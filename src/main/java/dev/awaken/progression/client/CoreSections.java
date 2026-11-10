@@ -404,12 +404,7 @@ final class CoreSections {
                 String head = entry.found() ? entry.title() : "?";
                 ui.textAt(head, a[0] + 5, a[1] + 4, cardW - 10, Glass.a(entry.found() ? Glass.TITLE : Glass.LABEL, 1f), false);
                 String text = entry.found() ? entry.body() : entry.title();
-                var body = SignalText.wrapAtMost(text, cardW - 10, 2, f::width);
-                int ty = a[1] + 15;
-                for (String l : body) {
-                    g.text(f, l, a[0] + 5, ty, Glass.a(Glass.LABEL, 1f), false);
-                    ty += 9;
-                }
+                ui.boxAt(text, a[0] + 5, a[1] + 15, cardW - 10, 2, Glass.a(Glass.LABEL, 1f), false); // fitted, never cut (SPEC §57.6)
                 boolean cut = SignalText.wrap(text, cardW - 10, f::width).size() > 2 || f.width(head) > cardW - 10;
                 if (hover && cut) {
                     g.tooltip(f, f.split(Component.literal(head + "\n" + text), 220), ui.mouseX(), ui.mouseY());

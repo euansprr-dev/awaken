@@ -111,11 +111,12 @@ public final class Goals {
      * belongs to (one row per thread shows, lowest {@code order} first; "" makes it its own thread), {@code opens} one line
      * of what it gets you, and {@code teaches} what it leads the player to (a room, a block, a tier: SPEC §53). {@code icon}
      * is the real item that stands for it on the band's stage when its needs don't already show one ("" for the goal's own;
-     * SPEC §57): an item id, never a picture of something the player hasn't met.
+     * SPEC §57): an item id, never a picture of something the player hasn't met. {@code makes} says the step IS the making
+     * of that item (a War Anvil), so the stage draws its recipe; a step that only uses or visits the thing leaves it false.
      */
     public record Step(String key, Goal goal, String title, String why, List<Need> needs, Optional<BlockPos> where, int path,
                        boolean optional, int priority, List<Choice> choices, List<String> covers, String thread, int order, Voice voice,
-                       String opens, List<String> teaches, String icon) {
+                       String opens, List<String> teaches, String icon, boolean makes) {
         public static Builder of(String key, Goal goal, String title) {
             return new Builder(key, goal, title);
         }
@@ -142,6 +143,7 @@ public final class Goals {
         private Voice voice = Voice.PLAIN;
         private final List<String> teaches = new ArrayList<>();
         private String icon = "";
+        private boolean makes;
 
         private Builder(String key, Goal goal, String title) {
             this.key = key;
@@ -237,9 +239,15 @@ public final class Goals {
             return icon(BuiltInRegistries.ITEM.getKey(item).toString());
         }
 
+        /** This step is the making of {@code item} (a block you craft and set down): its picture, drawn as its recipe. */
+        public Builder makes(Item item) {
+            makes = true;
+            return icon(item);
+        }
+
         public Step build() {
             return new Step(key, goal, title, why, List.copyOf(needs), where, path, optional, priority, List.copyOf(choices), List.copyOf(covers),
-                    thread, order, voice, opens, List.copyOf(teaches), icon);
+                    thread, order, voice, opens, List.copyOf(teaches), icon, makes && !icon.isEmpty());
         }
     }
 

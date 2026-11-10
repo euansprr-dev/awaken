@@ -186,21 +186,42 @@ public final class Sheet {
         return font.split(Component.literal(s), Math.max(1, (int) (width / snap(n))));
     }
 
-    /** Wrapped lines from y down, at most {@code most} of them; returns the y under the last. */
-    public float lines(String s, float x, float y, float width, float n, int most, int colour) {
-        List<FormattedCharSequence> text = wrap(s, width, n);
+    /**
+     * Wrapped lines from y down, every one of them: text on a sheet is never cut and never ends in dots (SPEC §57.6). What
+     * holds it grows, or scrolls. Returns the y under the last line.
+     */
+    public float lines(String s, float x, float y, float width, float n, int colour) {
         float step = line(n);
-        for (int i = 0; i < Math.min(most, text.size()); i++) {
-            text(text.get(i), x, y, n, colour);
+        for (FormattedCharSequence l : wrap(s, width, n)) {
+            text(l, x, y, n, colour);
             y += step;
         }
         return y;
     }
 
-    public String fit(String s, float width, float n) {
-        if (width(s, n) <= width) return s;
-        int room = (int) (width / snap(n)) - font.width("...");
-        return font.plainSubstrByWidth(s, Math.max(0, room)).stripTrailing() + "...";
+    /** As {@link #lines}, each line centred on cx. */
+    public float linesCentred(String s, float cx, float y, float width, float n, int colour) {
+        float step = line(n), size = snap(n);
+        for (FormattedCharSequence l : wrap(s, width, n)) {
+            text(l, cx - font.width(l) * size / 2F, y, n, colour);
+            y += step;
+        }
+        return y;
+    }
+
+    /** As {@link #lines}, each line ending at x1. */
+    public float linesRight(String s, float x1, float y, float width, float n, int colour) {
+        float step = line(n), size = snap(n);
+        for (FormattedCharSequence l : wrap(s, width, n)) {
+            text(l, x1 - font.width(l) * size, y, n, colour);
+            y += step;
+        }
+        return y;
+    }
+
+    /** How tall {@code s} is, wrapped to a width at size n. */
+    public float tall(String s, float width, float n) {
+        return s.isEmpty() ? 0F : wrap(s, width, n).size() * line(n);
     }
 
     // ---- things ---------------------------------------------------------------------------------------------------

@@ -846,7 +846,8 @@ of `AwakenConfig.Client`.
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
   frame) and `BandPlaces` (`Place`, `set(pageOrdinal, place)`: what a band page shows on the stage). `Goals.Step.icon`
-  (`Builder.icon(itemId)`) names the real item that stands for a step there.
+  (`Builder.icon(itemId)`) names the real item that stands for a step there; `Builder.makes(item)` says the step is the making
+  of that item (a War Anvil, an Inscribing Table), so the stage draws its recipe until you carry one.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
@@ -20595,4 +20596,34 @@ correct and the names are actually correct").
 - Tests: `band_stage_layout` (the stage's geometry at seven window shapes), `tasks_stage_pictures` (a Fitting Stand's and a crafting
   table's recipes are the game's own, a material gets none, every picture is a registered item, a recipe stops being sent once
   you have the thing, the page survives the wire). Not tested yet: the key meanings across screens and a word budget on the copy.
+
+- Keys: Left and Right (or Tab) walk the stats, Space places a point, Enter held confirms, Backspace undoes; Up and Down read
+  the Truths one at a time (true, then closest to true) without the pointer, and Esc lets the Truth go.
+
+### 57.5 Powers on the stage (`powers.client.PowersPlace`)
+- Your six keys with the power on each and your own binding under it, your energy as a bar; every power you own in one grid, thirteen
+  across, so all 63 show with no scrolling (level pips, mastery under them, a dot when it's on a key or always on); the panel at the
+  right reads the power you point at, else the one you picked, else the one Tab walked to, else the one on your first key, so it is
+  never an empty box (the old card was, with nothing under the pointer). It holds the power's kind, name, icon, energy and cooldown
+  as numbers, mastery as segments and in words, what it does, what to press, and its ladder.
+- Picking, the keys (your bindings), the key that doesn't fit and the server's say are the old page's own (`PowersSection.selected`,
+  `equip`). Esc lets go of a pick before it shuts the band; Tab walks the grid, Enter picks.
+- What your body does, your crafts, the Veil and the Armoury's line follow under the grid as they were written (`SectionHost`).
+
+### 57.6 Nothing is ever cut off (Euan, 10 Nov 2026: "you can actually always read everything that you need to read")
+A stat's line ended "…and you shrug off more h..." on the first build. The rule since, across the band:
+- **On the stage** (`core.client.ui`): there is no way to shorten text. `Sheet.lines`, `linesCentred` and `linesRight` draw every
+  wrapped line; nothing takes a "most" and nothing adds dots. What holds words grows to hold them: a tile is as tall as its longest
+  name, a need as its name, a row of picks as its longest name and line, the Later rows and the set-aside line as their words. If a
+  side still comes out taller than the stage (the step in focus, the lanes, a power's panel) that side scrolls, with a bar and "More"
+  on the bar of keys. A list that shows only the newest few shows each whole or not at all.
+- **Old sections** (`signal.client.Ui`): `textAt` and the new `boxAt` fit a line into its slot instead of ending it in "…"
+  (`SignalText.fitBox`): as written if it fits; else a whole real pixel smaller per font pixel at a time, never under half size or two
+  real pixels, wrapped onto the lines the slot then holds (two lines at half size fill the same height as one); and if even that
+  doesn't fit, every line at the smallest, running on below. `textAtMost` wraps in full. The Hearth's room tiles, the Journal's
+  cards and names, the Crafts' perks and the gate-world cards all go through these.
+- Not yet under the rule: the Hall of Arms, the anvil and the line-up (the workshops' own `Stage.fit`, Stage 4 of the plan), and the
+  HUD's cards and toasts, which page long lines by design.
+- Test `ui_text_never_cut`: for many lines, slots and pixel sizes, every word is still there, the size is on whole real pixels and
+  never under half, and each line is inside its slot.
 

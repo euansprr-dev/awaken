@@ -41,7 +41,6 @@ import java.util.List;
 final class TasksPlace implements BandPlaces.Place {
     private static final String ADD = "hearth/add";
     private static final float HERO_X1 = BandPlaces.X0 + 756F, LANES_X0 = BandPlaces.X1 - 676F;
-    private static final float LANE_H = 118F, TILE_W = 158F, TILE_H = 106F;
     private static final String[][] EMBLEM = dev.awaken.tasks.TaskPictures.EMBLEM;
 
     /** The step in focus ("" for the one on top), the pick looked at on it, and the lane whose Later list is open (-1). */
@@ -159,6 +158,14 @@ final class TasksPlace implements BandPlaces.Place {
 
     // ---- drawing -----------------------------------------------------------------------------------------------------
 
+    /**
+     * Nothing on this page is ever cut off (SPEC §57.6): every name and line is drawn whole, what holds it grows to fit, and
+     * if the step in focus or the lanes come out taller than the stage, that side scrolls. These are how far each is
+     * scrolled and how tall each last drew.
+     */
+    private float heroScroll, lanesScroll, heroTall, lanesTall;
+    private String heroFor = "";
+
     @Override
     public void draw(Sheet s, Hot hot, float mx, float my, float dt) {
         TaskCache.drawn();
@@ -172,109 +179,146 @@ final class TasksPlace implements BandPlaces.Place {
             return;
         }
         if (later >= 0 && waiting(v, Goal.values()[later]).isEmpty()) later = -1;
-        if (later >= 0) laterList(s, hot, v, mx, my);
-        else hero(s, hot, v, f, mx, my);
-        lanes(s, hot, v, f, mx, my);
+        String showing = later >= 0 ? "later/" + later : f.key();
+        if (!showing.equals(heroFor)) {
+            heroFor = showing;
+            heroScroll = 0;
+        }
+        // the step in focus, as tall as its words
+        float top = BandPlaces.Y0, bottom = BandPlaces.Y1 - (later >= 0 ? 0 : Kit.BUTTON_H + 12);
+        heroScroll = Math.clamp(heroScroll, 0F, Math.max(0F, heroTall - (bottom - top)));
+        boolean in = Sheet.in(mx, my, BandPlaces.X0 - 8, top, HERO_X1 + 8, bottom);
+        s.g.enableScissor(Math.round(BandPlaces.X0) - 8, Math.round(top), Math.round(HERO_X1) + 8, Math.round(bottom));
+        hot.clip(BandPlaces.X0 - 8, top, HERO_X1 + 8, bottom);
+        float end = later >= 0 ? laterList(s, hot, v, top - heroScroll, in ? mx : -10000, in ? my : -10000)
+                : hero(s, hot, v, f, top - heroScroll, bottom - top, in ? mx : -10000, in ? my : -10000);
+        heroTall = end - (top - heroScroll);
+        hot.unclip();
+        s.g.disableScissor();
+        Kit.scrollbar(s, HERO_X1 + 8, top, bottom, heroScroll, heroTall);
+        if (later < 0) actions(s, hot, v, f, became(f), mx, my);
+        // every other open step, in its goal's lane
+        lanesScroll = Math.clamp(lanesScroll, 0F, Math.max(0F, lanesTall - (BandPlaces.Y1 - BandPlaces.Y0)));
+        boolean inLanes = Sheet.in(mx, my, LANES_X0 - 8, BandPlaces.Y0, BandPlaces.X1 + 8, BandPlaces.Y1);
+        s.g.enableScissor(Math.round(LANES_X0) - 8, Math.round(BandPlaces.Y0) - 8, Math.round(BandPlaces.X1) + 8, Math.round(BandPlaces.Y1));
+        hot.clip(LANES_X0 - 8, BandPlaces.Y0, BandPlaces.X1 + 8, BandPlaces.Y1);
+        float lend = lanes(s, hot, v, f, BandPlaces.Y0 - lanesScroll, inLanes ? mx : -10000, inLanes ? my : -10000);
+        lanesTall = lend - (BandPlaces.Y0 - lanesScroll);
+        hot.unclip();
+        s.g.disableScissor();
+        Kit.scrollbar(s, BandPlaces.X1 + 10, BandPlaces.Y0, BandPlaces.Y1, lanesScroll, lanesTall);
         undo(s, hot, mx, my);
         String words = KeyText.resolve(f.title());
         if (!words.equals(said)) {
             said = words;
-            Sheet.say(words + ". " + line(f));
+            Sheet.say(words + ". " + (f.extra().opens().isEmpty() ? f.why() : f.extra().opens()));
         }
         if (tipTitle != null) Kit.tip(s, mx, my, tipTitle, tipMore);
     }
 
-    private static String line(StepRow f) {
-        ChoiceRow pick = became(f);
-        if (pick != null) return pick.detail().isEmpty() ? pick.sub() : pick.detail();
-        return f.extra().opens().isEmpty() ? f.why() : f.extra().opens();
+    /** What a step makes: its recipe, the thing's id and name, and how many you have of how many it takes (0: it isn't counted). */
+    private record Made(RecipeRow recipe, String item, String name, int have, int need) {}
+
+    /** The pick being looked at: the one clicked, else the one chosen, else the only one there is. */
+    private @Nullable ChoiceRow looked(StepRow f) {
+        List<ChoiceRow> cs = f.choices();
+        for (ChoiceRow c : cs) if (c.id().equals(choice)) return c;
+        for (ChoiceRow c : cs) if (c.id().equals(f.chosen())) return c;
+        return cs.size() == 1 ? cs.get(0) : null;
     }
 
-    private void hero(Sheet s, Hot hot, TaskPayloads.View v, StepRow f, float mx, float my) {
-        float x = BandPlaces.X0, y = BandPlaces.Y0;
+    /** The step in focus from y0 down, with {@code view} of height to fill. Returns the y under its last line. */
+    private float hero(Sheet s, Hot hot, TaskPayloads.View v, StepRow f, float y0, float view, float mx, float my) {
+        float x = BandPlaces.X0, y = y0, w = HERO_X1 - x;
         boolean tracked = f.key().equals(v.pinned()), top = f.key().equals(v.top());
         ChoiceRow pick = became(f);
-        // what kind of step this is, and whose
+        // whose it is, and why it's in front
         String eyebrow = tracked ? "Tracked" : top ? "Do this next" : f.optional() ? "When you want" : "Also open to you";
         s.caps(eyebrow, x, y + 9, Glass.a(tracked || top ? Glass.AMBER : s.label, 1F));
         float cx = x + s.width(eyebrow.toUpperCase(java.util.Locale.ROOT), Sheet.LABEL) + 14;
         cx += Kit.chip(s, emblem(f.goal()), laneName(f.goal()), cx, y, Glass.EDGE) + 8;
         if (f.extra().ready()) Kit.chip(s, ItemStack.EMPTY, "Ready", cx, y, Glass.GOOD);
         y += 46;
-        // its name, and one line of why
-        String title = KeyText.resolve(pick != null ? pick.title() : f.title());
-        List<FormattedCharSequence> name = s.wrap(title, HERO_X1 - x, 4F);
-        for (int i = 0; i < Math.min(2, name.size()); i++) {
-            s.text(name.get(i), x, y, 4F, Glass.a(Glass.TITLE, 1F));
-            y += s.line(4F);
-        }
-        y += 4;
-        String line = line(f);
-        if (!line.isEmpty()) {
-            List<FormattedCharSequence> why = s.wrap(KeyText.resolve(line), HERO_X1 - x, Sheet.BODY);
-            float y0 = y;
-            for (int i = 0; i < Math.min(2, why.size()); i++) {
-                s.text(why.get(i), x, y, Sheet.BODY, Glass.a(s.label, 1F));
-                y += s.line(Sheet.BODY);
-            }
-            String rest = !f.extra().opens().isEmpty() && pick == null ? f.why() : why.size() > 2 ? line : "";
-            if (!rest.isEmpty() && Sheet.in(mx, my, x, y0, HERO_X1, y)) tip(title, KeyText.resolve(rest));
-        }
+        // its name, what it gets you and why: every line of each
+        y = s.lines(KeyText.resolve(pick != null ? pick.title() : f.title()), x, y, w, 4F, Glass.a(Glass.TITLE, 1F)) + 4;
+        String lead = pick != null ? pick.sub() : f.extra().opens(), why = pick != null ? pick.detail() : f.why();
+        if (!lead.isEmpty()) y = s.lines(KeyText.resolve(lead), x, y, w, Sheet.BODY, Glass.a(Glass.TEXT, 1F));
+        if (!why.isEmpty()) y = s.lines(KeyText.resolve(why), x, y, w, Sheet.BODY, Glass.a(s.label, 1F));
         y += 14;
+        // what it shows, and what must follow it
+        boolean picking = pick == null && !f.choices().isEmpty();
+        ChoiceRow looked = picking ? looked(f) : null;
+        List<NeedRow> needs = new ArrayList<>(picking ? (looked == null ? List.<NeedRow>of() : looked.needs()) : pick != null ? pick.needs() : f.needs());
+        List<Made> made = new ArrayList<>();
+        if (!picking) {
+            for (NeedRow n : new ArrayList<>(needs)) {
+                RecipeRow r = n.met() || made.size() >= 2 ? null : TaskCache.view.recipe(n.item());
+                if (r == null) continue;
+                made.add(new Made(r, n.item(), needName(n), n.have(), n.need()));
+                needs.remove(n);
+            }
+            // a step that is itself the making of one thing (a War Anvil): that thing's recipe, and what it takes below
+            RecipeRow own = made.isEmpty() ? TaskCache.view.recipe(f.extra().icon()) : null;
+            if (own != null) made.add(new Made(own, f.extra().icon(), stack(f.extra().icon()).getHoverName().getString(), 0, 0));
+        }
+        List<NeedRow> items = new ArrayList<>(), conds = new ArrayList<>();
+        for (NeedRow n : needs) (n.item().isEmpty() ? conds : items).add(n);
+        BlockPos at = f.where().orElse(null);
+        boolean wayPicture = !picking && made.isEmpty() && items.isEmpty() && at != null;
+        String then = KeyText.resolve(f.extra().then());
+        float itemsH = 0;
+        for (int i = 0; i < items.size(); i += 6) {
+            float rowH = 0;
+            for (int j = i; j < Math.min(items.size(), i + 6); j++) rowH = Math.max(rowH, Kit.needHeight(s, needName(items.get(j)), items.get(j).need()));
+            itemsH += rowH + 8;
+        }
+        float after = itemsH + (items.isEmpty() ? 0 : 30) + conds.size() * 28 + (needs.isEmpty() ? 0 : 6) + (at != null && !wayPicture ? 52 : 0) + s.tall(then, w, Sheet.BODY);
+        float room = y0 + view - y - after;
         // the picture: the picks side by side, what it makes as its recipe, the way as a needle, or the thing itself
-        List<NeedRow> needs = new ArrayList<>(pick != null ? pick.needs() : f.needs());
-        float bottom = BandPlaces.Y1 - 56;
-        if (pick == null && !f.choices().isEmpty()) {
-            needs = picks(s, hot, f, x, y, bottom - y - Kit.NEED_H - 10, mx, my);
-            y += picksH;
-        } else {
-            List<NeedRow> made = new ArrayList<>();
-            for (NeedRow n : needs) if (!n.met() && TaskCache.view.recipe(n.item()) != null && made.size() < 2) made.add(n);
-            if (!made.isEmpty()) {
-                needs.removeAll(made);
-                recipes(s, made, x, y, mx, my);
-                y += 196;
-            } else if (needs.stream().noneMatch(n -> !n.item().isEmpty())) {
-                boolean way = f.where().isPresent();
-                float h = Math.min(250, bottom - y - (needs.isEmpty() ? 60 : 190));
-                if (way) way(s, f, x, y, h);
-                else thing(s, pictures(f).get(0), (x + HERO_X1) / 2F, y, h);
-                y += h + 10;
-            }
+        if (picking) y += picks(s, hot, f, looked, x, y, room, mx, my);
+        else if (!made.isEmpty()) y += recipes(s, made, x, y, room, mx, my);
+        else if (items.isEmpty()) {
+            float h = Math.clamp(room - 10, 150F, 260F);
+            if (wayPicture) way(s, f, x, y, h);
+            else thing(s, pictures(f).get(0), (x + HERO_X1) / 2F, y, h);
+            y += h + 10;
         }
-        // what it takes: the real items in a row, then anything that isn't a thing as a line
-        float nx = x;
-        int shown = 0;
-        for (NeedRow n : needs) {
-            if (n.item().isEmpty() || shown >= 6) continue;
-            shown++;
-            String name1 = needName(n);
-            if (Kit.need(s, WhereFrom.icon(n.item()), name1, n.have(), n.need(), nx, y, mx, my)) {
-                String where = n.met() ? "You have it." : WhereFrom.line(n.item());
-                tip(name1, where);
+        // what it takes: the real items, six to a row, and under them where the one you're missing comes from
+        NeedRow from = null;
+        for (int i = 0; i < items.size(); i += 6) {
+            float rowH = 0, nx = x;
+            for (int j = i; j < Math.min(items.size(), i + 6); j++) {
+                NeedRow n = items.get(j);
+                String name = needName(n);
+                rowH = Math.max(rowH, Kit.needHeight(s, name, n.need()));
+                if (Kit.need(s, WhereFrom.icon(n.item()), name, n.have(), n.need(), nx, y, mx, my) && !n.met()) from = n;
+                nx += Kit.NEED_W + 12;
             }
-            nx += Kit.NEED_W + 12;
+            y += rowH + 8;
         }
-        if (shown > 0) y += Kit.NEED_H + 8;
-        for (NeedRow n : needs) {
-            if (!n.item().isEmpty() || y + 22 > bottom) continue;
+        if (!items.isEmpty()) {
+            if (from == null) for (NeedRow n : items) if (!n.met() && !WhereFrom.line(n.item()).isEmpty()) {
+                from = n;
+                break;
+            }
+            String line = from == null ? "" : WhereFrom.line(from.item());
+            if (!line.isEmpty()) y = s.lines(needName(from) + ": " + line, x, y, w, Sheet.LABEL, Glass.a(s.label, 1F)) + 8;
+        }
+        // what it asks for that isn't a thing
+        for (NeedRow n : conds) {
             Kit.condition(s, n.need() > 1 ? n.label() + "  " + Math.min(n.have(), n.need()) + "/" + n.need() : n.label(), n.met(), x, y);
             y += 28;
         }
         if (!needs.isEmpty()) y += 6;
         // where, and what comes after
-        BlockPos at = f.where().orElse(null);
-        if (at != null && (pick != null || !f.choices().isEmpty() || !needs.isEmpty() || y < bottom - 40)) {
-            float[] w = bearing(at);
-            if (y + 44 <= bottom) {
-                Kit.needle(s, x + 22, y + 22, 22, w[1]);
-                s.text(wayWords(at, w[0]), x + 58, y + 14, Sheet.BODY, Glass.a(Glass.TEXT, 1F));
-                y += 52;
-            }
+        if (at != null && !wayPicture) {
+            float[] way = bearing(at);
+            Kit.needle(s, x + 22, y + 22, 22, way[1]);
+            s.text(wayWords(at, way[0]), x + 58, y + 14, Sheet.BODY, Glass.a(Glass.TEXT, 1F));
+            y += 52;
         }
-        String then = KeyText.resolve(f.extra().then());
-        if (!then.isEmpty() && y + 20 <= bottom) s.text(then, x, y, Sheet.BODY, Glass.a(s.label, .85F));
-        actions(s, hot, v, f, pick, mx, my);
+        if (!then.isEmpty()) y = s.lines(then, x, y, w, Sheet.BODY, Glass.a(s.label, .85F));
+        return y + 8;
     }
 
     private void tip(String title, String more) {
@@ -328,78 +372,75 @@ final class TasksPlace implements BandPlaces.Place {
         s.item(pictures(f).get(0), HERO_X1 - 200, cy - 76, 152);
     }
 
-    /** What the step makes, each drawn as its recipe with the thing itself beside it and how many you have. */
-    private void recipes(Sheet s, List<NeedRow> made, float x, float y, float mx, float my) {
+    /** What the step makes, each drawn as its recipe with the thing itself beside it. Returns the height it took. */
+    private float recipes(Sheet s, List<Made> made, float x, float y, float room, float mx, float my) {
         float each = (HERO_X1 - x) / made.size();
+        // as large as the room allows: the game's own grid, read at a glance
+        float cell = 44, result = 128, tallest = 0;
+        for (Made m : made) tallest = Math.max(tallest, Kit.recipeHeight(m.recipe.height(), 60, 180));
+        if (room >= tallest + 60 && Kit.recipeWidth(3, 60, 180) <= each - 20) {
+            cell = 60;
+            result = 180;
+        }
+        float h = 0;
+        for (Made m : made) h = Math.max(h, Kit.recipeHeight(m.recipe.height(), cell, result));
+        float under = 0;
         for (int i = 0; i < made.size(); i++) {
-            NeedRow n = made.get(i);
-            RecipeRow r = TaskCache.view.recipe(n.item());
-            if (r == null) continue;
+            Made m = made.get(i);
+            RecipeRow r = m.recipe;
             List<ItemStack> cells = new ArrayList<>(r.cells().size());
             long turn = System.currentTimeMillis() / 1000;
             for (List<String> ids : r.cells()) cells.add(ids.isEmpty() ? ItemStack.EMPTY : stack(ids.get((int) (turn % ids.size()))));
-            ItemStack out = stack(n.item());
-            float w = Kit.recipeWidth(r.width(), 128), rx = x + i * each + Math.max(0, (each - w) / 2F);
-            Kit.recipe(s, r.width(), r.height(), cells, out, rx, y, 128);
-            String name = needName(n), count = Math.min(n.have(), 9999) + "/" + n.need();
-            float tw = s.width(name + " ", Sheet.BODY) + s.width(count, Sheet.BODY), tx = rx + (w - tw) / 2F, ty = y + 150;
-            s.text(name, tx, ty, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-            s.text(count, tx + s.width(name + " ", Sheet.BODY), ty, Sheet.BODY, Glass.a(n.met() ? Glass.GOOD : Glass.WARN, 1F));
-            if (Sheet.in(mx, my, rx, y, rx + w, y + 170)) {
-                String where = WhereFrom.line(n.item());
-                tip(name, where);
+            float w = Kit.recipeWidth(r.width(), cell, result), rx = x + i * each + Math.max(0, (each - w) / 2F);
+            float ry = y + (h - Kit.recipeHeight(r.height(), cell, result)) / 2F;
+            Kit.recipe(s, r.width(), r.height(), cells, stack(m.item), rx, ry, cell, result);
+            // its own name, and how many you have: under it, on as many lines as the name takes
+            String count = m.need > 0 ? "  " + Math.min(m.have, m.need) + "/" + m.need : "";
+            float ty = y + h + 12, mid = x + i * each + each / 2F;
+            float end = s.linesCentred(m.name, mid, ty, each - 24, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
+            if (!count.isEmpty()) {
+                s.centre(count.trim(), mid, end, Sheet.BODY, Glass.a(m.have >= m.need ? Glass.GOOD : Glass.WARN, 1F));
+                end += s.line(Sheet.BODY);
             }
+            under = Math.max(under, end - ty);
         }
+        return h + 12 + under + 14;
     }
 
-    /** How tall the picks drew this frame. */
-    private float picksH;
-
-    /** The picks side by side: armour as figures wearing it, anything else as the things themselves. Returns the looked-at pick's needs. */
-    private List<NeedRow> picks(Sheet s, Hot hot, StepRow f, float x, float y, float room, float mx, float my) {
+    /** The picks side by side: armour as figures wearing it, anything else as the things themselves. Returns the height it took. */
+    private float picks(Sheet s, Hot hot, StepRow f, @Nullable ChoiceRow looked, float x, float y, float room, float mx, float my) {
         List<ChoiceRow> cs = f.choices();
-        int n = Math.min(4, cs.size());
-        // the one you're looking at: the one you clicked, else the one you chose, else the only one there is
-        String looked = !choice.isEmpty() && cs.stream().anyMatch(c -> c.id().equals(choice)) ? choice : !f.chosen().isEmpty() ? f.chosen() : n == 1 ? cs.get(0).id() : "";
+        int n = cs.size();
         boolean worn = figures(f);
-        float ph = Math.max(220, Math.min(worn ? 392 : 292, room)), tall = ph - 92;
-        picksH = ph;
         float w = Math.min(252, (HERO_X1 - x) / n), x0 = x + ((HERO_X1 - x) - w * n) / 2F;
+        // every pick's name and line in full: the tallest sets how much the figures get
+        float words = 0;
+        for (ChoiceRow c : cs) words = Math.max(words, s.tall(c.title(), w - 16, Sheet.BODY) + 2 + s.tall(c.sub(), w - 16, Sheet.LABEL));
+        float tall = Math.clamp(room - words - 34, worn ? 150F : 110F, worn ? 320F : 190F), ph = tall + words + 34;
         Kit.floor(s, x0 + w * n / 2F, y + tall - 6, Math.min(360, w * n / 2F + 20));
-        List<NeedRow> needs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             ChoiceRow c = cs.get(i);
             float cx = x0 + i * w;
-            boolean on = c.id().equals(looked), mine = c.id().equals(f.chosen()), over = Sheet.in(mx, my, cx, y, cx + w, y + ph - 8);
+            boolean on = c == looked, mine = c.id().equals(f.chosen()), over = Sheet.in(mx, my, cx, y, cx + w, y + ph - 8);
             if (over || on) s.fill(cx + 6, y, cx + w - 6, y + ph - 8, Glass.a(Glass.EDGE, on ? .10F : .06F));
             if (worn && i < figures.size()) {
                 InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(cx), s.gy(y + 4), s.gx(cx + w), s.gy(y + tall),
                         Math.round(tall * .41F * s.k), .0625F, s.ox + mx * s.k, s.oy + my * s.k, figures.get(i));
             } else {
-                int k = Math.min(4, c.show().size());
-                float size = k <= 1 ? 128 : 80, gx = cx + (w - (k <= 1 ? size : 2 * size)) / 2F;
-                for (int j = 0; j < k; j++) s.item(WhereFrom.icon(c.show().get(j)), gx + (k <= 1 ? 0 : (j % 2) * size), y + 14 + (k <= 1 ? 20 : (j / 2) * size), size);
+                int k = c.show().size(), across = k <= 1 ? 1 : 2, down = (k + across - 1) / across;
+                float size = Math.min((w - 24) / across, (tall - 20) / Math.max(1, down)), gx = cx + (w - across * size) / 2F, gy = y + (tall - down * size) / 2F;
+                for (int j = 0; j < k; j++) s.item(WhereFrom.icon(c.show().get(j)), gx + (j % across) * size, gy + (j / across) * size, size);
             }
-            float ty = y + tall + 12;
-            List<FormattedCharSequence> title = s.wrap(c.title(), w - 16, Sheet.BODY);
-            for (int j = 0; j < Math.min(2, title.size()); j++) {
-                s.text(title.get(j), cx + (w - s.font.width(title.get(j)) * s.snap(Sheet.BODY)) / 2F, ty, Sheet.BODY, Glass.a(mine ? Glass.GOOD : Glass.TITLE, 1F));
-                ty += s.line(Sheet.BODY);
-            }
-            List<FormattedCharSequence> sub = s.wrap(c.sub(), w - 16, Sheet.LABEL);
-            for (int j = 0; j < Math.min(2, sub.size()); j++) {
-                s.text(sub.get(j), cx + (w - s.font.width(sub.get(j)) * s.snap(Sheet.LABEL)) / 2F, ty + 2, Sheet.LABEL, Glass.a(s.label, 1F));
-                ty += s.line(Sheet.LABEL);
-            }
+            float ty = s.linesCentred(c.title(), cx + w / 2F, y + tall + 12, w - 16, Sheet.BODY, Glass.a(mine ? Glass.GOOD : Glass.TITLE, 1F)) + 2;
+            s.linesCentred(c.sub(), cx + w / 2F, ty, w - 16, Sheet.LABEL, Glass.a(s.label, 1F));
             if (on) s.fill(cx + 20, y + ph - 12, cx + w - 20, y + ph - 9, Glass.a(Glass.AMBER, 1F));
-            if (on) needs = new ArrayList<>(c.needs());
             hot.add(cx, y, cx + w, y + ph - 8, () -> {
                 choice = c.id();
                 StatusSections.cue(StatusSections.Cue.PAGE);
                 Sheet.say(c.title() + ". " + c.sub());
             });
         }
-        return needs;
+        return ph;
     }
 
     /** The figures wearing each set this step offers (a body under the armour); false when its picks aren't armour. */
@@ -498,16 +539,17 @@ final class TasksPlace implements BandPlaces.Place {
     private void undo(Sheet s, Hot hot, float mx, float my) {
         String title = TaskCache.undoTitle();
         if (title.isEmpty()) return;
-        String words = s.fit("Set aside: " + title, 520, Sheet.BODY);
-        float bw = Kit.buttonWidth(s, "Z", "Undo"), w = s.width(words, Sheet.BODY) + bw + 48;
-        float x = BandPlaces.X0 + (756 - w) / 2F, y = BandPlaces.Y1 - Kit.BUTTON_H - 64;
+        String words = "Set aside: " + title;
+        float bw = Kit.buttonWidth(s, "Z", "Undo"), tw = Math.min(s.width(words, Sheet.BODY), 520), th = s.tall(words, 520, Sheet.BODY);
+        float w = tw + bw + 48, h = Math.max(56, th + 30);
+        float x = BandPlaces.X0 + (756 - w) / 2F, y = BandPlaces.Y1 - Kit.BUTTON_H - 20 - h;
         s.g.nextStratum();
-        s.fill(x, y, x + w, y + 56, Sheet.argb(0x0F1724, .96F));
-        s.outline(x, y, x + w, y + 56, 1, Glass.a(Glass.EDGE, .55F));
-        s.text(words, x + 16, y + 21, Sheet.BODY, Glass.a(Glass.TEXT, 1F));
-        float bx = x + w - bw - 8;
-        Kit.button(s, "Z", "Undo", bx, y + 6, Kit.Look.PLAIN, Sheet.in(mx, my, bx, y + 6, bx + bw, y + 50), true, 0F);
-        hot.add(bx, y + 6, bx + bw, y + 50, TasksPlace::putBack);
+        s.fill(x, y, x + w, y + h, Sheet.argb(0x0F1724, .96F));
+        s.outline(x, y, x + w, y + h, 1, Glass.a(Glass.EDGE, .55F));
+        s.lines(words, x + 16, y + (h - th) / 2F + 2, 520, Sheet.BODY, Glass.a(Glass.TEXT, 1F));
+        float bx = x + w - bw - 8, by = y + (h - Kit.BUTTON_H) / 2F;
+        Kit.button(s, "Z", "Undo", bx, by, Kit.Look.PLAIN, Sheet.in(mx, my, bx, by, bx + bw, by + Kit.BUTTON_H), true, 0F);
+        hot.add(bx, by, bx + bw, by + Kit.BUTTON_H, TasksPlace::putBack);
     }
 
     private static void putBack() {
@@ -517,66 +559,69 @@ final class TasksPlace implements BandPlaces.Place {
 
     // ---- the lanes ---------------------------------------------------------------------------------------------------
 
-    private void lanes(Sheet s, Hot hot, TaskPayloads.View v, StepRow f, float mx, float my) {
-        float y = BandPlaces.Y0;
-        Goal[] goals = Goal.values();
-        for (Goal g : goals) {
+    private static final float LABEL_W = 108F, TILE_W = 181F, TILE_GAP = 12F;
+
+    /** How tall a step's tile must be for every line of its name. */
+    private static float tileHeight(Sheet s, StepRow r) {
+        ChoiceRow pick = became(r);
+        return Math.max(98F, 46 + s.tall(KeyText.resolve(pick != null ? pick.title() : r.title()), TILE_W - 18, Sheet.LABEL) + 8);
+    }
+
+    /** Every goal's lane from y0 down: its rows as tiles, three across, each as tall as its longest name. Returns the y under the last. */
+    private float lanes(Sheet s, Hot hot, TaskPayloads.View v, StepRow f, float y0, float mx, float my) {
+        float y = y0;
+        for (Goal g : Goal.values()) {
             List<StepRow> rows = lane(v, g), wait = waiting(v, g);
             if (rows.isEmpty() && wait.isEmpty()) continue;
-            if (y > BandPlaces.Y0) s.fill(LANES_X0, y, BandPlaces.X1, y + 1, Glass.a(Glass.EDGE, .14F));
-            float cx = LANES_X0 + 48;
-            s.item(emblem(g.ordinal()), cx - 20, y + 22, 40);
+            if (y > y0) s.fill(LANES_X0, y, BandPlaces.X1, y + 1, Glass.a(Glass.EDGE, .14F));
+            float cx = LANES_X0 + 48, ly = y + 8;
+            s.item(emblem(g.ordinal()), cx - 20, y + 14, 40);
             String name = laneName(g.ordinal()).toUpperCase(java.util.Locale.ROOT);
-            s.text(name, cx - s.width(name, Sheet.LABEL) / 2F, y + 72, Sheet.LABEL, Glass.a(s.label, 1F));
-            float x = LANES_X0 + 108, ty = y + 8;
-            int room = wait.isEmpty() ? 3 : 3;
-            for (int i = 0; i < Math.min(room, rows.size()); i++) {
-                StepRow r = rows.get(i);
-                tile(s, hot, v, r, r == f && later < 0, x, ty, mx, my);
-                x += TILE_W + 12;
-            }
+            s.text(name, cx - s.width(name, Sheet.LABEL) / 2F, y + 60, Sheet.LABEL, Glass.a(s.label, 1F));
             if (!wait.isEmpty()) {
-                boolean over = Sheet.in(mx, my, x, ty, x + 54, ty + TILE_H), open = later == g.ordinal();
-                Kit.well(s, x, ty, x + 54, ty + TILE_H, open ? Kit.Lit.FOCUS : Kit.Lit.KNOWN, over);
-                s.centre("+" + wait.size(), x + 27, ty + 40, Sheet.BODY, Glass.a(over || open ? Glass.TITLE : s.label, 1F));
+                // what waits behind this lane's rows: a way to its list, under the lane's name
+                String more = "+" + wait.size() + " later";
+                float mw = s.width(more, Sheet.LABEL), mx0 = cx - mw / 2F;
+                boolean over = Sheet.in(mx, my, mx0 - 8, y + 78, mx0 + mw + 8, y + 104), open = later == g.ordinal();
+                if (over || open) s.fill(mx0 - 8, y + 78, mx0 + mw + 8, y + 104, Glass.a(Glass.EDGE, open ? .22F : .12F));
+                s.text(more, mx0, y + 84, Sheet.LABEL, Glass.a(over || open ? Glass.TITLE : Glass.EDGE, 1F));
                 int lane = g.ordinal();
-                hot.add(x, ty, x + 54, ty + TILE_H, () -> {
+                hot.add(mx0 - 8, y + 78, mx0 + mw + 8, y + 104, () -> {
                     later = later == lane ? -1 : lane;
                     StatusSections.cue(StatusSections.Cue.PAGE);
                 });
-                if (over) tip(wait.size() + " more, later", "They come up as the ones before them are done. Click to see them.");
             }
-            y += LANE_H;
+            for (int i = 0; i < rows.size(); i += 3) {
+                float rowH = 0;
+                for (int j = i; j < Math.min(rows.size(), i + 3); j++) rowH = Math.max(rowH, tileHeight(s, rows.get(j)));
+                for (int j = i; j < Math.min(rows.size(), i + 3); j++) {
+                    StepRow r = rows.get(j);
+                    tile(s, hot, v, r, r == f && later < 0, LANES_X0 + LABEL_W + (j - i) * (TILE_W + TILE_GAP), ly, rowH, mx, my);
+                }
+                ly += rowH + 8;
+            }
+            y = Math.max(ly, y + 112) + 4;
         }
         String foot = v.footer(f.goal());
         if (foot.isEmpty()) foot = v.footer(Goal.HEARTH.ordinal());
         if (foot.isEmpty()) foot = v.footer(Goal.RANK.ordinal());
-        if (!foot.isEmpty() && y + 24 <= BandPlaces.Y1) {
-            String fit = s.fit(foot, BandPlaces.X1 - LANES_X0, Sheet.LABEL);
-            s.text(fit, BandPlaces.X1 - s.width(fit, Sheet.LABEL), BandPlaces.Y1 - 14, Sheet.LABEL, Glass.a(s.dim, 1F));
-        }
+        if (!foot.isEmpty()) y = s.linesRight(foot, BandPlaces.X1, y + 8, BandPlaces.X1 - LANES_X0, Sheet.LABEL, Glass.a(s.dim, 1F));
+        return y;
     }
 
-    private void tile(Sheet s, Hot hot, TaskPayloads.View v, StepRow r, boolean on, float x, float y, float mx, float my) {
+    private void tile(Sheet s, Hot hot, TaskPayloads.View v, StepRow r, boolean on, float x, float y, float h, float mx, float my) {
         if (r.fresh()) TaskCache.drawnFresh(r.key());
-        boolean over = Sheet.in(mx, my, x, y, x + TILE_W, y + TILE_H), top = r.key().equals(v.top());
-        Kit.well(s, x, y, x + TILE_W, y + TILE_H, on ? Kit.Lit.FOCUS : top ? Kit.Lit.WAITS : Kit.Lit.KNOWN, over);
+        boolean over = Sheet.in(mx, my, x, y, x + TILE_W, y + h), top = r.key().equals(v.top());
+        Kit.well(s, x, y, x + TILE_W, y + h, on ? Kit.Lit.FOCUS : top ? Kit.Lit.WAITS : Kit.Lit.KNOWN, over);
         List<ItemStack> pics = pictures(r);
         for (int i = 0; i < pics.size(); i++) s.item(pics.get(i), x + 9 + i * 34, y + 8, 32);
         ChoiceRow pick = became(r);
         List<NeedRow> needs = pick != null ? pick.needs() : r.needs();
-        if (!needs.isEmpty() && needs.size() <= 6) Kit.pips(s, x + TILE_W - 8 - needs.size() * 11, y + 10, met(needs), needs.size());
-        String title = KeyText.resolve(pick != null ? pick.title() : r.title());
-        List<FormattedCharSequence> lines = s.wrap(title, TILE_W - 18, Sheet.LABEL);
-        float ty = y + 44;
-        for (int i = 0; i < Math.min(4, lines.size()); i++) {
-            s.text(lines.get(i), x + 9, ty, Sheet.LABEL, Glass.a(Glass.TITLE, 1F));
-            ty += s.line(Sheet.LABEL);
-        }
-        if (lines.size() > 4 && over) tip(title, "");
+        if (!needs.isEmpty() && needs.size() <= 6 && pics.size() < 4) Kit.pips(s, x + TILE_W - 8 - needs.size() * 11, y + 10, met(needs), needs.size());
+        s.lines(KeyText.resolve(pick != null ? pick.title() : r.title()), x + 9, y + 46, TILE_W - 18, Sheet.LABEL, Glass.a(Glass.TITLE, 1F));
         if (r.fresh()) Kit.glint(s, x + TILE_W - 2, y + 2, Glass.AMBER);
-        if (r.key().equals(v.pinned())) s.text("◆", x + TILE_W - 18, y + TILE_H - 20, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
-        hot.add(x, y, x + TILE_W, y + TILE_H, () -> focus(r.key()));
+        if (r.key().equals(v.pinned())) s.text("◆", x + TILE_W - 18, y + h - 20, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
+        hot.add(x, y, x + TILE_W, y + h, () -> focus(r.key()));
     }
 
     /** Tours: brings a step into focus by its key, or by the start of it ("armour/" for the armour step). */
@@ -588,6 +633,15 @@ final class TasksPlace implements BandPlaces.Place {
         }
     }
 
+    /** Tours: the Later list of the first lane that has one. */
+    void debugLater() {
+        for (Goal g : Goal.values()) {
+            if (waiting(TaskCache.view, g).isEmpty()) continue;
+            later = g.ordinal();
+            return;
+        }
+    }
+
     private void focus(String key) {
         if (!key.equals(focus)) StatusSections.cue(StatusSections.Cue.PAGE);
         focus = key;
@@ -595,36 +649,37 @@ final class TasksPlace implements BandPlaces.Place {
         later = -1;
     }
 
-    /** A lane's Later list, in the focus area: read-only, with Track and (for one you set aside) Put back. */
-    private void laterList(Sheet s, Hot hot, TaskPayloads.View v, float mx, float my) {
+    /** A lane's Later list, in the focus area: read-only, with Track and (for one you set aside) Put back. Returns the y under it. */
+    private float laterList(Sheet s, Hot hot, TaskPayloads.View v, float y0, float mx, float my) {
         Goal g = Goal.values()[later];
         List<StepRow> rows = waiting(v, g);
-        float x = BandPlaces.X0, y = BandPlaces.Y0;
+        float x = BandPlaces.X0, y = y0;
         s.caps("Later", x, y + 9, Glass.a(s.label, 1F));
         Kit.chip(s, emblem(g.ordinal()), laneName(g.ordinal()), x + s.width("LATER", Sheet.LABEL) + 14, y, Glass.EDGE);
         y += 50;
-        for (int i = 0; i < Math.min(8, rows.size()); i++) {
-            StepRow r = rows.get(i);
-            Kit.well(s, x, y, HERO_X1, y + 70, Kit.Lit.KNOWN, false);
-            s.item(pictures(r).get(0), x + 12, y + 15, 40);
-            s.text(s.fit(KeyText.resolve(r.title()), 420, Sheet.BODY), x + 66, y + 14, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-            String why = r.aside() ? "You set this aside." : r.optional() ? "When you want." : "After the one before it.";
-            s.text(why, x + 66, y + 40, Sheet.LABEL, Glass.a(s.label, 1F));
+        for (StepRow r : rows) {
             boolean tracked = r.key().equals(v.pinned());
-            String label = tracked ? "Tracked" : "Track";
-            float w = Kit.buttonWidth(s, "", label), bx = HERO_X1 - w - 12;
-            Kit.button(s, "", label, bx, y + 13, tracked ? Kit.Look.ON : Kit.Look.PLAIN, Sheet.in(mx, my, bx, y + 13, bx + w, y + 57), true, 0F);
-            hot.add(bx, y + 13, bx + w, y + 57, () -> track(r));
+            String label = tracked ? "Tracked" : "Track", title = KeyText.resolve(r.title());
+            float bw = Kit.buttonWidth(s, "", label), pw = r.aside() ? Kit.buttonWidth(s, "", "Put back") + 10 : 0;
+            float tw = HERO_X1 - x - 66 - bw - pw - 28, h = Math.max(70, 14 + s.tall(title, tw, Sheet.BODY) + 4 + s.line(Sheet.LABEL) + 12);
+            Kit.well(s, x, y, HERO_X1, y + h, Kit.Lit.KNOWN, false);
+            s.item(pictures(r).get(0), x + 12, y + 15, 40);
+            float ty = s.lines(title, x + 66, y + 14, tw, Sheet.BODY, Glass.a(Glass.TITLE, 1F)) + 4;
+            s.text(r.aside() ? "You set this aside." : r.optional() ? "When you want." : "After the one before it.", x + 66, ty, Sheet.LABEL, Glass.a(s.label, 1F));
+            float bx = HERO_X1 - bw - 12, by = y + (h - Kit.BUTTON_H) / 2F;
+            Kit.button(s, "", label, bx, by, tracked ? Kit.Look.ON : Kit.Look.PLAIN, Sheet.in(mx, my, bx, by, bx + bw, by + Kit.BUTTON_H), true, 0F);
+            hot.add(bx, by, bx + bw, by + Kit.BUTTON_H, () -> track(r));
             if (r.aside()) {
-                float pw = Kit.buttonWidth(s, "", "Put back"), px = bx - pw - 10;
-                Kit.button(s, "", "Put back", px, y + 13, Kit.Look.PLAIN, Sheet.in(mx, my, px, y + 13, px + pw, y + 57), true, 0F);
-                hot.add(px, y + 13, px + pw, y + 57, () -> {
+                float px = bx - pw;
+                Kit.button(s, "", "Put back", px, by, Kit.Look.PLAIN, Sheet.in(mx, my, px, by, px + pw - 10, by + Kit.BUTTON_H), true, 0F);
+                hot.add(px, by, px + pw - 10, by + Kit.BUTTON_H, () -> {
                     TaskCache.act(TaskPayloads.PUT_BACK, r.key());
                     StatusSections.cue(StatusSections.Cue.UNDO);
                 });
             }
-            y += 78;
+            y += h + 8;
         }
+        return y;
     }
 
     // ---- keys --------------------------------------------------------------------------------------------------------
@@ -636,6 +691,14 @@ final class TasksPlace implements BandPlaces.Place {
         out.add(Kit.Hint.of(f.key().equals(TaskCache.view.pinned()) ? "Stop tracking" : "Track", "T"));
         out.add(Kit.Hint.of("Next step", "Tab"));
         if (!TaskCache.undoTitle().isEmpty()) out.add(Kit.Hint.of("Undo", "Z"));
+        if (heroTall > BandPlaces.Y1 - BandPlaces.Y0 - Kit.BUTTON_H - 12 || lanesTall > BandPlaces.Y1 - BandPlaces.Y0) out.add(Kit.Hint.of("More", "Scroll"));
+    }
+
+    @Override
+    public boolean scroll(float mx, float my, double amount) {
+        if (mx < HERO_X1 + 16) heroScroll -= (float) amount * 40;
+        else lanesScroll -= (float) amount * 40;
+        return true;
     }
 
     @Override
@@ -658,7 +721,7 @@ final class TasksPlace implements BandPlaces.Place {
         }
         boolean picking = became(f) == null && !f.choices().isEmpty();
         if (picking && (k == InputConstants.KEY_LEFT || k == InputConstants.KEY_RIGHT)) {
-            int n = Math.min(4, f.choices().size()), at = -1;
+            int n = f.choices().size(), at = -1;
             for (int i = 0; i < n; i++) if (f.choices().get(i).id().equals(choice.isEmpty() ? f.chosen() : choice)) at = i;
             at = Math.floorMod(at + (k == InputConstants.KEY_LEFT ? -1 : 1), n);
             choice = f.choices().get(at).id();

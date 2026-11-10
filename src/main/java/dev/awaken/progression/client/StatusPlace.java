@@ -78,14 +78,13 @@ public final class StatusPlace implements BandPlaces.Place {
         if (!p.awakened()) {
             figure(s, mc, mx, my);
             s.lit(name, MID, Y0 + 40, Sheet.TITLE, Glass.a(Glass.TITLE, 1F));
-            s.lines("You haven't awakened yet. Keep exploring: something out there is waiting for you to find it.", MID, Y0 + 84, 520, Sheet.BODY, 3,
-                    Glass.a(s.label, 1F));
+            s.lines("You haven't awakened yet. Keep exploring: something out there is waiting for you to find it.", MID, Y0 + 84, 520, Sheet.BODY, Glass.a(s.label, 1F));
             return;
         }
         figure(s, mc, mx, my);
         var title = p.title().map(Content.TITLES::get).orElse(null);
-        s.centre(name, X0 + 210, BandPlaces.Y1 - 46, Sheet.TITLE, Glass.a(Glass.TITLE, 1F));
-        if (title != null) s.centre("“" + title.name() + "”", X0 + 210, BandPlaces.Y1 - 16, Sheet.BODY, Glass.a(Glass.AMBER, 1F));
+        float ny = s.linesCentred(name, X0 + 210, BandPlaces.Y1 - 56, 420, Sheet.TITLE, Glass.a(Glass.TITLE, 1F));
+        if (title != null) s.linesCentred("“" + title.name() + "”", X0 + 210, ny, 420, Sheet.BODY, Glass.a(Glass.AMBER, 1F));
         sheet(s, hot, p, mx, my, dt);
         panel(s, hot, p, mx, my);
         if (tipTitle != null) Kit.tip(s, mx, my, tipTitle, tipMore.isEmpty() ? List.of() : List.of(tipMore));
@@ -113,9 +112,9 @@ public final class StatusPlace implements BandPlaces.Place {
         Rank next = rank.next();
         float tx = rx + 110;
         String when = p.reassessmentReady() ? "Your trial is ready" : next == null ? "The highest rank" : next.label + "-rank at level " + next.levelRequired;
-        s.text(when, tx, y + 26, Sheet.BODY, Glass.a(p.reassessmentReady() ? Glass.AMBER : s.label, 1F));
+        float wy = s.lines(when, tx, y + 26, PANEL - 16 - tx, Sheet.BODY, Glass.a(p.reassessmentReady() ? Glass.AMBER : s.label, 1F)) + 4;
         var path = p.path().map(Content.PATHS::get).orElse(null);
-        if (path != null) s.text("Path of the " + path.name(), tx, y + 52, Sheet.BODY, Glass.a(s.label, 1F));
+        if (path != null) s.lines("Path of the " + path.name(), tx, wy, PANEL - 16 - tx, Sheet.BODY, Glass.a(s.label, 1F));
         if (next != null && Sheet.in(mx, my, rx, y, rx + 96, y + 100)) {
             List<String> opens = WaitingSection.nextRankOpens(Minecraft.getInstance().player, next);
             tip(next.label + "-rank at level " + next.levelRequired, p.reassessmentReady() ? "Your trial is ready at your Spire."
@@ -136,46 +135,30 @@ public final class StatusPlace implements BandPlaces.Place {
         List<Defs.LevelRoadDef> stops = ahead(p.level());
         if (!stops.isEmpty()) {
             s.caps("What comes next", x, y, Glass.a(s.label, 1F));
-            float cx = x;
+            float cx = x, tall = 0;
+            for (Defs.LevelRoadDef d : stops) tall = Math.max(tall, 34 + s.tall(d.title(), 136, Sheet.LABEL) + 10);
             for (Defs.LevelRoadDef d : stops) {
-                boolean over = Sheet.in(mx, my, cx, y + 24, cx + 158, y + 96);
-                Kit.well(s, cx, y + 24, cx + 158, y + 96, Kit.Lit.KNOWN, over);
+                boolean over = Sheet.in(mx, my, cx, y + 24, cx + 158, y + 24 + tall);
+                Kit.well(s, cx, y + 24, cx + 158, y + 24 + tall, Kit.Lit.KNOWN, over);
                 s.text("Level " + d.level(), cx + 12, y + 34, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-                List<FormattedCharSequence> t = s.wrap(d.title(), 136, Sheet.LABEL);
-                for (int i = 0; i < Math.min(2, t.size()); i++) s.text(t.get(i), cx + 12, y + 58 + i * s.line(Sheet.LABEL), Sheet.LABEL, Glass.a(Glass.HORIZON, 1F));
+                s.lines(d.title(), cx + 12, y + 58, 136, Sheet.LABEL, Glass.a(Glass.HORIZON, 1F));
                 if (over) tip("Level " + d.level() + " · " + d.title(), d.text());
                 cx += 166;
             }
-            y += 116;
+            y += 24 + tall + 20;
         }
-        stats(s, hot, p, x, y, mx, my, dt);
-        truths(s, hot, p, x, y + 198, mx, my);
+        float under = stats(s, hot, p, x, y, mx, my, dt);
+        truths(s, hot, p, x, under + 14, mx, my);
     }
 
-    private void stats(Sheet s, Hot hot, Profile p, float x, float y, float mx, float my, float dt) {
+    /** The six stats and the line that says what the one in focus does. Returns the y under it all. */
+    private float stats(Sheet s, Hot hot, Profile p, float x, float y, float mx, float my, float dt) {
         List<Stat> placed = StatusSheet.PLACED;
         while (placed.size() > p.unspent()) placed.removeLast();
         int unspent = p.unspent(), left = unspent - placed.size();
         s.caps("Stats", x, y + 9, Glass.a(s.label, 1F));
         float cx = x + s.width("STATS", Sheet.LABEL) + 14;
-        if (unspent > 0) cx += Kit.chip(s, net.minecraft.world.item.ItemStack.EMPTY, left + " to place", cx, y, Glass.AMBER) + 12;
-        // a hold confirms: placed points can't be taken back once they're spent
-        if (!placed.isEmpty()) {
-            boolean overC = Sheet.in(mx, my, cx, y - 7, cx + Kit.buttonWidth(s, "Enter", "Hold to confirm"), y + 37);
-            if ((holdKey || holdMouse && overC) && held < 1F) held += dt / HOLD_SECONDS;
-            else if (!holdKey && !(holdMouse && overC)) held = 0F;
-            float w = Kit.button(s, "Enter", "Hold to confirm", cx, y - 7, Kit.Look.PRIMARY, overC, true, held);
-            hot.add(cx, y - 7, cx + w, y + 37, () -> holdMouse = true);
-            cx += w + 10;
-            float uw = Kit.buttonWidth(s, "Bksp", "Undo");
-            Kit.button(s, "Bksp", "Undo", cx, y - 7, Kit.Look.QUIET, Sheet.in(mx, my, cx, y - 7, cx + uw, y + 37), true, 0F);
-            hot.add(cx, y - 7, cx + uw, y + 37, StatusSheet.StatLine::undo);
-            if (held >= 1F) {
-                held = 0F;
-                holdKey = holdMouse = false;
-                StatusSheet.StatLine.confirm();
-            }
-        } else held = 0F;
+        if (unspent > 0) Kit.chip(s, net.minecraft.world.item.ItemStack.EMPTY, left + " to place", cx, y, Glass.AMBER);
         y += 44;
         long since = System.currentTimeMillis() - StatusSheet.confirmedAt;
         int over = -1;
@@ -202,11 +185,30 @@ public final class StatusPlace implements BandPlaces.Place {
             });
         }
         int shown = over >= 0 ? over : stat;
-        String line = shown >= 0 ? StatusSheet.SAYS[shown]
+        String line = shown >= 0 ? Stat.values()[shown].displayName + ". " + StatusSheet.SAYS[shown]
                 : !placed.isEmpty() ? placed.size() + " of " + unspent + " placed. Nothing is spent until you confirm."
                 : unspent > 0 ? "Click a stat to raise it, then confirm." : "";
-        if (shown >= 0) s.lines(Stat.values()[shown].displayName + ". " + line, x, y + 106, 492, Sheet.BODY, 2, Glass.a(Glass.TEXT, 1F));
-        else if (!line.isEmpty()) s.lines(line, x, y + 106, 492, Sheet.BODY, 2, Glass.a(placed.isEmpty() ? s.label : Glass.AMBER, 1F));
+        float ly = y + 106;
+        if (!line.isEmpty()) ly = s.lines(line, x, ly, 492, Sheet.BODY, Glass.a(shown >= 0 ? Glass.TEXT : placed.isEmpty() ? s.label : Glass.AMBER, 1F)) + 6;
+        // a hold confirms: placed points can't be taken back once they're spent
+        if (!placed.isEmpty()) {
+            float bw = Kit.buttonWidth(s, "Enter", "Hold to confirm");
+            boolean overC = Sheet.in(mx, my, x, ly, x + bw, ly + Kit.BUTTON_H);
+            if ((holdKey || holdMouse && overC) && held < 1F) held += dt / HOLD_SECONDS;
+            else if (!holdKey && !(holdMouse && overC)) held = 0F;
+            Kit.button(s, "Enter", "Hold to confirm", x, ly, Kit.Look.PRIMARY, overC, true, held);
+            hot.add(x, ly, x + bw, ly + Kit.BUTTON_H, () -> holdMouse = true);
+            float ux = x + bw + 10, uw = Kit.buttonWidth(s, "Bksp", "Undo");
+            Kit.button(s, "Bksp", "Undo", ux, ly, Kit.Look.QUIET, Sheet.in(mx, my, ux, ly, ux + uw, ly + Kit.BUTTON_H), true, 0F);
+            hot.add(ux, ly, ux + uw, ly + Kit.BUTTON_H, StatusSheet.StatLine::undo);
+            if (held >= 1F) {
+                held = 0F;
+                holdKey = holdMouse = false;
+                StatusSheet.StatLine.confirm();
+            }
+            ly += Kit.BUTTON_H + 8;
+        } else held = 0F;
+        return ly;
     }
 
     /** Focus moves to a stat: the narrator says what it is and does. */
@@ -264,9 +266,9 @@ public final class StatusPlace implements BandPlaces.Place {
                 String id = got ? mine.get(at) : close.get(at - mine.size());
                 var d = Content.TRUTHS.get(id);
                 s.caps(got ? "True" : "Closest to true", x, y, Glass.a(got ? Glass.GOOD : Glass.AMBER, 1F));
-                float ty = s.lines(d == null ? id : "“" + d.text() + "”", x, y + 28, 440, Sheet.TITLE, 3, Glass.a(Glass.TITLE, 1F)) + 10;
+                float ty = s.lines(d == null ? id : "“" + d.text() + "”", x, y + 28, 440, Sheet.TITLE, Glass.a(Glass.TITLE, 1F)) + 10;
                 if (d != null) {
-                    if (!got && d.hint().isPresent()) ty = s.lines(d.hint().get(), x, ty, 440, Sheet.BODY, 3, Glass.a(s.label, 1F)) + 10;
+                    if (!got && d.hint().isPresent()) ty = s.lines(d.hint().get(), x, ty, 440, Sheet.BODY, Glass.a(s.label, 1F)) + 10;
                     if (!got) {
                         float f = (float) Math.clamp(d.condition().progress(p, null), 0D, 1D);
                         s.fill(x, ty, x + 440, ty + 8, Sheet.argb(0x05080F, .6F));
@@ -274,11 +276,11 @@ public final class StatusPlace implements BandPlaces.Place {
                         ty += 24;
                     }
                     s.caps(got ? "It gave you" : "It gives", x, ty, Glass.a(s.label, 1F));
-                    s.lines(Rewards.describe(d.reward()), x, ty + 22, 440, Sheet.BODY, 3, Glass.a(got ? Glass.TEXT : Glass.AMBER, 1F));
+                    s.lines(Rewards.describe(d.reward()), x, ty + 22, 440, Sheet.BODY, Glass.a(got ? Glass.TEXT : Glass.AMBER, 1F));
                 }
             } else {
                 s.caps("Not yet", x, y, Glass.a(s.label, 1F));
-                s.lines("A Truth comes true by itself when you live it.", x, y + 28, 440, Sheet.BODY, 3, Glass.a(s.label, 1F));
+                s.lines("A Truth comes true by itself when you live it.", x, y + 28, 440, Sheet.BODY, Glass.a(s.label, 1F));
             }
             return;
         }
@@ -289,8 +291,10 @@ public final class StatusPlace implements BandPlaces.Place {
             y += 26;
             for (int i = 0; i < Math.min(3, entries.size()); i++) {
                 Journal.Entry e = entries.get(i);
-                y = s.lines(e.title(), x, y, 440, Sheet.BODY, 2, Glass.a(e.colour() & 0xFFFFFF, 1F)) + 2;
-                if (!e.line().isBlank()) y = s.lines(e.line(), x, y, 440, Sheet.LABEL, 2, Glass.a(s.label, 1F));
+                float h = s.tall(e.title(), 440, Sheet.BODY) + 2 + s.tall(e.line(), 440, Sheet.LABEL) + 10;
+                if (i > 0 && y + h > Y0 + 330) break; // an entry shows whole or waits in the Journal: never half of one
+                y = s.lines(e.title(), x, y, 440, Sheet.BODY, Glass.a(e.colour() & 0xFFFFFF, 1F)) + 2;
+                if (!e.line().isBlank()) y = s.lines(e.line(), x, y, 440, Sheet.LABEL, Glass.a(s.label, 1F));
                 y += 10;
             }
             y += 14;
@@ -319,6 +323,7 @@ public final class StatusPlace implements BandPlaces.Place {
             out.add(Kit.Hint.of("Undo", "Bksp"));
         }
         out.add(Kit.Hint.of("Next stat", "Tab"));
+        if (dev.awaken.progression.Progression.truthsOpen(p) && p.truthsTrue().size() + near.ids().size() > 0) out.add(Kit.Hint.of("Truths", "↑", "↓"));
     }
 
     @Override
@@ -339,6 +344,15 @@ public final class StatusPlace implements BandPlaces.Place {
             return true;
         }
         if (k == InputConstants.KEY_BACKSPACE && !StatusSheet.PLACED.isEmpty()) return StatusSheet.StatLine.undo();
+        if ((k == InputConstants.KEY_DOWN || k == InputConstants.KEY_UP) && dev.awaken.progression.Progression.truthsOpen(p)) {
+            // the Truths you can read (true, then closest to true), one at a time, without the pointer
+            int n = p.truthsTrue().size() + near.ids().size();
+            if (n > 0) {
+                mark = k == InputConstants.KEY_DOWN ? (mark + 1 >= n ? 0 : mark + 1) : mark <= 0 ? n - 1 : mark - 1;
+                StatusSections.cue(StatusSections.Cue.PAGE);
+                return true;
+            }
+        }
         return host.key(e, StatusSections.Tab.STATUS, sec -> !replaced(sec));
     }
 

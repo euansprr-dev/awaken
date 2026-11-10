@@ -162,7 +162,8 @@ public final class TaskBook {
                 keep.where().isPresent() ? keep.where() : other.where(), Math.min(keep.path(), other.path()), keep.optional() && other.optional(),
                 Math.max(keep.priority(), other.priority()), keep.choices(), List.copyOf(covers), theirs ? other.thread() : keep.thread(),
                 theirs ? other.order() : keep.order(), keep.voice() == Goals.Voice.PLAIN ? other.voice() : keep.voice(),
-                keep.opens().isEmpty() ? other.opens() : keep.opens(), List.copyOf(teaches), keep.icon().isEmpty() ? other.icon() : keep.icon());
+                keep.opens().isEmpty() ? other.opens() : keep.opens(), List.copyOf(teaches), keep.icon().isEmpty() ? other.icon() : keep.icon(),
+                keep.icon().isEmpty() ? other.makes() : keep.makes());
     }
 
     /**

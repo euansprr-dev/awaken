@@ -32,6 +32,31 @@ final class HoloTests {
     }
 
     static void register() {
+        // nothing on the band is ever cut off (SPEC §57.6; Euan, 10 Nov): a line that doesn't fit its slot is drawn a whole real
+        // pixel smaller at a time, then wrapped, and if it still doesn't fit it runs on rather than lose its end
+        AwakenTests.register("ui_text_never_cut", 20, h -> {
+            java.util.function.ToIntFunction<String> six = dev.awaken.signal.ui.SignalText::approxWidth;
+            String[] lines = {"rest heals here", "armour made here lasts longer", "More health, and you shrug off more harm.",
+                    "A Fitting Stand and a crafting table in one closed room. Your first armour is made there, before your first gate.", "Hall", ""};
+            for (String text : lines) for (int width : new int[]{24, 66, 110, 232}) for (int rows = 1; rows <= 3; rows++) for (int ppu = 1; ppu <= 8; ppu++) {
+                var fit = dev.awaken.signal.ui.SignalText.fitBox(text, width, rows, ppu, six);
+                String what = "'" + text + "' in " + width + " x " + rows + " at " + ppu + " px a unit";
+                // a word wider than its slot is broken across lines (nothing else can be done with it); no letter is ever lost
+                h.assertTrue(String.join("", fit.lines()).replace(" ", "").equals(text.replace(" ", "")), what + ": every letter is still there: " + fit.lines());
+                if (width >= 66) h.assertTrue(String.join(" ", fit.lines()).equals(text), what + ": and no word is broken where a word fits: " + fit.lines());
+                float px = fit.scale() * ppu;
+                h.assertTrue(fit.scale() <= 1f && Math.abs(px - Math.round(px)) < 1e-4f && (ppu < 2 || px >= Math.min(ppu, 2) - 1e-4f) && fit.scale() >= .5f - 1e-4f,
+                        what + ": on whole real pixels, never under half size: " + fit.scale());
+                for (String l : fit.lines()) h.assertTrue(l.indexOf(' ') < 0 || six.applyAsInt(l) * fit.scale() <= width + 1e-3f, what + ": each line inside the slot: " + l);
+            }
+            var plain = dev.awaken.signal.ui.SignalText.fitBox("Bedroom", 66, 1, 4, six);
+            h.assertTrue(plain.scale() == 1f && plain.lines().size() == 1, "what fits is drawn as written");
+            var smaller = dev.awaken.signal.ui.SignalText.fitBox("armour made here", 80, 1, 4, six); // 96 wide as written, 72 at three quarters
+            h.assertTrue(smaller.scale() == .75f && smaller.lines().size() == 1, "a little too long: one step smaller, still one line: " + smaller);
+            var wrapped = dev.awaken.signal.ui.SignalText.fitBox("armour made here lasts longer", 66, 1, 4, six); // 174 wide as written
+            h.assertTrue(wrapped.scale() == .5f && wrapped.lines().size() == 2, "far too long: half size on two lines in the same slot: " + wrapped);
+            h.succeed();
+        });
         // the band's stage (SPEC §57.2): everything inside the sheet, nothing on top of anything else, at every window
         AwakenTests.register("band_stage_layout", 20, h -> {
             float px0 = dev.awaken.holo.ui.StageLayout.PLATE_X0, py0 = dev.awaken.holo.ui.StageLayout.PLATE_Y0, px1 = dev.awaken.holo.ui.StageLayout.PLATE_X1,

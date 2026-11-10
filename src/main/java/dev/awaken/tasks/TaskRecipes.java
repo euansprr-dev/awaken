@@ -35,13 +35,23 @@ public final class TaskRecipes {
 
     private static final int MOST = 32;
 
-    /** The recipes for the unmet needs of the rows on the page (not the ones waiting in Later). */
-    static List<TaskPayloads.RecipeRow> of(ServerPlayer p, List<TaskPayloads.StepRow> rows) {
+    /**
+     * The recipes for the unmet needs of the rows on the page (not the ones waiting in Later), and for what a shown step
+     * is itself the making of ({@code made}, item ids) while you don't carry one.
+     */
+    static List<TaskPayloads.RecipeRow> of(ServerPlayer p, List<TaskPayloads.StepRow> rows, List<String> made) {
         Map<String, TaskPayloads.RecipeRow> out = new LinkedHashMap<>();
         for (TaskPayloads.StepRow row : rows) {
             if (!row.shown()) continue;
             add(p, out, row.needs());
             for (TaskPayloads.ChoiceRow c : row.choices()) add(p, out, c.needs());
+        }
+        for (String item : made) {
+            if (out.containsKey(item) || out.size() >= MOST) continue;
+            Item it = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(item)).orElse(null);
+            if (it == null || dev.awaken.core.api.Goals.count(p.getInventory(), it) > 0) continue;
+            TaskPayloads.RecipeRow r = recipe(p, item);
+            if (r != null) out.put(item, r);
         }
         return List.copyOf(out.values());
     }

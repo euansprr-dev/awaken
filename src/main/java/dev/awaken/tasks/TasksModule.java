@@ -101,10 +101,14 @@ public final class TasksModule {
         TaskState st = TaskState.of(p);
         Set<String> aside = TaskBook.aside(book.steps(), st, book.pinned());
         List<TaskPayloads.StepRow> rows = new ArrayList<>();
+        List<String> made = new ArrayList<>(); // what a shown step is the making of: its recipe goes with the page
         // each tab's rows in their places, then what waits behind them
         for (Goals.Goal g : Goals.Goal.values()) {
             List<Goals.Step> shown = book.shelf(g).rows();
-            for (int i = 0; i < shown.size(); i++) rows.add(row(st, book, aside, shown.get(i), i));
+            for (int i = 0; i < shown.size(); i++) {
+                rows.add(row(st, book, aside, shown.get(i), i));
+                if (shown.get(i).makes()) made.add(shown.get(i).icon());
+            }
         }
         for (Goals.Goal g : Goals.Goal.values()) {
             for (Goals.Step s : book.shelf(g).later()) rows.add(row(st, book, aside, s, aside.contains(s.key()) ? TaskPayloads.SET_ASIDE : TaskPayloads.LATER));
@@ -113,7 +117,7 @@ public final class TasksModule {
         for (Goals.Goal g : Goals.Goal.values()) footers.add(book.footers().getOrDefault(g, ""));
         int tabs = 0;
         for (Goals.Goal g : Goals.Goal.values()) if (st.tabsSeen.contains(g.name())) tabs |= 1 << g.ordinal();
-        return new TaskPayloads.View(rows, book.top(), book.pinned(), footers, tabs, book.capped(), TaskRecipes.of(p, rows));
+        return new TaskPayloads.View(rows, book.top(), book.pinned(), footers, tabs, book.capped(), TaskRecipes.of(p, rows, made));
     }
 
     private static TaskPayloads.StepRow row(TaskState st, TaskBook.Book book, Set<String> aside, Goals.Step s, int place) {

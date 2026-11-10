@@ -106,9 +106,11 @@ screenkey space
 screenkey space
 wait 10
 shot b20b_status_placed
-band click 659 638
+screenkey down
 wait 10
 shot b20c_status_truth
+screenkey esc
+wait 5
 screen band hearth
 wait 40
 shot b21_hearth
@@ -164,9 +166,33 @@ shot b31_weapons_step
 tasks focus hearth/add
 wait 20
 shot b32_add_to_home
-band click 1609 200
+tasks later
 wait 20
 shot b33_later_list
+screen close
+wait 10
+# ---- every power owned: the grid, a power walked to and picked ----
+cmd awaken admin power all
+wait 60
+key dismiss
+wait 10
+screen close
+screen band powers
+wait 60
+shot b34_powers_all
+screenkey tab
+screenkey tab
+screenkey tab
+wait 10
+shot b35_power_walked
+screenkey enter
+wait 10
+shot b36_power_picked
+screenkey esc
+wait 5
+screen band status
+wait 40
+shot b37_status_all_powers
 screen close
 wait 10
 # ---- the old band, one setting away ----

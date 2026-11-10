@@ -47,6 +47,7 @@ public final class TasksClient {
         }
         if (a.equals("later")) { // tours: open this tab's Later fold
             TaskCache.laterOpen = true;
+            PLACE.debugLater();
             return;
         }
         if (a.startsWith("pick ")) { // tours: tasks pick <step key> <choice id>

@@ -54,6 +54,15 @@ public final class GuiCanvas implements UiCanvas {
     }
 
     @Override
+    public void textScaled(Font font, String s, float x, float y, float scale, int argb, boolean shadow) {
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
+        g.pose().scale(scale, scale);
+        g.text(font, s, 0, 0, argb, shadow);
+        g.pose().popMatrix();
+    }
+
+    @Override
     public void item(ItemStack stack, int x, int y) {
         g.item(stack, x, y);
     }

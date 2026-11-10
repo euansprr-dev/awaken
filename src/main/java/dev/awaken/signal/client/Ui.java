@@ -98,17 +98,44 @@ public final class Ui {
         }
     }
 
-    /** Wrapped text, at most {@code max} lines (the last ends in "…"). */
+    /**
+     * Wrapped text. It once stopped at {@code max} lines and ended in "…"; nothing on the band is cut any more (SPEC §57.6),
+     * so every line shows and the section is as tall as its words.
+     */
     public void textAtMost(String s, int colour, int max) {
-        for (String line : SignalText.wrapAtMost(s, width, max, font::width)) {
-            if (drawing()) line(line, x, y, colour, false);
-            y += LINE;
-        }
+        text(s, colour, 0, false);
     }
 
-    /** One line at an absolute position, shortened to {@code maxW}. Draw pass only; doesn't move the cursor. */
+    /** Real pixels to one unit where sections are drawing now (a host sets it; 0: the window's GUI scale). */
+    public static int unitPixels;
+
+    public static int unitPixelsNow() {
+        return unitPixels > 0 ? unitPixels : Math.max(1, (int) net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale());
+    }
+
+    /**
+     * One line at an absolute position, in a slot {@code maxW} wide. Never cut (SPEC §57.6): a line that doesn't fit is drawn
+     * a step smaller, and one that still doesn't is wrapped at the smallest size. Draw pass only; doesn't move the cursor.
+     */
     public void textAt(String s, int tx, int ty, int maxW, int colour, boolean shadow) {
-        if (drawing()) line(SignalText.ellipsize(s, maxW, font::width), tx, ty, colour, shadow);
+        boxAt(s, tx, ty, maxW, 1, colour, shadow);
+    }
+
+    /** Text in a box {@code w} wide and {@code lines} lines tall, at an absolute position: fitted, never cut. Draw pass only. */
+    public void boxAt(String s, int tx, int ty, int w, int lines, int colour, boolean shadow) {
+        if (!drawing() || s == null || s.isEmpty()) return;
+        if (lines == 1 && font.width(s) <= w) {
+            line(s, tx, ty, colour, shadow);
+            return;
+        }
+        SignalText.Fitted f = SignalText.fitBox(s, w, lines, unitPixelsNow(), font::width);
+        if ((colour >>> 24) == 0) colour |= 0xFF000000;
+        float k = f.scale(), step = k >= 1f ? LINE : 9f * k + 1f, fy = ty + (f.lines().size() == 1 ? (9f - 9f * k) / 2f : 0f);
+        for (String l : f.lines()) {
+            if (k >= 1f) line(l, tx, Math.round(fy), colour, shadow);
+            else c.textScaled(font, l, tx, fy, k, colour, shadow);
+            fy += step;
+        }
     }
 
     /** A label on the left and a value on the right; when both don't fit, the value goes under, indented. */

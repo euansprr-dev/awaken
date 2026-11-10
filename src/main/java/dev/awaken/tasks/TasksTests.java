@@ -68,6 +68,15 @@ final class TasksTests {
             mine.set(0, armoury.get());
             view = TasksModule.view(sp, TaskBook.fresh(sp));
             h.assertTrue(view.recipe("minecraft:crafting_table") == null && view.recipe("awaken:fitting_stand") != null, "once you have one, its recipe is no longer sent");
+            // a step that is the making of one thing sends that thing's recipe; a step that only wears its picture doesn't
+            h.assertTrue(view.recipe("minecraft:campfire") == null, "a picture alone is not a recipe");
+            mine.add(Step.of("t/anvil", Goal.WEAPONS, "Set up a War Anvil").thread("c", 10)
+                    .makes(BuiltInRegistries.ITEM.getValue(Identifier.parse("awaken:war_anvil"))).build());
+            view = TasksModule.view(sp, TaskBook.fresh(sp));
+            h.assertTrue(rowOf(view, "t/anvil").extra().icon().equals("awaken:war_anvil") && view.recipe("awaken:war_anvil") != null,
+                    "a step that is the making of a War Anvil shows the anvil's recipe");
+            sp.getInventory().add(new net.minecraft.world.item.ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("awaken:war_anvil"))));
+            h.assertTrue(TasksModule.view(sp, TaskBook.fresh(sp)).recipe("awaken:war_anvil") == null, "and stops once you carry one");
             var buf = io.netty.buffer.Unpooled.buffer();
             TaskPayloads.View.STREAM_CODEC.encode(buf, view);
             h.assertTrue(TaskPayloads.View.STREAM_CODEC.decode(buf).equals(view), "the page survives the wire, recipes and pictures and all");

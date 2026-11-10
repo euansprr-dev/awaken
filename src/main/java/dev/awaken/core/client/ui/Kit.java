@@ -99,56 +99,53 @@ public final class Kit {
 
     // ---- what it takes ----------------------------------------------------------------------------------------------
 
-    public static final float NEED_W = 112F, NEED_H = 118F;
+    public static final float NEED_W = 112F;
+
+    /** How tall {@link #need} draws: the item, the count if it has one, and every line of its name. */
+    public static float needHeight(Sheet s, String name, int need) {
+        return 62 + (need > 0 ? 28 : 0) + s.tall(name, NEED_W, Sheet.LABEL) + 4;
+    }
 
     /**
-     * One need: the real item, how many you have of how many it takes, and its name under that. A condition (no item) is
-     * a tick or a dot with its words. Returns whether the pointer is on it (its tip is the caller's to draw, last).
+     * One need: the real item, how many you have of how many it takes, and its name under that, every line of it. Returns
+     * whether the pointer is on it (its tip is the caller's to draw, last).
      */
     public static boolean need(Sheet s, ItemStack icon, String name, int have, int need, float x, float y, float mx, float my) {
-        boolean met = have >= need, over = Sheet.in(mx, my, x, y, x + NEED_W, y + NEED_H);
+        boolean met = have >= need, over = Sheet.in(mx, my, x, y, x + NEED_W, y + needHeight(s, name, need));
         float cx = x + NEED_W / 2F;
-        if (icon.isEmpty()) {
-            s.centre(met ? "✓" : "·", cx, y + 12, Sheet.TITLE + 1, Glass.a(met ? Glass.GOOD : s.label, 1F));
-        } else {
-            if (over) s.glow(cx - 30, y, cx + 30, y + 60, Glass.EDGE, .3F);
-            s.item(icon, cx - 28, y + 2, 56);
-        }
-        String count = icon.isEmpty() && need <= 1 ? "" : Math.min(have, need) + "/" + need;
-        if (!count.isEmpty()) s.centre(count, cx, y + 62, Sheet.TITLE, Glass.a(met ? Glass.GOOD : Glass.WARN, 1F));
-        List<FormattedCharSequence> lines = s.wrap(name, NEED_W, Sheet.LABEL);
-        float ty = y + (count.isEmpty() ? 62 : 90);
-        for (int i = 0; i < Math.min(2, lines.size()); i++) {
-            float w = s.font.width(lines.get(i)) * s.snap(Sheet.LABEL);
-            s.text(lines.get(i), cx - w / 2F, ty, Sheet.LABEL, Glass.a(s.label, 1F));
-            ty += s.line(Sheet.LABEL);
-        }
+        if (over) s.glow(cx - 30, y, cx + 30, y + 60, Glass.EDGE, .3F);
+        s.item(icon, cx - 28, y + 2, 56);
+        if (need > 0) s.centre(Math.min(have, need) + "/" + need, cx, y + 62, Sheet.TITLE, Glass.a(met ? Glass.GOOD : Glass.WARN, 1F));
+        s.linesCentred(name, cx, y + (need > 0 ? 90 : 62), NEED_W, Sheet.LABEL, Glass.a(s.label, 1F));
         return over;
     }
 
-    public static final float CELL = 44F;
-
     /** How wide {@link #recipe} draws: the grid, the arrow and what it makes. */
-    public static float recipeWidth(int w, float result) {
-        return w * (CELL + 2) + 44 + result;
+    public static float recipeWidth(int w, float cell, float result) {
+        return w * (cell + 2) + 44 + result;
+    }
+
+    /** How tall: the grid or what it makes, whichever is taller. */
+    public static float recipeHeight(int h, float cell, float result) {
+        return Math.max(h * (cell + 2) - 2, result);
     }
 
     /**
-     * A recipe as Minecraft draws one: the grid ({@code w} across, rows down; an empty stack is an empty square), an arrow,
-     * and what it makes, {@code result} sheet pixels across. Centred on y0..y0 + 3 cells.
+     * A recipe as Minecraft draws one: the grid ({@code w} across, {@code h} down, {@code cell} sheet pixels a square; an
+     * empty stack is an empty square), an arrow, and what it makes, {@code result} sheet pixels across.
      */
-    public static void recipe(Sheet s, int w, int h, List<ItemStack> cells, ItemStack made, float x, float y, float result) {
-        float gh = h * (CELL + 2) - 2, tall = Math.max(gh, result), gy = y + (tall - gh) / 2F;
+    public static void recipe(Sheet s, int w, int h, List<ItemStack> cells, ItemStack made, float x, float y, float cell, float result) {
+        float gh = h * (cell + 2) - 2, tall = Math.max(gh, result), gy = y + (tall - gh) / 2F, in = Math.round(cell * .11F);
         for (int row = 0; row < h; row++) {
             for (int col = 0; col < w; col++) {
                 int i = row * w + col;
-                float cx = x + col * (CELL + 2), cy = gy + row * (CELL + 2);
-                s.fill(cx, cy, cx + CELL, cy + CELL, Sheet.argb(WELL, .6F));
-                s.outline(cx, cy, cx + CELL, cy + CELL, 1, Glass.a(Glass.EDGE, .22F));
-                if (i < cells.size()) s.item(cells.get(i), cx + 5, cy + 5, CELL - 10);
+                float cx = x + col * (cell + 2), cy = gy + row * (cell + 2);
+                s.fill(cx, cy, cx + cell, cy + cell, Sheet.argb(WELL, .6F));
+                s.outline(cx, cy, cx + cell, cy + cell, 1, Glass.a(Glass.EDGE, .22F));
+                if (i < cells.size()) s.item(cells.get(i), cx + in, cy + in, cell - 2 * in);
             }
         }
-        float ax = x + w * (CELL + 2) + 8, ay = y + tall / 2F;
+        float ax = x + w * (cell + 2) + 8, ay = y + tall / 2F;
         s.fill(ax, ay - 2, ax + 20, ay + 2, Glass.a(Glass.EDGE, .8F));
         for (int i = 0; i < 8; i++) s.fill(ax + 20 + i, ay - 8 + i, ax + 21 + i, ay + 8 - i, Glass.a(Glass.EDGE, .8F));
         s.item(made, ax + 36, y + (tall - result) / 2F, result);
@@ -289,21 +286,33 @@ public final class Kit {
 
     /** The name under the pointer, in the band's glass: a white line, then quieter ones. Drawn last, on a stratum of its own. */
     public static void tip(Sheet s, float mx, float my, String title, List<String> more) {
-        float w = s.width(title, Sheet.BODY);
-        java.util.ArrayList<FormattedCharSequence> lines = new java.util.ArrayList<>();
-        for (String m : more) lines.addAll(s.wrap(m, 420F, Sheet.LABEL));
+        java.util.ArrayList<FormattedCharSequence> head = new java.util.ArrayList<>(s.wrap(title, 480F, Sheet.BODY)), lines = new java.util.ArrayList<>();
+        for (String m : more) lines.addAll(s.wrap(m, 480F, Sheet.LABEL));
+        float w = 0;
+        for (FormattedCharSequence l : head) w = Math.max(w, s.font.width(l) * s.snap(Sheet.BODY));
         for (FormattedCharSequence l : lines) w = Math.max(w, s.font.width(l) * s.snap(Sheet.LABEL));
-        float h = 20 + s.line(Sheet.BODY) + lines.size() * s.line(Sheet.LABEL) - 4;
-        float x = Math.min(mx + 18, Sheet.W - w - 34), y = Math.max(8, Math.min(my + 18, Sheet.H - h - 8));
+        float h = 20 + head.size() * s.line(Sheet.BODY) + lines.size() * s.line(Sheet.LABEL) - 4;
+        float x = Math.max(8, Math.min(mx + 18, Sheet.W - w - 34)), y = Math.max(8, Math.min(my + 18, Sheet.H - h - 8));
         s.g.nextStratum();
         s.fill(x, y, x + w + 24, y + h, Sheet.argb(0x0F1724, .96F));
         s.outline(x, y, x + w + 24, y + h, 1, Glass.a(Glass.EDGE, .6F));
-        s.text(title, x + 12, y + 10, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-        float ty = y + 10 + s.line(Sheet.BODY);
+        float ty = y + 10;
+        for (FormattedCharSequence l : head) {
+            s.text(l, x + 12, ty, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
+            ty += s.line(Sheet.BODY);
+        }
         for (FormattedCharSequence l : lines) {
             s.text(l, x + 12, ty, Sheet.LABEL, Glass.a(s.label, 1F));
             ty += s.line(Sheet.LABEL);
         }
+    }
+
+    /** A thin bar at the right of something that scrolls: how far down {@code scroll} is of {@code tall}, seen through {@code view}. */
+    public static void scrollbar(Sheet s, float x, float y0, float y1, float scroll, float tall) {
+        float view = y1 - y0;
+        if (tall <= view) return;
+        float bar = Math.max(40F, view * view / tall), by = y0 + (view - bar) * scroll / (tall - view);
+        s.fill(x, by, x + 4, by + bar, Glass.a(Glass.EDGE, .5F));
     }
 
     /** A hairline that fades to the right: under a heading, between groups. */

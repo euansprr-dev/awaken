@@ -451,6 +451,8 @@ public final class Autopilot {
                     case "enter" -> com.mojang.blaze3d.platform.InputConstants.KEY_RETURN;
                     case "left" -> com.mojang.blaze3d.platform.InputConstants.KEY_LEFT;
                     case "right" -> com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT;
+                    case "up" -> com.mojang.blaze3d.platform.InputConstants.KEY_UP;
+                    case "down" -> com.mojang.blaze3d.platform.InputConstants.KEY_DOWN;
                     case "back" -> com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE;
                     case "1", "2", "3", "4", "5", "6" -> com.mojang.blaze3d.platform.InputConstants.KEY_1 + (k.charAt(k.length() - 1) - '1');
                     default -> -1;
