@@ -48,3 +48,36 @@ Not done / not sure: <plainly>
 Choices I made: <short list>
 Needs changing outside my files: <or "nothing">
 ```
+
+## The kit, for gate builders (all merged on the gates branch, 10 Nov)
+
+**The bench is your check.** `tools/bench/bench.sh check tools/autopilot/realm-<gate>.txt` draws the gate, looks for anything
+floating, walks from the Mouth to every site and writes the picture sheet, in 3 to 5 seconds once it is up (the first call starts
+it: one Gradle build, about a minute). It exits 0 only when floats are 0 and every site is reached. The report is
+`run-bench/out/<name>/bench.txt`, beside `sheet.png`. `tools/bench/bench.sh shot <blueprint id> <x> <y> <z> <yaw> <pitch> [name]` is
+one picture from one eye in half a second.
+- Seen without a restart: anything under `realms/land/` (a new class there too), the tour file, the blueprint and biome JSON, textures.
+- Needs `tools/bench/bench.sh restart`: a new block, the kit, anything outside `realms/land/`, and a blockout's JSON.
+- One checker per worktree, about 2 GB each on a 16 GB Mac three builders share. Run `tools/bench/bench.sh down` before you hand back.
+- Run it after every pass of your sheet, not once at the end. A round is a `check` that failed and made you change code. Count them.
+
+**The report's light numbers are the game's own light.** Per shot: `lum` (middle brightness, 0 to 255), `dark` (percent under 20),
+`bright` (percent over 200), and a `BLACK` flag. Indoors aim for `lum` 40 to 90 with `bright` at least 1. `tools/art/tone_check.py
+<prefix>` must pass for any texture family you add or change: family middle 95 to 150, nothing structural under 60. Darkness comes
+from light, never from a dark texture.
+
+**A new gate is a `SheetLand` on a blockout.** Read `realms/kit/SheetLand.java`, `realms/blockout/Blockout.java` (`mass(name)`, and a
+mass's `contains`, `top`, `edge`) and `realms/blockout/BlockoutLand.java` before you start. `SheetLand.paint` runs your `draw` and then
+`Settle`, which removes small strays and counts them: the bench prints `settled: ...`. Treat every line of that as something to fix
+at its cause, and say what was left in your hand-back. Ground marked `rough` moves from seed to seed: foot everything that stands
+on it with `V.foot`, or take its height from `ground(x, z)`.
+
+**Tours go straight in.** `cmd awaken gate realm_enter E awaken:<id>`, then `need realm`, then `hud off`, your shots, and `quit` last
+(copy `tools/autopilot/realm-hour.txt`). You never run a tour; the orchestrator does, on GitHub.
+
+**Shared one-liners** (`LandPrograms`, `RealmLive`, `RealmState`, `ThemeBlocks`, `data/awaken/dimension/realms.json`,
+`looks_gates.json`) are allowed where your sheet says so. Keep each to the fewest lines; three builders touch the same files and the
+orchestrator merges them. Lang and tags go in your own folder under `src/main/merge/`.
+
+**Extra lines for a gate's hand-back:** rounds on the bench; minutes; what `settled:` still lists; the `lum`, `dark` and `bright` of
+your painting shot; every place you departed from the sheet and why.
