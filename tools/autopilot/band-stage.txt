@@ -84,12 +84,22 @@ shot b09_set_aside
 screenkey z
 wait 30
 shot b10_undone
+tasks focus hale
+wait 10
+shot b11_go_step
 screenkey esc
 wait 10
-shot b11_back_to_top
-# ---- the places that haven't moved yet, in the same shell ----
-screenkey 1
-wait 30
+shot b12_back_to_top
+# ---- Status: you under your armour; then the places that haven't moved yet, in the same shell ----
+screen close
+wait 10
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+wait 10
+screen band status
+wait 60
 shot b20_status
 screenkey right
 screenkey space
@@ -99,16 +109,14 @@ shot b20b_status_placed
 band click 659 638
 wait 10
 shot b20c_status_truth
-screenkey esc
-wait 5
-screenkey 3
-wait 30
+screen band hearth
+wait 40
 shot b21_hearth
-screenkey 4
-wait 30
+screen band powers
+wait 40
 shot b22_powers
-screenkey 5
-wait 30
+screen band journal
+wait 40
 shot b23_journal
 screen close
 wait 20
@@ -150,13 +158,13 @@ shot b29_status_c_rank
 screenkey 2
 wait 40
 shot b30_tasks_c_rank
-tasks focus weapons/
+tasks focus war anvil
 wait 20
 shot b31_weapons_step
 tasks focus hearth/add
 wait 20
 shot b32_add_to_home
-band click 1500 200
+band click 1609 200
 wait 20
 shot b33_later_list
 screen close

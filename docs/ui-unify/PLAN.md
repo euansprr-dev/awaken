@@ -6,7 +6,19 @@ he wants it at the AAA level in how you interact with it, how good the holograph
 amount of actual things to interact with, and pictures". "I really hate walls of text." The tab menu and every holo thing are in
 scope, "so that we've really unified the entire interaction system".
 
-This is the design phase only. **No game code or data has changed.** The branch holds this plan, two tour scripts, an isolated
+**Approved by Euan on 10 Nov 2026: "This plan is great. You can go ahead with the whole recommendations and everything."** All seven
+decisions taken as recommended. Two things he asked for with it:
+- On Status the armour stood empty in the mock-up. The real player model stands under the armour, as in the bag, and looks at the
+  pointer the way vanilla's inventory figure does.
+- The Fitting Stand's icon in the mock-up was vanilla's armour stand. Every icon and every name must be the real item's own. (Its
+  name, Fitting Stand, was right.) In the build every icon is the registered item drawn by the game and a plain item's name is the
+  item's own; `tasks_stage_pictures` checks it.
+
+**What is built** (SPEC §57, on this branch; unplayed): Stage 0 (the sheet, the kit, the stage shell, Tasks, `classicBand`) and, from
+Stage 1, Status. Still to build: Powers, Hearth and its second door, the Journal wall, the bag's tip, the Tab glance, the cards, the
+workshops, the clean-up; and the tests `ui_word_budget` and `ui_keys_one_meaning`.
+
+What follows is the plan as approved. When it was written, no game code or data had changed. The branch holds this plan, two tour scripts, an isolated
 prototype (`docs/ui-unify/proto/`) and rendered frames (`docs/ui-unify/shots/`). The approval page is `docs/ui-unify/page.html`, published (private) at
 https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; its answers land in the page's `answers` collection.
 It follows `.claude/UI-EXCELLENCE.md` and returns the plan in that order.

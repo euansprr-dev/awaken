@@ -41,7 +41,7 @@ import java.util.List;
 final class TasksPlace implements BandPlaces.Place {
     private static final String ADD = "hearth/add";
     private static final float HERO_X1 = BandPlaces.X0 + 756F, LANES_X0 = BandPlaces.X1 - 676F;
-    private static final float LANE_H = 114F, TILE_W = 158F, TILE_H = 98F;
+    private static final float LANE_H = 118F, TILE_W = 158F, TILE_H = 106F;
     private static final String[][] EMBLEM = dev.awaken.tasks.TaskPictures.EMBLEM;
 
     /** The step in focus ("" for the one on top), the pick looked at on it, and the lane whose Later list is open (-1). */
@@ -225,8 +225,8 @@ final class TasksPlace implements BandPlaces.Place {
         List<NeedRow> needs = new ArrayList<>(pick != null ? pick.needs() : f.needs());
         float bottom = BandPlaces.Y1 - 56;
         if (pick == null && !f.choices().isEmpty()) {
-            needs = picks(s, hot, f, x, y, mx, my);
-            y += 300;
+            needs = picks(s, hot, f, x, y, bottom - y - Kit.NEED_H - 10, mx, my);
+            y += picksH;
         } else {
             List<NeedRow> made = new ArrayList<>();
             for (NeedRow n : needs) if (!n.met() && TaskCache.view.recipe(n.item()) != null && made.size() < 2) made.add(n);
@@ -242,22 +242,26 @@ final class TasksPlace implements BandPlaces.Place {
                 y += h + 10;
             }
         }
-        // what it takes, as the real items
-        if (!needs.isEmpty()) {
-            float nx = x;
-            int shown = 0;
-            for (NeedRow n : needs) {
-                if (shown++ >= 6) break;
-                ItemStack icon = n.item().isEmpty() ? ItemStack.EMPTY : WhereFrom.icon(n.item());
-                String name1 = needName(n);
-                if (Kit.need(s, icon, name1, n.have(), n.need(), nx, y, mx, my) && !n.item().isEmpty()) {
-                    String where = n.met() ? "" : WhereFrom.line(n.item());
-                    tip(name1, where.isEmpty() ? (n.met() ? "You have it." : "") : where);
-                }
-                nx += Kit.NEED_W + 12;
+        // what it takes: the real items in a row, then anything that isn't a thing as a line
+        float nx = x;
+        int shown = 0;
+        for (NeedRow n : needs) {
+            if (n.item().isEmpty() || shown >= 6) continue;
+            shown++;
+            String name1 = needName(n);
+            if (Kit.need(s, WhereFrom.icon(n.item()), name1, n.have(), n.need(), nx, y, mx, my)) {
+                String where = n.met() ? "You have it." : WhereFrom.line(n.item());
+                tip(name1, where);
             }
-            y += Kit.NEED_H + 8;
+            nx += Kit.NEED_W + 12;
         }
+        if (shown > 0) y += Kit.NEED_H + 8;
+        for (NeedRow n : needs) {
+            if (!n.item().isEmpty() || y + 22 > bottom) continue;
+            Kit.condition(s, n.need() > 1 ? n.label() + "  " + Math.min(n.have(), n.need()) + "/" + n.need() : n.label(), n.met(), x, y);
+            y += 28;
+        }
+        if (!needs.isEmpty()) y += 6;
         // where, and what comes after
         BlockPos at = f.where().orElse(null);
         if (at != null && (pick != null || !f.choices().isEmpty() || !needs.isEmpty() || y < bottom - 40)) {
@@ -282,7 +286,7 @@ final class TasksPlace implements BandPlaces.Place {
     /** The thing itself, large, on the band's lit floor. */
     private static void thing(Sheet s, ItemStack stack, float cx, float y, float h) {
         float size = Math.min(176, h - 36);
-        s.glow(cx - 220, y + h - 22, cx + 220, y + h - 8, Glass.EDGE, .35F);
+        Kit.floor(s, cx, y + h - 18, 240);
         s.item(stack, cx - size / 2F, y + (h - 30 - size) / 2F, size);
     }
 
@@ -317,7 +321,7 @@ final class TasksPlace implements BandPlaces.Place {
         BlockPos at = f.where().orElseThrow();
         float[] w = bearing(at);
         float r = Math.min(96, (h - 30) / 2F), cy = y + (h - 30) / 2F, cx = x + 150;
-        s.glow(x + 60, y + h - 22, HERO_X1 - 60, y + h - 8, Glass.EDGE, .35F);
+        Kit.floor(s, (x + HERO_X1) / 2F, y + h - 18, 320);
         Kit.needle(s, cx, cy, r, w[1]);
         boolean near = w[0] < 16;
         Kit.number(s, near ? "Here" : blocks(w[0]), near ? "close by" : "blocks " + compass(at), cx + r + 56, cy - 34, near ? 5F : 9F, Glass.TITLE);
@@ -348,34 +352,48 @@ final class TasksPlace implements BandPlaces.Place {
         }
     }
 
+    /** How tall the picks drew this frame. */
+    private float picksH;
+
     /** The picks side by side: armour as figures wearing it, anything else as the things themselves. Returns the looked-at pick's needs. */
-    private List<NeedRow> picks(Sheet s, Hot hot, StepRow f, float x, float y, float mx, float my) {
+    private List<NeedRow> picks(Sheet s, Hot hot, StepRow f, float x, float y, float room, float mx, float my) {
         List<ChoiceRow> cs = f.choices();
         int n = Math.min(4, cs.size());
-        String looked = !choice.isEmpty() && cs.stream().anyMatch(c -> c.id().equals(choice)) ? choice : f.chosen();
+        // the one you're looking at: the one you clicked, else the one you chose, else the only one there is
+        String looked = !choice.isEmpty() && cs.stream().anyMatch(c -> c.id().equals(choice)) ? choice : !f.chosen().isEmpty() ? f.chosen() : n == 1 ? cs.get(0).id() : "";
         boolean worn = figures(f);
-        float w = Math.min(190, (HERO_X1 - x) / n), x0 = x + ((HERO_X1 - x) - w * n) / 2F;
-        s.glow(x0 + 10, y + 232, x0 + w * n - 10, y + 246, Glass.EDGE, .3F);
+        float ph = Math.max(220, Math.min(worn ? 392 : 292, room)), tall = ph - 92;
+        picksH = ph;
+        float w = Math.min(252, (HERO_X1 - x) / n), x0 = x + ((HERO_X1 - x) - w * n) / 2F;
+        Kit.floor(s, x0 + w * n / 2F, y + tall - 6, Math.min(360, w * n / 2F + 20));
         List<NeedRow> needs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             ChoiceRow c = cs.get(i);
             float cx = x0 + i * w;
-            boolean on = c.id().equals(looked), mine = c.id().equals(f.chosen()), over = Sheet.in(mx, my, cx, y, cx + w, y + 294);
-            if (over || on) s.fill(cx + 6, y, cx + w - 6, y + 294, Glass.a(Glass.EDGE, on ? .10F : .06F));
+            boolean on = c.id().equals(looked), mine = c.id().equals(f.chosen()), over = Sheet.in(mx, my, cx, y, cx + w, y + ph - 8);
+            if (over || on) s.fill(cx + 6, y, cx + w - 6, y + ph - 8, Glass.a(Glass.EDGE, on ? .10F : .06F));
             if (worn && i < figures.size()) {
-                InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(cx), s.gy(y + 4), s.gx(cx + w), s.gy(y + 240),
-                        Math.round(92 * s.k), .0625F, s.ox + mx * s.k, s.oy + my * s.k, figures.get(i));
+                InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(cx), s.gy(y + 4), s.gx(cx + w), s.gy(y + tall),
+                        Math.round(tall * .41F * s.k), .0625F, s.ox + mx * s.k, s.oy + my * s.k, figures.get(i));
             } else {
                 int k = Math.min(4, c.show().size());
-                float size = k <= 1 ? 128 : 72, gx = cx + (w - (k <= 1 ? size : 2 * size)) / 2F;
-                for (int j = 0; j < k; j++) s.item(WhereFrom.icon(c.show().get(j)), gx + (k <= 1 ? 0 : (j % 2) * size), y + 40 + (k <= 1 ? 0 : (j / 2) * size), size);
+                float size = k <= 1 ? 128 : 80, gx = cx + (w - (k <= 1 ? size : 2 * size)) / 2F;
+                for (int j = 0; j < k; j++) s.item(WhereFrom.icon(c.show().get(j)), gx + (k <= 1 ? 0 : (j % 2) * size), y + 14 + (k <= 1 ? 20 : (j / 2) * size), size);
             }
-            String title = s.fit(c.title(), w - 8, Sheet.BODY), sub = s.fit(c.sub(), w - 8, Sheet.LABEL);
-            s.centre(title, cx + w / 2F, y + 250, Sheet.BODY, Glass.a(mine ? Glass.GOOD : Glass.TITLE, 1F));
-            s.centre(sub, cx + w / 2F, y + 272, Sheet.LABEL, Glass.a(s.label, 1F));
-            if (on) s.fill(cx + 20, y + 290, cx + w - 20, y + 293, Glass.a(Glass.AMBER, 1F));
+            float ty = y + tall + 12;
+            List<FormattedCharSequence> title = s.wrap(c.title(), w - 16, Sheet.BODY);
+            for (int j = 0; j < Math.min(2, title.size()); j++) {
+                s.text(title.get(j), cx + (w - s.font.width(title.get(j)) * s.snap(Sheet.BODY)) / 2F, ty, Sheet.BODY, Glass.a(mine ? Glass.GOOD : Glass.TITLE, 1F));
+                ty += s.line(Sheet.BODY);
+            }
+            List<FormattedCharSequence> sub = s.wrap(c.sub(), w - 16, Sheet.LABEL);
+            for (int j = 0; j < Math.min(2, sub.size()); j++) {
+                s.text(sub.get(j), cx + (w - s.font.width(sub.get(j)) * s.snap(Sheet.LABEL)) / 2F, ty + 2, Sheet.LABEL, Glass.a(s.label, 1F));
+                ty += s.line(Sheet.LABEL);
+            }
+            if (on) s.fill(cx + 20, y + ph - 12, cx + w - 20, y + ph - 9, Glass.a(Glass.AMBER, 1F));
             if (on) needs = new ArrayList<>(c.needs());
-            hot.add(cx, y, cx + w, y + 294, () -> {
+            hot.add(cx, y, cx + w, y + ph - 8, () -> {
                 choice = c.id();
                 StatusSections.cue(StatusSections.Cue.PAGE);
                 Sheet.say(c.title() + ". " + c.sub());
@@ -439,6 +457,12 @@ final class TasksPlace implements BandPlaces.Place {
                 StatusSections.cue(StatusSections.Cue.UNDO);
             });
             x += w + 12;
+        }
+        if (f.key().startsWith("progression:points")) {
+            float pw = Kit.buttonWidth(s, "", "Open Status");
+            Kit.button(s, "", "Open Status", x, y, Kit.Look.PRIMARY, Sheet.in(mx, my, x, y, x + pw, y + Kit.BUTTON_H), true, 0F);
+            hot.add(x, y, x + pw, y + Kit.BUTTON_H, () -> StatusSections.go(StatusSections.Tab.STATUS));
+            x += pw + 12;
         }
         String label = tracked ? "Tracked" : "Track";
         float w = Kit.buttonWidth(s, "T", label);
@@ -544,12 +568,12 @@ final class TasksPlace implements BandPlaces.Place {
         if (!needs.isEmpty() && needs.size() <= 6) Kit.pips(s, x + TILE_W - 8 - needs.size() * 11, y + 10, met(needs), needs.size());
         String title = KeyText.resolve(pick != null ? pick.title() : r.title());
         List<FormattedCharSequence> lines = s.wrap(title, TILE_W - 18, Sheet.LABEL);
-        float ty = y + 46;
-        for (int i = 0; i < Math.min(3, lines.size()); i++) {
+        float ty = y + 44;
+        for (int i = 0; i < Math.min(4, lines.size()); i++) {
             s.text(lines.get(i), x + 9, ty, Sheet.LABEL, Glass.a(Glass.TITLE, 1F));
             ty += s.line(Sheet.LABEL);
         }
-        if (lines.size() > 3 && over) tip(title, "");
+        if (lines.size() > 4 && over) tip(title, "");
         if (r.fresh()) Kit.glint(s, x + TILE_W - 2, y + 2, Glass.AMBER);
         if (r.key().equals(v.pinned())) s.text("◆", x + TILE_W - 18, y + TILE_H - 20, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
         hot.add(x, y, x + TILE_W, y + TILE_H, () -> focus(r.key()));
@@ -558,7 +582,7 @@ final class TasksPlace implements BandPlaces.Place {
     /** Tours: brings a step into focus by its key, or by the start of it ("armour/" for the armour step). */
     void debugFocus(String key) {
         for (StepRow r : all(TaskCache.view)) {
-            if (!r.key().equals(key) && !r.key().startsWith(key)) continue;
+            if (!r.key().equals(key) && !r.key().startsWith(key) && !r.title().toLowerCase(java.util.Locale.ROOT).contains(key.toLowerCase(java.util.Locale.ROOT))) continue;
             focus(r.key());
             return;
         }

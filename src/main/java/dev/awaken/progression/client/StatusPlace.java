@@ -31,7 +31,7 @@ import java.util.Set;
  * applies now (a decision waiting, this gate, the Deep Pack, this room, your mount). Nothing scrolls but that panel.
  */
 public final class StatusPlace implements BandPlaces.Place {
-    private static final float X0 = BandPlaces.X0, Y0 = BandPlaces.Y0, MID = X0 + 452F, PANEL = BandPlaces.X1 - 464F;
+    private static final float X0 = BandPlaces.X0, Y0 = BandPlaces.Y0, MID = X0 + 452F, PANEL = BandPlaces.X1 - 488F;
     /** The old sections this place replaces, by their order on the page (SPEC §30.1): the rest still show in the panel. */
     private static final Set<Integer> REPLACED = Set.of(0, 10, 18, 20, 710, 720, 735);
     private static final float HOLD_SECONDS = .6F;
@@ -94,15 +94,12 @@ public final class StatusPlace implements BandPlaces.Place {
     /** You, as the bag draws you: the real player, armour and all, turning to the pointer, on the band's lit floor. */
     private static void figure(Sheet s, Minecraft mc, float mx, float my) {
         float x0 = X0, x1 = X0 + 420, y0 = Y0 - 6, y1 = BandPlaces.Y1 - 70;
-        s.glow(x0 + 40, y1 - 26, x1 - 40, y1 - 10, Glass.EDGE, .4F);
-        // the cone of the band's light the figure stands in
-        for (int i = 0; i < 6; i++) {
-            float t = i / 6F, half = 60 + 130 * t;
-            s.fill(x0 + 210 - half, y0 + 40 + (y1 - y0 - 70) * t, x0 + 210 + half, y0 + 40 + (y1 - y0 - 70) * (t + 1 / 6F), Glass.a(Glass.EDGE, .022F));
-        }
+        float scale = (y1 - y0) * .40F;
+        // the floor under your feet (the figure stands centred in its box, 1.8 blocks tall)
+        Kit.floor(s, (x0 + x1) / 2F, (y0 + y1) / 2F + scale * .9F + 8, 190);
         boolean on = mx > -9000;
         float gx = on ? s.ox + mx * s.k : s.gx((x0 + x1) / 2F), gy = on ? s.oy + my * s.k : s.gy(y0 + 150);
-        InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1), Math.round((y1 - y0) * s.k * .40F), .0625F, gx, gy,
+        InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1), Math.round(scale * s.k), .0625F, gx, gy,
                 mc.player);
     }
 
@@ -127,7 +124,7 @@ public final class StatusPlace implements BandPlaces.Place {
         y += 112;
         // XP, as segments
         double need = Math.max(1, p.xpToNext()), frac = Math.clamp(p.xp() / need, 0D, 1D);
-        int segs = 32;
+        int segs = 30;
         for (int i = 0; i < segs; i++) {
             float sx = x + i * 16;
             boolean full = i < (int) (frac * segs), part = i < frac * segs;
@@ -141,18 +138,18 @@ public final class StatusPlace implements BandPlaces.Place {
             s.caps("What comes next", x, y, Glass.a(s.label, 1F));
             float cx = x;
             for (Defs.LevelRoadDef d : stops) {
-                boolean over = Sheet.in(mx, my, cx, y + 24, cx + 164, y + 96);
-                Kit.well(s, cx, y + 24, cx + 164, y + 96, Kit.Lit.KNOWN, over);
+                boolean over = Sheet.in(mx, my, cx, y + 24, cx + 158, y + 96);
+                Kit.well(s, cx, y + 24, cx + 158, y + 96, Kit.Lit.KNOWN, over);
                 s.text("Level " + d.level(), cx + 12, y + 34, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-                List<FormattedCharSequence> t = s.wrap(d.title(), 142, Sheet.LABEL);
+                List<FormattedCharSequence> t = s.wrap(d.title(), 136, Sheet.LABEL);
                 for (int i = 0; i < Math.min(2, t.size()); i++) s.text(t.get(i), cx + 12, y + 58 + i * s.line(Sheet.LABEL), Sheet.LABEL, Glass.a(Glass.HORIZON, 1F));
                 if (over) tip("Level " + d.level() + " · " + d.title(), d.text());
-                cx += 174;
+                cx += 166;
             }
             y += 116;
         }
         stats(s, hot, p, x, y, mx, my, dt);
-        truths(s, hot, p, x, y + 176, mx, my);
+        truths(s, hot, p, x, y + 198, mx, my);
     }
 
     private void stats(Sheet s, Hot hot, Profile p, float x, float y, float mx, float my, float dt) {
@@ -184,7 +181,7 @@ public final class StatusPlace implements BandPlaces.Place {
         int over = -1;
         for (Stat st : Stat.values()) {
             int i = st.ordinal();
-            float c0 = x + i * 86, c1 = c0 + 80;
+            float c0 = x + i * 82, c1 = c0 + 78;
             boolean hover = Sheet.in(mx, my, c0, y, c1, y + 96), hot1 = hover || i == stat;
             if (hover) over = i;
             int pend = StatusSheet.placed(st);
@@ -192,12 +189,12 @@ public final class StatusPlace implements BandPlaces.Place {
             if (hot1) Kit.well(s, c0, y, c1, y + 96, i == stat ? Kit.Lit.FOCUS : Kit.Lit.KNOWN, hover);
             else if (flash) s.fill(c0, y, c1, y + 96, Glass.a(Glass.AMBER, .22F * (1 - since / 600F)));
             String v = String.valueOf(p.stat(st) + pend);
-            s.lit(v, c0 + 40 - s.width(v, 5F) / 2F, y + 8, 5F, Glass.a(pend > 0 || flash ? Glass.AMBER : Glass.TITLE, 1F));
-            s.text(st.name(), c0 + 40 - s.width(st.name(), Sheet.LABEL) / 2F, y + 54, Sheet.LABEL, Glass.a(hot1 ? Glass.TITLE : s.label, 1F));
+            s.lit(v, c0 + 39 - s.width(v, 5F) / 2F, y + 8, 5F, Glass.a(pend > 0 || flash ? Glass.AMBER : Glass.TITLE, 1F));
+            s.text(st.name(), c0 + 39 - s.width(st.name(), Sheet.LABEL) / 2F, y + 54, Sheet.LABEL, Glass.a(hot1 ? Glass.TITLE : s.label, 1F));
             if (pend > 0) s.text("+" + pend, c1 - s.width("+" + pend, Sheet.LABEL) - 4, y + 4, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
             if (left > 0) {
-                Kit.mark(s, c0 + 40, y + 82, 9, Glass.AMBER, hot1 ? .3F : 0F, hot1 ? 1F : .7F, false);
-                s.text("+", c0 + 40 - s.width("+", Sheet.LABEL) / 2F, y + 76, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
+                Kit.mark(s, c0 + 39, y + 82, 9, Glass.AMBER, hot1 ? .3F : 0F, hot1 ? 1F : .7F, false);
+                s.text("+", c0 + 39 - s.width("+", Sheet.LABEL) / 2F, y + 76, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
             }
             hot.add(c0, y, c1, y + 96, () -> {
                 focusOn(i);
@@ -208,13 +205,8 @@ public final class StatusPlace implements BandPlaces.Place {
         String line = shown >= 0 ? StatusSheet.SAYS[shown]
                 : !placed.isEmpty() ? placed.size() + " of " + unspent + " placed. Nothing is spent until you confirm."
                 : unspent > 0 ? "Click a stat to raise it, then confirm." : "";
-        if (shown >= 0) {
-            String nm = Stat.values()[shown].displayName + ".";
-            s.text(nm, x, y + 106, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
-            s.text(s.fit(line, 500 - s.width(nm + " ", Sheet.BODY), Sheet.BODY), x + s.width(nm + " ", Sheet.BODY), y + 106, Sheet.BODY, Glass.a(s.label, 1F));
-        } else if (!line.isEmpty()) {
-            s.text(line, x, y + 106, Sheet.BODY, Glass.a(placed.isEmpty() ? s.label : Glass.AMBER, 1F));
-        }
+        if (shown >= 0) s.lines(Stat.values()[shown].displayName + ". " + line, x, y + 106, 492, Sheet.BODY, 2, Glass.a(Glass.TEXT, 1F));
+        else if (!line.isEmpty()) s.lines(line, x, y + 106, 492, Sheet.BODY, 2, Glass.a(placed.isEmpty() ? s.label : Glass.AMBER, 1F));
     }
 
     /** Focus moves to a stat: the narrator says what it is and does. */
@@ -241,7 +233,7 @@ public final class StatusPlace implements BandPlaces.Place {
         int close = near.ids().size(), per = 16;
         pointed = -1;
         for (int i = 0; i < total; i++) {
-            float cx = x + 15 + (i % per) * 32, cy = y + 40 + (i / per) * 32;
+            float cx = x + 15 + (i % per) * 31, cy = y + 40 + (i / per) * 31;
             boolean true1 = i < mine, near1 = !true1 && i < mine + close, on = i == mark;
             boolean over = Sheet.in(mx, my, cx - 16, cy - 16, cx + 16, cy + 16);
             Kit.mark(s, cx, cy, 15, true1 ? Glass.GOOD : near1 ? Glass.AMBER : 0x6F829C, true1 ? .35F : 0F, true1 || near1 ? 1F : .45F, on || over);
@@ -272,21 +264,21 @@ public final class StatusPlace implements BandPlaces.Place {
                 String id = got ? mine.get(at) : close.get(at - mine.size());
                 var d = Content.TRUTHS.get(id);
                 s.caps(got ? "True" : "Closest to true", x, y, Glass.a(got ? Glass.GOOD : Glass.AMBER, 1F));
-                float ty = s.lines(d == null ? id : "“" + d.text() + "”", x, y + 28, 416, Sheet.TITLE, 3, Glass.a(Glass.TITLE, 1F)) + 10;
+                float ty = s.lines(d == null ? id : "“" + d.text() + "”", x, y + 28, 440, Sheet.TITLE, 3, Glass.a(Glass.TITLE, 1F)) + 10;
                 if (d != null) {
-                    if (!got && d.hint().isPresent()) ty = s.lines(d.hint().get(), x, ty, 416, Sheet.BODY, 3, Glass.a(s.label, 1F)) + 10;
+                    if (!got && d.hint().isPresent()) ty = s.lines(d.hint().get(), x, ty, 440, Sheet.BODY, 3, Glass.a(s.label, 1F)) + 10;
                     if (!got) {
                         float f = (float) Math.clamp(d.condition().progress(p, null), 0D, 1D);
-                        s.fill(x, ty, x + 416, ty + 8, Sheet.argb(0x05080F, .6F));
-                        s.fill(x, ty, x + 416 * f, ty + 8, Glass.a(Glass.AMBER, 1F));
+                        s.fill(x, ty, x + 440, ty + 8, Sheet.argb(0x05080F, .6F));
+                        s.fill(x, ty, x + 440 * f, ty + 8, Glass.a(Glass.AMBER, 1F));
                         ty += 24;
                     }
                     s.caps(got ? "It gave you" : "It gives", x, ty, Glass.a(s.label, 1F));
-                    s.lines(Rewards.describe(d.reward()), x, ty + 22, 416, Sheet.BODY, 3, Glass.a(got ? Glass.TEXT : Glass.AMBER, 1F));
+                    s.lines(Rewards.describe(d.reward()), x, ty + 22, 440, Sheet.BODY, 3, Glass.a(got ? Glass.TEXT : Glass.AMBER, 1F));
                 }
             } else {
                 s.caps("Not yet", x, y, Glass.a(s.label, 1F));
-                s.lines("A Truth comes true by itself when you live it.", x, y + 28, 416, Sheet.BODY, 3, Glass.a(s.label, 1F));
+                s.lines("A Truth comes true by itself when you live it.", x, y + 28, 440, Sheet.BODY, 3, Glass.a(s.label, 1F));
             }
             return;
         }
@@ -297,9 +289,9 @@ public final class StatusPlace implements BandPlaces.Place {
             y += 26;
             for (int i = 0; i < Math.min(3, entries.size()); i++) {
                 Journal.Entry e = entries.get(i);
-                s.text(s.fit(e.title(), 416, Sheet.BODY), x, y, Sheet.BODY, Glass.a(e.colour() & 0xFFFFFF, 1F));
-                if (!e.line().isBlank()) s.text(s.fit(e.line(), 416, Sheet.LABEL), x, y + 22, Sheet.LABEL, Glass.a(s.label, 1F));
-                y += e.line().isBlank() ? 30 : 48;
+                y = s.lines(e.title(), x, y, 440, Sheet.BODY, 2, Glass.a(e.colour() & 0xFFFFFF, 1F)) + 2;
+                if (!e.line().isBlank()) y = s.lines(e.line(), x, y, 440, Sheet.LABEL, 2, Glass.a(s.label, 1F));
+                y += 10;
             }
             y += 14;
         }

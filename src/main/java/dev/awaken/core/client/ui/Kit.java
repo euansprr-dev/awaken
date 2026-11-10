@@ -72,6 +72,23 @@ public final class Kit {
         s.g.pose().popMatrix();
     }
 
+    /** The band's lit floor under a thing brought into focus: a flat disc of light, {@code half} wide each way from cx. */
+    public static void floor(Sheet s, float cx, float cy, float half) {
+        int rows = 9;
+        for (int i = -rows; i <= rows; i++) {
+            float t = i / (float) rows, w = half * (float) Math.sqrt(1F - t * t);
+            s.fill(cx - w, cy + i * 2, cx + w, cy + i * 2 + 2, Glass.a(Glass.EDGE, .075F));
+            if (Math.abs(i) < rows - 2) s.fill(cx - w * .62F, cy + i * 2, cx + w * .62F, cy + i * 2 + 2, Glass.a(Glass.EDGE, .06F));
+        }
+    }
+
+    /** A condition a step asks for that isn't a thing ("In one closed room"): a tick when it holds, a ring when it doesn't. */
+    public static void condition(Sheet s, String words, boolean met, float x, float y) {
+        if (met) s.text("✓", x, y, Sheet.BODY, Glass.a(Glass.GOOD, 1F));
+        else s.outline(x + 2, y + 2, x + 14, y + 14, 2, Glass.a(s.label, .8F));
+        s.text(words, x + 24, y, Sheet.BODY, Glass.a(met ? Glass.GOOD : Glass.TEXT, 1F));
+    }
+
     /** The glint on something new, or (amber) something that waits on you. */
     public static void glint(Sheet s, float cx, float cy, int rgb) {
         s.glow(cx - 5, cy - 5, cx + 5, cy + 5, rgb, .5F);
@@ -97,7 +114,7 @@ public final class Kit {
             if (over) s.glow(cx - 30, y, cx + 30, y + 60, Glass.EDGE, .3F);
             s.item(icon, cx - 28, y + 2, 56);
         }
-        String count = icon.isEmpty() && need <= 1 ? "" : Math.min(have, 9999) + "/" + need;
+        String count = icon.isEmpty() && need <= 1 ? "" : Math.min(have, need) + "/" + need;
         if (!count.isEmpty()) s.centre(count, cx, y + 62, Sheet.TITLE, Glass.a(met ? Glass.GOOD : Glass.WARN, 1F));
         List<FormattedCharSequence> lines = s.wrap(name, NEED_W, Sheet.LABEL);
         float ty = y + (count.isEmpty() ? 62 : 90);
