@@ -391,8 +391,8 @@ public final class AbilityRunner {
         };
         if (!shot || t == null || !t.isAlive() || mob.getSensing().hasLineOfSight(t)) return false;
         Vec3 c = Abilities.chest(mob);
-        level.sendParticles(ParticleTypes.SMOKE, c.x, c.y, c.z, 6, 0.25, 0.2, 0.25, 0.01);
-        mob.playLevelSound(net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, 0.5F, 1.6F);
+        if (!Abilities.shed(level, mob, c, 6, 0.25, 0.2, 0.25, 0.01)) level.sendParticles(ParticleTypes.SMOKE, c.x, c.y, c.z, 6, 0.25, 0.2, 0.25, 0.01);
+        Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, 0.5F, 1.6F);
         return true;
     }
 
@@ -424,7 +424,9 @@ public final class AbilityRunner {
             case BLINK -> {
                 if (!marks.isEmpty()) {
                     Vec3 m = marks.get(0);
-                    level.sendParticles(ParticleTypes.PORTAL, m.x, m.y + 0.8, m.z, 8, 0.3, 0.6, 0.3, 0.2);
+                    if (!Abilities.shed(level, mob, m.add(0, 0.8, 0), 5, 0.3, 0.6, 0.3, 0.02)) {
+                        level.sendParticles(ParticleTypes.PORTAL, m.x, m.y + 0.8, m.z, 8, 0.3, 0.6, 0.3, 0.2);
+                    }
                 }
             }
             // before the lock the aim shows as dust that follows you; at the lock the carrier's line takes over
@@ -478,7 +480,7 @@ public final class AbilityRunner {
                 chargeCls = cls;
                 chargeHits.clear();
                 mob.setFlag(AwakenMob.F_CHARGING, true);
-                mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 0.6F, 1.4F);
+                Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 0.6F, 1.4F);
             }
             case BOLT -> Abilities.bolts(level, mob, a, aim);
             case ARROWS -> {
@@ -524,7 +526,9 @@ public final class AbilityRunner {
             case DECOY -> Abilities.decoys(level, mob, a.count());
             case GUARD -> {
                 mob.startGuard(60);
-                level.sendParticles(ParticleTypes.ENCHANTED_HIT, mob.getX(), mob.getY() + 1, mob.getZ(), 12, 0.5, 0.6, 0.5, 0.1);
+                if (!Abilities.shed(level, mob, mob.position().add(0, mob.getBbHeight() * 0.6, 0), 12, 0.5, 0.6, 0.5, 0.1)) {
+                    level.sendParticles(ParticleTypes.ENCHANTED_HIT, mob.getX(), mob.getY() + 1, mob.getZ(), 12, 0.5, 0.6, 0.5, 0.1);
+                }
             }
             case LIFT -> Abilities.lift(level, mob, a, t != null && t.isAlive() ? t.position() : aim);
             case DARKNESS -> Abilities.darkness(level, mob, a);
@@ -532,7 +536,7 @@ public final class AbilityRunner {
             case FRENZY -> {
                 mob.startFrenzy(200);
                 level.sendParticles(dev.awaken.mobs.MobParticles.shot(dev.awaken.mobs.MobParticles.Shot.SPARK, 0xFF4A3A), mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 6, 0.5, 0.3, 0.5, 0);
-                mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 1.2F, 0.8F);
+                Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 1.2F, 0.8F);
             }
         }
     }

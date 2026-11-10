@@ -156,7 +156,37 @@ final class Abilities {
     }
 
     /** A slam's ground blow: dust and a crack where it struck (its reach beyond is a wave, which draws itself). */
+    /**
+     * A throw of a monster's own matter (SPEC §60.8): {@code n} bits of what it is made of round a point, flung at about
+     * {@code speed}. False (and nothing sent) for a body with no matter of its own, so the caller shows what it always did.
+     */
+    static boolean shed(ServerLevel level, @Nullable AwakenMob mob, Vec3 at, int n, double spread, double speed) {
+        return shed(level, mob, at, n, spread, spread, spread, speed);
+    }
+
+    static boolean shed(ServerLevel level, @Nullable AwakenMob mob, Vec3 at, int n, double sx, double sy, double sz, double speed) {
+        if (mob == null || mob.def().matter == null) return false;
+        dev.awaken.mobs.MobParticles.Shot shape = dev.awaken.mobs.MobParticles.Shot.values()[mob.def().matter.ordinal()];
+        level.sendParticles(dev.awaken.mobs.MobParticles.shot(shape, mob.def().matterRgb), at.x, at.y, at.z, n, sx, sy, sz, speed);
+        return true;
+    }
+
+    /** Whether this body speaks its own moves (a gate monster's blow voice, SPEC §60.8). */
+    static boolean ownVoice(AwakenMob mob) {
+        return MobSounds.monster(mob.def().id, "blow") != null;
+    }
+
+    /** Another creature's sound standing in for a move's, unless the body speaks its own moves (then that is all it needs). */
+    static void borrowed(AwakenMob mob, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+        if (!ownVoice(mob)) mob.playLevelSound(sound, volume, pitch);
+    }
+
     static void slamFx(ServerLevel level, AwakenMob mob, Vec3 c, float radius) {
+        if (shed(level, mob, c.add(0, 0.25, 0), 10 + (int) (radius * 5), radius * 0.4, 0.12, radius * 0.4, 0.14)) {
+            // its own matter thrown up off the floor, and the ground's answer under it (no vanilla blast)
+            level.playSound(null, c.x, c.y, c.z, SoundEvents.MACE_SMASH_GROUND_HEAVY, mob.getSoundSource(), 0.9F, 0.8F);
+            return;
+        }
         level.sendParticles(ParticleTypes.EXPLOSION, c.x, c.y + 0.3, c.z, 1, radius * 0.2, 0.1, radius * 0.2, 0);
         level.sendParticles(ParticleTypes.CLOUD, c.x, c.y + 0.2, c.z, 8, radius * 0.4, 0.1, radius * 0.4, 0.05);
         level.playSound(null, c.x, c.y, c.z, SoundEvents.MACE_SMASH_GROUND_HEAVY, mob.getSoundSource(), 1.2F, 0.8F);
@@ -228,7 +258,7 @@ final class Abilities {
             Vec3 d = new Vec3(xd, 0, zd).yRot((i - (n - 1) / 2.0F) * 0.12F);
             Projectile.spawnProjectileUsingShoot(arrow, level, new ItemStack(Items.ARROW), d.x, yd + dist * 0.2, d.z, 1.6F, 4.0F);
         }
-        mob.playLevelSound(SoundEvents.SKELETON_SHOOT, 1.0F, 0.9F + mob.getRandom().nextFloat() * 0.2F);
+        borrowed(mob, SoundEvents.SKELETON_SHOOT, 1.0F, 0.9F + mob.getRandom().nextFloat() * 0.2F);
     }
 
     /** Where a beam from {@code from} toward {@code aim} ends: its reach, or the first wall. */
@@ -269,7 +299,9 @@ final class Abilities {
                 level.addFreshEntity(bolt);
             }
         } else {
-            level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y + 0.4, at.z, 1, 0, 0, 0, 0);
+            if (!shed(level, mob, at.add(0, 0.4, 0), 12, radius * 0.35, 0.2, radius * 0.35, 0.12)) {
+                level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y + 0.4, at.z, 1, 0, 0, 0, 0);
+            }
             level.sendParticles(b.trail(), at.x, at.y + 0.5, at.z, 16, radius * 0.4, 0.5, radius * 0.4, 0.05);
         }
         level.playSound(null, at.x, at.y, at.z, MobSounds.VOLLEY_IMPACT.get(), mob != null ? mob.getSoundSource() : net.minecraft.sounds.SoundSource.HOSTILE,
@@ -343,10 +375,16 @@ final class Abilities {
             moved = mob.getBoundingBox().move(dest.subtract(old));
             if (!level.noCollision(mob, moved)) return;
         }
-        level.sendParticles(ParticleTypes.PORTAL, old.x, old.y + mob.getBbHeight() * 0.5, old.z, 24, 0.4, 0.8, 0.4, 0.3);
+        // where it left and where it came out: its own matter hanging in its shape (else the borrowed sparkle)
+        double half = mob.getBbHeight() * 0.5;
+        if (!shed(level, mob, old.add(0, half, 0), 18, 0.3, half * 0.7, 0.3, 0.03)) {
+            level.sendParticles(ParticleTypes.PORTAL, old.x, old.y + half, old.z, 24, 0.4, 0.8, 0.4, 0.3);
+        }
         mob.teleportTo(dest.x, dest.y, dest.z);
-        level.sendParticles(ParticleTypes.REVERSE_PORTAL, dest.x, dest.y + mob.getBbHeight() * 0.5, dest.z, 24, 0.4, 0.8, 0.4, 0.1);
-        mob.playLevelSound(SoundEvents.ENDERMAN_TELEPORT, 0.8F, 1.1F);
+        if (!shed(level, mob, dest.add(0, half, 0), 18, 0.3, half * 0.7, 0.3, 0.1)) {
+            level.sendParticles(ParticleTypes.REVERSE_PORTAL, dest.x, dest.y + half, dest.z, 24, 0.4, 0.8, 0.4, 0.1);
+        }
+        borrowed(mob, SoundEvents.ENDERMAN_TELEPORT, 0.8F, 1.1F);
         if (target != null) {
             mob.getLookControl().setLookAt(target);
             double reach = mob.getBbWidth() + target.getBbWidth() + 1.5;
@@ -370,9 +408,11 @@ final class Abilities {
         if (d == null) return;
         for (Vec3 p : spots) {
             AwakenMob m = Mobs.spawnMinion(level, d, p, mob);
-            if (m != null) level.sendParticles(ParticleTypes.POOF, p.x, p.y + 0.5, p.z, 10, 0.3, 0.4, 0.3, 0.02);
+            if (m != null && !shed(level, mob, p.add(0, 0.5, 0), 10, 0.3, 0.4, 0.3, 0.05)) {
+                level.sendParticles(ParticleTypes.POOF, p.x, p.y + 0.5, p.z, 10, 0.3, 0.4, 0.3, 0.02);
+            }
         }
-        mob.playLevelSound(SoundEvents.EVOKER_PREPARE_SUMMON, 1.0F, 1.0F);
+        borrowed(mob, SoundEvents.EVOKER_PREPARE_SUMMON, 1.0F, 1.0F);
     }
 
     static List<Vec3> summonSpots(ServerLevel level, AwakenMob mob, int count) {
@@ -400,9 +440,11 @@ final class Abilities {
             copy.makeDecoy(200);
             copy.setTarget(mob.getTarget());
             level.addFreshEntity(copy);
-            level.sendParticles(ParticleTypes.CLOUD, p.x, p.y + 1, p.z, 8, 0.3, 0.6, 0.3, 0.02);
+            if (!shed(level, mob, p.add(0, 1, 0), 10, 0.3, 0.6, 0.3, 0.04)) {
+                level.sendParticles(ParticleTypes.CLOUD, p.x, p.y + 1, p.z, 8, 0.3, 0.6, 0.3, 0.02);
+            }
         }
-        mob.playLevelSound(SoundEvents.ILLUSIONER_MIRROR_MOVE, 1.0F, 1.0F);
+        borrowed(mob, SoundEvents.ILLUSIONER_MIRROR_MOVE, 1.0F, 1.0F);
     }
 
     static void heal(ServerLevel level, AwakenMob mob, Ability a) {
@@ -411,7 +453,7 @@ final class Abilities {
             ally.heal(ally.getMaxHealth() * a.power());
             level.sendParticles(dev.awaken.mobs.MobParticles.shot(dev.awaken.mobs.MobParticles.Shot.EMBER, 0xFFE9A8), ally.getX(), ally.getY() + ally.getBbHeight(), ally.getZ(), 4, 0.3, 0.3, 0.3, 0);
         }
-        mob.playLevelSound(SoundEvents.BEACON_POWER_SELECT, 0.8F, 1.6F);
+        borrowed(mob, SoundEvents.BEACON_POWER_SELECT, 0.8F, 1.6F);
     }
 
     static boolean alliesHurt(ServerLevel level, AwakenMob mob, float r) {
@@ -431,8 +473,10 @@ final class Abilities {
     /** A gust: a wave that throws back whoever it reaches (and only them). */
     static void gust(ServerLevel level, AwakenMob mob, Ability a) {
         Carriers.wave(level, mob, mob.position(), 1.0F, a.radius(), damage(mob, a), bolt(mob, a), effect(mob, a), 1.0 + a.power() * 1.5);
-        level.sendParticles(ParticleTypes.GUST_EMITTER_SMALL, mob.getX(), mob.getY() + 1, mob.getZ(), 1, 0, 0, 0, 0);
-        mob.playLevelSound(SoundEvents.WIND_CHARGE_BURST.value(), 1.0F, 0.9F);
+        if (!shed(level, mob, mob.position().add(0, 1, 0), 16, 0.5, 0.4, 0.5, 0.22)) {
+            level.sendParticles(ParticleTypes.GUST_EMITTER_SMALL, mob.getX(), mob.getY() + 1, mob.getZ(), 1, 0, 0, 0, 0);
+        }
+        mob.playLevelSound(SoundEvents.WIND_CHARGE_BURST.value(), ownVoice(mob) ? 0.6F : 1.0F, 0.9F);
     }
 
     /** The widest a cone gets, as the dot of its edge: about 37 degrees each side (the wedge drawn at its lock). */
@@ -460,8 +504,9 @@ final class Abilities {
         for (int i = 1; i <= 5; i++) {
             Vec3 p = mob.position().add(dir.scale(a.radius() * i / 5.0)).add(0, 1.0, 0);
             level.sendParticles(b.trail(), p.x, p.y, p.z, 4, i * 0.12, 0.3, i * 0.12, 0.02);
+            shed(level, mob, p, 3, i * 0.12, 0.25, i * 0.12, 0.06); // its own matter carried down the cone with it
         }
-        mob.playLevelSound(SoundEvents.ENDER_DRAGON_SHOOT, 0.7F, 1.4F);
+        borrowed(mob, SoundEvents.ENDER_DRAGON_SHOOT, 0.7F, 1.4F);
     }
 
     static Vec3 coneDir(AwakenMob mob, Vec3 aim) {
@@ -484,7 +529,7 @@ final class Abilities {
     static void lift(ServerLevel level, AwakenMob mob, Ability a, Vec3 at) {
         Carriers.volley(level, mob, chest(mob), List.of(at), Math.min(Carriers.VOLLEY_RING, a.radius()), damage(mob, a) * 0.3F, bolt(mob, a),
                 new MobEffectInstance(MobEffects.LEVITATION, 30, 2));
-        level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.SHULKER_SHOOT, mob.getSoundSource(), 1.0F, 0.7F);
+        if (!ownVoice(mob)) level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.SHULKER_SHOOT, mob.getSoundSource(), 1.0F, 0.7F);
     }
 
     /** Darkness: a wave of ink; it darkens (a boss's only on its signature) whoever it reaches, and stings. */
@@ -493,7 +538,9 @@ final class Abilities {
                 : new MobEffectInstance(MobEffects.DARKNESS, 120, 0);
         Carriers.Carrier c = Carriers.wave(level, mob, mob.position(), 1.0F, a.radius(), damage(mob, a) * 0.3F, bolt(mob, a), fx, 0);
         if (c != null && a.heavy() && carrying) c.second = new MobEffectInstance(MobEffects.BLINDNESS, 30, 0);
-        level.sendParticles(ParticleTypes.SQUID_INK, mob.getX(), mob.getY() + 1, mob.getZ(), 30, 1.5, 1.0, 1.5, 0.05);
-        mob.playLevelSound(SoundEvents.SCULK_SHRIEKER_SHRIEK, 0.8F, 0.6F);
+        if (!shed(level, mob, mob.position().add(0, 1, 0), 30, 1.5, 1.0, 1.5, 0.05)) {
+            level.sendParticles(ParticleTypes.SQUID_INK, mob.getX(), mob.getY() + 1, mob.getZ(), 30, 1.5, 1.0, 1.5, 0.05);
+        }
+        borrowed(mob, SoundEvents.SCULK_SHRIEKER_SHRIEK, 0.8F, 0.6F);
     }
 }

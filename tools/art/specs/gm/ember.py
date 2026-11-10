@@ -242,7 +242,9 @@ def coal_tick():
     K.moves(r, bite="Scorch Bite")
     K.act(r, "bite", dict(bite(40), body={"pos": (0, -1.2, 1.5), "rot": (-10, 0, 0)}), dict(bite(-10), body={"pos": (0, 1.5, -3), "rot": (8, 0, 0)}),
           w=0.5, length=0.35, t_hit=0.06, plant=SIX)
-    K.plain(r, dict(bite(34), body={"pos": (0, -0.6, 1)}), dict(bite(-8), body={"pos": (0, 0, -2)}), plant=SIX)
+    K.plain(r, dict(bite(34), body={"pos": (0, -0.6, 1)}), dict(bite(-8), body={"pos": (0, 0, -2)}),
+            # its other swing: the bite again with its body rolled over
+            second=(dict(bite(40), body={"pos": (0, -0.6, 1), "rot": (0, 0, 14)}), dict(bite(-10), body={"pos": (0, 0, -2.3), "rot": (0, 0, -12)})), plant=SIX)
     K.loop(r, "idle", 4.0, lambda p: dict(bite(4 + 10 * bump(p, 0.5, 0.04)), body=(0, 0, 1.2 * s(p))), n=14)
     K.loop(r, "walk", 0.5, lambda p: {"body": (2 * s(p * 2), 0, 3 * s(p))})
     K.loop(r, "run", 0.3, lambda p: {"body": (-6 + 3 * s(p * 2), 0, 4 * s(p))})
@@ -387,6 +389,8 @@ def overseer():
     K.plain(r, {"chest": (0, 22, 0), "arm_r": (-70, 0, 30), "fore_r": (-40, 0, 0)}, {"chest": (6, -26, 0), "arm_r": (-64, 0, -20), "fore_r": (16, 0, 0)},
             heavy=({"chest": (-12, 0, 0), "arm_l": (-150, 0, -8), "arm_r": (-150, 0, 8), "fore_l": (-20, 0, 0), "fore_r": (-20, 0, 0)},
                    {"chest": (14, 0, 0), "arm_l": (-40, 0, 0), "arm_r": (-40, 0, 0), "fore_l": (10, 0, 0), "fore_r": (10, 0, 0), "body": {"pos": (0, -1.5, 0)}}),
+            # its other swing: the backhand, the same arm coming back
+            second=({"chest": (4, -24, 0), "arm_r": (-64, 0, -26), "fore_r": (-30, 0, 0)}, {"chest": (4, 24, 0), "arm_r": (-70, 0, 34), "fore_r": (12, 0, 0)}),
             plant=legs, lag=lagc)
     K.loop(r, "idle", 8.0, lambda p: dict(door(-3 - 3 * s(p * 2) - 14 * bump(p, 0.5, 0.03)), chest=(1.0 * s(p), 0, 0.8 * s(p, 0.3)), arm_l=(3 * s(p, 0.1), 0, 0),
                                           arm_r=(3 * s(p, 0.6), 0, 0), fore_l=(4 * s(p * 2), 0, 0)), n=16)

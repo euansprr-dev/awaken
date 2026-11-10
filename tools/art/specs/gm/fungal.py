@@ -47,7 +47,10 @@ def sporeling():
     K.moves(r, pounce="Pounce")
     K.act(r, "pounce", K.plus(puff(0.3), {"body": {"pos": (0, -1.5, 0), "scale": (1.15, 0.8, 1.15)}}),
           K.plus(puff(-0.12), {"body": {"pos": (0, 2, -1), "scale": (0.85, 1.3, 0.85), "rot": (-14, 0, 0)}}), w=0.5, length=0.4, t_hit=0.07)
-    K.plain(r, K.plus(puff(0.18), {"body": {"scale": (1.1, 0.85, 1.1)}}), K.plus(puff(-0.08), {"body": {"pos": (0, 1, -1.5), "scale": (0.9, 1.2, 0.9)}}))
+    K.plain(r, K.plus(puff(0.18), {"body": {"scale": (1.1, 0.85, 1.1)}}), K.plus(puff(-0.08), {"body": {"pos": (0, 1, -1.5), "scale": (0.9, 1.2, 0.9)}}),
+            # its other swing: the same butt thrown from a lean
+            second=(K.plus(puff(0.22), {"body": {"scale": (1.12, 0.82, 1.12), "rot": (0, 0, 10)}}),
+                    K.plus(puff(-0.1), {"body": {"pos": (0, 1.4, -1.8), "scale": (0.88, 1.24, 0.88), "rot": (0, 0, -10)}})))
     K.loop(r, "idle", 3.0, lambda p: {"head": {"scale": (1 + 0.04 * s(p), 1 - 0.05 * s(p), 1 + 0.04 * s(p)), "rot": (3 * s(p, 0.3), 0, 3 * s(p * 2))},
                                       "body": {"scale": (1 + 0.03 * s(p, 0.5), 1 - 0.03 * s(p, 0.5), 1 + 0.03 * s(p, 0.5))}})
     K.loop(r, "walk", 0.5, lambda p: {"body": {"scale": (1 - 0.1 * s(p), 1 + 0.16 * s(p), 1 - 0.1 * s(p))}, "head": (8 * s(p, 0.2), 0, 0)})
@@ -166,7 +169,10 @@ def capweaver():
           {"body": {"rot": (8, 0, 0), "pos": (0, 0.5, -1.5)}, "head": (6, 0, 0), "palp_l": (20, -10, 0), "palp_r": (20, 10, 0)}, w=1.0, length=0.5, t_hit=0.09,
           plant=EIGHT, open_pose={"body": {"rot": (-14, 0, 0), "pos": (0, 1.5, 0)}, "head": (-8, 0, 0)})
     K.plain(r, {"body": {"rot": (-16, 0, 0), "pos": (0, 1.5, 1)}, "palp_l": (-40, 24, 0), "palp_r": (-40, -24, 0)},
-            {"body": {"rot": (10, 0, 0), "pos": (0, 0, -2.5)}, "palp_l": (24, -12, 0), "palp_r": (24, 12, 0)}, plant=EIGHT)
+            {"body": {"rot": (10, 0, 0), "pos": (0, 0, -2.5)}, "palp_l": (24, -12, 0), "palp_r": (24, 12, 0)},
+            # its other swing: one palp jabbed in from the side
+            second=({"body": {"rot": (-10, 14, 0), "pos": (0, 1, 1)}, "palp_l": (-50, 30, 0), "palp_r": (-10, -8, 0)},
+                    {"body": {"rot": (8, -12, 0), "pos": (0, 0, -2.5)}, "palp_l": (30, -16, 0), "palp_r": (10, 6, 0)}), plant=EIGHT)
     K.loop(r, "idle", 6.0, lambda p: {"head": (0.8 * s(p), 0, 0.8 * s(p, 0.3)), "palp_l": (8 * bump(p, 0.4, 0.05), 0, 0), "palp_r": (8 * bump(p, 0.46, 0.05), 0, 0)}, n=16)
     K.loop(r, "walk", 0.7, lambda p: {"head": (1.5 * s(p * 2), 0, 2.5 * s(p))})
     K.loop(r, "run", 0.45, lambda p: {"head": (-5 + 2 * s(p * 2), 0, 3.5 * s(p))})
@@ -350,7 +356,9 @@ def rot():
     K.act(r, "field", dict(flare(14), body={"rot": (0, 0, 12), "pos": (0, 1, 0)}), dict(flare(-14), body={"rot": (0, 0, -14), "pos": (0, 0, 0)}),
           w=0.9, length=0.6, t_hit=0.1, plant=SIX, lag=lagc, after=dict(flare(8), body=(0, 0, 9)))
     K.plain(r, {"body": {"rot": (-8, 0, 0), "pos": (0, 1, 2.5)}}, {"body": {"rot": (8, 0, 0), "pos": (0, 0, -4.5)}},
-            heavy=({"body": {"rot": (-20, 0, 0), "pos": (0, 3.5, 2)}}, {"body": {"rot": (12, 0, 0), "pos": (0, -1.5, -3)}}), plant=SIX, lag=lagc)
+            heavy=({"body": {"rot": (-20, 0, 0), "pos": (0, 3.5, 2)}}, {"body": {"rot": (12, 0, 0), "pos": (0, -1.5, -3)}}),
+            # its other swing: a heave in from the side
+            second=({"body": {"rot": (-6, 18, 0), "pos": (0, 1, 2.2)}}, {"body": {"rot": (6, -20, 0), "pos": (0, 0, -4.2)}}), plant=SIX, lag=lagc)
     K.loop(r, "idle", 8.0, lambda p: dict(flare(2 * s(p * 2)), body=(0.8 * s(p), 0, 0.8 * s(p, 0.3))), n=12)
     K.loop(r, "walk", 1.0, lambda p: dict(flare(3 * s(p * 2, 0.2)), body=(1.5 * s(p * 2), 0, 2 * s(p))))
     K.loop(r, "run", 0.6, lambda p: dict(flare(6 * s(p * 2, 0.2)), body=(5 + 2.5 * s(p * 2), 0, 3 * s(p))))

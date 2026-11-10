@@ -81,6 +81,14 @@ public class GateMonster extends AwakenMob implements RigBody {
         return FaunaMob.moveNames(d).size() + (heavy ? 1 : 0);
     }
 
+    /** The slot after those: the other swing, which a body that strings its blows throws as every second one. */
+    public static int secondSlot(MobDef d) {
+        return FaunaMob.moveNames(d).size() + 2;
+    }
+
+    /** How many slots its plain blows take after its abilities (the renderer sizes its tables by it). */
+    public static final int PLAIN_SLOTS = 3;
+
     @Override
     public int cue() {
         return entityData.get(DATA_CUE);
@@ -111,6 +119,7 @@ public class GateMonster extends AwakenMob implements RigBody {
             if (a != null) {
                 meleeTold = false;
                 cue(FaunaMob.CUE_WINDUP, slot(a));
+                say("wind", a.heavy() ? 0.85F : 1.0F);
                 plantedNow = def().planted;
                 plantYaw = yBodyRot;
             } else if (cueAbility != null && isAlive()) {
@@ -129,6 +138,18 @@ public class GateMonster extends AwakenMob implements RigBody {
         MobDef d = def();
         plantedNow = false;
         int slot = slot(a);
+        if (opens(a) || a.kind() == Ability.Kind.BLINK) {
+            // the move is a blow: its own sound, and its own matter thrown off where its body let go
+            say("blow", a.heavy() ? 0.8F : 1.0F);
+            if (level() instanceof ServerLevel sl) {
+                boolean thrown = a.kind() == Ability.Kind.BOLT || a.kind() == Ability.Kind.ARROWS || a.kind() == Ability.Kind.NOVA;
+                Abilities.shed(sl, this, thrown ? Abilities.muzzle(this) : front(), a.heavy() ? 14 : 8, 0.25, 0.12);
+            }
+        } else {
+            // a call (a summon, a heal, a guard, its copies, a frenzy): its own voice, raised
+            SoundEvent call = MobSounds.monster(d.id, "ambient");
+            if (call != null) playLevelSound(call, 1.4F, 0.78F);
+        }
         boolean lunges = a.kind() == Ability.Kind.CHARGE || a.kind() == Ability.Kind.LEAP;
         if (lunges && d.miss > 0) {
             // judged when the lunge ends (below): it either hit someone or it didn't
@@ -180,7 +201,9 @@ public class GateMonster extends AwakenMob implements RigBody {
                     stuck = true;
                     cue(CUE_STUCK, missSlot);
                     open(d.miss);
-                    level.sendParticles(ParticleTypes.CRIT, getX(), getY() + 0.2, getZ(), 6, 0.3, 0.1, 0.3, 0.05);
+                    if (!Abilities.shed(level, this, position().add(0, 0.2, 0), 8, 0.3, 0.08)) {
+                        level.sendParticles(ParticleTypes.CRIT, getX(), getY() + 0.2, getZ(), 6, 0.3, 0.1, 0.3, 0.05);
+                    }
                 }
             } else if (++missWait > 10) {
                 missWatch = false; // it never left the spot (no room, a blind strike): nothing to judge
@@ -239,7 +262,10 @@ public class GateMonster extends AwakenMob implements RigBody {
         if (abilities != null && abilities.active() != null) return; // an ability's own tell: tickCue has it
         meleeTold = true;
         meleeIdle = 0;
-        cue(FaunaMob.CUE_WINDUP, meleeSlot(def(), kind == Strikes.Kind.HEAVY));
+        // every second blow of a string is its other swing
+        boolean heavy = kind == Strikes.Kind.HEAVY;
+        cue(FaunaMob.CUE_WINDUP, !heavy && (blowAt & 1) == 1 ? secondSlot(def()) : meleeSlot(def(), heavy));
+        say("wind", heavy ? 0.85F : blowAt > 0 ? 1.12F : 1.0F);
     }
 
     @Override
@@ -248,14 +274,29 @@ public class GateMonster extends AwakenMob implements RigBody {
         if (meleeTold && !level().isClientSide()) {
             meleeTold = false;
             int slot = FaunaMob.cueSlot(cue());
-            if (def().spent > 0) {
-                // its own blow leaves it open: the strike, then its open pose, for as long as the def says
+            if (def().spent > 0 && blowLast) {
+                // its own blow leaves it open (the last of a string): the strike, then its open pose, for as long as the def says
                 cue(CUE_OPEN, slot);
                 open(def().spent);
             } else {
                 cue(FaunaMob.CUE_STRIKE, slot);
             }
+            say("blow", slot == meleeSlot(def(), true) ? 0.82F : blowAt > 0 ? 1.1F : 1.0F);
+            if (level() instanceof ServerLevel sl) Abilities.shed(sl, this, front(), 6, 0.2, 0.1);
         }
+    }
+
+    /** Where its blows land: ahead of its body at about chest height. */
+    private Vec3 front() {
+        float yaw = yBodyRot * Mth.DEG_TO_RAD;
+        double out = getBbWidth() * 0.5 + 0.8;
+        return new Vec3(getX() - Mth.sin(yaw) * out, getY() + getBbHeight() * 0.55, getZ() + Mth.cos(yaw) * out);
+    }
+
+    /** Its own sound of this kind (wind: as it gathers; blow: as it lets go), if it has one; quiet under the tell's own voice. */
+    private void say(String kind, float pitch) {
+        SoundEvent s = MobSounds.monster(def().id, kind);
+        if (s != null) playLevelSound(s, "wind".equals(kind) ? 0.7F : 1.0F, pitch * (0.95F + random.nextFloat() * 0.1F));
     }
 
     /**
@@ -288,15 +329,28 @@ public class GateMonster extends AwakenMob implements RigBody {
         boolean blow = attacker instanceof LivingEntity && attacker != this && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
         boolean exposed = openTicks > 0 || staggered() || flag(F_FALLEN) || flag(F_DORMANT);
         if (d.front && blow && !exposed && fromFront(source, attacker)) {
-            // the front holds: a ring off stone or shell, a few sparks, nothing more
+            // the front holds: a ring off stone or shell, a few of its own bits, nothing more
             playSound(net.minecraft.sounds.SoundEvents.SHIELD_BLOCK.value(), 0.9F, 0.7F + random.nextFloat() * 0.1F);
-            level.sendParticles(ParticleTypes.CRIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.3, 0.3, 0.3, 0.1);
+            if (!Abilities.shed(level, this, front(), 6, 0.25, 0.1)) {
+                level.sendParticles(ParticleTypes.CRIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.3, 0.3, 0.3, 0.1);
+            }
             return false;
         }
         boolean winding = abilities != null && abilities.active() != null;
         boolean hurt = super.hurtServer(level, source, openTicks > 0 ? damage * OPEN_BITE : damage);
+        // a blow knocks a little of what it is made of off it, toward whoever struck it
+        if (hurt && blow) Abilities.shed(level, this, struckAt(source, attacker), openTicks > 0 ? 9 : 5, 0.18, 0.09);
         if (hurt && d.stopped && blow && winding && source.getDirectEntity() == attacker && isAlive()) stagger(STOPPED_TICKS);
         return hurt;
+    }
+
+    /** Where a blow met its body: its side toward where the blow came from, at about chest height. */
+    private Vec3 struckAt(DamageSource source, Entity attacker) {
+        Vec3 from = source.getSourcePosition();
+        if (from == null) from = attacker.position();
+        Vec3 to = new Vec3(from.x - getX(), 0, from.z - getZ());
+        if (to.lengthSqr() > 1.0E-4) to = to.normalize().scale(getBbWidth() * 0.5);
+        return new Vec3(getX() + to.x, getY() + getBbHeight() * 0.6, getZ() + to.z);
     }
 
     private boolean fromFront(DamageSource source, Entity attacker) {

@@ -147,7 +147,8 @@ def glint():
     K.moves(r, glint="Glint")
     K.act(r, "glint", {"body": {"rot": (0, 86, 0), "scale": (1, 1.12, 0.5), "pos": (0, 0.6, 0)}}, {"body": {"rot": (0, -20, 0), "scale": (1, 1.2, 1.1), "pos": (0, 1.5, -2)}},
           w=0.6, length=0.45, t_hit=0.08)
-    K.plain(r, {"body": {"rot": (-16, 0, -30), "pos": (0, 0.5, 1)}}, {"body": {"rot": (20, 0, 36), "pos": (0, -0.4, -2.4)}}, plant=SIX)
+    K.plain(r, {"body": {"rot": (-16, 0, -30), "pos": (0, 0.5, 1)}}, {"body": {"rot": (20, 0, 36), "pos": (0, -0.4, -2.4)}},
+            second=({"body": {"rot": (-16, 0, 30), "pos": (0, 0.5, 1)}}, {"body": {"rot": (20, 0, -36), "pos": (0, -0.4, -2.4)}}), plant=SIX)   # the cut back the other way
     K.loop(r, "idle", 4.0, lambda p: {"body": {"rot": (2 * s(p), 30 * (bump(p, 0.3, 0.05) - bump(p, 0.7, 0.05)), 3 * s(p * 2)), "pos": (0, 0.3 * s(p * 2), 0)}}, n=16)
     K.loop(r, "walk", 0.5, lambda p: {"body": (2 * s(p * 2), 4 * s(p), 4 * s(p, 0.25))})
     K.loop(r, "run", 0.36, lambda p: {"body": (10 + 2 * s(p * 2), 5 * s(p), 6 * s(p, 0.25))})
@@ -219,7 +220,10 @@ def glass_duelist():
     spent = K.planted(r, {"arm_r": (20, 0, 0), "fore_r": (10, 0, 0), "foil": (10, 0, 0), "chest": (26, -24, 0), "head": (16, 0, 0), "body": {"pos": (0, -3, -2)}}, legs)
     K.act(r, "lunge", {"arm_r": (40, 0, -10), "fore_r": (-100, 0, 0), "chest": (-6, 24, 0), "body": {"pos": (0, -2, 2)}},
           {"arm_r": (-20, 0, 0), "fore_r": (20, 0, 0), "chest": (14, -30, 0), "body": {"pos": (0, -2, -5)}}, w=0.8, length=0.45, t_hit=0.07, plant=legs, lag=lagc, stuck=spent)
-    K.plain(r, {"arm_r": (-30, 0, -30), "fore_r": (-40, 0, 0), "chest": (0, 14, 0)}, {"arm_r": (0, 0, 30), "fore_r": (16, 0, 0), "chest": (4, -18, 0), "body": {"pos": (0, 0, -2)}}, plant=legs, lag=lagc)
+    K.plain(r, {"arm_r": (-30, 0, -30), "fore_r": (-40, 0, 0), "chest": (0, 14, 0)}, {"arm_r": (0, 0, 30), "fore_r": (16, 0, 0), "chest": (4, -18, 0), "body": {"pos": (0, 0, -2)}},
+            # its other swing: out of the cut's end, a straight thrust
+            second=({"arm_r": (-10, 0, 40), "fore_r": (-50, 0, 0), "chest": (0, -16, 0)}, {"arm_r": (-70, 0, -10), "fore_r": (6, 0, 0), "chest": (6, 14, 0), "body": {"pos": (0, 0, -2.4)}}),
+            plant=legs, lag=lagc)
     K.loop(r, "idle", 4.0, lambda p: {"arm_r": (3 * s(p), 0, 4 * s(p, 0.25)), "foil": (4 * s(p * 2), 0, 4 * s(p * 2, 0.25)), "chest": (1.0 * s(p), 3 * s(p, 0.2), 0), "head": (0, 6 * s(p, 0.4), 0),
                                       "body": {"pos": (0, 0.5 * s(p * 2), 0)}}, n=14)
     K.loop(r, "walk", 0.8, lambda p: {"chest": (2, 5 * s(p), 2 * s(p)), "arm_r": (4 * s(p * 2), 0, 0), "head": (0, -4 * s(p), 0), "arm_l": (8 * s(p), 0, 0)})
@@ -292,7 +296,9 @@ def unblinking():
           w=1.1, length=0.5, t_hit=0.08, plant=legs, open_pose=K.plus(stare(-1.5, 1.4, 1.3), {"chest": (14, 0, 3)}))
     K.act(r, "never", K.plus(stare(5.0, 0.8, 0.6), {"chest": (4, 0, 0)}), K.plus(stare(-2.0, 1.3, 1.3), {"chest": (-6, 0, 0)}), w=0.5, length=0.5, t_hit=0.08, plant=legs)
     K.act(r, "reflections", K.plus(stare(1.0), {"chest": (0, 80, 0), "body": {"pos": (0, 0.5, 0)}}), K.plus(stare(-1.0, 1.2, 1.2), {"chest": (0, -24, 0)}), w=0.9, length=0.6, t_hit=0.12, plant=legs)
-    K.plain(r, K.plus(stare(1.0, 0.8), {"chest": (-26, 0, 0), "body": {"pos": (0, 0, 1)}}), K.plus(stare(0, 1.2, 1.2), {"chest": (46, 0, 0), "body": {"pos": (0, 0, -2)}}), plant=legs)
+    K.plain(r, K.plus(stare(1.0, 0.8), {"chest": (-26, 0, 0), "body": {"pos": (0, 0, 1)}}), K.plus(stare(0, 1.2, 1.2), {"chest": (46, 0, 0), "body": {"pos": (0, 0, -2)}}),
+            # its other swing: the same blow brought down across its body
+            second=(K.plus(stare(1.0, 0.8), {"chest": (-20, 22, 0), "body": {"pos": (0, 0, 1)}}), K.plus(stare(0, 1.2, 1.2), {"chest": (40, -24, 0), "body": {"pos": (0, 0, -2)}})), plant=legs)
     K.loop(r, "idle", 8.0, lambda p: K.plus(stare(0.3 * s(p * 2), 1 + 0.08 * s(p * 3), 1, 1.6 * s(p, 0.1), 1.0 * s(p * 2, 0.3)), {"chest": (1.0 * s(p), 0, 0.8 * s(p, 0.25))}), n=20)
     K.loop(r, "walk", 0.8, lambda p: K.plus(stare(), {"chest": (2 * s(p * 2), 0, 3 * s(p))}))
     K.loop(r, "run", 0.5, lambda p: K.plus(stare(1.0, 0.8), {"chest": (8 + 2 * s(p * 2), 0, 4 * s(p))}))

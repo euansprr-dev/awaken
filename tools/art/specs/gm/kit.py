@@ -149,13 +149,25 @@ def act(rig, mv, wind, hit, *, w=0.6, length=0.55, t_hit=0.09, over=0.14, back=0
             q = {b: v for b, v in q.items() if b not in limbs}
         return planted(rig, q, plant)
     wind_end = plus(wind, scaled(wind, press))
-    keyed(rig, mv + "_windup", w, [(0, {}), (0.2 * w, pl(scaled(wind, -counter), False)), (0.8 * w, pl(wind)), (w, pl(wind_end))], lag=lag)
+    # out of the counter-move and into the wind-up the body eases: slow away, quickest through the middle, slow to arrive
+    # (two keys on a smoothstep between them; a straight run from one pose to the other reads as a machine)
+    back_ = scaled(wind, -counter)
+
+    def gathering(u):
+        e = u * u * (3 - 2 * u)
+        return plus(scaled(back_, 1 - e), scaled(wind, e))
+    keyed(rig, mv + "_windup", w, [(0, {}), (0.2 * w, pl(back_, False)), (0.38 * w, pl(gathering(0.3), False)), (0.62 * w, pl(gathering(0.7))),
+                                   (0.8 * w, pl(wind)), (w, pl(wind_end))], lag=lag)
     end = open_pose if open_pose is not None else (rest or {})
     aft = after if after is not None else plus(scaled(hit, -back), scaled(end, 0.5))
     t1 = t_hit + 0.07
     t2 = min(length - 0.08, t1 + max(0.12, (length - t1) * 0.45))
-    keyed(rig, mv + "_strike", length, [(0, pl(wind_end)), (t_hit, pl(hit)), (t1, pl(plus(hit, scaled(hit, over)))), (t2, pl(aft, False)),
-                                        (length, pl(end))], lag=lag)
+    skeys = [(0, pl(wind_end)), (t_hit, pl(hit)), (t1, pl(plus(hit, scaled(hit, over)))), (t2, pl(aft, False))]
+    if length - t2 > 0.14:
+        # it does not stop dead where it ends: a last small rock back toward the blow, then still
+        skeys.append((t2 + (length - t2) * 0.55, pl(plus(end, scaled(hit, 0.035)))))
+    skeys.append((length, pl(end)))
+    keyed(rig, mv + "_strike", length, skeys, lag=lag)
     held = open_pose if open_pose is not None else stuck
     if held is not None:
         sway = scaled(held, 0.05)
@@ -195,19 +207,25 @@ def moves(rig, **ability_of):
             rig._abilities[ab] = mv
 
 
-def plain(rig, wind, hit, *, heavy=None, **kw):
-    """Its plain blow (the clips are windup / strike; a big body's every third is heavy_windup / heavy_strike)."""
+def plain(rig, wind, hit, *, heavy=None, second=None, **kw):
+    """Its plain blow (the clips are windup / strike; a big body's every third is heavy_windup / heavy_strike).
+    second = (wind, hit): its other swing (windup2 / strike2), which a body that strings its blows together throws as
+    every second one (SPEC §60.8): the other hand, the backhand, the bite from the other side."""
     kw.setdefault("w", 0.4)
     kw.setdefault("length", 0.42)
     kw.setdefault("t_hit", 0.07)
-    _plain(rig, "", wind, hit, **kw)
+    _plain(rig, "", "", wind, hit, **kw)
     if heavy is not None:
         hw, hh = heavy
         kw2 = dict(kw, w=0.7, length=0.6, t_hit=0.09)
-        _plain(rig, "heavy_", hw, hh, **kw2)
+        _plain(rig, "heavy_", "", hw, hh, **kw2)
+    if second is not None:
+        sw, sh = second
+        kw3 = {k: v for k, v in kw.items() if k not in ("open_pose", "stuck")}
+        _plain(rig, "", "2", sw, sh, **kw3)
 
 
-def _plain(rig, prefix, wind, hit, **kw):
+def _plain(rig, prefix, suffix, wind, hit, **kw):
     saved = dict(rig.moves)
     act(rig, "_plain", wind, hit, **kw)
     rig.moves.clear()
@@ -216,14 +234,25 @@ def _plain(rig, prefix, wind, hit, **kw):
         clip = rig.clips.pop("_plain_" + stage, None)
         if clip is None:
             continue    # (a plain blow has an open clip only if it was given an open pose)
-        clip.name = prefix + stage
+        if suffix and stage == "open":
+            continue    # (its other swing leaves it as its first does)
+        clip.name = prefix + stage + suffix
         rig.clips[clip.name] = clip
+
+
+def other_side(wind, hit, turn=("head",), roll=16.0, more=1.12):
+    """A body's other swing made from its first, for a blow thrown with the head (a bite, a butt, a peck): the same
+    gather and snap with the head rolled over the other way and driven a little further, so a second bite comes in from
+    the other side of the jaw instead of repeating the first. Returns (wind, hit) for plain(second=...)."""
+    w2 = plus(wind, {b: (0, 0, -roll) for b in turn})
+    h2 = plus(scaled(hit, more), {b: (0, 0, roll * 0.9) for b in turn})
+    return w2, h2
 
 
 def flinch(rig, p, length=0.4, plant=()):
     """Struck: thrown into the pose in a twentieth of a second, back past rest, settled."""
     f = (lambda q: planted(rig, q, plant)) if plant else (lambda q: q)
-    return keyed(rig, "hurt", length, [(0, {}), (0.05, f(p)), (0.19, f(scaled(p, -0.28))), (length, {})])
+    return keyed(rig, "hurt", length, [(0, {}), (0.05, f(p)), (0.19, f(scaled(p, -0.28))), (0.3, f(scaled(p, 0.09))), (length, {})])
 
 
 def bump(p, at, width=0.06):

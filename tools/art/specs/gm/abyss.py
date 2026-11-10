@@ -115,6 +115,9 @@ def silent_one():
     K.act(r, "step", K.planted(r, {"body": {"pos": (0, -5.5, 0)}, "head": {"rot": (20, 0, 0), "scale": (0.7, 0.7, 0.7)}}, FOUR), K.planted(r, {"body": {"pos": (0, 3, -1)}, "head": (-14, 0, 0)}, FOUR),
           w=0.7, length=0.6, t_hit=0.12, plant=FOUR)
     K.plain(r, {"body": {"pos": (0, 2, 1.5), "rot": (-10, 0, 0)}, "leg0_r": (0, -30, 40), "shin0_r": (0, 0, 30), "head": (-12, 0, 0)}, {"body": {"pos": (0, -1.5, -2.5), "rot": (10, 0, 0)}, "head": (10, 0, 0)},
+            # its other swing: the left forelimb cocked instead of the right
+            second=({"body": {"pos": (0, 2, 1.5), "rot": (-10, 0, 0)}, "leg0_l": (0, 30, -40), "shin0_l": (0, 0, -30), "head": (-12, 0, 0)},
+                    {"body": {"pos": (0, -1.5, -2.5), "rot": (10, 0, 0)}, "head": (10, 0, 0)}),
             plant=FOUR)
     K.loop(r, "idle", 9.0, lambda p: {"body": {"pos": (0, 1.2 * s(p), 0), "rot": (0, 3 * s(p, 0.2), 1.0 * s(p, 0.4))}, "head": (4 * s(p, 0.3), 30 * (bump(p, 0.3, 0.07) - bump(p, 0.75, 0.07)), 0)}, n=18,
            plant=FOUR)
@@ -164,7 +167,9 @@ def void_spawn():
     K.moves(r, bite="Void Bite")
     splat = K.plus(sq(0.45), whip(-10))
     K.act(r, "bite", K.plus(sq(0.62), whip(50)), K.plus(whip(-30), {"body": {"scale": (0.85, 1.3, 0.85), "pos": (0, 3, -3), "rot": (-20, 0, 0)}}), w=0.5, length=0.4, t_hit=0.07, lag=lagc, stuck=splat)
-    K.plain(r, K.plus(sq(0.8), whip(30)), K.plus(whip(-20), {"body": {"rot": (20, 0, 0), "pos": (0, 0.5, -2), "scale": (0.92, 1.12, 0.92)}}), lag=lagc)
+    K.plain(r, K.plus(sq(0.8), whip(30)), K.plus(whip(-20), {"body": {"rot": (20, 0, 0), "pos": (0, 0.5, -2), "scale": (0.92, 1.12, 0.92)}}),
+            # its other swing: the lash back the other way
+            second=(K.plus(sq(0.85), whip(-34)), K.plus(whip(26), {"body": {"rot": (-14, 0, 0), "pos": (0, 0.5, -2), "scale": (0.92, 1.12, 0.92)}})), lag=lagc)
     K.loop(r, "idle", 3.0, lambda p: K.plus(sq(1 + 0.05 * s(p * 2)), whip(8 * s(p)), {"tail": (0, 14 * s(p, 0.2), 0)}))
     K.loop(r, "walk", 0.5, lambda p: K.plus(sq(1 + 0.14 * s(p)), whip(20 * s(p, 0.2))))
     K.loop(r, "run", 0.36, lambda p: K.plus(sq(1 + 0.2 * s(p)), whip(30 * s(p, 0.2)), {"body": (-8, 0, 0)}))
@@ -318,7 +323,8 @@ def nothing():
     low = K.plus(crane(40, 60, 30), swell(0.96))
     K.act(r, "event", K.plus(crane(10, 20, -6, 16), swell(1.06)), K.plus(crane(34, 30, -24, 22), swell(1.12)), w=1.3, length=0.6, t_hit=0.12, lag=lagc, open_pose=low)
     K.act(r, "unlight", K.plus(crane(-14, -6, -30, -10), swell(1.04)), K.plus(crane(-6, 6, 20, -16), swell(0.98)), w=1.0, length=0.6, t_hit=0.12, lag=lagc)
-    K.plain(r, crane(-30, -24, 10, 0, "m"), crane(46, 40, -20, 0, "m"), heavy=(crane(-20, -20, 10, -20, "lr"), crane(40, 36, -16, 26, "lr")), lag=lagc)
+    K.plain(r, crane(-30, -24, 10, 0, "m"), crane(46, 40, -20, 0, "m"), heavy=(crane(-20, -20, 10, -20, "lr"), crane(40, 36, -16, 26, "lr")),
+            second=(crane(-30, -24, 10, 0, "l"), crane(46, 40, -20, 12, "l")), lag=lagc)   # its other swing: the left head alone
 
     def idle(p):
         q = {}

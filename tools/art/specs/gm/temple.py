@@ -211,7 +211,10 @@ def bramble_hound():
           {"body": {"pos": (0, 2.5, -5), "rot": (-16, 0, 0)}, "neck": (10, 0, 0), "head": (-10, 0, 0), "jaw": (30, 0, 0), "leg0_l": (-60, 0, 0), "leg0_r": (-60, 0, 0),
            "leg1_l": (50, 0, 0), "leg1_r": (50, 0, 0)}, w=0.8, length=0.45, t_hit=0.08, plant=QUAD, lag=lagc, stuck=spent)
     K.plain(r, {"neck": (-18, 0, 0), "head": (6, 0, 0), "jaw": (26, 0, 0), "body": {"pos": (0, -0.6, 1.2)}}, {"neck": (16, 0, 0), "head": (-6, 0, 0), "jaw": (-2, 0, 0),
-                                                                                                      "body": {"pos": (0, 0, -2.6)}}, plant=QUAD, lag=lagc)
+                                                                                                      "body": {"pos": (0, 0, -2.6)}},
+            second=K.other_side({"neck": (-18, 0, 0), "head": (6, 0, 0), "jaw": (26, 0, 0), "body": {"pos": (0, -0.6, 1.2)}},
+                                {"neck": (16, 0, 0), "head": (-6, 0, 0), "jaw": (-2, 0, 0), "body": {"pos": (0, 0, -2.6)}}),
+            plant=QUAD, lag=lagc)
     K.loop(r, "idle", 6.0, lambda p: {"neck": (2 * s(p), 6 * s(p, 0.3), 0), "head": (0, 0, 8 * bump(p, 0.6, 0.04)), "ear_l": (14 * bump(p, 0.3, 0.02), 0, 0),
                                       "ear_r": (14 * bump(p, 0.75, 0.02), 0, 0), "tail": (0, 10 * s(p * 2), 0), "seed": {"scale": (1 + 0.2 * s(p * 3),) * 3}}, n=16)
     K.loop(r, "walk", 0.7, lambda p: {"neck": (4 * s(p * 2, 0.1), 0, 2 * s(p)), "head": (-3 * s(p * 2, 0.2), 0, 0), "tail": (0, 14 * s(p), 0), "body": (1.2 * s(p * 2), 0, 2 * s(p))})

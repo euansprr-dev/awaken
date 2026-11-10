@@ -78,6 +78,14 @@ public final class MobDef {
     public final float muzzleUp, muzzleOut;
     /** Ticks it stands open after its own plain blow (a body that leaves itself open when it swings). */
     public final int spent;
+    /**
+     * Its plain blow's own rhythm (SPEC §60.8): ticks each blow is told (0: its tier's 8, 9 or 10) and how many blows
+     * it strings together, each told on its own ({@link #blowWeight} keeps what the string does per second the same).
+     */
+    public final int blowTell, blowChain;
+    /** What its blows throw off, and in what colour (SPEC §60.8); null: nothing of its own. */
+    public final @Nullable Matter matter;
+    public final int matterRgb;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -137,6 +145,25 @@ public final class MobDef {
         this.muzzleUp = b.muzzleUp;
         this.muzzleOut = b.muzzleOut;
         this.spent = b.spent;
+        this.blowTell = b.blowTell;
+        this.blowChain = Math.max(1, b.blowChain);
+        this.matter = b.matter;
+        this.matterRgb = b.matterRgb;
+    }
+
+    /** Ticks between two blows of a string: the first one's follow-through, before the next is told. */
+    public static final int STRING_GAP = 5;
+
+    /**
+     * How hard each blow of its own rhythm lands, against the plain swing its tier would throw ({@code tierTell} ticks
+     * told, then 20 of rest): a slow blow lands harder and each blow of a string softer, so that what it does per second
+     * stays what its damage number says. 1 for a monster with no rhythm of its own.
+     */
+    public float blowWeight(int tierTell) {
+        if (blowTell <= 0 && blowChain <= 1) return 1.0F;
+        int tell = blowTell > 0 ? blowTell : tierTell;
+        float string = blowChain * tell + (blowChain - 1) * STRING_GAP + 20;
+        return string / ((tierTell + 20) * blowChain);
     }
 
     public boolean isFauna() {
@@ -210,7 +237,8 @@ public final class MobDef {
         boolean placed, grounded;
         boolean rig, stopped, front, planted;
         Model.Move moves;
-        int open, miss, fall, spent;
+        int open, miss, fall, spent, blowTell, blowChain, matterRgb;
+        Matter matter;
         ShotLook shot;
         float muzzleUp, muzzleOut;
 
@@ -287,6 +315,21 @@ public final class MobDef {
         /** Its own plain blow leaves it open for this many ticks. */
         public B spent(int ticks) {
             this.spent = ticks;
+            return this;
+        }
+
+        /** Its plain blow is told for {@code tell} ticks (at least 8), and it strings {@code chain} of them together. */
+        public B blow(int tell, int chain) {
+            if (tell < 8 || chain < 1 || chain > 3) throw new IllegalArgumentException(id + ": a blow is told for 8 ticks or more, in strings of 1 to 3");
+            this.blowTell = tell;
+            this.blowChain = chain;
+            return this;
+        }
+
+        /** Its blows throw off bits of this shape and colour. */
+        public B matter(Matter shape, int rgb) {
+            this.matter = shape;
+            this.matterRgb = rgb;
             return this;
         }
 

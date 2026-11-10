@@ -62,8 +62,9 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         this.blink = exists(Awaken.id(dir + def.id + "_blink.png"));
         WildModel m = getModel();
         List<String> names = FaunaMob.moveNames(def);
-        // a gate monster's plain blow is two more moves after its abilities: the light swing and a big body's heavy one
-        int plain = def.rig ? 2 : 0;
+        // a gate monster's plain blow is three more moves after its abilities: the light swing, a big body's heavy one,
+        // and the other swing a body that strings its blows throws every second time (SPEC §60.8)
+        int plain = def.rig ? dev.awaken.mobs.entity.GateMonster.PLAIN_SLOTS : 0;
         windup = new int[names.size() + plain];
         strike = new int[windup.length];
         open = new int[windup.length];
@@ -91,14 +92,16 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         }
         for (int k = 0; k < plain; k++) {
             int i = names.size() + k;
-            int told = switch (def.tier) { // MobGoals.ToldMelee.tellTicks
+            int told = def.blowTell > 0 ? def.blowTell : switch (def.tier) { // MobGoals.ToldMelee.tellTicks
                 case ELITE -> 9;
                 case NORMAL -> 8;
                 default -> 10;
             };
             windupSeconds[i] = (told + (k == 1 ? 6 : 0)) / 20.0F;
-            windup[i] = k == 1 && m.clip("heavy_windup") >= 0 ? m.clip("heavy_windup") : m.clip("windup");
-            strike[i] = k == 1 && m.clip("heavy_strike") >= 0 ? m.clip("heavy_strike") : m.clip("strike");
+            String pre = k == 1 && m.clip("heavy_windup") >= 0 ? "heavy_" : "";
+            String post = k == 2 && m.clip("windup2") >= 0 ? "2" : "";
+            windup[i] = m.clip(pre + "windup" + post);
+            strike[i] = m.clip(pre + "strike" + post);
             open[i] = m.clip("open"); // where its own blow leaves it open (MobDef.spent)
         }
         addLayer(new Glow(this, Awaken.id(dir + def.id + "_glow.png"), exists(Awaken.id(dir + def.id + "_glow_blink.png"))));

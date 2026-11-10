@@ -75,19 +75,18 @@ public final class MobSounds {
     }
 
     /**
-     * The gate monsters' own voices, {@code monster.<id>.<kind>} (SPEC §60): ambient, hurt, death and step for every
-     * monster on a body of its own. Each points at Minecraft's own recordings by name, re-pitched and layered, in
-     * src/main/merge/mobs_monsters (written by tools/art/specs/gate_monsters.py).
+     * The gate monsters' own voices, {@code monster.<id>.<kind>} (SPEC §60): ambient, hurt and death for every monster
+     * on a body of its own, step for the ones that walk, and its fight's two (§60.8): wind as it gathers a blow, blow as
+     * it lets go. Each points at Minecraft's own recordings by name, re-pitched, in src/main/merge/mobs_monsters
+     * (written by tools/art/specs/gate_monsters.py, which also writes the list of the ones that exist:
+     * {@code mobs.def.GateVoices}).
      */
-    public static final java.util.List<String> MONSTER_KINDS = java.util.List.of("ambient", "hurt", "death", "step");
+    public static final java.util.List<String> MONSTER_KINDS = java.util.List.of("ambient", "hurt", "death", "step", "wind", "blow");
     private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> MONSTER = monsterSounds();
 
     private static java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> monsterSounds() {
         java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> m = new java.util.HashMap<>();
-        for (dev.awaken.mobs.def.MobDef d : dev.awaken.mobs.def.Bestiary.all()) {
-            if (!d.rig) continue;
-            for (String kind : MONSTER_KINDS) m.put(d.id + "." + kind, sound("monster." + d.id + "." + kind));
-        }
+        for (String key : dev.awaken.mobs.def.GateVoices.KEYS) m.put(key, sound("monster." + key));
         return java.util.Map.copyOf(m);
     }
 

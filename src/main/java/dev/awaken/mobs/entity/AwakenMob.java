@@ -101,6 +101,9 @@ public class AwakenMob extends Monster {
 
     private @Nullable MobDef def;
     protected @Nullable AbilityRunner abilities;
+    /** Server: which blow of its string it is telling or throwing (0 the first), and whether that one ends the string (MobGoals.ToldMelee). */
+    int blowAt;
+    boolean blowLast = true;
     protected @Nullable ServerBossEvent bar;
     /** Players tracking this mob. Its bar shows to the ones near its height: tracking ignores height, and a gate's
      *  floors are stacked 32 blocks apart, so a living Lord would otherwise show its bar on every floor above it. */

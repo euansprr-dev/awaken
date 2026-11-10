@@ -72,6 +72,9 @@ def test_subject():
           K.plus(heave(1.1), {"body": {"rot": (10, 0, 0), "pos": (0, 1.5, -5)}, "head": (16, 0, 0), "arm_l": (-70, 0, -10), "leg0_l": (-50, 0, 0), "leg0_r": (-50, 0, 0),
                               "leg1_l": (40, 0, 0), "leg1_r": (40, 0, 0)}), w=0.9, length=0.5, t_hit=0.08, plant=QUAD, lag=lagc, stuck=tipped)
     K.plain(r, K.plus(heave(1.2), {"body": {"rot": (-8, 0, 0), "pos": (0, 0, 1.5)}, "arm_l": (20, 0, -40)}), K.plus(heave(1.0), {"body": {"rot": (10, 0, 0), "pos": (0, -0.5, -2.6)}, "arm_l": (-80, 0, 10)}),
+            # its other swing: the one loose arm flung back across the other way
+            second=(K.plus(heave(1.25), {"body": {"rot": (-6, 0, 6), "pos": (0, 0, 1.2)}, "arm_l": (-90, 0, 30), "fore_l": (-30, 0, 0)}),
+                    K.plus(heave(1.0), {"body": {"rot": (10, 0, -6), "pos": (0, -0.5, -2.6)}, "arm_l": (-30, 0, -50), "fore_l": (10, 0, 0)})),
             plant=QUAD, lag=lagc)
     K.loop(r, "idle", 5.0, lambda p: K.plus(heave(1 + 0.06 * s(p) + 0.3 * bump(p, 0.6, 0.03)), {"head": (4 * s(p, 0.2) - 14 * bump(p, 0.6, 0.03), 10 * s(p, 0.4), 0),
                                                                                               "arm_l": (4 * s(p, 0.3), 0, 0), "body": (0, 0, 2.5 * bump(p, 0.62, 0.03))}), n=20)
@@ -346,7 +349,9 @@ def sweeper():
     K.act(r, "decon", {"body": {"scale": (1.03, 0.92, 1.03)}, **vents(-10)}, {"body": {"scale": (0.98, 1.06, 0.98), "pos": (0, 0.6, 1)}, **vents(70)}, w=1.0, length=0.55, t_hit=0.09,
           open_pose={"body": {"rot": (0, 0, 2)}, **vents(60), "beacon": {"scale": (1, 0.5, 1)}})
     K.plain(r, {"body": {"rot": (-5, 0, 0), "pos": (0, 0, 2)}, "drum": (90, 0, 0)}, {"body": {"rot": (5, 0, 0), "pos": (0, 0, -3.5)}, "drum": (360, 0, 0)},
-            heavy=({"body": (0, 30, 0), "drum": (135, 0, 0)}, {"body": {"rot": (0, -40, 0), "pos": (0, 0, -2)}, "drum": (495, 0, 0)}))
+            heavy=({"body": (0, 30, 0), "drum": (135, 0, 0)}, {"body": {"rot": (0, -40, 0), "pos": (0, 0, -2)}, "drum": (495, 0, 0)}),
+            # its other swing: the ram brought in from the other side
+            second=({"body": {"rot": (-5, -24, 0), "pos": (0, 0, 2)}, "drum": (90, 0, 0)}, {"body": {"rot": (5, 26, 0), "pos": (0, 0, -3.5)}, "drum": (360, 0, 0)}))
     turning(r, "idle", 4.0, lambda p: {"body": {"rot": (0, 0, 0.5 * s(p * 4)), "pos": (0, 0.15 * s(p * 8), 0)}}, {"drum": (0, 45), "beacon": (1, 360)}, n=16)
     turning(r, "walk", 0.8, lambda p: {"body": (1.0 * s(p * 2), 0, 0.8 * s(p))}, rolls)
     turning(r, "run", 0.4, lambda p: {"body": (3 + 1.0 * s(p * 2), 0, 1.0 * s(p))}, {"drum": (0, 90), "wheel_l": (0, 90), "wheel_r": (0, 90), "beacon": (1, 90)})

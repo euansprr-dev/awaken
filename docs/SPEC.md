@@ -20738,10 +20738,102 @@ motion profile. The offline check (`gate_monsters.py check`) covers what needs n
 the body lying on the floor (`kit.lying` folds any limb that would hold a fallen body up in the air; `fall` does it
 for every death that uses it).
 
-### 60.6 Known gaps (nothing here was seen in game when this was written)
+### 60.6 Known gaps
 
-- The Mourner still fires ordinary arrows, not its ribs; the Gel Sample's two halves keep their glass; the Mirage's
-  "only the real one casts a shadow" and the Sheet's "moves only when you blink" lean on rules the bestiary already
-  had (DECOY, HAUNTED) and were not re-tuned.
-- The Empty Suit's own swing does not open it (it parries with the GUARD ability it always had).
-- Particles and sounds for the new moves reuse each ability's existing effects.
+- The Gel Sample's two halves keep their glass; the Mirage's "only the real one casts a shadow" and the Sheet's "moves
+  only when you blink" lean on rules the bestiary already had (DECOY, HAUNTED) and were not re-tuned.
+- The shared carriers (the wave, the lobbed globe, the ground line, the pull) are the fight language of §47.2 and are
+  drawn the same for every creature on purpose; a monster's own look is its body, its shot (§60.7), its matter and its
+  two fight voices (§60.8).
+- The fight voices and the shots have not been heard or seen by Euan; the film reels (§60.9) are how they were checked.
+
+### 60.7 What they throw (the fight pass, Euan 2026-11-10: "some still fire ordinary arrows... completely custom attacks")
+
+No gate monster fires an arrow or the plain glow. Every monster with a BOLT, ARROWS or NOVA ability names its shot on
+its bestiary line, `.shot(ShotLook.X, up, out)`:
+
+- `mobs.def.ShotLook` (18 looks: rib, spore, cinder, thorn, ink, quill, card, rivet, shard, oil, hail, point, arc,
+  gust, quarrel, spar, ring, hood): a 16×8 sprite in the body's own colours
+  (`textures/entity/monsters/shots/<id>.png`, painted by `tools/art/specs/gm/shots.py`), whether it flies tip first
+  (a dart: two crossed planes along the flight) or tumbles (a billboard turning in the eye's plane), and how fast it spins.
+- `AwBolt` carries the look (synced byte); `mobs.client.ShotRenderer` draws the sprite full-bright inside the
+  answer-colour glow (kept smaller, so the class still reads: white-gold deflects).
+- `up`, `out`: the muzzle, in blocks over its feet and ahead of its body yaw (`Abilities.muzzle`). Shots leave from
+  there and the wind-up's gathering motes collect there: the Mourner's ribs from its chest, the Riveter's rivets from
+  its gun, the Lamplighter's flasks from the top of its pole.
+- ARROWS on a body with a shot is a volley of its own shots (`Abilities.volley`: the fan of §47.2, each at 0.65 of the
+  ability's damage, LIGHT), never `AbstractArrow`.
+- The offline check refuses a shooter with no shot and a `ShotLook` with no sprite; the game test asserts the same
+  and that the Mourner's volley is ribs.
+
+### 60.8 Its own way of hitting (the fight pass)
+
+**The bug this pass found.** In play no ordinary creature's plain blow ever landed. `MobGoals.ToldMelee` stops its
+navigation while it winds up, and vanilla's `MeleeAttackGoal.canContinueToUse` (not following unseen) gives up when the
+path is done, so the goal selector ended the goal two ticks into every wind-up; twenty ticks later it began again and
+was ended again. Abilities were unaffected, which hid it, and `mobs_told_melee` drives the goal by hand and never met
+the selector. Fix: `ToldMelee.canContinueToUse` holds while a blow is being told or followed through, and the chase is
+taken up again as the blow is thrown. `gate_monster_plain_blow_lands` runs the real loop. Every creature with a told
+melee hits with its plain blow again (not only the gates'); fights with ordinary creatures are harder than they were
+between 25 Oct and this fix.
+
+**Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
+blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
+for `STRING_GAP` (5) ticks, steps in (0.42 b/t toward a target out of reach) and tells the next, with its own closing
+circle. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+`blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
+own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
+did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
+
+- Snappers, two quick bites or cuts (8, 2): Sporeling, Capweaver, Coal Tick, Cog Hound, Sand Stalker, Bramble Hound,
+  Ice Hound, Glint, Test Subject, Silent One, Void Spawn.
+- Duelists, three (9, 3): Fan Dancer (left fan, right fan, left), Glass Duelist (cut, thrust, cut).
+- One-two (12, 2): the Rot, the Overseer (swing and backhand), the Regulator, the Lamplighter, the Unblinking, the
+  Sweeper, the Waking (right arm, left arm), the Nothing (middle head, left head).
+- Slow and heavy, one blow: 16: Pallbearer, Steam Hammer, Overgrowth, Yeti; 14: Sexton, Shelf, Pickhead, Slag Boar,
+  Door, Empty Suit (then open, `spent`), Security Unit, Tall One; 12: Toller, Shardwalker, Creaker, Frozen Monk, Gel
+  Sample, Sheet, Hollow Priest; 10: Chime (its dive), Slag Pot, Blotter, Prism, Grub, Honeypot, Hopping Lantern, Many
+  Eyes, the Gale.
+- Shooters that keep their range and fliers that only dive keep their rank's tell.
+
+**The other swing.** A body that strings its blows has a second swing, clips `windup2` / `strike2`
+(`K.plain(..., second=(wind, hit))`; for a bite, `K.other_side`: the head rolled over the other way and driven
+further). The server cues it as a third plain slot (`GateMonster.secondSlot`, after the plain and the heavy) for every
+second blow of a string; the renderer stretches every plain wind-up to the def's own tell. The offline check refuses a
+chain without a second swing.
+
+**Spent.** `MobDef.spent(t)`: its own plain blow leaves it open for `t` ticks (the last blow of a string): the cue goes
+to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
+
+**Matter.** `MobDef.matter(Matter.X, 0xRRGGBB)`: what its blows throw off, one of the shots' seven particle shapes
+(spark, ember, flake, wisp, puff, drop, sliver) in its own colour: bronze sparks off the Toller, paper off the Fan
+Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
+lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
+where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam. Wherever
+a monster has matter the borrowed vanilla puff, blast, portal sparkle or ink is not drawn.
+
+**Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
+Minecraft's own recordings by name, re-pitched; what the body is made of, moving; no high ring at the blow). `wind`
+plays under the tell's own sound as a blow or a move begins (0.7 volume; the tell's sound stays the same on every
+creature so it can be learned), `blow` as it lets go; a heavy is pitched down, the later blows of a string up. A call
+(a summon, a heal, a guard, its copies, a frenzy) is its own ambient voice raised. A body with a blow voice no longer
+plays the borrowed creature sounds for its moves (the enderman's teleport, the evoker's summon, the illusioner, the
+ravager's roar, the dragon's breath, the shulker, the shrieker, the skeleton's bow, the beacon). The game registers
+exactly the voices that exist (`mobs.def.GateVoices`, generated): a flier has no step.
+
+**In the studio.** `/awaken admin monster target` gives the nearest gate monster the nearest creature that isn't one of
+ours as its target; `/awaken admin monster act <n>` makes it act its nth move at it (`GateMonster.act`).
+
+### 60.9 Motion, and how it is checked
+
+- Wind-ups ease: out of the counter-move and into the gathered pose on a smoothstep (two keys between), never a
+  straight run. Strikes and flinches end with a small rock back toward the blow before they are still.
+- Loops keep what is written into them: a long idle is sampled finely and its even keys doubled until a straight line
+  between neighbours is within 0.8°, 0.1 px and 1.5% of scale of the function (`K.enough_keys`), so a glance or a twitch
+  a quarter of a second wide plays as written.
+- A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
+  death that ends more than 12 px over the floor.
+- **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
+  monsters a reel, ten reels): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
+  a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.

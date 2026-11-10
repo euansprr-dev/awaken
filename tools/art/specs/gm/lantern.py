@@ -297,7 +297,10 @@ def fan_dancer():
           K.plus(fans(23), {"arm_l": (-80, 0, 40), "arm_r": (-80, 0, -40), "fore_l": (30, 0, 0), "fore_r": (30, 0, 0), "chest": (16, -40, 0), "body": {"pos": (0, -0.5, -4), "rot": (0, -30, 0)}}),
           w=0.9, length=0.5, t_hit=0.08, plant=legs, lag=lagc, stuck=spent)
     K.plain(r, K.plus(fans(23, -5), {"arm_l": (-30, 0, -60), "fore_l": (30, 0, 0), "chest": (0, 24, 0)}), K.plus(fans(23, -5), {"arm_l": (-80, 0, 30), "fore_l": (40, 0, 0), "chest": (8, -28, 0),
-                                                                                                                         "body": {"pos": (0, 0, -2)}}), plant=legs, lag=lagc)
+                                                                                                                         "body": {"pos": (0, 0, -2)}}),
+            # its other swing: the right fan, the other way across
+            second=(K.plus(fans(-5, 23), {"arm_r": (-30, 0, 60), "fore_r": (30, 0, 0), "chest": (0, -24, 0)}),
+                    K.plus(fans(-5, 23), {"arm_r": (-80, 0, -30), "fore_r": (40, 0, 0), "chest": (8, 28, 0), "body": {"pos": (0, 0, -2)}})), plant=legs, lag=lagc)
     K.loop(r, "idle", 6.0, lambda p: K.plus(fans(-5 + 26 * bump(p, 0.3, 0.07), -5 + 26 * bump(p, 0.75, 0.07)), {"chest": (1.2 * s(p), 4 * s(p, 0.2), 0), "head": (0, 10 * s(p, 0.4), 4 * bump(p, 0.3, 0.06)),
                                                                                                              "arm_l": (-16 * bump(p, 0.3, 0.07), 0, 0), "arm_r": (-16 * bump(p, 0.75, 0.07), 0, 0)}), n=24)
     K.loop(r, "walk", 1.0, lambda p: K.plus(fans(8 + 14 * max(0, s(p)), 8 + 14 * max(0, s(p, 0.5))), {"chest": (2, 6 * s(p), 2 * s(p)), "head": (0, -5 * s(p), 0), "arm_l": (10 * s(p), 0, 0),
@@ -397,6 +400,8 @@ def lamplighter():
           {"body": {"pos": (0, 2, -3)}, "chest": (-8, 0, 0), "head": (-10, 0, 0), "arm_r": (-20, 0, 0)}, w=0.6, length=0.55, t_hit=0.12, plant=legs, lag=lagc)
     K.plain(r, {"arm_r": (-60, 0, 0), "pole": (-50, 0, 0), "chest": (-8, 14, 0)}, {"arm_r": (20, 0, 0), "pole": (30, 0, 0), "chest": (14, -16, 0), "body": {"pos": (0, -1.5, -1.5)}},
             heavy=({"arm_r": (-120, 0, 0), "pole": (-60, 0, 0), "chest": (-14, 0, 0), "body": {"pos": (0, 1.5, 0)}}, {"arm_r": (40, 0, 0), "pole": (40, 0, 0), "chest": (22, 0, 0), "body": {"pos": (0, -3, -1)}}),
+            # its other swing: the pole carried round level by its chest turning
+            second=({"arm_r": (-70, 0, 0), "pole": (-20, 0, 0), "chest": (0, 30, 0)}, {"arm_r": (-60, 0, 0), "pole": (10, 0, 0), "chest": (6, -34, 0), "body": {"pos": (0, -0.5, -1.5)}}),
             plant=legs, lag=lagc)
     K.loop(r, "idle", 8.0, lambda p: {"chest": (1.5 * s(p), 3 * s(p, 0.2), 1.0 * s(p * 2)), "head": (4 * bump(p, 0.5, 0.05), 16 * s(p, 0.35), 0), "arm_r": (3 * s(p, 0.3), 0, 0),
                                       "pole": (4 * s(p, 0.5), 0, 0), "arm_l": (3 * s(p, 0.6), 0, 0), "body": {"pos": (0, 0.8 * s(p * 2), 0)}}, n=16)

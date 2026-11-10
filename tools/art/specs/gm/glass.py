@@ -124,7 +124,9 @@ def sand_stalker():
     K.moves(r, burrow="Burrow Strike")
     K.act(r, "burrow", dict(snap(40), body={"pos": (0, -1.8, 0), "scale": (1.12, 0.4, 1.12)}), dict(snap(-22), body={"pos": (0, 3.5, -2), "rot": (-24, 0, 0)}),
           w=0.8, length=0.5, t_hit=0.08)
-    K.plain(r, dict(snap(46), head=(-8, 0, 0), body={"pos": (0, 0, 1.2)}), dict(snap(-24), head=(6, 0, 0), body={"pos": (0, 0, -2.6)}), plant=SIX)
+    K.plain(r, dict(snap(46), head=(-8, 0, 0), body={"pos": (0, 0, 1.2)}), dict(snap(-24), head=(6, 0, 0), body={"pos": (0, 0, -2.6)}),
+            # its other swing: the snap again with its head rolled over
+            second=(dict(snap(52), head=(-8, 0, 16), body={"pos": (0, 0, 1.2)}), dict(snap(-26), head=(6, 0, -14), body={"pos": (0, 0, -2.8)})), plant=SIX)
     K.loop(r, "idle", 5.0, lambda p: dict(snap(6 + 6 * s(p) + 14 * bump(p, 0.7, 0.03)), head=(0, 6 * s(p, 0.3), 0), body={"pos": (0, 0.3 * s(p * 2), 0)}), n=16)
     K.loop(r, "walk", 0.6, lambda p: dict(snap(8 + 4 * s(p * 2)), body=(0, 3 * s(p), 1.5 * s(p, 0.25)), head=(0, -3 * s(p), 0)))
     K.loop(r, "run", 0.4, lambda p: dict(snap(22 + 6 * s(p * 2)), body=(-3, 4 * s(p), 2 * s(p, 0.25)), head=(-4, -4 * s(p), 0)))

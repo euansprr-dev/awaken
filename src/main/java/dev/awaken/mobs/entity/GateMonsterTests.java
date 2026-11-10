@@ -52,9 +52,25 @@ public final class GateMonsterTests {
                         }
                     }
                 }
-                for (String kind : new String[] {"ambient", "hurt", "death"}) {
+                for (String kind : new String[] {"ambient", "hurt", "death", "wind", "blow"}) {
                     h.assertTrue(MobSounds.monster(d.id, kind) != null, d.id + ": no " + kind + " voice");
                 }
+                // its fight is its own (SPEC §60.8): its blows throw its own matter; a body that strings its blows has
+                // its other swing; and its rhythm is weighed so a string does per second what one plain swing did
+                h.assertTrue(d.matter != null, d.id + ": its blows throw nothing of its own");
+                if (d.blowChain > 1) {
+                    h.assertTrue(rig.clips.containsKey("windup2") && rig.clips.containsKey("strike2"), d.id + ": it strings its blows and has no other swing");
+                }
+                int rank = switch (d.tier) {
+                    case ELITE -> 9;
+                    case NORMAL -> 8;
+                    default -> 10;
+                };
+                int tell = d.blowTell > 0 ? d.blowTell : rank;
+                float string = d.blowChain * tell + (d.blowChain - 1) * MobDef.STRING_GAP + 20;
+                float perSecond = d.blowWeight(rank) * d.blowChain / string, plain = 1.0F / (rank + 20);
+                h.assertTrue(d.blowTell == 0 || d.blowTell >= 8, d.id + ": a blow told for under 8 ticks");
+                h.assertTrue(Math.abs(perSecond - plain) < 1.0E-4F, d.id + ": its rhythm does " + perSecond + " a tick, a plain swing " + plain);
                 // what it throws is its own (SPEC §60.7): never an arrow, never the plain glow
                 boolean shoots = false;
                 for (MobDef.Phase p : d.phases) {
@@ -194,6 +210,60 @@ public final class GateMonsterTests {
             h.assertTrue(m.isOpen() && FaunaMob.cueStage(m.cue()) == RigBody.CUE_OPEN, "it swung: it stands open");
             m.discard();
             h.succeed();
+        });
+
+        AwakenTests.register("gate_monster_strings_its_blows", 200, h -> {
+            GateMonster m = spawn(h, "cog_hound", 1.5, 1.5);
+            MobDef d = m.def();
+            h.assertTrue(d.blowChain == 2 && d.blowWeight(8) < 1.0F, "the Cog Hound snaps twice, each bite lighter than one plain one");
+            Zombie z = dummy(h, 1.5, 2.6);
+            face(m, 0.0F);
+            m.setTarget(z);
+            int first = GateMonster.meleeSlot(d, false), second = GateMonster.secondSlot(d);
+            int[] at = {-1, -1}; // the tick its first bite was told, and its second
+            AwakenTests.onEnd(h, () -> {
+                m.discard();
+                z.discard();
+            });
+            h.succeedWhen(() -> {
+                m.setTarget(z);
+                int cue = m.cue();
+                if (FaunaMob.cueStage(cue) == FaunaMob.CUE_WINDUP) {
+                    if (at[0] < 0 && FaunaMob.cueSlot(cue) == first) at[0] = m.tickCount;
+                    if (at[0] >= 0 && at[1] < 0 && FaunaMob.cueSlot(cue) == second) at[1] = m.tickCount;
+                }
+                h.assertTrue(at[0] >= 0, "it tells its first bite");
+                h.assertTrue(at[1] >= 0, "and, its target still there, its second: its other swing");
+                int apart = at[1] - at[0];
+                h.assertTrue(apart >= d.blowTell + MobDef.STRING_GAP && apart <= d.blowTell + MobDef.STRING_GAP + 3,
+                        "the second is told a follow-through after the first lands (" + apart + " ticks after the first was)");
+            });
+        });
+
+        // the real loop (its own goals, the selector): a plain blow is told for its whole tell and then lands
+        AwakenTests.register("gate_monster_plain_blow_lands", 200, h -> {
+            GateMonster m = spawn(h, "silver_knight", 1.5, 1.5);
+            MobDef d = m.def();
+            Zombie z = dummy(h, 1.5, 2.6);
+            face(m, 0.0F);
+            m.setTarget(z);
+            float hp = z.getHealth();
+            int[] told = {-1, 0}; // the tick its blow was first told, and the longest it has been told for so far
+            AwakenTests.onEnd(h, () -> {
+                m.discard();
+                z.discard();
+            });
+            h.succeedWhen(() -> {
+                m.setTarget(z);
+                if (m.tellKind() != dev.awaken.core.api.Strikes.Kind.NONE) {
+                    if (told[0] < 0) told[0] = m.tickCount;
+                    told[1] = m.tickCount - told[0];
+                }
+                h.assertTrue(told[0] >= 0, "it tells its blow");
+                h.assertTrue(z.getHealth() < hp, "the blow lands (told for " + told[1] + " ticks so far)");
+                h.assertTrue(told[1] >= d.blowTell - 2, "after its whole tell of " + d.blowTell + " ticks, not cut short (" + told[1] + ")");
+                h.assertTrue(m.isOpen(), "and its own swing leaves the Empty Suit open");
+            });
         });
 
         AwakenTests.register("gate_monster_planted_loses_its_aim", 200, h -> {

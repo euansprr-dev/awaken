@@ -383,7 +383,10 @@ def waking():
     K.act(r, "dreams", K.plus(arms(-64, -40, -80), {"chest": (8, 0, 0), "head": (10, 0, 0)}), K.plus(eyes(0.8), arms(-24, 74, -10), {"chest": (-8, 0, 0), "head": (-30, 0, 0)}), w=1.0, length=0.6, t_hit=0.12,
           plant=legs, lag=lagc)
     K.plain(r, K.plus(eyes(0.6), {"arm_r": (-40, 0, 60), "fore_r": (-30, 0, 0), "chest": (0, 20, 0)}), K.plus(eyes(0.6), {"arm_r": (-70, 0, -40), "fore_r": (-10, 0, 0), "chest": (8, -26, 0), "body": {"pos": (0, -0.6, -1.5)}}),
-            heavy=(K.plus(eyes(0.8), {"arm_r": (-160, 0, 10), "chest": (-10, 10, 0)}), K.plus(eyes(0.8), {"arm_r": (-30, 0, -6), "chest": (22, -10, 0), "body": {"pos": (0, -1.5, -1.5)}})), plant=legs, lag=lagc)
+            heavy=(K.plus(eyes(0.8), {"arm_r": (-160, 0, 10), "chest": (-10, 10, 0)}), K.plus(eyes(0.8), {"arm_r": (-30, 0, -6), "chest": (22, -10, 0), "body": {"pos": (0, -1.5, -1.5)}})),
+            # its other swing: its left arm
+            second=(K.plus(eyes(0.6), {"arm_l": (-40, 0, -60), "fore_l": (-30, 0, 0), "chest": (0, -20, 0)}),
+                    K.plus(eyes(0.6), {"arm_l": (-70, 0, 40), "fore_l": (-10, 0, 0), "chest": (8, 26, 0), "body": {"pos": (0, -0.6, -1.5)}})), plant=legs, lag=lagc)
     K.loop(r, "idle", 8.0, lambda p: {"chest": {"scale": (1 + 0.025 * s(p), 1 + 0.02 * s(p), 1 + 0.025 * s(p)), "rot": (1.5 * s(p), 0, 1.0 * s(p, 0.25))}, "head": (6 * s(p, 0.1) + 10 * bump(p, 0.7, 0.04), 0, 5 * s(p, 0.3)),
                                       "hammer": (0, 0, 10 * s(p * 8)), "arm_l": (2 * s(p, 0.3), 0, 0), "arm_r": (2 * s(p, 0.6), 0, 0)}, n=32)
     K.loop(r, "walk", 1.4, lambda p: {"chest": (4 + 1.5 * s(p * 2), 4 * s(p), 3 * s(p)), "head": (6 * s(p * 2, 0.15), 0, -4 * s(p, 0.1)), "arm_l": (10 * s(p), 0, 0), "arm_r": (10 * s(p, 0.5), 0, 0),

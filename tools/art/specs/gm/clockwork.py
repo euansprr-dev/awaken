@@ -82,7 +82,10 @@ def cog_hound():
     K.keyed(r, "pounce_open", 2.6, [(t, K.plus(slack, {"key": (0, -540 * (1 - (1 - t / 2.6) ** 2), 0), "cog": (-90 * (1 - (1 - t / 2.6) ** 2), 0, 0),
                                                        "head": (3 * math.sin(t * 5), 0, 0)})) for t in (0.0, 0.3, 0.6, 0.9, 1.3, 1.7, 2.1, 2.6)])
     K.plain(r, {"neck": (-18, 0, 0), "head": (6, 0, 0), "jaw": (26, 0, 0), "cog": (-45, 0, 0), "body": {"pos": (0, -0.6, 1.2)}},
-            {"neck": (16, 0, 0), "head": (-6, 0, 0), "jaw": (-2, 0, 0), "cog": (45, 0, 0), "body": {"pos": (0, 0, -2.6)}}, plant=QUAD, lag=lagc)
+            {"neck": (16, 0, 0), "head": (-6, 0, 0), "jaw": (-2, 0, 0), "cog": (45, 0, 0), "body": {"pos": (0, 0, -2.6)}},
+            second=K.other_side({"neck": (-18, 0, 0), "head": (6, 0, 0), "jaw": (26, 0, 0), "cog": (-45, 0, 0), "body": {"pos": (0, -0.6, 1.2)}},
+                                {"neck": (16, 0, 0), "head": (-6, 0, 0), "jaw": (-2, 0, 0), "cog": (45, 0, 0), "body": {"pos": (0, 0, -2.6)}}),
+            plant=QUAD, lag=lagc)
     K.loop(r, "idle", 6.0, lambda p: {"neck": (2 * s(p), 6 * s(p, 0.3), 0), "head": (0, 0, 8 * bump(p, 0.6, 0.04)), "ear_l": (14 * bump(p, 0.3, 0.02), 0, 0),
                                       "ear_r": (14 * bump(p, 0.75, 0.02), 0, 0), "tail": (0, 8 * s(p * 2), 0), "key": (0, 20 * bump(p, 0.2, 0.03) - 20 * bump(p, 0.26, 0.03), 0),
                                       "cog": (6 * bump(p, 0.2, 0.03) - 6 * bump(p, 0.26, 0.03), 0, 0)}, n=24)
@@ -383,7 +386,10 @@ def regulator():
           rest=press(60))
     K.plain(r, K.plus(press(40), {"body": {"pos": (0, 0.5, 2), "rot": (-4, 0, 0)}}), K.plus(press(70), {"body": {"pos": (0, -0.5, -3.5), "rot": (5, 0, 0)}}),
             heavy=(K.plus(press(80, 0.6), {"body": {"rot": (-12, 0, 0), "pos": (0, 1, 1)}, "leg0_l": (-60, 0, 0), "shin0_l": (30, 0, 0)}),
-                   K.planted(r, K.plus(press(110), {"body": {"rot": (6, 0, 0), "pos": (0, -1.2, -1.5)}}), QUAD)), plant=QUAD)
+                   K.planted(r, K.plus(press(110), {"body": {"rot": (6, 0, 0), "pos": (0, -1.2, -1.5)}}), QUAD)),
+            # its other swing: the same ram with its other shoulder
+            second=(K.plus(press(55), {"body": {"pos": (0, 0.5, 2), "rot": (-4, 16, 0)}}), K.plus(press(85), {"body": {"pos": (0, -0.5, -3.5), "rot": (5, -18, 0)}})),
+            plant=QUAD)
     K.loop(r, "idle", 6.0, lambda p: K.plus(press(8 * s(p * 3) + 6 * s(p), 0.8 * bump(p, 0.5, 0.03)), {"body": {"pos": (0, 0.4 * s(p * 2), 0)}, "head": (0, 0, 2 * s(p, 0.3))}), n=24)
     K.loop(r, "walk", 1.1, lambda p: K.plus(press(34 + 6 * s(p * 2)), {"body": (1.2 * s(p * 2), 0, 1.6 * s(p))}))
     K.loop(r, "run", 0.7, lambda p: K.plus(press(96 + 10 * s(p * 4), 0.6 * max(0, s(p * 4))), {"body": (3 + 2 * s(p * 2, 0.25), 0, 2 * s(p))}))
