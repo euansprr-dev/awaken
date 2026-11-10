@@ -24,7 +24,7 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
      * air's own sprites and sounds.
      */
     public static final Set<String> LIFE = Set.of("moths", "bats", "pale_fish", "rats", "dust", "drips",
-            "shaft_dust", "beams", "mist", "floor_mist", "smoke", "rain", "lightning", "procession", "far_toll",
+            "shaft_dust", "mist", "smoke", "rain", "lightning", "procession", "far_toll",
             "ash", "snow", "petals", "paper", "sand", "spores", "embers", "fireflies", "steam", "wind", "stars", "rain_up");
 
     /** Where a world sits in its theme: two everyday worlds, a deep one, a wonder, a secret one; rare ones in any gate. */

@@ -31,7 +31,7 @@ final class WorldAir {
     private WorldAir() {}
 
     static final int MOST = 260;
-    static final int WISP = 0, STREAK = 1, FLAKE = 2, ORB = 3, FLASH = 4, BEAM = 5, HAZE = 6;
+    static final int WISP = 0, STREAK = 1, FLAKE = 2, ORB = 3, FLASH = 4;
 
     private static final List<Air> LIVE = new ArrayList<>();
     private static int ticks, nextFlash = 300, thunderIn, nextToll = 1200, tolls, nextWalk = 200;
@@ -46,8 +46,6 @@ final class WorldAir {
         e.registerSpriteSet(GatesRegistry.P_FLAKE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, FLAKE));
         e.registerSpriteSet(GatesRegistry.P_ORB.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, ORB));
         e.registerSpriteSet(GatesRegistry.P_FLASH.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, FLASH));
-        e.registerSpriteSet(GatesRegistry.P_BEAM.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, BEAM));
-        e.registerSpriteSet(GatesRegistry.P_HAZE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, HAZE));
         // the server's coloured motes and flakes (a rule's trail, an event's drift): lit like the air's own
         e.registerSpriteSet(GatesRegistry.P_TRAIL.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> {
             Air a = new Air(l, x, y, z, xa, ya, za, s, ORB);
@@ -93,8 +91,6 @@ final class WorldAir {
             switch (k) {
                 case "shaft_dust" -> shaftDust(level, pl, air, o, r);
                 case "mist" -> mist(level, pl, air, o, r);
-                case "beams" -> beams(level, pl, air, o, r);
-                case "floor_mist" -> floorMist(level, pl, air, o, r);
                 case "smoke" -> smoke(level, pl, air, o, r);
                 case "rain" -> rain(level, pl, air, o, r);
                 case "lightning" -> lightning(mc, pl, air, o, r);
@@ -140,6 +136,7 @@ final class WorldAir {
     /** Motes turning slowly in the light shafts near you. */
     private static void shaftDust(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
         if (air.shafts().isEmpty()) return;
+        // as many tries as a third of the shafts, so one shaft among twenty is as full as one among five
         for (int t = 0, n = Math.max(2, Math.min(8, air.shafts().size() / 3)); t < n; t++) {
             FloorAir.Shaft s = air.shafts().get(r.nextInt(air.shafts().size()));
             double f = r.nextDouble();
@@ -153,57 +150,6 @@ final class WorldAir {
                 a.peak = 0.55F;
                 a.setLifetime(160 + r.nextInt(160));
             }
-        }
-    }
-
-    /**
-     * Light you can see in the air (SPEC §38.9): down each shaft near you a few upright bars of light, one over another,
-     * coming and going slowly, so a shaft reads as one from the side and not only by what it lights. Each bar is only just
-     * over a tenth opaque, which is as faint as the game will draw a sprite at all (anything under a tenth is thrown
-     * away, and a first try with fainter wisps drew nothing); where three or four overlap the middle of the beam is
-     * brighter than its edge. The sprite is fine-grained (a second try, a coarse one, showed pixels half a block wide).
-     */
-    private static void beams(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
-        if ((ticks & 3) != 0) return;
-        for (FloorAir.Shaft s : air.shafts()) {
-            double dx = s.x1() - s.x0(), dy = s.y1() - s.y0(), dz = s.z1() - s.z0(), len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (len < 4) continue;
-            float half = (float) Math.max(s.radius() * 1.4, Math.min(len * 0.28, s.radius() * 2.2));
-            // long shafts need more bars to be full from top to bottom
-            if (r.nextFloat() > 0.07 * Math.max(1, len / (half * 3))) continue;
-            double room = Math.min(0.45, half / len), f = room + r.nextDouble() * (1 - 2 * room);
-            Vec3 p = at(o, s.x0() + dx * f + 0.5, s.y0() + dy * f + 0.5, s.z0() + dz * f + 0.5)
-                    .add(r.nextGaussian() * s.radius() * 0.18, 0, r.nextGaussian() * s.radius() * 0.18);
-            if (pl.distanceToSqr(p) > 44 * 44 || !WorldLife.open(level, p)) continue;
-            Air a = make(level, GatesRegistry.P_BEAM.get(), p.x, p.y, p.z, 0, 0, 0, pale(s.rgb()), half * (0.85F + r.nextFloat() * 0.3F));
-            if (a != null) {
-                a.glow = true;
-                a.peak = 0.108F + 0.02F * r.nextFloat() + 0.02F * Math.min(1F, s.strength());
-                a.setLifetime(200 + r.nextInt(120));
-            }
-        }
-    }
-
-    /**
-     * Mist lying on a dry floor (SPEC §38.9): low fine-grained hazes on whatever floor there is inside one of Gate Air's
-     * mist layers near you, in the layer's colour made pale, thicker for a denser layer.
-     */
-    private static void floorMist(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
-        if ((ticks & 1) != 0 || air.mists().isEmpty()) return;
-        FloorAir.Mist m = air.mists().get(r.nextInt(air.mists().size()));
-        double mid = o.getY() + m.y(), half = m.thickness() / 2.0;
-        if (Math.abs(pl.getY() - mid) > half + 8) return;
-        double x = pl.getX() + (r.nextFloat() - 0.5) * 36, z = pl.getZ() + (r.nextFloat() - 0.5) * 36;
-        for (int y = Mth.floor(mid - half - 1); y <= Mth.ceil(mid + half); y++) {
-            if (!WorldLife.open(level, new Vec3(x, y + 0.5, z)) || WorldLife.open(level, new Vec3(x, y - 0.5, z))) continue;
-            Air a = make(level, GatesRegistry.P_HAZE.get(), x, y + 0.3 + r.nextFloat() * 0.8, z, (r.nextFloat() - 0.5) * 0.012, 0, (r.nextFloat() - 0.5) * 0.012,
-                    pale(m.rgb()), 10F + r.nextFloat() * 7F);
-            if (a != null) {
-                // each one only just over the tenth the game needs to draw it at all: the mist is where they overlap
-                a.peak = 0.108F + 0.05F * Math.min(1F, m.density());
-                a.setLifetime(200 + r.nextInt(120));
-            }
-            return;
         }
     }
 
@@ -483,9 +429,9 @@ final class WorldAir {
             this.friction = 1;
             this.hasPhysics = kind == STREAK || kind == FLAKE;
             this.alpha = 0;
-            this.base = quadSize = kind == STREAK ? 0.12F : kind == FLASH || kind == BEAM ? 1F : 0.1F;
+            this.base = quadSize = kind == STREAK ? 0.12F : kind == FLASH ? 1F : 0.1F;
             this.lifetime = 100;
-            this.roll = kind == WISP || kind == FLAKE || kind == HAZE ? random.nextFloat() * Mth.TWO_PI : 0;
+            this.roll = kind == WISP || kind == FLAKE ? random.nextFloat() * Mth.TWO_PI : 0;
             this.oRoll = roll;
         }
 
@@ -508,11 +454,6 @@ final class WorldAir {
             float t = age / (float) lifetime;
             float fade = kind == FLASH ? 1 - t : Math.min(1, Math.min(t * 6, (1 - t) * 4));
             alpha = peak * fade * (blink ? 0.4F + 0.6F * Math.max(0, Mth.sin(age * 0.15F + (float) (x * 3))) : 1);
-            if (kind == BEAM) {
-                // a bar of light is to be seen from outside it: one that stands on you would be a veil over the whole view
-                Player near = Minecraft.getInstance().player;
-                if (near != null) alpha *= Mth.clamp((float) ((Math.hypot(x - near.getX(), z - near.getZ()) - 2) / 2.5), 0, 1);
-            }
             quadSize += grow;
             if (!Float.isNaN(walk)) {
                 // a ghost light of the procession: it walks the way, a little behind the one in front, bobbing
@@ -531,14 +472,14 @@ final class WorldAir {
                 zd += (random.nextFloat() - 0.5) * sway * 0.2;
                 roll += 0.03F;
             }
-            if (kind == WISP || kind == HAZE) roll += 0.004F;
+            if (kind == WISP) roll += 0.004F;
             move(xd, yd, zd);
             if (hasPhysics && (onGround || x == xo && z == zo && y == yo)) remove();
         }
 
         @Override
         public FacingCameraMode getFacingCameraMode() {
-            return kind == STREAK || kind == BEAM ? FacingCameraMode.LOOKAT_Y : FacingCameraMode.LOOKAT_XYZ;
+            return kind == STREAK ? FacingCameraMode.LOOKAT_Y : FacingCameraMode.LOOKAT_XYZ;
         }
 
         @Override

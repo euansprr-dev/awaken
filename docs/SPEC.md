@@ -12479,16 +12479,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   kind (`gate_air_wisp`, `_streak`, `_flake`, `_orb`, `_flash`; `tools/art/specs/gate_worlds_air.py`); at most 260 near
   you, made only in open air. `shaft_dust`: pale motes turning slowly along Gate Air's light shafts within 40, lit by the
   shaft (as many tries a tick as a third of the shafts, from 2 to 8, so one shaft among twenty is as full as one among
-  five). `beams` (11 Nov, for the rolled dungeons, §50.9): down every shaft within 44 a few upright bars of light
-  (`gate_air_beam`, a sixth sprite), one over another, coming and going slowly, in the shaft's colour made pale, so a shaft
-  reads as light in the air from the side; a bar within two blocks of you is not drawn, so you never look through one.
-  `floor_mist` (the same day): low round hazes (`gate_air_haze`, a seventh) on whatever dry floor lies inside one of Gate
-  Air's mist layers near you, in the layer's colour made pale, thicker for a denser layer. **How faint a sprite can be.**
-  Minecraft's particle shader throws away anything under a tenth opaque. So neither of these can be a faint gradient
-  (the first try, fainter wisps, drew nothing at all), and a 16 pixel sprite stretched over six blocks showed pixels half
-  a block wide with hard steps for an edge (the second try: it read as a glitch). Both sprites are fine-grained instead,
-  64 and 32 pixels: every lit pixel is fully there, and it is how many are lit that falls off toward the edge. Each is
-  drawn just over a tenth opaque and the light or the mist is where several overlap. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  five). **How faint a sprite can be:** Minecraft's particle shader throws away anything under a tenth opaque, so no
+  sprite here can be a faint gradient; §50.9 "Air" has what that ruled out. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
   within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
   open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
   three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
@@ -21788,20 +21780,26 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
 - **Light comes down** (`GeneratedCrawl.wells`). Every room with the roof for it has a well of light, the Lord's hall two:
   a slot in the roof three cells by one, off the middle, over open floor, going six cells up into the rock to a light
   nobody sees the source of. It is real light: unseen lights down the middle of it every three cells, so the pool reaches
-  the floor however high the roof is and what grows and lies there can be seen. Gate Air has a shaft down it that leans a
-  little, in the colour of the day at the way in, and every kind asks for `beams` and `shaft_dust` (§38.9), so bars of
-  light and motes hang in it. Those two and `floor_mist` come first in every kind's list: the client takes a list in order
-  and stops at 260 sprites, and in a kind full of fireflies nothing later in the list was ever reached. A well is only cut where
-  nothing else of the run comes within three cells of it. The side cell and the way in have none (the way in has its own
-  crack to the sky).
-- **Mist on the floor** of the biggest rooms: the Lord's (a skin lays its own), then the Wardens', then the dens, widest
-  first, three blocks deep, until the six layers §38.9 allows are used. Gulfs and shafts take three of the six at most.
-  Every kind but the three dry ones (The Glass Warrens, The Silvered Halls, The Sealed Wing) asks for `floor_mist`, which
-  is what draws it.
-- **What reads Gate Air here.** In this build only the client's small life does (§38.9's sprites): nothing in Lens reads a
-  land's shafts, mist layers or lights, whatever §38.3 says of marching them. The first walk with wells in it showed a
-  lit slot in each roof and nothing under it. That is why the pool is real block light and the beam and the mist are
-  sprites. If Lens comes to march Gate Air, the same data is already there for it.
+  the floor however high the roof is and what grows and lies there can be seen. (A light at the roof alone never reached
+  the floor of a tall room: the first walk showed a lit slot and nothing under it.) A well is only cut where nothing else
+  of the run comes within three cells of it. The side cell and the way in have none (the way in has its own crack to the
+  sky). Gate Air has a shaft down each well, in the colour of the day at the way in, and every kind asks for `shaft_dust`
+  first in its list, so motes turn in it. First, because the client takes a list in order and stops at 260 sprites: in a
+  kind full of fireflies nothing late in the list was ever reached.
+- **Mist layers** are written down for the biggest rooms (the Lord's, which a skin lays itself, then the Wardens', then
+  the dens, widest first, inside the six §38.9 allows; gulfs and shafts take three at most). Nothing draws them yet.
+- **What reads Gate Air here, and the beams that are not there.** In this build only the client's small life reads Gate
+  Air (§38.9's sprites): nothing in Lens reads a land's shafts, mist layers or lights, whatever §38.3 says of marching
+  them. On 11 Nov a beam down each well and mist on the floors were tried as sprites, three ways, each walked in the real
+  game, and all three are taken out again:
+  1. Faint soft wisps: never drawn. The particle shader throws away anything under a tenth opaque.
+  2. Upright bars and wisps just over a tenth, from 16 pixel sprites: drawn, as sheets of glass with pixels half a block
+     wide and stepped edges, and a veil over the whole view when one stood on you. It read as a glitch.
+  3. The same from fine-grained sprites (every pixel fully there, fewer of them toward the edge): drawn, as patches of
+     static in the air.
+  A beam needs what that shader cannot give: light added to the picture, any faintness, a smooth edge. That is Lens
+  marching the shafts it is already sent, or a small renderer of the gates' own with its own pipeline. Until one of
+  those exists a well is a lit slot, a pool on the floor and motes turning between them.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

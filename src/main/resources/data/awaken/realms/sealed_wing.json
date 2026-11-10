@@ -18,7 +18,6 @@
     ],
     "lens": "sealed_wing",
     "air": [
-      "beams",
       "shaft_dust",
       "steam",
       "dust"

@@ -2,8 +2,7 @@
 
 Tinted by the client per world: a soft wisp (mist on water, smoke off candles, spore clouds, steam), a falling streak
 (rain, and with a short tail sparks or ash), a flake (snow, ash, petals, paper scraps, sand), a glowing orb with a halo
-(ghost lights, fireflies, lantern spirits, glowing spores), a soft flash (lightning through a window) and an upright
-bar of light and a round haze, both fine-grained (a beam down a shaft and mist on a dry floor, laid one over another).
+(ghost lights, fireflies, lantern spirits, glowing spores) and a soft flash (lightning through a window).
 
     python3 tools/art/build_all.py gate_worlds_air
     python3 tools/art/specs/gate_worlds_air.py content
@@ -32,25 +31,6 @@ def _soft(P, S, edge, seed, lumpy=0.0, core=1.0):
             if a > 0.02:
                 c.set(x, y, (255, 255, 255, int(255 * min(1, a))))
     return c
-
-
-def _grain(P, S, seed, lit):
-    """White pixels, each fully there or not at all: `lit(x, y)` is the chance a pixel is."""
-    r = P.rng_for("air", seed)
-    c = P.Canvas(S, S)
-    for y in range(S):
-        for x in range(S):
-            if r.random() < lit(x, y):
-                c.set(x, y, (255, 255, 255, 255))
-    return c
-
-
-def _bar(x, y, core, edge):
-    """An upright bar of light on a 64 pixel sprite: nearly full down its middle, thinning to nothing at its sides, coming in over its top and thinning out over its foot."""
-    u = abs(x - 31.5) / 32
-    v = y / 63
-    across = 0.82 if u < core else 0.82 * max(0.0, 1 - (u - core) / (edge - core)) ** 1.5
-    return across * min(1.0, v / 0.08) * min(1.0, (1 - v) / 0.3)
 
 
 def sprites(P):
@@ -88,15 +68,6 @@ def sprites(P):
                 c.set(x, y, (255, 255, 255, a))
     s["gate_air_orb"] = c
     s["gate_air_flash"] = _soft(P, 16, 1.2, "flash", core=1.0)
-    # a beam and a haze (11 Nov, for light coming down a shaft and mist on a dry floor). Minecraft's particle shader throws
-    # away anything under a tenth opaque, so neither can be a faint gradient, and a 16 pixel sprite six blocks across
-    # showed pixels half a block wide with hard steps for an edge. So these are fine-grained: every lit pixel is fully
-    # there, and it is how many are lit that falls off toward the edge. Laid one over another just over a tenth opaque,
-    # that reads as light in dusty air.
-    for i, (core, edge) in enumerate(((0.10, 0.40), (0.06, 0.32), (0.14, 0.46))):
-        s["gate_air_beam_%d" % i] = _grain(P, 64, "beam%d" % i, lambda x, y, core=core, edge=edge: _bar(x, y, core, edge))
-    for i, soft in enumerate((1.2, 1.5, 1.0)):
-        s["gate_air_haze_%d" % i] = _grain(P, 32, "haze%d" % i, lambda x, y, soft=soft: 0.9 * max(0.0, 1 - math.hypot(x - 15.5, y - 15.5) / 16) ** soft)
     return s
 
 
@@ -106,8 +77,6 @@ PARTICLES = {
     "gate_air_flake": ["gate_air_flake_0", "gate_air_flake_1", "gate_air_flake_2"],
     "gate_air_orb": ["gate_air_orb"],
     "gate_air_flash": ["gate_air_flash"],
-    "gate_air_beam": ["gate_air_beam_0", "gate_air_beam_1", "gate_air_beam_2"],
-    "gate_air_haze": ["gate_air_haze_0", "gate_air_haze_1", "gate_air_haze_2"],
 }
 
 

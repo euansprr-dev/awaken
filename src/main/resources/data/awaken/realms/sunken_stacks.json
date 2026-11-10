@@ -18,8 +18,6 @@
     ],
     "lens": "sunken_stacks",
     "air": [
-      "beams",
-      "floor_mist",
       "shaft_dust",
       "mist",
       "paper",
