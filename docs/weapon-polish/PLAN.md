@@ -6,6 +6,12 @@ Status: **approved and built.** Euan, 10 Nov, of the second (voxel) version of t
 sword), the assets regenerated, SPEC 25 and `docs/combat/weapon-style.md` updated. `docs/weapon-polish/fingerprint.py
 check` proves the spec builds all 111 weapons corner for corner as the drafts he saw. Not merged into build; unplayed.
 
+CI on the built branch: the look tour passed (run 42817291316: the game boots on the One Stage K menu and draws the
+re-cut weapons in first person, third person and the Hall). GameTests: the first full run was red on three tests that
+no weapon file reaches (`delve_heart_in_rock`, `fights_reach_live_hive_regent`, `ground_soft_steps_paint`; run
+42817251865); the second full run on the same code was green (run 42820926953), so they are flakes. Build itself was
+red on other fight tests at the time (`fights_mind_drinks_hive_regent` on 325a3d003).
+
 ## Revision 2: voxel only (this is the plan now)
 
 Euan, 10 Nov, on the first version's "ground blades" (sections 6 to 8 below): "I think this looks really bad. It takes
