@@ -40,7 +40,7 @@ public final class Scene {
     int clear;
     @Nullable BlockPos tell;
     /** Columns whose ground the scene set itself (turned offsets): the feature fills or cuts the land to them even where nothing is built. */
-    final it.unimi.dsi.fastutil.longs.LongOpenHashSet shaped = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+    public final it.unimi.dsi.fastutil.longs.LongOpenHashSet shaped = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
     /** Where a camera stands to look at the place, for the tours: {x, y, z (turned offsets), yaw, pitch}. */
     final List<int[]> cams = new ArrayList<>();
     private final Rotation turn;
@@ -120,7 +120,7 @@ public final class Scene {
                 double d = Math.sqrt(x * x + z * z);
                 if (d > r) continue;
                 if (d <= radius) ground(cx + x, cz + z, dy);
-                else {
+                else if (!shaped.contains(BlockPos.asLong(wx(cx + x, cz + z), 0, wz(cx + x, cz + z)))) { // a blend never undoes ground levelled before it
                     int nat = g(cx + x, cz + z);
                     double t = (d - radius) / blend;
                     t = t * t * (3 - 2 * t);
@@ -154,6 +154,8 @@ public final class Scene {
 
     /** A block at a height relative to the heart's ground. */
     public Scene put(int lx, int dy, int lz, BlockState s) {
+        if (lx == 0 && lz == 0 && dy == -2) return this; // the heart's own cell: whatever a big scene wanted there, the heart stands
+        if (site.kind().size() == Kind.Size.PLACE && (Math.abs(lx) > site.kind().reach() || Math.abs(lz) > site.kind().reach())) return this; // a place's dressing never strays past what its chunks write
         blocks.put(BlockPos.asLong(wx(lx, lz), dy, wz(lx, lz)), s.rotate(turn));
         return this;
     }

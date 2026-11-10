@@ -106,12 +106,13 @@ final class FindsTests {
                     BlockState b = e.getValue();
                     // what grew (leaves, trunks) and what the land is (earth, living rock, ice) is neither plain masonry nor
                     // shaped stone: it isn't counted either way
-                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS) || land(b)) continue;
+                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS) || b.is(Blocks.MUSHROOM_STEM) || b.is(Blocks.RED_MUSHROOM_BLOCK) || b.is(Blocks.BROWN_MUSHROOM_BLOCK) || land(b)) continue;
                     above++;
                     if (!b.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) shaped++;
                 }
                 for (var e : sc.parts().entrySet())
                     for (BlockPos p : e.getValue()) if (Math.abs(p.getX()) > k.reach() || Math.abs(p.getZ()) > k.reach()) why = "part " + e.getKey() + " is past its reach";
+                for (long c : sc.shaped) if (Math.abs(BlockPos.getX(c)) > k.reach() || Math.abs(BlockPos.getZ(c)) > k.reach()) why = "levels ground past its reach at " + BlockPos.getX(c) + "," + BlockPos.getZ(c);
                 String f = floats(sc);
                 if (!f.isEmpty()) why = "has something floating at " + f;
                 else if (above > 0 && k.size() == Kind.Size.PLACE ? shaped * 8 < above : shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";

@@ -23,5 +23,10 @@ public final class AllSets {
         Survey.init();
         Sealed.init();
         Beasts.init();
+        PlacesWood.init();
+        PlacesPlain.init();
+        PlacesWild.init();
+        PlacesStone.init();
+        PlacesFar.init();
     }
 }

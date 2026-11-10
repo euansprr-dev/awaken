@@ -103,6 +103,10 @@ public final class B {
         return Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, away);
     }
 
+    public static BlockState st(net.minecraft.world.level.block.Block b) {
+        return b.defaultBlockState();
+    }
+
     // ---- solids -----------------------------------------------------------------------------------------------------
 
     public static void fill(Scene s, int x0, int y0, int z0, int x1, int y1, int z1, BlockState st) {
@@ -150,23 +154,26 @@ public final class B {
     }
 
     /**
-     * A pitched roof over a rectangle, its eave at {@code y} and overhanging by {@code over}. The ridge runs along x
+     * A pitched roof over walls whose top course is at {@code y}, overhanging by {@code over} (0 or 1: the eave hangs
+     * beside the top course and the next row sits on it, so every row touches the last). The ridge runs along x
      * when {@code alongX}. The gable ends are walled in the palette's wall. {@code holes} in a hundred of it has fallen in.
      */
     public static void gable(Scene s, int x0, int z0, int x1, int z1, int y, Pal p, boolean alongX, int over, int holes) {
         int a0 = (alongX ? z0 : x0) - over, a1 = (alongX ? z1 : x1) + over, b0 = (alongX ? x0 : z0) - over, b1 = (alongX ? x1 : z1) + over;
         for (int i = 0; a0 + i <= a1 - i; i++) {
-            int lo = a0 + i, hi = a1 - i, yy = y + i;
+            int lo = a0 + i, hi = a1 - i, yy = y + 1 - over + i;
             for (int b = b0; b <= b1; b++) {
                 boolean gone = holes > 0 && n(s, b * 1.0 + 5, lo * 1.0 + yy, 3.2) * 100 < holes, gone2 = holes > 0 && n(s, b * 1.0 - 9, hi * 1.0 - yy, 3.2) * 100 < holes;
-                if (lo == hi) {
+                if (lo == hi) {                                   // the ridge: a beam with a slab cap
+                    put(s, alongX, b, yy - 1, lo, axis(p.log(), alongX ? Direction.Axis.X : Direction.Axis.Z));
                     if (!gone) put(s, alongX, b, yy, lo, p.slab());
                     continue;
                 }
                 if (!gone) put(s, alongX, b, yy, lo, stair(p.stair(), alongX ? Direction.SOUTH : Direction.EAST));
                 if (!gone2) put(s, alongX, b, yy, hi, stair(p.stair(), alongX ? Direction.NORTH : Direction.WEST));
             }
-            if (i > 0) for (int a = Math.max(lo + 1, alongX ? z0 : x0); a <= Math.min(hi - 1, alongX ? z1 : x1); a++) {
+            // the gable ends, walled under every stair so each row stands on the wall and not only on its neighbour's corner
+            if (i > 0) for (int a = Math.max(lo, alongX ? z0 : x0); a <= Math.min(hi, alongX ? z1 : x1); a++) {
                 put(s, alongX, alongX ? x0 : z0, yy - 1, a, h(s, a, yy, 3) < 64 ? p.wallB() : p.wall());
                 put(s, alongX, alongX ? x1 : z1, yy - 1, a, h(s, a, yy, 7) < 64 ? p.wallB() : p.wall());
             }
@@ -274,7 +281,7 @@ public final class B {
                 for (int z = (int) -rz - 2; z <= rz + 2; z++) {
                     double f = x * x / (rx * rx) + y * y / (ry * ry) + z * z / (rz * rz), edge = 0.8 + n(s, cx + x + y * 0.6, cz + z - y * 0.6, 3.4) * 0.4;
                     if (f <= edge) s.put(cx + x, cy + y, cz + z, AIR);
-                    else if (lining != null && f <= edge + 0.55 && !s.taken(cx + x, cy + y, cz + z)) s.put(cx + x, cy + y, cz + z, lining.apply(h(s, cx + x, cy + y, cz + z)));
+                    else if (lining != null && f <= edge + 0.55 && cy + y <= s.g(cx + x, cz + z) && !s.taken(cx + x, cy + y, cz + z)) s.put(cx + x, cy + y, cz + z, lining.apply(h(s, cx + x, cy + y, cz + z)));
                 }
     }
 
@@ -329,12 +336,24 @@ public final class B {
                 }
     }
 
+    /** A line of blocks from one point to another in which every block touches the last by a face: a branch, a root, a rope. */
+    public static void limb(Scene s, int x0, int y0, int z0, int x1, int y1, int z1, BlockState st) {
+        int x = x0, y = y0, z = z0, m = Math.max(1, Math.max(Math.abs(x1 - x0), Math.max(Math.abs(y1 - y0), Math.abs(z1 - z0))));
+        s.put(x, y, z, st);
+        for (int i = 1; i <= m; i++) {
+            int tx = x0 + Math.round((x1 - x0) * i / (float) m), ty = y0 + Math.round((y1 - y0) * i / (float) m), tz = z0 + Math.round((z1 - z0) * i / (float) m);
+            while (x != tx) { x += Integer.signum(tx - x); s.put(x, y, z, st); }
+            while (z != tz) { z += Integer.signum(tz - z); s.put(x, y, z, st); }
+            while (y != ty) { y += Integer.signum(ty - y); s.put(x, y, z, st); }
+        }
+    }
+
     /** A tree with a real crown: a trunk, four limbs reaching out and up, a cloud of leaves on each and one over the top. */
     public static void tree(Scene s, int x, int z, int y, int h, BlockState log, BlockState leaf, double r) {
         for (int i = 0; i < h; i++) s.put(x, y + i, z, log);
         for (int d = 0; d < 4; d++) {
             int len = 2 + (h(s, x, d, z) & 1), ly = y + h - 3 + (d & 1);
-            for (int j = 1; j <= len; j++) s.put(x + DX[d] * j, ly + (j > 1 ? 1 : 0), z + DZ[d] * j, axis(log, DX[d] != 0 ? Direction.Axis.X : Direction.Axis.Z));
+            limb(s, x + DX[d], ly, z + DZ[d], x + DX[d] * len, ly + 1, z + DZ[d] * len, axis(log, DX[d] != 0 ? Direction.Axis.X : Direction.Axis.Z));
             leaves(s, x + DX[d] * len, ly + 2, z + DZ[d] * len, r, leaf);
         }
         leaves(s, x, y + h + 1, z, r + 0.6, leaf);
@@ -347,11 +366,10 @@ public final class B {
             double a = d * Math.PI / 4 + 0.3;
             for (int j = 1; j <= tr + 3; j++) {
                 int rx = x + (int) Math.round(Math.cos(a) * (tr + j)), rz = z + (int) Math.round(Math.sin(a) * (tr + j));
-                for (int k = y - 1; k <= y + Math.max(0, 2 - j); k++) s.put(rx, k, rz, log);
+                for (int k = Math.max(y - 7, Math.min(y - 1, s.g(rx, rz))); k <= y + Math.max(0, 2 - j); k++) s.put(rx, k, rz, log);
             }
             int lx = x + (int) Math.round(Math.cos(a) * (tr + r * 0.8)), lz = z + (int) Math.round(Math.sin(a) * (tr + r * 0.8)), ly = y + h - 2 - (d & 1) * 2;
-            for (int j = tr; j <= tr + (int) (r * 0.8); j++)
-                s.put(x + (int) Math.round(Math.cos(a) * j), ly - 1 + (j - tr) / 3, z + (int) Math.round(Math.sin(a) * j), log);
+            limb(s, x + (int) Math.round(Math.cos(a) * tr), ly - 2, z + (int) Math.round(Math.sin(a) * tr), lx, ly, lz, log);
             leaves(s, lx, ly + 1, lz, r, leaf);
         }
         leaves(s, x, y + h + 1, z, r + 1.5, leaf);
@@ -412,6 +430,65 @@ public final class B {
             s.put(x, g + 1, z, k == 0 ? p.base() : k == 1 ? p.slab() : k == 2 ? stair(p.stair(), DIR[s.rnd.nextInt(4)]) : k == 3 ? Props.LOOSE_STONE.get().of(s.rnd.nextInt(4)) : p.wallB());
             i++;
         }
+    }
+
+    /**
+     * A small building, whole: a floor, walls on a foot course with timber posts at the corners, a window in each long
+     * wall, a doorway two high in the middle of side {@code door} (0 north, 1 east, 2 south, 3 west), a pitched roof with
+     * an overhang, and a lantern hung from the ridge. {@code holes} in a hundred of the roof has fallen in.
+     */
+    public static void house(Scene s, int x0, int z0, int x1, int z1, int y, int wallH, Pal p, int door, int holes) {
+        boolean alongX = x1 - x0 >= z1 - z0;
+        floor(s, x0, z0, x1, z1, y, p.floor(), p.plank(), 30);
+        air(s, x0 + 1, y + 1, z0 + 1, x1 - 1, y + wallH + 3, z1 - 1);
+        walls(s, x0, z0, x1, z1, y + 1, y + wallH, p, holes > 30 ? 2 : 0);
+        for (int cx = x0; cx <= x1; cx += x1 - x0) for (int cz = z0; cz <= z1; cz += z1 - z0) for (int k = y + 1; k <= y + wallH; k++) s.put(cx, k, cz, p.log());
+        int mx = (x0 + x1) / 2, mz = (z0 + z1) / 2;
+        BlockState pane = Blocks.GLASS_PANE.defaultBlockState();
+        if (alongX) {
+            for (int wx = x0 + 2; wx <= x1 - 2; wx += 3) {
+                if (!(door == 0 && wx == mx)) s.put(wx, y + 2, z0, along(pane, true));
+                if (!(door == 2 && wx == mx)) s.put(wx, y + 2, z1, along(pane, true));
+            }
+        } else {
+            for (int wz = z0 + 2; wz <= z1 - 2; wz += 3) {
+                if (!(door == 3 && wz == mz)) s.put(x0, y + 2, wz, along(pane, false));
+                if (!(door == 1 && wz == mz)) s.put(x1, y + 2, wz, along(pane, false));
+            }
+        }
+        int dx = door == 1 ? x1 : door == 3 ? x0 : mx, dz = door == 0 ? z0 : door == 2 ? z1 : mz;
+        s.put(dx, y + 1, dz, AIR);
+        s.put(dx, y + 2, dz, AIR);
+        gable(s, x0, z0, x1, z1, y + wallH, p, alongX, 1, holes);
+        int w = (alongX ? z1 - z0 : x1 - x0) + 3, ridge = y + wallH + (w - 1) / 2;
+        if (holes < 30) s.put(mx, w % 2 == 1 ? ridge - 2 : ridge - 1, mz, lantern(true, false));
+    }
+
+    /** A pile of logs lying side by side: three, then two, then one. */
+    public static void logPile(Scene s, int x, int z, int y, int len, boolean alongX, BlockState log) {
+        BlockState l = axis(log, alongX ? Direction.Axis.X : Direction.Axis.Z);
+        for (int row = 0; row < 3; row++)
+            for (int w = 0; w < 3 - row; w++)
+                for (int i = 0; i < len; i++) {
+                    if (alongX) s.put(x + i, y + row, z + w, l);
+                    else s.put(x + w, y + row, z + i, l);
+                }
+    }
+
+    /** A table: a slab top on fence legs. */
+    public static void table(Scene s, int x, int y, int z, int len, boolean alongX, Pal p) {
+        for (int i = 0; i < len; i++) {
+            int tx = alongX ? x + i : x, tz = alongX ? z : z + i;
+            s.put(tx, y, tz, i == 0 || i == len - 1 ? p.fence() : AIR);
+            s.put(tx, y + 1, tz, Blocks.SPRUCE_PRESSURE_PLATE.defaultBlockState());
+            if (i != 0 && i != len - 1) s.put(tx, y, tz, top(p.pslab()));
+        }
+    }
+
+    /** A post with a lantern on it. */
+    public static void lamp(Scene s, int x, int y, int z, int h, BlockState post, boolean soul) {
+        for (int k = 0; k < h; k++) s.put(x, y + k, z, post);
+        s.put(x, y + h, z, lantern(false, soul));
     }
 
     /** A stone person: {@code pose} 0..3, facing a way. */

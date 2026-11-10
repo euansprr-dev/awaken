@@ -16,6 +16,21 @@ public record Pal(BlockState wall, BlockState wallB, BlockState base, BlockState
                 pstair.defaultBlockState(), pslab.defaultBlockState());
     }
 
+    /** The same palette under another roof. */
+    public Pal roof(Block stair, Block slab) {
+        return new Pal(wall, wallB, base, trim, floor, stair.defaultBlockState(), slab.defaultBlockState(), log, plank, fence, pstair, pslab);
+    }
+
+    /** The same palette on another foot course. */
+    public Pal base(Block b) {
+        return new Pal(wall, wallB, b.defaultBlockState(), trim, floor, stair, slab, log, plank, fence, pstair, pslab);
+    }
+
+    /** The same palette with other walls. */
+    public Pal walls(Block wall, Block wallB) {
+        return new Pal(wall.defaultBlockState(), wallB.defaultBlockState(), base, trim, floor, stair, slab, log, plank, fence, pstair, pslab);
+    }
+
     /** Dressed stone under a dark timber roof. */
     public static final Pal STONE = of(Blocks.STONE_BRICKS, Blocks.CRACKED_STONE_BRICKS, Blocks.MOSSY_COBBLESTONE, Blocks.CHISELED_STONE_BRICKS, Blocks.POLISHED_ANDESITE,
             Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_SLAB, Blocks.DARK_OAK_LOG, Blocks.SPRUCE_PLANKS, Blocks.SPRUCE_FENCE, Blocks.SPRUCE_STAIRS, Blocks.SPRUCE_SLAB);
