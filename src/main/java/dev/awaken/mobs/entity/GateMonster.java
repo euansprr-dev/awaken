@@ -47,6 +47,8 @@ public class GateMonster extends AwakenMob implements RigBody {
     public static final float OPEN_BITE = 1.5F;
     /** Ticks a blow that stops a wind-up staggers it, and a planted shooter that lost its aim. */
     static final int STOPPED_TICKS = 26, LOST_AIM_TICKS = 18;
+    /** Ticks a planted shooter has to square up to its target as its wind-up begins, before its facing is held. */
+    static final int PLANT_TURN = 5;
 
     // server (no initialisers: registerGoals runs inside the super constructor)
     private @Nullable Ability cueAbility;
@@ -57,6 +59,7 @@ public class GateMonster extends AwakenMob implements RigBody {
     private boolean stuck;
     private boolean plantedNow;
     private float plantYaw;
+    private int plantTurn;
     private boolean poised;
     private int poisedTicks;
     private boolean missWatch, missMoved;
@@ -123,8 +126,11 @@ public class GateMonster extends AwakenMob implements RigBody {
                 meleeTold = false;
                 cue(FaunaMob.CUE_WINDUP, slot(a));
                 say("wind", a.heavy() ? 0.85F : 1.0F);
+                // it plants facing its target: a quarter second to square up (it may have been backing off, its body
+                // turned away), then it holds that facing to the end of the wind-up
                 plantedNow = def().planted;
                 plantYaw = yBodyRot;
+                plantTurn = PLANT_TURN;
             } else if (cueAbility != null && isAlive()) {
                 fired(cueAbility);
             }
@@ -228,7 +234,7 @@ public class GateMonster extends AwakenMob implements RigBody {
             }
         }
         // planted: it holds the way it faced when it began, and loses the move if its target gets beside it
-        if (plantedNow && cueAbility != null) {
+        if (plantedNow && cueAbility != null && plantTurn <= 0) {
             LivingEntity t = getTarget();
             if (t != null && Math.abs(Mth.wrapDegrees(yawTo(t.position()) - plantYaw)) > PLANT_ARC) {
                 stagger(LOST_AIM_TICKS);
@@ -263,7 +269,12 @@ public class GateMonster extends AwakenMob implements RigBody {
         if (level().isClientSide()) {
             clientAnimTick();
         } else if (plantedNow && cueAbility != null && isAlive()) {
-            // after the controls have turned it: a planted shooter keeps the facing it began with
+            if (plantTurn > 0) {
+                plantTurn--;
+                LivingEntity t = getTarget();
+                if (t != null) plantYaw = Mth.approachDegrees(plantYaw, yawTo(t.position()), 45.0F);
+            }
+            // after the controls have turned it: a planted shooter keeps the facing it squared up to
             setYRot(plantYaw);
             yBodyRot = plantYaw;
             yBodyRotO = plantYaw;

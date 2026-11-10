@@ -21884,7 +21884,7 @@ Each is data on the def, judged by the server, and none changes another creature
 | An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
 | Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
 | A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
-| Planted to shoot | `.planted()` | It cannot turn while it winds up, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side |
+| Planted to shoot | `.planted()` | As a wind-up begins it squares up to its target (5 ticks, 45 degrees a tick), then cannot turn, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side. (Before the square-up it took whatever way its body faced, and a shooter backing off from you lost every shot as it began: the Riveter never fired on film.) |
 | A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
 | The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
 
