@@ -52,11 +52,20 @@ final class MobGoals {
      * Melee with a tell (SPEC §24): within reach the creature winds up first, plants its feet and glints (LIGHT), then
      * strikes if you are still in reach; step out and it whiffs. Lords and wardens throw every third blow as a HEAVY
      * haymaker (a longer, amber tell, half as hard again). Replaces vanilla's untold swing, which gave nothing to read.
+     *
+     * <p>A creature with a rhythm of its own (SPEC §60.8, {@code MobDef.blow}) tells each blow for its own time and may
+     * string two or three together: after a blow, while its target is still near, it follows through for
+     * {@link dev.awaken.mobs.def.MobDef#STRING_GAP} ticks, steps in and tells the next. Each blow of a rhythm is weighed
+     * ({@code MobDef.blowWeight}) so the string does per second what one plain swing did.
      */
     static final class ToldMelee extends net.minecraft.world.entity.ai.goal.MeleeAttackGoal {
         private static final net.minecraft.resources.Identifier HAYMAKER = dev.awaken.Awaken.id("mobs_haymaker");
+        private static final net.minecraft.resources.Identifier RHYTHM = dev.awaken.Awaken.id("mobs_rhythm");
+        /** How far past its reach a target may be for the string to go on (it steps in after it). */
+        private static final double STRING_REACH = 2.0;
         private final AwakenMob mob;
-        private int tellLeft, swings;
+        private final double speed;
+        private int tellLeft, swings, stringAt, gapLeft;
         private Strikes.Kind telling = Strikes.Kind.NONE;
 
         ToldMelee(AwakenMob mob) {
@@ -66,16 +75,23 @@ final class MobGoals {
         ToldMelee(AwakenMob mob, double speed, boolean followUnseen) {
             super(mob, speed, followUnseen);
             this.mob = mob;
+            this.speed = speed;
         }
 
-        /** Ticks a blow of this creature is told for. */
+        /** Ticks a blow of this creature is told for: its own rhythm's, else its rank's. */
         static int tellTicks(AwakenMob mob, Strikes.Kind kind) {
-            int base = switch (mob.syncedRole()) {
+            int own = mob.def().blowTell;
+            int base = own > 0 ? own : rankTell(mob);
+            return kind == Strikes.Kind.HEAVY ? base + 6 : base;
+        }
+
+        /** Ticks a plain blow is told for by rank (SPEC §24). */
+        static int rankTell(AwakenMob mob) {
+            return switch (mob.syncedRole()) {
                 case BOSS, BREAK, WARDEN, NIGHTMARE -> 10;
                 case ELITE -> 9;
                 default -> 8;
             };
-            return kind == Strikes.Kind.HEAVY ? base + 6 : base;
         }
 
         private boolean big() {
@@ -85,17 +101,63 @@ final class MobGoals {
             };
         }
 
+        /**
+         * It stands still to wind up, and standing still is not the chase ending: vanilla's goal gives up when its
+         * path is done, which our own stop for the tell made true two ticks into every wind-up, so in play no plain blow
+         * ever landed (the test drove the goal by hand and never met the selector). While it tells a blow, or follows
+         * one through into the next of a string, it goes on as long as its target lives.
+         */
+        @Override
+        public boolean canContinueToUse() {
+            if (tellLeft > 0 || gapLeft > 0) {
+                LivingEntity t = mob.getTarget();
+                return t != null && t.isAlive();
+            }
+            return super.canContinueToUse();
+        }
+
         @Override
         public void stop() {
             super.stop();
             if (tellLeft > 0) mob.setTell(0, Strikes.Kind.NONE);
             tellLeft = 0;
+            endString();
+        }
+
+        private void endString() {
+            stringAt = 0;
+            gapLeft = 0;
+            mob.blowAt = 0;
+            mob.blowLast = true;
         }
 
         @Override
         public void tick() {
             if (mob.staggered()) {
                 tellLeft = 0;
+                endString();
+                return;
+            }
+            if (gapLeft > 0) {
+                // between two blows of a string: the first one's follow-through, then it steps in and tells the next
+                LivingEntity t = mob.getTarget();
+                AbilityRunner r = mob.runner();
+                if (t == null || !t.isAlive() || (r != null && r.active() != null)) {
+                    endString();
+                    return;
+                }
+                mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+                mob.getNavigation().stop();
+                if (--gapLeft == 0) {
+                    if (!mob.isWithinMeleeAttackRange(t)) {
+                        Vec3 to = t.position().subtract(mob.position()).multiply(1, 0, 1);
+                        if (to.lengthSqr() > 1.0E-4) {
+                            to = to.normalize().scale(0.42);
+                            mob.setDeltaMovement(to.x, mob.getDeltaMovement().y, to.z);
+                        }
+                    }
+                    tell();
+                }
                 return;
             }
             if (tellLeft > 0) {
@@ -116,8 +178,15 @@ final class MobGoals {
         protected void checkAndPerformAttack(LivingEntity target) {
             AbilityRunner r = mob.runner();
             if (!canPerformAttack(target) || (r != null && r.active() != null)) return;
+            stringAt = 0;
+            tell();
+        }
+
+        /** Tells the blow it is about to throw (the first of a string, or the next). */
+        private void tell() {
             telling = big() && ++swings % 3 == 0 ? Strikes.Kind.HEAVY : Strikes.Kind.LIGHT;
             tellLeft = tellTicks(mob, telling);
+            mob.blowAt = stringAt;
             mob.setTell(tellLeft, telling);
             mob.getNavigation().stop();
             mob.playTell(telling, telling == Strikes.Kind.HEAVY, 1.0F);
@@ -127,17 +196,44 @@ final class MobGoals {
             Strikes.Kind kind = telling;
             mob.setTell(0, Strikes.Kind.NONE);
             resetAttackCooldown();
+            // its string goes on while there are blows left in it and its target has not got clear away
+            boolean more = stringAt + 1 < mob.def().blowChain && target != null && target.isAlive()
+                    && mob.distanceToSqr(target) <= sq(Math.sqrt(reachSqr(target)) + STRING_REACH);
+            mob.blowLast = !more;
             mob.swingForAttack(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (more) {
+                stringAt++;
+                gapLeft = dev.awaken.mobs.def.MobDef.STRING_GAP;
+            } else {
+                stringAt = 0;
+                // the blow is thrown: it takes up the chase again (its rest before the next is the attack cooldown)
+                if (target != null && target.isAlive()) mob.getNavigation().moveTo(target, speed);
+            }
             if (target == null || !target.isAlive() || !mob.isWithinMeleeAttackRange(target)) return; // stepped out: a whiff
             var dmg = mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
             boolean heavy = kind == Strikes.Kind.HEAVY && dmg != null;
+            float weight = mob.def().blowWeight(rankTell(mob));
+            boolean weighed = weight != 1.0F && dmg != null;
             if (heavy) dmg.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(HAYMAKER, 0.5,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            if (weighed) dmg.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(RHYTHM, weight - 1.0,
                     net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             try {
                 Strikes.deliver(mob, kind, () -> mob.doHurtTarget(getServerLevel(mob), target));
             } finally {
                 if (heavy) dmg.removeModifier(HAYMAKER);
+                if (weighed) dmg.removeModifier(RHYTHM);
             }
+        }
+
+        /** The square of how far its blow reaches this target (the same measure isWithinMeleeAttackRange uses, near enough). */
+        private double reachSqr(LivingEntity target) {
+            double r = mob.getBbWidth() * 0.5 + target.getBbWidth() * 0.5 + 1.0;
+            return r * r;
+        }
+
+        private static double sq(double v) {
+            return v * v;
         }
     }
 
@@ -204,6 +300,14 @@ final class MobGoals {
         @Override public boolean requiresUpdateEveryTick() { return true; }
 
         @Override
+        public void stop() {
+            // its target is gone mid-dive: the dive is over, and so is whatever it was telling
+            mob.diving = false;
+            if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
+            tellLeft = -1;
+        }
+
+        @Override
         public void tick() {
             LivingEntity t = mob.getTarget();
             if (t == null) return;
@@ -216,6 +320,7 @@ final class MobGoals {
                 // brought down: the dive it was telling is lost, and it waits a moment once up again
                 if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
                 tellLeft = -1;
+                mob.diving = false;
                 attackCooldown = Math.max(attackCooldown, 10);
                 retarget = 0;
                 return;
@@ -237,6 +342,7 @@ final class MobGoals {
                     else if (tellLeft == 0) {
                         mob.setTell(0, Strikes.Kind.NONE);
                         diveTicks = 30;
+                        mob.diving = true; // its body holds the dive's shape until it hits or gives it up
                     }
                     mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
                     return;
@@ -249,6 +355,7 @@ final class MobGoals {
                     attackCooldown = 30 + mob.getRandom().nextInt(20);
                     tellLeft = -1;
                     retarget = 0;
+                    mob.diving = false;
                 }
                 return;
             }

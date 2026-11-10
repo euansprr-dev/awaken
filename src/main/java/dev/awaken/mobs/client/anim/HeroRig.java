@@ -103,6 +103,10 @@ public final class HeroRig {
                 HeroRig r = parse(src);
                 m.put(r.id, r);
             }
+            for (String[] src : GateMonsterData.SOURCES) { // the gates' monsters (tools/art/specs/gate_monsters.py, SPEC §60)
+                HeroRig r = parse(src);
+                m.put(r.id, r);
+            }
             for (String[] src : RitualData.SOURCES) { // the Ritual of the Bell's cast (tools/art/specs/ritual_art.py)
                 HeroRig r = parse(src);
                 m.put(r.id, r);
@@ -217,10 +221,14 @@ public final class HeroRig {
             if (c.length() <= 0) out.add(id + "/" + c.name() + ": length " + c.length());
             for (Track tr : c.tracks()) {
                 if (bone(tr.bone()) < 0) out.add(id + "/" + c.name() + ": no bone " + tr.bone());
-                float last = -1;
+                // a looping clip may carry one key before its start and one after its end (the loop carried on a step either
+                // way): the game's curve takes a key's slope from both its neighbours, and without them a loop loses half
+                // its speed for an instant every time it comes round (SPEC §60.9)
+                float lo = c.loop() ? -c.length() : 0.0F, hi = c.loop() ? 2.0F * c.length() : c.length();
+                float last = lo - 1;
                 for (Key k : tr.keys()) {
                     if (k.t() < last - 1e-4F) out.add(id + "/" + c.name() + "/" + tr.bone() + ": keys out of order");
-                    if (k.t() < -1e-4F || k.t() > c.length() + 1e-4F) out.add(id + "/" + c.name() + "/" + tr.bone() + ": key at " + k.t());
+                    if (k.t() < lo - 1e-4F || k.t() > hi + 1e-4F) out.add(id + "/" + c.name() + "/" + tr.bone() + ": key at " + k.t());
                     last = k.t();
                 }
                 if (tr.keys().isEmpty()) out.add(id + "/" + c.name() + "/" + tr.bone() + ": empty track");
