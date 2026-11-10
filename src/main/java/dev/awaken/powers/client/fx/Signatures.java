@@ -29,7 +29,7 @@ final class Signatures {
     private Signatures() {}
 
     private static final int J_RIME = 1, J_SHOCK = 2, J_GRIP = 3, J_THROUGH = 4, J_PLATE = 5, J_PETALS = 6, J_INK = 7, J_BRAND = 8, J_SEAR = 9,
-            J_LANCES = 10, J_DRAFT = 11, J_BREATH = 12;
+            J_LANCES = 10, J_DRAFT = 11, J_BREATH = 12, J_ROOT = 13;
 
     /** A signature that takes time: what, where, how big, whose, how old. */
     private static final class Job {
@@ -177,6 +177,7 @@ final class Signatures {
                     case J_LANCES -> lances(j, mc);
                     case J_DRAFT -> draft(j);
                     case J_BREATH -> breath(j);
+                    case J_ROOT -> rootGrows(j);
                     default -> {
                     }
                 }
@@ -413,8 +414,9 @@ final class Signatures {
                 double px = eye.x + look.x * depth + right.x * u + up.x * v, py = eye.y + look.y * depth + right.y * u + up.y * v,
                         pz = eye.z + look.z * depth + right.z * u + up.z * v;
                 // drawn over the world as well as adding light: a plate of light is invisible against a noon sky if it only adds
-                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.mid, 0.6f * pulse * k), alpha(j.style.mid, 0.4f * k), FxPool.BRIGHT);
-                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.core, 0.5f * pulse * k), alpha(j.style.core, 0.15f * k), FxPool.ADD);
+                // (NEAR: the renderer hides glows within a block and a half of the eye, which is exactly where your own plate is)
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.mid, 0.5f * pulse * k), alpha(j.style.mid, 0.35f * k), FxPool.BRIGHT | FxPool.NEAR);
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.core, 0.4f * pulse * k), alpha(j.style.core, 0.12f * k), FxPool.ADD | FxPool.NEAR);
             }
         }
     }
@@ -428,7 +430,7 @@ final class Signatures {
             float a = j.age * 0.55f + i * Mth.PI;
             double px = caster.getX() + Mth.cos(a) * j.radius, pz = caster.getZ() + Mth.sin(a) * j.radius;
             int s = FxWorld.sprite(PETAL, px, caster.getY() + 0.1 + (j.age % 12) * 0.12, pz, -Mth.sin(a) * 0.03, 0.07, Mth.cos(a) * 0.03, 16 + R.i(6), 0.2f, 0.08f,
-                    j.style.core, alpha(j.style.mid, 0), FxPool.ADD);
+                    j.style.core, alpha(j.style.mid, 0), FxPool.ADD | FxPool.NEAR);
             FxWorld.spin(s, a, 0.2f);
             FxWorld.drag(s, 0.96f);
         }
@@ -449,6 +451,15 @@ final class Signatures {
 
     private static final int EMBER_HOT = 0xFFFFD27A, EMBER_DEEP = 0xFFFF6A1E, FLAME = 0xFFFF9A2E, FLAME_END = 0xFFB02A0A, BARK = 0xFF7A5230, BARK_DARK = 0xFF55381E,
             LEAF = 0xFF8FCB6B, AIR = 0xFFEAF6FF, DUSTY = 0xFFD8CFBD, ICE = 0xFFCFEFFF;
+
+    /** Smoke off a fire: grey, lit by the world, rising and thinning. (A style's own puffs are its colour; fire's smoke is nobody's.) */
+    private static void smoke(double x, double y, double z, int count, float spread, float size, int life) {
+        for (int i = 0; i < count; i++) {
+            int s = FxWorld.sprite(SMOKE, x + R.s() * spread, y + R.s() * spread * 0.5, z + R.s() * spread, R.s() * 0.015, R.f(0.02f, 0.05f), R.s() * 0.015, life + R.i(8), size * 0.6f, size,
+                    0xA04A4744, 0x004A4744, FxPool.LIT | FxPool.ANIM);
+            FxWorld.drag(s, 0.97f);
+        }
+    }
 
     private static void branded(FxEvent e, FxStyle st, String power) {
         end(e.caster(), power); // a new mark on the same body replaces the old one
@@ -493,7 +504,7 @@ final class Signatures {
                     EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
             FxWorld.drag(s, 0.95f);
         }
-        if (j.age % 14 == 0) FxRecipes.smokePuffs(px, py + 0.2, pz, 1, 0.1f, 0.4f, FxStyle.NEUTRAL, 0.02f, 24);
+        if (j.age % 14 == 0) smoke(px, py + 0.2, pz, 1, 0.1f, 0.4f, 24);
     }
 
     /** A blow set it off: the fire comes out of the mark, the ground under it keeps the print and cools. */
@@ -518,7 +529,7 @@ final class Signatures {
         }
         FxRecipes.embers(x, y, z, n(full ? 40 : 26), r * 0.45f, st, 0.03f);
         FxRecipes.sparks(x, y, z, n(18), 0.55f, st, 10, 0.03f, 0, 1, 0, 0.5f);
-        FxRecipes.smokePuffs(x, y + 0.6, z, n(8), r * 0.4f, 1.3f, FxStyle.NEUTRAL, 0.05f, 34);
+        smoke(x, y + 0.6, z, n(8), r * 0.4f, 1.3f, 34);
         if (full) FxRecipes.sphereBurst(x, y, z, 0.4f, r, 7, st);
         if (mine) {
             FxScreen.flash(EMBER_DEEP, full ? 0.14f : 0.08f, 7);
@@ -669,8 +680,8 @@ final class Signatures {
         // between them, two strands of the wind itself: pale curls, full-bright
         for (int k = 0; k < 2; k++) {
             float a = j.age * 0.5f + k * Mth.PI + Mth.HALF_PI + (j.seed & 7);
-            int s = FxWorld.sprite(WIND, j.x + Mth.cos(a) * r * 0.8, j.y + 0.3, j.z + Mth.sin(a) * r * 0.8, 0, rise, 0, life, 1.5f, 0.9f, alpha(AIR, 0.9f * fade), alpha(AIR, 0),
-                    FxPool.BRIGHT);
+            int s = FxWorld.sprite(WIND, j.x + Mth.cos(a) * r * 0.8, j.y + 0.3, j.z + Mth.sin(a) * r * 0.8, 0, rise, 0, life, 0.9f, 0.6f, alpha(AIR, 0.85f * fade), alpha(AIR, 0),
+                    FxPool.BRIGHT | FxPool.NEAR);
             FxWorld.spin(s, a, 0.1f);
             FxWorld.drag(s, 1f);
         }
@@ -702,7 +713,11 @@ final class Signatures {
         if (j.age % 3 == 0) {
             float a = R.f() * Mth.TWO_PI, d = R.f() * r * 0.9f;
             int s = FxWorld.sprite(PETAL, j.x + Mth.cos(a) * d, j.y + 0.3, j.z + Mth.sin(a) * d, -Mth.sin(a) * 0.03, rise * R.f(0.8f, 1.2f), Mth.cos(a) * 0.03, life, 0.2f, 0.16f,
-                    alpha(LEAF, fade), alpha(LEAF, 0.4f * fade), FxPool.LIT);
+                    alpha(LEAF, fade), alpha(LEAF, 0.4f * fade), FxPool.LIT | FxPool.NEAR);
+            // and fine grit all through it, small enough to pass your eyes without hiding the world
+            int g = FxWorld.sprite(MOTE, j.x + Mth.cos(a + 2f) * d, j.y + 0.2, j.z + Mth.sin(a + 2f) * d, 0, rise * R.f(1.0f, 1.4f), 0, life, 0.07f, 0.05f, alpha(DUSTY, 0.9f * fade),
+                    alpha(DUSTY, 0), FxPool.BRIGHT | FxPool.NEAR);
+            FxWorld.drag(g, 1f);
             FxWorld.spin(s, a, 0.35f);
             FxWorld.drag(s, 1f);
         }
@@ -733,7 +748,7 @@ final class Signatures {
                     EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
             FxWorld.drag(s, 1f);
         }
-        FxRecipes.smokePuffs(e.x(), e.y(), e.z(), 2, 0.2f, 0.6f, FxStyle.NEUTRAL, 0.02f, 18);
+        smoke(e.x(), e.y(), e.z(), 2, 0.2f, 0.6f, 18);
         FxWorld.sprite(GLOW, e.x(), e.y(), e.z(), e.dx() * 0.18, e.dy() * 0.18, e.dz() * 0.18, 5, 0.7f, 0.15f, alpha(EMBER_HOT, 0.9f), alpha(EMBER_DEEP, 0), FxPool.ADD);
     }
 
@@ -752,13 +767,18 @@ final class Signatures {
             boolean core = i % 3 == 0;
             int s = core
                     ? FxWorld.sprite(FLARE, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 9 + R.i(4), 0.35f, 0.9f, 0xFFFFF3D0, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM)
-                    : FxWorld.sprite(GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 10 + R.i(5), 0.5f, 2.1f, alpha(i % 2 == 0 ? FLAME : EMBER_HOT, 0.9f),
-                            alpha(FLAME_END, 0), FxPool.BRIGHT);
+                    : FxWorld.sprite(GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 10 + R.i(5), 0.5f, 2.1f, alpha(i % 2 == 0 ? FLAME : EMBER_HOT, 0.85f),
+                            alpha(i % 2 == 0 ? FLAME : EMBER_HOT, 0), FxPool.BRIGHT);
             FxWorld.drag(s, 0.93f);
+            if (!core && i % 2 == 0) {
+                // the same tongue again as light, so it burns bright where the flame is thick
+                int lit = FxWorld.sprite(GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 9 + R.i(4), 0.4f, 1.6f, alpha(EMBER_HOT, 0.6f), alpha(EMBER_DEEP, 0), FxPool.ADD);
+                FxWorld.drag(lit, 0.93f);
+            }
         }
         if (j.age % 2 == 0) {
             FxRecipes.embers(j.x + dx * reach * 0.5, j.y + dy * reach * 0.5, j.z + dz * reach * 0.5, n(5), reach * 0.25f, j.style, 0.02f);
-            FxRecipes.smokePuffs(j.x + dx * reach * 0.9, j.y + dy * reach * 0.9 + 0.3, j.z + dz * reach * 0.9, 1, reach * 0.15f, 1.4f, FxStyle.NEUTRAL, 0.04f, 30);
+            smoke(j.x + dx * reach * 0.9, j.y + dy * reach * 0.9 + 0.3, j.z + dz * reach * 0.9, 1, reach * 0.15f, 1.3f, 30);
         }
         if (j.age == 0) {
             FxRecipes.flare(j.x + dx * 0.6, j.y + dy * 0.6, j.z + dz * 0.6, 1.5f, j.style, 5);
@@ -769,32 +789,60 @@ final class Signatures {
 
     // ---- Thornwake: the plants that are really there take hold -----------------------------------------------------------
 
+    private static final int ROOT_STEPS = 9, ROOT_TICKS = 4;
+
     /**
-     * A root: a chain of small chunks of bark, lit by the world like any block, thick at the foot and thin at the tip. They all
-     * start at the foot and are thrown along the root's curve with heavy drag, so it shoots out of the ground and stops where it
-     * holds. A couple of leaves come with it.
+     * A root: little blocks of real wood (the debris pool's cubes, each resting where it is put), thick at the foot and thin at
+     * the tip, along a curve that leaves the ground steeply and leans in to the body. It grows from the ground up over a few
+     * ticks, and leaves break out near its tip. Wood, not light: it is lit like any block and shows at noon and at night.
      */
-    private static void root(double x, double y, double z, double tx, double ty, double tz, int life, float width, int seed) {
-        int steps = n(10);
-        float drag = 0.6f;
-        for (int i = 0; i <= steps; i++) {
-            float t = i / (float) Math.max(1, steps);
-            // out of the ground steeply, then leaning in to the body: a curve with a wander, never a straight line
-            float u = t * t * (3 - 2 * t), up = Mth.sqrt(t);
-            double px = x + (tx - x) * u + Mth.sin(t * 5f + seed) * 0.08, py = y + (ty - y) * up, pz = z + (tz - z) * u + Mth.cos(t * 4f + seed * 1.7f) * 0.08;
-            float size = width * 2.8f * (1f - 0.62f * t);
-            int col = (i + seed & 1) == 0 ? BARK : BARK_DARK;
-            int s = FxWorld.sprite(PLATE, x, y + 0.05, z, (px - x) * (1 - drag), (py - y) * (1 - drag), (pz - z) * (1 - drag), life + R.i(5), size, size * 0.8f, col, alpha(col, 0.75f),
-                    FxPool.LIT);
-            FxWorld.drag(s, drag);
-            FxWorld.spin(s, (seed + i) * 0.9f, 0);
+    private static void root(FxStyle st, double x, double y, double z, double tx, double ty, double tz, int life, float width, int seed) {
+        for (Job free : JOBS) {
+            if (free.kind != 0) continue;
+            free.kind = J_ROOT;
+            free.age = 0;
+            free.life = ROOT_TICKS;
+            free.caster = -1;
+            free.target = -1;
+            free.seed = seed;
+            free.x = x;
+            free.y = y;
+            free.z = z;
+            free.dx = (float) (tx - x);
+            free.dy = (float) (ty - y);
+            free.dz = (float) (tz - z);
+            free.radius = width;
+            free.n = life;
+            free.h = 0;
+            free.full = false;
+            free.style = st;
+            free.power = "thornwake";
+            return;
         }
-        for (int i = 0; i < 2; i++) {
-            float t = 0.45f + 0.25f * i;
-            int s = FxWorld.sprite(PETAL, x, y + 0.05, z, (x + (tx - x) * t - x) * (1 - drag), (ty - y) * Mth.sqrt(t) * (1 - drag), (z + (tz - z) * t - z) * (1 - drag), life, 0.2f, 0.16f, LEAF,
-                    alpha(LEAF, 0.7f), FxPool.LIT);
-            FxWorld.drag(s, drag);
-            FxWorld.spin(s, seed + i * 2.1f, 0);
+    }
+
+    private static void rootGrows(Job j) {
+        int from = j.age * ROOT_STEPS / ROOT_TICKS, to = (j.age + 1) * ROOT_STEPS / ROOT_TICKS;
+        var wood = net.minecraft.world.level.block.Blocks.SPRUCE_WOOD.defaultBlockState();
+        for (int i = from; i < to; i++) {
+            float t = (i + 0.5f) / ROOT_STEPS;
+            float u = t * t * (3 - 2 * t), up = Mth.sqrt(t);
+            double px = j.x + j.dx * u + Mth.sin(t * 5f + j.seed) * 0.07, py = j.y + j.dy * up, pz = j.z + j.dz * u + Mth.cos(t * 4f + j.seed * 1.7f) * 0.07;
+            float size = j.radius * (1f - 0.55f * t);
+            // at rest where it is put: its floor is its own height
+            FxDebris.spawn(wood, px, py, pz, 0, 0, 0, size, j.n + R.i(6), (float) py);
+        }
+        if (j.age == ROOT_TICKS - 1) {
+            var leaves = net.minecraft.world.level.block.Blocks.AZALEA_LEAVES.defaultBlockState();
+            double tx = j.x + j.dx, ty = j.y + j.dy, tz = j.z + j.dz;
+            FxDebris.spawn(leaves, tx, ty + 0.05, tz, 0, 0, 0, j.radius * 0.7f, j.n, (float) (ty + 0.05));
+            for (int i = 0; i < 2; i++) {
+                int s = FxWorld.sprite(PETAL, tx + R.s() * 0.2, ty + R.s() * 0.2, tz + R.s() * 0.2, R.s() * 0.04, R.f(0.02f, 0.08f), R.s() * 0.04, 24 + R.i(10), 0.16f, 0.1f, LEAF,
+                        alpha(LEAF, 0), FxPool.LIT);
+                FxWorld.spin(s, R.f(0, 6.28f), 0.25f);
+                FxWorld.grav(s, 0.01f);
+                FxWorld.drag(s, 0.95f);
+            }
         }
     }
 
@@ -802,24 +850,16 @@ final class Signatures {
         double tx = e.x() + e.dx(), ty = e.y() + e.dy(), tz = e.z() + e.dz();
         int life = Math.max(12, e.ticks());
         double gy = FxWorld.groundY(tx, ty + 0.5, tz);
-        // where it left the plant: soil thrown up
-        FxRecipes.debris(e.x(), e.y() + 0.1, e.z(), 0.4f, n(5), 0.4f, 0.08f);
-        // and round the body: roots out of the ground on every side, up to the waist
-        int count = n(4);
+        // where it left the plant: a little soil
+        FxRecipes.debris(e.x(), e.y() + 0.1, e.z(), 0.3f, n(2), 0.3f, 0.06f);
+        // and round the body: three roots out of the ground on different sides, up to the waist
+        int count = Math.max(2, n(3));
         for (int i = 0; i < count; i++) {
-            float a = i / (float) Math.max(1, count) * Mth.TWO_PI + (e.seed() & 15) * 0.4f, d = 0.75f + R.f() * 0.35f;
-            root(tx + Mth.cos(a) * d, gy, tz + Mth.sin(a) * d, tx + Mth.cos(a + 1.1f) * 0.25, ty + R.f(-0.2f, 0.35f), tz + Mth.sin(a + 1.1f) * 0.25, life, 0.085f,
-                    e.seed() * 31 + i);
+            float a = i / (float) count * Mth.TWO_PI + (e.seed() & 15) * 0.4f, d = 0.8f + R.f() * 0.3f;
+            root(st, tx + Mth.cos(a) * d, gy, tz + Mth.sin(a) * d, tx + Mth.cos(a + 1.1f) * 0.28, ty + R.f(-0.15f, 0.3f), tz + Mth.sin(a + 1.1f) * 0.28, life, 0.3f, e.seed() * 31 + i);
         }
-        FxRecipes.debris(tx, gy + 0.1, tz, 0.9f, n(8), 0.45f, 0.1f);
+        FxRecipes.debris(tx, gy + 0.1, tz, 0.9f, n(3), 0.35f, 0.08f);
         FxRecipes.dustRing(tx, gy, tz, 0.9f, n(8), FxStyle.KINETIC, 0.06f);
-        for (int i = 0; i < n(7); i++) {
-            int s = FxWorld.sprite(PETAL, tx + R.s() * 0.6, gy + R.f(0.2f, 1.2f), tz + R.s() * 0.6, R.s() * 0.06, R.f(0.04f, 0.14f), R.s() * 0.06, 26 + R.i(14), 0.15f, 0.1f,
-                    LEAF, alpha(LEAF, 0), FxPool.LIT);
-            FxWorld.spin(s, R.f(0, 6.28f), 0.25f);
-            FxWorld.grav(s, 0.012f);
-            FxWorld.drag(s, 0.95f);
-        }
     }
 
     /** The cast itself: the ground stirs all the way out, and where it is green the leaves lift. */
@@ -831,7 +871,7 @@ final class Signatures {
             double px = e.x() + Mth.cos(a) * d, pz = e.z() + Mth.sin(a) * d;
             double gy = FxWorld.groundY(px, e.y() + 1.2, pz);
             if (Math.abs(gy - e.y()) > 3) continue;
-            FxRecipes.debris(px, gy + 0.1, pz, 0.25f, 2, 0.3f, 0.04f);
+            if (i % 2 == 0) FxRecipes.debris(px, gy + 0.1, pz, 0.25f, 1, 0.25f, 0.04f);
             if (green) {
                 int s = FxWorld.sprite(PETAL, px, gy + 0.2, pz, R.s() * 0.03, R.f(0.05f, 0.12f), R.s() * 0.03, 30 + R.i(16), 0.14f, 0.1f, LEAF, alpha(LEAF, 0), FxPool.LIT);
                 FxWorld.spin(s, a, 0.2f);
@@ -842,17 +882,18 @@ final class Signatures {
         if (green) FxRecipes.motes(e.x(), e.y() + 0.6, e.z(), n(12), r * 0.5f, st, 0.02f);
     }
 
-    /** Elder Grove: one great root, wound out of several, standing up under the strongest thing here. */
+    /** Elder Grove: one great root, wound out of five, standing up under the strongest thing here. */
     private static void elderRoot(FxEvent e, FxStyle st) {
         double x = e.x(), z = e.z();
         double gy = FxWorld.groundY(x, e.y() + 0.5, z);
         float h = Math.max(2.5f, e.scale());
         int life = Math.max(20, e.ticks());
-        for (int i = 0; i < n(6); i++) {
-            float a = i / 6f * Mth.TWO_PI, d = 1.3f;
-            root(x + Mth.cos(a) * d, gy, z + Mth.sin(a) * d, x + Mth.cos(a + 2.2f) * 0.35, gy + h * R.f(0.7f, 1f), z + Mth.sin(a + 2.2f) * 0.35, life, 0.16f, e.seed() * 17 + i);
+        int count = Math.max(3, n(5));
+        for (int i = 0; i < count; i++) {
+            float a = i / (float) count * Mth.TWO_PI, d = 1.3f;
+            root(st, x + Mth.cos(a) * d, gy, z + Mth.sin(a) * d, x + Mth.cos(a + 2.2f) * 0.35, gy + h * R.f(0.7f, 1f), z + Mth.sin(a + 2.2f) * 0.35, life, 0.5f, e.seed() * 17 + i);
         }
-        FxRecipes.debris(x, gy + 0.1, z, 1.6f, n(16), 0.7f, 0.2f);
+        FxRecipes.debris(x, gy + 0.1, z, 1.6f, n(8), 0.6f, 0.18f);
         FxRecipes.dustRing(x, gy, z, 1.6f, n(16), FxStyle.KINETIC, 0.12f);
         FxRecipes.decal(x, gy + 0.02, z, CRACK, 3.4f, 0xD0FFFFFF, 200);
         for (int i = 0; i < n(14); i++) {

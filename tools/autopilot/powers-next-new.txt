@@ -153,10 +153,22 @@ wait 4
 shotnow nn_updraft_rising
 wait 30
 shotnow nn_updraft_top
-camera third
-wait 6
-shotnow nn_updraft_third
-camera first
+wait 60
+# the same column from outside: cast, step back eight blocks, look at it
+cmd effect clear @s minecraft:levitation
+cmd effect clear @s minecraft:slow_falling
+cmd tp @s 0.5 200 0.5 0 0
+wait 20
+cmd awaken admin power showcase updraft 1
+wait 10
+hold power1 2
+wait 8
+cmd effect clear @s minecraft:levitation
+cmd tp @s 0.5 200 -8.5 0 -18
+wait 12
+shotnow nn_updraft_outside_a
+wait 20
+shotnow nn_updraft_outside_b
 wait 60
 cmd tp @s 0.5 200 0.5 0 0
 wait 20
