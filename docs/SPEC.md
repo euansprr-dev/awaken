@@ -21195,13 +21195,14 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
 
-## 62. Rope and Wings (the rope everywhere, feathered wings, powers in the air; plan docs/movement/PLAN.md, page https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w; PROPOSED 2026-11-10, not approved, nothing built)
+## 62. Rope and Wings (the rope everywhere, feathered wings, powers in the air; plan docs/movement/PLAN.md, page https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w; Euan approved all of it 2026-11-10: "make this one-to-one ... Go ahead and build all of this one-to-one", with the flying beat remade)
 
 Euan, 10 Nov 2026: the swing "is just not good ... I want it to be a bit more guided, and it should feel like you're
 basically playing ... a Spider-Man game nearly"; the wings "look a bit rushed. I want them to truly feel cinematic and
 awesome"; "make sure you can use powers in the air"; and extra movement that is "truly insane, awesome to unlock". The
-plan record is `docs/movement/PLAN.md`; the approval page is built by `docs/movement/build_page.py`. **Nothing below is
-a rule of the game until he approves it.** What follows is what the audit found and what the plan proposes.
+plan record is `docs/movement/PLAN.md`; the approval page is built by `docs/movement/build_page.py`. The page's wing model
+(`docs/movement/src/wings.js`) is the reference for the wings, one to one. What follows is what the audit found, what
+the plan sets, and (under "Built") what the code does.
 
 **Found (verified unless marked; every bench number is `docs/movement/proof/run.sh`, the game's own swing code compiled
 without Minecraft, 40 runs of 15 s, median blocks):**
@@ -21224,7 +21225,7 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   94); a first sling with a look-ahead takes the oak wood to 203 and the spruce wood to 198; `apex` 55 takes the lane to
   216 and the city to 258; **both together: oak 203, spruce 198, lane 253, city 265, forest 260**, no hard hit on a rope.
 
-**Proposed (docs/movement/PLAN.md §4):**
+**The plan (docs/movement/PLAN.md §4):**
 - **The rope:** one planner, three answers in order: the swing (§17.31's numbers kept), a **sling** (a top ahead and
   above the hand, 6-30 on: pulled toward a point 2.4 over it at 0.13 a tick² up to 1.3 b/t, let go before it, the whole
   flight swept first), the pull up a wall (swept, 16 at most). Held, the let-go comes at `apex` 55° when the flight

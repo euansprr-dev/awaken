@@ -1,9 +1,29 @@
 # Rope and Wings: the plan record (10 Nov 2026)
 
-Status: **proposed, not approved, nothing built.** The approval page is https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w
+Status: **APPROVED in full by Euan on 10 Nov 2026, with one change** (below). Being built on
+`claude/movement-plan-e38dfa`, the whole plan coded first and tested once at the end (his rule of 10 Nov). The approval page is https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w
 (source `docs/movement/page.src.html`, built by `build_page.py`; his answers save in its `answers` collection, `d1` to
 `d12` and `feel`). This file is the builder's contract once Euan says yes. It follows `.claude/PLANNING-PROCESS.md` and holds
 the standard of `.claude/UI-EXCELLENCE.md` for how movement looks, sounds and reads on screen.
+
+## The approval (10 Nov 2026, in chat)
+
+"Yeah, this looks fantastic. Like, make this one-to-one. The only thing is for the flying animation for the wings, it needs
+to be better. Like, all animations are good, but the flying one where it's like beating the wings looks very, very bad.
+And I think that can be much, much better. Like, it clips a bit and it just doesn't look professional. But everything
+else is amazing. Go ahead and build all of this one-to-one."
+
+- **One-to-one:** the page's model is the reference. `docs/movement/src/wings.js` holds every number of the wings (bones,
+  feathers, poses, the three rungs); the game's `WingLayer` is a port of it, not a new design.
+- **The flying beat was remade the same day** (`beat()` in `wings.js`, on the page since version 2). What was wrong with
+  the first one: the elbow's and the wrist's angles jumped where the cycle looped (a pop every beat); each feather turned
+  on its shaft on the way up and cut through its neighbours; the whole wing hinged at the shoulder, so the inner feathers
+  swept through the body and arms; and the wing bent as three flat plates. The remade beat: one smooth cycle (down 42%, up
+  58%, each eased in and out, every term periodic); the shoulder moves 9 degrees, the elbow 25, the wrist 15, each a
+  little later than the last, so the bend runs out along the wing and the tip trails; a feather takes the flap of its own
+  place on the span (eased across each joint), so the wing bends as one surface; no turn about the shaft; on the way up
+  the wrist folds and the primaries close, on the way down they spread; the body rises and falls 1.3 texels with it; the
+  roots sit 3.2 out and 4 off the back, clear of the head and arms.
 
 ## Euan's words (10 Nov 2026)
 
@@ -148,7 +168,9 @@ bump in free flight in a few runs (oak 1 in 40, spruce 5, lane 3); the build rem
   `fill` over 250 blocks said "not loaded". Its pictures are of a Carillon balcony and are not used.
 - Run 42840884113: the sandbox's lane and street with the key held, the glide, the dive, flight, the Sovereign. The
   wing and rope pictures on the page are from it. No rope was refused.
-- The forest run (`tools/autopilot/movement-wood.txt`): see the end of this file.
+- Run 42844169710 (`tools/autopilot/movement-wood.txt`): a real oak forest (`terrain visit minecraft:forest`, then
+  `waitpassage`), sprint, jump, press and hold the rope, nine times: **no swing**; five presses missed and four zipped
+  the runner up onto a treetop and left them standing on it (one with a bonk of 0.63). The page's forest picture.
 
 ## 3. Approaches
 

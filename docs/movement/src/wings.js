@@ -53,8 +53,8 @@
       body.add(l); legs.push(l);
     }
     // the mount between the shoulder blades (the wing core's mark): dark plate, a lit core
-    body.add(box(5, 5, 1.2, 0x1c222b, 0, 20.5, 2.5));
-    const core = box(1.6, 1.6, 0.6, 0xdff8ff, 0, 20.5, 3.3); body.add(core);
+    body.add(box(7, 5, 2, 0x1c222b, 0, 20.5, 3));
+    const core = box(1.6, 1.6, 0.6, 0xdff8ff, 0, 20.5, 4.2); body.add(core);
     return { root, body, arms, legs, core };
   }
 
@@ -99,7 +99,7 @@
     for (let i = 0; i < 3; i++) {
       const s = new T.Group(); s.matrixAutoUpdate = false; s.add(box(2, BONE[i] + 1, 2, pal.spar, 0, BONE[i] / 2, 0)); g.add(s); w.spars.push(s);
     }
-    for (let i = 0; i < 2; i++) { const k = box(3, 3, 3, pal.cov2); g.add(k); w.knuckles.push(k); }
+    for (let i = 0; i < 2; i++) { const k = box(2.4, 2.4, 2.4, pal.spar); g.add(k); w.knuckles.push(k); }
     for (let i = 0; i < TER.length; i++) { const f = feather(TER[i], 3, pal); g.add(f); w.ter.push(f); }
     for (let i = 0; i < SEC.length; i++) { const f = feather(SEC[i], 3, pal); g.add(f); w.sec.push(f); }
     for (let i = 0; i < PRIM.length; i++) { const f = feather(PRIM[i], 3, pal); g.add(f); w.prim.push(f); }
@@ -148,35 +148,37 @@
     w.knuckles[0].position.copy(J[1]); w.knuckles[1].position.copy(J[2]);
     const c = P.casc;
     const along = (f, a, b) => pv.copy(a).lerp(b, f);
+    // sp: where on the span (0 the shoulder, 1 the elbow, 2 the wrist, 3 the tip); the flap eases in across each joint
+    const fl = sp => (P.p0 + P.p1 * ease((sp - 0.7) / 0.7) + P.p2 * ease((sp - 1.7) / 0.7)) * D;
     for (let i = 0; i < w.ter.length; i++) {
       const t = i / (w.ter.length - 1), ci = ease((c - 0.05 * t) / 0.6);
       along(0.12 + 0.86 * t, J[0], J[1]);
-      place(w.ter[i], s, pv.x, pv.y, pv.z, lerp(-90, P.ter + (t - 0.5) * 8, ci) * D, ph[0] * D, i * 0.16 - 0.4, 0, lerp(0.8, 1, ci));
+      place(w.ter[i], s, pv.x, pv.y, pv.z, lerp(-90, P.ter + (t - 0.5) * 8, ci) * D, fl(0.12 + 0.86 * t), i * 0.16 - 0.4, 0, lerp(0.8, 1, ci));
     }
     for (let i = 0; i < w.sec.length; i++) {
       const t = i / (w.sec.length - 1), ci = ease((c - 0.1 - 0.15 * t) / 0.6);
       along(0.04 + 0.94 * t, J[1], J[2]);
-      place(w.sec[i], s, pv.x, pv.y, pv.z, lerp(-90, P.sec + t * (P.fanIn - P.sec) * 0.55, ci) * D, ph[1] * D, 0.5 + i * 0.16, P.louvre * 0.5 * D, lerp(0.8, 1, ci));
+      place(w.sec[i], s, pv.x, pv.y, pv.z, lerp(-90, P.sec + t * (P.fanIn - P.sec) * 0.55, ci) * D, fl(1.04 + 0.94 * t), 0.5 + i * 0.16, P.louvre * 0.5 * D, lerp(0.8, 1, ci));
     }
     for (let i = 0; i < w.prim.length; i++) {
       const t = i / (w.prim.length - 1), ci = ease((c - 0.25 - 0.3 * t) / 0.45);
       along(0.08 + 0.92 * t, J[2], J[3]);
       const open = lerp(P.fanIn, P.fanOut, Math.pow(t, 0.85));
-      place(w.prim[i], s, pv.x, pv.y, pv.z, lerp(-97 + 9 * t, open, ci) * D, ph[2] * D, 1.9 + i * 0.16, P.louvre * D, lerp(0.66, 1, ci));
+      place(w.prim[i], s, pv.x, pv.y, pv.z, lerp(-97 + 9 * t, open, ci) * D, fl(2.08 + 0.92 * t), 1.9 + i * 0.16, P.louvre * D, lerp(0.66, 1, ci));
     }
     for (let i = 0; i < w.cov.length; i++) {
       const t = i / (w.cov.length - 1), ci = ease((c - 0.2 * t) / 0.6);
       const b = t < 0.3 ? 0 : t < 0.68 ? 1 : 2, f = b === 0 ? t / 0.3 : b === 1 ? (t - 0.3) / 0.38 : (t - 0.68) / 0.32;
       along(0.06 + 0.9 * f, J[b], J[b + 1]);
       const base = b === 0 ? P.ter : b === 1 ? P.sec : lerp(P.fanIn, P.fanOut, f * 0.7);
-      place(w.cov[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, ph[b] * D, 3.6 + (i % 2) * 0.2, 0, 1);
+      place(w.cov[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, fl(b + 0.06 + 0.9 * f), 3.6 + (i % 2) * 0.2, 0, 1);
     }
     for (let i = 0; i < w.cov2.length; i++) {
       const t = i / (w.cov2.length - 1), ci = ease((c - 0.2 * t) / 0.6);
       const b = t < 0.3 ? 0 : t < 0.68 ? 1 : 2, f = b === 0 ? t / 0.3 : b === 1 ? (t - 0.3) / 0.38 : (t - 0.68) / 0.32;
       along(0.1 + 0.86 * f, J[b], J[b + 1]);
       const base = b === 0 ? P.ter : b === 1 ? P.sec : lerp(P.fanIn, P.fanOut, f * 0.6);
-      place(w.cov2[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, ph[b] * D, 4.7 + (i % 2) * 0.2, 0, 1);
+      place(w.cov2[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, fl(b + 0.1 + 0.86 * f), 4.7 + (i % 2) * 0.2, 0, 1);
     }
     for (let i = 0; i < 3; i++) {
       const h = w.halos[i]; h.position.copy(J[i + 1]).addScaledVector(J[i], 0.0); h.position.y -= 7 * c;
@@ -240,26 +242,32 @@
   function oldBeat(t) { if (t < 4) return -Math.sin(t / 4 * Math.PI / 2); if (t >= 12) return 0; const u = (t - 4) / 8; return -Math.cos(u * Math.PI / 2) + 0.35 * Math.sin(u * Math.PI); }
 
   // ---- states: what the bones and feathers do, as a function of time in the state (seconds) ----
-  const FOLD = { a0: 92, a1: 38, a2: -101, p0: 16, p1: 10, p2: 8, fanIn: -92, fanOut: -89, sec: -90, ter: -92, casc: 0, louvre: 0 };
-  const OPEN = { a0: 66, a1: 16, a2: -18, p0: 8, p1: 0, p2: 0, fanIn: -72, fanOut: -8, sec: -84, ter: -97, casc: 1, louvre: 0 };
-  const GLIDE = { a0: 50, a1: 6, a2: -15, p0: 6, p1: 5, p2: 7, fanIn: -70, fanOut: -13, sec: -86, ter: -95, casc: 1, louvre: 0 };
-  const DIVE = { a0: 26, a1: -128, a2: -64, p0: 22, p1: 2, p2: 4, fanIn: -84, fanOut: -70, sec: -100, ter: -98, casc: 1, louvre: 0 };
-  const FLARE = { a0: 64, a1: 18, a2: -6, p0: -34, p1: -12, p2: -10, fanIn: -78, fanOut: 2, sec: -84, ter: -96, casc: 1, louvre: 0 };
+  const FOLD = { a0: 92, a1: 38, a2: -101, p0: 16, p1: 10, p2: 8, fanIn: -92, fanOut: -89, sec: -90, ter: -92, casc: 0, louvre: 0, bob: 0 };
+  const OPEN = { a0: 66, a1: 16, a2: -18, p0: 8, p1: 0, p2: 0, fanIn: -72, fanOut: -8, sec: -84, ter: -97, casc: 1, louvre: 0, bob: 0 };
+  const GLIDE = { a0: 50, a1: 6, a2: -15, p0: 6, p1: 5, p2: 7, fanIn: -70, fanOut: -13, sec: -86, ter: -95, casc: 1, louvre: 0, bob: 0 };
+  const DIVE = { a0: 26, a1: -128, a2: -64, p0: 22, p1: 2, p2: 4, fanIn: -84, fanOut: -70, sec: -100, ter: -98, casc: 1, louvre: 0, bob: 0 };
+  const FLARE = { a0: 64, a1: 18, a2: -6, p0: -34, p1: -12, p2: -10, fanIn: -78, fanOut: 2, sec: -84, ter: -96, casc: 1, louvre: 0, bob: 0 };
   function mix(A, B, t) { const o = {}; for (const k in A) o[k] = lerp(A[k], B[k], t); return o; }
   function backOut(x) { x = Math.max(0, Math.min(1, x)); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
-  // a beat: down hard, the hand lagging; back up with the wrist folded and the feathers parted
-  function beat(base, t, period, amp) {
-    const u = (t % period) / period, o = Object.assign({}, base);
-    const down = 0.34;
-    if (u < down) {
-      const k = ease(u / down);
-      o.p0 = base.p0 + amp * (0.62 - 1.5 * k); o.p1 = base.p1 + amp * 0.34 * (1 - k); o.p2 = base.p2 + amp * 0.5 * (1 - k);
-      o.fanOut = base.fanOut + 5; o.louvre = 0;
-    } else {
-      const k = ease((u - down) / (1 - down)), bend = Math.sin(k * Math.PI);
-      o.p0 = base.p0 + amp * (-0.88 + 1.5 * k); o.p1 = base.p1 - amp * 0.34 * bend + amp * 0.34 * k * 0; o.p2 = base.p2 - amp * 0.7 * bend;
-      o.a1 = base.a1 - 14 * bend; o.a2 = base.a2 - 26 * bend; o.louvre = 34 * bend; o.fanOut = base.fanOut - 10 * bend;
-    }
+  // a beat: one smooth cycle. Down takes 42% of it and up the rest; each part eases in and out, so nothing jumps where
+  // the cycle loops. The shoulder moves little (the inner wing stays over the back and never cuts the body); the bend
+  // runs out along the wing a little late at each joint, so the tip trails; on the way up the wrist folds and the long
+  // feathers close, and on the way down they spread. `lift`: how far the wing also rises and falls in its own plane
+  // (an upright hover's beat), `amp` scales the whole stroke.
+  function beat(base, t, period, amp, lift) {
+    const u = (t % period) / period, d = 0.42;
+    const th = u < d ? Math.PI * u / d : Math.PI * (1 + (u - d) / (1 - d)), o = Object.assign({}, base);
+    const sn = Math.sin(th), up = th > Math.PI ? sn * sn : 0, dn = th > Math.PI ? 0 : sn * sn;
+    o.p0 = base.p0 + amp * 9 * Math.cos(th);
+    o.p1 = base.p1 + amp * 25 * Math.cos(th - 0.55);
+    o.p2 = base.p2 + amp * 15 * Math.cos(th - 1.15);
+    o.a0 = base.a0 + lift * 9 * Math.cos(th);
+    o.a1 = base.a1 + lift * 7 * Math.cos(th - 0.5) - amp * 8 * up;
+    o.a2 = base.a2 - amp * 18 * up;
+    o.fanOut = base.fanOut - amp * 9 * up + amp * 5 * dn;
+    o.fanIn = base.fanIn - amp * 3 * up;
+    o.louvre = 0;
+    o.bob = -1.3 * amp * Math.cos(th - 0.7);
     return o;
   }
   const STATES = {
@@ -281,7 +289,7 @@
     },
     beat: {
       body: { pitch: -74 }, glow: 0.9, label: 'Flying', speed: 1.4,
-      f: t => beat(GLIDE, t, 0.9, 46),
+      f: t => beat(GLIDE, t, 0.95, 1, 0),
       old: t => [1, oldBeat((t * 20) % 18), 0.5]
     },
     dive: {
@@ -291,7 +299,7 @@
     },
     hover: {
       body: { pitch: -8 }, glow: 1, label: 'Hovering',
-      f: t => beat(mix(OPEN, GLIDE, 0.3), t, 1.5, 40),
+      f: t => beat(mix(OPEN, GLIDE, 0.3), t, 1.6, 0.9, 1),
       old: t => [1, oldBeat((t * 20) % 18), 0]
     },
     land: {
@@ -311,14 +319,14 @@
   const rigNew = makeFigure(), rigOld = makeFigure();
   scene.add(rigNew.root); scene.add(rigOld.root);
   const oldWing = makeOld(); rigOld.body.add(oldWing.g);
-  const wingsHolder = new T.Group(); wingsHolder.position.set(0, 21, 2.6); rigNew.body.add(wingsHolder);
+  const wingsHolder = new T.Group(); wingsHolder.position.set(0, 21, 4.0); rigNew.body.add(wingsHolder);
   let wings = [], haloRing = null;
   function buildTier(name) {
     while (wingsHolder.children.length) wingsHolder.remove(wingsHolder.children[0]);
     wings = [];
     const tier = TIERS[name];
     tier.pairs.forEach((cfg, pi) => {
-      for (const s of [1, -1]) { const w = makeWing(s, cfg); w.g.position.set(s * 2.4, 0, pi * 0.9); wingsHolder.add(w.g); wings.push(w); }
+      for (const s of [1, -1]) { const w = makeWing(s, cfg); w.g.position.set(s * 3.2, 0, pi * 0.9); wingsHolder.add(w.g); wings.push(w); }
     });
     if (haloRing) { rigNew.body.remove(haloRing); haloRing = null; }
     if (tier.halo) {
@@ -379,12 +387,12 @@
   }
   if (window.ResizeObserver) new ResizeObserver(resize).observe(host); window.addEventListener('resize', resize);
 
-  function poseBody(rig, pitch, t, moving) {
+  function poseBody(rig, pitch, t, moving, bob) {
     rig.body.rotation.x = pitch * D;
     // the body turns about its chest so the figure stays in frame
     rig.body.position.set(0, 0, 0);
     const prone = Math.min(1, Math.abs(pitch) / 80);
-    rig.root.position.y = lerp(0, 18, prone) + (moving ? Math.sin(t * 2.1) * 0.8 : 0);
+    rig.root.position.y = lerp(0, 18, prone) + (moving && !bob ? Math.sin(t * 2.1) * 0.8 : 0) + (bob || 0);
     rig.root.position.z = lerp(0, -14, prone);
     for (let i = 0; i < 2; i++) {
       const s = i ? 1 : -1;
@@ -410,14 +418,14 @@
     pitchNow += (S.body.pitch - pitchNow) * Math.min(1, dt * 7);
     speedNow += ((S.speed || 0) - speedNow) * Math.min(1, dt * 3);
     const moving = !!S.speed;
-    poseBody(rigNew, pitchNow, tState, moving); poseBody(rigOld, pitchNow, tState, moving);
+    poseBody(rigNew, pitchNow, tState, moving, P.bob); poseBody(rigOld, pitchNow, tState, moving, 0);
     const prev = wings.length ? wings[0]._p0 : 0;
     for (const w of wings) {
       const lag = w.cfg.lag;
       let Pw = P;
       if (lag) { Pw = S.f(Math.max(0, tState - lag)); if (fromP && blend < 1 && state !== 'unfold') Pw = mix(fromP, Pw, ease(blend)); }
       poseWing(w, Pw, S.glow);
-      w._p0 = Pw.p0;
+      w._p0 = Pw.p0 + Pw.p1 + Pw.p2;
     }
     // a hard downstroke sheds a few motes of light from the tips
     if (dt > 0 && wings.length && which !== 'old' && prev - wings[0]._p0 > 110 * dt && Math.random() < 0.5) {
