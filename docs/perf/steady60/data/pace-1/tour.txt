@@ -1,0 +1,43 @@
+slot.sh: tour slot taken by look-steady-60 after 320s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+[20:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads on
+[20:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads off: pacing off, frames that held unloads back 0, longest queue 0
+[20:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads off
+[20:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 20
+[20:22:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:22:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:22:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.8 0 0 400
+[20:22:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_1 20
+[20:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_1 frames=1198 avg_fps=59.8 p50=16.40ms p95=20.07ms p99=23.59ms max=39.84ms tick_p95=15.73ms heap=2800/8192MB fb=3840x2160 load=3.7 occluded=false minimized=false
+[20:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:23:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 400
+[20:23:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_2 20
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_2 frames=1200 avg_fps=59.9 p50=16.31ms p95=19.90ms p99=23.43ms max=32.20ms tick_p95=10.68ms heap=7020/8192MB fb=3840x2160 load=3.7 occluded=false minimized=false
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_pace_off2: frames 2648, late (three refreshes or more) 81 = 3.1%; frames with two ticks or more 0 | usual: a tick 1.47 ms (in 884 of 2648 frames), the render 0.65, between 15.58 | the late frames' lost time: ticks 22%, render 13%, between 65%; worst part of each: tick 14, render 7, between 60; 60 of them had a tick | GC pauses in the window: 3, 0 ms in all |
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_pace_off2
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads off: pacing off, frames that held unloads back 0, longest queue 0
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads off
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads on: pacing on, frames that held unloads back 0, longest queue 0
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads on
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 20
+[20:23:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:23:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:23:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.8 0 0 400
+[20:23:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_1 20
+[20:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_1 frames=1183 avg_fps=59.0 p50=16.61ms p95=20.33ms p99=22.95ms max=35.41ms tick_p95=14.34ms heap=5388/8192MB fb=3840x2160 load=3.5 occluded=false minimized=false
+[20:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:23:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 400
+[20:23:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_2 20
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_2 frames=1181 avg_fps=59.0 p50=16.58ms p95=20.03ms p99=21.96ms max=38.09ms tick_p95=10.60ms heap=3686/8192MB fb=3840x2160 load=3.5 occluded=false minimized=false
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_pace_on2: frames 2612, late (three refreshes or more) 66 = 2.5%; frames with two ticks or more 0 | usual: a tick 1.48 ms (in 884 of 2612 frames), the render 0.57, between 15.83 | the late frames' lost time: ticks 21%, render 14%, between 65%; worst part of each: tick 16, render 3, between 47; 45 of them had a tick | GC pauses in the window: 6, 0 ms in all |
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_pace_on2
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads on: pacing on, frames that held unloads back 400, longest queue 33
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads on
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads setting: pacing on, frames that held unloads back 0, longest queue 0
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] unloads setting
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late off: off
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late off
+[20:24:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

@@ -26,6 +26,11 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   follows the partial tick; the cell field is one fixed texture (`awaken:lens_cloud_cells`, `tools/lens/cloud_cells.py`).
 - **The floor patchwork under a low sun** (same day): the lit air no longer shades any surface and no longer holds the
   far land's shade; it only saves the block walk where it is sure of the sun (`litSure`, `walkEnd`).
+- **The late frames in flight, profiled** (`LateFrames`, autopilot `late ...`; SPEC §22 has the breakdown). The top
+  cause was Sodium freeing every unloaded chunk in one frame. **Chunk pacing** (Turbo, `turboChunkPacing`,
+  `dev.awaken.turbo.chunkpace`) lets three through a frame: 94.9% on time against 93.3% on alternating legs (pace-1).
+  **It is a new Turbo hook into Sodium and needs Euan's yes before any merge** (then add it to CLAUDE.md's Turbo
+  list). A smaller chunk batch from the server was tried and dropped (batch-1).
 - **Tick work evened out** (autopilot `lens cost`): a 0.5 ms limit a tick for the heightfield and the block map, near
   re-reads in turn.
 - Euan's notes, 10 Nov, three rounds, all acted on: bright rims at dusk; dark un-fogged patches; "the atmosphere
@@ -46,10 +51,11 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   Air at 92.2 to 95.6%. The late frames are the game's own chunk work on the render thread.
 
 ## To do, in order
-1. **Flying to 98% on time**: profile the late frames in flight (`JFR=1 tools/steady60-tour.sh
-   tools/autopilot/steady60-fly.txt <name>`, then the render thread's frames over 20 ms): chunk meshes arriving,
-   Awaken's own client ticks across modules, the road planner and cave horizon threads. Then act on what it shows
-   (Awaken's workers giving way while frames run late; a frame governor only if the GPU turns out to matter).
+1. **Flying to 98% on time**: about 95% now over loaded land with Chunk pacing, 77 to 84% over land never seen.
+   Left, in order: the pass-by-pass trim below (every millisecond of GPU time is a millisecond of spare for the CPU's
+   spikes), the game's client light engine (it copies its section maps each frame that changed any), Sodium's rebuild
+   task preparation, the other modules' client ticks (Atlas, Wild Tint, Kin, Delve: their owners'), and new land (the
+   integrated server's world generation).
 2. **The Budget**: a pass-by-pass trim of the older Cinematic steps on the Dell (the probe chains,
    `tools/lens/probes.py`): the game alone is 2.8 ms and Cinematic-before 8.9, so they are most of the frame.
 3. **Frame record** on the Look page (on-time share, `/awaken look report`).
@@ -72,6 +78,7 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
 MacBook's screen in a copy of his world (`steady60-sky.txt`: the shorter one for the sky, clouds and rays;
 `steady60-edges.txt`: the dusk edge check; `steady60-floor.txt`: the floor under a low sun with each part off in turn;
 `steady60-check.txt`: floor and sky in one launch). On the Dell: `steady60-dell-5.txt` (cost and as played),
-`steady60-fly.txt` (flight with each part off in turn), then `tools/steady60-report.py <results dir>`. "On time" is a
+`steady60-fly.txt` (flight with each part off in turn), `steady60-late.txt` (the late-frame profile), `steady60-pace.txt`
+(Chunk pacing on and off on alternating legs), then `tools/steady60-report.py <results dir>`. "On time" is a
 frame gap that rounds to exactly two refreshes of the 120 Hz screen. ImmersiveVFX's shots at the same moments are
 `docs/perf/steady60/page/shots/p*_vfx.jpg`.

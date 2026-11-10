@@ -60,6 +60,8 @@ final class LensBlocks {
     private final int[] scratch = new int[256];
     private final int[] order = ringOrder();
     private byte[] kinds = new byte[0];
+    private BlockState lastState;
+    private int lastKind;
     private int minSectionY, centreX, centreZ;
     private int rescanAt, nearAt;
     private boolean started;
@@ -187,6 +189,14 @@ final class LensBlocks {
 
     /** What a block does to the sun: nothing, stops it, leaves, or stops it across its lower half. */
     private int kind(BlockState state) {
+        // (a column is runs of one state, so the last answer is nearly always this one's: the id lookup behind it is a
+        // hash probe a block, and was the map's hot spot in the late frames' samples)
+        if (state == lastState) return lastKind;
+        lastState = state;
+        return lastKind = kindOf(state);
+    }
+
+    private int kindOf(BlockState state) {
         int id = Block.getId(state);
         if (id >= kinds.length) {
             int old = kinds.length;

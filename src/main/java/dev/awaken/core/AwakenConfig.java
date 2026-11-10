@@ -169,6 +169,11 @@ public final class AwakenConfig {
                         "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
                         "is installed.")
                 .defineEnum("farSight", FarSight.FULL);
+        public static final ModConfigSpec.BooleanValue TURBO_CHUNK_PACING = C
+                .comment("When chunks leave the view, take them out of the renderer a few a frame and not all in one (a whole row",
+                        "leaving at once, flying, made that frame late). Nothing drawn changes. Needs Sodium; off: Sodium frees them",
+                        "exactly as its own code does.")
+                .define("turboChunkPacing", true);
         public static final ModConfigSpec.BooleanValue FAR_SIGHT_WATER_EDGES = C
                 .comment("While Far Sight draws, leave out the water walls at the edge of the loaded chunks (thin pale lines over the",
                         "far sea after a teleport or in fast flight). Needs Sodium; off: water meshes exactly as Sodium's.")

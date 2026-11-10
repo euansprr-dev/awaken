@@ -652,6 +652,10 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] look {}: {}", tier, took ? "applied" : "not available here");
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
+            case "chunkpace" -> // chunkpace on|off|setting: Chunk pacing (Turbo) for the following scenes, and its report
+                Awaken.LOG.info("[autopilot] chunkpace {}: {}", arg.trim(), dev.awaken.turbo.chunkpace.ChunkPace.autopilot(arg));
+            case "late" -> // late on|calibrate|report <label>|off: where the late frames' time goes (LateFrames)
+                Awaken.LOG.info("[autopilot] late {}: {}", arg.trim(), LateFrames.command(arg));
             case "pixels" -> { // pixels <scale> [fsr|sharp|bilinear] | config | state | gpu ...: Pixels for the following scenes
                 Awaken.LOG.info("[autopilot] pixels {}: {}", arg.trim(), dev.awaken.turbo.pixels.Pixels.autopilot(arg));
                 if (!arg.trim().startsWith("gpu")) waitTicks = 10;

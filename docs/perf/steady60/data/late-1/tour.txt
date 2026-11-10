@@ -1,0 +1,43 @@
+slot.sh: tour slot taken by look-steady-60 after 310s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+[20:04:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:04:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 400
+[20:04:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_4 20
+[20:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_4 frames=1199 avg_fps=59.9 p50=16.68ms p95=20.21ms p99=23.87ms max=31.80ms tick_p95=11.17ms heap=5934/8192MB fb=3840x2160 load=6.6 occluded=false minimized=false
+[20:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_air: frames 5163, late (three refreshes or more) 228 = 4.4%; frames with two ticks or more 0 | usual: a tick 1.84 ms (in 1727 of 5163 frames), the render 0.88, between 15.54 | the late frames' lost time: ticks 18%, render 12%, between 70%; worst part of each: tick 40, render 7, between 181; 150 of them had a tick | GC pauses in the window: 12, 0 ms in all |
+[20:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_air
+[20:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens air off: air false
+[20:04:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[20:04:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:04:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:04:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.8 0 0 400
+[20:04:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_1 20
+[20:05:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_1 frames=1198 avg_fps=59.8 p50=16.72ms p95=20.21ms p99=26.19ms max=46.42ms tick_p95=18.22ms heap=4442/8192MB fb=3840x2160 load=5.2 occluded=false minimized=false
+[20:05:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:05:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:05:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 400
+[20:05:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_2 20
+[20:05:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_2 frames=1190 avg_fps=59.4 p50=16.71ms p95=21.00ms p99=25.11ms max=53.10ms tick_p95=19.07ms heap=2634/8192MB fb=3840x2160 load=4.5 occluded=false minimized=false
+[20:05:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_cine: frames 2759, late (three refreshes or more) 109 = 4.0%; frames with two ticks or more 0 | usual: a tick 1.49 ms (in 925 of 2759 frames), the render 0.71, between 15.76 | the late frames' lost time: ticks 20%, render 13%, between 67%; worst part of each: tick 23, render 6, between 80; 74 of them had a tick | GC pauses in the window: 6, 0 ms in all |
+[20:05:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_cine
+[20:05:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens air setting: air from the setting
+[20:05:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[20:05:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:05:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:05:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 1200
+[20:05:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 420
+[20:05:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late on: recording frames (stacks on)
+[20:05:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late on
+[20:05:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_newland 38
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_newland frames=2225 avg_fps=58.5 p50=17.07ms p95=22.62ms p99=30.17ms max=84.86ms tick_p95=44.64ms heap=3172/8192MB fb=3840x2160 load=8.7 occluded=false minimized=false
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_newland: frames 2225, late (three refreshes or more) 203 = 9.1%; frames with two ticks or more 0 | usual: a tick 1.78 ms (in 760 of 2225 frames), the render 0.66, between 15.74 | the late frames' lost time: ticks 17%, render 13%, between 71%; worst part of each: tick 27, render 9, between 167; 153 of them had a tick | GC pauses in the window: 30, 0 ms in all |
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late report fly_newland
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late off: off
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] late off
+[20:06:25] [Netty Local IO #1/ERROR] [minecraft/Connection]: Exception caught in connection
+java.nio.channels.ClosedChannelException: null
+[20:06:25] [Netty Local IO #1/ERROR] [minecraft/Connection]: Exception caught in connection
+java.nio.channels.ClosedChannelException: null
+[20:06:25] [Server thread/INFO] [minecraft/ServerGamePacketListenerImpl]: Dev lost connection: Internal Exception: java.nio.channels.ClosedChannelException
+[20:06:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit
