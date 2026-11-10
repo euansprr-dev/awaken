@@ -664,6 +664,59 @@ public final class SwingBench {
         return r;
     }
 
+    /**
+     * A held swing across a gap over nothing, as a dream's Run has them and its solver plays them (lucidium's
+     * {@code AirProofs.swing}): roads one block thick 80 up, {@code len} of open air between them, a lantern {@code up}
+     * over the near road and {@code ahead} along the gap, the far road {@code road} long; a sprint jump off the edge, the
+     * rope thrown {@code throwAt} ticks into it and held until it lets go by itself. Returns how far past the gap's far
+     * edge the feet come down to the roads' height (NaN if the rope finds nothing or never lets go). With
+     * {@code groundUnder}, the same over a floor ten blocks down: there the guide's early let-go is free to throw far.
+     */
+    static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder) {
+        int y = 80, z = 100;
+        SwingSpace.Boxes space = new SwingSpace.Boxes();
+        space.add(-1, y - 1, z - 12, 2, y, z, false);
+        space.add(-1, y - 1, z + len, 2, y, z + len + road, false);
+        space.add(-1, y + up, z + ahead - 1, 2, y + up + 2, z + ahead + 2, false);
+        if (groundUnder) space.add(-8, y - 11, z - 12, 9, y - 10, z + len + 80, false);
+        // a sprint jump holding forward (vanilla's): up 0.42, along 0.40, the air's pull and drag
+        double by = y, bz = z - 0.2, vy = 0.42, vz = 0.40;
+        for (int t = 0; t < throwAt; t++) {
+            vz += 0.026;
+            bz += vz;
+            by += vy;
+            vy = (vy - AscentRules.G) * 0.98;
+            vz *= 0.91;
+        }
+        AscentRules.Kin k = new AscentRules.Kin().set(0.5, by + AscentRules.HAND_HEIGHT, bz, 0, vy, vz);
+        AscentSwing.Work w = new AscentSwing.Work();
+        AscentSwing.Pick pick = new AscentSwing.Pick();
+        if (!AscentSwing.find(space, k, 0, AscentRules.TETHER_RANGE, w, pick) || pick.zip) return Double.NaN;
+        AscentSwing.Rope rope = new AscentSwing.Rope().set(pick.x, pick.y, pick.z, pick.len, pick.fitLen);
+        AscentSwing.entry(k, 0);
+        double[] sc = new double[3];
+        for (int travel = AscentSwing.travel(pick.len); travel > 0; travel--) AscentRules.carryStep(k, 0f, 0.5, 0, sc);
+        double d = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
+        rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, d));
+        rope.fitLen = Math.min(rope.fitLen, rope.len);
+        for (int i = 0, held = 0; ; i++) {
+            if (i > 300) return Double.NaN;
+            int how = AscentSwing.tick(space, k, rope, 0, 1, w);
+            if (how == AscentSwing.WALL) return Double.NaN;
+            if (how == AscentSwing.TOP) {
+                if (held >= AscentSwing.T.holdOn || AscentSwing.letGoClear(space, k, rope, 0, w)) break;
+                held++;
+            }
+        }
+        AscentSwing.letGo(k, rope, 0, w);
+        k.y -= AscentRules.HAND_HEIGHT;
+        for (int i = 0; i < 300; i++) {
+            AscentRules.carryStep(k, 0f, 1, 0, sc);
+            if (k.vy < 0 && k.y <= y) return k.z - (z + len);
+        }
+        return Double.NaN;
+    }
+
     /** A place's 40 runs on one rope, summed up. */
     public record Row(String place, boolean assist, double medianDistance, double hitsPerMinute, int hardRuns, int stuckRuns,
                       int hardOnRope, int hardFree, double ropesPerRun, double windowShare) {

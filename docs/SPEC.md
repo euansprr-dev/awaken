@@ -22247,6 +22247,21 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   again from the ground: three and four seconds between slings, twice. The bench has no crown to cross. Not built,
   **Euan's call**: let the held rope also take the next crown ahead at or a little under the hand (a skip from crown to
   crown, told from bare ground by what stands under it), which would keep the chain in the canopy.
+- **The early let-go holds on over nothing** (`AscentSwing.landsOnSomething`, in the swing's own tick, so the client,
+  the bench and the dreams' solver all have it). The guide lets a held rope go at 55 degrees, which throws the body half
+  as far again as the top of the arc did. A dream's Run is roads in a void, laid and proven for the old let-go
+  (`AirProofs.swing`): the night's suite failed `dreams_runs_solvable` on the Rope Run, a swing thrown early flying 4.3
+  blocks past its far road. So the early let-go's flight is played first, and the rope lets go early only if that
+  flight comes down on something with ground under the next three blocks of its way; false only when it falls 16
+  blocks meeting nothing and no ground lies within a space's reach (64) under it. Otherwise the rope holds on, a tick
+  at a time, until the flight does land or the arc tops out as before. On the Run's gaps a held rope now lands 5.9 to
+  8.3 blocks onto roads 11 long (it flew 15 and 21.7 past the edge). Where there is ground nothing changes: the
+  bench's forty lines are the same to the digit. Test `ascent_swing_over_nothing`.
+- **Not answered: the Rope dream with the key simply held.** Its solver proves a sprint jump off each edge with the rope
+  thrown early or late in it. The guide also throws a held rope from the road before the edge, takes the lanterns as
+  tops to sling over, and chains from one to the next; the bench's key-only bot on the Run as boxes ends past the last
+  road in every one of twelve tries. A Run laid for the guided rope, with a held-key proof beside the jump's (the
+  bench's bot can be that proof), is the dreams' to decide.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
