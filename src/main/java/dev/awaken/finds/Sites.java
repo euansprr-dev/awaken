@@ -174,20 +174,24 @@ public final class Sites {
         if (sx * sx + sz * sz < 40 * 40) return NONE; // never on the spawn point itself
         if (CityHooks.inCity(a.level, new BlockPos(x, a.level.getSeaLevel(), z))) return NONE;
         // kinds a nearer cell with first say would pick: not here
-        java.util.BitSet taken = new java.util.BitSet();
+        // and if this cell has to choose again, it takes nothing any cell round it would pick, whoever has first say:
+        // the neighbour that keeps its first choice mustn't find it here too
+        java.util.BitSet taken = new java.util.BitSet(), around = new java.util.BitSet();
         int rings = RINGS[layer];
         for (int i = -rings; i <= rings; i++)
             for (int j = -rings; j <= rings; j++) {
                 if (i == 0 && j == 0) continue;
                 int other = basePick(a, layer, cx + i, cz + j);
-                if (other >= 0 && Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0) taken.set(other);
+                if (other < 0) continue;
+                around.set(other);
+                if (Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0) taken.set(other);
             }
         double[] w = weights(a, layer, x, z);
         List<Kind> kinds = Kinds.layer(layer);
         int choice = taken.get(base) ? -1 : base;
         for (int attempt = 0; attempt < 4; attempt++) {
             if (choice < 0) {
-                for (int i = taken.nextSetBit(0); i >= 0; i = taken.nextSetBit(i + 1)) if (i < w.length) w[i] = 0;
+                for (int i = around.nextSetBit(0); i >= 0; i = around.nextSetBit(i + 1)) if (i < w.length) w[i] = 0;
                 choice = pick(w, mix(h, 0x23 + attempt));
                 if (choice < 0) return NONE;
             }
