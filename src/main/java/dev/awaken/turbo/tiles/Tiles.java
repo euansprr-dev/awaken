@@ -98,7 +98,7 @@ public final class Tiles {
     // can read any texture: so the composite draws straight into the one Pixels will read, and the copy is skipped.
     private static final Identifier SWAP = Identifier.withDefaultNamespace("swap"), MAIN = Identifier.withDefaultNamespace("main");
     private static @Nullable GpuTextureView straight;
-    private static boolean straightUsed, loggedStraight;
+    private static boolean straightUsed, straightLast, loggedStraight;
     private static @Nullable Boolean forcedStraight;
 
     /** Pixels, before a frame's post effects: the texture its upscale can read this frame (null: none, the chain as written). */
@@ -107,9 +107,15 @@ public final class Tiles {
         straightUsed = false;
     }
 
-    /** Whether this frame's composite drew into the texture given to {@link #straightOut}. */
-    public static boolean straightUsed() {
-        return straightUsed;
+    /**
+     * Pixels, after a frame's post effects: whether the composite drew into the texture given to {@link #straightOut}.
+     * The offer ends here; the answer is kept for the autopilot's report (which runs in a tick, between frames).
+     */
+    public static boolean straightTaken() {
+        straightLast = straightUsed;
+        straight = null;
+        straightUsed = false;
+        return straightLast;
     }
 
     // the chains whose tail is "composite into swap, copy into main" (the measuring chains are left as written)
@@ -147,7 +153,7 @@ public final class Tiles {
             case "off" -> Boolean.FALSE;
             default -> null;
         };
-        return "straight out " + (forcedStraight != null ? forcedStraight : "with Tiles") + (straightUsed ? " (used last frame)" : " (not used last frame)");
+        return "straight out " + (forcedStraight != null ? forcedStraight : "with Tiles") + (straightLast ? " (used last frame)" : " (not used last frame)");
     }
 
     private static @Nullable GpuBuffer lensBlock;

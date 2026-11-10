@@ -122,8 +122,7 @@ final class PixelsFrame {
         giveBack();
         // (whether this frame's composite went straight into lowOut: then that is the picture, and low holds the world
         // as it was before the post effects)
-        boolean straight = dev.awaken.turbo.tiles.Tiles.straightUsed() && lowOut != null;
-        dev.awaken.turbo.tiles.Tiles.straightOut(null);
+        boolean straight = dev.awaken.turbo.tiles.Tiles.straightTaken() && lowOut != null;
         PixelsConfig.Upscaler upscaler = Pixels.upscaler();
         try {
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
