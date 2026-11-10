@@ -81,7 +81,7 @@ final class FindsCommands {
 
     /**
      * Takes you to the nearest place of a kind that the world itself made and stands you at one of its cameras (0 is from
-     * afar; a place has four). Looks out to 12,000 blocks from the spawn. For checking places in their own land.
+     * afar; a place has four). Looks out to 21,000 blocks from the spawn. For checking places in their own land.
      */
     private static int view(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -91,7 +91,7 @@ final class FindsCommands {
         Site s = VIEWED.get(id);
         if (s == null) {
             BlockPos from = level.getRespawnData().pos();
-            for (int r = 3000; r <= 12000 && s == null; r += 3000) {
+            for (int r = 3000; r <= 21000 && s == null; r += 6000) {
                 double best = Double.MAX_VALUE;
                 for (Site o : Sites.near(level, from.getX() - r, from.getZ() - r, from.getX() + r, from.getZ() + r, 0)) {
                     double d = o.heart().distSqr(from);
@@ -102,8 +102,8 @@ final class FindsCommands {
                 }
             }
             if (s == null) {
-                Awaken.LOG.info("[finds] view {}: none within 12000 of the spawn", id);
-                c.getSource().sendFailure(Component.literal("No " + id + " within 12,000 blocks of the spawn."));
+                Awaken.LOG.info("[finds] view {}: none within 21000 of the spawn", id);
+                c.getSource().sendFailure(Component.literal("No " + id + " within 21,000 blocks of the spawn."));
                 return 0;
             }
             VIEWED.put(id, s);
