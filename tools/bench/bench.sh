@@ -10,6 +10,9 @@
 #   tools/bench/bench.sh shot  <blueprint id> <x> <y> <z> <yaw> <pitch> [name]   one picture from one eye, land coordinates
 #   tools/bench/bench.sh status | down | restart
 #
+# The checker's heap is 1536 MB (three of them fit beside three builds on 16 GB). A land far bigger than the rest (Amber
+# Reach) may need more for its whole-land scans: BENCH_XMX=4g tools/bench/bench.sh restart, or use once.
+#
 # check and once exit 0 only when nothing floats and every site is reached. The report is run-bench/out/<name>/bench.txt,
 # beside sheet.png and the pictures.
 #
@@ -69,7 +72,7 @@ up() {
   (
     cd "$BENCH/game"
     export AWAKEN_BENCH_SERVE="$BENCH" AWAKEN_BENCH_ROOT="$ROOT"
-    nohup "$(cat "$ROOT/build/bench/run.java")" -Xmx1536m "${jvm[@]}" "@$BENCH/vmargs.txt" -cp "$(cat "$ROOT/build/bench/run.classpath")" \
+    nohup "$(cat "$ROOT/build/bench/run.java")" -Xmx${BENCH_XMX:-1536m} "${jvm[@]}" "@$BENCH/vmargs.txt" -cp "$(cat "$ROOT/build/bench/run.classpath")" \
       "$(cat "$ROOT/build/bench/run.main")" "@$BENCH/programargs.txt" > "$BENCH/log.txt" 2>&1 &
     echo $! > "$BENCH/pid"
   )
@@ -114,7 +117,8 @@ lands() { # rebuild the gates' lands when any changed since the last build; 1 wh
   touch "$BENCH/classes/.building"
   rm -rf "$BENCH/classes/dev"
   local javac="$(dirname "$(cat build/bench/run.java)")/javac"
-  if ! "$javac" -d "$BENCH/classes" -cp "$(cat build/bench/compile.classpath)" -proc:none -nowarn -Xlint:none -encoding UTF-8 $LANDS/*.java > "$BENCH/javac.txt" 2>&1; then
+  # a short-lived javac is quicker without the optimising compiler (about 0.9 s against 1.1 to 1.6 s for five lands)
+  if ! "$javac" -J-XX:TieredStopAtLevel=1 -J-XX:+UseSerialGC -d "$BENCH/classes" -cp "$(cat build/bench/compile.classpath)" -proc:none -nowarn -Xlint:none -encoding UTF-8 $LANDS/*.java > "$BENCH/javac.txt" 2>&1; then
     cat "$BENCH/javac.txt"
     echo "the lands don't compile: nothing was checked"
     rm -rf "$BENCH/classes/dev"
@@ -179,7 +183,7 @@ case "$1" in
   down) down ;;
   restart) down; up ;;
   *)
-    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
     exit 2
     ;;
 esac

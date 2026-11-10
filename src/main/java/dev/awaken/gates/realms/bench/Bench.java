@@ -84,7 +84,10 @@ public final class Bench {
             StringWriter w = new StringWriter();
             Throwable cause = e instanceof java.lang.reflect.InvocationTargetException && e.getCause() != null ? e.getCause() : e;
             cause.printStackTrace(new PrintWriter(w));
-            String text = "BENCH FAILED " + a.what() + ": " + cause + "\n" + w;
+            boolean memory = false;
+            for (Throwable t = e; t != null && !memory; t = t.getCause()) memory = t instanceof OutOfMemoryError;
+            String text = "BENCH FAILED " + a.what() + ": " + (memory ? "out of memory with a heap of " + (Runtime.getRuntime().maxMemory() >> 20)
+                    + " MB. This land needs more: BENCH_XMX=4g tools/bench/bench.sh restart, or bench.sh once" : cause.toString()) + "\n" + w;
             try {
                 Files.createDirectories(a.out());
                 Files.writeString(a.out().resolve("bench.txt"), text);
@@ -113,18 +116,28 @@ public final class Bench {
         Land land = make(new Land.Ctx(bp, id, rank, a.seed(), RealmPlan.CURRENT_VERSION), a.root(), a.lands());
         boolean only = a.eye() != null;
 
-        // the three read the land and never change it, so they run side by side
-        int h = land.halfSize() + 16;
-        Future<Timed<FloatCheck.Report>> floats = only ? null : POOL.submit(() -> {
+        // the three read the land and never change it, so they run side by side; a land too big for that (Amber Reach is
+        // 2,048 across, 17,000 chunks) is drawn first and checked after, one at a time, or the heap doesn't hold all three
+        int h = land.halfSize() + 16, across = (2 * h >> 4) + 1;
+        boolean together = across * across <= BIG_LAND;
+        java.util.concurrent.Callable<Timed<FloatCheck.Report>> scan = () -> {
             long t = System.currentTimeMillis();
-            FloatCheck.Report r = FloatCheck.scan(land, -h, -h, h, h);
-            return new Timed<>(r, System.currentTimeMillis() - t);
-        });
-        Future<Timed<List<String>>> reach = only ? null : POOL.submit(() -> {
+            try {
+                return new Timed<>(FloatCheck.scan(land, -h, -h, h, h), System.currentTimeMillis() - t);
+            } catch (OutOfMemoryError e) {
+                return new Timed<>(null, System.currentTimeMillis() - t);
+            }
+        };
+        java.util.concurrent.Callable<Timed<List<String>>> walk = () -> {
             long t = System.currentTimeMillis();
-            List<String> bad = WalkCheck.unreachable(land);
-            return new Timed<>(bad, System.currentTimeMillis() - t);
-        });
+            try {
+                return new Timed<>(WalkCheck.unreachable(land), System.currentTimeMillis() - t);
+            } catch (OutOfMemoryError e) {
+                return new Timed<>(null, System.currentTimeMillis() - t);
+            }
+        };
+        Future<Timed<FloatCheck.Report>> floats = only || !together ? null : POOL.submit(scan);
+        Future<Timed<List<String>>> reach = only || !together ? null : POOL.submit(walk);
         Preview.Drawn drawn;
         try {
             drawn = Preview.draw(land, bp, lines, a.shotName(), a.eye(), a.root(), a.out());
@@ -155,20 +168,23 @@ public final class Bench {
             s.append(drawn.report());
             if (!names.isEmpty()) s.append("shot: ").append(a.out().resolve(names.getFirst() + ".png").toAbsolutePath()).append('\n');
         } else {
-            Timed<FloatCheck.Report> fl = floats.get();
-            Timed<List<String>> re = reach.get();
+            Timed<FloatCheck.Report> fl = together ? floats.get() : scan.call();
+            Timed<List<String>> re = together ? reach.get() : walk.call();
             long t1 = System.currentTimeMillis();
             Path sheet = sheet(a.out(), names);
             long sheetMs = System.currentTimeMillis() - t1;
             int sites = 0;
             for (Land.Site site : land.sites()) if (site.kind() != Land.SiteKind.PORTAL) sites++;
-            clean = fl.value().clean() && re.value().isEmpty();
+            clean = fl.value() != null && fl.value().clean() && re.value() != null && re.value().isEmpty();
             s.append(String.format(Locale.ROOT, "BENCH %s seed %d   total %d ms  (paint %d, floats %d, reach %d, shots %d, sheet %d)%n", id, a.seed(),
                     System.currentTimeMillis() - t0, drawn.paintMs(), fl.millis(), re.millis(), drawn.shotsMs(), sheetMs));
-            floaters(s, land, fl.value());
+            if (fl.value() == null) s.append("floats: NOT SCANNED, the scan ran out of memory (").append(across * across).append(" chunks, heap ").append(Runtime.getRuntime().maxMemory() >> 20)
+                    .append(" MB). Use bench.sh once, or BENCH_XMX=4g bench.sh restart\n");
+            else floaters(s, land, fl.value());
             String settled = settled(land);
             if (settled != null) s.append("settled: ").append(settled).append('\n');
-            if (re.value().isEmpty()) s.append("reach: all ").append(sites).append(" sites\n");
+            if (re.value() == null) s.append("reach: NOT WALKED, the walk ran out of memory. Use bench.sh once, or BENCH_XMX=4g bench.sh restart\n");
+            else if (re.value().isEmpty()) s.append("reach: all ").append(sites).append(" sites\n");
             else {
                 s.append("reach: ").append(re.value().size()).append(" of ").append(sites).append(" sites can't be walked to from the Mouth\n");
                 for (String bad : re.value()) s.append("  ").append(bad).append('\n');
@@ -183,6 +199,9 @@ public final class Bench {
         Files.writeString(a.out().resolve("bench.txt"), s);
         return new Answer(clean, s.toString());
     }
+
+    /** More chunks than this and the three checks take turns (the lands of 420 to 460 half-size are about 3,500). */
+    private static final int BIG_LAND = 6000;
 
     /** A report line's warnings are its words in capitals: FLAT, PLAIN, ALL-SKY... */
     private static final Pattern FLAG = Pattern.compile("[A-Z]{3,}(-[A-Z]+)*");
@@ -238,11 +257,11 @@ public final class Bench {
             BlockState state = v.get(f.x(), f.y(), f.z());
             String key = (state == null ? "air" : BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()) + " near " + nearest(land, f.x(), f.z());
             groups.merge(key, 1, Integer::sum);
-            if (first.size() < 12) first.add(String.format(Locale.ROOT, "  at %d %d %d: %s, %s%s", f.x(), f.y(), f.z(), key, f.what(), f.blocks() > 1 ? " of " + f.blocks() + " blocks" : ""));
+            if (first.size() < 12) first.add(String.format(Locale.ROOT, "    at %d %d %d: %s, %s%s", f.x(), f.y(), f.z(), key, f.what(), f.blocks() > 1 ? " of " + f.blocks() + " blocks" : ""));
         }
         groups.entrySet().stream().sorted((p, q) -> q.getValue() - p.getValue()).limit(20).forEach(e -> s.append("  ").append(e.getValue()).append(" x ").append(e.getKey()).append('\n'));
         if (groups.size() > 20) s.append("  and ").append(groups.size() - 20).append(" more kinds\n");
-        s.append(" the first ").append(first.size()).append(":\n");
+        s.append("  the first ").append(first.size()).append(":\n");
         for (String line : first) s.append(line).append('\n');
     }
 
