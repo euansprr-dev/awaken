@@ -25,7 +25,7 @@ public final class FurnaceTests {
     }
 
     /**
-     * A furnace's own view (SPEC §64.6): straight out from the middle of its face at the height of what cooks, the same
+     * A furnace's own view (SPEC §65.6): straight out from the middle of its face at the height of what cooks, the same
      * from wherever you stand before it; its three slots inside the room at four window sizes, each picking itself; a
      * stack is held on an upright plane just out from the face; from the side or behind there is no scene.
      */

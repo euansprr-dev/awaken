@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.BeaconMenu;
 
-/** A beacon (its power buttons are vanilla's own) in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §64.9). */
+/** A beacon (its power buttons are vanilla's own) in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §65.9). */
 final class GlassBeaconScreen extends BeaconScreen {
     private final Inventory inventory;
     private long opened;

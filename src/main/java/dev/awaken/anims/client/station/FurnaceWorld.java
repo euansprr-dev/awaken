@@ -128,7 +128,7 @@ final class FurnaceWorld {
             StationView.spot(station, slot, POINT, 0);
             ItemStackRenderState model = view.items[slot];
             mc.getItemModelResolver().updateForTopItem(model, item, ItemDisplayContext.FIXED, mc.level, null, slot);
-            // while you work it (SPEC §64.6): a stack your hand just set down goes in from where it was held, and what
+            // while you work it (SPEC §65.6): a stack your hand just set down goes in from where it was held, and what
             // cooks draws in and trembles through the last third of its cooking
             double in = 0, shake = 0;
             float size = .24F;
@@ -140,7 +140,7 @@ final class FurnaceWorld {
                     shake = 0.004 * k * Math.sin((System.nanoTime() % 1_000_000_000L) / 1e9 * Math.PI * 2 * 11);
                 }
             }
-            // a stack sits as a few, one behind the next (SPEC §64.3)
+            // a stack sits as a few, one behind the next (SPEC §65.3)
             int n = screen == null ? 1 : StationClient.pile(item.getCount());
             for (int k = 0; k < n; k++) {
                 pose.pushPose();

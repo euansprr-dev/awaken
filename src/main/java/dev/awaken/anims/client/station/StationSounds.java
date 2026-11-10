@@ -12,7 +12,7 @@ import net.neoforged.neoforge.common.Tags;
 import org.jspecify.annotations.Nullable;
 
 /**
- * What working a station sounds like (SPEC §64.4): each moment one of Minecraft's own recordings ({@link AnimsSounds}),
+ * What working a station sounds like (SPEC §65.4): each moment one of Minecraft's own recordings ({@link AnimsSounds}),
  * played here on the client for your own hands and, quieter, for the hands of others you can see at work. A thing set
  * down sounds like what it is: a block makes its own place sound, metal a chain's, stone and gems a dry click, food and
  * cloth a soft one, anything else the tap of a thing laid on a board.

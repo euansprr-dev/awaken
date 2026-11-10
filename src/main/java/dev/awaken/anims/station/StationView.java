@@ -17,7 +17,7 @@ public final class StationView {
 
     /**
      * A kind of station: its slots (the menu's first), its result slot (-1: none) and its hint. The crafting table and
-     * the furnace have their own geometry below; the six workstations of SPEC §64.8 are described here: where each slot
+     * the furnace have their own geometry below; the six workstations of SPEC §65.8 are described here: where each slot
      * lies ({@code at}: across to your right, up from the block's foot, far along the way in from its middle, per slot;
      * a brewing stand's bottles stand where vanilla's own model has them, whatever side you work it from), how big a
      * slot is ({@code half}), how big its item is drawn and whether it lies flat or stands ({@code size},
@@ -126,7 +126,7 @@ public final class StationView {
     /**
      * Where the table's result lies: flat on the top's right border (vanilla's own side of the grid), out from the middle
      * to your right, inside the table's own block so it can never go into a wall. A hand reaching over the grid lies
-     * back toward you, so it never crosses the right border (on the near border it did; SPEC §64.2).
+     * back toward you, so it never crosses the right border (on the near border it did; SPEC §65.2).
      */
     public static final double RESULT_SIDE = 0.39, RESULT_HALF = 0.085;
 
@@ -209,7 +209,7 @@ public final class StationView {
         return true;
     }
 
-    // ---- the bench view (SPEC §64.1) --------------------------------------------------------------------------------
+    // ---- the bench view (SPEC §65.1) --------------------------------------------------------------------------------
 
     /**
      * A table's own views, best first: how far back from its middle along the way in, how far over its top. The first
@@ -240,7 +240,7 @@ public final class StationView {
         return (int) Math.round(Mth.clamp(4.2 + d * 1.1, 5, 9));
     }
 
-    // ---- a furnace's own view (SPEC §64.6) --------------------------------------------------------------------------
+    // ---- a furnace's own view (SPEC §65.6) --------------------------------------------------------------------------
 
     /** A furnace's mouth views, best first: how far out from the middle of its face, at the height of what cooks. */
     private static final double[] MOUTH = {1.05, 0.80, 0.60};
@@ -305,7 +305,7 @@ public final class StationView {
         out[2] = ez + d.z * dist;
     }
 
-    // ---- the carrying hand (SPEC §64.2) -----------------------------------------------------------------------------
+    // ---- the carrying hand (SPEC §65.2) -----------------------------------------------------------------------------
 
     /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */
     public static final double HOVER = 0.07, HAND_BACK = 0.11;
@@ -528,7 +528,7 @@ public final class StationView {
 
     /**
      * The stage a bench view frames beside the slots themselves, so the station is seen whole and square on: half its
-     * width across, half its depth along the way in, and the heights it lies between over the block's foot (SPEC §64.1).
+     * width across, half its depth along the way in, and the heights it lies between over the block's foot (SPEC §65.1).
      * A table's is as wide as its result's far edge on both sides and no deeper than its slots (its grid fills its top,
      * and a view opened to the whole top would make every square smaller); a workstation's is its whole top; a brewing
      * stand's is the stand, foot to top. A furnace is framed by its slots alone.

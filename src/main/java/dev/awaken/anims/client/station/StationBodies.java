@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * A body at a station, as everyone sees it in third person (SPEC §64.5), read from each player's synced
+ * A body at a station, as everyone sees it in third person (SPEC §65.5), read from each player's synced
  * {@link StationPresence.At}: bent over a table, on one knee before a furnace, bent to a box, and a reach to each slot
  * they touch (clips from {@code tools/art/specs/station_moves.py}, through {@link PlayerClips}; without the animation
  * library, vanilla's arm swing for each reach). Standing more than {@link #TOUCH} from the station the body only
@@ -55,7 +55,7 @@ final class StationBodies {
     }
 
     private static final Map<UUID, Body> BODIES = new HashMap<>();
-    /** Bodies in the middle of a quick touch's reach (SPEC §64.9): the entity, and the tick its clip ends. */
+    /** Bodies in the middle of a quick touch's reach (SPEC §65.9): the entity, and the tick its clip ends. */
     private static final Map<Integer, Long> REACHING = new HashMap<>();
     private static final String[] HEIGHT = {"low", "mid", "high"};
 

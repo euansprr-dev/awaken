@@ -37,7 +37,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     int hovered = -1;
     StationView.@Nullable Layout layout;
     private List<FormattedCharSequence> hint = List.of();
-    /** When this screen opened: its hint is read once and then leaves the view to the work (SPEC §64.1). */
+    /** When this screen opened: its hint is read once and then leaves the view to the work (SPEC §65.1). */
     private final long openedNs = System.nanoTime();
     private static final float HINT_HOLD = 3.5F;
     // vanilla draws its slot highlight at a hovered slot's screen place, which is no longer the station's: while it
@@ -291,7 +291,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     /**
      * On the band's glass, over the world: the count of every stack that lies on the station and of the one in your
      * hand, and whatever lies under your sleeve, shown through it so nothing you need to read is ever hidden (SPEC
-     * §64.2, §64.3).
+     * §65.2, §65.3).
      */
     private void extractStation(GuiGraphicsExtractor g) {
         if (StationClient.station == null || StationClient.weight(0) < 0.9F) return;
@@ -358,7 +358,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     /**
      * A count on a small tag of glass, its middle at (x, y). A tag that knows its slot (the last is the stack in your
      * hand) rolls to a new number: the old one leaves upward as a larger one comes in from below, and the other way
-     * for a smaller (SPEC §64.3).
+     * for a smaller (SPEC §65.3).
      */
     private void count(GuiGraphicsExtractor g, int x, int y, int count, int slot) {
         String text = Integer.toString(count);

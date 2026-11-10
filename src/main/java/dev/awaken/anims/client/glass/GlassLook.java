@@ -15,7 +15,7 @@ import net.minecraft.world.inventory.Slot;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A vanilla container screen in the band's glass (SPEC §64.9), the look storage gave chests (§56): the same panel, a
+ * A vanilla container screen in the band's glass (SPEC §65.9), the look storage gave chests (§56): the same panel, a
  * well under every slot where vanilla puts it, a light under the slot the cursor is on, the labels in the glass's own
  * colours, a fade in over 120 ms. Only the drawing: the screen underneath is vanilla's own class, so every click, key
  * and other mod behaves as it always has.

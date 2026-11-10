@@ -32,7 +32,7 @@ public final class AnimsClient {
         bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, Touches::entityInteract);
         bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, Touches::screenOpening);
-        // boxes (SPEC §64.7): the lid let down as its screen shuts, the view looking in while it is open, living slots
+        // boxes (SPEC §65.7): the lid let down as its screen shuts, the view looking in while it is open, living slots
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Closing.class, Touches::screenClosing);
         bus.addListener(EventPriority.LOW, net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class, Touches::lookIn);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Foreground.class, Touches::glassRise);

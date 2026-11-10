@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Living slots (SPEC §64.7), on the game's own container screens and ours: a stack you send somewhere without carrying
+ * Living slots (SPEC §65.7), on the game's own container screens and ours: a stack you send somewhere without carrying
  * it (a shift-click, a number key) travels from its slot to the one it lands in, a small "+n" lifts off where it lands,
  * and the stack on your pointer casts a soft shadow that drops away as you pick it up. All of it is drawn over the
  * screen from what the slots already hold: the move itself is vanilla's and has already happened, so no click ever

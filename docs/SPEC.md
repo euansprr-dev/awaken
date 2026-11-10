@@ -6941,7 +6941,7 @@ of the plan). No mixins.
   then) and pushes on through. The player never moves (Euan, 2026-10-25: walking you to the thing
   would take control): past 2.5 blocks the hand only gets an arm's length (1.3) toward the thing, and while a hand is out
   the view narrows ×0.95 (a lean; off with reduced motion). A chest's screen waited 4 ticks for both hands to reach its
-  lid until §64.7 (it now opens at once and the hands go up with the lid). The fist clips below stay for books (no world thing).
+  lid until §65.7 (it now opens at once and the hands go up with the lid). The fist clips below stay for books (no world thing).
 - **Touches** (P4, `anims.client.Touches`, `anims.AnimsClips`): quick hand moments from the game's own interaction
   events (client side), so every module's blocks get them by what they are: a door, trapdoor or gate (`DoorBlock`,
   `TrapDoorBlock`, `FenceGateBlock`) pushed with a palm (`fp_push`), a lever thrown (`fp_lever`), a button pressed
@@ -23262,7 +23262,7 @@ corners of those bands. Before the rules of this section the same square stood 1
 first spot that fits, one card, blocks of twelve, discs), then 252 (the best spot, two cards, blocks of eight, discs:
 the Sleepers' Hall 0 of 8; by its own footprint 5 of 5).
 
-## 64. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md, page https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B; Euan approved all ten recommendations 2026-11-10: "Go with all recommendations and the full plan")
+## 65. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md, page https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B; Euan approved all ten recommendations 2026-11-10: "Go with all recommendations and the full plan")
 
 Euan, 10 Nov 2026: "massively improve the smoothness of all of it ... when you're like hovering with an item, it actually
 shows like the actual hand of the player going over the box with that item in its hand ... Think about how it acts when
@@ -23285,7 +23285,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
 - Nine vanilla workstations and four of ours start a touch and a screen in the same tick; only a chest's screen waits (4 ticks).
 - No sound and no count for anything laid on a station.
 
-### 64.1 The bench view (`anims.station.StationView`, `anims.client.station.StationCamera`, `StationClient`)
+### 65.1 The bench view (`anims.station.StationView`, `anims.client.station.StationCamera`, `StationClient`)
 - **A table's view is its own.** Using a crafting table (not sneaking) sends the view to a place fixed to the table: over
   its near edge on the side you came from (the way in snapped to an axis, as before), 0.81 back from its middle and 1.12
   over its top, looking down on the grid at 54 degrees (`StationView.benchEye`, view 0). It is the same from one block or
@@ -23293,7 +23293,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   From there the view is framed (`StationView.frame`): every slot and the station's **stage** inside the room above the
   hint and strip, looking **square on**, straight along the way in (`StationView.stage`). A table's stage is as wide as
   its result's far edge on both sides, so the result on the right border does not turn the view; a workstation's
-  (§64.8) is its whole top; a brewing stand's is the stand, foot to top. The first build framed the slots alone: the
+  (§65.8) is its whole top; a brewing stand's is the stand, foot to top. The first build framed the slots alone: the
   table stood turned a few degrees and a workstation's three slots filled the screen (CI tour, 10 Nov). Framed from
   your own eyes (the fallback) the view still turns to what it sees.
 - **The hint is read once:** whole for 3.5 s after the screen opens, gone over the next 0.6 s. The room keeps its size.
@@ -23319,7 +23319,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   degrees from past the near edge; at seven window sizes, with and without side panels, in all three views the view is
   square to the table, every slot is inside the room and a click on its middle picks it; the glide's lengths).
 
-### 64.2 The carrying hand (`anims.client.station.StationHands`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
+### 65.2 The carrying hand (`anims.client.station.StationHands`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
 - **While a stack is on your pointer and the pointer is over the station** (above the inventory strip, and its line of
   sight meets the table's level within 0.35 of the table's sides and far edge), your main hand holds it. The stack is
   drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as it will lie, its
@@ -23349,7 +23349,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   result, only nearer squares are under the sleeve, never more than two). The hands' motion itself is client code and
   is checked on film.
 
-### 64.3 Things with weight (`StationClient.onSubmit`, `StationScreen.extractStation`)
+### 65.3 Things with weight (`StationClient.onSubmit`, `StationScreen.extractStation`)
 - A stack **lies as a small pile**: 1 item, 2 for a count of 2 to 5, 3 up to 32, 4 above (`StationClient.pile`), each a
   little up and across from the last, on the table and in the hand.
 - Its **count** is on a small tag of glass at the square's near right corner (and by the stack in your hand), for any
@@ -23362,7 +23362,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
 - **A count rolls to its new number** on its tag over 140 ms (the old number leaves upward as a larger one comes in from
   below, the other way for a smaller); a tag that has just appeared does not roll, and with reduced motion none does.
 
-### 64.4 Sound (`anims.AnimsSounds`, `anims.client.station.StationSounds`)
+### 65.4 Sound (`anims.AnimsSounds`, `anims.client.station.StationSounds`)
 Every sound is one of Minecraft's own, named in `src/main/merge/anims/assets/awaken/sounds.json` by its vanilla sound
 event with a volume and a pitch (the game plays its own files; none of Mojang's audio is in the repo). **First picks:
 none has been heard by Euan, and his ear decides.**
@@ -23383,10 +23383,10 @@ none has been heard by Euan, and his ear decides.**
 | `touch.set` | `block.wood.hit` 0.3, 0.9 | both hands set to a thing |
 
 Played on the client for your own hands as you click (a set-down's pitch varies a little), and at 0.55 for the hands of
-another player whose beat you see (§64.5). A lid, a hatch, an anvil, a smithing table, a grindstone, a stonecutter's
+another player whose beat you see (§65.5). A lid, a hatch, an anvil, a smithing table, a grindstone, a stonecutter's
 choice and a jukebox keep vanilla's own sounds. No listening page yet: these are named events, heard in the game.
 
-### 64.5 Your body, and what others see (`anims.station.StationPresence`, `anims.client.station.StationBodies`)
+### 65.5 Your body, and what others see (`anims.station.StationPresence`, `anims.client.station.StationBodies`)
 - **Presence.** While a player has a station's own menu open the server marks them with attachment `awaken:station`
   (`StationPresence.At`: how it is worked, the block, the way in, a beat, what lies there). It is appearance only: no
   `serialize`, no copy on death, synced by NeoForge to everyone tracking the player and to the player. It is set when a
@@ -23414,7 +23414,7 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
   change; a changed square is a beat with its number though the result changed too; a second change inside 3 ticks is
   seen with no beat; the menu shut ends it; a box's six largest stacks merged and in order).
 
-### 64.6 The furnace: a crouch (`StationView.mouthEye`, `StationClient.onAngles`, `StationHands`, `StationFire`, `FurnaceWorld`)
+### 65.6 The furnace: a crouch (`StationView.mouthEye`, `StationClient.onAngles`, `StationHands`, `StationFire`, `FurnaceWorld`)
 - **Its own view:** straight out from the middle of the face at the height of what cooks (block y + 0.57), 1.05 out, then
   0.80, then 0.60 when the first is taken (`StationView.mouthEye`); with none clear, the old view straight down where you
   stand (§24); from the side or behind (`beforeFace`: at least 0.6 out from the block's middle and no further to the
@@ -23426,7 +23426,7 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
 - **Your hand takes the food in.** A carried stack is held upright on the plane 0.08 out from the face
   (`StationView.onFace`; inside the stone it could not be seen), exactly on the pointer, at 0.22. Set down, the hand
   goes in toward the mouth and the stack travels in from where it was held to its slot over 110 ms
-  (`StationClient.unsettled`). The arm is a world arm (§64.2) with a fist 0.165 across, lying back and down toward a
+  (`StationClient.unsettled`). The arm is a world arm (§65.2) with a fist 0.165 across, lying back and down toward a
   point under the inventory strip's corner on the hand's own side. A hand shows only while it carries or makes a pass
   (fuel by a key or a shift-click is the off hand's): resting before a furnace it would be a corner of arm in the frame.
   The hands are the scene's the whole time (`Rig.noHands`: `WorldBody.armShown` answers for both sides), so the game's
@@ -23443,7 +23443,7 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
   beside and behind; at four window sizes the three slots are inside the room and pick themselves; a held stack is on
   the plane 0.08 out from the face and exactly on the pointer). The old `anims_furnace_*` tests stay.
 
-### 64.7 Boxes (`anims.client.Touches`, `anims.client.LivingSlots`, `anims.station.SlotMoves`)
+### 65.7 Boxes (`anims.client.Touches`, `anims.client.LivingSlots`, `anims.station.SlotMoves`)
 The glass screen stays (§56): nothing is faster for twenty-seven slots. What is round it changes.
 - **The lid is in your hands.** A chest, ender chest, shulker box or cache: both hands under the lid's front edge, and
   the edge they hold is the lid's own as it stands each tick (`Touches.lid`: the lid turns about a hinge a texel in
@@ -23459,25 +23459,25 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
 - **The glass rises out of the box:** for 240 ms after the screen opens two thin strokes of light run from the box's
   mouth, where the world shows it, to the foot of the panel (`Touches.glassRise`). Slots are in place and clickable
   from the first frame.
-- **What is inside** lies in an open chest for everyone near (§64.5).
+- **What is inside** lies in an open chest for everyone near (§65.5).
 - **Living slots** (`LivingSlots`, on the game's own container screens and ours, never the creative screen): a stack you
   send without carrying it (a shift-click, a number key) travels from its slot to where it landed in 120 ms on a small
   arc, a "+n" lifts off the slot it reached, and the stack on your pointer has a soft shadow that drops away as you pick
   it up. Drawn over the screen from what the slots already hold: the move is vanilla's and has happened, so no click
   waits. `SlotMoves.read` pairs a tick's losses with its gains; a stack the pointer carried is no move, and a tick that
   changed more than six slots (a Tidy, §56) is left to whoever made it. At most eight stacks in flight.
-  The pointer's stack tips with its speed only where we draw it ourselves (a station scene, §64.2): vanilla's own icon
+  The pointer's stack tips with its speed only where we draw it ourselves (a station scene, §65.2): vanilla's own icon
   on other screens cannot be turned.
 - Tests: `stations_living_slots` (a shift-click is one move with its count; a spill into a second slot is two; a swap
   is two; the pointer's is none; more than six slots is none). The lid, the look and the light are client code.
 
-### 64.8 Six more workstations as scenes (`StationView.Kind`, `StationScreen`, `StationClient`)
+### 65.8 Six more workstations as scenes (`StationView.Kind`, `StationScreen`, `StationClient`)
 - **A station is described, not coded.** `StationView.Kind` holds, for each: how many of its menu's first slots lie on
   it, its result slot, its hint, where each slot lies (across to your right, up from the block's foot, far along the way
   in), a slot's half size, how big its item is drawn and whether it lies or stands, the height of the work, and the
   view's own place. `kindOf(state)` names a block's kind and `menuFits` its menu; the scene screen is the same
-  `StationScreen` over vanilla's own menu, so every click is vanilla's. The bench view (§64.1), the carrying hand
-  (§64.2), piles, counts and settles (§64.3), presence and what others see (§64.5) come with the description.
+  `StationScreen` over vanilla's own menu, so every click is vanilla's. The bench view (§65.1), the carrying hand
+  (§65.2), piles, counts and settles (§65.3), presence and what others see (§65.5) come with the description.
   The crafting table and the furnace keep their own geometry.
 
   | Kind | Block | Slots on it | View (back, up over its top) |
@@ -23511,13 +23511,13 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   block and apart from the others; from all three views, four sides and four window sizes the view is square on, the
   whole top is in the room, and every slot is in the room and picks itself).
 
-### 64.9 Glass for the plain screens, and every quick touch (`anims.client.glass`, `anims.station.TouchKinds`, `Touches`, `StationBodies`)
+### 65.9 Glass for the plain screens, and every quick touch (`anims.client.glass`, `anims.station.TouchKinds`, `Touches`, `StationBodies`)
 - **Glass:** vanilla's hopper, dispenser and dropper, crafter and beacon screens are replaced, while the bag is glass
   (`HoloGlass.on()`), by subclasses that change only the drawing (`GlassHopperScreen` and the rest, through
   `GlassLook`: the bag's panel, a well under every slot where vanilla puts it, a light under the hovered slot, labels in
   the glass's colours, a 120 ms fade), as storage did chests (§56). A crafter's switched-off slots and redstone mark and
   a beacon's power buttons and the five things it takes are still vanilla's own. Storage's Tidy keys accept the glass
-  hopper and dispenser (`StorageClient.offered`). Living slots (§64.7) run on all of them.
+  hopper and dispenser (`StorageClient.offered`). Living slots (§65.7) run on all of them.
   **The loom and the lectern keep vanilla's screens:** a loom's screen is its pattern list and banner as much as its
   slots, and a lectern shows a book. The plan named both for glass; the loom's is left to the band's owner (§57.10).
 - **One list of touches for both sides.** `TouchKinds.of(state, held)` names the touch a use of a block gets (vanilla's
@@ -23540,7 +23540,7 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   block, a held thing is put and an empty hand takes, the Forge's two, the three heights).
 
 **Built:** stages 1 to 7 of PLAN §6. The click path (`StationScreen`, vanilla's own menu) does not change.
-**Left, and why:** the loom's screen on glass (§64.9); a furnace's food changing colour as it cooks (it draws in and
+**Left, and why:** the loom's screen on glass (§65.9); a furnace's food changing colour as it cooks (it draws in and
 trembles instead: an item's own model cannot be tinted without a second model); a grindstone's wheel turning and a
 stonecutter's blade spinning up (both are vanilla's block models); the cartography table's paper sliding under the
 map; doors that swing with the hand (not approved: a mixin). Nothing here has been

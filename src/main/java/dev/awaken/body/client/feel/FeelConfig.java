@@ -54,7 +54,7 @@ public final class FeelConfig {
             .define("stationScenes", true);
     public static final ModConfigSpec.BooleanValue STATION_BENCH = B
             .comment("Station scenes: the view goes to the station's own place (over a table's near edge), the same from wherever you",
-                    "stand (SPEC §64.1). Off: the view turns and zooms from your own eyes, as it did before.")
+                    "stand (SPEC §65.1). Off: the view turns and zooms from your own eyes, as it did before.")
             .define("stationBenchView", true);
     public static final ModConfigSpec.BooleanValue ROPE_ASSIST = B
             .comment("The assisted rope swing: the rope picks a good anchor along your heading, fits its length, swings you round what's",
@@ -187,7 +187,7 @@ public final class FeelConfig {
         }
     }
 
-    /** Station scenes: the view goes to the station's own place (SPEC §64.1). */
+    /** Station scenes: the view goes to the station's own place (SPEC §65.1). */
     public static boolean stationBench() {
         try {
             return !SPEC.isLoaded() || STATION_BENCH.get();

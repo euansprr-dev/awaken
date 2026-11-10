@@ -37,7 +37,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Who is working a station, for everyone who can see them (SPEC §64.5). While a player has a station's own menu open
+ * Who is working a station, for everyone who can see them (SPEC §65.5). While a player has a station's own menu open
  * the server marks them with where it is, which side they work it from, what lies there for others to see (a table's
  * nine squares and its result; the six largest stacks in an open box) and a count of the slots they have touched, so
  * the other clients can show a body at work, the things on the table and a reach to each slot. It is appearance only:
