@@ -91,6 +91,16 @@ shot b11_back_to_top
 screenkey 1
 wait 30
 shot b20_status
+screenkey right
+screenkey space
+screenkey space
+wait 10
+shot b20b_status_placed
+band click 659 638
+wait 10
+shot b20c_status_truth
+screenkey esc
+wait 5
 screenkey 3
 wait 30
 shot b21_hearth
@@ -134,8 +144,11 @@ wait 200
 key dismiss
 wait 10
 screen close
-screen band tasks
+screen band status
 wait 60
+shot b29_status_c_rank
+screenkey 2
+wait 40
 shot b30_tasks_c_rank
 tasks focus weapons/
 wait 20
