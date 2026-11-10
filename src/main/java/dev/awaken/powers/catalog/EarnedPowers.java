@@ -132,7 +132,8 @@ public final class EarnedPowers {
         final Cast c;
         int left;
         final float damage;
-        long last = Long.MIN_VALUE;
+        /** When one last flew (half the range, so "how long since" never overflows). */
+        long last = Long.MIN_VALUE / 2;
         boolean crowned;
 
         Lances(Cast c, int n, float damage) {
