@@ -71,7 +71,8 @@ package (anything else there can't be referenced and crashes the client). Record
 `awaken.pixels.mixins.json`), Water edges (§20, `awaken.wateredge.mixins.json`, in Sodium's fluid renderer),
 Tiles (§22 "Lens on Apple", `awaken.tiles.mixins.json`, in PostChain and PostPass for Lens's chains only),
 Road starts (§28.9, `awaken.roadstarts.mixins.json`, common, in structure starts; AT `META-INF/accesstransformer.cfg`),
-Packet cap (§28.9, `awaken.packetcap.mixins.json`, common, in PacketProcessor and MinecraftServer.stopServer).
+Packet cap (§28.9, `awaken.packetcap.mixins.json`, common, in PacketProcessor and MinecraftServer.stopServer),
+Chunk pacing (§22 "Steady Light", `awaken.chunkpace.mixins.json`, in Sodium's ChunkTracker.forEachEvent).
 
 ## Commits
 Small, focused commits on the current branch. End every commit message with:

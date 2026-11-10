@@ -66,6 +66,106 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> KILL = sound("kill");
     public static final DeferredHolder<SoundEvent, SoundEvent> CLEAVE = sound("cleave");
 
+    // Minecraft's own recordings, each named as an event in sounds.json so it follows the game's own variants (SPEC §25
+    // "Weight in the Hand", stage 2; Euan 2026-11-09: built sounds read fake, his own game's recordings belong)
+    static final DeferredHolder<SoundEvent, SoundEvent> STRONG = named("fight.strong"), CRIT = named("fight.crit"), KNOCK = named("fight.knock"),
+            SWEEP = named("fight.sweep"), MACE = named("fight.mace"), MACE_HEAVY = named("fight.mace_heavy"), GOLEM = named("fight.golem"),
+            BREEZE_HURT = named("fight.breeze_hurt"), BREEZE_DEFLECT = named("fight.breeze_deflect"), ANVIL = named("fight.anvil"),
+            CROSSBOW_DRAW = named("fight.crossbow_draw"), CROSSBOW_LOCK = named("fight.crossbow_lock"), FLAP = named("fight.flap"),
+            RASP = named("fight.rasp");
+    /** A blow that struck and did no harm (an invulnerable body): Minecraft's own weak attack. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DULL = named("fight.dull");
+    /** A blade glancing off stone or wood (the world's answer, stage 5): the block's own hit, as its own event so it can be levelled. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GLANCE_STONE = named("fight.stone"), GLANCE_WOOD = named("fight.wood");
+    /** A weapon drawn, by its family (stage 4). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DRAW_BLADE = named("fight.draw_blade"), DRAW_HAFT = named("fight.draw_haft"),
+            DRAW_CHAIN = named("fight.draw_chain"), DRAW_GAUNTLETS = named("fight.draw_gauntlets"), DRAW_PRECURSOR = named("fight.draw_precursor");
+
+    /** One recording in a sound's mix: an event at its own level and pitch against the sound's. */
+    public record Voice(java.util.function.Supplier<SoundEvent> sound, float volume, float pitch) {}
+
+    /**
+     * Off: every sound plays the 25 Oct kit's one event, as before the pass. Set by the fighter's own setting for what
+     * they hear ({@code recordedSounds}); a server plays the mixes for those near either way.
+     */
+    public static volatile boolean recorded = true;
+
+    private static volatile java.util.@Nullable Map<SoundEvent, Voice[]> mixes;
+
+    /**
+     * The mix a sound plays as (null: itself alone). Fourteen of the kit's sounds failed the audit: the hits on flesh and
+     * armour, the blunt hit, the kill, the Execution and the hurt carry 80 to 98% of their energy below 300 Hz, which a
+     * laptop's speakers don't play, and the parry, the glance, the charge, its glint, the cleave, the perfect dodge and the
+     * spirit's hit hold the thin synthetic tone. Each is now Minecraft's own recordings, with the kit's low thump kept
+     * quietly under the blows that had one. The levels are first values: the listening page
+     * (tools/art/weapon_listen.py, its pick 1 for each row) is where they are judged.
+     */
+    public static Voice @Nullable [] mix(SoundEvent sound) {
+        if (!recorded) return null;
+        java.util.Map<SoundEvent, Voice[]> m = mixes;
+        if (m == null) {
+            m = new java.util.IdentityHashMap<>();
+            m.put(HIT_FLESH.get(), new Voice[] {new Voice(STRONG, 1.0F, 1.0F), new Voice(HIT_FLESH, 0.45F, 1.0F)});
+            m.put(HIT_FLESH_HEAVY.get(), new Voice[] {new Voice(CRIT, 1.0F, 0.85F), new Voice(KNOCK, 0.7F, 0.8F), new Voice(HIT_FLESH_HEAVY, 0.5F, 1.0F)});
+            m.put(HIT_BLUNT.get(), new Voice[] {new Voice(MACE, 0.8F, 1.0F), new Voice(HIT_BLUNT, 0.5F, 1.0F)});
+            m.put(HIT_ARMOR.get(), new Voice[] {new Voice(GOLEM, 0.9F, 1.2F), new Voice(STRONG, 0.6F, 1.0F)});
+            m.put(HIT_SPIRIT.get(), new Voice[] {new Voice(BREEZE_HURT, 0.8F, 1.0F), new Voice(SWEEP, 0.6F, 1.2F)});
+            m.put(HURT.get(), new Voice[] {new Voice(KNOCK, 0.9F, 0.8F), new Voice(HURT, 0.5F, 1.0F)});
+            m.put(DEFLECT.get(), new Voice[] {new Voice(ANVIL, 0.45F, 1.6F), new Voice(BLOCK_STRUCK, 1.0F, 1.1F)});
+            m.put(GLANCE.get(), new Voice[] {new Voice(BREEZE_DEFLECT, 0.9F, 1.0F)});
+            m.put(CHARGE.get(), new Voice[] {new Voice(CROSSBOW_DRAW, 0.8F, 0.8F)});
+            m.put(GLINT.get(), new Voice[] {new Voice(CROSSBOW_LOCK, 0.9F, 1.2F)});
+            m.put(KILL.get(), new Voice[] {new Voice(CRIT, 1.0F, 0.8F), new Voice(KILL, 0.5F, 1.0F)});
+            m.put(CLEAVE.get(), new Voice[] {new Voice(SWEEP, 1.0F, 1.0F)});
+            m.put(EXECUTION.get(), new Voice[] {new Voice(MACE_HEAVY, 0.9F, 1.0F), new Voice(CRIT, 0.9F, 0.7F)});
+            m.put(PERFECT_DODGE.get(), new Voice[] {new Voice(FLAP, 0.6F, 1.7F)});
+            mixes = m;
+        }
+        return m.get(sound);
+    }
+
+    /** The Katana's drawn cut, over its swish: a rasp off the scabbard's mouth and a steel ring (stage 4). */
+    public static final Voice[] DRAWN_CUT = {new Voice(RASP, 0.35F, 1.5F), new Voice(DRAW_BLADE, 0.7F, 1.45F)};
+
+    /** A weapon's draw by its style's family: blades ring, hafted weapons knock, the chain rattles, gauntlets creak, the Precursor Arm wakes. */
+    public static SoundEvent draw(String style) {
+        return switch (style) {
+            case Arms.AXE, Arms.MAUL, "spear", "glaive", "scythe", "warstaff" -> DRAW_HAFT.get();
+            case "chainblade" -> DRAW_CHAIN.get();
+            case "gauntlets" -> DRAW_GAUNTLETS.get();
+            case "precursor" -> DRAW_PRECURSOR.get();
+            default -> DRAW_BLADE.get();
+        };
+    }
+
+    /** A draw's level and pitch by family (first values; the listening page's draws, pick 1). */
+    public static float drawVolume(String style) {
+        return "precursor".equals(style) ? 0.4F : 0.8F;
+    }
+
+    public static float drawPitch(String style) {
+        return switch (style) {
+            case Arms.AXE, Arms.MAUL, "spear", "glaive", "scythe", "warstaff" -> 0.8F;
+            case "gauntlets" -> 0.8F;
+            case "precursor" -> 1.8F;
+            case "chainblade" -> 1.0F;
+            case "rapier", "daggers" -> 1.5F;
+            case "greatblade" -> 1.1F;
+            default -> 1.3F;
+        };
+    }
+
+    /** Plays a sound as its mix in the world for everyone near but {@code except} (the fighter hears their own client's copy). */
+    public static void play(net.minecraft.world.level.Level level, net.minecraft.world.entity.player.@Nullable Player except, double x, double y, double z,
+                            SoundEvent sound, float volume, float pitch) {
+        Voice[] mix = mix(sound);
+        if (mix == null) {
+            level.playSound(except, x, y, z, sound, net.minecraft.sounds.SoundSource.PLAYERS, volume, pitch);
+            return;
+        }
+        for (Voice v : mix) level.playSound(except, x, y, z, v.sound().get(), net.minecraft.sounds.SoundSource.PLAYERS, volume * v.volume(), pitch * v.pitch());
+    }
+
     /** From this damage multiplier a blow lands as a heavy one (the finishers, a heavy, a riposte). */
     static final float HEAVY_MOTION = 1.4F;
     private static final float SEMITONE = 1.0594631F;
