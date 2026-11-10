@@ -3,6 +3,7 @@ package dev.awaken.powers.catalog;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Bore;
@@ -162,7 +163,7 @@ final class TechPowers {
                 Combat.push(mob, d.normalize().scale(Math.min(2.2, 0.5 + d.length() * 0.18) * reel(c.powerLevel)).add(0, 0.35, 0));
             }
             if (c.is(2)) Combat.stun(mob, 30);
-            c.sound(PowerSounds.GRAPPLE, 1f, 1.2f);
+            c.voice(Beat.RELEASE, PowerSounds.GRAPPLE, 1f, 1.2f);
             if (c.step(5)) reelKick(c, mob);
             return Result.OK;
         }
@@ -172,7 +173,7 @@ final class TechPowers {
         // a cable to the wall, sparks where the hook bites
         Fx.at(c, FxKind.TETHER, c.player.getEyePosition()).to(anchor).aux(1).ticks(9).send();
         Fx.at(c, FxKind.IMPACT, anchor).scale(0.7).noAnim().send();
-        c.sound(PowerSounds.GRAPPLE, 1f, 1f);
+        c.voice(Beat.IMPACT, PowerSounds.GRAPPLE, 1f, 1f);
         if (c.step(5)) reelKick(c, null);
         return Result.OK;
     }
@@ -204,7 +205,7 @@ final class TechPowers {
                 Combat.knockFrom(e, c.player.position(), 1.2, 0.35);
             }
             Fx.at(c, FxKind.IMPACT, hit.getBoundingBox().getCenter()).dir(dir).scale(1.4).noAnim().send();
-            c.sound(PowerSounds.IMPACT, 1f, 0.9f);
+            c.voice(Beat.EXTRA_A, PowerSounds.IMPACT, 1f, 0.9f);
             rr.stop();
         });
     }
@@ -213,7 +214,7 @@ final class TechPowers {
         Vec3 motion = c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward());
         if (!c.predicted) Moves.launch(c.player, motion);
         Moves.noFall(c, 80);
-        c.sound(PowerSounds.JET, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.JET, 1f, 1f);
         Vec3 back = c.look().scale(-1);
         float dmg = c.dmg();
         // boot jets: a blue-white core with embers and smoke streaming behind you
@@ -282,7 +283,7 @@ final class TechPowers {
             // Burst Fire (4)
             d.burst = (int) c.num(4, "bursts", 1);
         }
-        c.sound(PowerSounds.SUMMON, 0.8f, 1.6f);
+        c.voice(Beat.RELEASE, PowerSounds.SUMMON, 0.8f, 1.6f);
         if (c.step(5)) overwatch(c, life);
         return Result.OK;
     }
@@ -323,7 +324,7 @@ final class TechPowers {
         var hp = t.getAttribute(Attributes.MAX_HEALTH);
         if (hp != null) hp.setBaseValue(30);
         t.setHealth(30);
-        c.sound(at, PowerSounds.BUILD, 1f, 1.4f);
+        c.voice(at, Beat.RELEASE, PowerSounds.BUILD, 1f, 1.4f);
         if (c.step(2)) Fx.at(c, FxKind.RING, at).scale(range).ticks(16).plain().flag(FxEvent.QUIET).send();
         // Shield (4): it shrugs off half of every hit
         t.shield = c.num(4, "shield", 0f);
@@ -362,7 +363,7 @@ final class TechPowers {
                 Combat.stun(e, 10);
             }
             Fx.at(c, FxKind.RAIL, from).to(end).scale(0.7).aux(RAIL_WIDTH).plain().send();
-            c.sound(from, PowerSounds.RAIL, 1f, 1.3f);
+            c.voice(from, Beat.EXTRA_A, PowerSounds.RAIL, 1f, 1.3f);
         });
     }
 
@@ -383,7 +384,7 @@ final class TechPowers {
         r.tick(rr -> {
             if (rr.age == full - 1) {
                 Fx.at(c, FxKind.HOLD_READY, EnergyPowers.hand(c.player)).scale(0.8).noAnim().send();
-                c.sound(PowerSounds.RAIL_READY, 0.9f, 1f);
+                c.voice(Beat.PEAK, PowerSounds.RAIL_READY, 0.9f, 1f);
             }
         }).end((rr, why) -> {
             int held = rr.age + 1;
@@ -418,8 +419,8 @@ final class TechPowers {
             }
             // the slug: a white-hot line wrapped in spiral rings, a muzzle flash, and the line of light it leaves behind
             Fx.at(c, FxKind.RAIL, eye).to(end).scale(charge * (1 + 0.4 * over)).aux(RAIL_WIDTH).flag(FxEvent.FULL, charge >= 1).send();
-            c.sound(PowerSounds.RAIL_RELEASE, 1.4f, 1.04f - 0.08f * (float) charge);
-            if (struck || first != null) c.sound(end, PowerSounds.RAIL_IMPACT, 1.2f, 1f);
+            c.voice(Beat.RELEASE, PowerSounds.RAIL_RELEASE, 1.4f, 1.04f - 0.08f * (float) charge);
+            if (struck || first != null) c.voice(end, Beat.IMPACT, PowerSounds.RAIL_IMPACT, 1.2f, 1f);
             c.feel(first, first != null ? 60 : 0, 3f + 2f * (float) charge + 1.5f * (float) over);
             // Gauss Lance (5): the tunnel the slug left blasts again, hitting everything in the line
             if (c.step(5)) {
@@ -429,7 +430,7 @@ final class TechPowers {
                     if (c.player.isRemoved()) return;
                     for (LivingEntity e : Combat.alongLine(c.player, eye, line, RAIL_WIDTH * 1.6)) c.hurt(e, second, Forces.Force.CHARGE);
                     Fx.at(c, FxKind.RAIL, eye).to(line).scale(0.6).aux(RAIL_WIDTH * 1.6).noAnim().send();
-                    c.sound(eye.add(dir.scale(6)), PowerSounds.RAIL_L5, 1.2f, 1f);
+                    c.voice(eye.add(dir.scale(6)), Beat.EXTRA_B, PowerSounds.RAIL_L5, 1.2f, 1f);
                 });
             }
         });
@@ -442,7 +443,7 @@ final class TechPowers {
         Moves.addMod(c.player, Attributes.ARMOR, "nanite_armor", armour, AttributeModifier.Operation.ADD_VALUE);
         Moves.addMod(c.player, Attributes.ARMOR_TOUGHNESS, "nanite_toughness", 4 * c.v.dmg(), AttributeModifier.Operation.ADD_VALUE);
         PowerState.of(c.player).buff(PowerState.Buffs.NANITE, c.now() + ticks, 0.2);
-        c.sound(PowerSounds.NANITE, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.NANITE, 1f, 1f);
         // a hex film closes over the body, a scan of light climbing it
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.NANITE.ordinal()).ticks(ticks).send();
         int healEvery = c.is(1) ? 0 : c.is(2) ? 7 : 20;
@@ -506,7 +507,7 @@ final class TechPowers {
             made.add(d);
         }
         if (made.isEmpty()) return Result.fail("blocked");
-        c.sound(PowerSounds.SUMMON, 1.2f, 1.8f);
+        c.voice(Beat.RELEASE, PowerSounds.SUMMON, 1.2f, 1.8f);
         LivingEntity[] focused = {focus};
         float lance = c.step(5) ? c.dmg() * 2f * c.num(5, "lance", 1f) : 0;
         Running r = Casting.start(c, life);
@@ -527,7 +528,7 @@ final class TechPowers {
                 Vec3 end = wall.getType() == HitResult.Type.MISS ? eye.add(dir.scale(32)) : wall.getLocation();
                 for (LivingEntity e : Combat.alongLine(c.player, eye, end, 0.7)) c.hurt(e, lance, Forces.Force.CHARGE);
                 Fx.beam(c, c.player, c.player, end, 0xFF000000 | TEAL, 10, 0.3f, (float) eye.distanceTo(end), false, false);
-                c.sound(PowerSounds.RAIL, 1f, 1.6f);
+                c.voice(Beat.EXTRA_A, PowerSounds.RAIL, 1f, 1.6f);
             }
             if (rr.age % 20 != 0) return;
             LivingEntity t = c.player.getLastHurtMob();

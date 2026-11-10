@@ -46,11 +46,14 @@ POWERS = {
     "cord_lash": "spirit", "bulwark": "spirit", "hundred_palms": "spirit", "void_maw": "spirit",
     "waking_dream": "spirit", "storm_call": "spirit", "ember_step": "spirit", "frost_nova": "spirit",
     "ghost_step": "spirit", "twin_strike": "spirit",
+    # earned (docs/powers-next): no Core rolls these, but the K menu, the HUD and a commanded Core still show them
+    "brand": "spirit", "hoarfrost_lances": "spirit", "backdraft": "spirit", "thornwake": "spirit", "updraft": "flight",
 }
 
 # energy-like powers: their glyph glows (a halo instead of a drop shadow, a lit face behind it)
 GLOW = {p for p, f in POWERS.items() if f == "energy"} | {
     "lightning_step", "thunderclap", "aura", "mend", "third_eye", "ember_step", "frost_nova", "storm_call", "foresight",
+    "brand", "hoarfrost_lances", "backdraft",
 }
 
 

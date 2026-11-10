@@ -89,6 +89,11 @@ public final class AbilityRunner {
         return (active != null && active.roots()) || chargeTicks > 0 || leapTicks > 0 || blinkCut > 0;
     }
 
+    /** Whether it has stepped and its cut is still to come (told, {@link #BLINK_CUT} ticks after the step). */
+    boolean cutPending() {
+        return blinkCut > 0;
+    }
+
     /** A kit boss's runner (SPEC §35.3): it starts nothing itself; its FightRunner fires abilities as moves strike. */
     private boolean scripted;
 
@@ -391,8 +396,8 @@ public final class AbilityRunner {
         };
         if (!shot || t == null || !t.isAlive() || mob.getSensing().hasLineOfSight(t)) return false;
         Vec3 c = Abilities.chest(mob);
-        level.sendParticles(ParticleTypes.SMOKE, c.x, c.y, c.z, 6, 0.25, 0.2, 0.25, 0.01);
-        mob.playLevelSound(net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, 0.5F, 1.6F);
+        if (!Abilities.shed(level, mob, c, 6, 0.25, 0.2, 0.25, 0.01)) level.sendParticles(ParticleTypes.SMOKE, c.x, c.y, c.z, 6, 0.25, 0.2, 0.25, 0.01);
+        Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, 0.5F, 1.6F);
         return true;
     }
 
@@ -424,7 +429,9 @@ public final class AbilityRunner {
             case BLINK -> {
                 if (!marks.isEmpty()) {
                     Vec3 m = marks.get(0);
-                    level.sendParticles(ParticleTypes.PORTAL, m.x, m.y + 0.8, m.z, 8, 0.3, 0.6, 0.3, 0.2);
+                    if (!Abilities.shed(level, mob, m.add(0, 0.8, 0), 5, 0.3, 0.6, 0.3, 0.02)) {
+                        level.sendParticles(ParticleTypes.PORTAL, m.x, m.y + 0.8, m.z, 8, 0.3, 0.6, 0.3, 0.2);
+                    }
                 }
             }
             // before the lock the aim shows as dust that follows you; at the lock the carrier's line takes over
@@ -437,7 +444,7 @@ public final class AbilityRunner {
             case CONE -> {
                 if (!locked) Telegraph.cone(level, feet, aim.subtract(feet), a.radius(), colour);
             }
-            case BOLT, ARROWS -> Telegraph.gather(level, mob.getEyePosition(), colour);
+            case BOLT, ARROWS -> Telegraph.gather(level, mob.def().shot != null ? Abilities.muzzle(mob) : mob.getEyePosition(), colour);
         }
     }
 
@@ -478,10 +485,14 @@ public final class AbilityRunner {
                 chargeCls = cls;
                 chargeHits.clear();
                 mob.setFlag(AwakenMob.F_CHARGING, true);
-                mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 0.6F, 1.4F);
+                Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 0.6F, 1.4F);
             }
             case BOLT -> Abilities.bolts(level, mob, a, aim);
-            case ARROWS -> { if (t != null) Abilities.arrows(level, mob, a, t); }
+            case ARROWS -> {
+                // a body with shots of its own looses them (told and locked as every shot); a borrowed body its arrows
+                if (mob.def().shot != null) Abilities.volley(level, mob, a, aim.add(0, t != null ? t.getBbHeight() * 0.6 : 1.0, 0));
+                else if (t != null) Abilities.arrows(level, mob, a, t);
+            }
             case NOVA -> Abilities.nova(level, mob, a.count(), Abilities.bolt(mob, a), a.power(), Abilities.effect(mob, a));
             case RAIN -> {
                 // thrown now, falling where each of you stands now (never following), and the rest scattered near
@@ -520,7 +531,9 @@ public final class AbilityRunner {
             case DECOY -> Abilities.decoys(level, mob, a.count());
             case GUARD -> {
                 mob.startGuard(60);
-                level.sendParticles(ParticleTypes.ENCHANTED_HIT, mob.getX(), mob.getY() + 1, mob.getZ(), 12, 0.5, 0.6, 0.5, 0.1);
+                if (!Abilities.shed(level, mob, mob.position().add(0, mob.getBbHeight() * 0.6, 0), 12, 0.5, 0.6, 0.5, 0.1)) {
+                    level.sendParticles(ParticleTypes.ENCHANTED_HIT, mob.getX(), mob.getY() + 1, mob.getZ(), 12, 0.5, 0.6, 0.5, 0.1);
+                }
             }
             case LIFT -> Abilities.lift(level, mob, a, t != null && t.isAlive() ? t.position() : aim);
             case DARKNESS -> Abilities.darkness(level, mob, a);
@@ -528,7 +541,7 @@ public final class AbilityRunner {
             case FRENZY -> {
                 mob.startFrenzy(200);
                 level.sendParticles(dev.awaken.mobs.MobParticles.shot(dev.awaken.mobs.MobParticles.Shot.SPARK, 0xFF4A3A), mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 6, 0.5, 0.3, 0.5, 0);
-                mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 1.2F, 0.8F);
+                Abilities.borrowed(mob, net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 1.2F, 0.8F);
             }
         }
     }

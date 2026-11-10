@@ -29,10 +29,21 @@ Stand anywhere in the overworld, as an admin:
 | The Green Dark | `/awaken gate realm_enter E awaken:green_dark 1` | Jungle caves under the temple, rolled from the seed |
 | The Unlit Stair | `/awaken gate realm_enter A awaken:unlit_stair 1` | A shrine cut down into nothing, rolled from the seed (rank A) |
 
-A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
-Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. The layout
-comes from the seed alone, so the same number gives the same layout in every kind: seed 1 is a great delve with a shaft and
-a chasm you cross on pillars, seed 2 a short plunge down two shafts, seed 3 a short climb, seed 5 a standard delve.
+A seed decides everything about a rolled run: how long it is (short, standard, or great with a second Warden and about
+fifteen legs), which way it goes (delving, plunging, climbing to a Lord at the top, or sprawling nearly level), and what
+every leg is cut like. No two legs need be alike:
+
+- **Rooms** come as an oval, a long hall, a cross, a ring round a core of rock, a hall of piers, a room with a terrace along
+  one side, a pit with a walk round it, or a tall rift whose floor steps up.
+- **Wardens' rooms and Lords' halls** come as a ring of pillars, a nave, a cross, a rotunda, a round floor with tiers of
+  steps, or a square hall on four great piers.
+- **Gulfs** are crossed on pillars, a broken bridge, rafters one block wide, a ledge along each wall in turn, platforms hung
+  on chains, great steps down, stones in shallow water, or a deck that gives way under you. From a standard run up there is
+  always one, and often a second down a side way that leads to a vault with two caches. Nobody has to take that one.
+- **Shafts** are round, or square stairwells where the place was built.
+
+Each kind has its own share of these (a palace has galleries and naves, a nest has pits and round cells). The same seed
+still gives two kinds the same order of legs, but each cuts them its own way. Seed 1 is a great delve in every kind.
 
 Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a

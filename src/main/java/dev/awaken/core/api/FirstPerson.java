@@ -164,9 +164,22 @@ public final class FirstPerson {
          * place is held, not floating. Unset (weight 0), nothing changes.
          */
         public final float[] gripMain = new float[4], gripOff = new float[4];
+        /**
+         * How a fist's arm lies (schema 2 clips, SPEC §32 "The arm"): the forearm's pitch and yaw (degrees in view space;
+         * 0, 0 points straight ahead, yaw + to the right, pitch + up), the wrist's roll, then the summed weight. Weight 0:
+         * the arm rises to the fist from under the frame's corner, as it always has.
+         */
+        public final float[] armMain = new float[4], armOff = new float[4];
+        /**
+         * The arms' light (a cast showing on the arm): how far it has run from the elbow to the fist (0..1), how hot it
+         * burns (0..1 and a little over at a release), then the summed weight. Weight 0: whoever draws the light decides.
+         */
+        public final float[] lightMain = new float[3], lightOff = new float[3];
         public boolean drawOff, hideMain, hideOff;
         /** A cast clip's fists are drawn even when a hand holds something: the held thing is out of view while it plays. */
         public boolean stow;
+        /** With {@link #stow}: what the hands hold eases away and back (a two-handed cast) instead of going at once. */
+        public boolean stowEase;
         /**
          * The hands grip the world (a hang, a wall climb, a rope, a catch, a mantle): the stances' and clips' fists are
          * drawn even when a hand holds something. Unlike {@link #stow} it eases both ways, as vanilla's equip does: what
@@ -190,8 +203,12 @@ public final class FirstPerson {
             java.util.Arrays.fill(fistOff, 0F);
             java.util.Arrays.fill(gripMain, 0F);
             java.util.Arrays.fill(gripOff, 0F);
+            java.util.Arrays.fill(armMain, 0F);
+            java.util.Arrays.fill(armOff, 0F);
+            java.util.Arrays.fill(lightMain, 0F);
+            java.util.Arrays.fill(lightOff, 0F);
             drawOff = hideMain = hideOff = false;
-            stow = climb = false;
+            stow = climb = stowEase = false;
             tint = 0;
             glow = 0;
         }
@@ -203,6 +220,23 @@ public final class FirstPerson {
             to[Y] += y * k;
             to[Z] += z * k;
             to[3] += k;
+        }
+
+        /** Adds how a fist's arm lies (weighted, as fists are). */
+        public static void arm(float[] to, float k, float pitch, float yaw, float roll) {
+            if (k <= 0) return;
+            to[0] += pitch * k;
+            to[1] += yaw * k;
+            to[2] += roll * k;
+            to[3] += k;
+        }
+
+        /** Adds an arm's light (weighted). */
+        public static void light(float[] to, float k, float charge, float heat) {
+            if (k <= 0) return;
+            to[0] += charge * k;
+            to[1] += heat * k;
+            to[2] += k;
         }
 
         /** Adds a move (scaled by k) to one of the three. */
@@ -245,6 +279,8 @@ public final class FirstPerson {
      * every frame it composes, so they are a frame old at most when the world is drawn.
      */
     public static final float[] LAST_FIST_MAIN = new float[4], LAST_FIST_OFF = new float[4];
+    /** How those fists' arms lay (pitch, yaw, roll in degrees, then the weight; weight 0 = the old arm from the corner). */
+    public static final float[] LAST_ARM_MAIN = new float[4], LAST_ARM_OFF = new float[4];
     public static volatile long lastFistNanos;
 
     // ---- clips and their events -------------------------------------------------------------------------------------

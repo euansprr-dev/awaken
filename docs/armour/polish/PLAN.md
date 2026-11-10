@@ -319,6 +319,17 @@ that took 35 minutes instead of 24). A third run is on the tip after merging bui
 Not seen anywhere: a piece in the hand from your own eyes after it was raised (9 px higher; the last shot of it showed
 it low and small); the weld's ripples (too fine for a tour shot); slim-arm skins; the VFX Look; any sound.
 
-Left to do: stage 3's B, A and S sets (after his eye on C); the Status line placed by the K menu's owner; the Hunter
-sets' equip sound (the gear module's items); the old sound files deleted once the page is marked; the measuring run on
-his Mac (ask first); the grips film check with weapon-feel; a slim-skin shot.
+## 12. Stage 3 finished (11 Nov 2026)
+Euan, 11 Nov, after C-rank was in his play copy: "with all B, A, and S plates. And those sets. This is already great
+work so far. Let's fully update this and finish it."
+
+Built in one commit (2b690bf1a): `armour_finish.PLATES`, twelve sets (the three Hunter sets of these ranks are not
+touched), limbs and backs only, no helm changed; SPEC §44.1 lists each set. A sixth living motion, glitch, for Signal's
+Echo's displaced slices (§44.10). Checked: the kit's check clean on all 29 (it caught every off-grid box and one shared
+plane on Riftwalker before anything was built); CI tours `armour-audit-worn-2` (62 shots: front, back, first person,
+Status) and `armour-audit-plates` (each set on three stands); both read right in the game with nothing floating,
+clipping or flickering that I could see. The page carries all twelve.
+
+Left to do, all Euan's: his ear on the 45 sounds (the listening page), the measuring run on his Mac (ask first).
+Owed by sessions: the Status line placed by the K menu's owner; the Hunter sets' equip sound (the gear module's
+items); the old sound files deleted once the page is marked; the grips film check with weapon-feel; a slim-skin shot.

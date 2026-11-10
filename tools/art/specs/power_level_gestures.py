@@ -217,6 +217,12 @@ L5 = {
                                           EOC)]),
     "ghost_step": dict(hit=d(la=S((70, 0, -20)), le=S(5), shift=1.0), hang=2),
     "twin_strike": dict(flourish=[(2, d(side=2.0, tilt=6), EOX), (4, d(side=-2.0, tilt=-6), EOX), (6, d(), EIOS)]),
+    # Earned
+    "brand": dict(hit=d(shift=1.4, lean=8, rk=8), hang=2),
+    "hoarfrost_lances": dict(hit=d(rise=0.5, lean=-6), hang=3),
+    "updraft": dict(hit=d(rise=0.6, lean=-8), hang=2),
+    "backdraft": dict(hit=d(lean=12, shift=1.2), hang=2),
+    "thornwake": dict(hang=1, flourish=[(3, d(lean=-16, rk=-30, lk=-30), EOC)]),
 }
 
 

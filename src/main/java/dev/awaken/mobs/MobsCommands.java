@@ -54,6 +54,12 @@ final class MobsCommands {
                             .then(Commands.argument("level", IntegerArgumentType.integer(0, 400))
                                     .executes(c -> boss(c, IntegerArgumentType.getInteger(c, "level"))))));
             admin.then(Commands.literal("bestiary").executes(MobsCommands::bestiary));
+            // the gates' monsters on bodies of their own (SPEC §60): the nearest one turns on the nearest thing that isn't one
+            // of ours ("target"), or acts one of its moves at it now ("act <n>", n from 0 in the bestiary's order)
+            admin.then(Commands.literal("monster")
+                    .then(Commands.literal("target").executes(c -> monster(c, -1)))
+                    .then(Commands.literal("act").then(Commands.argument("move", IntegerArgumentType.integer(0, 12))
+                            .executes(c -> monster(c, IntegerArgumentType.getInteger(c, "move"))))));
             root.then(admin);
             // the Creature Kit's bosses (SPEC §35.8)
             root.then(Commands.literal("bosses").requires(AwakenCommands.admin())
@@ -109,6 +115,54 @@ final class MobsCommands {
             pos = pos.add(look.x * 4, 0, look.z * 4);
         }
         return BlockPos.containing(pos);
+    }
+
+    private static int monster(CommandContext<CommandSourceStack> c, int move) {
+        CommandSourceStack src = c.getSource();
+        ServerLevel level = src.getLevel();
+        Vec3 at = src.getPosition();
+        dev.awaken.mobs.entity.GateMonster m = null;
+        double best = 24 * 24;
+        for (dev.awaken.mobs.entity.GateMonster e : level.getEntitiesOfClass(dev.awaken.mobs.entity.GateMonster.class, new net.minecraft.world.phys.AABB(at, at).inflate(24))) {
+            double d = e.distanceToSqr(at);
+            if (d < best && e.isAlive()) {
+                best = d;
+                m = e;
+            }
+        }
+        if (m == null) {
+            src.sendFailure(Component.literal("No gate monster within 24 blocks."));
+            return 0;
+        }
+        LivingEntity t = null;
+        best = 20 * 20;
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, m.getBoundingBox().inflate(20))) {
+            if (e instanceof dev.awaken.mobs.entity.AwakenMob || !e.isAlive()) continue;
+            if (e instanceof net.minecraft.world.entity.player.Player pl && (pl.isSpectator() || pl.isCreative())) continue;
+            double d = e.distanceToSqr(m);
+            if (d < best) {
+                best = d;
+                t = e;
+            }
+        }
+        if (t == null) {
+            src.sendFailure(Component.literal("Nothing near " + m.getName().getString() + " for it to turn on."));
+            return 0;
+        }
+        final dev.awaken.mobs.entity.GateMonster mm = m;
+        final LivingEntity tt = t;
+        if (move < 0) {
+            m.setTarget(t);
+            src.sendSuccess(() -> Component.literal(mm.getName().getString() + " turns on " + tt.getName().getString()), true);
+            return 1;
+        }
+        List<String> names = dev.awaken.mobs.entity.FaunaMob.moveNames(m.def());
+        if (move >= names.size() || !m.act(level, move, t)) {
+            src.sendFailure(Component.literal(m.getName().getString() + " can't act move " + move + " now (it has " + names + ")."));
+            return 0;
+        }
+        src.sendSuccess(() -> Component.literal(mm.getName().getString() + " acts " + names.get(move)), true);
+        return 1;
     }
 
     private static int mob(CommandContext<CommandSourceStack> c, int asked) throws CommandSyntaxException {
