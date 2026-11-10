@@ -14,6 +14,7 @@ uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): 
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
+uniform sampler2D AirSkySampler;     // the Air's sky buffer (lens_airsky.fsh): the galaxy's light and the wisps' cover
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -450,10 +451,12 @@ void main() {
             // the night's own: stars, the galaxy, a shooting star (they come out as the sun goes under); then the high
             // wisps over all of it
             float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rainA);
-            if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark;
+            // (the galaxy's light and the wisps' cover are noise: drawn once a frame into the small sky buffer,
+            // lens_airsky.fsh, and read here)
+            vec4 slow = texture(AirSkySampler, texCoord);
+            if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark + airSlowGalaxy(slow);
             s += extra * keep;
-            vec4 wisp = airWisps(dirA, F(18).zw, F(12).y, f22.xyz, rainA, F(17).x);
-            s = mix(s, wisp.rgb, wisp.a);
+            s = mix(s, airWispColour(dirA, f22.xyz, rainA), airSlowWisp(slow));
             c = mix(c, s, airK);
         } else if (!farTerrain && !plate) {
             // by distance over the render distance (a far renderer's land carries on past it, so the fog thins out

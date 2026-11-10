@@ -6315,6 +6315,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     (the glow and the rays' mask). It was a frame-size pass and target of its own (`lens_cloud_blocks`,
     `lens_cloudblocks`), both gone: the chain is 15 passes. The cells' shared definitions moved to
     `include/lens_cloud_cells.glsl`.
+  - **The sky buffer** (`lens_airsky.fsh`, target `awaken:lens_airsky`, 512x288): the parts of the sky that are
+    noise and have no sharp edge, once a frame: the galaxy's light (with the night's share and its rise from the
+    horizon, stored as a square root) and the wisps' cover (`airSlow`). The composite reads them with one filtered
+    lookup a sky pixel, where it worked out eight noise values a pixel for the wisps by day and six more for the
+    galaxy by night. Stars, the shooting star, the moon's halo and the wisps' colour stay in the composite.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows.
