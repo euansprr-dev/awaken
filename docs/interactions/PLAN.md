@@ -1,8 +1,9 @@
 # Hands at Work: every block you work, by your own hands
 
 Plan record. **Approved in full by Euan on 10 Nov 2026, after trying the page: "Go with all recommendations and the
-full plan".** All ten decisions in §7 are yes as recommended. Being built on branch `claude/interactions-plan-145244`,
-all seven stages in one run, tested once at the end (his rule of 10 Nov). SPEC §63 says what exists as it lands.
+full plan".** All ten decisions in §7 are yes as recommended. **Built** on branch `claude/interactions-plan-145244`, all
+seven stages in one run, then tested (§8 says what was built, what the look tours showed and what is left). SPEC §63 is
+the game as it is. Not merged; not yet played or heard by a person.
 Approval page (private): https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B (his answers are its `answers/d1` to `d10`).
 
 Euan, 10 Nov 2026:
@@ -391,3 +392,42 @@ look); third-person clips need a film to judge.
 8. **Sounds from Minecraft's recordings, first picks as listed, marked by ear after the build.** *Recommended: yes.*
 9. **Doors that swing with your hand** would need a renderer mixin under the Turbo contract. *Recommended: not now.*
 10. **Build all seven stages in one run, then test.** *Recommended: yes.*
+
+## 8. As built (10 to 11 Nov 2026)
+
+All seven stages were coded in one run and are on the branch; SPEC §63 describes each part. This section is the honest
+ledger against §4.
+
+**Built as planned:** the bench view from any standing place and from third person (§4.1); the carrying hand on the
+pointer with a world arm lying back under the strip (§4.2); piles, counts on glass, the settle, the result coming
+together on the right border, the give and the flecks as it is taken, counts that roll (§4.3); sounds from Minecraft's
+own events, named in `sounds.json` (§4.4); presence, bodies at a station and what lies there for others (§4.5); the
+furnace's crouch, the hand going in, the fire's answer (§4.6); the lid in your hands, looking in, the glass rising,
+what is inside, living slots (§4.7); six workstation scenes with the anvil's name line and cost, the stonecutter's
+rail, blows and sparks as work is taken, bubbles in brewing bottles (§4.8); every quick touch named once for both
+sides, new touches, a body clip for each (§4.9).
+
+**Different from the plan, and why:**
+- The pointer's stack tips with its speed only in a station scene. On a chest's screen the icon is vanilla's own and
+  cannot be turned without replacing how every container screen draws it.
+- A furnace's food draws in and trembles through the last third of its cooking; it does not change colour. An item's
+  model cannot be tinted without a second model for every food.
+- Hopper, dispenser, dropper, crafter and beacon are on glass. **The loom and the lectern keep vanilla's screens**: a
+  loom's screen is its pattern list and banner as much as its slots, a lectern shows a book.
+- A grindstone's wheel does not turn and a stonecutter's blade does not spin up (both are vanilla's block models); the
+  cartography table's paper does not slide under the map. The blow, the sparks and vanilla's own sounds are there.
+- The hint over the strip now leaves after 3.5 s (it sat over the table's near edge in the new view).
+- No local listening page yet: the sounds are vanilla events with a volume and a pitch, heard in the game.
+
+**Tests.** `anims_`, `stations_`, `touch_` and `audio_`: 32 of 32. The names differ a little from §6: click parity is the
+old `anims_station_*` tests run against the new view (they pass); fast hands and the beat cap are inside
+`stations_presence` and the tour's fast-crafter clip; the fallback order is in `stations_bench_view` and
+`stations_mouth_view`.
+
+**What the look tours showed** (`tools/autopilot/hands-at-work.txt`, on GitHub's runner):
+- Run 42879591037 (first): opening a brewing stand **crashed the client** (a kind with no result slot indexed slot -1).
+  Fixed. Its 36 shots before the crash showed the bench view, the arm, piles, counts, the result on the border, the
+  crouch, embers and the workstations all drawing, and three faults: the table's view turned a few degrees by its
+  result, the workstations framed so close that three slots filled the screen, and the game's own hand in the corner
+  before a furnace. All fixed (SPEC §63.1, §63.6) and guarded by tests (square on; the whole top in the room).
+
