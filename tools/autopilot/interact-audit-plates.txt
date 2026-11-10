@@ -6,6 +6,10 @@
 # ci knobs: PACK=feel
 world interact_audit_d survival 4304
 waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+screen close
 gui 0
 window 1708 960
 hud on
