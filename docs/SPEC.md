@@ -8087,10 +8087,12 @@ recommended).
   - *The glance* (`glance`, client): a strike that has struck no body by a third of a tick past its hit, and whose blade
     meets a block within the move's reach (three lines 14 degrees either side of the look; a pinning blow one more, 25
     degrees down), glances off it: the block's own hit sound, lower and louder, with a ring over stone and metal; its
-    chips (three); sparks off stone, chips off wood, started 0.08 blocks off the face and thrown out of it along the
-    blade's way (thrown into the wall, and with the flare in the wall's own plane, none of it was seen in the proof
-    tour); the blade knocked back against its cut for two and a half ticks; the view kicked one degree against it; a
-    30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
+    chips (three); sparks off stone and metal (warm, `FxClient.guardSpark` at size 0.85, under the size that adds a
+    deflect's ring) and duller ones off wood (0.5), started 0.08 blocks off the face and thrown out of it along the
+    blade's way. They are the guard's near-eye sparks and not a body's: a wall is struck within a blade's length of the
+    eye, and the effects engine shows no glow inside 1.5 blocks and only part of one inside 4, so a body's sparks at a
+    wall were never seen (two proof tours, 10 Nov). The blade is knocked back against its cut for two and a half ticks;
+    the view kicked one degree against it; a 30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
     block isn't harmed and the chain goes on. Those near hear the block's hit from the server on the move's last active
     tick.
   - *Grass* (`cutGrass`, awaken-arms.toml, on): each active tick cuts the plants tagged `#awaken:cut_by_sweeps` (short

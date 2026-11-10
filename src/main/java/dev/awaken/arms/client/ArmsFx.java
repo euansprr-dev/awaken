@@ -156,21 +156,27 @@ final class ArmsFx {
     }
 
     /**
-     * Where a blade glanced off a block (SPEC §25 "Weight in the Hand", stage 5): sparks off stone and metal, chips off
-     * wood, thrown out of the face and on along the blade's way ({@code travel}, in the world; zero for a thrust, whose
-     * sparks come straight back). Drawn a little off the face: on it, the flare lay in the wall's own plane and wasn't
-     * seen. Earth and soft things only shed their own block's chips.
+     * Where a blade glanced off a block (SPEC §25 "Weight in the Hand", stage 5): sparks off stone and metal, duller chips
+     * of light off wood, thrown out of the face and on along the blade's way ({@code travel}, in the world; zero for a
+     * thrust, whose sparks come straight back), started a little off the face. Earth and soft things only shed their own
+     * block's chips.
+     * <p>
+     * The guard's sparks, not a body's: a wall is struck within a blade's length of the eye, and the effects engine shows
+     * no glow inside 1.5 blocks and only part of one inside 4 (so nothing fills the view). A body's sparks at a wall were
+     * never seen at all (the proof tours' film, 10 Nov). These are the ones made for arm's length: drawn at any distance
+     * from the eye and sized for it, under the size that adds a deflect's ring.
      */
     static void glance(Vec3 at, Vec3 normal, Vec3 travel, int kind) {
-        if (kind != dev.awaken.arms.ArmsWalls.GLANCE_HARD && kind != dev.awaken.arms.ArmsWalls.GLANCE_WOOD) return;
+        boolean hard = kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD;
+        if (!hard && kind != dev.awaken.arms.ArmsWalls.GLANCE_WOOD) return;
         Vec3 from = at.add(normal.scale(GLANCE_OFF));
         Vec3 way = normal.scale(0.7).add(travel.scale(0.7)).normalize();
-        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) FxClient.bladeHit(from, way, 0.8F, BodyMaterial.STONE);
-        else FxClient.bladeHit(from, way, 0.65F, BodyMaterial.WOOD);
+        FxClient.guardSpark(from.x, from.y, from.z, way.x, way.y, way.z, hard ? GLANCE_STONE : GLANCE_WOOD, hard ? 0.85F : 0.5F, true);
     }
 
-    /** How far off a block's face a glance's sparks start (blocks). */
+    /** How far off a block's face a glance's sparks start (blocks), and their light: warm off stone and metal, pale tan off wood. */
     private static final double GLANCE_OFF = 0.08;
+    private static final int GLANCE_STONE = 0xFFB85C, GLANCE_WOOD = 0xD8B884;
 
     /** Where a blade landed, along the line from the wielder. */
     static void hit(Entity target, Entity by, Archetype.MoveDef def, dev.awaken.arms.Blow b) {
