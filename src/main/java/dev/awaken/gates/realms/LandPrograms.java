@@ -33,6 +33,7 @@ public final class LandPrograms {
             Map.entry("awaken:sealed_wing", dev.awaken.gates.realms.land.SealedWing::new),
             Map.entry("awaken:sleepless_ward", dev.awaken.gates.realms.land.SleeplessWard::new),
             Map.entry("awaken:unlit_stair", dev.awaken.gates.realms.land.UnlitStair::new),
+            Map.entry("awaken:rime_hollows", dev.awaken.gates.realms.land.RimeHollow::new),
             Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new));
 
     public static boolean has(String id) {
