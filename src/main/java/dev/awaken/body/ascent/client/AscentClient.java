@@ -51,6 +51,8 @@ public final class AscentClient {
         // a cast in the air shows over the flight (SPEC §62)
         dev.awaken.core.api.PlayerClips.onCast(AscentAnims::cast);
         FeelDirector.init(modBus);
+        // The Way Up (SPEC §63): the place that woke, and the Lesson at every unlock
+        WayClient.init(modBus);
         RopeTuning.init();
         // the Tab glance shows the Aether (SPEC §40.7)
         dev.awaken.core.api.HudState.installAether(() -> AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN) ? AscentMoves.aether : -1);

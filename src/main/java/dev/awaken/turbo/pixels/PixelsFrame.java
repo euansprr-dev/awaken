@@ -33,6 +33,9 @@ final class PixelsFrame {
     // the world at the lower resolution (colour + depth, formats as the main target's), the hand's depth, and FSR's
     // intermediate (EASU's output at the screen's resolution, sharpened by RCAS into the main target)
     private static @Nullable TextureTarget low, lowHand, easu;
+    // straight out (Tiles; SPEC §22 "Steady Light"): the texture Lens's composite draws into in place of its swap
+    // target, read by the upscale, so the chain's copy back into the low world texture is never made
+    private static @Nullable TextureTarget lowOut;
     // the main and hand targets' own textures while they're lent out
     private static @Nullable RenderTarget lentMain, lentHand;
     private static @Nullable GpuTexture mainColor, mainDepth, handDepth;
@@ -56,6 +59,7 @@ final class PixelsFrame {
     /** Before {@code renderLevel()}. */
     static void begin(RenderTarget main, RenderTarget hand) {
         if (lentMain != null) giveBack(); // never expected: the end hook always runs before the next frame
+        dev.awaken.turbo.tiles.Tiles.straightOut(null);
         beganThisFrame = true;
         PixelsTiming.stamp(PixelsTiming.BEFORE_WORLD);
         if (!proven) return;
@@ -87,6 +91,15 @@ final class PixelsFrame {
             low = sized(low, "Pixels world", sw, sh, main.getColorTexture().getFormat(), main.getDepthTexture().getFormat());
             lowHand = sized(lowHand, "Pixels hand depth", sw, sh, null, hand.getDepthTexture().getFormat());
             lend(main, hand);
+            // straight out: when one post effect runs (Lens's chain; Tiles knows its own), so nothing reads the main
+            // target after it. Counted from the frame's own list, the effects that passed the game's check: the
+            // renderer's wider list always opens with the game's "end_of_frame" slot, which no pack of ours fills, so
+            // it is never one long (the first build counted that list, and straight out never once engaged). The
+            // steady pass reads the picture from wherever it went
+            if (net.minecraft.client.Minecraft.getInstance().gameRenderer.gameRenderState().requestedPostEffects.size() == 1) {
+                lowOut = sized(lowOut, "Pixels straight out", sw, sh, main.getColorTexture().getFormat(), null);
+                dev.awaken.turbo.tiles.Tiles.straightOut(lowOut.getColorTextureView());
+            }
         } catch (RuntimeException e) {
             giveBack();
             Pixels.fail("could not make the low-resolution targets", e);
@@ -107,18 +120,17 @@ final class PixelsFrame {
             return;
         }
         giveBack();
+        // (whether this frame's composite went straight into lowOut: then that is the picture, and low holds the world
+        // as it was before the post effects)
+        boolean straight = dev.awaken.turbo.tiles.Tiles.straightTaken() && lowOut != null;
         PixelsConfig.Upscaler upscaler = Pixels.upscaler();
         try {
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             // steadied first, at the world's resolution; then upscaled as ever (native: copied out, nothing sharpened that
             // wasn't before)
-            GpuTextureView world;
-            if (steady) {
-                world = PixelsSteady.resolve(encoder, low, lowHand);
-            } else {
-                world = low.getColorTextureView();
-                PixelsSteady.skip();
-            }
+            GpuTextureView world = straight ? lowOut.getColorTextureView() : low.getColorTextureView();
+            if (steady) world = PixelsSteady.resolve(encoder, low, lowHand, world);
+            else PixelsSteady.skip();
             if (low.width >= main.width && low.height >= main.height) {
                 pass(encoder, BILINEAR_LABEL, main.getColorTextureView(), PixelsPipelines.BILINEAR, world, FilterMode.NEAREST);
             } else if (upscaler == PixelsConfig.Upscaler.FSR) {
@@ -211,7 +223,9 @@ final class PixelsFrame {
         if (low != null) low.destroyBuffers();
         if (lowHand != null) lowHand.destroyBuffers();
         if (easu != null) easu.destroyBuffers();
-        low = lowHand = easu = null;
+        if (lowOut != null) lowOut.destroyBuffers();
+        low = lowHand = easu = lowOut = null;
+        dev.awaken.turbo.tiles.Tiles.straightOut(null);
         PixelsSteady.release();
     }
 
