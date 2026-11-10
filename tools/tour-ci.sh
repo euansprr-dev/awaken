@@ -69,6 +69,10 @@ mkdir -p $DIR
 gh run download $RUN -R $REPO -n tour-$NAME -D $DIR > /dev/null 2>&1 \
   || { rmdir $DIR 2>/dev/null; echo "no artifact: the run stopped before the tour"
          gh run view $RUN -R $REPO --log-failed 2>/dev/null | grep -m5 '##\[error\]' | sed 's/.*##\[error\]/  /'; }
+# a Realm tour that never got into its Realm photographed the wrong world: a FAIL, said first, whatever the run concluded
+NOT_IN_REALM=""
+grep -qs "not in a Realm" $DIR/tour.log $DIR/latest.log $DIR/summary.txt && NOT_IN_REALM=1
+[ -n "$NOT_IN_REALM" ] && ! head -1 $DIR/summary.txt 2>/dev/null | grep -q "not in a Realm" && echo "FAIL not in a Realm: $NAME"
 [ -f $DIR/summary.txt ] && cat $DIR/summary.txt
 SHOTS=($DIR/*.png(N))
 (( ${#SHOTS} )) && print -l -- $SHOTS
@@ -76,4 +80,4 @@ gh api "repos/$REPO/actions/runs/$RUN/artifacts" -q '.artifacts[].name' 2>/dev/n
   && echo "clips: gh run download $RUN -R $REPO -n tour-$NAME-clips -D run-autopilot/clips-ci/$NAME-$RUN"
 echo "$CONCLUSION after $(( ($(date +%s) - STARTED) / 60 )) min: ${#SHOTS} shots in $DIR"
 echo "run: $URL"
-[ "$CONCLUSION" = success ]
+[ "$CONCLUSION" = success ] && [ -z "$NOT_IN_REALM" ]

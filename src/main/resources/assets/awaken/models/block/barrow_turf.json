@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/barrow_turf_top",
+    "bottom": "awaken:block/barrow_turf",
+    "side": "awaken:block/barrow_turf"
+  }
+}

@@ -57,6 +57,20 @@ public final class Encounters {
         entity.getPersistentData().putLong(WAKE, entity.level().getGameTime() + WAKE_BEAT);
     }
 
+    /** A Realm's pack (SPEC §50.9): held where it stands, with no room and no floor state behind it. {@link RealmPacks} wakes it. */
+    static void holdFree(Entity entity) {
+        if (!(entity instanceof Mob mob) || mob.isNoAi()) return;
+        entity.getPersistentData().putBoolean(WAITING, true);
+        entity.getPersistentData().putLong(HOME, mob.blockPosition().asLong());
+        mob.setTarget(null);
+        mob.getNavigation().stop();
+        Dormant.attach(mob, mob.blockPosition());
+    }
+
+    static void releaseFree(Entity entity) {
+        release(entity);
+    }
+
     static void onLoad(Entity entity, GateMobs.Key key) {
         if (!(entity.level() instanceof ServerLevel level) || !waiting(entity)) return;
         GateRecord g = GateRegistry.get(level.getServer()).gate(key.gate());

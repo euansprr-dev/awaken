@@ -21177,6 +21177,233 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
 
+
+**The Hour Crypt (gate 2 of 88, E and D, Dungeon, Bell Crypt).** One great drum with a bell the size of a house hung over a sunk floor; the
+stair head and nave run north, an Ossuary east, a flooded Sunk Aisle west, a bell tower south, the Candle Keepers' cloister off the nave.
+Every wall is one function (`niche`) for straight and round faces. The law is `tolls` (`RealmToll`): every 1,200 ticks the great bell rings
+and all six iron doors drop for 180 ticks; a door cell with something alive in it stays open. Land hooks added for it: `indoors()`,
+`portalAxis()`, `heartClosedLine()`. The Lord's floor is lit by low hidden light (a 7-block grid of level 13 at floor+4) because candles round
+the rim alone leave the middle black, and a fight has to be read.
+
+**One family per theme, not per gate.** Bell Crypt's lands all build in Knell (`tools/art/specs/realm_knell.py`, 22 blocks and 16 cuts), Hive's
+in Amber, so 88 lands don't mean 2,700 blocks. Under a blue moon a green patina has to be painted yellow-green or it reads as cyan.
+
+**More checks.** `WalkCheck.unreachable(land)`: breadth-first from the Mouth with `heart_open` applied (step up 1, drop up to 4, 2 cells of
+headroom), every site within 4 blocks of a walked cell. `FloatCheck` now knows things meant to float on water (`crypt_lily_candle`,
+`market_boat_lamp`: fail with no water under them), and a small stray's failure names the block and what it stands on. Tests:
+`realm_hour_walks_to_everything`, `realm_hour_nothing_floats`, `realm_hour_doors_toll`. The preview lights an `indoors()` land by flood fill on
+the volume (warm candle, cool moon) and draws candles as their real sticks. Where two halls cross, neither draws its wall across the other.
+
+**The bar (10 Nov 2026).** `docs/gates-as-worlds/BAR.md` is the standard every gate is held to: what Amber Reach and The Hour Crypt have, and the preview's `relief`, `wall`, `shaped`, `contrast` measures and FLAT, PLAIN, WASHED flags.
+
+**Air.** Realms now take part in Gate Air (SPEC 38.9). `RealmAir` tells a client on arrival and every half minute, no card: blueprint `sky.air` lists the client's air and small life, and `Land.air()` (built with `kit/AirPlan`) gives mist layers, shafts, lights and still water, which Lens reads. Amber Reach and The Hour Crypt have both.
+
+**Walking.** `WalkCheck` now swims: you can cross water and climb out where the bank is a step high.
+
+**Kingsroot Keep (gate 10, Overgrown Temple).** Keep family: cold wet ashlar, verdigris tile, black oak, pale roots, rust cloth (`tools/art/specs/realm_keep.py`). Two rings of curtain wall and a stepped keep on a hill inside a river gorge; every gate is shut. The rule: `keep_climb_root` (a root net, tagged `minecraft:climbable`) hangs on the walls where the great roots have broken them, and `WalkCheck` now climbs. The Lord waits in the great hall, nave and galleries with no roof. A shared wall profile (`wall`) makes every face step in four planes: batter, pilasters, blind arches with lit slits, corbelled parapet. Folk: wall-hobs in the outer ward.
+
+**Saltcomb Flats (gate 7, Hive, Desert and Ruin).** Salt family: bone wax, ochre stone, blue-black shade, white crust, dune sand, charcoal paving (`tools/art/specs/realm_salt.py`). A white salt pan of hexagon plates with brine pans, crossed by a road of black hexagon stones from the Mouth (0, 66, 244) to the door of the Sinking Court. A dry hive-city climbs the dunes behind it: spires of stepped comb tiers (`Spire`), comb domes, stepped blocks of cells, dark ribs. Realms can't change their sky per gate, so the rule isn't tied to a clock in the sky: law `salt` (`RealmSalt`) sets the crust over the three fords (z 188, 128, 72) hard for 60 s and soft for 40 s, a run or a slow swim, via `change("salt_soft"/"salt_hard")`; a cell with something in it stays brine until the next turn. Lord: `hive_regent` in the Sinking Court (drum at (0, -60), arena radius 42, wall inner radius 60): hex floor over brine, tiers of steps, a gallery at +30 with two stairs, lit niches, sand running down every third pilaster, a corbelled roof with a hole 22 across, a cracked comb dome in the middle. `heart_weeps` and `heart_winds` sink whole floor tiles into the brine in two sectors; the door is sealed with fresh comb. Folk: salt-rakers.
+
+**The Vine Seat (gate 3, Overgrown Temple).** Fane family: pale cut stone, green tile, teak, gilt, three leaf shades (`fane_leaf`, `_lit`, `_deep`), pale water (`fane_fall`). A stepped temple of six courses on a lagoon, split by one tree, with two great faces either side of the stair and a screen wall rising behind the trunk. Every wall comes from one rule, `facade`: plinth, pilasters every fourteen, bays with a lit niche or a carved panel, frieze, overhanging cornice. Rule `roots` (`RealmRoots`): curtains of roots shut across doors you've used and part for anyone moving at them; stand still and they climb your legs. The Lord's place is the Root Bowl at the foot of the trunk, opened by three Wardens.
+
+
+### 50.9 The Run (plan page https://claude.ai/artifact/S2hFD95MozxhM8twqcfXQ9, approved in full 10 Nov 2026; build log docs/gates-as-worlds/the-run/BUILD.md)
+
+A gate is a run, not a place to look at: you go from point to point, up and down, fight several different packs, get past
+traps and movement, beat the Wardens and the Lord. A Realm's land carries its run as data (`Land.route()`), a list of **legs**:
+
+| Leg | What happens | Runs on |
+|---|---|---|
+| ARRIVE | The Mouth. | |
+| FIGHT | A pack stands in view at a DEN site and waits; it wakes when it sees you inside 13 blocks, when you come inside 5, or when one is hurt. | `RealmPacks.den`, `Encounters.holdFree` |
+| AMBUSH | Nothing stands there. Walk inside the leg's radius and its pack comes up awake round you; the land's `ambush_<leg>` blocks change as it springs. | `RealmRun` |
+| MOVEMENT | A stretch you can fall from. Inside its box (`Land.Course`) a fall of more than 6 puts you back on the last of its ledges you stood on, for 3 + 8% of your health. | `RealmRun.course` |
+| TRAP | Presses, spitters, floor that gives way (below). | `RealmTraps` |
+| WARDEN | A Warden and its company at a WARDEN site. | `RealmPacks.warden` |
+| BREATHER | A place to stop. Pressure sends nothing after a player standing in one. | `RealmLive.pressure` |
+| SHORTCUT | A way that opens when its `when` is met ("warden2": that Warden is down; "den1": that pack is dead): the land's `shortcut_<leg>` blocks, once, with the land's line if it has one. | `RealmRun` |
+| HIDDEN | A place off the route. The first player inside it banks its share for everyone in the gate; the land's `found_<leg>` blocks change. | `RealmRun` |
+| LORD | The Lord's hall (§50.8). | `RealmLive.heart` |
+
+A leg is `id, kind, name, x y z, radius, site, pack, when, exits`. `pack` names the monsters ("hive_larva*4", "hive_guard"), from
+the mobs each theme already has, with one more of the first for every two ranks; empty rolls from the theme as before. `exits`
+are the legs you can go on to. A land nobody has designed a run for still has one, read off its sites (arrive, every den a
+fight, every Warden a Warden, the Lord), and plays exactly as it did.
+
+**Doors.** A leg whose land answers `change("seal_<leg>")` has doors. They shut while its pack is awake and a player of the gate
+stands inside it (radius + 2), and open the moment either stops being true, so nobody is ever locked in or out; a cell with
+anyone in it stays open. A Warden without doors keeps the soft ring of stage 0 (the ground past ring + 6 turns you back).
+Which legs are shut is saved with the Realm (`RealmState.sealed`).
+
+**Traps** (`Land.Trap`, in the land's own blocks, on the Realm's clock; hurt as the old Gauntlet does):
+- PRESS: a box of cells fills for 30 ticks of every `period`, after 30 ticks of dust and cracking. Whoever is in it takes
+  3 + 11% of their health and is put outside on the nearer side. It never closes on a monster.
+- SPIT: a cell lights for 20 ticks, then everything on its line takes 2 + 8% and Slowness II for 2 s, once per beat.
+- CRUMBLE: floor that goes 15 ticks after it is stood on and grows back 100 ticks later, never into anyone.
+
+**Pressure** as §7: 4 minutes with no pack woken and nothing killed and waves come (2, then up to 6, every 45 s); at 8 minutes
+the hunter (the theme's Warden kind). Not in the Lord's hall, not in a breather, not on peaceful.
+
+**Pay.** Kill pay is unchanged (60% of the land's pay, split over the run's monsters: a rolled den counts 5, a named pack what it
+names, a Warden 4 plus its company). Of the other 40%: the Wardens bank half between them (a sixth each where there are three);
+where the land has a hidden leg the Wardens bank four tenths and the hidden legs hold 15% between them, paid only to those who
+find them; the Lord pays what is left.
+
+**The check** (`RouteCheck`, in the bench and the tests) proves a designed run: every leg has its job (a den, a Warden, a trap,
+a course, blocks that open) and can be walked to, the first fight is within 150 blocks of the Mouth, no two joined legs are more
+than 260 apart, there is a loop or a shortcut, a place under a roof rises or falls 20 or more, and each fight has 12 walkable
+columns a monster. The walk (`WalkCheck`) now makes the one jump anyone can (a sprint over one to three missing cells, level or
+down) and goes through everything a land lists as `walk_open`.
+
+**The crawl kit** (`kit/crawl/CrawlLand`). A dungeon crawl is rock with a run hollowed out of it, part by part: `Cave` (an oval
+room with a wandering rim), `Arena` (a round room with a ring of pillars for cover), `Tunnel` (a way between two points that
+climbs in half steps, never steeper than one in two), `Shaft` (a ledge winding down a round shaft, breakable at its quarter
+points, over a pool it runs down into). Parts meet at the same height. The land that extends it says what the rock, floors and
+doors are made of and what grows on the walls (`adorn`), which is where a crawl gets a look of its own.
+
+**The Hour Crypt as a run** (15 legs). The nave (ghouls and archers), the walk round the pit (a breather), then three wings in
+any order. East: three rows of stone teeth come up across the Ossuary's gallery one after another (PRESS, period 100), the
+Ossuary's pack, an ambush of wisps in the north chapel, and the Warden of bones, whose door shuts on the fight. Off the cross
+aisle's south end is the reliquary (HIDDEN): its door stands open only while the bell rings, and for good once someone has been
+in. West: the Sunk Aisle's pack in the water, an ambush in the drowned bays, the Warden of water behind its door. South: the
+ringers' tower, its stair broken in three places (three cells each, a sprint clears them; a fall is caught), to the Warden
+among the ropes. Its fall lets a bell rope down from the bridge to the walk round the pit (SHORTCUT; `crypt_bell_rope` is
+climbable). Then the Lord.
+
+**The Broodwarren (gate 14, Hive, a short crawl; `land/Broodwarren`, blueprint `awaken:broodwarren`).** Brood family
+(`tools/art/specs/realm_brood.py`): nest paper in three tones laid in layers, rooted earth, resin and its slab, brood comb and
+comb with something lit in it, sacs, royal jelly, spitter cells, and the red skin that is its door. Fifty blocks down in nine
+legs: the split root (a crack of daylight behind you), the antechamber (larvae and honey slimes), the spitting gallery (five
+cells, a second apart), the nursery (a shaft of hanging comb; the ledge is broken at three quarter points and has two stretches
+of thin comb that give way), the larder (the sacs burst round you: larvae and drones), the jelly cell behind the larder's
+curtain of sacs (HIDDEN), the workers' crawl back up to the antechamber once the larder is cleared (SHORTCUT), the comb ring
+(the Swarm Mind with a guard and drones) and the brood chamber (the Hive Regent; its pillars wake as she is worn down).
+
+**Creatures with bodies of their own in the packs.** A pack can name any creature the mobs module has, not only its theme's:
+the cave hunters (§23) are gate monsters now, with the bodies and motion they already have. A name marked "~" keeps its own
+habits instead of standing and waiting (a Drip Lurker leaps up and hangs from a roof three to nine blocks over it and drops on
+whoever walks under it in the dark; a Hushling hunts by sound and leaves the light alone); such a monster counts as fighting
+only once it has a target, so a room of them does not shut its doors on someone who is sneaking through. A Warden's pack that
+starts "!name" names the Warden itself. The Broodwarren: three Drip Lurkers hang among the larder's sacs before its ambush
+springs, and the comb ring's Warden is the Thousandfoot (the ring has no pillars). The Hour Crypt: three Hushlings keep the dark
+south aisle in front of the reliquary's door, which is why you wait for the toll there quietly (16 legs).
+
+**A cache per herd.** When a fight's or an ambush's pack is all down, a gate cache appears where it stood (as a room's does in
+the old gates), with the cache sound and a burst of light.
+
+**Rolled crawls** (`kit/crawl/GeneratedCrawl`). A crawl whose run is rolled from the gate's seed, so one blueprint is a
+different dungeon every time it forms. Always: the way in, a fight in sight of it, two to five legs out of a bag (more fights,
+a gallery of spitters, a hall of three teeth, a shaft with a broken ledge and thin floor, and always one ambush), the Warden
+behind its door, the Lord behind the heart's door. Ways turn (they try up to seven headings and take the first that runs into
+nothing; galleries, halls and shafts keep to the four straight ways) and drop four to seven blocks each; a run with a shaft in
+it may climb three now and then. Every fight, ambush and Warden room has a door on each way out of it. A side cell off the first
+fight joins the way beyond it, so there is always a way round (and a find in it); a hidden cell goes off the ambush where there
+is room (two finds, and the hidden share of the pay). The same checks as a designed run prove every seed (test
+`realm_generated_crawls_play`, six seeds a skin).
+
+A **skin** is the land that extends it: rock, floors, the half step, the door, what grows on the walls (`adorn`), who lives
+there (a few herds it goes round, the ambush, the Warden's company), what its spitters, teeth and thin floor are made of, and
+how much it wanders (1 dug, 0 built). A new skin is a new kind of dungeon; its layouts come free. Skins so far:
+- **The Lower Combs** (`awaken:brood_burrow`, Hive): the Brood family, as The Broodwarren. Larvae and slimes, drones and a
+  guard, lurkers in the roof with larvae under them, slimes and drones; the Thousandfoot as Warden; the Hive Regent.
+- **The Bone Roads** (`awaken:catacombs`, Bell Crypt): the Knell family, built (clean round vaults, straight ways, coursed
+  stone with a band every six). Skulls in niches at head height, bone packed into the walls in patches, candles gathered along
+  the foot of every wall with a light over each cluster, a small bell on its rope here and there, bell ropes down every shaft.
+  Ghouls and archers, archers and wisps, Hushlings with a ghoul, wisps and a Crypt Keeper; the Sexton; the Bell Warden. Teeth of
+  pale stone, a bronze mouth that turns gilt before it spits, boards that give way.
+
+**Naming a monster** (`core.api.MobHooks.spawnNamed(level, id, pos, contentLevel, tags, gateId)`, added to the §12 API). A pack's
+names are spawned through it: any creature by its id, in the role its own tier gives it (normal, elite or Warden; never a
+Lord), scaled to the gate's content level and counted and paid as a monster of the gate. `spawnCreature` stays what it was (a
+Realm's peaceful life, no gate role), which is why a pack could not use it. A name nothing answers to gets one of the theme's
+own instead, so a typo never empties a room. Test `realm_packs_spawn_by_name`.
+
+**Herds for a den nobody designed** (`gates/run/Herds`). A land whose run is only read off its sites (Amber Reach, The Vine
+Seat, Kingsroot Keep, Saltcomb Flats, The Quiet Barrow, The Wax Galleries, until each gets its own) takes its dens' packs from
+its theme's herds, four each for the Hive, the Bell Crypt and the Overgrown Temple, gone round den by den from a start the
+seed picks, so two camps in one land are not the same fight. Under a roof a fifth herd joins the round: Drip Lurkers or
+Hushlings with one of the theme's own. A theme with no herds rolls from its roster as before.
+
+**The run on the HUD.** In a Realm the run HUD's hint line reads "Herds 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
+are all down, of those the run has; a herd that keeps its own habits isn't counted), then "Every Warden is down. The way on is
+open." until the Lord falls (`RealmLive.hint`).
+
+Three more skins, each one file a builder wrote from a thirty-line brief in ten to twenty minutes (bench on three seeds, then
+the six-seed test here):
+- **The Hollow Hills** (`awaken:hollow_hills`, Bell Crypt, the Barrow family): passages under a mound, packed earth shored
+  with kerb stones, urns and shields, grave-glow low on the walls; darker than the catacombs, with pools, because Hushlings
+  live in it.
+- **The Root Cellars** (`awaken:root_cellars`, Overgrown Temple, the Fane family): a temple's undercroft half swallowed by
+  roots, moss and vines, lit leaves and braziers; the temple's hounds, archers and creakers, with Lurkers in one herd.
+- **The Tallow Runs** (`awaken:tallow_runs`, Hive, the Wax family): soot rock that pale wax has run down and set over, candle
+  banks at the foot of the walls, lit comb in the ambush and the Lord's hall; the one that glows.
+
+**Light in a rolled crawl, after the first real-game walks.** The Bone Roads and The Hollow Hills could barely be read in the
+real game. The Bone Roads: candles along half of every wall's foot (was three tenths), a light over four in ten clusters, at
+15. The Hollow Hills: grave-lights in three quarters of a room's wall cells of four and along the ways too, each with a light
+of 15 over it and, in a room, a second two higher. A skin is judged in the real game, not on the checker: the checker draws
+these two brighter than the game does.
+
+**Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
+no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
+gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.
+
+**Sizes and shapes of a rolled crawl.** A seed also rolls how long the run is and which way it goes.
+- Size: short (one or two legs between the first fight and the Warden, besides the ambush), standard (three or four), great
+  (three, then the Warden, then three more with a second ambush and a second Warden before the Lord). Three in ten, about
+  half, one in six. A great run is about fifteen legs.
+- Shape: delve (steadily down, four to seven a way), plunge (six to eight a way, two shafts first out of its bag), climb (the
+  Mouth is at the bottom and every way rises to a Lord at the top; a shaft is walked upward and has no breaks, since nobody
+  jumps a gap upward), sprawl (wide rooms, no shaft, nearly level). Forty, twenty-five, seventeen and eighteen in a hundred.
+- Legs of the same kind after the first take a number (`shaft2`, `ambush2`, `warden2`).
+
+**The chasm** (`CrawlLand.Chasm`, a MOVEMENT leg). A straight room with no floor but a pool ten blocks down, a shelf at each
+end, and a row of flat-topped pillars between them: three cells long (four before a gap of three), two or three cells apart,
+each beside the last by at most one cell and never higher than it. A fall is caught as on any course. A ramp down one wall goes
+from the first shelf into the pool, so whoever lands in it walks back up; the far end can only be reached across. The
+generator clears anything with a body out of the air over the pool and off the pillars after a skin has dressed the place.
+
+**What a skin's growths may hold on to.** `adorn` is told about a wall, floor or roof only when it is the dungeon's own rock
+(solid by the parts' shapes, and still there), never something another `adorn` call put into the air. Found the hard way: a
+shelf fungus had attached itself to a hanging glowcap that one chunk had drawn in its margin and the next chunk, which owned
+the cell, had not; the shelf was left floating. Nothing can hold on to a thing that isn't rock, so nothing can be left behind.
+
+Three more skins from builders, one per gate theme with that theme's own blocks, monsters and Lord: **The Cinder Workings**
+(`awaken:cinder_workings`, Ember Mines), **The Sunken Stacks** (`awaken:sunken_stacks`, Drowned Archive, ranks D and C),
+**The Sporewells** (`awaken:sporewells`, Fungal Hollow). The Realms dimension lists every gate theme's biome, so a skin
+takes its theme's air and sky.
+
+Three more, the same way: **The Frozen Cells** (`awaken:frozen_cells`, Frost Monastery, ranks C and B: a monastery's cells
+under ice, pale stone and ring-lamps), **The Glass Warrens** (`awaken:glass_warrens`, Glass Desert, ranks D and C: burrows in
+sandstone shot through with lit amber glass), **The Stopped Works** (`awaken:stopped_works`, Clockwork Foundry, ranks D and C:
+riveted plate, brass and furnace light, machines stopped mid-stroke).
+
+**A wall is one thing with things in it.** Seen in the real game on The Sporewells: a skin that picks each wall cell's block at
+random from four or five (rock, lit rock, moss, stalk, cap, gills) reads as a chequer and nothing else, however good each block
+is. A wall is its rock (courses or veins from noise); growths and fittings come in whole patches a few cells across (a bracket
+of fungus is a dark cap with its gills lit along the underside), and a floor is one stuff with beds of another. Light comes from
+the fittings, never from salting lit blocks through the rock. A great run's crossing over a pool is lit from its walls alone, so
+a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
+
+**A climb is never dark.** Skins light rooms, and two of them lit no shaft at all. So the generator itself sets an unseen light
+(level 14) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
+skin has dressed the place. A skin still dresses a climb's walls; it no longer has to make the jumps visible.
+
+Three more kinds: **The Silvered Halls** (`awaken:silvered_halls`, Mirror Palace, ranks C and B: bays of tall mirror between dark
+piers, a gilt cornice, chequered floors), **The Sealed Wing** (`awaken:sealed_wing`, Precursor Lab, ranks C and B: pale panels,
+lit strips at knee height and under the roof, tanks for pillars), **The Sleepless Ward** (`awaken:sleepless_ward`, Nightmare,
+ranks C and B: papered corridors as a dream remembers them, a rail that slips out of line, doors and windows that lead nowhere).
+The false doors are real doors set in solid wall: a player may open one and finds wall.
+
+Three more, which bring the kinds to seventeen: **The Unlit Stair** (`awaken:unlit_stair`, Abyssal Shrine, ranks A and S: black
+dressed stone with one pale band every sixth course, niches with votives, a pale line down every way, nothing on the floors),
+and two second kinds for themes that had a built one, each wild where the first is built: **The Rime Hollows**
+(`awaken:rime_hollows`, Frost Monastery: natural ice caves, stone at a wall's foot, then snow, then blue ice, sheets of it lit
+from inside, icicles in clusters) and **The Green Dark** (`awaken:green_dark`, Overgrown Temple: wet jungle caves, moss taking
+whole walls, curtains of vine and glow berries along lines in the roof). With these every theme that suits a crawl has a kind.
+Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
+a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The

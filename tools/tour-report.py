@@ -5,8 +5,8 @@
 
 Copies the shots, the client's log and any crash report into <out-dir> (the run's artifact), writes summary.md (the run
 page), summary.txt (what tools/tour-ci.sh prints) and tour.json, and sets the step output verdict=pass|fail. A tour
-fails when Gradle or the client failed, the watchdog stopped it, the world never loaded, the game crashed, or it took
-no shots. Reads the env the workflow sets: SCRIPT, KNOBS, TOUR_NAME, TOUR_RUNNER, BUILD_SECONDS, TOUR_SECONDS.
+fails when Gradle or the client failed, the watchdog stopped it, the world never loaded, the game crashed, it took
+no shots, or it said it failed ("need realm": the first line then reads "FAIL not in a Realm: ..."). Reads the env the workflow sets: SCRIPT, KNOBS, TOUR_NAME, TOUR_RUNNER, BUILD_SECONDS, TOUR_SECONDS.
 """
 import json
 import os
@@ -69,6 +69,12 @@ def main(out):
         problems.append(f"Gradle exited {exit_code} (a build failure or the client crashed)")
     if "[autopilot] world never became ready" in text:
         problems.append("the world never became ready")
+    # a tour that says what it failed at (Autopilot.fail; "need realm"), or any answer of "You're not in a Realm.":
+    # its shots are of the wrong world, so the run fails by name whatever else went right
+    named = [l.split("[autopilot] FAIL ", 1)[1].strip() for l in lines if "[autopilot] FAIL " in l]
+    if not named and "not in a Realm" in text:
+        named = ["not in a Realm"]
+    problems += [f"the tour failed: {n}" for n in dict.fromkeys(named)]
     # the process died under the game (the GPU driver, the JVM): the line that says why
     for l in lines:
         if re.search(r"\*\*\* Terminating app|A fatal error has been detected", l):
@@ -135,7 +141,7 @@ def main(out):
     (out / "tour.json").write_text(json.dumps(report, indent=1) + "\n")
 
     name = os.environ.get("TOUR_NAME", Path(script).stem)
-    head = (f"{verdict.upper()}: {name} on {report['runner']}, {len(shots)} shots; tour {mins(report['tourSeconds'])},"
+    head = (f"{verdict.upper()}{' ' + named[0] if named else ''}: {name} on {report['runner']}, {len(shots)} shots; tour {mins(report['tourSeconds'])},"
             f" build {mins(report['buildSeconds'])}")
     rows = [("script", script), ("knobs", report["knobs"] or "none (Awaken alone, defaults)"),
             ("backend", report["backend"] or "?"), ("device", report["device"] or "?"), ("display", display), ("sound", sound),

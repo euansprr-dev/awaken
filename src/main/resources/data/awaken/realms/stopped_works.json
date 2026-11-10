@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "name": "The Stopped Works",
+  "line": "Every machine in this foundry stopped in the middle of what it was doing, and nobody came to start them again.",
+  "form": "dungeon",
+  "theme": "clockwork_foundry",
+  "ranks": [
+    "D",
+    "C"
+  ],
+  "land": {
+    "program": "awaken:stopped_works",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:gate_clockwork_foundry"
+    ],
+    "lens": "stopped_works",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "smoke",
+      "dust",
+      "drips",
+      "bats",
+      "rats"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "gearwright_colossus",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}
