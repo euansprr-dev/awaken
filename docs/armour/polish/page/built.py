@@ -19,7 +19,8 @@ W, H = 3416, 1858
 
 def newest(prefixes, tour):
     for prefix in prefixes:
-        dirs = sorted(d for d in glob.glob(os.path.join(CI, f"{prefix}-armour-audit-{tour}-*")) if glob.glob(os.path.join(d, "*.png")))
+        head = f"{prefix}-" if prefix else ""  # "" is a run by tools/tour-ci.sh itself: armour-audit-<tour>-<run id>
+        dirs = sorted(d for d in glob.glob(os.path.join(CI, f"{head}armour-audit-{tour}-*")) if glob.glob(os.path.join(d, "*.png")))
         if dirs:
             return dirs[-1]
     return None
@@ -56,6 +57,21 @@ def strip(out, tiles, size, quality=84):
     return True
 
 
+# stage 3's B, A and S sets, and what each one gained (the page's captions)
+PLATED = {
+    "deepcarapace": ("Deepcarapace", "A knuckled elbow with a spur swept back from it, another at the calf, a keel on the knee. The shoulder, where your own skin showed, is closed."),
+    "cloudrunner": ("Cloudrunner", "The helm&rsquo;s feathered fins again at the forearm, swept back from a plated elbow. A feather-tipped plate on each thigh."),
+    "tidebreaker": ("Tidebreaker", "The crest&rsquo;s webbed fin and amethyst spines down the back of the forearm, and a spine on the knee. They hold their light at night."),
+    "hollowheart": ("Hollowheart", "Its spine: three vertebrae and their wings down the cape, where a back would be. A bone spur at the elbow."),
+    "leviathan": ("Leviathan", "The back&rsquo;s sail again on forearm and calf: a fin cut in three steps with a bone ray along its top. A tooth on the knee."),
+    "galewing": ("Galewing", "A wing feather swept back from a steel elbow. Two flight feathers laid over each thigh."),
+    "halo_choir": ("Halo Choir", "A choir&rsquo;s organ on the back: five pipes rising to the middle, a gold lip on each and a lit mouth."),
+    "dreamsteel": ("Dreamsteel", "The mirror on its back broken in three, each piece at its own depth, light in the cracks. A plate on the upper arm and thigh, a shard at the elbow. It was the thinnest A set."),
+    "starfall": ("Starfall", "The star again on the back, as it fell, its tail burning up toward the shoulder. A pointed elbow. The shoulder is closed."),
+    "riftwalker": ("Riftwalker", "The rift&rsquo;s light now shows in the gap under the plates that stand off the suit. Your own shirt no longer shows at the shoulder."),
+    "nightcourt": ("Nightcourt", "A duelist&rsquo;s half-cloak over the left shoulder, the sword arm left free. A silver half-belt with two buttons across the back of the coat."),
+    "signals_echo": ("Signal&rsquo;s Echo", "The System&rsquo;s light down the back, three dashes that light in turn. A scanline plate on each thigh. Its displaced slices of robe now really glitch."),
+}
 FIG = (1148, 400, 2268, 1800)      # the worn tours' figure, fov 50
 CLOSE = (1108, 60, 2308, 1560)     # the living tour's figure, fov 40
 FP = (1780, 880, 3416, 1858)       # the first-person arm
@@ -70,6 +86,11 @@ def main():
     # marked arm turned away: only the run after those fixes counts
     moments = newest(["after8"], "moments")
     extras = newest(["after8", "after7"], "extras")
+    # B, A and S: each changed set on three stands (back three-quarter, back, side)
+    plates = newest([""], "plates")
+    for sid in PLATED:
+        strip(f"built_p_{sid}.jpg", [(plates, f"p_{sid}", (208, 300, 3208, 1700), "")], (960, 448))
+    strip("built_p_glitch.jpg", [(plates, f"p_glitch_{k}", FIG, lab) for k, lab in (("rest", "AT REST"), ("a", "TEARING"), ("b", ""), ("c", ""))], (300, 375))
     # C-rank: the three sets whose plates changed in stage 3, from behind (and Shardcrown's forearm from your own eyes)
     strip("built_c_gatewrought.jpg", [(before, "w_gatewrought_back", FIG, "TODAY"), (worn, "w_gatewrought_back", FIG, "BUILT")], (400, 500))
     strip("built_c_vaultbreaker.jpg", [(before, "w_vaultbreaker_back", FIG, "TODAY"), (worn, "w_vaultbreaker_back", FIG, "BUILT")], (400, 500))
@@ -124,7 +145,7 @@ def section():
         ("0. Faults", "Your arms, wrists and legs wear the armour in every first-person view our own code draws. Your own charge shows on your own arm. The sheen no longer crosses armour in the dark.", "Built. Seen in the game, all 29."),
         ("1. Light", "Plates part from each other by day. From C-rank up the thing a stranger would name is lit after dark; E and D stay dark.", "Built. Seen in the game, day and night."),
         ("2. Hands", "A glove, a cuff and a hand plate on every set, each in its own materials.", "Built. Seen in the game, all 29."),
-        ("3. Plates", "C-rank only: a gate on Gatewrought&rsquo;s back, a vault door on Vaultbreaker&rsquo;s, crystal on Shardcrown&rsquo;s forearm.", "<strong>Waits for your eye.</strong> B, A and S are not started."),
+        ("3. Plates", "Every later set&rsquo;s own plates on limbs and back. C-rank first; B, A and S after you had seen C and said to finish it (11 November). No helm was touched.", "Built. Seen in the game."),
         ("4. Parts that move", "Twelve sets have one or two parts that live: a marker, a halo, rays, lanterns, plumes, wings, shards, a heart.", "Built. Seen in the game."),
         ("5. Sound", "45 sounds, every one from Minecraft&rsquo;s own recordings: the Forge Song remade, and new ones for putting a piece on, walking in a set and a blow landing on it.", "<strong>Waits for your ear.</strong> Nobody has heard any of it."),
         ("6. Moments and marks", "A set lights feet to crown when its last piece goes on. A forged piece shows its flaw, its fold and its maker&rsquo;s mark. A piece in your hand, on the ground or in a frame is the piece, not an icon.", "Built. Tested, and seen in the game."),
@@ -134,9 +155,12 @@ def section():
              + "".join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in rows) + "</tbody></table></div>")
     parts = [
         '<div class="col"><h2 id="built">Built since your yes</h2>'
-        "<p>You said: go with the full plan and all recommendations. This is what is built, what the real game has shown of it on GitHub&rsquo;s machines, and the three things only you can do. It all sits on its own branch. Nothing is merged.</p>"
+        "<p>You said: go with the full plan and all recommendations. This is what is built and what the real game has shown of it on GitHub&rsquo;s machines. Stages 0 to 6 with C-rank went into the game on 10 November. The B, A and S plates are the newest part.</p>"
         + table + "</div>",
-        group("C-rank, for your eye", "You asked to see C-rank before the rest. Three sets changed shape, on limbs and backs only. No helm was touched.", [
+        group("B, A and S plates", "On 11 November you said: with all B, A and S plates, let&rsquo;s finish it. Twelve sets, limbs and backs only. Each picture is one set on three stands: turned three-quarters away, its back, and its side.",
+              [fig(f"built_p_{sid}.jpg", f"{name} on three stands", f"<strong>{name}.</strong> {what}") for sid, (name, what) in PLATED.items()]
+              + [fig("built_p_glitch.jpg", "Signal's Echo glitching", "Signal&rsquo;s Echo with its ability fired: the slices of robe tear sideways and back.")]),
+        group("C-rank", "The first three sets that changed shape, which you saw before the rest.", [
             fig("built_c_gatewrought.jpg", "Gatewrought from behind, today and built", "Gatewrought. Today the back is a blank slab. Built: the gate&rsquo;s two pillars and lintel, with a lit door between them.", False),
             fig("built_c_vaultbreaker.jpg", "Vaultbreaker from behind, today and built", "Vaultbreaker. Built: a riveted vault door on the back with its diamond lock, and darker steel so the set stops being grey on grey.", False),
             fig("built_c_shardcrown.jpg", "Shardcrown from the front, today and built", "Shardcrown. Built: crystal growing out of the forearm, lit from inside.", False),
@@ -144,8 +168,6 @@ def section():
             fig("built_c_front.jpg", "The five C-rank sets from the front, as built", "All five C-rank sets as they stand now, front."),
             fig("built_c_back.jpg", "The five C-rank sets from behind, as built", "And from behind."),
         ]),
-        '<div class="col"><div class="dec"><h3>8. C-rank: go on to B, A and S the same way?</h3><p>The same kind of change on the eleven sets left: limbs, belts and backs, one feature each where a back is plain, no helm touched. <span class="rec">Recommended: yes.</span></p>'
-        '<div class="ans" data-key="d8" hidden><button type="button" data-v="yes" aria-pressed="false">Yes, go on</button><button type="button" data-v="change" aria-pressed="false">Change something first</button><button type="button" data-v="stop" aria-pressed="false">Stop at C</button><textarea id="note-d8" aria-label="A note on decision 8" placeholder="What to change, or anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div></div>',
         group("Parts that move", "Each strip is one set a second apart, or standing beside moving. They move from the game&rsquo;s own state, so everyone sees the same and nothing is sent or saved.", [
             fig("built_live_marker.jpg", "Signal's Echo's marker at four moments", "Signal&rsquo;s Echo: the System&rsquo;s marker turns and rides over the hood."),
             fig("built_live_halo.jpg", "Halo Choir's halo at four moments", "Halo Choir: the halo leans round and the small wings breathe."),
@@ -172,9 +194,8 @@ def section():
             fig("built_admire.jpg", "Admire circling Lordscale", "Admire: hold O and the camera leaves your eyes and circles you once."),
             fig("built_admire_night.jpg", "Admire at night in Sunward", "The same at night. The set is drawn in a light that shows it whatever the hour."),
         ]),
-        '<div class="col"><h3>The three things only you can do</h3>'
-        '<ul><li><strong>Your eye on C-rank</strong>: decision 8, above.</li>'
-        '<li><strong>Your ear on the sounds.</strong> A listening page runs on your Mac only (it plays Minecraft&rsquo;s recordings from your own copy of the game, so it is never hosted). In the armour worktree run <code>python3 tools/art/armour_sounds.py listen</code>, then open <code>http://127.0.0.1:8767</code>. Each of the 45 sounds has three picks; press <em>Use this</em> on one. Pick 1 is in the game until you choose.</li>'
+        '<div class="col"><h3>The two things only you can do</h3>'
+        '<ul><li><strong>Your ear on the sounds.</strong> A listening page runs on your Mac only (it plays Minecraft&rsquo;s recordings from your own copy of the game, so it is never hosted). In the armour worktree run <code>python3 tools/art/armour_sounds.py listen</code>, then open <code>http://127.0.0.1:8767</code>. Each of the 45 sounds has three picks; press <em>Use this</em> on one. Pick 1 is in the game until you choose.</li>'
         '<li><strong>The measuring run on your Mac</strong> (many armoured players at once). You said yes to it; I will still ask before I launch the game.</li></ul>',
         '<p class="muted">Not checked anywhere yet: slim-arm skins, the VFX Look, the grips with the weapon-feel session, and how any of it sounds.</p></div>',
     ]

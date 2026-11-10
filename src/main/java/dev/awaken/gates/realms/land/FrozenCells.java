@@ -220,4 +220,11 @@ public final class FrozenCells extends GeneratedCrawl<FrozenCells.M> {
         if (lord != null) air.mist(lord.feet + 1, 4, 0xa8c8e8, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0xbfe4ff, 20, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a monastery: cloister halls, crossings, a sunk court, and ice where a floor should be. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIERS, Cave.Form.PIT), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.TIERS, Arena.Plan.CROSS), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.LEDGES, Chasm.Kind.FALLING, Chasm.Kind.FORD), true, 2.4, 5);
+    }
 }

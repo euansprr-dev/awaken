@@ -1,0 +1,236 @@
+# Gate monsters today (plan docs/gates-as-worlds/monsters/PLAN.md): each Bell Crypt monster beside the vanilla mob whose
+# body it wears, then the Drip Lurker and the Hushling (bodies of our own) alone, then a Bell Crypt row and a Hive row
+# seen from 8 and from 20 blocks. Stills only; nothing here is new, it films what is already in the game.
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world monsterstoday creative 811
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+cmd time set 13000
+wait 20
+# toll_ghoul beside minecraft:zombie
+cmd summon awaken:toll_ghoul 1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:toll_ghoul,limit=1,sort=nearest,x=1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[165f,0f]}
+cmd summon minecraft:zombie -1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=minecraft:zombie,limit=1,sort=nearest,x=-1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[195f,0f]}
+cmd tp @s 0.0 200.45 2.08 0 4
+look 0 4
+wait 40
+shot pair_toll_ghoul
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# crypt_archer beside minecraft:skeleton
+cmd summon awaken:crypt_archer 1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_archer,limit=1,sort=nearest,x=1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[165f,0f]}
+cmd summon minecraft:skeleton -1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=minecraft:skeleton,limit=1,sort=nearest,x=-1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[195f,0f]}
+cmd tp @s 0.0 200.47 2.02 0 4
+look 0 4
+wait 40
+shot pair_crypt_archer
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# bell_wisp beside minecraft:vex
+cmd summon awaken:bell_wisp 1.1 202.2 6.0
+wait 3
+cmd data merge entity @e[type=awaken:bell_wisp,limit=1,sort=nearest,x=1.1,y=202.2,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,NoGravity:1b,Tags:["p"],Rotation:[165f,0f]}
+cmd summon minecraft:vex -1.1 202.2 6.0
+wait 3
+cmd data merge entity @e[type=minecraft:vex,limit=1,sort=nearest,x=-1.1,y=202.2,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,NoGravity:1b,Tags:["p"],Rotation:[195f,0f]}
+cmd tp @s 0.0 201.02 3.40 0 4
+look 0 4
+wait 40
+shot pair_bell_wisp
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# crypt_keeper beside minecraft:wither_skeleton
+cmd summon awaken:crypt_keeper 1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_keeper,limit=1,sort=nearest,x=1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[165f,0f]}
+cmd summon minecraft:wither_skeleton -1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=minecraft:wither_skeleton,limit=1,sort=nearest,x=-1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[195f,0f]}
+cmd tp @s 0.0 200.70 1.40 0 4
+look 0 4
+wait 40
+shot pair_crypt_keeper
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the_sexton beside minecraft:warden
+cmd summon awaken:the_sexton 1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:the_sexton,limit=1,sort=nearest,x=1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[165f,0f]}
+cmd summon minecraft:warden -1.1 201 6.0
+wait 3
+cmd data merge entity @e[type=minecraft:warden,limit=1,sort=nearest,x=-1.1,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[195f,0f]}
+cmd tp @s 0.0 200.97 0.65 0 4
+look 0 4
+wait 40
+shot pair_the_sexton
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:drip_lurker 0.0 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:drip_lurker,limit=1,sort=nearest,x=0.0,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[150f,0f]}
+cmd tp @s 0.0 200.15 3.40 0 8
+look 0 8
+wait 40
+shot bar_drip_lurker
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:hushling 0.0 201 6.0
+wait 3
+cmd data merge entity @e[type=awaken:hushling,limit=1,sort=nearest,x=0.0,y=201,z=6.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[150f,0f]}
+cmd tp @s 0.0 200.01 3.40 0 8
+look 0 8
+wait 40
+shot bar_hushling
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the bell row
+cmd summon awaken:toll_ghoul -7.8 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:toll_ghoul,limit=1,sort=nearest,x=-7.8,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:crypt_archer -5.2 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_archer,limit=1,sort=nearest,x=-5.2,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:bell_wisp -2.6 202.2 26.0
+wait 3
+cmd data merge entity @e[type=awaken:bell_wisp,limit=1,sort=nearest,x=-2.6,y=202.2,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,NoGravity:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:crypt_keeper 0.0 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_keeper,limit=1,sort=nearest,x=0.0,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:the_sexton 2.6 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:the_sexton,limit=1,sort=nearest,x=2.6,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:drip_lurker 5.2 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:drip_lurker,limit=1,sort=nearest,x=5.2,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:hushling 7.8 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:hushling,limit=1,sort=nearest,x=7.8,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd tp @s 0.0 200.98 18.00 0 2
+look 0 2
+wait 40
+shot row_bell_8
+wait 10
+cmd tp @s 0.0 200.98 6.00 0 0
+look 0 0
+wait 40
+shot row_bell_20
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the hive row
+cmd summon awaken:drone_bee -7.8 202.2 26.0
+wait 3
+cmd data merge entity @e[type=awaken:drone_bee,limit=1,sort=nearest,x=-7.8,y=202.2,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,NoGravity:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:hive_larva -5.2 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:hive_larva,limit=1,sort=nearest,x=-5.2,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:honey_slime -2.6 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:honey_slime,limit=1,sort=nearest,x=-2.6,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:hive_guard 0.0 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:hive_guard,limit=1,sort=nearest,x=0.0,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:the_swarm_mind 2.6 202.2 26.0
+wait 3
+cmd data merge entity @e[type=awaken:the_swarm_mind,limit=1,sort=nearest,x=2.6,y=202.2,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,NoGravity:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:drip_lurker 5.2 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:drip_lurker,limit=1,sort=nearest,x=5.2,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd summon awaken:thousandfoot 7.8 201 26.0
+wait 3
+cmd data merge entity @e[type=awaken:thousandfoot,limit=1,sort=nearest,x=7.8,y=201,z=26.0,distance=..2] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["r"],Rotation:[180f,0f]}
+cmd tp @s 0.0 200.98 18.00 0 2
+look 0 2
+wait 40
+shot row_hive_8
+wait 10
+cmd tp @s 0.0 200.98 6.00 0 0
+look 0 0
+wait 40
+shot row_hive_20
+wait 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode creative
+info
+quit

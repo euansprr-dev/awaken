@@ -78,8 +78,9 @@ public final class DeathTests {
             if (e == null) continue;
             i++;
             bodies.add(e);
-            // its fall: a beast's own clip, a kit boss's up to 80 ticks, else vanilla's second
-            fall.put(e, e instanceof NamedBeast nb ? nb.deathTicks() : e instanceof AwakenBoss ? 80 : 20);
+            // its fall: a beast's own clip, a gate monster's own (its def's, SPEC §60), a kit boss's up to 80 ticks, else
+            // vanilla's second
+            fall.put(e, e instanceof NamedBeast nb ? nb.deathTicks() : e instanceof GateMonster g ? g.def().fall : e instanceof AwakenBoss ? 80 : 20);
             if (dev.awaken.core.api.CreatureTag.of(e).kind() == dev.awaken.core.api.CreatureTag.Kind.BEAST) quarries.add(e); // a hunt's quarry (SPEC §41.6)
         }
         h.assertTrue(bodies.size() > 150, "every creature spawned (" + bodies.size() + ")");

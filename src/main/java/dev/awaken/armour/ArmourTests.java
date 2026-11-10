@@ -140,7 +140,7 @@ final class ArmourTests {
 
     private static final java.util.Set<String> LIVE_BONES = java.util.Set.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg",
             "cape0", "cape1", "cape2", "front_cloth", "back_cloth");
-    private static final java.util.Set<String> LIVE_KINDS = java.util.Set.of("turn", "tilt", "sway", "drift", "pulse");
+    private static final java.util.Set<String> LIVE_KINDS = java.util.Set.of("turn", "tilt", "sway", "drift", "pulse", "glitch");
 
     /**
      * A set's living parts (SPEC §44.10), where it has any: every entry of live.json names a real piece, bone and motion,

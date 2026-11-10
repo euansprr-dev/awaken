@@ -135,6 +135,8 @@ final class AwRenderers {
         // a creature whose kit loaded wears its kit body (the setting puts the old ones back)
         var kit = dev.awaken.mobs.boss.Kits.get(d.id);
         if (kit != null && dev.awaken.mobs.client.kit.KitConfig.kitBodies()) return new dev.awaken.mobs.client.kit.KitRenderer(ctx, d, kit);
+        // a gate monster wears its own body when its rig loaded (SPEC §60); without one, the body it always had
+        if (d.rig && HeroRig.get(d.id) != null) return dev.awaken.mobs.client.anim.WildRenderer.create(ctx, d);
         return switch (d.model) {
             case ZOMBIE -> zombie(ctx, d, ModelLayers.ZOMBIE, ModelLayers.ZOMBIE_ARMOR);
             case HUSK -> zombie(ctx, d, ModelLayers.HUSK, ModelLayers.HUSK_ARMOR);

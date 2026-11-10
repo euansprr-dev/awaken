@@ -18201,13 +18201,43 @@ blocks through stone, no marks, no danger sense).
     shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
     and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
     step brighter, to part the two.
-  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+  - **Stage 3, set by set** (limbs, belts and backs only; no helm is touched). Euan saw C-rank in his play copy
+    and said, on 11 Nov 2026: "with all B, A, and S plates... This is already great work so far. Let's fully update
+    this and finish it." C-rank:
     **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
     blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
     under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
     a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
     forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
     own (cut-ice plates, fluted gold) and nothing more.
+  - **B, A and S** (`armour_finish.PLATES`, parts named `p_*`, run before the language, night and gauntlet passes so
+    a new plate takes its set's surface and light like any other). Each set gets what its own idea was missing on
+    limbs and back, an elbow where Lordscale has one and it did not, and a sleeve where the wearer's own skin showed
+    under a pauldron (Deepcarapace, Tidebreaker, Hollowheart, Leviathan, Starfall, Riftwalker). Every box is whole
+    texels in size and joined to the suit; only Dreamsteel's and Riftwalker's plates stand a texel off, as they
+    already did. The three Hunter sets of these ranks (Veilwoven, Lordscale, Sovereign Weave) are not touched.
+    - **Deepcarapace**: a knuckled elbow with a spur swept back from it, another spur at the calf, a keel on the knee
+      like the breast's.
+    - **Cloudrunner**: the helm's and heel's feathered fins again at the forearm, swept back from a plated elbow; a
+      feather-tipped plate on each thigh.
+    - **Tidebreaker**: the crest's webbed fin and amethyst spines down the back of the forearm; a spine on the knee
+      (the spines hold their light at night, as the crest's do).
+    - **Hollowheart**: its spine: three vertebrae with their wings down the cape, where a back would be; a bone spur
+      at the elbow.
+    - **Leviathan**: the back's sail again on forearm and calf, a fin cut in three steps with a bone ray along its
+      top (lit at night with the other fins); a tooth on the knee.
+    - **Galewing**: a wing feather swept back from a steel elbow; two flight feathers laid over each thigh.
+    - **Halo Choir**: a choir's organ on the back: five pipes rising to the middle, a gold lip on each and a lit
+      mouth; a gilt elbow.
+    - **Dreamsteel**: the mirror on its back broken in three, each piece at its own depth, light in the cracks; a
+      plate on the upper arm and the thigh; a shard at the elbow.
+    - **Starfall**: the star again on the back as it fell, its tail burning up toward the shoulder; a pointed elbow.
+    - **Riftwalker**: the rift's light in the gap under the forearm's and the thigh's standing plates; the shoulder,
+      where the wearer's shirt showed, closed.
+    - **Nightcourt**: a duelist's half-cloak over the left shoulder to the elbow, in a lighter night blue with a
+      silver hem, the sword arm left free; a silver half-belt with two buttons across the back of the coat.
+    - **Signal's Echo**: the System's light down the back, three dashes that light in turn; a scanline plate on each
+      thigh; and its displaced slices of robe now really glitch (§44.10).
   - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
     one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
     kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
@@ -18564,15 +18594,19 @@ that fidgets would be wrong).
   those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
   and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
   (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
-- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+- **Six motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
   **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
   axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
-  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+  three slow sines), **pulse** (swells on a double beat) and **glitch** (jumps a texel along its axis and back for two
+  or three ticks, in about a third of its slots of 31 to 53 ticks; which slots and which way come from a hash of the
+  slot number, so every client shows the same jump with nothing sent; with the set's ability fired it tears back and
+  forth every two ticks). Any of the first five may bob up and down.
 - **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
   1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
   (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
   same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
-- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+- **The sets.** Signal's Echo: the marker turns and bobs, and the four slices of robe that sit out of line (on the
+  body, the cape and both skirts) glitch, each on its own clock, so one jumps somewhere every couple of seconds. Sunward: the rays turn slowly behind the disc. Halo Choir: the
   halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
   stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
   a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
@@ -21623,6 +21657,43 @@ whole walls, curtains of vine and glow berries along lines in the roof). With th
 Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
 a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
 
+**No two alike.** Euan, 10 Nov, on the first seventeen: "they look very repetitive, just with different themes... add more
+variation in terms of the different parkour things and everything, so that they never look exactly the same." He was right:
+the generator knew one room, one Lord's hall, one shaft and one chasm, and a kind changed only the blocks. Now every leg rolls
+what it is cut like, and a kind says which cuts are its own (`GeneratedCrawl.Style`, one `style()` per kind):
+
+- **Rooms** (`Cave.Form`, eight): the oval; a long hall; a cross; a ring round a core of rock; a hall with two rows of piers; a
+  room with a terrace three up along one side and two ramps onto it; a pit with a walk two up all round it and four ramps down;
+  a rift, long and tall, whose floor steps up a block and then two more. The first fight and the ambush take only level
+  forms, because other ways lead off them.
+- **Wardens' rooms and Lords' halls** (`Arena.Plan`, six): a ring of pillars; a nave with two rows; a cross with four at the
+  crossing; a rotunda with two rings and a higher dome; a round floor with two tiers of steps round it; a square hall on four
+  great piers. The middle is always open and level, because the Lords were built for a level floor. A Warden that needs the
+  floor (no pillars) gets a plan with nothing raised.
+- **Gulfs** (`Chasm.Kind`, eight ways across): pillars; a bridge with two spans gone, on piers, what fell lying in the pool;
+  rafters one cell wide, each ending on a cross beam a block lower, the next beside it or over a gap of two; a ledge along the
+  left wall, a pillar in the middle, a ledge along the right; platforms hung from the roof by a chain; great steps down, two
+  or three lower each time (never on a climb); a ford, wall to wall in shallow water, with stones at the water's top and more
+  that lead nowhere; a deck that gives way under whoever stands on it (the crumbling floor's rule: a block goes fifteen ticks
+  after you step on it and comes back after a hundred), where a fall puts you back on a shelf, never on the deck.
+- **Shafts**: round, or square with flights along four walls for what was built.
+- **Ways**: as wide and as high as the kind says (2 to 3 each side, 4 to 6 high).
+- **How often.** From a standard run up there is always a gulf to cross (it takes the place of a second fight if the bag
+  drew none), and a great run's second stretch has a climb or a crossing of its own.
+- **A branch.** From a standard run up, where there is room: off a den after the first or a Warden's room, to one side, a way to a gulf with no
+  fall in it and a vault beyond with two caches. Nobody has to cross it; whoever does is paid for it. It is only ever a
+  crossing that is as easy to come back over as to go out on (never the great steps, never the pillars with their run-ups),
+  and the den's doors shut it with the rest.
+
+Rules these keep, so that a skin written for the oval and the pillars dresses all of them without knowing:
+`feet` is a room's lowest floor and every other level is raised from it (what a skin draws at `feet` is on the floor or
+under it, never in the air); a new room is still a `Cave`, a new hall an `Arena` with `pillar()`, a new crossing a `Chasm`;
+every jump is a sprint over one to three cells straight along or straight across, level or down, and the only way up is a
+step of one; what was built (`wild()` under a half) stands square to the compass however the way came to it; whatever a skin
+grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
+names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
+leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
@@ -21826,3 +21897,219 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
+## 60. Monsters of the Gates (plan docs/gates-as-worlds/monsters/PLAN.md, page https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ; Euan approved option B on 2026-11-10)
+
+Every gate monster that wore a Minecraft mob's body has a body of its own: 78 of them, across the fifteen gate themes
+(48 normal, 15 elite, 15 Wardens). The Mirror Shade keeps the player's face, which is its point. Lords, Provings and
+the Gate Worlds' creatures already had bodies and are untouched. A monster's bestiary id, numbers, abilities, drops and
+spawn rules do not change; its name and one-line description may (`docs/gates-as-worlds/monsters/ROSTER.md`).
+
+### 60.1 Bodies
+
+- One rig and animation system: the hero rigs (§23), drawn by `WildRenderer` with the life layer and the motion layer.
+  A gate monster's rig id is its bestiary id. `MobDef.rig()` marks it; `MobTypes` then makes it a
+  `mobs.entity.GateMonster`, and `AwRenderers` draws it on its rig. If the rig is missing the old body draws instead,
+  silently (the fallback): the old skins stay in `textures/entity/mobs/`, the new ones are in
+  `textures/entity/monsters/<id>.png` and `<id>_glow.png`.
+- Authoring: `tools/art/specs/gm/<theme>.py` on `gm/kit.py`; `tools/art/specs/gate_monsters.py` builds
+  (`python3 tools/art/build_all.py gate_monsters`), checks (`... gate_monsters.py check [theme|id]`) and previews
+  (`... preview DIR theme`). Generated, never edited by hand: `mobs/client/anim/GateMonsterData.java`,
+  `assets/awaken/life/monsters_motion.json` and `monsters_creatures.json` (read beside `motion.json` and
+  `creatures.json`, same shape), the textures, and `src/main/merge/mobs_monsters/` (voices, names).
+- Each theme has one rule of colour, set against its room so its monsters read at twenty blocks, and one light of its
+  own (the Bell Crypt's cold wisp, the Hive's amber, the Abyss's single violet ring, and so on). No Minecraft or Fresh
+  Animations asset is used or copied.
+- Size: a body is its own size (entity scales were removed, except the Gel Sample's 1.6). Hitboxes come from
+  `.size()` on the def. Bone budgets: 40 for a normal monster, 60 for an elite or a Warden.
+- Clips every body has: idle, walk and run (or fly), angry, hurt, death, its plain blow (`windup`, `strike`, and
+  `heavy_windup`, `heavy_strike` on big bodies), and for each ability its move's `<move>_windup`, `<move>_strike` and
+  `<move>_open`. A wind-up is stretched to the ability's real wind-up time, so the body's tell is the server's tell.
+- Voices: `monster.<id>.<ambient|hurt|death|step>`, each a list of Minecraft's own sound events named in
+  `sounds.json` with a volume and pitch (never a new recording, never a built sound).
+- Legs: a four-legged body's forelegs bend knee-forward and its hind legs hock-back, as the motion layer bends them
+  (§23.1) and as an animal's do; a knuckle-walker (the Toller, the Yeti) is the other way round. The offline check
+  refuses a quadruped whose joints both fold in under the belly. A crawler's leg may hang from a mount turned its way
+  (`splay_pairs(mounts=True)`), so its knee stands as high as it was drawn however far round it is turned. Two bodies
+  walk on three legs (the Riveter, the Security Unit): two in front and one behind, which the motion layer ranks as a
+  hind leg.
+
+### 60.2 The cue
+
+A gate monster tells its body what it is doing in one synced int (`RigBody`, shared with the fauna): slot + 1,
+stage << 8, a serial << 11. Stages: none, wind-up, strike, roar, warn, and two new ones: OPEN 5 (the move fired and
+left it open: the body plays the strike, then holds `<move>_open` until the server lets it go) and STUCK 6 (a lunge
+missed: the body goes into `<move>_open` from wherever it stands). The plain blow has two slots after the abilities
+(light, heavy). A late joiner gets the current cue with the entity's data.
+
+### 60.3 The fight rules
+
+Each is data on the def, judged by the server, and none changes another creature's numbers:
+
+| Rule | On the def | What it does |
+|---|---|---|
+| An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
+| Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
+| A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
+| Planted to shoot | `.planted()` | As a wind-up begins it squares up to its target (5 ticks, 45 degrees a tick), then cannot turn, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side. (Before the square-up it took whatever way its body faced, and a shooter backing off from you lost every shot as it began: the Riveter never fired on film.) |
+| A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
+| The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
+
+`.moves(Move)` overrides how a body moves where its old body's way no longer fits (the Shimmer, the Prism, the Snow
+Star, the Puffer, the Balloonist and the Gale fly; the Honeypot walks; the Nothing is on the ground).
+
+### 60.4 Engine changes this needed
+
+- `LegSurface.clear` samples a leg's line every 0.1 block, leaving 0.2 at each end, as `LegBlockTrial` does (it took
+  0.25-block steps and could let a leg cross a kerb's corner). This is shared by every body with planted feet.
+- `AwakenMob.holdStill(ticks)`: stand still and start nothing, without ending what it is doing (an opening).
+
+### 60.5 Tests
+
+`gate_monsters_own_bodies` (all 78 have a body, and the body acts every ability the bestiary gives its monster, with
+an open pose wherever the server can leave it open), and one test for each rule: `gate_monster_front_holds`,
+`gate_monster_open_bites_deeper`, `gate_monster_stopped_by_a_blow`, `gate_monster_miss_leaves_it_stuck`,
+`gate_monster_planted_loses_its_aim`. The life layer's tests (`creature_`, `life_`) cover every rig's legs, springs and
+motion profile. The offline check (`gate_monsters.py check`) covers what needs no game: bone budgets, clips, the floor
+(nothing more than 2 px under it in any clip), strike begins where wind-up ends, stride cadence at full chase (0.6 to
+3.6 a second), leg joints, voices, the bestiary's abilities against the body's moves, and that a death ends with
+the body lying on the floor (`kit.lying` folds any limb that would hold a fallen body up in the air; `fall` does it
+for every death that uses it).
+
+### 60.6 Known gaps
+
+- The Mirage's "only the real one casts a shadow" and the Sheet's "moves only when you blink" lean on rules the
+  bestiary already had (DECOY, HAUNTED) and were not re-tuned.
+- The Gel Sample's two halves come out bare: bones named `jar*` (its glass walls, cap and plinth) are not drawn on a
+  split child (`WildModel`, `AwakenMob.F_SPLIT_CHILD`).
+- The shared carriers (the wave, the lobbed globe, the ground line, the pull) are the fight language of §47.2 and are
+  drawn the same for every creature on purpose; a monster's own look is its body, its shot (§60.7), its matter and its
+  two fight voices (§60.8).
+- The fight voices and the shots have not been heard or seen by Euan; the film reels (§60.9) are how they were checked.
+
+### 60.7 What they throw (the fight pass, Euan 2026-11-10: "some still fire ordinary arrows... completely custom attacks")
+
+No gate monster fires an arrow or the plain glow. Every monster with a BOLT, ARROWS or NOVA ability names its shot on
+its bestiary line, `.shot(ShotLook.X, up, out)`:
+
+- `mobs.def.ShotLook` (18 looks: rib, spore, cinder, thorn, ink, quill, card, rivet, shard, oil, hail, point, arc,
+  gust, quarrel, spar, ring, hood): a 16×8 sprite in the body's own colours
+  (`textures/entity/monsters/shots/<id>.png`, painted by `tools/art/specs/gm/shots.py`), whether it flies tip first
+  (a dart: two crossed planes along the flight) or tumbles (a billboard turning in the eye's plane), and how fast it spins.
+- `AwBolt` carries the look (synced byte); `mobs.client.ShotRenderer` draws the sprite full-bright inside the
+  answer-colour glow (kept smaller, so the class still reads: white-gold deflects).
+- `up`, `out`: the muzzle, in blocks over its feet and ahead of its body yaw (`Abilities.muzzle`). Shots leave from
+  there and the wind-up's gathering motes collect there: the Mourner's ribs from its chest, the Riveter's rivets from
+  its gun, the Lamplighter's flasks from the top of its pole.
+- ARROWS on a body with a shot is a volley of its own shots (`Abilities.volley`: the fan of §47.2, each at 0.65 of the
+  ability's damage, LIGHT), never `AbstractArrow`.
+- The offline check refuses a shooter with no shot and a `ShotLook` with no sprite; the game test asserts the same
+  and that the Mourner's volley is ribs.
+
+### 60.8 Its own way of hitting (the fight pass)
+
+**The bug this pass found.** In play no ordinary creature's plain blow ever landed. `MobGoals.ToldMelee` stops its
+navigation while it winds up, and vanilla's `MeleeAttackGoal.canContinueToUse` (not following unseen) gives up when the
+path is done, so the goal selector ended the goal two ticks into every wind-up; twenty ticks later it began again and
+was ended again. Abilities were unaffected, which hid it, and `mobs_told_melee` drives the goal by hand and never met
+the selector. Fix: `ToldMelee.canContinueToUse` holds while a blow is being told or followed through, and the chase is
+taken up again as the blow is thrown (at the goal's own speed). `gate_monster_plain_blow_lands` runs the real loop.
+Who this changes: every creature whose melee does not follow a target it cannot see, which is every ordinary monster
+(`AwakenMob`: the gates' and the world's), the hunters among the fauna (`FaunaMob` HUNTER) and the Hush cave creatures
+(`CaveFauna`). The named beasts, the water creatures and the neutral fauna follow unseen and always landed. Fights
+with ordinary monsters are harder than they were between 25 Oct and this fix.
+
+**Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
+blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
+for `STRING_GAP` (5) ticks, walking after a target its blow knocked back, and as it tells the next blow (with its own
+closing circle) it lunges across what is left of the gap (at most about 2.2 blocks). The first film showed why: the
+Bramble Hound's first bite knocked the dummy out of reach and its second bit air. The goal also holds through its
+rest (the 20-tick attack cooldown), so the rhythm is the monster's own, tell and rest; before, the selector stopped
+the goal after every blow and began it again at once, and creatures swung every 13 to 22 ticks instead of 28 to 40. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+`blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
+own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
+did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
+
+- Snappers, two quick bites or cuts (8, 2): Sporeling, Capweaver, Coal Tick, Cog Hound, Sand Stalker, Bramble Hound,
+  Ice Hound, Glint, Test Subject, Silent One, Void Spawn.
+- Duelists, three (9, 3): Fan Dancer (left fan, right fan, left), Glass Duelist (cut, thrust, cut).
+- One-two (12, 2): the Rot, the Overseer (swing and backhand), the Regulator, the Lamplighter, the Unblinking, the
+  Sweeper, the Waking (right arm, left arm), the Nothing (middle head, left head).
+- Slow and heavy, one blow: 16: Pallbearer, Steam Hammer, Overgrowth, Yeti; 14: Sexton, Shelf, Pickhead, Slag Boar,
+  Door, Empty Suit (then open, `spent`), Security Unit, Tall One; 12: Toller, Shardwalker, Creaker, Frozen Monk, Gel
+  Sample, Sheet, Hollow Priest; 10: Chime (its dive), Slag Pot, Blotter, Prism, Grub, Honeypot, Hopping Lantern, Many
+  Eyes, the Gale.
+- Shooters that keep their range and fliers that only dive keep their rank's tell.
+
+**The other swing.** A body that strings its blows has a second swing, clips `windup2` / `strike2`
+(`K.plain(..., second=(wind, hit))`; for a bite, `K.other_side`: the head rolled over the other way and driven
+further). The server cues it as a third plain slot (`GateMonster.secondSlot`, after the plain and the heavy) for every
+second blow of a string; the renderer stretches every plain wind-up to the def's own tell. The offline check refuses a
+chain without a second swing.
+
+**Spent.** `MobDef.spent(t)`: its own plain blow leaves it open for `t` ticks (the last blow of a string): the cue goes
+to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
+
+**Matter.** `MobDef.matter(Matter.X, 0xRRGGBB)`: what its blows throw off, one of the shots' seven particle shapes
+(spark, ember, flake, wisp, puff, drop, sliver) in its own colour: bronze sparks off the Toller, paper off the Fan
+Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
+lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
+where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
+its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
+fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
+(`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
+puff, blast, portal sparkle or ink is not drawn.
+
+**Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
+Minecraft's own recordings by name, re-pitched; what the body is made of, moving; no high ring at the blow). `wind`
+plays under the tell's own sound as a blow or a move begins (0.7 volume; the tell's sound stays the same on every
+creature so it can be learned), `blow` as it lets go; a heavy is pitched down, the later blows of a string up. A call
+(a summon, a heal, a guard, its copies, a frenzy) is its own ambient voice raised. A body with a blow voice no longer
+plays the borrowed creature sounds for its moves (the enderman's teleport, the evoker's summon, the illusioner, the
+ravager's roar, the dragon's breath, the shulker, the shrieker, the skeleton's bow, the beacon). The game registers
+exactly the voices that exist (`mobs.def.GateVoices`, generated): a flier has no step.
+
+**In the studio.** `/awaken admin monster target` gives the nearest gate monster the nearest creature that isn't one of
+ours as its target; `/awaken admin monster act <n>` makes it act its nth move at it (`GateMonster.act`).
+
+### 60.9 Motion, and how it is checked
+
+- Wind-ups ease: out of the counter-move and into the gathered pose on a smoothstep (two keys between), never a
+  straight run. Strikes and flinches end with a small rock back toward the blow before they are still.
+- Loops keep what is written into them: a long idle is sampled finely and its even keys doubled until a straight line
+  between neighbours is within 0.8°, 0.1 px and 1.5% of scale of the function (`K.enough_keys`), so a glance or a twitch
+  a quarter of a second wide plays as written.
+- Loops have no seam. The game's curve through a clip's keys (vanilla `CATMULLROM`) takes each key's slope from its two
+  neighbours and clamps at the clip's two ends, so a looping clip lost about half its speed for an instant every time
+  it came round: a hitch in every wingbeat, stride and breath. `K.seal_loops` gives every looping clip one key before
+  its start and one after its end (the loop carried on a step either way; a wheel that turns steadily keeps turning),
+  and `HeroRig.problems` and the rig check allow those two keys on a looping clip. The older hero rigs' loops (the Drip
+  Lurker's and the rest of `fauna_rig`'s users) still have the hitch; the same call would cure them.
+- **The blow lands as the circle closes.** The server deals a blow on the tick its tell ends, and the closing circle
+  shuts then; the body's strike clip used to begin only when the client heard it had struck, so its hit frame came
+  0.07 to 0.09 s after the circle. A gate monster's wind-up is now gathered `STRIKE_LEAD` (0.08 s) before the tell ends
+  and its strike begins there (`WildRenderer.resolve`), holding at the hit frame until the strike's own cue takes it
+  on from where it had got to (`begun`). The other bodies the renderer draws are unchanged.
+- The wind-up is gathered over the tell's real length, which the server already syncs (`RigBody.cueTell`, read as the
+  cue arrives), not the move's usual one: a heavy, or a blow told shorter or longer than its move, no longer pops.
+- **A step, then its cut** (`RigBody.CUE_POISED`, stage 7): a monster that blinks strikes `BLINK_CUT` (8) ticks after it
+  arrives, with its own tell. Its body used to play the strike on arrival, six ticks before the cut landed. It now
+  arrives poised (the move's wind-up held at its last frame) and strikes as the cut's tell ends; if the cut never
+  comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
+- From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
+  body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
+- A gate monster's dive lands at the touch: its reach is half the two widths + 0.9 (the other fliers keep 1.3). On film
+  the Lantern Moth's blow landed a block and a half short of its target, a tenth of a second before it arrived.
+- A dormant gate monster wakes in its own matter and voice (`GateMonster.wake`), with the game's warning sound under
+  it, not the borrowed sparks. `/awaken admin monster target` and `act` rouse a dormant one (it otherwise waits for a
+  player to come near: on film the Security Unit slept through its fight).
+- A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
+  it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
+  strike ever played.
+- A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
+  death that ends more than 12 px over the floor.
+- **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
+  monsters a reel, ten reels; `film --as <name> <id>...` writes one named reel for those monsters; frames 854x480,
+  since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
+  a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.

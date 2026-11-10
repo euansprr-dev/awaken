@@ -218,4 +218,11 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
         if (ambush != null) air.light(ambush.cx, ambush.feet + 4, ambush.cz, 0xff5a20, 12, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a nest: round cells, a larder you look down into, comb hung over the drops. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.PIT, Cave.Form.RING, Cave.Form.OVAL, Cave.Form.RIFT), List.of(Arena.Plan.RING),
+                List.of(Arena.Plan.ROTUNDA, Arena.Plan.RING, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.HANGERS, Chasm.Kind.LEDGES, Chasm.Kind.STEPS), false, 2.1, 4);
+    }
 }
