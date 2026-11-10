@@ -20638,17 +20638,32 @@ build yourself full briefs for every single structure beforehand." So: thirty pl
 
 ### 59.1 What changed from §58
 
-- The world deals places only (`Sites.BASE = {0, 0, 0.6}`). The 144 small kinds are no longer placed or listed; they stay in
+- The world deals places only (`Sites.BASE = {0, 0, 1.0}`). The 144 small kinds are no longer placed or listed; they stay in
   the code as furnishing and for their tests. §58.3's densities, §58.7's 144 slots and §58.9's gallery tours no longer hold.
 - `Kind.Size.PLACE`, set `PLACES`, thirty kinds in `finds/sets/Places*.java`. Everything in §58.5 and §58.6 (the heart, parts,
   scripts, the ward, pay, leads) holds for a place as it did for a find.
 
 ### 59.2 Where they are
 
-One place at most in a cell 448 blocks on a side, set anywhere inside it but its outer 80. Chance 0.6 where the land is at its
-usual liveliness, by the same slow field as §58.3 (a third of the land quiet: there, about one cell in fourteen). Never two of a
-kind within three cells. Rank and land as in §58.3. Anchor `FIELD`: seventeen points across the footprint (the middle and two
-rings) all dry and within the kind's `slope` of each other; the site's height is their median. Two places stand on `SHORE`.
+One place at most in a cell 384 blocks on a side, set anywhere inside it but its outer 80. A cell holds one where the land is
+lively (chance 1.0 times the slow field of §58.3; a third of the land is quiet: there, about one cell in eight). Never two of
+a kind within three cells.
+
+- **Land.** A kind stands only in the countries it names. Eleven kinds name a second country because their own is too rare
+  near home (the first census: 21 swamp, 29 mountain, 50 desert cells of 2,025 round the spawn).
+- **Rank.** Unlike the small kinds, no place is ruled out by rank: its own rank is likeliest (weight times 0.62 per rank it is
+  below the country's, 0.42 per rank above), so grand places are rare near home and plain ones thin out far away. By rank
+  alone no swamp place could be chosen within 10,000 blocks of the spawn.
+- **Ground.** Anchor `FIELD`: seventeen points across the footprint (the middle and two rings) all dry and within the kind's
+  `slope` plus two of each other; the site's height is their median. Twenty-five tries: the point, a ring at 22 and a ring
+  at 34. Two places stand on `SHORE`.
+- **Keeping clear.** No structure that stands on the land (a temple, a pyramid, a spire) may start within two chunks; no
+  village, outpost or mansion within the place's reach and 72 blocks; no part of Carillon within its reach and 56. Sets under
+  the ground, under the sea, in the sky and in other worlds are not asked (`Terrain.UNSEEN`): a structure set answers "may
+  one start here" whatever the biome, and asking all two dozen over seven chunks left two places in 10,000 blocks.
+- **Counted** (`/awaken finds census`, the `places-census` tour, seed 4242, 20,000 blocks square round the spawn): 2 places
+  with every set asked over seven chunks; 205 with the rules above on the 448 grid and the kind's own slope; the count on
+  this grid is in docs/places/STATUS.md.
 
 ### 59.3 Ground
 
@@ -20664,7 +20679,9 @@ snow). A place's `reach` is its levelled radius plus its blend: nothing of it, b
 recordings on a loop, and `below()` for a cave whose air stays underground. The heart sends its kind to the client; the
 client fades the air in over the last fourteen blocks to the place's reach, takes the strongest of the hearts near, and holds
 it inside (`FindsClient`: `ViewportEvent.ComputeFogColor` and `RenderFog`, particles round the camera, `playLocalSound`). The
-fog colour is scaled by the hour's own brightness, so night stays night.
+fog colour is scaled by the hour's own brightness, so night stays night. In the open the air tints the distance and does
+not bury it: half the colour, fog no nearer than 110 blocks or 2.4 times the place's own figure (the first tours were pea
+soup from the "above" camera). A cave's air (`below()`) keeps its full strength.
 
 ### 59.5 The kit
 
@@ -20673,7 +20690,13 @@ slab, timber). `B` builds: `wall`/`walls` (foot course, two stones, a ragged top
 course, every row on the last, gable ends walled under each stair, a ridge beam; a fallen roof keeps eaves, ends and beam),
 `cyl`, `ring`, `disc`, `dome`, `cone`, `arch`, `steps`, `house`, `blob` (one piece: only what joins its middle), `carve`
 (a hollow lined below ground), `pool`, `ground`, `path`, `limb` (a line where every block touches the last by a face),
-`leaves`, `tree`, `giant`, `palm`, `vines`, `moss`, `rubble`. Chance is a hash of the site's seed and the position, so every
+`leaves`, `tree`, `giant`, `palm`, `pine`, `bush`, `boulder`, `vines`, `moss`, `rubble`, and what people leave about:
+`run` (a fence or wall along the ground), `awning`, `well`, `stack`, `cart`, `wheel`, `crops`, `tower`. `ground`'s number
+runs in soft patches with ragged edges, never block by block (the first pictures were checkerboards). `wild(r0, r1, trees)`
+plants the ring round a place with what grows in the site's own country (oak and birch, spruce, dark oak, jungle, mangrove,
+cactus and stone; grass, ferns, flowers in drifts) wherever nothing is built: every place calls it, so none stands on a bare
+disc. The feature clears what grew inside a place's clearing and, in a ring six wide outside it, the leaves no trunk still
+stands beside (treetops hung over the first tours' clearings). Chance is a hash of the site's seed and the position, so every
 chunk writes the same place. Fences, walls, panes, bars and stairs are joined to their neighbours after writing
 (`markPosForPostProcessing` in a new chunk).
 
@@ -20688,13 +20711,22 @@ of a level and the game's find card. Finishing its two or three steps pays its l
 - `finds_every_scene_stands` holds a place to: it builds, nothing floats (unseen light excepted), nothing built or shaped past
   its reach. The "third not plain cubes" rule is for the small kinds only: a place is judged by eye.
 - `finds_every_kind_plays`: a scripted player does each place's own steps on a level pad; it finishes and pays once.
+- **Pictures without the game.** `tools/content/finds_render.py` draws every place from the scenes test's dump (the test
+  writes `finds-dump/<kind>.txt` when that folder stands in the test server's game folder): from two sides, cut open through
+  the inside camera, roof off, by night, and in plan with the tour's cameras. Thirty places in four seconds. It showed what
+  the tests could not: a mill that was one house in an empty field, a wedding of 308 blocks. It is a drawing of the blocks
+  (no air, no light, flat land): a tour is still the last word.
 - `/awaken finds view <kind> <0..3>`: stands you at one of the place's four cameras (afar, above, door, inside) at the nearest
-  one the world made, looking out to 21,000 blocks from the spawn.
-- Tours for GitHub's runners (`tools/content/finds_tour.py`): `places-a` to `-f`, five places each, five pictures a place
-  (the four cameras and the door at dusk), and `places-journal`.
+  one the world made within 48 cells of the spawn. It moves you through `core.api.Passage` (the land is made off the server
+  thread): a plain teleport into unmade land held the server half a minute and the first tour photographed the spawn.
+- `/awaken finds census`: the count above, into the log.
+- Tours for GitHub's runners (`tools/content/finds_tour.py`): `places-a` to `-j`, three places each, five pictures a place
+  (the four cameras and the door at dusk); a tour waits for the passage before its first picture of a place. `places-journal`,
+  `places-census`.
 
 ### 59.8 Not done
 
 No hand clips. Motes and recordings are vanilla's by name. The Stilled are the kit's simple figures. A place has no map of
 its own, no second storey of story (books, notes), and nothing that changes after it is done except what its steps change.
-Nothing has been played by a person.
+Water set in a place stands still (the feature schedules no fluid ticks: no falls, no running races). Nothing has been
+played by a person. Where each place stands against its brief: docs/places/STATUS.md.

@@ -409,6 +409,7 @@ final class PlacesWood {
                     s.put(-13, -18, -15, st(Blocks.AMETHYST_CLUSTER));
                     for (int[] k : new int[][] {{6, -14, -4}, {-9, -13, -6}, {0, -12, -14}, {9, -14, -12}}) s.put(k[0], k[1], k[2], light(6));
                     s.spawnUp(EntityTypes.GLOW_SQUID, -5, -9, -20, 0, "squid").spawnUp(EntityTypes.GLOW_SQUID, 1, -12, -20, 0, "squid").spawnUp(EntityTypes.BAT, 6, -6, -14, 0, "bat");
+                    wild(s, 13, 25, 8);
                     s.cam(4, 9, 30, 180, 12).cam(14, 12, 16, 150, 32).cam(4, 2, 15, 180, 8).cam(15, -16, -8, 90, 4);
                 })
                 .script(() -> Notes.of("stone", 3))
@@ -475,6 +476,7 @@ final class PlacesWood {
                     for (int[] k : new int[][] {{-10, -13}, {10, -15}, {-9, -25}, {9, -26}}) giant(s, k[0], k[1], s.g(k[0], k[1]) + 1, 15, 1, st(Blocks.DARK_OAK_LOG), leaf(Blocks.DARK_OAK_LEAVES), 5.5);
                     moss(s, -8, 0, -25, 8, 12, 28, 12);
                     s.spawn(EntityTypes.CAT, -4, -14, Scene.Spawn.STAY, "cat");
+                    wild(s, 17, 34, 10);
                     s.cam(0, 14, 44, 180, 6).cam(14, 30, 2, 110, 40).cam(0, 2, 27, 180, -6).cam(0, 12, -11, 180, -2);
                 })
                 .script(() -> Steps.of(Light.all("lamp").inOrder(), Prize.at("bell").then((c, i) -> c.sound(c.pos("bell", 0), SoundEvents.BELL_BLOCK, 2.5F, 0.8F)),

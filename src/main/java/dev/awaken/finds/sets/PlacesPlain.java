@@ -169,6 +169,12 @@ final class PlacesPlain {
                             if (d <= 23.2 || d > 27.6 || (Math.abs(x) <= 2 && z > 0)) continue;
                             s.ground(x, z, d <= 24.6 ? -1 : d > 25.4 && d <= 26.8 ? 2 : 1);
                         }
+                    for (int i = 0; i < 18; i++) {                         // the ring of stones on the bank, some fallen short
+                        double a = i * Math.PI / 9 + 0.17;
+                        int x = (int) Math.round(Math.cos(a) * 26), z = (int) Math.round(Math.sin(a) * 26), hgt = 2 + (h(s, x, 7, z) % 4);
+                        if (Math.abs(x) <= 4 && z > 0) continue;
+                        for (int y = 3; y <= 2 + hgt; y++) s.put(x, y, z, y == 2 + hgt && hgt > 2 ? st(Blocks.TUFF) : h(s, x, y, z) < 110 ? mossy : stone);
+                    }
                     for (int i = 0; i < 4; i++)                            // the avenue: paired stones up to the door
                         for (int x = -3; x <= 3; x += 6) {
                             int z = 9 + i * 4, hgt = 2 + (h(s, x, i, z) % 3);
@@ -395,6 +401,7 @@ final class PlacesPlain {
                     vines(s, 12, 9, -2, 36, 16, 2, 22);
                     for (int i = 0; i < 10; i++) { int x = 3 + s.rnd.nextInt(10), z = 6 + s.rnd.nextInt(7); if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 1, z, st(i % 2 == 0 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawn(EntityTypes.FROG, 8, 7, 0, "frog");
+                    wild(s, 9, 44, 16);
                     s.cam(0, 14, 40, 180, 4).cam(18, 30, 20, 150, 38).cam(-36, 2, 12, 180, -20).cam(-6, 17, 0, -90, 6);
                 })
                 .script(() -> Prize.at("gate").then((c, i) -> { PlacesWood.fillPart(c, "fall"); PlacesWood.fillPart(c, "run"); c.sound(c.pos("gate", 0), SoundEvents.IRON_DOOR_CLOSE, 2.0F, 0.6F); }))

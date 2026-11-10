@@ -399,7 +399,7 @@ final class PlacesStone {
                 .play(t -> { t.use("well", 0).hold(Items.FLINT_AND_STEEL); for (int i = 0; i < 3; i++) t.use("lamp", i); t.use("loose", 0).hold(Props.BRASS_RING.get()).use("door", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 24, "bone_yard", "The Bone Yard").verb(Verb.MEND).place().rank(2).lands(Group.BADLANDS, Group.DESERT, Group.SNOW)
+        Kind.of(FSet.PLACES, 24, "bone_yard", "The Bone Yard").verb(Verb.MEND).place().rank(2).lands(Group.BADLANDS, Group.DESERT)
                 .anchor(Anchor.FIELD).slope(5).made(Made.BEAST)
                 .see("Ribs taller than trees arching out of red ground, a spine along the top of them, and a skull with its jaw open that somebody has been living in.")
                 .learned("The carved tooth went back in the jaw. You lit their hearth in the skull and read what they painted on the bone.")
