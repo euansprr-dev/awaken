@@ -63,6 +63,11 @@ public final class Bench {
     });
 
     public static void runIfAsked() {
+        String serve = System.getenv("AWAKEN_BENCH_SERVE");
+        if (serve != null && !serve.isBlank()) {
+            Serve.run(Path.of(serve));
+            return;
+        }
         String what = System.getenv("AWAKEN_BENCH");
         if (what == null || what.isBlank()) return;
         String seed = System.getenv("AWAKEN_BENCH_SEED");
