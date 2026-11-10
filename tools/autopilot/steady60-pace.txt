@@ -1,0 +1,116 @@
+# Steady Light on the Dell: Chunk pacing on and off (SPEC §22; Turbo). As Euan plays (vsync, 60 cap), the same flight
+# back and forth, the legs alternating between Sodium's own unloading and the paced one, with the late-frame report
+# for each. tools/steady60-tour.sh tools/autopilot/steady60-pace.txt pace-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch cinematic
+wait 900
+opt vsync 1
+opt maxFps 60
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+look -90 12
+wait 30
+glide 0.8 0 0 400
+wait 410
+look 90 12
+wait 30
+glide -0.8 0 0 400
+wait 410
+late on
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_cal 20
+late calibrate
+chunkpace off
+wait 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf pace_off1_1 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_off1_2 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf pace_off1_3 20
+late report fly_pace_off1
+chunkpace off
+chunkpace on
+wait 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_on1_1 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf pace_on1_2 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_on1_3 20
+late report fly_pace_on1
+chunkpace on
+chunkpace off
+wait 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf pace_off2_1 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_off2_2 20
+late report fly_pace_off2
+chunkpace off
+chunkpace on
+wait 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf pace_on2_1 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf pace_on2_2 20
+late report fly_pace_on2
+chunkpace on
+chunkpace off
+look -90 12
+wait 30
+glide 0.8 0 0 1300
+wait 430
+perf pace_off_new 20
+late report fly_new_off
+chunkpace on
+wait 20
+perf pace_on_new 20
+late report fly_new_on
+chunkpace on
+chunkpace setting
+late off
+quit

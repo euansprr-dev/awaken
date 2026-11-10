@@ -1,0 +1,37 @@
+[20:00:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL: on DELL U2725QE, fullscreen
+[20:00:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL fullscreen
+[20:00:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=DELL_U2725QE fb=3840x2160 window=1920x1080 rd=16 sd=10 heapMax=8192MB gc=ZGC Minor Cycles,ZGC Minor Pauses,ZGC Major Cycles,ZGC Major Pauses mods=entity_model_features,minecraft,entity_texture_features,ambientsounds,mousetweaks,jade,shouldersurfing,creativecore,lithostitched,lithium,apollib,trender,notenoughanimations,controlling,neoforge,awaken,searchables,dynamic_fps_common,entityculling,immersivevfx,midnightlib,immediatelyfast,architectury,appleskin,ferritecore,conditional_mixin,transition,dynamic_fps,sodium,moreculling,player_animation_library,cameraoverhaul,skinlayers3d,cloth_config,sound_physics_remastered,mezz_config,jei,bendable_cuboids,tectonic,smooth_steps
+[20:00:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on: gpu timing on
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [look] ImmersiveVFX asleep
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [look] CINEMATIC: Lens CINEMATIC, Distant Horizons not installed, Iris shaders not installed
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look CINEMATIC: applied
+[20:00:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lookswitch cinematic
+[20:02:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:02:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:02:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:02:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:02:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cal 20
+[20:03:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cal frames=1199 avg_fps=59.9 p50=16.95ms p95=20.99ms p99=25.00ms max=33.20ms tick_p95=17.25ms heap=6396/8192MB fb=3840x2160 load=7.1 occluded=false minimized=false
+[20:03:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:03:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_1 20
+[20:03:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_1 frames=1194 avg_fps=59.6 p50=16.99ms p95=21.58ms p99=26.19ms max=60.42ms tick_p95=15.94ms heap=2652/8192MB fb=3840x2160 load=6.6 occluded=false minimized=false
+[20:03:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:03:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_2 20
+[20:03:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_2 frames=1198 avg_fps=59.8 p50=16.85ms p95=20.37ms p99=24.01ms max=37.29ms tick_p95=14.96ms heap=2664/8192MB fb=3840x2160 load=5.8 occluded=false minimized=false
+[20:03:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:03:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_3 20
+[20:04:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_3 frames=1198 avg_fps=59.8 p50=16.89ms p95=20.30ms p99=24.43ms max=46.79ms tick_p95=19.99ms heap=7354/8192MB fb=3840x2160 load=5.6 occluded=false minimized=false
+[20:04:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:04:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_4 20
+[20:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_air_4 frames=1199 avg_fps=59.9 p50=16.68ms p95=20.21ms p99=23.87ms max=31.80ms tick_p95=11.17ms heap=5934/8192MB fb=3840x2160 load=6.6 occluded=false minimized=false
+[20:04:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:04:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_1 20
+[20:05:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_1 frames=1198 avg_fps=59.8 p50=16.72ms p95=20.21ms p99=26.19ms max=46.42ms tick_p95=18.22ms heap=4442/8192MB fb=3840x2160 load=5.2 occluded=false minimized=false
+[20:05:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:05:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_2 20
+[20:05:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_cine_2 frames=1190 avg_fps=59.4 p50=16.71ms p95=21.00ms p99=25.11ms max=53.10ms tick_p95=19.07ms heap=2634/8192MB fb=3840x2160 load=4.5 occluded=false minimized=false
+[20:05:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:05:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_newland 38
+[20:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf late_newland frames=2225 avg_fps=58.5 p50=17.07ms p95=22.62ms p99=30.17ms max=84.86ms tick_p95=44.64ms heap=3172/8192MB fb=3840x2160 load=8.7 occluded=false minimized=false

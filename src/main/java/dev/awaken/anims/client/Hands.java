@@ -188,10 +188,11 @@ final class Hands implements FirstPerson.Player {
         lagNanos = t;
         lagYaw = yaw;
         lagPitch = pitch;
-        float scale = FirstPerson.reducedMotion.getAsBoolean() ? 0.5F : 1F;
+        // what is held sets how far and how fast it trails (FirstPerson.lagReach, lagRate: a weapon's weight)
+        float scale = (FirstPerson.reducedMotion.getAsBoolean() ? 0.5F : 1F) * FirstPerson.lagReach;
         float tx = clamp(-yawRate * 0.00022F, 0.06F) * scale, ty = clamp(pitchRate * 0.00018F, 0.045F) * scale;
         float tr = clamp(-yawRate * 0.005F, 4F) * scale;
-        float k = 1 - (float) Math.exp(-dt * 14);
+        float k = 1 - (float) Math.exp(-dt * 14 * FirstPerson.lagRate);
         lagX += (tx - lagX) * k;
         lagY += (ty - lagY) * k;
         lagRoll += (tr - lagRoll) * k;
