@@ -30,10 +30,13 @@ screen close
 cmd awaken ascent grant tether
 hud on
 cmd awaken ascent spire goto
-wait 30
+# the move waits for the spire's chunks (a fresh world: up to ten seconds); the climb must start from the plaza
+wait 320
 camera back
 cmd awaken ascent pilot run spire
-wait 260
+# the pilot's own start lags, then about eight seconds of climb
+wait 420
+shotnow leap_00_on_the_rim
 cmd awaken ascent pilot stop
 camera first
 # to the middle of the crown, looking out and down at where the gate will stand
