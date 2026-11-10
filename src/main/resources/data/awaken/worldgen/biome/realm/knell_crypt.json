@@ -8,7 +8,7 @@
     "foliage_color": "#3a4a44"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#0e1626",
+    "minecraft:visual/fog_color": "#24365a",
     "minecraft:visual/sky_color": "#16233f",
     "minecraft:visual/fog_start_distance": 18.0,
     "minecraft:visual/fog_end_distance": 230.0,
@@ -64,7 +64,7 @@
       }
     },
     "minecraft:visual/block_light_tint": "#ffbf85",
-    "minecraft:visual/ambient_light_color": "#252e40"
+    "minecraft:visual/ambient_light_color": "#2c374f"
   },
   "carvers": [],
   "features": []

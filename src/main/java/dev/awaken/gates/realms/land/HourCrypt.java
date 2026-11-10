@@ -36,6 +36,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
     static final int NAVE = 30, DRUM = 46, DRUM_TOP = DRUM + TIERS, HEAD_Z = -112;
     static final double PIT_R = 29.2, RAIL_R = 29.8;
     private static final BlockState PIT_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 13);
+    private static final BlockState POOL_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12);
 
     public static final class M extends Mats {
         final BlockState bronze = b("knell_bronze"), bronzeDark = b("knell_bronze_dark"), patina = b("knell_patina"), key = b("knell_bronze_key"), iron = b("knell_iron"),
@@ -348,9 +349,13 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         }
     }
 
-    /** x, z, the height the crack starts at, its half width. The great round one is the oculus over the bell. */
-    private static final int[][] SHAFTS = {{0, 0, F + 104, 24}, {16, -74, F + 76, 1}, {-20, -98, F + 76, 1}, {-14, -60, F + 76, 1}, {22, -54, F + 76, 1},
-            {-104, -4, F + 8, 1}, {-122, 6, F + 8, 2}, {-140, -5, F + 8, 1}, {-178, 0, F + 8, 3}, {156, 6, F + 26, 1}, {100, 2, F + 26, 1}, {0, 84, F + 60, 2}};
+    /**
+     * x, z, the height the crack starts at, its half width. The great round one is the oculus over the bell; the rest are three to five cells across,
+     * wide enough that the sky's own light reaches the floor in a patch. Two fall on the nave's road and one on the head of the stair.
+     */
+    private static final int[][] SHAFTS = {{0, 0, F + 104, 24}, {16, -74, F + 76, 2}, {-20, -98, F + 76, 2}, {-14, -60, F + 76, 2}, {22, -54, F + 76, 2},
+            {-3, -80, F + 76, 2}, {4, -50, F + 76, 2}, {3, -103, F + 76, 2},
+            {-104, -4, F + 6, 2}, {-122, 6, F + 6, 2}, {-140, -5, F + 6, 2}, {-178, 0, F + 8, 3}, {156, 6, F + 26, 2}, {100, 2, F + 26, 2}, {0, 84, F + 60, 2}};
 
     // ---- what every wall is made of ----------------------------------------------------------------------------------------
 
@@ -362,19 +367,25 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
     /**
      * One cell of a wall of niches, whether the wall runs straight or round: u is along it, h up it, d into it from the face (-1 is the air just in front).
      * Cut-stone frames, a recess in each bay with brick at the back, and in the recess whatever was left there: candles, a skull, bones, a stone coffin, iron.
-     * out is the way the wall faces, along the way u grows: the carved stones need both. ledge says the tier above this one steps back, so its
-     * top course carries a ledge (the nave, the drum and the round rooms; a hall's wall goes straight up).
+     * out is the way the wall faces, along the way u grows: the carved stones need both. The wall is tiers high; stepped says each tier stands a
+     * block back from the one under it, leaving a ledge (the nave, the drum and the round rooms; a hall's wall goes straight up).
+     *
+     * The light is gathered into pools: every third bay is lit, its candles in clusters of four and five on the ledge in front and in the recess, and
+     * the two bays between are dark but for one candle in about one bay in five.
      */
-    static void niche(V v, M m, int wall, int x, int y, int z, int u, int h, int d, Direction out, Direction along, boolean ledge) {
+    static void niche(V v, M m, int wall, int x, int y, int z, int u, int h, int d, Direction out, Direction along, int tiers, boolean stepped) {
         int tier = Math.floorDiv(h, TIER), hh = Math.floorMod(h, TIER), uu = Math.floorMod(u, BAY), bay = Math.floorDiv(u, BAY);
         if (d > DEPTH + 1) return;
+        boolean lit = Math.floorMod(bay, 3) == 0;
         if (d < 0) {
             // what stands proud of the face, and the candles left along the ledge where the tier below steps out
             boolean pierSide = uu == 0 || uu == BAY - 1;
             // a bracket under the ledge where the tier above steps back, at both sides of every bay
-            if (ledge && pierSide && hh == TIER - 1) v.set(x, y, z, m.facing(m.corbel, out));
+            if (stepped && tier < tiers - 1 && pierSide && hh == TIER - 1) v.set(x, y, z, m.facing(m.corbel, out));
             else if (pierSide && rnd(bay + uu * 7, h, wall + 3) < 0.16) v.set(x, y, z, m.worn);
-            else if (hh == 0 && !pierSide && rnd(x, y * 3 + z, wall + 4) < 0.3) v.set(x, y, z, m.candles(1 + (int) (rnd(x, z, wall + 5) * 3)));
+            else if (lit && hh == 0 && !pierSide && rnd(x, y * 3 + z, wall + 4) < 0.45) v.set(x, y, z, m.candles(rnd(x, z, wall + 5) < 0.5 ? 4 : 5));
+            // candles light a few blocks: one unseen light out from the middle of a lit bay's wall carries its pool into the room
+            else if (lit && tier == tiers / 2 && hh == 3 && uu == 2) v.set(x, y, z, POOL_GLOW);
             return;
         }
         int kind = (int) (rnd(bay, tier, wall) * 16);
@@ -404,25 +415,30 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         }
         v.set(x, y, z, null);
         double c = rnd(x * 7 + z, y, wall + 2);
+        // a dark bay's one candle, in about one bay in five
+        boolean lone = !lit && hh == 1 && rnd(bay, tier, wall + 6) < 0.2 && uu == 1 + (int) (rnd(bay, tier, wall + 7) * 4);
         switch (kind) {
             case 9, 10 -> {
                 if (d == 2 && hh <= 2) v.set(x, y, z, m.ossuary);
+                else if (lone && d == 0) v.set(x, y, z, m.candles(1));
                 else if (hh == 1 && c < 0.5) v.set(x, y, z, m.bones);
             }
             case 11, 12 -> {
                 if (hh == 1) v.set(x, y, z, m.pale);
                 else if (hh == 2) v.set(x, y, z, uu == 1 && d == 1 ? m.pale : m.paleSlab);
-                else if (hh == 3 && uu == 1 && d == 1) v.set(x, y, z, m.candles(4));
+                else if (lit && hh == 3 && uu == 1 && d == 1) v.set(x, y, z, m.candles(4));
             }
             case 14 -> {
                 if (d == 0) v.set(x, y, z, m.barsAlong(out.getAxis() == Direction.Axis.Z, out.getAxis() == Direction.Axis.X));
-                else if (hh == 1 && c < 0.4) v.set(x, y, z, m.candles(3));
+                else if (lit && hh == 1 && c < 0.4) v.set(x, y, z, m.candles(c < 0.2 ? 4 : 5));
+                else if (lone && d == 1) v.set(x, y, z, m.candles(1));
             }
             case 15 -> {
                 if (d == 1 && uu == 2 && hh >= 2) v.set(x, y, z, m.link(y));
             }
             default -> {
-                if (hh == 1 && c < (d == 0 ? 0.62 : 0.34)) v.set(x, y, z, m.candles(1 + (int) (rnd(x, z, y) * 5)));
+                if (lit && hh == 1 && c < (d == 0 ? 0.85 : 0.5)) v.set(x, y, z, m.candles(rnd(x, z, y) < 0.5 ? 4 : 5));
+                else if (lone && d == 0) v.set(x, y, z, m.candles(1));
             }
         }
     }
@@ -504,7 +520,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                     else if (d <= 2) v.set(x, y, z, band == 0 || band == 6 ? m.pale : y % 12 == 0 ? m.band : d == 0 ? m.facing(m.flute, x > 0 ? Direction.WEST : Direction.EAST) : course(m, x, y, z));
                 } else {
                     if (d == -1) v.set(x, y, z, null);
-                    niche(v, m, 11, x, y, z, side >= head ? z : x, h, d, side >= head ? (x > 0 ? Direction.WEST : Direction.EAST) : Direction.SOUTH, side >= head ? Direction.SOUTH : Direction.EAST, tier < TIERS - 1);
+                    niche(v, m, 11, x, y, z, side >= head ? z : x, h, d, side >= head ? (x > 0 ? Direction.WEST : Direction.EAST) : Direction.SOUTH, side >= head ? Direction.SOUTH : Direction.EAST, TIERS, true);
                 }
             }
             if (a < NAVE + 1 && z > HEAD_Z) dress(v, m, x, z, fl, stairs);
@@ -623,7 +639,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                     else if (d <= 2) v.set(x, y, z, Math.floorMod(u, 40) == 0 || Math.floorMod(u, 40) == 6 ? m.pale : y % 12 == 0 ? m.band : d == 0 ? m.facing(m.flute, out) : course(m, x, y, z));
                 } else {
                     if (d == -1) v.set(x, y, z, null);
-                    niche(v, m, 23, x, y, z, u, h, d, out, out.getCounterClockWise(), tier < TIERS - 1);
+                    niche(v, m, 23, x, y, z, u, h, d, out, out.getCounterClockWise(), TIERS, true);
                 }
             }
             floors(v, m, x, z, r, theta, fl, s);
@@ -634,7 +650,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
             int u = (int) Math.round(theta * PIT_R), d = (int) Math.floor(r - PIT_R);
             for (int y = PIT + 1; y <= F; y++) {
                 int h = y - (PIT + 1);
-                if (h < TIER) niche(v, m, 37, x, y, z, u, h, d, inward(x, z), inward(x, z).getCounterClockWise(), false);
+                if (h < TIER) niche(v, m, 37, x, y, z, u, h, d, inward(x, z), inward(x, z).getCounterClockWise(), 1, false);
                 else if (d <= 1) v.set(x, y, z, h == TIER ? m.band : course(m, x, y, z));
             }
         }
@@ -895,8 +911,8 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                 if (d < -1) v.set(x, y, z, null);
                 else if (d == -1) {
                     v.set(x, y, z, null);
-                    niche(v, m, wall, x, y, z, a, h, d, out, alongX ? Direction.EAST : Direction.SOUTH, false);
-                } else niche(v, m, wall, x, y, z, a, h, d, out, alongX ? Direction.EAST : Direction.SOUTH, false);
+                    niche(v, m, wall, x, y, z, a, h, d, out, alongX ? Direction.EAST : Direction.SOUTH, tiers, false);
+                } else niche(v, m, wall, x, y, z, a, h, d, out, alongX ? Direction.EAST : Direction.SOUTH, tiers, false);
             }
             if (ac < half) {
                 int fl = wet ? fy - 1 : fy;
@@ -986,7 +1002,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                         if (rel >= 0) v.set(x, y, z, null);
                     } else {
                         if (d == -1) v.set(x, y, z, null);
-                        niche(v, m, 71, x, y, z, x, h, d, out, Direction.EAST, false);
+                        niche(v, m, 71, x, y, z, x, h, d, out, Direction.EAST, 3, false);
                     }
                 }
                 if (ac < half) {
@@ -1048,7 +1064,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                     if (d < -1) v.set(x, y, z, null);
                     else {
                         if (d == -1) v.set(x, y, z, null);
-                        niche(v, m, wall, x, y, z, u, h, d, out, out.getCounterClockWise(), tier < tiers - 1);
+                        niche(v, m, wall, x, y, z, u, h, d, out, out.getCounterClockWise(), tiers, true);
                     }
                 }
                 if (r < radius + 1) floor(v, m, x, z, r, theta);
@@ -1134,7 +1150,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                         if (far < SIZE + 2) v.set(x, y, z, course(m, x, y, z));
                         continue;
                     }
-                    if (d >= 0) niche(v, m, 81, x, y, z, u, h, d, out, Math.abs(dz) > Math.abs(dx) ? Direction.EAST : Direction.SOUTH, false);
+                    if (d >= 0) niche(v, m, 81, x, y, z, u, h, d, out, Math.abs(dz) > Math.abs(dx) ? Direction.EAST : Direction.SOUTH, TIERS, false);
                     else v.set(x, y, z, null);
                 }
                 if (far >= SIZE) continue;
