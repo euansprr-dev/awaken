@@ -14,17 +14,14 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_abyssal_shrine"
+      "awaken:realm/unlit_stair"
     ],
     "lens": "unlit_stair",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
-      "dust",
-      "drips",
-      "bats",
-      "rats"
+      "mist",
+      "stars",
+      "dust"
     ]
   },
   "life": {

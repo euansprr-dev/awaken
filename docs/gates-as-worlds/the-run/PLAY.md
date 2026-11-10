@@ -45,6 +45,22 @@ every leg is cut like. No two legs need be alike:
 Each kind has its own share of these (a palace has galleries and naves, a nest has pits and round cells). The same seed
 still gives two kinds the same order of legs, but each cuts them its own way. Seed 1 is a great delve in every kind.
 
+Since 11 Nov every rolled room also has **depth and air**:
+
+- The ground rises and falls in half blocks. The way through a room is worn level; off it the floor stands higher, rolls,
+  and banks up against the walls. Ways have half a step along their sides.
+- Built places have pilasters on their walls and beams under their roofs. Dug places have roofs that swell, dip and come
+  down in lumps at the walls.
+- Stairs stand at the foot of walls and hang where a roof steps. Drifts lie along the walls. Plants grow in clumps that
+  thicken away from the way. Small bits lie underfoot and things hang from high roofs. Each kind uses its own theme's.
+- Each kind has its own fog, its own things drifting in the air, its own colour of light, its own ambient sound and music
+  (Minecraft's own recordings), and its own Lens look. The Unlit Stair has no sound at all.
+- In a gulf there is still water and a low mist; over every fight a soft light colours the mist.
+- Light comes down into every room through a slot in its roof (two in a Lord's hall): a pool of real light on the floor,
+  with dust turning in it. There is no beam in the air: three ways of drawing one as sprites were tried and taken out
+  (SPEC 50.9, "Air").
+- The long walls of gulfs and stairwells are cut into bays between piers (built places) or scooped out (dug ones).
+
 Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a
 creative player, and packs do not notice one.

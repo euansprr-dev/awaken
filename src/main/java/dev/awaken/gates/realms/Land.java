@@ -155,7 +155,8 @@ public abstract class Land {
      * legs somewhere else on every seed and cuts every room differently, so a tour can't name a place or a camera; it
      * names "the first crossing". With {@code back} 0 it stands at the leg, turned toward the leg it leads on to (the way
      * you would cross a gulf). With {@code back} over 0 it stands that far toward the leg you came from, turned to the leg
-     * (the way you would walk into a room); under 0, that far beyond it, looking back. Null when the run has no such leg.
+     * (the way you would walk into a room); under 0, that far beyond it, looking back. After the yaw come the leg's own x and z.
+     * Null when the run has no such leg.
      */
     public final double[] legView(LegKind kind, int index, int back) {
         int n = 0;
@@ -167,13 +168,13 @@ public abstract class Land {
             if (back == 0 || before == null) {
                 Leg toward = on != null ? on : before;
                 double yaw = toward == null ? 0 : Math.toDegrees(Math.atan2(-(toward.x() - l.x()), toward.z() - l.z()));
-                return new double[]{l.x(), l.y(), l.z(), on != null || before == null ? yaw : yaw + 180};
+                return new double[]{l.x(), l.y(), l.z(), on != null || before == null ? yaw : yaw + 180, l.x(), l.z()};
             }
             double dx = before.x() - l.x(), dz = before.z() - l.z(), far = Math.max(1, Math.hypot(dx, dz));
             double x = l.x() + dx / far * back, z = l.z() + dz / far * back;
             // facing the leg from wherever that put us
             double yaw = Math.toDegrees(Math.atan2(-(l.x() - x), l.z() - z));
-            return new double[]{x, l.y(), z, yaw};
+            return new double[]{x, l.y(), z, yaw, l.x(), l.z()};
         }
         return null;
     }

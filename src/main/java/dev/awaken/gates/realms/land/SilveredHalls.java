@@ -228,7 +228,7 @@ public final class SilveredHalls extends GeneratedCrawl<SilveredHalls.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xe8ecff, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0xc8ccdc, 0.35F).light(lord.cx, lord.feet + 4, lord.cz, 0xfff0d0, 18, 0.8F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a palace: galleries, crossings and colonnades, wide high ways, a glass floor nobody should trust. */
@@ -236,5 +236,18 @@ public final class SilveredHalls extends GeneratedCrawl<SilveredHalls.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIERS, Cave.Form.HALL), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
                 List.of(Arena.Plan.NAVE, Arena.Plan.CROSS, Arena.Plan.SQUARE), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.HANGERS, Chasm.Kind.BEAMS), true, 3.0, 6);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): a marble plinth along the walls and a cove under the roof, shards where a mirror went, little else: it is a palace. */
+    @Override
+    protected Trim trim(SilveredHalls.M m) {
+        return new Trim(named("palace_marble_stairs"), named("palace_marble_stairs"), null, named("palace_shards"),
+                namedAll("palace_crystal"), List.of(), 0.35);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xfff4e0;
     }
 }

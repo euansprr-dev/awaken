@@ -14,17 +14,16 @@
   },
   "sky": {
     "biomes": [
-      "awaken:realm/barrow_ship"
+      "awaken:realm/hollow_hills"
     ],
     "lens": "hollow_hills",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
+      "mist",
       "dust",
       "drips",
       "bats",
-      "rats"
+      "wind"
     ]
   },
   "life": {

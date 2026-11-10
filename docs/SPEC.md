@@ -12570,7 +12570,9 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   `life` added (a mood's optional list; at most 16 on the arrival) also names the air, from five shared sprites tinted per
   kind (`gate_air_wisp`, `_streak`, `_flake`, `_orb`, `_flash`; `tools/art/specs/gate_worlds_air.py`); at most 260 near
   you, made only in open air. `shaft_dust`: pale motes turning slowly along Gate Air's light shafts within 40, lit by the
-  shaft. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  shaft (as many tries a tick as a third of the shafts, from 2 to 8, so one shaft among twenty is as full as one among
+  five). **How faint a sprite can be:** Minecraft's particle shader throws away anything under a tenth opaque, so no
+  sprite here can be a faint gradient; §50.9 "Air" has what that ruled out. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
   within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
   open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
   three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
@@ -21816,6 +21818,80 @@ step of one; what was built (`wild()` under a half) stands square to the compass
 grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
 names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
 leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
+**Depth.** Euan, 10 Nov, on the pictures of the new shapes: "the rooms and the setups and stuff is decent now, but the
+atmosphere itself is completely missing... a completely flat floor, completely flat walls... it's still all one block
+distances. There's no half blocks, there's no grass, there's no mushrooms... no variation in the depth of the floor or the
+walls." The old gates had been given exactly this (§38.14: gentle on the way, bold at the edges, with a theme's slabs,
+stairs, drifts and bits); the rolled dungeons had none of it. They take that section's blocks and its rule:
+
+- **Ground** (`Cave.depth`, `relief2`). Over every level room the ground rises and falls in half blocks. Nothing rises on
+  the way through (the lines from each doorway to the middle; round a ring's core, the middle of the walk), so the way reads
+  as a path worn into the floor. Off it the ground stands a slab or two higher and rolls, and banks up two or three blocks
+  against the walls. A step is half a block nearly everywhere and never more than one. A half step is the kind's own slab.
+  Rooms whose form already has levels (terrace, pit, rift) keep them and take no ground; a Warden's room and a Lord's hall
+  stay level to five sixths of the way out and only bank at the wall; the small cells (way in, side cell, hidden cell, vault)
+  stay level. A room is told of every way into it (`door`) before anything asks how high its floor is there.
+- **Ways** are worn down their middle with half a step up along their sides: ragged where the place was dug, a kerb where it
+  was built.
+- **Walls and roofs.** What was built: a pilaster stands a block out of every straight wall every six cells, and a beam
+  crosses a hall's roof every five. What was dug: the roof swells and dips, comes down in knots, and comes down in lumps at
+  the walls so a wall leans in over you. (Lumps cut into the wall itself were tried first and could hang a cell clear of it;
+  what comes down from the roof is always joined to it.)
+- **Small pieces** (`Trim`, one per kind, set last by `detail`): a stair at about half the wall feet off the way, its back
+  to the wall; a stair hung upside down where the roof steps; a drift one layer deep along the rest of the wall feet; plants
+  in clumps that thicken away from the way; bits underfoot; things hanging where the roof is high. All from the kind's own
+  theme (its §38.14 depth blocks and its plants), a few of Minecraft's where a theme has none (cobwebs, hanging roots, moss
+  carpet, fern). Nothing with a body but the stairs. Nothing where a door shuts, in the narrow ways or in a hall of traps.
+  The Lower Combs and The Tallow Runs have no stairs yet: their rock has no cut shapes.
+- **The long walls** (`Chasm.walls`, `Shaft.walls`). The first walk in the real game with depth in it showed where none
+  had reached: the two long walls of every gulf and the four of every stairwell, dead flat for thirty blocks. They are cut
+  back one cell, never built out, so nothing can stand in the way of a jump. What was built: bays four wide between piers
+  two wide. What was dug: scoops in patches. A gulf's are under the level of its shelves, from two over the water, and
+  never beside anything there is to stand on (the ramp back up included). A stairwell's are between the passes of its
+  ledge: the wall is whole from five under the ledge to five over the feet of whoever is on it, so there is never a hole
+  beside the climb, and the bays step down the wall with the stair.
+
+**Air.** The same message: "Same with like the atmosphere in the air... Same when it comes to sounds and everything, and
+music." The kinds had been sharing borrowed biomes and one copied list of small life (a foundry with bats). Now each kind
+has its own, written from one table (`tools/realms/kinds_air.py`):
+
+- **Its own biome** (`awaken:realm/<kind>`, a copy of its theme's gate biome so nothing spawns): its fog colour and how
+  near the fog stands (from 3 to 12 blocks out, gone by 42 to 110: the first numbers, 56 to 140, stood too far out to be
+  seen inside a room), what drifts in the air (ash, spores, snow, motes,
+  fireflies, sparks), the colour of its block light and of its dark, an ambient loop, a mood sound, an occasional sound and
+  its music. Every sound is one of Minecraft's own recordings by name. The Silvered Halls has no loop; The Unlit Stair has
+  no sound at all, which is its theme's one line.
+- **Its own Lens look** (`biome:awaken:realm/<kind>` in `looks_gates.json`): its theme's look with more haze, a mist, a
+  little more glow, and the haze tinted from its fog.
+- **Its own small life** (blueprint `sky.air`): only what belongs there (embers and steam in a foundry, snow and wind in ice,
+  fish and paper in a drowned library).
+- **Gate Air from the kit** (`GeneratedCrawl.airOf`, on top of what the skin asks for, inside §38.9's limits): a soft light
+  in the kind's colour over the middle of every room something is fought in, so its mist is lit; still water and a low
+  mist in every gulf and at the foot of every shaft; a shaft of light down every shaft.
+- **Light comes down** (`GeneratedCrawl.wells`). Every room with the roof for it has a well of light, the Lord's hall two:
+  a slot in the roof three cells by one, off the middle, over open floor, going six cells up into the rock to a light
+  nobody sees the source of. It is real light: unseen lights down the middle of it every three cells, so the pool reaches
+  the floor however high the roof is and what grows and lies there can be seen. (A light at the roof alone never reached
+  the floor of a tall room: the first walk showed a lit slot and nothing under it.) A well is only cut where nothing else
+  of the run comes within three cells of it. The side cell and the way in have none (the way in has its own crack to the
+  sky). Gate Air has a shaft down each well, in the colour of the day at the way in, and every kind asks for `shaft_dust`
+  first in its list, so motes turn in it. First, because the client takes a list in order and stops at 260 sprites: in a
+  kind full of fireflies nothing late in the list was ever reached.
+- **Mist layers** are written down for the biggest rooms (the Lord's, which a skin lays itself, then the Wardens', then
+  the dens, widest first, inside the six §38.9 allows; gulfs and shafts take three at most). Nothing draws them yet.
+- **What reads Gate Air here, and the beams that are not there.** In this build only the client's small life reads Gate
+  Air (§38.9's sprites): nothing in Lens reads a land's shafts, mist layers or lights, whatever §38.3 says of marching
+  them. On 11 Nov a beam down each well and mist on the floors were tried as sprites, three ways, each walked in the real
+  game, and all three are taken out again:
+  1. Faint soft wisps: never drawn. The particle shader throws away anything under a tenth opaque.
+  2. Upright bars and wisps just over a tenth, from 16 pixel sprites: drawn, as sheets of glass with pixels half a block
+     wide and stepped edges, and a veil over the whole view when one stood on you. It read as a glitch.
+  3. The same from fine-grained sprites (every pixel fully there, fewer of them toward the edge): drawn, as patches of
+     static in the air.
+  A beam needs what that shader cannot give: light added to the picture, any faintness, a smooth edge. That is Lens
+  marching the shafts it is already sent, or a small renderer of the gates' own with its own pipeline. Until one of
+  those exists a well is a lit slot, a pool on the floor and motes turning between them.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

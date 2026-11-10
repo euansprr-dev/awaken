@@ -30,7 +30,23 @@
         "awaken:gate_abyssal_shrine",
         "awaken:gate_nightmare",
         "awaken:gate_lantern_night_market",
-        "awaken:gate_sky_archipelago"
+        "awaken:gate_sky_archipelago",
+        "awaken:realm/catacombs",
+        "awaken:realm/hollow_hills",
+        "awaken:realm/root_cellars",
+        "awaken:realm/tallow_runs",
+        "awaken:realm/cinder_workings",
+        "awaken:realm/sunken_stacks",
+        "awaken:realm/sporewells",
+        "awaken:realm/frozen_cells",
+        "awaken:realm/glass_warrens",
+        "awaken:realm/stopped_works",
+        "awaken:realm/silvered_halls",
+        "awaken:realm/sealed_wing",
+        "awaken:realm/sleepless_ward",
+        "awaken:realm/unlit_stair",
+        "awaken:realm/rime_hollows",
+        "awaken:realm/green_dark"
       ]
     }
   }

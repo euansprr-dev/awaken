@@ -18,8 +18,9 @@
     ],
     "lens": "brood_burrow",
     "air": [
-      "mist",
       "shaft_dust",
+      "mist",
+      "spores",
       "dust",
       "drips",
       "moths"
