@@ -153,7 +153,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
       <tr><td><strong>All fifteen</strong></td><td class="num"><strong>334</strong></td><td class="num"><strong>235</strong></td><td class="num"><strong>99 (30%)</strong></td></tr>
     </table></div>
     <p>One session had 19 ghosts in 25 hits. On 8 Nov you said hits <q>feel random</q>. This is the number behind that.</p>
-    <p><strong>What I don't know: the cause.</strong> Three fixes went in after these logs (only the hands decide the combo, a boss's body arrives on time, a hit waits for the blade). Nobody has measured since. And the server never tells the game <em>why</em> it disagreed, so the logs can't say. My best guess, not proven: the game draws other bodies about three ticks behind where the server has them. A creature your last strike knocked back is already out of reach on the server when your next strike "hits" it on screen.</p>
+    <p><strong>What I don't know: the cause.</strong> Three fixes went in after these logs (only the hands decide the combo, a boss's body arrives on time, a hit waits for the blade). Nobody has measured since. And the server never tells the game <em>why</em> it disagreed, so the logs can't say. I have two guesses and neither is proven. One: the game draws other bodies about three ticks behind where the server has them, so a creature your last strike knocked back is already out of reach on the server when your next strike "hits" it on screen. (In today's film, against a husk that can't move, all 9 hits shown were confirmed. So the ghosts come with moving creatures and fast chains, not with every hit.) Two: when you click faster than the chain, the server can land a blow under one press's number while your game files it under the next, so the blow is played twice and one copy is counted as a ghost.</p>
   </div></div>
 
   <div class="finding"><div class="big">2</div><div>
@@ -184,7 +184,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <p>The view's kick on a hit, and the side a creature is thrown to, are both read from an old pair of numbers in the timing table. The blade you see comes from the baked keys. Most of the time they agree. On 17 of 143 cuts they don't, and on nine of them the creature is thrown to the <em>opposite</em> side from your cut:</p>
     <ul>
       <li><strong>Axe</strong>, fourth strike. <strong>Maul</strong>, second strike. <strong>War-staff</strong>, fourth strike. <strong>Daggers</strong>, the Art.</li>
-      <li><strong>Twin Blades</strong>, strikes 2, 3 and 4, the Slipcut and the Undercut. The table still describes the old figure-eight that the 9 Nov spins replaced.</li>
+      <li><strong>Twin Blades</strong>, strikes 2, 3 and 4, the Slipcut and the Undercut. The 9 Nov spins changed the table's timings but not its direction numbers, which still describe the old figure-eight.</li>
     </ul>
     <p>The other eight throw the right way but kick the view 50 to 125 degrees off the blade (the Maul's first strike, the Katana's second, three Gauntlet moves among them).</p>
   </div></div>
@@ -228,7 +228,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
   <ul>
     <li>The guard comes up in a straight line over two ticks and drops in a single frame.</li>
     <li>In third person the Longsword's heavy is still the old rising cut, while first person chops.</li>
-    <li>Third person as others see it has not been looked at since the 9 Nov round, by anyone.</li>
+    <li>Third person as others see it was filmed for the Shieldblade on 9 Nov, and for none of the other fifteen since that round.</li>
   </ul>
 
   <h3>What is right and stays untouched</h3>
@@ -254,6 +254,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <div class="opt pick"><h3>B · Keep every swing, add truth, sound and weight around it <span class="tag forge">recommended</span></h3><p>Everything in A, plus layers that sit on top of the same keys: the shake, the settle, the draw, the glance off a wall. Each has its own switch. Each is tried small before it spreads.</p></div>
     <div class="opt"><h3>C · Re-make the twelve rule-made weapons by hand</h3><p>Bring every weapon to the Daggers' hand-keyed standard, or drive weapons by physics. This is the rewrite you said you don't want, and it repeats the rounds' mistake: changing motion you haven't judged.</p></div>
   </div>
+  <p><strong>The aim in one sentence.</strong> Every blow you throw is answered by the creature, the view, your ears and the weapon's own weight, and the answer always matches what the blade did.</p>
   <p><strong>Why B.</strong> The measurements say the swings are not where the gap is. The gap is in the 250 ms around each hit and in everything that isn't a swing. B closes that without touching a key.</p>
   <p><strong>What would change my mind.</strong> If your play of the merged round flags many of the swings themselves, the weapon-by-weapon pass (stage 6) grows and comes sooner. If your A/B says you prefer today's dead stop, the settle is dropped, not tuned.</p>
 </section>
@@ -266,7 +267,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
   <div class="change"><h3><span class="n">1</span>A hit you see is a hit that landed</h3>
     <dl class="rows">
       <dt>Evidence</dt><dd>99 of 334 hits shown did no damage. Cause unknown.</dd>
-      <dt>Change</dt><dd>First, find out. In development runs the server says why it turned down a hit the game showed: out of its reach (how far, how many ticks apart), struck but immune, the move refused, already dead. The black box records every hit shown, confirmed or not. You play ten minutes and I read the reasons. Then the fix follows the cause. If it is the three-tick lag, the server accepts a hit your game showed when the body was in reach within the last few ticks, inside strict limits. If it is immunity, the game shows a dull knock instead of a full hit.</dd>
+      <dt>Change</dt><dd>First, find out. In development runs the server says why it turned down a hit the game showed: out of its reach (how far, how many ticks apart), struck but immune, the move refused, already dead. The black box records every hit shown, confirmed or not. You play ten minutes and I read the reasons. Then the fix follows the cause. If it is the three-tick lag, the server accepts a hit your game showed when the body was in reach within the last few ticks, inside strict limits. If it is the press numbers, both sides are made to file a blow under the same press. If it is immunity, the game shows a dull knock instead of a full hit.</dd>
       <dt>You get</dt><dd>Hits you can trust. Every other change here rests on that.</dd>
       <dt>Keeps</dt><dd>The server's final word on damage. The hit at once.</dd>
       <dt>Risk</dt><dd>Letting the server accept late hits makes fights slightly easier. The limits are set from your log, and shown to you first.</dd>
@@ -394,6 +395,19 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 <section id="weapons">
   <div class="eyebrow">7 · Weapon by weapon, move by move</div>
   <h2>What each one gets</h2>
+  <h3>The eight parts of a blow</h3>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>Today</th><th>Verdict</th><th>In the plan</th></tr>
+    <tr><td>Anticipation</td><td>Wind-ups of one to six ticks by weight. A tap from rest plays its wind-up at twice speed, the trade made on 9 Nov so a tap is never late. A charge is drawn in view</td><td>Keep</td><td>Unchanged. If a wind-up reads too short in your hands, that weapon goes to stage 6</td></tr>
+    <tr><td>Contact</td><td>The hit plays when the blade crosses. On the cuts and thrusts I measured, the blade is on the creature at the hit</td><td>Keep, but 3 in 10 are ghosts</td><td>Change 1</td></tr>
+    <tr><td>Hit-stop</td><td>40 to 70 ms on light strikes, 70 to 130 on finishers and heavies, 220 on an Execution, 40 more on a kill. The weapon is still</td><td>Keep the lengths</td><td>The shake (change 4)</td></tr>
+    <tr><td>Follow-through</td><td>The blade slows through the body, then stops dead and holds</td><td>Add to it</td><td>The settle and the living hold (change 4)</td></tr>
+    <tr><td>Camera</td><td>Leans with the swing, from 0.6° on a dagger stab to 8° on the Maul's slam. Kicks up to 2.4° on a hit. The big moments push the field of view</td><td>Keep; 17 kicks point wrong</td><td>Change 3</td></tr>
+    <tr><td>Sound</td><td>The swish peaks as the blade crosses. The hit is picked by what you struck</td><td>Hits too low to hear; dings</td><td>Change 2</td></tr>
+    <tr><td>Particles</td><td>A ribbon on the blade, sparks by what you hit, a flare on a kill</td><td>Keep</td><td>Sparks and dust on a glance (change 7). Nothing else is added</td></tr>
+    <tr><td>The creature's reaction</td><td>It freezes and trembles, springs back, is thrown along the cut, and falls the way the blade went on a kill</td><td>Keep; 9 thrown the wrong way</td><td>Change 3</td></tr>
+  </table></div>
+  <h3>The sixteen weapons</h3>
   <p>Every weapon gets the shared layers by its weight: the shake, the settle, the weighted look, its draw, the new hit sounds. The last column is what my measurements flagged for your eye. Nothing in that column is changed until you have played it.</p>
   <div class="scroll"><table>
     <tr><th>Weapon</th><th>Weight</th><th>Made</th><th>Draw</th><th>Flagged for your eye</th></tr>
@@ -415,6 +429,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <tr><td>Precursor Arm</td><td>Blade</td><td>By rule</td><td>Hum</td><td>Nothing measured</td></tr>
   </table></div>
 
+  <h3>Every kind of move</h3>
   <div class="scroll"><table>
     <tr><th>Move</th><th>Today</th><th>With the plan</th></tr>
     <tr><td>The light chain</td><td>A clean cut, a still freeze, a dead stop, a quiet thump</td><td>The same cut. The blade shudders in the freeze and settles by its weight. A hit you can hear. The creature flies the way you cut</td></tr>
@@ -438,6 +453,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <li><strong>A press still shows nothing for four ticks.</strong> Not touched.</li>
     <li><strong>A hand at rest stays at rest.</strong> The settle acts only where the blade was moving. The breath is under 3 mm and slower than one in four seconds; the 8 Hz tremble you called a glitch is the line it stays far from.</li>
     <li><strong>Every layer has a switch</strong> in the arms settings. Off is today's picture, frame for frame, and a test holds that. Reduced motion halves or removes each one.</li>
+    <li><strong>Nothing is told by sound alone.</strong> Every new sound comes with something you see.</li>
     <li><strong>Each stage is its own merge.</strong> If one reads wrong, it comes out without the others.</li>
   </ul>
   <div class="scroll"><table>
@@ -470,13 +486,14 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <tr><td><strong>5 · The world</strong></td><td>Walls, the glance, grass (change 7)</td><td>A fight in a cave</td><td>No miss that feels unfair</td><td class="num">3–4 h</td></tr>
     <tr><td><strong>6 · Your notes</strong></td><td>One hand-keyed round per weapon you flag; third person checked (change 8)</td><td>Your notes as you play, and an either-or per weapon</td><td>You sign each weapon off</td><td class="num">1–2 h each</td></tr>
   </table></div>
-  <p class="note">Sizes are from this project's own pace: the whole 9 Nov weapon round took about a day. Each stage runs the weapon tests while building and the full suite on GitHub at hand-off. Before stage 0 I merge the build into this branch, since the One Stage UI is about to land there.</p>
+  <p class="note">Sizes are from this project's own pace: the whole 9 Nov weapon round took about a day. Each stage runs the weapon tests while building and the full suite on GitHub at hand-off. Before stage 0 I merge the build into this branch, since the One Stage UI is about to land there. Each finished stage goes to the manager session to merge; I never merge into the build myself.</p>
   <h3>The ten minutes, after stage 0</h3>
   <ol>
     <li>Take the Longsword, the Maul and the Daggers.</li>
     <li>Fight a few zombies in the open with each. Chain them the way you normally do.</li>
     <li>Fight one boss you know.</li>
     <li>Block a few blows. Swap weapons a few times.</li>
+    <li>End on whatever felt worst. The log keeps every hit of the session, but the black box keeps only the last three and a half minutes of frames.</li>
     <li>Stop clicking and quit to the title straight after. That writes the log and the black box. I read both.</li>
   </ol>
 </section>
