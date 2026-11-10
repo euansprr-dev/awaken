@@ -740,6 +740,10 @@ of `AwakenConfig.Client`.
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.finds.api.Monuments` (§64.3) — `near(ServerLevel, x, z, margin)`: whether a column lies on a monument's
+  ground (everything within its reach) or within a margin of it. Pure from the seed, any thread, no land made; the
+  first ask of a stretch of country runs the search for its monuments' spots, so a planner asks from its own thread.
+  For whatever is laid across the land (a road, a yard) to keep off a monument; nothing calls it yet.
 - `dev.awaken.village.api.Troubles` (§28.7, W4) — who a player brought home from a trouble: `rescued(ServerPlayer)` →
   `List<Rescued>` oldest first, `record Rescued(village, villageName, rec, name, trade, age, day, trouble, settled)` (`rec`
   is the person's record in that settlement's roster; `trade` a `Roster.JOBS` name; `trouble` "taken" or "missing";
@@ -22016,6 +22020,228 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
+## 58. Over Every Hill: finds (plan docs/finds/PLAN.md, page https://claude.ai/artifact/G9fPfsJmTjj8xbaRnrScSw; Euan approved the full plan and every recommendation 2026-11-10: "make sure it doesn't feel like a fairground... you should still have stretches where you don't find much. It should feel very natural")
+
+Module `finds` (package `dev.awaken.finds`), config switch `finds` (default on). The catalogue is `docs/finds/catalogue.txt`; the
+kinds as built are `docs/finds/BOOK.md` (generated). Built in one run on `claude/finds-over-every-hill`; unseen in game.
+
+### 58.1 What it is
+
+144 kinds of small thing to come across in the overworld: 97 curios (a few blocks, under a minute) and 47 finds (a small scene, a
+few minutes), in 18 sets of 8, ranks E to A. Each is something you do, on one of eighteen verbs: stack, carry, light, ring, turn,
+offer, follow, dig, pull, pour, shoot, run, reach, wait, mend, read, break, sneak. No fights, no people (the Stilled are stone),
+nothing automated, loot per player. Nothing about a find is told ahead: no markers, no list of what's out there.
+
+### 58.2 The sets
+
+Cairns (stack), The Stilled at Rest (carry), Lamplighter's Road (light), Ringing Stones (ring), Old Machines (turn), Small Gods
+(offer), Wisps (follow), Buried Things (dig), Hung Things (pull), Dry Things (pour), Marks (shoot), Runs (run), High Things
+(reach), Night and Weather (wait), Mended Things (mend), Surveyor's Stones (read), Sealed Things (break), Beast Works (sneak).
+Number 1 of a set is its plainest and is favoured near the spawn. A kind is written in `finds/sets/<Set>.java` with
+`Kind.of(...)...add()`: its words (`see` before, `learned` after), where it stands, its scene, its script, its walkthrough.
+
+### 58.3 Where they are (and where they aren't)
+
+- Two layers of cells: curios 96 blocks, finds 256, one site at most per cell, set anywhere inside the cell but its edge.
+- A slow field over the world (value noise, 62% at 1,100 blocks and 38% at 420). Below 0.42 the land is quiet: no curios at
+  all and an eighth of the usual finds. Above it the chance rises smoothly to 2.35 times the usual. A third of the land is quiet.
+  Chance per cell at the usual liveliness: 0.62 curios, 0.50 finds. Within 420 blocks of the spawn the land is never quiet.
+- Walk simulation (`tools/sim/finds_walk.py`, with 60 to 80% of cells finding ground that suits them): a find within 36 blocks
+  of your path every 75 to 98 s on average, half of the gaps under 36 to 46 s, one gap in ten over 3 to 4 minutes, and about
+  half of all walking time is spent in a stretch of three minutes or more with nothing. That is the rule, not a fault.
+- A kind is eligible from its own rank outward (rank from `RegionMap`, by distance) and thins by 0.45 a rank beyond it, so far
+  land is mostly new kinds. It stands only in its lands (`RegionMap.Group`) and only on ground that suits its anchor: FLAT,
+  HILLTOP, LINE (a gentle run, an old road), SHORE (facing the water), CLIFF (facing the rock), SLOPE, PEAK. A cell with no
+  fitting ground stays empty.
+- No twins: a cell won't take a kind that a cell within 4 rings (curios) or 5 (finds) with first say would take.
+- Never within 40 blocks of the spawn point, in the city, or on a structure. New chunks only.
+- In snow country the snow comes back after a find is written: on the ground its clearing bared and on top of what was
+  built, never where the scene keeps a place for a part.
+- A site, its turn and its scene are pure functions of the world seed. `FindsFeature` (`awaken:finds`, top layer step, every
+  overworld biome) writes each chunk's share of every site within reach.
+
+### 58.4 A scene, and the bar every one is held to
+
+`Scene` is what a kind builds, in its own coordinates (facing south, then turned): blocks that follow the ground, named parts,
+what lives there, where its tell is drawn. Test `finds_every_scene_stands` holds every kind to: nothing floats (every block joins
+the ground through its neighbours), nothing past its `reach` (48 at most), nothing where the heart goes, and a third or more of
+the blocks above ground are not plain cubes. What grew (leaves, trunks) and the land itself (earth, living rock, sand, ice,
+water) count neither way. The kit's `Dress` puts the ground round a find in keeping: pebbles, twigs, litter, a path trace.
+
+### 58.5 The heart, parts and scripts
+
+- `find_heart`: an unseen, unbreakable block two below the middle of every site, with a block entity holding everything that
+  isn't a function of the seed: the stage, sixteen numbers and four clocks (a script's whole memory), who has been paid, whether
+  what lives there has been put out. It runs the kind's `Script` while a player is within 56 blocks, on the beat (every 5 ticks,
+  or the script's own `every()`), and never otherwise.
+- A part is a position with a name. Listeners for use, hit, break, place and a projectile landing find the site a position
+  belongs to and hand the event to its script. So any block, vanilla or prop, can be a part. A mark that an arrow must hit has
+  to be a block with a collision shape.
+- The ward: a site's own blocks can't be broken or built on by a survival player unless its script says so (`mayBreak`,
+  `mayPlace`).
+- A site left part-done goes back to how the world made it after two minutes with nobody near; a finished one that doesn't
+  `persist`, after ten. What you mend, and a few others, stay done for everyone.
+- Verbs (`finds/verb/`): `Light`, `Notes`, `Sockets`, `Fit`, `Assemble`, `Turn`, `Guide`, `Dig`, `Haul`, `Swap`, `Pick`, `Pour`,
+  `Marks`, `Course`, `Prize`, `When` (`stay`, `only`), `Later`, `Seal`, `Quiet`, `Read`, chained with `Steps.of` (four links at
+  most). A kind may write its own small script in its set file. Hands (`Hands`): flame, water, cold, blade, pick, a thing that
+  rings. Powers are not yet counted as blows.
+- Carried things are the props' own block items: use a loose one to pick it up, use it on its place to set it down. Heavy ones
+  (`#awaken:finds/heavy`) slow you while held.
+- Never kills from full health: shafts have rungs or water, wells have a way out, the warm cracks give slow falling.
+
+### 58.6 Paying out, and leads
+
+Finishing pays everyone near who hasn't been paid at that site, once each: loot from `awaken:finds/<e..a>_<small|big>` by rank and
+size, or the kind's own table, tossed out of its cache; the kind counted; the first of a kind a discovery (a twentieth to a fifth
+of a level by size and rank) told with the game's own find card. No toast for a repeat. About one kind in ten gives a lead: the
+compass way from where you stand to the nearest undone find (never a curio) further from home. A lead is closed when that find
+pays you.
+
+### 58.7 Journal, glass, Atlas, Tasks
+
+- Journal, Places shelf: 144 fixed slots in set order through `Catalogue.fixed`. Unfound is a number and "?"; seen through the
+  binoculars is its name and what you saw; done is what you learned and how many times.
+- Binoculars: a `Spotting` source; holding the glass on a site marks its kind seen.
+- Atlas: the sites you've been paid at are marks (`MapMarks`). Nothing else of the finds is ever on a map.
+- Tasks: the two newest leads you hold, under "Out there", as leads (`FindsGoals`): a way to walk, no place and no distance.
+- What waits: a find that needs the rope or wings (`needsMove("tether")`, `"wings"`: the Ring Posts, the Needle, the Cloud Shelf) is
+  kept as a promise when you come within 20 blocks of it without that rung, and dropped when it pays you (`Promises`).
+- The look of the Journal and Tasks belongs to One Stage (§57); finds only feed them.
+
+### 58.8 The kit
+
+`finds/kit/Props` (generated by `tools/content/finds_content.py`, 68 small blocks, ids `find_*`, each a `PropBlock` with a facing
+and a state 0..3; vanilla textures by name), `Mats` (a land's stone and wood), `Dress` (ground dressing, a leaf crown that hangs
+together). The generator also writes the loot tables, the lang lines and the heavy tag. Every prop is declared to the Journey
+ledger as found at a find.
+
+### 58.9 Commands, tests, the gallery
+
+- `/awaken finds place <kind>` (where and which way the command stands, on its own pad), `gallery [set]`, `near`, `locate <kind>`,
+  `visit <n>` (the n-th find nearest the spawn that the world itself made).
+- GameTests: `finds_catalogue_is_whole` (18 sets of 8, numbered, with words, a walkthrough and a loot name),
+  `finds_every_scene_stands` (58.4, two seeds a kind), `finds_every_kind_plays` (a scripted player does every kind's own
+  walkthrough: it finishes, pays once and fills its slot), `finds_quiet_land_is_quiet` (58.3).
+- `tools/content/finds_tour.py` writes the look tours for GitHub's runners (`tools/tour-ci.sh`): `finds-gallery-a` to `-f` (every
+  kind on its own pad, three sets a tour), `finds-world` (the twelve finds nearest the spawn as the world made them) and
+  `finds-journal` (the Places shelf empty, part filled and at its end, and the Tasks page). A tour must skip the opening
+  (`cmd awaken opening skip`) or the opening's camera ride owns its first minute.
+
+### 58.10 Simplified or not built in the first run
+
+One swing for every verb (no hand clips of their own). Tells are vanilla particles and recordings by name. The Stilled are kit
+figures, not the Stilled module's own. Gifts that repeat by the day (the scarecrow's crows) are not built. Powers don't count as
+blows on seals. A few kinds stand in for what the catalogue describes with something plainer that can be finished by anyone:
+the Flag Line is five rings with five arrows, the Stopped Cart doesn't roll, the Sprung Boat gives a boat and no island, the
+Cloud Shelf is a spire you reach from above, the Chimney goes down from a hilltop, the Hundred Posts are thirteen and don't
+sink, the Otters' Slide is a timed run through three pools. Placement in generated land is exercised only by the gallery tour's last twelve shots.
+
+## 59. Places (what the world gives you to discover; briefs in docs/places/BRIEFS.md)
+
+**Rejected as content, 10 Nov 2026** (Euan, on the picture page: "decoration... empty buildings... vanilla and boring and flat"). The thirty are no
+longer dealt or listed; §61 replaces them. What stands of this section is the engine: §59.2 (where), §59.3 (ground), §59.4 (air),
+§59.6 (arriving and finishing) and §59.7 (checks).
+
+Euan, 10 Nov 2026, on seeing the 144 small finds of §58: "this is not at all what I was asking... I meant things that you
+discover, like caves, or special buildings... actual places... a really cool swamp thing with an awesome atmosphere, unique
+places that actually stand out when you discover them." Then: "Build them all. Code all first, then tour multiple at a time...
+build yourself full briefs for every single structure beforehand." So: thirty places, briefs first, on the engine of §58.
+
+### 59.1 What changed from §58
+
+- The world deals places only (`Sites.BASE = {0, 0, 1.0}`). The 144 small kinds are no longer placed or listed; they stay in
+  the code as furnishing and for their tests. §58.3's densities, §58.7's 144 slots and §58.9's gallery tours no longer hold.
+- `Kind.Size.PLACE`, set `PLACES`, thirty kinds in `finds/sets/Places*.java`. Everything in §58.5 and §58.6 (the heart, parts,
+  scripts, the ward, pay, leads) holds for a place as it did for a find.
+
+### 59.2 Where they are
+
+One place at most in a cell 384 blocks on a side, set anywhere inside it but its outer 80. A cell holds one where the land is
+lively (chance 1.0 times the slow field of §58.3; a third of the land is quiet: there, about one cell in eight). Never two of
+a kind within three cells.
+
+- **Land.** A kind stands only in the countries it names. Eleven kinds name a second country because their own is too rare
+  near home (the first census: 21 swamp, 29 mountain, 50 desert cells of 2,025 round the spawn).
+- **Rank.** Unlike the small kinds, no place is ruled out by rank: its own rank is likeliest (weight times 0.62 per rank it is
+  below the country's, 0.42 per rank above), so grand places are rare near home and plain ones thin out far away. By rank
+  alone no swamp place could be chosen within 10,000 blocks of the spawn.
+- **Ground.** Anchor `FIELD`: seventeen points across the footprint (the middle and two rings) all dry and within the kind's
+  `slope` plus two of each other; the site's height is their median. Twenty-five tries: the point, a ring at 22 and a ring
+  at 34. Two places stand on `SHORE`.
+- **Keeping clear.** No structure that stands on the land (a temple, a pyramid, a spire) may start within two chunks; no
+  village, outpost or mansion within the place's reach and 72 blocks; no part of Carillon within its reach and 56. Sets under
+  the ground, under the sea, in the sky and in other worlds are not asked (`Terrain.UNSEEN`): a structure set answers "may
+  one start here" whatever the biome, and asking all two dozen over seven chunks left two places in 10,000 blocks.
+- **Counted** (`/awaken finds census`, the `places-census` tour, seed 4242, 20,000 blocks square round the spawn): 2 places
+  with every set asked over seven chunks; 205 with the rules above on the 448 grid and the kind's own slope; the count on
+  this grid is in docs/places/STATUS.md.
+
+### 59.3 Ground
+
+A place levels its own ground: `Scene.level(radius, blend)` sets every column of a disc to the heart's height and blends the
+edge back into the land over `blend` blocks; `Scene.ground` sets one column (a crater, a terrace). The feature fills or cuts
+the land to those heights even where nothing is built, and finishes a cut or a fill with the land's own top (grass, sand,
+snow). A place's `reach` is its levelled radius plus its blend: nothing of it, built or shaped, lies past that, and
+`Scene.put` drops what would. The heart's own cell is never written.
+
+### 59.4 A place's air
+
+`Air` (common): one fog colour and how close it comes, one mote (how many a tick, how high, how it drifts), up to two
+recordings on a loop, and `below()` for a cave whose air stays underground. The heart sends its kind to the client; the
+client fades the air in over the last fourteen blocks to the place's reach, takes the strongest of the hearts near, and holds
+it inside (`FindsClient`: `ViewportEvent.ComputeFogColor` and `RenderFog`, particles round the camera, `playLocalSound`). The
+fog colour is scaled by the hour's own brightness, so night stays night. In the open the air tints the distance and does
+not bury it: half the colour, fog no nearer than 110 blocks or 2.4 times the place's own figure (the first tours were pea
+soup from the "above" camera). A cave's air (`below()`) keeps its full strength.
+
+### 59.5 The kit
+
+`finds/kit/B` and `Pal`. A `Pal` is a place's materials by job (wall, second stone, foot course, trim, floor, roof stair and
+slab, timber). `B` builds: `wall`/`walls` (foot course, two stones, a ragged top when ruined), `gable` (eave beside the top
+course, every row on the last, gable ends walled under each stair, a ridge beam; a fallen roof keeps eaves, ends and beam),
+`cyl`, `ring`, `disc`, `dome`, `cone`, `arch`, `steps`, `house`, `blob` (one piece: only what joins its middle), `carve`
+(a hollow lined below ground), `pool`, `ground`, `path`, `limb` (a line where every block touches the last by a face),
+`leaves`, `tree`, `giant`, `palm`, `pine`, `bush`, `boulder`, `vines`, `moss`, `rubble`, and what people leave about:
+`run` (a fence or wall along the ground), `awning`, `well`, `stack`, `cart`, `wheel`, `crops`, `tower`. `ground`'s number
+runs in soft patches with ragged edges, never block by block (the first pictures were checkerboards). `wild(r0, r1, trees)`
+plants the ring round a place with what grows in the site's own country (oak and birch, spruce, dark oak, jungle, mangrove,
+cactus and stone; grass, ferns, flowers in drifts) wherever nothing is built: every place calls it, so none stands on a bare
+disc. The feature clears what grew inside a place's clearing and, in a ring six wide outside it, the leaves no trunk still
+stands beside (treetops hung over the first tours' clearings). Chance is a hash of the site's seed and the position, so every
+chunk writes the same place. Fences, walls, panes, bars and stairs are joined to their neighbours after writing
+(`markPosForPostProcessing` in a new chunk).
+
+### 59.6 Arriving and finishing
+
+Walking into a place (within its reach) files it in the Journal with its name and what you see, once per kind, with a tenth
+of a level and the game's find card. Finishing its two or three steps pays its loot twice over and three tenths of a level
+(plus rank), and marks it done. The Journal's Places shelf lists the thirty places and nothing else.
+
+### 59.7 Checks
+
+- `finds_every_scene_stands` holds a place to: it builds, nothing floats (unseen light excepted), nothing built or shaped past
+  its reach. The "third not plain cubes" rule is for the small kinds only: a place is judged by eye.
+- `finds_every_kind_plays`: a scripted player does each place's own steps on a level pad; it finishes and pays once.
+- **Pictures without the game.** `tools/content/finds_render.py` draws every place from the scenes test's dump (the test
+  writes `finds-dump/<kind>.txt` when that folder stands in the test server's game folder): from two sides, cut open through
+  the inside camera, roof off, by night, and in plan with the tour's cameras. Thirty places in four seconds. It showed what
+  the tests could not: a mill that was one house in an empty field, a wedding of 308 blocks. It is a drawing of the blocks
+  (no air, no light, flat land): a tour is still the last word.
+- `/awaken finds view <kind> <0..3>`: stands you at one of the place's four cameras (afar, above, door, inside) at the nearest
+  one the world made within 48 cells of the spawn. It moves you through `core.api.Passage` (the land is made off the server
+  thread): a plain teleport into unmade land held the server half a minute and the first tour photographed the spawn.
+- `/awaken finds census`: the count above, into the log.
+- Tours for GitHub's runners (`tools/content/finds_tour.py`): `places-a` to `-j`, three places each, five pictures a place
+  (the four cameras and the door at dusk); a tour waits for the passage before its first picture of a place. `places-journal`,
+  `places-census`.
+
+### 59.8 Not done
+
+No hand clips. Motes and recordings are vanilla's by name. The Stilled are the kit's simple figures. A place has no map of
+its own, no second storey of story (books, notes), and nothing that changes after it is done except what its steps change.
+Water set in a place stands still (the feature schedules no fluid ticks: no falls, no running races). Nothing has been
+played by a person. Where each place stands against its brief: docs/places/STATUS.md.
+
 ## 60. Monsters of the Gates (plan docs/gates-as-worlds/monsters/PLAN.md, page https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ; Euan approved option B on 2026-11-10)
 
 Every gate monster that wore a Minecraft mob's body has a body of its own: 78 of them, across the fifteen gate themes
@@ -22234,6 +22460,68 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
   striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
   a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.
+
+## 61. Old World Monuments (plan docs/places/MONUMENTS.md; paintings docs/places/img; page https://claude.ai/artifact/1Fign2AXfzSB9AhJwe9Jns; Euan on the paintings, 10 Nov 2026: "this is 100% what I'm looking for")
+
+(§60 is the gate monsters', on their own branch.)
+
+### 61.1 What a monument is
+
+A ruin the Precursors left (docs/STORY.md), a little broken down, that the world went on living round. Each has a look held
+to the Gates' rule (§50.8: its painting is the bar, a block family of its own, relief at three scales, at most a third of a
+view the game's own blocks), a relic only it gives, something to do to earn it (never a fight, never a way to be stuck),
+carvings the System reads, and what later people left there. Set `Kind.FSet.MONUMENTS`, size `PLACE`: the world deals
+monuments only (`Sites.weights`), and the Journal's Places shelf lists them and nothing else. `Sites.MAX_REACH` is 64.
+
+### 61.2 Olden stone and the kit
+
+`finds/kit/Olden`: thirty blocks (`olden_*`), drawn by `tools/art/specs/finds_olden.py` (textures, models, states, items,
+loot, lang, tags; the same table as the class): ashlar in three drawings, worn, mossy and dark; dressed blocks; a carved
+band, a carved panel, an inscribed panel; flags, a mosaic; rubble; a fluted pillar and its capital; verdigris bronze, a
+bronze band on stone, a door plate; a lamp (`lit`, light 14); a seal and a lichen that glow (an emissive layer); slabs and
+stairs of the four stones, a flag slab, a wall. ("Elder" is a tree in the terrain module: hence olden.)
+
+`finds/kit/M`, the seven passes as working parts: `mass`, `shell`, `pier` (down to the land's own ground, battered foot,
+bands, a corbelled capital), `column`; `face` (a plinth proud of the wall with a sloped top, pilasters by bay, a band at two
+thirds, sunk panels, an overhanging cornice: no wall is one flat plane); `colossus`, `lampPost`, `heap`; `ruin` (a ragged
+break along soft noise); and `age`, one pass over everything built: arrises crumble to stairs and slabs, faces under a real
+ledge go dark, low wet faces go mossy, a share goes worn, moss mats grow on low open tops, and `settle` lets fall whatever
+no longer touches the ground through its faces (the flood the scenes test runs).
+
+### 61.3 The relics (`finds/Relics`)
+
+One to a monument, in its own loot table (`finds/relic_<monument>`, rolled once: a place's table is otherwise rolled
+twice). The Counterweight: carried, it slows a fall longer than seven blocks for 3.5 s, once a minute. The Listening Stone:
+used, it names the direction and rough distance of the nearest monument (five cells out), ten seconds between uses. The
+Sleeper's Lamp: in the off hand, night vision while below sea level under a roof.
+
+### 61.4 Steps, carvings
+
+`verb/Lore.with(steps, "carving", lines...)`: using a part named `carving` has the System read its line in brackets
+(a `NOTICE` window, topic `monument`), at any stage; it is never a step. `verb/Then.run`: a step that is the world
+answering (a door turns) the tick the step before it is done.
+
+### 61.5 The three
+
+- **The Stair That Stops** (`stair_that_stops`; mountain, snow, forest, plains; reach 62): a gatehouse on a podium (bronze
+  doors three by six between two colossi, pilastered walls, a parapet mostly gone) whose roof is where a stair seven wide
+  begins: eight steps and a landing of four, seven times, on seven piers and rampant arches, to 72 above the ground, where
+  it is broken off and chains hang. One span fell (the climbers' planks cross it). A ladder up the gatehouse, a camp by the
+  first pier. Steps: the release on the top landing opens the doors; the relic is on the plinth in the hall. Three carvings.
+- **The Listening Dish** (`listening_dish`; plains, forest, desert, badlands; reach 46): a dish 61 across tipped to the
+  north-east (low rim on the ground, high rim 25 up) on a drum and twelve fins, a third of its rim fallen, bronze rings, a
+  leaning pylon 30 high with a lamp in its core and the vault in its base. Herders' lean-tos under the high rim. Steps:
+  three banded stones lie about; set back in the low rim's sockets, the vault opens. Three carvings on the pylon.
+- **The Sleepers' Hall** (`sleepers_hall`; dark forest, forest, swamp, jungle; reach 44): under the ground, a hall 61 by 21
+  (nave open to a ragged slot in the forest floor, aisles under arcades), sixteen beds with stone sleepers under canopies,
+  roots through the roof, glowing lichen, pilgrims' candles, a stair down from the west. Steps: eight lamps lit near to far,
+  left then right (the first carving says so); the round door at the far end opens on the one empty bed.
+
+### 61.6 Checks, and what is not done
+
+The `finds_` tests hold every monument to what they held a place to; all three walkthroughs pass. The picture maker draws
+olden stone. Tours: `monument-<id>.txt`, the first camera where the painting stands. Not done: seven to nine more monuments
+(Euan's call after these three); the relic list beyond three; sounds and motes of their own; hand clips. Unplayed.
 
 ## 62. Rope and Wings (the rope everywhere, feathered wings, powers in the air; plan docs/movement/PLAN.md, page https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w; Euan approved all of it 2026-11-10: "make this one-to-one ... Go ahead and build all of this one-to-one", with the flying beat remade)
 
@@ -22670,3 +22958,306 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   the takeoff only with flight; and the count is what the client is told. *Not written:* `way_up_places` (a test world
   has one seed; the distances in the audit come from the placement maths).
 - **Not built:** the platform's brighter rings; a needle to hero trees.
+
+## 64. The Long World: sixty monuments in twelve families (plan docs/places/PLAN.md, page https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1; Euan, 10 Nov 2026: "Go with the full plan", and the same hour: "everything actually looks naturally placed... make sure it's at actual AAA level for each. And focus on coding more than checking over and over")
+
+(Numbered 64: it was built as §62 on its own branch while Rope and Wings took that number in the build. Its commits before 11 Nov say 62.)
+
+Module `dev.awaken.finds`. What §61 began with three, built out as approved: twelve ideas, each painted first
+(`docs/places/img/`), each a generator; five named monuments of each, found further and further out; every site aged by
+its own seed and its land; one relic a family that grows; small remains between them that point the way. Working notes:
+`docs/places/BUILD.md`.
+
+### 64.1 Families and tiers
+
+`Family` (twelve, in the four groups the story has; the groups are never named to a player): DISH, ROAD, ARCHIVE (before
+the split); STAIR, MAST, ORRERY (up); HALL, GARDEN, CLOCK (in); SHAFT, CHAINS, DOOR (down). A monument is a `Kind` with a
+family and a tier 1..5 (`Kind.family`, `Kind.tier`, set by `Builder.family`). Tier 1 is small and most broken, 2 fallen
+(read lying down), 3 the one in the painting, 4 strange (a pair, flooded, buried, alone), 5 whole and still working. The
+three of §61 are tier 3 of their families and keep their ids. One file a family: `sets/M<Family>.java`; shared pieces in
+`sets/Mon`. Each of a family's five has its own name, Journal text and three carvings; a family's fifteen carvings are
+that group's account.
+
+### 64.2 Bands, and the deal
+
+Euan, 11 Nov 2026, on the built sixty: "make sure they're placed in the right ways... tied into the world generation in a
+way that makes it never glitchy, similar to vanilla villages... and how far out you can find them, and a ton of
+variation, so you very rarely see two of the same unless you really explore a lot."
+
+**How far out.** A kind's rank is where its tier begins: tiers 1..5 are ranks 0..4, one further out for the down group
+(`Family.rankOf`); they live in the fewest lands, so where they can stand they are drawn more often (weight 16 to 18
+against 10). A cell never deals a kind more than one rank above its land's, and one rank early a kind has three
+tenths of its weight: a foretaste of what the next band out holds, never the band after. At the land's rank and one
+under it a kind has full weight; older ones halve per rank. Within a kilometre of the start a monuments' cell holds
+something at least one time in three (`Sites.deal`), so the land near home is never empty; past that it follows the
+same rich and quiet stretches as everything else (`Sites.richness`).
+
+**Rarely the same twice.** Monuments are dealt like a hand from a shuffled deck, a block of eight cells by eight at a
+time (3,072 blocks square; `Sites.deal`). The block's cells that hold something take their turn in the order of their
+hashes, and each draws, by the weights of its own land and rank, from the kinds no cell of the block has drawn yet. So a
+kind stands at most once in a block, and where the land offers fewer kinds than the block has cells, the cells left over
+stay empty: that is the quiet between. A cell passes over the families its touching cells drew while anything else is
+left for it. Then each cell that holds a card is dealt a second from what the block still has, for when its first finds
+no ground here or stands too near something: a card, not a fresh deal, so the block still holds each kind once and no
+kind turns up where its land did not ask for it. Across the edge of two blocks, a card yields where a cell with first
+say (the lower hash) within six cells stands the same kind; only cells that hold that very card are asked what they
+built. So from any monument the next of its kind is never nearer than 2,300 blocks, and in a counted world it is
+kilometres further (§64.9). Lands by family are in each file's `lands(...)`: every land has at least three families at
+rank 0.
+
+(The first deal, twelve cells by twelve with one card each and a yield to any cell that had only drawn the kind, was
+counted in a real world on 11 Nov: no twin nearer than 2,589, but nothing within a kilometre of the start, one cell in
+five lost to a twin that never stood and one in five to a structure that could not have been there.)
+
+### 64.3 Meeting the ground
+
+The first count of a real world with the three (10 Nov) stood 12 monuments in 616 choosing cells: a footprint a hundred
+wide found no ground level to a few blocks. A monument no longer asks for level ground; it is placed where it can be
+made to belong, and then the land is made up to it the way it is to a village.
+
+**Choosing the spot** (`Anchors.terrace`, `Sites.stand`). A monument is tried as the shape it is, not as a disc as wide
+as its reach. Before a spot is looked for, this very monument (its kind, its site's own seed) is built once on level
+land and its ground read off (`Anchors.foot`), on a lattice eight apart: the columns its **terrace** levels; the
+**ring** sixteen round them that the land is eased over; and what else it **builds** on the land's own ground (piers,
+a fallen piece: only what meets the ground, so a deck high over the land does not count and a road may cross a
+stream). So a hall is tried as a box a hundred long and twenty-eight wide, a stair as the small terrace at its foot
+and a line of piers, a road as its piers alone. (Tried as discs, the Sleepers' Hall stood nowhere in a counted world
+and the roads and stairs rarely; and a disc is no truer for the round ones than their own round terrace.)
+
+A cell offers 49 spots on a grid 24 apart, all inside its edge, and at each the monument is tried in all four turns.
+A spot and a turn fit when: every terrace column is dry and they lie within the kind's `slope` (15 to 22) and two of
+each other; the site is no higher than 110 over the sea; the ring is dry and nowhere more than 28 under the floor (40
+for `Anchor.HIGH`, the masts and orreries, which belong on crowns) or 24 over it, because no wall and no eased bank
+makes more than that look meant; and what stands on the land's own ground is dry and neither buried (12 over) nor on
+stilts (40 under). A monument with no terrace is held to its slope across what it builds and to the same ring round
+that, which is not eased and so may hold a river: a road may stand on a bank, never on a crag.
+
+Of all that fit, the best is taken, never the first: the gentlest ground (anything within six from low to high counts
+as gentle, so a monument still finds a fall to look down), half the fall of the ring added, so the lip of a cliff
+loses to calmer land; and a way in that is a walk: the ground twelve past the head of its steps (`G.stairs` tells the
+scene where they are, `Scene.ways`) a little under the floor, three up to ten down, where a climb or a drop costs as
+much as rough ground does. For `Anchor.HIGH` the highest spot, a rough crown counting against it. So the turn is
+chosen with the spot: a hall lies along the contour, and steps never run out over a cliff. The slope a kind allows is
+only what it puts up with where the cell has nothing better. Last, the one taken is looked at for water standing over
+its floor (a lake held above the sea), and the next best tried if there is any. The site's height is six tenths of
+the way up its terrace's columns, so it is built up more than it is cut in. Spots and turns share the lattice, so
+about a thousand columns of the generator's noise answer for all of it (`Terrain.memo`, shared by a cell's two cards).
+
+**Clear of what else stands there** (`Sites.stand`, `Anchors.Clear`). The spots are asked this too, from the best
+down, so a monument steps aside from a village or a spire the way it steps off rough ground, and is lost only where
+its whole cell is taken (asked once, of the one best spot, 27 first cards were lost to settlements that a step of fifty
+blocks would have cleared). A spot is clear when: the land it belongs to lies under its middle and at least three of
+four points half way out; nothing else that stands on the land starts within its reach and `Sites.APART` (40), which is
+every sparse structure set with a biome of its own there, ours and Minecraft's (a spire, a monolith, a temple, a delve's
+mouth: `Terrain.starts`, each set asked one square of its spacing at a time); no settlement starts within its reach
+and 150, ours first (`awaken:settlement_grid`; a walled village is some 80 across from its anchor, which the land may
+move 32), then outposts and mansions, and not the city; and no monument with first say stands within 300, or within
+both their widths and 24, so two never share ground or crowd each other. Found by the first worlds made without a
+client (§64.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
+was asked, which our villages' pack empties; and a Tether Spire stood in a Water Clock's lawn, because only two chunks
+from the monument's middle were asked. The margin from other landmarks is forty and not more because this world has
+something standing within 150 blocks of nearly every spot: at eighty, 167 monuments stood where 263 do.
+
+What a monument plants round itself (`B.wild`) is never in water nor at its edge, and the feature never swaps water
+for something that grows: a monument may stand by a river now, and the river is left whole.
+
+**Making the ground** (`kit/G.platform(shape, top)`). Level inside the footprint. Round it, over `G.SKIRT` (10) blocks,
+the land is eased until it stands no more than `G.WALL` (6) below the floor or `G.CUT` (4) above it: a long gentle
+regrade in the land's own skin, grass or sand or snow, with three of what lies under that skin and rock below. What is
+left the masonry takes: a battered retaining wall that stands on each column's own ground, with a parapet where it is
+tall; the cut faced and coped where the land rises; a kerb flush with the grass where it is level. `G.stairs` runs
+steps from the terrace down (or up) to the ground as the regrade left it. `G.foot` fills masonry under anything built
+over a curved or tilted floor (the Dish's spike stood a block clear of its bowl). Piers (`M.pier`), stairs and fallen
+pieces stand on each column's own ground. Roads need no terrace at all. A kind's `reach` holds its terrace and the
+skirt. Where a monument stands over a ravine or a cave's mouth, the feature looks 48 down for the real floor and fills
+from it with rock: nothing is bridged and nothing hangs. Everything that grew inside the reach is cleared, and the
+kind plants its own trees and grass back on the regraded ring (`B.wild`), so it stands in a glade of its own land.
+
+**Writing it into the land** (`FindsFeature.write`, a chunk at a time). Under every column the terrace shaped, the
+real ground is found from the land's real top down (the heightmap; not from twenty over the floor, which began inside
+any hillside higher than that, took its earth for the land's skin and left the hill above hanging). Everything over
+the floor goes, ground or not, and the search carries on to the floor and under it: a tree's branch or a village's
+eave over a column is not its ground. A half step of the soft land (§31.2) is the land's skin half a block up: it
+goes, and the block it stood for is what the column is made of. The column is finished with the land's own top block,
+whatever this land is made of (grass, sand, snow, terracotta, our lands' own grounds), three of what lies under it
+and rock below; under a tree and under a soft step the top is bare earth, so it takes the skin it had or its
+neighbours' (`skinNear`), and the earth under every tree the clearing fells is skinned the same way. Only a whole
+block is ground: a plant of ours that nothing replaces (heather, bracken, clover), standing exactly at the floor, would
+be taken for it and the column stay a block low. What grows is cleared up to the land's real top with whatever stands
+on it, not to 46 over the floor (a great tree on ground the terrace cut away kept its crown in the air beside the
+Archive). Before these rules a lawn had a pit one block wide wherever a branch hung over it (two each at two of the
+first six made; none in the 23 made since), a square of dirt for every tree and every step (98 and 256 at two of
+them; since, none at 21 of 23), and earth or stone where a deep cut was floored.
+
+**Felling a tree whole** (`FindsFeature.sweep`). A trunk goes where the terrace, a pier or the clearing takes its
+column; its crown hangs on past them, over the next chunk, beyond the clearing's edge. Where a call took a trunk, every
+group of the land's leaves and logs within ten of that chunk that stands on nothing goes with it, as the roads and the
+villages do for their own felling (`city.SettlementPaint.sweep`): a group stays if a log of it stands on the ground,
+if it is a low bush on the ground, if it runs past what the call can see, if it is the scene's own tree, or a hero
+tree's (`terrain.api.HeroTrees`). What the place itself planted is told by what stands there, not by where: a tree of
+the next chunk that grew its leaves over a tuft the place had planted was spared for standing in the tuft's spot.
+Counted on the 23 made: 123 hanging clusters before, 16 after, and most of those far from anything a monument built
+(the world leaves a few by itself).
+
+**The scene's trees are the land's** (`Scene.liveLeaves`, after every build). A road or a village that crosses a
+monument's ground fells the land's trees in its way and sweeps what hangs, but spares kept leaves as somebody's hedge
+(`CityWriter.vegetation`). Laid over one of our planted trees it took every log and left the whole crown in the air
+(the Mooring Mast, the Sealed Shaft: 25 and 21 logs gone, some 180 leaves hanging each). So every leaf of a scene
+within six of one of its own logs, counted through leaves as the game counts, is written as a living leaf with its
+distance set; a road now fells such a tree whole. Leaves no log reaches stay kept (a hedge, a drift, a bush).
+
+**Nothing of the scene's in the ground.** The last pass of every monument lays mats of moss on low open tops
+(`M.age`). Masonry one under the turf has nothing in the scene over it, so it read as an open top, and a mat laid
+there took the turf's place when the scene was written: the Sleepers' Hall, whose vault lies one under its lawn, had
+some fifty one-block pits in it in the second and third game pictures. A mat is laid only above its column's ground.
+
+**Snow** comes back wherever the sky sees, over everything the clearing touched (it reaches seven blocks into the
+chunks beside the one being written, and takes snow with what grows): by the world's own rule on the ground and on
+what the place planted, and in drifts on what was built (a noise of the site's own, about half of it, some six blocks
+across), never on a part, a prop or a lamp. Laid a chunk at a time and wherever the scene had written no air, it lay
+in squares on green and in the outlines of rooms.
+
+**Read from many threads.** A scene is read by every worldgen thread that writes a chunk of it and by the server; its
+two maps of ground heights fill as they are asked, so they are only touched under their lock (`Scene.ask`).
+
+**The site's heart** is two under the ground at the site's middle and is solid though unseen. A generator that digs (a
+pit, a pool, a cleft) sets its hole off from the middle so the heart lies under masonry or ground.
+
+**The skyline rule.** Every monument shows above the trees: a sunk one carries a mark that does (the Hall the ribs of
+its fallen vault and great trees, or a clerestory house; the Shaft its giants or pylons; the Garden its gateposts).
+
+**The site box** for clicks is 64 below to 128 above the heart (`Site.holds`).
+
+### 64.4 The kit, and the things you do
+
+Added to `kit/M`: `giant` (a robed, hooded figure 15 and more tall, standing, seated or lying on its back, broken at the
+waist), `ring` (a band of a ring in any plane, broken by degrees), `ringStuff`, `dome` (shell, ribs, eye, with a keep
+function), `tower` and `spiral` (a round wall, and a stair of slab wedges inside it that is walked, not jumped),
+`haunch` (an arch as the depth of stone under a deck), and `finish`. Verbs added: `Order` (parts worked first to last,
+or one part so many times), `Points` (a remain's carving), `Guide.each` (something at every waypoint). In MGarden,
+`NightGate`: shut by day, open after dark to anyone standing at it, and from inside it opens to a hand at any hour.
+What you do, by family: carry the fallen stones back (Dish); wind out planks over the gap (Road, `Swap`); put five
+tablets back in the order the floor studs give (Archive, `Sockets.inOrder`); climb and let the counterweight go (Stair);
+climb inside and knock out the pin, and what hangs comes down (Mast); give each wheel as many turns as its post has studs
+(Orrery, `Turn`); light the lamps in the order they lay down (Hall); come back after dark and follow the flowers as they
+open (Garden); open the sluices from the top down, and real water runs (Clock, `Order`, `Scene.flow`); go down the
+ledges to the one door that is only latched (Shaft); push the capstan round six times (Chains); dig the door out (Door,
+`Dig`). No fights, and no way to be shut in.
+
+### 64.5 No two sites alike
+
+`M.finish(wet, wear)` is every monument's last pass: `age` with what its land adds (desert and badlands dry and worn,
+with sand drifted against the side the wind comes from; jungle and swamp wet, with vines down the faces; forest and the
+dark woods a little of both; mountain and snow bare and worn), shifted ten either way by the site's own seed. Which arc
+fell, which corner slumped, which giant lost what, are picked from the seed (`Mon.pick`). `Mon.camp` leaves one of five
+kinds of later people at its foot: climbers, herders, pilgrims, a hermit, or nobody.
+
+### 64.6 Remains
+
+Layer 1 (cells 256, chance 0.8 in lively land): fifteen kinds of `FSet.REMAINS` (`sets/Remains`), small, from the same
+kit: a giant's head, a lone arch, milestones, a pier with no bridge, a fallen column, steps to nothing, a piece of a
+ring, a link, a lamp still lit, a bed in the open, a trough, a door lying down, a piece of a rim, a stone hand, a
+waymark. A remain stands only where a monument stands within 1,000 blocks and outside that monument's own ground, and is
+turned to face it. Its one carving has the System say its line, then which way and about how far; that way is kept as a
+lead (Tasks page). No relic.
+
+### 64.7 Relics that grow, and hoards
+
+Twelve, one a family (`finds/Relics`), given by code the first time any of a family's five is finished at a site;
+`Family.done` (how many of the five a player has done) is the relic's step, 1..5, so nothing is saved on the item and a
+lost relic given again is as strong as it was. All five: a whole level (`family/<name>`). Steps:
+Listening Stone hears 500 blocks further each step, at 3 says whether you have been there, at 5 what it is; Waystone
+gives back a fifth more of what running on a road or path costs; Reading Glass makes a carving's first reading worth
+0.8% of a level a step; Counterweight rests 60, 45, 30, 15 seconds, then not at all; Mooring Ring 12% knockback and 15%
+blast resistance a step; Pocket Rings the hour and the way home, then weather, then how long the light lasts, then where
+you last fell; Sleeper's Lamp off hand below the sea's level, then any roof, then either hand, then carried, then the
+open night too; Night Bloom a half heart every 5, 4, 3, 2, 1 seconds standing still in the dark; Float 12% water
+movement and a fifth of your breath back a step; Seal Shard 6 to 14 seconds of fire resistance, resting 150 down to 30
+seconds; Link draws items from 3.7 to 8.5 blocks; Digger's Glass 20% faster in shovel ground a step. A relic that
+touches another system uses vanilla attributes and effects only.
+Hoards: `finds/hoard_e` .. `hoard_s` by the kind's rank: olden stone and bronze (which can be had no other way) and
+one to three rolls of the finds' own tier table. A site pays a player once.
+
+### 64.8 The twelve
+
+| Family | Tier 1 | 2 | 3 (painted) | 4 | 5 |
+|---|---|---|---|---|---|
+| Dish | The Small Ear | The Fallen Ear | The Listening Dish | The Twin Ears | The Ear That Still Hears |
+| Road | The Three Arches | The Fallen Road | The Long Road | The Double Road | The Road That Still Runs |
+| Archive | The Reading Room | The Fallen Archive | The Archive | The Buried Archive | The Whole Archive |
+| Stair | The First Flight | The Fallen Stair | The Stair That Stops | The Stairs That Never Met | The Stair That Goes On |
+| Mast | The Mooring Post | The Fallen Mast | The Mooring Mast | The Twin Masts | The Mast With Its Ship |
+| Orrery | The Small Rings | The Fallen Rings | The Orrery | The Great Ring | The Rings That Still Turn |
+| Hall | The Little Rest | The Fallen Hall | The Sleepers' Hall | The Drowned Hall | The Hall Where One Still Sleeps |
+| Garden | The Small Garden | The Fallen Garden | The Dream Garden | The Drowned Garden | The Garden That Still Dreams |
+| Clock | The Small Count | The Fallen Count | The Water Clock | The Twin Counts | The Clock That Still Counts |
+| Shaft | The Capped Well | The Fallen Ring | The Sealed Shaft | The Shaft of Rings | The Shaft That Is Still Shut |
+| Chains | The Single Chain | The Fallen Chains | The Chain Works | The Hanging Chain | The Works That Still Hold |
+| Door | The Small Door | The Fallen Front | The Door in the Sand | The Door Without a Wall | The Door That Was Left Open |
+
+Changed from the plan's first list while drawing them: the Sky Cradle became the Orrery, the Lantern House the Water
+Clock, the Deep Well the Door in the Sand (each was too like another family in shape or in what you do).
+
+### 64.9 Checks
+
+The `finds_` tests hold all sixty and the fifteen remains to what they held the three to (every scene stands, nothing
+floats, every walkthrough is finished by a scripted player). The dump writes every monument on a level pad and the
+painted one of each family on a hillside (`Terrain.hill`), and `tools/content/finds_render.py` draws them.
+`tools/content/finds_tour.py` writes a tour for the painted and the whole one of each family, and four tours
+(`placed-a..d`) that go to twelve monuments where the world put them, three pictures each, to see how they sit.
+
+**The count** (`/awaken finds census`; without a client `tools/content/finds_census.sh`: a dedicated dev server with
+`AWAKEN_FINDS_CENSUS=<rings>` in its environment counts into its log and stops, `FindsEvents.countAndStop`). It asks only
+the generator's noise, so 17 km square is counted in about three minutes. It takes a fair sample of what stands (the
+four nearest the start, the eight on the roughest ground, the nearest painted one of every family; or with
+`AWAKEN_FINDS_ONLY=<kind ids>` the nearest of each of those kinds) and writes it one of two ways for the renderer:
+
+- `AWAKEN_FINDS_REAL=1` (`REAL=1` to the script; `FindsDump.real`): each scene on the generator's own ground with twenty
+  blocks of land round it and the water on it. No land is made; trees and what else stands there are not in it.
+- `AWAKEN_FINDS_REAL=world` (`WORLD=1`; `FindsDump.world`): **the world as made.** The chunks each one stands in are
+  generated and every block open to the air is written, trees, snow, villages and all, so the drawing is the game's own
+  without a client. It also says what is wrong where each stands: holes (a column the terrace shaped whose ground is
+  not there, with what is in it), bare earth, and how near the next settlement and the next other landmark start. Ten
+  minutes for twenty-three, where a look tour waits hours for a runner; this is what found the mast in a village and
+  the spire in a lawn (§64.3). The script throws away the land an earlier run made, or a changed feature would be read
+  back as it was. The renderer draws our own blocks from their models and the soft land's slabs as slabs
+  (`FINDS_VIEWS=se,nw` for only those views, `FINDS_JOBS` for how many at once: a world as made is large).
+
+The first game pictures of monuments where a world put them (tours `placed-a..d`, 39 pictures, 11 Nov) found five
+things wrong in how any monument is written into the land, all in §64.3 now: snow in squares and in the outlines of
+rooms, pits in lawns, squares of bare earth and stone, a mast in one of our villages, a spire in a lawn. The second
+(48 pictures, the same day, on those fixes) found two more: some fifty pits in the Sleepers' Hall's lawn, and leaves
+left in the air over a clearing. The pits were first taken for plants standing at the floor; the third pictures
+showed them still there, and they were the scene's own moss mats in the ground. The fourth (42 pictures) showed the Hall's lawn whole and leaves still in the air by the Archive, which is what
+"Felling a tree whole" in §64.3 is for. The dump now also says **what of each scene the world does not hold** (every
+block it built against the block standing there, counted by what was meant and what is there instead: that is what
+showed a road taking a planted tree's logs), and `tools/content/finds_hanging.py` counts the hanging clusters of
+living leaves in each dump. The dump now also counts **dips**
+(a shaped column whose top whole block lies under its floor and under all four neighbours', whoever put it there),
+which finds what the count of holes passes over, and its holes take anything at the floor that is not a whole block.
+`/awaken finds view` looks for the nearest standing one of a kind off the server's own thread and goes there when it
+is found: on the server's thread the search for one eight kilometres off held the game 45 seconds, and three tours
+in twelve lost their GPU on the runner while it ran. The placed tours wait 70 seconds for it.
+
+The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42% of it sea):
+
+| | |
+|---|---|
+| Monuments standing | 263, of 51 kinds (545 cells drew a card; 77 stand on their second) |
+| By the land's rank | E 78, D 58, C 82, B 29, A 11, S 5 |
+| From the start | the nearest 264 away; 3 within 1,000; 8 within 2,000 |
+| To the next monument | least 303, middle 478, most 2,293 |
+| To the next of the same kind | least 2,471, middle 4,174 |
+| From any spot (sea included) | half the land within 530 of one, nine tenths within 1,001 |
+| First cards lost (the best spot's reason) | no ground 119, a twin standing near 98, another landmark 78, a settlement 27, wrong land 22, a monument too close 10 |
+| As made, the sample of 23 | no holes; 11 dips, all the scenes' own (a worn step, a well, a basin); bare earth at 1 (11 squares); 16 hanging clusters of leaves in all, at 3 of the 23; a road crosses the ground of 3 (it fells a planted tree at each); the nearest settlement 200 off, the nearest other landmark 80 |
+
+(Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
+With `Sites.APART` at 80 instead of 40: 167.)
+
+That is the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.88 a
+square kilometre over land and sea, about 1.5 over land; `Sites.BASE[2]` 0.85 holds it there). The nine kinds that
+did not stand in this square are fourth and fifth tiers, which belong to ranks A and S: this square holds only the
+corners of those bands. Before the rules of this section the same square stood 12 (level ground only), then 122 (the
+first spot that fits, one card, blocks of twelve, discs), then 252 (the best spot, two cards, blocks of eight, discs:
+the Sleepers' Hall 0 of 8; by its own footprint 5 of 5).
