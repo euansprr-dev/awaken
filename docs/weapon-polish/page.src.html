@@ -1,0 +1,376 @@
+<title>Weapon Polish Pass</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Sora:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column with full-width figures; gold always means "proposed", steel means "today". */
+:root {
+  color-scheme: dark;
+  --bg: #12131a; --panel: #1a1c26; --panel2: #20232f; --line: #2c2f3e; --fg: #e8e7ef; --muted: #9c9eb2;
+  --gold: #e2c078; --steel: #8fb4d8; --good: #7fc99a; --bad: #e08a7a; --shot: #0d0e14;
+  --display: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  color-scheme: light;
+  --bg: #f2f1f6; --panel: #ffffff; --panel2: #f7f6fa; --line: #d8d7e2; --fg: #1c1d28; --muted: #5a5c72;
+  --gold: #85600c; --steel: #2c5c8c; --good: #1f6f45; --bad: #a8402e; --shot: #12131a;
+} }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f1f6; --panel: #ffffff; --panel2: #f7f6fa; --line: #d8d7e2; --fg: #1c1d28; --muted: #5a5c72;
+  --gold: #85600c; --steel: #2c5c8c; --good: #1f6f45; --bad: #a8402e; --shot: #12131a;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 56px; }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: clamp(22px, 3.2vw, 30px); font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 19px; font-weight: 600; }
+p, li { max-width: 68ch; margin: 0; }
+ul, ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 19px; line-height: 1.55; }
+.muted { color: var(--muted); }
+.gold { color: var(--gold); } .steel { color: var(--steel); }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--gold); background: var(--panel); border-radius: 0 8px 8px 0; max-width: 72ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.fact b { font: 600 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: 14px; line-height: 1.4; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+figcaption { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 80ch; }
+img { display: block; max-width: 100%; height: auto; border-radius: 8px; background: var(--shot); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tag { font: 600 12px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.dirs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dirs > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dirs h3 { font-size: 15px; }
+.dirs p { font-size: 14px; line-height: 1.45; color: var(--muted); }
+.pick { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v { font: 600 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; border: 1px solid currentColor; white-space: nowrap; display: inline-block; }
+.v.fat { color: var(--bad); } .v.ok { color: var(--steel); } .v.keep { color: var(--good); }
+.style { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; gap: 12px; }
+.tiers { display: flex; flex-wrap: wrap; gap: 6px; }
+.tiers button { font: 500 13px/1 var(--body); color: var(--fg); background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+.tiers button[aria-pressed="true"] { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 600; }
+.tiers button:focus-visible, .zoomer:focus-visible, .copy:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+.strip { overflow-x: auto; border-radius: 8px; background: var(--shot); }
+.strip img { width: 100%; border-radius: 0; }
+.strip.big img { width: 960px; max-width: none; }
+.zoomer { align-self: flex-start; font: 500 13px/1 var(--body); color: var(--steel); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: underline; }
+.stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.stage { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.stage .eyebrow { color: var(--gold); }
+.stage p { font-size: 14.5px; line-height: 1.5; }
+.twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.twocol > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 0; background: var(--panel); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+legend { font: 600 17px/1.2 var(--display); padding: 0 6px; }
+label.opt { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; line-height: 1.45; }
+label.opt input { margin-top: 4px; accent-color: var(--gold); }
+label.opt small { color: var(--muted); display: block; font-size: 14px; }
+.rec { font: 600 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; padding: 2px 5px; margin-left: 6px; white-space: nowrap; }
+textarea { width: 100%; min-height: 84px; background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 15px/1.5 var(--body); }
+.copy { align-self: flex-start; font: 600 15px/1 var(--body); background: var(--gold); color: var(--bg); border: 0; border-radius: 8px; padding: 12px 18px; cursor: pointer; }
+pre.answer { white-space: pre-wrap; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 14px/1.5 var(--mono); margin: 0; max-width: 100%; overflow-x: auto; }
+svg text { font-family: var(--mono); }
+@media (max-width: 720px) {
+  .pair, .twocol { grid-template-columns: 1fr; }
+  .dirs { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<div class="wrap">
+
+<section>
+  <span class="eyebrow">AWAKEN · plan for your approval · 10 November 2026</span>
+  <h1>Weapon polish pass</h1>
+  <p class="lede">I looked at all 111 weapon models as they are in the game today. The fat blades have one cause, and one fix brings every blade up to the Maul's level without redesigning anything. Nothing is built. Your five answers are at the bottom.</p>
+  <div class="facts">
+    <div class="fact"><b>82</b><span>weapons change: every bladed kind, and 11 Lord-forged</span></div>
+    <div class="fact"><b>29</b><span>stay exactly as they are: the Maul, War-staff, Precursor Arm, Gauntlets</span></div>
+    <div class="fact"><b>0</b><span>changes to length, grip, stats, recipes, holds or swings</span></div>
+    <div class="fact"><b><!--LS_PCT--></b><span>thinner on screen for the Longsword, and it gains a real point</span></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">What you asked for</span>
+  <h2>Keep the language, lose the fat</h2>
+  <blockquote>"Some of them are a bit too chunky and don't look that good in the hand. Some of the blades to me look a bit fat. Most are still really good, like the Maul... the Katana is decent, but I think can still be slightly improved... I don't want to completely scrap everything."</blockquote>
+  <div class="twocol">
+    <div>
+      <h3>How I'll know it worked</h3>
+      <ul>
+        <li>In first person a blade reads as a blade at a glance: thin at the edge, a clear point, one clean line of light down it.</li>
+        <li>Each weapon is plainly still the same weapon. Same outline, same materials, same hilt.</li>
+        <li>The Maul and the other block-shaped weapons are untouched.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What would be a failure</h3>
+      <ul>
+        <li>Thinner, but still a stack of boxes.</li>
+        <li>A new look that loses the chunky painted feel. You have turned down two looks before: plain cubes ("still very, very blocky") and smooth sculpted meshes ("too thin and noisy"). This plan stays between them.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">What I found</span>
+  <h2>Every blade has a hammer's body</h2>
+  <p>The weapons' look was built from one reference picture, and that picture is a hammer. The Maul is that hammer, which is why it is the best one. Every blade was then built by the same rules, so every blade got a hammer's mass. A Longsword's blade today is 5 wide with a square post 3 wide and 3 deep down its middle. That post is what reads as fat.</p>
+  <figure>
+    <svg viewBox="0 0 760 220" role="img" aria-label="Blade cross-sections drawn to one scale: a vanilla sword, the Longsword today, and the Longsword proposed" style="width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px">
+      <g font-size="12" fill="var(--muted)">
+        <text x="110" y="28" text-anchor="middle">Vanilla sword</text>
+        <text x="380" y="28" text-anchor="middle">Longsword today</text>
+        <text x="650" y="28" text-anchor="middle">Longsword proposed</text>
+      </g>
+      <!-- 1 texel = 36px; held sizes differ, so each is drawn at its size in the hand: vanilla 0.68, ours 0.425 -->
+      <g transform="translate(110 110)">
+        <rect x="-49" y="-12.2" width="98" height="24.5" fill="var(--steel)"/>
+        <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--muted)">1 thick</text>
+      </g>
+      <g transform="translate(380 110)">
+        <rect x="-38.2" y="-7.6" width="76.5" height="15.3" fill="var(--steel)"/>
+        <rect x="-23" y="-23" width="46" height="46" fill="var(--steel)"/>
+        <rect x="-23" y="-23" width="46" height="46" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--bad)">a 3 by 3 post</text>
+      </g>
+      <g transform="translate(650 110)">
+        <polygon points="-38.2,0 -7.6,-15.3 7.6,-15.3 38.2,0 7.6,15.3 -7.6,15.3" fill="var(--gold)"/>
+        <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--gold)">a flat, two bevels, a knife edge</text>
+      </g>
+      <text x="380" y="204" text-anchor="middle" font-size="11.5" fill="var(--muted)">Each cut straight across the blade, drawn at the size it is held in first person.</text>
+    </svg>
+    <figcaption>Today's blade is nearly twice as thick in the hand as a vanilla sword's (0.080 against 0.043 of a block). The proposed blade is thinner than vanilla's on average and comes to a true edge.</figcaption>
+  </figure>
+  <!--INGAME_BEFORE-->
+  <div class="twocol">
+    <div>
+      <h3>Why you see it more now</h3>
+      <p>On 9 November you asked for swords to be held like a vanilla sword, edge ahead. That was right, and it is in the build. It also means the eye now looks straight at the blade's thickness. Before that, the flat was turned toward you and hid it.</p>
+    </div>
+    <div>
+      <h3>The second cause: steps</h3>
+      <p>Points, axe bits and spear heads are stacks of boxes, so they end in stairs. A stepped tip reads blunt however thin the blade is.</p>
+    </div>
+  </div>
+  <p class="muted">Two things I checked and ruled out. The weapons are not too big: at mid-blade a Longsword is <!--LS_TODAY--> pixels across on a 1280 by 720 screen and a vanilla diamond sword is <!--VANILLA-->. And the hilts are not the problem any more: the 2 November pass already brought them down to 5 deep.</p>
+</section>
+
+<section>
+  <span class="eyebrow">The audit</span>
+  <h2>All sixteen kinds, graded</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Kind</th><th>Verdict</th><th>Blade today<br>wide × thick</th><th>Proposed</th><th>On screen<br>today → proposed</th></tr></thead>
+      <tbody>
+<!--GRADES-->
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Sizes are in texels (one texel is one pixel of the player's skin). "On screen" is the width of the held weapon across its own length at mid-blade, in first person at rest, on a 1280 by 720 screen, for the Gatewrought weapon of each kind.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Three ways to fix it</span>
+  <h2>Grind the blades</h2>
+  <p>The same Gatewrought Longsword four ways, at your first-person view, then upright from the front and from the edge.</p>
+  <div class="dirs">
+    <div><img src="direction_today.jpg" alt="The Gatewrought Longsword today in first person and upright" loading="lazy"><h3>Today</h3><p>Three stacked planks and a stepped tip.</p></div>
+    <div><img src="direction_a.jpg" alt="The same sword with a thinner core" loading="lazy"><h3>A. Thinner boxes</h3><p>The post made 2 deep. Cheapest. You can hardly tell.</p></div>
+    <div class="pick"><img src="direction_b.jpg" alt="The same sword with a ground blade and a true point" loading="lazy"><h3 class="gold">B. Ground blades</h3><p>A flat, a real bevel each side to a knife edge, a true point. My recommendation.</p></div>
+    <div><img src="direction_c.jpg" alt="The same sword one texel thick" loading="lazy"><h3>C. Flat, like vanilla</h3><p>One texel thick. Loses all its weight and still has stairs.</p></div>
+  </div>
+  <div class="twocol">
+    <div>
+      <h3>Why B</h3>
+      <ul>
+        <li>It is the only one that removes the stacked planks and gives a real point.</li>
+        <li>It keeps the same pixel size, the same paint, the same hilts. Only the blade's cut changes.</li>
+        <li>The blade becomes one clean plane that catches the light, so it reads sharp when it moves.</li>
+        <li>The models get lighter, not heavier: the Longsword goes from 248 triangles to 188.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What it costs, and the guard rails</h3>
+      <ul>
+        <li>One new piece in the model toolkit: a slanted face. Everything else is the box toolkit you have now.</li>
+        <li>The risk is drifting toward the sculpted look you rejected. So: flat faces only, never smoothed; one bevel a side; no new kinds of detail; hilts, stones, hafts and chains untouched.</li>
+        <li>A fourth way, re-sculpting the weapons, would scrap the language. I did not draft it.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!--INGAME-->
+
+<section>
+  <span class="eyebrow">Every weapon I would change</span>
+  <h2>Before and after, four views each</h2>
+  <p>Each picture shows one weapon today and proposed: in first person at your view, in third person, as the Hall of Arms shows it (face and edge), and its inventory icon at two sizes. Pick a rank to see it. Tap a picture to enlarge it.</p>
+  <p class="muted">These are rendered outside the game with the game's own weapon shader and first-person camera maths. The third-person figure is a plain stand-in the player's size, with the weapon where the game's hand puts it. The icons are the real generated icons.</p>
+<!--GALLERY-->
+</section>
+
+<section>
+  <span class="eyebrow">What stays the same</span>
+  <h2>The promises</h2>
+  <div class="twocol">
+    <div>
+      <h3>Never changes</h3>
+      <ul>
+        <li>Every weapon's name, id, damage, speed, uses, recipe and where you find it.</li>
+        <li>Its length, its grip and which side its edge is on. I measured all 82: every end is within half a texel of today's.</li>
+        <li>How it is held and every swing. The weapon-feel plan needs nothing re-done because of this one.</li>
+        <li>Hilts, guards, stones, hafts, chains, glows and the light that lifts off the high ranks.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Changes</h3>
+      <ul>
+        <li>The blade's cut: a flat, a bevel, a knife edge, a point.</li>
+        <li>Axe bits become wedges. Spear heads become real leaves and spires.</li>
+        <li>Curved blades (Katana, Glaive, Scythe, tusks) become one smooth curve with no joints.</li>
+        <li>The Shieldblade's sword slims from 6 wide to the Longsword's 5, with its lit groove painted into the flat.</li>
+        <li>Icons are redrawn from the new models, so they gain the points too.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">How it gets built</span>
+  <h2>Four stages, each one undoable</h2>
+  <div class="stages">
+    <div class="stage"><span class="eyebrow">Stage 0 · proof</span><h3>Longsword and Katana</h3><p>All six ranks of each, in the real game. A look tour in first person, third person and the Hall, and the War Anvil forging one. I send you the shots.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 1</span><h3>Blades held edge ahead</h3><p>Greatblade, the Shieldblade's sword, Daggers, Twinblades, Rapier. 29 weapons.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 2</span><h3>Heads on hafts</h3><p>Axe, Spear, Glaive, Scythe, Chainblade. 30 weapons.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 3</span><h3>The Lord-forged</h3><p>The 11 with blades, each re-cut by hand and shown to you before it lands.</p></div>
+  </div>
+  <div class="twocol">
+    <div>
+      <h3>How each stage is checked</h3>
+      <ul>
+        <li>The model checks that exist today, plus new ones for slanted faces (no gaps, no faces fighting over one plane, no stretched pixels).</li>
+        <li>The full test suite on CI.</li>
+        <li>A look tour in the real game, every shot read for clipping, floating parts and wrong scale before you see it.</li>
+        <li>Every weapon's ends measured against today's.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Undo, cost and risk</h3>
+      <ul>
+        <li>Only generated files change (models, textures, icons). One commit per kind, so any kind can be put back alone.</li>
+        <li>About 2 hours for Stage 0 and 4 for the rest. The drafts on this page already exist.</li>
+        <li>Main risk: it reads like the sculpted look in play. Stage 0 is there to find that out on two weapons, not eighty.</li>
+        <li>The build is about to get the new K menu and Hall. I merge that in first.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="decisions">
+  <span class="eyebrow">Your decisions</span>
+  <h2>Five answers</h2>
+  <p>My recommendation is picked for each. Change what you like, then copy the answers and paste them to the session that sent you this page.</p>
+  <form id="answers" onsubmit="return false" style="display:flex;flex-direction:column;gap:16px">
+    <fieldset><legend>1. The direction</legend>
+      <label class="opt"><input type="radio" name="d1" id="d1a" value="Ground blades (B)" checked><span>Ground blades <span class="rec">recommended</span><small>A flat, a bevel, a knife edge, a true point.</small></span></label>
+      <label class="opt"><input type="radio" name="d1" id="d1b" value="Thinner boxes only (A)"><span>Thinner boxes only<small>Safest and smallest. Blades stay stacked and stepped.</small></span></label>
+      <label class="opt"><input type="radio" name="d1" id="d1c" value="Leave the weapons as they are"><span>Leave the weapons as they are</span></label>
+    </fieldset>
+    <fieldset><legend>2. How far</legend>
+      <label class="opt"><input type="radio" name="d2" id="d2a" value="All 82 bladed weapons" checked><span>All 82 bladed weapons <span class="rec">recommended</span><small>One language across the wall. Mixed, the old ones would look worse beside the new.</small></span></label>
+      <label class="opt"><input type="radio" name="d2" id="d2b" value="Swords and the Katana first, the rest after I have played them"><span>Swords and the Katana first, the rest after I have played them</span></label>
+    </fieldset>
+    <fieldset><legend>3. The Lord-forged</legend>
+      <label class="opt"><input type="radio" name="d3" id="d3a" value="Grind the Lord-forged too, last, each by hand" checked><span>Grind them too, last, each by hand <span class="rec">recommended</span><small>The drafts here are an automatic first pass. Each gets its own care and you see it first.</small></span></label>
+      <label class="opt"><input type="radio" name="d3" id="d3b" value="Leave the Lord-forged alone"><span>Leave the Lord-forged alone</span></label>
+    </fieldset>
+    <fieldset><legend>4. The Katana's length</legend>
+      <label class="opt"><input type="radio" name="d4" id="d4a" value="Katana: same length, new curve and point" checked><span>Same length, new curve and point <span class="rec">recommended</span><small>No motion work needed.</small></span></label>
+      <label class="opt"><input type="radio" name="d4" id="d4b" value="Katana: also two texels longer"><span>Also two texels longer in the blade<small>A little more elegant. The weapon-feel session would re-solve its swings.</small></span></label>
+    </fieldset>
+    <fieldset><legend>5. After the first two weapons are in the game</legend>
+      <label class="opt"><input type="radio" name="d5" id="d5a" value="Send me the Stage 0 shots and carry on" checked><span>Send me the shots and carry on <span class="rec">recommended</span><small>You can stop it at any stage.</small></span></label>
+      <label class="opt"><input type="radio" name="d5" id="d5b" value="Stop after Stage 0 until I have played it"><span>Stop until I have played them</span></label>
+    </fieldset>
+    <fieldset><legend>Anything else</legend>
+      <label for="notes" class="muted" style="font-size:14px">A weapon you like as it is, one that still looks fat, anything I got wrong.</label>
+      <textarea id="notes" placeholder="Optional"></textarea>
+    </fieldset>
+    <button class="copy" id="copy" type="button">Copy my answers</button>
+    <pre class="answer" id="out" aria-live="polite"></pre>
+  </form>
+</section>
+
+<section>
+  <span class="eyebrow">How this was checked</span>
+  <h2>What is real here and what is not</h2>
+  <ul>
+    <li><b>Real:</b> every "today" model is built from the game's own weapon file, unchanged. Every "proposed" model is a real draft built by the same pipeline, with real textures and icons.</li>
+    <!--REAL_GAME-->
+    <li><b>Outside the game:</b> the four-view pictures. They use the game's shader and first-person camera maths. The third-person figure is a stand-in and the Hall view is the bare model, not the Hall's screen.</li>
+    <li><b>Not done:</b> nothing is in your build. You have not played any of it. The Lord-forged drafts are automatic and rougher than the rest.</li>
+    <li><b>A structured review, not a playtest:</b> I read every picture for clipping, floating parts and wrong scale. That is my eye, not yours in play.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var G = /*GALLERY_DATA*/{};
+  document.querySelectorAll(".style").forEach(function (sec) {
+    var img = sec.querySelector("img"), box = sec.querySelector(".strip"), z = sec.querySelector(".zoomer");
+    sec.querySelectorAll(".tiers button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        sec.querySelectorAll(".tiers button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+        img.src = "strips/" + b.dataset.id + ".jpg";
+        img.alt = b.dataset.name + ": today and proposed, in first person, third person, the Hall of Arms and as an icon";
+      });
+    });
+    function toggle() { var big = box.classList.toggle("big"); z.textContent = big ? "Fit to the page" : "Enlarge"; }
+    z.addEventListener("click", toggle);
+    img.addEventListener("click", toggle);
+  });
+  var out = document.getElementById("out");
+  function text() {
+    var lines = ["Weapon polish pass, my answers:"];
+    for (var i = 1; i <= 5; i++) {
+      var c = document.querySelector('input[name="d' + i + '"]:checked');
+      lines.push(i + ". " + (c ? c.value : "(no answer)"));
+    }
+    var n = document.getElementById("notes").value.trim();
+    if (n) lines.push("Notes: " + n);
+    return lines.join("\n");
+  }
+  function show() { out.textContent = text(); }
+  document.getElementById("answers").addEventListener("input", show);
+  show();
+  document.getElementById("copy").addEventListener("click", function () {
+    var b = this, t = text();
+    function done(ok) { b.textContent = ok ? "Copied" : "Select the text below and copy it"; setTimeout(function () { b.textContent = "Copy my answers"; }, 2400); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { done(true); }, function () { sel(); done(false); });
+    } else { sel(); done(false); }
+    function sel() { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  });
+})();
+</script>

@@ -424,6 +424,8 @@ def ground(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0
             bk = (y_end - y1) / 2 if back is None else back
             if back is None:
                 bk = min(bk, max(0.0, 1.6 * W - (y_end + tipx - y1)))
+                if y_end - y_first > 20:  # a long blade's point is at most three tenths of it (a sword, not a spearhead)
+                    bk = min(bk, max(0.0, 0.3 * (y_end - y_first) - (y_end + tipx - y1)))
             bk = min(bk, (y1 - y0) / 2)
             if len(wide) > 1 or y0 != y_first:
                 st.append((cx, min(y0 + 1, y1 - bk - 0.5), w))
@@ -863,20 +865,21 @@ def directions(out):
         kw.pop("core_d", None)
         return ORIG["blade"](segs, core, edge, core_d=1, **kw)
 
-    shots = [("Today: a 3 x 3 core between thin edges", AW.make(row)),
-             ("A. Thinner boxes: the core 2 deep", make2(row, variant(thin))),
-             ("B. Ground: a flat, two bevels, a true point", make2(row, variant(ground))),
-             ("C. Flat: one texel thick, like a vanilla sword", make2(row, variant(flat)))]
-    W, H = 470, 760
-    sheet = Image.new("RGB", (W * len(shots), H), (22, 22, 30))
-    d = ImageDraw.Draw(sheet)
-    for i, (name, (built, look)) in enumerate(shots):
-        fp = fp_shot(row, built, look, (1280, 720)).crop((760, 60, 1230, 720)).resize((W, int(660 * W / 470)))
-        sheet.paste(fp.crop((0, 0, W, 430)), (i * W, 26))
-        sheet.paste(hall_shot(built, look, (200, 300)), (i * W + 10, 458))
-        sheet.paste(hall_shot(built, look, (200, 300), yaw=78, pitch=8), (i * W + 240, 458))
-        d.text((i * W + 8, 6), name, fill=(236, 232, 244))
-    sheet.save(out)
+    shots = [("today", AW.make(row)), ("a", make2(row, variant(thin))), ("b", make2(row, variant(ground))),
+             ("c", make2(row, variant(flat)))]
+    fulls = [fp_full(row, bl, lk) for _, (bl, lk) in shots]
+    hit = np.any([h for _, h in fulls], axis=0)
+    ys, xs = np.nonzero(hit)
+    H, W = hit.shape
+    w = 500
+    x0 = int(min(max((xs.min() + xs.max()) / 2 - w / 2, 0), W - w))
+    os.makedirs(out, exist_ok=True)
+    for (name, (bl, lk)), (im, _) in zip(shots, fulls):
+        tile = Image.new("RGB", (500, 720 + 300), (17, 17, 23))
+        tile.paste(im.crop((x0, 0, x0 + w, H)), (0, 0))
+        tile.paste(hall_shot(bl, lk, (250, 300)), (0, 720))
+        tile.paste(hall_shot(bl, lk, (250, 300), yaw=84, pitch=6), (250, 720))
+        tile.resize((375, 765), Image.LANCZOS).save(os.path.join(out, f"direction_{name}.jpg"), quality=88)
     return out
 
 
@@ -1251,7 +1254,7 @@ def main(argv):
         measure(argv[1:] or None)
         return 0
     if cmd == "strips":
-        ids = argv[2:] or [r[0] for r in AW.CATALOG]
+        ids = argv[2:] or [r[0] for r in AW.CATALOG if changed(r)]
         for wid in ids:
             print(strip(ROWS[wid], argv[1]))
         return 0
