@@ -10154,7 +10154,14 @@ spire it meets lost a slice and its top hung in the air, and a neighbouring chun
 well as after it, so no sweep afterwards could be safe. The placement modifier `awaken:clear_of_settlements` (`reach`, last
 in the placed feature) drops a feature whose reach, plus 8 for a road's banks, touches land a road or settlement referenced
 from its chunk or those beside it uses: frost spires and glass shards (13, small 8), floating shards (16), boulders and
-shale boulders (6). New chunks only. Test: `village_tall_things_keep_off`. The carriageway is a two-track country road in the land's own ground: a crown grown over
+shale boulders (6). New chunks only. It reads only what the region decorating the chunk holds (vanilla's FEATURES step:
+references in the chunks beside it, starts out to 8 chunks): the chunks under the footprint, no further out than those
+beside the centre (whatever could cut the feature's own blocks is named there), and a start a reference names past 8
+chunks (a road leg reaching 8 chunks from its lattice start, named from the chunk beside) keeps the feature off rather
+than being read (reading it crashed world generation, CI tour 10 Nov: "Requested chunk unavailable during world
+generation"). A layout is asked in its own plan coordinates (offsets from its origin, as the painter asks it); asked in
+the world's, the first version saw no real road or settlement. Tests: `village_tall_things_keep_off`,
+`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin). The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
