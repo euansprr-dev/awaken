@@ -89,6 +89,7 @@ public final class RoadTests {
         AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);
         AwakenTests.registerIsolated("village_road_spares_hero_trees", 600, RoadTests::sparesHeroTrees);
         AwakenTests.register("village_tall_things_keep_off", 20, RoadTests::tallThingsKeepOff);
+        AwakenTests.register("village_tall_things_keep_off_region", 20, RoadTests::tallThingsKeepOffRegion);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
         AwakenTests.register("village_march_ranks", 20, h -> {
@@ -294,10 +295,6 @@ public final class RoadTests {
         h.succeed();
     }
 
-    /**
-     * A road straight through a Lumen Spire's trunk, chunk by chunk as worldgen paints it (Euan 2026-11-09, the floating veined
-     * logs): without the hero guard the road's felling cuts it and pieces hang in the air; with it the tree stands whole.
-     */
     /** SPEC §28.9, "Tall things keep off": a straight road, a spire's reach from it and clear of it, and the packs asking. */
     private static void tallThingsKeepOff(GameTestHelper h) {
         int n = 40;
@@ -321,6 +318,110 @@ public final class RoadTests {
         h.succeed();
     }
 
+    /**
+     * SPEC §28.9, "Tall things keep off", as world generation asks it (CI tour 10 Nov, "Requested chunk unavailable during
+     * world generation"): a region built the way the FEATURES step builds one round the chunk being decorated. A road named
+     * from the chunk beside it, whose start is 9 chunks off, is past what the region holds: vanilla's own read of it throws
+     * (what the rule did), and the rule keeps the feature off instead. A road it can read keeps it off only when near, far
+     * from the world's origin (a layout is asked in its own plan coordinates: asked in the world's, it saw no real road).
+     */
+    private static void tallThingsKeepOffRegion(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ChunkPos c = new ChunkPos(2500, 2500), east = new ChunkPos(c.x() + 1, c.z());
+        ChunkPos held = new ChunkPos(c.x() + 5, c.z()), past = new ChunkPos(c.x() + 9, c.z());
+        java.util.Map<Long, net.minecraft.world.level.chunk.ChunkAccess> made = new java.util.HashMap<>();
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) made.put(ChunkPos.pack(c.x() + dx, c.z() + dz), proto(h, new ChunkPos(c.x() + dx, c.z() + dz), net.minecraft.world.level.chunk.status.ChunkStatus.TERRAIN));
+        made.put(held.pack(), proto(h, held, net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS));
+        var step = net.minecraft.world.level.chunk.status.ChunkPyramid.GENERATION_PYRAMID.getStepTo(net.minecraft.world.level.chunk.status.ChunkStatus.FEATURES);
+        var cache = net.minecraft.util.StaticCache2D.<net.minecraft.server.level.GenerationChunkHolder>create(c.x(), c.z(), step.directDependencies().getRadius(),
+                (x, z) -> new Held(new ChunkPos(x, z), made.get(ChunkPos.pack(x, z))));
+        var region = new net.minecraft.server.level.WorldGenRegion(level, cache, step, made.get(c.pack()));
+        h.assertTrue(region.hasChunk(held.x(), held.z()) && !region.hasChunk(past.x(), past.z()), "the region holds starts out to 8 chunks, no further");
+
+        RoadStructure roads = new RoadStructure(new net.minecraft.world.level.levelgen.structure.Structure.StructureSettings(net.minecraft.core.HolderSet.empty()));
+        int ox = c.getMinBlockX() + 8, oz = c.getMinBlockZ() + 8;
+        BlockPos origin = new BlockPos(ox, 70, oz);
+        var context = new net.minecraft.world.level.levelgen.placement.PlacementContext(region, level.getChunkSource().getGenerator(), java.util.Optional.empty());
+        var rule = new ClearOfSettlements(6);
+        java.util.function.Consumer<ChunkPos> named = start ->
+                made.get(east.pack()).setAllReferences(java.util.Map.of(roads, new it.unimi.dsi.fastutil.longs.LongOpenHashSet(new long[]{start.pack()})));
+        java.util.function.Supplier<Boolean> stands = () -> {
+            List<BlockPos> out = new java.util.ArrayList<>();
+            rule.modify(context, net.minecraft.util.RandomSource.create(1), origin, out::add);
+            return !out.isEmpty();
+        };
+
+        // the crash: the chunk beside names a road leg whose start is 9 chunks off
+        named.accept(past);
+        boolean threw = false;
+        try {
+            level.structureManager().forWorldGenRegion(region).startsForStructure(east.x(), east.z(), s -> s instanceof RoadStructure);
+        } catch (net.minecraft.ReportedException e) {
+            threw = e.getCause() != null && String.valueOf(e.getCause().getMessage()).contains("Requested chunk unavailable");
+        }
+        h.assertTrue(threw, "the setup is the crash: reading the start 9 chunks off throws in this region");
+        boolean kept;
+        try {
+            kept = !stands.get();
+            // a footprint reaching past the chunks beside the centre reads only those (they alone have their references)
+            List<BlockPos> out = new java.util.ArrayList<>();
+            new ClearOfSettlements(16).modify(context, net.minecraft.util.RandomSource.create(1), new BlockPos(c.getMinBlockX() - 14, 70, oz), out::add);
+        } catch (net.minecraft.ReportedException e) {
+            h.fail("the rule read past the region: " + e.getCause());
+            return;
+        }
+        h.assertTrue(kept, "a road whose start the region can't read: kept off, not a crash");
+
+        // roads it can read: kept off only when near
+        named.accept(held);
+        for (boolean through : new boolean[]{false, true}) {
+            RoadPiece road = RoadBanksTests.road(through ? "through" : "clear", through ? ox : ox + 200, oz - 40, through ? ox : ox + 200, oz + 40, 64);
+            made.get(held.pack()).setStartForStructure(roads, new net.minecraft.world.level.levelgen.structure.StructureStart(roads, held, 0,
+                    new net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer(List.of(road))));
+            h.assertTrue(stands.get() != through, through ? "a road the region can read, through it: kept off" : "a road the region can read, well clear: it stands");
+        }
+        h.succeed();
+    }
+
+    private static net.minecraft.world.level.chunk.ProtoChunk proto(GameTestHelper h, ChunkPos pos, net.minecraft.world.level.chunk.status.ChunkStatus status) {
+        var chunk = new net.minecraft.world.level.chunk.ProtoChunk(pos, net.minecraft.world.level.chunk.UpgradeData.EMPTY, h.getLevel(), h.getLevel().palettedContainerFactory(), null);
+        chunk.setPersistedStatus(status);
+        return chunk;
+    }
+
+    /** A chunk holder that hands the region the test's own chunk, or none (as a chunk past the region). */
+    private static final class Held extends net.minecraft.server.level.GenerationChunkHolder {
+        private final net.minecraft.world.level.chunk.@org.jspecify.annotations.Nullable ChunkAccess chunk;
+
+        Held(ChunkPos pos, net.minecraft.world.level.chunk.@org.jspecify.annotations.Nullable ChunkAccess chunk) {
+            super(pos);
+            this.chunk = chunk;
+        }
+
+        @Override
+        public net.minecraft.world.level.chunk.@org.jspecify.annotations.Nullable ChunkAccess getChunkIfPresentUnchecked(net.minecraft.world.level.chunk.status.ChunkStatus status) {
+            return chunk;
+        }
+
+        @Override
+        protected void addSaveDependency(java.util.concurrent.CompletableFuture<?> sync) {}
+
+        @Override
+        public int getTicketLevel() {
+            return 0;
+        }
+
+        @Override
+        public int getQueueLevel() {
+            return 0;
+        }
+    }
+
+    /**
+     * A road straight through a Lumen Spire's trunk, chunk by chunk as worldgen paints it (Euan 2026-11-09, the floating veined
+     * logs): without the hero guard the road's felling cuts it and pieces hang in the air; with it the tree stands whole.
+     */
     private static void sparesHeroTrees(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         int[] before = throughSpire(h, level, h.absolutePos(new BlockPos(0, 2, 0)).offset(9000, 0, 6000), false);
