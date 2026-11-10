@@ -321,7 +321,10 @@ public final class B {
         for (int x = -ir; x <= ir; x++)
             for (int z = -ir; z <= ir; z++) {
                 if (x * x + z * z > r * r * (0.75 + n(s, cx + x, cz + z, 4.0) * 0.4)) continue;
-                BlockState st = pick.apply(h(s, cx + x, -5, cz + z));
+                // the pick's number runs in soft patches with ragged edges, not block by block: bare earth, gravel and
+                // moss lie in drifts the way ground does, never as a checkerboard
+                double v = (n(s, cx + x + 31, cz + z - 17, 5.5) - 0.5) * 2.1 + 0.5 + (h(s, cx + x, -5, cz + z) - 128) / 255.0 * 0.22;
+                BlockState st = pick.apply((int) Math.max(0, Math.min(255, v * 255)));
                 if (st != null) s.put(cx + x, s.g(cx + x, cz + z), cz + z, st);
             }
     }

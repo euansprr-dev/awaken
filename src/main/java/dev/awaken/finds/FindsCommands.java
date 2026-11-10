@@ -34,6 +34,12 @@ final class FindsCommands {
             f.then(Commands.literal("view").then(Commands.argument("kind", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.places().stream().map(Kind::id), b))
                     .then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 9)).executes(FindsCommands::view))));
+            f.then(Commands.literal("census").executes(c -> {
+                // where the placement loses a kind: every place within 10,000 blocks of the spawn, counted into the log
+                for (String line : Sites.census(c.getSource().getLevel(), 22)) Awaken.LOG.info("[finds] census {}", line);
+                c.getSource().sendSuccess(() -> Component.literal("Counted into the log."), false);
+                return 1;
+            }));
             f.then(Commands.literal("grant").then(Commands.argument("kind", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.all().stream().map(Kind::id), b)).executes(FindsCommands::grant)));
             f.then(Commands.literal("visit").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99)).executes(FindsCommands::visit)));

@@ -84,7 +84,8 @@ public final class FindsClient {
 
     private static void onFogColour(net.neoforged.neoforge.client.event.ViewportEvent.ComputeFogColor e) {
         if (air == null || shown <= 0) return;
-        float s = shown * 0.88F, fr = (air.fog >> 16 & 255) / 255F, fg = (air.fog >> 8 & 255) / 255F, fb = (air.fog & 255) / 255F;
+        // open-air places tint the distance, they don't bury it (the first tours were pea soup); a cave keeps its thick air
+        float s = shown * (air.below ? 0.88F : 0.5F), fr = (air.fog >> 16 & 255) / 255F, fg = (air.fog >> 8 & 255) / 255F, fb = (air.fog & 255) / 255F;
         // keep some of the hour: the place's colour scaled by how bright the sky's own fog is now, so night stays night
         float lum = Math.max(0.18F, Math.min(1, (e.getRed() * 0.3F + e.getGreen() * 0.59F + e.getBlue() * 0.11F) * 1.6F));
         e.setRed(e.getRed() + (fr * lum - e.getRed()) * s);
@@ -94,9 +95,9 @@ public final class FindsClient {
 
     private static void onFog(net.neoforged.neoforge.client.event.ViewportEvent.RenderFog e) {
         if (air == null || shown <= 0) return;
-        float far = e.getFarPlaneDistance(), to = Math.min(far, air.far);
+        float far = e.getFarPlaneDistance(), to = Math.min(far, air.below ? air.far : Math.max(110, air.far * 2.4F));
         e.setFarPlaneDistance(far + (to - far) * shown);
-        e.setNearPlaneDistance(e.getNearPlaneDistance() * (1 - 0.8F * shown));
+        e.setNearPlaneDistance(e.getNearPlaneDistance() * (1 - (air.below ? 0.8F : 0.35F) * shown));
     }
 
     private static List<Catalogue.Slot> slots() {

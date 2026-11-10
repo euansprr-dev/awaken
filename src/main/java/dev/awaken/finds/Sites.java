@@ -201,7 +201,10 @@ public final class Sites {
             }
             Kind k = kinds.get(choice);
             int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37));
-            if (at != null && !a.terrain.structureNear(at[0], at[2], 1)) {
+            // a place keeps clear of villages and the city by its own width and more (the first tours had the quarry
+            // against Carillon's wall and the temple in a village's garden)
+            boolean place = k.size() == Kind.Size.PLACE;
+            if (at != null && !a.terrain.structureNear(at[0], at[2], place ? (k.reach() + 72) >> 4 : 1) && !(place && cityNear(a, at[0], at[2], k.reach() + 56))) {
                 RegionMap.Region r = a.map.regionAt(at[0], at[2]);
                 return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], a.map.landOf(r).group(),
                         Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
@@ -210,6 +213,16 @@ public final class Sites {
             choice = -1;
         }
         return NONE;
+    }
+
+    private static boolean cityNear(Ask a, int x, int z, int r) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int y = a.level.getSeaLevel();
+        for (int i = 0; i < 16; i++) {
+            double ang = i * Math.PI / 8, rr = i % 2 == 0 ? r : r * 0.5;
+            if (CityHooks.inCity(a.level, m.set(x + (int) (Math.cos(ang) * rr), y, z + (int) (Math.sin(ang) * rr)))) return true;
+        }
+        return false;
     }
 
     private static @Nullable Site cell(Ask a, int layer, int cx, int cz) {
@@ -328,6 +341,50 @@ public final class Sites {
             if (best != null && bestD < (ring - 1) * (double) c) break; // nothing in a further ring can be nearer
         }
         return best;
+    }
+
+    /**
+     * A count of the places round the spawn, for checking that every kind can be met: for each kind, the cells that
+     * first chose it and the sites that stand; and how many cells fall in each land. Slow (it asks every cell for its
+     * ground): a check command's, never the game's.
+     */
+    public static List<String> census(ServerLevel level, int rings) {
+        Ask a = ask(level);
+        if (a == null) return List.of("finds are off here");
+        List<Kind> kinds = Kinds.layer(2);
+        int[] chose = new int[kinds.size()], stand = new int[kinds.size()], nearest = new int[kinds.size()];
+        java.util.Arrays.fill(nearest, Integer.MAX_VALUE);
+        int[] lands = new int[RegionMap.Group.values().length], ranks = new int[6];
+        int c = CELL[2], cx0 = Math.floorDiv(a.spawnX, c), cz0 = Math.floorDiv(a.spawnZ, c), cells = 0, any = 0, none = 0;
+        for (int i = -rings; i <= rings; i++)
+            for (int j = -rings; j <= rings; j++) {
+                cells++;
+                long h = cellHash(a.seed, 2, cx0 + i, cz0 + j);
+                int x = cellX(h, 2, cx0 + i), z = cellZ(h, 2, cz0 + j);
+                lands[a.map.landOf(a.map.regionAt(x, z)).group().ordinal()]++;
+                ranks[Math.min(5, RegionMap.rankOf(a.map.levelAt(x, z)))]++;
+                int base = basePick(a, 2, cx0 + i, cz0 + j);
+                if (base < 0) continue;
+                any++;
+                chose[base]++;
+                Site s = cell(a, 2, cx0 + i, cz0 + j);
+                if (s == null) {
+                    none++;
+                    continue;
+                }
+                int k = kinds.indexOf(s.kind());
+                stand[k]++;
+                nearest[k] = Math.min(nearest[k], (int) Math.hypot(s.x() - a.spawnX, s.z() - a.spawnZ));
+            }
+        List<String> out = new ArrayList<>();
+        StringBuilder land = new StringBuilder("lands of " + cells + " cells:");
+        for (RegionMap.Group g : RegionMap.Group.values()) land.append(' ').append(g).append(' ').append(lands[g.ordinal()]);
+        out.add(land.toString());
+        out.add("ranks: E " + ranks[0] + " D " + ranks[1] + " C " + ranks[2] + " B " + ranks[3] + " A " + ranks[4] + " S " + ranks[5] + "; cells that chose " + any + ", of those with no ground " + none);
+        for (int k = 0; k < kinds.size(); k++)
+            out.add(String.format("%-22s rank %d chose %3d stands %3d nearest %s", kinds.get(k).id(), kinds.get(k).rank(), chose[k], stand[k],
+                    nearest[k] == Integer.MAX_VALUE ? "none" : nearest[k] + ""));
+        return out;
     }
 
     /** A site made by hand (the gallery, tests): the kind at a place, on a level pad. Layer 2 marks it as made by hand. */

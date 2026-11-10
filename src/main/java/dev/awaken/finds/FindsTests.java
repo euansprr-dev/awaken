@@ -85,6 +85,8 @@ final class FindsTests {
     }
 
     private static void scenes(GameTestHelper h) {
+        java.nio.file.Path dump = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get().resolve("finds-dump");
+        if (java.nio.file.Files.isDirectory(dump)) FindsDump.write(dump); // the picture maker's input, only where asked for
         java.util.List<String> bad = new java.util.ArrayList<>();
         for (Kind k : Kinds.all())
             for (int i = 0; i < 6; i++) {

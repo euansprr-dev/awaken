@@ -81,12 +81,36 @@ public record FindsFeature() implements Feature {
                 int x = s.x() + dx, z = s.z() + dz;
                 if (x < x0 || x > x1 || z < z0 || z > z1 || dx * dx + dz * dz > cr * cr) continue;
                 // only what grows goes here; the ground is left as it is
-                for (int y = s.y() + sc.groundAt(dx, dz) + 30; y > s.y() + sc.groundAt(dx, dz); y--) {
+                for (int y = s.y() + sc.groundAt(dx, dz) + 46; y > s.y() + sc.groundAt(dx, dz); y--) {
                     m.set(x, y, z);
                     BlockState b = level.getBlockState(m);
                     if (!b.isAir() && b.getFluidState().isEmpty() && soft(b)) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
+        // a tree felled at the clearing's edge leaves its crown hanging past it: leaves in a ring outside the clearing go
+        // too, unless a trunk still stands beside them (the first tours had treetops floating over the stilt market)
+        if (cr > 0) {
+            BlockPos.MutableBlockPos n = new BlockPos.MutableBlockPos();
+            int or = cr + 6;
+            for (int dx = -or; dx <= or; dx++)
+                for (int dz = -or; dz <= or; dz++) {
+                    int x = s.x() + dx, z = s.z() + dz, d2 = dx * dx + dz * dz;
+                    if (x < x0 || x > x1 || z < z0 || z > z1 || d2 <= cr * cr || d2 > or * or) continue;
+                    int g = s.y() + sc.groundAt(dx, dz);
+                    for (int y = g + 46; y > g; y--) {
+                        m.set(x, y, z);
+                        if (!level.getBlockState(m).is(BlockTags.LEAVES)) continue;
+                        boolean trunk = false;
+                        for (int ox = -2; ox <= 2 && !trunk; ox++)
+                            for (int oz = -2; oz <= 2 && !trunk; oz++) {
+                                int ex = dx + ox, ez = dz + oz;
+                                if (ex * ex + ez * ez <= cr * cr) continue; // inside the clearing every trunk has gone
+                                for (int oy = -6; oy <= 1 && !trunk; oy++) trunk = level.getBlockState(n.set(x + ox, y + oy, z + oz)).is(BlockTags.LOGS);
+                            }
+                        if (!trunk) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    }
+                }
+        }
         for (long c : cols) {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             int want = s.y() + sc.groundAt(dx, dz);
