@@ -972,6 +972,26 @@ public final class AscentMoves {
         return false;
     }
 
+    private static final AscentSwing.Pick LESSON_PICK = new AscentSwing.Pick();
+
+    /**
+     * The Way Up's sling lesson on foot (SPEC §63.8; the marker below never looks from the ground with the key up):
+     * where a rope held now would bite to sling you, or null (something swings, nothing is ahead, or the guide is off).
+     * The same two looks as the marker's, into a pick of its own; called twice a second at most, only while the lesson
+     * can still teach.
+     */
+    static @org.jspecify.annotations.Nullable Vec3 slingFromGround(LocalPlayer p) {
+        if (!FeelConfig.ropeAssist() || !AscentSwing.guide || state != AscentState.NONE || !p.onGround() || !has(AscentPayloads.Tier.TETHER)
+                || dev.awaken.body.client.RunnerMoves.busy()) return null;
+        boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+        float yaw = view ? VIEW[0] : p.getYRot();
+        SPACE.at(p.level(), p);
+        hand(p);
+        if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, LESSON_PICK)) return null;
+        if (!AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, LESSON_PICK)) return null;
+        return new Vec3(LESSON_PICK.x, LESSON_PICK.y, LESSON_PICK.z);
+    }
+
     /** The marker: where a press now would throw, every other tick while airborne off the rope (or the key held). */
     private static void marker(LocalPlayer p, boolean assist, boolean tether) {
         boolean free = state == AscentState.NONE || state == AscentState.CARRY || state == AscentState.GLIDE || state == AscentState.SOAR;

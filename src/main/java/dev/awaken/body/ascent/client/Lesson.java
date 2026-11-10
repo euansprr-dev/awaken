@@ -145,6 +145,11 @@ final class Lesson {
         if (doneAt < 0) doneAt = age;
         if (withCard && k.move != null) card(k.move);
         else if (withCard) card(k.rung);
+        // the rope has just been thrown for the first time: its second lesson (the sling) waits half a minute
+        if (k == Kind.ROPE_MAST || k == Kind.ROPE_OWED) {
+            int i = WayUp.Move.SLING.ordinal();
+            moveNext[i] = Math.max(moveNext[i], clock + 600);
+        }
     }
 
     /** The card of a rung's keys: its name and two or three caps, no sentence. */
@@ -307,8 +312,8 @@ final class Lesson {
     }
 
     /**
-     * The two moments the moves' own code does not name (SPEC §63.8). The flare: coming down on open wings with the
-     * ground near, before the landing it is for. The takeoff, at home: standing still outdoors in the overworld with
+     * The moments the moves' own code does not name (SPEC §63.8). The flare: coming down on open wings with the
+     * ground near, before the landing it is for. The sling: on foot, where a held rope would sling. The takeoff, at home: standing still outdoors in the overworld with
      * flight and Aether to spare, out of any fight (a rank fight is in its own dimension, so this is after the way home).
      */
     private static void offerOwn(Minecraft mc, LocalPlayer p) {
@@ -316,6 +321,13 @@ final class Lesson {
         if (wants(Kind.FLARE) && AscentMoves.state() == AscentState.GLIDE && p.getY() - p.yo < -0.05
                 && p.getY() - dev.awaken.body.ascent.AscentAnchors.floorUnder(mc.level, p, p.getX(), p.getY() + 0.5, p.getZ(), 16) < 14) {
             offerMove(Kind.FLARE, null, -1);
+        }
+        // the sling, on foot: the rope's own marker only looks while you are in the air or already holding the key, and
+        // the lesson is for the walk before that (SPEC §63.8)
+        if (p.onGround() && mc.gui.screen() == null && (kind == Kind.SLING && doneAt < 0
+                || kind == null && cardAge < 0 && wants(Kind.SLING) && clock >= moveNext[WayUp.Move.SLING.ordinal()])) {
+            Vec3 top = AscentMoves.slingFromGround(p);
+            if (top != null) offerMove(Kind.SLING, top, -1);
         }
         if (kind == null && cardAge < 0 && wants(Kind.TAKEOFF) && clock >= homeNext && clock >= moveNext[WayUp.Move.TAKEOFF.ordinal()]
                 && AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN) && p.onGround() && !AscentMoves.active()
@@ -622,8 +634,15 @@ final class Lesson {
         int x0 = Mth.clamp(px - total / 2, 6, Math.max(6, w - total - 6));
         int y0 = target == null ? py : Mth.clamp(py - 34, 8, h - 60);
         int rim = Glass.a(Glass.EDGE, 0.85F * a);
-        g.fill(x0 - 5, y0 - 5, x0 + total + 5, y0 + 14, Sheet.argb(0x05080F, 0.62F * a));
-        g.fill(x0 - 5, y0 - 5, x0 + total + 5, y0 - 4, rim);
+        // held at the edge: which way to turn, on the plate itself (out on the sky it could not be read)
+        String arrow = target == null || pinned && !off ? null : sx < w * 0.25F ? "<" : sx > w * 0.75F ? ">" : sy < h * 0.5F ? "^" : "v";
+        boolean arrowLeft = arrow != null && sx < w * 0.25F;
+        int room = arrow == null ? 0 : font.width(arrow) + 7;
+        if (arrow != null) x0 = Mth.clamp(x0, 6 + (arrowLeft ? room : 0), Math.max(6, w - total - 6 - (arrowLeft ? 0 : room)));
+        int left = x0 - 5 - (arrowLeft ? room : 0), right = x0 + total + 5 + (arrow != null && !arrowLeft ? room : 0);
+        g.fill(left, y0 - 5, right, y0 + 14, Sheet.argb(0x05080F, 0.62F * a));
+        g.fill(left, y0 - 5, right, y0 - 4, rim);
+        if (arrow != null) g.text(font, arrow, arrowLeft ? left + 5 : x0 + total + 7, y0, Glass.a(Glass.TITLE, a), false);
         int x = x0;
         if (key != null) {
             if (k.hold) x += Kit.cap(g, font, "Hold", x, y0, a, true) + 2;
@@ -646,10 +665,6 @@ final class Lesson {
             g.fill(px - 4, py + 4, px + 5, py + 5, ring);
             g.fill(px - 4, py - 3, px - 3, py + 4, ring);
             g.fill(px + 4, py - 3, px + 5, py + 4, ring);
-        } else {
-            // held at the edge: which way to turn
-            String arrow = sx < w * 0.25F ? "<" : sx > w * 0.75F ? ">" : sy < h * 0.5F ? "^" : "v";
-            g.text(font, arrow, sx < w * 0.25F ? x0 - 14 : x0 + total + 8, y0, Glass.a(Glass.EDGE, a), false);
         }
     }
 

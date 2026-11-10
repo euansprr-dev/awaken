@@ -22584,12 +22584,14 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   longer teach), plus two moments of the Lesson's own (`Lesson.offerOwn`):
   | Move | Earned (§62, unchanged) | Its moment | The prompt |
   |---|---|---|---|
-  | Sling | with the rope | the marker shows a sling (nothing to swing from, a top ahead) | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
+  | Sling | with the rope | on foot, where a rope held now would sling (nothing to swing from, a top ahead: `AscentMoves.slingFromGround`, the marker's own two looks twice a second while the lesson can still teach, because the marker itself only looks in the air or with the key held); and wherever the marker shows a sling. Not within half a minute of the rope's own first lesson | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
   | Spring | Tether mastery 3 | a pull is carrying you up onto a top, forward not held | Hold + forward: "Spring off the top" (stays 3.5 s: the pull is over before it is read) |
   | Rope strike | Tether mastery 5 | on the rope or in its carry, a creature out of reach under the crosshair | the attack key, pinned on the creature as it moves: "Your rope pulls you into it" |
   | Flare | with wings | gliding down with the ground within 14 blocks; and after a hard landing on wings | no key: "Level out just before you land" |
   | Skim | Wings mastery 3 | gliding fast within 9.5 blocks of the ground and not yet skimming | no key: "Drop lower and skim the ground" |
   | Takeoff | with flight | at home: standing still outdoors in the overworld with flight and Aether to spare, no fight (a rank fight is in its own dimension, so this is after the way home); and whenever you look up from the ground | Hold + sneak, "then", jump: "while you look up", pinned on a ring in the sky up ahead; at home the gold figure crouches and rises 14 blocks, three ahead |
+  A prompt held at the screen's edge (its target is off the screen: the takeoff's ring before you look up) carries its
+  arrow on the plate itself, in the title's white; out on the sky beside the plate it could not be read (first look tour).
   A move's prompt shows while its moment lasts (15 s at most), at most four times a session and a minute apart (the
   takeoff's for standing about three minutes apart), never over another lesson, a card, a scene or a screen, and never
   again once the move has been made. The first time a move is made its card shows for four seconds (its name and how: "The sling ·
@@ -22618,8 +22620,8 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   seconds before the gate), a first glide carried by a windway, and the Tasks row for the gate (covered by
   `way_up_road`). The pilot's spire climb ends on the crown's rim or beyond: in four tours it never came within the 2.6
   blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing (the rim's own
-  watch came after those tours, and no tour has run since). **The six moves' Lessons and their K lines have not been
-  pictured**: compiled and their rule tested, unseen.
+  watch came after those tours, and no tour has run since). The six moves: tour `way-up-moves.txt`, on a stone floor
+  built in the open sky with flight by a dev grant (see "Seen, the moves" below).
 - **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
   (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
   (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the

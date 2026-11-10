@@ -45,15 +45,34 @@ wait 60
 cmd awaken ascent grant skyborn
 cmd awaken ascent aether full
 cmd awaken ascent pilot aether 1
-# the road is told within five seconds; then standing still brings the lesson
-wait 150
+# the road is told within five seconds; then standing still brings the lesson, and the gold figure rises ahead in
+# its first three seconds: a shot every half second until it must have been
+wait 16
+shotnow moves_00a_standing
+wait 10
+shotnow moves_00b_standing
+wait 10
+shotnow moves_00c_standing
+wait 10
+shotnow moves_00d_standing
+wait 10
+shotnow moves_00e_standing
+wait 10
+shotnow moves_00f_standing
+wait 10
+shotnow moves_00g_standing
+wait 10
+shotnow moves_00h_standing
+wait 10
+shotnow moves_00i_standing
+wait 10
+shotnow moves_00j_standing
+wait 10
+shotnow moves_00k_standing
+wait 10
+shotnow moves_00l_standing
+wait 30
 shotnow moves_01_takeoff_standing
-wait 16
-shotnow moves_02_takeoff_figure
-wait 16
-shotnow moves_03_takeoff_figure
-wait 16
-shotnow moves_04_takeoff_figure
 cmd tp @s ~ ~ ~ ~ -50
 wait 14
 shotnow moves_05_takeoff_looking_up
@@ -105,10 +124,11 @@ screen close
 # ---- the sling: a low block sixteen ahead, nothing tall enough to swing from ----
 cmd tp @s -282.5 251 -16.5 0 0
 cmd fill -288 251 0 -276 254 5 minecraft:stone
+# on foot the lesson looks twice a second for a top a held rope would sling you over
 wait 50
-shotnow moves_18_sling_marker
+shotnow moves_18_sling_on_foot
 wait 20
-shotnow moves_19_sling_marker
+shotnow moves_19_sling_on_foot
 cmd awaken ascent pilot hold tether 40
 wait 8
 shotnow moves_20_sling_pull
