@@ -89,7 +89,7 @@ public final class RealmPacks {
     /** One monster a sheet named. A name the mobs module doesn't know gets one of the theme's own instead, so a typo never empties a room. */
     private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String name, BlockPos pos, String pack, ServerPlayer wakeFor) {
         boolean free = name.startsWith("~");
-        LivingEntity e = Rooms.signature(level, g, f, -1, free || name.startsWith("!") ? name.substring(1) : name, pos);
+        LivingEntity e = Rooms.named(level, g, f, -1, free || name.startsWith("!") ? name.substring(1) : name, pos);
         if (e == null) {
             e = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, pos);
             free = false;

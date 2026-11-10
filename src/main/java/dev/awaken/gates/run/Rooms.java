@@ -152,6 +152,20 @@ public final class Rooms {
         return e;
     }
 
+    /**
+     * A monster a Realm's pack names (SPEC §50.9): that creature by id, in the role its own tier gives it, a monster of this
+     * gate like any other. Null when the mobs module has no such creature.
+     */
+    public static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, int roomKey, String creature, BlockPos pos) {
+        if (GateMobs.inGate(g.id) >= GATE_CAP) return null;
+        int lv = g.scripted ? 0 : Progression.contentLevel(g.plan.rank());
+        LivingEntity e = MobHooks.spawnNamed(level, creature, pos, lv, tags(g, f), g.key());
+        if (e == null) return null;
+        GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
+        Modifiers.onSpawn(g, e);
+        return e;
+    }
+
     /** A Lord met by a party: +50% health per extra player (the hoard is already one per player). */
     static void partyLord(LivingEntity e, int party) {
         if (party <= 1) return;

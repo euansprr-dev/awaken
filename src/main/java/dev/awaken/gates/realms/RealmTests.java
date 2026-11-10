@@ -383,6 +383,26 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)
+        AwakenTests.register("realm_packs_spawn_by_name", 60, h -> {
+            var level = h.getLevel();
+            var at = h.absolutePos(new net.minecraft.core.BlockPos(2, 2, 2));
+            Object[][] want = {{"hive_larva", dev.awaken.core.api.MobRole.Role.NORMAL}, {"toll_ghoul", dev.awaken.core.api.MobRole.Role.NORMAL}, {"hive_guard", dev.awaken.core.api.MobRole.Role.ELITE},
+                    {"drip_lurker", dev.awaken.core.api.MobRole.Role.NORMAL}, {"hushling", dev.awaken.core.api.MobRole.Role.NORMAL}, {"thousandfoot", dev.awaken.core.api.MobRole.Role.WARDEN}};
+            for (Object[] w : want) {
+                var e = dev.awaken.core.api.MobHooks.spawnNamed(level, (String) w[0], at, 3, Set.of(), "test");
+                if (e == null) {
+                    h.fail(w[0] + " didn't come when a pack named it");
+                    continue;
+                }
+                var role = e.getData(dev.awaken.core.api.CoreApi.MOB_ROLE.get());
+                if (role.role() != w[1] || !role.gateId().equals("test")) h.fail(w[0] + " came as " + role.role() + " of gate '" + role.gateId() + "'");
+                e.discard();
+            }
+            if (dev.awaken.core.api.MobHooks.spawnNamed(level, "hive_regent", at, 3, Set.of(), "test") != null) h.fail("a pack could name a Lord");
+            if (dev.awaken.core.api.MobHooks.spawnNamed(level, "no_such_thing", at, 3, Set.of(), "test") != null) h.fail("a name nothing has came as something");
+            h.succeed();
+        });
         AwakenTests.register("realm_route_read_off_sites", 200, h -> {
             Land land = amber(1);
             int dens = land.sites(Land.SiteKind.DEN).size(), wardens = land.sites(Land.SiteKind.WARDEN).size();

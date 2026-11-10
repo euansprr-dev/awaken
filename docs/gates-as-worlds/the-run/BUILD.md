@@ -79,6 +79,29 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   New: `Land.Leg/Trap/Course`, `RealmRun`, `RealmTraps`, `check/RouteCheck`, `kit/crawl/CrawlLand`, `land/Broodwarren`, the
   Brood block family (13 blocks), SPEC 50.9. Changed: `RealmPacks`, `RealmLive`, `RealmToll`, `WalkCheck`, `Bench`, `HourCrypt`.
 
+- Stages 1 and 2 compiled first time; 44 tests green; both gates clean on the bench in 3 to 6 s (commit 54cbb8c4c). One look
+  round on the Broodwarren (lit comb read as pale boxes, walls were all comb, two cameras behind pillars).
+- **Euan, 10 Nov, going out for two hours:** "don't wait on me... surprise me, focus on coding more than testing and trust
+  yourself to build something incredible... so the gate experiences and progression are INCREDIBLE and IMMERSIVE and SO FUN to
+  play with custom mobs, insanely good animations on par with fresh animations resource pack... ideally without needing to do it
+  all one by one."
+  What I did with that, in order:
+  1. **The mod's own-bodied creatures in the packs** (4c4475068, then the spawn fix below). Drip Lurkers, Hushlings and the
+     Thousandfoot already have their own bodies and the motion work of SPEC 23; a pack can name them. I did not build new
+     creature bodies or animation: that cannot be judged without watching it move, and the creatures plan owns it.
+  2. **A cache per herd** (same commit).
+  3. **Rolled crawls** (747a419a2): `kit/crawl/GeneratedCrawl` and two skins, The Lower Combs and The Bone Roads. Brood passed
+     six seeds first time; the catacombs failed seed 1 because my candle rule took a stair's next step for a wall and put
+     candles (which have a body) across ledges and narrow ways. Rule now: a wall is two solid cells high.
+  4. **Three more skins from the three idle builders**, briefed from the generator: The Root Cellars (Fane, branch
+     `claude/skin-roots`), The Hollow Hills (Barrow, `claude/skin-barrow`), The Tallow Runs (Wax, `claude/skin-wax`). One file
+     each plus a blueprint, a program line and a tour; bench only.
+  5. **The real-game walk of the Broodwarren** (run 42789486172, all 13 shots inside) showed named packs were not spawning
+     who they named: `MobHooks.spawnCreature` only makes a Realm's peaceful life, so every name fell back to a roll from the
+     theme. Added `MobHooks.spawnNamed` (any creature by id, in its tier's role, a monster of the gate) and a test.
+- Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
+  shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
+
 ## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,

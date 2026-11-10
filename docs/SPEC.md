@@ -20623,3 +20623,9 @@ how much it wanders (1 dug, 0 built). A new skin is a new kind of dungeon; its l
   the foot of every wall with a light over each cluster, a small bell on its rope here and there, bell ropes down every shaft.
   Ghouls and archers, archers and wisps, Hushlings with a ghoul, wisps and a Crypt Keeper; the Sexton; the Bell Warden. Teeth of
   pale stone, a bronze mouth that turns gilt before it spits, boards that give way.
+
+**Naming a monster** (`core.api.MobHooks.spawnNamed(level, id, pos, contentLevel, tags, gateId)`, added to the §12 API). A pack's
+names are spawned through it: any creature by its id, in the role its own tier gives it (normal, elite or Warden; never a
+Lord), scaled to the gate's content level and counted and paid as a monster of the gate. `spawnCreature` stays what it was (a
+Realm's peaceful life, no gate role), which is why a pack could not use it. A name nothing answers to gets one of the theme's
+own instead, so a typo never empties a room. Test `realm_packs_spawn_by_name`.
