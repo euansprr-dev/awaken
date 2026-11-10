@@ -3,7 +3,6 @@ package dev.awaken.body.client;
 import dev.awaken.body.BodyConfig;
 import dev.awaken.body.ascent.AscentMemory;
 import dev.awaken.body.ascent.AscentPayloads;
-import dev.awaken.body.ascent.WayMemory;
 import dev.awaken.body.ascent.WayUp;
 import dev.awaken.body.ascent.client.AscentMoves;
 import dev.awaken.body.ascent.client.WayClient;
@@ -56,7 +55,7 @@ final class AscentSection extends UiSection {
                     : rank < Rank.D.ordinal() ? "A vault keeps it. It waits for a hunter of a higher rank."
                     : "A vault has lit up for the chain you're carrying. Stand between its two pylons.";
             case LEAP -> !way ? "Get to know your rope, and a gate will open for you."
-                    : WayClient.gateAt != WayMemory.NONE ? "A gate has opened where you climbed. It is a course, not a fight."
+                    : WayClient.gateOpen() ? "A gate has opened where you climbed. It is a course, not a fight."
                     : "It waits for a hunter who climbs something tall by rope: a Tether Spire, a great tree.";
             case WINGS -> rank < Rank.C.ordinal() ? "A sky platform keeps it. It waits for a hunter of a higher rank."
                     : "A sky platform has lit up for you. Its rings climb to it by rope.";

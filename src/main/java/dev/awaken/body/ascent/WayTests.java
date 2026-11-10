@@ -12,7 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
+
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
@@ -172,14 +172,14 @@ final class WayTests {
             WayUp.read(p, AscentServer.now(p));
             h.assertTrue(Ascent.has(p, Ascent.Tier.SOVEREIGN) && Ascent.has(p, Ascent.Tier.WINGS), "the last rank fight pays the last rung");
             BlockPos at = p.blockPosition();
-            Zombie plain = EntityType.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
-            Zombie boss = EntityType.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            Zombie plain = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            Zombie boss = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
             h.assertTrue(plain != null && boss != null, "two zombies made");
             plain.snapTo(at.getX() + 3.5, at.getY(), at.getZ() + 0.5, 0, 0);
             boss.snapTo(at.getX() - 3.5, at.getY(), at.getZ() + 0.5, 0, 0);
             plain.setNoAi(true);
             boss.setNoAi(true);
-            boss.setData(dev.awaken.core.CoreApi.MOB_ROLE.get(), new MobRole(MobRole.Role.BOSS, 100, "", Optional.empty(), ""));
+            boss.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new MobRole(MobRole.Role.BOSS, 100, "", Optional.empty(), ""));
             h.getLevel().addFreshEntity(plain);
             h.getLevel().addFreshEntity(boss);
             plain.setTarget(p);

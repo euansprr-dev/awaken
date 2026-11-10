@@ -84,6 +84,11 @@ public final class WayClient {
         return (owed & r.bit()) != 0 && (done & r.bit()) == 0;
     }
 
+    /** Whether the Leaper's Gauntlet's gate stands open for you. */
+    public static boolean gateOpen() {
+        return gateAt != WayMemory.NONE;
+    }
+
     public static boolean isDone(WayUp.Rung r) {
         return (done & r.bit()) != 0;
     }
