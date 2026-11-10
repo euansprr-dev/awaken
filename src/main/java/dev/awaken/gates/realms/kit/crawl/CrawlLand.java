@@ -307,6 +307,19 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return dome(x, z);
         }
 
+        /** The shaft is air but for its ledge: two cells thick under your feet, and the half step where it has one. */
+        @Override
+        public boolean open(int x, int y, int z) {
+            if (x < x0 || x > x1 || z < z0 || z > z1 || !in(x, z) || y < bottom || y >= dome(x, z)) return false;
+            for (int k = -1; k * perTurn <= drop; k++) {
+                int f = ledge2(x, z, k);
+                if (f == NONE) continue;
+                int base = Math.floorDiv(f, 2);
+                if (y == base - 1 || y == base - 2 || y == base && (f & 1) != 0) return false;
+            }
+            return true;
+        }
+
         @Override
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
@@ -505,7 +518,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     protected abstract BlockState doorBlock(M m);
 
     /**
-     * One cell of air that touches rock: {@code onFloor} (rock under it), {@code underRoof} (rock over it), and
+     * One cell of air that touches the dungeon's own rock (never something another call of this put there, so nothing can
+     * be hung on a thing that isn't in the next chunk): {@code onFloor} (rock under it), {@code underRoof} (rock over it), and
      * {@code wx}, {@code wz} the way to a wall beside it (both 0 for none). Put here what grows on this land's walls,
      * hangs from its roofs and lies on its floors; you may also change the rock you were pointed at. Decide by position,
      * never by chance that differs between calls: the same cell is asked about from more than one chunk.
@@ -586,23 +600,34 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (Part p : near) p.carve(v);
         for (Part p : near) p.lay(v, this, m);
         special(v, m);
-        for (Part p : near) dress(v, m, p);
+        for (Part p : near) dress(v, m, p, near);
         finish(v, m);
         drawPieces(v, m);
     }
 
-    private void dress(V v, M m, Part p) {
+    /**
+     * The dungeon's own rock (or what a land's {@link #special} made of it): solid by the parts' shapes, and still there.
+     * Never something {@link #adorn} put into the air. A shelf, a root or a hanging thing may only hold on to this: what
+     * one rule hangs in a chunk's margin isn't always hung in the chunk that owns the cell, and whatever held on to it
+     * there would be left in the air.
+     */
+    private static boolean rock(V v, List<Part> near, int x, int y, int z) {
+        for (Part q : near) if (q.open(x, y, z)) return false;
+        return V.holds(v.get(x, y, z));
+    }
+
+    private void dress(V v, M m, Part p, List<Part> near) {
         for (int x = Math.max(p.x0, v.x0 - 1); x <= Math.min(p.x1, v.x0 + 16); x++) for (int z = Math.max(p.z0, v.z0 - 1); z <= Math.min(p.z1, v.z0 + 16); z++) {
             int f = p.feet2(x, z);
             if (f == NONE) continue;
             for (int y = Math.floorDiv(f, 2), roof = p.roof(x, z); y < roof; y++) {
                 if (v.get(x, y, z) != null) continue;
-                boolean onFloor = V.holds(v.get(x, y - 1, z)), underRoof = V.holds(v.get(x, y + 1, z));
+                boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
                 int wx = 0, wz = 0;
-                if (V.holds(v.get(x + 1, y, z))) wx = 1;
-                else if (V.holds(v.get(x - 1, y, z))) wx = -1;
-                else if (V.holds(v.get(x, y, z + 1))) wz = 1;
-                else if (V.holds(v.get(x, y, z - 1))) wz = -1;
+                if (rock(v, near, x + 1, y, z)) wx = 1;
+                else if (rock(v, near, x - 1, y, z)) wx = -1;
+                else if (rock(v, near, x, y, z + 1)) wz = 1;
+                else if (rock(v, near, x, y, z - 1)) wz = -1;
                 if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
             }
         }

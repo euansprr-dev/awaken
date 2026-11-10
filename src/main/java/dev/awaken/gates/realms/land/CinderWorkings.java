@@ -240,7 +240,7 @@ public final class CinderWorkings extends GeneratedCrawl<CinderWorkings.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xffc890, 0.8F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffc890, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x7a2a12, 0.45F).light(lord.cx, lord.feet + 4, lord.cz, 0xff8030, 18, 0.9F);
         return air.build();
     }

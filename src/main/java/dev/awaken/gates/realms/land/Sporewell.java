@@ -221,7 +221,7 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xbfe8e0, 0.7F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xbfe8e0, 0.7F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x4a8a90, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0x80e0d8, 18, 0.8F);
         return air.build();
     }

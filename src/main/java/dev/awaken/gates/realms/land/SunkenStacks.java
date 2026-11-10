@@ -202,7 +202,7 @@ public final class SunkenStacks extends GeneratedCrawl<SunkenStacks.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0x9fd8e8, 0.7F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0x9fd8e8, 0.7F);
         if (lord != null) air.mist(lord.feet + 1, 4, 0x2a5a6a, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0x7fe0e8, 20, 0.7F);
         return air.build();
     }

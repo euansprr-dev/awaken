@@ -108,6 +108,16 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
      teeth up across the gallery, the reliquary's door shut, the break in the tower stair). The Broodwarren with named
      monsters (42794222878): the Thousandfoot in the comb ring with its guard, Lurkers in the larder (on the floor in the shot,
      not yet hung), and in the played moment the larder's ambush sprang, its sacs burst and the skin sealed the way out.
+- **Euan, 10 Nov evening:** the rolled dungeons "look great, actually... maybe 20 or 30... some go up and down more, some
+  have a different style... sections where you have to do some parkour... the bigger, more intense ones from time to time".
+  Done for that: sizes and shapes in the generator, the chasm, and a skin per gate theme from the builders in rounds of three
+  (round 1: Cinder Workings, Sunken Stacks, Sporewells). Two faults the wider tests caught: a skin's roots grew across the
+  chasm (the generator now clears every chasm's crossing), and a shelf held on to a thing drawn only in a chunk's margin and
+  floated (`adorn` is now told only about the dungeon's own rock).
+- **Euan, same evening, on the monsters:** "all the mobs are not custom... I basically want like really high quality mobs."
+  Counted: 95 of the 100 gate monsters wear a re-tinted vanilla body. My answer: the gates need their own bodies, built as a
+  few animated families with per-theme bodies, proved on one theme with clips first; a card proposes a session to plan it
+  by his process (not started by me).
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 

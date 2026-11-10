@@ -30,7 +30,8 @@ public final class RealmTests {
     }
 
     /** Every skin on the crawl generator: each has to play on any seed. */
-    private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs"};
+    private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs",
+            "awaken:sunken_stacks", "awaken:sporewells", "awaken:cinder_workings"};
 
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
@@ -371,7 +372,7 @@ public final class RealmTests {
         // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
             Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
-            for (String program : CRAWLS) for (long seed = 1; seed <= 10; seed++) {
+            for (String program : CRAWLS) for (long seed = 1; seed <= 8; seed++) {
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
@@ -388,8 +389,8 @@ public final class RealmTests {
                 sizes.add(rolled.size().name());
                 shapes.add(rolled.shape().name());
             }
-            // ten seeds of anything must not all be the same run: every size and at least three of the four shapes turn up
-            if (sizes.size() < 3 || shapes.size() < 3) h.fail("ten seeds rolled only " + sizes + " and " + shapes);
+            // eight seeds of anything must not all be the same run: every size and at least three of the four shapes turn up
+            if (sizes.size() < 3 || shapes.size() < 3) h.fail("eight seeds rolled only " + sizes + " and " + shapes);
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)

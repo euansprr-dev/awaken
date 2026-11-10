@@ -20659,3 +20659,28 @@ these two brighter than the game does.
 **Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
 no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
 gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.
+
+**Sizes and shapes of a rolled crawl.** A seed also rolls how long the run is and which way it goes.
+- Size: short (one or two legs between the first fight and the Warden, besides the ambush), standard (three or four), great
+  (three, then the Warden, then three more with a second ambush and a second Warden before the Lord). Three in ten, about
+  half, one in six. A great run is about fifteen legs.
+- Shape: delve (steadily down, four to seven a way), plunge (six to eight a way, two shafts first out of its bag), climb (the
+  Mouth is at the bottom and every way rises to a Lord at the top; a shaft is walked upward and has no breaks, since nobody
+  jumps a gap upward), sprawl (wide rooms, no shaft, nearly level). Forty, twenty-five, seventeen and eighteen in a hundred.
+- Legs of the same kind after the first take a number (`shaft2`, `ambush2`, `warden2`).
+
+**The chasm** (`CrawlLand.Chasm`, a MOVEMENT leg). A straight room with no floor but a pool ten blocks down, a shelf at each
+end, and a row of flat-topped pillars between them: three cells long (four before a gap of three), two or three cells apart,
+each beside the last by at most one cell and never higher than it. A fall is caught as on any course. A ramp down one wall goes
+from the first shelf into the pool, so whoever lands in it walks back up; the far end can only be reached across. The
+generator clears anything with a body out of the air over the pool and off the pillars after a skin has dressed the place.
+
+**What a skin's growths may hold on to.** `adorn` is told about a wall, floor or roof only when it is the dungeon's own rock
+(solid by the parts' shapes, and still there), never something another `adorn` call put into the air. Found the hard way: a
+shelf fungus had attached itself to a hanging glowcap that one chunk had drawn in its margin and the next chunk, which owned
+the cell, had not; the shelf was left floating. Nothing can hold on to a thing that isn't rock, so nothing can be left behind.
+
+Three more skins from builders, one per gate theme with that theme's own blocks, monsters and Lord: **The Cinder Workings**
+(`awaken:cinder_workings`, Ember Mines), **The Sunken Stacks** (`awaken:sunken_stacks`, Drowned Archive, ranks D and C),
+**The Sporewells** (`awaken:sporewells`, Fungal Hollow). The Realms dimension lists every gate theme's biome, so a skin
+takes its theme's air and sky.
