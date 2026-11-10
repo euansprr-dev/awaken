@@ -499,8 +499,11 @@ final class WorldBody {
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
         int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
-        // the limb wears what you wear (once it is more there than not: armour can't fade)
+        // the limb wears what you wear (once it is more there than not: armour can't fade); a layer that lights the arm
+        // says so first, so the dress can answer the light
+        if (layered != null && w > 0.5F) ArmLayers.prepare(layered);
         boolean dressed = w > 0.5F && dress(ps, out, part, light);
+        dev.awaken.core.client.FirstPersonDress.glow(0, 0F);
         if (layered != null) {
             // the arm's layers (a cast's light), in the cube's own space: where the model's part puts it
             ArmLayers.Arm arm = layered;

@@ -56,6 +56,18 @@ public final class FeelConfig {
             .comment("The assisted rope swing: the rope picks a good anchor along your heading, fits its length, swings you round what's",
                     "in the way and lets go at the top (SPEC §17.31). Off: the rope bites where you look and swings as it always did.")
             .define("ropeAssist", true);
+    public static final ModConfigSpec.BooleanValue ROPE_GUIDE = B
+            .comment("The rope finds the way (SPEC §62): where nothing stands tall enough to swing from, the rope slings you past a top",
+                    "ahead; a held rope lets go while it still goes forward and carries on through a landing. Off: the assisted swing",
+                    "exactly as it was. Needs ropeAssist.")
+            .define("ropeGuide", true);
+    public static final ModConfigSpec.BooleanValue WINGS_FEATHERS = B
+            .comment("Wings of feathers (SPEC §62): each wing is feathers of light in boxes, with a look for each rung of the ladder.",
+                    "Off: the single sheet the wings were before.")
+            .define("wingsFeathers", true);
+    public static final ModConfigSpec.BooleanValue MOVEMENT_SCORES = B
+            .comment("Movement sounds made from Minecraft's own recordings (SPEC §62). Off: the sounds as they were (Classic).")
+            .define("movementScores", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -121,6 +133,33 @@ public final class FeelConfig {
     public static boolean ropeAssist() {
         try {
             return !SPEC.isLoaded() || ROPE_ASSIST.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** The rope finds the way (SPEC §62): the sling, the earlier let-go, the chain through a landing. */
+    public static boolean ropeGuide() {
+        try {
+            return !SPEC.isLoaded() || ROPE_GUIDE.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Wings as feathers in boxes (SPEC §62); off, the old sheet. */
+    public static boolean wingsFeathers() {
+        try {
+            return !SPEC.isLoaded() || WINGS_FEATHERS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Movement sounds as scores of Minecraft's recordings (SPEC §62); off, the synthesised ones. */
+    public static boolean movementScores() {
+        try {
+            return !SPEC.isLoaded() || MOVEMENT_SCORES.get();
         } catch (RuntimeException e) {
             return true;
         }

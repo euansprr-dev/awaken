@@ -289,10 +289,184 @@ def night(sid, d):
                         b.mat = lit
 
 
+# ---- stage 3: each later set's own plates (SPEC §44.1, "Stage 3 set by set") ----------------------------------------
+# Limbs, belts and backs only: no helm is touched and no palette changes. Each set gets what its own idea was missing
+# there (a beetle's spurs, a spine over a hollow cape, organ pipes on a choir's back), an elbow where Lordscale has one
+# and it did not, and a sleeve where the wearer's own skin showed under a pauldron. Everything is joined to the suit:
+# nothing floats that the set did not already float (Dreamsteel's and Riftwalker's plates stand a texel off on purpose).
+# New parts are named p_*; the forearm's stay above the wrist cut. Run before the language, night and gauntlet passes,
+# so a new plate takes its set's surface and light like any other.
+
+def _arm(d, right, left=None):
+    """Onto both arms (the left mirrored), or onto each its own."""
+    arms = d["pieces"]["chestplate"]
+    arms["right_arm"] = list(arms["right_arm"]) + list(right)
+    arms["left_arm"] = list(arms["left_arm"]) + (A.mirror(right) if left is None else list(left))
+
+
+def _leg(d, piece, right):
+    legs = d["pieces"][piece]
+    legs["right_leg"] = list(legs["right_leg"]) + list(right)
+    legs["left_leg"] = list(legs["left_leg"]) + A.mirror(right)
+
+
+def _on(d, piece, bone, boxes):
+    d["pieces"][piece][bone] = list(d["pieces"][piece].get(bone, [])) + list(boxes)
+
+
+def _sleeve(mat, y0=-0.5):
+    """The top of the arm under the pauldron, which was the wearer's own skin: a sleeve of the suit's own cloth."""
+    return B(-3.5, 1.5, y0, 2.5, -2.5, 2.5, mat, "p_sleeve")  # every box is whole texels in size (half-texel places are fine)
+
+
+def _feathers(p0, ds, lens, part, mats, flat=(1, 0, 0)):
+    """Broad flat feathers fanned from p0 (Cloudrunner's own fins), a dark tip on each."""
+    out = []
+    for k, (dd, ln) in enumerate(zip(ds, lens)):
+        dd = np.asarray(dd, dtype=float)
+        b, end = A.link(p0, dd, ln, 2, 1, mats[k % 2], f"{part}{k}", up=flat)
+        t, _ = A.link(end, dd, 2, 2, 1, mats[2], f"{part}{k}t", up=flat)
+        out += [b, t]
+    return out
+
+
+def _plates_deepcarapace(d):
+    # a beetle's leg: a knuckled elbow, a spur swept back from it and another from the calf; a keel on the knee like
+    # the breast's; the shoulder closed
+    _arm(d, [_sleeve("under"), B(-5, -4, -6, -3, -2, 2, "shell_rim", "p_couter"), B(-6, -5, -5, -4, -1, 1, "ridge", "p_couter_boss")]
+         + A.chain((-4.2, -5.6, -1.5), [((-0.55, 0.25, -1.0), 3, 1, 1, "horn")], "p_spur"))
+    _leg(d, "leggings", [B(-1.5, 0.5, -8, -6, 4, 5, "ridge", "p_keel")])
+    _leg(d, "boots", A.chain((-3.2, -8.2, -1.5), [((-0.5, 0.3, -1.0), 3, 1, 1, "horn")], "p_cspur"))
+
+
+def _plates_cloudrunner(d):
+    # the helm's and the heel's feathered fins again at the forearm, swept back from a plated elbow; a feather-tipped
+    # plate on the thigh
+    fm = ("feather", "feather_b", "feather_tip")
+    _arm(d, [B(-5, -4, -6, -4, -2, 2, "plate_rim", "p_couter")]
+         + _feathers((-4.5, -6.5, -1.0), [(-0.15, 0.45, -1.0), (-0.3, 1.0, -0.7)], [4, 3], "p_vfin", fm))
+    _leg(d, "leggings", [B(-4, -3, -5, -1, -2, 2, "plate_lames", "p_tasset"), B(-4, -3, -6, -5, -2, 2, "feather_tip", "p_tasset_tip")])
+
+
+def _plates_tidebreaker(d):
+    # the crest's webbed fin and amethyst spines again down the back of the forearm; a spine on the knee; the shoulder
+    # closed
+    _arm(d, [_sleeve("dark"), B(-4, -3, -7, -3, -5, -3, "web", "p_ffin"), B(-4, -3, -3, -2, -5, -4, "spine", "p_ffin_tip"),
+             B(-4, -3, -6, -5, -6, -5, "spine", "p_ffin_tip2")])
+    _leg(d, "leggings", [B(-1, 0, -6, -4, 3, 4, "spine", "p_kspine")])
+
+
+def _plates_hollowheart(d):
+    # a hollow thing shows its spine: three vertebrae and their wings down the cape, where a back would be; a bone spur
+    # at the elbow; the shoulder closed in the suit's red
+    spine = []
+    for k, y in enumerate((-1, -3, -5)):  # each a knob two texels proud, its wings one
+        spine += [B(-1, 1, y, y + 1, -3, -1, "bone", f"p_vert{k}"), B(-3, 3, y, y + 1, -2, -1, "rib", f"p_vertw{k}")]
+    _on(d, "chestplate", "cape0", spine)
+    _arm(d, [_sleeve("red", -1.5), B(-5, -4, -6, -4, -2, 2, "bone_rim", "p_couter")]
+         + A.chain((-4.2, -5.0, -1.0), [((-0.6, 0.15, -1.0), 3, 1, 1, "bone")], "p_spur"))
+
+
+def _plates_leviathan(d):
+    # the back's sail again on forearm and calf: a fin cut in three steps like a shark's, a bone ray along its top; a
+    # tooth on the knee; the shoulder closed
+    _arm(d, [_sleeve("abyss_dark"), B(-4, -3, -5, -4, -6, -3, "fin", "p_ffin0"), B(-4, -3, -6, -5, -5, -3, "fin", "p_ffin1"),
+             B(-4, -3, -7, -6, -4, -3, "fin", "p_ffin2"), B(-4, -3, -4, -3, -7, -3, "bone", "p_ffin_ray")])
+    _leg(d, "leggings", [B(-1, 0, -6, -4, 3, 4, "tooth", "p_ktooth")])
+    _leg(d, "boots", [B(-1, 0, -8, -7, -6, -3, "fin", "p_cfin0"), B(-1, 0, -9, -8, -5, -3, "fin", "p_cfin1"), B(-1, 0, -10, -9, -4, -3, "fin", "p_cfin2")])
+
+
+def _plates_galewing(d):
+    # a wing feather swept back from a steel elbow; two flight feathers laid over each thigh, as the pauldron's are
+    # over the arm
+    f, end = A.link((-4.5, -5.2, -1.5), (-0.2, 0.35, -1.0), 4, 2, 1, "feather", "p_efeather", up=(1, 0, 0))
+    t, _ = A.link(end, (-0.2, 0.35, -1.0), 2, 2, 1, "feather_tip", "p_efeather_t", up=(1, 0, 0))
+    _arm(d, [B(-5, -4, -6, -4, -2, 2, "metal_rim", "p_couter"), f, t])
+    _leg(d, "leggings", [B(-4, -3, -5, 0, -2, 0, "feather", "p_tass0"), B(-4, -3, -6, -5, -2, 0, "feather_tip", "p_tass0t"),
+                         B(-4, -3, -4, 0, 0, 2, "feather_grey", "p_tass1"), B(-4, -3, -5, -4, 0, 2, "feather_tip", "p_tass1t")])
+
+
+def _plates_halo_choir(d):
+    # a choir's organ on the back: five pipes rising to the middle, a gold lip on each and a lit mouth; a gilt elbow
+    pipes = []
+    for k, (x, y0, y1) in enumerate(((-4, -7, -3), (-2, -8, -1), (0, -9, 0), (2, -8, -1), (4, -7, -3))):
+        # foot, lit mouth, body, and a lip a texel prouder than the pipe
+        pipes += [B(x - 0.5, x + 0.5, y0, y0 + 1, -4, -3, "porcelain_plain", f"p_pipe_foot{k}"),
+                  B(x - 0.5, x + 0.5, y0 + 1, y0 + 2, -4, -3, "light", f"p_pipe_mouth{k}"),
+                  B(x - 0.5, x + 0.5, y0 + 2, y1 - 1, -4, -3, "porcelain_plain", f"p_pipe{k}"),
+                  B(x - 0.5, x + 0.5, y1 - 1, y1, -5, -3, "gold", f"p_pipe_lip{k}")]
+    _on(d, "chestplate", "body", pipes)
+    _arm(d, [B(-5, -4, -6, -4, -2, 2, "gold_rim", "p_couter")])
+
+
+def _plates_dreamsteel(d):
+    # the mirror on the back, broken in three: each piece at its own depth, light in the cracks; a plate on the upper
+    # arm and the thigh, standing off the suit as the set's others do; a shard at the elbow
+    mats = d["mats"]
+    mats["p_mirror"] = copy(mats["mirror"], details=(facets(),))
+    body = d["pieces"]["chestplate"]["body"]
+    d["pieces"]["chestplate"]["body"] = [b for b in body if b.part != "backplate"] + [
+        B(-4, 0, -7, -1, -5, -4, "p_mirror", "p_back_a"), B(1, 4, -4, -1, -6, -4, "p_mirror", "p_back_b"),
+        B(1, 4, -7, -5, -5, -4, "p_mirror", "p_back_c"),
+        B(0, 1, -7, -1, -5, -4, "slit", "p_crack"), B(1, 4, -5, -4, -5, -4, "slit", "p_crack2")]
+    shard, _ = A.link((-4.5, -4.8, -0.5), (-0.35, 0.7, -0.6), 4, 2, 1, "shard", "p_eshard", up=(1, 0, 0))
+    _arm(d, [B(-6, -5, -3, 0, -2, 2, "mirror_rim", "p_rplate"), shard])
+    _leg(d, "leggings", [B(-5, -4, -5, -1, -2, 2, "mirror_rim", "p_tside")])
+
+
+def _plates_starfall(d):
+    # the star again on the back, as it fell: its tail still burning up toward the shoulder it came over; a pointed
+    # elbow; the shoulder closed
+    _on(d, "chestplate", "body", [
+        B(-1.5, 1.5, -6, -3, -4, -3, "fire", "p_bstar"), B(-0.5, 0.5, -3, -1, -4, -3, "fire_soft", "p_bray0"),
+        B(-0.5, 0.5, -8, -6, -4, -3, "fire_soft", "p_bray1"), B(-3.5, -1.5, -5, -4, -4, -3, "fire_soft", "p_bray2"),
+        B(1.5, 3.5, -5, -4, -4, -3, "fire_soft", "p_bray3"),
+        B(2, 3, -3, -2, -4, -3, "fire_soft", "p_tail0"), B(3, 4, -2, -1, -4, -3, "silver", "p_tail1"), B(4, 5, -1, 0, -4, -3, "silver_tail", "p_tail2")])
+    _arm(d, [_sleeve("dark", -1.5), B(-5, -4, -6, -4, -2, 2, "star_rim", "p_couter"), B(-6, -5, -5.5, -4.5, -1, 1, "silver", "p_couter_pt")])
+
+
+def _plates_riftwalker(d):
+    # the plates that stand off the suit are held there by the rift: its light now shows in the gap under the forearm's
+    # and the thigh's; the shoulder, where the wearer's own shirt showed, closed in the suit's cloth
+    # (its sleeve is carried one texel further up on its own grid: a half-texel cap would share planes with the rift
+    # light under the pauldron, which stands at half texels itself)
+    _arm(d, [B(-4, 2, 1, 2, -3, 3, "cloth", "p_sleeve"), B(-5, -4, -6, -5, -2, 2, "rift_soft", "p_vrift")])  # above the cuff, on the plate's own grid
+    _leg(d, "leggings", [B(-1.5, 0.5, -4.5, -1.5, 3, 4, "rift_soft", "p_trift")])
+
+
+def _plates_nightcourt(d):
+    # a duelist's half-cloak over the left shoulder to the elbow, the sword arm left free; a silver half-belt and its
+    # two buttons across the back of the coat
+    mats = d["mats"]
+    mats["p_cloak"] = AW.Mat(mats["coat"].ramp, mats["coat"].base + 2, 0.05, 0.4, details=(A.folds(3), A.hem(mats["silver"].ramp, mats["silver"].base)))
+    _arm(d, [], left=[B(-2, 5, -5, 2, 3, 4, "p_cloak", "p_cloak_f"), B(-2, 5, -7, 2, -4, -3, "p_cloak", "p_cloak_b"),
+                      B(4, 5, -6, -1, -3, 3, "p_cloak", "p_cloak_s")])
+    _on(d, "chestplate", "cape0", [B(-2, 2, -4.5, -3.5, -2, -1, "silver_rim", "p_halfbelt"),
+                                    B(-3, -2, -4.5, -3.5, -2, -1, "silver", "p_button0"), B(2, 3, -4.5, -3.5, -2, -1, "silver", "p_button1")])
+
+
+def _plates_signals_echo(d):
+    # the System's light down the back, three dashes that light in turn like its own windows waiting; a plate on each
+    # thigh drawn in its scanlines
+    mats = d["mats"]
+    mats["p_scan"] = copy(mats["plate"], details=(scanlines(mats["cyan"].ramp, mats["cyan"].base, 3, 0.3),))
+    _on(d, "chestplate", "cape0", [B(-0.5, 0.5, -1.5, -0.5, -2, -1, "cyan", "p_dash0"), B(-0.5, 0.5, -3.5, -2.5, -2, -1, "cyan", "p_dash1"),
+                                    B(-0.5, 0.5, -5.5, -4.5, -2, -1, "cyan", "p_dash2")])
+    _leg(d, "leggings", [B(-4, -3, -5, -1, -2, 2, "p_scan", "p_tasset")])
+
+
+PLATES = {"deepcarapace": _plates_deepcarapace, "cloudrunner": _plates_cloudrunner, "tidebreaker": _plates_tidebreaker,
+          "hollowheart": _plates_hollowheart, "leviathan": _plates_leviathan, "galewing": _plates_galewing,
+          "halo_choir": _plates_halo_choir, "dreamsteel": _plates_dreamsteel, "starfall": _plates_starfall,
+          "riftwalker": _plates_riftwalker, "nightcourt": _plates_nightcourt, "signals_echo": _plates_signals_echo}
+
+
 def finish(sid, d):
     if not ON:
         return d
     mats = d["mats"]
+    if sid in PLATES:
+        PLATES[sid](d)
     for name, ramp, base in PALETTE.get(sid, ()):
         mats[name].ramp, mats[name].base = ramp, base
     if sid == "galewing":  # the folded wings' edges take the storm's light
@@ -398,8 +572,8 @@ def overlaps(design):
     bad = []
     for piece, bones in design["pieces"].items():
         for bone, boxes in bones.items():
-            ours = [b for b in boxes if b.part.startswith("g_") and np.allclose(b.R, np.eye(3))]
-            theirs = [b for b in boxes if not b.part.startswith("g_") and np.allclose(b.R, np.eye(3))]
+            ours = [b for b in boxes if b.part.startswith(("g_", "p_")) and np.allclose(b.R, np.eye(3))]
+            theirs = [b for b in boxes if not b.part.startswith(("g_", "p_")) and np.allclose(b.R, np.eye(3))]
             for a in ours:
                 alo, ahi = a.c - a.h, a.c + a.h
                 for b in theirs:
@@ -429,6 +603,9 @@ def overlaps(design):
 
 def _live(piece, bone, parts, kind, pivot, axis=(0, 1, 0), speed=0.05, amount=0.0, bob=0.0, phase=0.0, idle=0.35, stride=0.65,
           wind=0.0, side=0, through=(), kick=0.0):
+    # kind "glitch" (Signal's Echo): the part jumps `amount` texels along its axis and back, for `idle` ticks, in about
+    # a third of the `speed`-tick slots (which slots, and which way, by a hash of the slot); with its set's ability
+    # fired it tears back and forth every two ticks
     """through: parts it may pass into as it moves (rays turning behind their disc, a plume over the ridge it rises
     from); the sweep check refuses every other. kick: how hard the part answers when its set's ability fires (SPEC
     §44.13): a sway swings that many times its amount further, a tilt or a drift grows by that share, a pulse swells by
@@ -456,7 +633,13 @@ def _both_arms(piece, parts, kind, pivot, axis, **kw):
 
 LIVE = {
     # the System's marker turns over the hood and rides up and down
-    "signals_echo": [_live("helmet", "head", ("marker", "marker_core"), "turn", (0, 14.5, 0), (0, 1, 0), speed=3.0, bob=0.6, kick=1.0)],
+    "signals_echo": [_live("helmet", "head", ("marker", "marker_core"), "turn", (0, 14.5, 0), (0, 1, 0), speed=3.0, bob=0.6, kick=1.0),
+                     # the slices of robe that sit out of line with the rest jump further out and back, as a window
+                     # tears when the System stutters: each on its own clock, so one somewhere every couple of seconds
+                     _live("chestplate", "body", ("glitch",), "glitch", (0, -5, 0), (1, 0, 0), speed=31, amount=1.0, idle=3, phase=0.0, kick=1.0),
+                     _live("chestplate", "cape1", ("cape_glitch",), "glitch", (0, -4, 0), (1, 0, 0), speed=43, amount=1.0, idle=3, phase=1.7, kick=1.0),
+                     _live("leggings", "front_cloth", ("robe_glitch",), "glitch", (0, -5, 0), (1, 0, 0), speed=37, amount=1.0, idle=2, phase=3.1, kick=1.0),
+                     _live("leggings", "back_cloth", ("robe_glitch",), "glitch", (0, -5, 0), (1, 0, 0), speed=53, amount=1.0, idle=3, phase=4.9, kick=1.0)],
     # the sun's rays turn slowly behind the head
     "sunward": [_live("helmet", "head", ("ray",), "turn", (0, 5, -8), (0, 0, 1), speed=0.6, through=("disc",), kick=0.5)],
     # the halo leans round and round and rides; the wings at the temples breathe
@@ -524,7 +707,7 @@ def live_json(design):
             a = a / max(np.linalg.norm(a), 1e-9)
             u, v = _lean(a)
             flip = np.array([1.0, -1.0, -1.0])  # design space to part space
-            drift = s["kind"] == "drift"
+            drift = s["kind"] in ("drift", "glitch")
             out.append({"piece": piece, "bone": bone, "mesh": f"{piece}_{bone}_live{k}", "kind": s["kind"],
                         "pivot": [round(px / 16.0, 5), round(-py / 16.0, 5), round(-pz / 16.0, 5)],
                         "axis": [round(float(x), 5) for x in a * flip], "u": [round(float(x), 5) for x in u * flip],
@@ -620,6 +803,16 @@ def pose(spec, age, stride=0.0, walk=0.0, wind=0.0, kick=0.0):
         t = am * (1 + kw) * np.array([np.sin(sp * age + ph), np.sin(0.7 * sp * age + 2 * ph), np.sin(1.3 * sp * age + 3 * ph)])
     elif k == "pulse":
         R = np.eye(3) * (1 + am * (beat(sp * age + ph) + kw))
+    elif k == "glitch":
+        a = np.asarray(spec["axis"], dtype=float)
+        slot = np.floor(age / sp)
+        h = (np.sin(slot * 12.9898 + ph * 78.233) * 43758.5453) % 1.0
+        off = 0.0
+        if kick > 0.25:
+            off = am if int(age / 2) % 2 == 0 else -am
+        elif h < 0.34 and age - slot * sp < spec["idle"]:
+            off = -am if h < 0.17 else am
+        t = a / max(np.linalg.norm(a), 1e-9) * off
     t = t + np.array([0.0, spec["bob"] * np.sin(0.05 * age + ph), 0.0])
     return R, t
 

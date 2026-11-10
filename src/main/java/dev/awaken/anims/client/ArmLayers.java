@@ -41,6 +41,12 @@ public final class ArmLayers {
     @FunctionalInterface
     public interface Layer {
         void draw(Arm arm, PoseStack ps, SubmitNodeCollector out);
+
+        /**
+         * Before the arm is dressed (and so before {@link #draw}): a layer that lights the arm says so here
+         * ({@code core.client.FirstPersonDress.glow}), so what the arm wears can answer the light in its own materials.
+         */
+        default void prepare(Arm arm) {}
     }
 
     private static final List<Layer> LAYERS = new CopyOnWriteArrayList<>();
@@ -51,6 +57,17 @@ public final class ArmLayers {
 
     static boolean any() {
         return !LAYERS.isEmpty();
+    }
+
+    static void prepare(Arm arm) {
+        for (Layer l : LAYERS) {
+            try {
+                l.prepare(arm);
+            } catch (RuntimeException ex) {
+                LAYERS.remove(l);
+                Awaken.LOG.error("A first-person arm layer failed and is off for this session", ex);
+            }
+        }
     }
 
     static void draw(Arm arm, PoseStack ps, SubmitNodeCollector out) {

@@ -46,217 +46,200 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # thorn_hound (The Bramble Hound)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 200.04 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:thorn_hound 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec thorn_hound_idle 30 4
+cmd awaken ascent pilot rec thorn_hound_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec thorn_hound_fight 110 4
+cmd awaken ascent pilot rec thorn_hound_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec thorn_hound_m0 76 4
+cmd awaken ascent pilot rec thorn_hound_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec thorn_hound_death 50 4
+cmd awaken ascent pilot rec thorn_hound_death 50 2
 wait 54
 # incense_priest (The Censer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -4.7 200.31 2.6 -90 4
+cmd tp @s -7.7 200.31 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:incense_priest 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec incense_priest_idle 30 4
+cmd awaken ascent pilot rec incense_priest_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec incense_priest_fight 110 4
+cmd awaken ascent pilot rec incense_priest_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec incense_priest_m0 76 4
+cmd awaken ascent pilot rec incense_priest_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec incense_priest_m1 76 4
+cmd awaken ascent pilot rec incense_priest_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec incense_priest_m2 76 4
+cmd awaken ascent pilot rec incense_priest_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec incense_priest_death 50 4
+cmd awaken ascent pilot rec incense_priest_death 50 2
 wait 54
 # the_overgrowth (The Overgrowth)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.8 201.09 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_overgrowth 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_overgrowth_idle 30 4
+cmd awaken ascent pilot rec the_overgrowth_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_overgrowth_fight 110 4
+cmd awaken ascent pilot rec the_overgrowth_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_overgrowth_m0 76 4
+cmd awaken ascent pilot rec the_overgrowth_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_overgrowth_m1 76 4
+cmd awaken ascent pilot rec the_overgrowth_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_overgrowth_m2 76 4
+cmd awaken ascent pilot rec the_overgrowth_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_overgrowth_death 50 4
+cmd awaken ascent pilot rec the_overgrowth_death 50 2
 wait 54
 # ink_drowned (The Blotter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.7 200.31 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:ink_drowned 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec ink_drowned_idle 30 4
+cmd awaken ascent pilot rec ink_drowned_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec ink_drowned_fight 110 4
+cmd awaken ascent pilot rec ink_drowned_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec ink_drowned_m0 76 4
+cmd awaken ascent pilot rec ink_drowned_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec ink_drowned_death 50 4
+cmd awaken ascent pilot rec ink_drowned_death 50 2
 wait 54
 # page_wraith (The Paper Crane)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.9 201.58 2.6 -90 -6
+cmd tp @s -8.8 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:page_wraith 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec page_wraith_idle 30 4
+cmd awaken ascent pilot rec page_wraith_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec page_wraith_fight 110 4
+cmd awaken ascent pilot rec page_wraith_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec page_wraith_m0 76 4
+cmd awaken ascent pilot rec page_wraith_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec page_wraith_death 50 4
+cmd awaken ascent pilot rec page_wraith_death 50 2
 wait 54
 # archive_eye (The Reading Glass)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -6.7 201.58 2.6 -90 -6
+cmd tp @s -13.1 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:archive_eye 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec archive_eye_idle 30 4
+cmd awaken ascent pilot rec archive_eye_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec archive_eye_fight 110 4
+cmd awaken ascent pilot rec archive_eye_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec archive_eye_m0 76 4
+cmd awaken ascent pilot rec archive_eye_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec archive_eye_death 50 4
+cmd awaken ascent pilot rec archive_eye_death 50 2
 wait 54
 # salt_stray (The Quillback)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -3.9 199.93 2.6 -90 4
+cmd tp @s -6.9 199.93 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:salt_stray 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec salt_stray_idle 30 4
+cmd awaken ascent pilot rec salt_stray_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec salt_stray_fight 110 4
+cmd awaken ascent pilot rec salt_stray_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec salt_stray_m0 76 4
+cmd awaken ascent pilot rec salt_stray_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec salt_stray_death 50 4
+cmd awaken ascent pilot rec salt_stray_death 50 2
 wait 54
 # drowned_scribe (The Scribe)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -4.9 200.42 2.6 -90 4
+cmd tp @s -7.9 200.42 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:drowned_scribe 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec drowned_scribe_idle 30 4
+cmd awaken ascent pilot rec drowned_scribe_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec drowned_scribe_fight 110 4
+cmd awaken ascent pilot rec drowned_scribe_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec drowned_scribe_m0 76 4
+cmd awaken ascent pilot rec drowned_scribe_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec drowned_scribe_m1 76 4
+cmd awaken ascent pilot rec drowned_scribe_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec drowned_scribe_m2 76 4
+cmd awaken ascent pilot rec drowned_scribe_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec drowned_scribe_death 50 4
+cmd awaken ascent pilot rec drowned_scribe_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

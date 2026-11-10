@@ -32,6 +32,10 @@ public final class Hazards {
         final @Nullable MobEffectInstance effect;
         int delay, life;
         final boolean once;
+        /** How its one strike lands (a cloud's or a field's pulse is PERILOUS; a rising spike is its ability's own class). */
+        dev.awaken.core.api.Strikes.Kind kind = dev.awaken.core.api.Strikes.Kind.PERILOUS;
+        /** A spike of its owner's own matter out of the floor (SPEC §60.8): 0 none, 1 the stir before it, 2 the spike. */
+        int erupt;
 
         Hazard(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int delay, int life, float damage, BoltKind bolt,
                @Nullable MobEffectInstance effect, boolean once) {
@@ -61,6 +65,22 @@ public final class Hazards {
     public static void strike(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int delay, float damage, BoltKind bolt, @Nullable MobEffectInstance effect) {
         if (ACTIVE.size() >= MAX) return;
         add(new Hazard(level, owner, pos, radius, delay, 1, damage, bolt, effect, true));
+    }
+
+    /**
+     * A gate monster's spike out of the floor, in place of a borrowed fang (SPEC §60.8): its matter stirs on the floor
+     * at {@code delay}, and {@code rise} ticks later bursts up and bites whoever stands there, as a blow of {@code kind}.
+     */
+    public static void rise(ServerLevel level, AwakenMob owner, Vec3 pos, float radius, int delay, int rise, float damage, BoltKind bolt,
+                            @Nullable MobEffectInstance effect, dev.awaken.core.api.Strikes.Kind kind) {
+        if (ACTIVE.size() >= MAX - 1) return;
+        Hazard stir = new Hazard(level, owner, pos, 0, delay, 1, 0, bolt, null, true);
+        stir.erupt = 1;
+        add(stir);
+        Hazard spike = new Hazard(level, owner, pos, radius, delay + rise, 1, damage, bolt, effect, true);
+        spike.erupt = 2;
+        spike.kind = kind;
+        add(spike);
     }
 
     /** Hazards created while we iterate (an owner dying mid-tick leaves a death cloud) join on the next tick. */
@@ -114,10 +134,26 @@ public final class Hazards {
 
     private static void apply(ServerLevel level, Hazard h) {
         AwakenMob owner = h.owner != null && h.owner.isAlive() ? h.owner : null;
+        if (h.erupt == 1) {
+            Abilities.shed(level, h.owner, h.pos.add(0, 0.08, 0), 4, 0.22, 0.03, 0.22, 0.015);
+            return;
+        }
+        if (h.erupt == 2) {
+            // the spike: a column of its matter thrown up out of the floor, gone as fast as it came
+            // (thick enough to read from across a room: on film a thinner one was lost at eight blocks)
+            Abilities.shed(level, h.owner, h.pos.add(0, 0.7, 0), 24, 0.16, 0.65, 0.16, 0.1);
+            Abilities.shed(level, h.owner, h.pos.add(0, 0.1, 0), 6, 0.32, 0.04, 0.32, 0.05);
+            level.sendParticles(h.bolt.trail(), h.pos.x, h.pos.y + 0.6, h.pos.z, 8, 0.14, 0.55, 0.14, 0.04);
+            if (h.owner != null) {
+                net.minecraft.sounds.SoundEvent s = dev.awaken.mobs.MobSounds.monster(h.owner.def().id, "blow");
+                if (s != null) level.playSound(null, h.pos.x, h.pos.y, h.pos.z, s, h.owner.getSoundSource(), 0.3F, 1.25F + level.getRandom().nextFloat() * 0.2F);
+            }
+        }
         for (LivingEntity e : Abilities.enemiesNear(level, owner, h.pos, h.radius)) {
-            // a cloud's or a field's pulse lands as the perilous blow its ability was told as (dodge it, never parry)
+            // a cloud's or a field's pulse lands as the perilous blow its ability was told as (dodge it, never parry);
+            // a spike as the class its own ability was told as
             if (owner != null) {
-                dev.awaken.core.api.Strikes.deliver(owner, dev.awaken.core.api.Strikes.Kind.PERILOUS, () -> {
+                dev.awaken.core.api.Strikes.deliver(owner, h.kind, () -> {
                     Abilities.hurt(level, owner, e, h.damage, h.bolt, h.effect == null ? null : new MobEffectInstance(h.effect));
                     return true;
                 });

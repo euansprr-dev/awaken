@@ -1,0 +1,10 @@
+{
+  "text": "To land softly on your wings, come down slowly and level out near the ground. Your wings cup the air and set you on your feet.",
+  "short": "Land slow and level",
+  "priority": 50,
+  "show_for": 200,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

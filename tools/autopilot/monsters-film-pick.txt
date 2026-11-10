@@ -46,214 +46,197 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # sand_stalker (The Sand Stalker)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.4 199.66 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sand_stalker 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec sand_stalker_idle 30 4
+cmd awaken ascent pilot rec sand_stalker_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec sand_stalker_fight 110 4
+cmd awaken ascent pilot rec sand_stalker_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec sand_stalker_m0 76 4
+cmd awaken ascent pilot rec sand_stalker_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec sand_stalker_death 50 4
+cmd awaken ascent pilot rec sand_stalker_death 50 2
 wait 54
 # glint_mite (The Glint)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.5 199.88 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:glint_mite 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec glint_mite_idle 30 4
+cmd awaken ascent pilot rec glint_mite_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec glint_mite_fight 110 4
+cmd awaken ascent pilot rec glint_mite_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec glint_mite_m0 76 4
+cmd awaken ascent pilot rec glint_mite_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec glint_mite_death 50 4
+cmd awaken ascent pilot rec glint_mite_death 50 2
 wait 54
 # sleepwalker (The Sheet)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.2 200.53 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sleepwalker 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec sleepwalker_idle 30 4
+cmd awaken ascent pilot rec sleepwalker_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec sleepwalker_fight 110 4
+cmd awaken ascent pilot rec sleepwalker_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec sleepwalker_m0 76 4
+cmd awaken ascent pilot rec sleepwalker_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec sleepwalker_death 50 4
+cmd awaken ascent pilot rec sleepwalker_death 50 2
 wait 54
 # the_tall_one (The Tall One)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.9 201.14 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_tall_one 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_tall_one_idle 30 4
+cmd awaken ascent pilot rec the_tall_one_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_tall_one_fight 110 4
+cmd awaken ascent pilot rec the_tall_one_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_tall_one_m0 76 4
+cmd awaken ascent pilot rec the_tall_one_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_tall_one_m1 76 4
+cmd awaken ascent pilot rec the_tall_one_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_tall_one_death 50 4
+cmd awaken ascent pilot rec the_tall_one_death 50 2
 wait 54
 # silent_stalker (The Silent One)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.2 200.15 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:silent_stalker 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec silent_stalker_idle 30 4
+cmd awaken ascent pilot rec silent_stalker_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec silent_stalker_fight 110 4
+cmd awaken ascent pilot rec silent_stalker_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec silent_stalker_m0 76 4
+cmd awaken ascent pilot rec silent_stalker_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec silent_stalker_death 50 4
+cmd awaken ascent pilot rec silent_stalker_death 50 2
 wait 54
 # the_unblinking (The Unblinking)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.7 200.70 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_unblinking 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_unblinking_idle 30 4
+cmd awaken ascent pilot rec the_unblinking_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_unblinking_fight 110 4
+cmd awaken ascent pilot rec the_unblinking_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_unblinking_m0 76 4
+cmd awaken ascent pilot rec the_unblinking_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_unblinking_m1 76 4
+cmd awaken ascent pilot rec the_unblinking_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_unblinking_m2 76 4
+cmd awaken ascent pilot rec the_unblinking_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_unblinking_death 50 4
+cmd awaken ascent pilot rec the_unblinking_death 50 2
 wait 54
 # the_lamplighter (The Lamplighter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.0 201.19 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_lamplighter 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_lamplighter_idle 30 4
+cmd awaken ascent pilot rec the_lamplighter_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_lamplighter_fight 110 4
+cmd awaken ascent pilot rec the_lamplighter_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_lamplighter_m0 76 4
+cmd awaken ascent pilot rec the_lamplighter_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_lamplighter_m1 76 4
+cmd awaken ascent pilot rec the_lamplighter_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_lamplighter_m2 76 4
+cmd awaken ascent pilot rec the_lamplighter_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_lamplighter_death 50 4
+cmd awaken ascent pilot rec the_lamplighter_death 50 2
 wait 54
 # gel_sample (The Gel Sample)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.1 199.93 2.6 -90 4
 look -90 4
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:gel_sample 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec gel_sample_idle 30 4
+cmd awaken ascent pilot rec gel_sample_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec gel_sample_fight 110 4
+cmd awaken ascent pilot rec gel_sample_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec gel_sample_m0 76 4
+cmd awaken ascent pilot rec gel_sample_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec gel_sample_death 50 4
+cmd awaken ascent pilot rec gel_sample_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

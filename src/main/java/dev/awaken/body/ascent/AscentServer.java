@@ -1,6 +1,7 @@
 package dev.awaken.body.ascent;
 
 import dev.awaken.core.AwakenNet;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -225,21 +226,33 @@ public final class AscentServer {
         if (flying && ++m.aloft % 100 == 0) link(p, AscentMemory.Track.SKYBORN, 1);
     }
 
-    /** States refused since the server started (tests and the bench read it). */
+    /** States refused since the server started (tests and the bench read it), and why the last one was. */
     static int refusals;
+    static String lastRefusal = "";
+
+    /** Why an anchor isn't real, in words (the log's; SPEC §62: a refusal used to say nothing). */
+    private static String anchorWhy(ServerPlayer p, double ax, double ay, double az) {
+        double reach = reach(p, 10) + 6;
+        return p.distanceToSqr(ax, ay, az) > reach * reach
+                ? String.format("the anchor is %.1f from where the server has the body (reach %.1f)", Math.sqrt(p.distanceToSqr(ax, ay, az)), reach)
+                : String.format("no block's collision at the anchor (%.2f %.2f %.2f)", ax, ay, az);
+    }
 
     static void onState(ServerPlayer p, AscentPayloads.State msg) {
         AscentState s = AscentState.byId(msg.state());
         if (s == null) return;
         AscentMotion m = motion(p);
-        boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
-                || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z())
-                || s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE
-                || s == AscentState.RAPPEL && !rappelOk(p, m, msg);
-        if (refuse && s != AscentState.NONE) {
+        String why = !allowed(p, s) ? "the tier isn't held" : p.isPassenger() ? "riding" : p.isSpectator() ? "spectating"
+                : !dev.awaken.body.BodyConfig.ascent() ? "the Ascent is off in this world"
+                : s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z()) && !(s == AscentState.ZIP && strikeAnchor(p, m, msg.x(), msg.y(), msg.z()))
+                        ? anchorWhy(p, msg.x(), msg.y(), msg.z())
+                : s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE ? "too little Aether"
+                : s == AscentState.RAPPEL && !rappelOk(p, m, msg) ? "the rappel's length" : null;
+        if (why != null && s != AscentState.NONE) {
             refusals++;
+            lastRefusal = why;
             AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
-            dev.awaken.Awaken.LOG.debug("[ascent] refused {} for {}", s, p.getPlainTextName());
+            dev.awaken.Awaken.LOG.info("[ascent] refused {} for {}: {}", s, p.getPlainTextName(), why);
             s = AscentState.NONE;
         }
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
@@ -317,6 +330,76 @@ public final class AscentServer {
         return false;
     }
 
+    // ---- the rope strike (SPEC §62) ----------------------------------------------------------------------------------
+
+    /**
+     * A strike begins: the rope may bite this creature if the Tether's mastery has the move, the creature is one the
+     * look could mean (alive, seen, within the rope's reach and the ground covered while the packet travelled) and no
+     * player. The ZIP state that follows is then let through with the creature for an anchor.
+     */
+    static void onStrike(ServerPlayer p, AscentPayloads.Strike msg) {
+        AscentMotion m = motion(p);
+        int level = p.getData(AscentContent.MEMORY).level(AscentMemory.Track.TETHER);
+        net.minecraft.world.entity.Entity t = p.level().getEntity(msg.target());
+        boolean ok = Ascent.has(p, Ascent.Tier.TETHER) && level >= AirRules.STRIKE_LEVEL && now(p) - m.strikeAt >= AirRules.STRIKE_COOLDOWN - 6
+                && t instanceof net.minecraft.world.entity.LivingEntity && !(t instanceof Player)
+                && dev.awaken.core.api.Aim.meant(p, t, p.getYRot(), p.getXRot(), reach(p, level) + 6);
+        m.strikeTarget = ok ? msg.target() : -1;
+        if (ok) m.strikeAt = now(p);
+    }
+
+    /** A strike's anchor is its creature: the point sits in (or a little round) the creature the server let the rope bite. */
+    static boolean strikeAnchor(ServerPlayer p, AscentMotion m, double x, double y, double z) {
+        if (m.strikeTarget < 0 || now(p) - m.strikeAt > AirRules.STRIKE_TICKS + 20) return false;
+        net.minecraft.world.entity.Entity t = p.level().getEntity(m.strikeTarget);
+        return t != null && t.isAlive() && t.getBoundingBox().inflate(3).contains(x, y, z);
+    }
+
+    /**
+     * The blow. The pull was the client's; whether it lands and how hard is decided here: the creature the rope bit,
+     * still alive, and the body really at it (its packets may trail the pull by a few ticks). The hand's own damage and
+     * more for the speed it came in at, as a player's attack, and a hit for everything that answers one.
+     */
+    static void strikeBlow(ServerPlayer p, AscentMotion m, float speed) {
+        int id = m.strikeTarget;
+        m.strikeTarget = -1;
+        if (id < 0 || now(p) - m.strikeAt > AirRules.STRIKE_TICKS + 20) return;
+        if (!(p.level().getEntity(id) instanceof net.minecraft.world.entity.LivingEntity t) || !t.isAlive() || dev.awaken.core.api.Aim.body(t)) return;
+        if (t instanceof net.minecraft.world.entity.OwnableEntity own && own.getOwnerReference() != null && p.getUUID().equals(own.getOwnerReference().getUUID())) return;
+        if (dev.awaken.core.api.Aim.gap(p.getEyePosition(), t.getBoundingBox()) > AirRules.STRIKE_ARRIVE + 4.5) return;
+        ServerLevel level = p.level();
+        double came = Mth.clamp(speed, 0, AirRules.STRIKE_SPEED + 0.6);
+        float damage = AirRules.strikeDamage(p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE), came);
+        var source = p.damageSources().playerAttack(p);
+        if (!t.hurtServer(level, source, damage)) return;
+        double dx = t.getX() - p.getX(), dz = t.getZ() - p.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+        if (d > 1e-3) t.knockback(0.5 + 0.3 * came, -dx / d, -dz / d, source, damage);
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, t);
+        link(p, AscentMemory.Track.TETHER, 3);
+        made(p, AscentGoals.STRUCK, AscentTips.STRIKE);
+    }
+
+    /** A move of §62 made: counted (its row leaves the Tasks page after the first) and its tip a step nearer retiring. */
+    private static void made(ServerPlayer p, String counter, net.minecraft.resources.Identifier tip) {
+        dev.awaken.progression.Progression.count(p, counter);
+        dev.awaken.core.api.TipHooks.done(p, tip);
+    }
+
+    // ---- a push carries (SPEC §62) -----------------------------------------------------------------------------------
+
+    /**
+     * A push on a body the Ascent holds, said plainly: its client moves it, so the push is sent there to join its
+     * state's velocity. False when the Ascent doesn't hold this body: the caller then pushes it the game's way. (A
+     * motion the game itself syncs, a knock or a module's own packet, reaches a held body too: the server's copy rests at
+     * nothing between ticks and so does the client's, so whatever arrives is a push there.)
+     */
+    public static boolean push(ServerPlayer p, double x, double y, double z) {
+        AscentMotion m = p.getExistingDataOrNull(AscentContent.MOTION);
+        if (m == null || !m.state.airborne()) return false;
+        AwakenNet.send(p, new AscentPayloads.Push((float) x, (float) y, (float) z));
+        return true;
+    }
+
     static void onEvent(ServerPlayer p, AscentPayloads.Event msg) {
         if (msg.what() == AscentPayloads.EV_ASCEND) {
             Sovereign.ascend(p);
@@ -330,6 +413,47 @@ public final class AscentServer {
             case AscentPayloads.EV_LAUNCH -> {
                 if (st == AscentState.TETHER) link(p, AscentMemory.Track.TETHER, 3);
             }
+            // Rope and Wings (SPEC §62): a sling's let-go and a spring off a top are the rope's moves
+            case AscentPayloads.EV_SLING -> {
+                if (st == AscentState.ZIP) {
+                    link(p, AscentMemory.Track.TETHER, 2);
+                    made(p, AscentGoals.SLUNG, AscentTips.SLING);
+                }
+            }
+            case AscentPayloads.EV_SPRING -> {
+                if (Ascent.has(p, Ascent.Tier.TETHER) && st == AscentState.CARRY
+                        && p.getData(AscentContent.MEMORY).level(AscentMemory.Track.TETHER) >= AirRules.SPRING_LEVEL) {
+                    link(p, AscentMemory.Track.TETHER, 2);
+                    made(p, AscentGoals.SPRUNG, AscentTips.SPRING);
+                }
+            }
+            // the moves the air earned (SPEC §62): each a link, once in a while, only out of the state it comes from
+            case AscentPayloads.EV_FLARE -> {
+                AscentMotion m = motion(p);
+                if (Ascent.has(p, Ascent.Tier.WINGS) && now(p) - m.endedAt < SOFT_LANDING && now(p) - m.flareAt >= 60) {
+                    m.flareAt = now(p);
+                    link(p, AscentMemory.Track.WINGS, 2);
+                    made(p, AscentGoals.FLARED, AscentTips.FLARE);
+                }
+            }
+            case AscentPayloads.EV_SKIM -> {
+                AscentMotion m = motion(p);
+                if (Ascent.has(p, Ascent.Tier.WINGS) && st == AscentState.GLIDE && now(p) - m.skimAt >= 100
+                        && p.getData(AscentContent.MEMORY).level(AscentMemory.Track.WINGS) >= AirRules.SKIM_LEVEL) {
+                    m.skimAt = now(p);
+                    link(p, AscentMemory.Track.WINGS, 3);
+                    made(p, AscentGoals.SKIMMED, AscentTips.SKIM);
+                }
+            }
+            case AscentPayloads.EV_TAKEOFF -> {
+                AscentMotion m = motion(p);
+                if (Ascent.has(p, Ascent.Tier.SKYBORN) && st == AscentState.SOAR && now(p) - m.since <= 10) {
+                    m.aether = Math.max(0, m.aether - AirRules.TAKEOFF_AETHER);
+                    link(p, AscentMemory.Track.SKYBORN, 2);
+                    made(p, AscentGoals.TOOK_OFF, AscentTips.TAKEOFF);
+                }
+            }
+            case AscentPayloads.EV_STRIKE -> strikeBlow(p, motion(p), msg.speed());
             // a rappel's bound off the wall: a link, as any move on the rope
             case AscentPayloads.EV_RAPPEL_KICK -> {
                 if (st == AscentState.RAPPEL) link(p, AscentMemory.Track.TETHER, 1);
@@ -441,8 +565,9 @@ public final class AscentServer {
         p.resetFallDistance();
         p.connection.resetFlyingTicks();
         // the client moves this body; the server's own physics between packets (gravity on a hover, a hang on a rope)
-        // would sink its copy here and show everyone else a bob
-        p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        // would sink its copy here and show everyone else a bob. A real push set this tick that has yet to be synced is
+        // left to go out first (SPEC §62: the client carries what arrives into its state's velocity)
+        if (!p.needsSync || p.getDeltaMovement().lengthSqr() < 0.04) p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         // a body that has stood on the ground for a while is not in the air, whatever its client last said
         m.groundTicks = p.onGround() ? m.groundTicks + 1 : 0;
         if (m.groundTicks > 20) end(p, m);

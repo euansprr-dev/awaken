@@ -152,6 +152,7 @@ final class MobsCommands {
         final dev.awaken.mobs.entity.GateMonster mm = m;
         final LivingEntity tt = t;
         if (move < 0) {
+            m.rouse(level); // (a dormant one would wait for a player to come near)
             m.setTarget(t);
             src.sendSuccess(() -> Component.literal(mm.getName().getString() + " turns on " + tt.getName().getString()), true);
             return 1;
