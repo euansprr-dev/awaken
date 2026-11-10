@@ -15,11 +15,15 @@ import java.util.Random;
  * A crawl nobody laid out by hand (SPEC §50.9): the run is rolled from the gate's seed, so one blueprint is a different
  * dungeon every time it forms. It always starts with a fight in sight of the Mouth, ends with a Warden and then the
  * Lord, and between them draws from a bag: more fights, a gallery of spitters, a hall of teeth, a shaft with a broken
- * ledge, an ambush. It turns as it goes and it goes down. There is always a side cell that makes a way round the first
- * fight, and usually a hidden cell off the ambush.
+ * ledge, a gulf to cross, an ambush. It turns as it goes and it goes down. There is always a side cell that makes a way
+ * round the first fight, and usually a hidden cell off the ambush.
+ *
+ * <p>No two legs are cut alike either: every room rolls a form, every Warden's room and Lord's hall a plan, every gulf a
+ * way across (SPEC §50.9, "No two alike"). Which of them a run may roll is its kind's {@link Style}.
  *
  * <p>The land that extends this is a <b>skin</b>: what the rock, floors and doors are made of, what grows on the walls,
- * who lives there and what its traps are made of. A new skin is a new kind of dungeon; the layouts come free.
+ * who lives there, what its traps are made of and what it is cut like. A new skin is a new kind of dungeon; the layouts
+ * come free.
  */
 public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     private static final BlockState CLIMB_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 14);
@@ -57,10 +61,30 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     /** Whatever the skin draws that is bigger than a cell of wall. */
     protected void skinSpecial(V v, M m) {}
 
+    /**
+     * What a kind of dungeon is cut like (SPEC §50.9): the forms its rooms may take, the plans of its Wardens' rooms and
+     * its Lord's hall, the ways across its gulfs, whether its shafts are square, and how wide and high its ways are.
+     * A form listed twice is rolled twice as often.
+     */
+    public record Style(List<Cave.Form> rooms, List<Arena.Plan> wardens, List<Arena.Plan> lords, List<Chasm.Kind> crossings, boolean squareShafts, double wayHalf, int wayHigh) {}
+
+    /** What this kind is cut like. As it stands: something dug has caves, pits and rifts; something built has halls, naves and bridges. */
+    protected Style style() {
+        return wild() >= 0.5
+                ? new Style(List.of(Cave.Form.OVAL, Cave.Form.OVAL, Cave.Form.RING, Cave.Form.PIT, Cave.Form.RIFT, Cave.Form.TERRACE), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                        List.of(Arena.Plan.RING, Arena.Plan.ROTUNDA, Arena.Plan.TIERS),
+                        List.of(Chasm.Kind.PILLARS, Chasm.Kind.LEDGES, Chasm.Kind.HANGERS, Chasm.Kind.STEPS, Chasm.Kind.FORD, Chasm.Kind.BRIDGE), false, 2.3, 4)
+                : new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.CROSS, Cave.Form.TERRACE, Cave.Form.PIT, Cave.Form.RING), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE, Arena.Plan.RING),
+                        List.of(Arena.Plan.NAVE, Arena.Plan.CROSS, Arena.Plan.SQUARE, Arena.Plan.ROTUNDA),
+                        List.of(Chasm.Kind.BRIDGE, Chasm.Kind.BEAMS, Chasm.Kind.FALLING, Chasm.Kind.HANGERS, Chasm.Kind.LEDGES, Chasm.Kind.STEPS, Chasm.Kind.FORD), true, 2.6, 5);
+    }
+
     private final List<int[]> taken = new ArrayList<>(), thin = new ArrayList<>(), spitters = new ArrayList<>(), finds = new ArrayList<>();
     private int[] heartDoor;
     private Cave root;
-    private int lordX, lordY, lordZ, lordR;
+    private Arena lordHall;
+    /** Every form, plan and crossing this run rolled: for whoever checks that all of them turn up. */
+    private final java.util.Set<String> used = new java.util.TreeSet<>();
 
     protected GeneratedCrawl(Ctx ctx, long salt) {
         super(ctx, salt);
@@ -68,6 +92,77 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
 
     public final List<int[]> finds() {
         return finds;
+    }
+
+    public final java.util.Set<String> used() {
+        return used;
+    }
+
+    private static <T> T pick(Random r, List<T> from) {
+        return from.get(r.nextInt(from.size()));
+    }
+
+    /** The rooms whose floor is all one level: for the first fight and the ambush, which other ways lead off. */
+    private static List<Cave.Form> level(List<Cave.Form> rooms) {
+        List<Cave.Form> out = new ArrayList<>();
+        for (Cave.Form f : rooms) if (f != Cave.Form.TERRACE && f != Cave.Form.PIT && f != Cave.Form.RIFT) out.add(f);
+        return out.isEmpty() ? List.of(Cave.Form.OVAL) : out;
+    }
+
+    /** The crossings that don't go down: nobody jumps upward, so on a climb the way across stays level. */
+    private static List<Chasm.Kind> flat(List<Chasm.Kind> crossings) {
+        List<Chasm.Kind> out = new ArrayList<>();
+        for (Chasm.Kind k : crossings) if (k != Chasm.Kind.STEPS) out.add(k);
+        return out.isEmpty() ? List.of(Chasm.Kind.PILLARS) : out;
+    }
+
+    private static String called(Chasm.Kind kind) {
+        return switch (kind) {
+            case BRIDGE -> "A broken bridge";
+            case BEAMS -> "A walk along the rafters";
+            case LEDGES -> "A ledge over a drop";
+            case HANGERS -> "Hanging platforms";
+            case STEPS -> "Great steps down";
+            case FORD -> "A ford";
+            case FALLING -> "A bridge that gives way";
+            default -> "A chasm";
+        };
+    }
+
+    /** What goes with a gulf: where a long fall puts you back, and the trap of whatever in it gives way. */
+    private void rig(String id, Chasm pit, M m) {
+        int bx = pit.ax + pit.dx * pit.length, bz = pit.az + pit.dz * pit.length;
+        List<int[]> ledges = new ArrayList<>();
+        for (int i = -1; i <= pit.pillars(); i++) {
+            // what gave way under someone is no place to put them back on: off a falling deck it is one shelf or the other
+            if (pit.kind == Chasm.Kind.FALLING && i >= 0 && i < pit.pillars()) continue;
+            int[] at = pit.stand(i);
+            ledges.add(new int[]{at[0], at[1], at[2]});
+        }
+        course(new Course(id, Math.min(pit.ax, bx) - pit.half - 2, pit.top - pit.depth - 2, Math.min(pit.az, bz) - pit.half - 2, Math.max(pit.ax, bx) + pit.half + 2, pit.top + 9, Math.max(pit.az, bz) + pit.half + 2, ledges));
+        for (int[] t : pit.thin()) {
+            thin.add(t);
+            trap(new Trap(id, TrapKind.CRUMBLE, t[0], t[1], t[2], t[3], t[4], t[5], 0, 0, thinFloor(m), AIR));
+        }
+    }
+
+    /** The crossings a branch may be: the ones that are as easy to come back over as to go out on. */
+    private static List<Chasm.Kind> thereAndBack(List<Chasm.Kind> crossings) {
+        List<Chasm.Kind> out = new ArrayList<>();
+        for (Chasm.Kind k : crossings) if (k != Chasm.Kind.STEPS && k != Chasm.Kind.PILLARS) out.add(k);
+        return out.isEmpty() ? List.of(Chasm.Kind.HANGERS) : out;
+    }
+
+    /** The nearest of north, east, south and west to a heading: what was built stands square, however the way came to it. */
+    private static double snap(double h) {
+        return Math.round(h / (Math.PI / 2)) * (Math.PI / 2);
+    }
+
+    /** Your feet on a room's floor at a column, or beside it where that column isn't floor. */
+    private static int near(Cave room, int x, int z) {
+        if (room.feet2(x, z) != NONE) return room.floorAt(x, z);
+        for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}}) if (room.feet2(x + d[0], z + d[1]) != NONE) return room.floorAt(x + d[0], z + d[1]);
+        return room.feet;
     }
 
     private static double sx(double h) {
@@ -126,6 +221,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         Random r = new Random(seed * 0x9E3779B97F4A7C15L ^ 0xC2A7L);
         M m = mats();
         double wild = wild();
+        Style style = style();
+        boolean built = wild < 0.5;
         long s = seed * 31 + 7;
 
         // what kind of run this seed is
@@ -151,12 +248,17 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         List<Character> plan = new ArrayList<>();
         plan.add('F');
         List<Character> mid = new ArrayList<>(draw.subList(0, middle));
+        // from a standard run up there is always a gulf to cross: how it is crossed is what no two runs share. It takes the
+        // place of a second fight if there is one to spare, else of whatever came last out of the bag
+        if (size != Size.SHORT && !mid.contains('C')) mid.set(mid.lastIndexOf('F') >= 0 ? mid.lastIndexOf('F') : mid.size() - 1, 'C');
         Collections.shuffle(mid, r);
         mid.add(r.nextInt(mid.size() + 1), 'A');
         plan.addAll(mid);
         plan.add('W');
         if (size == Size.GREAT) {
             List<Character> more = new ArrayList<>(draw.subList(middle, Math.min(draw.size(), middle + 3)));
+            // and a great run's second stretch has a climb or a crossing of its own
+            if (!more.contains('C') && !more.contains('M')) more.set(more.lastIndexOf('F') >= 0 ? more.lastIndexOf('F') : more.size() - 1, up ? 'M' : 'C');
             more.add(r.nextInt(more.size() + 1), 'A');
             plan.addAll(more);
             plan.add('W');
@@ -172,6 +274,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         List<String> none = List.of();
 
         double cx = 0, cz = 0, cr = 7, heading = 0;
+        // the room the next way leaves, when it leaves a room: its wall and its floor are wherever its form puts them
+        Cave from = null;
         boolean straight = true; // the first way leads straight on from where you arrive, so the first thing you see is where to go
         int dens = 0, fights = 0, wardens = 0;
         java.util.Map<Character, Integer> count = new java.util.HashMap<>();
@@ -182,6 +286,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         made.add(new Object[]{"root", LegKind.ARRIVE, "The way in", 0, feet, 0, 6, -1, none});
         List<String[]> joins = new ArrayList<>();
         Cave firstFight = null, ambush = null;
+        // the dens after the first and the Wardens' rooms: the room, the way you came into it, its leg, and the room it takes up
+        List<Object[]> later = new ArrayList<>();
         int[] ambushBox = null;
         double ambushHeading = 0;
         double sideX = 0, sideZ = 0, sideHeading = 0;
@@ -190,7 +296,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
 
         for (int step = 0; step < plan.size(); step++) {
             char kind = plan.get(step);
-            boolean axis = kind == 'S' || kind == 'P' || kind == 'M' || kind == 'C';
+            boolean axis = kind == 'S' || kind == 'P' || kind == 'M' || kind == 'C', arena = kind == 'W' || kind == 'L';
             // the way to this leg: how long, and how far it falls (or, on a climb, rises)
             int len = step == 1 ? 22 : shape == Shape.PLUNGE ? 20 + r.nextInt(6) : 17 + r.nextInt(8);
             int fall = shape == Shape.PLUNGE ? 6 + r.nextInt(3) : shape == Shape.SPRAWL ? 4 + r.nextInt(2) : 4 + r.nextInt(Math.min(4, len / 3 - 3));
@@ -199,6 +305,72 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 fall = 8;
             }
             int drop = up ? -fall : fall;
+            int wide = kind == 'L' ? 22 : kind == 'W' ? (wardenPillars() == 0 ? 15 : 13) : kind == 'M' ? 11 : kind == 'A' ? 13 + r.nextInt(2) : 10 + r.nextInt(4) + (shape == Shape.SPRAWL ? 2 : 0);
+            int high = kind == 'L' ? 16 : kind == 'A' ? 6 : 7 + r.nextInt(3);
+
+            // what this leg is cut like comes before the way to it: it decides how much room the leg needs
+            Cave.Form form = Cave.Form.OVAL;
+            Arena.Plan hall = Arena.Plan.RING;
+            Chasm.Kind cross = Chasm.Kind.PILLARS;
+            double rl = wide, rw = wide;
+            if (kind == 'F' || kind == 'A') {
+                form = pick(r, kind == 'A' || fights == 0 ? level(style.rooms()) : style.rooms());
+                switch (form) {
+                    case HALL, PIERS -> {
+                        rl = wide * 1.35;
+                        rw = wide * 0.74;
+                    }
+                    case TERRACE -> {
+                        rl = wide * 1.25;
+                        rw = wide * 0.85;
+                        high += 2;
+                    }
+                    case RIFT -> {
+                        rl = wide * 1.5;
+                        rw = wide * 0.7;
+                        high = 12 + r.nextInt(4);
+                    }
+                    case CROSS -> {
+                        rl = wide * 1.2;
+                        rw = wide * 0.5;
+                    }
+                    case RING, PIT -> rl = rw = wide + 2;
+                    default -> {}
+                }
+            } else if (arena) {
+                hall = pick(r, kind == 'L' ? style.lords() : style.wardens());
+                // a Warden that needs the floor gets it: nothing is raised and nothing stands in the middle
+                if (kind == 'W' && wardenPillars() == 0 && (hall == Arena.Plan.TIERS || hall == Arena.Plan.ROTUNDA)) hall = Arena.Plan.RING;
+                switch (hall) {
+                    case NAVE -> {
+                        rl = wide * 1.3;
+                        rw = wide * 0.7;
+                    }
+                    case CROSS -> {
+                        rl = wide * 1.15;
+                        rw = wide * 0.5;
+                    }
+                    case SQUARE -> rl = rw = wide * 0.92;
+                    case ROTUNDA -> high = high * 13 / 10 + 2;
+                    default -> {}
+                }
+            } else if (kind == 'C') cross = pick(r, up ? flat(style.crossings()) : style.crossings());
+            boolean round = arena ? hall == Arena.Plan.RING || hall == Arena.Plan.ROTUNDA || hall == Arena.Plan.TIERS : Cave.round(form);
+            Cave.Form cut = arena ? (hall == Arena.Plan.CROSS ? Cave.Form.CROSS : Cave.Form.HALL) : form;
+            double rimOf = (arena ? 0.06 : 0.16) * wild;
+            int run = kind == 'S' ? 26 + 5 * r.nextInt(2) : kind == 'P' ? 16 : kind != 'C' ? 0 : switch (cross) {
+                case BRIDGE -> 36;
+                case BEAMS, LEDGES -> 36 + r.nextInt(5);
+                case FALLING -> 24 + r.nextInt(7);
+                case FORD -> 28 + r.nextInt(9);
+                default -> 30 + r.nextInt(9);
+            };
+            int slope = kind == 'S' ? (up ? -6 : 6) : 0;
+            int crossFall = up ? 0 : cross == Chasm.Kind.STEPS ? 6 + r.nextInt(4) : 3;
+            // (under great steps the pool lies well below the last of them: a pool within four of a step is somewhere to step down to,
+            // and the walk that proves a run would wade in and never try the jump)
+            int half = cross == Chasm.Kind.FORD ? 7 : 5, deep = cross == Chasm.Kind.FORD ? 2 : cross == Chasm.Kind.STEPS ? crossFall + 9 : 10;
+
             // which way: straight on out of a shaft; else try a few turns and keep the first that runs into nothing
             List<Double> ways = new ArrayList<>();
             if (straight) ways.add(heading);
@@ -209,19 +381,23 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 for (double t : new double[]{0, 0.6, -0.6, 1.15, -1.15, 1.7, -1.7}) ways.add(heading + t);
                 Collections.shuffle(ways, r);
             }
-            int wide = kind == 'L' ? 22 : kind == 'W' ? (wardenPillars() == 0 ? 15 : 13) : kind == 'M' ? 11 : kind == 'A' ? 13 + r.nextInt(2) : 10 + r.nextInt(4) + (shape == Shape.SPRAWL ? 2 : 0);
-            int high = kind == 'L' ? 16 : kind == 'A' ? 6 : 7 + r.nextInt(3);
-            int run = kind == 'S' ? 26 + 5 * r.nextInt(2) : kind == 'P' ? 16 : kind == 'C' ? 30 + r.nextInt(9) : 0, slope = kind == 'S' ? (up ? -6 : 6) : 0;
             double best = heading;
             int fewest = Integer.MAX_VALUE;
             for (double h : ways) {
-                double ax = cx + sx(h) * cr * 0.9, az = cz + sz(h) * cr * 0.9, ex = ax + sx(h) * len, ez = az + sz(h) * len;
+                double lead = from != null ? from.reach(h) * 0.9 : cr * 0.9;
+                double ax = cx + sx(h) * lead, az = cz + sz(h) * lead, ex = ax + sx(h) * len, ez = az + sz(h) * len;
                 int to = feet - drop, lo = Math.min(feet, to), hi = Math.max(feet, to);
                 int n = hits(box(ax, lo - 4, az, ex, hi + 9, ez, 5), 1);
-                if (run > 0) n += hits(box(ex, Math.min(to, to - slope) - (kind == 'C' ? 14 : 4), ez, ex + sx(h) * run, Math.max(to, to - slope) + 10, ez + sz(h) * run, 7), 0);
-                else {
+                if (run > 0) n += hits(box(ex, Math.min(to, to - slope) - (kind == 'C' ? deep + 4 : 4), ez, ex + sx(h) * run, Math.max(to, to - slope) + 10, ez + sz(h) * run, kind == 'C' ? half + 2 : 7), 0);
+                else if (kind == 'M') {
                     double mx = ex + sx(h) * (wide - 1.5), mz = ez + sz(h) * (wide - 1.5);
-                    n += hits(box(mx - wide, to - (kind == 'M' ? 34 : 4), mz - wide, mx + wide, to + (kind == 'M' ? 42 : high + 4), mz + wide, 5), 0);
+                    n += hits(box(mx - wide, to - 34, mz - wide, mx + wide, to + 42, mz + wide, 5), 0);
+                } else {
+                    double rax = built ? snap(h) : h, back = round ? rl : Cave.edge(cut, rimOf, rl, rw, h - rax);
+                    double mx = ex + sx(h) * (back - 1.5), mz = ez + sz(h) * (back - 1.5);
+                    double far = cut == Cave.Form.CROSS ? rl : 0;
+                    double bx = round ? rl : Math.max(far, Math.abs(sx(rax)) * rl + Math.abs(sz(rax)) * rw), bz = round ? rl : Math.max(far, Math.abs(sz(rax)) * rl + Math.abs(sx(rax)) * rw);
+                    n += hits(box(mx - bx, to - 7, mz - bz, mx + bx, to + high + 6, mz + bz, 5), 0);
                 }
                 if (n < fewest) {
                     fewest = n;
@@ -230,7 +406,10 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 if (n == 0) break;
             }
             double h = best;
-            double ax = cx + sx(h) * cr * 0.9, az = cz + sz(h) * cr * 0.9, ex = ax + sx(h) * len, ez = az + sz(h) * len;
+            double lead = from != null ? from.reach(h) * 0.9 : cr * 0.9;
+            double ax = cx + sx(h) * lead, az = cz + sz(h) * lead, ex = ax + sx(h) * len, ez = az + sz(h) * len;
+            // out of a room the way starts from the floor it meets there, which a terrace, a pit's walk or a rift may have raised
+            if (from != null) feet = near(from, (int) Math.round(ax), (int) Math.round(az));
             int to = feet - drop;
             int nth = count.merge(kind, 1, Integer::sum);
             String id = switch (kind) {
@@ -244,8 +423,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 default -> "lord";
             };
             if (kind != 'F' && nth > 1) id += nth;
-            double way = kind == 'L' ? 2.6 : 2.3;
-            part(new Tunnel("way" + step, (int) Math.round(ax), feet, (int) Math.round(az), (int) Math.round(ex), to, (int) Math.round(ez), way, kind == 'L' ? 5 : 4, 0.4 * wild, s++));
+            double way = style.wayHalf() + (kind == 'L' ? 0.3 : 0);
+            part(new Tunnel("way" + step, (int) Math.round(ax), feet, (int) Math.round(az), (int) Math.round(ex), to, (int) Math.round(ez), way, style.wayHigh() + (kind == 'L' ? 1 : 0), 0.4 * wild, s++));
             taken.add(box(ax, Math.min(feet, to) - 4, az, ex, Math.max(feet, to) + 9, ez, 5));
             // the doors on this way: the last fight's, six along it, and this fight's, six short of its end; the way to the Lord has the heart's door instead
             if (kind == 'L') {
@@ -267,38 +446,56 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             joins.add(new String[]{prevLeg, id});
             feet = to;
             straight = false;
+            from = null;
             prevSeals = kind == 'F' || kind == 'A' || kind == 'W';
             int ddx = (int) Math.round(sx(h)), ddz = (int) Math.round(sz(h)), x0 = (int) Math.round(ex), z0 = (int) Math.round(ez);
             switch (kind) {
                 case 'F', 'A', 'W', 'L' -> {
-                    double mx = ex + sx(h) * (wide - 1.5), mz = ez + sz(h) * (wide - 1.5);
-                    int ix = (int) Math.round(mx), iz = (int) Math.round(mz);
-                    Cave room;
-                    if (kind == 'W') room = part(new Arena(id, ix, feet, iz, wide, 10, wardenPillars(), 0.06 * wild, s++));
-                    else if (kind == 'L') room = part(new Arena(id, ix, feet, iz, wide, high, 8, 0.06 * wild, s++));
-                    else room = part(new Cave(id, ix, feet, iz, wide, Math.max(9, wide - r.nextInt(3)), high, 0.16 * wild, s++));
-                    taken.add(box(mx - wide, feet - 4, mz - wide, mx + wide, feet + high + 4, mz + wide, 4));
+                    double rax = built ? snap(h) : h, back = round ? rl : Cave.edge(cut, rimOf, rl, rw, h - rax);
+                    int ix = (int) Math.round(ex + sx(h) * (back - 1.5)), iz = (int) Math.round(ez + sz(h) * (back - 1.5));
+                    long roomSeed = s++;
+                    int narrow = !arena && form == Cave.Form.OVAL ? Math.max(9, wide - r.nextInt(3)) : 0;
+                    double inner = Cave.round(form) ? rl : form == Cave.Form.CROSS ? rw * 1.3 : rw;
+                    Cave room = null;
+                    // where the way comes in the floor may be raised (a pit's walk, the top of a rift, a hall's tiers): the room is set so that it meets the way
+                    for (int base = feet, pass = 0; pass < 2; pass++) {
+                        room = arena ? new Arena(id, ix, base, iz, wide, high, kind == 'W' ? wardenPillars() : 8, 0.06 * wild, roomSeed).planned(hall, rax)
+                                : form == Cave.Form.OVAL ? new Cave(id, ix, base, iz, wide, narrow, high, 0.16 * wild, roomSeed)
+                                : new Cave(id, ix, base, iz, inner, inner, high, 0.16 * wild, roomSeed).shaped(form, rax, rl, rw, !up);
+                        int raised = near(room, x0, z0) - base;
+                        if (raised == 0) break;
+                        base = feet - raised;
+                    }
+                    part(room);
+                    taken.add(new int[]{room.x0, room.feet - 4, room.z0, room.x1, room.feet + high + 7, room.z1});
                     if (kind == 'A' && ambush == null) ambushBox = taken.getLast();
                     if (kind == 'W') {
-                        site(SiteKind.WARDEN, ix, feet, iz, wide, "");
-                        made.add(new Object[]{id, LegKind.WARDEN, "A Warden's room", ix, feet, iz, wide, wardens++, wardenPack()});
+                        used.add("warden " + hall);
+                        later.add(new Object[]{room, h, id, taken.getLast()});
+                        site(SiteKind.WARDEN, ix, room.feet, iz, wide, "");
+                        made.add(new Object[]{id, LegKind.WARDEN, "A Warden's room: " + hall.name().toLowerCase(java.util.Locale.ROOT), ix, room.feet, iz, wide, wardens++, wardenPack()});
                     } else if (kind == 'L') {
-                        site(SiteKind.LORD, ix, feet, iz, wide, ctx.bp().heart().lord());
-                        made.add(new Object[]{id, LegKind.LORD, "The Lord's hall", ix, feet, iz, wide, -1, none});
-                        lordX = ix;
-                        lordY = feet;
-                        lordZ = iz;
-                        lordR = wide;
+                        used.add("lord " + hall);
+                        site(SiteKind.LORD, ix, room.feet, iz, wide, ctx.bp().heart().lord());
+                        made.add(new Object[]{id, LegKind.LORD, "The Lord's hall: " + hall.name().toLowerCase(java.util.Locale.ROOT), ix, room.feet, iz, wide, -1, none});
+                        lordHall = (Arena) room;
                     } else {
-                        site(SiteKind.DEN, ix, feet, iz, 9, "");
+                        used.add("room " + form);
+                        // where the fight is: the middle of the room, or, round a ring's core, the far side of it
+                        int px = form == Cave.Form.RING ? (int) Math.round(ix + sx(h) * rl * 0.62) : ix, pz = form == Cave.Form.RING ? (int) Math.round(iz + sz(h) * rl * 0.62) : iz, py = near(room, px, pz);
+                        site(SiteKind.DEN, px, py, pz, 9, "");
                         int radius = (int) Math.min(room.rx, room.rz) - 1;
+                        String cutName = form.name().toLowerCase(java.util.Locale.ROOT);
                         if (kind == 'F') {
-                            made.add(new Object[]{id, LegKind.FIGHT, "A den", ix, feet, iz, radius, dens, herd(fights)});
+                            made.add(new Object[]{id, LegKind.FIGHT, "A den: " + cutName, px, py, pz, radius, dens, herd(fights)});
                             if (fights == 0) firstFight = room;
-                            else if (r.nextBoolean()) find(room, h + 2.2);
+                            else {
+                                later.add(new Object[]{room, h, id, taken.getLast()});
+                                if (r.nextBoolean()) find(room, h + 2.2);
+                            }
                             fights++;
                         } else {
-                            made.add(new Object[]{id, LegKind.AMBUSH, "A quiet room", ix, feet, iz, Math.min(7, radius), dens, ambushPack()});
+                            made.add(new Object[]{id, LegKind.AMBUSH, "A quiet room: " + cutName, px, py, pz, Math.min(7, radius), dens, ambushPack()});
                             if (ambush == null) {
                                 ambush = room;
                                 ambushHeading = h;
@@ -306,20 +503,21 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                         }
                         dens++;
                     }
-                    cx = mx;
-                    cz = mz;
-                    cr = kind == 'F' || kind == 'A' ? Math.min(room.rx, room.rz) : wide;
+                    cx = ix;
+                    cz = iz;
+                    cr = wide;
+                    from = room;
                 }
                 case 'S', 'P' -> {
                     int bx = x0 + ddx * run, bz = z0 + ddz * run, top = feet;
                     feet -= slope;
-                    Tunnel hall = part(new Tunnel(id, x0, top, z0, bx, feet, bz, kind == 'P' ? 3.0 : 2.5, kind == 'P' ? 5 : 4, 0, s++));
+                    Tunnel hall2 = part(new Tunnel(id, x0, top, z0, bx, feet, bz, kind == 'P' ? 3.0 : 2.5, kind == 'P' ? 5 : 4, 0, s++));
                     taken.add(box(x0, Math.min(top, feet) - 4, z0, bx, Math.max(top, feet) + 9, bz, 5));
                     int px = -ddz, pz = ddx;
                     if (kind == 'S') {
                         // a cell every five along it, on one wall and then the other, a second apart
                         for (int i = 0, k = 5; k <= run - 4; i++, k += 5) {
-                            int x = x0 + ddx * k, z = z0 + ddz * k, side = i % 2 == 0 ? 1 : -1, y = Part.airFrom(hall.feet2(x, z)) + 1;
+                            int x = x0 + ddx * k, z = z0 + ddz * k, side = i % 2 == 0 ? 1 : -1, y = Part.airFrom(hall2.feet2(x, z)) + 1;
                             spitters.add(new int[]{x + px * 3 * side, y, z + pz * 3 * side});
                             trap(new Trap(id, TrapKind.SPIT, x + px * 3 * side, y, z + pz * 3 * side, x - px * 3 * side, y, z - pz * 3 * side, 60, i * 20 % 60, spitOn(m), spitOff(m)));
                         }
@@ -336,17 +534,13 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     cr = 0;
                 }
                 case 'C' -> {
-                    // pillars over a pool: on a climb they stay level, otherwise they step down a little as they go
-                    Chasm pit = part(new Chasm(id, x0, feet, z0, ddx, ddz, run, 5, 8, 10, up ? 0 : 3, s++));
+                    // a gulf, and whatever this run rolled to cross it on: on a climb it stays level, otherwise it steps down as it goes
+                    used.add("crossing " + cross);
+                    Chasm pit = part(new Chasm(id, cross, x0, feet, z0, ddx, ddz, run, half, cross == Chasm.Kind.FORD ? 6 : 8, deep, crossFall, s++));
                     int bx = x0 + ddx * pit.length, bz = z0 + ddz * pit.length;
-                    taken.add(box(x0, feet - 14, z0, bx, feet + 10, bz, 8));
-                    List<int[]> ledges = new ArrayList<>();
-                    for (int i = -1; i <= pit.pillars(); i++) {
-                        int[] at = pit.stand(i);
-                        ledges.add(new int[]{at[0], at[1], at[2]});
-                    }
-                    course(new Course(id, Math.min(x0, bx) - 7, feet - 12, Math.min(z0, bz) - 7, Math.max(x0, bx) + 7, feet + 9, Math.max(z0, bz) + 7, ledges));
-                    made.add(new Object[]{id, LegKind.MOVEMENT, "A chasm", x0 + ddx, feet, z0 + ddz, pit.length / 2 + 2, -1, none});
+                    taken.add(box(x0, feet - deep - 4, z0, bx, feet + 10, bz, half + 3));
+                    rig(id, pit, m);
+                    made.add(new Object[]{id, LegKind.MOVEMENT, called(cross), x0 + ddx, feet, z0 + ddz, pit.length / 2 + 2, -1, none});
                     feet = pit.exitFeet;
                     cx = bx;
                     cz = bz;
@@ -360,6 +554,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     int ix = (int) Math.round(mx), iz = (int) Math.round(mz), top = up ? feet + 24 : feet;
                     Shaft sh = up ? part(new Shaft(id, quarter, ix, top, iz, 11, 3.2, 16, 26, top - 28, 3, s++))
                             : part(new Shaft(id, quarter, ix, top, iz, 11, 3.2, 16, 26, top - 28, 3, s++, 0.25, 0.75, 1.25));
+                    if (style.squareShafts()) sh.squared();
+                    used.add(style.squareShafts() ? "shaft SQUARE" : "shaft ROUND");
                     taken.add(box(mx - 12, top - 32, mz - 12, mx + 12, top + 16, mz + 12, 4));
                     // thin floor on the far side of the first turn and the near side of the second
                     thin.add(arc(ix, iz, (quarter + 2) % 4, top - 8));
@@ -372,7 +568,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     }
                     course(new Course(id, ix - 13, top - 28, iz - 13, ix + 13, top + 14, iz + 13, ledges));
                     int[] start = sh.stand(up ? 1.48 : 0.02);
-                    made.add(new Object[]{id, LegKind.MOVEMENT, "A shaft", start[0], feet, start[2], 12, -1, none});
+                    made.add(new Object[]{id, LegKind.MOVEMENT, style.squareShafts() ? "A stairwell" : "A shaft", start[0], feet, start[2], 12, -1, none});
                     feet = up ? top : top - 24;
                     cx = mx;
                     cz = mz;
@@ -387,13 +583,13 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         // the side cell: off the first fight, and back into the way beyond it, so there is always a way round
         if (firstFight != null) {
             double out = sideHeading + (r.nextBoolean() ? 1 : -1) * Math.PI / 2;
-            int tx = (int) Math.round(sideX + sx(out) * 13), tz = (int) Math.round(sideZ + sz(out) * 13), tf = (firstFight.feet + sideFeetB) / 2;
+            int tx = (int) Math.round(sideX + sx(out) * 13), tz = (int) Math.round(sideZ + sz(out) * 13);
+            double a = Math.atan2(tx - firstFight.cx, tz - firstFight.cz), edge = firstFight.reach(a) * 0.9;
+            int fx = (int) Math.round(firstFight.cx + sx(a) * edge), fz = (int) Math.round(firstFight.cz + sz(a) * edge), ff = near(firstFight, fx, fz), tf = (ff + sideFeetB) / 2;
             part(new Cave("side", tx, tf, tz, 5, 5, 5, 0.16 * wild, s++));
-            double a = Math.atan2(tx - firstFight.cx, tz - firstFight.cz);
-            int fx = (int) Math.round(firstFight.cx + sx(a) * Math.min(firstFight.rx, firstFight.rz) * 0.9), fz = (int) Math.round(firstFight.cz + sz(a) * Math.min(firstFight.rx, firstFight.rz) * 0.9);
-            part(new Tunnel("side_in", fx, firstFight.feet, fz, tx, tf, tz, 1.6, 3, 0.4 * wild, s++));
+            part(new Tunnel("side_in", fx, ff, fz, tx, tf, tz, 1.6, 3, 0.4 * wild, s++));
             part(new Tunnel("side_out", tx, tf, tz, (int) Math.round(sideX), sideFeetB, (int) Math.round(sideZ), 1.6, 3, 0.4 * wild, s++));
-            doorAcross("fight1", fx + sx(a) * 5, firstFight.feet, tf, fz + sz(a) * 5, a, 1.6);
+            doorAcross("fight1", fx + sx(a) * 5, ff, tf, fz + sz(a) * 5, a, 1.6);
             finds.add(new int[]{tx + 2, tf, tz + 1});
             made.add(new Object[]{"side", LegKind.BREATHER, "A side cell", tx, tf, tz, 5, -1, none});
             joins.add(new String[]{"fight1", "side"});
@@ -402,7 +598,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         // the hidden cell: a thin way off the ambush, to one side, if there is room for it
         if (ambush != null) {
             for (int side : r.nextBoolean() ? new int[]{1, -1} : new int[]{-1, 1}) {
-                double out = ambushHeading + side * Math.PI / 2, rim = Math.min(ambush.rx, ambush.rz) * 0.9;
+                double out = ambushHeading + side * Math.PI / 2, rim = ambush.reach(out) * 0.9;
                 double ax = ambush.cx + sx(out) * rim, az = ambush.cz + sz(out) * rim, ex = ax + sx(out) * 12, ez = az + sz(out) * 12, mx = ex + sx(out) * 4, mz = ez + sz(out) * 4;
                 int[] own = ambushBox;
                 taken.remove(own);
@@ -417,6 +613,41 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 made.add(new Object[]{"hidden", LegKind.HIDDEN, "A place kept back", hx, hf, hz, 5, -1, none});
                 joins.add(new String[]{"ambush", "hidden"});
                 break;
+            }
+        }
+        // a branch: off a later den or a Warden's room, to one side, a gulf with no fall in it and a vault beyond with two caches in it. Nobody has
+        // to cross it; whoever does is paid for it. One to a run from standard up, where there is room for it
+        branch:
+        if (size != Size.SHORT) for (Object[] den : later) {
+            Cave room = (Cave) den[0];
+            for (int side : r.nextBoolean() ? new int[]{1, -1} : new int[]{-1, 1}) {
+                double out = snap((Double) den[1] + side * Math.PI / 2), edge = room.reach(out) * 0.9;
+                int ddx = (int) Math.round(sx(out)), ddz = (int) Math.round(sz(out));
+                int ax = (int) Math.round(room.cx + sx(out) * edge), az = (int) Math.round(room.cz + sz(out) * edge), f = near(room, ax, az);
+                Chasm.Kind kind = pick(r, thereAndBack(style.crossings()));
+                int run = kind == Chasm.Kind.FALLING ? 22 : kind == Chasm.Kind.FORD ? 26 : kind == Chasm.Kind.HANGERS ? 28 : 36;
+                int half = kind == Chasm.Kind.FORD ? 7 : 5, deep = kind == Chasm.Kind.FORD ? 2 : 10, x0 = ax + ddx * 9, z0 = az + ddz * 9;
+                int[] own = (int[]) den[3];
+                taken.remove(own);
+                boolean blocked = hits(box(ax + ddx * 4, f - deep - 4, az + ddz * 4, x0 + ddx * (run + 18), f + 12, z0 + ddz * (run + 18), half + 4), 0) > 0;
+                taken.add(own);
+                if (blocked) continue;
+                part(new Tunnel("branch_way", ax, f, az, x0, f, z0, 2.0, 4, 0.4 * wild, s++));
+                Chasm pit = part(new Chasm("branch", kind, x0, f, z0, ddx, ddz, run, half, kind == Chasm.Kind.FORD ? 6 : 8, deep, 0, s++));
+                int vx = x0 + ddx * (pit.length + 5), vz = z0 + ddz * (pit.length + 5);
+                part(new Cave("vault", vx, pit.exitFeet, vz, 6, 6, 6, 0.16 * wild, s++));
+                taken.add(box(ax, f - deep - 4, az, vx + ddx * 7, f + 12, vz + ddz * 7, half + 3));
+                doorAcross((String) den[2], ax + ddx * 4, f, f, az + ddz * 4, out, 2.0);
+                rig("branch", pit, m);
+                finds.add(new int[]{vx + ddx * 2 + ddz * 3, pit.exitFeet, vz + ddz * 2 + ddx * 3});
+                finds.add(new int[]{vx + ddx * 2 - ddz * 3, pit.exitFeet, vz + ddz * 2 - ddx * 3});
+                made.add(new Object[]{"branch", LegKind.MOVEMENT, called(kind) + ", off the way", x0 + ddx, f, z0 + ddz, pit.length / 2 + 2, -1, none});
+                made.add(new Object[]{"vault", LegKind.BREATHER, "A vault", vx, pit.exitFeet, vz, 5, -1, none});
+                joins.add(new String[]{(String) den[2], "branch"});
+                joins.add(new String[]{"branch", "vault"});
+                used.add("crossing " + kind);
+                used.add("branch");
+                break branch;
             }
         }
         done();
@@ -440,9 +671,14 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         };
     }
 
+    /** A cache near a room's wall, on level floor: three in from the wall along a heading, or as much further in as it takes to find some. */
     private void find(Cave room, double heading) {
-        double d = Math.min(room.rx, room.rz) - 3;
-        finds.add(new int[]{(int) Math.round(room.cx + sx(heading) * d), room.feet, (int) Math.round(room.cz + sz(heading) * d)});
+        for (double d = room.reach(heading) - 3; d > 2; d -= 1) {
+            int x = (int) Math.round(room.cx + sx(heading) * d), z = (int) Math.round(room.cz + sz(heading) * d), f = room.feet2(x, z);
+            if (f == NONE || (f & 1) != 0) continue;
+            finds.add(new int[]{x, Math.floorDiv(f, 2), z});
+            return;
+        }
     }
 
     private static boolean in(int[] box, int x, int y, int z) {
@@ -451,7 +687,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
 
     @Override
     protected final boolean thin(Part part, int x, int y, int z) {
-        if (!(part instanceof Shaft)) return false;
+        if (!(part instanceof Shaft) && !(part instanceof Chasm)) return false;
         for (int[] t : thin) if (in(t, x, y, z)) return true;
         return false;
     }
@@ -477,23 +713,14 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     }
 
     /**
-     * A chasm's crossing is kept clear whatever a skin grows: nothing with a body stands in the air over the pool between
-     * the pillars, or on them, however a skin's rule for "well over your head" reads a floor that is ten blocks down.
-     * (The strip by each wall is left alone: the way back up runs along one, and a wall may have what it likes on it.)
+     * A gulf's crossing is kept clear whatever a skin grows: nothing with a body stands in the air over the pool down the
+     * middle of it, or on anything there is to cross on, however a skin's rule for "well over your head" reads a floor
+     * that is ten blocks down. (The strip by each wall is otherwise left alone: a wall may have what it likes on it.)
+     * And a climb is never left dark, whatever a skin does or forgets: an unseen light over the ledge every eighth of a
+     * turn down a shaft, and over each shelf and stand of a crossing. A jump nobody can see is not a jump.
      */
     @Override
     protected final void finish(V v, M m) {
-        for (Part p : parts) {
-            if (!(p instanceof Chasm c) || !p.near(v)) continue;
-            for (int x = Math.max(c.x0, v.x0 - 1); x <= Math.min(c.x1, v.x0 + 16); x++) for (int z = Math.max(c.z0, v.z0 - 1); z <= Math.min(c.z1, v.z0 + 16); z++) {
-                int f = c.feet2(x, z);
-                if (f == NONE || Math.abs(-(x - c.ax) * c.dz + (z - c.az) * c.dx) > c.half - 2) continue;
-                for (int y = Part.airFrom(f); y <= c.top + 3; y++) if (V.holds(v.get(x, y, z))) v.set(x, y, z, null);
-            }
-        }
-        // A climb is never left dark, whatever a skin does or forgets: an unseen light over the ledge every eighth of a turn
-        // down a shaft, and over each shelf and pillar of a crossing. (Skins light rooms; two of them lit no shaft at all, and
-        // a jump nobody can see is not a jump.)
         for (Part p : parts) {
             if (!p.near(v)) continue;
             if (p instanceof Shaft sh) {
@@ -502,10 +729,13 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     v.add(at[0], at[1] + 3, at[2], CLIMB_LIGHT);
                 }
             } else if (p instanceof Chasm c) {
-                for (int i = -1; i <= c.pillars(); i++) {
-                    int[] at = c.stand(i);
-                    v.add(at[0], at[1] + 3, at[2], CLIMB_LIGHT);
+                for (int x = Math.max(c.x0, v.x0 - 1); x <= Math.min(c.x1, v.x0 + 16); x++) for (int z = Math.max(c.z0, v.z0 - 1); z <= Math.min(c.z1, v.z0 + 16); z++) {
+                    int f = c.feet2(x, z);
+                    if (f == NONE) continue;
+                    boolean middle = Math.abs(-(x - c.ax) * c.dz + (z - c.az) * c.dx) <= c.half - 2;
+                    for (int y = Part.airFrom(f); y <= c.top + 3; y++) if ((middle || c.over(x, y, z)) && c.open(x, y, z) && V.holds(v.get(x, y, z))) v.set(x, y, z, null);
                 }
+                for (int[] l : c.lights()) v.add(l[0], l[1], l[2], CLIMB_LIGHT);
             }
         }
     }
@@ -523,7 +753,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
 
     @Override
     public boolean inHeart(int x, int y, int z) {
-        return (x - lordX) * (x - lordX) + (z - lordZ) * (z - lordZ) < (lordR - 1) * (lordR - 1) && y < lordY + 18 && y > lordY - 4;
+        return lordHall != null && y < lordHall.feet + 26 && y > lordHall.feet - 4 && x >= lordHall.x0 && x <= lordHall.x1 && z >= lordHall.z0 && z <= lordHall.z1 && lordHall.out(x, z) < 0.96;
     }
 
     @Override

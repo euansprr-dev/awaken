@@ -236,4 +236,11 @@ public final class StoppedWorks extends GeneratedCrawl<StoppedWorks.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x6a4a2a, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0xffb050, 18, 0.9F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a foundry: machine halls, a casting pit, a gantry along one wall, and everything that hung from the roof still hanging. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.PIT, Cave.Form.TERRACE), List.of(Arena.Plan.SQUARE, Arena.Plan.RING),
+                List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE), List.of(Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.BRIDGE, Chasm.Kind.FALLING), true, 3.0, 5);
+    }
 }

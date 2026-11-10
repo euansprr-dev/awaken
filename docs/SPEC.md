@@ -21215,6 +21215,43 @@ whole walls, curtains of vine and glow berries along lines in the roof). With th
 Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
 a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
 
+**No two alike.** Euan, 10 Nov, on the first seventeen: "they look very repetitive, just with different themes... add more
+variation in terms of the different parkour things and everything, so that they never look exactly the same." He was right:
+the generator knew one room, one Lord's hall, one shaft and one chasm, and a kind changed only the blocks. Now every leg rolls
+what it is cut like, and a kind says which cuts are its own (`GeneratedCrawl.Style`, one `style()` per kind):
+
+- **Rooms** (`Cave.Form`, eight): the oval; a long hall; a cross; a ring round a core of rock; a hall with two rows of piers; a
+  room with a terrace three up along one side and two ramps onto it; a pit with a walk two up all round it and four ramps down;
+  a rift, long and tall, whose floor steps up a block and then two more. The first fight and the ambush take only level
+  forms, because other ways lead off them.
+- **Wardens' rooms and Lords' halls** (`Arena.Plan`, six): a ring of pillars; a nave with two rows; a cross with four at the
+  crossing; a rotunda with two rings and a higher dome; a round floor with two tiers of steps round it; a square hall on four
+  great piers. The middle is always open and level, because the Lords were built for a level floor. A Warden that needs the
+  floor (no pillars) gets a plan with nothing raised.
+- **Gulfs** (`Chasm.Kind`, eight ways across): pillars; a bridge with two spans gone, on piers, what fell lying in the pool;
+  rafters one cell wide, each ending on a cross beam a block lower, the next beside it or over a gap of two; a ledge along the
+  left wall, a pillar in the middle, a ledge along the right; platforms hung from the roof by a chain; great steps down, two
+  or three lower each time (never on a climb); a ford, wall to wall in shallow water, with stones at the water's top and more
+  that lead nowhere; a deck that gives way under whoever stands on it (the crumbling floor's rule: a block goes fifteen ticks
+  after you step on it and comes back after a hundred), where a fall puts you back on a shelf, never on the deck.
+- **Shafts**: round, or square with flights along four walls for what was built.
+- **Ways**: as wide and as high as the kind says (2 to 3 each side, 4 to 6 high).
+- **How often.** From a standard run up there is always a gulf to cross (it takes the place of a second fight if the bag
+  drew none), and a great run's second stretch has a climb or a crossing of its own.
+- **A branch.** From a standard run up, where there is room: off a den after the first or a Warden's room, to one side, a way to a gulf with no
+  fall in it and a vault beyond with two caches. Nobody has to cross it; whoever does is paid for it. It is only ever a
+  crossing that is as easy to come back over as to go out on (never the great steps, never the pillars with their run-ups),
+  and the den's doors shut it with the rest.
+
+Rules these keep, so that a skin written for the oval and the pillars dresses all of them without knowing:
+`feet` is a room's lowest floor and every other level is raised from it (what a skin draws at `feet` is on the floor or
+under it, never in the air); a new room is still a `Cave`, a new hall an `Arena` with `pillar()`, a new crossing a `Chasm`;
+every jump is a sprint over one to three cells straight along or straight across, level or down, and the only way up is a
+step of one; what was built (`wild()` under a half) stands square to the compass however the way came to it; whatever a skin
+grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
+names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
+leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The

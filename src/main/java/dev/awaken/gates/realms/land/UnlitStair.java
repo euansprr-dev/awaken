@@ -209,4 +209,11 @@ public final class UnlitStair extends GeneratedCrawl<UnlitStair.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x1a1630, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xd8d0ff, 18, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a shrine cut downward: tall halls, crossings, a pit to look into, and steps down in the dark. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIT, Cave.Form.PIERS), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
+                List.of(Arena.Plan.TIERS, Arena.Plan.CROSS, Arena.Plan.NAVE), List.of(Chasm.Kind.STEPS, Chasm.Kind.BRIDGE, Chasm.Kind.LEDGES, Chasm.Kind.FALLING), true, 2.6, 6);
+    }
 }
