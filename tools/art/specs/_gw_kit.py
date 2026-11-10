@@ -35,6 +35,36 @@ def rgba(h, a=255):
     return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a
 
 
+def luminance(h):
+    """Rec. 709 brightness of a "#rrggbb", 0 to 255: what tools/art/tone_check.py measures."""
+    r, g, b, _ = rgba(h)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def lift_colour(h, g, sat=1.1):
+    """One colour, brighter: luminance to 255 * (old / 255) ** g, the hue kept, the colour pushed a little further from grey."""
+    y = luminance(h)
+    if y <= 0:
+        return h
+    yn = 255 * (y / 255) ** g
+    out = [yn + (c * yn / y - yn) * sat for c in rgba(h)[:3]]
+    fit = 1.0  # when a channel leaves 0..255, pull the colour in towards grey: brightness and hue stay
+    if max(out) > 255:
+        fit = min(fit, (255 - yn) / (max(out) - yn))
+    if min(out) < 0:
+        fit = min(fit, yn / (yn - min(out)))
+    return "#%02x%02x%02x" % tuple(max(0, min(255, round(yn + (c - yn) * fit))) for c in out)
+
+
+def lift(ramps, g, sat=1.1, leave=(), more=None):
+    """A family's ramps re-toned so the game's light can show them (SPEC 50.8, "Textures that can be lit"): the game draws
+    texture x light, so a family painted as dark as its painting's shadows stays black under any lamp. Every ramp gets the same
+    exponent `g` on luminance; `leave` names the ramps that already glow (windows, gilt); `more` gives a ramp a further exponent
+    on top, for structural stone and wood that one exponent still left too dark to light."""
+    more = more or {}
+    return {name: list(cols) if name in leave else [lift_colour(c, g * more.get(name, 1.0), sat) for c in cols] for name, cols in ramps.items()}
+
+
 def lerp(a, b, t):
     return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3)) + (255,)
 
