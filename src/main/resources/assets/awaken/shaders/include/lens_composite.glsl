@@ -206,20 +206,26 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     // screen pixel of a texel takes one light and a shadow's edge is the texture's own pixel edge at any buffer size
     // (stretched from a smaller buffer it was a soft band, and the shadow had no weight)
     float want = packDistance8(dist), got = 0.0;
-    vec3 lr = vec3(1.0, 1.0, 0.0);
-    bool snapped = false;
-    if (air > 0.0 && dist < 72.0) {
+    // the buffer at this pixel's own place: the soft shade and the mist always (they are worked out afresh each frame
+    // and only settle over several, so one sample held across a whole texel made every grass pixel flicker as a block:
+    // "the floor was shimmering", Euan 2026-11-10), and the sun's light everywhere but close to the eye
+    vec3 lr = upsampleAt(LightSampler, texCoord, want, got);
+    // close to the eye, where a texel is many screen pixels, the sun's light alone is read at the texel's centre (the
+    // light pass gives such a texel one unchanging answer); from 10 to 18 blocks it goes over to the smooth read, where
+    // a texel is no wider than one of the buffer's own pixels and its centre's pixel is as likely a neighbour's
+    float crisp = air > 0.0 ? 1.0 - smoothstep(10.0, 18.0, dist) : 0.0;
+    if (crisp > 0.0) {
         vec3 an = abs(n);
         if (max(an.x, max(an.y, an.z)) > 0.99) {
             vec3 w = p + f12.xyz;
             vec3 q = project(frameMat(4), mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - f12.xyz, z01);
             if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
-                lr = upsampleAt(LightSampler, q.xy, want, got);
-                snapped = got > 1.0e-3;
+                float gotAt = 0.0;
+                vec3 at = upsampleAt(LightSampler, q.xy, want, gotAt);
+                if (gotAt > 1.0e-3) lr.r = mix(lr.r, at.r, crisp);
             }
         }
     }
-    if (!snapped) lr = upsampleAt(LightSampler, texCoord, want, got);
     lrKept = lr;
     lrHave = true;
     if (sun > 0.0) {

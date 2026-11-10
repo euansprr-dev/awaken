@@ -6165,8 +6165,16 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
     as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
-    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
-    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
+    streaks. A shadow keeps the texture's pixels close to the eye, and holds still: within 10 blocks
+    (fading out by 18) the composite reads the sun's light, and only that, at the centre of the pixel's own 1/16-block
+    texel (`upsampleAt`), and the light pass gives such a texel one unchanging answer (along the sun's own line, with
+    no disc, and a march jitter fixed to the texel), so a texel is wholly lit or wholly shaded and the edge runs along
+    texel edges. The soft shade and the mist are always read at the pixel's own place. (First the whole sample was
+    held across the texel out to 72 blocks: the mist and the soft shade, new every frame, made each grass texel
+    flicker as a block, and the sun's disc sampled once a texel made a shadow's edge a dither of light and dark
+    texels that changed every frame: "the floor was shimmering ... a grid style where the shadows were broken", Euan
+    2026-11-10. Checked with `steady60-still-ci.txt` and `tools/steady60-flicker.py`: frames of a still scene
+    compared.) With the Air on
     the clouds and light are always spread over frames (`lensTemporal` as if on).
   - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
     through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
