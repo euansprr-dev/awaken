@@ -42,6 +42,8 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue WARDS = B.comment("Precursor wards: blocks placed near Precursor sites crumble after 3 s and come back,",
                     "and a site's own walls can't be broken (SPEC §17)")
             .define("wards", true);
+    public static final ModConfigSpec.BooleanValue FINDS = B.comment("Finds (SPEC 58): the small things to find and do in the overworld, in new chunks. Off: none are placed; ones already standing keep working.")
+            .define("finds", true);
     public static final ModConfigSpec.BooleanValue WILDS = B.comment("The Wilds: how you arrived, the Horizon line, biome discoveries and sky-only rewards (SPEC §17)")
             .define("wilds", true);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS = B.comment("Gate Worlds: new gates' floors become worlds of their theme (SPEC §38).",

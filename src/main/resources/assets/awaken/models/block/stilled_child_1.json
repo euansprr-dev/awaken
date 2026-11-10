@@ -1,0 +1,273 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        5.5,
+        0,
+        6.5
+      ],
+      "to": [
+        7.5,
+        7,
+        9.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        8.5,
+        0,
+        6.5
+      ],
+      "to": [
+        10.5,
+        7,
+        9.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        5,
+        7,
+        6
+      ],
+      "to": [
+        11,
+        14,
+        10
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        }
+      },
+      "from": [
+        5.5,
+        14,
+        5.5
+      ],
+      "to": [
+        10.5,
+        19,
+        10.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        3.5,
+        8,
+        7
+      ],
+      "to": [
+        5,
+        13,
+        9
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        11,
+        12,
+        7
+      ],
+      "to": [
+        12.5,
+        21,
+        9
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "minecraft:block/smooth_stone",
+    "smooth": "minecraft:block/smooth_stone",
+    "stone": "minecraft:block/andesite"
+  }
+}

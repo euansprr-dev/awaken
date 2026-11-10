@@ -1,0 +1,154 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#red"
+        },
+        "east": {
+          "texture": "#red"
+        },
+        "north": {
+          "texture": "#red"
+        },
+        "south": {
+          "texture": "#red"
+        },
+        "up": {
+          "texture": "#red"
+        },
+        "west": {
+          "texture": "#red"
+        }
+      },
+      "from": [
+        2,
+        0,
+        3
+      ],
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "to": [
+        14,
+        0.6,
+        13
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#white"
+        },
+        "east": {
+          "texture": "#white"
+        },
+        "north": {
+          "texture": "#white"
+        },
+        "south": {
+          "texture": "#white"
+        },
+        "up": {
+          "texture": "#white"
+        },
+        "west": {
+          "texture": "#white"
+        }
+      },
+      "from": [
+        7.6,
+        0,
+        12
+      ],
+      "to": [
+        8.4,
+        0.5,
+        16
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "minecraft:block/red_wool",
+    "red": "minecraft:block/red_wool",
+    "white": "minecraft:block/white_wool"
+  }
+}
