@@ -32,6 +32,7 @@ public final class StationTests {
         AwakenTests.register("anims_station_shift_result", 20, StationTests::shiftResult);
         AwakenTests.register("stations_bench_view", 20, StationTests::benchView);
         AwakenTests.register("stations_hand_never_hides", 20, StationTests::handNeverHides);
+        AwakenTests.register("stations_presence", 40, StationTests::presence);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -243,6 +244,59 @@ public final class StationTests {
             }
         }
         h.assertTrue(most <= 2, "at most two squares are ever under the sleeve (" + most + ")");
+        h.succeed();
+    }
+
+    /**
+     * Presence (SPEC §63.5): a player who opens a crafting table's menu just after using the table is marked as at it,
+     * with what lies on it; a slot they change is passed on as a beat, at most one every three ticks; a menu that is not
+     * the station's, or one opened without using a station, marks nobody; shutting the menu takes the mark away. A box
+     * shows its six largest stacks, one of each kind of thing, biggest first.
+     */
+    static void presence(GameTestHelper h) {
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        CraftingMenu m = menu(h, p);
+        StationPresence.Sent sent = new StationPresence.Sent();
+        h.assertTrue(StationPresence.kindOf(Blocks.CRAFTING_TABLE.defaultBlockState()) == StationPresence.BENCH
+                && StationPresence.kindOf(Blocks.FURNACE.defaultBlockState()) == StationPresence.KNEEL
+                && StationPresence.kindOf(Blocks.CHEST.defaultBlockState()) == StationPresence.BOX
+                && StationPresence.kindOf(Blocks.BARREL.defaultBlockState()) == StationPresence.BOX
+                && StationPresence.kindOf(Blocks.STONE.defaultBlockState()) == StationPresence.NONE, "each station is worked its own way");
+        h.assertTrue(StationPresence.menuFits(StationPresence.BENCH, m) && !StationPresence.menuFits(StationPresence.KNEEL, m)
+                && !StationPresence.menuFits(StationPresence.BOX, m), "a crafting menu is a table's and nothing else's");
+        // at the table, with a plank on a square
+        m.getSlot(5).set(new ItemStack(Items.OAK_PLANKS, 3));
+        java.util.List<ItemStack> first = StationPresence.shown(StationPresence.BENCH, m);
+        h.assertTrue(first.size() == 10 && first.get(5).is(Items.OAK_PLANKS) && first.get(5).getCount() == 3, "others see the ten slots of a table");
+        p.setData(StationPresence.AT, new StationPresence.At(StationPresence.BENCH, h.absolutePos(BlockPos.ZERO), (byte) 0, (byte) 1, 0, first));
+        sent.shown = first;
+        h.assertTrue(StationPresence.tick(p, sent) && p.getData(StationPresence.AT).beats() == 0, "nothing changed: no beat");
+        // a slot is changed: a beat with that slot; a second change straight after is seen but passes no beat
+        m.getSlot(2).set(new ItemStack(Items.OAK_PLANKS, 1));
+        h.assertTrue(StationPresence.tick(p, sent), "still at the table");
+        StationPresence.At at = p.getData(StationPresence.AT);
+        h.assertTrue(at.beats() == 1 && at.beatSlot() == 2 && at.shown().get(2).is(Items.OAK_PLANKS), "a changed slot is a beat with its number (" + at.beat() + ")");
+        m.getSlot(8).set(new ItemStack(Items.STICK, 1));
+        StationPresence.tick(p, sent);
+        at = p.getData(StationPresence.AT);
+        h.assertTrue(at.beats() == 1 && at.shown().get(8).is(Items.STICK), "a second change inside three ticks is seen, with no second beat");
+        // the menu shuts: they are no longer at it
+        p.containerMenu = p.inventoryMenu;
+        h.assertTrue(!StationPresence.tick(p, sent), "with the menu shut they have left the station");
+        // a box: the six largest stacks, like things together, biggest first
+        net.minecraft.world.SimpleContainer box = new net.minecraft.world.SimpleContainer(27);
+        box.setItem(0, new ItemStack(Items.COBBLESTONE, 10));
+        box.setItem(1, new ItemStack(Items.OAK_PLANKS, 30));
+        box.setItem(2, new ItemStack(Items.COBBLESTONE, 40));
+        for (int i = 0; i < 7; i++) box.setItem(5 + i, new ItemStack(i == 0 ? Items.STICK : i == 1 ? Items.COAL : i == 2 ? Items.BEEF : i == 3 ? Items.APPLE : i == 4 ? Items.BONE
+                : i == 5 ? Items.FLINT : Items.FEATHER, i + 1));
+        net.minecraft.world.inventory.ChestMenu chest = net.minecraft.world.inventory.ChestMenu.threeRows(2, p.getInventory(), box);
+        java.util.List<ItemStack> seen = StationPresence.shown(StationPresence.BOX, chest);
+        h.assertTrue(seen.size() == StationPresence.BOX_SHOWN && seen.get(0).is(Items.COBBLESTONE) && seen.get(0).getCount() == 50 && seen.get(1).is(Items.OAK_PLANKS),
+                "a box shows its six largest stacks, like things together, biggest first (" + seen + ")");
+        for (int i = 1; i < seen.size(); i++) h.assertTrue(seen.get(i).getCount() <= seen.get(i - 1).getCount(), "in order of size");
+        h.assertTrue(StationPresence.changedSlot(first, first) == -1 && StationPresence.changedSlot(first, StationPresence.shown(StationPresence.BENCH, m)) == 2,
+                "the first slot that differs is the one that changed");
         h.succeed();
     }
 

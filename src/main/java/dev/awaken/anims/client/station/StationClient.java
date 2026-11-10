@@ -89,8 +89,10 @@ public final class StationClient {
     public static void init(IEventBus bus, IEventBus modBus) {
         FurnaceWorld.init(modBus);
         bus.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> {
-            StationCamera.end(); open = false; table = null;
+            StationCamera.end(); open = false; table = null; before = null;
+            StationBodies.clear();
         });
+        bus.addListener(SubmitCustomGeometryEvent.class, StationBodies::submit);
         bus.addListener(StationClient::onPlayer);
         bus.addListener(PlayerInteractEvent.RightClickBlock.class, StationClient::onUse);
         bus.addListener(EventPriority.LOW, ScreenEvent.Opening.class, StationClient::onOpening);
@@ -103,6 +105,7 @@ public final class StationClient {
 
     public static void tick() {
         ticks++;
+        StationBodies.tick();
         // the lowered view gives up (and the screen shuts) if it lost its level, the scene ended, you died, or a block
         // came between it and your eyes (a second player can place one while you work)
         if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null

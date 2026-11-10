@@ -21722,9 +21722,34 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   beside and behind; at four window sizes the three slots are inside the room and pick themselves; a held stack is on
   the plane 0.08 out from the face and exactly on the pointer). The old `anims_furnace_*` tests stay.
 
-**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; presence and beats so others see a body at work and
-what lies on a table or in an open chest; lids in the hands and living slots for boxes; six more workstation scenes;
-glass for seven screens; a hand, a sound and a body for every quick touch. The click path
+### 63.5 Your body, and what others see (`anims.station.StationPresence`, `anims.client.station.StationBodies`)
+- **Presence.** While a player has a station's own menu open the server marks them with attachment `awaken:station`
+  (`StationPresence.At`: how it is worked, the block, the way in, a beat, what lies there). It is appearance only: no
+  `serialize`, no copy on death, synced by NeoForge to everyone tracking the player and to the player. It is set when a
+  menu opens within 5 ticks of the player using a block of that kind (`kindOf`: BENCH a crafting table, KNEEL a furnace,
+  smoker or blast furnace, BOX a chest, barrel, ender chest or shulker box) and the menu is that kind's (`menuFits`), and
+  removed the tick the menu is no longer open, the player is dead or gone (checked every server tick for marked players
+  only). Nothing here changes an item.
+- **What lies there:** a table's result and nine squares, read every tick; the six largest stacks in a box, like things
+  together, biggest first, read every 5 ticks (`shown`). Sent only when it changes.
+- **Beats:** the slot that changed (a table's result only when nothing else did) is passed on as a beat in the same
+  record, at most one every 3 ticks for a player (six a second); the rest are only seen as what lies there.
+- **The body** (`StationBodies`, client, for every player in view, yourself in third person too): `station_bench` bent
+  over a table, `station_kneel` on one knee before a furnace (a low lunge without Bendable Cuboids), `station_box` bent to
+  a box with a hand on its lid, each a breathing loop; a beat plays `station_bench_reach_r` or `_l` (the left column the
+  left arm; 7 ticks), `station_kneel_reach` (8) or `station_box_reach` (7) and the loop comes back. More than 2.5 blocks
+  from the station the body stands and only reaches toward it (`station_far`, `station_far_reach`, 6). Clips from
+  `tools/art/specs/station_moves.py` through `core.api.PlayerClips`; without the animation library a beat is vanilla's
+  arm swing. The body stands up the tick the presence goes.
+- **What others see lying there:** the stacks on a table someone else is working (as the scene lays them, with piles),
+  and in any chest or ender chest whose lid is up the largest stacks lying in it, two rows of three, for you too.
+  Within 16 blocks. A barrel's and a shulker box's insides cannot be seen and show nothing.
+- Tests: `stations_presence` (each block's kind; a crafting menu fits a table only; ten slots seen; no beat without a
+  change; a changed square is a beat with its number though the result changed too; a second change inside 3 ticks is
+  seen with no beat; the menu shut ends it; a box's six largest stacks merged and in order).
+
+**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; lids in the hands and living slots for boxes; six
+more workstation scenes; glass for seven screens; a hand, a sound and a body for every quick touch. The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts
