@@ -22579,6 +22579,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   tells a scene the card is up, and the Vow's and the gifts' titles are then drawn at 0.60 of the screen's height. *Differs:* the gold figure is the Gauntlet's ghost
   (`gates.entity.GauntletGhost`, the gates' own entity type, used from the client only) moved along a computed path (a
   swing's sag to the mast, two hops along the look, a run off the pier), not a recorded route; none with reduced motion.
+  Its tint is the Lesson's own gold (`Lesson.GOLD`, a little over half there): with the Gauntlet's pale tint the skin's
+  colours stay as they are, and the first clear picture of it (11 Nov, on open ground) read as another player standing
+  in your way.
 - **The six moves of §62** (11 Nov, after Rope and Wings was merged). Six more kinds, each begun where the move's own
   code already offered its written tip (`AscentMoves`: `Lesson.offerMove` first, the tip only when the Lesson can no
   longer teach), plus two moments of the Lesson's own (`Lesson.offerOwn`):

@@ -17,6 +17,8 @@ TOURS = {
     "w3": "run-autopilot/screenshots-ci/way-up-42874946585",
     "w4": "run-autopilot/screenshots-ci/way-up-42879026051",
     "wl": "run-autopilot/screenshots-ci/way-up-leap-42885496256",
+    "m3": "run-autopilot/screenshots-ci/way-up-moves-42917835393",
+    "m4": "run-autopilot/screenshots-ci/way-up-moves-@@M4@@",
 }
 # page picture -> (tour, shot, crop as fractions (x0, y0, x1, y1) or None)
 CUTS = {
@@ -34,6 +36,12 @@ CUTS = {
     "built_form": ("w2", "way_18_form_prompt", None),
     "built_k": ("w2", "way_19_k_rows_all", (0.25, 0.50, 0.66, 0.99)),
     "built_tasks": ("w3", "way_03_tasks_rope_row", (0.63, 0.12, 0.99, 0.62)),
+    "moves_takeoff_stand": ("m4", "@@M4SHOT@@", None),
+    "moves_takeoff_up": ("m3", "moves_05_takeoff_looking_up", None),
+    "moves_takeoff_card": ("m3", "moves_07_takeoff_card", None),
+    "moves_flare": ("m3", "moves_09_glide", None),
+    "moves_sling": ("m3", "moves_18_sling_on_foot", None),
+    "moves_sling_card": ("m3", "moves_21_sling_over", None),
     "tether_now": ("tether2", "tether_04_chain", None),
     "leap_now": ("leap", "trial_03_across", None),
     "leap_place": ("leap", "trial_02_course", None),
@@ -79,6 +87,14 @@ STRIPS = {
         ("wings_after", "<b>Before: four seconds after the gift.</b> The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened."),
         ("wings_k", "<b>Before: the K menu at C-rank with wings.</b> The next row still says the sky \"calls you to a trial\". That trial can no longer be reached."),
         ("sky_gift", "<b>Before: the Sky Warden falls.</b> \"The sky is yours.\" and four moves in one line of text."),
+    ],
+    "moves_strip": [
+        ("moves_takeoff_stand", "<b>The takeoff, standing outdoors with flight.</b> The keys wait near the top with an arrow, and a pale gold figure of you rises ahead."),
+        ("moves_takeoff_up", "<b>Look up,</b> and the keys sit on a ring in the sky."),
+        ("moves_takeoff_card", "<b>The takeoff made.</b> Its name and keys show once, for four seconds."),
+        ("moves_flare", "<b>The flare.</b> Gliding down with the ground close: no key, only how."),
+        ("moves_sling", "<b>The sling, on foot.</b> Your key sits on the top the rope would bite."),
+        ("moves_sling_card", "<b>The sling made.</b> Thrown up and over the block, and its card."),
     ],
     "leap_strip": [
         ("built_gate", "<b>Built: the course's gate at the foot of a Tether Spire,</b> opened by reaching its crown by rope."),

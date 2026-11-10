@@ -472,6 +472,8 @@ final class Lesson {
     private static int nextId = -0x6B0000;
     /** Ticks between two points of a figure's path. */
     private static final int STEP = 3;
+    /** The figure's light (ARGB, multiplied into your skin): the Lesson's gold, a little over half there. */
+    private static final int GOLD = 0x8CFFD257;
 
     /** A run and two jumps ahead of the player, along their look: the leap, shown. */
     static Vec3[] hopPath(LocalPlayer p, double far) {
@@ -522,6 +524,9 @@ final class Lesson {
         ghost = new GauntletGhost(GatesRegistry.GHOST.get(), level);
         ghost.setId(nextId--);
         ghost.route(mc.player.getUUID(), List.of(), List.of());
+        // gold, and half there: the Gauntlet's own pale tint leaves the skin's colours as they are, and on open ground
+        // the figure read as another player standing in your way (the fourth look tour's first clear picture of it)
+        ghost.tint(GOLD);
         ghost.snapTo(pts[0].x, pts[0].y, pts[0].z, yaw(pts, 0), 0);
         level.addEntity(ghost);
         ghostAge = 0;
