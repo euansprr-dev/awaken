@@ -247,7 +247,7 @@ final class MHall {
             Hall d = (Hall) v[3];
             int reach = (Integer) v[4];
             Mon.kind(Family.HALL, tier, (String) v[1], (String) v[2]).verb(Verb.LIGHT)
-                    .lands(Group.DARK, Group.FOREST, Group.SWAMP, Group.JUNGLE).slope(12)
+                    .lands(Group.DARK, Group.FOREST, Group.SWAMP, Group.JUNGLE).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach(reach)
                     .air(Air.of(0x1E3A38, 44).below().mote(() -> ParticleTypes.GLOW, 0.4F, 7, -0.004F).loop(() -> SoundEvents.AMBIENT_CAVE.value(), 360, 0.4F, 0.9F))
                     .scene(s -> hall(s, d, reach))

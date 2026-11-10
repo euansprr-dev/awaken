@@ -230,7 +230,7 @@ final class MArchive {
             Arc d = (Arc) v[3];
             int reach = (Integer) v[4];
             Mon.kind(Family.ARCHIVE, tier, (String) v[1], (String) v[2]).verb(Verb.CARRY)
-                    .lands(Group.FOREST, Group.PLAINS, Group.SNOW, Group.DARK, Group.JUNGLE).slope(13)
+                    .lands(Group.FOREST, Group.PLAINS, Group.SNOW, Group.DARK, Group.JUNGLE).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach(reach)
                     .air(Air.of(0xD6CDB4, 120).mote(() -> ParticleTypes.WHITE_ASH, 0.3F, 10, -0.004F).loop(() -> SoundEvents.BOOK_PAGE_TURN, 260, 0.2F, 0.6F))
                     .scene(s -> archive(s, d, reach))

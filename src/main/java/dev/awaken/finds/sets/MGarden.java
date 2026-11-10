@@ -240,7 +240,7 @@ final class MGarden {
             int[] d = (int[]) v[3];
             int reach = (Integer) v[4];
             Mon.kind(Family.GARDEN, tier, (String) v[1], (String) v[2]).verb(Verb.FOLLOW)
-                    .lands(Group.FOREST, Group.DARK, Group.SWAMP, Group.JUNGLE, Group.PLAINS).slope(11)
+                    .lands(Group.FOREST, Group.DARK, Group.SWAMP, Group.JUNGLE, Group.PLAINS).slope(15)
                     .see((String) v[5]).learned((String) v[6]).reach(reach)
                     .air(Air.of(0x1B2B4A, 70).mote(() -> ParticleTypes.FIREFLY, 0.5F, 9, 0.002F).loop(() -> SoundEvents.AMETHYST_BLOCK_RESONATE, 300, 0.2F, 1.4F))
                     .scene(s -> garden(s, d[0], d[1], d[2], d[3], d[4], reach))

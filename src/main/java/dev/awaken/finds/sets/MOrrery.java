@@ -183,7 +183,7 @@ final class MOrrery {
             Object[] o = (Object[]) v[3];
             int reach = (Integer) v[4], wheels = (Integer) o[4];
             Mon.kind(Family.ORRERY, tier, (String) v[1], (String) v[2]).verb(Verb.TURN).anchor(Anchor.HIGH)
-                    .lands(Group.MOUNTAIN, Group.PLAINS, Group.SNOW, Group.BADLANDS, Group.DESERT).slope(13)
+                    .lands(Group.MOUNTAIN, Group.PLAINS, Group.SNOW, Group.BADLANDS, Group.DESERT).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach(reach)
                     .air(Air.of(0xB9C4DA, 150).mote(() -> ParticleTypes.END_ROD, 0.05F, 16, 0.004F).loop(() -> SoundEvents.AMETHYST_BLOCK_CHIME, 320, 0.15F, 0.4F))
                     .scene(s -> orrery(s, (Integer) o[0], (Integer) o[1], (Ring[]) o[2], (Integer) o[3], wheels, (Boolean) o[5], (Boolean) o[6], reach))

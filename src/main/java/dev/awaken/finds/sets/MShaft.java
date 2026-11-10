@@ -243,7 +243,7 @@ final class MShaft {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.SHAFT, tier, (String) v[1], (String) v[2]).verb(Verb.REACH)
-                    .lands(Group.DESERT, Group.BADLANDS, Group.MOUNTAIN).slope(12)
+                    .lands(Group.DESERT, Group.BADLANDS, Group.MOUNTAIN).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0x3A2E2A, 120).below().mote(() -> ParticleTypes.ASH, 0.3F, 12, 0.01F).loop(() -> SoundEvents.AMBIENT_CAVE.value(), 300, 0.35F, 0.6F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

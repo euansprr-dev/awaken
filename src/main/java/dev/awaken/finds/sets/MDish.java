@@ -277,7 +277,7 @@ final class MDish {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.DISH, tier, (String) v[1], (String) v[2]).verb(Verb.MEND)
-                    .lands(Group.PLAINS, Group.FOREST, Group.DESERT, Group.BADLANDS, Group.SNOW).slope(tier == 2 ? 10 : 14)
+                    .lands(Group.PLAINS, Group.FOREST, Group.DESERT, Group.BADLANDS, Group.SNOW).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0xD9CFA8, 150).mote(() -> ParticleTypes.END_ROD, tier == 5 ? 0.14F : 0.06F, 12, 0.005F).loop(() -> SoundEvents.AMETHYST_BLOCK_RESONATE, tier == 5 ? 120 : 200, tier == 5 ? 0.4F : 0.25F, 0.5F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

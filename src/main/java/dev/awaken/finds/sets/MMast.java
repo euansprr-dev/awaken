@@ -288,7 +288,7 @@ final class MMast {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.MAST, tier, (String) v[1], (String) v[2]).verb(Verb.BREAK).anchor(Anchor.HIGH)
-                    .lands(Group.MOUNTAIN, Group.SNOW, Group.PLAINS, Group.DESERT, Group.BADLANDS).slope(tier == 2 ? 16 : 14)
+                    .lands(Group.MOUNTAIN, Group.SNOW, Group.PLAINS, Group.DESERT, Group.BADLANDS).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0xC4D2DE, 150).mote(() -> ParticleTypes.CLOUD, 0.05F, 16, 0.01F).loop(() -> SoundEvents.ELYTRA_FLYING, 200, 0.09F, 0.8F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

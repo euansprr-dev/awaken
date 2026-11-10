@@ -87,7 +87,8 @@ final class Anchors {
      * The first census of monuments on level ground only (10 Nov) stood 12 of 616: this is what asks less of the land.
      */
     private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long h, boolean highest) {
-        int r = Math.max(8, k.reach() * 4 / 5), sea = t.seaLevel();
+        // (the reach holds the terrace and the ground eased to it: the terrace itself is what has to fit)
+        int r = Math.max(8, k.reach() - 14), sea = t.seaLevel();
         int[] f = new int[17], best = null;
         for (int[] o : GRID) {
             int cx = x + o[0] * 24, cz = z + o[1] * 24;

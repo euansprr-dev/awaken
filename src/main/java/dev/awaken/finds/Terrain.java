@@ -128,7 +128,17 @@ public interface Terrain {
                     String id = set.unwrapKey().map(k -> k.identifier().getPath()).orElse("");
                     boolean settlement = id.equals("villages") || id.equals("pillager_outposts") || id.equals("woodland_mansions");
                     if (settlement != settlements || UNSEEN.contains(id)) continue;
-                    if (gs.hasStructureChunkInRange(set, x >> 4, z >> 4, chunks)) return true;
+                    // a set says "one may start in this chunk" whatever the land: asked that way, a desert temple's set ruled
+                    // out forest sites and one site in five was lost to nothing (the count of 11 Nov). So: the set's own
+                    // start chunk within range, and a biome there that one of its structures stands in.
+                    int cx = x >> 4, cz = z >> 4;
+                    for (int ox = cx - chunks; ox <= cx + chunks; ox++)
+                        for (int oz = cz - chunks; oz <= cz + chunks; oz++) {
+                            var p = rs.getPotentialStructureChunk(gs.getLevelSeed(), ox, oz);
+                            if (p.x() != ox || p.z() != oz || !rs.isStructureChunk(gs, ox, oz)) continue;
+                            var biome = level.getUncachedNoiseBiome((ox * 16 + 8) >> 2, 16, (oz * 16 + 8) >> 2);
+                            for (var e : set.value().structures()) if (e.structure().value().biomes().contains(biome)) return true;
+                        }
                 }
                 return false;
             }

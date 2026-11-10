@@ -329,7 +329,7 @@ final class MStair {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.STAIR, tier, (String) v[1], (String) v[2]).verb(Verb.REACH)
-                    .lands(Group.MOUNTAIN, Group.SNOW, Group.FOREST, Group.PLAINS).slope(16)
+                    .lands(Group.MOUNTAIN, Group.SNOW, Group.FOREST, Group.PLAINS).slope(20)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0xC9D6E2, 140).mote(() -> ParticleTypes.WHITE_ASH, 0.25F, 14, -0.01F).loop(() -> SoundEvents.ELYTRA_FLYING, 240, 0.07F, 0.7F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

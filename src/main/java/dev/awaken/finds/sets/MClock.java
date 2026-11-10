@@ -216,7 +216,7 @@ final class MClock {
             Mount d = (Mount) v[3], twin = (Mount) v[4];
             int reach = (Integer) v[5];
             Mon.kind(Family.CLOCK, tier, (String) v[1], (String) v[2]).verb(Verb.POUR)
-                    .lands(Group.JUNGLE, Group.SWAMP, Group.FOREST, Group.DARK).slope(12)
+                    .lands(Group.JUNGLE, Group.SWAMP, Group.FOREST, Group.DARK).slope(16)
                     .see((String) v[6]).learned((String) v[7]).reach(reach)
                     .air(Air.of(0x2C4A3A, 110).mote(() -> ParticleTypes.FALLING_WATER, 0.2F, 12, 0F).loop(() -> SoundEvents.WATER_AMBIENT, 120, 0.25F, 0.8F))
                     .scene(s -> site(s, d, twin, reach))

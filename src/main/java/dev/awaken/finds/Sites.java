@@ -147,8 +147,9 @@ public final class Sites {
             if (layer == 1 && k.set() != Kind.FSet.REMAINS) continue;   // nor the small finds: only the remains (SPEC §62.6)
             // Bands (SPEC §62.2): nothing stands nearer home than its own rank, so each band out holds monuments the
             // last did not. At the land's rank and one under it a kind is at full weight; older ones thin by half a rank.
-            if (k.rank() > rank) continue;
-            double v = layer == 2 ? k.weight() * Math.pow(0.5, Math.max(0, rank - k.rank() - 1)) : k.weight();
+            // (and one band early, three times in ten: a foretaste of what the next band out holds)
+            if (k.rank() > rank + (layer == 2 ? 1 : 0)) continue;
+            double v = layer != 2 ? k.weight() : k.rank() > rank ? k.weight() * 0.3 : k.weight() * Math.pow(0.5, Math.max(0, rank - k.rank() - 1));
             if (home && (layer == 2 ? k.tier() == 1 : k.number() == 1)) v *= 4; // the plainest is the one you meet first
             w[i] = v;
         }
@@ -168,17 +169,18 @@ public final class Sites {
     }
 
     /**
-     * Monuments are dealt a block of cells at a time: twelve by twelve, 4,608 blocks on a side. Six by six was tried first on
-     * paper: with sixty kinds and bands by distance, a kind then came round again about every two kilometres, which is "the same
-     * one twice" for anyone who walks an afternoon. At twelve, everything within two kilometres of any point is different.
+     * Monuments are dealt a block of cells at a time: eight by eight, 3,072 blocks on a side. Twelve by twelve was counted
+     * in a real world (11 Nov): no twin nearer than 2,589 blocks, but with only nine to twenty kinds on offer near home most
+     * of a block's cells went empty, and nothing stood within a kilometre of the start. At eight a kind still stands once in
+     * three kilometres square, and the land near home holds something.
      */
-    private static final int SUPER = 12;
+    private static final int SUPER = 8;
     private static final ConcurrentHashMap<Long, int[]> DEALS = new ConcurrentHashMap<>();
 
     /**
      * The deal of one block of cells (SPEC §62.2): like a hand from a shuffled deck. The block's cells that hold
      * something take their turn in the order of their hashes; each draws, by the weights of its own land and rank, from
-     * the kinds no cell of the block has drawn yet. So a kind stands at most once in 4,608 blocks square, and where the
+     * the kinds no cell of the block has drawn yet. So a kind stands at most once in 3,072 blocks square, and where the
      * land offers few kinds the cells left over stay empty, which is the quiet between. A cell also passes over the
      * families its touching cells have drawn, while anything else is left for it.
      */
@@ -187,7 +189,7 @@ public final class Sites {
         int[] d = DEALS.get(key);
         if (d != null) return d;
         int n = SUPER * SUPER;
-        d = new int[n];
+        d = new int[2 * n];                                         // each cell's card, then its second card
         java.util.Arrays.fill(d, -1);
         long[] hs = new long[n];
         Integer[] order = new Integer[n];
@@ -203,6 +205,8 @@ public final class Sites {
             long h = hs[i];
             int x = cellX(h, 2, cx), z = cellZ(h, 2, cz);
             double chance = BASE[2] * richness(a.seed, x, z, 2, a.spawnX, a.spawnZ);
+            long hx = x - a.spawnX, hz = z - a.spawnZ;
+            if (hx * hx + hz * hz < 1000L * 1000L) chance = Math.max(chance, 0.35);  // within a kilometre of the start the land is never empty
             if (((h >>> 44) & 0xFFFF) / 65536.0 >= chance) continue;
             double[] w = weights(a, 2, x, z);
             for (int k = used.nextSetBit(0); k >= 0; k = used.nextSetBit(k + 1)) if (k < w.length) w[k] = 0;
@@ -224,6 +228,16 @@ public final class Sites {
             d[i] = choice;
             if (choice >= 0) used.set(choice);
         }
+        // second cards, from what the block has left: for a cell whose first finds no ground, or a twin too near
+        for (int i : order) {
+            if (d[i] < 0) continue;
+            long h = hs[i];
+            double[] w = weights(a, 2, cellX(h, 2, scx * SUPER + i % SUPER), cellZ(h, 2, scz * SUPER + i / SUPER));
+            for (int k = used.nextSetBit(0); k >= 0; k = used.nextSetBit(k + 1)) if (k < w.length) w[k] = 0;
+            int choice = pick(w, mix(h, 0x12));
+            d[n + i] = choice;
+            if (choice >= 0) used.set(choice);
+        }
         int[] old = DEALS.putIfAbsent(key, d);
         return old != null ? old : d;
     }
@@ -241,51 +255,79 @@ public final class Sites {
     }
 
     /**
-     * A monument's cell (SPEC §62.2, §62.3). Its kind is the deal's. It yields to a cell with first say (the lower hash)
-     * that drew the same kind within six cells, in another block; it needs ground it can stand a terrace on, in a land
-     * it belongs to across its footprint and not only at its middle; it keeps clear of villages and the city; and it
-     * never stands within its own width and its neighbour's of a monument that has first say. Whatever fails, the cell
-     * is empty: nothing else is tried in its place, so no kind turns up where its land or its ground did not ask for it.
+     * A monument's cell (SPEC §62.2, §62.3). Its kind is the deal's: its card, and if that cannot stand here, its second
+     * card. A card yields where a cell with first say (the lower hash) within six cells, in another block, stands the same
+     * kind; it needs ground it can stand a terrace on, in a land it belongs to across its footprint and not only at its
+     * middle; it keeps clear of villages and the city; and it never stands within three hundred blocks, or its own width
+     * and its neighbour's, of a monument that has first say. Where neither card stands the cell is empty: nothing is
+     * dealt afresh in its place, so no kind turns up where its land or its ground did not ask for it.
      */
     private static Site monument(Ask a, int cx, int cz) {
-        int base = basePick(a, 2, cx, cz);
-        if (base < 0) return NONE;
+        int n = SUPER * SUPER, at = Math.floorMod(cx, SUPER) + Math.floorMod(cz, SUPER) * SUPER;
+        int[] d = deal(a, Math.floorDiv(cx, SUPER), Math.floorDiv(cz, SUPER));
+        if (d[at] < 0) return NONE;
         long h = cellHash(a.seed, 2, cx, cz);
         int x = cellX(h, 2, cx), z = cellZ(h, 2, cz);
         long sx = x - a.spawnX, sz = z - a.spawnZ;
         if (sx * sx + sz * sz < 40 * 40) return NONE;
         if (CityHooks.inCity(a.level, new BlockPos(x, a.level.getSeaLevel(), z))) return NONE;
+        int why = -1;
+        int[] reason = new int[1];
+        for (int c = 0; c < 2; c++) {
+            int card = d[c * n + at];
+            if (card < 0) continue;
+            Site s = stand(a, Kinds.layer(2).get(card), card, cx, cz, h, x, z, reason);
+            if (s != null) {
+                if (c == 1) LOST[7]++;
+                return s;
+            }
+            if (why < 0) why = reason[0];
+        }
+        LOST[why]++;                                             // (the count says why the first card failed)
+        return NONE;
+    }
+
+    /** Whether a monuments' cell holds a card, as its first or its second. */
+    private static boolean holds(Ask a, int cx, int cz, int card) {
+        int n = SUPER * SUPER, at = Math.floorMod(cx, SUPER) + Math.floorMod(cz, SUPER) * SUPER;
+        int[] d = deal(a, Math.floorDiv(cx, SUPER), Math.floorDiv(cz, SUPER));
+        return d[at] == card || d[n + at] == card;
+    }
+
+    /** One card tried at one cell: the site it makes, or null and the reason (an index into the count's losses). */
+    private static @Nullable Site stand(Ask a, Kind k, int card, int cx, int cz, long h, int x, int z, int[] why) {
+        // the same monument is never within six cells: a block deals each kind once, and across a block's edge the cell
+        // with first say stands. Only a cell that holds this very card is asked what it built, so the asking stays small.
         int rings = RINGS[2];
         for (int i = -rings; i <= rings; i++)
             for (int j = -rings; j <= rings; j++) {
-                if (i == 0 && j == 0) continue;
-                if (basePick(a, 2, cx + i, cz + j) == base && Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) < 0) {
-                    LOST[4]++;
-                    return NONE;
+                if ((i == 0 && j == 0) || !holds(a, cx + i, cz + j, card) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0) continue;
+                Site o = cell(a, 2, cx + i, cz + j);
+                if (o != null && o.kind() == k) {
+                    why[0] = 4;
+                    return null;
                 }
             }
-        Kind k = Kinds.layer(2).get(base);
-        int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37));
+        int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37 + card));
         if (at == null) {
-            LOST[0]++;
-            return NONE;
+            why[0] = 0;
+            return null;
         }
         // the land it belongs to, under most of it: the middle and four points half way out
         int fits = k.fits(landAt(a, at[0], at[2])) ? 1 : 0, half = k.reach() / 2;
-        if (fits == 0) { LOST[5]++; return NONE; }
-        for (int q = 0; q < 4; q++) if (k.fits(landAt(a, at[0] + RX[q] * half, at[2] + RZ[q] * half))) fits++;
-        if (fits < 4) { LOST[5]++; return NONE; }
-        if (a.terrain.structureNear(at[0], at[2], 2)) { LOST[1]++; return NONE; }
-        if (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) { LOST[2]++; return NONE; }
-        if (cityNear(a, at[0], at[2], k.reach() + 56)) { LOST[3]++; return NONE; }
-        // two monuments never share ground: the one with first say stands, the other's cell is empty
+        for (int q = 0; q < 4 && fits > 0; q++) if (k.fits(landAt(a, at[0] + RX[q] * half, at[2] + RZ[q] * half))) fits++;
+        if (fits < 4) { why[0] = 5; return null; }
+        if (a.terrain.structureNear(at[0], at[2], 2)) { why[0] = 1; return null; }
+        if (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) { why[0] = 2; return null; }
+        if (cityNear(a, at[0], at[2], k.reach() + 56)) { why[0] = 3; return null; }
+        // two monuments never share ground, nor stand in each other's lap: the one with first say stands
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++) {
                 if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
                 Site o = cell(a, 2, cx + i, cz + j);
-                if (o != null && Math.max(Math.abs(o.x() - at[0]), Math.abs(o.z() - at[2])) < o.kind().reach() + k.reach() + 24) {
-                    LOST[6]++;
-                    return NONE;
+                if (o != null && Math.hypot(o.x() - at[0], o.z() - at[2]) < Math.max(300, o.kind().reach() + k.reach() + 24)) {
+                    why[0] = 6;
+                    return null;
                 }
             }
         return new Site(k, 2, at[0], at[1], at[2], mix(h, 0x41), at[3], landAt(a, at[0], at[2]), Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
@@ -347,7 +389,7 @@ public final class Sites {
     }
 
     /** Why deals failed since the last census: no ground, a structure, a settlement, the city. A check's counters, nothing reads them in play. */
-    private static final int[] LOST = new int[7];
+    private static final int[] LOST = new int[8];
 
     /** The country at a spot, from the biome there (the same naming the regions use for their hearts). */
     private static RegionMap.Group landAt(Ask a, int x, int z) {
@@ -576,7 +618,7 @@ public final class Sites {
         StringBuilder land = new StringBuilder("lands of " + cells + " cells:");
         for (RegionMap.Group g : RegionMap.Group.values()) land.append(' ').append(g).append(' ').append(lands[g.ordinal()]);
         out.add(land.toString());
-        out.add("lost since the last count: no ground " + LOST[0] + ", a structure " + LOST[1] + ", a settlement " + LOST[2] + ", the city " + LOST[3] + ", a twin near " + LOST[4] + ", the wrong land " + LOST[5] + ", a monument too close " + LOST[6]);
+        out.add("lost since the last count: no ground " + LOST[0] + ", a structure " + LOST[1] + ", a settlement " + LOST[2] + ", the city " + LOST[3] + ", a twin near " + LOST[4] + ", the wrong land " + LOST[5] + ", a monument too close " + LOST[6] + "; standing on a second card " + LOST[7]);
         java.util.Arrays.fill(LOST, 0);
         out.add("ranks: E " + ranks[0] + " D " + ranks[1] + " C " + ranks[2] + " B " + ranks[3] + " A " + ranks[4] + " S " + ranks[5] + "; cells that chose " + any + ", of those that stand " + sites.size());
         out.add("stand by rank: E " + standRank[0] + " D " + standRank[1] + " C " + standRank[2] + " B " + standRank[3] + " A " + standRank[4] + " S " + standRank[5]);

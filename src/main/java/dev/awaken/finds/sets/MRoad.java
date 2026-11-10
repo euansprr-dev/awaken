@@ -288,7 +288,7 @@ final class MRoad {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.ROAD, tier, (String) v[1], (String) v[2]).verb(Verb.PULL)
-                    .lands(Group.PLAINS, Group.FOREST, Group.SNOW, Group.MOUNTAIN, Group.DESERT, Group.SWAMP).slope(18)
+                    .lands(Group.PLAINS, Group.FOREST, Group.SNOW, Group.MOUNTAIN, Group.DESERT, Group.SWAMP).slope(22)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0xD8D2C0, 150).mote(() -> ParticleTypes.WHITE_ASH, 0.12F, 12, -0.006F).loop(() -> SoundEvents.ELYTRA_FLYING, 300, 0.05F, 0.6F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

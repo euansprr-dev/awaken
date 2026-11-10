@@ -32,7 +32,7 @@ final class Mon {
 
     /** One of a family's five: a monument on a terrace, its rank from its tier, its hoard from its rank, its relic for an icon. */
     static Kind.Builder kind(Family f, int tier, String id, String name) {
-        return Kind.of(FSet.MONUMENTS, f.ordinal() * 5 + tier, id, name).place().family(f, tier).made(Made.FALLEN).anchor(Anchor.TERRACE).slope(14)
+        return Kind.of(FSet.MONUMENTS, f.ordinal() * 5 + tier, id, name).place().family(f, tier).made(Made.FALLEN).anchor(Anchor.TERRACE).slope(17)
                 .loot(HOARD[f.rankOf(tier)]).icon(f::relic);
     }
 

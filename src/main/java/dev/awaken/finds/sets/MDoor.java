@@ -260,7 +260,7 @@ final class MDoor {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.DOOR, tier, (String) v[1], (String) v[2]).verb(Verb.DIG)
-                    .lands(Group.DESERT, Group.BADLANDS).slope(12)
+                    .lands(Group.DESERT, Group.BADLANDS).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0xD9C49A, 140).mote(() -> ParticleTypes.WHITE_ASH, 0.35F, 14, 0.03F).loop(() -> SoundEvents.ELYTRA_FLYING, 220, 0.08F, 0.5F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])

@@ -273,7 +273,7 @@ final class MChains {
         for (Object[] v : five) {
             int tier = (Integer) v[0];
             Mon.kind(Family.CHAINS, tier, (String) v[1], (String) v[2]).verb(Verb.TURN)
-                    .lands(Group.BADLANDS, Group.DESERT, Group.MOUNTAIN).slope(13)
+                    .lands(Group.BADLANDS, Group.DESERT, Group.MOUNTAIN).slope(16)
                     .see((String) v[5]).learned((String) v[6]).reach((Integer) v[4])
                     .air(Air.of(0x5A4A40, 130).mote(() -> ParticleTypes.ASH, 0.25F, 14, 0.02F).loop(() -> SoundEvents.CHAIN_STEP, 160, 0.25F, 0.4F))
                     .scene((dev.awaken.finds.Kind.Maker) v[3])
