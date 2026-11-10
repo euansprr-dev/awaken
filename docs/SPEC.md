@@ -21608,12 +21608,12 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
 
-## 63. The Way Up (how each move is earned; plan docs/movement-unlocks/PLAN.md, page https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN; PROPOSED 2026-11-10, nothing built, nothing approved)
+## 63. The Way Up (how each move is earned; plan docs/movement-unlocks/PLAN.md, page https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN; Euan approved all twelve recommendations 2026-11-10: "Go with all recommendations")
 
 Euan, 10 Nov 2026: "it should be kind of a natural progression ... it shouldn't be impossible to unlock the future movement.
 Like maybe we make it unlock more with ... the rank assessments ... and then that unlocks somewhere that you discovered that
 you can go and unlock that item, and then it actually shows you how to use it ... it has to be clear the moment that you
-unlock it." This section is what the plan would set once approved; until then §17, §27.3 and §47 stand as written. Its
+unlock it." Where this section and §17, §27.3 or §47 differ, this section holds (with `wayUp` on, the default). Its
 sister is §62 (Rope and Wings: how the rope and wings feel, and six new moves); this section is how every rung and move is
 earned and taught.
 
