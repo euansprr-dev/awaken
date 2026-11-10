@@ -1,0 +1,47 @@
+# The Hour Crypt with its packs standing where they wait (SPEC 50.9, stage 0). Difficulty is normal; the camera is in creative, so nothing wakes.
+world autopilot_realm_hour_packs creative 20261113
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:hour_crypt
+need realm
+hud off
+wait 30
+wait 300
+look 0 -8
+cmd awaken gate realm_at DEN 7 0 3 -14
+look 0 10
+wait 80
+shot packs_nave
+cmd awaken gate realm_at DEN 0 -14 3 0
+look -90 10
+wait 80
+shot packs_ossuary
+cmd awaken gate realm_at WARDEN 0 -17 4 0
+look -90 10
+wait 80
+shot packs_warden_bones
+cmd awaken gate realm_at WARDEN 1 17 4 0
+look 90 10
+wait 80
+shot packs_warden_water
+cmd awaken gate realm_at WARDEN 2 0 3 -12
+look 0 8
+wait 80
+shot packs_warden_ropes
+cmd awaken gate realm_at DEN 4 14 3 0
+look 90 10
+wait 80
+shot packs_sunk_aisle
+quit
