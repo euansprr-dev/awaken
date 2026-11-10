@@ -80,10 +80,11 @@ bodies; 33 of the 79 are people (zombie, skeleton, illager, enderman, piglin, wi
 
 ### 2.3 Why they read as vanilla (seen, not guessed)
 
-Pictures: `img/today_nave.jpg`, `today_warden.jpg`, `today_brood.jpg` (real-game CI shots of the run, 10 Nov). A close
-tour, `tools/autopilot/monsters-today.txt` (each Bell Crypt monster beside the mob whose body it wears, then rows from 8
-and 20 blocks), was sent to GitHub on 10 Nov and was still waiting for a runner when this was written (run
-42812918797); it adds close-ups, and nothing below depends on it.
+Pictures: `img/today_nave.jpg`, `today_warden.jpg`, `today_brood.jpg` (real-game CI shots of the run, 10 Nov). And a
+close tour made for this plan, `tools/autopilot/monsters-today.txt` (CI run 42812918797, passed, 13 shots): each Bell
+Crypt monster beside the mob whose body it wears (`img/today_pair_*.jpg`), the Drip Lurker alone, and the five in a row
+with the Lurker and the Hushling from 8 and from 20 blocks (`img/today_row8.jpg`, `today_row20.jpg`). In the 20-block
+row two of the seven are plainly ours; the other five read as a Warden, two skeletons, a vex and a zombie.
 
 1. **The outline is Mojang's.** A tint and a glow change the surface. At fighting distance you read shape first, and
    the shape is a zombie's. `img/silhouettes.jpg`: four of the Bell Crypt's five are an upright rectangle on two legs.
