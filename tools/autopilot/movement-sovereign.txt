@@ -1,0 +1,247 @@
+# The Sovereign's six wings and their halo (SPEC §62), alone: held in each state on the high deck at dusk and by day,
+# then the real form (the server needs a full meter), its flight, and the first rung's wings opening through your own
+# eyes. Shots only. Look tour: tools/tour-ci.sh tools/autopilot/movement-sovereign.txt 1200
+# ci knobs: LENS=cinematic
+world movement_sovereign survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 12700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -64 2047 63
+# a deck in the open sky: there, wait for its chunks, lay it (twice: the first fill can meet an unloaded chunk)
+cmd tp @s 2000.5 300 0.5 0 0
+wait 200
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 60
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 40
+screen close
+cmd awaken ascent grant sovereign
+
+# ---- the studio at dusk: the Sovereign's wings in every state, from behind and in front ----
+cmd awaken living calm
+cmd awaken ascent pilot wings folded sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_folded_back
+look 0 -4
+camera front
+wait 6
+shotnow s_folded_front
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow s_open_back
+look 0 -4
+camera front
+wait 6
+shotnow s_open_front
+cmd awaken ascent pilot wings glide sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_glide_back
+look 0 -4
+camera front
+wait 6
+shotnow s_glide_front
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow s_fly_back
+wait 5
+shotnow s_fly_back_2
+wait 5
+shotnow s_fly_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_fly_front
+cmd awaken ascent pilot wings dive sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_dive_back
+look 0 -4
+camera front
+wait 6
+shotnow s_dive_front
+cmd awaken ascent pilot wings hover sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_hover_back
+wait 5
+shotnow s_hover_back_2
+wait 5
+shotnow s_hover_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_hover_front
+cmd awaken ascent pilot wings land sovereign
+look 0 12
+camera back
+wait 22
+shotnow s_land_back
+look 0 -4
+camera front
+wait 6
+shotnow s_land_front
+cmd awaken ascent pilot wings off
+wait 20
+
+# ---- the same by day ----
+cmd time set 5000
+wait 20
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow d_open_back
+look 0 -4
+camera front
+wait 6
+shotnow d_open_front
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow d_fly_back
+wait 5
+shotnow d_fly_back_2
+wait 5
+shotnow d_fly_back_3
+look 0 -4
+camera front
+wait 6
+shotnow d_fly_front
+cmd awaken ascent pilot wings hover sovereign
+look 0 12
+camera back
+wait 16
+shotnow d_hover_back
+wait 5
+shotnow d_hover_back_2
+look 0 -4
+camera front
+wait 6
+shotnow d_hover_front
+cmd awaken ascent pilot wings off
+wait 20
+
+# ---- the real form by day: the lift, the hover, then flight forward ----
+cmd awaken living calm
+cmd tp @s 2000.5 291 -2.5 0 10
+camera back
+cmd awaken ascent aether full
+cmd awaken ascent pilot aether 1
+wait 20
+cmd awaken ascent pilot ascend
+wait 10
+shotnow i_form_back_01
+wait 10
+shotnow i_form_back_02
+wait 10
+shotnow i_form_back_03
+wait 10
+shotnow i_form_back_04
+wait 10
+shotnow i_form_back_05
+wait 10
+shotnow i_form_back_06
+camera front
+wait 10
+shotnow i_form_front_01
+wait 10
+shotnow i_form_front_02
+wait 10
+shotnow i_form_front_03
+wait 10
+shotnow i_form_front_04
+camera back
+cmd awaken ascent pilot hold forward 70
+wait 10
+shotnow i_form_fly_01
+wait 10
+shotnow i_form_fly_02
+wait 10
+shotnow i_form_fly_03
+wait 10
+shotnow i_form_fly_04
+wait 10
+shotnow i_form_fly_05
+camera front
+wait 8
+shotnow i_form_fly_front_01
+wait 8
+shotnow i_form_fly_front_02
+cmd awaken ascent pilot stop
+wait 20
+
+# ---- the first rung's wings opening through your own eyes: they fade in as they spread ----
+cmd awaken living calm
+cmd awaken ascent grant wings
+# near the deck's edge: the run walks off it and opens the wings a few ticks into the fall
+cmd tp @s 2000.5 291 2.5 0 10
+camera first
+wait 30
+cmd awaken ascent pilot run glide
+wait 6
+wait 3
+shotnow fp_open_01
+wait 3
+shotnow fp_open_02
+wait 3
+shotnow fp_open_03
+wait 3
+shotnow fp_open_04
+wait 3
+shotnow fp_open_05
+wait 3
+shotnow fp_open_06
+wait 3
+shotnow fp_open_07
+wait 3
+shotnow fp_open_08
+wait 3
+shotnow fp_open_09
+wait 3
+shotnow fp_open_10
+wait 3
+shotnow fp_open_11
+wait 3
+shotnow fp_open_12
+wait 12
+shotnow fp_glide_01
+wait 12
+shotnow fp_glide_02
+wait 12
+shotnow fp_glide_03
+cmd awaken ascent pilot stop
+wait 20
+quit

@@ -221,6 +221,9 @@ cmd awaken ascent pilot stop
 wait 20
 
 # ---- the wings' studio on the high deck at dusk: every state at every rung, from behind and in front ----
+# (the Living Wilds starts a happening every minute and a half here: a rolling storm's tower and flashes stood behind
+# every rung of run 42872444094, so each rung begins by ending them)
+cmd awaken living calm
 cmd time set 12700
 cmd tp @s 2000.5 291 0.5 0 12
 wait 40
@@ -295,6 +298,7 @@ look 0 -4
 camera front
 wait 6
 shotnow s_wings_land_front
+cmd awaken living calm
 cmd awaken ascent pilot wings folded skyborn
 look 0 12
 camera back
@@ -366,6 +370,7 @@ look 0 -4
 camera front
 wait 6
 shotnow s_skyborn_land_front
+cmd awaken living calm
 cmd awaken ascent pilot wings folded sovereign
 look 0 12
 camera back
@@ -440,6 +445,7 @@ shotnow s_sovereign_land_front
 cmd awaken ascent pilot wings off
 wait 20
 # the same wings by day, the first rung
+cmd awaken living calm
 cmd time set 5000
 wait 20
 cmd awaken ascent pilot wings open wings
@@ -663,7 +669,11 @@ shotnow h_takeoff_12_hover
 cmd awaken ascent pilot stop
 cmd tp @s 2000.5 291 -2.5 0 10
 camera back
+cmd awaken living calm
 cmd awaken ascent grant sovereign
+# the form asks the server for a full meter: the takeoff and the flight before this spent it (the form never began in
+# run 42872444094)
+cmd awaken ascent aether full
 cmd awaken ascent pilot aether 1
 wait 20
 cmd awaken ascent pilot ascend
