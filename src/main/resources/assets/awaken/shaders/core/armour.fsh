@@ -79,7 +79,8 @@ void main() {
     vec3 upDir = Light0_Direction + Light1_Direction;
     upDir = dot(upDir, upDir) > 0.01 ? normalize(upDir) : vec3(0.0, 1.0, 0.0);
     float up = smoothstep(-0.5, 0.6, dot(nw, upDir));
-    col += SKY * rim * up * (0.07 + 0.26 * gloss + 0.10 * metal);
+    // (in the plate's own colour: a first draft added the sky's white and washed dark iron grey and a red stone pale)
+    col += (alb.rgb * 1.3 + SKY * 0.04) * rim * up * (0.10 + 0.30 * gloss) * (1.0 - 0.6 * emit);
     col += alb.rgb * rim * 0.25 * (1.0 - metal) * (1.0 - gloss);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
 
@@ -89,7 +90,7 @@ void main() {
     col *= world;
     // DRAFT: under an open sky at night what is turned up to it, and every edge, still catches the moon: a set keeps its
     // shape in the dark (never its colours), bright metal most; none of it underground or by a fire
-    col += MOON * (0.30 * max(dot(nw, upDir), 0.0) + 0.55 * rim * up) * (0.04 + 0.26 * gloss) * skyLight * dark;
+    col += MOON * (0.30 * max(dot(nw, upDir), 0.0) + 0.45 * rim * up) * (0.03 + 0.20 * gloss) * (0.35 + 0.65 * max(alb.r, max(alb.g, alb.b))) * skyLight * dark;
 
     // a sheen runs feet to crown every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
     // DRAFT: under the world's light, like the plate it runs on (it used to cross a figure standing in the dark)

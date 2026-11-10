@@ -169,7 +169,7 @@ NIGHT = {
 }
 # palette: (material, ramp, base) for the sets that sat in one blue-grey crowd
 PALETTE = {
-    "galewing": (("metal", "flint", 4), ("metal_plain", "flint", 5), ("metal_rim", "flint", 4)),
+    "galewing": (("metal", "flint", 3), ("metal_plain", "flint", 4), ("metal_rim", "flint", 3)),
     "leviathan": (("fin", "spore", 3),),
 }
 
@@ -308,8 +308,8 @@ def finished(sid, fn):
 # ---- light that spills ----------------------------------------------------------------------------------------------
 
 def spill(t, alb, mat):
-    """What glows lights the texels beside it on its own face: a texel away a third of its light and some of its
-    colour, two away a little. A slit reads as a light, not a painted bar. alb, mat: the face's texels (0-255)."""
+    """What glows lights the texels beside it on its own face: a texel away a quarter of its light and some of its
+    colour, two away a little (more than this and a narrow plate takes the glow's colour whole). A slit reads as a light, not a painted bar. alb, mat: the face's texels (0-255)."""
     if not ON:
         return
     f = t.f
@@ -323,7 +323,7 @@ def spill(t, alb, mat):
     E[jj[src], ii[src]] = emit[src]
     C[jj[src], ii[src]] = alb[src, :3].astype(float)
     F[jj[src], ii[src]] = mat[src, 3].astype(float)
-    for reach, share, tint in ((1, 0.34, 0.45), (2, 0.14, 0.2)):
+    for reach, share, tint in ((1, 0.28, 0.3), (2, 0.09, 0.1)):
         best = np.zeros((H, W)); col = np.zeros((H, W, 3)); n = np.zeros((H, W)); flow = np.zeros((H, W))
         for dy in range(-reach, reach + 1):
             for dx in range(-reach, reach + 1):
@@ -364,13 +364,13 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     col = col + spec * (np.ones(3) * (1 - metal) + np.minimum(rgb * 1.7, 1.0) * metal) * 0.85
     rim = (1 - np.clip(n_view @ V, 0, 1))[:, None] ** 3
     up = MR.smoothstep(-0.5, 0.6, n_world[:, 1:2])
-    col = col + MR.SKY[None] * rim * up * (0.07 + 0.26 * gloss + 0.10 * metal)
+    col = col + (rgb * 1.3 + MR.SKY[None] * 0.04) * rim * up * (0.10 + 0.30 * gloss) * (1.0 - 0.6 * emit)
     col = col + rgb * rim * 0.25 * (1 - metal) * (1 - gloss)
     col = col + accent[None] * rim * (0.12 + 0.55 * energy * rim) * 0.6
     dark = 1.0 - min(1.0, light)
     col = col * light
     top = np.maximum(n_world[:, 1:2], 0)
-    col = col + MOON[None] * (0.30 * top + 0.55 * rim * up) * (0.04 + 0.26 * gloss) * sky * dark
+    col = col + MOON[None] * (0.30 * top + 0.45 * rim * up) * (0.03 + 0.20 * gloss) * (0.35 + 0.65 * rgb.max(axis=1, keepdims=True)) * sky * dark
     cycle = (time * 240.0) % 1.0
     band = np.exp(-(((along - (cycle * 1.8 - 0.4)) * 7.0) ** 2))[:, None]
     col = col + band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash) * max(light, flash)

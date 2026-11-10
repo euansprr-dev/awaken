@@ -81,6 +81,16 @@ th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercas
 .dec h3 { margin: 0; font-size: 19px; }
 .dec .rec { color: var(--yes); font-weight: 700; }
 .loop { max-width: 720px; }
+.ans { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.ans button { font: 500 14px var(--mono); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; }
+.ans button[aria-pressed="true"] { border-color: var(--yes); color: var(--yes); }
+.ans button:disabled { opacity: .6; cursor: default; }
+.ans button:focus-visible, .ans textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ans textarea { flex: 1 1 100%; min-height: 44px; font: 15px/1.4 var(--body); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; resize: vertical; }
+.ans .saved { font: 500 12px var(--mono); color: var(--muted); }
+.ansnote { color: var(--muted); font-size: 15px; margin-top: 10px; }
 </style>
 
 <div class="wrap">
@@ -103,7 +113,7 @@ th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercas
 
   <div class="col">
     <h2>What I found</h2>
-    <p>The six sets you saw and approved (Wildhide to Sovereign Weave) had rounds of tuning. The other 23 were built in a single day at that bar's shapes, and the time went into helms and silhouettes. That was the right place for it. It also means the same few things were left the same way on nearly every set.</p>
+    <p>All 29 sets were built on one day, 29 October. The six Hunter sets came first and had your eye on them. The other 23 followed straight after, and the time went into helms and silhouettes. That was the right place for it. It also means the same few things were left the same way on nearly every set.</p>
   </div>
 
   <div class="finding">
@@ -146,6 +156,7 @@ th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercas
         <li><b>Sound.</b> Putting on any of the 29 sets plays one of five vanilla clinks. A and S share one. Nothing sounds when you move. The ability and forge sounds that do exist were built on 29 October from impact samples and synth rings, the way you called "super synthetic" on 9 November when you heard the pick. Your ding checker flags 34 of the 57 files. Nobody has listened to them.</li>
         <li><b>Getting it.</b> When the last piece goes on and the set becomes whole, the game knows, and does nothing. The ability switches on without a light, a sound or a word.</li>
         <li><b>Making it.</b> A Flawless piece and a Plain one look the same on your body. Weapons show how they were forged. Armour carries the same facts and draws none of them.</li>
+        <li><b>Small things.</b> A helm in your hand, on the ground or in a frame is a flat picture, where a weapon is the real thing. The icons for greaves and boots read as blocks. Riftwalker shows your shirt through a gap at each shoulder, and five lighter sets show your skin's own colours on the arms.</li>
         <li><b>Motion.</b> Capes and leg cloth move. Nothing else does. The halo, the marker, the lantern cages, the plumes and the wings are rigid. The October plan promised Galewing's wings would open when you fly and Dreamsteel's shards would drift. Neither was built.</li>
       </ul>
     </div>
@@ -169,7 +180,7 @@ th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercas
     <div class="change"><div class="n">4</div><div><h3>A plate language for each set</h3><p>On the sixteen later sets the rimmed panel becomes the set's own: riveted vault plate, cut ice, shell segments, feather lames, scales, fluted porcelain, cut mirror. They get elbow and knee pieces where Lordscale has them. The plain backs get one feature each. The blue-grey crowd gets pulled apart. Helms untouched. <span class="tag draft">a first version is in the draft</span> The hand-finishing, set by set, is the real work here and is not.</p></div></div>
     <div class="change"><div class="n">5</div><div><h3>Living parts</h3><p>One or two per set, never more. The halo tilts and breathes. The marker turns. Lantern cages and plumes sway with your step. Wings open when you fall or glide. Shards drift. The rift flickers. Mastery's new parts grow in over half a second. <span class="tag">not in the pictures</span></p></div></div>
     <div class="change"><div class="n">6</div><div><h3>Sound</h3><p>From Minecraft's own recordings, named, never copied: an equip sound for each material (hide, cloth, mail, plate, heavy plate, crystal, bone, feather), three notes when a set becomes whole (the notes of the Forge Song you made it with), and a soft movement sound by weight that goes quiet when you sneak. The 25 old sounds get remade the same way. I can't hear, so you would get a listening page first, with a best guess and two alternatives per sound. <span class="tag">not in the pictures</span></p></div></div>
-    <div class="change"><div class="n">7</div><div><h3>Moments and marks</h3><p>When the last piece goes on, the seams light from feet to crown and the set's three notes play. The first time, the System says one line. A flaw shows on the plate, a fold shows as a weld pattern, a Flawless piece carries its maker's mark, the same way weapons do. <span class="tag">not in the pictures</span></p></div></div>
+    <div class="change"><div class="n">7</div><div><h3>Moments and marks</h3><p>When the last piece goes on, the seams light from feet to crown and the set's three notes play. The first time, the System says one line. A flaw shows on the plate, a fold shows as a weld pattern, a Flawless piece carries its maker's mark, the same way weapons do. A piece in your hand becomes the real piece, and greaves and boots get icons that read as legs and boots. <span class="tag">not in the pictures</span></p></div></div>
 
     <h2>Every set, today and after</h2>
     <p>Pick a rank and a set. Left half of each picture is the game today. Right half is the draft. The draft holds changes 1 to 3 and a first version of 4. It doesn't hold the hand-finishing, the motion or the sound, so each set also lists what would come later.</p>
@@ -237,13 +248,21 @@ th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercas
     </ul>
 
     <h2>Your decisions</h2>
-    <div class="dec"><h3>1. Build the pass, stages 0 to 6?</h3><p><span class="rec">Recommended: yes.</span> If you only want the faults fixed, say "stage 0 only".</p></div>
-    <div class="dec"><h3>2. The hands</h3><p>Every set gets a cuff, a slimmer glove and a hand plate, Lordscale and Sovereign Weave included (they keep their molten line). Look at the "your own eyes" picture on a few sets. <span class="rec">Recommended: yes.</span></p></div>
-    <div class="dec"><h3>3. The night rule</h3><p>From C-rank up the named feature stays lit. E and D stay dark. Halos, sun discs, crowns and wing edges glow by day too. <span class="rec">Recommended: yes.</span></p></div>
-    <div class="dec"><h3>4. Movement sound</h3><p>A soft sound of your armour as you move, quiet when you sneak, with its own volume slider. <span class="rec">Recommended: on by default, low.</span> The other choice is off until you turn it on.</p></div>
-    <div class="dec"><h3>5. Stage 3 changes plates on sixteen sets</h3><p>Limbs, belts and backs only. No helm changes. You see C-rank before the rest. <span class="rec">Recommended: yes.</span></p></div>
-    <div class="dec"><h3>6. Any bigger options?</h3><p><span class="rec">Recommended: Admire, and Abilities that use the suit after the pass.</span> The rest can wait.</p></div>
-    <div class="dec"><h3>7. A measuring run on your Mac at the end?</h3><p>It launches the game client there for a few minutes, with 20 armoured figures. <span class="rec">Recommended: yes, when the shaders session isn't measuring.</span></p></div>
+    <div class="dec"><h3>1. Build the pass, stages 0 to 6?</h3><p><span class="rec">Recommended: yes.</span> If you only want the faults fixed, choose stage 0 only.</p>
+      <div class="ans" data-key="d1" hidden><button type="button" data-v="yes" aria-pressed="false">Yes, all of it</button><button type="button" data-v="stage0" aria-pressed="false">Stage 0 only</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d1" aria-label="A note on decision 1" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>2. The hands</h3><p>Every set gets a cuff, a slimmer glove and a hand plate, Lordscale and Sovereign Weave included (they keep their molten line). Look at the &ldquo;your own eyes&rdquo; picture on a few sets first. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d2" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No, keep the hands as they are</button><textarea id="note-d2" aria-label="A note on decision 2" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>3. The night rule</h3><p>From C-rank up the named feature stays lit. E and D stay dark. Halos, sun discs, crowns and wing edges glow by day too. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d3" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d3" aria-label="A note on decision 3" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>4. Movement sound</h3><p>A soft sound of your armour as you move, quiet when you sneak, with its own volume slider. <span class="rec">Recommended: on by default, low.</span></p>
+      <div class="ans" data-key="d4" hidden><button type="button" data-v="on" aria-pressed="false">On, low</button><button type="button" data-v="off" aria-pressed="false">Off until I turn it on</button><button type="button" data-v="none" aria-pressed="false">Don&rsquo;t build it</button><textarea id="note-d4" aria-label="A note on decision 4" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>5. Stage 3 changes plates on sixteen sets</h3><p>Limbs, belts and backs only. No helm changes. You see C-rank before the rest. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d5" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d5" aria-label="A note on decision 5" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>6. Any bigger options?</h3><p><span class="rec">Recommended: Admire, and Abilities that use the suit, after the pass.</span> Pick any.</p>
+      <div class="ans" data-key="d6" data-multi hidden><button type="button" data-v="admire" aria-pressed="false">Admire</button><button type="button" data-v="abilities" aria-pressed="false">Abilities that use the suit</button><button type="button" data-v="face" aria-pressed="false">Show your face</button><button type="button" data-v="trails" aria-pressed="false">Footprints and trails</button><button type="button" data-v="many" aria-pressed="false">Many players</button><textarea id="note-d6" aria-label="A note on decision 6" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>7. A measuring run on your Mac at the end?</h3><p>It launches the game client there for a few minutes, with 20 armoured figures. <span class="rec">Recommended: yes, when the shaders session isn&rsquo;t measuring.</span></p>
+      <div class="ans" data-key="d7" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d7" aria-label="A note on decision 7" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <p class="ansnote" id="ansnote">You can also just answer in chat.</p>
 
     <p class="muted" style="margin-top:28px">How this was checked: the armour code, shader and art kit read end to end. Every set rendered with the kit. 191 shots of the game today and 191 of the draft, same script, on GitHub's macOS runners with Lens on Cinematic. Draft branch <code>claude/armour-polish-plan-5e3628</code>, marked not for merge. Full record in <code>docs/armour/polish/PLAN.md</code>. The draft's light was only shot on Cinematic. Swift and the VFX look are unchecked.</p>
   </div>
@@ -298,4 +317,56 @@ function draw() {
   try { history.replaceState(null, "", "#" + set); } catch (e) {}
 }
 draw();
+
+// Answers: saved to this page's own store when it is there (you can still answer in chat when it is not).
+(async () => {
+  let db = null;
+  try { db = await window.claude?.use?.("db"); } catch (e) {}
+  const note = $("ansnote");
+  if (!db) return;
+  const boxes = [...document.querySelectorAll(".ans")];
+  const state = {};
+  const show = (box) => {
+    const key = box.dataset.key, st = state[key] || {};
+    const picks = st.picks && st.picks.length ? st.picks : (st.choice ? [st.choice] : []);
+    box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", picks.includes(b.dataset.v) ? "true" : "false"));
+    const ta = box.querySelector("textarea");
+    if (document.activeElement !== ta && typeof st.note === "string") ta.value = st.note;
+  };
+  const save = async (box, next) => {
+    const key = box.dataset.key, said = box.querySelector(".saved");
+    box.querySelectorAll("button").forEach(b => b.disabled = true);
+    said.textContent = "Saving";
+    try {
+      await db.doc("answers/" + key).set({ ...next, at: new Date().toISOString() });
+      state[key] = next; said.textContent = "Saved";
+    } catch (e) {
+      said.textContent = e && e.code === "invalid_argument" ? "This view can't save answers. Answer in chat." : "Couldn't save. Try again, or answer in chat.";
+    }
+    box.querySelectorAll("button").forEach(b => b.disabled = false);
+    show(box);
+  };
+  boxes.forEach(box => {
+    box.hidden = false;
+    const key = box.dataset.key, multi = "multi" in box.dataset, ta = box.querySelector("textarea");
+    box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      const st = state[key] || {};
+      if (multi) {
+        const picks = new Set(st.picks || []);
+        picks.has(b.dataset.v) ? picks.delete(b.dataset.v) : picks.add(b.dataset.v);
+        save(box, { picks: [...picks], note: ta.value });
+      } else {
+        save(box, { choice: st.choice === b.dataset.v ? "" : b.dataset.v, note: ta.value });
+      }
+    }));
+    ta.addEventListener("change", () => { const st = state[key] || {}; if ((st.note || "") !== ta.value) save(box, { choice: st.choice || "", picks: st.picks || [], note: ta.value }); });
+  });
+  note.textContent = "Your answers save here as you click. You can also just answer in chat.";
+  const late = setTimeout(() => { note.textContent = "Saved answers can't be reached yet. You can still click, or answer in chat."; }, 10000);
+  db.collection("answers").onSnapshot(snap => {
+    clearTimeout(late);
+    snap.docs.forEach(d => { const v = d.data() || {}; state[d.id] = { choice: v.choice || "", picks: v.picks || [], note: v.note || "" }; });
+    boxes.forEach(show);
+  }, () => { clearTimeout(late); note.textContent = "Saved answers can't be reached. Answer in chat."; });
+})();
 </script>

@@ -52,7 +52,7 @@ SETS = {
     "dreamsteel": ("Dreamsteel", "Duelist", "The thinnest A set. The helm is a plain pale box, and its drifting shards don't drift.", "Shards that catch light, plates cut like mirror. Later: shards that really drift."),
     "sovereign": ("Sovereign Weave", "Lord-forged", "The dark faceplate and lilac crown you chose.", "The crown lit at night, and its line run on down the hand."),
     "starfall": ("Starfall", "Bulwark", "The star in the breast reads. The limbs are frames.", "Cut faces on the plates and a silver cuff. Later: seams that blaze on a hard landing."),
-    "riftwalker": ("Riftwalker", "Strider", "The rift standing behind you is the idea, and it works.", "A cuff at the wrist. Later: a rift that flickers and tears wider when you dodge."),
+    "riftwalker": ("Riftwalker", "Strider", "The rift standing behind you is the idea, and it works. Your own shirt shows through a gap at each shoulder.", "A cuff at the wrist. Later: the shoulder gap closed, and a rift that flickers and tears wider when you dodge."),
     "nightcourt": ("Nightcourt", "Duelist", "Hat, mask and coat: nobody else looks like this. A thin build.", "A leather glove under its silver cuff. Later: tails and a plume that move."),
     "signals_echo": ("Signal's Echo", "Channeler", "White robes and the System's marker. The thinnest S set, and its glitch is still.", "The marker lit at night. Later: a marker that turns and robes that really glitch."),
 }
@@ -63,7 +63,8 @@ W, H = 3416, 1858
 def newest(prefix, tour):
     dirs = sorted(d for d in glob.glob(os.path.join(CI, f"{prefix}-{tour}-*")) if glob.glob(os.path.join(d, "*.png")))
     if not dirs:
-        raise SystemExit(f"no shots for {prefix}-{tour}")
+        print(f"no shots yet for {prefix}-{tour}: that half stays empty")
+        return "/nonexistent"
     return dirs[-1]
 
 
@@ -101,10 +102,10 @@ BOX = {
     "front": (1148, 400, 2268, 1800),      # third person from the front, fov 50: the whole figure and its tallest crest
     "back": (1148, 400, 2268, 1800),
     "fp": (1780, 880, 3416, 1858),         # the arm, lower right
-    "status": (340, 230, 1300, 1660),      # the K menu's figure
+    "status": (340, 150, 1300, 1660),      # the K menu's figure, with room for the tallest crest
     "stand": (540, 290, 3060, 1858),       # an armour stand and a Fitting Stand
 }
-SIZE = {"front": (400, 500), "back": (400, 500), "fp": (560, 335), "status": (360, 536), "stand": (700, 436)}
+SIZE = {"front": (400, 500), "back": (400, 500), "fp": (560, 335), "status": (360, 566), "stand": (700, 436)}
 
 
 def main(argv):
@@ -123,9 +124,9 @@ def main(argv):
         pair(os.path.join(b, f"s_{s}.png"), os.path.join(a, f"s_{s}.png"), BOX["stand"], SIZE["stand"], os.path.join(IMG, f"{s}_stand.jpg"))
         made += 1
     b, a = newest(bp, "far"), newest(ap, "far")
-    far = {"12": ((908, 520, 2508, 1200), (640, 272)), "24": ((1208, 700, 2208, 1125), (640, 272)), "48": ((1388, 800, 2028, 1072), (640, 272)),
-           "12_night": ((908, 520, 2508, 1200), (640, 272)), "24_night": ((1208, 700, 2208, 1125), (640, 272)),
-           "back_night": ((708, 300, 2708, 1150), (640, 272))}
+    far = {"12": ((958, 672, 2458, 1309), (640, 272)), "24": ((1258, 690, 2158, 1072), (640, 272)), "48": ((1448, 830, 1968, 1051), (640, 272)),
+           "12_night": ((958, 672, 2458, 1309), (640, 272)), "24_night": ((1258, 690, 2158, 1072), (640, 272)),
+           "back_night": ((208, 583, 3208, 1858), (640, 272))}
     for r in RANKS:
         for name, (box, size) in far.items():
             pair(os.path.join(b, f"f_{r}_{name}.png"), os.path.join(a, f"f_{r}_{name}.png"), box, size, os.path.join(IMG, f"far_{r}_{name}.jpg"))

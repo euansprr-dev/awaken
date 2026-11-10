@@ -73,8 +73,9 @@ Numbers come from `armour_sets.py check` and from scripts over the built texture
 | F9 | **A set becoming whole on you is silent.** | `ArmourAbilities.count` knows the moment (`was` against `s.full`) and does nothing with it. | The ability switches on with no light, sound or word. |
 | F10 | **What the forge did does not show.** | `Forged` carries quality, flaw, twin-struck, fold and true ring. The armour shader draws none (the weapons' shader draws flaws, a pattern weld and temper colours). | A Flawless piece and a Plain one look the same on the body. |
 | F11 | **Promised motion never built.** | Plan §4.2: Galewing's cape "opens like wings when you fly", Dreamsteel's "fragments drifting". Both are rigid. Halos, markers, lantern cages, plumes and wings are rigid on every set. | Suits read as statues that walk. |
-| F12 | **Skin shows on five sets.** | Share of the front that is the wearer's own skin: Wildhide 9%, Sunward 6%, Cleftrunner 4%, Veilwoven 3%, Amberwing 2%. | With a bright skin the set's palette breaks. |
+| F12 | **Skin shows on six sets.** | Share of the front that is the wearer's own skin: Wildhide 9%, Sunward 6%, Cleftrunner 4%, Veilwoven 3%, Amberwing 2%. Riftwalker shows the wearer's shirt through a gap at each shoulder (CI shots `w_riftwalker_front`, `_back`). | With a bright skin the set's palette breaks; on black Riftwalker the gap is the brightest thing on the figure. |
 | F13 | **A smear in two old night shots.** | Two of the building session's five night row shots (runs 40886121168, 40896380184) show screen-wide coloured sheets. Six new night rows with the same sets at mastery V are clean. | Not reproduced. The runner's GPU is known to scramble some draws (SPEC §13). Watch item, no fix planned. |
+| F15 | **Greaves and boots icons read as blocks; a piece in the hand is a flat picture.** | The 32-pixel icons are drawn from the meshes: helms read (bell, horns, halo), greaves and boots are box shapes. Held, dropped or framed, a piece is that flat icon, while a weapon is its real mesh. | The bag and the forge's lists are harder to scan than they should be; a helm you just forged is a cut-out in your hand. |
 | F14 | **Never measured.** | The original plan's perf pass (P5) did not run. A figure is about 17 draws and 2,000 to 4,000 corners written each frame. | Unknown cost with many armoured players in view. |
 
 ### 2.3 Set by set
@@ -108,7 +109,7 @@ Rank, archetype, triangles today, surface treatments, then what the eye says.
 | Dreamsteel | A Duelist | 558 | 3 | Thinnest A set. The helm is a plain pale box. Its drifting shards do not drift. | Shards that drift and catch light. Cut-mirror plates. |
 | Sovereign Weave | S Lord | 1070 | 12 | The dark faceplate and lilac crown he chose. | The crown lit at night, its line run onto the hand. |
 | Starfall | S Bulwark | 838 | 3 | The star in the breast reads. Limbs are frames. | Cut faces, a silver cuff. Seams that flare on a hard landing. |
-| Riftwalker | S Strider | 810 | 3 | The rift behind you is the idea. The hood is 7 boxes. | The rift flickers and tears wider when you dodge. |
+| Riftwalker | S Strider | 810 | 3 | The rift behind you is the idea. The hood is 7 boxes. Your shirt shows at each shoulder. | The gap closed. The rift flickers and tears wider when you dodge. |
 | Nightcourt | S Duelist | 692 | 4 | Hat, mask and coat: its own. Thin build. | A leather glove under its silver cuff. Tails and plume that move. |
 | Signal's Echo | S Channeler | 634 | 3 | White robes and the System's marker. Thinnest S set. Its "glitch" is still. | The marker lit, turning and bobbing. Robes that really glitch. |
 
@@ -190,7 +191,8 @@ I cannot hear: a local listening page (best guess and two alternatives per row),
 **5.7 Moments and marks.** F9, F10 → when the last piece goes on: the seams light feet to crown, the set's three notes,
 one line from the System the first time; the weapons' forge marks on armour (a flaw shows, a fold shows as a weld
 pattern, a Flawless piece carries its maker's mark); the Status figure gets one quiet line under your name: the set,
-pieces worn, mastery → getting and making a set show on your body → no new screen, no toast → the K menu is another
+pieces worn, mastery; greaves and boots icons redrawn to read as legs and boots, and a piece held, dropped or framed
+drawn as the real piece, as weapons are → getting and making a set show on your body → no new screen, no toast → the K menu is another
 session's: the line is offered to them, not built over them → a tour of the wake; GameTests for the marks' data.
 
 ### 5.8 Contracts
