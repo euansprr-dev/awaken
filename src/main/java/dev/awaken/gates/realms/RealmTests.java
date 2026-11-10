@@ -371,14 +371,21 @@ public final class RealmTests {
             h.succeed();
         });
         // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does.
-        // A layout comes from the seed alone, whatever the kind, so every kind is tried on seeds 1 and 2 (a great run with a chasm and a
-        // short plunge, the two the play notes name) and on six seeds no other kind is tried on: seventeen kinds are 104 layouts, not 8.
+        // A layout comes from the seed alone, whatever the kind. In the suite every kind is tried on seed 1 (a great run: a shaft, a chasm,
+        // both traps, two Wardens) and on one seed no other kind is tried on: 34 checks, about four seconds each on the Mac and far more on
+        // GitHub's runners, where the whole suite has 45 minutes. The wide sweep (eight seeds a kind, 104 layouts) is run by hand whenever
+        // the generator or a skin changes: AWAKEN_CRAWL_SEEDS=8 tools/gradle.sh 1700 runGameTestServer -Ptests=realm_generated
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
+            int perKind = 2;
+            String wide = System.getenv("AWAKEN_CRAWL_SEEDS");
+            if (wide != null) try {
+                perKind = Math.max(2, Math.min(40, Integer.parseInt(wide.trim())));
+            } catch (NumberFormatException ignored) {}
             Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
             List<String> bad = new java.util.ArrayList<>();
-            for (int k = 0; k < CRAWLS.length; k++) for (int i = 0; i < 8; i++) {
+            for (int k = 0; k < CRAWLS.length; k++) for (int i = 0; i < perKind; i++) {
                 String program = CRAWLS[k];
-                long seed = i < 2 ? i + 1 : 100 + k * 6L + i;
+                long seed = i == 0 ? 1 : i == 2 ? 2 : 100 + k * 40L + i; // the wide sweep holds every seed the suite tries
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
@@ -398,8 +405,9 @@ public final class RealmTests {
             // every fault is listed in the log, so one run says everything that is wrong
             for (String line : bad) dev.awaken.Awaken.LOG.error("[realms] rolled crawl: {}", line);
             if (!bad.isEmpty()) h.fail(bad.size() + " rolled crawls are wrong, the first: " + bad.get(0));
-            // so many seeds must not all be the same run: every size and every shape turns up
-            if (sizes.size() < 3 || shapes.size() < 4) h.fail("the seeds rolled only " + sizes + " and " + shapes);
+            // so many seeds must not all be the same run: on the wide sweep every size and every shape turns up
+            if (sizes.size() < (perKind >= 8 ? 3 : 2) || shapes.size() < (perKind >= 8 ? 4 : 2)) h.fail("the seeds rolled only " + sizes + " and " + shapes);
+            dev.awaken.Awaken.LOG.info("[realms] rolled crawls: {} kinds on {} seeds each, sizes {}, shapes {}", CRAWLS.length, perKind, sizes, shapes);
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)
