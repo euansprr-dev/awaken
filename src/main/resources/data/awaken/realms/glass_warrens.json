@@ -21,7 +21,8 @@
       "sand",
       "dust",
       "shaft_dust",
-      "wind"
+      "wind",
+      "beams"
     ]
   },
   "life": {

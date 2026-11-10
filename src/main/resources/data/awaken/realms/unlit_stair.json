@@ -20,7 +20,10 @@
     "air": [
       "mist",
       "stars",
-      "dust"
+      "dust",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

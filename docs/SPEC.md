@@ -12422,7 +12422,11 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   `life` added (a mood's optional list; at most 16 on the arrival) also names the air, from five shared sprites tinted per
   kind (`gate_air_wisp`, `_streak`, `_flake`, `_orb`, `_flash`; `tools/art/specs/gate_worlds_air.py`); at most 260 near
   you, made only in open air. `shaft_dust`: pale motes turning slowly along Gate Air's light shafts within 40, lit by the
-  shaft. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  shaft (as many tries a tick as a third of the shafts, from 2 to 8, so one shaft among twenty is as full as one among
+  five). `beams` (11 Nov, for the rolled dungeons, §50.9): soft glowing wisps hanging down every shaft within 36 and
+  sinking slowly, in the shaft's colour made pale, so a shaft reads as light in the air from the side. `floor_mist` (the
+  same day): low wisps on whatever dry floor lies inside one of Gate Air's mist layers near you, in the layer's colour made
+  pale, thicker for a denser layer. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
   within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
   open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
   three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
@@ -21680,12 +21684,20 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
   mist in every gulf and at the foot of every shaft; a shaft of light down every shaft.
 - **Light comes down** (`GeneratedCrawl.wells`). Every room with the roof for it has a well of light, the Lord's hall two:
   a slot in the roof three cells by one, off the middle, over open floor, going six cells up into the rock to a light
-  nobody sees the source of. It is real light (a pool on the floor under it, so what grows and lies there can be seen) and
-  Gate Air draws a beam down it that leans a little, in the colour of the day at the way in. A well is only cut where
+  nobody sees the source of. It is real light: unseen lights down the middle of it every three cells, so the pool reaches
+  the floor however high the roof is and what grows and lies there can be seen. Gate Air has a shaft down it that leans a
+  little, in the colour of the day at the way in, and every kind asks for `beams` and `shaft_dust` (§38.9), so glowing
+  wisps and motes hang in it. A well is only cut where
   nothing else of the run comes within three cells of it. The side cell and the way in have none (the way in has its own
   crack to the sky).
 - **Mist on the floor** of the biggest rooms: the Lord's (a skin lays its own), then the Wardens', then the dens, widest
   first, three blocks deep, until the six layers §38.9 allows are used. Gulfs and shafts take three of the six at most.
+  Every kind but the three dry ones (The Glass Warrens, The Silvered Halls, The Sealed Wing) asks for `floor_mist`, which
+  is what draws it.
+- **What reads Gate Air here.** In this build only the client's small life does (§38.9's sprites): nothing in Lens reads a
+  land's shafts, mist layers or lights, whatever §38.3 says of marching them. The first walk with wells in it showed a
+  lit slot in each roof and nothing under it. That is why the pool is real block light and the beam and the mist are
+  sprites. If Lens comes to march Gate Air, the same data is already there for it.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

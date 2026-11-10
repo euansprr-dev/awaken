@@ -21,7 +21,10 @@
       "mist",
       "snow",
       "wind",
-      "drips"
+      "drips",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

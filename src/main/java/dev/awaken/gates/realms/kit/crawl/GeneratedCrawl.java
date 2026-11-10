@@ -846,7 +846,12 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             if (!v.in(x, 1, z)) continue;
             v.set(x, w.top, z, WELL_LIGHT);
             v.set(x, w.top - 2, z, WELL_LIGHT);
-            if (i == 0) v.set(x, w.room.roof(x, z), z, WELL_LIGHT);
+            if (i == 0) {
+                // and down the middle of it, so the pool reaches the floor however high the roof is
+                int roof = w.room.roof(x, z);
+                v.set(x, roof, z, WELL_LIGHT);
+                for (int y = roof - 3; y >= w.floor + 3; y -= 3) v.add(x, y, z, WELL_LIGHT);
+            }
         }
         Trim trim = trim(m);
         if (trim != null) for (Part p : parts) if (p.near(v) && (p instanceof Cave || p instanceof Tunnel)) detail(v, trim, p);

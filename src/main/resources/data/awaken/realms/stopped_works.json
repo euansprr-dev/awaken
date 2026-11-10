@@ -22,7 +22,9 @@
       "steam",
       "embers",
       "dust",
-      "shaft_dust"
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

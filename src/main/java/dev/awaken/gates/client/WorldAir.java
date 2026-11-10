@@ -91,6 +91,8 @@ final class WorldAir {
             switch (k) {
                 case "shaft_dust" -> shaftDust(level, pl, air, o, r);
                 case "mist" -> mist(level, pl, air, o, r);
+                case "beams" -> beams(level, pl, air, o, r);
+                case "floor_mist" -> floorMist(level, pl, air, o, r);
                 case "smoke" -> smoke(level, pl, air, o, r);
                 case "rain" -> rain(level, pl, air, o, r);
                 case "lightning" -> lightning(mc, pl, air, o, r);
@@ -136,7 +138,7 @@ final class WorldAir {
     /** Motes turning slowly in the light shafts near you. */
     private static void shaftDust(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
         if (air.shafts().isEmpty()) return;
-        for (int t = 0; t < 2; t++) {
+        for (int t = 0, n = Math.max(2, Math.min(8, air.shafts().size() / 3)); t < n; t++) {
             FloorAir.Shaft s = air.shafts().get(r.nextInt(air.shafts().size()));
             double f = r.nextDouble();
             Vec3 p = at(o, s.x0() + (s.x1() - s.x0()) * f + 0.5, s.y0() + (s.y1() - s.y0()) * f + 0.5, s.z0() + (s.z1() - s.z0()) * f + 0.5)
@@ -149,6 +151,50 @@ final class WorldAir {
                 a.peak = 0.55F;
                 a.setLifetime(160 + r.nextInt(160));
             }
+        }
+    }
+
+    /**
+     * Light you can see in the air (SPEC §38.9): soft glowing wisps hanging down each shaft near you and sinking slowly, so
+     * a shaft of light reads as one from the side and not only by what it lights. More shafts, more tries, so one shaft
+     * among twenty is as full as one among five.
+     */
+    private static void beams(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
+        if ((ticks & 1) != 0 || air.shafts().isEmpty()) return;
+        for (int t = 0, n = Math.min(5, 1 + air.shafts().size() / 5); t < n; t++) {
+            FloorAir.Shaft s = air.shafts().get(r.nextInt(air.shafts().size()));
+            double f = 0.06 + r.nextDouble() * 0.9;
+            Vec3 p = at(o, s.x0() + (s.x1() - s.x0()) * f + 0.5, s.y0() + (s.y1() - s.y0()) * f + 0.5, s.z0() + (s.z1() - s.z0()) * f + 0.5)
+                    .add(r.nextGaussian() * s.radius() * 0.25, 0, r.nextGaussian() * s.radius() * 0.25);
+            if (pl.distanceToSqr(p) > 36 * 36 || !WorldLife.open(level, p)) continue;
+            Air a = make(level, GatesRegistry.P_WISP.get(), p.x, p.y, p.z, 0, -0.003, 0, pale(s.rgb()), s.radius() * (5F + r.nextFloat() * 3F));
+            if (a != null) {
+                a.glow = true;
+                a.peak = 0.05F + 0.06F * Math.min(1F, s.strength());
+                a.setLifetime(160 + r.nextInt(100));
+            }
+        }
+    }
+
+    /**
+     * Mist lying on a dry floor (SPEC §38.9): low wisps on whatever floor there is inside one of Gate Air's mist layers
+     * near you, in the layer's colour made pale, thicker for a denser layer.
+     */
+    private static void floorMist(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
+        if ((ticks & 1) != 0 || air.mists().isEmpty()) return;
+        FloorAir.Mist m = air.mists().get(r.nextInt(air.mists().size()));
+        double mid = o.getY() + m.y(), half = m.thickness() / 2.0;
+        if (Math.abs(pl.getY() - mid) > half + 8) return;
+        double x = pl.getX() + (r.nextFloat() - 0.5) * 36, z = pl.getZ() + (r.nextFloat() - 0.5) * 36;
+        for (int y = Mth.floor(mid - half - 1); y <= Mth.ceil(mid + half); y++) {
+            if (!WorldLife.open(level, new Vec3(x, y + 0.5, z)) || WorldLife.open(level, new Vec3(x, y - 0.5, z))) continue;
+            Air a = make(level, GatesRegistry.P_WISP.get(), x, y + 0.2 + r.nextFloat() * 0.9, z, (r.nextFloat() - 0.5) * 0.012, 0, (r.nextFloat() - 0.5) * 0.012,
+                    pale(m.rgb()), 7F + r.nextFloat() * 6F);
+            if (a != null) {
+                a.peak = 0.1F + 0.12F * Math.min(1F, m.density());
+                a.setLifetime(200 + r.nextInt(120));
+            }
+            return;
         }
     }
 

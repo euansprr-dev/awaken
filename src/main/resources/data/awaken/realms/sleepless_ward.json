@@ -21,7 +21,10 @@
       "mist",
       "dust",
       "moths",
-      "procession"
+      "procession",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

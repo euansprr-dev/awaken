@@ -20,7 +20,8 @@
     "air": [
       "dust",
       "shaft_dust",
-      "stars"
+      "stars",
+      "beams"
     ]
   },
   "life": {

@@ -22,7 +22,9 @@
       "snow",
       "wind",
       "shaft_dust",
-      "dust"
+      "dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

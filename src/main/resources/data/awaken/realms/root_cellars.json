@@ -24,7 +24,9 @@
       "drips",
       "moths",
       "fireflies",
-      "petals"
+      "petals",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

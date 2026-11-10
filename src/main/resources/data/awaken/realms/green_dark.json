@@ -23,7 +23,10 @@
       "fireflies",
       "drips",
       "moths",
-      "petals"
+      "petals",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

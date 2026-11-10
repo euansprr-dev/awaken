@@ -22,7 +22,10 @@
       "paper",
       "drips",
       "dust",
-      "pale_fish"
+      "pale_fish",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

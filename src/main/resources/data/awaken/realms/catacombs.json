@@ -24,7 +24,9 @@
       "drips",
       "bats",
       "rats",
-      "far_toll"
+      "far_toll",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

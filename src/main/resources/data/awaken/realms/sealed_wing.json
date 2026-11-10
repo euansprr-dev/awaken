@@ -20,7 +20,8 @@
     "air": [
       "steam",
       "dust",
-      "shaft_dust"
+      "shaft_dust",
+      "beams"
     ]
   },
   "life": {

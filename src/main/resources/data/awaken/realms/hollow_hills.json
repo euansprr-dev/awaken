@@ -22,7 +22,10 @@
       "dust",
       "drips",
       "bats",
-      "wind"
+      "wind",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {

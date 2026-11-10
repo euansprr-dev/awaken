@@ -23,7 +23,10 @@
       "embers",
       "dust",
       "drips",
-      "moths"
+      "moths",
+      "shaft_dust",
+      "beams",
+      "floor_mist"
     ]
   },
   "life": {
