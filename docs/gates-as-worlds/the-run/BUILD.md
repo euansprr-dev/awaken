@@ -118,6 +118,20 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   Counted: 95 of the 100 gate monsters wear a re-tinted vanilla body. My answer: the gates need their own bodies, built as a
   few animated families with per-theme bodies, proved on one theme with clips first; a card proposes a session to plan it
   by his process (not started by me).
+- **10 Nov, about 20:20 local: fourteen kinds, three more with the builders.** Round 2 (Frozen Cells, Glass Warrens, Stopped
+  Works) and round 3 (Silvered Halls, Sealed Wing, Sleepless Ward) are merged; round 4 is briefed (The Unlit Stair for the
+  Abyssal Shrine on `claude/skin-abyss`, The Rime Hollows as a second Frost kind on `claude/skin-rime`, The Green Dark as a
+  second Overgrown kind on `claude/skin-green`). After those every theme that suits a crawl has a kind; Sky Archipelago
+  (fliers, open sky) and the Night Market (neutral monsters, a Lord who trades) do not suit one as the generator stands.
+  What the real-game walks of rounds 1 and 2 showed, and what changed:
+  - The Sunken Stacks, The Cinder Workings and The Stopped Works read well. The Glass Warrens glowed over half its walls (less
+    now). The Sporewells was a chequer of five blocks; rewritten to the rule now in SPEC 50.9 ("a wall is one thing with
+    things in it"), and briefs carry that rule.
+  - A great run's chasm was near black, and two skins lit no shaft at all. The generator now lights every climb itself.
+  - A layout comes from the seed alone, whatever the kind, so the test had only ever tried eight layouts. It tries 86 now
+    (seeds 1 and 2 for every kind, six more that no other kind uses), and all pass. Seed 1 is a great delve with a shaft at
+    about -33 181 78 and a chasm at -184 124 189 in every kind; seed 2 is a short plunge.
+  - The Lord's camera in a rolled kind's tour stands eight blocks from the middle (inside the pillar ring).
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 
