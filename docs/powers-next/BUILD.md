@@ -10,7 +10,7 @@ This file is the plan I build from and the ledger of what is done. Order is by w
 
 | # | Piece | State |
 |---|---|---|
-| M1 | The arm: schema 2 (elbow, wrist), upper arm, arm layers, the light, left-hand casts, eased put-away, grip follow | Built (7237af2a9). Unseen in game. |
+| M1 | The arm: schema 2 (elbow, wrist), upper arm, arm layers, the light, left-hand casts, eased put-away, grip follow | Built (7237af2a9). The first film's elbow and upper-arm piece read as a broken arm (Euan, 10 Nov): the arm is one straight vanilla box again, turned at most 38 degrees by a clip and drawn longer for a high fist. Light, left-hand casts and poses kept. |
 | M2 | Voice: scores, the VOICE event, Classic/New setting, generator, a score for every power | Built: 64 powers, 157 beats, 386 recordings named. Unheard in game. No subtitles for the beats yet. |
 | M3 | Takes and ways: payload bits, `Cast.way`, event bits, clip pick, the press buffer | Built. The server changes the shape of Shockwave, Haymaker, Spirit Palm, Nova and Frost Nova by way; Updraft reads it too. |
 | M4 | Every cast re-authored: `fp_casts2.py` (elbow, light, left hand), takes, ways, third person in step | 77 authored, 207 clips with takes. Only Shockwave's standing stamp is its earlier clip. Third person has no takes or ways yet. |

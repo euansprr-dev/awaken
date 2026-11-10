@@ -11552,9 +11552,13 @@ straight box, wind-ups happened off screen, a weapon popped out of the hand and 
 What follows replaces that. Nothing here changes what a power does to a number unless it says so.
 
 **The arm** (module `anims`; clip schema 2, `FpClipSet.SCHEMA`; schema 1 files still load).
-- A fists clip may say `"arm": true`: each fist key's three spare values are then the forearm's pitch and yaw (degrees, view space, 0 0
-  straight ahead) and the wrist's roll. The elbow is the fist minus 0.6 along that direction, and an upper arm (a shade darker) is drawn
-  from under the frame (`side * 0.52, -1.30, -0.30`) to the elbow while the elbow is above `y = -0.95`. Without `arm` the old arm draws.
+- A fists clip may say `"arm": true`: each fist key's three spare values are then how the arm would lie (pitch and yaw, degrees, view
+  space, 0 0 straight ahead) and the wrist's roll. **The arm drawn is still vanilla's: one straight box, its sleeve end out of sight**
+  (Euan, 10 Nov 2026, on the first film, where an elbow and a separate upper arm read as a broken arm: "keep the arms closer to vanilla
+  style and not break them"). It comes to the fist from under the frame's corner on its own side (`side * 0.48, -0.84, -0.53`), as it
+  always did; the keyed lie turns it toward itself by at most 38 degrees and never so far that the far end of the box would show; a fist
+  held too high for that is reached by drawing the same arm longer, at most 1.6 times, about its shoulder (`WorldBody.drawFist`). There
+  is no elbow joint and never a second piece. The roll turns the arm's front. Without `arm` the arm is exactly as before.
 - `"mainMoves"` / `"offMoves"`: that hand's track is offsets (it moves what the hand holds) while the other hand is fists. This is the
   left-hand cast: the off hand acts, the main hand keeps the weapon and lowers it into a guard. A weapon's grip follows the move.
 - `"ease": true` with `"stow"`: a two-handed cast puts the weapon away over 2.5 ticks and brings it back over 3, never a pop. The weapon

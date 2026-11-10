@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """First-person casts, the next level (SPEC §32 "The arm"; docs/powers-next/BUILD.md M4). Every power's cast re-authored for
-the arm that can act: a forearm keyed by its elbow, a wrist that turns, light that runs down the arm, the LEFT hand casting
+the arm that can act: a lie keyed by where its elbow would be, a wrist that turns, light that runs down the arm, the LEFT hand casting
 while the right keeps the weapon and lowers it, and a real put-away for the casts that need both hands.
 
     python3 tools/art/specs/fp_casts2.py build          assets/awaken/fp_clips/fp_casts2.json (schema 2; replaces fp_casts.json's
@@ -9,7 +9,9 @@ while the right keeps the weapon and lowers it, and a real put-away for the cast
 
 View space as fp_moves.py: x right, y up, z toward you, blocks. Authored right-handed (the game mirrors for a left main arm):
 the casting hand is the off hand, on the left, x < 0. A key is K(tick, x, y, z, elbow=(x, y, z), roll=degrees, ease=...); with no
-elbow the arm comes up from under the frame's corner as it always did. The clip's release event sits on the power's release tick
+elbow the arm comes up from under the frame's corner as it always did. The elbow is a wish, not a joint: the game draws vanilla's
+one straight arm and lets the wish turn it at most 38 degrees, never far enough to show the arm's far end (WorldBody.drawFist; Euan,
+10 Nov 2026: "keep the arms closer to vanilla style and not break them"). The clip's release event sits on the power's release tick
 (data/awaken/powers/casts.json), so the effect, the sound and the hand agree.
 
 Names: fp_p_<power> (or the profile's own begin clip), then __run / __air for a way, then _t2 / _t3 for a take. Takes are made
