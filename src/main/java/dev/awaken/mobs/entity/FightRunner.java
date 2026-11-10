@@ -707,6 +707,16 @@ final class FightRunner {
         return inRange(m, target) && (!aimed(m) || solve(m, target, boss.yBodyRot, trial));
     }
 
+    /**
+     * How far an aimed blow would step to land on the target where it stands now (negative: back), or NaN when it can't
+     * land from here; remembering nothing (tests: a stand the next blow of a string still reaches).
+     */
+    float landingStep(KitMoves.Move m, LivingEntity target) {
+        if (!inRange(m, target)) return Float.NaN;
+        if (!aimed(m)) return 0;
+        return solve(m, target, boss.yBodyRot, trial) ? trial.step : Float.NaN;
+    }
+
     /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */
     private boolean solve(KitMoves.Move m, LivingEntity target, float facing, BlowAim.Result out) {
         boolean turns = m.time().track() > 0;

@@ -178,12 +178,17 @@ public final class FightReachTests {
         p.setYHeadRot(180F);
         p.setYBodyRot(180F);
         double floor = p.getY();
-        Vec3 start = p.position();
+        Vec3[] start = {p.position()};
         MobDef def = Bestiary.get("hive_regent");
-        KitMoves.Move cut = Kits.all().get("hive_regent").moves().get(Kits.all().get("hive_regent").moves().index("cut"));
+        KitMoves.Table table = Kits.all().get("hive_regent").moves();
+        KitMoves.Move cut = table.get(table.index("cut")), next = table.get(table.index("cut_b"));
         double back = (cut.minRange() + cut.maxRange()) * 0.5 + def.width * def.scale * 0.5 + 0.3;
         AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - back)), 5,
                 new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        // a boss spawns facing anywhere (the level's dice); this one faces you, as it would by the time it swings
+        boss.setYRot(0F);
+        boss.setYBodyRot(0F);
+        boss.setYHeadRot(0F);
         p.startUsingItem(InteractionHand.MAIN_HAND);
         FairTests.pool(p);
         int[] tick = {0}, met = {0}, begun = {0};
@@ -193,13 +198,17 @@ public final class FightReachTests {
         h.onEachTick(() -> {
             tick[0]++;
             boss.setTarget(p);
+            if (tick[0] == 8) { // where the string can meet the guard twice, from where the body hovers now
+                p.setPos(stringStand(h, boss, p, cut, next));
+                start[0] = p.position();
+            }
             Vec3 v = p.getDeltaMovement();
             p.setDeltaMovement(Vec3.ZERO); // its own tick would move it, with no client's gravity
             p.doTick();
             p.setPos(p.getX(), Math.max(floor, p.getY()), p.getZ());
             p.setDeltaMovement(v);
             walk(p, floor);
-            moved[0] = Math.max(moved[0], Math.sqrt(Math.pow(p.getX() - start.x, 2) + Math.pow(p.getZ() - start.z, 2)));
+            moved[0] = Math.max(moved[0], Math.sqrt(Math.pow(p.getX() - start[0].x, 2) + Math.pow(p.getZ() - start[0].z, 2)));
             String now = boss.kitPlaying();
             if (tick[0] == 8) h.assertTrue(boss.playKitString("cut", java.util.List.of("cut_b")), "the string plays");
             if (now == null ? was[0] != null : !now.equals(was[0])) {
@@ -305,6 +314,53 @@ public final class FightReachTests {
             boss.discard();
             h.succeed();
         });
+    }
+
+    /** How far a held guard is pushed by one light blow: the push (0.42) walked out on the ground. */
+    private static final double GUARD_PUSH = 0.92;
+    private static final double STAND_STEP = 0.05, STAND_SLACK = 0.1;
+
+    /**
+     * Where to stand, on the +z side of the body, for a string of two blows to meet a held guard twice (SPEC §47.15). At its
+     * lock a blow takes the cheapest correction that lands it, and from some places that is a step back; that step and the
+     * guard's push carry you out of the next blow's reach, and the string ends after one (at an edge of 1.02 the Regent's
+     * cut steps back, at 1.00 it only turns). So: the nearest place to the middle of the first blow's range from which it
+     * lands without a step back, and the second still lands a push further off, each a little either way too. Fails the
+     * test when there is none. Asks the runner, which remembers nothing; the player ends where it started looking.
+     */
+    private static Vec3 stringStand(GameTestHelper h, AwakenBoss boss, ServerPlayer p, KitMoves.Move first, KitMoves.Move second) {
+        FightRunner run = boss.fight();
+        Vec3 was = p.position();
+        double low = first.minRange() + STAND_SLACK, high = Math.min(first.maxRange(), second.maxRange() - GUARD_PUSH) - STAND_SLACK;
+        double mid = Math.min(Math.max((first.minRange() + first.maxRange()) * 0.5, low), high);
+        for (double off = 0; off <= high - low; off += STAND_STEP) {
+            for (double edge : new double[]{mid - off, mid + off}) {
+                if (edge < low || edge > high) continue;
+                boolean ok = true;
+                for (double e = edge - STAND_SLACK; e <= edge + STAND_SLACK + 1.0E-6 && ok; e += STAND_SLACK) {
+                    p.setPos(standAt(boss, p, e));
+                    float step = run.landingStep(first, p);
+                    ok = !Float.isNaN(step) && step >= 0;
+                    // the second blow begins from where the first step and the push leave you
+                    if (ok) {
+                        p.setPos(standAt(boss, p, e - step + GUARD_PUSH));
+                        ok = run.couldLand(second, p);
+                    }
+                }
+                if (ok) {
+                    p.setPos(was);
+                    return standAt(boss, p, edge);
+                }
+            }
+        }
+        p.setPos(was);
+        h.assertTrue(false, first.id() + " then " + second.id() + " can't both meet a guard from anywhere in reach");
+        return was;
+    }
+
+    /** The player this far from the body's edge, on its +z side, on the floor it stands on. */
+    private static Vec3 standAt(AwakenBoss boss, ServerPlayer p, double edge) {
+        return new Vec3(boss.getX(), p.getY(), boss.getZ() + edge + boss.getBbWidth() * 0.5 + p.getBbWidth() * 0.5);
     }
 
     private static boolean hits(AwakenBoss boss, String move) {
