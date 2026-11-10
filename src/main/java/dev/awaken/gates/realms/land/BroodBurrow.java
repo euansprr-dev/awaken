@@ -131,6 +131,8 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
 
     private double awake(Part part) {
         String n = part.name;
+        // (a crossing over a pool is lit from its walls alone, and in the real game the first one was near black)
+        if (part instanceof Chasm) return 0.45;
         return n.equals("way0") ? 0.34 : n.equals("shaft") || n.equals("lord") ? 0.24 : n.equals("ambush") ? 0.2 : n.equals("gallery") ? 0.1 : 0.15;
     }
 
@@ -144,7 +146,7 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
         if (wx != 0 || wz != 0) {
             int ax = x + wx, az = z + wz;
             BlockState at = v.get(ax, y, az);
-            if ((at == m.paper || at == m.paperDark || at == m.paperPale) && patch.get(ax / 8.0 + y / 9.0, az / 8.0 - y / 7.0) > (part.name.equals("way0") ? 0.1 : 0.42)) {
+            if ((at == m.paper || at == m.paperDark || at == m.paperPale) && patch.get(ax / 8.0 + y / 9.0, az / 8.0 - y / 7.0) > (part.name.equals("way0") ? 0.1 : part instanceof Chasm ? 0.2 : 0.42)) {
                 v.set(ax, y, az, rnd(ax * 31L + y, az, 77) < awake(part) ? m.cellLit : m.cell);
             }
         }

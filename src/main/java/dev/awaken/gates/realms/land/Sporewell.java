@@ -23,8 +23,11 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
     private static final int[][] SIDES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
     private static final List<List<String>> HERDS = List.of(List.of("sporeling*4", "mycelid*2"), List.of("capweaver*3", "puffcap*2"),
             List.of("mycelid*3", "hollow_tender"), List.of("~drip_lurker*3", "sporeling*3"));
-    /** How far apart the roof's glowcap clusters are: one in every square of this many cells, so no floor is far from a pool. */
-    private static final int GRID = 4;
+    /**
+     * How far apart the roof's glowcap clusters are: one in every square of this many cells, so no floor is far from a pool.
+     * (At four the roof was a ceiling of lit gills from wall to wall; at six each cluster hangs in dark of its own.)
+     */
+    private static final int GRID = 6;
 
     /** The Fungal Hollow has no Realm family of its own: these are its gate's blocks, by id. Amber's names only give the kit its cache. */
     public static final class M extends Mats {
@@ -122,7 +125,8 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
     protected BlockState skinFloor(M m, Part part, int x, int y, int z) {
         // a ledge over a drop is bare earth, so the mossy stretch that gives way can be told from it
         if (part instanceof Shaft) return m.loam;
-        return patch.get(x / 7.0 + 40, z / 7.0) > -0.45 ? m.moss : m.loam;
+        // moss in beds on dark earth (all moss, the floor was one bright speckle from wall to wall)
+        return patch.get(x / 9.0 + 40, z / 9.0) > -0.05 ? m.moss : m.loam;
     }
 
     @Override
@@ -141,33 +145,27 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
         boolean narrow = part.name.equals("slip") || part.name.startsWith("side_");
         int up = y - Part.airFrom(part.feet2(x, z));
         if (wall) {
-            // the wall beside you: gills have come through it in patches and glow, with a light in the air beside some of them,
-            // so the shafts and the narrow ways are lit from their own walls and nothing stands in anyone's way
+            // the wall beside you: brackets of the fungus have come through it, each a dark cap with its gills glowing along
+            // the underside, and a light in the air beside some of those, so the shafts and the narrow ways are lit from their
+            // own walls. (The first pass set gills, stalk and cap cell by cell at random, and in the real game every wall read
+            // as a chequer of five blocks; a wall is rock now, with whole brackets in it and moss creeping up from its foot.)
             int ax = x + wx, az = z + wz;
             BlockState at = v.get(ax, y, az);
-            if ((at == m.stone || at == m.loam || at == m.veined) && patch.get(ax / 5.0 + y / 6.0, az / 5.0 - y / 5.0) > (shaft || narrow ? 0.15 : 0.2)) {
-                double kind = rnd(ax * 31L + y, az, 974);
-                v.set(ax, y, az, kind < 0.45 ? m.gills : kind < 0.7 ? m.stem : m.cap);
-                if (up >= 1 && rnd(ax * 17L + y, az, 975) < 0.5) {
-                    v.set(x, y, z, m.light);
-                    return;
-                }
-            } else if (at == m.stone || at == m.loam) {
-                // and where no gills have come through, moss and lit threads cover most of the bare rock that faces you
-                double skin = rnd(ax * 13L + y, az, 984);
-                if (skin < 0.3) v.set(ax, y, az, m.moss);
-                else if (skin < 0.65) v.set(ax, y, az, m.veined);
+            double edge = shaft || narrow ? 0.3 : 0.42;
+            if (at == m.stone || at == m.loam || at == m.veined) {
+                if (bracket(ax, y, az) > edge) {
+                    boolean under = up <= 0 || bracket(ax, y - 1, az) <= edge;
+                    v.set(ax, y, az, under ? m.gills : m.cap);
+                    if (up >= 1 && rnd(ax * 17L + y, az, 975) < (under ? 0.6 : shaft || narrow ? 0.2 : 0)) {
+                        v.set(x, y, z, m.light);
+                        return;
+                    }
+                } else if (at != m.veined && up <= (patch.get(ax / 6.0 + 90, az / 6.0) > 0.1 ? 1 : -1)) v.set(ax, y, az, m.moss);
             }
-        }
-        if (underRoof) {
-            // the roof over you, the same
-            BlockState over = v.get(x, y + 1, z);
-            double skin = rnd(x * 13L + y, z, 985);
-            if ((over == m.stone || over == m.loam) && skin < 0.6) v.set(x, y + 1, z, skin < 0.3 ? m.moss : m.veined);
         }
         if (narrow || shaft) return;
         // shelves of the fungus step out of a room's walls above head height
-        if (wall && room && !onFloor && !underRoof && up >= 3 && up <= 6 && rnd(Math.floorDiv(x, 2), Math.floorDiv(z, 2) * 7L + up / 2, 976) < 0.14) {
+        if (wall && room && !onFloor && !underRoof && up >= 3 && up <= 6 && v.get(x + wx, y, z + wz) == m.cap && rnd(Math.floorDiv(x, 2), Math.floorDiv(z, 2) * 7L + up / 2, 976) < 0.3) {
             v.set(x, y, z, m.cap);
             return;
         }
@@ -199,12 +197,17 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
                 if (v.get(x, low - 1, z) == null) v.set(x, low - 1, z, m.light);
                 int over = y - up + 3; // and one just over head height, however high the roof is
                 if (over < low - 1 && v.get(x, over, z) == null) v.set(x, over, z, m.light);
-            } else if (rnd(x, z, 982) < (room ? 0.12 : 0.05)) {
+            } else if (rnd(x, z, 982) < (room ? 0.03 : 0.05)) {
                 // small ones between the clusters
                 int len = Math.min(room2, 1 + (int) (rnd(x, z, 983) * 2));
                 for (int k = 0; k < len && v.get(x, y - k, z) == null; k++) v.set(x, y - k, z, k == len - 1 ? m.gills : m.stem);
             }
         }
+    }
+
+    /** Where a bracket of the fungus has come through the rock: whole patches, a few cells across. */
+    private double bracket(int x, int y, int z) {
+        return patch.get(x / 5.0 + y / 6.0, z / 5.0 - y / 5.0);
     }
 
     @Override

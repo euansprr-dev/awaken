@@ -19,6 +19,9 @@ Stand anywhere in the overworld, as an admin:
 | The Cinder Workings | `/awaken gate realm_enter E awaken:cinder_workings 1` | A burning mine rolled from the seed |
 | The Sporewells | `/awaken gate realm_enter E awaken:sporewells 1` | Fungal wells rolled from the seed |
 | The Sunken Stacks | `/awaken gate realm_enter D awaken:sunken_stacks 1` | A drowned library rolled from the seed (rank D) |
+| The Frozen Cells | `/awaken gate realm_enter C awaken:frozen_cells 1` | A monastery's cells under ice, rolled from the seed (rank C) |
+| The Glass Warrens | `/awaken gate realm_enter D awaken:glass_warrens 1` | Burrows under the glass desert, rolled from the seed (rank D) |
+| The Stopped Works | `/awaken gate realm_enter D awaken:stopped_works 1` | A foundry stopped mid-stroke, rolled from the seed (rank D) |
 
 A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
 Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. On these
@@ -65,5 +68,8 @@ creative player, and packs do not notice one.
 - The Hour Crypt still looks flatter and bluer than its painting, and The Quiet Barrow is still short of its painting (listed
   in `../round-two/STATUS.md`). This work was about play, not those looks.
 - The rolled dungeons are plainer than a gate built by hand from a painting. They are meant to be the short gates in the mix.
-- The three skins the builders wrote (Hollow Hills, Root Cellars, Tallow Runs) have been checked on the bench and by test on
-  six seeds each, and looked at once.
+- Every rolled kind is checked by test on eight seeds (it can be walked end to end, nothing floats, every fight has room).
+  Seen in the real game so far: The Lower Combs, The Bone Roads, The Hollow Hills, The Root Cellars, The Tallow Runs, The
+  Cinder Workings, The Sunken Stacks and The Sporewells. The Sporewells' walls were a clutter of five blocks in that walk
+  and have been calmed since; nobody has seen the calmer version in the game yet.
+- A great run's chasm in The Lower Combs was too dark in the real game; its walls carry more lit comb now, unseen.

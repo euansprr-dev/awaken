@@ -20684,3 +20684,15 @@ Three more skins from builders, one per gate theme with that theme's own blocks,
 (`awaken:cinder_workings`, Ember Mines), **The Sunken Stacks** (`awaken:sunken_stacks`, Drowned Archive, ranks D and C),
 **The Sporewells** (`awaken:sporewells`, Fungal Hollow). The Realms dimension lists every gate theme's biome, so a skin
 takes its theme's air and sky.
+
+Three more, the same way: **The Frozen Cells** (`awaken:frozen_cells`, Frost Monastery, ranks C and B: a monastery's cells
+under ice, pale stone and ring-lamps), **The Glass Warrens** (`awaken:glass_warrens`, Glass Desert, ranks D and C: burrows in
+sandstone shot through with lit amber glass), **The Stopped Works** (`awaken:stopped_works`, Clockwork Foundry, ranks D and C:
+riveted plate, brass and furnace light, machines stopped mid-stroke).
+
+**A wall is one thing with things in it.** Seen in the real game on The Sporewells: a skin that picks each wall cell's block at
+random from four or five (rock, lit rock, moss, stalk, cap, gills) reads as a chequer and nothing else, however good each block
+is. A wall is its rock (courses or veins from noise); growths and fittings come in whole patches a few cells across (a bracket
+of fungus is a dark cap with its gills lit along the underside), and a floor is one stuff with beds of another. Light comes from
+the fittings, never from salting lit blocks through the rock. A great run's crossing over a pool is lit from its walls alone, so
+a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
