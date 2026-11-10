@@ -21630,7 +21630,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   four (9 degrees, field of view 5.7), at a 488 by 266 GUI.
 - No scene in third person (`StationClient.on()`), no body clip for any station but the War Anvil, nothing for others to
   see at a table.
-- Thirteen workstations start a touch and a vanilla screen in the same tick; only the chest's screen waits (4 ticks).
+- Nine vanilla workstations and four of ours start a touch and a screen in the same tick; only a chest's screen waits (4 ticks).
 - No sound and no count for anything laid on a station.
 
 What the plan proposes, in the order it would be built (PLAN §4, §6): a view that belongs to the station (the bench

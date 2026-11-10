@@ -29,8 +29,9 @@ person, and as quick to use as the plain screen.
 3. In third person there is no scene at all: the plain grey screen opens and your character does nothing but vanilla's
    arm swing. Nobody else ever sees you work.
 4. At the furnace the view drops to the mouth, but nothing crouches: no body, no bend in the move, no weight.
-5. Thirteen other workstations play a short hand moment and open a vanilla grey screen over the top of it in the same
-   tick, so the moment is mostly hidden.
+5. Nine vanilla workstations (anvil, smithing table, grindstone, stonecutter, loom, cartography table, brewing stand,
+   lectern, beacon) play a short hand moment and open a grey screen over the top of it in the same tick, so the moment
+   is mostly hidden. Four of ours do the same with their own screens (Forge, Hearth anchor, waystone, Spire board).
 6. It is silent and it pops. Laying an item makes no sound; items appear and vanish in one frame; a stack on a square
    shows no count.
 7. Quick clicks restart the hand from its rest every time, which reads as a twitch.

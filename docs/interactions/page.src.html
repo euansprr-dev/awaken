@@ -24,6 +24,7 @@ main, header.top, nav.jump { max-width: var(--wide); margin-inline: auto }
 h1, h2, h3 { font-family: var(--display); font-stretch: 112%; text-wrap: balance; line-height: 1.12; margin: 0 }
 h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 800; letter-spacing: -0.02em }
 h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); font-weight: 700; margin-top: 4.5rem; padding-top: 1.2rem; border-top: 2px solid var(--ink) }
+section { scroll-margin-top: 1.5rem } section > h2 { scroll-margin-top: 3.4rem }
 h3 { font-size: 1.12rem; font-weight: 700; margin-top: 2.2rem }
 p { margin: 0.8rem 0 0 }
 a { color: var(--accent) }
@@ -44,7 +45,8 @@ ol.found li { counter-increment: f; display: grid; grid-template-columns: 2rem 1
 ol.found li::before { content: counter(f); font: 600 0.85rem var(--mono); color: var(--amber); padding-top: 0.2rem }
 ol.found b { font-weight: 600 }
 figure { margin: 1.6rem 0 0 }
-figure img, figure canvas { display: block; width: 100%; height: auto; max-width: 100%; background: var(--sunk); border: 1px solid var(--line) }
+img, canvas { display: block; width: 100%; height: auto; max-width: 100% }
+figure img, figure canvas { background: var(--sunk); border: 1px solid var(--line) }
 figcaption { font-size: 0.86rem; color: var(--muted); margin-top: 0.5rem; max-width: var(--col) }
 .tag { display: inline-block; font: 600 0.68rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; padding: 0.28rem 0.45rem; border: 1px solid currentColor; margin-right: 0.5rem; vertical-align: 0.08em }
 .tag.real { color: var(--amber) } .tag.plan { color: var(--accent) }
@@ -111,7 +113,7 @@ svg text { font-family: var(--mono) }
     <li><div><b>The scene is only as good as the spot you stand on.</b> The view is framed from your own eyes. Two blocks back, a grid square is a sliver seen almost side-on.</div></li>
     <li><div><b>In third person there is no scene.</b> The plain grey screen opens and your character does nothing. Nobody else ever sees you work.</div></li>
     <li><div><b>The furnace view drops, but nothing crouches.</b> No body, no bend in the move.</div></li>
-    <li><div><b>Thirteen workstations hide their own hand moment.</b> The hands play and a vanilla grey screen opens over them in the same tick.</div></li>
+    <li><div><b>Nine workstations hide their own hand moment.</b> The hands play and a vanilla grey screen opens over them in the same tick. Four of ours do the same with their own screens.</div></li>
     <li><div><b>It is silent and it pops.</b> No sound for laying or lifting. Items appear and vanish in one frame. A stack on a square shows no count.</div></li>
     <li><div><b>Quick clicks twitch.</b> Each click sends the hand back to its rest before it goes out again.</div></li>
   </ol>

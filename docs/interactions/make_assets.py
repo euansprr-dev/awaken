@@ -82,6 +82,10 @@ def build_html(gui):
     _, _, c = c.partition('/*GUI*/')
     src = a + '[%d, %d]' % gui + c
     open(os.path.join(OUT, 'index.html'), 'w').write(src)
+    # the same page inside the skeleton the Artifact tool adds, for a local look before publishing
+    open(os.path.join(OUT, 'preview.html'), 'w').write('<!doctype html><html><head><meta charset="utf8"><meta name="viewport" '
+        'content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0;font:14px system-ui}img{max-width:100%}'
+        '[hidden]{display:none!important}</style></head><body>' + src + '</body></html>')
 
 
 if __name__ == '__main__':
