@@ -107,6 +107,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         /** A takeoff's crouch: how far the folded wings are lifted (0 none). */
         float gather;
         int gatherAt = -100;
+        /** The flare's approach or landing last heard (the wings cup only for a landing that is one). */
+        int flareAt = -100;
         final View third = new View(), own = new View();
     }
 
@@ -146,7 +148,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             f.show = f.showO = 0;
             f.flew = f.flourish = false;
             f.gather = 0;
-            f.gatherAt = -100;
+            f.gatherAt = f.flareAt = -100;
             f.state = AscentState.NONE;
             return f;
         }
@@ -232,6 +234,15 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (w == null) return;
         w.gather = Mth.clamp(k, 0, 1);
         w.gatherAt = AscentMoves.ticks;
+    }
+
+    /**
+     * The flare (SPEC §62): this entity is coming down slow and level, or has just landed so. Open wings begin to cup;
+     * wings that close on the ground within a moment of it finish the flare and shed light instead of just folding.
+     */
+    static void flare(int entityId) {
+        Wings w = find(entityId);
+        if (w != null) w.flareAt = AscentMoves.ticks;
     }
 
     /** True on the tick a feathered wing's downstroke begins (the beat's sound and the air it moves follow the wing). */
@@ -350,7 +361,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 set(w, UNFOLD);
                 if (lifted) w.modeAt -= 4;
             } else if (w.mode != UNFOLD || age >= 13) {
-                int next = pick(w);
+                // coming in to land slow and level, the wings cup before the feet touch
+                int next = AscentMoves.ticks - w.flareAt <= 1 && !w.flourish ? LANDING : pick(w);
                 if (next != w.mode) set(w, next);
                 else if (w.mode == FLYING && w.lastFlap > w.flapDone) set(w, FLYING); // a flap you asked for starts a fresh stroke
             }
@@ -365,12 +377,15 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                     if (age > FOLDED_TICKS) w.show = Math.max(0, w.show - 0.1F);
                 }
                 case LANDING -> {
+                    // cupped already on the way down: the touch sheds its light once, then the wings fold
+                    if (w.flew && !FeelConfig.reduced() && FeelConfig.wingsFeathers() && AscentMoves.ticks - w.flareAt <= 3) burst(mc, w, e);
+                    w.flew = false;
                     if (age >= WingForm.LAND_TICKS) set(w, FOLDED);
                 }
                 case GATHER -> set(w, FOLDED);
                 default -> {
-                    // closed: a landing from real flight cups the wings first; anything else folds them where they are
-                    boolean flare = w.flew && !w.flourish && e.onGround() && w.mode != UNFOLD;
+                    // closed: a flare cups the wings as the feet touch; anything else folds them where they are
+                    boolean flare = w.flew && !w.flourish && w.mode != UNFOLD && AscentMoves.ticks - w.flareAt <= 3;
                     set(w, flare ? LANDING : FOLDED);
                     if (flare && !FeelConfig.reduced() && FeelConfig.wingsFeathers()) burst(mc, w, e);
                     w.flew = false;

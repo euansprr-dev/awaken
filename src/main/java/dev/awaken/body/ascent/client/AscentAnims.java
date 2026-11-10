@@ -42,6 +42,10 @@ public final class AscentAnims {
         int rollAt = -100, rollDir;
         /** A rappel's kick off the wall (client clock). */
         int kickAt = -100;
+        /** A cast or a blow in the air (SPEC §62): the gesture's clip and the tick it gives the body back to the flight. */
+        String gesture;
+        int gestureUntil = -100;
+        boolean swinging;
         AscentState state = AscentState.NONE;
     }
 
@@ -66,6 +70,8 @@ public final class AscentAnims {
         for (Look f : LOOKS) if (f.entity < 0) {
             f.entity = id;
             f.clip = null;
+            f.gesture = null;
+            f.gestureUntil = -100;
             f.heading = Float.NaN;
             f.bank = f.bankO = 0;
             return f;
@@ -130,6 +136,13 @@ public final class AscentAnims {
             } else {
                 l.bank *= 0.8F;
             }
+            // a weapon swung in the air shows: the arm comes in for the blow and back out (SPEC §62)
+            boolean swinging = e instanceof net.minecraft.world.entity.LivingEntity le && le.isSwinging();
+            if (swinging && !l.swinging && free(l.state) && AscentMoves.ticks >= l.gestureUntil) {
+                l.gesture = STRIKE;
+                l.gestureUntil = AscentMoves.ticks + 8;
+            }
+            l.swinging = swinging;
             String want = clipFor(l, e);
             if (want != null && !want.equals(l.clip)) {
                 if (PlayerClips.play(l.entity, want, l.clip == null ? 3 : 4)) l.clip = want;
@@ -137,8 +150,41 @@ public final class AscentAnims {
         }
     }
 
+    /** The gestures a cast or a blow makes over the flight (tools/art/specs/ascent_moves.py); each has an upright twin. */
+    static final String CAST = "ascent_cast_", STRIKE = "ascent_strike";
+    private static final int GESTURE_TICKS = 12;
+
+    private static boolean free(AscentState st) {
+        return st == AscentState.CARRY || st == AscentState.GLIDE || st == AscentState.SOAR;
+    }
+
+    /**
+     * A cast's pose began on a player (core.api.PlayerClips, from the powers' client). Flying free, on wings or in
+     * flight, the body shows it as one of five gestures over the flight; your own hands in first person stand aside for
+     * the cast's own.
+     */
+    static void cast(int entityId, String kind, int ticks) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.getId() == entityId && AscentMoves.state() != AscentState.NONE) AscentFp.aside(Math.max(10, ticks + 4));
+        Look l = find(entityId);
+        if (l == null || !free(l.state)) return;
+        l.gesture = CAST + switch (kind) {
+            case "PUSH2", "CLAP", "CONJURE", "BRACE", "CHARGE2" -> "sweep";
+            case "SLAM", "SLAM_WIND", "STOMP" -> "stamp";
+            case "RAISE", "SKYWARD", "HOVER" -> "lift";
+            case "THROW" -> "throw";
+            default -> "thrust";
+        };
+        l.gestureUntil = AscentMoves.ticks + GESTURE_TICKS;
+    }
+
     private static String clipFor(Look l, Entity e) {
         int age = AscentMoves.ticks - l.since;
+        if (l.gesture != null && AscentMoves.ticks < l.gestureUntil && free(l.state)) {
+            // lying on the air only on wings at speed; a hover and a free flight are upright
+            boolean lying = l.state == AscentState.GLIDE || l.state == AscentState.SOAR && speedOf(e) > 0.45;
+            return lying ? l.gesture : l.gesture + "_up";
+        }
         return switch (l.state) {
             case TETHER -> SWING;
             case RAPPEL -> AscentMoves.ticks - l.kickAt < KICK_TICKS ? RAPPEL_KICK

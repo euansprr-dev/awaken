@@ -19,6 +19,9 @@ final class AscentMotion {
     /** Skyborn's Aether as the server keeps it (the cheapest drain: a fair flight is never refused), and time aloft. */
     double aether = 1;
     int aloft;
+    /** The rope strike (SPEC §62): the creature the rope has (-1 none) and when it bit; the last skim and flare counted. */
+    int strikeTarget = -1;
+    long strikeAt = Long.MIN_VALUE / 2, skimAt = Long.MIN_VALUE / 2, flareAt = Long.MIN_VALUE / 2;
 
     // ---- how the player got here (Ascent.arrivedByMovement) ----
     /** The trail's length: 20 seconds of ticks, a bit each (moving by Ascent or Runner, or not). */

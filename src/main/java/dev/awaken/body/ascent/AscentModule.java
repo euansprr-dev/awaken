@@ -86,6 +86,10 @@ public final class AscentModule {
         r.playToServer(AscentPayloads.Event.TYPE, AscentPayloads.Event.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) AscentServer.onEvent(sp, msg);
         });
+        r.playToServer(AscentPayloads.Strike.TYPE, AscentPayloads.Strike.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) AscentServer.onStrike(sp, msg);
+        });
+        r.playToClient(AscentPayloads.Push.TYPE, AscentPayloads.Push.STREAM_CODEC);
         r.playToClient(AscentPayloads.Seen.TYPE, AscentPayloads.Seen.STREAM_CODEC);
         r.playToClient(AscentPayloads.SeenEvent.TYPE, AscentPayloads.SeenEvent.STREAM_CODEC);
         r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);

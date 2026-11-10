@@ -108,6 +108,10 @@ public final class BodyModule {
                 if (t.name().equals(track)) dev.awaken.body.ascent.AscentServer.addMastery(p, t, points);
         }
 
+        @Override public boolean push(ServerPlayer p, net.minecraft.world.phys.Vec3 push) {
+            return dev.awaken.body.ascent.AscentServer.push(p, push.x, push.y, push.z);
+        }
+
         /** A cast ends a tactical sprint at once (the cast is never held back); a slide keeps going. */
         @Override public void castStarting(ServerPlayer p) {
             BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);

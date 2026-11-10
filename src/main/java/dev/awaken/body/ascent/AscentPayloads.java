@@ -51,6 +51,27 @@ public final class AscentPayloads {
     }
 
     /**
+     * Client → server: a rope strike begins at this creature (SPEC §62). Sent just before the ZIP state whose anchor is
+     * the creature, so the server can take a creature for an anchor; the blow itself is {@link #EV_STRIKE}.
+     */
+    public record Strike(int target) implements CustomPacketPayload {
+        public static final Type<Strike> TYPE = new Type<>(Awaken.id("ascent_strike"));
+        public static final StreamCodec<ByteBuf, Strike> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Strike::target, Strike::new);
+        @Override public Type<Strike> type() { return TYPE; }
+    }
+
+    /**
+     * Server → the player: a push on a body the Ascent holds (a knock, a module's push; SPEC §62). The client moves this
+     * body, so the push goes into its state's velocity there (blocks a tick).
+     */
+    public record Push(float x, float y, float z) implements CustomPacketPayload {
+        public static final Type<Push> TYPE = new Type<>(Awaken.id("ascent_push"));
+        public static final StreamCodec<ByteBuf, Push> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.FLOAT, Push::x, ByteBufCodecs.FLOAT, Push::y, ByteBufCodecs.FLOAT, Push::z, Push::new);
+        @Override public Type<Push> type() { return TYPE; }
+    }
+
+    /**
      * Server → watching clients: an entity's state (and its rope's anchor), and the fittings on its rope ({@code kit}:
      * RopeKit.bits, so watchers see an iron line's steel and a Deepglass line's violet).
      */

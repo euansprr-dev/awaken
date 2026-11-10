@@ -125,6 +125,8 @@ final class CastAnims {
         a.profile = profile;
         a.holdStarted = false;
         a.momentPlayed = false;
+        // a body another module's clip holds (the Ascent's flight) shows the cast its own way (SPEC §62)
+        dev.awaken.core.api.PlayerClips.cast(entityId, kind.name(), a.ticks);
         if (pal && PowerFxConfig.animations()) {
             String clip = profile != null ? profile.begin3p() : CastClips.clip(a.family, kind, afterHold);
             a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));

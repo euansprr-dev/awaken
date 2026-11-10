@@ -48,6 +48,8 @@ public final class AscentClient {
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_notes"), AscentNotes::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CONTEXTUAL_INFO_BAR, dev.awaken.Awaken.id("ascent_aether"), AscentFlow::renderAether));
+        // a cast in the air shows over the flight (SPEC §62)
+        dev.awaken.core.api.PlayerClips.onCast(AscentAnims::cast);
         FeelDirector.init(modBus);
         RopeTuning.init();
         // the Tab glance shows the Aether (SPEC §40.7)
@@ -105,6 +107,8 @@ public final class AscentClient {
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
+        // a push on a body the Ascent holds (SPEC §62): into its state's velocity at the next step
+        event.register(AscentPayloads.Push.TYPE, (msg, ctx) -> AscentMoves.pushed(msg.x(), msg.y(), msg.z()));
         event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));
