@@ -34,9 +34,9 @@ final class Remains {
 
     private static void head(Scene s) {
         int y0 = y(s, 0, 0) - 2;                                   // sunk to its eyes
-        for (int x = -2; x <= 2; x++) for (int y = 0; y <= 5; y++) for (int z = -2; z <= 2; z++)
-            s.put(x, y0 + y, z, z == 2 && Math.abs(x) <= 1 && y >= 2 && y <= 4 ? M.panel() : y == 3 && z == 2 ? M.dark() : y == 5 && (Math.abs(x) == 2 || Math.abs(z) == 2) ? M.blockSlab() : M.block());
-        for (int x = -3; x <= 3; x++) for (int z = -2; z <= 3; z++) if ((Math.abs(x) == 3) != (z == 3)) s.put(x, y0 + 5, z, M.blockSlab());
+        for (int x = -2; x <= 2; x++) for (int y = 0; y <= 6; y++) for (int z = -2; z <= 2; z++)
+            s.put(x, y0 + y, z, z == 2 && Math.abs(x) <= 1 && y >= 2 && y <= 4 ? M.panel() : y == 6 && Math.abs(x) == 2 && Math.abs(z) == 2 ? M.blockSlab() : y % 4 == 3 && z != 2 ? M.stone() : M.block());
+        for (int x = -2; x <= 2; x++) s.put(x, y0 + 5, 3, x == 0 ? M.block() : M.blockSlab());       // the hood's brim, over the mask
         carve(s, 4, 1);
         M.heap(s, -5, -2, 2.4);
         M.finish(s, 4, 60);
@@ -44,7 +44,11 @@ final class Remains {
 
     private static void arch(Scene s) {
         for (int side = -1; side <= 1; side += 2) for (int x = 3; x <= 4; x++) for (int z = -1; z <= 0; z++) for (int y = Math.min(0, s.g(side * x, z)); y <= 7; y++) s.put(side * x, y, z, y == 7 ? M.capital() : y % 5 == 0 ? M.band() : M.course(y));
-        for (int x = -4; x <= 4; x++) for (int z = -1; z <= 0; z++) { int up = 8 + (int) Math.round(Math.sqrt(Math.max(0, 16 - x * x)) * 0.75); s.put(x, up, z, M.block()); if (Math.abs(x) <= 2) s.put(x, up + 1, z, x == 0 ? M.seal() : M.band()); }
+        for (int x = -4; x <= 4; x++) for (int z = -1; z <= 0; z++) {
+            int up = 8 + (int) Math.round(Math.sqrt(Math.max(0, 16 - x * x)) * 0.75);
+            for (int y = Math.abs(x) >= 3 ? 8 : up - 1; y <= up; y++) s.put(x, y, z, y == up && Math.abs(x) <= 1 ? M.band() : M.block());
+            if (x == 0) s.put(x, up + 1, z, M.seal());
+        }
         carve(s, 5, 1);
         M.finish(s, 3, 50);
     }
@@ -98,7 +102,7 @@ final class Remains {
 
     private static void ringPiece(Scene s) {
         int g = s.g(0, 0);
-        M.ring(s, 0, g - 3, 0, 9, 2.0, 1.4, 1, 0, 0, deg -> deg >= 20 && deg <= 160 ? M.ringStuff(deg, false) : null);
+        M.ring(s, 0, g - 3, 0, 9, 2.0, 1.4, 1, 0, 0.25, deg -> M.ringStuff(deg, false));    // the whole ring, most of it under the ground
         carve(s, 3, 3);
         M.finish(s, 2, 40);
     }
@@ -167,8 +171,10 @@ final class Remains {
 
     private static void hand(Scene s) {
         int y0 = y(s, 0, 0) - 1;                                    // a fist, wrist-deep in the ground, knuckles up
-        for (int x = -2; x <= 2; x++) for (int y = 0; y <= 4; y++) for (int z = -1; z <= 2; z++) s.put(x, y0 + y, z, y == 4 && z == 2 ? M.blockSlab() : (y >= 2 && z == 2 && x % 2 != 0) ? M.dark() : M.block());
-        for (int y = 2; y <= 3; y++) s.put(-3, y0 + y, 0, M.block());
+        for (int x = -2; x <= 2; x++) for (int y = 0; y <= 4; y++) for (int z = -1; z <= 2; z++)
+            s.put(x, y0 + y, z, y == 4 && z >= 1 ? (x % 2 == 0 ? M.block() : M.blockSlab()) : y == 2 && z == 2 ? M.band() : M.block());
+        for (int x = -2; x <= 2; x += 2) s.put(x, y0 + 5, 1, M.blockSlab());            // the knuckles
+        for (int y = 1; y <= 3; y++) s.put(-3, y0 + y, 1, y == 3 ? M.blockSlab() : M.block());   // the thumb, along the side
         carve(s, 4, 1);
         M.finish(s, 3, 60);
     }
