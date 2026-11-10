@@ -87,7 +87,7 @@ final class WeaponGoals {
             Goals.Builder b = Goals.Step.of(ANVIL, Goal.WEAPONS, "Set up a War Anvil").thread("arms.forge", 10)
                     .why("It makes weapons stronger than anything from a crafting table, by hand, Plain to Flawless. "
                             + (tier == 0 ? "Your first weapons need no Forge, so set it down wherever you like." : "Set it down within 6 blocks of the Hearth's Forge."))
-                    .path(d ? Goals.PATH_WAR_ANVIL : Goals.NO_PATH).priority(44);
+                    .path(d ? Goals.PATH_WAR_ANVIL : Goals.NO_PATH).priority(44).makes(AnvilContent.ANVIL_ITEM.get());
             if (Goals.count(p.getInventory(), AnvilContent.ANVIL_ITEM.get()) > 0) b.need(Need.item(p, AnvilContent.ANVIL_ITEM.get(), 1));
             else for (NeedRow r : ArmsArmoury.needsOf(p, "war_anvil")) b.need(need(r));
             out.add(b.build());

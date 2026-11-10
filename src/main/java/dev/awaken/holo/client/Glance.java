@@ -22,8 +22,8 @@ import java.util.Locale;
 
 /**
  * The Tab glance (SPEC §40.7; Metro's watch): hold the player-list key and the off-hand forearm comes up with the band, and
- * the band projects one flat, readable panel just above it: level and rank with the XP line, health, Aether, food,
- * armour, the task with its current and next step, a needle to where you're heading, and the hotbar, so everything is in
+ * the band projects one flat, readable panel just above it: level and rank with the XP line, the vitals two to a row as
+ * marks with their bars (SPEC §57.9), the task with its current step in full, a needle to where you're heading, and the hotbar, so everything is in
  * one place (the bar at the foot of the screen steps aside while it shows). You keep walking and looking while you hold
  * it; in multiplayer vanilla's player list shows with it (the same key). It goes when the key is let go. The panel
  * unfolds from the wrist along a beam of light, in the band's own glass. Off in Classic. Its texts are built once a tick
@@ -46,10 +46,12 @@ final class Glance {
     private static boolean armWanted, panelWanted, wasArm, wasPanel;
 
     // ---- the texts, built once a tick while the panel shows -----------------------------------------------------------
-    private static final Row[] ROWS = new Row[Row.values().length];
+    private static final Row[] ROWS = new Row[GlanceRules.MOST];
     private static int rowN;
-    private static String level = "", rank = "", health = "", aetherText = "", food = "", armour = "", taskTitle = "", count = "",
-            step = "", next = "", heading = "", distance = "";
+    private static String level = "", rank = "", health = "", aetherText = "", food = "", armour = "", count = "", distance = "";
+    /** A task's name, its current step and the place you're heading, each as the lines it takes: never cut (SPEC §57.6). */
+    private static java.util.List<String> titleLines = java.util.List.of(), stepLines = java.util.List.of(), headingLines = java.util.List.of();
+    private static boolean aetherOn;
     private static int rankColour = Glass.EDGE;
     private static float xpFrac, healthFrac, aetherFrac, foodFrac, armourFrac, bearing;
     private static boolean destination;
@@ -134,28 +136,25 @@ final class Glance {
         armourFrac = Math.min(1F, ar / 20F);
         armour = String.valueOf(ar);
         Font font = mc.font;
-        taskTitle = SignalGlance.taskTitle().toUpperCase(Locale.ROOT);
-        count = taskTitle.isEmpty() ? "" : SignalGlance.done() + "/" + SignalGlance.steps();
-        String s0 = SignalGlance.step(0), s1 = s0 == null ? null : SignalGlance.step(1);
-        step = s0 == null ? "" : fit(font, "▸ " + s0, W - 2 * PAD);
-        next = s1 == null ? "" : fit(font, "· " + s1, W - 2 * PAD);
-        if (!taskTitle.isEmpty()) taskTitle = fit(font, taskTitle, W - 2 * PAD - font.width(count) - 6);
+        String title = SignalGlance.taskTitle().toUpperCase(Locale.ROOT);
+        count = title.isEmpty() ? "" : SignalGlance.done() + "/" + SignalGlance.steps();
+        String s0 = title.isEmpty() ? null : SignalGlance.step(0);
+        int room = W - 2 * PAD;
+        titleLines = title.isEmpty() ? java.util.List.of() : dev.awaken.signal.ui.SignalText.wrap(title, room - font.width(count) - 6, font::width);
+        stepLines = s0 == null ? java.util.List.of() : dev.awaken.signal.ui.SignalText.wrap("▸ " + s0, room, font::width);
         var h = SignalGlance.heading();
-        heading = distance = "";
+        headingLines = java.util.List.of();
+        distance = "";
         if (h != null) {
             destination = h.destination();
             boolean here = h.dimension().equals(p.level().dimension().identifier());
             double dx = h.at().getX() + 0.5 - p.getX(), dz = h.at().getZ() + 0.5 - p.getZ();
             distance = here ? Math.round(Math.sqrt(dx * dx + dz * dz)) + " m" : "elsewhere";
             bearing = here ? Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-dx, dz)) - p.getYRot()) : Float.NaN;
-            heading = fit(font, (destination ? "◆ " : "◇ ") + h.name(), W - 2 * PAD - 22 - font.width(distance));
+            headingLines = dev.awaken.signal.ui.SignalText.wrap((destination ? "◆ " : "◇ ") + h.name(), room - 22 - font.width(distance), font::width);
         }
-        rowN = GlanceRules.rows(ae >= 0, !taskTitle.isEmpty(), !step.isEmpty(), !next.isEmpty(), h != null, hotbarRow(), ROWS);
-    }
-
-    private static String fit(Font font, String s, int room) {
-        if (font.width(s) <= room) return s;
-        return font.plainSubstrByWidth(s, Math.max(10, room - font.width("…"))) + "…";
+        aetherOn = ae >= 0;
+        rowN = GlanceRules.rows(aetherOn ? 4 : 3, titleLines.size(), stepLines.size(), headingLines.size(), hotbarRow(), ROWS);
     }
 
     // ---- once a frame -------------------------------------------------------------------------------------------------
@@ -180,7 +179,7 @@ final class Glance {
         Wrist.band(1F, side, WRIST);
         float tanY = Math.max(0.1F, ViewMath.tanYHand), aspect = sw / (float) sh;
         float wx = (0.5F + 0.5F * WRIST.x / -WRIST.z / (tanY * aspect)) * sw, wy = (0.5F - 0.5F * WRIST.y / -WRIST.z / tanY) * sh;
-        int h = 2 * PAD + ROW * rowN + 4 + (has(Row.TASK) ? 3 : 0) + (has(Row.HEADING) ? 3 : 0) + (has(Row.HOTBAR) ? 3 + HOTBAR_H - ROW : 0);
+        int h = 2 * PAD + ROW * rowN + 4 + (has(Row.TASK) ? 3 : 0) + (has(Row.HEADING) ? 3 : 0) + (has(Row.HOTBAR) ? 3 + HOTBAR_H - ROW : 0) + 2;
         int x = Mth.clamp(Math.round(side < 0 ? wx - 24 : wx - W + 24), 8, sw - W - 8);
         int y = Mth.clamp(Math.round(wy - 30 - h), 8, sh - h - 8);
         float k = HoloTimeline.easeOut(panel);
@@ -197,14 +196,16 @@ final class Glance {
         HudLook.glow(g, x - 2, y - 2, W + 4, h + 4, Glass.EDGE, 0.18F * k + 0.5F * flare);
         float a = Mth.clamp((panel - 0.35F) / 0.65F, 0, 1); // the words come in once the glass is up
         int ry = y + PAD;
+        int nth = 0; // which of a kind of row this is (the second row of vitals, a step's second line)
         for (int i = 0; i < rowN; i++) {
             Row r = ROWS[i];
-            if ((r == Row.TASK || r == Row.HEADING || r == Row.HOTBAR) && i > 0) {
+            nth = i > 0 && ROWS[i - 1] == r ? nth + 1 : 0;
+            if ((r == Row.TASK || r == Row.HEADING || r == Row.HOTBAR) && nth == 0) {
                 g.fill(x + PAD, ry, x + W - PAD, ry + 1, Glass.a(Glass.EDGE, 0.25F * a));
                 ry += 3;
             }
-            row(g, font, r, x, ry, a);
-            ry += r == Row.LEVEL ? ROW + 4 : r == Row.HOTBAR ? HOTBAR_H : ROW;
+            row(g, font, r, nth, x, ry, a);
+            ry += r == Row.LEVEL ? ROW + 6 : r == Row.HOTBAR ? HOTBAR_H : ROW;
         }
         g.pose().popMatrix();
     }
@@ -214,7 +215,7 @@ final class Glance {
         return false;
     }
 
-    private static void row(GuiGraphicsExtractor g, Font font, Row r, int x, int y, float a) {
+    private static void row(GuiGraphicsExtractor g, Font font, Row r, int nth, int x, int y, float a) {
         int lx = x + PAD, rx = x + W - PAD;
         switch (r) {
             case LEVEL -> {
@@ -230,20 +231,34 @@ final class Glance {
                     g.fill(bx0, by, lit, by + 1, Glass.a(Glass.GOOD, a));
                 }
             }
-            case HEALTH -> bar(g, font, "Health", health, healthFrac, 0xFF6F61, x, y, a, 10);
-            case AETHER -> bar(g, font, "Aether", aetherText, aetherFrac, 0xFFE08A, x, y, a, 0);
-            case FOOD -> bar(g, font, "Food", food, foodFrac, 0xE8C07A, x, y, a, 10);
-            case ARMOUR -> bar(g, font, "Armour", armour, armourFrac, 0xBCCDE3, x, y, a, 10);
-            case TASK -> {
-                HudLook.text(g, font, taskTitle, lx, y, Glass.a(Glass.EDGE, a), true);
-                HudLook.text(g, font, count, rx - font.width(count), y, Glass.a(Glass.LABEL, a), true);
+            case VITALS -> {
+                // two to a row, each a mark, a bar and its number: health and Aether, then food and armour
+                int half = (W - 2 * PAD - 8) / 2;
+                for (int c = 0; c < 2; c++) {
+                    int which = vital(nth * 2 + c);
+                    if (which < 0) continue;
+                    int vx = lx + c * (half + 8);
+                    switch (which) {
+                        case 0 -> vital(g, font, HEART, health, healthFrac, 0xFF6F61, vx, y, half, a, 10);
+                        case 1 -> vital(g, font, SPARK, aetherText, aetherFrac, 0xFFE08A, vx, y, half, a, 0);
+                        case 2 -> vital(g, font, APPLE, food, foodFrac, 0xE8C07A, vx, y, half, a, 10);
+                        default -> vital(g, font, PLATE, armour, armourFrac, 0xBCCDE3, vx, y, half, a, 10);
+                    }
+                }
             }
-            case STEP -> HudLook.text(g, font, step, lx, y, Glass.a(Glass.TEXT, a), true);
-            case NEXT -> HudLook.text(g, font, next, lx, y, Glass.a(Glass.LABEL, 0.8F * a), true);
+            case TASK -> {
+                if (nth < titleLines.size()) HudLook.text(g, font, titleLines.get(nth), lx, y, Glass.a(Glass.EDGE, a), true);
+                if (nth == 0) HudLook.text(g, font, count, rx - font.width(count), y, Glass.a(Glass.LABEL, a), true);
+            }
+            case STEP -> {
+                if (nth < stepLines.size()) HudLook.text(g, font, stepLines.get(nth), lx + (nth > 0 ? 8 : 0), y, Glass.a(Glass.TEXT, a), true);
+            }
             case HEADING -> {
-                HudLook.text(g, font, heading, lx, y, Glass.a(destination ? Glass.TITLE : Glass.TEXT, a), true);
-                HudLook.text(g, font, distance, rx - font.width(distance), y, Glass.a(Glass.LABEL, a), true);
-                if (!Float.isNaN(bearing)) needle(g, rx - font.width(distance) - 10, y + 4, bearing, a);
+                if (nth < headingLines.size()) HudLook.text(g, font, headingLines.get(nth), lx + (nth > 0 ? 8 : 0), y, Glass.a(destination ? Glass.TITLE : Glass.TEXT, a), true);
+                if (nth == 0) {
+                    HudLook.text(g, font, distance, rx - font.width(distance), y, Glass.a(Glass.LABEL, a), true);
+                    if (!Float.isNaN(bearing)) needle(g, rx - font.width(distance) - 10, y + 4, bearing, a);
+                }
             }
             case HOTBAR -> hotbar(g, font, x, y, a);
         }
@@ -289,16 +304,37 @@ final class Glance {
         }
     }
 
-    /** A labelled line: the label, a thin segmented bar and the value at the right. */
-    private static void bar(GuiGraphicsExtractor g, Font font, String label, String value, float frac, int colour, int x, int y, float a, int segments) {
-        int lx = x + PAD, rx = x + W - PAD;
-        HudLook.text(g, font, label, lx, y, Glass.a(Glass.LABEL, a), true);
-        HudLook.text(g, font, value, rx - font.width(value), y, Glass.a(Glass.TEXT, a), true);
-        int bx0 = lx + 44, bx1 = rx - 36, by = y + 3;
+    /** The k-th vital shown: 0 health, 1 Aether (once you have it), 2 food, 3 armour; -1 past the last. */
+    private static int vital(int k) {
+        if (!aetherOn && k >= 1) k++;
+        return k <= 3 ? k : -1;
+    }
+
+    /** The band's own marks for the vitals, seven pixels wide, a row a number (bit 6 is the left pixel). */
+    private static final int[] HEART = {0b0110110, 0b1111111, 0b1111111, 0b0111110, 0b0011100, 0b0001000};
+    private static final int[] SPARK = {0b0001000, 0b0011100, 0b0111110, 0b1111111, 0b0111110, 0b0011100, 0b0001000};
+    private static final int[] APPLE = {0b0001100, 0b0001000, 0b0111110, 0b1111111, 0b1111111, 0b0111110};
+    private static final int[] PLATE = {0b1100011, 0b1111111, 0b0111110, 0b0111110, 0b0111110, 0b0011100};
+
+    /** A vital without its word: its mark in its colour, a thin bar, and the number at the right. */
+    private static void vital(GuiGraphicsExtractor g, Font font, int[] mark, String value, float frac, int colour, int x, int y, int w, float a, int segments) {
+        int my = y + (8 - mark.length) / 2 + 1, ink = Glass.a(colour, a);
+        for (int r = 0; r < mark.length; r++) {
+            for (int c = 0; c < 7; c++) {
+                if ((mark[r] >> (6 - c) & 1) == 0) continue;
+                int run = c;
+                while (run + 1 < 7 && (mark[r] >> (6 - (run + 1)) & 1) != 0) run++;
+                g.fill(x + c, my + r, x + run + 1, my + r + 1, ink);
+                c = run;
+            }
+        }
+        HudLook.text(g, font, value, x + w - font.width(value), y, Glass.a(Glass.TEXT, a), true);
+        int bx0 = x + 11, bx1 = x + w - font.width(value) - 4, by = y + 3;
+        if (bx1 - bx0 < 8) return;
         g.fill(bx0 - 1, by - 1, bx1 + 1, by + 3, Glass.a(0x000000, 0.4F * a));
         int lit = bx0 + Math.round((bx1 - bx0) * frac);
         if (lit > bx0) HudLook.glow(g, bx0 - 2, by - 2, lit - bx0 + 4, 6, colour, 0.35F * a);
-        int n = Math.max(1, segments);
+        int n = Math.max(1, Math.min(segments, (bx1 - bx0) / 4));
         for (int k = 0; k < n; k++) {
             int s0 = bx0 + Math.round((bx1 - bx0 + 1) * k / (float) n), s1 = bx0 + Math.round((bx1 - bx0 + 1) * (k + 1) / (float) n) - (segments > 0 ? 1 : 0);
             g.fill(s0, by, s1, by + 2, Glass.a(0x1A222E, 0.8F * a));

@@ -45,7 +45,13 @@ public final class GuideClient {
             if (msg.open() && mc.level != null) ringUntil = mc.level.getGameTime() + RING_TICKS;
         } else if (msg.open()) {
             if (mc.level != null) ringUntil = mc.level.getGameTime() + RING_TICKS;
-            mc.gui.setScreen(new HearthScreen(data));
+            // one Hearth, two doors (SPEC §57.7): the Anchor opens the band's own Hearth, where the tier can be raised too.
+            // Without the band on the wrist, or with the old band asked for, the separate window as before.
+            if (dev.awaken.holo.client.HoloClient.stage() && mc.player != null && dev.awaken.core.api.HoloBand.worn(mc.player)) {
+                mc.gui.setScreen(dev.awaken.holo.client.HoloClient.statusScreen(dev.awaken.progression.client.StatusSections.Tab.HEARTH, "anchor"));
+            } else {
+                mc.gui.setScreen(new HearthScreen(data));
+            }
         }
     }
 
@@ -77,7 +83,7 @@ public final class GuideClient {
         ClientLevel level = mc.level;
         if (level == null || mc.player == null || data == null) return;
         long now = level.getGameTime();
-        boolean open = mc.gui.screen() instanceof HearthScreen;
+        boolean open = mc.gui.screen() instanceof HearthScreen || HearthPlace.INSTANCE.showing();
         if (open && ++sinceRefresh >= REFRESH_EVERY) {
             sinceRefresh = 0;
             send(Guide.Act.REFRESH);

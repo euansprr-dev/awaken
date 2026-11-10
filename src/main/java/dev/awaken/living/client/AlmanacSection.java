@@ -2,7 +2,6 @@ package dev.awaken.living.client;
 
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.client.StatusSections;
-import dev.awaken.signal.client.HudLook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -64,7 +63,7 @@ final class AlmanacSection implements StatusSections.Section {
             String key = "happening.awaken." + list.get(i);
             String name = net.minecraft.network.chat.Component.translatableWithFallback(key, list.get(i).replace('_', ' ')).getString();
             int cx = x + (i % 2) * col, cy = y + (i / 2) * ROW;
-            HudLook.text(g, font, "◇ " + font.plainSubstrByWidth(name, col - 12), cx, cy, 0xFFD9E4F2, false);
+            dev.awaken.signal.client.Ui.fitted(g, font, "◇ " + name, cx, cy, col - 2, 1, 0xFFD9E4F2, true); // fitted, never cut (SPEC §57.6)
         }
     }
 }

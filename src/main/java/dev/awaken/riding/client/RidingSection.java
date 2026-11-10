@@ -115,7 +115,7 @@ final class RidingSection implements StatusSections.Section {
         int shown = 0;
         for (AbstractClientPlayer p : nearby()) {
             if (shown++ == MAX_ROWS) break;
-            g.text(font, font.plainSubstrByWidth(p.getGameProfile().name(), rideX - x - PAD - 6), x + PAD, ty, 0xFFFFFFFF, false);
+            dev.awaken.signal.client.Ui.fitted(g, font, p.getGameProfile().name(), x + PAD, ty, rideX - x - PAD - 6, 1, 0xFFFFFFFF, false);
             button(g, font, RIDE, rideX, ty, RidingNet.RIDE, p.getUUID(), mouseX, mouseY);
             button(g, font, BRING, bringX, ty, RidingNet.BRING, p.getUUID(), mouseX, mouseY);
             ty += ROW;
