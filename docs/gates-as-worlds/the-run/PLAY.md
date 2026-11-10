@@ -16,8 +16,16 @@ Stand anywhere in the overworld, as an admin:
 | The Hollow Hills | `/awaken gate realm_enter E awaken:hollow_hills 1` | Barrow passages rolled from the seed |
 | The Root Cellars | `/awaken gate realm_enter E awaken:root_cellars 1` | A temple's undercroft rolled from the seed |
 | The Tallow Runs | `/awaken gate realm_enter E awaken:tallow_runs 1` | Wax runs rolled from the seed |
+| The Cinder Workings | `/awaken gate realm_enter E awaken:cinder_workings 1` | A burning mine rolled from the seed |
+| The Sporewells | `/awaken gate realm_enter E awaken:sporewells 1` | Fungal wells rolled from the seed |
+| The Sunken Stacks | `/awaken gate realm_enter D awaken:sunken_stacks 1` | A drowned library rolled from the seed (rank D) |
 
-The last five take any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
+A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
+Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. On these
+gates seed 1 is a great delve with a chasm you cross on pillars, seed 2 a short plunge down two shafts, seed 3 a short climb,
+seed 5 a standard delve.
+
+Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a
 creative player, and packs do not notice one.
 
