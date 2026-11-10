@@ -22,14 +22,29 @@ public final class HitWhy {
     static final long SAME_BLOW = 1_500_000_000L;
 
     // what the server did with a body in one move (the higher, the nearer it came to landing)
-    public static final byte REACH = 1, ARC = 2, HEIGHT = 3, NO_DAMAGE = 4, LANDED = 5;
+    public static final byte REACH = 1, ARC = 2, HEIGHT = 3, WALL = 4, NO_DAMAGE = 5, LANDED = 6;
+    /** A blow landed by the hands' word past the sweep's own reach ({@code ArmsServer.claimed}): how many, and how far past in all. */
+    private static int granted;
+    private static float grantedBeyond;
+
+    /** The server landed a blow by the hands' word, {@code beyond} blocks past its own reach (0 or less: inside it, the arc or the timing was the miss). */
+    public static synchronized void granted(float beyond) {
+        if (!on) return;
+        granted++;
+        grantedBeyond += Math.max(0F, beyond);
+    }
+
+    /** "N landed by the hands' word (x beyond reach on average)", or nothing when none were. */
+    public static synchronized String grants() {
+        return granted == 0 ? "" : String.format(Locale.ROOT, "%d landed by the hands' word (%.2f past the server's reach on average)", granted, grantedBeyond / granted);
+    }
     // what it did with a press
     public static final byte NOTHING = 10, TOO_EARLY = 11, NOT_GRANTED = 12, QUEUED = 13, RAN = 14;
 
     /** Why a shown hit did no damage. */
     public enum Cause {
         OUT_OF_REACH("out of reach"), OUT_OF_ARC("outside the arc"), OUT_OF_HEIGHT("above or below"), NO_DAMAGE("struck, no damage"),
-        OTHER_PRESS("landed under another press"), NOT_NEAR("nowhere near on the server"), NEVER_RAN("the press ran no move"),
+        OUT_OF_SIGHT("behind a wall"), OTHER_PRESS("landed under another press"), NOT_NEAR("nowhere near on the server"), NEVER_RAN("the press ran no move"),
         UNMATCHED("landed, word not matched"), NO_RECORD("no server record");
 
         public final String label;
@@ -133,6 +148,10 @@ public final class HitWhy {
                             A[own] - B[own], A[own], B[own], ms));
                     return new Why(Cause.OUT_OF_REACH, A[own] - B[own]);
                 }
+                case WALL -> {
+                    say.append(String.format(Locale.ROOT, "on the server a block stood between the eye and it, %+d ms from the show", ms));
+                    return new Why(Cause.OUT_OF_SIGHT, 0F);
+                }
                 case ARC -> {
                     say.append(String.format(Locale.ROOT, "on the server it was %.0f degrees outside the arc of %.0f, %+d ms from the show", A[own], B[own], ms));
                     return new Why(Cause.OUT_OF_ARC, 0F);
@@ -170,5 +189,7 @@ public final class HitWhy {
         java.util.Arrays.fill(KIND, (byte) 0);
         next = 0;
         kept = 0;
+        granted = 0;
+        grantedBeyond = 0;
     }
 }

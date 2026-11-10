@@ -781,7 +781,9 @@ of `AwakenConfig.Client`.
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
   clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
-  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26; `lagReach`, `lagRate`: how far and how quickly the
+  hands trail the view's turn against the body's own, 1 and 1 unless what is held sets them each frame, additive, Arms
+  2026-11-10, §25 "Weight in the Hand"). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -7942,7 +7944,8 @@ recommended).
   his game showed in fifteen sessions (4 to 9 Nov) were never confirmed by the server; the hits on flesh and armour, the blunt
   hit, the kill and the Execution carry 80 to 98% of their sound below 300 Hz (the block's old fault, §47.3); 36 of the 102
   weapon sound files hold the thin tone he calls a synthetic ding; the view's kick and the knockback's side read the timing
-  table's old `from`/`to` and disagree with the baked blade on 17 of 143 cuts, nine thrown the opposite way; the fast part of
+  table's old `from`/`to` and disagree with the baked blade on 28 of 139 cuts, eleven thrown the opposite way (the page's
+  first count, 17 and nine, had not mirrored the off hand's moves); the fast part of
   a cut is about three frames at 60 a second, and after its freeze the blade is at a dead stop within 60 ms; the guard drops in
   one frame; a changed weapon stays below the frame for its attack cooldown (vanilla's `FirstPersonHandsAndItems`), 9 ticks
   filmed for the Katana; Fight Feel's stages 2 to 4 (above) were never built.
@@ -7956,7 +7959,13 @@ recommended).
   recordings named in `sounds.json`, after a listening page, with the draws' new sounds, and the swishes stay (3); blows stop
   at walls, with the glance (4); counter-hits are not in this pass: their rule goes to the fights' owner, who places it with
   the bosses' minds (5); the Katana rests lowered at the hip with no new model (6).
-- **The stages**, each handed over on its own and played before the next: 0 truth; 1 honest hits, and the blow's direction
+- **Code first** (Euan 2026-11-10, after stage 0: "The whole plan is approved. Just go ahead and actually do everything and
+  code everything... prioritize coding over testing... code at the best possible level of code... and then do a test"):
+  stages 1 to 5 were built in one run with their first values and one test pass at the end. Where the plan said "after your
+  play" the best call was made and its switch and its measurement kept, so his play corrects it: the ghosts' fixes without
+  his log (the ghost report stays on), the sounds on the listening page's first pick for each row (the page stays), the
+  weight layers on for all sixteen weapons (one command flips them: `/awaken swing weight on|off`). Stage 6 needs his notes.
+- **The stages**: 0 truth; 1 honest hits, and the blow's direction
   from the baked blade; 2 sound; 3 weight (the shake in the freeze, the settle where the blade stops, the living hold); 4 the
   guard, the draws, the Katana's sheath, the look-lag by weight; 5 walls, the glance, grass; 6 his notes weapon by weapon, by
   hand as the Daggers were, then third person against first.
@@ -7980,6 +7989,102 @@ recommended).
   machine's asset cache, so it is never hosted or committed): each of the fourteen sounds and the five draws in a scene at the
   game's own timing, today's sound beside three picks made of named recordings, his mark for each saved to `picks.json`
   there. *The baseline film*: `tools/autopilot/arms-feel-baseline.txt` (CI run 42788877636).
+- **Stage 1, honest hits and the blade's own direction** (built 2026-11-10).
+  - *The direction.* `tools/arms/blows.py` writes each cut's travel on the screen at its hit into its swing row of
+    archetypes.json as `blow` [x right, y up] (`Archetype.Swing.blow`, optional), read from the blade the baked keys draw: the
+    blade's middle over the half tick round the hit, mirrored for a move the off hand strikes, the two together for both
+    hands; a hand-keyed move keeps the direction its own bake worked out (its `kick`); a thrust has none. `ArmsRules.blowX`,
+    `blowY` and `side` read it (the row's `from`/`to` only where a move has none), so the knockback's side, the struck
+    body's recoil and a kill's fall follow the blade, and so does the view's kick (`ArmsPredict.impact`: a thrust now nods
+    the view in as the hand-keyed stabs do, `THRUST_NOD` 0.6, and a left-handed fighter's kick is mirrored as their screen
+    is). `blows.py check` fails when a row is more than 20 degrees off the bake: run it after any re-bake. Test
+    `arms_blow_dir`.
+  - *A blow always lands whole.* `ArmsServer.hit` clears the struck body's damage cooldown before every Arms blow, whoever
+    hurt it last (it was cleared only after the fighter's own): vanilla's half second of immunity after fire, a fall, a
+    pet's or another fighter's blow swallowed or shrank blows the game had shown. Each move still strikes a body once.
+  - *One blow, one press.* The two sides can file a strike under different presses (a queued strike pressed again moves to
+    the newer press on each side's own clock, and a HIT sent in between carries the older number): its impact then played
+    twice and one copy was a ghost. `HitLedger.confirm` matches the server's word by the press, then by the body and the
+    move (the oldest such blow still waiting, `reconciled` counted in the log's line); `HitLedger.struck` keeps the hands
+    off a body the server already struck with the same move under another press (`SAME_BLOW`, 12 ticks); and a HIT is held
+    for the blade by the move, not the press (`ArmsPredict.early`), also for a strike still queued behind the one on the
+    hands (the server ran ahead), never longer than `QUEUE_WAIT` (8 ticks).
+  - *The hands' word.* The game draws a creature about three ticks behind where the server has it (26.3's stepped
+    interpolation, by the entity type's update interval), so one just knocked back can look in reach and be a block further
+    on. When the hands play a blow they say so (`ArmsPayloads.PRESS_HIT`: the move's press, the body, the move's
+    ordinal), and the server lands it by their word (`ArmsServer.claimed`, `grantClaims`) when its own sweep left that body:
+    only a creature its sweep would look at (a foe or the aimed one, never a person), once a move, only while the move they
+    name runs here (from 3 ticks before its first active tick to 6 after its last; a word that comes before its move waits
+    up to 20), and only within `CLAIM_REACH` 1.25 blocks and `CLAIM_ARC` 20 degrees past the move's own reach and arc, and
+    never through a wall. The damage, the push and everything after are the server's own. Switch `claimedHits`
+    (awaken-arms.toml, on); `[arms] N landed by the hands' word (x past the server's reach on average)` in a development
+    run's log says how much it is used. Test `arms_claim`.
+  - *Struck, no harm.* A blow that strikes and does no damage (an invulnerable body, another mod's refusal) is answered
+    (`ArmsPayloads.DULL`): Minecraft's own weak-attack sound, and the ledger counts it answered, not a ghost.
+- **Stage 2, sound** (built 2026-11-10 on the listening page's first pick for each row; his ear is still the judge, and
+  the page stays). Fourteen sounds play as mixes of Minecraft's own recordings (`ArmsSounds.mix`, `Voice`), each recording
+  named as an event of its own in the merged sounds.json (`fight.*`, `"type": "event"`, so it follows the game's own
+  variants and no file of Mojang's is in the repo), layered in code on both sides (`ArmsSounds.play`, `ArmsAudio.play`):
+  a hit on flesh the strong attack over the kit's thump at 0.45; a heavy one the critical hit (pitch 0.85) and the knockback
+  hit (0.7 at 0.8) over the thump at 0.5; the Maul's the mace's own blow (0.8) over its thump; armour an iron golem struck
+  (0.9 at 1.2) with the strong attack (0.6); a spirit a breeze hurt (0.8) with a sweep of air (0.6 at 1.2); a blow on you
+  the knockback hit (0.9 at 0.8) over the thump; the parry an anvil landing (0.45 at 1.6) over the shield block (at 1.1);
+  the glance a breeze turning a shot; the charge a crossbow drawn (0.8 at 0.8) and its glint the crossbow locking (0.9 at
+  1.2), a wooden click in place of the ting; the kill the critical hit (at 0.8) over the body drop; the cleave Minecraft's
+  own sweep; the Execution the mace's heaviest ground blow (0.9) with the critical hit (0.9 at 0.7); the perfect dodge a
+  dragon's wingbeat (0.6 at 1.7). The swishes, bone, wood, stone, slime, the block, the tells and the Art are as they were.
+  Switch `recordedSounds` (awaken-arms-client.toml; off: the 25 Oct kit).
+- **Stage 3, weight** (built 2026-11-10; `arms.SwingWeight`, plain maths, drawn by `ArmsHands` over the same keys; test
+  `arms_weight`). By `ArmsRules.heft` (snap / blade / heavy):
+  - *The shake* (`weaponShake`): while a landed blow of the move on the hands is frozen, the striking hand shudders along the
+    blow's own direction, 0.005 / 0.008 / 0.012 blocks at first (about 5, 9 and 13 pixels at 1080p), dying to nothing by the
+    freeze's end, its sign turning every 16 ms. Added after the blend, so it is never carried into the next move.
+  - *The settle* (`weaponSettle`): where a baked move's hand stops after its hit (`SwingWeight.stop`: the first key under
+    6% of the move's fastest, found once a clip) it carries 0.015 / 0.025 / 0.04 blocks and 1.5 / 2.5 / 4 degrees past, along
+    the way it came in, peaking 0.9 / 1.4 / 2.2 ticks after the stop and back to nothing with no second swing (x e^(1-x)).
+    A stop within 0.05 of the pose the move ends on is the rest itself and is never settled: 138 of the 179 moves have a
+    stop, the rest go home in one motion.
+  - *The living hold* (`livingHold`, off under reduced motion): a held weapon rises and sinks 3 mm once in 4.5 s, and the
+    hands trail the view's turn by the weapon's weight (`FirstPerson.lagReach`, `lagRate`, §12, read by Hands' look-lag:
+    0.75 of the reach and 1.3 of the rate for a dagger, 1.45 and 0.65 for a Maul).
+  - Reduced motion halves the shake and the settle. `/awaken swing weight on|off` flips the shake, the settle, the living
+    hold, the draw and the guard's ease together.
+- **Stage 4, the guard and presence** (built 2026-11-10).
+  - *The guard* (`guardEase`): it comes up on an ease-out that seats with a small settle, in the server's own two ticks
+    (past nine tenths by a tick and a half), and lowers over three, from wherever it is (`SwingWeight.guardUp`,
+    `guardDown`). On film it rose in a straight line and was back at rest one frame after the key came up. Only the
+    picture: the windows are the server's. A deflect throws the blade at the blow and back, a third harder than a block's
+    knock (`ArmsHands.parry`).
+  - *The draw* (`weaponDraw`): a change of the fighting weapon in hand (its item or its slot, seen each tick) plays its
+    family's sound (blades Minecraft's iron armour going on, pitched by the blade; hafted weapons an axe biting wood; the
+    Chain-blade a chain; the Gauntlets leather; the Precursor Arm a conduit waking; `ArmsSounds.draw`, those near from the
+    server on the equipment change) and the weapon comes up on the draw's own clock, 6 / 8 / 10 ticks by weight on an
+    ease-out that seats a hair above its place, its wrist turned in 22 degrees at first (`SwingWeight.drawSink`,
+    `drawTurn`). It replaces vanilla's rise for a fighting weapon: vanilla raises a changed item only as its attack cooldown
+    refills (the item swap scale, cubed), a cooldown Arms never uses, so the weapon was out of view for nine ticks on film
+    with the Katana and by that rule over twenty with the Maul, and a strike thrown meanwhile was drawn that far under the
+    frame. A strike begun during a draw brings the weapon up within 2 ticks from where it is. A power's stow never draws.
+  - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks, on the client's own count, which is
+    never ahead of the server's), it lowers to the hip over 6 ticks with a soft click (`ArmsHands.hip`: the rest pose itself
+    moves, so the strike that draws it is carried out by the blend), and the drawn cut has its own sound over the swish
+    (a rasp and a ring) and a ribbon half again as bright. No scabbard (decision 6).
+- **Stage 5, the world answers** (built 2026-11-10; `arms.ArmsWalls`, one set of rules for the server's sweep and the
+  client's prediction; tests `arms_walls`, `arms_cut_grass`).
+  - *Walls stop blows* (`wallsStopBlows`, awaken-arms.toml, on): a body is struck only when a line from the eye to its
+    nearest point, its middle or its top is clear of every block a body can't pass. Three points, so a creature half
+    behind a door frame still counts; glass, fences and leaves stop a blade, tall grass doesn't. The hands' word is held
+    to it too. Things that aren't alive (a rift's core) are struck as before.
+  - *The glance* (`glance`, client): a strike that has struck no body by a third of a tick past its hit, and whose blade
+    meets a block within the move's reach (three lines 14 degrees either side of the look; a pinning blow one more, 25
+    degrees down), glances off it: the block's own hit sound, lower and louder, with a ring over stone and metal; its
+    chips; sparks off stone, chips off wood; the blade knocked back against its cut for two and a half ticks; the view
+    kicked one degree against it; a 30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
+    block isn't harmed and the chain goes on. Those near hear the block's hit from the server on the move's last active
+    tick.
+  - *Grass* (`cutGrass`, awaken-arms.toml, on): each active tick cuts the plants tagged `#awaken:cut_by_sweeps` (short
+    and tall grass, ferns, dead and plain bushes, dry grass) in the sweep's arc and reach, as a player's break
+    (`CommonHooks.fireBlockBreak`, so a claim can refuse; drops as vanilla's), at most 12 a blow; never where the
+    fighter can't build, at a Hearth, in the city or in a village.
 
 **Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
 moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,

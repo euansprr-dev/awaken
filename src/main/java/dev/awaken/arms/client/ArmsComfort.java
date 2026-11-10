@@ -41,6 +41,30 @@ final class ArmsComfort {
             .comment("A killing blow is its own moment: a longer freeze, a harder kick, its own sound and the ribbon's flare;",
                     "the last foe of a fight lets the view breathe out.")
             .define("killMoment", true);
+    // Weight in the Hand (SPEC §25): each layer of the polish pass has its switch; off is the picture and the sound as before it
+    static final ModConfigSpec.BooleanValue RECORDED_SOUNDS = B
+            .comment("The weapon sounds made of Minecraft's own recordings (the hits, the parry, the charge and its glint, the kill).",
+                    "Off: the first sound kit, as before the polish pass.")
+            .define("recordedSounds", true);
+    static final ModConfigSpec.BooleanValue WEAPON_SHAKE = B
+            .comment("While a blow that landed is frozen, your weapon shudders along the cut and dies away. Off: it holds still.")
+            .define("weaponShake", true);
+    static final ModConfigSpec.BooleanValue WEAPON_SETTLE = B
+            .comment("Where a weapon stops after a cut it carries a little past and comes back once, by its weight. Off: it stops dead.")
+            .define("weaponSettle", true);
+    static final ModConfigSpec.BooleanValue LIVING_HOLD = B
+            .comment("A weapon held at rest breathes a little, and trails your look by its weight. Off: it holds still and every weapon trails alike.")
+            .define("livingHold", true);
+    static final ModConfigSpec.BooleanValue WEAPON_DRAW = B
+            .comment("Changing to a weapon draws it: it comes up on its own clock with a turn of the wrist and its own sound.",
+                    "Off: vanilla's rise, as slow as the weapon's attack cooldown, with no sound.")
+            .define("weaponDraw", true);
+    static final ModConfigSpec.BooleanValue GUARD_EASE = B
+            .comment("The guard comes up on a curve and settles, and lowers over three ticks. Off: straight up, and down in one frame.")
+            .define("guardEase", true);
+    static final ModConfigSpec.BooleanValue GLANCE = B
+            .comment("A strike that meets a wall glances off it: the block's sound, sparks, the blade knocked back. Off: nothing.")
+            .define("glance", true);
     // Swing Studio (SPEC §25 "Swing Studio"): the swings read from a tuning folder while tuning is on (/awaken swing tune)
     static final ModConfigSpec.BooleanValue SWING_TUNING = B
             .comment("Swing Studio: read the first-person swings from the tuning folder as the lab writes them (/awaken swing tune on|off).")
@@ -97,6 +121,47 @@ final class ArmsComfort {
 
     static boolean lowHealth() {
         return on(LOW_HEALTH);
+    }
+
+    static boolean recordedSounds() {
+        return on(RECORDED_SOUNDS);
+    }
+
+    /** The shake's and the settle's scale now: 1, half under reduced motion, 0 when switched off. */
+    static float shake() {
+        return on(WEAPON_SHAKE) ? reduced() ? 0.5F : 1F : 0F;
+    }
+
+    static float settle() {
+        return on(WEAPON_SETTLE) ? reduced() ? 0.5F : 1F : 0F;
+    }
+
+    /** The breath and the weighted look: off under reduced motion. */
+    static boolean livingHold() {
+        return on(LIVING_HOLD) && !reduced();
+    }
+
+    static boolean weaponDraw() {
+        return on(WEAPON_DRAW);
+    }
+
+    static boolean guardEase() {
+        return on(GUARD_EASE);
+    }
+
+    static boolean glance() {
+        return on(GLANCE);
+    }
+
+    /** Flips every layer of the polish pass at once (/awaken swing weight): the quick A/B against the picture before it. */
+    static void layers(boolean on) {
+        try {
+            if (!SPEC.isLoaded()) return;
+            for (ModConfigSpec.BooleanValue v : new ModConfigSpec.BooleanValue[] {WEAPON_SHAKE, WEAPON_SETTLE, LIVING_HOLD, WEAPON_DRAW, GUARD_EASE}) v.set(on);
+            SPEC.save();
+        } catch (RuntimeException e) {
+            Awaken.LOG.warn("The weight layers' state could not be saved", e);
+        }
     }
 
     static boolean swingTuning() {

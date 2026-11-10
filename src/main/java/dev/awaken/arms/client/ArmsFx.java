@@ -149,15 +149,19 @@ final class ArmsFx {
         }
         float yaw = by.getYRot() * Mth.DEG_TO_RAD;
         float fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
-        float side = 0;
-        if (def.swish() != Archetype.Swish.THRUST) {
-            List<Float> from = def.swing().from(), to = def.swing().to();
-            float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
-            side = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
-            if (by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT) side = -side;
-        }
+        // the cut's side on the screen, by the one rule everything that answers a blow reads (the baked blade's own way)
+        float side = dev.awaken.arms.ArmsRules.side(def, by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT);
         dev.awaken.core.api.CombatFeedback.blow(target.getId(), fx * (1 - 0.6F * Math.abs(side)) + rx * side, fz * (1 - 0.6F * Math.abs(side)) + rz * side,
                 Mth.clamp(def.motion() / 1.2F, 0.6F, 3F));
+    }
+
+    /**
+     * Where a blade glanced off a block (SPEC §25 "Weight in the Hand", stage 5): sparks off stone and metal, chips off
+     * wood, back along the way the blade came. Earth and soft things only shed their own block's chips.
+     */
+    static void glance(Vec3 at, Vec3 fromEye, int kind) {
+        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) FxClient.bladeHit(at, fromEye, 0.8F, BodyMaterial.STONE);
+        else if (kind == dev.awaken.arms.ArmsWalls.GLANCE_WOOD) FxClient.bladeHit(at, fromEye, 0.65F, BodyMaterial.WOOD);
     }
 
     /** Where a blade landed, along the line from the wielder. */

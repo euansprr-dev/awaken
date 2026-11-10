@@ -13,8 +13,13 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 public final class ArmsPayloads {
     private ArmsPayloads() {}
 
-    /** What a {@link Press} pressed: a strike's press; the hold becoming a charge; the charge let go; the strike's press let go before it charged (a tap). */
-    public static final int PRESS_STRIKE = 0, PRESS_CHARGE = 1, PRESS_RELEASE = 2, PRESS_TAP = 3;
+    /**
+     * What a {@link Press} pressed: a strike's press; the hold becoming a charge; the charge let go; the strike's press let
+     * go before it charged (a tap). HIT is no press: the hands played a blow of the move under {@code seq} on a body
+     * (target = the body, claim = the move's ordinal), and the server may land it by their word within its limits
+     * (SPEC §25 "Weight in the Hand": the game shows a body a few ticks behind where the server has it).
+     */
+    public static final int PRESS_STRIKE = 0, PRESS_CHARGE = 1, PRESS_RELEASE = 2, PRESS_TAP = 3, PRESS_HIT = 4;
     /** A press's {@code claim} when it isn't a move's ordinal: no word from the hands; they counted it for nothing; it pressed their queued strike again. */
     public static final int CLAIM_OPEN = -1, CLAIM_NOTHING = -2, CLAIM_AGAIN = -3;
 
@@ -46,7 +51,7 @@ public final class ArmsPayloads {
 
     /** What a {@link Result} or {@link Seen} reports. */
     public static final int MOVE = 0, HIT = 1, DEFLECT = 2, BLOCK = 3, GUARD_BREAK = 4, PERFECT_DODGE = 5, EVADE = 6, BREAK = 7,
-            REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11, POSTURE = 12, CHARGE = 13, SHOT = 14;
+            REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11, POSTURE = 12, CHARGE = 13, SHOT = 14, DULL = 15;
 
     /**
      * Server → the player: what their press or guard did. MOVE: the move the server runs for seq (aux = move id,
@@ -54,7 +59,7 @@ public final class ArmsPayloads {
      * PERFECT_DODGE / EVADE: entity = the attacker; BREAK: entity's stance broke; REFUSE: seq refused; RESONANCE:
      * aux = the meter; HURT: a blow landed on you (entity = who struck, aux = the yaw it came from, aux2 = damage in
      * tenths); SHOT: your guard stopped a shot (entity = who loosed it, aux = DEFLECT or BLOCK, aux2 = the world yaw
-     * it came from).
+     * it came from); DULL: the blow of seq struck entity and no damage landed (aux2 = the move's ordinal).
      */
     public record Result(int seq, int what, int entity, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Result> TYPE = new Type<>(Awaken.id("arms_result"));

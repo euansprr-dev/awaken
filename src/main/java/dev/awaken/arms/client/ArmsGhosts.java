@@ -77,6 +77,8 @@ final class ArmsGhosts {
                 if (c == HitWhy.Cause.OUT_OF_REACH) out.append(String.format(Locale.ROOT, " (%.2f beyond on average)", beyond / COUNT[c.ordinal()]));
             }
             Awaken.LOG.info("[arms] ghosts by cause, {} of {} blows shown: {}", total, shown, total == 0 ? "none" : out);
+            String grants = HitWhy.grants();
+            if (!grants.isEmpty()) Awaken.LOG.info("[arms] {}", grants);
         }
         java.util.Arrays.fill(COUNT, 0);
         java.util.Arrays.fill(WHAT, null);

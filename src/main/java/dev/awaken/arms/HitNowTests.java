@@ -78,11 +78,26 @@ final class HitNowTests {
                 told[1] = seq;
                 told[2] = body;
             };
-            l.played(2, 9, 5, 200L, 60);
-            l.played(3, 9, 5, 200L, 60);
-            l.confirm(3, 9, 6);
+            l.played(2, 9, 0, 5, 200L, 60);
+            l.played(3, 9, 1, 5, 200L, 60);
+            l.confirm(3, 9, 1, 6);
             l.expire(5 + HitLedger.LIFE + 1);
             h.assertTrue(told[0] == 1 && told[1] == 2 && told[2] == 9, "the ledger tells the one ghost, once: " + told[0] + " (" + told[1] + ", " + told[2] + ")");
+
+            // one blow filed under two presses is one blow (stage 1): the server's word under the older press confirms the
+            // hands' blow of the same move on the same body, and a blow the server struck first isn't struck again by the hands
+            HitLedger m = new HitLedger();
+            m.ghosts = (seq, body) -> told[0] += 100;
+            m.played(12, 40, 1, 100, 300L, 45);
+            h.assertTrue(m.confirm(11, 40, 1, 101), "the server's HIT under the press before confirms the same strike on the same body");
+            h.assertTrue(m.reconciled == 1 && m.matchedFreezeMs() == 45, "counted as matched by body and move, its freeze kept");
+            h.assertTrue(!m.confirm(11, 41, 2, 102), "a body the hands haven't struck is the server's to play");
+            h.assertTrue(m.struck(12, 41, 2, 104) && !m.struck(12, 41, 3, 104) && !m.struck(12, 41, 2, 102 + HitLedger.SAME_BLOW + 1),
+                    "the hands leave it alone for that move, for a while, and only for that move");
+            m.played(13, 42, 0, 110, 0L, 0);
+            h.assertTrue(!m.confirm(14, 42, 1, 111), "another move on the same body is another blow");
+            m.expire(200);
+            h.assertTrue(told[0] == 101 && m.unconfirmed == 1, "and the one left waiting is the one ghost");
 
             // the real server: one zombie in reach is struck, one a block and more past the reach is explained
             HitWhy.on = true;
@@ -138,12 +153,12 @@ final class HitNowTests {
 
         // the ledger: each blow once; the server's word on a blow played adds, never replays; a blow it never confirms is counted
         HitLedger l = new HitLedger();
-        l.played(1, 7, 0, 100L, 60);
-        h.assertTrue(l.confirm(1, 7, 1), "the server's HIT for a blow played is not played again");
-        h.assertTrue(l.freezeMs(1, 7) == 60, "the played blow's freeze is kept for a kill's beat");
-        h.assertTrue(!l.confirm(1, 8, 1), "a blow the client didn't play is the server's to play");
+        l.played(1, 7, 0, 0, 100L, 60);
+        h.assertTrue(l.confirm(1, 7, 0, 1), "the server's HIT for a blow played is not played again");
+        h.assertTrue(l.freezeMs(1, 7) == 60 && l.matchedFreezeMs() == 60, "the played blow's freeze is kept for a kill's beat");
+        h.assertTrue(!l.confirm(1, 8, 0, 1), "a blow the client didn't play is the server's to play");
         h.assertTrue(l.has(1, 8), "and the client's sweep then leaves that body be for this move");
-        l.played(2, 9, 5, 200L, 60);
+        l.played(2, 9, 1, 5, 200L, 60);
         h.assertTrue(l.expire(5 + HitLedger.LIFE + 1) == 1, "a blow never confirmed is counted once it's old");
         h.assertTrue(l.predicted == 2 && l.confirmed == 1 && l.unconfirmed == 1,
                 "counted: played " + l.predicted + ", confirmed " + l.confirmed + ", unconfirmed " + l.unconfirmed);
