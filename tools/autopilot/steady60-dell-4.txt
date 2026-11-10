@@ -1,0 +1,96 @@
+# The Air's frame cost on the Dell (SPEC §22 "Steady Light"): Lens Cinematic with the Air on and off, standing, turning
+# and flying, uncapped and as Euan plays it, in a copy of his world with his settings.
+#   tools/steady60-tour.sh tools/autopilot/steady60-dell-4.txt dell-4
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch cinematic
+wait 1200
+pixels gpu reset
+perf air_raw_still 12
+pixels gpu air_raw_still
+turn 1.5 240
+pixels gpu reset
+perf air_raw_turn 12
+pixels gpu air_raw_turn
+shot d1_air_morning
+lens air off
+wait 80
+pixels gpu reset
+perf cine_raw_still 12
+pixels gpu cine_raw_still
+turn 1.5 240
+pixels gpu reset
+perf cine_raw_turn 12
+pixels gpu cine_raw_turn
+lens air setting
+lens temporal on
+wait 80
+pixels gpu reset
+perf air_temporal_raw_still 12
+pixels gpu air_temporal_raw_still
+lens temporal setting
+opt vsync 1
+opt maxFps 60
+wait 60
+pixels gpu reset
+perf air_played_still 15
+pixels gpu air_played_still
+turn 1.5 240
+pixels gpu reset
+perf air_played_turn 12
+pixels gpu air_played_turn
+# ---- flights: out over new land, back over it, then as played
+opt vsync 0
+opt maxFps 260
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+glide 0.8 0 0 400
+pixels gpu reset
+perf air_fly_newland 20
+pixels gpu air_fly_newland
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf air_fly_back_raw 20
+pixels gpu air_fly_back_raw
+shot d2_air_flight
+opt vsync 1
+opt maxFps 60
+look -90 12
+wait 40
+glide 0.8 0 0 400
+pixels gpu reset
+perf air_fly_played 20
+pixels gpu air_fly_played
+opt vsync 0
+opt maxFps 260
+lens air off
+look 90 12
+wait 40
+glide -0.8 0 0 400
+pixels gpu reset
+perf cine_fly_back_raw 20
+pixels gpu cine_fly_back_raw
+lens air setting
+pixels config
+quit

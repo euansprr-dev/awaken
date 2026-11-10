@@ -25,12 +25,20 @@ lens air off
 wait 60
 shot a1_morning_off
 lens air setting
+lookswitch ultra
+wait 160
+shot a1_morning_ultra
+lookswitch cinematic
+wait 100
 cmd time set 11800
 wait 140
 shot a2_dusk
 cmd time set 6000
 wait 140
 shot a3_noon
+cmd time set 12800
+wait 200
+shot a4_sunset
 cmd time set 18000
 wait 140
 shot a5_night
@@ -70,4 +78,8 @@ cmd time set 11800
 look 90 8
 wait 140
 shot c2_open_dusk_sunward
+cmd time set 18000
+look -90 12
+wait 160
+shot c5_open_night
 quit

@@ -522,7 +522,8 @@ void main() {
         if (!classic) {
 #endif
             float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
-            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
+            // (the Air: the sunlit mist is stronger, so beams stand in the air between the trees)
+            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 2.7, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

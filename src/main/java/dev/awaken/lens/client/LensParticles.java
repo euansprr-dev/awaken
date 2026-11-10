@@ -28,7 +28,11 @@ import org.joml.Vector3fc;
 public final class LensParticles {
     private LensParticles() {}
 
-    static final int MOTE = 0, EMBER = 1, FROST = 2, SPORE = 3, WISP = 4, BREATH = 5;
+    static final int MOTE = 0, EMBER = 1, FROST = 2, SPORE = 3, WISP = 4, BREATH = 5,
+            // a firefly: a spore's sprite on its own slow blink and wander (the Air's, no particle type of its own)
+            FIREFLY = 6,
+            // pollen: the same sprite, a steady soft glow that drifts in sunlit air near the ground by day
+            POLLEN = 7;
 
     /** One emitter of a place: what, its colour, how many a tick at Ultra, and how it moves. */
     private record Emitter(int kind, int tint, float rate, float rise) {}
@@ -74,7 +78,7 @@ public final class LensParticles {
      * the sunrise colour as 0xRRGGBB and its strength.
      */
     static void tick(Minecraft mc, boolean ultra, String biome, float light, Vector3fc lightDir, int warm, float warmth,
-            LensHeightfield height) {
+            LensHeightfield height, boolean air, float sunY, float rain) {
         ClientLevel level = mc.level;
         if (level == null || mc.player == null || mc.isPaused()) return;
         ParticleStatus status = mc.options.particles().get();
@@ -88,7 +92,8 @@ public final class LensParticles {
         for (Emitter e : place) emit(level, r, eye, camera.forwardVector(), e.kind, e.tint, e.rate * scale * 1.5f, e.rise, 1f);
         // the overworld by day: dust, only where the sun reaches, glinting when it's between you and the sun
         if (place == NONE && light > 0.2f && height != null) {
-            int n = count(r, 2.5f * scale);
+            // (the Air: more of it, so the sunlit air between you and the trees is never empty)
+            int n = count(r, (air ? 5f : 2.5f) * scale);
             for (int i = 0; i < n; i++) {
                 double x = eye.x + (r.nextFloat() - 0.5f) * 18, y = eye.y + (r.nextFloat() - 0.4f) * 8, z = eye.z + (r.nextFloat() - 0.5f) * 18;
                 if (!level.getBlockState(BlockPos.containing(x, y, z)).isAir() || !height.sunlit(x, y, z, lightDir)) continue;
@@ -99,8 +104,39 @@ public final class LensParticles {
                 spawn(level, r, MOTE, tint, x, y, z, 0, 0.002, 0, glint * light);
             }
         }
-        // breath in the cold: a puff every few seconds from just in front of the face (first person only)
         boolean cold = "awaken:gate_frost_monastery".equals(biome) || coldAt(level, camera.blockPosition());
+        // the Air: pollen by day, glowing specks low over sunlit ground, so a clearing's air has something alive in it
+        if (air && place == NONE && height != null && light > 0.3f && sunY > 0.1f && rain < 0.2f && !cold) {
+            Vector3fc f = camera.forwardVector();
+            int n = count(r, 0.9f * scale);
+            for (int i = 0; i < n; i++) {
+                double x = eye.x + (r.nextFloat() - 0.5f) * 26 + f.x() * 6, z = eye.z + (r.nextFloat() - 0.5f) * 26 + f.z() * 6;
+                int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+                if (Math.abs(ground - eye.y) > 8) continue;
+                double y = ground + 0.3 + r.nextFloat() * 1.9;
+                if (!level.getBlockState(BlockPos.containing(x, y, z)).isAir() || !height.sunlit(x, y, z, lightDir)) continue;
+                spawn(level, r, POLLEN, lerpColour(0xFFF6C8, warm, warmth * 0.5f), x, y, z, (r.nextFloat() - 0.5) * 0.012, 0.003 + r.nextFloat() * 0.004,
+                        (r.nextFloat() - 0.5) * 0.012, 1f);
+            }
+        }
+        // the Air (SPEC §22 "Steady Light"): fireflies from dusk through the night, low over open ground near the eye,
+        // more of them ahead; none in the snow, in rain or under a roof. Each blinks on its own slow beat
+        if (air && place == NONE && height != null && sunY < 0.32f && rain < 0.2f && !cold) {
+            float dusk = smooth((0.32f - sunY) / 0.22f);
+            Vector3fc f = camera.forwardVector();
+            int n = count(r, 1.6f * dusk * scale);
+            for (int i = 0; i < n; i++) {
+                double x = eye.x + (r.nextFloat() - 0.5f) * 30 + f.x() * 7, z = eye.z + (r.nextFloat() - 0.5f) * 30 + f.z() * 7;
+                int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+                if (Math.abs(ground - eye.y) > 9) continue;
+                double y = ground + 0.35 + r.nextFloat() * 2.4;
+                BlockPos at = BlockPos.containing(x, y, z);
+                if (!level.getBlockState(at).isAir() || !level.getFluidState(at.below((int) (y - ground) + 1)).isEmpty()) continue;
+                spawn(level, r, FIREFLY, r.nextFloat() < 0.75f ? 0xE4FF7A : 0xFFE27A, x, y, z, (r.nextFloat() - 0.5) * 0.02, (r.nextFloat() - 0.4) * 0.006,
+                        (r.nextFloat() - 0.5) * 0.02, 1f);
+            }
+        }
+        // breath in the cold: a puff every few seconds from just in front of the face (first person only)
         if (cold && !camera.isDetached() && --breathIn <= 0) {
             breathIn = 55 + r.nextInt(30);
             Vector3fc f = camera.forwardVector();
@@ -138,10 +174,12 @@ public final class LensParticles {
     private static void spawn(ClientLevel level, RandomSource r, int kind, int tint, double x, double y, double z, double xa, double ya, double za, float alpha) {
         LensParticle.nextTint = tint;
         LensParticle.nextAlpha = alpha;
+        // (a firefly shares the spore's particle type and sprite; its kind rides along like the tint)
+        LensParticle.nextKind = kind == FIREFLY || kind == POLLEN ? kind : -1;
         var type = switch (kind) {
             case EMBER -> LensModule.EMBER.get();
             case FROST -> LensModule.FROST.get();
-            case SPORE -> LensModule.SPORE.get();
+            case SPORE, FIREFLY, POLLEN -> LensModule.SPORE.get();
             case WISP -> LensModule.WISP.get();
             case BREATH -> LensModule.BREATH.get();
             default -> LensModule.MOTE.get();
@@ -164,7 +202,9 @@ public final class LensParticles {
         @Override
         public Particle createParticle(SimpleParticleType options, ClientLevel level, double x, double y, double z, double xa, double ya,
                 double za, RandomSource random) {
-            return new LensParticle(level, x, y, z, xa, ya, za, sprites, kind);
+            int k = LensParticle.nextKind >= 0 ? LensParticle.nextKind : kind;
+            LensParticle.nextKind = -1;
+            return new LensParticle(level, x, y, z, xa, ya, za, sprites, k);
         }
     }
 
@@ -177,6 +217,7 @@ public final class LensParticles {
     static final class LensParticle extends SingleQuadParticle {
         static int nextTint = 0xFFFFFF;
         static float nextAlpha = 1f;
+        static int nextKind = -1;
         private final int kind;
         private final float size0, phase, spin;
         private float base;
@@ -222,6 +263,18 @@ public final class LensParticles {
                     size0 = 0.16f + r.nextFloat() * 0.12f;
                     friction = 0.97f;
                     base = 0.5f;
+                }
+                case POLLEN -> {
+                    lifetime = 110 + r.nextInt(120);
+                    size0 = 0.035f + r.nextFloat() * 0.035f;
+                    friction = 0.96f;
+                    base = 0.9f;
+                }
+                case FIREFLY -> {
+                    lifetime = 140 + r.nextInt(160);
+                    size0 = 0.05f + r.nextFloat() * 0.04f;
+                    friction = 0.94f;
+                    base = 1f;
                 }
                 case BREATH -> {
                     lifetime = 24 + r.nextInt(10);
@@ -279,6 +332,21 @@ public final class LensParticles {
                     xd += (r.nextFloat() - 0.5f) * 0.0008;
                     zd += (r.nextFloat() - 0.5f) * 0.0008;
                     alpha = base * fade * (0.65f + 0.35f * Mth.sin(t * 0.12f));
+                }
+                case POLLEN -> {
+                    xd += Mth.sin(t * 0.05f) * 0.0009 + (r.nextFloat() - 0.5f) * 0.0006;
+                    zd += Mth.cos(t * 0.04f) * 0.0009 + (r.nextFloat() - 0.5f) * 0.0006;
+                    yd += Mth.sin(t * 0.07f) * 0.0005;
+                    alpha = base * fade * (0.7f + 0.3f * Mth.sin(t * 0.16f));
+                }
+                case FIREFLY -> {
+                    // a slow wander, and a blink that is mostly dark with a soft pulse of light
+                    xd += Mth.sin(t * 0.043f) * 0.0022 + (r.nextFloat() - 0.5f) * 0.0012;
+                    zd += Mth.cos(t * 0.037f) * 0.0022 + (r.nextFloat() - 0.5f) * 0.0012;
+                    yd += Mth.sin(t * 0.061f) * 0.0009;
+                    float beat = Math.max(0f, Mth.sin(t * 0.085f));
+                    alpha = base * fade * beat * beat;
+                    quadSize = size0 * (0.8f + 0.5f * beat);
                 }
                 case WISP -> {
                     xd += Mth.sin(t * 0.031f) * 0.0012;

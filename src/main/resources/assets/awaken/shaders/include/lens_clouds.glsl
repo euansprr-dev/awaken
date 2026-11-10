@@ -37,7 +37,7 @@ float cloudCellHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7))) * 437
 float cloudCell(vec2 cell, float cover) {
     vec2 u = (cell + 0.5) * CLOUD_CELL;
     float n = textureLod(CloudNoiseSampler, fract(u / 1536.0), 0.0).r * 0.62 + textureLod(CloudNoiseSampler, fract(u / 384.0 + 0.37), 0.0).g * 0.38;
-    return n + (cloudCellHash(cell) - 0.5) * 0.08 - (1.0 - cover * 0.72);
+    return n + (cloudCellHash(cell) - 0.5) * 0.045 - (1.0 - cover * 0.72);
 }
 
 float cloudBlock(vec3 rel, vec4 cp, float camY) {

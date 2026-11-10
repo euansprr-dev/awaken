@@ -277,7 +277,8 @@ public final class LensClient {
             var at = mc.gameRenderer.mainCamera().blockPosition();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
         }
-        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null);
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
+                air && sunHere, sunDir.y, rain);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
