@@ -234,7 +234,8 @@ public final class ArmourClient {
         // your own set's charge and flare show on your own arm, as everyone else sees them on you
         ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
         boolean low = player.getHealth() < player.getMaxHealth() * LOW_HEALTH;
-        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow, ArmorType.CHESTPLATE), -1,
+        int flash = ArmourGlow.flash(glow, ArmorType.CHESTPLATE);
+        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), Math.max(ArmourGlow.energy(glow), flash * 3 / 4), flash, -1,
                 f == null ? 0 : f.masteryStep(), low, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(chest),
                 ArmourLayer.marks(f, look.set()));
         return true;
@@ -256,7 +257,8 @@ public final class ArmourClient {
             if (mesh == null) continue;
             Forged f = stack.get(ArmourContent.FORGED.get());
             ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
-            ArmourLayer.draw(out, ps, mesh, look.set(), light, stack.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow, slot), -1,
+            int flash = ArmourGlow.flash(glow, slot);
+            ArmourLayer.draw(out, ps, mesh, look.set(), light, stack.hasFoil(), Math.max(ArmourGlow.energy(glow), flash * 3 / 4), flash, -1,
                     f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(stack),
                     ArmourLayer.marks(f, look.set()));
             drew = true;

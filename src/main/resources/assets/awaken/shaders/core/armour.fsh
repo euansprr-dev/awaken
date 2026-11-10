@@ -148,7 +148,9 @@ void main() {
     float pulse = flow > 0.0 ? 0.55 + 0.45 * sin(GameTime * 240.0 * TAU * 0.6 - flow * 12.0) : 1.0;
     col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6 * seams;
     col += accent * beat * (0.12 + 0.5 * emit) * 0.8;
-    col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
+    // a flare (an ability's release, the wake climbing the body when a set becomes whole) must read on plain plate too:
+    // at 0.18 it only showed on what already glowed
+    col += accent * flash * (0.34 + 0.6 * emit + 0.5 * rim);
 
     // an enchantment's own light (SPEC §45.11): a thin line of script along the piece's edges in that enchantment's
     // colour, its letters drifting feet to crown, what glows of itself taking the colour, a few pixels catching it; with

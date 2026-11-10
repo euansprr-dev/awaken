@@ -24,6 +24,11 @@ def head(name, seed, what):
             "cmd weather clear 1000000", "cmd time set 6000", "screen close", "cmd gamemode creative"]
 
 
+# about twenty seconds into a new world a light of the world's own stands on the player for a few seconds (not armour's):
+# tours that film a moment wait it out before their first shot
+SETTLE = ["wait 260"]
+
+
 def wear(s):
     return [f"cmd item replace entity @s armor.{slot} with awaken:{s}_{piece}" for slot, piece in PIECES]
 
@@ -99,7 +104,7 @@ def living():
     L = head("armouraudit5", 5155, "living parts: each set at four moments a second apart, then in a walk or a fall")
     L += ["cmd tp @s 0.5 150 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
           "cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone", "cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete",
-          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"]
+          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"] + SETTLE
     for s, side, move in LIVING:
         L += wear(s)
         if side == "front":
@@ -132,25 +137,26 @@ def moments():
     L = head("armouraudit6", 5156, "moments and marks: the wake, a piece in the hand, in a frame and on the ground, forge marks")
     L += ["cmd tp @s 0.5 150 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
           "cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone", "cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete",
-          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 50", "wait 20"]
+          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 50", "wait 20"] + SETTLE
     # the wake: three pieces on, then the fourth; the light climbs the body over a second
     for s in ("lordscale", "halo_choir"):
         L += wear(s)
         L += ["cmd item replace entity @s armor.head with minecraft:air", "cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 8", "wait 30",
               f"shotnow m_{s}_wake_0", f"cmd item replace entity @s armor.head with awaken:{s}_helmet"]
-        for k, w in zip("abcdef", (3, 3, 3, 4, 5, 8)):
+        for k, w in zip("abcdef", (4, 3, 3, 4, 5, 8)):
             L += [f"wait {w}", f"shotnow m_{s}_wake_{k}"]
-        L += ["wait 20"]
+        L += ["wait 220"]  # past the quiet time, so the next set wakes too
     # the same from your own eyes, with the chat up: the System's one line the first time
     L += wear("bellguard")
     L += ["cmd item replace entity @s armor.feet with minecraft:air", "camera first", "hud on", "opt fov 70", "cmd tp @s 0.5 150 0.5 0 0", "look 0 10",
           "wait 220", "cmd item replace entity @s armor.feet with awaken:bellguard_boots", "wait 7", "shotnow m_wake_fp_a", "wait 6",
           "shotnow m_wake_fp_b", "wait 30", "shot m_wake_line", "hud off"]
-    # a piece in the hand: first person, then seen from outside
+    # a piece in the hand: first person (the HUD on: hidden, the game draws no hand), then seen from outside
+    L += ["hud on"]
     for piece in ("helmet", "chestplate", "leggings", "boots"):
         L += [f"cmd item replace entity @s weapon.mainhand with awaken:galewing_{piece}", "camera first", "wait 12", f"shot m_held_{piece}_fp"]
     L += ["cmd item replace entity @s weapon.mainhand with awaken:sunward_helmet", "cmd item replace entity @s weapon.offhand with awaken:hollowheart_chestplate",
-          "wait 10", "shot m_held_both_fp", "opt fov 50", "cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 8", "wait 14", "shot m_held_front",
+          "wait 10", "shot m_held_both_fp", "hud off", "opt fov 50", "cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 8", "wait 14", "shot m_held_front",
           "cmd item replace entity @s weapon.mainhand with minecraft:air", "cmd item replace entity @s weapon.offhand with minecraft:air"]
     # in frames on the wall, and lying on the ground
     for i, (s, piece) in enumerate((("sunward", "helmet"), ("halo_choir", "helmet"), ("hollowheart", "chestplate"), ("galewing", "chestplate"),
@@ -161,12 +167,13 @@ def moments():
           "cmd kill @e[type=minecraft:item_frame]", "cmd kill @e[type=minecraft:item]"]
     # forge marks: a plain Galewing, one with the fold's ripples and its maker's mark (Flawless), one with a scale flaw,
     # each turned so its right forearm faces you; then Vaultbreaker (not folded) Flawless and flawed
-    L += [forged_stand("galewing", -3.5, 8.5, 250, "quality:0"), forged_stand("galewing", -1.5, 8.5, 250, "quality:3"),
-          forged_stand("galewing", 0.5, 8.5, 250, "quality:1,flaw:1b"), forged_stand("vaultbreaker", 2.5, 8.5, 250, "quality:3"),
-          forged_stand("vaultbreaker", 4.5, 8.5, 250, "quality:1,flaw:1b")]
+    # yaw 110: the stand looks west and a little north, so its right arm (where the mark is struck) faces you
+    L += [forged_stand("galewing", -3.5, 8.5, 110, "quality:0"), forged_stand("galewing", -1.5, 8.5, 110, "quality:3"),
+          forged_stand("galewing", 0.5, 8.5, 110, "quality:1,flaw:1b"), forged_stand("vaultbreaker", 2.5, 8.5, 110, "quality:3"),
+          forged_stand("vaultbreaker", 4.5, 8.5, 110, "quality:1,flaw:1b")]
     L += ["opt fov 30", "cmd tp @s 0.5 150 2.5 0 4", "wait 30", "shot m_marks_row"]
     for i, x in enumerate((-3.5, -1.5, 0.5, 2.5, 4.5)):
-        L += [f"cmd tp @s {x} 150 5.9 0 6", "wait 12", f"shot m_marks_{i}"]
+        L += [f"cmd tp @s {x} 150 6.3 0 4", "wait 12", f"shot m_marks_{i}"]
     return L + ["quit"]
 
 
@@ -174,7 +181,7 @@ def extras():
     L = head("armouraudit7", 5157, "the bigger options: the suit answering its ability, and Admire")
     L += ["cmd tp @s 0.5 150 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
           "cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone", "cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete",
-          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"]
+          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"] + SETTLE
     # a set's ability fires (the demo command flares it on this client): its living parts answer
     for s, side in (("galewing", "back"), ("halo_choir", "front"), ("riftwalker", "back"), ("hollowheart", "front"), ("signals_echo", "front"),
                     ("leviathan", "front")):

@@ -24,7 +24,7 @@ final class ArmourGlow {
     }
 
     /** The wake: each piece lights this long after the one below it, rises this fast and fades this slowly. */
-    private static final long WAKE_STEP_MS = 130, WAKE_RISE_MS = 90, WAKE_FADE_MS = 620;
+    private static final long WAKE_STEP_MS = 160, WAKE_RISE_MS = 100, WAKE_FADE_MS = 760;
     private static final long WAKE_MS = 3 * WAKE_STEP_MS + WAKE_RISE_MS + WAKE_FADE_MS;
 
     /** A set became whole on someone in view: their armour wakes. */

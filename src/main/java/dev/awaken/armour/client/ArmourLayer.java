@@ -66,6 +66,7 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             int mastery = forged == null ? 0 : forged.masteryStep();
             int accent = forged == null ? 0 : forged.accent();
             int flash = ArmourGlow.flash(glow, slot); // a release's flare, or the wake climbing the body (SPEC §44.11)
+            int lit = Math.max(energy, flash * 3 / 4);  // and with it what glows on the piece brightens: the seams light
             int marks = marks(forged, look.set());
             // mastery IV: the set's awakened parts grow over the piece's own
             ArmourMesh[] awake = mastery >= AWAKENED ? ArmourMeshes.awakened(look.set(), slot) : null;
@@ -79,17 +80,17 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
                 if (mesh == null && extra == null && !lives) continue;
                 ps.pushPose();
                 if (place(ps, getParentModel(), b, state)) {
-                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script, marks);
+                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
                     if (lives) for (ArmourLive.Part p : live) {
                         if (p.bone() != b) continue;
                         ps.pushPose();
                         ArmourLive.pose(ps, p, state.ageInTicks, state.walkAnimationSpeed, state.walkAnimationPos, wind, kick);
-                        draw(out, ps, p.mesh(), look.set(), light, foil, energy, flash, -1, mastery, low, accent, script, marks);
+                        draw(out, ps, p.mesh(), look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
                         ps.popPose();
                     }
                     if (extra != null) {
                         if (grown < 1F) ArmourLive.grow(ps, extra, grown);
-                        draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script, marks);
+                        draw(out, ps, extra, look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
                     }
                 }
                 ps.popPose();

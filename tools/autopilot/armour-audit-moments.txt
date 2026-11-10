@@ -27,6 +27,7 @@ cmd item replace entity @s weapon.mainhand with minecraft:air
 hud off
 opt fov 50
 wait 20
+wait 260
 cmd item replace entity @s armor.head with awaken:lordscale_helmet
 cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
 cmd item replace entity @s armor.legs with awaken:lordscale_leggings
@@ -38,7 +39,7 @@ look 180 8
 wait 30
 shotnow m_lordscale_wake_0
 cmd item replace entity @s armor.head with awaken:lordscale_helmet
-wait 3
+wait 4
 shotnow m_lordscale_wake_a
 wait 3
 shotnow m_lordscale_wake_b
@@ -50,7 +51,7 @@ wait 5
 shotnow m_lordscale_wake_e
 wait 8
 shotnow m_lordscale_wake_f
-wait 20
+wait 220
 cmd item replace entity @s armor.head with awaken:halo_choir_helmet
 cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
 cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
@@ -62,7 +63,7 @@ look 180 8
 wait 30
 shotnow m_halo_choir_wake_0
 cmd item replace entity @s armor.head with awaken:halo_choir_helmet
-wait 3
+wait 4
 shotnow m_halo_choir_wake_a
 wait 3
 shotnow m_halo_choir_wake_b
@@ -74,7 +75,7 @@ wait 5
 shotnow m_halo_choir_wake_e
 wait 8
 shotnow m_halo_choir_wake_f
-wait 20
+wait 220
 cmd item replace entity @s armor.head with awaken:bellguard_helmet
 cmd item replace entity @s armor.chest with awaken:bellguard_chestplate
 cmd item replace entity @s armor.legs with awaken:bellguard_leggings
@@ -94,6 +95,7 @@ shotnow m_wake_fp_b
 wait 30
 shot m_wake_line
 hud off
+hud on
 cmd item replace entity @s weapon.mainhand with awaken:galewing_helmet
 camera first
 wait 12
@@ -114,6 +116,7 @@ cmd item replace entity @s weapon.mainhand with awaken:sunward_helmet
 cmd item replace entity @s weapon.offhand with awaken:hollowheart_chestplate
 wait 10
 shot m_held_both_fp
+hud off
 opt fov 50
 cmd tp @s 0.5 150 7.5 180 0
 camera front
@@ -144,28 +147,28 @@ wait 14
 shot m_ground
 cmd kill @e[type=minecraft:item_frame]
 cmd kill @e[type=minecraft:item]
-cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[250f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:0}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:0}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:0}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:0}}}}}
-cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[250f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:3}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:3}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:3}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:3}}}}}
-cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[250f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}}}}
-cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[250f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}}}}
-cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[250f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:0}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:0}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:0}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:0}}}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:3}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:3}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:3}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:3}}}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}}}}
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}}}}
 opt fov 30
 cmd tp @s 0.5 150 2.5 0 4
 wait 30
 shot m_marks_row
-cmd tp @s -3.5 150 5.9 0 6
+cmd tp @s -3.5 150 6.3 0 4
 wait 12
 shot m_marks_0
-cmd tp @s -1.5 150 5.9 0 6
+cmd tp @s -1.5 150 6.3 0 4
 wait 12
 shot m_marks_1
-cmd tp @s 0.5 150 5.9 0 6
+cmd tp @s 0.5 150 6.3 0 4
 wait 12
 shot m_marks_2
-cmd tp @s 2.5 150 5.9 0 6
+cmd tp @s 2.5 150 6.3 0 4
 wait 12
 shot m_marks_3
-cmd tp @s 4.5 150 5.9 0 6
+cmd tp @s 4.5 150 6.3 0 4
 wait 12
 shot m_marks_4
 quit

@@ -27,6 +27,7 @@ cmd item replace entity @s weapon.mainhand with minecraft:air
 hud off
 opt fov 40
 wait 20
+wait 260
 cmd item replace entity @s armor.head with awaken:galewing_helmet
 cmd item replace entity @s armor.chest with awaken:galewing_chestplate
 cmd item replace entity @s armor.legs with awaken:galewing_leggings

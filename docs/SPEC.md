@@ -18118,8 +18118,9 @@ that fidgets would be wrong).
 **44.11 Moments and marks (the Finish, stage 6).** Getting a set and how it was made both show on the body.
 - **The wake.** When the last piece goes on and the four are one set (`ArmourAbilities.whole`), the server tells the
   wearer and everyone within 80 blocks (`ArmourPayloads.Whole`: entity, set, first). The armour lights feet to crown:
-  each piece flares 130 ms after the one below it, a 90 ms rise and a 620 ms fade (`ArmourGlow.flash(glow, piece)`,
-  the shader's own flash, so the seams and what glows carry it), on the body, on your own first-person arms and legs
+  each piece flares 160 ms after the one below it, a 100 ms rise and a 760 ms fade (`ArmourGlow.flash(glow, piece)`,
+  the shader's own flash, raised from 0.18 to 0.34 of the accent on plain plate so it reads on a set with nothing
+  that glows; an ability's release flare is the same term and reads better for it), on the body, on your own first-person arms and legs
   and on the Status figure. It sounds the set's three notes (§44.12). Not for what you log in wearing, and at most
   once in ten seconds (`WHOLE_COOLDOWN`), so swapping a piece in and out stays quiet.
 - **The first time** a player wears a set whole, the System says one line in the set's rank colour: "Bellguard is
