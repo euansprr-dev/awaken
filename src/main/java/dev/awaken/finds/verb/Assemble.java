@@ -18,7 +18,7 @@ public final class Assemble implements Script {
     private final String build;
     private final Predicate<ItemStack> piece;
     private final BlockState[] states;
-    private String loose = "";
+    private String loose = "", base = "";
 
     private Assemble(String build, Predicate<ItemStack> piece, BlockState[] states) {
         this.build = build;
@@ -30,6 +30,12 @@ public final class Assemble implements Script {
         return new Assemble(build, piece, states);
     }
 
+    /** A part that can be used in place of the build itself, for when the first piece goes where there's only air. */
+    public Assemble base(String base) {
+        this.base = base;
+        return this;
+    }
+
     public Assemble carry(String loose) {
         this.loose = loose;
         return this;
@@ -38,7 +44,7 @@ public final class Assemble implements Script {
     @Override
     public boolean use(Ctx c, ServerPlayer p, String name, int i, ItemStack held) {
         if (!loose.isEmpty() && name.equals(loose)) return Fit.pickUp(c, p, loose, i);
-        if (!name.equals(build) || !piece.test(held)) return false;
+        if (!(name.equals(build) || (!base.isEmpty() && name.equals(base))) || !piece.test(held)) return false;
         int n = c.v(0);
         if (n >= states.length) return true;
         if (!p.isCreative()) held.shrink(1);

@@ -260,7 +260,7 @@ prop("orrery", "Orrery", [
          b(7.5, 13.5, 9, 8.5, 14.5, 20, "brass"), b(6.5, 12.5, 19, 9.5, 15.5, 22, "glass")])],
      (4, 0, 4, 12, 16, 12))
 prop("orrery_arm", "Orrery Arm", [[b(2, 0, 7, 13, 1, 9, "brass"), b(12, 0, 6, 15, 3, 10, t)] for t in ("gold", "verdigris", "glass", "gold")], (2, 0, 6, 15, 3, 10), solid=False)
-prop("stilled", "Stilled Figure", [figure("stand"), figure("reach"), figure("sit"), figure("down")], (3, 0, 4, 13, 16, 12))
+prop("stilled", "Stilled Figure", [figure("stand"), figure("reach"), figure("sit"), figure("down")], (3, 0, 4, 13, 16, 12), heavy=True)
 prop("stilled_child", "Stilled Child", [figure("child")] * 4, (4, 0, 5, 12, 16, 11))
 prop("stone_sheep", "Stone Sheep", [
     [b(4, 5, 1, 12, 12, 13, "pale"), b(5, 9, -3, 11, 14, 2, "smooth"), b(4.5, 0, 2, 6.5, 5, 4, "smooth"), b(9.5, 0, 2, 11.5, 5, 4, "smooth"), b(4.5, 0, 10, 6.5, 5, 12, "smooth"), b(9.5, 0, 10, 11.5, 5, 12, "smooth")],

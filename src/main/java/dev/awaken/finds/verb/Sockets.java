@@ -21,7 +21,7 @@ public final class Sockets implements Script {
     private String loose = "";
     private Predicate<ItemStack> accepts = s -> false;
     private IntFunction<BlockState> filled = i -> Blocks.AIR.defaultBlockState();
-    private boolean ordered, keep;
+    private boolean ordered, keep, onTop;
 
     private Sockets(String socket) {
         this.socket = socket;
@@ -38,6 +38,12 @@ public final class Sockets implements Script {
     /** The parts named {@code loose} can be picked up (they give their block's item). */
     public Sockets carry(String loose) {
         this.loose = loose;
+        return this;
+    }
+
+    /** What's fitted goes on top of the socket, not in its place (a blade laid on an anvil). */
+    public Sockets onTop() {
+        onTop = true;
         return this;
     }
 
@@ -65,7 +71,8 @@ public final class Sockets implements Script {
             return true;
         }
         if (!keep && !p.isCreative()) held.shrink(1);
-        c.set(socket, i, c.turned(filled.apply(i)));
+        if (onTop) c.set(c.pos(socket, i).above(), c.turned(filled.apply(i)));
+        else c.set(socket, i, c.turned(filled.apply(i)));
         bits |= 1 << i;
         c.v(0, bits);
         c.sound(c.pos(socket, i), SoundEvents.STONE_PLACE, 0.8F, 0.85F + 0.07F * Integer.bitCount(bits));
