@@ -20,6 +20,7 @@ public final class LandPrograms {
             Map.entry("awaken:wax_galleries", dev.awaken.gates.realms.land.WaxGalleries::new),
             Map.entry("awaken:broodwarren", dev.awaken.gates.realms.land.Broodwarren::new),
             Map.entry("awaken:brood_burrow", dev.awaken.gates.realms.land.BroodBurrow::new),
+            Map.entry("awaken:sealed_wing", dev.awaken.gates.realms.land.SealedWing::new),
             Map.entry("awaken:sunken_stacks", dev.awaken.gates.realms.land.SunkenStacks::new),
             Map.entry("awaken:hollow_hills", dev.awaken.gates.realms.land.HollowHill::new),
             Map.entry("awaken:catacombs", dev.awaken.gates.realms.land.Catacomb::new),
