@@ -6370,7 +6370,9 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     and rain). The first comparison (run 42853594714) found two faults, both in `azure`: by moonlight it turned a
     purple flower blue (its guard was an absolute difference, and every difference is small in the dark; it is now
     red over green by a share of the blue), and a bright sky paled to cyan (green rose with it; now red gives way
-    and green hardly moves). Test: `lens_grade_vivid_reads`.
+    and green hardly moves). Test: `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
+    (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
+    `docs/perf/steady60/grades/`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.
