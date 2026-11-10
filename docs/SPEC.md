@@ -6307,9 +6307,12 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     is Pixels' upscale, which can read any texture: Pixels makes one more colour texture the world's size
     (`lowOut`), Tiles hands it to the pass that draws into swap as its colour target, the copy into the main target
     is left out (`PostPass`'s frame lambda, cancelled at its head), and the upscale reads `lowOut` (through the steady
-    pass when that is on: it takes the picture from wherever it went. The first build left Steady out, and CI showed
-    straight out never engaging, since Steady is on in every preset but one and in Euan's own settings). Only with
-    one post effect requested, the sizes equal, and on the chains `lens_cinematic`, `lens_ultra` and `lens_swift`;
+    pass when that is on: it takes the picture from wherever it went). The first build never once engaged it, as CI
+    showed, for two reasons: it left Steady out, and Steady is on in every preset but one and in Euan's own
+    settings; and it counted the renderer's list of requested effects, which always opens with the game's own
+    "end_of_frame" slot and so is never one long. It counts the frame's own list now (`gameRenderState()
+    .requestedPostEffects`, the effects that passed the game's check). Only with one post effect applied, the sizes
+    equal, and on the chains `lens_cinematic`, `lens_ultra` and `lens_swift`;
     otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
     reads the finished picture's neighbours.
   - **Near clouds in the composite.** The walk of the near clouds (`include/lens_cloud_walk.glsl`, `cloudNear`) runs
@@ -6370,7 +6373,9 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     and rain). The first comparison (run 42853594714) found two faults, both in `azure`: by moonlight it turned a
     purple flower blue (its guard was an absolute difference, and every difference is small in the dark; it is now
     red over green by a share of the blue), and a bright sky paled to cyan (green rose with it; now red gives way
-    and green hardly moves). Test: `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
+    and green hardly moves). The second (run 42860718291) showed the allium still drifting blue at night, at a
+    ratio of -0.10: the guard now closes from 0 to -0.08. Vivid on Swift drew correctly there too. Test:
+    `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
     (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
     `docs/perf/steady60/grades/`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:

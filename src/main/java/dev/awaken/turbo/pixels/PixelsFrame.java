@@ -91,9 +91,12 @@ final class PixelsFrame {
             low = sized(low, "Pixels world", sw, sh, main.getColorTexture().getFormat(), main.getDepthTexture().getFormat());
             lowHand = sized(lowHand, "Pixels hand depth", sw, sh, null, hand.getDepthTexture().getFormat());
             lend(main, hand);
-            // straight out: when one post effect runs (Lens's chain; Tiles knows its own). The steady pass reads the
-            // picture from wherever it went (it was left out at first, and Steady is on in every preset but one)
-            if (net.minecraft.client.Minecraft.getInstance().gameRenderer.getRequestedPostEffects().size() == 1) {
+            // straight out: when one post effect runs (Lens's chain; Tiles knows its own), so nothing reads the main
+            // target after it. Counted from the frame's own list, the effects that passed the game's check: the
+            // renderer's wider list always opens with the game's "end_of_frame" slot, which no pack of ours fills, so
+            // it is never one long (the first build counted that list, and straight out never once engaged). The
+            // steady pass reads the picture from wherever it went
+            if (net.minecraft.client.Minecraft.getInstance().gameRenderer.gameRenderState().requestedPostEffects.size() == 1) {
                 lowOut = sized(lowOut, "Pixels straight out", sw, sh, main.getColorTexture().getFormat(), null);
                 dev.awaken.turbo.tiles.Tiles.straightOut(lowOut.getColorTextureView());
             }

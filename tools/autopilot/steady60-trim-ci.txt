@@ -1,5 +1,6 @@
 # The trim's picture check on CI (SPEC §22 "Steady Light"): the still scene with Pixels at 0.75, so the composite goes
-# straight out into Pixels' texture; the same ground view with straight out off (the two must match); the day sky, the
+# straight out into Pixels' texture; the same ground view with straight out off (the two must match), with the steady
+# pass on and then off; the day sky, the
 # dusk sky and the night sky (the wisps and the galaxy from the sky buffer, the clouds walked in the composite); and
 # the tick report with the sun map's sweep. Run: tools/tour-ci.sh tools/autopilot/steady60-trim-ci.txt 1500
 # ci knobs: LENS=cinematic
@@ -51,6 +52,15 @@ wait 20
 shotnow t1_ground_copy
 lens straight setting
 wait 20
+pixels steady off
+wait 40
+shotnow t7_nosteady
+lens straight off
+wait 20
+shotnow t7_nosteady_copy
+lens straight setting
+pixels steady on
+wait 40
 look -90 8
 wait 100
 shot t2_far

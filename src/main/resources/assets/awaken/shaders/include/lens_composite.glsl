@@ -62,7 +62,7 @@ vec3 lensGrade(vec3 c, vec4 a, vec4 b) {
     // azure: a violet blue toward a deeper azure, by blue's lead over the other two (red gives way; green hardly
     // rises, or a bright sky pales to cyan). Purples keep their hue: red over green by more than a share of the blue,
     // so a flower stays purple by moonlight too, where every difference is small
-    float lead = max(c.b - max(c.r, c.g), 0.0) * smoothstep(-0.14, -0.02, (c.g - c.r) / max(c.b, 1.0e-3)) * b.r;
+    float lead = max(c.b - max(c.r, c.g), 0.0) * smoothstep(-0.08, 0.0, (c.g - c.r) / max(c.b, 1.0e-3)) * b.r;
     c.g += lead * 0.08;
     c.r -= lead * 0.50;
     // leaf: green's lead brightens toward a sunlit yellow-green

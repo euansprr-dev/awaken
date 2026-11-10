@@ -15,7 +15,7 @@ def smooth(lo, hi, x):
     t = np.clip((x - lo) / (hi - lo), 0, 1); return t * t * (3 - 2 * t)
 def grade(c):
     r, gr, bl = c[..., 0].copy(), c[..., 1].copy(), c[..., 2].copy()
-    lead = np.maximum(bl - np.maximum(r, gr), 0) * smooth(-0.14, -0.02, (gr - r) / np.maximum(bl, 1e-3)) * b[0]
+    lead = np.maximum(bl - np.maximum(r, gr), 0) * smooth(-0.08, 0.0, (gr - r) / np.maximum(bl, 1e-3)) * b[0]
     gr += lead * 0.08; r -= lead * 0.50
     leaf = np.maximum(gr - np.maximum(r, bl), 0) * b[1]
     gr += leaf * 0.55; r += leaf * 0.40
