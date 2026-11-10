@@ -6260,10 +6260,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     Kin, Delve, Ritual), 2 to 5%.
   - **Chunk pacing** (Turbo: `dev.awaken.turbo.chunkpace`, `awaken.chunkpace.mixins.json`, client setting
     `turboChunkPacing`, autopilot `chunkpace on|off|setting`; version-locked to Minecraft 26.3, NeoForge 26.3.0.95 and
-    Sodium 0.9.3-beta.1+mc26.3). **Off by default until Euan says yes to the hook**, as the Turbo contract asks: shown
-    the result he said "Push everything to the orchestrator since it's already a huge step forward", which hands the
-    work over but is not his word on the hook itself. On his yes: the setting's default to true, and its line in
-    CLAUDE.md's Turbo list. A pseudo mixin in
+    Sodium 0.9.3-beta.1+mc26.3; approved by Euan on 2026-11-10, asked about this hook by name: "Yes, turn it on". On by
+    default; its line in CLAUDE.md's Turbo list is still to be added by a session that may edit that file). A pseudo mixin in
     Sodium's `ChunkTracker.forEachEvent`: before it runs, all but three of the queued unloads (or a fortieth of a long
     queue) are lifted out of `unloadQueue`, and after it they go back in, so between frames the queue is Sodium's own
     and a chunk that returns before its turn is taken off it by Sodium's own bookkeeping. A waiting chunk is one
