@@ -25,11 +25,14 @@ Stand anywhere in the overworld, as an admin:
 | The Silvered Halls | `/awaken gate realm_enter C awaken:silvered_halls 1` | A mirror palace's back halls, rolled from the seed (rank C) |
 | The Sealed Wing | `/awaken gate realm_enter C awaken:sealed_wing 1` | A sealed laboratory wing, rolled from the seed (rank C) |
 | The Sleepless Ward | `/awaken gate realm_enter C awaken:sleepless_ward 1` | A house as a bad dream remembers it, rolled from the seed (rank C) |
+| The Rime Hollows | `/awaken gate realm_enter C awaken:rime_hollows 1` | Ice caves under the monastery's mountain, rolled from the seed (rank C) |
+| The Green Dark | `/awaken gate realm_enter E awaken:green_dark 1` | Jungle caves under the temple, rolled from the seed |
+| The Unlit Stair | `/awaken gate realm_enter A awaken:unlit_stair 1` | A shrine cut down into nothing, rolled from the seed (rank A) |
 
 A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
-Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. On these
-gates seed 1 is a great delve with a chasm you cross on pillars, seed 2 a short plunge down two shafts, seed 3 a short climb,
-seed 5 a standard delve.
+Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. The layout
+comes from the seed alone, so the same number gives the same layout in every kind: seed 1 is a great delve with a shaft and
+a chasm you cross on pillars, seed 2 a short plunge down two shafts, seed 3 a short climb, seed 5 a standard delve.
 
 Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a
@@ -71,8 +74,11 @@ creative player, and packs do not notice one.
 - The Hour Crypt still looks flatter and bluer than its painting, and The Quiet Barrow is still short of its painting (listed
   in `../round-two/STATUS.md`). This work was about play, not those looks.
 - The rolled dungeons are plainer than a gate built by hand from a painting. They are meant to be the short gates in the mix.
-- Every rolled kind is checked by test on eight seeds (it can be walked end to end, nothing floats, every fight has room).
-  Seen in the real game so far: The Lower Combs, The Bone Roads, The Hollow Hills, The Root Cellars, The Tallow Runs, The
-  Cinder Workings, The Sunken Stacks and The Sporewells. The Sporewells' walls were a clutter of five blocks in that walk
-  and have been calmed since; nobody has seen the calmer version in the game yet.
-- A great run's chasm in The Lower Combs was too dark in the real game; its walls carry more lit comb now, unseen.
+- Every rolled kind is checked by test on eight seeds, 104 different layouts in all (each can be walked end to end, nothing
+  floats, every fight has room). The first fourteen kinds have been seen in the real game; The Rime Hollows, The Green Dark
+  and The Unlit Stair only on the checker so far.
+- The Sporewells' walls were a clutter of five blocks on its first walk; it was rewritten and its second walk reads as a
+  fungus cave, still the busiest kind. The Glass Warrens glowed over half its walls; that is turned down, and nobody has
+  seen the calmer version in the game yet.
+- A great run's chasm was too dark in the real game. Every shaft and chasm is lit by the generator now, and that was seen
+  working in The Lower Combs, The Silvered Halls and The Sealed Wing.

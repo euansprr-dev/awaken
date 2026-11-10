@@ -20861,6 +20861,15 @@ lit strips at knee height and under the roof, tanks for pillars), **The Sleeples
 ranks C and B: papered corridors as a dream remembers them, a rail that slips out of line, doors and windows that lead nowhere).
 The false doors are real doors set in solid wall: a player may open one and finds wall.
 
+Three more, which bring the kinds to seventeen: **The Unlit Stair** (`awaken:unlit_stair`, Abyssal Shrine, ranks A and S: black
+dressed stone with one pale band every sixth course, niches with votives, a pale line down every way, nothing on the floors),
+and two second kinds for themes that had a built one, each wild where the first is built: **The Rime Hollows**
+(`awaken:rime_hollows`, Frost Monastery: natural ice caves, stone at a wall's foot, then snow, then blue ice, sheets of it lit
+from inside, icicles in clusters) and **The Green Dark** (`awaken:green_dark`, Overgrown Temple: wet jungle caves, moss taking
+whole walls, curtains of vine and glow berries along lines in the roof). With these every theme that suits a crawl has a kind.
+Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
+a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
