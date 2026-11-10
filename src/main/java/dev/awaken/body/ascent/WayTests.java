@@ -33,6 +33,72 @@ final class WayTests {
         AwakenTests.registerIsolated("way_up_handed_down", 100, WayTests::handedDown);
         AwakenTests.registerIsolated("way_up_form_and_field", 60, WayTests::formAndField);
         AwakenTests.register("way_up_words_and_record", 20, WayTests::wordsAndRecord);
+        AwakenTests.registerIsolated("way_up_moves", 40, WayTests::moves);
+    }
+
+    /** A client says it made a move out of {@code from}: the server's own judging of it. */
+    private static void says(ServerPlayer p, AscentState from, int what) {
+        AscentMotion m = AscentServer.motion(p);
+        long now = AscentServer.now(p);
+        m.state = from;
+        m.since = now;
+        m.endedAt = now;
+        AscentServer.onEvent(p, new AscentPayloads.Event(what, 1F));
+        m.state = AscentState.NONE;
+    }
+
+    /**
+     * Rope and Wings' six moves on the road (SPEC §63.8): each is counted only with its rung and its mastery (the sling
+     * with the rope, which a D-rank hunter does not hold before a vault; the spring at Tether mastery 3; the rope strike
+     * at 5; the flare with wings; the skim at Wings mastery 3; the takeoff with flight), and the count is what the
+     * client's lesson is told, so a move made once is never taught again.
+     */
+    private static void moves(GameTestHelper h) {
+        BodyConfig.wayOverride = true;
+        ServerPlayer p = player(h);
+        try {
+            TrialHooks.done(p, TrialHooks.RINGER, 0, 0);
+            Progression.passReassessment(p);
+            h.assertTrue(!AscentServer.allowed(p, AscentState.ZIP) && WayUp.moves(p) == 0, "D-rank before a vault: no rope, so no sling; no move made yet");
+            says(p, AscentState.CARRY, AscentPayloads.EV_SPRING);
+            says(p, AscentState.NONE, AscentPayloads.EV_FLARE);
+            says(p, AscentState.GLIDE, AscentPayloads.EV_SKIM);
+            says(p, AscentState.SOAR, AscentPayloads.EV_TAKEOFF);
+            h.assertTrue(WayUp.moves(p) == 0, "without its rung no move is counted, whatever a client says: " + WayUp.moves(p));
+            // the rope: the sling at once, the spring at mastery 3, the strike at 5
+            Ascent.grant(p, Ascent.Tier.TETHER, "tether vow");
+            h.assertTrue(AscentServer.allowed(p, AscentState.ZIP), "the sling's pull comes with the rope");
+            says(p, AscentState.ZIP, AscentPayloads.EV_SLING);
+            says(p, AscentState.CARRY, AscentPayloads.EV_SPRING);
+            h.assertTrue(WayUp.moves(p) == WayUp.Move.SLING.bit(), "the sling with the rope, and no spring below Tether mastery " + AirRules.SPRING_LEVEL + ": " + WayUp.moves(p));
+            AscentServer.addMastery(p, AscentMemory.Track.TETHER, 25 * AirRules.SPRING_LEVEL * AirRules.SPRING_LEVEL);
+            says(p, AscentState.CARRY, AscentPayloads.EV_SPRING);
+            h.assertTrue((WayUp.moves(p) & WayUp.Move.SPRING.bit()) != 0, "the spring at Tether mastery " + AirRules.SPRING_LEVEL);
+            h.assertTrue(!AirRules.strikes(AirRules.STRIKE_LEVEL - 1, 8, 20) && AirRules.strikes(AirRules.STRIKE_LEVEL, 8, 20),
+                    "the rope strike at Tether mastery " + AirRules.STRIKE_LEVEL);
+            // wings: the flare at once, the skim at mastery 3; the takeoff only with flight
+            Ascent.grant(p, Ascent.Tier.WINGS, "sky platform core");
+            says(p, AscentState.NONE, AscentPayloads.EV_FLARE);
+            says(p, AscentState.GLIDE, AscentPayloads.EV_SKIM);
+            says(p, AscentState.SOAR, AscentPayloads.EV_TAKEOFF);
+            int now = WayUp.moves(p);
+            h.assertTrue((now & WayUp.Move.FLARE.bit()) != 0 && (now & (WayUp.Move.SKIM.bit() | WayUp.Move.TAKEOFF.bit())) == 0,
+                    "the flare with wings; no skim below Wings mastery " + AirRules.SKIM_LEVEL + ", no takeoff without flight: " + now);
+            AscentServer.addMastery(p, AscentMemory.Track.WINGS, 25 * AirRules.SKIM_LEVEL * AirRules.SKIM_LEVEL);
+            says(p, AscentState.GLIDE, AscentPayloads.EV_SKIM);
+            Ascent.grant(p, Ascent.Tier.SKYBORN, "the sky warden");
+            AscentServer.motion(p).aether = 1;
+            says(p, AscentState.SOAR, AscentPayloads.EV_TAKEOFF);
+            int all = 0;
+            for (WayUp.Move mv : WayUp.Move.VALUES) if (mv != WayUp.Move.STRIKE) all |= mv.bit();
+            h.assertTrue(WayUp.moves(p) == all, "the skim at Wings mastery 3 and the takeoff with flight: every move but the strike made, " + WayUp.moves(p));
+        } finally {
+            BodyConfig.wayOverride = null;
+            AscentServer.motion(p).state = AscentState.NONE;
+            WayUp.forget(p.getUUID());
+            h.getLevel().getServer().getPlayerList().remove(p);
+        }
+        h.succeed();
     }
 
     private static ServerPlayer player(GameTestHelper h) {

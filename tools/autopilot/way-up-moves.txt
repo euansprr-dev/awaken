@@ -1,0 +1,102 @@
+# The Way Up (SPEC 63.8): the Lessons of Rope and Wings' six moves, the ones a tour can reach without mastery.
+# The takeoff's (standing outdoors with flight: the keys held at the top with an arrow, the gold figure rising; then
+# looking up, the caps on the ring in the sky; the takeoff made and its card), the flare's (a glide down toward the
+# ground), the K rows with a line a move, and a try at the sling's (a wall ahead with nothing to swing from).
+# Flight is a dev grant here (no rung is handed down, so no lesson is owed).
+# Run on CI: tools/tour-ci.sh tools/autopilot/way-up-moves.txt 1500
+world autopilot_way_up_moves survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tick sprint 6200
+# the sprint must be over before anything is timed
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 5500
+hud on
+camera first
+# ---- the takeoff, standing outdoors with flight ----
+cmd awaken ascent grant skyborn
+cmd awaken ascent aether full
+cmd awaken ascent pilot aether 1
+cmd tp @s ~ ~ ~ ~ 0
+# the road is told within five seconds; then standing still brings the lesson
+wait 150
+shotnow moves_01_takeoff_standing
+wait 16
+shotnow moves_02_takeoff_figure
+wait 16
+shotnow moves_03_takeoff_figure
+cmd tp @s ~ ~ ~ ~ -50
+wait 12
+shotnow moves_04_takeoff_looking_up
+cmd awaken ascent pilot aether 1
+cmd awaken ascent pilot hold sneak 16
+wait 12
+cmd awaken ascent pilot hold jump 3
+wait 8
+shotnow moves_05_takeoff_made
+wait 30
+shotnow moves_06_takeoff_card
+# fold and come down
+cmd awaken ascent pilot hold sneak 6
+wait 120
+# ---- the flare: a glide down toward the ground ----
+cmd tp @s ~ ~48 ~ ~ 8
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 20
+shotnow moves_07_glide_high
+wait 20
+shotnow moves_08_glide
+wait 20
+shotnow moves_09_glide
+wait 20
+shotnow moves_10_glide
+wait 20
+shotnow moves_11_glide
+wait 20
+shotnow moves_12_glide
+wait 20
+shotnow moves_13_glide
+wait 20
+shotnow moves_14_glide
+wait 30
+shotnow moves_15_landed
+wait 60
+# ---- the K rows: a line a move, and the next one only as a diamond ----
+screen band powers
+wait 30
+shotnow moves_16_k_rows
+screen close
+# ---- a try at the sling: a wall ahead, nothing tall enough to swing from ----
+cmd tp @s ~ ~ ~ 0 -10
+cmd fill ~-4 ~ ~7 ~4 ~6 ~9 minecraft:stone
+wait 30
+shotnow moves_17_sling_marker
+wait 30
+shotnow moves_18_sling_marker
+cmd awaken ascent pilot hold tether 50
+wait 16
+shotnow moves_19_sling_pull
+wait 40
+shotnow moves_20_sling_card
+info
+quit

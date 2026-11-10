@@ -33,6 +33,9 @@ public final class WayClient {
     private WayClient() {}
 
     static int told, done, owed;
+    /** Which of Rope and Wings' six moves have been made once (a bit each, WayUp.Move), and whether the road has been heard at all. */
+    static int moves;
+    static boolean synced;
     static final long[] PLACES = new long[WayUp.Rung.VALUES.length];
     static long gateAt = WayMemory.NONE;
     /** The first flight: the pier's end and the way off it, waiting for the gift's scene to finish; then running. */
@@ -68,6 +71,8 @@ public final class WayClient {
             owed = msg.owed();
             System.arraycopy(msg.places(), 0, PLACES, 0, Math.min(PLACES.length, msg.places().length));
             gateAt = msg.gateAt();
+            moves = msg.moves();
+            synced = true;
             LocalPlayer p = Minecraft.getInstance().player;
             // a place has just lit up for you: its own low note (the vault's call, quiet and high)
             if (msg.woke() >= 0 && p != null) AscentSounds.local(p, AscentContent.VOW_CALL.get(), 0.5F, 1.3F);
@@ -104,7 +109,8 @@ public final class WayClient {
     }
 
     static void reset() {
-        told = done = owed = 0;
+        told = done = owed = moves = 0;
+        synced = false;
         java.util.Arrays.fill(PLACES, WayMemory.NONE);
         gateAt = WayMemory.NONE;
         pierEnd = null;

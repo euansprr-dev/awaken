@@ -15,10 +15,11 @@ public final class WayPayloads {
 
     /**
      * Server → client: your road. {@code told}, {@code done}, {@code owed}: a bit a rung ({@link WayUp.Rung}); the five
-     * places (packed blocks, {@link WayMemory#NONE} for none); the Gauntlet's gate while it stands; and {@code woke}: the
-     * rung whose place lit up just now (-1 for none), so the client shows it once.
+     * places (packed blocks, {@link WayMemory#NONE} for none); the Gauntlet's gate while it stands; {@code woke}: the
+     * rung whose place lit up just now (-1 for none), so the client shows it once; and {@code moves}: which of Rope and
+     * Wings' six moves have been made once (a bit each, {@link WayUp.Move}), so a move's lesson ends for good.
      */
-    public record Way(int told, int done, int owed, long[] places, long gateAt, int woke) implements CustomPacketPayload {
+    public record Way(int told, int done, int owed, long[] places, long gateAt, int woke, int moves) implements CustomPacketPayload {
         public static final Type<Way> TYPE = new Type<>(Awaken.id("ascent_way"));
         public static final StreamCodec<ByteBuf, Way> STREAM_CODEC = StreamCodec.of((buf, m) -> {
             ByteBufCodecs.VAR_INT.encode(buf, m.told);
@@ -27,11 +28,12 @@ public final class WayPayloads {
             for (int i = 0; i < WayUp.Rung.VALUES.length; i++) buf.writeLong(i < m.places.length ? m.places[i] : WayMemory.NONE);
             buf.writeLong(m.gateAt);
             buf.writeByte(m.woke);
+            buf.writeByte(m.moves);
         }, buf -> {
             int told = ByteBufCodecs.VAR_INT.decode(buf), done = ByteBufCodecs.VAR_INT.decode(buf), owed = ByteBufCodecs.VAR_INT.decode(buf);
             long[] places = new long[WayUp.Rung.VALUES.length];
             for (int i = 0; i < places.length; i++) places[i] = buf.readLong();
-            return new Way(told, done, owed, places, buf.readLong(), buf.readByte());
+            return new Way(told, done, owed, places, buf.readLong(), buf.readByte(), buf.readByte());
         });
         @Override public Type<Way> type() { return TYPE; }
     }
