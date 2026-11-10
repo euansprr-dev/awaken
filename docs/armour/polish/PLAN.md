@@ -298,9 +298,26 @@ Built on this branch, on top of build's tip (merged at 464ecf45c), one commit a 
 | 5 Sound | 25c34b5fb | 45 sounds from Minecraft's recordings by name; equip, stride and blow by what a set is made of; the three notes | every name checked against this game; test `armour_sounds_named` | **nobody has heard any of it**: the listening page is the gate |
 | Bigger options | 2ed291bc5 | the suit answers its ability (a kick on the living parts); Admire (hold O, the camera circles you in a hero light) | kit sweep check with the kick; CI tour (`after6`) | Admire by the held key (the tour uses the command) |
 
-Seen in the game on CI so far: stages 0 to 2 on all 29 sets (`after3`); living parts on all twelve sets and mastery
-IV's parts growing in (`after5` living, 72 shots: the marker turns, the sun's rays turn, the halo tilts, lanterns and
-ribbons swing in a walk, Galewing's primaries open in a fall, the shards drift).
+Seen in the game on CI (GitHub's macOS runners, Lens Cinematic), tour folders under `run-autopilot/screenshots-ci/`:
+- stages 0 to 2 on all 29 sets, day and night, first person and a cast (`after3`); Lens Swift far (`swift`);
+- stage 3's C-rank sets, today beside built (`after5` worn-1);
+- living parts on all twelve sets and mastery IV's parts growing in (`after5` living, 72 shots);
+- the wake climbing Lordscale and Halo Choir and on your own arm, pieces in frames, on the ground and held seen from
+  outside, the maker's mark and a scale flaw on a forged Galewing (`after8` moments);
+- the kick on six sets and Admire by day and by night (`after8` extras).
+
+What the tours changed after a first look: the wake's light was too faint on plain plate (the flare is now 0.34 of the
+accent, was 0.18) and a held piece was twice a block (it is now measured and fitted to one); Admire cut Lordscale's
+horns at 3.1 blocks (now 4). Three of my own tour mistakes cost a run each: a 40-second timeout, the HUD hidden (which
+hides the hand), and forge-mark stands turned the wrong way.
+
+GameTests (dispatched by hand: they do not run on `claude/**` pushes): the first full run failed only
+`audio_events_resolve` (the eight movement sounds had no subtitle; fixed). The second failed only
+`fights_guard_holds_ground` (the fights module's; it passed on the run before with the same server code, on a runner
+that took 35 minutes instead of 24). A third run is on the tip after merging build (f2f5b5591).
+
+Not seen anywhere: a piece in the hand from your own eyes after it was raised (9 px higher; the last shot of it showed
+it low and small); the weld's ripples (too fine for a tour shot); slim-arm skins; the VFX Look; any sound.
 
 Left to do: stage 3's B, A and S sets (after his eye on C); the Status line placed by the K menu's owner; the Hunter
 sets' equip sound (the gear module's items); the old sound files deleted once the page is marked; the measuring run on
