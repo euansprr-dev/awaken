@@ -4,7 +4,7 @@
   "mouthYaw": 0,
   "masses": [
     {"name": "moor", "op": "add", "shape": "box", "from": [-240, 0, -240], "to": [240, 63, 240], "rough": 2, "role": "ground"},
-    {"name": "mouth_pad", "op": "add", "shape": "cylinder", "at": [0, 58, -205], "r": 10, "h": 6, "role": "floor"},
+    {"name": "mouth_pad", "op": "add", "shape": "cylinder", "at": [0, 58, -205], "r": 4, "h": 6, "role": "floor"},
     {"name": "rim_w1", "op": "add", "shape": "dome", "at": [-236, 58, -120], "r": 60, "h": 36, "rough": 3, "role": "ground"},
     {"name": "rim_w2", "op": "add", "shape": "dome", "at": [-240, 58, 20], "r": 70, "h": 44, "rough": 3, "role": "ground"},
     {"name": "rim_w3", "op": "add", "shape": "dome", "at": [-236, 58, 160], "r": 60, "h": 38, "rough": 3, "role": "ground"},
@@ -56,7 +56,7 @@
   "sites": [
     {"kind": "MOUTH", "at": [0, 64, -205], "radius": 8, "what": ""},
     {"kind": "PORTAL", "at": [0, 64, -211], "radius": 2, "what": ""},
-    {"kind": "LORD", "at": [-37, 104, -50], "radius": 34, "what": "lord"},
+    {"kind": "LORD", "at": [-59, 104, -50], "radius": 34, "what": "lord"},
     {"kind": "WARDEN", "at": [-130, 66, 105], "radius": 14, "what": "long barrow"},
     {"kind": "WARDEN", "at": [110, 70, 120], "radius": 16, "what": "stone ring"},
     {"kind": "WARDEN", "at": [0, 72, 150], "radius": 12, "what": "tarn"},
