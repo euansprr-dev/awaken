@@ -48,6 +48,9 @@ final class HoldSound extends AbstractTickableSoundInstance {
         Entity e = mc.level.getEntity(entityId);
         SoundEvent ev = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(prof.holdSound()));
         if (e == null || ev == null) return;
+        // Power sounds: New. A power whose score has a gather plays that from the hands; a let-go cuts it (PowerVoice)
+        if (PowerVoice.playAt(mc.level, prof.power(), dev.awaken.powers.fx.Voice.Beat.GATHER, e.getX(), e.getEyeY() - 0.3, e.getZ(), 1f,
+                entityId * 31 + FxWorld.ticks, entityId, 1)) return;
         int slot = -1;
         for (int i = 0; i < SLOTS; i++) {
             HoldSound h = PLAYING[i];
