@@ -162,7 +162,8 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     if built:
         B = lambda n: os.path.join(built, n + '.png')
         for n, o in (('h_table_carry_mid', 'built_carry'), ('h_table_result', 'built_result'), ('h_table_pile', 'built_pile'), ('h_table_fast', 'built_fast'),
-                     ('h_furnace_carry', 'built_furnace_carry'), ('h_furnace_flare', 'built_furnace_flare')):
+                     ('h_furnace_carry', 'built_furnace_carry'), ('h_furnace_flare', 'built_furnace_flare'), ('h_anvil_result', 'built_anvil'),
+                     ('h_smithing_result', 'built_smithing'), ('h_glass_hopper', 'built_glass'), ('h_body_kneel_side', 'built_kneel')):
             shot(B(n), o)
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
