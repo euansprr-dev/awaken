@@ -137,8 +137,10 @@ final class DelveTests {
      */
     private static void heartInRock(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        // two blocks short of a chunk's edge, so veins cross it whichever slot the test runs in
-        BlockPos base = h.absolutePos(new BlockPos(0, 24, 0)), heart = base.offset(14 - (base.getX() & 15), 0, 0);
+        // two blocks short of a chunk's edge in x, so veins cross it whichever slot the test runs in; mid-chunk in z, so the
+        // open north face's veins (a block north of the heart) are in the chunks traced below, not the row of chunks past
+        // them (a heart on a chunk's north row left nothing to count, one slot in sixteen)
+        BlockPos base = h.absolutePos(new BlockPos(0, 24, 0)), heart = base.offset(14 - (base.getX() & 15), 0, 8 - (base.getZ() & 15));
         for (int dx = -8; dx <= 8; dx++) for (int dy = -8; dy <= 8; dy++) for (int dz = -2; dz <= 2; dz++) {
             level.setBlock(heart.offset(dx, dy, dz), dz < 0 ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState(), 2);
         }
