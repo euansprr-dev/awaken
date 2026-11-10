@@ -1,5 +1,16 @@
 # Places: where they stand (10 Nov 2026)
 
+> **Placement finalised, 11 Nov (SPEC §62.2, §62.3, §62.9).** Euan on the built sixty: "these are fantastic... make sure
+> they're placed in the right ways... tied into the world generation... never glitchy, like vanilla villages... very rarely
+> see two of the same... finalize it all." Done: a monument is tried as the shape it is (its own terrace, the ring round
+> it, its piers), in all four turns at every spot, and the best taken; the land near a cliff's lip is refused; what it
+> plants keeps out of water; monuments are dealt from a deck per three-kilometre block with a second card, twins never
+> within 2.3 km. A counted world (seed 4242, 17 km square): 272 standing of 49 kinds, the nearest 264 from the start,
+> four within a kilometre, the nearest two of a kind 2,561 apart. Count and real-land drawings without a client:
+> `tools/content/finds_census.sh`. Same page, now with 22 monuments drawn where the world put them:
+> https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z . Not merged, unplayed. Out when this was written: the full suite and
+> four placement tours (`placed-a..d`) on GitHub. Follow-up, not mine: the village roads do not know of monuments.
+
 > **Built, 10 Nov ~17:00 UTC: the long world (SPEC §62).** Euan approved the plan in full ("Go with the full plan") and
 > added that everything must sit naturally in the land and come closer to its painting. All of it is coded: sixty
 > monuments in twelve families, fifteen remains, twelve relics that grow, terraces that meet the land. The four `finds_`
