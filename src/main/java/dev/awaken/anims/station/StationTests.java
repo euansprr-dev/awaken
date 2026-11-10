@@ -34,6 +34,7 @@ public final class StationTests {
         AwakenTests.register("stations_hand_never_hides", 20, StationTests::handNeverHides);
         AwakenTests.register("stations_presence", 40, StationTests::presence);
         AwakenTests.register("stations_living_slots", 20, StationTests::livingSlots);
+        AwakenTests.register("stations_workstations", 20, StationTests::workstations);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -336,6 +337,65 @@ public final class StationTests {
             now[i] = new ItemStack(Items.COBBLESTONE, 8 - i);
         }
         h.assertTrue(SlotMoves.read(was, now, false, out) == 0, "more than six slots changed in a tick: left to whoever made it");
+        h.succeed();
+    }
+
+    /**
+     * The six workstations (SPEC §63.8): each block is its kind (a grindstone only on the floor), each kind's slots lie
+     * on its own block, apart from one another, and from each of its three views, from all four sides, at four window
+     * sizes, every slot is inside the room and a click on its middle picks it.
+     */
+    static void workstations(GameTestHelper h) {
+        h.assertTrue(StationView.kindOf(Blocks.ANVIL.defaultBlockState()) == StationView.Kind.ANVIL
+                && StationView.kindOf(Blocks.DAMAGED_ANVIL.defaultBlockState()) == StationView.Kind.ANVIL
+                && StationView.kindOf(Blocks.SMITHING_TABLE.defaultBlockState()) == StationView.Kind.SMITHING
+                && StationView.kindOf(Blocks.STONECUTTER.defaultBlockState()) == StationView.Kind.STONECUTTER
+                && StationView.kindOf(Blocks.CARTOGRAPHY_TABLE.defaultBlockState()) == StationView.Kind.CARTOGRAPHY
+                && StationView.kindOf(Blocks.BREWING_STAND.defaultBlockState()) == StationView.Kind.BREWING
+                && StationView.kindOf(Blocks.LOOM.defaultBlockState()) == null, "each workstation is its own kind, and a loom has no scene");
+        var floor = Blocks.GRINDSTONE.defaultBlockState().setValue(net.minecraft.world.level.block.GrindstoneBlock.FACE,
+                net.minecraft.world.level.block.state.properties.AttachFace.FLOOR);
+        var wall = floor.setValue(net.minecraft.world.level.block.GrindstoneBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL);
+        h.assertTrue(StationView.kindOf(floor) == StationView.Kind.GRINDSTONE && StationView.kindOf(wall) == null, "a grindstone has a scene only on the floor");
+        int[][] screens = {{320, 240}, {424, 238}, {640, 360}, {1280, 720}};
+        int[][] ways = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], o = new double[3];
+        Quaternionf rot = new Quaternionf();
+        for (StationView.Kind kind : new StationView.Kind[]{StationView.Kind.ANVIL, StationView.Kind.SMITHING, StationView.Kind.GRINDSTONE,
+                StationView.Kind.STONECUTTER, StationView.Kind.CARTOGRAPHY, StationView.Kind.BREWING}) {
+            for (int[] way : ways) {
+                StationView.Station s = new StationView.Station(TABLE, kind, way[0], way[1]);
+                for (int i = 0; i < kind.slots; i++) {
+                    StationView.spot(s, i, p, 0);
+                    h.assertTrue(p[0] > TABLE.getX() + 0.02 && p[0] < TABLE.getX() + 0.98 && p[2] > TABLE.getZ() + 0.02 && p[2] < TABLE.getZ() + 0.98
+                            && p[1] > TABLE.getY() && p[1] < TABLE.getY() + 1.05, kind + " slot " + i + " lies on its own block");
+                    for (int j = 0; j < i; j++) {
+                        StationView.spot(s, j, o, 0);
+                        double d = Math.sqrt((p[0] - o[0]) * (p[0] - o[0]) + (p[1] - o[1]) * (p[1] - o[1]) + (p[2] - o[2]) * (p[2] - o[2]));
+                        h.assertTrue(d > kind.half * 1.6, kind + " slots " + j + " and " + i + " are apart (" + d + ")");
+                    }
+                }
+                for (int b = 0; b < StationView.BENCHES; b++) {
+                    StationView.benchEye(s, b, eye);
+                    for (int[] scr : screens) {
+                        int w = scr[0], gh = scr[1];
+                        float aspect = (float) w / gh;
+                        StationView.Layout l = StationView.layout(w, gh, 2, true);
+                        StationView.frame(s, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
+                        StationView.rotation(view[0], view[1], rot);
+                        for (int i = 0; i < kind.slots; i++) {
+                            StationView.spot(s, i, p, 0);
+                            String at = kind + " slot " + i + " from view " + b + " at " + w + "x" + gh;
+                            h.assertTrue(StationView.project(p[0], p[1], p[2], eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q) && l.inRoom(q[0], q[1]),
+                                    at + " is inside the room");
+                            int got = StationView.pick(s, l, eye[0], eye[1], eye[2], rot, view[2], aspect, q[0], q[1], w, gh);
+                            h.assertTrue(got == i, at + " picks itself (got " + got + ")");
+                        }
+                    }
+                }
+            }
+        }
         h.succeed();
     }
 

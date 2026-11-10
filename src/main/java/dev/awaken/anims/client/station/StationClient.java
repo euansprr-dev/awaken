@@ -8,8 +8,6 @@ import dev.awaken.anims.station.StationView.Kind;
 import dev.awaken.anims.station.StationView.Station;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractFurnaceScreen;
-import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -24,7 +22,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.CraftingTableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -110,7 +107,7 @@ public final class StationClient {
         // came between it and your eyes (a second player can place one while you work)
         if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null
                 || !Minecraft.getInstance().player.isAlive() || StationCamera.blocked())) {
-            boolean wasTable = kind == Kind.TABLE && open;
+            boolean wasTable = kind.bench() && open;
             StationCamera.end();
             bench = false;
             if (wasTable && on() && Minecraft.getInstance().player != null && Minecraft.getInstance().player.isAlive()) {
@@ -150,6 +147,9 @@ public final class StationClient {
                 if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationFire.flare(station);
             } else if (taken || (!more && !menu.getCarried().isEmpty())) {
                 StationHands.lifted();
+                // taking what an anvil, a smithing table or a grindstone made: the other hand's blows on the work,
+                // sparks off each (SPEC §63.8); the block's own sound is vanilla's
+                if (taken && (kind == Kind.ANVIL || kind == Kind.SMITHING || kind == Kind.GRINDSTONE)) StationHands.blows(kind == Kind.SMITHING ? 1 : 0, kind == Kind.ANVIL ? 3 : 1);
             } else if (!tapped && i != res) { StationHands.pass(i); tapped = true; }
         }
         // the view is home again: the view you had before comes back
@@ -225,8 +225,7 @@ public final class StationClient {
 
     private static void onUse(PlayerInteractEvent.RightClickBlock e) {
         if (!e.getLevel().isClientSide()) return;
-        var b = e.getLevel().getBlockState(e.getPos()).getBlock();
-        if (!(b instanceof CraftingTableBlock) && !(b instanceof AbstractFurnaceBlock)) return;
+        if (StationView.kindOf(e.getLevel().getBlockState(e.getPos())) == null) return;
         used = e.getPos().immutable();
         usedAt = ticks;
     }
@@ -236,13 +235,13 @@ public final class StationClient {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || used == null || ticks - usedAt > 10 || !on()) return;
         if (p.isShiftKeyDown()) return; // the escape hatch: the plain screen
-        if (e.getNewScreen() instanceof CraftingScreen cs) {
-            begin(p, used, Kind.TABLE);
-            e.setNewScreen(new StationScreen<>(cs.getMenu(), p.getInventory(), cs.getTitle(), Kind.TABLE));
-        } else if (e.getNewScreen() instanceof AbstractFurnaceScreen<?> fs) {
-            if (!FurnaceWorld.supported(used, p.level().getBlockState(used)) || !begin(p, used, Kind.FURNACE)) return;
-            e.setNewScreen(new StationScreen<>(fs.getMenu(), p.getInventory(), fs.getTitle(), Kind.FURNACE));
-        }
+        // the station you used, and the screen that is its own: the scene takes that screen's place over the same menu
+        Kind k = StationView.kindOf(p.level().getBlockState(used));
+        if (k == null || !(e.getNewScreen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> vs) || vs instanceof StationScreen<?>
+                || !StationView.menuFits(k, vs.getMenu())) return;
+        if (k == Kind.FURNACE && !FurnaceWorld.supported(used, p.level().getBlockState(used))) return;
+        if (!begin(p, used, k)) return;
+        e.setNewScreen(new StationScreen<>(vs.getMenu(), p.getInventory(), vs.getTitle(), k));
     }
 
     private static boolean begin(LocalPlayer p, BlockPos pos, Kind k) {
@@ -307,7 +306,7 @@ public final class StationClient {
         }
         framed = false;
         boolean quick = ticks - closedAt < 240;
-        if (bench && k == Kind.TABLE) {
+        if (bench && k.bench()) {
             inTicks = quick ? 4 : StationView.glideTicks(Math.sqrt((from != null ? from : eye).distanceToSqr(target)));
             outTicks = inTicks;
             openedAt = ticks;
@@ -367,7 +366,7 @@ public final class StationClient {
         BlockPos b = table;
         if (b == null) return Vec3.ZERO;
         if (kind == Kind.FURNACE) return new Vec3(b.getX() + 0.5 - fx * 0.5, b.getY() + 0.36, b.getZ() + 0.5 - fz * 0.5);
-        return new Vec3(b.getX() + 0.5, b.getY() + 1.0, b.getZ() + 0.5);
+        return new Vec3(b.getX() + 0.5, b.getY() + kind.work, b.getZ() + 0.5);
     }
 
     /** Where a slot lies on the station (StationView.spot). */
@@ -442,7 +441,7 @@ public final class StationClient {
     private static void onFovModifier(ComputeFovModifierEvent e) {
         float w = weight(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         // the field of view the frame asks for, whatever the speed or the setting would make it
-        if (kind == Kind.TABLE && !bench && table != null && w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
+        if (kind.bench() && !bench && table != null && w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
     }
 
     private static void onFov(ViewportEvent.ComputeFov e) {
@@ -462,6 +461,14 @@ public final class StationClient {
         if (slot < 0 || slot >= LAID_AT.length || LAID_AT[slot] == 0) return 0F;
         double u = (System.nanoTime() - LAID_AT[slot]) / (double) SETTLE_NS;
         return u >= 1 ? 0F : 1 - Ease.at(Ease.OUT_CUBIC, (float) u);
+    }
+
+    private static final java.util.Map<Kind, VoxelShape> OUTLINES = new java.util.EnumMap<>(Kind.class);
+
+    /** A workstation slot's outline: a thin square the slot's own size where a stack lies, a box where it stands. */
+    private static VoxelShape outline(Kind k) {
+        return OUTLINES.computeIfAbsent(k, x -> x.upright ? Shapes.box(-x.half, -x.half, -x.half, x.half, x.half, x.half)
+                : Shapes.box(-x.half, 0, -x.half, x.half, 0.02, x.half));
     }
 
     /** How many of a stack are drawn lying on a square or in the hand: 1, then 2 up to 5, 3 up to 32, 4 above. */
@@ -516,17 +523,22 @@ public final class StationClient {
             for (int k = 0; k < n; k++) {
                 ps.pushPose();
                 ps.translate(P[0] + (rx * 0.012 - fx * 0.012) * k - cam.x, P[1] + lift + 0.006 * k - cam.y, P[2] + (rz * 0.012 - fz * 0.012) * k - cam.z);
-                if (result) {
-                    // the table's result lies flat on the right border, turning slowly where it lies
+                if (kind.upright) {
+                    // a brewing stand's bottles stand on its arms, turned to you
+                    ps.rotateDegrees(Axis.YP, 180F - yaw);
+                    ps.scale(kind.size * grow, kind.size * grow, kind.size * grow);
+                } else if (result) {
+                    // the result lies flat on its own place, turning slowly where it lies
                     ps.rotateDegrees(Axis.YP, t * 1.5F);
                     ps.rotateDegrees(Axis.XP, 90F);
-                    ps.scale(0.17F * grow, 0.17F * grow, 0.17F * grow);
+                    float size = (kind == Kind.TABLE ? 0.17F : kind.size) * grow;
+                    ps.scale(size, size, size);
                 } else {
-                    // an ingredient lies flat on its square, square to the table (a flat item a little over the square
+                    // an ingredient lies flat on its square, square to the station (a flat item a little over the square
                     // between the lines, a block half that)
                     ps.rotateDegrees(Axis.YP, 180F - yaw);
                     ps.rotateDegrees(Axis.XP, 90F);
-                    ps.scale(0.16F, 0.16F, 0.16F);
+                    ps.scale(kind.size, kind.size, kind.size);
                 }
                 r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
                 ps.popPose();
@@ -543,11 +555,12 @@ public final class StationClient {
                 for (int k = 0; k < n; k++) {
                     ps.pushPose();
                     ps.translate(HELD[0] + (rx * 0.012 - fx * 0.012) * k - cam.x, HELD[1] + 0.007 * k - cam.y, HELD[2] + (rz * 0.012 - fz * 0.012) * k - cam.z);
-                    ps.rotate(TILT.rotationAxis(18F * Mth.DEG_TO_RAD, (float) rx, 0F, (float) rz));
+                    if (!kind.upright) ps.rotate(TILT.rotationAxis(18F * Mth.DEG_TO_RAD, (float) rx, 0F, (float) rz));
                     ps.rotate(TILT.rotationAxis(-roll * Mth.DEG_TO_RAD, (float) fx, 0F, (float) fz));
                     ps.rotateDegrees(Axis.YP, 180F - yaw);
-                    ps.rotateDegrees(Axis.XP, 90F);
-                    ps.scale(0.16F, 0.16F, 0.16F);
+                    if (!kind.upright) ps.rotateDegrees(Axis.XP, 90F);
+                    float held = kind == Kind.TABLE ? 0.16F : kind.size * 0.94F;
+                    ps.scale(held, held, held);
                     CARRIED.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
                     ps.popPose();
                 }
@@ -569,7 +582,7 @@ public final class StationClient {
                 ps.popPose();
             }
         }
-        if (furnace) StationFire.submit(e, s);
+        StationFire.submit(e, s);
         // the hovered slot's outline: every slot now lies on the station (the table's result on its border, the
         // furnace's result inside its mouth)
         for (int i = 0; i < kind.slots; i++) {
@@ -577,7 +590,8 @@ public final class StationClient {
             spot(i, P, 0);
             ps.pushPose();
             ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
-            e.getSubmitNodeCollector().submitShapeOutline(ps, furnace ? (fx == 0 ? FACE_Z : FACE_X) : CELL, RenderTypes.lines(), 0xCC7FC3FF, 2F, true);
+            e.getSubmitNodeCollector().submitShapeOutline(ps, furnace ? (fx == 0 ? FACE_Z : FACE_X) : kind == Kind.TABLE ? CELL : outline(kind), RenderTypes.lines(),
+                    0xCC7FC3FF, 2F, true);
             ps.popPose();
         }
     }

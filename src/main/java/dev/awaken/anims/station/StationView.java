@@ -15,19 +15,90 @@ import org.joml.Vector3f;
 public final class StationView {
     private StationView() {}
 
-    /** A kind of station: its slots (the menu's first), its result slot and its hint. */
+    /**
+     * A kind of station: its slots (the menu's first), its result slot (-1: none) and its hint. The crafting table and
+     * the furnace have their own geometry below; the six workstations of SPEC §63.8 are described here: where each slot
+     * lies ({@code at}: across to your right, up from the block's foot, far along the way in from its middle, per slot;
+     * a brewing stand's bottles stand where vanilla's own model has them, whatever side you work it from), how big a
+     * slot is ({@code half}), how big its item is drawn and whether it lies flat or stands ({@code size},
+     * {@code upright}), how high the work is ({@code work}: a carried stack is held just over it), and the view's own
+     * place ({@code back} from the block's middle, {@code up} over its top).
+     */
     public enum Kind {
-        TABLE(10, 0, "screen.awaken.table.hint"),
-        FURNACE(3, AbstractFurnaceMenu.RESULT_SLOT, "screen.awaken.furnace.hint");
+        TABLE(10, 0, "screen.awaken.table.hint", null, 3 / 32.0, 0.16F, false, 1.0, 0.81, 1.12),
+        FURNACE(3, AbstractFurnaceMenu.RESULT_SLOT, "screen.awaken.furnace.hint", null, 0.15, 0.24F, true, 0.57, 1.55, -0.43),
+        ANVIL(3, 2, "screen.awaken.anvil.hint", new double[]{-0.19, 1.012, 0, 0.0, 1.012, 0, 0.21, 1.012, 0}, 0.085, 0.17F, false, 1.0, 0.85, 1.05),
+        SMITHING(4, 3, "screen.awaken.smithing.hint", new double[]{-0.27, 1.012, 0.06, -0.08, 1.012, 0.06, 0.11, 1.012, 0.06, 0.36, 1.012, 0}, 0.085, 0.16F,
+                false, 1.0, 0.81, 1.12),
+        GRINDSTONE(3, 2, "screen.awaken.grindstone.hint", new double[]{-0.15, 1.012, 0.04, 0.15, 1.012, 0.04, 0, 1.012, -0.3}, 0.09, 0.17F, false, 1.0, 0.85,
+                1.0),
+        STONECUTTER(2, 1, "screen.awaken.stonecutter.hint", new double[]{-0.2, 0.575, 0, 0.22, 0.575, 0}, 0.1, 0.19F, false, 0.5625, 0.8, 0.75),
+        CARTOGRAPHY(3, 2, "screen.awaken.cartography.hint", new double[]{-0.16, 1.012, 0.04, 0.14, 1.012, 0.12, 0.34, 1.012, -0.18}, 0.09, 0.18F, false, 1.0,
+                0.81, 1.12),
+        BREWING(5, -1, "screen.awaken.brewing.hint", new double[]{0.25, 0.42, 0, -0.195, 0.42, -0.195, -0.195, 0.42, 0.195, 0, 0.98, 0, 0, 0.14, -0.32},
+                0.12, 0.3F, true, 0.5, 1.25, 0.3);
 
         public final int slots, result;
         public final String hint;
+        final double @org.jspecify.annotations.Nullable [] at;
+        public final double half, work, back, up;
+        public final float size;
+        public final boolean upright;
 
-        Kind(int slots, int result, String hint) {
+        Kind(int slots, int result, String hint, double @org.jspecify.annotations.Nullable [] at, double half, float size, boolean upright, double work,
+             double back, double up) {
             this.slots = slots;
             this.result = result;
             this.hint = hint;
+            this.at = at;
+            this.half = half;
+            this.size = size;
+            this.upright = upright;
+            this.work = work;
+            this.back = back;
+            this.up = up;
         }
+
+        /** Worked from above, bent over it (everything but a furnace, which is worked through its face). */
+        public boolean bench() {
+            return this != FURNACE;
+        }
+    }
+
+    /**
+     * The kind of station a block is, or null when it has no scene: a crafting table, a furnace, smoker or blast
+     * furnace, an anvil (chipped and damaged too), a smithing table, a grindstone that stands on the floor, a
+     * stonecutter, a cartography table, a brewing stand.
+     */
+    public static @org.jspecify.annotations.Nullable Kind kindOf(net.minecraft.world.level.block.state.BlockState state) {
+        var b = state.getBlock();
+        // a smithing table is a crafting table by class: asked first
+        if (b instanceof net.minecraft.world.level.block.SmithingTableBlock) return Kind.SMITHING;
+        if (b instanceof net.minecraft.world.level.block.CraftingTableBlock) return Kind.TABLE;
+        if (b instanceof net.minecraft.world.level.block.AbstractFurnaceBlock) return Kind.FURNACE;
+        if (b instanceof net.minecraft.world.level.block.AnvilBlock) return Kind.ANVIL;
+        if (b instanceof net.minecraft.world.level.block.GrindstoneBlock) {
+            return state.getValue(net.minecraft.world.level.block.GrindstoneBlock.FACE) == net.minecraft.world.level.block.state.properties.AttachFace.FLOOR
+                    ? Kind.GRINDSTONE : null;
+        }
+        if (b instanceof net.minecraft.world.level.block.StonecutterBlock) return Kind.STONECUTTER;
+        if (b instanceof net.minecraft.world.level.block.CartographyTableBlock) return Kind.CARTOGRAPHY;
+        if (b instanceof net.minecraft.world.level.block.BrewingStandBlock) return Kind.BREWING;
+        return null;
+    }
+
+    /** Whether a menu is the one a station of this kind opens. */
+    public static boolean menuFits(Kind kind, net.minecraft.world.inventory.AbstractContainerMenu menu) {
+        return switch (kind) {
+            case TABLE -> menu instanceof net.minecraft.world.inventory.CraftingMenu;
+            case FURNACE -> menu instanceof AbstractFurnaceMenu;
+            case ANVIL -> menu instanceof net.minecraft.world.inventory.AnvilMenu;
+            case SMITHING -> menu instanceof net.minecraft.world.inventory.SmithingMenu;
+            case GRINDSTONE -> menu instanceof net.minecraft.world.inventory.GrindstoneMenu;
+            case STONECUTTER -> menu instanceof net.minecraft.world.inventory.StonecutterMenu;
+            case CARTOGRAPHY -> menu instanceof net.minecraft.world.inventory.CartographyTableMenu;
+            case BREWING -> menu instanceof net.minecraft.world.inventory.BrewingStandMenu;
+        };
     }
 
     /** A station being worked: where, its kind, the way in (horizontal, along an axis); across is to your right. */
@@ -38,6 +109,11 @@ public final class StationView {
 
         public double rz() {
             return fx;
+        }
+
+        /** The height of the work: a table's top, a stonecutter's bed. */
+        public double top() {
+            return pos.getY() + kind.work;
         }
     }
 
@@ -71,6 +147,20 @@ public final class StationView {
             return;
         }
         double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
+        if (s.kind() != Kind.TABLE) {
+            double[] d = s.kind().at;
+            double u = d[slot * 3], v = d[slot * 3 + 2];
+            if (s.kind() == Kind.BREWING && slot < 4) {
+                // the bottles and what brews them stand where the stand's own model has them, in the block's own space
+                out[at] = cx + u;
+                out[at + 2] = cz + v;
+            } else {
+                out[at] = cx + rx * u + fx * v;
+                out[at + 2] = cz + rz * u + fz * v;
+            }
+            out[at + 1] = b.getY() + d[slot * 3 + 1];
+            return;
+        }
         if (slot == 0) {
             out[at] = cx + rx * RESULT_SIDE;
             out[at + 1] = cy + 0.012;
@@ -87,6 +177,7 @@ public final class StationView {
     /** How far a slot reaches from its spot (across, up, in): a grid square, the result, a furnace's opening. */
     public static double reach(Station s, int slot, int axis) {
         if (s.kind() == Kind.FURNACE) return axis == 2 ? 0.05 : 0.15;
+        if (s.kind() != Kind.TABLE) return axis == 1 ? (s.kind().upright ? s.kind().half : 0.03) : s.kind().half;
         if (axis == 1) return 0.03;
         return slot == 0 ? RESULT_HALF : CELL / 2;
     }
@@ -127,12 +218,21 @@ public final class StationView {
     private static final double[][] BENCH = {{0.81, 1.12}, {0.66, 0.90}, {0.55, 0.72}};
     public static final int BENCHES = BENCH.length;
 
-    /** A table's bench view {@code i}: where the eye is. The same from wherever you clicked the table. */
+    /**
+     * A station's bench view {@code i}: where the eye is. The same from wherever you clicked it. A table's three are
+     * written out; a workstation's are its own place and two nearer, lower ones.
+     */
     public static void benchEye(Station s, int i, double[] out) {
         BlockPos b = s.pos();
-        out[0] = b.getX() + 0.5 - s.fx() * BENCH[i][0];
-        out[1] = b.getY() + 1.0 + BENCH[i][1];
-        out[2] = b.getZ() + 0.5 - s.fz() * BENCH[i][0];
+        double back = BENCH[i][0], up = BENCH[i][1];
+        if (s.kind() != Kind.TABLE) {
+            double k = i == 0 ? 1 : i == 1 ? 0.9 : 0.8;
+            back = Math.max(0.55, s.kind().back * k);
+            up = s.kind().up * k;
+        }
+        out[0] = b.getX() + 0.5 - s.fx() * back;
+        out[1] = b.getY() + 1.0 + up;
+        out[2] = b.getZ() + 0.5 - s.fz() * back;
     }
 
     /** How long the view takes to reach a station's own place from {@code d} blocks away (ticks): 5 beside it to 9. */
@@ -226,7 +326,7 @@ public final class StationView {
         double cx = b.getX() + 0.5, cz = b.getZ() + 0.5;
         double u = (px - cx) * s.rx() + (pz - cz) * s.rz();
         double across = Mth.clamp(u + side * ARM_LEAN, -most, most), back = 0.5 + ARM_BEYOND;
-        double ax = cx + s.rx() * across - s.fx() * back - px, ay = b.getY() + 1.0 + ARM_RISE - py, az = cz + s.rz() * across - s.fz() * back - pz;
+        double ax = cx + s.rx() * across - s.fx() * back - px, ay = s.top() + ARM_RISE - py, az = cz + s.rz() * across - s.fz() * back - pz;
         double al = Math.sqrt(ax * ax + ay * ay + az * az);
         if (al < 1e-6) {
             ax = -s.fx();
@@ -249,7 +349,7 @@ public final class StationView {
     public static double acrossMost(Station s, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, int guiW, int guiH,
                                     double[] p) {
         BlockPos b = s.pos();
-        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5, y = b.getY() + 1.0 + ARM_RISE * 0.75, most = 0.36;
+        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5, y = s.top() + ARM_RISE * 0.75, most = 0.36;
         for (int k = 0; k < 2; k++) {
             if (!onPlane(ex, ey, ez, rot, fov, aspect, k == 0 ? l.px0() + 3 : l.px1() - 3, l.py0() + 3, guiW, guiH, y, p)) continue;
             most = Math.min(most, Math.abs((p[0] - cx) * s.rx() + (p[2] - cz) * s.rz()) - 0.1);
@@ -454,16 +554,20 @@ public final class StationView {
         float nx = (float) (mx / guiW * 2 - 1), ny = (float) (1 - my / guiH * 2);
         Vector3f d = new Vector3f(nx * tan * aspect, ny * tan, -1).normalize().rotate(rot);
         double[] p = new double[3];
-        if (s.kind() == Kind.FURNACE) {
+        if (s.kind() != Kind.TABLE) {
+            // a furnace: the nearest spot the line passes close to; a workstation: the spot the line passes closest to
+            // (its slots stand at different heights, and one may be behind another from where you look)
+            boolean furnace = s.kind() == Kind.FURNACE;
             int best = -1;
-            double bestAlong = Double.MAX_VALUE;
+            double bestBy = Double.MAX_VALUE, near = furnace ? 0.16 : s.kind().half * 1.15;
             for (int i = 0; i < s.kind().slots; i++) {
                 spot(s, i, p, 0);
                 double wx = p[0] - ex, wy = p[1] - ey, wz = p[2] - ez, along = wx * d.x + wy * d.y + wz * d.z;
-                double qx = wx - d.x * along, qy = wy - d.y * along, qz = wz - d.z * along;
-                if (along > 0 && along < bestAlong && qx * qx + qy * qy + qz * qz < 0.16 * 0.16) {
+                double qx = wx - d.x * along, qy = wy - d.y * along, qz = wz - d.z * along, off = qx * qx + qy * qy + qz * qz;
+                double by = furnace ? along : off;
+                if (along > 0 && by < bestBy && off < near * near) {
                     best = i;
-                    bestAlong = along;
+                    bestBy = by;
                 }
             }
             return best;

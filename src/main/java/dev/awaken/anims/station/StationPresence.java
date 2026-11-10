@@ -9,13 +9,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.AbstractFurnaceMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.CraftingTableBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -161,8 +159,8 @@ public final class StationPresence {
     /** How a block is worked, or {@link #NONE} when it is not a station. */
     public static byte kindOf(BlockState state) {
         var b = state.getBlock();
-        if (b instanceof CraftingTableBlock) return BENCH;
-        if (b instanceof AbstractFurnaceBlock) return KNEEL;
+        StationView.Kind k = StationView.kindOf(state);
+        if (k != null) return k == StationView.Kind.FURNACE ? KNEEL : BENCH;
         if (b instanceof ChestBlock || b instanceof BarrelBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return BOX;
         return NONE;
     }
@@ -170,7 +168,7 @@ public final class StationPresence {
     /** Whether a menu is the one a station of this kind opens. */
     static boolean menuFits(byte kind, AbstractContainerMenu menu) {
         return switch (kind) {
-            case BENCH -> menu instanceof CraftingMenu;
+            case BENCH -> benchSlots(menu) > 0;
             case KNEEL -> menu instanceof AbstractFurnaceMenu;
             case BOX -> menu instanceof ChestMenu || menu instanceof ShulkerBoxMenu;
             default -> false;
@@ -215,8 +213,9 @@ public final class StationPresence {
     /** What lies at a station for others to see: a table's result and nine squares; the largest stacks in a box. */
     static List<ItemStack> shown(byte kind, AbstractContainerMenu menu) {
         if (kind == BENCH) {
-            List<ItemStack> out = new ArrayList<>(10);
-            for (int i = 0; i < 10 && i < menu.slots.size(); i++) out.add(menu.getSlot(i).getItem().copy());
+            int n = benchSlots(menu);
+            List<ItemStack> out = new ArrayList<>(n);
+            for (int i = 0; i < n && i < menu.slots.size(); i++) out.add(menu.getSlot(i).getItem().copy());
             return out;
         }
         if (kind == BOX) {
@@ -247,6 +246,12 @@ public final class StationPresence {
             return out.size() > BOX_SHOWN ? new ArrayList<>(out.subList(0, BOX_SHOWN)) : out;
         }
         return List.of();
+    }
+
+    /** How many of a bench menu's first slots lie on the station (0: not a bench's menu). */
+    static int benchSlots(AbstractContainerMenu menu) {
+        for (StationView.Kind k : StationView.Kind.values()) if (k.bench() && StationView.menuFits(k, menu)) return k.slots;
+        return 0;
     }
 
     /**

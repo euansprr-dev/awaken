@@ -60,6 +60,23 @@ final class StationFire {
         }
     }
 
+    /** Sparks off a blow (an anvil's, a smithing table's, a grindstone's): {@code n} of them from a point, out and up. */
+    static void sparks(double x, double y, double z, int n) {
+        long now = System.nanoTime();
+        for (int k = 0; k < n; k++) {
+            int i = next++ % N, j = i * 3;
+            double a = rnd() * Math.PI * 2, out = 0.5 + rnd() * 1.1;
+            AT[j] = x;
+            AT[j + 1] = y;
+            AT[j + 2] = z;
+            VEL[j] = Math.cos(a) * out;
+            VEL[j + 1] = 0.5 + rnd() * 1.0;
+            VEL[j + 2] = Math.sin(a) * out;
+            BORN[i] = now;
+            LIFE[i] = (float) (0.22 + rnd() * 0.3);
+        }
+    }
+
     /** How bright the flare is now (0..0.55), for the light on your arm. */
     static float level() {
         if (flareAt == 0) return 0;
@@ -85,7 +102,7 @@ final class StationFire {
             AT[j] += VEL[j] * dt;
             AT[j + 1] += VEL[j + 1] * dt;
             AT[j + 2] += VEL[j + 2] * dt;
-            VEL[j + 1] -= 0.9 * dt; // they slow as they rise
+            VEL[j + 1] -= (LIFE[i] < 0.53F ? 3.2 : 0.9) * dt; // embers slow as they rise; a blow's sparks fall
             VEL[j] *= 1 - 1.5 * dt;
             VEL[j + 2] *= 1 - 1.5 * dt;
             any = true;

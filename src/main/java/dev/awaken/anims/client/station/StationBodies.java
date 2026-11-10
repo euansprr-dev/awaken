@@ -129,11 +129,12 @@ final class StationBodies {
             if (at.kind() == StationPresence.BENCH) {
                 // your own table is drawn by your own scene (with your hand and its settles); a plain screen shows it too
                 if (mine && StationClient.table != null && StationClient.table.equals(pos) && mc.gui.screen() instanceof StationScreen<?>) continue;
-                if (!(mc.level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.CraftingTableBlock)) continue;
-                StationView.Station s = new StationView.Station(pos, StationView.Kind.TABLE, at.fx(), at.fz());
+                StationView.Kind kind = StationView.kindOf(mc.level.getBlockState(pos));
+                if (kind == null || !kind.bench()) continue;
+                StationView.Station s = new StationView.Station(pos, kind, at.fx(), at.fz());
                 int light = LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, pos.above()), mc.level.getBrightness(LightLayer.SKY, pos.above()));
                 float yaw = (float) (Mth.atan2(-at.fx(), at.fz()) * Mth.RAD_TO_DEG);
-                for (int i = 0; i < at.shown().size() && i < 10; i++) {
+                for (int i = 0; i < at.shown().size() && i < kind.slots; i++) {
                     ItemStack st = at.shown().get(i);
                     if (st.isEmpty()) continue;
                     StationView.spot(s, i, P, 0);
@@ -144,8 +145,8 @@ final class StationBodies {
                         ps.pushPose();
                         ps.translate(P[0] + (s.rx() * 0.012 - s.fx() * 0.012) * k - cam.x, P[1] + 0.006 * k - cam.y, P[2] + (s.rz() * 0.012 - s.fz() * 0.012) * k - cam.z);
                         ps.rotateDegrees(Axis.YP, 180F - yaw);
-                        ps.rotateDegrees(Axis.XP, 90F);
-                        float size = i == 0 ? 0.17F : 0.16F;
+                        if (!kind.upright) ps.rotateDegrees(Axis.XP, 90F);
+                        float size = kind == StationView.Kind.TABLE && i == 0 ? 0.17F : kind.size;
                         ps.scale(size, size, size);
                         r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
                         ps.popPose();

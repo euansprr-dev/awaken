@@ -21776,8 +21776,43 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
 - Tests: `stations_living_slots` (a shift-click is one move with its count; a spill into a second slot is two; a swap
   is two; the pointer's is none; more than six slots is none). The lid, the look and the light are client code.
 
-**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; six more workstation scenes; glass for seven
-screens; a hand, a sound and a body for every quick touch. The click path
+### 63.8 Six more workstations as scenes (`StationView.Kind`, `StationScreen`, `StationClient`)
+- **A station is described, not coded.** `StationView.Kind` holds, for each: how many of its menu's first slots lie on
+  it, its result slot, its hint, where each slot lies (across to your right, up from the block's foot, far along the way
+  in), a slot's half size, how big its item is drawn and whether it lies or stands, the height of the work, and the
+  view's own place. `kindOf(state)` names a block's kind and `menuFits` its menu; the scene screen is the same
+  `StationScreen` over vanilla's own menu, so every click is vanilla's. The bench view (§63.1), the carrying hand
+  (§63.2), piles, counts and settles (§63.3), presence and what others see (§63.5) come with the description.
+  The crafting table and the furnace keep their own geometry.
+
+  | Kind | Block | Slots on it | View (back, up over its top) |
+  |---|---|---|---|
+  | `ANVIL` | anvil, chipped, damaged | piece, what mends it, result: a row across the face | 0.85, 1.05 |
+  | `SMITHING` | smithing table | template, piece, material in a row; result to the right | 0.81, 1.12 |
+  | `GRINDSTONE` | grindstone on the floor (on a wall or ceiling: the plain screen) | two pieces on the stone; result on the near side | 0.85, 1.0 |
+  | `STONECUTTER` | stonecutter | block on the left of the bed, result on the right | 0.8, 0.75 |
+  | `CARTOGRAPHY` | cartography table | map, paper or glass, new map | 0.81, 1.12 |
+  | `BREWING` | brewing stand | a bottle standing on each arm where vanilla's model has them (in the block's own space), what brews them on top, blaze powder at the foot before you | 1.25, 0.3 |
+
+  A workstation's two nearer views are 0.9 and 0.8 of its own. Its slots are picked by the spot the pointer's line passes
+  closest to, within 1.15 of a slot's half size (they stand at different heights and one may be behind another).
+- **An anvil's name** is a line of glass at the foot of the room: click it to write (vanilla's own `EditBox` rule and
+  `ServerboundRenameItemPacket`; while it has focus the keys are its). What it costs stands beside it as a bottle o'
+  enchanting and a number, red when you can't pay (§57.10's rule), or vanilla's "Too Expensive!".
+- **A stonecutter's cuts** are a rail of glass chips at the foot of the room, each the real item, up to three rows; a
+  click sends vanilla's own button (`clickMenuButton`, `handleInventoryButtonClick`) with its sound.
+- **A brewing stand's** brewing and blaze powder left are the two thin lines over the strip, as a furnace's.
+- **Taking the work:** an anvil's result is three blows on the piece by the hand that isn't carrying, a smithing
+  table's one on the piece, a grindstone's one on the stone (a 190 ms pass each, `StationHands.blows`), seven sparks
+  of our own off each as it lands (`StationFire.sparks`). The block's sound is vanilla's.
+- Hints, in plain words, one for each kind (`screen.awaken.<kind>.hint`).
+- A smithing table is a crafting table by class in vanilla: it is asked first.
+- Tests: `stations_workstations` (each block's kind, the grindstone only on the floor, a loom none; every slot on its own
+  block and apart from the others; from all three views, four sides and four window sizes every slot is in the room
+  and picks itself).
+
+**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; glass for seven screens; a hand, a sound and a
+body for every quick touch. The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts

@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
  */
 final class StationScreen<M extends AbstractContainerMenu> extends AbstractContainerScreen<M> {
     private static final int GLASS = 0xC80F1724, EDGE = 0xFF7FC3FF, HINT = 0xFFB9C7D9, FIRE = 0xFFFFB45A;
+    private static final ItemStack BOTTLE = new ItemStack(net.minecraft.world.item.Items.EXPERIENCE_BOTTLE);
     /** The station slots: the first {@code n} of the menu. */
     final int n;
     final StationView.Kind kind;
@@ -60,6 +61,95 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
         leftPos = layout.left();
         topPos = layout.top();
         pickX = Double.NaN;
+        if (menu instanceof net.minecraft.world.inventory.AnvilMenu) {
+            // the name, on a line of glass at the foot of the room: click it to write (vanilla's own box and packet)
+            String before = name == null ? "" : name.getValue();
+            int w = Math.min(150, layout.rx1() - layout.rx0() - 20);
+            name = new net.minecraft.client.gui.components.EditBox(font, width / 2 - w / 2, layout.ry1() - 16, w, 12, Component.translatable("container.repair"));
+            name.setTextColor(0xFFE8F3FF);
+            name.setTextColorUneditable(0xFF8094AA);
+            name.setBordered(false);
+            name.setMaxLength(50);
+            name.setValue(before);
+            name.setResponder(this::named);
+            name.setEditable(menu.getSlot(0).hasItem());
+            addRenderableWidget(name);
+            named0 = menu.getSlot(0).getItem().copy();
+        }
+    }
+
+    private net.minecraft.client.gui.components.@Nullable EditBox name;
+    private ItemStack named0 = ItemStack.EMPTY;
+
+    /** The anvil's name line changed: vanilla's own rule and packet. */
+    private void named(String text) {
+        if (!(menu instanceof net.minecraft.world.inventory.AnvilMenu anvil)) return;
+        Slot slot = menu.getSlot(0);
+        if (!slot.hasItem()) return;
+        String newName = text;
+        if (!slot.getItem().has(net.minecraft.core.component.DataComponents.CUSTOM_NAME) && newName.equals(slot.getItem().getHoverName().getString())) newName = "";
+        if (anvil.setItemName(newName)) minecraft.player.connection.send(new net.minecraft.network.protocol.game.ServerboundRenameItemPacket(newName));
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (name != null) {
+            // the piece on the face changed: its name is on the line
+            ItemStack now = menu.getSlot(0).getItem();
+            if (!ItemStack.matches(now, named0)) {
+                named0 = now.copy();
+                name.setValue(now.isEmpty() ? "" : now.getHoverName().getString());
+                name.setEditable(!now.isEmpty());
+            }
+            minecraft.player.experienceDisplayStartTick = minecraft.player.tickCount;
+        }
+    }
+
+    // ---- a stonecutter's choices: a rail of glass at the foot of the room ---------------------------------------------
+
+    private static final int CHIP = 18;
+
+    /** The rail's place: its left, its top, how many to a row, how many rows. */
+    private int[] rail() {
+        int count = menu instanceof net.minecraft.world.inventory.StonecutterMenu sc && sc.hasInputItem() ? sc.getVisibleRecipes().size() : 0;
+        if (count == 0 || layout == null) return new int[]{0, 0, 0, 0, 0};
+        int perRow = Math.max(1, Math.min(count, (layout.rx1() - layout.rx0() - 16) / CHIP)), rows = Math.min(3, (count + perRow - 1) / perRow);
+        return new int[]{width / 2 - perRow * CHIP / 2, layout.ry1() - rows * CHIP - 2, perRow, rows, Math.min(count, perRow * rows)};
+    }
+
+    private void extractRail(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        if (!(menu instanceof net.minecraft.world.inventory.StonecutterMenu sc)) return;
+        int[] r = rail();
+        if (r[4] == 0) return;
+        var context = net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(minecraft.level);
+        var recipes = sc.getVisibleRecipes();
+        for (int i = 0; i < r[4]; i++) {
+            int x = r[0] + i % r[2] * CHIP, y = r[1] + i / r[2] * CHIP;
+            boolean on = i == sc.getSelectedRecipeIndex(), over = mouseX >= x && mouseX < x + CHIP && mouseY >= y && mouseY < y + CHIP;
+            g.fill(x, y, x + CHIP - 1, y + CHIP - 1, on ? 0xD01B3A5C : 0xB00F1724);
+            g.outline(x, y, CHIP - 1, CHIP - 1, on || over ? EDGE : 0x667FC3FF);
+            ItemStack icon = recipes.entries().get(i).recipe().optionDisplay().resolveForFirstStack(context);
+            g.item(icon, x + 1, y + 1);
+            if (over) g.setTooltipForNextFrame(font, icon, mouseX, mouseY);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        dragButton = event.button();
+        if (menu instanceof net.minecraft.world.inventory.StonecutterMenu sc) {
+            int[] r = rail();
+            for (int i = 0; i < r[4]; i++) {
+                int x = r[0] + i % r[2] * CHIP, y = r[1] + i / r[2] * CHIP;
+                if (event.x() >= x && event.x() < x + CHIP && event.y() >= y && event.y() < y + CHIP && sc.clickMenuButton(minecraft.player, i)) {
+                    minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, i);
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     // the screen's area for other mods (JEI keeps clear of it): the room the station is framed in and the strip
@@ -89,6 +179,24 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
         if (l == null) return;
         g.fill(l.px0(), l.py0(), l.px1(), l.py1(), GLASS);
         g.outline(l.px0(), l.py0(), l.px1() - l.px0(), l.py1() - l.py0(), EDGE);
+        if (name != null) {
+            g.fill(name.getX() - 4, name.getY() - 3, name.getX() + name.getWidth() + 4, name.getY() + 11, GLASS);
+            g.outline(name.getX() - 4, name.getY() - 3, name.getWidth() + 8, 14, name.isFocused() ? EDGE : 0x667FC3FF);
+            if (menu instanceof net.minecraft.world.inventory.AnvilMenu anvil && anvil.getCost() > 0 && menu.getSlot(2).hasItem()) {
+                // what it costs: levels as a bottle o' enchanting and their number (SPEC §57.10), red when you can't pay
+                boolean tooMuch = anvil.getCost() >= 40 && !minecraft.player.hasInfiniteMaterials(), short_ = !menu.getSlot(2).mayPickup(minecraft.player);
+                int x = name.getX() + name.getWidth() + 10, y = name.getY() - 3;
+                g.item(BOTTLE, x, y - 1);
+                g.text(font, tooMuch ? Component.translatable("container.repair.expensive") : Component.literal(Integer.toString(anvil.getCost())), x + 18, y + 3,
+                        tooMuch || short_ ? 0xFFFF6060 : 0xFF80FF20, true);
+            }
+        }
+        if (menu instanceof net.minecraft.world.inventory.BrewingStandMenu b) {
+            // the brewing (Holo blue) and the blaze powder left (fire), as two thin lines over the strip
+            int w = l.px1() - l.px0();
+            if (b.getBrewingTicks() > 0) g.fill(l.px0(), l.py0() - 5, l.px0() + (int) (w * (1 - b.getBrewingTicks() / 400F)), l.py0() - 3, EDGE);
+            if (b.getFuel() > 0) g.fill(l.px0(), l.py0() - 2, l.px0() + (int) (w * Math.min(1F, b.getFuel() / 20F)), l.py0() - 1, FIRE);
+        }
         if (menu instanceof AbstractFurnaceMenu f) {
             // the cooking (Holo blue) and what's left of the fuel (fire), as two thin lines over the strip
             int w = l.px1() - l.px0();
@@ -127,6 +235,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
         // the square under the cursor is the hovered slot (its tooltip, the number keys, Q, the pick key)
         if (hoveredSlot == null && hovered >= 0) hoveredSlot = menu.getSlot(hovered);
         extractStation(g);
+        extractRail(g, mouseX, mouseY);
     }
 
     /**
@@ -153,12 +262,6 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     }
 
     private int dragButton;
-
-    @Override
-    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
-        dragButton = event.button();
-        return super.mouseClicked(event, doubleClick);
-    }
 
     /** While your hand holds the stack over the station it is drawn there, in the world: no icon on the pointer. */
     @Override
@@ -304,6 +407,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (name != null && name.isFocused() && !event.isEscape()) return name.keyPressed(event) || name.canConsumeInput() || super.keyPressed(event);
         var o = minecraft.options;
         if (o.keyUp.matches(event) || o.keyDown.matches(event) || o.keyLeft.matches(event) || o.keyRight.matches(event) || o.keyJump.matches(event)) {
             onClose();
