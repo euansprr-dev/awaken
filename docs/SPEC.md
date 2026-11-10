@@ -20947,6 +20947,10 @@ sink, the Otters' Slide is a timed run through three pools. Placement in generat
 
 ## 59. Places (what the world gives you to discover; briefs in docs/places/BRIEFS.md)
 
+**Rejected as content, 10 Nov 2026** (Euan, on the picture page: "decoration... empty buildings... vanilla and boring and flat"). The thirty are no
+longer dealt or listed; §61 replaces them. What stands of this section is the engine: §59.2 (where), §59.3 (ground), §59.4 (air),
+§59.6 (arriving and finishing) and §59.7 (checks).
+
 Euan, 10 Nov 2026, on seeing the 144 small finds of §58: "this is not at all what I was asking... I meant things that you
 discover, like caves, or special buildings... actual places... a really cool swamp thing with an awesome atmosphere, unique
 places that actually stand out when you discover them." Then: "Build them all. Code all first, then tour multiple at a time...
@@ -21046,3 +21050,65 @@ No hand clips. Motes and recordings are vanilla's by name. The Stilled are the k
 its own, no second storey of story (books, notes), and nothing that changes after it is done except what its steps change.
 Water set in a place stands still (the feature schedules no fluid ticks: no falls, no running races). Nothing has been
 played by a person. Where each place stands against its brief: docs/places/STATUS.md.
+
+## 61. Old World Monuments (plan docs/places/MONUMENTS.md; paintings docs/places/img; page https://claude.ai/artifact/1Fign2AXfzSB9AhJwe9Jns; Euan on the paintings, 10 Nov 2026: "this is 100% what I'm looking for")
+
+(§60 is the gate monsters', on their own branch.)
+
+### 61.1 What a monument is
+
+A ruin the Precursors left (docs/STORY.md), a little broken down, that the world went on living round. Each has a look held
+to the Gates' rule (§50.8: its painting is the bar, a block family of its own, relief at three scales, at most a third of a
+view the game's own blocks), a relic only it gives, something to do to earn it (never a fight, never a way to be stuck),
+carvings the System reads, and what later people left there. Set `Kind.FSet.MONUMENTS`, size `PLACE`: the world deals
+monuments only (`Sites.weights`), and the Journal's Places shelf lists them and nothing else. `Sites.MAX_REACH` is 64.
+
+### 61.2 Olden stone and the kit
+
+`finds/kit/Olden`: thirty blocks (`olden_*`), drawn by `tools/art/specs/finds_olden.py` (textures, models, states, items,
+loot, lang, tags; the same table as the class): ashlar in three drawings, worn, mossy and dark; dressed blocks; a carved
+band, a carved panel, an inscribed panel; flags, a mosaic; rubble; a fluted pillar and its capital; verdigris bronze, a
+bronze band on stone, a door plate; a lamp (`lit`, light 14); a seal and a lichen that glow (an emissive layer); slabs and
+stairs of the four stones, a flag slab, a wall. ("Elder" is a tree in the terrain module: hence olden.)
+
+`finds/kit/M`, the seven passes as working parts: `mass`, `shell`, `pier` (down to the land's own ground, battered foot,
+bands, a corbelled capital), `column`; `face` (a plinth proud of the wall with a sloped top, pilasters by bay, a band at two
+thirds, sunk panels, an overhanging cornice: no wall is one flat plane); `colossus`, `lampPost`, `heap`; `ruin` (a ragged
+break along soft noise); and `age`, one pass over everything built: arrises crumble to stairs and slabs, faces under a real
+ledge go dark, low wet faces go mossy, a share goes worn, moss mats grow on low open tops, and `settle` lets fall whatever
+no longer touches the ground through its faces (the flood the scenes test runs).
+
+### 61.3 The relics (`finds/Relics`)
+
+One to a monument, in its own loot table (`finds/relic_<monument>`, rolled once: a place's table is otherwise rolled
+twice). The Counterweight: carried, it slows a fall longer than seven blocks for 3.5 s, once a minute. The Listening Stone:
+used, it names the direction and rough distance of the nearest monument (five cells out), ten seconds between uses. The
+Sleeper's Lamp: in the off hand, night vision while below sea level under a roof.
+
+### 61.4 Steps, carvings
+
+`verb/Lore.with(steps, "carving", lines...)`: using a part named `carving` has the System read its line in brackets
+(a `NOTICE` window, topic `monument`), at any stage; it is never a step. `verb/Then.run`: a step that is the world
+answering (a door turns) the tick the step before it is done.
+
+### 61.5 The three
+
+- **The Stair That Stops** (`stair_that_stops`; mountain, snow, forest, plains; reach 62): a gatehouse on a podium (bronze
+  doors three by six between two colossi, pilastered walls, a parapet mostly gone) whose roof is where a stair seven wide
+  begins: eight steps and a landing of four, seven times, on seven piers and rampant arches, to 72 above the ground, where
+  it is broken off and chains hang. One span fell (the climbers' planks cross it). A ladder up the gatehouse, a camp by the
+  first pier. Steps: the release on the top landing opens the doors; the relic is on the plinth in the hall. Three carvings.
+- **The Listening Dish** (`listening_dish`; plains, forest, desert, badlands; reach 46): a dish 61 across tipped to the
+  north-east (low rim on the ground, high rim 25 up) on a drum and twelve fins, a third of its rim fallen, bronze rings, a
+  leaning pylon 30 high with a lamp in its core and the vault in its base. Herders' lean-tos under the high rim. Steps:
+  three banded stones lie about; set back in the low rim's sockets, the vault opens. Three carvings on the pylon.
+- **The Sleepers' Hall** (`sleepers_hall`; dark forest, forest, swamp, jungle; reach 44): under the ground, a hall 61 by 21
+  (nave open to a ragged slot in the forest floor, aisles under arcades), sixteen beds with stone sleepers under canopies,
+  roots through the roof, glowing lichen, pilgrims' candles, a stair down from the west. Steps: eight lamps lit near to far,
+  left then right (the first carving says so); the round door at the far end opens on the one empty bed.
+
+### 61.6 Checks, and what is not done
+
+The `finds_` tests hold every monument to what they held a place to; all three walkthroughs pass. The picture maker draws
+olden stone. Tours: `monument-<id>.txt`, the first camera where the painting stands. Not done: seven to nine more monuments
+(Euan's call after these three); the relic list beyond three; sounds and motes of their own; hand clips. Unplayed.
