@@ -24,7 +24,7 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  */
 public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
     private static final int[][] SIDES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-    private static final BlockState POOL = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13);
+    private static final BlockState POOL = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15);
     private static final List<List<String>> HERDS = List.of(List.of("toll_ghoul*3", "crypt_archer*2"), List.of("crypt_archer*3", "bell_wisp*2"),
             List.of("~hushling*3", "toll_ghoul"), List.of("bell_wisp*4", "crypt_keeper"));
 
@@ -133,9 +133,10 @@ public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
         if (onFloor && foot && low && !narrow) {
             // candles gather along the foot of the wall in clusters, with a light over each so its pool reaches into the room; bones lie between
             double c = rnd(Math.floorDiv(x, 3), Math.floorDiv(z, 3), 944), own = rnd(x, z, 945);
-            if (c < 0.3 && own < 0.75) {
+            // (in the real game the first pass was too dark to read: half the wall's foot has candles now, and half of those a light)
+            if (c < 0.5 && own < 0.75) {
                 v.set(x, y, z, m.candles(2 + (int) (own * 4)));
-                if (v.get(x, y + 2, z) == null && own < 0.25) v.set(x, y + 2, z, POOL);
+                if (v.get(x, y + 2, z) == null && own < 0.4) v.set(x, y + 2, z, POOL);
             } else if (own < 0.07) v.set(x, y, z, m.bones);
         } else if (onFloor && low && !narrow && !wall && rnd(x, z, 946) < 0.02) v.set(x, y, z, m.bones);
         if (underRoof && !onFloor && !wall && rnd(x, z, 947) < 0.025) {

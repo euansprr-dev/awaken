@@ -20649,3 +20649,9 @@ the six-seed test here):
   roots, moss and vines, lit leaves and braziers; the temple's hounds, archers and creakers, with Lurkers in one herd.
 - **The Tallow Runs** (`awaken:tallow_runs`, Hive, the Wax family): soot rock that pale wax has run down and set over, candle
   banks at the foot of the walls, lit comb in the ambush and the Lord's hall; the one that glows.
+
+**Light in a rolled crawl, after the first real-game walks.** The Bone Roads and The Hollow Hills could barely be read in the
+real game. The Bone Roads: candles along half of every wall's foot (was three tenths), a light over four in ten clusters, at
+15. The Hollow Hills: grave-lights in three quarters of a room's wall cells of four and along the ways too, each with a light
+of 15 over it and, in a room, a second two higher. A skin is judged in the real game, not on the checker: the checker draws
+these two brighter than the game does.

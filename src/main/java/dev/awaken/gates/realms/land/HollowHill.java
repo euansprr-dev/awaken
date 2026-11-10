@@ -22,7 +22,7 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  */
 public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
     private static final int[][] SIDES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-    private static final BlockState POOL = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 12);
+    private static final BlockState POOL = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15);
     private static final List<List<String>> HERDS = List.of(List.of("~hushling*3", "toll_ghoul"), List.of("toll_ghoul*3", "crypt_archer*2"),
             List.of("~hushling*2", "crypt_archer*2"), List.of("bell_wisp*3", "crypt_keeper"));
 
@@ -143,9 +143,11 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
             if (earth(m, v.get(ax, y, az))) {
                 if (up == 0) {
                     // a little grave light low on a room's wall, a few to a room, each with its pool
-                    boolean lit = room && !narrow && rnd(Math.floorDiv(ax, 4), Math.floorDiv(az, 4), 954) < 0.5 && rnd(ax, az, 955) < 0.45;
+                    // (in the real game the first pass was too dark to read: more of them in a room, a few along the ways, and each pool brighter)
+                    boolean lit = !narrow && rnd(Math.floorDiv(ax, 4), Math.floorDiv(az, 4), 954) < (room ? 0.75 : 0.4) && rnd(ax, az, 955) < (room ? 0.5 : 0.3);
                     v.set(ax, y, az, lit ? m.glow : rnd(ax * 7L + y, az, 956) < 0.8 ? m.pale : m.stoneA);
                     if (lit && v.get(x, y + 1, z) == null) v.set(x, y + 1, z, POOL);
+                    if (lit && room && v.get(x, y + 3, z) == null) v.set(x, y + 3, z, POOL);
                 } else if (up == 2) v.set(ax, y, az, rnd(ax * 7L + y, az, 957) < 0.75 ? m.stoneA : m.worn);
                 else if (up == 1 && !narrow && rnd(ax * 11L + y, az, 958) < 0.045) v.set(ax, y, az, m.urn); // an urn in a niche at knee height
             }
