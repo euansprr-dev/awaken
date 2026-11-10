@@ -17,10 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,27 +77,107 @@ public final class FloatCheck {
         return s.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty() ? ON_GROUND : BODY;
     }
 
-    /** One chunk's worth of kinds, three bits a block. */
+    /**
+     * One chunk's worth of kinds, three bits a block, and the body blocks no walk has reached yet as plain bits: the walk
+     * visits every solid block's eighteen neighbours, so that test has to be one array read, not a map and four bit sets.
+     */
     private static final class Chunk {
-        final BitSet a = new BitSet(16 * 16 * V.H), b = new BitSet(16 * 16 * V.H), c = new BitSet(16 * 16 * V.H), seen = new BitSet(16 * 16 * V.H);
+        final BitSet a = new BitSet(16 * 16 * V.H), b = new BitSet(16 * 16 * V.H), c = new BitSet(16 * 16 * V.H);
+        final long[] unreached = new long[16 * 16 * V.H >> 6];
 
         void put(int i, int kind) {
             if ((kind & 1) != 0) a.set(i);
             if ((kind & 2) != 0) b.set(i);
             if ((kind & 4) != 0) c.set(i);
+            if (kind == BODY) unreached[i >> 6] |= 1L << i;
         }
 
         int get(int i) {
             return (a.get(i) ? 1 : 0) | (b.get(i) ? 2 : 0) | (c.get(i) ? 4 : 0);
         }
+
+        /** A body block a walk has reached. */
+        boolean seen(int i) {
+            return (unreached[i >> 6] & 1L << i) == 0 && get(i) == BODY;
+        }
+
+        /** Takes a body block for the walk; false when it isn't one or was taken before. */
+        boolean take(int i) {
+            long bit = 1L << i;
+            if ((unreached[i >> 6] & bit) == 0) return false;
+            unreached[i >> 6] &= ~bit;
+            return true;
+        }
+    }
+
+    /** Every chunk of one scan, found by position with no hashing. */
+    private static final class Grid {
+        final int cx0, cz0, w, d;
+        final Chunk[] chunks;
+
+        Grid(int cx0, int cz0, int cx1, int cz1) {
+            this.cx0 = cx0;
+            this.cz0 = cz0;
+            w = cx1 - cx0 + 1;
+            d = cz1 - cz0 + 1;
+            chunks = new Chunk[w * d];
+        }
+
+        Chunk at(int cx, int cz) {
+            int i = cx - cx0, j = cz - cz0;
+            return i < 0 || j < 0 || i >= w || j >= d ? null : chunks[j * w + i];
+        }
+    }
+
+    /** The walk's to-do list: packed positions, last in first out (the order doesn't change what is reached). */
+    private static final class Stack {
+        long[] at = new long[1 << 16];
+        int n;
+
+        void push(int x, int y, int z) {
+            if (n == at.length) at = java.util.Arrays.copyOf(at, n * 2);
+            at[n++] = (long) (x + (1 << 24)) << 34 | (long) (z + (1 << 24)) << 9 | y;
+        }
+
+        long pop() {
+            return at[--n];
+        }
+
+        static int x(long p) {
+            return (int) (p >>> 34) - (1 << 24);
+        }
+
+        static int z(long p) {
+            return (int) (p >>> 9 & 0x1FFFFFF) - (1 << 24);
+        }
+
+        static int y(long p) {
+            return (int) (p & 0x1FF);
+        }
+    }
+
+    /** Walks from everything on the stack through every body block it touches; returns how many it took, and whether it met a leaf. */
+    private static int walk(Grid grid, Stack q, boolean[] metLeaf) {
+        int n = 0;
+        while (q.n > 0) {
+            long p = q.pop();
+            int px = Stack.x(p), py = Stack.y(p), pz = Stack.z(p);
+            n++;
+            for (int[] d : STEP) {
+                int x = px + d[0], y = py + d[1], z = pz + d[2];
+                if (y < 0 || y >= V.H) continue;
+                Chunk c = grid.at(x >> 4, z >> 4);
+                if (c == null) continue;
+                int i = idx(x, y, z);
+                if (c.take(i)) q.push(x, y, z);
+                else if (metLeaf != null && !metLeaf[0] && c.get(i) == LEAF) metLeaf[0] = true;
+            }
+        }
+        return n;
     }
 
     private static int idx(int x, int y, int z) {
         return ((x & 15) * 16 + (z & 15)) * V.H + y;
-    }
-
-    private static long key(int cx, int cz) {
-        return (long) cx << 32 | cz & 0xFFFFFFFFL;
     }
 
     private static final int[][] STEP;
@@ -117,83 +195,71 @@ public final class FloatCheck {
     public static Report scan(Land land, int minX, int minZ, int maxX, int maxZ) {
         long t0 = System.currentTimeMillis();
         int cx0 = minX >> 4, cz0 = minZ >> 4, cx1 = maxX >> 4, cz1 = maxZ >> 4;
-        Map<Long, Chunk> map = new HashMap<>();
-        for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
+        Grid grid = new Grid(cx0, cz0, cx1, cz1);
+        // drawing is most of the work and a land may be drawn from any thread (worldgen does): every core draws chunks
+        java.util.stream.IntStream.range(0, grid.chunks.length).parallel().forEach(n -> {
+            int cx = cx0 + n % grid.w, cz = cz0 + n / grid.w;
             Chunk c = new Chunk();
             V v = new V(cx * 16, cz * 16);
             land.paint(v);
             int ox = cx * 16, oz = cz * 16;
+            // a column is mostly runs of one block: ask the table only when the block changes
+            BlockState last = null;
+            int lastKind = AIR;
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 0; y < V.H; y++) {
-                int k = kind(v.get(ox + x, y, oz + z));
-                if (k != AIR) c.put(idx(x, y, z), k);
+                BlockState s = v.get(ox + x, y, oz + z);
+                if (s == null) continue;
+                if (s != last) {
+                    last = s;
+                    lastKind = kind(s);
+                }
+                if (lastKind != AIR) c.put(idx(x, y, z), lastKind);
             }
-            map.put(key(cx, cz), c);
-        }
-        ArrayDeque<int[]> q = new ArrayDeque<>();
+            grid.chunks[n] = c;
+        });
+        Stack q = new Stack();
         // the walk starts at the world's floor and at the edge of what was drawn (land past the edge carries on)
-        for (var e : map.entrySet()) {
-            int cx = (int) (e.getKey() >> 32), cz = (int) (long) e.getKey();
-            Chunk c = e.getValue();
+        for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
+            Chunk c = grid.at(cx, cz);
             boolean rim = cx == cx0 || cx == cx1 || cz == cz0 || cz == cz1;
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) {
                 boolean edge = rim && ((cx == cx0 && x == 0) || (cx == cx1 && x == 15) || (cz == cz0 && z == 0) || (cz == cz1 && z == 15));
-                for (int y = 0; y < (edge ? V.H : 2); y++) {
-                    int i = idx(x, y, z);
-                    if (c.get(i) == BODY && !c.seen.get(i)) {
-                        c.seen.set(i);
-                        q.add(new int[]{cx * 16 + x, y, cz * 16 + z});
-                    }
-                }
+                for (int y = 0; y < (edge ? V.H : 2); y++) if (c.take(idx(x, y, z))) q.push(cx * 16 + x, y, cz * 16 + z);
             }
         }
-        int blocks = 0;
-        while (!q.isEmpty()) {
-            int[] p = q.poll();
-            blocks++;
-            for (int[] d : STEP) {
-                int x = p[0] + d[0], y = p[1] + d[1], z = p[2] + d[2];
-                if (y < 0 || y >= V.H) continue;
-                Chunk c = map.get(key(x >> 4, z >> 4));
-                if (c == null) continue;
-                int i = idx(x, y, z);
-                if (c.seen.get(i) || c.get(i) != BODY) continue;
-                c.seen.set(i);
-                q.add(new int[]{x, y, z});
-            }
-        }
+        int blocks = walk(grid, q, null);
         // what's left floats; things that lean on others are checked against the walk
         List<Piece<?>> airborne = new ArrayList<>();
         for (Piece<?> p : land.pieces()) if (p.airborne) airborne.add(p);
         List<Floater> out = new ArrayList<>();
-        for (var e : map.entrySet()) {
-            int cx = (int) (e.getKey() >> 32), cz = (int) (long) e.getKey();
-            Chunk c = e.getValue();
+        for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
+            Chunk c = grid.at(cx, cz);
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 0; y < V.H; y++) {
                 int i = idx(x, y, z), k = c.get(i);
                 if (k == AIR) continue;
                 int wx = cx * 16 + x, wz = cz * 16 + z;
                 if (cx == cx0 && x == 0 || cx == cx1 && x == 15 || cz == cz0 && z == 0 || cz == cz1 && z == 15) continue;
                 if (k == BODY) {
-                    if (c.seen.get(i)) continue;
+                    if (c.seen(i)) continue;
                     if (airborne.stream().anyMatch(p -> p.covers(wx, wz))) continue;
-                    Floater fl = floater(map, wx, y, wz);
+                    Floater fl = floater(grid, q, wx, y, wz);
                     if (fl != null) out.add(fl);
                 } else if (k == ON_GROUND) {
-                    if (held(map, wx, y - 1, wz) || below(map, wx, y - 1, wz, ON_GROUND)) continue;
+                    if (held(grid, wx, y - 1, wz) || below(grid, wx, y - 1, wz, ON_GROUND)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a plant or small thing with nothing under it (" + named(land, wx, y, wz) + ")"));
                 } else if (k == AFLOAT) {
-                    if (below(map, wx, y - 1, wz, WATER)) continue;
+                    if (below(grid, wx, y - 1, wz, WATER)) continue;
                     out.add(new Floater(wx, y, wz, 1, "something meant to float with no water under it"));
                 } else if (k == HANGS) {
-                    if (held(map, wx, y + 1, wz) || below(map, wx, y + 1, wz, HANGS)) continue;
+                    if (held(grid, wx, y + 1, wz) || below(grid, wx, y + 1, wz, HANGS)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a hanging thing with nothing above it"));
                 } else if (k == BESIDE) {
-                    if (held(map, wx + 1, y, wz) || held(map, wx - 1, y, wz) || held(map, wx, y, wz + 1) || held(map, wx, y, wz - 1) || held(map, wx, y + 1, wz)) continue;
+                    if (held(grid, wx + 1, y, wz) || held(grid, wx - 1, y, wz) || held(grid, wx, y, wz + 1) || held(grid, wx, y, wz - 1) || held(grid, wx, y + 1, wz)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a vine on nothing"));
                 }
             }
         }
-        return new Report(out, blocks, map.size(), System.currentTimeMillis() - t0);
+        return new Report(out, blocks, grid.chunks.length, System.currentTimeMillis() - t0);
     }
 
     /** What a stray is and what it's standing on, read again from the land: a failure should say which block to go and fix. */
@@ -203,45 +269,29 @@ public final class FloatCheck {
         return v.get(x, y, z) + " on " + v.get(x, y - 1, z);
     }
 
-    private static boolean held(Map<Long, Chunk> map, int x, int y, int z) {
+    private static boolean held(Grid grid, int x, int y, int z) {
         if (y < 0 || y >= V.H) return false;
-        Chunk c = map.get(key(x >> 4, z >> 4));
+        Chunk c = grid.at(x >> 4, z >> 4);
         if (c == null) return true; // past the drawn edge: can't tell, so it's not a finding
         int i = idx(x, y, z);
-        return c.get(i) == LEAF || c.get(i) == BODY && c.seen.get(i);
+        return c.get(i) == LEAF || c.seen(i);
     }
 
-    private static boolean below(Map<Long, Chunk> map, int x, int y, int z, int kind) {
+    private static boolean below(Grid grid, int x, int y, int z, int kind) {
         if (y < 0 || y >= V.H) return false;
-        Chunk c = map.get(key(x >> 4, z >> 4));
+        Chunk c = grid.at(x >> 4, z >> 4);
         return c != null && c.get(idx(x, y, z)) == kind;
     }
 
     /** Marks a whole floating cluster seen, so one tower is one finding. */
     private static final int MAX_TWIG = 12;
 
-    private static Floater floater(Map<Long, Chunk> map, int x0, int y0, int z0) {
-        ArrayDeque<int[]> q = new ArrayDeque<>();
-        q.add(new int[]{x0, y0, z0});
-        map.get(key(x0 >> 4, z0 >> 4)).seen.set(idx(x0, y0, z0));
-        int n = 0;
-        boolean inLeaves = false;
-        while (!q.isEmpty()) {
-            int[] p = q.poll();
-            n++;
-            for (int[] d : STEP) {
-                int x = p[0] + d[0], y = p[1] + d[1], z = p[2] + d[2];
-                if (y < 0 || y >= V.H) continue;
-                Chunk c = map.get(key(x >> 4, z >> 4));
-                if (c == null) continue;
-                int i = idx(x, y, z);
-                if (c.get(i) == LEAF) inLeaves = true;
-                if (c.seen.get(i) || c.get(i) != BODY) continue;
-                c.seen.set(i);
-                q.add(new int[]{x, y, z});
-            }
-        }
-        if (n <= MAX_TWIG && inLeaves) return null; // a branch end inside a crown is held up by the leaves round it
+    private static Floater floater(Grid grid, Stack q, int x0, int y0, int z0) {
+        grid.at(x0 >> 4, z0 >> 4).take(idx(x0, y0, z0));
+        q.push(x0, y0, z0);
+        boolean[] inLeaves = {false};
+        int n = walk(grid, q, inLeaves);
+        if (n <= MAX_TWIG && inLeaves[0]) return null; // a branch end inside a crown is held up by the leaves round it
         return new Floater(x0, y0, z0, n, "a floating thing");
     }
 }
