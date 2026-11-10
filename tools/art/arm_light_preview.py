@@ -120,7 +120,7 @@ def cells(corners, tex):
                 role = EMIT if emit > 0.25 else TRIM if metal * gloss * smooth(0.35, 0.7, max(alb[:3]) / 255) > 0.3 else PLATE if metal > 0.3 else SOFT
                 cy = sum(pt[1] for pt in p) / 4 * 16
                 grid[(i, j)] = len(out)
-                out.append(dict(p=p, n=n, alb=alb, role=role, q=q, v=cy + 2.0, face=face,
+                out.append(dict(p=p, n=n, alb=alb, role=role, q=q, v=cy + 2.0, face=face, lum=max(alb[:3]) / 255,
                                 ul=j if first_along else i, cols=n2 if first_along else n1))
         # a trim is a line: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide bright plate is plate.
         inner = [k for (i, j), k in grid.items() if out[k]["role"] == TRIM
@@ -280,7 +280,17 @@ def light(style, c, t, seed, charge, awake, gains):
         return soak * (0.8 + 0.2 * math.sin(t * 0.3 + q))
     if role == EMIT and i > 0:
         i *= 1.0 - 0.3 * shimmer * hash3(seed, q * 7 + ul, vi + int(t * 0.6))
+    # cloth and plate take the light by their own painting: a bright texel more, a dark one less, so the piece still reads
+    if not line and i > 0:
+        i *= 0.5 + 0.65 * c["lum"]
     return i * g if i > 0 else i
+
+
+def alpha(c, i):
+    """ArmourLight: how much of a cell the light covers. The lines are crisp; cloth and plate are tinted, never painted out."""
+    if i < 0:
+        return 0.78 * min(1.0, -i)
+    return max(0.0, min(1.0, 0.25 + 0.75 * i if c["role"] >= TRIM else 0.1 + 0.55 * i))
 
 
 def rgb(x):
@@ -317,10 +327,10 @@ def view(cs, lit, style, yaw, pitch, size=(250, 400), scale=30):
         col = tuple(int(x * shade) for x in c["alb"][:3])
         i = lit[k]
         if i < 0:
-            col = mix(col, accent, 0.9 * min(1.0, -i))
+            col = mix(col, accent, alpha(c, i))
         elif i > 0:
             glow = mix(mid, core, max(0.0, min(1.0, (i - 0.55) * 2.2)))
-            col = mix(col, glow, max(0.0, min(1.0, 0.2 + 0.75 * i)))
+            col = mix(col, glow, alpha(c, i))
         d.polygon([(size[0] / 2 + p[0] * scale * 0.5, size[1] / 2 + p[1] * scale * 0.5) for p in pts], fill=col)
     return img
 

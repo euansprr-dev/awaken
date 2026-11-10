@@ -26,7 +26,8 @@ import java.util.Map;
  * face. Each cell has a part to play, read from the set's own texture: cloth, plate, a <i>line</i> (a trim: the rim of a
  * bright plate, a cuff ring, a band) or something that glows of itself (a stone, a crystal, a seam). The light is then
  * drawn cell by cell on the faces themselves, a hair off them: the type's colour runs down the set's own lines, fills its
- * stones, and lays the type's motif over cloth and plate, one face at a time. So every set wears each type its own way
+ * stones, and lays the type's motif over cloth and plate, one face at a time, as a tint that follows their own painting
+ * (never a coat of paint over it). So every set wears each type its own way
  * with no art of its own, and a set's record ({@link #SETS}) says how its materials take it: how far the lines run ahead
  * of the rest (metal), how much the cloth holds a glow (hide and cloth), how what glows shimmers (crystal).
  * <p>
@@ -76,6 +77,7 @@ final class ArmourLight {
         float[] v;          // how far down the arm, in texels from the shoulder end
         short[] face;       // which flat face
         byte[] ul, cols, role, side;
+        byte[] lum;         // how bright its own painting is there, 0 to 255
         float[] normal;     // three a face
         float[] centre;     // three a face
         int[] faceStart;
@@ -151,6 +153,7 @@ final class ArmourLight {
             out.cols = new byte[most];
             out.role = new byte[most];
             out.side = new byte[most];
+            out.lum = new byte[most];
             out.normal = new float[faces * 3];
             out.centre = new float[faces * 3];
             out.faceStart = new int[faces + 1];
@@ -200,6 +203,7 @@ final class ArmourLight {
                         out.cols[n] = (byte) Math.min(127, firstAlong ? w2 : w1);
                         out.role[n] = (byte) role;
                         out.side[n] = (byte) side;
+                        out.lum[n] = (byte) Math.round(bright * 255f);
                         grid[i * w2 + j] = n++;
                     }
                 }
@@ -411,6 +415,8 @@ final class ArmourLight {
         }
         if (i == 0f && role == SOFT && set.soak > 0f && region) return set.soak * (0.8f + 0.2f * Mth.sin(t * 0.3f + q));
         if (role == EMIT && i > 0f) i *= 1f - 0.3f * set.shimmer * hash(seed, q * 7 + ul, vi + (int) (t * 0.6f));
+        // cloth and plate take the light by their own painting: a bright texel more, a dark one less, so the piece still reads
+        if (!line && i > 0f) i *= 0.5f + 0.65f * ((c.lum[k] & 255) / 255f);
         return i > 0f ? i * set.gain(role) : i;
     }
 
@@ -459,12 +465,13 @@ final class ArmourLight {
                     }
                     int colour;
                     float alpha;
-                    if (i < 0f) { // ink: a dark cell, painted over what is there
+                    if (i < 0f) { // ink: a dark cell over what is there, the piece still showing through it
                         colour = style.accent;
-                        alpha = 0.9f * fade * Math.min(1f, -i);
+                        alpha = 0.78f * fade * Math.min(1f, -i);
                     } else {
+                        // the lines are crisp; cloth and plate are tinted, never painted out
                         colour = mix(style.mid, style.core, Mth.clamp((i - 0.55f) * 2.2f + flash, 0f, 1f));
-                        alpha = fade * Mth.clamp(0.2f + 0.75f * i, 0f, 1f);
+                        alpha = fade * Mth.clamp(c.role[k] >= TRIM ? 0.25f + 0.75f * i : 0.1f + 0.55f * i, 0f, 1f);
                     }
                     int argb = (colour & 0xFFFFFF) | (Math.round(alpha * 255) << 24);
                     for (int v = 0; v < 12; v += 3) vc.addVertex(pose, p[at + v] + lx, p[at + v + 1] + ly, p[at + v + 2] + lz).setColor(argb);
