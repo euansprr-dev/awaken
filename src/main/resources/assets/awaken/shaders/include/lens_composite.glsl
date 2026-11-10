@@ -54,6 +54,43 @@ float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
 vec3 screen(vec3 a, vec3 b) { return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)); }
 
+// The player's grade (SPEC §22 "Grades"; LensGrades): its own step at the end of the colour stage, on the finished
+// colour, the same on every tier. a: vibrance, dark colour, rise, punch; b: azure, leaf, gold, split (parameter texels
+// 22 and 23, each 0..1; all zero is the look as built and the step is skipped). Every part works by how far one
+// channel leads the others, so it is smooth across a gradient and has no hue to branch on.
+vec3 lensGrade(vec3 c, vec4 a, vec4 b) {
+    // azure: a violet blue toward azure, by blue's lead over the other two; purples (red over green) keep their hue
+    float lead = max(c.b - max(c.r, c.g), 0.0) * smoothstep(-0.16, -0.02, c.g - c.r) * b.r;
+    c.g += lead * 0.30;
+    c.r -= lead * 0.50;
+    // leaf: green's lead brightens toward a sunlit yellow-green
+    float leaf = max(c.g - max(c.r, c.b), 0.0) * b.g;
+    c.g += leaf * 0.55;
+    c.r += leaf * 0.40;
+    // gold: warm colours (red leading green, both over blue) glow a little more
+    float gold = max(min(c.r, c.g * 1.25) - c.b, 0.0) * smoothstep(0.0, 0.12, c.r - c.g) * b.b;
+    c.r += gold * 0.30;
+    c.g += gold * 0.14;
+    c = max(c, 0.0);
+    // rise: the lights and upper mids come up, the darks stay where they are
+    float l = clamp(luma(c), 1.0e-4, 1.0);
+    c *= 1.0 + a.b * 6.75 * l * (1.0 - l);
+    // punch: an S around the middle, at half strength below it (night and shade keep their depth)
+    vec3 cc = clamp(c, 0.0, 1.0), s = cc * cc * (3.0 - 2.0 * cc) - cc;
+    c += max(s, s * 0.5) * a.a;
+    // split: sunlit colours a little warm, shade a little cool (each tint less its own brightness, so neither end
+    // gets lighter or darker)
+    const vec3 warm = vec3(1.0, 0.92, 0.72), cool = vec3(0.72, 0.90, 1.12);
+    l = luma(c);
+    c *= 1.0 + b.a * 0.16 * ((warm - luma(warm)) * smoothstep(0.45, 0.95, l) + (cool - luma(cool)) * (1.0 - smoothstep(0.05, 0.45, l)));
+    // vibrance: the less saturated a colour, the more it gains (a flower or a glow that is already rich stays put);
+    // and the darks keep their colour
+    l = luma(c);
+    float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), dk = 1.0 - clamp(l, 0.0, 1.0);
+    float k = 1.0 + a.r * (1.0 - (mx - mn) / max(mx, 1.0e-4)) + a.g * dk * dk;
+    return clamp(l + (c - l) * k, 0.0, 1.0);
+}
+
 // view distance in blocks from reversed-Z depth; the projection's depth range differs between OpenGL and Vulkan
 float viewDistance(float depth, float zFar, bool zeroToOne) {
     const float zNear = 0.05;
@@ -472,7 +509,8 @@ void main() {
             // (thinner only well above the eye, and slowly: a tree is one thing at one distance, and a haze that thinned
             // over its own height left every far tree a dark crown on a vanished trunk, Euan 10 Nov)
             float lying = mix(0.62, 1.0, exp(-max(wy - F(12).y - 16.0, 0.0) / 130.0));
-            float near = (1.0 - exp(-max(d - 4.0, 0.0) / mix(280.0, 150.0, clamp(max(hrA.y, hrA.z * 0.85) + 0.5 * rainA, 0.0, 1.0)))) * lying;
+            // (a grade may thicken it: parameter texel 24 r, the haze over 1, halved)
+            float near = (1.0 - exp(-max(d - 4.0, 0.0) * (1.0 + 2.0 * P(24).r) / mix(280.0, 150.0, clamp(max(hrA.y, hrA.z * 0.85) + 0.5 * rainA, 0.0, 1.0)))) * lying;
             // The fog is the air along the view, so what is over the far point doesn't matter: only a camera that is
             // itself under cover, looking at something under cover, is in a cave's air (parameter texel 21 r). (Leaving
             // out every covered point left the ground under each ledge and the mouth of each cave as a dark hole in
@@ -623,6 +661,9 @@ void main() {
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
 #endif
     c = mix(vec3(luma(c)), c, g.b * 2.0);
+    // the player's grade over the place's own (all zero: the look as built)
+    vec4 grA = P(22), grB = P(23);
+    if (dot(grA + grB, vec4(1.0)) > 0.0) c = lensGrade(c, grA, grB);
     // Under solid cover (a cave, a room) Lens never takes the dark below the game's own: the grade's black point and
     // shadow tint would crush a cave at light 0 (on Bright, about 6% grey) and a hand or tool held there to pure black.
     // The darks keep at least 85% of what the game drew, so a cave stays as dark and moody as the game made it and

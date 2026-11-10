@@ -6334,9 +6334,40 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     the block map's reading take 0.15 ms a tick where they may take 0.5 (`LensClient.tickBudget`). Nothing drawn
     changes: the maps catch up a little later. Not built: updating the glow and the rays on alternate frames (a
     frame's lag shows on small bright things when the view turns fast) and shedding the far cloud walk (it pops).
+- **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
+  the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
+  to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
+  player's choice of colour and air over every place's own look. Two ship: **Awaken**, the look as built (the
+  default; nothing changes for a player who never touches it), and **Vivid**.
+  - **A grade is a file**: `assets/<namespace>/lens_grade/<id>.json` (`LensGrade`, schema 1: `name`, `order`,
+    `colour`, `air`, `look`). `LensGrades` reads every one in every namespace on a resource reload, so a new grade,
+    ours or a resource pack's, is a file and no code. "awaken" is built in and always first.
+  - **The setting** is `lensGrade` (a grade's id; an id no file has reads as the look as built). The Look page has a
+    **COLOUR GRADE** row under LOOK that steps through the grades on offer, and the world behind the page changes as
+    it does. Autopilot: `lens grade <id>|setting`.
+  - **What a grade may change.** `colour`: its own step at the end of Lens's colour stage (`lensGrade` in
+    lens_composite.glsl, after the place's exposure, tints, contrast and saturation, before the cave and held-item
+    floors), on all three tiers, skipped when every number is zero. Eight numbers, each 0..1: `vibrance` (the less
+    saturated a colour, the more it gains; a flower or a glow that is already rich stays put), `dark` (the darks keep
+    their colour), `rise` (the lights and upper mids come up, the darks stay), `punch` (an S around the middle, half
+    strength below it so night and shade keep their depth), `azure` (a violet blue toward azure, by blue's lead over
+    red and green; purples keep their hue), `leaf` (greens toward a sunlit yellow-green), `gold` (warm colours glow),
+    `split` (lights a little warm, shade a little cool). Each works by how far one channel leads the others, so it is
+    smooth over a gradient. The sky, the far fog and the clouds' shade are one colour model (the Air), and the step
+    is laid over all of them alike, so the land still fades into exactly the sky behind it. `air.haze` (1..3)
+    thickens the Air's near haze. `look.scale` and `look.add` change any single number of the place's look by its
+    name in the looks files (bloom, sunGlow, mist, ...). Clouds, shadows and the passes are not a grade's to change.
+  - **Where it holds.** Every world (it is the player's taste, not a place's). A story moment's look
+    (`LensClient.override`) plays as it was authored: the grade eases out for its length and back after. A change of
+    grade eases over about a third of a second. Parameter texels 22 to 24 carry it.
+  - **Vivid**: an azure sky (`azure` 0.5), bright greens (`leaf` 0.5), `vibrance` 0.4, `dark` 0.3, `rise` 0.1,
+    `punch` 0.25, `gold` 0.3, `split` 0.25, the near haze 1.25 times as thick, and a little more bloom, sun glow, sky
+    glow and mist. Tuned offline on finished frames against his three pictures, then compared on CI
+    (`tools/autopilot/steady60-grade-ci.txt`: a garden under both grades at morning, noon, golden hour, dusk, night
+    and rain). Test: `lens_grade_vivid_reads`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
-  Swift (it has no view direction there), ground mist, the Look page rows.
+  Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 

@@ -645,6 +645,11 @@ public final class Autopilot {
                     waitTicks = 10;
                     return true;
                 }
+                if (arg.trim().startsWith("grade")) { // lens grade <id>|setting: the colour grade for the following scenes
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.grade(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().equals("cost")) {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;

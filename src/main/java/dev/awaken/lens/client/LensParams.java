@@ -21,7 +21,8 @@ final class LensParams {
     void write(int debug, float[] look, float far, boolean zeroToOne, float sunU, float sunV, float sunVisible, float sunsetStrength,
             float sunsetR, float sunsetG, float sunsetB, float fogR, float fogG, float fogB, float fogEnd, float environmentalEnd,
             float tear, float crush, float bloomBoost, float focus, float motion, float motionX, float motionY,
-            boolean farActive, boolean farReadable, boolean farReverseZ, boolean farZeroToOne, float farNear, float farFar, float under) {
+            boolean farActive, boolean farReadable, boolean farReverseZ, boolean farZeroToOne, float farNear, float farFar, float under,
+            float[] grade) {
         int f = Math.clamp(Math.round(far), 0, 65535);
         int u = Math.clamp(Math.round((sunU + 1f) / 3f * 65535f), 0, 65535), v = Math.clamp(Math.round((sunV + 1f) / 3f * 65535f), 0, 65535);
         // texel 0: b = far terrain drawn, a = its depth (bit 0 reverse-Z, bit 1 zero-to-one, bit 2 shared with Lens; the
@@ -63,8 +64,13 @@ final class LensParams {
         // 20: water and magic: r reflections on water, g heat shimmer, b frost at the edges, a emissive glow
         packed[20] = pack(look[Look.WATER], look[Look.HEAT], look[Look.FROST], look[Look.GLOW]);
         // 21: r the camera under solid cover (a cave, a room), eased: where Swift keeps the game's own darks (Cinematic and
-        // Ultra read cover per pixel from the heightfield); 22-31 free
+        // Ultra read cover per pixel from the heightfield)
         packed[21] = pack(under, 0f, 0f, 0f);
+        // 22-24: the player's grade (LensGrades, SPEC §22 "Grades"), all zero for the look as built: vibrance, dark colour,
+        // rise, punch; azure, leaf, gold, split; then r the Air's near haze over 1, halved. 25-31 free
+        packed[22] = pack(grade[0], grade[1], grade[2], grade[3]);
+        packed[23] = pack(grade[4], grade[5], grade[6], grade[7]);
+        packed[24] = pack(grade[8], 0f, 0f, 0f);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

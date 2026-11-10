@@ -20,6 +20,22 @@ final class LensTests {
 
     static void register() {
         AwakenTests.register("lens_heights_skipped_roof", 20, LensTests::skippedRoof);
+        // the shipped grade reads (SPEC §22 "Grades"): a grade that fails to parse just leaves the Look page's list
+        AwakenTests.register("lens_grade_vivid_reads", 20, h -> {
+            try (var stream = LensTests.class.getResourceAsStream("/assets/awaken/lens_grade/vivid.json")) {
+                h.assertTrue(stream != null, "the Vivid grade is packaged");
+                LensGrade g = LensGrade.parse("vivid", com.google.gson.JsonParser.parseReader(
+                        new java.io.InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject());
+                h.assertTrue(g.name().equals("Vivid") && g.order() > LensGrade.AWAKEN.order(), "named, and after the look as built");
+                float sum = 0;
+                for (float v : g.colour()) sum += v;
+                h.assertTrue(sum > 0f, "it has a colour step");
+                for (float v : LensGrade.AWAKEN.colour()) h.assertTrue(v == 0f, "the look as built has none");
+                h.succeed();
+            } catch (java.io.IOException | RuntimeException ex) {
+                h.fail("the Vivid grade did not read: " + ex.getMessage());
+            }
+        });
         AwakenTests.register("lens_rain_texture", 20, h -> {
             try (var stream = LensTests.class.getResourceAsStream("/assets/minecraft/textures/environment/rain.png")) {
                 h.assertTrue(stream != null, "the weather texture is packaged at vanilla's rain path");

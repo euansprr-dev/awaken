@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "name": "Vivid",
+  "order": 10,
+  "_about": "An azure sky, bright greens, warm light, shade that keeps its colour and a paler, closer haze (SPEC 22, Grades). Tuned on Euan's three reference pictures, 10 Nov 2026.",
+  "colour": {
+    "vibrance": 0.40,
+    "dark": 0.30,
+    "rise": 0.10,
+    "punch": 0.25,
+    "azure": 0.50,
+    "leaf": 0.50,
+    "gold": 0.30,
+    "split": 0.25
+  },
+  "air": {
+    "haze": 1.25
+  },
+  "look": {
+    "scale": {
+      "bloom": 1.15,
+      "sunGlow": 1.2,
+      "skyGlow": 1.25,
+      "mist": 1.15
+    }
+  }
+}

@@ -142,6 +142,8 @@ public final class LensClient {
     private static String biomeFor;
     private static int biomeClock;
     private static final float[] current = Look.neutral(), target = Look.neutral();
+    // the look as drawn: `current` with the player's grade over it (LensGrades)
+    private static final float[] graded = Look.neutral();
     // the place's own look (the biome's, else the dimension's; or a story moment's), before any place look over it
     private static final float[] base = Look.neutral();
     // place looks over the biome's (SPEC §28.5: a plain cave's own, a seep's violet), each weighted 0..1 by its owner
@@ -186,6 +188,23 @@ public final class LensClient {
         return "air " + (forcedAir != null ? forcedAir : "from the setting");
     }
 
+    /** Autopilot {@code lens grade <id>|setting}: a grade for the following scenes (SPEC §22 "Grades"). */
+    public static String grade(String arg) {
+        return LensGrades.force(arg);
+    }
+
+    /** The grade in use, by the name the Look page shows. */
+    public static String gradeName() {
+        return LensGrades.current().name();
+    }
+
+    /** The Look page's click: the next grade ({@code step} 1) or the one before (-1), set now and saved. Returns its name. */
+    public static String stepGrade(int step) {
+        var g = LensGrades.next(step);
+        LensGrades.choose(g);
+        return g.name();
+    }
+
     /** Autopilot {@code lens temporal on|off|setting}: the A/B switch for the interleaved clouds and light. */
     public static String temporal(String arg) {
         forcedTemporal = switch (arg.trim()) {
@@ -215,6 +234,7 @@ public final class LensClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
                 (ResourceManagerReloadListener) manager -> {
                     Looks.reload(manager);
+                    LensGrades.reload(manager);
                     lookFor = null; // re-resolve the current place's look
                     biomeFor = null;
                     java.util.Arrays.fill(placeStale, true);
@@ -366,6 +386,10 @@ public final class LensClient {
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
+        // the player's grade over it; a story moment's look plays as it was authored, and with Lens off there is no
+        // grade over the plain frame a scene eases back to
+        LensGrades.tick(overrideLook != null || off);
+        LensGrades.apply(current, graded);
         snap = false;
         if (tearStep > 0) {
             tear = Math.min(1f, tear + tearStep);
@@ -665,11 +689,12 @@ public final class LensClient {
         }
         float underTarget = roof > eye.y + 0.5 ? 1f : 0f;
         under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
-        params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
+        params.write(debug, graded, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(), motion, motionX, motionY,
-                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under);
+                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under,
+                LensGrades.shader());
         params.uploadIfChanged();
     }
 

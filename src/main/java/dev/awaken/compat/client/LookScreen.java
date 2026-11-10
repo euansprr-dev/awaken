@@ -36,7 +36,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             .filter(t -> t != Tier.VFX || Companions.immersiveVfxLoaded()).toArray(Tier[]::new);
     private static final LookPresets.Preset[] PRESETS = LookPresets.Preset.values();
     // the clickable setting rows, in order
-    private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
+    private static final int S_LOOK = 0, S_GRADE = 1, S_FAR = 2, S_DISTANCE = 3, S_SCALE = 4, S_STEADY = 5, S_TEMPORAL = 6, SETTINGS = 7;
     // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
     private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
     private static final List<dev.awaken.core.client.ui.Kit.Hint> FOOT_KEYS = List.of(dev.awaken.core.client.ui.Kit.Hint.of("A look", "1-4"),
@@ -253,6 +253,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         if (hover) g.fill(x - 2, y - 1, x + w + 2, y + LINE - 1, Glass.a(Glass.EDGE, 0.10f));
         String label = switch (i) {
             case S_LOOK -> "LOOK";
+            case S_GRADE -> "COLOUR GRADE";
             case S_FAR -> "FAR TERRAIN";
             case S_DISTANCE -> "RENDER DISTANCE";
             case S_SCALE -> "RENDER SCALE ON 4K";
@@ -262,6 +263,8 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         Tier t = LookSwitch.current();
         String value = switch (i) {
             case S_LOOK -> t == null ? "off" : t.pretty();
+            // Lens's grade (SPEC §22 "Grades"): the colours and the air over every place's own look
+            case S_GRADE -> dev.awaken.lens.client.LensClient.gradeName();
             case S_FAR -> switch (LookPresets.far()) {
                 case FULL -> "Full, 16 km";
                 case NEAR -> "Near, 4 km";
@@ -284,6 +287,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
                 Tier t = LookSwitch.current();
                 pick(TIERS[Math.floorMod((t == null ? -step : t.ordinal()) + step, TIERS.length)]);
             }
+            case S_GRADE -> dev.awaken.lens.client.LensClient.stepGrade(step);
             case S_FAR -> {
                 AwakenConfig.Client.FarSight[] all = AwakenConfig.Client.FarSight.values();
                 LookPresets.setFar(all[Math.floorMod(LookPresets.far().ordinal() - step, all.length)]);
