@@ -131,7 +131,15 @@ work is moving the stand-ins into the spec and checking each weapon's shots.
 4. The Katana at today's length (no motion work), or two texels longer (weapon-feel re-solves its swings).
 5. After Stage 0's shots: carry on, or wait until he has played it.
 
-## 12. Files
+## 12. Evidence from the real game
+
+One look tour (`tools/autopilot/arms-polish.txt`), run twice on GitHub's machines:
+- today's models: run 42791961802 (branch `claude/weapon-models-plan-c4ab96` at 9b5b6073);
+- the final drafts: run 42795267891 (branch `claude/weapon-models-draft-c4ab96` at db243b29).
+The game loads and draws the ground meshes in first person, third person and the Hall of Arms with no code change.
+An earlier cut of the drafts toured at 42792334098 (points a texel longer); the page shows the final run.
+
+## 13. Files
 
 - `tools/art/arms_polish.py`: the draft harness (`directions`, `review`, `strips`, `measure`, `draft-write`).
 - `tools/autopilot/arms-polish.txt`: the look tour, the same views on any branch.
