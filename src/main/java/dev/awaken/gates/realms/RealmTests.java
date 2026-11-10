@@ -54,6 +54,7 @@ public final class RealmTests {
             dev.awaken.gates.realms.preview.Preview.runIfAsked();
             h.succeed();
         });
+        dev.awaken.gates.realms.bench.BenchTests.register(); // realm_bench (tools/bench/bench.sh) and the straight-in walk's command
         AwakenTests.register("realm_blueprints_parse", 40, h -> {
             String why = AMBER.problem();
             if (!why.isEmpty()) h.fail("Amber's blueprint: " + why);

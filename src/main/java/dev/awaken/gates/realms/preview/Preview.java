@@ -60,16 +60,10 @@ public final class Preview {
     private static void run(Path tour, Path out, Path root) throws IOException, NoSuchAlgorithmException {
         Files.createDirectories(out);
         List<String> lines = Files.readAllLines(tour);
-        String id = null;
-        Rank rank = Rank.E;
-        for (String line : lines) {
-            String[] w = line.trim().split("\\s+");
-            if (w.length >= 6 && w[0].equals("cmd") && w[3].equals("realm")) {
-                rank = Rank.valueOf(w[4]);
-                id = w[5];
-            }
-        }
-        if (id == null) throw new IOException("no 'cmd awaken gate realm RANK id' line in " + tour);
+        String[] which = landOf(lines);
+        if (which == null) throw new IOException("no 'cmd awaken gate realm RANK id' or 'realm_enter RANK id' line in " + tour);
+        Rank rank = Rank.valueOf(which[0]);
+        String id = which[1];
         Blueprint bp = Blueprints.get(id).orElseThrow(() -> new IOException("no blueprint"));
 
         String env = System.getenv("AWAKEN_PREVIEW_SEEDS");
@@ -87,6 +81,36 @@ public final class Preview {
             if (i == 0) new Camera(land, bp, vol, root, out).all(shots);
         }
         Files.writeString(out.resolve("volume.sha"), sha);
+    }
+
+    /** Which Realm a tour walks: {rank, id} from its 'cmd awaken gate realm RANK id' or 'realm_enter RANK id' line, or null. */
+    public static String[] landOf(List<String> lines) {
+        String[] found = null;
+        for (String line : lines) {
+            String[] w = line.trim().split("\\s+");
+            if (w.length >= 6 && w[0].equals("cmd") && (w[3].equals("realm") || w[3].equals("realm_enter"))) found = new String[]{w[4], w[5]};
+        }
+        return found;
+    }
+
+    /** What one drawing came to, for the bench: the hash of every block, the report's text, and where the time went. */
+    public record Drawn(String hash, String report, int shots, long paintMs, long shotsMs) {}
+
+    /**
+     * The bench's way in (realms/bench): one land that's already made, drawn into {@code out} exactly as a preview is.
+     * The cameras come from a tour's lines; or from one eye given outright ({x, y, z, yaw, pitch} in the land's own
+     * coordinates); or, with neither, one look from the Mouth along the way you arrive.
+     */
+    public static Drawn draw(Land land, Blueprint bp, List<String> tourLines, String name, double[] eye, Path root, Path out) throws IOException, NoSuchAlgorithmException {
+        Files.createDirectories(out);
+        List<Shot> shots = eye != null ? List.of(new Shot(name, eye[0], eye[1], eye[2], (float) eye[3], (float) eye[4], false))
+                : shots(tourLines != null ? tourLines : List.of("shot " + name), land);
+        long t0 = System.currentTimeMillis();
+        Volume vol = new Volume(land, shots);
+        String hash = paint(land, vol);
+        long t1 = System.currentTimeMillis();
+        new Camera(land, bp, vol, root, out).all(shots);
+        return new Drawn(hash, Files.readString(out.resolve("report.txt")), shots.size(), t1 - t0, System.currentTimeMillis() - t1);
     }
 
     /** The cameras, worked out the way the walk would: same commands, same sites, a standing eye height above each. */

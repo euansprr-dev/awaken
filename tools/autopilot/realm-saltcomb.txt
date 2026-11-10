@@ -1,4 +1,4 @@
-# Saltcomb Flats (SPEC 50.8), walked as a player does. Shots beside its two paintings.
+# Saltcomb Flats (SPEC 50.8), walked as a player does from the Mouth (entered with gate realm_enter). Shots beside its two paintings.
 world autopilot_realm_saltcomb creative 20261116
 waitworld
 gui 0
@@ -10,10 +10,13 @@ wait 200
 cmd awaken powers starter 1
 wait 20
 screen close
-wait 20
-cmd awaken gate realm E awaken:saltcomb_flats
-wait 100
-cmd awaken gate interior enter
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:saltcomb_flats
+need realm
+hud off
 wait 200
 shot saltcomb_crossing
 cmd awaken gate realm_at MOUTH 0 -2 7 -6

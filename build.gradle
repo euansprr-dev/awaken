@@ -279,6 +279,31 @@ publishing {
     }
 }
 
+// tools/bench/bench.sh: what javac needs to rebuild one gate's land, and what plain java needs to start the GameTest
+// server outside Gradle (the same classpath, JVM arguments and main class as runGameTestServer), in build/bench/.
+tasks.register('benchClasspath') {
+    def run = tasks.named('runGameTestServer', JavaExec).get()
+    dependsOn run.dependsOn, tasks.named('classes')
+    def compileCp = sourceSets.main.compileClasspath + sourceSets.main.output.classesDirs
+    def runCp = run.classpathProvider // the plugin's task only hands its classpath to JavaExec as it starts
+    inputs.files(runCp)
+    def launch = [
+            'run.main'   : run.mainClass.get(),
+            'run.jvmargs': run.allJvmArgs.join('\n'),
+            'run.args'   : run.args.join('\n'),
+            'run.java'   : run.javaLauncher.get().executablePath.asFile.absolutePath,
+            'run.env'    : run.environmentProperty.get().collect { k, v -> "${k}=${v}" }.join('\n'),
+    ]
+    def out = layout.buildDirectory.dir('bench').get().asFile
+    outputs.dir(out)
+    doLast {
+        out.mkdirs()
+        new File(out, 'compile.classpath').text = compileCp.asPath
+        new File(out, 'run.classpath').text = runCp.asPath
+        launch.each { k, v -> new File(out, k).text = v }
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
