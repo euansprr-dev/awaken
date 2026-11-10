@@ -52,8 +52,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.2 200.83 2.6 -90 4
-look -90 4
+cmd tp @s -6.2 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:heat_shimmer 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -79,8 +79,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -6.1 201.16 2.6 -90 4
-look -90 4
+cmd tp @s -7.1 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:prism_sentinel 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -136,8 +136,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -4.9 200.61 2.6 -90 4
-look -90 4
+cmd tp @s -5.9 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:lantern_moth 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}

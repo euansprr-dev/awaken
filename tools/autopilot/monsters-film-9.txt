@@ -52,8 +52,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.3 200.61 2.6 -90 4
-look -90 4
+cmd tp @s -6.3 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:night_terror 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -157,8 +157,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.5 200.56 2.6 -90 4
-look -90 4
+cmd tp @s -6.5 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:gale_harpy 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -181,8 +181,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.1 200.66 2.6 -90 4
-look -90 4
+cmd tp @s -6.1 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:cloud_breeze 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -208,8 +208,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.8 201.05 2.6 -90 4
-look -90 4
+cmd tp @s -6.8 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sky_raider 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
@@ -232,8 +232,8 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -6.0 200.83 2.6 -90 4
-look -90 4
+cmd tp @s -7.0 201.58 2.6 -90 -6
+look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:thunderhead 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
