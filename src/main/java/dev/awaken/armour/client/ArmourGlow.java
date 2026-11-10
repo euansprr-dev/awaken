@@ -91,6 +91,21 @@ final class ArmourGlow {
         return Math.max(flare, (int) (255 * k * k));
     }
 
+    /** How long a living part answers a release (SPEC §44.13): longer than the flare, so a wingbeat is seen. */
+    private static final long KICK_MS = 700;
+
+    /**
+     * The kick a release gives the set's living parts, 0..1: at once to full, then easing out (a wing thrown open
+     * folds slowly; a halo struck rings down).
+     */
+    static float kick(@Nullable Glow g) {
+        if (g == null || g.flash <= 0) return 0F;
+        long age = Util.getMillis() - g.flashAt;
+        if (age >= KICK_MS || age < 0) return 0F;
+        float k = 1F - age / (float) KICK_MS;
+        return k * k * (3F - 2F * k);
+    }
+
     /** The shader's flash, 0-255: a release's flare fading out. */
     static int flash(@Nullable Glow g) {
         if (g == null || g.flash <= 0) return 0;

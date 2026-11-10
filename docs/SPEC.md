@@ -18185,6 +18185,25 @@ that fidgets would be wrong).
 - Test `armour_sounds_named`: every armour and forge sound event has its entry, every entry and layer names one of
   Minecraft's events, every set has its family and its pieces go on with its sound.
 
+**44.13 The bigger options (after the Finish; Euan chose Admire and the abilities that use the suit).**
+- **The suit answers its ability.** When a set's ability or twist fires (the release's flare, `ArmourPayloads.Charge`
+  with a flash), its living parts (§44.10) take a **kick** for 0.7 s: at once to full, easing out
+  (`ArmourGlow.kick`). Each part's own `kick` in the kit's `LIVE` table says how hard: a sway swings that many times its
+  amount further (the wind or the kick, whichever is larger, never both), a tilt or a drift grows by that share, a
+  pulse swells by it, a turn whips half a turn times it and settles back. So on Gust Galewing's wings are thrown open
+  (30 degrees) and fold; on Hymn the halo rings wider and its wings beat; on Riftstep the rift tears five times as
+  wide; on Hollow Pulse the heart swells; the System's marker whips round on Echo; Leviathan's frills flare on Abyss
+  Pull; plumes, lanterns, ribbons, the sun's rays and Dreamsteel's shards answer too. The 17 sets without living
+  parts keep the flare alone. From the render state and the glow record: nothing new is sent. The kit's sweep check
+  covers the kicked range (three kicks were lowered because a lantern, the halo and the shards reached their set).
+  `/awaken armour kick` flares your own set on your client (tours and demos).
+- **Admire.** Hold **O** (`key.awaken.admire`, "Admire your armour (hold)") with a piece of ours on and nothing open:
+  the view leaves your eyes, starts in front of you and circles you once, close (3.1 blocks, field of view 42, six
+  seconds), stopping short of any wall between it and you. You stand still (`InputLock`), the HUD steps aside, and
+  the set is drawn in a **hero light**: never darker than block light 11, what glows as if half charged. Letting go,
+  moving, a blow, death or anything opening ends it at once. It rides the Forge Song's camera (`ForgeCamera`), which
+  now leaves your body drawn while Admire has it. `/awaken armour admire` runs one circle without the key.
+
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
 Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the

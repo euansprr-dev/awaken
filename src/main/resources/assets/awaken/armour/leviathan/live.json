@@ -31,7 +31,8 @@
   "phase": 0.0,
   "idle": 1.0,
   "stride": 0.0,
-  "wind": 0.0
+  "wind": 0.0,
+  "kick": 2.0
  },
  {
   "piece": "helmet",
@@ -65,6 +66,7 @@
   "phase": 0.0,
   "idle": 1.0,
   "stride": 0.0,
-  "wind": 0.0
+  "wind": 0.0,
+  "kick": 2.0
  }
 ]

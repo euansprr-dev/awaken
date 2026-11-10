@@ -167,7 +167,7 @@ final class ArmourTests {
             h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + o.get("mesh").getAsString() + ".mesh"), file + " ships " + o.get("mesh"));
             for (String v : new String[]{"pivot", "axis", "u", "v"})
                 h.assertTrue(o.has(v) && o.getAsJsonArray(v).size() == 3, file + ": " + v + " has three numbers");
-            for (String n : new String[]{"speed", "amount", "reach", "bob", "phase", "idle", "stride", "wind"})
+            for (String n : new String[]{"speed", "amount", "reach", "bob", "phase", "idle", "stride", "wind", "kick"})
                 h.assertTrue(o.has(n) && o.get(n).getAsJsonPrimitive().isNumber(), file + ": " + n + " is a number");
         }
     }

@@ -24,11 +24,11 @@ public final class ArmourLive {
      * One living part, in its bone's part space (blocks; y down, z back). speed: degrees a tick (turn), radians a tick
      * (tilt, sway, drift), beats a tick (pulse). amount: degrees (tilt, sway), a share (pulse). reach: blocks (drift).
      * u, v: the two directions a tilt leans in. idle, stride, wind: what shares of a sway come from standing, from the
-     * stride and from the wind.
+     * stride and from the wind. kick: how hard it answers when its set's ability fires (SPEC §44.13).
      */
     public record Part(Bone bone, ArmourMesh mesh, Kind kind, float px, float py, float pz, float ax, float ay, float az,
                        float ux, float uy, float uz, float vx, float vy, float vz, float speed, float amount, float reach, float bob,
-                       float phase, float idle, float stride, float wind) {}
+                       float phase, float idle, float stride, float wind, float kick) {}
 
     static boolean on(Part[] parts, Bone bone) {
         for (Part p : parts) if (p.bone == bone) return true;
@@ -39,30 +39,34 @@ public final class ArmourLive {
 
     /**
      * Moves the pose (already on the part's bone) to where the part is now. age in ticks; stride 0..1 and walk the
-     * wearer's stride and its phase; wind 0..1 how hard the air moves past them (a fall, a glide, a sprint).
+     * wearer's stride and its phase; wind 0..1 how hard the air moves past them (a fall, a glide, a sprint); kick 0..1
+     * how freshly their set's ability fired (the part answers it: wings beat, a halo rings, a rift tears wider).
      */
-    public static void pose(PoseStack ps, Part p, float age, float stride, float walk, float wind) {
+    public static void pose(PoseStack ps, Part p, float age, float stride, float walk, float wind, float kick) {
         float bob = p.bob == 0 ? 0 : p.bob * Mth.sin(0.05F * age + p.phase);
+        float kw = p.kick * kick;
         if (p.kind == Kind.DRIFT) {
-            float t = p.speed * age;
-            ps.translate(p.reach * Mth.sin(t + p.phase), -p.reach * Mth.sin(0.7F * t + 2 * p.phase) - bob, -p.reach * Mth.sin(1.3F * t + 3 * p.phase));
+            float t = p.speed * age, r = p.reach * (1F + kw);
+            ps.translate(r * Mth.sin(t + p.phase), -r * Mth.sin(0.7F * t + 2 * p.phase) - bob, -r * Mth.sin(1.3F * t + 3 * p.phase));
             return;
         }
         ps.translate(p.px, p.py - bob, p.pz);
         switch (p.kind) {
-            case TURN -> ps.rotate(Q.rotationAxis(p.speed * age * Mth.DEG_TO_RAD, p.ax, p.ay, p.az));
+            case TURN -> ps.rotate(Q.rotationAxis((p.speed * age + 180F * kw * kick) * Mth.DEG_TO_RAD, p.ax, p.ay, p.az));
             case TILT -> {
-                float t = p.speed * age + p.phase, a = p.amount * Mth.DEG_TO_RAD;
+                float t = p.speed * age + p.phase, a = p.amount * (1F + kw) * Mth.DEG_TO_RAD;
                 ps.rotate(Q.rotationAxis(a * Mth.sin(t), p.ux, p.uy, p.uz));
                 ps.rotate(Q.rotationAxis(a * Mth.cos(t), p.vx, p.vy, p.vz));
             }
             case SWAY -> {
-                float a = p.amount * (p.idle * Mth.sin(p.speed * age + p.phase) + p.stride * stride * Mth.sin(walk * 0.6662F + p.phase) + p.wind * wind);
+                // the wind or the kick, whichever opens it further: never past what either alone does
+                float a = p.amount * (p.idle * Mth.sin(p.speed * age + p.phase) + p.stride * stride * Mth.sin(walk * 0.6662F + p.phase)
+                        + Math.max(p.wind * wind, kw));
                 ps.rotate(Q.rotationAxis(a * Mth.DEG_TO_RAD, p.ax, p.ay, p.az));
             }
             case PULSE -> {
                 float f = Mth.frac(p.speed * age + p.phase), a = (f - 0.1F) * 9F, b = (f - 0.32F) * 9F;
-                float s = 1F + p.amount * ((float) Math.exp(-a * a) + 0.6F * (float) Math.exp(-b * b));
+                float s = 1F + p.amount * ((float) Math.exp(-a * a) + 0.6F * (float) Math.exp(-b * b) + kw);
                 ps.scale(s, s, s);
             }
             default -> { }
@@ -144,6 +148,7 @@ public final class ArmourLive {
                 u.get(0).getAsFloat(), u.get(1).getAsFloat(), u.get(2).getAsFloat(),
                 v.get(0).getAsFloat(), v.get(1).getAsFloat(), v.get(2).getAsFloat(),
                 o.get("speed").getAsFloat(), o.get("amount").getAsFloat(), o.get("reach").getAsFloat(), o.get("bob").getAsFloat(),
-                o.get("phase").getAsFloat(), o.get("idle").getAsFloat(), o.get("stride").getAsFloat(), o.get("wind").getAsFloat());
+                o.get("phase").getAsFloat(), o.get("idle").getAsFloat(), o.get("stride").getAsFloat(), o.get("wind").getAsFloat(),
+                o.has("kick") ? o.get("kick").getAsFloat() : 0F);
     }
 }

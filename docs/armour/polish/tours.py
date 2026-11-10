@@ -170,6 +170,29 @@ def moments():
     return L + ["quit"]
 
 
+def extras():
+    L = head("armouraudit7", 5157, "the bigger options: the suit answering its ability, and Admire")
+    L += ["cmd tp @s 0.5 150 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
+          "cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone", "cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete",
+          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"]
+    # a set's ability fires (the demo command flares it on this client): its living parts answer
+    for s, side in (("galewing", "back"), ("halo_choir", "front"), ("riftwalker", "back"), ("hollowheart", "front"), ("signals_echo", "front"),
+                    ("leviathan", "front")):
+        L += wear(s)
+        L += ["cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 6"] if side == "front" else ["cmd tp @s 0.5 150 5.5 0 0", "camera back", "look 0 8"]
+        L += ["wait 20", f"shotnow k_{s}_rest", "cmd awaken armour kick", "wait 2", f"shotnow k_{s}_a", "wait 3", f"shotnow k_{s}_b", "wait 4",
+              f"shotnow k_{s}_c", "wait 8", f"shotnow k_{s}_d", "wait 10"]
+    # Admire: one circle by day, one by night (the hero light), from the command (the key does the same while held)
+    for s, time in (("lordscale", 6000), ("sunward", 18000)):
+        L += wear(s)
+        L += [f"cmd time set {time}", "camera first", "opt fov 70", "cmd tp @s 0.5 150 2.5 0 0", "look 0 0", "wait 40", f"shot a_{s}_before",
+              "cmd awaken armour admire"]
+        for k, w in zip("abcdef", (14, 20, 20, 20, 20, 20)):
+            L += [f"wait {w}", f"shotnow a_{s}_{k}"]
+        L += ["wait 40", f"shot a_{s}_after"]
+    return L + ["quit"]
+
+
 def write(name, lines):
     with open(os.path.join(OUT, name + ".txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -183,3 +206,4 @@ if __name__ == "__main__":
     write("armour-audit-far", far())
     write("armour-audit-living", living())
     write("armour-audit-moments", moments())
+    write("armour-audit-extras", extras())

@@ -31,7 +31,8 @@
   "phase": 0.0,
   "idle": 0.3,
   "stride": 0.7,
-  "wind": 0.0
+  "wind": 0.0,
+  "kick": 1.0
  },
  {
   "piece": "chestplate",
@@ -65,6 +66,7 @@
   "phase": 0.0,
   "idle": 0.3,
   "stride": 0.7,
-  "wind": 0.0
+  "wind": 0.0,
+  "kick": 1.0
  }
 ]

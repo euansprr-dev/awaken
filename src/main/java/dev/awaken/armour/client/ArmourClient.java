@@ -52,6 +52,7 @@ public final class ArmourClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("armour_meshes"),
                 (ResourceManagerReloadListener) ArmourMeshes::reload));
         ArmourSoundsClient.init(modBus);
+        ArmourAdmire.init(modBus);
         modBus.addListener(RegisterRenderPipelinesEvent.class, ArmourPipelines::onRegister);
         // a piece in a hand, on the ground, in a frame: the piece itself, not its icon (SPEC §44.11)
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent.class,
@@ -79,6 +80,8 @@ public final class ArmourClient {
     /** The wearer's set ability glow ({@link ArmourGlow}), and whether they are low (mastery III's heartbeat). */
     static final ContextKey<ArmourGlow.Glow> GLOW = new ContextKey<>(Awaken.id("armour_glow"));
     static final ContextKey<Boolean> LOW = new ContextKey<>(Awaken.id("armour_low"));
+    /** You, while Admire's camera circles you: the set is drawn in its hero light ({@link ArmourAdmire}). */
+    static final ContextKey<Boolean> ADMIRED = new ContextKey<>(Awaken.id("armour_admired"));
     /** When the wearer's awakened parts (mastery IV) first showed, so they grow in ({@link ArmourLive.Wake}). */
     static final ContextKey<ArmourLive.Wake> WAKE = new ContextKey<>(Awaken.id("armour_wake"));
     /** Below this share of health a mastered set beats with your heart. */
@@ -113,6 +116,7 @@ public final class ArmourClient {
         ArmourGlow.Glow glow = ArmourGlow.of(entity.getId());
         if (glow != null) state.setRenderData(GLOW, glow);
         if (entity.getHealth() < entity.getMaxHealth() * LOW_HEALTH) state.setRenderData(LOW, Boolean.TRUE);
+        if (ArmourAdmire.on() && entity == Minecraft.getInstance().player) state.setRenderData(ADMIRED, Boolean.TRUE);
         AvatarRenderState a = state instanceof AvatarRenderState av ? av : null;
         if (worn[ArmorType.HELMET.ordinal()] != null) {
             h.headEquipment = ItemStack.EMPTY;

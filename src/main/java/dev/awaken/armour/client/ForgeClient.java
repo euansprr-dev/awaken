@@ -77,6 +77,14 @@ public final class ForgeClient {
                                     ArmourClientConfig.motion(com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on"));
                                     return 1;
                                 })))
+                        .then(net.minecraft.commands.Commands.literal("admire").executes(c -> ArmourAdmire.once() ? 1 : 0))
+                        // tours and demos: your own set flares as if its ability had just fired (this client only)
+                        .then(net.minecraft.commands.Commands.literal("kick").executes(c -> {
+                            var me = Minecraft.getInstance().player;
+                            if (me == null) return 0;
+                            ArmourGlow.on(new ArmourPayloads.Charge(me.getId(), 0, 0, 255));
+                            return 1;
+                        }))
                         .then(net.minecraft.commands.Commands.literal("movesound").then(net.minecraft.commands.Commands.argument("level",
                                 com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 100)).executes(c -> {
                                     ArmourClientConfig.moveSound(com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "level"));
@@ -91,6 +99,7 @@ public final class ForgeClient {
                                 }))))));
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ForgeSongScreen.last = null;
+            ArmourAdmire.stop();
             ForgeCamera.end();
         });
     }
@@ -132,7 +141,7 @@ public final class ForgeClient {
             if (mc.getConnection() != null) send(ForgeSongScreen.last, ArmourPayloads.LEAVE, 0, 0F, 0F);
             ForgeSongScreen.last = null;
         }
-        if (!ForgeCamera.active()) return;
+        if (!ForgeCamera.active() || ArmourAdmire.on()) return; // Admire holds the camera by its key, and lets go itself
         boolean ours = mc.gui.screen() instanceof ForgeScreen || mc.gui.screen() instanceof ForgeSongScreen;
         if (!ours || mc.player == null || !mc.player.isAlive()) ForgeCamera.end();
     }

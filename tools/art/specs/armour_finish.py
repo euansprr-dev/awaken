@@ -428,12 +428,14 @@ def overlaps(design):
 # bob lifts it up and down besides (texels). A set with nothing here stands still, and some should (Bellguard, Beastbound).
 
 def _live(piece, bone, parts, kind, pivot, axis=(0, 1, 0), speed=0.05, amount=0.0, bob=0.0, phase=0.0, idle=0.35, stride=0.65,
-          wind=0.0, side=0, through=()):
+          wind=0.0, side=0, through=(), kick=0.0):
     """through: parts it may pass into as it moves (rays turning behind their disc, a plume over the ridge it rises
-    from); the sweep check refuses every other."""
+    from); the sweep check refuses every other. kick: how hard the part answers when its set's ability fires (SPEC
+    §44.13): a sway swings that many times its amount further, a tilt or a drift grows by that share, a pulse swells by
+    it, a turn whips half a turn times it and settles."""
     return dict(piece=piece, bone=bone, parts=tuple(parts), kind=kind, pivot=tuple(float(v) for v in pivot),
                 axis=tuple(float(v) for v in axis), speed=speed, amount=amount, bob=bob, phase=phase, idle=idle, stride=stride,
-                wind=wind, side=side, through=tuple(through))
+                wind=wind, side=side, through=tuple(through), kick=kick)
 
 
 def _both_sides(piece, bone, parts, kind, pivot, axis, **kw):
@@ -454,33 +456,33 @@ def _both_arms(piece, parts, kind, pivot, axis, **kw):
 
 LIVE = {
     # the System's marker turns over the hood and rides up and down
-    "signals_echo": [_live("helmet", "head", ("marker", "marker_core"), "turn", (0, 14.5, 0), (0, 1, 0), speed=3.0, bob=0.6)],
+    "signals_echo": [_live("helmet", "head", ("marker", "marker_core"), "turn", (0, 14.5, 0), (0, 1, 0), speed=3.0, bob=0.6, kick=1.0)],
     # the sun's rays turn slowly behind the head
-    "sunward": [_live("helmet", "head", ("ray",), "turn", (0, 5, -8), (0, 0, 1), speed=0.6, through=("disc",))],
+    "sunward": [_live("helmet", "head", ("ray",), "turn", (0, 5, -8), (0, 0, 1), speed=0.6, through=("disc",), kick=0.5)],
     # the halo leans round and round and rides; the wings at the temples breathe
-    "halo_choir": [_live("helmet", "head", ("halo",), "tilt", (0, 7, -7), (0, 0, 1), speed=0.045, amount=6.0, bob=0.4)]
-                  + _both_sides("helmet", "head", ("hwing",), "sway", (4.5, 6.0, -7.0), (0, 0, 1), speed=0.045, amount=5.0, idle=1.0, stride=0.0),
+    "halo_choir": [_live("helmet", "head", ("halo",), "tilt", (0, 7, -7), (0, 0, 1), speed=0.045, amount=6.0, bob=0.4, kick=0.6)]
+                  + _both_sides("helmet", "head", ("hwing",), "sway", (4.5, 6.0, -7.0), (0, 0, 1), speed=0.045, amount=5.0, idle=1.0, stride=0.0, kick=2.5),
     # the little lamp at the brow swings on its chain as you walk; the shoulder lanterns rock on their feet
-    "lanternlight": [_live("helmet", "head", ("lamp", "lamp_glass"), "sway", (0, 7, 6), (1, 0, 0), speed=0.07, amount=9.0, idle=0.3, stride=0.7)]
-                    + _both_arms("chestplate", ("lantern", "lantern_glass"), "sway", (-3, 4, 0), (0, 0, 1), speed=0.06, amount=3.5, idle=0.25, stride=0.75),
+    "lanternlight": [_live("helmet", "head", ("lamp", "lamp_glass"), "sway", (0, 7, 6), (1, 0, 0), speed=0.07, amount=9.0, idle=0.3, stride=0.7, kick=1.2)]
+                    + _both_arms("chestplate", ("lantern", "lantern_glass"), "sway", (-3, 4, 0), (0, 0, 1), speed=0.06, amount=3.5, idle=0.25, stride=0.75, kick=0.5),
     # a plume that nods with your step and streams when you run or fall
     "bladeward": [_live("helmet", "head", ("plume",), "sway", (0, 10, -2), (1, 0, 0), speed=0.06, amount=7.0, idle=0.3, stride=0.5, wind=1.6,
-                        through=("ridge",))],
-    "nightcourt": [_live("helmet", "head", ("plume",), "sway", (4.5, 10.5, 1.5), (1, 0, 0), speed=0.05, amount=6.0, idle=0.35, stride=0.5, wind=1.6)],
+                        through=("ridge",), kick=1.2)],
+    "nightcourt": [_live("helmet", "head", ("plume",), "sway", (4.5, 10.5, 1.5), (1, 0, 0), speed=0.05, amount=6.0, idle=0.35, stride=0.5, wind=1.6, kick=1.2)],
     # the wings that hang down the back (the cape's primaries) breathe, and fan open when you fall, glide or run
     "galewing": _both_sides("chestplate", "cape1", ("prim",), "sway", (0.0, 0.0, -0.5), (0, 0, -1), speed=0.04, amount=1.5, idle=1.0,
-                            stride=0.0, wind=20.0),
+                            stride=0.0, wind=20.0, kick=20.0),
     # the broken crown drifts over the head, half of it against the other half
-    "dreamsteel": [_live("helmet", "head", ("crown0", "crown2", "crown4"), "drift", (0, 12, 0), speed=0.035, amount=0.5),
-                   _live("helmet", "head", ("crown1", "crown3", "crown5"), "drift", (0, 12, 0), speed=0.035, amount=0.5, phase=2.1)],
+    "dreamsteel": [_live("helmet", "head", ("crown0", "crown2", "crown4"), "drift", (0, 12, 0), speed=0.035, amount=0.5, kick=0.5),
+                   _live("helmet", "head", ("crown1", "crown3", "crown5"), "drift", (0, 12, 0), speed=0.035, amount=0.5, phase=2.1, kick=0.5)],
     # the tear behind you never quite holds still
-    "riftwalker": [_live("chestplate", "body", ("tear", "glow"), "drift", (0, 0, -8), speed=0.09, amount=0.3)],
+    "riftwalker": [_live("chestplate", "body", ("tear", "glow"), "drift", (0, 0, -8), speed=0.09, amount=0.3, kick=4.0)],
     # the caged heart beats
-    "hollowheart": [_live("chestplate", "body", ("heart", "heart_tip", "heart_core"), "pulse", (0, -4, 4.5), speed=1 / 17.0, amount=0.09)],
+    "hollowheart": [_live("chestplate", "body", ("heart", "heart_tip", "heart_core"), "pulse", (0, -4, 4.5), speed=1 / 17.0, amount=0.09, kick=2.0)],
     # the frills at the ears open and close like gills
-    "leviathan": _both_sides("helmet", "head", ("frill",), "sway", (5.0, 6.0, -2.0), (0, 1, 0), speed=0.035, amount=5.0, idle=1.0, stride=0.0),
+    "leviathan": _both_sides("helmet", "head", ("frill",), "sway", (5.0, 6.0, -2.0), (0, 1, 0), speed=0.035, amount=5.0, idle=1.0, stride=0.0, kick=2.0),
     # the ribbons at the wrists swing
-    "veilwoven": _both_arms("chestplate", ("ribbon",), "sway", (-4.5, -9.0, -0.5), (1, 0, 0), speed=0.06, amount=10.0, idle=0.3, stride=0.7),
+    "veilwoven": _both_arms("chestplate", ("ribbon",), "sway", (-4.5, -9.0, -0.5), (1, 0, 0), speed=0.06, amount=10.0, idle=0.3, stride=0.7, kick=1.0),
 }
 
 
@@ -528,7 +530,7 @@ def live_json(design):
                         "axis": [round(float(x), 5) for x in a * flip], "u": [round(float(x), 5) for x in u * flip],
                         "v": [round(float(x), 5) for x in v * flip], "speed": s["speed"], "amount": 0.0 if drift else s["amount"],
                         "reach": round(s["amount"] / 16.0, 5) if drift else 0.0, "bob": round(s["bob"] / 16.0, 5),
-                        "phase": s["phase"], "idle": s["idle"], "stride": s["stride"], "wind": s["wind"]})
+                        "phase": s["phase"], "idle": s["idle"], "stride": s["stride"], "wind": s["wind"], "kick": s.get("kick", 0.0)})
     return out
 
 
@@ -598,24 +600,26 @@ def beat(x):
     return np.exp(-((f - 0.1) * 9.0) ** 2) + 0.6 * np.exp(-((f - 0.32) * 9.0) ** 2)
 
 
-def pose(spec, age, stride=0.0, walk=0.0, wind=0.0):
+def pose(spec, age, stride=0.0, walk=0.0, wind=0.0, kick=0.0):
     """(R, t): a living part's boxes at this moment are R (p - pivot) + pivot + t, in design space (the game does the same
-    in part space, ArmourLive.pose)."""
+    in part space, ArmourLive.pose). kick 0..1: how freshly the set's ability fired."""
     k, sp, am, ph = spec["kind"], spec["speed"], spec["amount"], spec["phase"]
+    kw = spec.get("kick", 0.0) * kick
     R, t = np.eye(3), np.zeros(3)
     if k == "turn":
-        R = _rot(spec["axis"], sp * age)
+        R = _rot(spec["axis"], sp * age + 180.0 * kw * kick)
     elif k == "tilt":
         a = np.asarray(spec["axis"], dtype=float)
         u, v = _lean(a / max(np.linalg.norm(a), 1e-9))
+        am = am * (1 + kw)
         R = _rot(u, am * np.sin(sp * age + ph)) @ _rot(v, am * np.cos(sp * age + ph))
     elif k == "sway":
         R = _rot(spec["axis"], am * (spec["idle"] * np.sin(sp * age + ph) + spec["stride"] * stride * np.sin(walk * 0.6662 + ph)
-                                     + spec["wind"] * wind))
+                                     + max(spec["wind"] * wind, kw)))
     elif k == "drift":
-        t = am * np.array([np.sin(sp * age + ph), np.sin(0.7 * sp * age + 2 * ph), np.sin(1.3 * sp * age + 3 * ph)])
+        t = am * (1 + kw) * np.array([np.sin(sp * age + ph), np.sin(0.7 * sp * age + 2 * ph), np.sin(1.3 * sp * age + 3 * ph)])
     elif k == "pulse":
-        R = np.eye(3) * (1 + am * beat(sp * age + ph))
+        R = np.eye(3) * (1 + am * (beat(sp * age + ph) + kw))
     t = t + np.array([0.0, spec["bob"] * np.sin(0.05 * age + ph), 0.0])
     return R, t
 
@@ -664,8 +668,10 @@ def sweep(design):
             ages = range(0, 4000, 37)
             worst = set()
             for age in ages:
-                for stride, wind in ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)):
-                    R, t = pose(spec, age, stride, age * 0.9, wind)
+                # standing, striding, in the wind, and with the set's ability just fired (a wing never takes the wind
+                # and the kick at once past what the wind alone opens it: the game adds the larger of the two)
+                for stride, wind, kick in ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 1.0)):
+                    R, t = pose(spec, age, stride, age * 0.9, wind, kick)
                     for b, r0 in zip(mine, rest):
                         P = corners(b, R, t)
                         for o in others:

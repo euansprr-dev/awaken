@@ -31,6 +31,7 @@
   "phase": 0.0,
   "idle": 0.35,
   "stride": 0.65,
-  "wind": 0.0
+  "wind": 0.0,
+  "kick": 0.5
  }
 ]

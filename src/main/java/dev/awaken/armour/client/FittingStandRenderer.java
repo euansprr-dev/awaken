@@ -161,7 +161,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
                 if (lives) for (ArmourLive.Part p : live) {
                     if (p.bone() != b) continue;
                     ps.pushPose();
-                    ArmourLive.pose(ps, p, s.age, 0F, 0F, 0F);
+                    ArmourLive.pose(ps, p, s.age, 0F, 0F, 0F, 0F);
                     ArmourLayer.draw(out, ps, p.mesh(), set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot], s.marks[slot]);
                     ps.popPose();
                 }

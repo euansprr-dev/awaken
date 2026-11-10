@@ -41,10 +41,15 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         if (state.isInvisible || worn == null) return;
         ArmourGlow.Glow glow = state.getRenderData(ArmourClient.GLOW);
         int energy = ArmourGlow.energy(glow);
+        if (state.getRenderData(ArmourClient.ADMIRED) != null) {
+            // Admire's hero light (SPEC §44.13): never darker than a lit room, and what glows glows as if half charged
+            light = net.minecraft.util.LightCoordsUtil.max(light, HERO_LIGHT);
+            energy = Math.max(energy, 110);
+        }
         boolean low = state.getRenderData(ArmourClient.LOW) != null;
         ArmourLive.Wake wake = state.getRenderData(ArmourClient.WAKE);
         boolean motion = ArmourClientConfig.motion();
-        float wind = motion ? ArmourLive.wind(state) : 0F;
+        float wind = motion ? ArmourLive.wind(state) : 0F, kick = motion ? ArmourGlow.kick(glow) : 0F;
         ArmourSet aura = null;
         int mastered = 0;
         for (int si = 0; si < SLOTS.length; si++) {
@@ -78,7 +83,7 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
                     if (lives) for (ArmourLive.Part p : live) {
                         if (p.bone() != b) continue;
                         ps.pushPose();
-                        ArmourLive.pose(ps, p, state.ageInTicks, state.walkAnimationSpeed, state.walkAnimationPos, wind);
+                        ArmourLive.pose(ps, p, state.ageInTicks, state.walkAnimationSpeed, state.walkAnimationPos, wind, kick);
                         draw(out, ps, p.mesh(), look.set(), light, foil, energy, flash, -1, mastery, low, accent, script, marks);
                         ps.popPose();
                     }
@@ -98,6 +103,8 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         if (mastered == 4) ArmourAura.draw(out, ps, aura, state.ageInTicks);
         if (glow != null && glow.runes > 0) runes(ps, out, worn[ArmorType.CHESTPLATE.ordinal()], glow, state.ageInTicks);
     }
+
+    private static final int HERO_LIGHT = net.minecraft.util.LightCoordsUtil.pack(11, 0);
 
     /** Mastery steps (0-based) at which the awakened parts grow (IV) and the aura comes (V). */
     static final int AWAKENED = 3, AURA = 4;
