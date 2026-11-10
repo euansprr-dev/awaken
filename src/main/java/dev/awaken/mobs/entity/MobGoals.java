@@ -333,7 +333,9 @@ final class MobGoals {
             }
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
-            double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + 1.3;
+            // (a gate monster's own body dives to the touch: on film the Lantern Moth's blow landed a block and a half
+            // short of its target, a tenth of a second before it got there)
+            double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + (mob.def().rig ? 0.9 : 1.3);
             // it dives only down a clear line: never into the leaves after you (it waits for you to come out)
             if (!ranged && attackCooldown <= 0 && !mob.staggered() && tellLeft < 0 && !diveClear(t, reach)) attackCooldown = 10;
             if (!ranged && attackCooldown <= 0 && !mob.staggered()) {

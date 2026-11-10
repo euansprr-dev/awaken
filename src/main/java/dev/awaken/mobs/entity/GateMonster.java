@@ -344,8 +344,29 @@ public class GateMonster extends AwakenMob implements RigBody {
     public boolean act(ServerLevel level, int index, LivingEntity target) {
         java.util.List<String> names = FaunaMob.moveNames(def());
         if (abilities == null || index < 0 || index >= names.size()) return false;
+        wake(level);
         setTarget(target);
         return abilities.start(level, names.get(index));
+    }
+
+    /** Wakes it if it lies dormant (the studio and the tours: a dormant monster otherwise waits for a player to come near). */
+    public void rouse(ServerLevel level) {
+        wake(level);
+    }
+
+    /** It wakes in its own matter and its own voice, with the game's warning under it (never the borrowed sparks). */
+    @Override
+    protected void wake(ServerLevel level) {
+        if (!flag(F_DORMANT)) return;
+        if (def().matter == null) {
+            super.wake(level);
+            return;
+        }
+        setFlag(F_DORMANT, false);
+        Abilities.shed(level, this, position().add(0, getBbHeight() * 0.6, 0), 16, 0.4, 0.5, 0.4, 0.08);
+        playSound(MobSounds.TELEGRAPH_HEAVY.get(), 1.0F, 1.4F);
+        SoundEvent own = MobSounds.monster(def().id, "ambient");
+        if (own != null) playLevelSound(own, 1.2F, 1.15F);
     }
 
     // ---- being hit -------------------------------------------------------------------------------------------------

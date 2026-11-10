@@ -22032,6 +22032,11 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
 - From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
   body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
+- A gate monster's dive lands at the touch: its reach is half the two widths + 0.9 (the other fliers keep 1.3). On film
+  the Lantern Moth's blow landed a block and a half short of its target, a tenth of a second before it arrived.
+- A dormant gate monster wakes in its own matter and voice (`GateMonster.wake`), with the game's warning sound under
+  it, not the borrowed sparks. `/awaken admin monster target` and `act` rouse a dormant one (it otherwise waits for a
+  player to come near: on film the Security Unit slept through its fight).
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.
