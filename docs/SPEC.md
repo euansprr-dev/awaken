@@ -20505,3 +20505,114 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 `ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
+
+## 58. Over Every Hill: finds (plan docs/finds/PLAN.md, page https://claude.ai/artifact/G9fPfsJmTjj8xbaRnrScSw; Euan approved the full plan and every recommendation 2026-11-10: "make sure it doesn't feel like a fairground... you should still have stretches where you don't find much. It should feel very natural")
+
+Module `finds` (package `dev.awaken.finds`), config switch `finds` (default on). The catalogue is `docs/finds/catalogue.txt`; the
+kinds as built are `docs/finds/BOOK.md` (generated). Built in one run on `claude/finds-over-every-hill`; unseen in game.
+
+### 58.1 What it is
+
+144 kinds of small thing to come across in the overworld: 97 curios (a few blocks, under a minute) and 47 finds (a small scene, a
+few minutes), in 18 sets of 8, ranks E to A. Each is something you do, on one of eighteen verbs: stack, carry, light, ring, turn,
+offer, follow, dig, pull, pour, shoot, run, reach, wait, mend, read, break, sneak. No fights, no people (the Stilled are stone),
+nothing automated, loot per player. Nothing about a find is told ahead: no markers, no list of what's out there.
+
+### 58.2 The sets
+
+Cairns (stack), The Stilled at Rest (carry), Lamplighter's Road (light), Ringing Stones (ring), Old Machines (turn), Small Gods
+(offer), Wisps (follow), Buried Things (dig), Hung Things (pull), Dry Things (pour), Marks (shoot), Runs (run), High Things
+(reach), Night and Weather (wait), Mended Things (mend), Surveyor's Stones (read), Sealed Things (break), Beast Works (sneak).
+Number 1 of a set is its plainest and is favoured near the spawn. A kind is written in `finds/sets/<Set>.java` with
+`Kind.of(...)...add()`: its words (`see` before, `learned` after), where it stands, its scene, its script, its walkthrough.
+
+### 58.3 Where they are (and where they aren't)
+
+- Two layers of cells: curios 96 blocks, finds 256, one site at most per cell, set anywhere inside the cell but its edge.
+- A slow field over the world (value noise, 62% at 1,100 blocks and 38% at 420). Below 0.42 the land is quiet: no curios at
+  all and an eighth of the usual finds. Above it the chance rises smoothly to 2.35 times the usual. A third of the land is quiet.
+  Chance per cell at the usual liveliness: 0.62 curios, 0.50 finds. Within 420 blocks of the spawn the land is never quiet.
+- Walk simulation (`tools/sim/finds_walk.py`, with 60 to 80% of cells finding ground that suits them): a find within 36 blocks
+  of your path every 75 to 98 s on average, half of the gaps under 36 to 46 s, one gap in ten over 3 to 4 minutes, and about
+  half of all walking time is spent in a stretch of three minutes or more with nothing. That is the rule, not a fault.
+- A kind is eligible from its own rank outward (rank from `RegionMap`, by distance) and thins by 0.45 a rank beyond it, so far
+  land is mostly new kinds. It stands only in its lands (`RegionMap.Group`) and only on ground that suits its anchor: FLAT,
+  HILLTOP, LINE (a gentle run, an old road), SHORE (facing the water), CLIFF (facing the rock), SLOPE, PEAK. A cell with no
+  fitting ground stays empty.
+- No twins: a cell won't take a kind that a cell within 4 rings (curios) or 5 (finds) with first say would take.
+- Never within 40 blocks of the spawn point, in the city, or on a structure. New chunks only.
+- A site, its turn and its scene are pure functions of the world seed. `FindsFeature` (`awaken:finds`, top layer step, every
+  overworld biome) writes each chunk's share of every site within reach.
+
+### 58.4 A scene, and the bar every one is held to
+
+`Scene` is what a kind builds, in its own coordinates (facing south, then turned): blocks that follow the ground, named parts,
+what lives there, where its tell is drawn. Test `finds_every_scene_stands` holds every kind to: nothing floats (every block joins
+the ground through its neighbours), nothing past its `reach` (48 at most), nothing where the heart goes, and a third or more of
+the blocks above ground are not plain cubes. What grew (leaves, trunks) and the land itself (earth, living rock, sand, ice,
+water) count neither way. The kit's `Dress` puts the ground round a find in keeping: pebbles, twigs, litter, a path trace.
+
+### 58.5 The heart, parts and scripts
+
+- `find_heart`: an unseen, unbreakable block two below the middle of every site, with a block entity holding everything that
+  isn't a function of the seed: the stage, sixteen numbers and four clocks (a script's whole memory), who has been paid, whether
+  what lives there has been put out. It runs the kind's `Script` while a player is within 56 blocks, on the beat (every 5 ticks,
+  or the script's own `every()`), and never otherwise.
+- A part is a position with a name. Listeners for use, hit, break, place and a projectile landing find the site a position
+  belongs to and hand the event to its script. So any block, vanilla or prop, can be a part. A mark that an arrow must hit has
+  to be a block with a collision shape.
+- The ward: a site's own blocks can't be broken or built on by a survival player unless its script says so (`mayBreak`,
+  `mayPlace`).
+- A site left part-done goes back to how the world made it after two minutes with nobody near; a finished one that doesn't
+  `persist`, after ten. What you mend, and a few others, stay done for everyone.
+- Verbs (`finds/verb/`): `Light`, `Notes`, `Sockets`, `Fit`, `Assemble`, `Turn`, `Guide`, `Dig`, `Haul`, `Swap`, `Pick`, `Pour`,
+  `Marks`, `Course`, `Prize`, `When` (`stay`, `only`), `Later`, `Seal`, `Quiet`, `Read`, chained with `Steps.of` (four links at
+  most). A kind may write its own small script in its set file. Hands (`Hands`): flame, water, cold, blade, pick, a thing that
+  rings. Powers are not yet counted as blows.
+- Carried things are the props' own block items: use a loose one to pick it up, use it on its place to set it down. Heavy ones
+  (`#awaken:finds/heavy`) slow you while held.
+- Never kills from full health: shafts have rungs or water, wells have a way out, the warm cracks give slow falling.
+
+### 58.6 Paying out, and leads
+
+Finishing pays everyone near who hasn't been paid at that site, once each: loot from `awaken:finds/<e..a>_<small|big>` by rank and
+size, or the kind's own table, tossed out of its cache; the kind counted; the first of a kind a discovery (a twentieth to a fifth
+of a level by size and rank) told with the game's own find card. No toast for a repeat. About one kind in ten gives a lead: the
+compass way from where you stand to the nearest undone find (never a curio) further from home. A lead is closed when that find
+pays you.
+
+### 58.7 Journal, glass, Atlas, Tasks
+
+- Journal, Places shelf: 144 fixed slots in set order through `Catalogue.fixed`. Unfound is a number and "?"; seen through the
+  binoculars is its name and what you saw; done is what you learned and how many times.
+- Binoculars: a `Spotting` source; holding the glass on a site marks its kind seen.
+- Atlas: the sites you've been paid at are marks (`MapMarks`). Nothing else of the finds is ever on a map.
+- Tasks: the two newest leads you hold, under "Out there", as leads (`FindsGoals`): a way to walk, no place and no distance.
+- The look of the Journal and Tasks belongs to One Stage (§57); finds only feed them.
+
+### 58.8 The kit
+
+`finds/kit/Props` (generated by `tools/content/finds_content.py`, 68 small blocks, ids `find_*`, each a `PropBlock` with a facing
+and a state 0..3; vanilla textures by name), `Mats` (a land's stone and wood), `Dress` (ground dressing, a leaf crown that hangs
+together). The generator also writes the loot tables, the lang lines and the heavy tag. Every prop is declared to the Journey
+ledger as found at a find.
+
+### 58.9 Commands, tests, the gallery
+
+- `/awaken finds place <kind>` (where and which way the command stands, on its own pad), `gallery [set]`, `near`, `locate <kind>`,
+  `visit <n>` (the n-th find nearest the spawn that the world itself made).
+- GameTests: `finds_catalogue_is_whole` (18 sets of 8, numbered, with words, a walkthrough and a loot name),
+  `finds_every_scene_stands` (58.4, two seeds a kind), `finds_every_kind_plays` (a scripted player does every kind's own
+  walkthrough: it finishes, pays once and fills its slot), `finds_quiet_land_is_quiet` (58.3).
+- `tools/content/finds_tour.py` writes `tools/autopilot/finds-gallery.txt`: every kind on its own pad, then the twelve finds
+  nearest the spawn as the world made them. A look tour for GitHub's runners (`tools/tour-ci.sh`).
+
+### 58.10 Simplified or not built in the first run
+
+One swing for every verb (no hand clips of their own). Tells are vanilla particles and recordings by name. The Stilled are kit
+figures, not the Stilled module's own. Gifts that repeat by the day (the scarecrow's crows) are not built. Powers don't count as
+blows on seals. A few kinds stand in for what the catalogue describes with something plainer that can be finished by anyone:
+the Flag Line is five rings with five arrows, the Stopped Cart doesn't roll, the Sprung Boat gives a boat and no island, the
+Cloud Shelf is a spire you reach from above, the Chimney goes down from a hilltop, the Hundred Posts are thirteen and don't
+sink, the Otters' Slide is a timed run through three pools. Kinds marked `needsMove` (wall-run, the rope, a glide) are not yet
+filed under "What waits" (`Promises`). Placement in generated land is exercised only by the gallery tour's last twelve shots.

@@ -79,7 +79,7 @@ public final class Reward {
     private static void one(Ctx c, ServerPlayer p, BlockPos from) {
         Kind k = c.kind();
         FindsData d = p.getData(FindsContent.FINDS);
-        p.setData(FindsContent.FINDS, d.withDone(k.id(), c.site.key()));
+        p.setData(FindsContent.FINDS, d.withDone(k.id(), c.site.key()).withoutLeadTo(c.site.key()));
         LootTable table = c.level.getServer().reloadableRegistries().getLootTable(table(k));
         table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
                 .withParameter(LootContextParams.THIS_ENTITY, p).create(LootContextParamSets.CHEST), stack -> c.pop(from, stack));

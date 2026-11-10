@@ -37,6 +37,7 @@ public final class FindsModule {
         FindsEvents.init(NeoForge.EVENT_BUS);
         FindsCommands.init();
         FindsJournal.init();
+        FindsGoals.register();
         FindsTests.init();
         Sources.declare("found at a find out in the world (finds.Reward), or picked up there", Props.ids());
         Sources.neverHeld("the world places it under a find; it has no item", "find_heart");

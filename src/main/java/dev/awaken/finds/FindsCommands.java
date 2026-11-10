@@ -3,6 +3,7 @@ package dev.awaken.finds;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.awaken.Awaken;
 import dev.awaken.core.AwakenCommands;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -30,6 +31,7 @@ final class FindsCommands {
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Kind.FSet.values()).map(s -> s.name().toLowerCase(java.util.Locale.ROOT)), b))
                             .executes(c -> gallery(c, StringArgumentType.getString(c, "set")))));
             f.then(Commands.literal("near").executes(FindsCommands::near));
+            f.then(Commands.literal("visit").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99)).executes(FindsCommands::visit)));
             f.then(Commands.literal("locate").then(Commands.argument("kind", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.all().stream().map(Kind::id), b)).executes(FindsCommands::locate)));
             root.then(f);
@@ -43,8 +45,11 @@ final class FindsCommands {
             c.getSource().sendFailure(Component.literal("No find is called that."));
             return 0;
         }
-        ServerLevel level = (ServerLevel) p.level();
-        Site s = FindsFeature.stamp(level, k, p.blockPosition().below(), p.getDirection().get2DDataValue(), level.getRandom().nextLong());
+        // where and which way the command stands, so "execute positioned ... rotated ..." can stand one anywhere loaded
+        ServerLevel level = c.getSource().getLevel();
+        BlockPos at = BlockPos.containing(c.getSource().getPosition()).below();
+        int rot = net.minecraft.core.Direction.fromYRot(c.getSource().getRotation().y).get2DDataValue();
+        Site s = FindsFeature.stamp(level, k, at, rot, level.getRandom().nextLong());
         c.getSource().sendSuccess(() -> Component.literal(k.name() + " at " + s.x() + " " + s.y() + " " + s.z()), false);
         return 1;
     }
@@ -65,6 +70,26 @@ final class FindsCommands {
         int count = n, end = x;
         c.getSource().sendSuccess(() -> Component.literal(count + " finds stood east of you, as far as x " + end), false);
         return n;
+    }
+
+    /** Takes you to the n-th nearest find the world itself made (0 is the nearest), set down a little north of it and above, looking at it. */
+    private static int visit(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        ServerLevel level = (ServerLevel) p.level();
+        BlockPos from = level.getRespawnData().pos();
+        var sites = new java.util.ArrayList<>(Sites.near(level, from.getX() - 600, from.getZ() - 600, from.getX() + 600, from.getZ() + 600, 0));
+        sites.sort(java.util.Comparator.comparingDouble(s -> s.heart().distSqr(from)));
+        int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "n");
+        if (n >= sites.size()) {
+            c.getSource().sendFailure(Component.literal("Only " + sites.size() + " finds within 600 blocks of the spawn."));
+            return 0;
+        }
+        Site s = sites.get(n);
+        int back = Math.min(s.kind().reach(), 14) + 6;
+        p.teleportTo(level, s.x() + 0.5, s.y() + 5 + back * 0.35, s.z() + 0.5 - back, java.util.Set.of(), 0F, 28F, false);
+        c.getSource().sendSuccess(() -> Component.literal(s.kind().name() + " (" + s.kind().id() + ") at " + s.x() + " " + s.y() + " " + s.z()), true);
+        Awaken.LOG.info("[finds] visit {}: {} at {} {} {}", n, s.kind().id(), s.x(), s.y(), s.z());
+        return 1;
     }
 
     private static int near(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

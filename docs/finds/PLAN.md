@@ -5,8 +5,8 @@ Approval page: https://claude.ai/artifact/G9fPfsJmTjj8xbaRnrScSw. Euan approved 
 don't find much. It should feel very natural." Branch `claude/finds-over-every-hill`, from build 8496b6105. One builder, no
 sub-agents, no client on the Mac, look tours on GitHub's runners allowed.
 
-The catalogue of 144 (set, verb, name, size, rank, where, made, see, do, get) is `docs/finds/catalogue.txt`. The brief for
-each find is in `docs/finds/BOOK.md`. SPEC section: §58 (to write at hand-over).
+The catalogue of 144 (set, verb, name, size, rank, where, made, see, do, get) is `docs/finds/catalogue.txt`. Each find
+as built is in `docs/finds/BOOK.md` (generated from the set files). SPEC §58.
 
 ## What it is
 
@@ -106,13 +106,15 @@ Nothing floats, every part is reachable, it can always be finished or restarted,
 - Not done on purpose in the first pass: hand clips per verb (vanilla swing only), own particles for tells (vanilla ones),
   the Stilled's own renderer (the kit has simple stone figures), repeat gifts by game day, powers as blows on seals.
 
-## Build order and state
+## Build order and state (10 Nov 2026, end of the one run)
 
-1. [x] Engine core: Kind, Site, Scene, feature, heart, listeners, ward, player data, loot, commands. (written; compiling)
-2. [x] Kit: 54 props + generator, Mats, Dress.
-3. [x] Verb scripts (sixteen classes).
-4. [~] First eighteen kinds written (number 1 of each set), gallery command, tests written; not yet green.
-5. [~] The other 126. Sets written in full so far: Cairns, The Stilled at Rest, Lamplighter's Road. The other fifteen have their number 1 only.
-6. [ ] Journal, Spotting, Atlas, leads, Promises.
-7. [ ] Full test run on CI, gallery tour, fix pass.
-8. [ ] SPEC §58, module doc, hand-over note.
+1. [x] Engine: Kind, Site, Scene, feature, heart, listeners, ward, player data, loot, commands.
+2. [x] Kit: 68 props and their generator, Mats, Dress.
+3. [x] Verb scripts (twenty classes and `Steps`).
+4. [x] All 144 kinds, 18 sets of 8, each with a scene, a script and a walkthrough. `docs/finds/BOOK.md` lists them as built.
+5. [x] Journal slots, the glass, Atlas marks, leads (and the leads on the Tasks page). Not done: `Promises` for kinds that need a move.
+6. [x] The four `finds_` tests green with all 144. The walk simulation re-run with the field as built (SPEC §58.3).
+7. [~] Pushed; the full suite on CI; the gallery tour on GitHub's runners (`tools/autopilot/finds-gallery.txt`), one fix pass.
+8. [x] SPEC §58, BOOK.md, hand-over note.
+
+What is simplified or not built is SPEC §58.10. Nothing here has been seen in the game by a person yet.

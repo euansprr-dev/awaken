@@ -67,6 +67,13 @@ public record FindsData(int schemaVersion, Map<String, Integer> done, List<Strin
         return new FindsData(SCHEMA, done, seen, sites, List.copyOf(l), best);
     }
 
+    /** A lead is done with once the find it pointed at has paid you. */
+    public FindsData withoutLeadTo(String siteKey) {
+        List<String> l = new ArrayList<>(leads);
+        if (!l.removeIf(s -> s.endsWith("|" + siteKey))) return this;
+        return new FindsData(SCHEMA, done, seen, sites, List.copyOf(l), best);
+    }
+
     /** A run's time in ticks, kept when it beats the best. */
     public FindsData withTime(String kind, int ticks) {
         Integer old = best.get(kind);
