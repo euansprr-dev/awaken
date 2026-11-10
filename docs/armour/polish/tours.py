@@ -142,8 +142,9 @@ def moments():
     for s in ("lordscale", "halo_choir"):
         L += wear(s)
         L += ["cmd item replace entity @s armor.head with minecraft:air", "cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 8", "wait 30",
-              f"shotnow m_{s}_wake_0", f"cmd item replace entity @s armor.head with awaken:{s}_helmet"]
-        for k, w in zip("abcdef", (4, 3, 3, 4, 5, 8)):
+              f"shot m_{s}_wake_0", f"cmd item replace entity @s armor.head with awaken:{s}_helmet"]
+        # the light takes a second and a quarter of real time to climb; a CI runner's ticks run slow, so shoot often
+        for k, w in zip("abcdefgh", (2, 2, 2, 2, 3, 3, 4, 6)):
             L += [f"wait {w}", f"shotnow m_{s}_wake_{k}"]
         L += ["wait 220"]  # past the quiet time, so the next set wakes too
     # the same from your own eyes, with the chat up: the System's one line the first time
@@ -171,9 +172,9 @@ def moments():
     L += [forged_stand("galewing", -3.5, 8.5, 110, "quality:0"), forged_stand("galewing", -1.5, 8.5, 110, "quality:3"),
           forged_stand("galewing", 0.5, 8.5, 110, "quality:1,flaw:1b"), forged_stand("vaultbreaker", 2.5, 8.5, 110, "quality:3"),
           forged_stand("vaultbreaker", 4.5, 8.5, 110, "quality:1,flaw:1b")]
-    L += ["opt fov 30", "cmd tp @s 0.5 150 2.5 0 4", "wait 30", "shot m_marks_row"]
+    L += ["opt fov 30", "cmd tp @s 0.5 150 2.5 0 4", "wait 30", "shot m_marks_row", "opt fov 40"]
     for i, x in enumerate((-3.5, -1.5, 0.5, 2.5, 4.5)):
-        L += [f"cmd tp @s {x} 150 6.3 0 4", "wait 12", f"shot m_marks_{i}"]
+        L += [f"cmd tp @s {x} 150 5.3 0 2", "wait 12", f"shot m_marks_{i}"]
     return L + ["quit"]
 
 

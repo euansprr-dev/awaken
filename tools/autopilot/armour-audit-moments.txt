@@ -37,20 +37,24 @@ cmd tp @s 0.5 150 7.5 180 0
 camera front
 look 180 8
 wait 30
-shotnow m_lordscale_wake_0
+shot m_lordscale_wake_0
 cmd item replace entity @s armor.head with awaken:lordscale_helmet
-wait 4
+wait 2
 shotnow m_lordscale_wake_a
-wait 3
+wait 2
 shotnow m_lordscale_wake_b
-wait 3
+wait 2
 shotnow m_lordscale_wake_c
-wait 4
+wait 2
 shotnow m_lordscale_wake_d
-wait 5
+wait 3
 shotnow m_lordscale_wake_e
-wait 8
+wait 3
 shotnow m_lordscale_wake_f
+wait 4
+shotnow m_lordscale_wake_g
+wait 6
+shotnow m_lordscale_wake_h
 wait 220
 cmd item replace entity @s armor.head with awaken:halo_choir_helmet
 cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
@@ -61,20 +65,24 @@ cmd tp @s 0.5 150 7.5 180 0
 camera front
 look 180 8
 wait 30
-shotnow m_halo_choir_wake_0
+shot m_halo_choir_wake_0
 cmd item replace entity @s armor.head with awaken:halo_choir_helmet
-wait 4
+wait 2
 shotnow m_halo_choir_wake_a
-wait 3
+wait 2
 shotnow m_halo_choir_wake_b
-wait 3
+wait 2
 shotnow m_halo_choir_wake_c
-wait 4
+wait 2
 shotnow m_halo_choir_wake_d
-wait 5
+wait 3
 shotnow m_halo_choir_wake_e
-wait 8
+wait 3
 shotnow m_halo_choir_wake_f
+wait 4
+shotnow m_halo_choir_wake_g
+wait 6
+shotnow m_halo_choir_wake_h
 wait 220
 cmd item replace entity @s armor.head with awaken:bellguard_helmet
 cmd item replace entity @s armor.chest with awaken:bellguard_chestplate
@@ -156,19 +164,20 @@ opt fov 30
 cmd tp @s 0.5 150 2.5 0 4
 wait 30
 shot m_marks_row
-cmd tp @s -3.5 150 6.3 0 4
+opt fov 40
+cmd tp @s -3.5 150 5.3 0 2
 wait 12
 shot m_marks_0
-cmd tp @s -1.5 150 6.3 0 4
+cmd tp @s -1.5 150 5.3 0 2
 wait 12
 shot m_marks_1
-cmd tp @s 0.5 150 6.3 0 4
+cmd tp @s 0.5 150 5.3 0 2
 wait 12
 shot m_marks_2
-cmd tp @s 2.5 150 6.3 0 4
+cmd tp @s 2.5 150 5.3 0 2
 wait 12
 shot m_marks_3
-cmd tp @s 4.5 150 6.3 0 4
+cmd tp @s 4.5 150 5.3 0 2
 wait 12
 shot m_marks_4
 quit

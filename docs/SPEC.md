@@ -18138,8 +18138,9 @@ that fidgets would be wrong).
   person and held.
 - **A piece in the world is the piece.** The 23 sets with items of their own draw a piece as its real meshes in a hand,
   on the ground, in an item frame and on a shelf (`ArmourPieceRenderer`, special model `awaken:armour_piece` {set,
-  piece}; each bone at rest as on the stand's form; base `awaken:item/<id>_held` on `armour_piece_held`, a block's own
-  display transforms). The inventory keeps the flat icon. It carries its mastery, accent, enchantment light and marks.
+  piece}; each bone at rest as on the stand's form, measured once so the whole piece, crests and wings and all, just fills
+  a block, with its cape left off; base `awaken:item/<id>_held` on `armour_piece_held`, a block's own display
+  transforms). The inventory keeps the flat icon. It carries its mastery, accent, enchantment light and marks.
   The six Hunter sets' items are the gear module's and keep their icons.
 - **Icons.** Greaves stand like an A (each leg turned 7 degrees out from the hip, seen nearly straight on) and read as
   legs; boots stand apart with the background between them and read as a pair (`ICON_VIEW`, `ICON_SPREAD`,

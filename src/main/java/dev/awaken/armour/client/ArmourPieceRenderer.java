@@ -34,31 +34,51 @@ final class ArmourPieceRenderer implements SpecialModelRenderer<ArmourPieceRende
 
     private final ArmourSet set;
     private final ArmorType piece;
-    /** The middle of the piece on the figure (model texels down from the shoulders) and how much larger it is drawn, so
-     * each piece fills about a block and the item's display transforms treat it as one. */
-    private final float centre, scale;
+    /**
+     * Where the piece's middle is on the figure and how much larger it is drawn, so that the whole piece, crests and
+     * wings and all, just fills a block and the item's display transforms treat it as one. Measured from its meshes
+     * (the first tour drew a winged helm at twice a block: it filled a quarter of the screen in the hand).
+     */
+    private float cx, cy, cz, scale = 1F;
+    private ArmourMesh @Nullable [] measured;
 
     private ArmourPieceRenderer(ArmourSet set, ArmorType piece) {
         this.set = set;
         this.piece = piece;
-        switch (piece) {
-            case HELMET -> {
-                centre = -4.5F;
-                scale = 1.7F;
+    }
+
+    /** A cape is left off a piece in the hand: it hangs from shoulders that are not there. */
+    private static boolean shown(Bone b) {
+        return b != Bone.CAPE0 && b != Bone.CAPE1 && b != Bone.CAPE2;
+    }
+
+    private void measure(ArmourMesh[] bones) {
+        float x0 = Float.MAX_VALUE, y0 = x0, z0 = x0, x1 = -x0, y1 = -x0, z1 = -x0;
+        PoseStack ps = new PoseStack();
+        Vector3f at = new Vector3f();
+        for (Bone b : ArmourMeshes.BONES) {
+            ArmourMesh mesh = bones[b.ordinal()];
+            if (mesh == null || !shown(b)) continue;
+            ps.pushPose();
+            FittingStandRenderer.rest(ps, b);
+            float[] p = mesh.pos();
+            for (int i = 0; i + 2 < p.length; i += 3) {
+                ps.last().pose().transformPosition(p[i], p[i + 1], p[i + 2], at);
+                x0 = Math.min(x0, at.x);
+                x1 = Math.max(x1, at.x);
+                y0 = Math.min(y0, at.y);
+                y1 = Math.max(y1, at.y);
+                z0 = Math.min(z0, at.z);
+                z1 = Math.max(z1, at.z);
             }
-            case CHESTPLATE -> {
-                centre = 6F;
-                scale = 0.95F;
-            }
-            case LEGGINGS -> {
-                centre = 16.5F;
-                scale = 1.15F;
-            }
-            default -> {
-                centre = 21F;
-                scale = 1.6F;
-            }
+            ps.popPose();
         }
+        measured = bones;
+        if (x1 < x0) return;
+        cx = (x0 + x1) / 2;
+        cy = (y0 + y1) / 2;
+        cz = (z0 + z1) / 2;
+        scale = 0.96F / Math.max(0.25F, Math.max(x1 - x0, Math.max(y1 - y0, z1 - z0)));
     }
 
     @Override
@@ -68,13 +88,14 @@ final class ArmourPieceRenderer implements SpecialModelRenderer<ArmourPieceRende
         int mastery = state == null ? 0 : state.mastery(), accent = state == null ? 0 : state.accent();
         int glow = state == null ? 0 : state.glow(), marks = state == null ? 0 : state.marks();
         ArmourMesh[] awake = mastery >= ArmourLayer.AWAKENED ? ArmourMeshes.awakened(set, piece) : null;
+        if (measured != bones) measure(bones); // once, and again after a resource reload brings new meshes
         ps.pushPose();
         ps.translate(0.5F, 0.5F, 0.5F);
         ps.scale(-scale, -scale, scale); // the model's y runs down, as on a figure
-        ps.translate(0F, -centre / 16F, 0F);
+        ps.translate(-cx, -cy, -cz);
         for (Bone b : ArmourMeshes.BONES) {
             ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
-            if (mesh == null && extra == null) continue;
+            if ((mesh == null && extra == null) || !shown(b)) continue;
             ps.pushPose();
             FittingStandRenderer.rest(ps, b);
             if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, light, foil, 0, 0, -1, mastery, false, accent, glow, marks);
@@ -86,7 +107,7 @@ final class ArmourPieceRenderer implements SpecialModelRenderer<ArmourPieceRende
 
     @Override
     public void getExtents(Consumer<Vector3fc> output) {
-        for (int k = 0; k < 8; k++) output.accept(new Vector3f((k & 1) * 1.4F - 0.2F, (k >> 1 & 1) * 1.4F - 0.2F, (k >> 2 & 1) * 1.4F - 0.2F));
+        for (int k = 0; k < 8; k++) output.accept(new Vector3f(k & 1, k >> 1 & 1, k >> 2 & 1)); // the piece fills a block
     }
 
     // a few states kept, so a piece in view makes nothing each frame

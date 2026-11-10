@@ -68,8 +68,8 @@ def main():
     living = newest(["after5", "after6"], "living")
     # the first moments run (after5) was shot through the world's own first light, with the HUD hiding the hand and the
     # marked arm turned away: only the run after those fixes counts
-    moments = newest(["after7"], "moments")
-    extras = newest(["after7"], "extras")
+    moments = newest(["after8"], "moments")
+    extras = newest(["after8", "after7"], "extras")
     # C-rank: the three sets whose plates changed in stage 3, from behind (and Shardcrown's forearm from your own eyes)
     strip("built_c_gatewrought.jpg", [(before, "w_gatewrought_back", FIG, "TODAY"), (worn, "w_gatewrought_back", FIG, "BUILT")], (400, 500))
     strip("built_c_vaultbreaker.jpg", [(before, "w_vaultbreaker_back", FIG, "TODAY"), (worn, "w_vaultbreaker_back", FIG, "BUILT")], (400, 500))
@@ -88,12 +88,13 @@ def main():
     strip("built_live_grow.jpg", [(living, f"l_grow_{k}", CLOSE, lab) for k, lab in (("before", "MASTERY III"), ("a", "IV: 0.15 S"), ("b", "0.3 S"), ("d", "GROWN"))], (300, 375))
     # the wake: the light climbing the body when the last piece goes on
     for s in ("lordscale", "halo_choir"):
-        strip(f"built_wake_{s}.jpg", [(moments, f"m_{s}_wake_{k}", FIG, lab) for k, lab in (("0", "THREE PIECES"), ("a", "THE FOURTH"), ("b", ""), ("c", ""), ("e", ""))], (300, 375))
+        strip(f"built_wake_{s}.jpg", [(moments, f"m_{s}_wake_{k}", FIG, lab) for k, lab in (("0", "THREE PIECES"), ("b", "THE FOURTH"), ("d", ""), ("f", ""), ("h", ""))], (300, 375))
     strip("built_wake_line.jpg", [(moments, "m_wake_line", (0, 0, W, H), "")], (960, 522))
     strip("built_held.jpg", [(moments, f"m_held_{p}_fp", (1108, 560, 3416, 1858), p.upper()) for p in ("helmet", "chestplate", "leggings", "boots")], (400, 225))
     strip("built_frames.jpg", [(moments, "m_frames", (608, 300, 2808, 1500), "")], (960, 524))
     strip("built_ground.jpg", [(moments, "m_ground", (608, 500, 2808, 1700), "")], (960, 524))
     strip("built_marks.jpg", [(moments, f"m_marks_{i}", (1108, 300, 2308, 1700), lab) for i, lab in enumerate(("PLAIN", "FLAWLESS", "SCALE FLAW", "FLAWLESS", "SCALE FLAW"))], (300, 350))
+    strip("built_wake_fp.jpg", [(moments, "m_wake_fp_a", FP, "YOUR OWN ARM"), (moments, "m_wake_fp_b", FP, "")], (560, 335))
     # the bigger options
     strip("built_kick_galewing.jpg", [(extras, f"k_galewing_{k}", CLOSE, lab) for k, lab in (("rest", "AT REST"), ("a", "GUST"), ("b", ""), ("d", ""))], (300, 375))
     strip("built_kick_halo.jpg", [(extras, f"k_halo_choir_{k}", CLOSE, lab) for k, lab in (("rest", "AT REST"), ("a", "HYMN"), ("b", ""), ("d", ""))], (300, 375))
@@ -155,7 +156,7 @@ def section():
         group("The moment a set becomes whole", "Put the last piece on and the light climbs you, boots first. The first time, the System says in one line what the set does. It also sounds the first three notes of its Forge Song, which you have not heard yet.", [
             fig("built_wake_lordscale.jpg", "Lordscale as the fourth piece goes on", "Lordscale: three pieces, then the helm goes on."),
             fig("built_wake_halo_choir.jpg", "Halo Choir as the fourth piece goes on", "Halo Choir, the same moment."),
-            fig("built_wake_line.jpg", "The System's line in chat", "The one line, the first time only."),
+            fig("built_wake_fp.jpg", "The wake on your own arm in first person", "The same light on your own arm, from your own eyes.", False),
         ]),
         group("Forge marks, and a piece in the world", "Armour now shows how it was made, as weapons do. And a piece you hold, drop or frame is drawn as the piece itself.", [
             fig("built_marks.jpg", "Forged pieces with their marks", "Galewing plain, Flawless (the fold&rsquo;s ripples and a maker&rsquo;s mark on the forearm) and with a scale flaw; Vaultbreaker Flawless and flawed."),
