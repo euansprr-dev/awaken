@@ -445,11 +445,27 @@ public final class Autopilot {
                     case "space" -> com.mojang.blaze3d.platform.InputConstants.KEY_SPACE;
                     case "q" -> com.mojang.blaze3d.platform.InputConstants.KEY_Q;
                     case "e" -> com.mojang.blaze3d.platform.InputConstants.KEY_E;
+                    case "x" -> com.mojang.blaze3d.platform.InputConstants.KEY_X;
+                    case "z" -> com.mojang.blaze3d.platform.InputConstants.KEY_Z;
+                    case "esc" -> com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE;
+                    case "enter" -> com.mojang.blaze3d.platform.InputConstants.KEY_RETURN;
+                    case "left" -> com.mojang.blaze3d.platform.InputConstants.KEY_LEFT;
+                    case "right" -> com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT;
+                    case "up" -> com.mojang.blaze3d.platform.InputConstants.KEY_UP;
+                    case "down" -> com.mojang.blaze3d.platform.InputConstants.KEY_DOWN;
+                    case "back" -> com.mojang.blaze3d.platform.InputConstants.KEY_BACKSPACE;
+                    case "1", "2", "3", "4", "5", "6" -> com.mojang.blaze3d.platform.InputConstants.KEY_1 + (k.charAt(k.length() - 1) - '1');
                     default -> -1;
                 };
                 if (code < 0) Awaken.LOG.warn("[autopilot] unknown screen key {}", k);
                 else if (mc.gui.screen() != null)
                     mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(code, 0, shift ? com.mojang.blaze3d.platform.InputConstants.MOD_SHIFT : 0));
+                waitTicks = 2;
+            }
+            case "band" -> { // band click <x> <y>: a click on the band's stage at a sheet point (1708 x 960)
+                String[] r = arg.trim().split("\\s+");
+                if (r.length == 3 && r[0].equals("click") && mc.gui.screen() instanceof dev.awaken.holo.client.BandStage stage)
+                    Awaken.LOG.info("[autopilot] band click {} {}: {}", r[1], r[2], stage.autopilotClick(Float.parseFloat(r[1]), Float.parseFloat(r[2])));
                 waitTicks = 2;
             }
             case "trails" -> dev.awaken.trails.client.TrailsClient.debug(arg); // trails <now|browse [area]|open>: the Journal's TRAILS section
@@ -485,6 +501,17 @@ public final class Autopilot {
                             ? dev.awaken.compat.client.LookSettings.section(cs, net.neoforged.fml.config.ModConfig.Type.CLIENT, client,
                                     net.minecraft.network.chat.Component.literal("AWAKEN · client settings"))
                             : top);
+                }
+                else if (arg.trim().startsWith("band")) { // the band's stage on a place (SPEC §57): screen band [status|tasks|hearth|powers|journal]
+                    String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
+                    var tab = switch (t) {
+                        case "powers" -> dev.awaken.progression.client.StatusSections.Tab.POWERS;
+                        case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
+                        case "hearth" -> dev.awaken.progression.client.StatusSections.Tab.HEARTH;
+                        case "tasks" -> dev.awaken.progression.client.StatusSections.Tab.TASKS;
+                        default -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
+                    };
+                    mc.gui.setScreen(new dev.awaken.holo.client.BandStage(tab));
                 }
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";

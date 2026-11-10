@@ -171,6 +171,15 @@ public final class HoloGraphics extends GuiGraphicsExtractor implements UiCanvas
     }
 
     @Override
+    public void textScaled(Font font, String s, float x, float y, float scale, int argb, boolean shadow) {
+        pose().pushMatrix();
+        pose().translate(x, y);
+        pose().scale(scale, scale);
+        text(font, s, 0, 0, argb, shadow);
+        pose().popMatrix();
+    }
+
+    @Override
     public void text(Font font, String s, int x, int y, int argb, boolean shadow) {
         at(a, x, y);
         canvas.textF(s, a.x, a.y, argb, shadow, scale());

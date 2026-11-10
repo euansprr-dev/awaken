@@ -39,6 +39,9 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
     // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
     private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
+    private static final List<dev.awaken.core.client.ui.Kit.Hint> FOOT_KEYS = List.of(dev.awaken.core.client.ui.Kit.Hint.of("A look", "1-4"),
+            dev.awaken.core.client.ui.Kit.Hint.of("Choose", "Click"), dev.awaken.core.client.ui.Kit.Hint.of("Back", "Right click"),
+            dev.awaken.core.client.ui.Kit.Hint.of("Close", "Esc"));
     /** One line under each tier's name on this page (the tiers' longer blurbs are for the settings screen). */
     private static String shortBlurb(Tier t) {
         return switch (t) {
@@ -222,7 +225,9 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             int colour = Glass.a(why ? Glass.AMBER : noteColour, 1f);
             for (int l = 0; l < Math.min(3, noteLines.size()); l++) HudLook.text(g, font, noteLines.get(l), innerX, y + l * LINE, colour, false);
         }
-        HudLook.centered(g, font, "Click to choose or change · right click: back · Esc", px + pw / 2, py + ph - 12, DIM, false);
+        // the keys that work here, in the band's caps (SPEC §57.9); it read "Click to choose or change · right click: back · Esc"
+        int hw = dev.awaken.core.client.ui.Kit.hintLineWidth(font, FOOT_KEYS);
+        dev.awaken.core.client.ui.Kit.hintLine(g, font, FOOT_KEYS, px + (pw - hw) / 2, py + ph - 12, 1f);
         if (holo) g.disableScissor();
     }
 
@@ -345,7 +350,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         HudLook.text(g, font, label, x, y, LABEL, false);
         int room = w - font.width(label) - 10;
         String v = value;
-        if (font.width(v) > room) v = font.plainSubstrByWidth(v, Math.max(0, room - font.width("…"))).stripTrailing() + "…";
+        if (font.width(v) > room) { // a long value: smaller, never cut (SPEC §57.6)
+            dev.awaken.signal.client.Ui.fitted(g, font, v, x + w - room, y, room, 1, Glass.a(colour, 1f), true);
+            return;
+        }
         HudLook.text(g, font, v, x + w - font.width(v), y, Glass.a(colour, 1f), false);
     }
 

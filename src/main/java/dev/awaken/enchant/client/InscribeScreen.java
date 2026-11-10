@@ -235,7 +235,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             int colour = e == null ? INK_SOFT : 0xFF000000 | darken(e.colour());
             String label = ref.get().value().description().getString() + (Inscriptions.top(ref.get()) > 1 ? " " + Inscriptions.numeral(on[1]) : "");
             if (e != null) mark(g, e.no(), x + 5, cy + 4, 5, colour, 1F);
-            g.text(font, font.plainSubstrByWidth(label, pw - 52), x + 13, cy, INK, false);
+            dev.awaken.signal.client.Ui.fitted(g, font, label, x + 13, cy, pw - 52, 1, INK, false); // whole, never cut (§57.6)
             boolean armed = scrapeId == on[0] && age - scrapeAt < 40;
             String sc = armed ? "sure?" : "scrape";
             int sw = font.width(sc), sx = x + pw - sw;
@@ -301,7 +301,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 }
             }
             String sub;
-            int subColour;
+            int subColour, costW = 0;
+            int[] cost = null;
             // "from memory" sits at the end of the second line (the name keeps its whole line for its level arrows)
             int memW = ok && r.memory ? font.width("from memory") + 8 : 0;
             if (!ok) {
@@ -310,14 +311,19 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             } else {
                 // the price always shows: on a narrow page the Study's depth goes first (the left page says it), then "here"
                 String deep = Inscriptions.top(r.h) > 1 ? Inscriptions.numeral(Math.min(Inscriptions.top(r.h), r.deepest)) : "";
-                String price = EnchantRules.priceLine(r.price);
+                // the price as the things themselves, each with its count (SPEC §57.10; it read "6 levels and 2 lapis")
                 String study = !InscribeScene.study && r.anywhere > r.deepest ? " (" + Inscriptions.numeral(r.anywhere) + " in your Study)" : "";
-                sub = deep.isEmpty() ? fit(pw - 20 - memW, price, price.replace(" and ", ", ")) : fit(pw - 20 - memW,
-                        "Up to " + deep + " here" + study + "  ·  " + price, "Up to " + deep + " here  ·  " + price,
-                        "Up to " + deep + "  ·  " + price, price.replace(" and ", ", "));
+                cost = r.price;
+                costW = priceWidth(cost);
+                sub = deep.isEmpty() ? "" : fit(pw - 20 - memW - costW - 8, "Up to " + deep + " here" + study, "Up to " + deep + " here", "Up to " + deep);
                 subColour = r.afford ? INK_SOFT : RED_INK;
             }
-            g.text(font, font.plainSubstrByWidth(sub, pw - 20 - memW), x + 20, ry + 10, subColour, false);
+            int sx = x + 20, room = pw - 20 - memW - (cost == null ? 0 : costW + 8);
+            if (!sub.isEmpty()) {
+                dev.awaken.signal.client.Ui.fitted(g, font, sub, sx, ry + 10, room, 1, subColour, false); // whole, never cut (§57.6)
+                sx += Math.min(font.width(sub), room) + 8;
+            }
+            if (cost != null) price(g, cost, sx, ry + 10, subColour);
             if (ok && r.memory) {
                 String m = "from memory";
                 int mw = font.width(m), mxl = x + pw - mw;
@@ -349,6 +355,34 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
     }
 
     /** The first of these that fits the width, else the last. */
+    private static final net.minecraft.world.item.ItemStack LEVELS = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EXPERIENCE_BOTTLE),
+            LAPIS = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LAPIS_LAZULI);
+
+    private int priceWidth(int[] p) {
+        if (p[0] == 0 && p[1] == 0) return font.width("Free");
+        return (p[0] > 0 ? font.width(Integer.toString(p[0])) + 11 : 0) + (p[0] > 0 && p[1] > 0 ? 5 : 0) + (p[1] > 0 ? font.width(Integer.toString(p[1])) + 11 : 0);
+    }
+
+    /** A price as the things it takes: the levels (a bottle o' enchanting stands for them) and the lapis, each a count and its item at half size. */
+    private void price(GuiGraphicsExtractor g, int[] p, int x, int y, int colour) {
+        if (p[0] == 0 && p[1] == 0) {
+            g.text(font, "Free", x, y, colour, false);
+            return;
+        }
+        for (int i = 0; i < 2; i++) {
+            if (p[i] <= 0) continue;
+            String n = Integer.toString(p[i]);
+            g.text(font, n, x, y, colour, false);
+            x += font.width(n) + 1;
+            g.pose().pushMatrix();
+            g.pose().translate(x, y - 1);
+            g.pose().scale(.5625F, .5625F);
+            g.item(i == 0 ? LEVELS : LAPIS, 0, 0);
+            g.pose().popMatrix();
+            x += 10 + 5;
+        }
+    }
+
     private String fit(int width, String... tries) {
         for (String t : tries) if (font.width(t) <= width) return t;
         return tries[tries.length - 1];
