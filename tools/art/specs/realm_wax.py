@@ -258,7 +258,7 @@ def drip_models():
 def arch_model():
     """A stepped quarter curve closing a top corner of an opening; the pier is to the north of it, the wall runs through east to west."""
     steps = [((0, 12, 0), (16, 16, 16)), ((0, 8, 0), (16, 12, 11)), ((0, 4, 0), (16, 8, 6)), ((0, 0, 0), (16, 4, 3))]
-    return K.model({"wax": COLD, "run": RUN}, [K.box(a, b, "#wax") for a, b in steps[:2]] + [K.box(a, b, "#run") for a, b in steps[2:]])
+    return K.model({"wax": COLD}, [K.box(a, b, "#wax") for a, b in steps])
 
 
 def bank_model():

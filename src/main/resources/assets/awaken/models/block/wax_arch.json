@@ -2,7 +2,6 @@
   "parent": "minecraft:block/block",
   "textures": {
     "wax": "awaken:block/wax_cold",
-    "run": "awaken:block/wax_run",
     "particle": "awaken:block/wax_cold"
   },
   "elements": [
@@ -83,22 +82,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "up": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "north": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "south": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "west": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "east": {
-          "texture": "#run"
+          "texture": "#wax"
         }
       }
     },
@@ -115,22 +114,22 @@
       ],
       "faces": {
         "down": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "up": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "north": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "south": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "west": {
-          "texture": "#run"
+          "texture": "#wax"
         },
         "east": {
-          "texture": "#run"
+          "texture": "#wax"
         }
       }
     }
