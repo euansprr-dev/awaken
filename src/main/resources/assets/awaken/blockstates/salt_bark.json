@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/salt_bark"
+      },
+      {
+        "model": "awaken:block/salt_bark",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/salt_bark",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/salt_bark",
+        "y": 270
+      }
+    ]
+  }
+}

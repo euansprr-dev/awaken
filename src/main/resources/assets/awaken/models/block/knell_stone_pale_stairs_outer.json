@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "awaken:block/knell_stone_pale",
+    "top": "awaken:block/knell_stone_pale",
+    "side": "awaken:block/knell_stone_pale"
+  }
+}

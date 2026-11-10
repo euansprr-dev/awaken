@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "name": "The Sealed Wing",
+  "line": "Somebody sealed this wing of the laboratory long before there was anyone to remember why, and everything in it is still switched on.",
+  "form": "dungeon",
+  "theme": "precursor_lab",
+  "ranks": [
+    "C",
+    "B"
+  ],
+  "land": {
+    "program": "awaken:sealed_wing",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:gate_precursor_lab"
+    ],
+    "lens": "sealed_wing",
+    "air": [
+      "shaft_dust",
+      "dust"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "unit_zero",
+    "seat": "the_last_room"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

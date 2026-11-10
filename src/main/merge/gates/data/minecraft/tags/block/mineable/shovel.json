@@ -23,6 +23,12 @@
     "awaken:fungal_loam_stairs",
     "awaken:fungal_moss_drift",
     "awaken:crypt_dust",
-    "awaken:amber_bed"
+    "awaken:amber_bed",
+    "awaken:knell_bed",
+    "awaken:fane_bed",
+    "awaken:keep_bed",
+    "awaken:salt_bed",
+    "awaken:salt_sand",
+    "awaken:salt_sand_ripple"
   ]
 }
