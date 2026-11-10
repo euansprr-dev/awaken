@@ -373,7 +373,7 @@ public final class Preview {
     private static final int FLAT_WALL = 25, MIN_RELIEF = 40, MIN_SHAPED = 4, MIN_BRIGHT_CONTRAST = 115;
     /** A view too dark to play in: its median brightness under this, or more than this share of it nearly black. */
     private static final int BLACK_LUM = 25, BLACK_DARK = 60;
-    private static final java.util.regex.Pattern SHAPED = java.util.regex.Pattern.compile("_stairs|_slab|_wall$|_fence|_bars|chain|lantern|candle|_trapdoor|_door|_vines|fern|grass|_carpet|_drift|_crumbs|bones|_petals|_rope|_lily|_drip|_flower|_rail|_comb_|_shelf|reed|_cap");
+    private static final java.util.regex.Pattern SHAPED = java.util.regex.Pattern.compile("_stairs|_slab|_wall$|_fence|_bars|chain|lantern|candle|_trapdoor|_door|_vines|fern|grass|_carpet|_drift|_crumbs|bones|_petals|_rope|_lily|_drip|_flower|_rail|_comb_|_shelf|reed|_cap|_arch|_flute|_rib|_corbel|_link");
 
     private static final class Hit {
         double t, u, v, x, y, z;
@@ -509,7 +509,7 @@ public final class Preview {
             if (depth[0] < MIN_RELIEF || shapedPct < MIN_SHAPED) flags.append(" PLAIN");
             if (depth[3] > 60 && depth[2] < MIN_BRIGHT_CONTRAST) flags.append(" WASHED");
             if (depth[3] < BLACK_LUM || depth[4] > BLACK_DARK) flags.append(" BLACK");
-            flags.insert(0, String.format(Locale.ROOT, "  relief %d wall %d shaped %d contrast %d  lum %d dark %d bright %d", depth[0], depth[1], shapedPct, depth[2], depth[3], depth[4], depth[5]));
+            flags.insert(0, String.format(Locale.ROOT, "  relief %d wall %d shaped %d contrast %d  lum %d dark %d bright %d pool %d", depth[0], depth[1], shapedPct, depth[2], depth[3], depth[4], depth[5], depth[6]));
             return String.format(Locale.ROOT, "%-26s near<5 %2d%%  sky %2d%%  top %s %d%%  vanilla %d%%%s", s.name, near[0] * 100 / total, skyN[0] * 100 / total, topId, top * 100 / hitN, vanilla * 100 / hitN, flags);
         }
 
@@ -523,7 +523,8 @@ public final class Preview {
          * How much the view actually steps in and out. relief: of every hundred neighbouring pixels, how many cross from one
          * plane to another. wall: the share of the view on the single biggest upright plane. contrast: the spread of brightness
          * across what isn't sky. A view of big flat walls in even light scores low on the first and third and high on the second.
-         * Then the light itself, over the same pixels: their median brightness (0 to 255), and the share under 20 and over 200.
+         * Then the light itself, over the same pixels: their median brightness (0 to 255), the share under 20 and over 200, and pool, the
+         * share over 90: how much of a dark place its lights reach. (bright only counts lamps and near-white things, candle sticks mostly.)
          */
         private static int[] depth(int[] plane, int[] px, int w, int h) {
             long pairs = 0, steps = 0;
@@ -547,19 +548,20 @@ public final class Preview {
                     if (plane[(j + 1) * w + i] != a) steps++;
                 }
             }
-            if (hits == 0) return new int[]{100, 0, 255, 0, 0, 0};
+            if (hits == 0) return new int[]{100, 0, 255, 0, 0, 0, 0};
             int big = 0;
             for (int n : upright.values()) big = Math.max(big, n);
-            int lo = -1, hi = 0, run = 0, median = -1, dark = 0, bright = 0;
+            int lo = -1, hi = 0, run = 0, median = -1, dark = 0, bright = 0, pool = 0;
             for (int l = 0; l < 256; l++) {
                 run += hist[l];
                 if (l < 20) dark += hist[l];
                 if (l > 200) bright += hist[l];
+                if (l > 90) pool += hist[l];
                 if (lo < 0 && run * 100L >= hits * 5L) lo = l;
                 if (median < 0 && run * 2L >= hits) median = l;
                 if (run * 100L <= hits * 95L) hi = l;
             }
-            return new int[]{(int) (steps * 1000 / Math.max(1, pairs)), big * 100 / hits, hi - lo, median, (int) (dark * 100L / hits), (int) (bright * 100L / hits)};
+            return new int[]{(int) (steps * 1000 / Math.max(1, pairs)), big * 100 / hits, hi - lo, median, (int) (dark * 100L / hits), (int) (bright * 100L / hits), (int) (pool * 100L / hits)};
         }
 
         private int skyAt(double dy) {
