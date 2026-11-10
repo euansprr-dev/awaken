@@ -893,9 +893,10 @@ def vchain(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
     spine, its narrowing links kept to the back so the edge steps up to the point; a tusk or talon loses a texel of
     depth. Returns the flats first, in link order (designs hang things off them), then the backs."""
     mat = links[0][4]
-    if part not in BLADE_PARTS or not (mat in KAT or mat in TUSK_EDGE or mat in LORD_BLADES):
+    # a chain's head (a hook, a sickle) is left as it is: its neighbours are cut round its depths
+    if part not in ("blade", "fin") or not (mat in KAT or mat in TUSK_EDGE or mat in LORD_BLADES):
         return ORIG["chain"](x, y, links, part, side, back, stagger, cycle, **data)
-    boxes = ORIG["chain"](x, y, links, part, side, back, stagger, cycle, **data)
+    boxes = ORIG["chain"](x, y, links, part, side, back, stagger or 0.05, cycle, **data)  # thin links of one depth never share a plane
     if mat in TUSK_EDGE:
         return [VX.Box(b.c, [b.h[0], b.h[1], THIN[int(round(2 * b.h[2]))] / 2], b.mat, b.part, b.R, b.name, **b.data) for b in boxes]
     edge = -1 if data.get("flip") else 1          # which local side the edge is on
@@ -908,8 +909,8 @@ def vchain(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
         c = b.c + b.R[:, 0] * off
         flat_d = (KAT_CUT[0] if depth >= 2 else 1) if narrow else 1
         flats.append(VX.Box(c, [width / 2, length / 2, flat_d / 2], m, b.part, b.R, b.name, **b.data))
-        rib_d = KAT_CUT[1] if narrow else depth
-        if width >= 3 and rib_d > flat_d:
+        rib_d = KAT_CUT[1] if narrow else 3  # three deep: a whole texel proud each side, on the flat's own grid
+        if (width >= 4 or (narrow and width >= 3)) and rib_d > flat_d:
             spine = SPINE.get(m, m)
             backs.append(VX.Box(c - b.R[:, 0] * edge * (width / 2 - 0.5), [0.5, length / 2, rib_d / 2], spine, b.part, b.R, b.name + ":back"))
     return flats + backs
@@ -953,7 +954,7 @@ def _recut(design, fix, add=lambda: []):
 
 
 # the Beastbound Longsword: the tusk a texel thick under its bronze back (the back is its spine)
-AFTER_V[("longsword", "D")] = _recut(AW.beastbound, lambda b: _depth(_thin_part(b, ("blade",)), "back", 3))
+AFTER_V[("longsword", "D")] = _recut(AW.beastbound, lambda b: _thin_part(b, ("blade",)))
 
 
 def _v_flint_cleaver():
@@ -982,7 +983,6 @@ def _v_gate_window():
 AFTER_V[("greatblade", "C")] = _v_gate_window
 AFTER_V[("greatblade", "B")] = _recut(AW.veilwoven_greatblade, lambda b: _thin_part(b, ("blade",)) if (not is_solid(b) and b.mat == "veil" and 2 * b.h[0] >= 5 - 1e-6) else b,
                                       lambda: [VX.slab(-0.5, 0.5, 8, 30, 3, "veil", "blade")])
-AFTER_V[("greatblade", "A")] = _recut(AW.lordscale_greatblade, _thin_tines)
 AFTER_V[("daggers", "E")] = _recut(AW.wildhide_daggers, lambda b: _thin_part(b, ("blade",)),
                                    lambda: [VX.slab(-2.5, -1.5, 3, 12, 3, "flint", "blade")])
 
@@ -993,7 +993,7 @@ def vsword(t):
     fuller = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}.get(t)
     B = [AW.grip(-4, 3, k["wrap"]), AW.ring(-5, -4, k["metal"], part="pommel")]
     B += vblade([(5, 25, 5, 3), (25, 28, 3, 1), (28, 31, 1, 1)], k["core"], k["edge"], flat_mat=fuller, span=(5, 31), column=0)
-    B += [VX.slab(-6.5, 6.5, 3, 5, 3, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 3, k["metal"], "guard_top")]
+    B += [VX.slab(-6.5, 6.5, 3, 5, 4, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 3, k["metal"], "guard_top")]
     stone = (0.0, 4.0, 0.0)
     B.append(AW.stone_at(t, stone, 2, 5))
     if t == "E":
@@ -1002,7 +1002,7 @@ def vsword(t):
     elif t == "D":
         for sx in (-1, 1):
             for y in (8.0, 14.0, 20.0):
-                B.append(VX.rbox((sx * 2.9, y, 0), (1, 3, 1), sx * 20, "tooth", f"tooth{sx}{y}"))
+                B.append(VX.rbox((sx * 2.9, y, 0), (1, 3, 2), sx * 20, "tooth", f"tooth{sx}{y}"))
     elif t == "A":
         B += AW.both(AW.fan(-6.0, 5.0, [(35, 4, 2, 2, "gold"), (65, 3, 1, 1, "feather")], "guard_wing"))
     elif t == "S":
@@ -1027,7 +1027,7 @@ class Voxel:
     """While open, arms_weapons' designs build the voxel re-cut."""
 
     def __enter__(self):
-        AW.blade, AW.chain, AW.bit = vblade, vchain, vbit
+        AW.blade, AW.chain = vblade, vchain  # (axe bits stay as they are: thinning them set their teeth and caps fighting)
         AW.KATANA_LINKS = V_KATANA_LINKS
         return self
 
