@@ -23,7 +23,9 @@ import realm_amber as A  # noqa: E402
 # As the painting has them. Never drawn as they are: see RAMPS below.
 PAINTED = {
     "astone": ["#12141b", "#1b1e27", "#262a35", "#323744", "#414755", "#535b6b"],
-    "aworn": ["#17130f", "#241e18", "#352b21", "#483a2b", "#5e4b36", "#755c43"],
+    # worn stone is the same stone, greyer and a touch warmer (under 10% saturation, the stone's own brightness step for step): a rust-brown
+    # block mixed one in four into blue stone reads as a checkerboard. Rust is the brick's alone.
+    "aworn": ["#141415", "#1e1e20", "#292a2d", "#36373a", "#46474a", "#595b5f"],
     "adeep": ["#090a0e", "#101218", "#171a22", "#1f232c", "#282d37", "#323843"],
     "apale": ["#3a4050", "#495062", "#5a6275", "#6c7589", "#7f889c", "#949db0"],
     "ahex": ["#1a1c24", "#262933", "#333742", "#424755", "#525867", "#656c7d"],
@@ -148,7 +150,8 @@ def stained(P, base, ramp, seed, runs=4):
 
 
 def tex_worn(P):
-    return stained(P, cut_block(P, "aworn", "w", lo=1, span=4, chips=8), "rust", "w", runs=5)
+    """Worn stone weeps dark, not rust: brown streaks down one block in five were most of what made the walls a checkerboard."""
+    return stained(P, cut_block(P, "aworn", "w", lo=1, span=4, chips=8), "adeep", "w", runs=5)
 
 
 def tex_stone(P):
