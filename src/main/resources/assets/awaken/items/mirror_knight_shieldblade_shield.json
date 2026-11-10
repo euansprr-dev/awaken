@@ -1,0 +1,10 @@
+{
+ "model": {
+  "type": "minecraft:special",
+  "base": "awaken:item/mirror_knight_shieldblade_shield_in_hand",
+  "model": {
+   "type": "awaken:weapon",
+   "weapon": "mirror_knight_shieldblade_shield"
+  }
+ }
+}

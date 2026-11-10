@@ -54,6 +54,15 @@ public final class GuiCanvas implements UiCanvas {
     }
 
     @Override
+    public void textScaled(Font font, String s, float x, float y, float scale, int argb, boolean shadow) {
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
+        g.pose().scale(scale, scale);
+        g.text(font, s, 0, 0, argb, shadow);
+        g.pose().popMatrix();
+    }
+
+    @Override
     public void item(ItemStack stack, int x, int y) {
         g.item(stack, x, y);
     }
@@ -69,7 +78,8 @@ public final class GuiCanvas implements UiCanvas {
 
     @Override
     public void itemTooltip(Font font, ItemStack stack, int x, int y) {
-        g.setTooltipForNextFrame(font, stack, x, y);
+        if (tipX != Integer.MIN_VALUE) g.setTooltipForNextFrame(font, stack, tipX, tipY);
+        else g.setTooltipForNextFrame(font, stack, x, y);
     }
 
     @Override
@@ -85,9 +95,23 @@ public final class GuiCanvas implements UiCanvas {
         g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u0 * R, v0 * R, w, h, Math.round((u1 - u0) * R), Math.round((v1 - v0) * R), R, R, argb);
     }
 
+    /** Where tooltips go while a host draws sections under a scaled pose (the band's stage): the real mouse, in GUI pixels. */
+    private static int tipX = Integer.MIN_VALUE, tipY;
+
+    /** Every tooltip goes to this screen position until {@link #tooltipsWhereAsked}: a section's own mouse isn't the screen's. */
+    public static void tooltipsAt(int screenX, int screenY) {
+        tipX = screenX;
+        tipY = screenY;
+    }
+
+    public static void tooltipsWhereAsked() {
+        tipX = Integer.MIN_VALUE;
+    }
+
     @Override
     public void tooltip(Font font, List<? extends FormattedCharSequence> lines, int x, int y) {
-        g.setTooltipForNextFrame(font, lines, x, y);
+        if (tipX != Integer.MIN_VALUE) g.setTooltipForNextFrame(font, lines, tipX, tipY);
+        else g.setTooltipForNextFrame(font, lines, x, y);
     }
 
     @Override

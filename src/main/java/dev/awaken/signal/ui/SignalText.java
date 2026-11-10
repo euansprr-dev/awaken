@@ -144,6 +144,31 @@ public final class SignalText {
         return out;
     }
 
+    /** Text fitted into a slot without losing a letter: the scale it's drawn at (1 is as written) and its lines. */
+    public record Fitted(float scale, List<String> lines) {}
+
+    /**
+     * Fits text into a slot {@code width} wide and {@code lines} lines tall and never cuts it (SPEC §57.6; Euan, 10 Nov 2026:
+     * "you can actually always read everything that you need to read"). As written if that fits. Else smaller, a whole real
+     * pixel per font pixel at a time ({@code unitPixels} real pixels to a unit), never under half size or two real pixels,
+     * wrapped onto as many lines as the slot then holds. If even the smallest doesn't fit, every line at the smallest: it runs
+     * on below the slot rather than lose its end.
+     */
+    public static Fitted fitBox(String s, int width, int lines, int unitPixels, ToIntFunction<String> measure) {
+        if (s == null || s.isEmpty()) return new Fitted(1f, List.of());
+        width = Math.max(1, width);
+        lines = Math.max(1, lines);
+        int ppu = Math.max(1, unitPixels), least = Math.min(ppu, Math.max(2, (ppu + 1) / 2));
+        Fitted last = null;
+        for (int k = ppu; k >= least; k--) {
+            float scale = k / (float) ppu;
+            List<String> wrapped = wrap(s, (int) (width / scale), measure);
+            last = new Fitted(scale, wrapped);
+            if (wrapped.size() <= (int) Math.floor(lines / scale + 1e-4)) return last;
+        }
+        return last;
+    }
+
     /** Fixed-width measure for tests and server-side estimates: 6 px per character, like most of Minecraft's font. */
     public static int approxWidth(String s) {
         return s == null ? 0 : s.length() * 6;

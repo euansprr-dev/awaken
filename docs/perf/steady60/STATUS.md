@@ -29,8 +29,9 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
 - **The late frames in flight, profiled** (`LateFrames`, autopilot `late ...`; SPEC §22 has the breakdown). The top
   cause was Sodium freeing every unloaded chunk in one frame. **Chunk pacing** (Turbo, `turboChunkPacing`,
   `dev.awaken.turbo.chunkpace`) lets three through a frame: 94.9% on time against 93.3% on alternating legs (pace-1).
-  **It is a new Turbo hook into Sodium and needs Euan's yes before any merge** (then add it to CLAUDE.md's Turbo
-  list). A smaller chunk batch from the server was tried and dropped (batch-1).
+  Euan, shown the result on 10 Nov: "Push everything to the orchestrator since it's already a huge step forward".
+  The project guide's Turbo list (CLAUDE.md) still needs its line for it: this session may not edit that file.
+  A smaller chunk batch from the server was tried and dropped (batch-1).
 - **Tick work evened out** (autopilot `lens cost`): a 0.5 ms limit a tick for the heightfield and the block map, near
   re-reads in turn.
 - Euan's notes, 10 Nov, three rounds, all acted on: bright rims at dusk; dark un-fogged patches; "the atmosphere
@@ -66,7 +67,9 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
 5b. More atmosphere, as Euan asks: ground mist at dawn and dusk, thinner cloud by night (it hides the stars when there
    is a lot of it), a lighter night ground.
 6. The Air on Swift (needs a view direction: Swift has no frame texture).
-7. CI: GameTests ran once on 43373dfbb (run 42798649001, started by hand: the workflow does not start on `claude/**`):
+7. **Handed to the orchestrator on 10 Nov** with build/awaken-v1 (325a3d003) merged in and the mod building. Not yet:
+   GameTests after that merge, and Euan playing it.
+8. CI: GameTests ran once on 43373dfbb (run 42798649001, started by hand: the workflow does not start on `claude/**`):
    two required tests failed, `delve_heart_in_rock` and `fights_mind_answer_gearwright_colossus_3`, both in modules
    this branch does not touch; build/awaken-v1's own last three runs were red too, and this branch forked before the
    gearwright fix (43dceee2a). Rerun after rebasing onto a green build. The manager merges

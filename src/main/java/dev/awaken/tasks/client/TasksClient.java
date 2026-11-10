@@ -12,10 +12,14 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class TasksClient {
     private TasksClient() {}
 
+    private static final TasksPlace PLACE = new TasksPlace();
+
     public static void init(IEventBus modBus) {
         StatusSections.add(StatusSections.Tab.TASKS, new TaskTabs());
         StatusSections.add(StatusSections.Tab.TASKS, new TaskPage());
         StatusSections.add(StatusSections.Tab.HEARTH, new HearthNext());
+        // the band's stage (SPEC §57): Tasks is a place of its own; the two sections above are the old band's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.TASKS.ordinal(), PLACE);
         dev.awaken.core.api.UiHooks.installTasksNew(() -> TaskCache.fresh(null));
         modBus.addListener(TasksClient::onPayloads);
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> TaskCache.tick());
@@ -37,8 +41,13 @@ public final class TasksClient {
             }
             return;
         }
+        if (a.startsWith("focus ")) { // tours: tasks focus <step key>, on the band's stage
+            PLACE.debugFocus(arg.trim().substring(6).trim());
+            return;
+        }
         if (a.equals("later")) { // tours: open this tab's Later fold
             TaskCache.laterOpen = true;
+            PLACE.debugLater();
             return;
         }
         if (a.startsWith("pick ")) { // tours: tasks pick <step key> <choice id>

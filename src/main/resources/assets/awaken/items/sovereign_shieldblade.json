@@ -21,7 +21,7 @@
    "base": "awaken:item/sovereign_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "sovereign_shieldblade"
+    "weapon": "sovereign_shieldblade_blade"
    }
   }
  }

@@ -38,11 +38,15 @@ final class ArmsBodies {
         if (e == net.minecraft.client.Minecraft.getInstance().player) ArmsFilm.event("clip " + clip + (played ? "" : " (none)"));
     }
 
-    static void charge(Entity e) {
-        ArmsWrist.charge(e);
+    /** Ticks another fighter's body takes into the held draw once the server says it charges (its word comes at the mark). */
+    static final int SEEN_DRAW = 5;
+
+    /** The body into the heavy's held draw, over {@code fade} ticks. */
+    static void charge(Entity e, int fade) {
+        ArmsWrist.charge(e, fade);
         Archetypes.Loaded style = e instanceof LivingEntity l ? Arms.styleOf(l.getMainHandItem()) : null;
         String clip = style == null ? ArmsClips.CHARGE : ArmsClips.charge(style.id());
-        if (PlayerClips.play(e.getId(), clip, 2)) HELD.put(e.getId(), clip);
+        if (PlayerClips.play(e.getId(), clip, fade)) HELD.put(e.getId(), clip);
     }
 
     /** The dodge's clip for a way (dx, dz in the world): back, or a step to one side, mirrored for a left hand. */
@@ -78,10 +82,13 @@ final class ArmsBodies {
     /** Players whose guard a shot jolted: entity id → the tick its jolt is over and the guard is held again. */
     private static final Map<Integer, Integer> JOLTED = new HashMap<>();
 
+    private static final int GUARD_FADE = 3;
+
     /** A shot struck a raised guard: the jolt plays over it, then the guard is held again (ArmsBodies.tick). */
     static void jolt(Entity e) {
-        if (!ArmsClips.GUARD.equals(HELD.get(e.getId()))) return;
-        if (PlayerClips.play(e.getId(), ArmsClips.GUARD_JOLT, 0)) JOLTED.put(e.getId(), ArmsPredict.ticks + ArmsClips.GUARD_JOLT_TICKS);
+        String held = HELD.get(e.getId());
+        if (!ArmsClips.isGuard(held)) return;
+        if (PlayerClips.play(e.getId(), ArmsClips.guardJolt(held), 0)) JOLTED.put(e.getId(), ArmsPredict.ticks + ArmsClips.GUARD_JOLT_TICKS);
     }
 
     /** A refused or cancelled move: whatever is held settles. */
@@ -101,19 +108,26 @@ final class ArmsBodies {
             boolean guarding = p.isUsingItem() && Arms.guards(p.getUseItem());
             String held = HELD.get(p.getId());
             Integer jolted = JOLTED.get(p.getId());
-            if (guarding && !ArmsClips.GUARD.equals(held)) {
-                if (PlayerClips.play(p.getId(), ArmsClips.GUARD, 2)) HELD.put(p.getId(), ArmsClips.GUARD);
-            } else if (!guarding && ArmsClips.GUARD.equals(held)) {
+            if (guarding && !ArmsClips.isGuard(held)) {
+                Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
+                String clip = style == null ? ArmsClips.GUARD : ArmsClips.guard(style.id());
+                if (PlayerClips.play(p.getId(), clip, 2)) {
+                    HELD.put(p.getId(), clip);
+                    ArmsWrist.guard(p, GUARD_FADE);
+                }
+            } else if (!guarding && ArmsClips.isGuard(held)) {
                 JOLTED.remove(p.getId());
-                settle(p);
+                ArmsWrist.guardDown(p, GUARD_FADE);
+                String ending = HELD.remove(p.getId());
+                if (ending != null && !PlayerClips.play(p.getId(), ending + "_end", 2)) PlayerClips.stop(p.getId());
             } else if (jolted != null && ArmsPredict.ticks >= jolted) {
                 // the jolt ended on the guard's own pose: hold it again
                 JOLTED.remove(p.getId());
-                if (ArmsClips.GUARD.equals(held)) PlayerClips.play(p.getId(), ArmsClips.GUARD, 1);
+                if (ArmsClips.isGuard(held)) PlayerClips.play(p.getId(), held, 1);
             }
         }
         if (!HELD.isEmpty()) HELD.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        if (!JOLTED.isEmpty()) JOLTED.keySet().removeIf(id -> !ArmsClips.GUARD.equals(HELD.get(id)));
+        if (!JOLTED.isEmpty()) JOLTED.keySet().removeIf(id -> !ArmsClips.isGuard(HELD.get(id)));
         ArmsWrist.prune(mc.level);
     }
 

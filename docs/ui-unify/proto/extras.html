@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>UI unify · extra mock frames</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500&family=Jacquard+24&display=swap">
+<style>
+@font-face { font-family: "MCLocal"; src: url("file:///Volumes/MEDIA/ui-unify-work/font/mclocal.ttf"); }
+html, body { margin: 0; background: #05080F; overflow: hidden; }
+</style>
+<link rel="stylesheet" href="proto.css">
+<style>
+/* frames beyond the prototype: the Tab glance (today, rebuilt from holo.client.Glance, and proposed), the Hall's close-up
+   panel pushed further, direction A, and the shared kit. Same tokens as proto.css. */
+.x { position: absolute; }
+.gl { position: absolute; background: linear-gradient(180deg, rgba(22,35,58,.9), rgba(15,23,36,.92)); box-shadow: 0 0 0 1px rgba(127,195,255,.5), 0 0 30px rgba(127,195,255,.18); }
+.gl::before, .gl::after { content: ""; position: absolute; width: 22px; height: 22px; border: 2px solid var(--hot); }
+.gl::before { left: -4px; top: -4px; border-right: 0; border-bottom: 0; } .gl::after { right: -4px; bottom: -4px; border-left: 0; border-top: 0; }
+.old { font-size: 28px; line-height: 38.5px; text-shadow: 3.5px 3.5px 0 rgba(0,0,0,.55); }
+.old .r { position: relative; height: 38.5px; display: flex; align-items: center; }
+.old .r .rt { margin-left: auto; }
+.old .bar { position: absolute; left: 154px; right: 126px; top: 14px; height: 7px; background: rgba(0,0,0,.5); display: flex; gap: 3.5px; }
+.old .bar i { flex: 1; background: #1A222E; } .old .hl { height: 3.5px; background: rgba(127,195,255,.25); margin: 3.5px 0; }
+.wells { display: flex; gap: 4px; } .wells i { width: 63px; height: 63px; background: rgba(4,10,22,.62); box-shadow: inset 0 0 0 2px rgba(127,195,255,.28); display: flex; align-items: center; justify-content: center; position: relative; }
+.wells i.held { box-shadow: inset 0 0 0 3px var(--edge), 0 0 14px rgba(127,195,255,.55); background: rgba(127,195,255,.2); }
+.wells i img { width: 49px; height: 49px; } .wells i b { position: absolute; right: 3px; bottom: -2px; font-weight: normal; font-size: 21px; color: #fff; text-shadow: 2px 2px 0 #000; }
+.vit { display: flex; align-items: center; gap: 10px; height: 26px; } .vit svg { width: 20px; height: 20px; shape-rendering: crispEdges; flex: none; }
+.vit .seg { display: flex; gap: 3px; flex: 1; } .vit .seg i { flex: 1; height: 8px; background: rgba(5,8,15,.6); }
+.vit .v { width: 54px; text-align: right; font-size: 16px; color: var(--title); }
+.fire .plate2 { position: absolute; background: #080C16; box-shadow: 0 0 0 2px rgba(127,195,255,.55); }
+.fire .hd { color: #7FC3FF; font-size: 24px; } .fire .bl { font-family: var(--black); -webkit-font-smoothing: antialiased; color: #fff; text-shadow: 0 0 18px rgba(255,255,255,.35); }
+.trait { display: flex; align-items: center; gap: 14px; height: 54px; } .trait .ti { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; background: rgba(127,195,255,.08); box-shadow: inset 0 0 0 1px rgba(127,195,255,.3); }
+.trait .ti svg { width: 28px; height: 28px; shape-rendering: crispEdges; color: var(--edge); } .trait .n { font-size: 32px; color: #fff; width: 92px; }
+.kit h3 { font: inherit; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--label); margin: 0 0 12px; font-weight: normal; }
+.kit .cell { position: absolute; }
+.tip { display: inline-block; padding: 8px 12px; background: rgba(15,23,36,.96); box-shadow: 0 0 0 1px rgba(127,195,255,.6), 0 0 16px rgba(127,195,255,.2); }
+.vtip { display: inline-block; padding: 6px 10px; background: #100010; border: 3px solid #2a0a5e; color: #fff; }
+.ann { position: absolute; color: #FFCF7A; font-size: 16px; } .ann::before { content: ""; position: absolute; background: #FFCF7A; }
+</style></head><body>
+<div id="sheet" class="aw still"></div>
+<script src="data.js"></script>
+<script>
+const A = n => `assets/${n}.png`, im = (n, st) => `<img src="${A(n)}" style="${st || ''}" alt="">`;
+const px = (rows, col) => `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" fill="${col || 'currentColor'}">${rows.map((r, y) => [...r].map((c, x) => c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : '').join('')).join('')}</svg>`;
+const HEART = ['.##.##.', '#######', '#######', '#######', '.#####.', '..###..', '...#...'], FOOD = ['....##.', '...####', '..#####', '.#####.', '.####..', '##.....', '##.....'], SHIELD = ['#######', '#######', '#######', '#######', '.#####.', '..###..', '...#...'];
+const GUARD = ['#######', '#.....#', '#.###.#', '#.###.#', '.#.#.#.', '..#.#..', '...#...'], ARC = ['....###', '..##...', '.#.....', '.#.....', '#......', '#......', '#......'], WAVE = ['.......', '.#...#.', '#.#.#.#', '...#...', '.#...#.', '#.#.#.#', '...#...'], EVEN = ['.......', '#######', '.......', '.......', '#######', '.......', '.......'];
+const kbd = (k, hold) => `<kbd${hold ? ' class="hold"' : ''}>${k}</kbd>`;
+const hot = [['v_diamond_sword', ''], ['v_iron_pickaxe', ''], ['v_bow', ''], ['b_log', 16], ['v_bread', 12], ['', ''], ['', ''], ['', ''], ['b_cobble', 41]];
+const wells = () => `<div class="wells">${hot.map((h, i) => `<i class="${i === 0 ? 'held' : ''}">${h[0] ? im(h[0]) : ''}${h[1] ? `<b>${h[1]}</b>` : ''}</i>`).join('')}</div>`;
+const need = (icon, name, have, n) => `<div class="need ${have >= n ? 'met' : 'short'}"><div class="np">${im(icon)}</div><div class="c">${have}/${n}</div><div class="nm">${name}</div></div>`;
+const scene = decodeURIComponent(location.hash.slice(1)) || 'kit', el = document.getElementById('sheet');
+const bg = (n, veil) => `<img class="bg" src="assets/${n}.jpg" alt="">${veil ? `<div class="veil" style="opacity:${veil}"></div>` : ''}`;
+const S = {
+  // ---- the Tab glance as it is: rebuilt from holo.client.Glance's own numbers (184 GUI px wide, 11 px rows, GUI scale 7) ----
+  glance_before: () => bg('bg_world') + `<div class="gl old" style="left:70px;top:258px;width:644px;padding:21px">
+    <div class="r"><span style="color:var(--edge);margin-right:12px">◆</span><span class="t">LV 7</span><span class="rt" style="color:var(--rank-e)">E-RANK</span></div>
+    <div style="height:3.5px;background:rgba(0,0,0,.45);margin:0 0 10px"><i style="display:block;width:38%;height:3.5px;background:var(--good)"></i></div>
+    ${[['Health', '20/20', '#FF6F61', 1, 10], ['Food', '18/20', '#E8C07A', .9, 10], ['Armour', '10', '#BCCDE3', .5, 10]].map(b => `<div class="r"><span style="color:var(--label)">${b[0]}</span><span class="bar">${Array.from({ length: b[4] }, (_, i) => `<i style="${i < b[3] * b[4] ? 'background:' + b[2] : ''}"></i>`).join('')}</span><span class="rt">${b[1]}</span></div>`).join('')}
+    <div class="hl"></div>
+    <div class="r"><span style="color:var(--edge)">BUILD YOUR ARMOURY</span><span class="rt" style="color:var(--label)">0/3</span></div>
+    <div class="r">▸ A Fitting Stand</div><div class="r" style="color:var(--label);opacity:.8">· A crafting table</div>
+    <div class="hl"></div>
+    <div class="r"><span class="t">Shellburn</span><span class="rt" style="color:var(--label)">184 m</span></div>
+    <div class="hl"></div><div style="display:flex;justify-content:center;padding-top:6px">${wells()}</div></div>
+    <div class="ann" style="left:740px;top:300px">Rebuilt from the code’s own sizes. Not a screenshot:<br>no tour can hold Tab.</div>`,
+  // ---- the Tab glance, proposed: the same facts as pictures, in the kit's parts ----
+  glance_after: () => bg('bg_world') + `<div class="gl" style="left:70px;top:398px;width:644px;padding:21px;font-size:28px;line-height:1.2">
+    <div style="display:flex;gap:24px;align-items:center">
+      <div style="text-align:center;width:112px"><div class="num" style="font-size:84px">7</div><div style="font-size:21px;color:var(--rank-e)">E-rank</div></div>
+      <div style="flex:1">
+        ${[['#FF6F61', HEART, 10, '20'], ['#E8C07A', FOOD, 9, '18'], ['#BCCDE3', SHIELD, 5, '10']].map(v => `<div class="vit" style="color:${v[0]};height:35px">${px(v[1]).replace('<svg', '<svg style="width:28px;height:28px"')}<span class="seg">${Array.from({ length: 10 }, (_, i) => `<i style="height:10px;${i < v[2] ? 'background:' + v[0] : ''}"></i>`).join('')}</span><span class="v" style="font-size:28px;width:56px">${v[3]}</span></div>`).join('')}
+        <div style="height:4px;background:rgba(0,0,0,.5);margin-top:8px"><i style="display:block;width:38%;height:4px;background:var(--good);box-shadow:0 0 8px var(--good)"></i></div>
+      </div></div>
+    <div class="hair" style="margin:14px 0"></div>
+    <div style="display:flex;align-items:center;gap:16px"><span class="compass" style="width:63px;height:63px"><i style="left:30px;top:7px;height:27px;transform-origin:2px 25px;transform:rotate(35deg)"></i></span>
+      <div style="flex:1"><div class="t">Build your Armoury</div><div style="color:var(--label);font-size:21px">184 m</div></div>
+      <span class="well" style="width:63px;height:63px">${im('v_armor_stand', 'width:49px;height:49px')}<span class="n warn" style="font-size:21px">0/1</span></span><span class="well" style="width:63px;height:63px">${im('b_crafting_table', 'width:49px;height:49px')}<span class="n warn" style="font-size:21px">0/1</span></span></div>
+    <div class="hair" style="margin:14px 0"></div>${wells()}</div>`,
+  // ---- the Hall's close-up, pushed further: what makes it different as marks and numbers, one bar of keys ----
+  hall_after: () => `<div class="fire"><div class="x" style="inset:0;background:#000 url(assets/hall_piece.jpg) 0 15px/1708px 929px no-repeat"></div>
+    <div class="x" style="left:0;top:880px;width:1010px;height:80px;background:#000"></div>
+    <div class="plate2" style="left:1010px;top:36px;width:654px;height:884px;padding:30px 34px">
+      <div style="color:var(--rank-d);font-size:24px">Beastbound · D rank</div>
+      <div class="bl" style="font-size:92px;line-height:1;margin-top:10px">Longsword</div>
+      <div class="t" style="margin-top:14px;font-size:24px">Balanced. It guards as well as it cuts.</div>
+      <div style="display:flex;gap:34px;margin-top:20px">${[['7.5', 'Damage'], ['1.6', 'Swings a second'], ['500', 'Uses'], ['3.2', 'Reach']].map(n => `<span class="stat"><span class="num">${n[0]}</span><span class="caps" style="color:#7FC3FF;letter-spacing:0;text-transform:none;font-size:16px">${n[1]}</span></span>`).join('')}</div>
+      <div class="good" style="margin-top:12px;font-size:24px">+1 on your Wildhide Longsword</div>
+      <div class="hd" style="margin-top:18px">What makes it different</div>
+      <div class="trait" style="margin-top:6px"><span class="ti">${px(GUARD)}</span><span class="n">70%</span><span>off a blow you block</span></div>
+      <div class="trait"><span class="ti">${px(ARC)}</span><span class="n">3.2</span><span>blocks: its Art is one wide cut</span></div>
+      <div class="trait"><span class="ti">${px(WAVE)}</span><span class="n">10</span><span>blocks: the wave the Art sends out</span></div>
+      <div class="hd" style="margin-top:14px">What it takes</div>
+      <div class="needs" style="margin-top:12px;gap:34px">${need('v_bone', 'D-rank Part', 0, 2)}${need('v_iron_ingot', 'D-rank Metal', 0, 2)}${need('i_essence_shard', 'Essence Shard', 1, 1)}${need('v_copper_ingot', 'D-rank Binding', 0, 1)}</div>
+      <div style="position:absolute;left:30px;right:30px;bottom:24px;display:flex;gap:12px"><span class="btn" style="flex:1;justify-content:center;opacity:.55">${kbd('Hold', 1)}Forge it at a War Anvil</span><span class="btn">${kbd('T')}Track</span></div>
+    </div>
+    <div class="hints" style="left:60px;top:906px">${`<span class="hint">${kbd('Esc')}Back</span><span class="hint">${kbd('Drag')}Turn it</span><span class="hint">${kbd('Tab')}Next rank</span><span class="sp"></span><span class="hint" style="margin-right:700px">${kbd('Q')}${kbd('E')}Katana</span>`}</div></div>`,
+  // ---- direction A: tidy the band where it is (the slab stays 288 x 228 units) ----
+  dirA: () => bg('bg_world', 0) + `<div class="gl" style="left:92px;top:86px;width:722px;height:572px;transform:perspective(2400px) rotateY(7deg) rotateX(-2deg);transform-origin:0 50%">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:76px;background:rgba(5,8,15,.3);border-right:1px solid rgba(127,195,255,.3)">${['Status', 'Tasks', 'Hearth', 'Powers', 'Journal', 'Map'].map((p, i) => `<div style="height:72px;padding-top:44px;text-align:center;font-size:12px;letter-spacing:1px;color:${i === 1 ? '#fff' : 'var(--label)'};${i === 1 ? 'background:rgba(127,195,255,.15);border-left:4px solid var(--hot)' : ''}">${p.toUpperCase()}</div>`).join('')}</div>
+    <div style="position:absolute;left:100px;top:22px;right:22px;font-size:28px;line-height:36px">
+      <div class="caps amber" style="font-size:18px">Do this next</div><div class="t">Build your Armoury</div>
+      <div style="display:flex;gap:20px;align-items:center;margin:14px 0"><span class="well lg">${im('v_armor_stand')}<span class="n warn" style="font-size:20px">0/1</span></span><span class="well lg">${im('b_crafting_table')}<span class="n warn" style="font-size:20px">0/1</span></span><span class="lab" style="font-size:22px;line-height:28px">in one<br>closed room</span></div>
+      <div style="display:flex;gap:12px"><span class="btn" style="height:52px;font-size:28px">Track</span></div>
+      <div class="hair" style="margin:20px 0 12px"></div><div class="caps" style="font-size:18px">Also open</div>
+      ${[['i_wildhide_chestplate', 'Choose your first armour'], ['w_longsword', 'Talk to Hale'], ['v_bell', 'Find where that bell’s note…']].map(r => `<div style="display:flex;gap:14px;align-items:center;height:48px">${im(r[0], 'width:36px;height:36px')}<span>${r[1]}</span></div>`).join('')}
+    </div></div>`,
+  // ---- the kit: the parts every surface is built from ----
+  kit: () => `<div class="x kit" style="inset:0;background:linear-gradient(180deg,#16233A,#0F1724)">
+    <div class="cell" style="left:48px;top:40px"><h3>A thing, lit by its state</h3><div style="display:flex;gap:18px">
+      ${[['Not found', 'filter:brightness(0);opacity:.6', ''], ['Known', 'filter:saturate(.25) brightness(.55)', ''], ['Ready', '', 'box-shadow:inset 0 0 0 1px var(--edge),0 0 14px rgba(127,195,255,.35)'], ['Yours', '', 'box-shadow:inset 0 0 0 1px rgba(242,165,65,.7);background:rgba(242,165,65,.16)'], ['New', '', ''], ['Waits on you', '', 'box-shadow:inset 0 0 0 2px var(--amber),0 0 14px rgba(255,207,122,.3)'], ['In focus', '', 'box-shadow:inset 0 0 0 2px var(--hot),0 0 16px rgba(127,195,255,.4)']].map((s, i) => `<div style="text-align:center;width:112px"><span class="well lg" style="${s[2]}">${im('b_anvil', s[1])}${i === 4 ? '<span style="position:absolute;right:-5px;top:-5px;width:10px;height:10px;transform:rotate(45deg);background:var(--amber);box-shadow:0 0 10px var(--amber)"></span>' : ''}</span><div class="lab" style="margin-top:8px">${s[0]}</div></div>`).join('')}</div></div>
+    <div class="cell" style="left:48px;top:230px"><h3>What it takes</h3><div class="needs">${need('v_iron_ingot', 'Iron Ingot', 3, 3)}${need('i_essence_shard', 'Essence Shard', 1, 1)}${need('v_coal', 'Coal', 0, 1)}</div></div>
+    <div class="cell" style="left:460px;top:230px"><h3>A number, and what it is</h3><div style="display:flex;gap:34px"><span class="stat"><span class="num">7.5</span><span class="caps">Damage</span></span><span class="stat"><span class="num">7.5 <span class="amber" style="font-size:24px">▸</span> <span class="good">8.5</span></span><span class="caps">After</span></span><span class="stat"><span class="num">3/5</span><span class="caps">Ready</span></span></div></div>
+    <div class="cell" style="left:1040px;top:230px"><h3>A recipe, as Minecraft shows one</h3><span class="recipe"><span class="grid" style="grid-template-columns:repeat(3,44px)">${['b_cobble', 'b_cobble', 'b_cobble', '', 'v_copper_ingot', '', '', 'b_log', ''].map(c => `<i>${c ? im(c) : ''}</i>`).join('')}</span><span class="arrow"></span>${im('b_war_anvil', 'width:96px;height:96px')}</span></div>
+    <div class="cell" style="left:48px;top:420px"><h3>Keys, said one way everywhere</h3><div style="display:flex;gap:26px;flex-wrap:wrap;width:900px;row-gap:14px">
+      ${[['Esc', 'Back one step'], ['Tab', 'The next thing'], ['Q E', 'The view beside this one'], ['T', 'Track it'], ['Z', 'Undo']].map(h => `<span class="hint">${h[0].split(' ').map(k => kbd(k)).join('')}${h[1]}</span>`).join('')}<span class="hint">${kbd('Hold', 1)}${kbd('Space')}Commit: what can’t be taken back</span></div></div>
+    <div class="cell" style="left:1040px;top:420px"><h3>Where it is</h3><div style="display:flex;gap:16px;align-items:center"><span class="compass"><i style="transform:rotate(300deg)"></i></span><div><div class="num" style="font-size:32px">1,220</div><div class="caps">blocks west</div></div></div></div>
+    <div class="cell" style="left:48px;top:590px"><h3>Buttons</h3><div style="display:flex;gap:12px;align-items:center"><span class="btn primary">Choose Wildhide</span><span class="btn">${kbd('T')}Track</span><span class="btn on">${kbd('T')}Tracked</span><span class="btn hold"><span class="fill" style="width:55%"></span>${kbd('Hold', 1)}Forge it</span><span class="btn quiet">${kbd('X')}Set aside</span></div></div>
+    <div class="cell" style="left:48px;top:720px"><h3>A name under the pointer: today, and in the band’s glass</h3><div style="display:flex;gap:26px;align-items:center"><span class="vtip">Diorite<br><span style="color:#5a5aff;font-style:italic">Minecraft</span></span><span class="amber">▸</span><span class="tip"><span class="t">Diorite</span><br><span class="lab">41 in your bag</span></span></div></div>
+    <div class="cell" style="left:940px;top:590px"><h3>Chips: where you are, what waits</h3><div style="display:flex;gap:10px"><span class="chip">${im('v_campfire', 'width:20px;height:20px')}Hearth</span><span class="chip amber">3 to place</span><span class="chip lantern">At your fire you can do more</span><span class="chip good">Ready</span></div></div>
+    <div class="cell" style="left:760px;top:720px"><h3>Type, three sizes and one for numbers</h3><div style="display:flex;gap:30px;align-items:baseline"><span class="num">48</span><span class="h2">Title 24</span><span>Body 16</span><span class="caps">Label 12</span></div></div>
+  </div>`,
+};
+el.innerHTML = (S[scene] || S.kit)();
+</script></body></html>
