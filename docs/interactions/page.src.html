@@ -91,22 +91,56 @@ svg text { font-family: var(--mono) }
 </style>
 
 <header class="top">
-  <div class="eyebrow">AWAKEN · a plan for your approval · 10 Nov 2026</div>
+  <div class="eyebrow">AWAKEN · approved 10 Nov 2026 · built 11 Nov</div>
   <h1>Hands at Work</h1>
   <p class="lede">Every block you work, done by your own hands: the stack carried over the grid, a real crouch at the furnace, a lid you lift. The same from any distance, in first and third person, and as quick as the plain screen.</p>
   <blockquote class="words">looking at all the interactive animations with like the crafting tables and the chests and everything like that to massively improve the smoothness of all of it. Like, for example, in the crafting table, I think it would be dope if when you're like hovering with an item, it actually shows like the actual hand of the player going over the box with that item in its hand, for example. And just overall, like for all of the like interactive animations like that, like massively level them up. Think about how it acts when you're more at the distance, when you're closer. Think about the POV, so it's really optimized to still be like usable and very nice. Same with the furnace. Maybe like the furnace, you actually crouch down, so you put stuff in the furnace that way. Think about the animations and from third person as well. And like for the audit, basically all of that, and then create a plan to massively improve them and bring them up to like AAA level and the quality bar that we keep saying.
     <footer>Euan, 10 Nov 2026</footer></blockquote>
-  <div class="status"><span><b>Approved in full, 10 Nov 2026:</b> "Go with all recommendations and the full plan"</span><span>Being built now, all seven stages in one run</span><span>About 13 hours at our pace</span></div>
+  <div class="status"><span><b>Approved in full, 10 Nov 2026:</b> "Go with all recommendations and the full plan"</span><span><b>Built:</b> all seven stages are on the branch</span><span>Not merged. Not yet played or heard by you.</span></div>
 </header>
 
 <nav class="jump" aria-label="Sections">
-  <a href="#today">Today</a><a href="#hand">Try the hand</a><a href="#view">The view</a><a href="#furnace">Furnace</a><a href="#boxes">Chests</a><a href="#rest">Everything else</a><a href="#third">Third person</a><a href="#build">Cost and proof</a><a href="#decisions">Decisions</a>
+  <a href="#built">Built</a><a href="#today">Before</a><a href="#hand">Try the hand</a><a href="#view">The view</a><a href="#furnace">Furnace</a><a href="#boxes">Chests</a><a href="#rest">Everything else</a><a href="#third">Third person</a><a href="#build">Cost and proof</a><a href="#decisions">Decisions</a>
   <span class="count" id="navcount">0 of 10 answered</span>
 </nav>
 
 <main>
+<section id="built">
+  <h2>Built: how it looks in the game</h2>
+  <p class="col">All seven stages are coded and on the branch. These are real frames from the game, taken on GitHub's test machine by a script that works each block. They are from the first filmed run, so they still show two faults that run found and I have since fixed (listed under the pictures). You have not played any of it yet, and none of the sounds have been heard.</p>
+  <div class="pair">
+    <figure><img src="img/built_carry.jpg" alt="The crafting table from the bench view: an arm reaches over the grid holding a stack of planks, the count 64 beside it" loading="lazy"><figcaption><span class="tag real">Built · real</span>Your hand carries the stack over the grid, exactly under the pointer. The count rides beside it.</figcaption></figure>
+    <figure><img src="img/built_result.jpg" alt="Two planks laid on the grid and four sticks lying on the table's right border" loading="lazy"><figcaption><span class="tag real">Built · real</span>Two planks laid. The sticks come together on the right border, where your arm never crosses them.</figcaption></figure>
+    <figure><img src="img/built_pile.jpg" alt="A stack of 62 planks lying as a small pile on one square with its count on a glass tag" loading="lazy"><figcaption><span class="tag real">Built · real</span>A stack lies as a pile, with its count on a small glass tag.</figcaption></figure>
+    <figure><img src="img/built_fast.jpg" alt="Three planks laid down the right column in quick clicks, the hand already carrying the rest" loading="lazy"><figcaption><span class="tag real">Built · real</span>Three clicks two ticks apart. All three land and the hand never goes back to rest between them.</figcaption></figure>
+    <figure><img src="img/built_furnace_carry.jpg" alt="Crouched before the furnace: an arm reaches into the mouth holding raw beef" loading="lazy"><figcaption><span class="tag real">Built · real</span>The crouch. You look straight into the mouth and your arm takes the beef in.</figcaption></figure>
+    <figure><img src="img/built_furnace_flare.jpg" alt="The furnace lit: coal on the fire bed, embers rising, beef above" loading="lazy"><figcaption><span class="tag real">Built · real</span>Coal lands and the fire answers with embers. The hand in the bottom corner is vanilla's own, one of the faults below.</figcaption></figure>
+  </div>
+
+  <h3>What the first filmed run found, all fixed</h3>
+  <ol class="found">
+    <li><div><b>Opening a brewing stand crashed the game.</b> A real crash, in code no headless test reaches. Fixed. It also cut the run short, so chests, the glass screens, the lever and bell, and the third-person bodies have not been filmed yet.</div></li>
+    <li><div><b>The table sat turned a few degrees.</b> You can see it in the pictures above: the right border is wider than the left. The view now looks square on.</div></li>
+    <li><div><b>The five new bench workstations were framed far too close.</b> Three slots filled the screen and you could not see the anvil. Each view now shows the block's whole top.</div></li>
+    <li><div><b>Vanilla's own hand sat in the corner at the furnace.</b> Gone.</div></li>
+    <li><div><b>The hint text stayed over the table's near edge.</b> It now leaves after three and a half seconds.</div></li>
+  </ol>
+  <p class="note">A second run to film the fixes and the scenes the crash cut off is waiting in GitHub's queue behind other sessions' runs. Tests: 32 of 32 for this work, and the full suite passed on GitHub at the last stage's commit.</p>
+
+  <h3>Different from the plan</h3>
+  <ol class="found">
+    <li><div><b>The loom and the lectern keep vanilla's screens.</b> Hopper, dispenser, dropper, crafter and beacon are on glass. A loom's screen is mostly its pattern list, and a lectern shows a book.</div></li>
+    <li><div><b>Cooking food draws in and trembles; it does not change colour.</b> That would need a second model for every food.</div></li>
+    <li><div><b>The grindstone's wheel does not turn and the cartography paper does not slide.</b> The blow, the sparks and vanilla's own sounds are there.</div></li>
+    <li><div><b>The pointer's stack tips with its speed only on a station.</b> On a chest's screen the icon is vanilla's own.</div></li>
+  </ol>
+
+  <h3>What needs you</h3>
+  <p class="col">Ten minutes at a crafting table, a furnace, an anvil and a chest once this is merged, and your ear on twelve sound picks (they are Minecraft's own sounds, chosen by reading, not by listening). Tell me what feels wrong and I will fix it.</p>
+</section>
+
 <section id="today">
-  <h2>What working a block is like today</h2>
+  <h2>What working a block was like before</h2>
   <p class="col">I read the code for every block a player can work, then filmed them all in the real game at your window size. Sixty-odd blocks, four tours. This is what the film shows.</p>
   <ol class="found">
     <li><div><b>The hand never carries anything.</b> The stack on your pointer is a flat screen icon. Your hands wait at the table's corners and tap a square after the click has already happened.</div></li>

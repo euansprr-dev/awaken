@@ -4,7 +4,8 @@
 
 Each argument is a tour folder under run-autopilot/ (screenshots-ci/<tour>-<run> or clips-ci/<tour>-<run>). It writes
 run-autopilot/interactions-page/ (gitignored): index.html and img/*.jpg. Pictures are real game frames; nothing here
-draws on them (the page's own mock-ups are drawn in the browser by proto/carry.js)."""
+draws on them (the page's own mock-ups are drawn in the browser by proto/carry.js). With BUILT=<the hands-at-work tour's
+folder> in the environment it also cuts the "as built" pictures."""
 import os
 import sys
 from PIL import Image
@@ -156,6 +157,13 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
                    ('/Volumes/MEDIA/Awaken/.claude/worktrees/enchanting-plan-c9d533/run-autopilot/screenshots-ci/enchant-table-41439843140/enchant_06_the_first_stroke.png', 'o_inscribing')):
         if os.path.exists(src):
             shot(src, o)
+    # ---- as built: the look tour of the finished scenes (tools/autopilot/hands-at-work.txt), named in BUILT ----
+    built = os.environ.get('BUILT')
+    if built:
+        B = lambda n: os.path.join(built, n + '.png')
+        for n, o in (('h_table_carry_mid', 'built_carry'), ('h_table_result', 'built_result'), ('h_table_pile', 'built_pile'), ('h_table_fast', 'built_fast'),
+                     ('h_furnace_carry', 'built_furnace_carry'), ('h_furnace_flare', 'built_furnace_flare')):
+            shot(B(n), o)
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
         sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)
