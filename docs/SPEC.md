@@ -20696,3 +20696,13 @@ is. A wall is its rock (courses or veins from noise); growths and fittings come 
 of fungus is a dark cap with its gills lit along the underside), and a floor is one stuff with beds of another. Light comes from
 the fittings, never from salting lit blocks through the rock. A great run's crossing over a pool is lit from its walls alone, so
 a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
+
+**A climb is never dark.** Skins light rooms, and two of them lit no shaft at all. So the generator itself sets an unseen light
+(level 12) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
+skin has dressed the place. A skin still dresses a climb's walls; it no longer has to make the jumps visible.
+
+Three more kinds: **The Silvered Halls** (`awaken:silvered_halls`, Mirror Palace, ranks C and B: bays of tall mirror between dark
+piers, a gilt cornice, chequered floors), **The Sealed Wing** (`awaken:sealed_wing`, Precursor Lab, ranks C and B: pale panels,
+lit strips at knee height and under the roof, tanks for pillars), **The Sleepless Ward** (`awaken:sleepless_ward`, Nightmare,
+ranks C and B: papered corridors as a dream remembers them, a rail that slips out of line, doors and windows that lead nowhere).
+The false doors are real doors set in solid wall: a player may open one and finds wall.

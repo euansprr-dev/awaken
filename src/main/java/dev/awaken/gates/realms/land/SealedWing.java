@@ -153,7 +153,11 @@ public final class SealedWing extends GeneratedCrawl<SealedWing.M> {
 
     @Override
     protected void adorn(V v, M m, Part part, int x, int y, int z, boolean onFloor, boolean underRoof, int wx, int wz) {
-        if (part instanceof Shaft || part instanceof Chasm) return;
+        if (part instanceof Shaft || part instanceof Chasm) {
+            // down a shaft and along a crossing the wing has one thing in its walls: a lit band right round, every eighth course
+            if ((wx != 0 || wz != 0) && Math.floorMod(y, 8) == 0 && built(m, v.get(x + wx, y, z + wz))) v.set(x + wx, y, z + wz, m.strip);
+            return;
+        }
         boolean wall = wx != 0 || wz != 0, room = part instanceof Cave, narrow = part.name.equals("slip") || part.name.startsWith("side_");
         int feet = Part.airFrom(part.feet2(x, z)), up = y - feet, roof = part.roof(x, z), down = roof - 1 - y;
         boolean free = v.get(x, y, z) == null;

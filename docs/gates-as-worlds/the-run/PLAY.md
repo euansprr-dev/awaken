@@ -22,6 +22,9 @@ Stand anywhere in the overworld, as an admin:
 | The Frozen Cells | `/awaken gate realm_enter C awaken:frozen_cells 1` | A monastery's cells under ice, rolled from the seed (rank C) |
 | The Glass Warrens | `/awaken gate realm_enter D awaken:glass_warrens 1` | Burrows under the glass desert, rolled from the seed (rank D) |
 | The Stopped Works | `/awaken gate realm_enter D awaken:stopped_works 1` | A foundry stopped mid-stroke, rolled from the seed (rank D) |
+| The Silvered Halls | `/awaken gate realm_enter C awaken:silvered_halls 1` | A mirror palace's back halls, rolled from the seed (rank C) |
+| The Sealed Wing | `/awaken gate realm_enter C awaken:sealed_wing 1` | A sealed laboratory wing, rolled from the seed (rank C) |
+| The Sleepless Ward | `/awaken gate realm_enter C awaken:sleepless_ward 1` | A house as a bad dream remembers it, rolled from the seed (rank C) |
 
 A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
 Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. On these

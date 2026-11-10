@@ -22,6 +22,7 @@ import java.util.Random;
  * who lives there and what its traps are made of. A new skin is a new kind of dungeon; the layouts come free.
  */
 public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
+    private static final BlockState CLIMB_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12);
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final double[] AXES = {0, Math.PI / 2, Math.PI, Math.PI * 1.5};
 
@@ -488,6 +489,23 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 int f = c.feet2(x, z);
                 if (f == NONE || Math.abs(-(x - c.ax) * c.dz + (z - c.az) * c.dx) > c.half - 2) continue;
                 for (int y = Part.airFrom(f); y <= c.top + 3; y++) if (V.holds(v.get(x, y, z))) v.set(x, y, z, null);
+            }
+        }
+        // A climb is never left dark, whatever a skin does or forgets: an unseen light over the ledge every eighth of a turn
+        // down a shaft, and over each shelf and pillar of a crossing. (Skins light rooms; two of them lit no shaft at all, and
+        // a jump nobody can see is not a jump.)
+        for (Part p : parts) {
+            if (!p.near(v)) continue;
+            if (p instanceof Shaft sh) {
+                for (double t = 0; t <= 1.5; t += 0.125) {
+                    int[] at = sh.stand(t);
+                    v.add(at[0], at[1] + 3, at[2], CLIMB_LIGHT);
+                }
+            } else if (p instanceof Chasm c) {
+                for (int i = -1; i <= c.pillars(); i++) {
+                    int[] at = c.stand(i);
+                    v.add(at[0], at[1] + 3, at[2], CLIMB_LIGHT);
+                }
             }
         }
     }

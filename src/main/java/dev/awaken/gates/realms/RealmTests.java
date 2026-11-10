@@ -31,7 +31,8 @@ public final class RealmTests {
 
     /** Every skin on the crawl generator: each has to play on any seed. */
     private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs",
-            "awaken:sunken_stacks", "awaken:sporewells", "awaken:cinder_workings", "awaken:frozen_cells", "awaken:glass_warrens", "awaken:stopped_works"};
+            "awaken:sunken_stacks", "awaken:sporewells", "awaken:cinder_workings", "awaken:frozen_cells", "awaken:glass_warrens", "awaken:stopped_works",
+            "awaken:silvered_halls", "awaken:sealed_wing", "awaken:sleepless_ward"};
 
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
