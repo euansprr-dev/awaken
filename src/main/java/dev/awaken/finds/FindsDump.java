@@ -176,15 +176,37 @@ final class FindsDump {
             } catch (IOException e) {
                 Awaken.LOG.error("[finds] dump: {} not written", file, e);
             }
+            // Dips: a shaped column whose top whole block lies under its floor and under all four of its neighbours' tops,
+            // whoever put it there. (The count of holes passes over what the scene itself wrote at the floor; a moss mat
+            // the scene laid in place of the turf made fifty pits in one lawn and none of them was counted.)
+            int dips = 0;
+            for (long key : sc.shaped) {
+                int x = BlockPos.getX(key), z = BlockPos.getZ(key), want = s.y() + sc.groundAt(x, z);
+                int mine = solidTop(level, m, s.x() + x, want, s.z() + z);
+                if (mine >= want) continue;
+                boolean pit = true;
+                for (int side = 0; side < 4 && pit; side++) {
+                    int ox = side == 0 ? 1 : side == 1 ? -1 : 0, oz = side == 2 ? 1 : side == 3 ? -1 : 0;
+                    pit = solidTop(level, m, s.x() + x + ox, s.y() + sc.groundAt(x + ox, z + oz), s.z() + z + oz) > mine;
+                }
+                if (pit && dips++ < 6) said.append("\n    dip at ").append(x).append(' ').append(mine - s.y()).append(' ').append(z).append(" under a floor at ").append(want - s.y()).append(": ")
+                        .append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(m.set(s.x() + x, mine + 1, s.z() + z)).getBlock()).getPath());
+            }
             double town = Double.MAX_VALUE, thing = Double.MAX_VALUE;
             for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, true)) town = Math.min(town, Math.hypot(p[0] - s.x(), p[1] - s.z()));
             for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, false)) thing = Math.min(thing, Math.hypot(p[0] - s.x(), p[1] - s.z()));
-            Awaken.LOG.info("[finds] census as made: {} at {} {} {} ({}, reach {}), {} s: {} holes in its ground, {} bare earth; nearest settlement {}, nearest other landmark {}{}",
-                    k.id(), s.x(), s.y(), s.z(), s.group(), k.reach(), (System.currentTimeMillis() - t0) / 1000, holes, bare,
+            Awaken.LOG.info("[finds] census as made: {} at {} {} {} ({}, reach {}), {} s: {} holes in its ground, {} one-block dips, {} bare earth; nearest settlement {}, nearest other landmark {}{}",
+                    k.id(), s.x(), s.y(), s.z(), s.group(), k.reach(), (System.currentTimeMillis() - t0) / 1000, holes, dips, bare,
                     town > 1e9 ? "none in 600" : String.valueOf((int) town), thing > 1e9 ? "none in 600" : String.valueOf((int) thing), said);
             n++;
         }
         Awaken.LOG.info("[finds] dump: {} monuments written as the world made them to {}", n, dir.toAbsolutePath());
+    }
+
+    /** The highest whole block of a column at or under two over its floor (looking eight down), for the count of dips. */
+    private static int solidTop(net.minecraft.server.level.ServerLevel level, BlockPos.MutableBlockPos m, int x, int floor, int z) {
+        for (int y = floor + 2; y > floor - 8; y--) if (level.getBlockState(m.set(x, y, z)).isCollisionShapeFullBlock(level, m)) return y;
+        return floor - 8;
     }
 
     private static void write(Path dir, String file, Kind k, int number, String name, Scene sc) {

@@ -322,13 +322,9 @@ public final class Sites {
         int span = 96 + k.reach();                                  // (spots lie within 80 of the cell's own point)
         List<int[]> things = a.terrain.starts(x - span - APART, z - span - APART, x + span + APART, z + span + APART, false);
         List<int[]> towns = a.terrain.starts(x - span - 150, z - span - 150, x + span + 150, z + span + 150, true);
-        List<Site> firsts = new ArrayList<>(2);
-        for (int i = -1; i <= 1; i++)
-            for (int j = -1; j <= 1; j++) {
-                if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
-                Site o = cell(a, 2, cx + i, cz + j);
-                if (o != null) firsts.add(o);
-            }
+        // (the neighbours with first say are asked what they built only once a spot has got that far: asking is a search
+        // of its own, and a cell with no ground at all has no need of it)
+        @SuppressWarnings("unchecked") List<Site>[] firsts = new List[1];
         int half = k.reach() / 2;
         Anchors.Clear clear = (px, pz) -> {
             int fits = k.fits(landAt(a, px, pz)) ? 1 : 0;
@@ -337,7 +333,16 @@ public final class Sites {
             for (int[] s : things) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + APART) return 1;
             for (int[] s : towns) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + 150) return 2;
             if (cityNear(a, px, pz, k.reach() + 56)) return 3;
-            for (Site o : firsts) if (Math.hypot(o.x() - px, o.z() - pz) < Math.max(300, o.kind().reach() + k.reach() + 24)) return 6;
+            if (firsts[0] == null) {
+                firsts[0] = new ArrayList<>(2);
+                for (int i = -1; i <= 1; i++)
+                    for (int j = -1; j <= 1; j++) {
+                        if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
+                        Site o = cell(a, 2, cx + i, cz + j);
+                        if (o != null) firsts[0].add(o);
+                    }
+            }
+            for (Site o : firsts[0]) if (Math.hypot(o.x() - px, o.z() - pz) < Math.max(300, o.kind().reach() + k.reach() + 24)) return 6;
             return 0;
         };
         why[0] = 0;

@@ -260,8 +260,10 @@ public final class M {
                 BlockState to = shaded ? st(Olden.DARK_SLAB.get()) : patch * 100 < wear ? st(Olden.WORN_SLAB.get()) : null;
                 if (to != null) m.put(k, to.setValue(SlabBlock.TYPE, b.getValue(SlabBlock.TYPE)));
             }
-            // growth: a mat of moss on low open tops, where it is wet
-            if (topOpen && low && hh > 205 && b.isCollisionShapeFullBlock(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
+            // growth: a mat of moss on low open tops, where it is wet. Never in the ground: masonry one under the turf has
+            // nothing in the scene over it, so it read as an open top, and a mat laid there took the turf's place (the
+            // Sleepers' Hall, whose vault lies one under its lawn, had fifty one-block pits in it in the game's pictures)
+            if (topOpen && low && hh > 205 && y + 1 > s.groundAt(x, z) && b.isCollisionShapeFullBlock(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
                     && !m.containsKey(BlockPos.asLong(x, y + 1, z)) && !(x == 0 && z == 0 && y + 1 == -2)) m.put(BlockPos.asLong(x, y + 1, z), Blocks.MOSS_CARPET.defaultBlockState());
         }
         settle(s);

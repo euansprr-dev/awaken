@@ -23017,13 +23017,17 @@ goes, and the block it stood for is what the column is made of. The column is fi
 whatever this land is made of (grass, sand, snow, terracotta, our lands' own grounds), three of what lies under it
 and rock below; under a tree and under a soft step the top is bare earth, so it takes the skin it had or its
 neighbours' (`skinNear`), and the earth under every tree the clearing fells is skinned the same way. Only a whole
-block is ground: a plant of ours that nothing replaces (heather, bracken, clover), standing exactly at the floor, was
-taken for it, the column stayed a block low, and the plant fell when masonry replaced the grass under it. What grows
-is cleared up to the land's real top with whatever stands on it, not to 46 over the floor (a great tree on ground the
-terrace cut away kept its crown in the air). Before these rules a lawn had a pit one block wide wherever a branch
-hung over it or one of those plants stood (two each at two of the first six made; some fifty in the Sleepers' Hall's
-lawn in the second game pictures; none in the 23 made since), a square of dirt for every tree and every step (98 and
-256 at two of them; since, none at 21 of 23), and earth or stone where a deep cut was floored.
+block is ground: a plant of ours that nothing replaces (heather, bracken, clover), standing exactly at the floor, would
+be taken for it and the column stay a block low. What grows is cleared up to the land's real top with whatever stands
+on it, not to 46 over the floor (a great tree on ground the terrace cut away kept its crown in the air beside the
+Archive). Before these rules a lawn had a pit one block wide wherever a branch hung over it (two each at two of the
+first six made; none in the 23 made since), a square of dirt for every tree and every step (98 and 256 at two of
+them; since, none at 21 of 23), and earth or stone where a deep cut was floored.
+
+**Nothing of the scene's in the ground.** The last pass of every monument lays mats of moss on low open tops
+(`M.age`). Masonry one under the turf has nothing in the scene over it, so it read as an open top, and a mat laid
+there took the turf's place when the scene was written: the Sleepers' Hall, whose vault lies one under its lawn, had
+some fifty one-block pits in it in the second and third game pictures. A mat is laid only above its column's ground.
 
 **Snow** comes back wherever the sky sees, over everything the clearing touched (it reaches seven blocks into the
 chunks beside the one being written, and takes snow with what grows): by the world's own rule on the ground and on
@@ -23140,11 +23144,14 @@ four nearest the start, the eight on the roughest ground, the nearest painted on
 The first game pictures of monuments where a world put them (tours `placed-a..d`, 39 pictures, 11 Nov) found five
 things wrong in how any monument is written into the land, all in §64.3 now: snow in squares and in the outlines of
 rooms, pits in lawns, squares of bare earth and stone, a mast in one of our villages, a spire in a lawn. The second
-(48 pictures, the same day, on those fixes) found two more: pits where one of our own plants stood at the floor, and
-leaves left in the air over a clearing. The dump's count of holes now takes anything at the floor that is not a
-whole block for one, since a plant left there is a pit as soon as the game looks at it. A tour's first `finds view`
-of a kind looks for the nearest standing one on the server's own thread, which took 45 seconds for one eight
-kilometres off: the placed tours wait 70 seconds for it.
+(48 pictures, the same day, on those fixes) found two more: some fifty pits in the Sleepers' Hall's lawn, and leaves
+left in the air over a clearing. The pits were first taken for plants standing at the floor; the third pictures
+showed them still there, and they were the scene's own moss mats in the ground. The dump now also counts **dips**
+(a shaped column whose top whole block lies under its floor and under all four neighbours', whoever put it there),
+which finds what the count of holes passes over, and its holes take anything at the floor that is not a whole block.
+`/awaken finds view` looks for the nearest standing one of a kind off the server's own thread and goes there when it
+is found: on the server's thread the search for one eight kilometres off held the game 45 seconds, and three tours
+in twelve lost their GPU on the runner while it ran. The placed tours wait 70 seconds for it.
 
 The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42% of it sea):
 
@@ -23157,7 +23164,7 @@ The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42%
 | To the next of the same kind | least 2,471, middle 4,174 |
 | From any spot (sea included) | half the land within 530 of one, nine tenths within 1,001 |
 | First cards lost (the best spot's reason) | no ground 119, a twin standing near 98, another landmark 78, a settlement 27, wrong land 22, a monument too close 10 |
-| As made, the sample of 23 | no holes; bare earth at 2 (1 and 9 squares); the nearest settlement 200 off, the nearest other landmark 80 |
+| As made, the sample of 23 | no holes; 11 dips, all the scenes' own (a worn step, a well, a basin); bare earth at 1 (7 squares); the nearest settlement 200 off, the nearest other landmark 80 |
 
 (Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
 With `Sites.APART` at 80 instead of 40: 167.)

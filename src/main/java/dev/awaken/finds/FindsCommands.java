@@ -97,15 +97,42 @@ final class FindsCommands {
         Kind kind = Kinds.byId(id);
         Site s = VIEWED.get(id);
         if (s == null && kind != null) {
+            // Looked for off the server's own thread, and gone to when found. The search asks the generator's noise for
+            // every candidate cell: for a kind eight kilometres off it held the server 45 seconds, and three tours in
+            // twelve lost their GPU on the runner while it did.
+            if (!SEEKING.add(id)) {
+                c.getSource().sendSuccess(() -> Component.literal("Still looking for the nearest " + id + "."), false);
+                return 1;
+            }
             BlockPos from = level.getRespawnData().pos();
-            s = Sites.nearestOf(level, kind, from.getX(), from.getZ(), 48);
-            if (s != null) VIEWED.put(id, s);
+            java.util.concurrent.CompletableFuture.supplyAsync(() -> Sites.nearestOf(level, kind, from.getX(), from.getZ(), 48), net.minecraft.util.Util.backgroundExecutor())
+                    .whenCompleteAsync((found, err) -> {
+                        SEEKING.remove(id);
+                        if (err != null) Awaken.LOG.error("[finds] view {}: the search failed", id, err);
+                        if (found == null) {
+                            Awaken.LOG.info("[finds] view {}: none within 21000 of the spawn", id);
+                            return;
+                        }
+                        VIEWED.put(id, found);
+                        if (!p.isRemoved() && !p.hasDisconnected()) go(p, level, found, id, n);
+                    }, level.getServer());
+            c.getSource().sendSuccess(() -> Component.literal("Looking for the nearest " + id + "."), false);
+            return 1;
         }
         if (s == null) {
-            Awaken.LOG.info("[finds] view {}: none within 21000 of the spawn", id);
-            c.getSource().sendFailure(Component.literal("No " + id + " within 21,000 blocks of the spawn."));
+            c.getSource().sendFailure(Component.literal("No find is called that."));
             return 0;
         }
+        go(p, level, s, id, n);
+        Site at = s;
+        c.getSource().sendSuccess(() -> Component.literal(at.kind().name() + " at " + at.x() + " " + at.y() + " " + at.z()), false);
+        return 1;
+    }
+
+    private static final java.util.Set<String> SEEKING = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** Stands a player at one of a site's cameras, held in the air. */
+    private static void go(ServerPlayer p, ServerLevel level, Site s, String id, int n) {
         var cams = Sites.scene(level, s).cams();
         int[] cam = cams.isEmpty() ? new int[] {0, 14, -(s.kind().reach() + 6), 0, 25} : cams.get(Math.min(n, cams.size() - 1));
         double x = s.x() + cam[0] + 0.5, y = s.y() + cam[1], z = s.z() + cam[2] + 0.5;
@@ -117,10 +144,7 @@ final class FindsCommands {
             p.onUpdateAbilities();
             p.teleportTo(level, x, y, z, java.util.Set.of(), (float) cam[3], (float) cam[4], false);
         });
-        Site at = s;
-        Awaken.LOG.info("[finds] view {} {}: at {} {} {} ({}, rank {})", id, n, at.x(), at.y(), at.z(), at.group(), at.rank());
-        c.getSource().sendSuccess(() -> Component.literal(at.kind().name() + " at " + at.x() + " " + at.y() + " " + at.z()), false);
-        return 1;
+        Awaken.LOG.info("[finds] view {} {}: at {} {} {} ({}, rank {})", id, n, s.x(), s.y(), s.z(), s.group(), s.rank());
     }
 
     /** Files a kind in your Journal as done, for checking the Journal's pages: a kind's id, a set's name, or "all". */
