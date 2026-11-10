@@ -53,35 +53,35 @@ for "always something over the next hill". One number changes it (`Sites.CELL[2]
 
 | # | Place | Country | What stands there | Seen in game | My read |
 |---|---|---|---|---|---|
-| 1 | Charcoal Burners' Clearing | forest, dark | three turfed kilns (one smoking), a bothy, a woodshed, ricks of cordwood, stumps | round 1 (before rebuild) | rebuilt; the plainest place, as its rank says |
+| 1 | Charcoal Burners' Clearing | forest, dark | three turfed kilns (one smoking), a bothy, a woodshed, ricks of cordwood, stumps | round 2 | rebuilt; reads as a working camp from above; the plainest place, as its rank says |
 | 2 | Mill at the Weir | forest, plains | mill with wheel and hoist, barn, wheat field, two ponds, a bridge | round 2 | reads as a homestead |
-| 3 | Hollow King | forest, dark | a dead oak 30 high, lobed and flared, three floors inside, boughs half in leaf | round 2 | strong from afar; door recut since |
+| 3 | Hollow King | forest, dark | a dead oak 30 high, lobed and flared, three floors inside, boughs half in leaf | round 2 | strong from afar; the door was hidden by the new roots and is recut since |
 | 4 | Glowworm Cave | dark, forest, jungle, mountain | a tor over a stair down to a lake hall hung with glow | round 2 | the hall is the place; dark but lit |
-| 5 | Lantern Shrine | dark, forest, snow | gate, lantern stair, shrine under two giant trees | round 1 | strong |
+| 5 | Lantern Shrine | dark, forest, snow | gate, lantern stair, shrine under two giant trees | round 2 | strong; stands on a rise, the gate frames it |
 | 6 | Beekeeper's Terraces | forest, plains | a hill cut in four stone-faced steps, hives and flowers, honey house, walled yard | round 2 | rebuilt; reads well from above and at the gate |
 | 7 | Stilled Wedding | plains, forest | hedged green, six cherry trees in blossom, dais and arch, marquee, dance floor, bandstand | round 2 | rebuilt; the pink shows from far off |
 | 8 | Barrow Field | plains, snow | henge bank and ditch, stone ring, six barrows round an open one | round 2 | reads as an old site from above |
-| 9 | Observatory | plains, mountain, snow | round tower under a copper dome, a paved court | not since round 0 | unjudged in game |
+| 9 | Observatory | plains, mountain, snow | round tower under a copper dome, a paved court | round 2 | strong: the copper dome shows over the trees |
 | 10 | Amphitheatre | plains, desert, badlands | stone tiers, a stage with columns, stone watchers | round 2 | strong inside |
-| 11 | Broken Aqueduct | plains, mountain, desert | seven piers, one span down, water still in the channel | round 1 | strong from above |
+| 11 | Broken Aqueduct | plains, mountain, desert | seven piers, one span down, water still in the channel | round 2 | strong from above and from the top of it |
 | 12 | Drowned Chapel | swamp, dark, forest | roofless chapel and tower in a pond, a yew, a crypt | round 2 | strong |
-| 13 | Stilt Market | swamp, jungle, forest | five huts and a pavilion on stilts over a pond, boardwalks | round 1 | strong |
-| 14 | Hanging Village | jungle, dark | three giant trees, platforms, bridges | round 1 | strong |
-| 15 | Sunken Temple | jungle, swamp, dark | stepped temple with a tree through it, a mirror room | round 1 | strong |
+| 13 | Stilt Market | swamp, jungle, forest | five huts and a pavilion on stilts over a pond, boardwalks | round 2 | strong |
+| 14 | Hanging Village | jungle, dark | three giant trees, platforms, bridges | round 2 | strong: the best silhouette of the thirty |
+| 15 | Sunken Temple | jungle, swamp, dark | stepped temple with a tree through it, a mirror room | round 2 | strong outside; the mirror room is small |
 | 16 | Bathhouse at the Hot Spring | snow, mountain | bathhouse, tea house, white spring basins stepping down, pools, a smoking chimney | round 2 | rebuilt; reads well |
-| 17 | Ice Hall | snow | a feast hall cased in ice among eight ice spikes | round 1 (before the spikes) | unjudged since |
+| 17 | Ice Hall | snow | a feast hall cased in ice among eight ice spikes | round 1 (before the spikes) | the hall is fine inside; the spikes round it are unseen in game |
 | 18 | Bell Foundry | mountain, snow | walled yard, furnace and stack, casting pit, crane, a green bell | round 1 | fair |
 | 19 | Stair Monastery | mountain, snow | a rock with a stair cut round it, cells, a gong under thatch at the top | round 2 | strong |
 | 20 | Flooded Quarry | mountain, forest, plains | a flooded pit under a cut bluff of three benches, crane, shed | round 2 | fair; the water still reads as a square pool |
-| 21 | Mine Head | mountain, badlands, snow, forest | headframe and wheel, winding house and stack, spoil heap, an adit | not since rebuild | unjudged |
+| 21 | Mine Head | mountain, badlands, snow, forest | headframe and wheel, winding house and stack, spoil heap, an adit | round 2 | reads well: headframe, smoke, a lit track into the rock |
 | 22 | Salt Works | desert, badlands | nine pans, a wind pump with cloth sails, boiling house, white heaps | round 2 | reads well |
 | 23 | Caravanserai | desert, badlands | walled court, palms, a well under a canopy, stables | round 2 (in the wrong country then) | strong |
-| 24 | Bone Yard | badlands, desert | a giant's ribs and skull, a camp under them | not seen | unjudged |
-| 25 | Mesa Granary | badlands, desert | a banded drum of a store, a ramp round it | round 1 (afar only) | strong shape, plain face |
+| 24 | Bone Yard | badlands, desert | a giant's ribs and skull, a camp under them | round 2 | strong: a giant's ribs and skull in white desert |
+| 25 | Mesa Granary | badlands, desert | a banded drum of a store, a ramp round it | round 2 | strong shape, plain face; its way in is a ladder up the wall |
 | 26 | Glass Garden | desert, badlands | a crater of glass spires and amethyst round an oasis | round 2 | the strangest; stands out |
-| 27 | Lighthouse on the Skerry | shore | a banded light 24 high on a rock, a cottage, a jetty | not seen | unjudged |
-| 28 | Careened Ship | shore | a ship hauled over on a beach, props, a camp | not seen | unjudged |
-| 29 | Hermit's Rock | forest, plains, mountain, jungle | a hollowed boulder, a garden, a stone ring | not seen | unjudged; the smallest |
+| 27 | Lighthouse on the Skerry | shore | a banded light 24 high on a rock, a cottage, a jetty | round 2 | strong: a lighthouse is a lighthouse |
+| 28 | Careened Ship | shore | a ship hauled over on a beach, props, a camp | round 2 | good from above; the deck is bare |
+| 29 | Hermit's Rock | forest, plains, mountain, jungle | a hollowed boulder, a garden, a stone ring | round 2 | modest and homely; the smallest |
 | 30 | Spore Cathedral | mushroom, dark, swamp, jungle | giant mushrooms as a nave, a white way up it | round 2 | strong |
 
 ## Known shortfalls
