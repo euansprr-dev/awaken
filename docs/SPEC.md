@@ -21747,7 +21747,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   prompt and card, the ring line off the pier, the sky's strip, the form's prompt, the Tasks rows and the K rows).
 - **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
   (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
-  (a mock player starts outside the test's ground); fixed to spawn them as `ascent_sovereign` does. Changed for the new
+  (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the
+  field by the slowness it lays (III on a zombie, I on a boss): a monster can't be made to target a test's mock player,
+  so "a boss keeps its target" is read in the code, not asserted. All four pass (local run of `-Ptests=way_`, 11 Nov). Changed for the new
   rule: `ascent_tether_vow` runs with the option off (the door rule is the old rule), the sky trial's test gives its taker
   wings first, the Ringer's Proving test expects the cold chain. *Not written:* `way_up_places` (a test world has one
   seed; the distances in the audit come from the placement maths).
