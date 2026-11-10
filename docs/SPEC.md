@@ -21607,3 +21607,71 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
+
+## 63. The Way Up (how each move is earned; plan docs/movement-unlocks/PLAN.md, page https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN; PROPOSED 2026-11-10, nothing built, nothing approved)
+
+Euan, 10 Nov 2026: "it should be kind of a natural progression ... it shouldn't be impossible to unlock the future movement.
+Like maybe we make it unlock more with ... the rank assessments ... and then that unlocks somewhere that you discovered that
+you can go and unlock that item, and then it actually shows you how to use it ... it has to be clear the moment that you
+unlock it." This section is what the plan would set once approved; until then §17, §27.3 and §47 stand as written. Its
+sister is §62 (Rope and Wings: how the rope and wings feel, and six new moves); this section is how every rung and move is
+earned and taught.
+
+**The audit (verified in code, 10 Nov).** The rope is given by the D Proving (`AscentTrials`, `TrialHooks.RINGER`) and
+flight by the A Proving's roof (`TrialHooks.SKY_WARDEN`); neither can be missed. The leap waits on Tether mastery 4 (400
+points, shown nowhere) and a scripted gate opened once and left out of the Now line (`GatesNow`); wings wait on a sky
+platform found by chance at C. The movement module registers no `core.api.Goals` step. `Ascent.grant` gives every rung
+under the one granted, so a core or the Sky Warden's roof hands lower rungs over with no scene of their own. The Tether Vow
+(§17.7) and the Sky Leviathan's trial (§17.18) can't be reached in a new world (D always comes with the rope, A with
+flight), and the first vault's "Its line waits for a D-rank hunter" is never paid. The band's Ascent rows for the rope and
+flight, the level road's stop at 73 and the Wings trail's second step describe the old rules. The Sovereign's form is given
+after an ending. Hours (pacing_sim, balanced): D 3.4, C 10.2, B 23.8, A 35.8, S 47.2, Sovereign 61.4. The nearest site by
+the structure sets' own spacing (median; worst seen): a vault 260 to 350 (1,140), a Tether Spire 160 to 290 (1,050), a sky
+platform 280 to 380 (1,290).
+
+**63.1 The rule.** A rank fight opens a rung; a place gives it; the way out of the place is the move. On a Proving's win
+the System wakes one place of the rung's kind for each winner: one in their Saved for later book (§27.1) if there is one,
+else the nearest by the seed (found on a later tick, never loading chunks on the server thread, §28.9). It is lit in the
+rank's colour, carried on the Now line for ten minutes, and held as one row on Tasks until visited. Any place of the kind
+serves. A later Proving still hands down any rung not yet held, and each rung handed down is flagged "lesson owed".
+
+**63.2 The rungs.**
+- *The rope (D).* The Ringer's chain is given as built, but `TrialHooks.done(RINGER)` no longer grants the tier. The Tether
+  Vow (§17.7) gives it in any vault's forecourt to an awake D-rank player without the rope; its door rule is dropped (the
+  rank that won the chain is the proof). The spawn vault exists in every world.
+- *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
+  Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
+  is a Tasks row with its place until run, and is opened again if lost.
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+  light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
+  platform's ward a fall is a soft landing.
+- *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
+  before with their own beat. The Sky Leviathan's trial (§17.18) is retired: its trigger, toast, level-road stop and trail
+  step go.
+- *The Sovereign (the last Proving).* The form is given at the Last Loop's fall (§47.10), not at an ending; an ending still
+  gives it to a save without it. `Sovereign.field` no longer clears the target of, or routs, a Lord, Warden, guardian,
+  Sovereign or the last; it slows them a quarter at most.
+
+**63.3 The Lesson** (one kit for every unlock, client). The gift (today's scene, 2.5 s, one plain sentence, never over a
+fight); the player's own key as a `Kit` key cap with up to seven words, pinned to the target in the world and held at the
+screen's edge with an arrow when off it; a pale gold figure doing the move once from a recorded route (`GauntletGhost`,
+`AscentRoutes`), again after 12 s; gone at the tick the server sees the state begin; then a four-second card of the move's
+keys. The band's Powers place shows a row a rung with its keys as caps and its mastery as ten pips, the next pip that gives
+a move marked. The six moves of §62 use the same Lesson where each can first be done. Reduced motion: the key cap only.
+Nothing is cut off (§57.6).
+
+**63.4 Tasks.** One thread, `rank.way_up`, Gates and rank, Lead voice, one row at a time, each `.teaches` its rung. Nothing
+is listed for flight or the form (a Proving is never named ahead, §43).
+
+**63.5 Words.** Every line in plain speech; the table is in PLAN.md 4.8.
+
+**63.6 Data.** `AscentMemory` schema 4 (reads 3): per rung, the place that woke, given, lesson done, lesson owed. Per
+player, kept through death, synced to its owner. World option `wayUp` in `awaken-body.toml` (on); off, every rule of §17
+and §47 exactly as before.
+
+**63.7 Tests (planned).** `way_up_road` (a fresh player walked rung by rung: one way-up row or a Proving ahead at every
+stop, every row with a place, no rung held with its lesson neither done nor owed), `way_up_places` (200 seeds), one per
+mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_ledger` green.
+
+**Audit tours (as the game is):** `tools/autopilot/unlock-tether.txt`, `unlock-vow.txt`, `unlock-wings.txt`,
+`unlock-sky.txt`, and the existing `leaper-trial.txt`.

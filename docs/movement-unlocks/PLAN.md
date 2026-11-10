@@ -1,7 +1,8 @@
 # The Way Up: how each move is earned (plan record, 10 Nov 2026)
 
 Status: **PROPOSED. Nothing is built and nothing is approved.** Branch `claude/movement-unlocks-b62e18`. The approval page is
-built by `docs/movement-unlocks/build_page.py` from `page.src.html`; its link is in SPEC §63. This file is the builder's
+https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN (built by `docs/movement-unlocks/build_page.py` from `page.src.html` and
+`shots.py`; his answers save in its `answers` collection, `d1` to `d12`). This file is the builder's
 contract once Euan says yes. It follows `.claude/PLANNING-PROCESS.md` and holds `.claude/UI-EXCELLENCE.md` for the unlock
 moments. Its sister is Rope and Wings (`docs/movement/PLAN.md`, SPEC §62, approved 10 Nov): that plan decides how the rope
 and the wings feel and adds six moves; this one decides how every rung and move is earned and taught.
