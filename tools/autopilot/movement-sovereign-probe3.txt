@@ -1,0 +1,412 @@
+# The third probe: is it where the wings lie in the frame's shared vertex buffer? Wings that have always been whole on
+# the tour machine (Skyborn's two pairs, the first rung's one) with more and more geometry of no size sent ahead of them
+# (/awaken wings set probe_pad <vertices>), in both vertex formats, then the Sovereign's six the same way, then the same
+# padding sent after the wings. Shots only. Look tour: tools/tour-ci.sh tools/autopilot/movement-sovereign-probe3.txt 1200
+# ci knobs: LENS=cinematic
+world movement_sovereign_probe3 survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 12700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -64 2047 63
+cmd tp @s 2000.5 300 0.5 0 0
+wait 500
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 80
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 60
+screen close
+cmd awaken ascent grant sovereign
+cmd awaken living calm
+
+# a: Skyborn, the entity format
+cmd awaken living calm
+cmd awaken ascent pilot wings open skyborn
+wait 30
+cmd awaken ascent pilot wingset probe_pad 0
+look 0 12
+camera back
+wait 8
+shotnow a_sky_000000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_000000_front
+cmd awaken ascent pilot wingset probe_pad 10000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_010000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_010000_front
+cmd awaken ascent pilot wingset probe_pad 20000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_020000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_020000_front
+cmd awaken ascent pilot wingset probe_pad 30000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_030000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_030000_front
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_040000_front
+cmd awaken ascent pilot wingset probe_pad 50000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_050000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_050000_front
+cmd awaken ascent pilot wingset probe_pad 60000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_060000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_060000_front
+cmd awaken ascent pilot wingset probe_pad 80000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_080000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_080000_front
+cmd awaken ascent pilot wingset probe_pad 120000
+look 0 12
+camera back
+wait 8
+shotnow a_sky_120000_back
+look 0 -4
+camera front
+wait 8
+shotnow a_sky_120000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+# b: the first rung, the entity format
+cmd awaken living calm
+cmd awaken ascent pilot wings open wings
+wait 30
+cmd awaken ascent pilot wingset probe_pad 0
+look 0 12
+camera back
+wait 8
+shotnow b_one_000000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_000000_front
+cmd awaken ascent pilot wingset probe_pad 20000
+look 0 12
+camera back
+wait 8
+shotnow b_one_020000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_020000_front
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow b_one_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_040000_front
+cmd awaken ascent pilot wingset probe_pad 50000
+look 0 12
+camera back
+wait 8
+shotnow b_one_050000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_050000_front
+cmd awaken ascent pilot wingset probe_pad 60000
+look 0 12
+camera back
+wait 8
+shotnow b_one_060000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_060000_front
+cmd awaken ascent pilot wingset probe_pad 80000
+look 0 12
+camera back
+wait 8
+shotnow b_one_080000_back
+look 0 -4
+camera front
+wait 8
+shotnow b_one_080000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+# c: the Sovereign, the entity format
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+wait 30
+cmd awaken ascent pilot wingset probe_pad 0
+look 0 12
+camera back
+wait 8
+shotnow c_sov_000000_back
+look 0 -4
+camera front
+wait 8
+shotnow c_sov_000000_front
+cmd awaken ascent pilot wingset probe_pad 10000
+look 0 12
+camera back
+wait 8
+shotnow c_sov_010000_back
+look 0 -4
+camera front
+wait 8
+shotnow c_sov_010000_front
+cmd awaken ascent pilot wingset probe_pad 20000
+look 0 12
+camera back
+wait 8
+shotnow c_sov_020000_back
+look 0 -4
+camera front
+wait 8
+shotnow c_sov_020000_front
+cmd awaken ascent pilot wingset probe_pad 30000
+look 0 12
+camera back
+wait 8
+shotnow c_sov_030000_back
+look 0 -4
+camera front
+wait 8
+shotnow c_sov_030000_front
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow c_sov_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow c_sov_040000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+# d: Skyborn, padding after the wings
+cmd awaken ascent pilot wingset probe_pad_after 1
+cmd awaken living calm
+cmd awaken ascent pilot wings open skyborn
+wait 30
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow d_sky_after_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow d_sky_after_040000_front
+cmd awaken ascent pilot wingset probe_pad 80000
+look 0 12
+camera back
+wait 8
+shotnow d_sky_after_080000_back
+look 0 -4
+camera front
+wait 8
+shotnow d_sky_after_080000_front
+cmd awaken ascent pilot wingset probe_pad 120000
+look 0 12
+camera back
+wait 8
+shotnow d_sky_after_120000_back
+look 0 -4
+camera front
+wait 8
+shotnow d_sky_after_120000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_pad_after 0
+# e: Skyborn, lean
+cmd awaken ascent pilot wingset probe_lean 1
+cmd awaken living calm
+cmd awaken ascent pilot wings open skyborn
+wait 30
+cmd awaken ascent pilot wingset probe_pad 0
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_000000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_000000_front
+cmd awaken ascent pilot wingset probe_pad 20000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_020000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_020000_front
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_040000_front
+cmd awaken ascent pilot wingset probe_pad 60000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_060000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_060000_front
+cmd awaken ascent pilot wingset probe_pad 80000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_080000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_080000_front
+cmd awaken ascent pilot wingset probe_pad 120000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_120000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_120000_front
+cmd awaken ascent pilot wingset probe_pad 200000
+look 0 12
+camera back
+wait 8
+shotnow e_sky_lean_200000_back
+look 0 -4
+camera front
+wait 8
+shotnow e_sky_lean_200000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+# f: the Sovereign, lean
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+wait 30
+cmd awaken ascent pilot wingset probe_pad 0
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_000000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_000000_front
+cmd awaken ascent pilot wingset probe_pad 20000
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_020000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_020000_front
+cmd awaken ascent pilot wingset probe_pad 40000
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_040000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_040000_front
+cmd awaken ascent pilot wingset probe_pad 60000
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_060000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_060000_front
+cmd awaken ascent pilot wingset probe_pad 80000
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_080000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_080000_front
+cmd awaken ascent pilot wingset probe_pad 120000
+look 0 12
+camera back
+wait 8
+shotnow f_sov_lean_120000_back
+look 0 -4
+camera front
+wait 8
+shotnow f_sov_lean_120000_front
+cmd awaken ascent pilot wingset probe_pad 0
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_lean 0
+quit

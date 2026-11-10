@@ -1,0 +1,10 @@
+{
+  "text": "When the rope pulls you up onto a roof or a treetop, hold {key.forward}. You spring straight off it with your speed instead of stopping on top.",
+  "short": "{key.forward} as the rope pulls you up",
+  "priority": 55,
+  "show_for": 200,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

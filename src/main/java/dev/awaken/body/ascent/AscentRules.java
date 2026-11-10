@@ -96,6 +96,9 @@ public final class AscentRules {
     public static final double SOAR_FLAP = 0.38;
 
     /** A body's point and velocity: the hand point on a rope, the feet otherwise. Plain fields, nothing allocated. */
+    /** The spring off a top (SPEC §62): the leap's speed along the look and its rise. */
+    public static final double SPRING_SPEED = 0.6, SPRING_UP = 0.46;
+
     public static final class Kin {
         public double x, y, z, vx, vy, vz;
 

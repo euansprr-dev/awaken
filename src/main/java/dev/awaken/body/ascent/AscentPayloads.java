@@ -22,7 +22,9 @@ public final class AscentPayloads {
              * ended; a Judgement Fall's landing (speed: its force). */
             EV_ASCEND = 14, EV_SOVEREIGN = 15, EV_SOVEREIGN_END = 16, EV_JUDGEMENT = 17,
             /** The rappel (SPEC §28.5): a kick off the wall, the feet back on it (speed: how hard each was). */
-            EV_RAPPEL_KICK = 18, EV_RAPPEL_PLANT = 19;
+            EV_RAPPEL_KICK = 18, EV_RAPPEL_PLANT = 19,
+            // Rope and Wings (SPEC §62): a sling's let-go, a spring off a top, a flare landing, a skim (every 2 s of it), a takeoff
+            EV_SLING = 20, EV_SPRING = 21, EV_FLARE = 22, EV_SKIM = 23, EV_TAKEOFF = 24, EV_STRIKE = 25;
 
     /**
      * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;
@@ -46,6 +48,27 @@ public final class AscentPayloads {
         public static final StreamCodec<ByteBuf, Event> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Event::what, ByteBufCodecs.FLOAT, Event::speed, Event::new);
         @Override public Type<Event> type() { return TYPE; }
+    }
+
+    /**
+     * Client → server: a rope strike begins at this creature (SPEC §62). Sent just before the ZIP state whose anchor is
+     * the creature, so the server can take a creature for an anchor; the blow itself is {@link #EV_STRIKE}.
+     */
+    public record Strike(int target) implements CustomPacketPayload {
+        public static final Type<Strike> TYPE = new Type<>(Awaken.id("ascent_strike"));
+        public static final StreamCodec<ByteBuf, Strike> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Strike::target, Strike::new);
+        @Override public Type<Strike> type() { return TYPE; }
+    }
+
+    /**
+     * Server → the player: a push on a body the Ascent holds (a knock, a module's push; SPEC §62). The client moves this
+     * body, so the push goes into its state's velocity there (blocks a tick).
+     */
+    public record Push(float x, float y, float z) implements CustomPacketPayload {
+        public static final Type<Push> TYPE = new Type<>(Awaken.id("ascent_push"));
+        public static final StreamCodec<ByteBuf, Push> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.FLOAT, Push::x, ByteBufCodecs.FLOAT, Push::y, ByteBufCodecs.FLOAT, Push::z, Push::new);
+        @Override public Type<Push> type() { return TYPE; }
     }
 
     /**

@@ -47,6 +47,19 @@ final class RopeTuning {
     private static volatile Map<String, Double> readNums = Map.of();
 
     static void init() {
+        // the wings' studio and numbers (SPEC §62): /awaken wings show <state|off> [rung], /awaken wings set <key> <value>
+        NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
+                Commands.literal(Awaken.MODID).then(Commands.literal("wings")
+                        .executes(c -> say("Wings: show <" + String.join("|", WingLayer.MODES) + "|off> [wings|skyborn|sovereign]; set <fp_ahead|fp_up|fp_alpha> <number> (now "
+                                + WingLayer.fpAhead + ", " + WingLayer.fpUp + ", " + WingLayer.fpAlpha + ")."))
+                        .then(Commands.literal("show").then(Commands.argument("state", StringArgumentType.word())
+                                .executes(c -> wings(StringArgumentType.getString(c, "state"), ""))
+                                .then(Commands.argument("rung", StringArgumentType.word())
+                                        .executes(c -> wings(StringArgumentType.getString(c, "state"), StringArgumentType.getString(c, "rung"))))))
+                        .then(Commands.literal("set").then(Commands.argument("key", StringArgumentType.word())
+                                .then(Commands.argument("value", com.mojang.brigadier.arguments.FloatArgumentType.floatArg())
+                                        .executes(c -> say(WingLayer.tune(StringArgumentType.getString(c, "key"),
+                                                com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "value")) ? "Set." : "No such number."))))))));
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 Commands.literal(Awaken.MODID).then(Commands.literal("rope")
                         .then(Commands.literal("tune")
@@ -163,6 +176,13 @@ final class RopeTuning {
             return say("Rope tuning: the note could not be written (" + e.getMessage() + ")");
         }
         return say("Rope tuning: noted");
+    }
+
+    private static int wings(String state, String rung) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+        return say(WingLayer.studio(mc.player.getId(), state, rung) ? (state.equals("off") ? "Your wings are your own again." : "Wings held: " + state + ".")
+                : "No such state. One of: " + String.join(", ", WingLayer.MODES) + ", off.");
     }
 
     private static int say(String line) {
