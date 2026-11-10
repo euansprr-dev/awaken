@@ -30,7 +30,9 @@ final class ArmourAdmire {
 
     /** One circle's length in ticks, how far off the eye stands, how high above your middle, and its field of view. */
     private static final float TURN = 120F;
-    private static final double RADIUS = 3.1, UP = 0.35, FOV = 42;
+    // 4 blocks off at this field of view shows three blocks of height: a helm's tallest crest and the boots both in frame
+    // (at 3.1 the first tour cut Lordscale's horns)
+    private static final double RADIUS = 4.0, UP = 0.35, FOV = 42;
 
     private static boolean on, command;
     private static float startedAt;
@@ -66,7 +68,7 @@ final class ArmourAdmire {
     private static void start(Minecraft mc, boolean byCommand) {
         LocalPlayer p = mc.player;
         float now = ForgeClient.now(0F);
-        Vec3 middle = p.position().add(0, p.getBbHeight() * 0.55, 0);
+        Vec3 middle = p.position().add(0, p.getBbHeight() * 0.64, 0);
         // from in front of you, round by your right, and back to the front
         double front = -p.yBodyRot;
         var level = mc.level;

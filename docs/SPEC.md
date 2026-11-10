@@ -18200,8 +18200,8 @@ that fidgets would be wrong).
   covers the kicked range (three kicks were lowered because a lantern, the halo and the shards reached their set).
   `/awaken armour kick` flares your own set on your client (tours and demos).
 - **Admire.** Hold **O** (`key.awaken.admire`, "Admire your armour (hold)") with a piece of ours on and nothing open:
-  the view leaves your eyes, starts in front of you and circles you once, close (3.1 blocks, field of view 42, six
-  seconds), stopping short of any wall between it and you. You stand still (`InputLock`), the HUD steps aside, and
+  the view leaves your eyes, starts in front of you and circles you once, close (4 blocks, field of view 42, six
+  seconds: three blocks of height in frame, so the tallest crest and the boots both show), stopping short of any wall between it and you. You stand still (`InputLock`), the HUD steps aside, and
   the set is drawn in a **hero light**: never darker than block light 11, what glows as if half charged. Letting go,
   moving, a blow, death or anything opening ends it at once. It rides the Forge Song's camera (`ForgeCamera`), which
   now leaves your body drawn while Admire has it. `/awaken armour admire` runs one circle without the key.
