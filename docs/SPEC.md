@@ -20655,3 +20655,7 @@ real game. The Bone Roads: candles along half of every wall's foot (was three te
 15. The Hollow Hills: grave-lights in three quarters of a room's wall cells of four and along the ways too, each with a light
 of 15 over it and, in a room, a second two higher. A skin is judged in the real game, not on the checker: the checker draws
 these two brighter than the game does.
+
+**Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
+no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
+gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.

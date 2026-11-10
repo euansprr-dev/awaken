@@ -626,6 +626,34 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // a Realm is a gate: nobody digs through one of its doors, walls or floors, and nobody builds a way over a gap (SPEC §17's protection, §50.9)
+        AwakenTests.registerIsolated("realm_blocks_cannot_be_dug", 200, h -> {
+            var level = h.getLevel();
+            var server = level.getServer();
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
+            var g = dev.awaken.gates.GateLiveTests.standUp(h, dev.awaken.gates.GateLiveTests.plan(4646, Theme.HIVE, dev.awaken.gates.content.Layout.LABYRINTH, dev.awaken.gates.content.Twist.NONE, 0));
+            AwakenTests.Live live = null;
+            try {
+                dev.awaken.gates.GateLiveTests.useLevel(level);
+                Realms.attach(server, g, "awaken:amber_reach");
+                // a real survival player: a test's mock player always answers that it is creative, and creative may break anything
+                live = AwakenTests.survivalPlayer(h, "Digger", net.minecraft.core.BlockPos.ZERO);
+                var p = live.player();
+                var at = Realms.entrance(g).above(3);
+                h.assertTrue(dev.awaken.gates.GateService.inGate(level, at), "a Realm's ground counts as inside a gate");
+                var stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+                var dug = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.block.BreakBlockEvent(level, at, stone, p));
+                h.assertTrue(dug.isCanceled(), "a block of a Realm was dug out by hand");
+                var placed = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent(
+                        net.neoforged.neoforge.common.util.BlockSnapshot.create(level.dimension(), level, at), stone, p));
+                h.assertTrue(placed.isCanceled(), "a block was placed in a Realm");
+            } finally {
+                if (live != null) live.leave();
+                dev.awaken.gates.GateLiveTests.teardown(level, null, g);
+                dev.awaken.gates.GateLiveTests.useLevel(null);
+            }
+            h.succeed();
+        });
         AwakenTests.register("realm_seeds_differ", 200, h -> {
             Set<Integer> seen = new HashSet<>();
             for (long seed = 1; seed <= 5; seed++) {

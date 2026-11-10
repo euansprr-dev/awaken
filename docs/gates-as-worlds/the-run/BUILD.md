@@ -74,8 +74,10 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   - Doors: a leg's `seal_`/`unseal_` moments; which are shut is saved (`RealmState.sealed`) so a restart can't strand a door.
   - Pay: kill share untouched; hidden legs hold 15% of the rest, Wardens 40% beside one (50% without), the Lord the remainder.
   - `crypt_bell_rope` is climbable now (tag, merge folder `gates_run`): the Crypt's shortcut is a rope from the bridge.
-  - Blocks in a gate can be broken by hand (no protection found in `gates/`), so a skin or bars can be dug through. Not
-    changed here; a follow-up for whoever owns gate rules.
+  - CORRECTED 10 Nov evening: I wrote here that blocks in a gate can be broken by hand. Wrong. `GateEvents.onBreak`,
+    `onPlace`, `onUseItem` and `onExplode` already protect every gate, Realms included (`GatesRegistry.isGateDim` counts the
+    Realms dimension, `GateService.inGate` counts a Realm's cell). My search for it had missed the file. Euan was asked
+    whether to protect them and said yes; nothing needed changing. Test `realm_blocks_cannot_be_dug` now proves it for a Realm.
   New: `Land.Leg/Trap/Course`, `RealmRun`, `RealmTraps`, `check/RouteCheck`, `kit/crawl/CrawlLand`, `land/Broodwarren`, the
   Brood block family (13 blocks), SPEC 50.9. Changed: `RealmPacks`, `RealmLive`, `RealmToll`, `WalkCheck`, `Bench`, `HourCrypt`.
 

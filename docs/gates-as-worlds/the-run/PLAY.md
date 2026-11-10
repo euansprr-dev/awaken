@@ -52,7 +52,8 @@ creative player, and packs do not notice one.
 
 ## Known rough edges
 
-- Blocks in a gate can be broken by hand, so a door can be dug through. Not changed; it needs a decision.
+- Doors can't be dug through. I first reported that they could; that was wrong. A gate already protects its blocks (no
+  breaking but your own powers' constructs, no placing, no buckets, no blast damage), and that covers these gates too.
 - The Hour Crypt still looks flatter and bluer than its painting, and The Quiet Barrow is still short of its painting (listed
   in `../round-two/STATUS.md`). This work was about play, not those looks.
 - The rolled dungeons are plainer than a gate built by hand from a painting. They are meant to be the short gates in the mix.
