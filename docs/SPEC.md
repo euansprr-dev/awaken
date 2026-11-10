@@ -6298,6 +6298,18 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     target. It is worth asking again if, after those, the terrain pass is what limits the frame, or as Far Sight
     drawn inward (Sodium for the near chunks, our meshes beyond) once Far Sight costs less than it does (4.2 ms at
     near reach).
+- **The trim** (Euan 2026-11-10, shown the six changes and asked about the hook by name: "look into this too ... and
+  then apply all of the other ones. Let's make this GREAT"). Lens's chain was 16 passes, three of them the size of the
+  frame; on this GPU a frame-size pass costs 0.3 to 0.45 ms before it does any work. Built whole, the picture checked
+  on CI, frame times owed from a quiet Mac.
+  - **Straight out** (Tiles, Turbo; autopilot `lens straight on|off|setting`). A Lens chain ends "composite into swap,
+    copy swap into the main target". While Pixels lends the main target its smaller texture, the picture's next stop
+    is Pixels' upscale, which can read any texture: Pixels makes one more colour texture the world's size
+    (`lowOut`), Tiles hands it to the pass that draws into swap as its colour target, the copy into the main target
+    is left out (`PostPass`'s frame lambda, cancelled at its head), and the upscale reads `lowOut`. Only with one post
+    effect requested, the steady pass off, the sizes equal, and on the chains `lens_cinematic`, `lens_ultra` and
+    `lens_swift`; otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
+    reads the finished picture's neighbours.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows.

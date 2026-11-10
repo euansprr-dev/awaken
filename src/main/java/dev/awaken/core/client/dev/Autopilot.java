@@ -640,6 +640,11 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("straight")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.straight(arg.trim().substring(8)));
+                    waitTicks = 10;
+                    return true;
+                }
                 if (arg.trim().equals("cost")) {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;
