@@ -13,6 +13,12 @@ A table's top is waist high in front of you, a furnace's mouth is at the knee, a
 - station_box_reach       the low hand dips in and comes out (7 ticks)
 - station_far             too far to touch: standing, the main arm half out toward it (loop)
 - station_far_reach       the arm out and back (6 ticks)
+Quick touches (a door pushed, a lever thrown, a lid lifted), for whoever watches:
+- touch_one_low/mid/high  one hand out to a thing by its height and back (6 ticks)
+- touch_both_low/mid/high both hands (8 ticks)
+- touch_pull              a handle taken and pulled down (8)
+- touch_strike            one blow onto the work (6)
+- touch_crank             a handle round once (12)
 Every clip has a _bent twin (Bendable Cuboids). Edit the poses here, never the JSON.
 """
 import json
@@ -78,6 +84,27 @@ there_and_back("station_box_reach", BOX, pose(BOX, lean=40, shift=0.3, ra=(-58, 
 FAR = pose(lean=4, ra=(-46, -4, 0), re=26)
 breathe("station_far", FAR, [nudge(FAR, ra=(-2, 0, 0)), nudge(FAR, re=2)], 40, "standing, the main arm half out toward the station")
 there_and_back("station_far_reach", FAR, pose(FAR, lean=8, ra=(-80, -2, 0), re=6), 6, "the arm out and back")
+
+
+# ---- quick touches (SPEC §63.9): the body reaches to the thing, by how the hand works and how high the thing is ------
+STAND = pose()
+LOW = dict(lean=30, rl=(14, 0, 5), rk=34, ll=(-12, 0, -5), lk=30)   # bent to something under the knee
+HIGH = dict(lean=-4)                                                 # up to something at the head
+for tag, body, arm in (("low", LOW, -52), ("mid", dict(lean=6), -82), ("high", HIGH, -128)):
+    out = pose(STAND, ra=(arm, -4, 0), re=8, **body)
+    there_and_back(f"touch_one_{tag}", STAND, out, 6, f"one hand out to a thing ({tag})")
+    both = pose(STAND, ra=(arm, -10, 0), re=14, la=(arm, 10, 0), le=14, **body)
+    there_and_back(f"touch_both_{tag}", STAND, both, 8, f"both hands to a thing ({tag})")
+# a lever: the hand up to the handle, then pulled down through its throw
+clip("touch_pull", [(0, STAND, "linear"), (3, pose(STAND, lean=4, ra=(-100, -4, 0), re=10), "easeoutquad"),
+                    (6, pose(STAND, lean=8, ra=(-62, -4, 0), re=26), "easeinquad"), (8, STAND, "easeinoutsine")], 8, note="a handle taken and pulled down")
+# a blow: the arm cocked, then down onto the work
+clip("touch_strike", [(0, STAND, "linear"), (2, pose(STAND, lean=8, ra=(-140, 4, -8), re=60), "easeoutquad"),
+                      (4, pose(STAND, lean=18, ra=(-64, 4, -6), re=8), "easeinquad"), (6, STAND, "easeinoutsine")], 6, note="one blow onto the work")
+# a crank: the hand round once
+CR = [pose(STAND, lean=10, ra=(a, y, 0), re=30) for a, y in ((-70, -10), (-58, 0), (-70, 10), (-84, 0))]
+clip("touch_crank", [(0, STAND, "linear"), (2, CR[0], "easeoutquad"), (4, CR[1], "linear"), (6, CR[2], "linear"), (8, CR[3], "linear"), (10, CR[0], "linear"),
+                     (12, STAND, "easeinoutsine")], 12, note="a handle cranked round once")
 
 
 def document():

@@ -35,6 +35,7 @@ public final class StationTests {
         AwakenTests.register("stations_presence", 40, StationTests::presence);
         AwakenTests.register("stations_living_slots", 20, StationTests::livingSlots);
         AwakenTests.register("stations_workstations", 20, StationTests::workstations);
+        AwakenTests.register("touch_every_block", 20, StationTests::touchEveryBlock);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -396,6 +397,57 @@ public final class StationTests {
                 }
             }
         }
+        h.succeed();
+    }
+
+    /**
+     * Every block a player works has a touch (SPEC §63.9): vanilla's by class, ours by id (each id is a real block: a
+     * renamed block would lose its hand silently); what the hand holds decides a put from a take, and the Forge's blows
+     * from its palm; how high the thing is against the body is low, middle or high.
+     */
+    static void touchEveryBlock(GameTestHelper h) {
+        ItemStack none = ItemStack.EMPTY, stick = new ItemStack(Items.STICK);
+        Object[][] vanilla = {
+                {Blocks.OAK_DOOR, TouchKinds.Kind.PUSH}, {Blocks.OAK_TRAPDOOR, TouchKinds.Kind.PUSH}, {Blocks.OAK_FENCE_GATE, TouchKinds.Kind.PUSH},
+                {Blocks.LEVER, TouchKinds.Kind.LEVER}, {Blocks.STONE_BUTTON, TouchKinds.Kind.BUTTON}, {Blocks.CHEST, TouchKinds.Kind.LID},
+                {Blocks.ENDER_CHEST, TouchKinds.Kind.LID}, {Blocks.SHULKER_BOX, TouchKinds.Kind.LID}, {Blocks.BARREL, TouchKinds.Kind.HATCH},
+                {Blocks.SWEET_BERRY_BUSH, TouchKinds.Kind.PLUCK}, {Blocks.LODESTONE, TouchKinds.Kind.PALM}, {Blocks.RESPAWN_ANCHOR, TouchKinds.Kind.PALM},
+                {Blocks.BEACON, TouchKinds.Kind.PALM}, {Blocks.GRINDSTONE, TouchKinds.Kind.CRANK}, {Blocks.LECTERN, TouchKinds.Kind.PAGE},
+                {Blocks.OAK_SIGN, TouchKinds.Kind.PAGE}, {Blocks.ANVIL, TouchKinds.Kind.HAMMER}, {Blocks.SMITHING_TABLE, TouchKinds.Kind.HAMMER},
+                {Blocks.STONECUTTER, TouchKinds.Kind.SET}, {Blocks.LOOM, TouchKinds.Kind.SET}, {Blocks.CARTOGRAPHY_TABLE, TouchKinds.Kind.SET},
+                {Blocks.BREWING_STAND, TouchKinds.Kind.SET}, {Blocks.NOTE_BLOCK, TouchKinds.Kind.TAP},
+                {Blocks.REPEATER, TouchKinds.Kind.TAP}, {Blocks.COMPARATOR, TouchKinds.Kind.TAP}, {Blocks.DAYLIGHT_DETECTOR, TouchKinds.Kind.TAP},
+                {Blocks.BELL, TouchKinds.Kind.RING}, {Blocks.CAKE, TouchKinds.Kind.TAKE}};
+        for (Object[] row : vanilla) {
+            TouchKinds.Kind got = TouchKinds.of(((net.minecraft.world.level.block.Block) row[0]).defaultBlockState(), none);
+            h.assertTrue(got == row[1], row[0] + " is " + row[1] + " (got " + got + ")");
+        }
+        for (net.minecraft.world.level.block.Block b : new net.minecraft.world.level.block.Block[]{Blocks.JUKEBOX, Blocks.COMPOSTER, Blocks.DECORATED_POT,
+                Blocks.END_PORTAL_FRAME, Blocks.FLOWER_POT, Blocks.CHISELED_BOOKSHELF}) {
+            h.assertTrue(TouchKinds.of(b.defaultBlockState(), stick) == TouchKinds.Kind.PUT && TouchKinds.of(b.defaultBlockState(), none) == TouchKinds.Kind.TAKE,
+                    b + ": a thing in the hand is put, an empty hand takes");
+        }
+        h.assertTrue(TouchKinds.of(Blocks.STONE.defaultBlockState(), none) == null && TouchKinds.of(Blocks.CRAFTING_TABLE.defaultBlockState(), none) == null,
+                "a plain block has no touch, and a crafting table's hands are its scene's");
+        String[][] ours = {{"waystone", "PALM"}, {"conduit", "PALM"}, {"ascent_stone", "PALM"}, {"hearth_anchor", "PALM"}, {"stillpoint_shrine", "PALM"},
+                {"word_stone", "PALM"}, {"precursor_log_terminal", "PALM"}, {"precursor_door_core", "PALM"}, {"halo_return_pad", "PALM"},
+                {"anomaly_fallen_star", "PALM"}, {"well_lift", "PALM"}, {"reassessment_monolith", "PALM"}, {"waking_pick_stone", "PALM"}, {"hearthfire", "PALM"},
+                {"fitting_stand", "SET"}, {"foundry_crucible", "SET"}, {"storehouse_drop", "SET"}, {"work_plan", "SET"}, {"fabricator", "SET"},
+                {"broken_machine", "SET"}, {"trophy_mount", "SET"}, {"pattern_stand", "SET"}, {"bell_frame", "RING"}, {"found_bell", "RING"},
+                {"sleeping_bell", "RING"}, {"dream_bell", "RING"}, {"spire_board", "TEAR"}, {"ledger_desk", "PAGE"}, {"ghost_lever", "LEVER"},
+                {"carved_token", "TAKE"}, {"piton", "TAKE"}, {"veil_cache", "LID"}, {"anomaly_spirit_cache", "LID"}, {"left_chest", "LID"},
+                {"precursor_door", "PUSH"}, {"ghost_door", "PUSH"}, {"forge", "PALM"}};
+        for (String[] row : ours) {
+            var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("awaken", row[0]);
+            var block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(id);
+            h.assertTrue(block.isPresent(), "awaken:" + row[0] + " is a real block");
+            TouchKinds.Kind got = TouchKinds.of(block.get().defaultBlockState(), none);
+            h.assertTrue(got != null && got.name().equals(row[1]), "awaken:" + row[0] + " is " + row[1] + " (got " + got + ")");
+        }
+        var forge = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(net.minecraft.resources.Identifier.fromNamespaceAndPath("awaken", "forge"));
+        h.assertTrue(forge.isPresent() && TouchKinds.of(forge.get().defaultBlockState(), stick) == TouchKinds.Kind.HAMMER, "the Forge with a piece in the hand is blows");
+        h.assertTrue(TouchKinds.height(64, 64.3) == 0 && TouchKinds.height(64, 65) == 1 && TouchKinds.height(64, 65.6) == 2, "low, middle and high against the body");
+        for (TouchKinds.Kind k : TouchKinds.Kind.values()) h.assertTrue(k.reach != null, k + " has a body");
         h.succeed();
     }
 

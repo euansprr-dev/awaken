@@ -148,6 +148,14 @@ final class Touches {
             at(7, -0.14F, 0.03F, 0.02F), rest(10));
     /** A stonecutter, loom, cartography table or brewing stand: both hands set to the work. */
     static final Touch SET = t(AnimsClips.SET, 0.28F, -1, -1, -1, -1, rest(0), at(3, 0, 0.06F, 0.02F), at(5, 0, 0, 0.01F), rest(8));
+    /** A note block, a repeater's or comparator's switch, a daylight detector: a tap of the fingers. */
+    static final Touch TAP = t(AnimsClips.BUTTON, rest(0), at(2, 0, 0.02F, 0.04F), at(3, 0, -0.01F, 0), at(5, 0, 0.02F, 0.04F), rest(8));
+    /** A bell: the palm on it, setting it swinging, and the hand going with the swing. */
+    static final Touch RING = t(AnimsClips.PUSH, rest(0), at(2, 0, 0, 0.05F), at(4, 0.04F, 0, -0.06F), at(7, 0.1F, 0.02F, 0.02F), rest(11));
+    /** Something put in or on a thing (a disc, scraps, a book, a flower): carried to it in the hand and let go. */
+    static final Touch PUT = t(AnimsClips.LAY, 0, 0, 6, -1, -1, rest(0), at(4, 0, 0.1F, 0.06F), at(6, 0, 0.02F, 0.01F), at(8, 0, 0.12F, 0.12F), rest(11));
+    /** Something taken with the fingers (a slice of cake, a token, a book off a shelf): pinched and drawn back to you. */
+    static final Touch TAKE = t(AnimsClips.PLUCK, rest(0), at(3, 0, 0, 0.03F), at(5, 0, 0.03F, 0.02F), at(8, 0.03F, 0.2F, 0.3F), rest(12));
     /** A notice board: a notice pinched, torn off and brought to you. */
     static final Touch TEAR = t(AnimsClips.TEAR, 0, 5, 12, -1, -1, rest(0), at(3, 0, 0, 0.03F), at(5, 0, 0, 0.03F),
             at(8, 0.05F, -0.12F, 0.35F), rest(12));
@@ -228,8 +236,18 @@ final class Touches {
             return;
         }
         if (p.isShiftKeyDown() && !p.getMainHandItem().isEmpty()) return; // a sneak-use places or uses the item
+        // a station whose scene is about to open: its own hands take over (SPEC §63.2), so no touch plays over them
+        if (FirstPerson.stationsOn.getAsBoolean() && !p.isShiftKeyDown() && dev.awaken.anims.station.StationView.kindOf(s) != null) return;
         Touch t = forUse(s);
         if (t == null) return;
+        if (t == PUT) {
+            // the hand that holds the thing carries it there
+            if (ticks - lastAt < 4) return;
+            lastAt = ticks;
+            trace(PUT.name());
+            Reaches.start(PUT, fixed(hit.x, hit.y, hit.z), rightMain(p), !rightMain(p), p.getMainHandItem());
+            return;
+        }
         if (t == LID || t == HATCH) {
             lidAt = ticks;
             box = pos;
@@ -239,29 +257,30 @@ final class Touches {
         }
     }
 
+    /** The touch a use of this block gets (anims.station.TouchKinds names it, for both sides), as your own hands play it. */
     private static @Nullable Touch forUse(BlockState s) {
-        Block b = s.getBlock();
-        Identifier id = BuiltInRegistries.BLOCK.getKey(b);
-        if (id.getNamespace().equals("awaken")) {
-            String path = id.getPath();
-            if (PALM_STONES.contains(path)) return PALM;
-            if (path.equals("spire_board")) return TEAR;
-            if (path.endsWith("_cache")) return LID;
-        }
-        if (b instanceof DoorBlock || b instanceof TrapDoorBlock || b instanceof FenceGateBlock) return PUSH;
-        if (b instanceof LeverBlock) return s.getValue(LeverBlock.POWERED) ? LEVER_UP : LEVER_DOWN;
-        if (b instanceof ButtonBlock) return BUTTON;
-        if (b instanceof BarrelBlock) return HATCH;
-        if (b instanceof ChestBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return LID;
-        if (b instanceof SweetBerryBushBlock || b instanceof CaveVinesBlock) return PLUCK;
-        if (s.is(Blocks.LODESTONE) || b instanceof RespawnAnchorBlock || b instanceof BeaconBlock) return PALM;
-        if (b instanceof GrindstoneBlock) return CRANK;
-        if (b instanceof LecternBlock || b instanceof EnchantingTableBlock) return PAGE;
-        if (b instanceof SmithingTableBlock || b instanceof AnvilBlock || FORGE.equals(id)) return HAMMER;
-        if (b instanceof StonecutterBlock || b instanceof LoomBlock || b instanceof CartographyTableBlock || b instanceof BrewingStandBlock) {
-            return SET;
-        }
-        return null;
+        LocalPlayer p = Minecraft.getInstance().player;
+        dev.awaken.anims.station.TouchKinds.Kind k = dev.awaken.anims.station.TouchKinds.of(s, p == null ? ItemStack.EMPTY : p.getMainHandItem());
+        if (k == null) return null;
+        return switch (k) {
+            case PUSH -> PUSH;
+            case LEVER -> s.hasProperty(LeverBlock.POWERED) && s.getValue(LeverBlock.POWERED) ? LEVER_UP : LEVER_DOWN;
+            case BUTTON -> BUTTON;
+            case LID -> LID;
+            case HATCH -> HATCH;
+            case PLUCK -> PLUCK;
+            case PALM -> PALM;
+            case HAMMER -> HAMMER;
+            case LAY -> LAY;
+            case CRANK -> CRANK;
+            case PAGE -> PAGE;
+            case SET -> SET;
+            case TEAR -> TEAR;
+            case TAP -> TAP;
+            case RING -> RING;
+            case PUT -> PUT;
+            case TAKE -> TAKE;
+        };
     }
 
     /** Breaking a plant that breaks at a touch (a flower, a fern, grass, a mushroom: the Living Wilds' herbs): plucked. */

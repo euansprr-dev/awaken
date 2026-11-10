@@ -37,6 +37,7 @@ public final class AnimsClient {
         bus.addListener(EventPriority.LOW, net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class, Touches::lookIn);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Foreground.class, Touches::glassRise);
         LivingSlots.init(bus);
+        dev.awaken.anims.client.glass.GlassScreens.init(bus);
         FirstPerson.view(Touches::viewPose);
         // the hands meet what they touch (P4.1); the view leans in a touch while one is out
         FirstPerson.world("anims_touch", 200, Reaches::pose);

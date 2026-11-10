@@ -21811,8 +21811,35 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   block and apart from the others; from all three views, four sides and four window sizes every slot is in the room
   and picks itself).
 
-**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; glass for seven screens; a hand, a sound and a
-body for every quick touch. The click path
+### 63.9 Glass for the plain screens, and every quick touch (`anims.client.glass`, `anims.station.TouchKinds`, `Touches`, `StationBodies`)
+- **Glass:** vanilla's hopper, dispenser and dropper, crafter and beacon screens are replaced, while the bag is glass
+  (`HoloGlass.on()`), by subclasses that change only the drawing (`GlassHopperScreen` and the rest, through
+  `GlassLook`: the bag's panel, a well under every slot where vanilla puts it, a light under the hovered slot, labels in
+  the glass's colours, a 120 ms fade), as storage did chests (§56). A crafter's switched-off slots and redstone mark and
+  a beacon's power buttons and the five things it takes are still vanilla's own. Storage's Tidy keys accept the glass
+  hopper and dispenser (`StorageClient.offered`). Living slots (§63.7) run on all of them.
+  **The loom and the lectern keep vanilla's screens:** a loom's screen is its pattern list and banner as much as its
+  slots, and a lectern shows a book. The plan named both for glass; the loom's is left to the band's owner (§57.10).
+- **One list of touches for both sides.** `TouchKinds.of(state, held)` names the touch a use of a block gets (vanilla's
+  by class, ours by id) and how a body shows it (`Reach`: one hand, both, a pull, a blow, a crank). The client's
+  `Touches.forUse` plays your hands from it; the server passes it on.
+- **New touches** for what had none: a tap (`TAP`: note block, repeater, comparator, daylight detector), a bell set
+  swinging (`RING`: vanilla's bell, our bell frame, found, sleeping and dream bells), something put in or on, carried
+  there in the hand that holds it (`PUT`: jukebox, composter, decorated pot, flower pot, chiseled bookshelf, end portal
+  frame), something taken (`TAKE`: the same with an empty hand, a cake, our carved token and piton), a sign and our
+  ledger desk as a page, a bed and our bedroll, Fitting Stand, Pattern Stand, trophy mount, crucible, storehouse drop,
+  work plan, fabricator and broken machine as both hands, our Word Stone, log terminal, door core, return pad, fallen
+  star, well lift, monolith, pick stone and Hearthfire as a palm, our doors as a push, the ghost lever as a lever, the
+  left chest as a lid. The Forge is three blows with a piece in the hand and a palm for anything else it offers.
+- **A scene's own hands take over:** a block whose scene is about to open plays no touch over it.
+- **Every touch has a body** (`TouchKinds.Body`, to everyone tracking the player and to them, at most one every 5
+  ticks): `touch_one_low`/`_mid`/`_high` (6 ticks), `touch_both_…` (8), `touch_pull` (8), `touch_strike` (6),
+  `touch_crank` (12), by `Reach` and by how high the thing is against the body (under 0.6 over the feet, under 1.4,
+  above). `StationBodies.touched` plays it unless the player is at a station, and lets go when it ends.
+- Tests: `touch_every_block` (29 vanilla blocks and 37 of ours each resolve to their touch, every id of ours is a real
+  block, a held thing is put and an empty hand takes, the Forge's two, the three heights).
+
+**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings, picked by ear (§63.4). The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts

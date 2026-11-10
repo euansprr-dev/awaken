@@ -46,7 +46,10 @@ final class FurnaceWorld {
 
     static void init(IEventBus modBus) {
         FurnaceModels.init(modBus);
-        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(FurnaceContents.Update.TYPE, (m, ctx) -> accept(m)));
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
+            e.register(FurnaceContents.Update.TYPE, (m, ctx) -> accept(m));
+            e.register(dev.awaken.anims.station.TouchKinds.Body.TYPE, (m, ctx) -> StationBodies.touched(m));
+        });
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, FurnaceWorld::render);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> clear());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {

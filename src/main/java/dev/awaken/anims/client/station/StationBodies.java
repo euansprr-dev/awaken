@@ -55,6 +55,31 @@ final class StationBodies {
     }
 
     private static final Map<UUID, Body> BODIES = new HashMap<>();
+    /** Bodies in the middle of a quick touch's reach (SPEC §63.9): the entity, and the tick its clip ends. */
+    private static final Map<Integer, Long> REACHING = new HashMap<>();
+    private static final String[] HEIGHT = {"low", "mid", "high"};
+
+    /** The server says a player's body reaches (a door pushed, a lever thrown): its clip, unless they are at a station. */
+    static void touched(dev.awaken.anims.station.TouchKinds.Body m) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || !(mc.level.getEntity(m.entity()) instanceof Player p) || BODIES.containsKey(p.getUUID())) return;
+        var reaches = dev.awaken.anims.station.TouchKinds.Reach.values();
+        var reach = reaches[Mth.clamp(m.reach(), 0, reaches.length - 1)];
+        String h = HEIGHT[Mth.clamp(m.height(), 0, 2)];
+        String clip = switch (reach) {
+            case ONE -> "touch_one_" + h;
+            case BOTH -> "touch_both_" + h;
+            case PULL -> "touch_pull";
+            case STRIKE -> "touch_strike";
+            case CRANK -> "touch_crank";
+        };
+        int len = switch (reach) {
+            case ONE, STRIKE -> 6;
+            case BOTH, PULL -> 8;
+            case CRANK -> 12;
+        };
+        if (PlayerClips.play(m.entity(), clip, 1)) REACHING.put(m.entity(), mc.level.getGameTime() + len);
+    }
     private static final double[] P = new double[3];
 
     static void tick() {
@@ -65,6 +90,14 @@ final class StationBodies {
             return;
         }
         long now = level.getGameTime();
+        if (!REACHING.isEmpty()) {
+            for (Iterator<Map.Entry<Integer, Long>> it = REACHING.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<Integer, Long> e = it.next();
+                if (now < e.getValue()) continue;
+                if (!(level.getEntity(e.getKey()) instanceof Player q) || !BODIES.containsKey(q.getUUID())) PlayerClips.stop(e.getKey());
+                it.remove();
+            }
+        }
         for (Player p : level.players()) {
             At at = p.getExistingData(StationPresence.AT).orElse(At.NOWHERE);
             Body b = BODIES.get(p.getUUID());
@@ -111,6 +144,7 @@ final class StationBodies {
 
     static void clear() {
         BODIES.clear();
+        REACHING.clear();
     }
 
     /** What lies at the stations others are working, and in any open chest (yours too): drawn in the world. */
