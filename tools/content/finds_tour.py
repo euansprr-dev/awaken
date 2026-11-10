@@ -35,7 +35,7 @@ for part in range(10):
         out += ["cmd time set 6000"]
         for v, label in enumerate(VIEWS):
             if v == 0:  # the first move waits for its land (a passage); the second view is then at once, in case the first came late
-                out += [f"cmd awaken finds view {pid} 0", "wait 100", "waitpassage", "wait 60"]
+                out += [f"cmd awaken finds view {pid} 0", "wait 240", "waitpassage", "wait 80", f"cmd awaken finds view {pid} 0", "wait 80", "waitpassage", "wait 40"]
             out += [f"cmd awaken finds view {pid} {v}", "wait 60" if v == 0 else "wait 50", f"shot p{n:02d}_{pid}_{v}_{label}"]
         out += ["cmd time set 13000", f"cmd awaken finds view {pid} 2", "wait 50", f"shot p{n:02d}_{pid}_4_dusk"]
     out += ["info", "quit"]

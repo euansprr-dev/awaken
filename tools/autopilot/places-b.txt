@@ -23,9 +23,13 @@ cmd gamerule advance_time false
 hud off
 cmd time set 6000
 cmd awaken finds view glowworm_cave 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view glowworm_cave 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view glowworm_cave 0
 wait 60
 shot p04_glowworm_cave_0_afar
@@ -44,9 +48,13 @@ wait 50
 shot p04_glowworm_cave_4_dusk
 cmd time set 6000
 cmd awaken finds view lantern_shrine 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view lantern_shrine 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view lantern_shrine 0
 wait 60
 shot p05_lantern_shrine_0_afar
@@ -65,9 +73,13 @@ wait 50
 shot p05_lantern_shrine_4_dusk
 cmd time set 6000
 cmd awaken finds view beekeepers_terraces 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view beekeepers_terraces 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view beekeepers_terraces 0
 wait 60
 shot p06_beekeepers_terraces_0_afar

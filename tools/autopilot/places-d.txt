@@ -23,9 +23,13 @@ cmd gamerule advance_time false
 hud off
 cmd time set 6000
 cmd awaken finds view amphitheatre 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view amphitheatre 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view amphitheatre 0
 wait 60
 shot p10_amphitheatre_0_afar
@@ -44,9 +48,13 @@ wait 50
 shot p10_amphitheatre_4_dusk
 cmd time set 6000
 cmd awaken finds view broken_aqueduct 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view broken_aqueduct 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view broken_aqueduct 0
 wait 60
 shot p11_broken_aqueduct_0_afar
@@ -65,9 +73,13 @@ wait 50
 shot p11_broken_aqueduct_4_dusk
 cmd time set 6000
 cmd awaken finds view drowned_chapel 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view drowned_chapel 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view drowned_chapel 0
 wait 60
 shot p12_drowned_chapel_0_afar

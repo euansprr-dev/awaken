@@ -23,9 +23,13 @@ cmd gamerule advance_time false
 hud off
 cmd time set 6000
 cmd awaken finds view mesa_granary 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view mesa_granary 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view mesa_granary 0
 wait 60
 shot p25_mesa_granary_0_afar
@@ -44,9 +48,13 @@ wait 50
 shot p25_mesa_granary_4_dusk
 cmd time set 6000
 cmd awaken finds view glass_garden 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view glass_garden 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view glass_garden 0
 wait 60
 shot p26_glass_garden_0_afar
@@ -65,9 +73,13 @@ wait 50
 shot p26_glass_garden_4_dusk
 cmd time set 6000
 cmd awaken finds view skerry_light 0
-wait 100
+wait 240
 waitpassage
-wait 60
+wait 80
+cmd awaken finds view skerry_light 0
+wait 80
+waitpassage
+wait 40
 cmd awaken finds view skerry_light 0
 wait 60
 shot p27_skerry_light_0_afar
