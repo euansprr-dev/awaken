@@ -34,6 +34,42 @@ final class AscentCommands {
                 AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111, AscentPayloads.REMEMBER));
                 return 1;
             }));
+            // The Way Up (SPEC §63): your road as the server reads it, read again now (tours, and "why is nothing lit?")
+            ascent.then(Commands.literal("way").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                WayUp.read(p, AscentServer.now(p));
+                WayMemory m = WayUp.memory(p);
+                WayUp.Rung r = WayUp.waiting(p);
+                net.minecraft.core.BlockPos at = r == null ? null : m.place(r);
+                String line = "Way up: " + (r == null ? "nothing waits" : r + " waits" + (at == null ? ", no place yet" : " at " + at.toShortString()
+                        + " (" + WayUp.whereFrom(p, at) + ")")) + "; told " + m.told() + ", done " + m.done() + ", owed " + m.owed()
+                        + (m.leapGate() >= 0 ? ", the Gauntlet's gate " + m.leapGate() : "");
+                c.getSource().sendSuccess(() -> Component.literal(line).withStyle(ChatFormatting.AQUA), false);
+                return 1;
+            }));
+            // a gift's scene by name, as its grant would play it (tours: the Lesson's strip and cards without the fight)
+            ascent.then(Commands.literal("scene").then(Commands.argument("what", StringArgumentType.word())
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.List.of("wings", "leap", "leap_edge", "sky", "sky_edge", "sovereign", "wings_edge"), b))
+                    .executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        int mode = switch (StringArgumentType.getString(c, "what")) {
+                            case "wings" -> AscentPayloads.GIFT_WINGS;
+                            case "leap" -> AscentPayloads.GIFT_LEAP;
+                            case "leap_edge" -> AscentPayloads.LEAP_EDGE;
+                            case "sky" -> AscentPayloads.GIFT_SKY;
+                            case "sky_edge" -> AscentPayloads.SKY_EDGE;
+                            case "sovereign" -> AscentPayloads.GIFT_SOVEREIGN;
+                            case "wings_edge" -> AscentPayloads.WINGS_EDGE;
+                            default -> -1;
+                        };
+                        if (mode < 0) {
+                            c.getSource().sendFailure(Component.literal("scene wings, leap, leap_edge, sky, sky_edge, sovereign or wings_edge"));
+                            return 0;
+                        }
+                        AwakenNet.send(p, new AscentPayloads.Remember(AscentServer.tiers(p), mode));
+                        if (mode == AscentPayloads.GIFT_WINGS) WayUp.firstFlight(p, p.blockPosition().offset(-dev.awaken.above.ruin.SkyRig.PIER, -1, -dev.awaken.above.ruin.SkyRig.PIER));
+                        return 1;
+                    })));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
             ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource(), false))));
             // the same, with the vault's sealed door opened first (the vow needs it open: tours at C-rank)

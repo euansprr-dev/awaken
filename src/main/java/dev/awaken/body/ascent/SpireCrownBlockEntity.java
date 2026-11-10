@@ -141,6 +141,8 @@ public class SpireCrownBlockEntity extends BlockEntity {
         Long start = leftPlaza.remove(p.getUUID());
         int ticks = start == null || now - start > LONGEST ? -1 : (int) (now - start);
         boolean first = climbed.add(p.getUUID());
+        // The Way Up (SPEC §63.2): the first crown reached by rope opens the Leaper's Gauntlet at its foot
+        WayUp.crownReached(p, worldPosition, plazaY());
         Run mine = null;
         for (Run r : records) if (r.who().equals(p.getUUID())) mine = r;
         boolean best = ticks > 0 && (mine == null || ticks < mine.ticks());

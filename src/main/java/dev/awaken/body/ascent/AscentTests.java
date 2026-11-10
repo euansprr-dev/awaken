@@ -378,6 +378,9 @@ final class AscentTests {
         var box = new net.minecraft.world.level.levelgen.structure.BoundingBox(o.getX(), o.getY(), o.getZ(),
                 o.getX() + size.x() - 1, o.getY() + size.y() - 1, o.getZ() + size.z() - 1);
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        // the vault's own lock (its door's rank, its door open) is the rule with The Way Up off; with it on the chain is the
+        // proof at any vault (way_up_road)
+        dev.awaken.body.BodyConfig.wayOverride = false;
         try {
             for (int rot = 0; rot < 4; rot++) {
                 TetherVow.Site site = new TetherVow.Site(box, rot, 1);
@@ -472,6 +475,7 @@ final class AscentTests {
             h.assertTrue(!TetherVow.running(p) && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.VOW_KEPT) != 0, "the vow is kept at the mast");
             h.assertFalse(TetherVow.eligible(p), "and never offered again");
         } finally {
+            dev.awaken.body.BodyConfig.wayOverride = null;
             TetherVow.forget(p);
             dev.awaken.above.block.DoorCoreBlock.forget(p.getUUID());
             wipe(level, box);

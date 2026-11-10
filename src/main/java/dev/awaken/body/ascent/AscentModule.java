@@ -16,6 +16,8 @@ public final class AscentModule {
 
     public static void init(IEventBus modBus) {
         AscentContent.register(modBus);
+        // The Way Up (SPEC §63): how each rung is earned and taught; its record is its own attachment, registered here
+        WayUp.init(modBus);
         modBus.addListener(AscentModule::registerPayloads);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(AscentServer::onPlayerTick);
