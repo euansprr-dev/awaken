@@ -648,6 +648,70 @@ one("thornwake",
     tail=14, note="flat on the ground, dug in, then hauled upward as the roots come")
 
 
+# ============================================================================================================================
+# The three held aims, on the arm that can act. Their fists keep the places the first clips gave them (the ball, the core and
+# the rail's line are measured from the hands: powers.fx.CastPoints, Muzzles); what is new is the elbows under them, the wrists,
+# the light, and a weapon that is put away and brought back, never popped.
+# ============================================================================================================================
+
+def held(name, main, off, light, note):
+    """A trembling hold on two fists: (place, elbow, roll) each."""
+    (pm, em, rm), (po, eo, ro) = main, off
+    clip(name,
+         main=[at(0, pm, em, rm, L), at(1, shake(pm, 1, 0.008), em, rm + 3, EIOS), at(2, shake(pm, -1, 0.008), em, rm - 3, EIOS), at(3, shake(pm, 0.5, 0.008), em, rm + 1, EIOS),
+               at(4, pm, em, rm, EIOS)],
+         off=[at(0, po, eo, ro, L), at(1.5, shake(po, -1, 0.008), eo, ro - 3, EIOS), at(2.5, shake(po, 1, 0.008), eo, ro + 3, EIOS), at(3.4, shake(po, -0.5, 0.008), eo, ro - 1, EIOS),
+              at(4, po, eo, ro, EIOS)],
+         light=light, loop=True, length=4, two=True, note=note)
+
+
+# Charged Shot: the hands cup low at the core, lift the ball up before the face and hold it; the let-go pushes it out between them.
+CS_LOW_M, CS_LOW_O = (0.12, -0.40, -0.55), (-0.12, -0.42, -0.56)
+CS_UP_M, CS_UP_O = (0.25, -0.17, -0.48), (-0.25, -0.17, -0.48)
+CS_OUT_M, CS_OUT_O = (0.18, -0.13, -0.80), (-0.18, -0.13, -0.80)
+CS_E_M, CS_E_O = (0.50, -0.66, -0.26), (-0.50, -0.66, -0.26)
+clip("fp_p_charged_shot",
+     main=[at(0, REST, ease=L), at(1.2, CS_LOW_M, (0.46, -0.78, -0.22), 40), at(1.8, CS_LOW_M, (0.46, -0.78, -0.22), 40, EIOS), at(3, CS_UP_M, CS_E_M, 30, EOC)],
+     off=[at(0, OUT_L, ease=L), at(1.5, CS_LOW_O, (-0.46, -0.80, -0.22), -40), at(2.0, CS_LOW_O, (-0.46, -0.80, -0.22), -40, EIOS), at(3, CS_UP_O, CS_E_O, -30, EOC)],
+     light=[(0, 0, 0, 0, 0, L), (1.2, 0.4, 0.5, 0.4, 0.5, EOS), (3, 1, 1.0, 1, 1.0, EOS)], events=[(3, "hold")], release=3, two=True, to_stance=True, length=3,
+     note="cupped low at the core, lifted before the face")
+held("fp_p_charged_shot_hold", (CS_UP_M, CS_E_M, 30), (CS_UP_O, CS_E_O, -30), [(0, 1, 0.85, 1, 0.85, L), (2, 1, 1.0, 1, 1.0, EIOS), (4, 1, 0.85, 1, 0.85, EIOS)],
+     "the ball held between the hands, trembling")
+clip("fp_p_charged_shot_end",
+     main=[at(0, CS_UP_M, CS_E_M, 30, L), at(1, CS_OUT_M, (0.44, -0.46, -0.34), -60, EOC), at(3, CS_OUT_M, (0.44, -0.46, -0.34), -60, L), at(10, REST, ease=EIOS)],
+     off=[at(0, CS_UP_O, CS_E_O, -30, L), at(1.4, CS_OUT_O, (-0.44, -0.46, -0.34), 60, EOC), at(3, CS_OUT_O, (-0.44, -0.46, -0.34), 60, L), at(10, OUT_L, ease=EIOS)],
+     light=[(0, 1, 1.0, 1, 1.0, L), (1, 1, 1.8, 1, 1.8, L), (4, 0.8, 0.8, 0.8, 0.8, EOQ), (10, 0.3, 0, 0.3, 0, EOQ)], two=True, note="pushed out from between the hands")
+
+# Prism Lance: the hands meet low at the core, then are thrown wide and held there, the chest open, while the light pours out of it.
+PL_IN_M, PL_IN_O = (0.10, -0.50, -0.60), (-0.10, -0.52, -0.62)
+PL_OUT_M, PL_OUT_O = (0.62, -0.28, -0.85), (-0.62, -0.28, -0.85)
+PL_E_M, PL_E_O = (0.74, -0.78, -0.52), (-0.74, -0.78, -0.52)
+clip("fp_p_prism_lance",
+     main=[at(0, REST, ease=L), at(2.4, PL_IN_M, (0.50, -0.86, -0.34), 50), at(3.6, PL_IN_M, (0.50, -0.86, -0.34), 50, EIOS), at(6, PL_OUT_M, PL_E_M, -40, EOC)],
+     off=[at(0, OUT_L, ease=L), at(2.8, PL_IN_O, (-0.50, -0.88, -0.34), -50), at(3.9, PL_IN_O, (-0.50, -0.88, -0.34), -50, EIOS), at(6, PL_OUT_O, PL_E_O, 40, EOC)],
+     light=[(0, 0, 0, 0, 0, L), (2.4, 0.5, 0.6, 0.5, 0.6, EOS), (3.6, 1, 1.1, 1, 1.1, EIOS), (6, 1, 1.5, 1, 1.5, EOC)], events=[(6, "hold")], release=6, two=True, to_stance=True,
+     length=6, note="met low at the core, thrown wide")
+held("fp_p_prism_lance_hold", (PL_OUT_M, PL_E_M, -40), (PL_OUT_O, PL_E_O, 40), [(0, 1, 1.0, 1, 1.0, L), (2, 1, 1.25, 1, 1.25, EIOS), (4, 1, 1.0, 1, 1.0, EIOS)],
+     "the arms held wide while the core burns")
+
+# Railgun: the right fist is the barrel, the left hand braces under its wrist; the shot throws both back and they come down slowly.
+RG_IN_M, RG_IN_O = (0.14, -0.40, -0.70), (0.02, -0.46, -0.72)
+RG_AIM_M, RG_AIM_O = (0.30, -0.20, -0.95), (0.12, -0.42, -0.95)
+RG_E_M, RG_E_O = (0.52, -0.46, -0.44), (-0.32, -0.72, -0.60)
+clip("fp_p_railgun",
+     main=[at(0, REST, ease=L), at(1.6, RG_IN_M, (0.52, -0.72, -0.34), 20), at(2.4, RG_IN_M, (0.52, -0.72, -0.34), 20, EIOS), at(4, RG_AIM_M, RG_E_M, 0, EOC)],
+     off=[at(0, OUT_L, ease=L), at(2.0, RG_IN_O, (-0.36, -0.78, -0.40), -30), at(2.7, RG_IN_O, (-0.36, -0.78, -0.40), -30, EIOS), at(4, RG_AIM_O, RG_E_O, -60, EOC)],
+     light=[(0, 0, 0, 0, 0, L), (1.6, 0.4, 0.5, 0.2, 0.3, EOS), (4, 1, 1.0, 0.5, 0.6, EOS)], events=[(4, "hold")], release=4, two=True, to_stance=True, length=4,
+     note="the fist levelled along the aim, the other hand braced under its wrist")
+held("fp_p_railgun_hold", (RG_AIM_M, RG_E_M, 0), (RG_AIM_O, RG_E_O, -60), [(0, 1, 0.9, 0.5, 0.6, L), (2, 1, 1.15, 0.5, 0.7, EIOS), (4, 1, 0.9, 0.5, 0.6, EIOS)],
+     "locked on, humming")
+clip("fp_p_railgun_end",
+     main=[at(0, RG_AIM_M, RG_E_M, 0, L), at(1, (0.35, 0.00, -0.64), (0.56, -0.50, -0.38), 20, EOC), at(5, (0.32, -0.15, -0.86), (0.54, -0.50, -0.42), 6, EIOS), at(14, REST, ease=EIOS)],
+     off=[at(0, RG_AIM_O, RG_E_O, -60, L), at(1.5, (0.05, -0.52, -0.68), (-0.34, -0.84, -0.46), -40, EOC), at(6, (-0.08, -0.54, -0.76), (-0.44, -0.86, -0.50), -30, EIOS),
+          at(14, OUT_L, ease=EIOS)],
+     light=[(0, 1, 1.0, 0.5, 0.6, L), (1, 1, 2.0, 0.6, 1.0, L), (5, 0.8, 0.7, 0.4, 0.3, EOQ), (14, 0.3, 0, 0.2, 0, EOQ)], two=True, note="thrown back by the shot, lowered slowly")
+
+
 def all_clips():
     """Every clip, with two more takes of each cast's begin and let-go (never of a hold loop)."""
     out = OrderedDict()

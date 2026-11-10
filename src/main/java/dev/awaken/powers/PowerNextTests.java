@@ -118,6 +118,7 @@ final class PowerNextTests {
             FpClipSet.Clip base = clips.get(p.begin1p());
             if (base == null || !base.arm) continue; // still on its earlier clip
             authored++;
+            if (base.toStance) continue; // a held power's gather hands over to its hold: one way in, the takes are its let-go's
             for (int take = 1; take <= 2; take++) {
                 FpClipSet.Clip t = clips.get(Ways.clip(p.begin1p(), Ways.STAND, take));
                 if (t == null) bad.add(p.power() + ": no take " + (take + 1));

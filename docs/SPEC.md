@@ -11572,8 +11572,9 @@ What follows replaces that. Nothing here changes what a power does to a number u
 - Authoring: `tools/art/specs/fp_casts2.py` writes `assets/awaken/fp_clips/fp_casts2.json` (read last, so a clip there replaces the
   older one of the same name). One-handed casts key only the left fist. Its rules are checked on build: every pose held two ticks is
   on screen above the hotbar; no hand sits in the middle fifth of the view for more than two ticks; two hands never start on the same
-  tick; a strike overshoots and settles. 69 casts authored. Charged Shot, Prism Lance, Railgun and Shockwave's standing stamp keep
-  their earlier clips for now.
+  tick; a strike overshoots and settles. 77 clips authored (207 with takes). The three held aims (Charged Shot, Prism Lance, Railgun)
+  keep the fist places their first clips gave them, because the ball, the core and the rail's line are measured from the hands; only
+  Shockwave's standing stamp is still its earlier clip (a stamp is the foot's, and its run and air ways are authored).
 
 **Takes.** Every authored cast has three takes (`_t2`, `_t3`: the same cast with its path and timing a little different, never its
 release pose). The client picks one that isn't the last one it used for that power and sends it with the cast, so everyone sees the
@@ -11605,7 +11606,7 @@ out the far side), Barrier (a curved plate of hexes that turns with your look), 
 left behind in ink), and the five earned powers (§50.11). The rule for the rest: no power's main effect may be only a ring, a flash and a
 number. Signatures are drawn, never real, inside the effect budget, and off at the Minimal effects level.
 
-**Open** (in the ledger): third person has no takes or ways yet; the remaining powers' signatures; the four casts still on old clips.
+**Open** (in the ledger): third person has no takes or ways yet; the remaining powers' signatures.
 
 ---------------------------------------------------------------------------------------------------------------------
 
