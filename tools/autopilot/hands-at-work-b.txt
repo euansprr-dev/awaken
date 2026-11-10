@@ -1,9 +1,10 @@
 # Hands at Work, the scenes the second look run (42883680457) could not settle: a chest opened with empty hands
 # (the lid in your hands; what lies in it), the brewing stand (your hand under the stack you carry), the furnace (no
 # hand of the game's own in the corner) and the crafting table at rest (both hands off their corners). Shots h2_*. Screens are shut with Esc, as a player shuts them.
+# The world, seed and waits are hands-at-work.txt's own: another seed's teleport landed late and the run filmed the city.
 # Run on CI: tools/tour-ci.sh tools/autopilot/hands-at-work-b.txt 1500
 # ci knobs: PACK=feel
-world hands_at_work_b survival 4312
+world hands_at_work survival 4311
 waitworld
 wait 60
 cmd awaken opening skip
@@ -30,7 +31,7 @@ screen close
 cmd effect give @s minecraft:slow_falling 30 1 true
 cmd tp @s 0.5 201 0.5 0 0
 wait 200
-cmd forceload add -16 -16 32 16
+cmd forceload add -16 -16 64 16
 wait 120
 cmd fill -4 199 -6 14 199 8 minecraft:smooth_stone
 cmd fill -4 200 -6 14 206 8 minecraft:air
