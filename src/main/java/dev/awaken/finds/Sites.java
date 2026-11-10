@@ -29,13 +29,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Sites {
     private Sites() {}
 
-    static final int[] CELL = {96, 256, 384}, EDGE = {18, 44, 80}, RINGS = {4, 5, 3};
+    static final int[] CELL = {96, 256, 384}, EDGE = {18, 44, 80}, RINGS = {4, 4, 2};
     /** The layer number of a site stood by hand (the gallery, a test): it stands on a level pad, not on the world's ground. */
     public static final int HAND = 3;
     /** The chance a cell holds something where the land is at its usual liveliness. */
     // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
     // stay in the code as furnishing and for their tests; their layers are off.
-    static final double[] BASE = {0, 0, 1.0};
+    // Layer 1 is the remains (SPEC §62.6): small, and only where a monument stands near.
+    static final double[] BASE = {0, 0.8, 1.0};
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 64;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -142,17 +143,12 @@ public final class Sites {
             Kind k = kinds.get(i);
             if (!k.fits(group)) continue;
             if (layer == 2 && k.set() != Kind.FSet.MONUMENTS) continue; // the thirty everyday places are not dealt (rejected, SPEC §61.1)
-            double v;
-            if (layer == 2) {
-                // a place may stand in any country of its land: its own rank is likeliest, the grand ones are rare near home
-                // and the plain ones thin out far away, but none is ruled out (by rank alone no swamp place could ever
-                // be chosen within 10,000 blocks of the spawn: the first census)
-                v = k.weight() * Math.pow(k.rank() > rank ? 0.42 : 0.62, Math.abs(rank - k.rank()));
-            } else {
-                if (k.rank() > rank) continue;
-                v = k.weight() * Math.pow(0.45, rank - k.rank());
-            }
-            if (home && k.number() == 1) v *= 4; // the plainest of each set is the one you meet first
+            if (layer == 1 && k.set() != Kind.FSet.REMAINS) continue;   // nor the small finds: only the remains (SPEC §62.6)
+            // Bands (SPEC §62.2): nothing stands nearer home than its own rank, so each band out holds monuments the
+            // last did not. At the land's rank and one under it a kind is at full weight; older ones thin by half a rank.
+            if (k.rank() > rank) continue;
+            double v = layer == 2 ? k.weight() * Math.pow(0.5, Math.max(0, rank - k.rank() - 1)) : k.weight();
+            if (home && (layer == 2 ? k.tier() == 1 : k.number() == 1)) v *= 4; // the plainest is the one you meet first
             w[i] = v;
         }
         return w;
@@ -193,6 +189,9 @@ public final class Sites {
         // and if this cell has to choose again, it takes nothing any cell round it would pick, whoever has first say:
         // the neighbour that keeps its first choice mustn't find it here too
         java.util.BitSet taken = new java.util.BitSet(), around = new java.util.BitSet();
+        // and no family twice in cells that touch (SPEC §62.2): two cells on is something that is not a dish at all
+        java.util.EnumSet<Family> famTaken = java.util.EnumSet.noneOf(Family.class), famAround = java.util.EnumSet.noneOf(Family.class);
+        List<Kind> kinds = Kinds.layer(layer);
         int rings = RINGS[layer];
         for (int i = -rings; i <= rings; i++)
             for (int j = -rings; j <= rings; j++) {
@@ -200,14 +199,20 @@ public final class Sites {
                 int other = basePick(a, layer, cx + i, cz + j);
                 if (other < 0) continue;
                 around.set(other);
-                if (Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0) taken.set(other);
+                boolean first = Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0;
+                if (first) taken.set(other);
+                Family f = kinds.get(other).family();
+                if (f != null && Math.abs(i) <= 1 && Math.abs(j) <= 1) {
+                    famAround.add(f);
+                    if (first) famTaken.add(f);
+                }
             }
         double[] w = weights(a, layer, x, z);
-        List<Kind> kinds = Kinds.layer(layer);
-        int choice = taken.get(base) ? -1 : base;
+        int choice = taken.get(base) || (kinds.get(base).family() != null && famTaken.contains(kinds.get(base).family())) ? -1 : base;
         for (int attempt = 0; attempt < 4; attempt++) {
             if (choice < 0) {
                 for (int i = around.nextSetBit(0); i >= 0; i = around.nextSetBit(i + 1)) if (i < w.length) w[i] = 0;
+                for (int i = 0; i < w.length; i++) if (kinds.get(i).family() != null && famAround.contains(kinds.get(i).family())) w[i] = 0;
                 choice = pick(w, mix(h, 0x23 + attempt));
                 if (choice < 0) return NONE;
             }
@@ -224,6 +229,19 @@ public final class Sites {
             if (at != null && !a.terrain.structureNear(at[0], at[2], place ? 2 : 1)
                     && !(place && (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4) || cityNear(a, at[0], at[2], k.reach() + 56)))) {
                 RegionMap.Region r = a.map.regionAt(at[0], at[2]);
+                if (k.set() == Kind.FSet.REMAINS) {
+                    // a remain is the edge of something big: it stands only where a monument does, and faces it
+                    Site to = nearestMonument(a, at[0], at[2], REMAINS_REACH, true);
+                    if (to == null) return NONE;
+                    double bestDot = -1e18;
+                    for (int d = 0; d < 4; d++) {
+                        double dot = (to.x() - at[0]) * (double) RX[d] + (to.z() - at[2]) * (double) RZ[d];
+                        if (dot > bestDot) {
+                            bestDot = dot;
+                            at[3] = d;
+                        }
+                    }
+                }
                 return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], place ? landAt(a, at[0], at[2]) : a.map.landOf(r).group(),
                         Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
             }
@@ -255,8 +273,50 @@ public final class Sites {
     }
 
     private static @Nullable Site cell(Ask a, int layer, int cx, int cz) {
-        Site s = SITES.computeIfAbsent(cellKey(layer, cx, cz), key -> make(a, layer, cx, cz));
+        // not computeIfAbsent: a remain's cell asks the monuments' cells while it is being made, and a map must not be
+        // changed from inside its own computation. Two threads may make the same cell; they make the same site.
+        long key = cellKey(layer, cx, cz);
+        Site s = SITES.get(key);
+        if (s == null) {
+            s = make(a, layer, cx, cz);
+            Site old = SITES.putIfAbsent(key, s);
+            if (old != null) s = old;
+        }
         return s == NONE ? null : s;
+    }
+
+    /** South, west, north, east: where a kind's own south points after 0..3 quarter turns. */
+    private static final int[] RX = {0, -1, 0, 1}, RZ = {1, 0, -1, 0};
+    /** How far a remain may stand from the monument it belongs to. */
+    public static final int REMAINS_REACH = 1000;
+
+    /** The nearest monument that stands within {@code max} blocks of a point, or null. Cells that chose nothing are never asked for their ground. */
+    private static @Nullable Site nearestMonument(Ask a, int x, int z, int max, boolean remain) {
+        int c = CELL[2], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c), rings = max / c + 1;
+        Site best = null;
+        double bestD = max;
+        for (int i = -rings; i <= rings; i++)
+            for (int j = -rings; j <= rings; j++) {
+                if (basePick(a, 2, cx0 + i, cz0 + j) < 0) continue;
+                Site s = cell(a, 2, cx0 + i, cz0 + j);
+                if (s == null) continue;
+                double d = Math.hypot(s.x() - x, s.z() - z);
+                if (d <= s.kind().reach() + 30) {
+                    if (remain) return null;                    // inside a monument's own ground: nothing else stands there
+                    continue;                                   // the one you are standing in is not news
+                }
+                if (d < bestD) {
+                    bestD = d;
+                    best = s;
+                }
+            }
+        return best;
+    }
+
+    /** The nearest monument that stands within {@code max} blocks, for a remain's carving and the Listening Stone. */
+    public static @Nullable Site monumentFrom(ServerLevel level, int x, int z, int max) {
+        Ask a = ask(level);
+        return a == null ? null : nearestMonument(a, x, z, max, false);
     }
 
     // ---- asking -----------------------------------------------------------------------------------------------------

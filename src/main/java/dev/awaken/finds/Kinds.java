@@ -13,7 +13,7 @@ public final class Kinds {
     private Kinds() {}
 
     private static final Map<String, Kind> BY_ID = new LinkedHashMap<>();
-    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of(), places = List.of(), monuments = List.of();
+    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of(), places = List.of(), monuments = List.of(), remains = List.of();
 
     static void register(Kind k) {
         if (BY_ID.put(k.id(), k) != null) throw new IllegalStateException("two finds are called " + k.id());
@@ -28,6 +28,7 @@ public final class Kinds {
         finds = a.stream().filter(k -> k.size() == Kind.Size.FIND).toList();
         places = a.stream().filter(k -> k.size() == Kind.Size.PLACE).toList();
         monuments = places.stream().filter(k -> k.set() == Kind.FSet.MONUMENTS).toList();
+        remains = finds.stream().filter(k -> k.set() == Kind.FSet.REMAINS).toList();
     }
 
     public static List<Kind> all() {
@@ -46,6 +47,16 @@ public final class Kinds {
     /** The monuments of the old world (SPEC §61): the only places the world still deals, and the only ones the Journal lists. */
     public static List<Kind> monuments() {
         return monuments;
+    }
+
+    /** The remains (SPEC §62.6): small pieces of the old world that stand near a monument and point to it. */
+    public static List<Kind> remains() {
+        return remains;
+    }
+
+    /** A family's five, nearest home first. */
+    public static List<Kind> ofFamily(Family f) {
+        return monuments.stream().filter(k -> k.family() == f).sorted(java.util.Comparator.comparingInt(Kind::tier)).toList();
     }
 
     public static @Nullable Kind byId(String id) {

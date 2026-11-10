@@ -21112,3 +21112,127 @@ answering (a door turns) the tick the step before it is done.
 The `finds_` tests hold every monument to what they held a place to; all three walkthroughs pass. The picture maker draws
 olden stone. Tours: `monument-<id>.txt`, the first camera where the painting stands. Not done: seven to nine more monuments
 (Euan's call after these three); the relic list beyond three; sounds and motes of their own; hand clips. Unplayed.
+
+## 62. The Long World: sixty monuments in twelve families (plan docs/places/PLAN.md, page https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1; Euan, 10 Nov 2026: "Go with the full plan", and the same hour: "everything actually looks naturally placed... make sure it's at actual AAA level for each. And focus on coding more than checking over and over")
+
+Module `dev.awaken.finds`. What §61 began with three, built out as approved: twelve ideas, each painted first
+(`docs/places/img/`), each a generator; five named monuments of each, found further and further out; every site aged by
+its own seed and its land; one relic a family that grows; small remains between them that point the way. Working notes:
+`docs/places/BUILD.md`.
+
+### 62.1 Families and tiers
+
+`Family` (twelve, in the four groups the story has; the groups are never named to a player): DISH, ROAD, ARCHIVE (before
+the split); STAIR, MAST, ORRERY (up); HALL, GARDEN, CLOCK (in); SHAFT, CHAINS, DOOR (down). A monument is a `Kind` with a
+family and a tier 1..5 (`Kind.family`, `Kind.tier`, set by `Builder.family`). Tier 1 is small and most broken, 2 fallen
+(read lying down), 3 the one in the painting, 4 strange (a pair, flooded, buried, alone), 5 whole and still working. The
+three of §61 are tier 3 of their families and keep their ids. One file a family: `sets/M<Family>.java`; shared pieces in
+`sets/Mon`. Each of a family's five has its own name, Journal text and three carvings; a family's fifteen carvings are
+that group's account.
+
+### 62.2 Bands, and the deal
+
+A kind's rank is where its tier begins: tiers 1..5 are ranks 0..4, one further out for the down group
+(`Family.rankOf`). A cell never deals a kind whose rank is above the land's (`Sites.weights`), so every band out holds
+monuments the last could not. At the land's rank and one under it a kind has full weight; older ones halve per rank. No
+kind twice within two cells (768 blocks); no family twice in cells that touch. Lands by family are in each file's
+`lands(...)`: every land has at least three families at rank 0.
+
+### 62.3 Meeting the ground
+
+The first count of a real world with the three (10 Nov) stood 12 monuments in 616 choosing cells: a footprint a hundred
+wide found no ground level to a few blocks. A monument no longer asks. `Anchor.TERRACE`: seventeen points within the
+kind's `slope` (10 to 18) of each other, all dry; the site's height is the eleventh of them; 49 tries on a grid 24 apart
+(all inside the cell's edge); and the kind is turned so its front (south) looks down the fall of the land.
+`Anchor.HIGH`: the same, taking the highest spot that fits (masts, orreries). `kit/G.platform(shape, top)` then builds
+the terrace: level inside; where the land falls away a battered retaining wall that stands on each column's own ground,
+with a parapet where it is tall and buttresses where it is taller; where the land rises, the cut faced and coped; where
+it is level, a kerb flush with the grass. Never a dirt ramp. `G.stairs` runs steps from the terrace down (or up) to
+whatever ground is there, between cheek walls. `G.foot` fills masonry under anything built over a curved or tilted
+floor (the Dish's spike stood a block clear of its bowl). Piers (`M.pier`), stairs and fallen pieces stand on each
+column's own ground. Roads need no terrace at all.
+
+**The site's heart** is two under the ground at the site's middle and is solid though unseen. A generator that digs (a
+pit, a pool, a cleft) sets its hole off from the middle so the heart lies under masonry or ground.
+
+**The skyline rule.** Every monument shows above the trees: a sunk one carries a mark that does (the Hall the ribs of
+its fallen vault and great trees, or a clerestory house; the Shaft its giants or pylons; the Garden its gateposts).
+
+**The site box** for clicks is 64 below to 128 above the heart (`Site.holds`).
+
+### 62.4 The kit, and the things you do
+
+Added to `kit/M`: `giant` (a robed, hooded figure 15 and more tall, standing, seated or lying on its back, broken at the
+waist), `ring` (a band of a ring in any plane, broken by degrees), `ringStuff`, `dome` (shell, ribs, eye, with a keep
+function), `tower` and `spiral` (a round wall, and a stair of slab wedges inside it that is walked, not jumped),
+`haunch` (an arch as the depth of stone under a deck), and `finish`. Verbs added: `Order` (parts worked first to last,
+or one part so many times), `Points` (a remain's carving), `Guide.each` (something at every waypoint). In MGarden,
+`NightGate`: shut by day, open after dark to anyone standing at it, and from inside it opens to a hand at any hour.
+What you do, by family: carry the fallen stones back (Dish); wind out planks over the gap (Road, `Swap`); put five
+tablets back in the order the floor studs give (Archive, `Sockets.inOrder`); climb and let the counterweight go (Stair);
+climb inside and knock out the pin, and what hangs comes down (Mast); give each wheel as many turns as its post has studs
+(Orrery, `Turn`); light the lamps in the order they lay down (Hall); come back after dark and follow the flowers as they
+open (Garden); open the sluices from the top down, and real water runs (Clock, `Order`, `Scene.flow`); go down the
+ledges to the one door that is only latched (Shaft); push the capstan round six times (Chains); dig the door out (Door,
+`Dig`). No fights, and no way to be shut in.
+
+### 62.5 No two sites alike
+
+`M.finish(wet, wear)` is every monument's last pass: `age` with what its land adds (desert and badlands dry and worn,
+with sand drifted against the side the wind comes from; jungle and swamp wet, with vines down the faces; forest and the
+dark woods a little of both; mountain and snow bare and worn), shifted ten either way by the site's own seed. Which arc
+fell, which corner slumped, which giant lost what, are picked from the seed (`Mon.pick`). `Mon.camp` leaves one of five
+kinds of later people at its foot: climbers, herders, pilgrims, a hermit, or nobody.
+
+### 62.6 Remains
+
+Layer 1 (cells 256, chance 0.8 in lively land): fifteen kinds of `FSet.REMAINS` (`sets/Remains`), small, from the same
+kit: a giant's head, a lone arch, milestones, a pier with no bridge, a fallen column, steps to nothing, a piece of a
+ring, a link, a lamp still lit, a bed in the open, a trough, a door lying down, a piece of a rim, a stone hand, a
+waymark. A remain stands only where a monument stands within 1,000 blocks and outside that monument's own ground, and is
+turned to face it. Its one carving has the System say its line, then which way and about how far; that way is kept as a
+lead (Tasks page). No relic.
+
+### 62.7 Relics that grow, and hoards
+
+Twelve, one a family (`finds/Relics`), given by code the first time any of a family's five is finished at a site;
+`Family.done` (how many of the five a player has done) is the relic's step, 1..5, so nothing is saved on the item and a
+lost relic given again is as strong as it was. All five: a whole level (`family/<name>`). Steps:
+Listening Stone hears 500 blocks further each step, at 3 says whether you have been there, at 5 what it is; Waystone
+gives back a fifth more of what running on a road or path costs; Reading Glass makes a carving's first reading worth
+0.8% of a level a step; Counterweight rests 60, 45, 30, 15 seconds, then not at all; Mooring Ring 12% knockback and 15%
+blast resistance a step; Pocket Rings the hour and the way home, then weather, then how long the light lasts, then where
+you last fell; Sleeper's Lamp off hand below the sea's level, then any roof, then either hand, then carried, then the
+open night too; Night Bloom a half heart every 5, 4, 3, 2, 1 seconds standing still in the dark; Float 12% water
+movement and a fifth of your breath back a step; Seal Shard 6 to 14 seconds of fire resistance, resting 150 down to 30
+seconds; Link draws items from 3.7 to 8.5 blocks; Digger's Glass 20% faster in shovel ground a step. A relic that
+touches another system uses vanilla attributes and effects only.
+Hoards: `finds/hoard_e` .. `hoard_s` by the kind's rank: olden stone and bronze (which can be had no other way) and
+one to three rolls of the finds' own tier table. A site pays a player once.
+
+### 62.8 The twelve
+
+| Family | Tier 1 | 2 | 3 (painted) | 4 | 5 |
+|---|---|---|---|---|---|
+| Dish | The Small Ear | The Fallen Ear | The Listening Dish | The Twin Ears | The Ear That Still Hears |
+| Road | The Three Arches | The Fallen Road | The Long Road | The Double Road | The Road That Still Runs |
+| Archive | The Reading Room | The Fallen Archive | The Archive | The Buried Archive | The Whole Archive |
+| Stair | The First Flight | The Fallen Stair | The Stair That Stops | The Stairs That Never Met | The Stair That Goes On |
+| Mast | The Mooring Post | The Fallen Mast | The Mooring Mast | The Twin Masts | The Mast With Its Ship |
+| Orrery | The Small Rings | The Fallen Rings | The Orrery | The Great Ring | The Rings That Still Turn |
+| Hall | The Little Rest | The Fallen Hall | The Sleepers' Hall | The Drowned Hall | The Hall Where One Still Sleeps |
+| Garden | The Small Garden | The Fallen Garden | The Dream Garden | The Drowned Garden | The Garden That Still Dreams |
+| Clock | The Small Count | The Fallen Count | The Water Clock | The Twin Counts | The Clock That Still Counts |
+| Shaft | The Capped Well | The Fallen Ring | The Sealed Shaft | The Shaft of Rings | The Shaft That Is Still Shut |
+| Chains | The Single Chain | The Fallen Chains | The Chain Works | The Hanging Chain | The Works That Still Hold |
+| Door | The Small Door | The Fallen Front | The Door in the Sand | The Door Without a Wall | The Door That Was Left Open |
+
+Changed from the plan's first list while drawing them: the Sky Cradle became the Orrery, the Lantern House the Water
+Clock, the Deep Well the Door in the Sand (each was too like another family in shape or in what you do).
+
+### 62.9 Checks
+
+The `finds_` tests hold all sixty and the fifteen remains to what they held the three to (every scene stands, nothing
+floats, every walkthrough is finished by a scripted player). The dump writes every monument on a level pad and the
+painted one of each family on a hillside (`Terrain.hill`), and `tools/content/finds_render.py` draws them.
+`tools/content/finds_tour.py` writes a tour for the painted and the whole one of each family.

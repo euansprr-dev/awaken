@@ -41,6 +41,7 @@ public final class Lore implements Script {
     public boolean use(Ctx c, ServerPlayer p, String name, int i, ItemStack held) {
         if (!name.equals(part)) return inner.use(c, p, name, i, held);
         String line = lines[Math.min(i, lines.length - 1)];
+        dev.awaken.finds.Relics.read(p, c.kind(), i);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("[" + line + "]")).topic("monument").ttl(20 * 14).build());
         c.sound(c.pos(part, i), SoundEvents.BOOK_PAGE_TURN, 0.7F, 0.7F);
         c.puff(c.pos(part, i), ParticleTypes.ENCHANT, 10, 0.4, 0.2);

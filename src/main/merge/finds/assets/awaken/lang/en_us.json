@@ -99,5 +99,14 @@
   "block.awaken.olden_stone_wall": "Olden Stone Wall",
   "item.awaken.relic_counterweight": "The Counterweight",
   "item.awaken.relic_listening_stone": "The Listening Stone",
-  "item.awaken.relic_sleepers_lamp": "The Sleeper's Lamp"
+  "item.awaken.relic_sleepers_lamp": "The Sleeper's Lamp",
+  "item.awaken.relic_waystone": "The Waystone",
+  "item.awaken.relic_reading_glass": "The Reading Glass",
+  "item.awaken.relic_mooring_ring": "The Mooring Ring",
+  "item.awaken.relic_pocket_rings": "The Pocket Rings",
+  "item.awaken.relic_night_bloom": "The Night Bloom",
+  "item.awaken.relic_float": "The Float",
+  "item.awaken.relic_seal_shard": "The Seal Shard",
+  "item.awaken.relic_link": "The Link",
+  "item.awaken.relic_diggers_glass": "The Digger's Glass"
 }

@@ -381,10 +381,54 @@ def relics():
     lamp_ = ["................", ".......oo.......", "......orro......", "......o..o......", ".....oobboo.....", "....occccbao....",
              "....obggggao....", "....obghhgao....", "....obhiihao....", "....obhiihao....", "....obghhgao....", "....obggggao....",
              "....obbbbaao....", "...oaaaaaaaao...", "...oooooooooo...", "................"]
-    return {"relic_counterweight": K.sprite(weight, pal_w), "relic_listening_stone": K.sprite(stone, pal_s), "relic_sleepers_lamp": K.sprite(lamp_, pal_l)}
+    # the nine that came with the long world (SPEC 62.7): the same bronze, stone, teal and gold, one plain shape each
+    pal = {"o": o, "a": bz[1], "b": bz[2], "c": bz[3], "d": bz[5], "r": br[4], "s": br[2], "k": dk[1], "e": st[1], "f": st[2], "g": st[3], "h": st[5],
+           "t": tl[4], "u": tl[2], "y": gd[3], "z": gd[5]}
+    way = ["................", "......oooo......", ".....ohggfo.....", ".....ohggfo.....", ".....occbao.....", ".....ohggfo.....",
+           ".....ohtgfo.....", ".....ohttfo.....", ".....ohtgfo.....", ".....ohggfo.....", ".....ohggfo.....", "....oohggfoo....",
+           "...ohhggggffo...", "...oeeeeeeeeo...", "....oooooooo....", "................"]
+    glass = ["................", "....oooooo......", "...oddccbbo.....", "..odcttttcbo....", "..octuuuutbo....", "..octu..utbo....",
+             "..octuuuutbo....", "..obcttttbao....", "...obbbbaao.....", "....ooooooo.....", ".........oro....", "..........oro...",
+             "...........oro..", "............oso.", ".............oo.", "................"]
+    ring = ["................", "................", "....oooooooo....", "...oddccccbbo...", "..odcbooooabao..", "..occo....oabo..",
+            "..ocbo....oabo..", "..ocbo....oabo..", "..obbo....oaao..", "..obaaooooaaao..", "...oaaaaaaaao...", "....oooorooo....",
+            ".......oro......", ".......oso......", "........o.......", "................"]
+    rings = ["................", ".....oooooo.....", "...oodccccboo...", "..odco....obao..", ".odco.oooo.obao.", ".oco.ordsro.oao.",
+             ".oco.orzyso.oao.", ".oco.oryzso.oao.", ".oco.ordsro.oao.", ".obao.oooo.oaao.", "..obao....oaao..", "...ooaaaaaaoo...",
+             ".....oooooo.....", "................", "................", "................"]
+    bloom = ["................", "......o..o......", ".....otootuo....", "....otuttuuto...", "....otuzyuto....", ".....otyzto.....",
+             "....otuttuto....", ".....oooooo.....", ".......oc.......", "......oocoo.....", ".....occcbo.....", "......oobo......",
+             ".......oco......", ".......obo......", "........o.......", "................"]
+    float_ = ["................", ".......oo.......", "......oroo......", "......osro......", ".....ooooo......", "....oddccbo.....",
+              "...oddccbbao....", "...odccbbbao....", "...orrrrrsso....", "...occbbbaao....", "...ocbbbaaao....", "....obbaaao.....",
+              ".....oooooo.....", "................", "................", "................"]
+    shard = ["................", "...ooooooooo....", "...okkkkkkkto...", "...okttttkkto...", "...oktuutkkto...", "...oktukkkto....",
+             "...oktukkto.....", "...okttkto......", "...okkkto.......", "...okkto........", "...okto.........", "...oto..........",
+             "...oo...........", "................", "................", "................"]
+    link = ["................", "................", "................", "...oooooooooo...", "..oddccccccbbo..", ".odcooooooooabo.",
+            ".oco........oao.", ".oco........oao.", ".obo........oao.", ".obaooooooooaao.", "..oaaaaaaaaaao..", "...oooooooooo...",
+            "................", "................", "................", "................"]
+    hour = ["................", "...oooooooooo...", "...oddccccbao...", "....ozyyyyzo....", "....ooyyyyoo....", ".....ooyyoo.....",
+            "......ooyo......", ".......oyo......", "......oo.oo.....", ".....oo.y.oo....", "....oo.yyy.oo...", "....ozyyyyyzo...",
+            "...oddccccbao...", "...oooooooooo...", "................", "................"]
+    more = {"relic_waystone": way, "relic_reading_glass": glass, "relic_mooring_ring": ring, "relic_pocket_rings": rings, "relic_night_bloom": bloom,
+            "relic_float": float_, "relic_seal_shard": shard, "relic_link": link, "relic_diggers_glass": hour}
+    out = {"relic_counterweight": K.sprite(weight, pal_w), "relic_listening_stone": K.sprite(stone, pal_s), "relic_sleepers_lamp": K.sprite(lamp_, pal_l)}
+    for name, rows in more.items():
+        assert len(rows) == 16 and all(len(r) == 16 for r in rows), (name, [len(r) for r in rows])
+        out[name] = K.sprite(rows, pal)
+    return out
 
 
-RELICS = {"relic_counterweight": "The Counterweight", "relic_listening_stone": "The Listening Stone", "relic_sleepers_lamp": "The Sleeper's Lamp"}
+RELICS = {"relic_counterweight": "The Counterweight", "relic_listening_stone": "The Listening Stone", "relic_sleepers_lamp": "The Sleeper's Lamp",
+          "relic_waystone": "The Waystone", "relic_reading_glass": "The Reading Glass", "relic_mooring_ring": "The Mooring Ring",
+          "relic_pocket_rings": "The Pocket Rings", "relic_night_bloom": "The Night Bloom", "relic_float": "The Float", "relic_seal_shard": "The Seal Shard",
+          "relic_link": "The Link", "relic_diggers_glass": "The Digger's Glass"}
+# A monument's hoard (SPEC 62.7): its own stone and bronze, which can be had no other way, and by rank what the game already
+# keeps at that distance (the finds' own tier table, rolled this many times). The relic is given by code, once a family.
+HOARDS = {"e": ("e_big", 1, 1.0), "d": ("d_big", 1, 1.2), "c": ("c_big", 2, 1.5), "b": ("b_big", 2, 1.8), "a": ("a_big", 2, 2.2), "s": ("a_big", 3, 2.6)}
+STONE = [("awaken:olden_stone", 10, 18), ("awaken:olden_block", 6, 10), ("awaken:olden_band", 3, 6), ("awaken:olden_bronze", 3, 6), ("awaken:olden_bronze_band", 2, 4),
+         ("awaken:olden_flag", 4, 8), ("awaken:olden_pillar", 2, 4), ("awaken:olden_capital", 1, 2), ("awaken:olden_mosaic", 2, 5), ("awaken:olden_lamp", 1, 2)]
 # a monument's table: its relic, then what was left with it (item, least, most)
 SPOILS = {
     "relic_stair": ("relic_counterweight", [("minecraft:gold_ingot", 4, 7), ("minecraft:emerald", 2, 4), ("minecraft:ender_pearl", 1, 2), ("awaken:olden_bronze", 3, 6)]),
@@ -503,7 +547,16 @@ def content():
                 e["functions"] = [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": lo, "max": hi}}]
             pools.append({"rolls": 1, "entries": [e]})
         K.write(os.path.join(K.RES, f"data/awaken/loot_table/finds/{name}.json"), {"type": "minecraft:chest", "random_sequence": "awaken:finds/" + name, "pools": pools})
-    print(f"finds_olden: content written for {len(every)} blocks, {len(RELICS)} relics")
+    def counted(item, lo, hi):
+        return {"type": "minecraft:item", "name": item, "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": lo, "max": hi}}]}
+    for rank, (tier, rolls, much) in HOARDS.items():
+        pools = [{"rolls": 1, "entries": [counted(i, round(lo * much), round(hi * much))]} for i, lo, hi in STONE[:4]]
+        pools.append({"rolls": 2, "entries": [counted(i, lo, hi) for i, lo, hi in STONE[4:]]})
+        pools.append({"rolls": rolls, "entries": [{"type": "minecraft:loot_table", "value": "awaken:finds/" + tier}]})
+        K.write(os.path.join(K.RES, f"data/awaken/loot_table/finds/hoard_{rank}.json"), {"type": "minecraft:chest", "random_sequence": "awaken:finds/hoard_" + rank, "pools": pools})
+    K.write(os.path.join(K.RES, "data/awaken/loot_table/finds/remains.json"), {"type": "minecraft:chest", "random_sequence": "awaken:finds/remains",
+            "pools": [{"rolls": 2, "entries": [counted(i, max(1, lo // 3), max(2, hi // 3)) for i, lo, hi in STONE[:6]]}]})
+    print(f"finds_olden: content written for {len(every)} blocks, {len(RELICS)} relics, {len(HOARDS)} hoards")
 
 
 if __name__ == "__main__":

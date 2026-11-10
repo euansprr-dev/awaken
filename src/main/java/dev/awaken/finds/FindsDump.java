@@ -29,6 +29,21 @@ final class FindsDump {
             write(dir, k.id(), k, k.number(), k.name(), sc);
             n++;
         }
+        // the painted one of each family again, on a hillside: how each meets land that is not level (SPEC §62.3)
+        for (Kind k : Kinds.monuments()) {
+            if (k.tier() != 3) continue;
+            try {
+                Site site = Sites.forced(k, 0, 64, 0, 0, 11L);
+                Scene sc = Sites.build(site, Terrain.hill(64));
+                natural = Terrain.hill(64);
+                write(dir, k.id() + "_hill", k, 200 + k.number(), k.name() + " on a hill", sc);
+                n++;
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[finds] dump: {} doesn't build on a hill", k.id(), e);
+            } finally {
+                natural = null;
+            }
+        }
         // generators given other numbers (a plan's proofs): the same file, under the proof's name, on the dish's own site
         Kind host = Kinds.byId("listening_dish");
         if (host != null)
@@ -46,6 +61,9 @@ final class FindsDump {
         Awaken.LOG.info("[finds] dump: {} places written to {}", n, dir.toAbsolutePath());
     }
 
+    /** The land a dump is standing on when it is not level; null on a level pad. */
+    private static Terrain natural;
+
     private static void write(Path dir, String file, Kind k, int number, String name, Scene sc) {
         StringBuilder b = new StringBuilder(1 << 18);
         b.append("K ").append(file).append(' ').append(number).append(' ').append(k.reach()).append(' ').append(name).append('\n');
@@ -56,6 +74,10 @@ final class FindsDump {
             int x = BlockPos.getX(key), z = BlockPos.getZ(key);
             b.append("G ").append(x).append(' ').append(z).append(' ').append(sc.groundAt(x, z)).append('\n');
         }
+        if (natural != null)                                        // and the land's own ground wherever the scene left it alone
+            for (int x = -k.reach() - 2; x <= k.reach() + 2; x++)
+                for (int z = -k.reach() - 2; z <= k.reach() + 2; z++)
+                    if (!sc.shaped.contains(BlockPos.asLong(x, 0, z))) b.append("G ").append(x).append(' ').append(z).append(' ').append(natural.floor(x, z) - 64).append('\n');
         for (var e : sc.blocks().long2ObjectEntrySet()) {
             long key = e.getLongKey();
             String s = e.getValue().toString(); // Block{minecraft:oak_stairs}[facing=north,...]

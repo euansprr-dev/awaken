@@ -23,6 +23,8 @@ final class Anchors {
             case PEAK -> hilltop(k, t, x, z, h, 58);
             case LINE -> line(k, t, x, z, h);
             case FIELD -> field(k, t, x, z, h);
+            case TERRACE -> terrace(k, t, x, z, h, false);
+            case HIGH -> terrace(k, t, x, z, h, true);
             case SHORE -> shore(k, t, x, z, h);
             case CLIFF -> cliff(k, t, x, z, h);
             case SLOPE -> slope(k, t, x, z, h);
@@ -66,6 +68,63 @@ final class Anchors {
             if (sorted[16] - sorted[0] <= Math.max(3, k.slope()) + 2) return new int[] {cx, sorted[8], cz, (int) (h & 3)};
         }
         return null;
+    }
+
+    /** The forty-nine spots a terrace is tried at: a grid 24 apart round the cell's own point, nearest first. All inside the cell's edge. */
+    private static final int[][] GRID = grid();
+
+    private static int[][] grid() {
+        java.util.List<int[]> g = new java.util.ArrayList<>();
+        for (int i = -3; i <= 3; i++) for (int j = -3; j <= 3; j++) g.add(new int[] {i, j});
+        g.sort(java.util.Comparator.comparingInt(o -> o[0] * o[0] + o[1] * o[1]));
+        return g.toArray(int[][]::new);
+    }
+
+    /**
+     * Ground a monument can stand its terrace on (SPEC §62.3). Seventeen points (the middle and two rings), all dry and
+     * within the kind's slope of each other. The site's height is the eleventh of them from the bottom, so most of the
+     * terrace is built up and little is cut in; and the kind is turned so that its front looks down the fall of the land.
+     * The first census of monuments on level ground only (10 Nov) stood 12 of 616: this is what asks less of the land.
+     */
+    private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long h, boolean highest) {
+        int r = Math.max(8, k.reach() * 4 / 5), sea = t.seaLevel();
+        int[] f = new int[17], best = null;
+        for (int[] o : GRID) {
+            int cx = x + o[0] * 24, cz = z + o[1] * 24;
+            f[0] = t.floor(cx, cz);
+            boolean dry = f[0] > sea;
+            double gx = 0, gz = 0;
+            for (int j = 0; j < 16 && dry; j++) {
+                double a = j * Math.PI / 4 + (j >= 8 ? Math.PI / 8 : 0);
+                int rr = j >= 8 ? r : r / 2;
+                f[1 + j] = t.floor(cx + (int) Math.round(Math.cos(a) * rr), cz + (int) Math.round(Math.sin(a) * rr));
+                dry = f[1 + j] > sea;
+                if (j >= 8) {
+                    gx += f[1 + j] * Math.cos(a);
+                    gz += f[1 + j] * Math.sin(a);
+                }
+            }
+            if (!dry) continue;
+            int[] sorted = f.clone();
+            java.util.Arrays.sort(sorted);
+            if (sorted[16] - sorted[0] > Math.max(4, k.slope())) continue;
+            // (gx, gz) points uphill; the kind's south goes the other way, unless the land is as good as level
+            int rot = (int) (h & 3);
+            if (gx * gx + gz * gz > 9) {
+                double bestDot = -1e9;
+                for (int d = 0; d < 4; d++) {
+                    double dot = -(gx * DX[d] + gz * DZ[d]);
+                    if (dot > bestDot) {
+                        bestDot = dot;
+                        rot = d;
+                    }
+                }
+            }
+            int[] at = {cx, sorted[10], cz, rot};
+            if (!highest) return at;
+            if (best == null || at[1] > best[1]) best = at;
+        }
+        return best;
     }
 
     private static int @Nullable [] flat(Kind k, Terrain t, int x, int z, long h) {

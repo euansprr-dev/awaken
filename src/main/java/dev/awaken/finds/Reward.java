@@ -79,6 +79,7 @@ public final class Reward {
     private static void one(Ctx c, ServerPlayer p, BlockPos from) {
         Kind k = c.kind();
         FindsData d = p.getData(FindsContent.FINDS);
+        boolean firstOfKind = d.count(k.id()) == 0;
         p.setData(FindsContent.FINDS, d.withDone(k.id(), c.site.key()).withoutLeadTo(c.site.key()));
         LootTable table = c.level.getServer().reloadableRegistries().getLootTable(table(k));
         table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
@@ -86,7 +87,8 @@ public final class Reward {
         dev.awaken.core.api.Promises.kept(p, "find/" + c.site.key());
         Progression.count(p, "awaken:finds_done");
         if (!Finds.counts(p)) return;
-        if (k.size() == Kind.Size.PLACE && !k.loot().startsWith("relic_")) table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
+        if (k.family() != null) Relics.earned(c, p, k, from, firstOfKind);   // a monument's relic, or its next step (SPEC §62.7)
+        if (k.size() == Kind.Size.PLACE && k.family() == null && !k.loot().startsWith("relic_")) table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
                 .withParameter(LootContextParams.THIS_ENTITY, p).create(LootContextParamSets.CHEST), stack -> c.pop(from, stack)); // a place pays twice over
         boolean fresh = Progression.discover(p, k.key(), (k.size() == Kind.Size.CURIO ? 0.06 : k.size() == Kind.Size.FIND ? 0.12 : 0.3) + 0.02 * k.rank());
         if (fresh) {

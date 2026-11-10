@@ -33,6 +33,12 @@ public final class FindsClient {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFogColour);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFog);
+        // a relic's tooltip says which of its five steps it is at (SPEC §62.7)
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.ItemTooltipEvent e) -> {
+            if (e.getEntity() == null) return;
+            var line = dev.awaken.finds.Relics.stepLine(e.getEntity(), e.getItemStack());
+            if (line != null) e.getToolTip().add(line);
+        });
     }
 
     // ---- a place's air (SPEC §59.4) -----------------------------------------------------------------------------------
@@ -108,7 +114,7 @@ public final class FindsClient {
         for (Kind k : Kinds.monuments()) {
             int n = d.count(k.id());
             ItemStack icon = k.icon().get();
-            String where = "Monument " + k.number() + " of " + Kinds.monuments().size() + ".";
+            String where = k.family() == null ? "" : k.family().display + ", " + k.tier() + " of 5.";
             if (n > 0) out.add(new Catalogue.Slot(k.name(), true, k.learned() + "\n\n" + where + " Found " + (n == 1 ? "once." : n + " times."), icon));
             else if (d.seen().contains(k.id())) out.add(new Catalogue.Slot(k.name(), true, k.see() + "\n\n" + where + " You have been here. There is something still to do.", icon));
             else out.add(Catalogue.Slot.unknown());

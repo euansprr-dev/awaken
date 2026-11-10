@@ -37,6 +37,9 @@ public final class Scene {
     final Map<String, List<BlockPos>> parts = new LinkedHashMap<>();
     final List<Spawn> spawns = new ArrayList<>();
     private final Long2IntOpenHashMap ground = new Long2IntOpenHashMap();
+    private final Long2IntOpenHashMap natural = new Long2IntOpenHashMap();
+    /** Water the scene wants running (scene offsets): the feature gives each a fluid tick once it is written. */
+    public final List<BlockPos> flows = new ArrayList<>();
     int clear;
     @Nullable BlockPos tell;
     /** Columns whose ground the scene set itself (turned offsets): the feature fills or cuts the land to them even where nothing is built. */
@@ -51,6 +54,7 @@ public final class Scene {
         this.rnd = RandomSource.create(site.seed() ^ 0x5DEECE66DL);
         this.turn = Rotation.values()[site.rot() & 3];
         ground.defaultReturnValue(Integer.MIN_VALUE);
+        natural.defaultReturnValue(Integer.MIN_VALUE);
     }
 
     // ---- coordinates ------------------------------------------------------------------------------------------------
@@ -83,6 +87,29 @@ public final class Scene {
             ground.put(k, v);
         }
         return v;
+    }
+
+    /** The land's own ground at a column, whatever the scene has shaped there since (relative to the heart's). */
+    public int nat(int lx, int lz) {
+        int dx = wx(lx, lz), dz = wz(lx, lz);
+        long k = BlockPos.asLong(dx, 0, dz);
+        int v = natural.get(k);
+        if (v == Integer.MIN_VALUE) {
+            v = terrain.floor(site.x() + dx, site.z() + dz) - site.y();
+            natural.put(k, v);
+        }
+        return v;
+    }
+
+    /** Water at this block is to run once the world has it (a channel that fills, a fall). */
+    public Scene flow(int lx, int dy, int lz) {
+        flows.add(rel(lx, dy, lz));
+        return this;
+    }
+
+    /** The land the site stands in: what wears a monument (sand, snow, vines) goes by this. */
+    public dev.awaken.living.region.RegionMap.Group land() {
+        return site.group();
     }
 
     /** The ground at an already turned offset, for the feature. */

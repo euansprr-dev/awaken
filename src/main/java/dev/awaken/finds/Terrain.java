@@ -31,6 +31,34 @@ public interface Terrain {
         return false;
     }
 
+    /**
+     * A hillside falling to the south with a roll in it, far above any sea: what the picture maker stands a monument on to
+     * see how it meets land that is not level (SPEC §62.3). About sixteen blocks from top to bottom across a monument.
+     */
+    static Terrain hill(int y) {
+        return new Terrain() {
+            @Override
+            public int floor(int x, int z) {
+                return y - (int) Math.round(z * 0.15 + 2.4 * Math.sin(x * 0.09) * Math.cos(z * 0.07) + 1.5 * Math.sin((x + z) * 0.05));
+            }
+
+            @Override
+            public int surface(int x, int z) {
+                return floor(x, z);
+            }
+
+            @Override
+            public int seaLevel() {
+                return y - 60;
+            }
+
+            @Override
+            public boolean structureNear(int x, int z, int chunks) {
+                return false;
+            }
+        };
+    }
+
     /** Level ground at one height, far above any sea: what a site made by hand stands on. */
     static Terrain flat(int y) {
         return new Terrain() {

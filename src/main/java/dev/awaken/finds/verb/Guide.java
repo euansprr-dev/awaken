@@ -21,6 +21,7 @@ public final class Guide implements Script {
     private ParticleOptions look = ParticleTypes.END_ROD;
     private double speed = 0.16;
     private net.minecraft.sounds.SoundEvent note;
+    private java.util.function.BiConsumer<Ctx, Integer> each = (c, i) -> {};
 
     private Guide(String way) {
         this.way = way;
@@ -44,6 +45,12 @@ public final class Guide implements Script {
     /** A sound it makes each time it reaches a waypoint, a little higher each time. */
     public Guide note(net.minecraft.sounds.SoundEvent e) {
         note = e;
+        return this;
+    }
+
+    /** Something the world does each time it reaches a waypoint (a flower opens, a lamp comes on). */
+    public Guide each(java.util.function.BiConsumer<Ctx, Integer> each) {
+        this.each = each;
         return this;
     }
 
@@ -97,6 +104,7 @@ public final class Guide implements Script {
                     i++;
                     c.v(0, i);
                     if (note != null) c.sound(c.pos(way, i), note, 1.0F, 0.8F + 0.06F * i);
+                    each.accept(c, i);
                     if (i == n - 1) {
                         c.sound(c.pos(way, i), SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.2F);
                         c.v(1, 0);

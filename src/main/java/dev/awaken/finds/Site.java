@@ -24,7 +24,7 @@ public record Site(Kind kind, int layer, int x, int y, int z, long seed, int rot
     /** Whether a position lies in the site's box, with {@code extra} blocks of margin. */
     public boolean holds(BlockPos p, int extra) {
         int r = kind.reach() + extra;
-        return Math.abs(p.getX() - x) <= r && Math.abs(p.getZ() - z) <= r && p.getY() >= y - 24 && p.getY() <= y + 72;
+        return Math.abs(p.getX() - x) <= r && Math.abs(p.getZ() - z) <= r && p.getY() >= y - 64 && p.getY() <= y + 128;
     }
 
     public BlockPos world(BlockPos rel) {

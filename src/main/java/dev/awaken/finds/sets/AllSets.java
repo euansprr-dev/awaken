@@ -28,11 +28,24 @@ public final class AllSets {
         PlacesWild.init();
         PlacesStone.init();
         PlacesFar.init();
-        Monuments.init();
+        // the twelve families of monuments (SPEC §62), in Journal order, and the remains that point to them
+        MDish.init();
+        MRoad.init();
+        MArchive.init();
+        MStair.init();
+        MMast.init();
+        MOrrery.init();
+        MHall.init();
+        MGarden.init();
+        MClock.init();
+        MShaft.init();
+        MChains.init();
+        MDoor.init();
+        Remains.init();
     }
 
     /** Scenes that are not kinds: a generator given other numbers, drawn for a plan's page by the picture maker. */
     public static java.util.Map<String, java.util.function.Consumer<dev.awaken.finds.Scene>> proofs() {
-        return Monuments.proofs();
+        return java.util.Map.of();
     }
 }

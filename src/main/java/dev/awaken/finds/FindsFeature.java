@@ -177,6 +177,12 @@ public record FindsFeature() implements Feature {
             BlockState was = level.getBlockState(p), now = Block.updateFromNeighbourShapes(was, level, p);
             if (now != was) level.setBlock(p, now, Block.UPDATE_CLIENTS);
         }
+        for (BlockPos f : sc.flows) {
+            int x = s.x() + f.getX(), z = s.z() + f.getZ();
+            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
+            m.set(x, s.y() + f.getY(), z);
+            if (!level.getFluidState(m).isEmpty()) level.scheduleTick(m, net.minecraft.world.level.material.Fluids.WATER, 2);
+        }
         BlockPos heart = s.heart();
         if (heart.getX() >= x0 && heart.getX() <= x1 && heart.getZ() >= z0 && heart.getZ() <= z1) {
             level.setBlock(heart, FindsContent.HEART.get().defaultBlockState(), Block.UPDATE_CLIENTS);
