@@ -466,9 +466,10 @@ final class ArmourLight {
                     int at = k * 12;
                     float[] p = c.pos;
                     if (glow) {
-                        // the brightest cells spill a little over their neighbours, along the face
-                        if (i < 0.7f) continue;
-                        int argb = scale(style.mid, (0.1f + 0.12f * flash) * fade * Math.min(i, 1.2f));
+                        // the set's lines spill a little over their neighbours, along the face; cloth and plate never do
+                        // (in the first film every lit cell spilt, and the spills added up to a pale wash over the whole arm)
+                        if (i < 0.7f || c.role[k] < TRIM) continue;
+                        int argb = scale(style.mid, (0.07f + 0.12f * flash) * fade * Math.min(i, 1.2f));
                         float cx = (p[at] + p[at + 6]) * 0.5f, cy = (p[at + 1] + p[at + 7]) * 0.5f, cz = (p[at + 2] + p[at + 8]) * 0.5f;
                         for (int v = 0; v < 12; v += 3) {
                             vc.addVertex(pose, cx + (p[at + v] - cx) * SPILL + lx, cy + (p[at + v + 1] - cy) * SPILL + ly, cz + (p[at + v + 2] - cz) * SPILL + lz)
