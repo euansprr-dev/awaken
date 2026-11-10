@@ -1,0 +1,146 @@
+[
+ {
+  "title": "The Longsword's chain, first person",
+  "frames": [
+   {
+    "file": "long_1p_combo_005.jpg",
+    "caption": "At rest.",
+    "alt": "The Longsword held at rest at the right of the view"
+   },
+   {
+    "file": "long_1p_combo_011.jpg",
+    "caption": "Second strike, mid-cut. The pale wedge is the blade's ribbon.",
+    "alt": "The blade rising across the lower view with a pale ribbon behind it"
+   },
+   {
+    "file": "long_1p_combo_012.jpg",
+    "caption": "The hit. The game freezes here for 45 ms.",
+    "alt": "The blade stopped on the husk, which has turned red"
+   },
+   {
+    "file": "long_1p_combo_013.jpg",
+    "caption": "Later in the same freeze. The weapon holds its pose and nothing on it answers the hit.",
+    "alt": "The same pose a moment later"
+   },
+   {
+    "file": "long_1p_combo_020.jpg",
+    "caption": "After the cut, stopped at the right.",
+    "alt": "The blade held at the right edge after the cut"
+   },
+   {
+    "file": "long_1p_combo_026.jpg",
+    "caption": "Two and a half ticks later, the same place. In the film's numbers it has crept under a centimetre.",
+    "alt": "The blade in the same place later"
+   },
+   {
+    "file": "long_1p_combo_031.jpg",
+    "caption": "Third strike raised, the arm up to the grip.",
+    "alt": "The blade raised high with the forearm in view"
+   },
+   {
+    "file": "long_1p_combo_034.jpg",
+    "caption": "Third strike frozen on the hit.",
+    "alt": "The blade down across the husk inside a bright ribbon"
+   }
+  ],
+  "note": "The second and third strikes of the chain against a husk that can't move. Pictures are a quarter of a tick apart."
+ },
+ {
+  "title": "The heavy, held and loosed",
+  "frames": [
+   {
+    "file": "long_1p_heavy_056.jpg",
+    "caption": "Charged and held in view, as the 9 Nov round set it.",
+    "alt": "The Longsword raised high and held"
+   },
+   {
+    "file": "long_1p_heavy_068.jpg",
+    "caption": "Loosed at full charge: the blow frozen on the hit, its ribbon gold.",
+    "alt": "The blade across the husk with a gold ribbon"
+   }
+  ]
+ },
+ {
+  "title": "The guard",
+  "frames": [
+   {
+    "file": "long_1p_guard_026.jpg",
+    "caption": "The guard up.",
+    "alt": "The Longsword laid across the view in guard"
+   },
+   {
+    "file": "long_1p_guard_027.jpg",
+    "caption": "The next picture, half a tick later: already at rest.",
+    "alt": "The Longsword back at rest"
+   }
+  ],
+  "note": "In the film's frame data the guard rises over two ticks and is back at rest one frame after the key comes up, on both weapons."
+ },
+ {
+  "title": "Changing weapon",
+  "frames": [
+   {
+    "file": "long_1p_swap_008.jpg",
+    "caption": "Longsword in hand.",
+    "alt": "The Longsword at rest"
+   },
+   {
+    "file": "long_1p_swap_015.jpg",
+    "caption": "Four ticks after the change: nothing on screen.",
+    "alt": "An empty view with the husk"
+   },
+   {
+    "file": "long_1p_swap_024.jpg",
+    "caption": "Nine ticks after: still nothing.",
+    "alt": "An empty view with the husk"
+   },
+   {
+    "file": "long_1p_swap_031.jpg",
+    "caption": "Thirteen ticks after: the Katana comes up.",
+    "alt": "A blade coming up from the bottom right"
+   }
+  ],
+  "note": "Longsword to Katana. Vanilla raises the new weapon only as its attack cooldown refills, 13 ticks for the Katana."
+ },
+ {
+  "title": "The Maul's slam",
+  "frames": [
+   {
+    "file": "maul_1p_combo_015.jpg",
+    "caption": "At rest.",
+    "alt": "The Maul held with its head up"
+   },
+   {
+    "file": "maul_1p_combo_019.jpg",
+    "caption": "Raised overhead. The arms fill the corner.",
+    "alt": "The Maul raised with both arms in view"
+   },
+   {
+    "file": "maul_1p_combo_023.jpg",
+    "caption": "Frozen on the hit.",
+    "alt": "The Maul brought down beside the husk"
+   },
+   {
+    "file": "maul_1p_combo_027.jpg",
+    "caption": "After. The husk is thrown and the number shows.",
+    "alt": "The husk red and leaning with a damage number"
+   }
+  ]
+ },
+ {
+  "title": "From the side, as others see it",
+  "frames": [
+   {
+    "file": "long_side_combo_009.jpg",
+    "caption": "Raised for the first strike.",
+    "alt": "The fighter with the sword raised, seen from the side"
+   },
+   {
+    "file": "long_side_combo_055.jpg",
+    "caption": "The third strike on the husk.",
+    "alt": "The sword low across the husk"
+   }
+  ],
+  "note": "Poses only. On the slow runner the body's clip trails the hands, so timing can't be read from this take."
+ }
+]

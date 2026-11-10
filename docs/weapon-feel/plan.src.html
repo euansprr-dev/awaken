@@ -206,8 +206,8 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <div class="legend"><span><i style="background: var(--forge)"></i>The cut: its fast part is about 3 frames at 60 a second, the blade crossing two thirds of the screen</span><span><i style="background: color-mix(in srgb, var(--bad) 55%, var(--panel))"></i>The freeze on the hit</span></div>
     <p>Your eye gets the fast part of the cut for about three frames. It gets the freeze and what follows for four times as long. And in that time:</p>
     <ul>
-      <li><strong>In the freeze,</strong> the creature trembles but your weapon is perfectly still.</li>
-      <li><strong>After it,</strong> the blade is at a dead stop about 60 ms after the freeze lets go. It backs up a little, and then doesn't move at all (speed 0.00 in the keys) for as long as you wait.</li>
+      <li><strong>In the freeze,</strong> the creature trembles but your weapon just holds its pose. Nothing on it answers the hit.</li>
+      <li><strong>After it,</strong> the blade is at a dead stop about 60 ms after the freeze lets go. It backs up a little, and then holds as good as still for as long as you wait (speed 0.00 in the keys; under a centimetre of creep in the film).</li>
       <li><strong>At rest,</strong> every weapon trails your view by the same spring. A Maul follows your look exactly as a dagger does.</li>
     </ul>
     <p>Section 3 says how the dead stop got there.</p>
@@ -217,7 +217,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <h3>You approved these on 28 Oct and they were never built <span class="tag warn">checked on every branch</span></h3>
     <p>The Fight Feel plan had eight changes. You said <q>Go ahead with the fight feel plan</q>. Stage 1 was built and merged. Then that session went into the dagger rounds, and these stayed on the page:</p>
     <ul>
-      <li><strong>The draw.</strong> Changing weapon is still vanilla's dip, with no sound. No weapon has a presence until it swings.</li>
+      <li><strong>The draw.</strong> Changing weapon is still vanilla's dip, with no sound. And vanilla brings the new weapon up only as fast as its attack cooldown refills, a cooldown the fighting doesn't use. In the film the screen held no weapon for nine ticks after a change to the Katana. By that rule the Maul, with a 29-tick cooldown, is out of view for about a second. A strike thrown in that time is drawn that far below the frame (read from the code, not filmed).</li>
       <li><strong>The katana's sheath.</strong> Its first strike after two seconds' rest hits ×1.7. Nothing on screen or in your ears says so.</li>
       <li><strong>Walls.</strong> Blows land through walls, and a swing into stone is silent.</li>
       <li><strong>Counter-hits</strong> and <strong>cutting wild grass</strong>.</li>
@@ -226,9 +226,10 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 
   <h3>Smaller things, same check</h3>
   <ul>
-    <li>The guard comes up in a straight line over two ticks and drops in a single frame.</li>
+    <li>The guard comes up in a straight line over two ticks and drops in a single frame (measured in the film on the Longsword and the Maul).</li>
     <li>In third person the Longsword's heavy is still the old rising cut, while first person chops.</li>
     <li>Third person as others see it was filmed for the Shieldblade on 9 Nov, and for none of the other fifteen since that round.</li>
+    <li>The lab's own check of which part of a weapon leads into the hit fails on 12 first-person and 31 third-person moves of the merged build, nearly all on the four hand-keyed weapons. That check was written for the rule-made swings and may simply not fit them. It is a flag for your eye: does a Twin Blade or a Dagger slash ever lead with the back of the blade?</li>
   </ul>
 
   <h3>What is right and stays untouched</h3>
@@ -296,7 +297,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 
   <div class="change"><h3><span class="n">4</span>Weight in the freeze and after it</h3>
     <dl class="rows">
-      <dt>Evidence</dt><dd>In the freeze the weapon is still. After the cut it stops dead within 60 ms and holds at speed 0.00.</dd>
+      <dt>Evidence</dt><dd>In the freeze the weapon only holds its pose. After the cut it stops dead within 60 ms and holds at speed 0.00.</dd>
       <dt>Change</dt><dd>Three small layers drawn over the same keys, in your own game only:
         <br><strong>The shake.</strong> While a landed blow is frozen, the weapon shudders along the cut and dies away by the end of the freeze. About 5 pixels for daggers, 9 for a blade, 13 for the Maul on a 1080p screen.
         <br><strong>The settle.</strong> Where the blade stops after a cut, it carries a little past and comes back once, with no bounce. Quick and small for daggers (it peaks in 0.05 s and is gone by 0.2), slower and bigger for the Maul (0.1 s, gone by 0.5). Only along the way the blade was already going.
@@ -309,7 +310,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 
   <div class="change"><h3><span class="n">5</span>The guard and the parry</h3>
     <dl class="rows">
-      <dt>Evidence</dt><dd>The guard rises in a straight line and drops in one frame. The parry's sound is the ding.</dd>
+      <dt>Evidence</dt><dd>In the film the guard rises in a straight line over two ticks and is back at rest one frame after the key comes up. The parry's sound is the ding.</dd>
       <dt>Change</dt><dd>The guard comes up on a curve and seats with a small settle, in the same two ticks. It lowers over three ticks. On a parry the blade is thrown toward the blow and back, a third harder than today's jolt, with its new sound from change 2.</dd>
       <dt>Keeps</dt><dd>The parry and block windows exactly. They are the server's, and only the picture changes.</dd>
       <dt>Risk</dt><dd>A slower drop could look like the guard is still up when it isn't. Three ticks is the first value; the picture never leads the rule by more than that.</dd>
@@ -318,11 +319,11 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 
   <div class="change"><h3><span class="n">6</span>Presence: the draw, the sheath, the weight in your look</h3>
     <dl class="rows">
-      <dt>Evidence</dt><dd>No draw motion or sound on any weapon. The katana's bonus is invisible. One look-lag for all sixteen.</dd>
-      <dt>Change</dt><dd><strong>The draw</strong>, as you approved on 28 Oct: changing to a weapon plays a six-tick flourish over vanilla's rise and a sound by family. Blades ring, hafted weapons knock, the Chain-blade rattles, Gauntlets creak, the Precursor Arm hums. Everyone near hears it. Sounds from Minecraft's recordings, on the same listening page.
+      <dt>Evidence</dt><dd>No draw motion or sound on any weapon, and the new weapon stays below the frame for 9 ticks (Katana) to over 20 (Maul) after a change. The katana's bonus is invisible. One look-lag for all sixteen.</dd>
+      <dt>Change</dt><dd><strong>The draw</strong>, as you approved on 28 Oct, with one addition. The weapon comes up on the draw's own clock, 6 ticks for daggers, 8 for a blade, 10 for the Maul, with a small turn of the wrist and a settle, in place of vanilla's cooldown rise. It plays a sound by family. Blades ring, hafted weapons knock, the Chain-blade rattles, Gauntlets creak, the Precursor Arm hums. Everyone near hears it. Sounds from Minecraft's recordings, on the same listening page.
         <br><strong>The katana's sheath.</strong> After two seconds' rest the hands lower it to the hip with a soft click. The drawn strike has its own sound and a brighter ribbon, so the ×1.7 is something you see and hear.
         <br><strong>Weight in the look.</strong> The hands trail your view by the weapon's weight: daggers tight, a blade as today, the Maul and Greatblade slower and further.</dd>
-      <dt>Keeps</dt><dd>Vanilla's swap speed. You can strike the moment you can today. The draw never plays after a power cast puts the weapon back.</dd>
+      <dt>Keeps</dt><dd>You can strike the moment you can today; the strike just takes over from wherever the draw has got to. The draw never plays after a power cast puts the weapon back.</dd>
       <dt>Risk</dt><dd>A flourish on every swap can get old. It is short, it halves with reduced motion, and it has a switch.</dd>
       <dt>Test</dt><dd>Film of all sixteen draws. Your ear and your play.</dd>
     </dl></div>
@@ -388,7 +389,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
   </div>
 
   <h3>The real game, today</h3>
-  <p>Frames from the merged build, filmed on GitHub's runner with the world slowed to a tenth so every frame can be read. Slow films hide glitches, as 9 Nov taught, so these show poses only. They say nothing about how it feels at speed.</p>
+  <p>Frames from the merged build (43dceee2a), filmed today on GitHub's runner with the world slowed to a tenth so every frame can be read. Slow films hide glitches, as 9 Nov taught, so these show poses only. They say nothing about how it feels at speed.</p>
   <!--FRAMES-->
 </section>
 
@@ -436,7 +437,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <tr><td>The heavy and its charge</td><td>Drawn in view, a slow strain, a synthetic ting at full, lands when the blade crosses</td><td>The same draw and strain. A wooden lock at full in place of the ting. A harder shake and a longer settle on the blow</td></tr>
     <tr><td>Riposte, Slipcut, Undercut, Plunge, Execution, the Art</td><td>Their own clips; some kick off the blade</td><td>Same clips, direction fixed, new hit and kill sounds. Not re-keyed</td></tr>
     <tr><td>Block and parry</td><td>Up in a line, down in a frame; a ding on the parry</td><td>Up on a curve with a settle, down over three ticks; the blade thrown at the blow; a real ring</td></tr>
-    <tr><td>Draw and sheathe</td><td>Vanilla's dip, silent</td><td>A six-tick draw and a sound for each family; the katana rests at the hip</td></tr>
+    <tr><td>Draw and sheathe</td><td>Vanilla's dip, silent; the weapon out of view for 9 to 20 ticks</td><td>A draw of 6 to 10 ticks by weight and a sound for each family; the katana rests at the hip</td></tr>
     <tr><td>Idle</td><td>Perfectly still; one look-lag for all</td><td>A slow breath; the look-lag by weight</td></tr>
     <tr><td>Sprint</td><td>The body's sprint, the weapon kept in hand</td><td>Unchanged. The weighted look carries into it</td></tr>
     <tr><td>Into a wall</td><td>Through it, silent</td><td>Stops, clanks, sparks, bounces</td></tr>
@@ -465,6 +466,22 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <tr><td>High ping in multiplayer</td><td>The kill's extra freeze arrives late</td><td>As today: it is dropped, never replayed. The layers are local, so ping can't touch them</td></tr>
     <tr><td>Frame cost</td><td>Fights get heavier</td><td>The layers are a few additions per frame with nothing allocated. Measured on your Mac before merge, at a time agreed with the shaders session</td></tr>
   </table></div>
+  <h3>How one blow flows, and where the plan touches it</h3>
+  <div class="scroll" style="padding: 12px"><pre class="mermaid">
+flowchart LR
+  P["Your press"] --> H["The hands decide the strike"]
+  H --> B["The blade crosses the creature"]
+  B --> S["Your game shows the hit at once"]
+  B --> V["The server sweeps and decides the damage"]
+  V -->|confirmed| K["A kill or a cleave is added"]
+  V -.->|"new: refused, and why"| L["Play log and black box"]
+  D["New: the cut's direction, baked once"] --> S
+  D --> V
+  S --> W["New: shake, settle, living hold"]
+  S --> A["New: sounds from Minecraft's recordings"]
+  V --> G["New: walls stop it, the blade glances"]
+</pre></div>
+  <p class="note">Everything marked new sits beside the existing path. The press, the hands' decision and the server's damage are not changed.</p>
   <h3>With the other three sessions</h3>
   <ul>
     <li><strong>Weapon models.</strong> Stages 0 to 5 don't depend on any shape. Stage 6 keys against final shapes, so it follows theirs. A new shape moves only where a weapon rests, never where a blow lands, because the swings are solved in view terms. The four hand-keyed weapons carry their blade lengths in their keys and need a re-bake if a length changes. A scabbard for the katana is theirs to draw if you want one.</li>
@@ -519,6 +536,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <li><strong>Why the ghost hits happen.</strong> The three-tick lag is a guess. Stage 0 exists to replace it with a fact.</li>
     <li><strong>The ghost rate on today's build.</strong> The logs are from 4 to 9 Nov. It may already be lower.</li>
     <li><strong>Third person and multiplayer.</strong> Not filmed since the 9 Nov round. Latency with a real second player has never been tested.</li>
+    <li><strong>A second dip on a weapon change.</strong> In the film the Katana sank once more part-way up. That may come from the film's own command. It needs a look in real play.</li>
     <li><strong>Frame cost on your Mac.</strong> Not measured; the shaders session is measuring on it now.</li>
     <li><strong>The player above is a drawing.</strong> The shake and settle in it are my first values, drawn in a browser. They show the idea. Stage 3 is where you judge the real thing.</li>
   </ul>
