@@ -296,7 +296,12 @@ Built on this branch, on top of build's tip (merged at 464ecf45c), one commit a 
 | 4 Living parts | 582dc434b | twelve sets move (turn, tilt, sway, drift, pulse); mastery IV grows in; setting and command | kit sweep check; test of the files; CI tour (`after5`) | |
 | 6 Moments and marks | 7d031b821 | the wake feet to crown and the System's line; forge marks in the shader; a piece in the world drawn as itself; icons; the status line as an API | tests `armour_whole_wakes`; CI tour (`after5`) | |
 | 5 Sound | 25c34b5fb | 45 sounds from Minecraft's recordings by name; equip, stride and blow by what a set is made of; the three notes | every name checked against this game; test `armour_sounds_named` | **nobody has heard any of it**: the listening page is the gate |
+| Bigger options | 2ed291bc5 | the suit answers its ability (a kick on the living parts); Admire (hold O, the camera circles you in a hero light) | kit sweep check with the kick; CI tour (`after6`) | Admire by the held key (the tour uses the command) |
+
+Seen in the game on CI so far: stages 0 to 2 on all 29 sets (`after3`); living parts on all twelve sets and mastery
+IV's parts growing in (`after5` living, 72 shots: the marker turns, the sun's rays turn, the halo tilts, lanterns and
+ribbons swing in a walk, Galewing's primaries open in a fall, the shards drift).
 
 Left to do: stage 3's B, A and S sets (after his eye on C); the Status line placed by the K menu's owner; the Hunter
-sets' equip sound (the gear module's items); the old sound files deleted once the page is marked; Admire and the
-abilities that use the suit (the bigger options he chose, after the pass); the measuring run on his Mac (ask first).
+sets' equip sound (the gear module's items); the old sound files deleted once the page is marked; the measuring run on
+his Mac (ask first); the grips film check with weapon-feel; a slim-skin shot.
