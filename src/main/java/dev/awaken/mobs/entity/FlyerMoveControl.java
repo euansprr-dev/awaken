@@ -204,7 +204,7 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
             ahead = 1.0;
             return;
         }
-        AABB box = FlightRoom.padded(mob, here.x, here.y, here.z, pad);
+        AABB box = FlightRoom.skimming(mob, here.x, here.y, here.z, pad);
         double f = FlightRoom.sweep(mob, box, aim.subtract(here).normalize().scale(range));
         if (f >= 1.0) {
             ahead = 1.0;
@@ -243,7 +243,7 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
         double leg = Mth.clamp(range, 3.0, 6.0);
         int keep = mob.tickCount < sideUntil ? side : 0;
         for (int pass = 0; pass < 2; pass++) {
-            AABB box = FlightRoom.padded(mob, here.x, here.y, here.z, pass == 0 ? pad : 0.05);
+            AABB box = FlightRoom.skimming(mob, here.x, here.y, here.z, pass == 0 ? pad : 0.05);
             long tried = 0L;
             for (int t = pass == 0 ? 10 : 6; t > 0; t--) {
                 int best = -1;

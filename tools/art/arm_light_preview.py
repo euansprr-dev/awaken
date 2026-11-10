@@ -367,7 +367,7 @@ def alpha(c, i):
     """ArmourLight: how much of a cell the light covers. The lines are crisp; cloth and plate are tinted, never painted out."""
     if i < 0:
         return 0.62 * min(1.0, -i)
-    return max(0.0, min(1.0, 0.18 + 0.55 * i if c["role"] >= TRIM else 0.62 * i))
+    return min(0.78, 0.18 + 0.55 * i) if c["role"] >= TRIM else min(1.0, 0.62 * i)
 
 
 # The types whose light grows back from the hand (the rest run to the fist).
@@ -410,7 +410,7 @@ def view(cs, lit, style, yaw, pitch, size=(250, 400), scale=30):
         if i < 0:
             col = mix(col, accent, alpha(c, i))
         elif i > 0:
-            glow = mix(mid, core, max(0.0, min(1.0, (i - 0.55) * 2.2)))
+            glow = mix(mid, core, max(0.0, min(1.0, (i - 0.55) * 2.2)) * 0.7)  # never all the way to white but at a release
             col = mix(col, glow, alpha(c, i))
         d.polygon([(size[0] / 2 + p[0] * scale * 0.5, size[1] / 2 + p[1] * scale * 0.5) for p in pts], fill=col)
     return img

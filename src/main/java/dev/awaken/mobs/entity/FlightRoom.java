@@ -128,6 +128,21 @@ public final class FlightRoom {
         return new AABB(x - r, y - pad * 0.5, z - r, x + r, y + m.getBbHeight() + pad, z + r);
     }
 
+    /**
+     * {@link #padded}, its underside lifted to the ground it is skimming: the half clearance under a flier keeps it off
+     * what it flies over, not off what it is already down on. Low over a floor (a dive or a charge ends level with your
+     * feet) the box reached into it, the next block of floor read as a wall, and the flier climbed two or three blocks to
+     * go round it, then began its blows from up there (fights_reach_live_hive_regent).
+     */
+    static AABB skimming(AwakenMob m, double x, double y, double z, double pad) {
+        AABB box = padded(m, x, y, z, pad);
+        double floor = box.minY;
+        for (VoxelShape shape : m.level().getBlockCollisions(m, box.setMaxY(y))) {
+            for (AABB o : shape.toAabbs()) floor = Math.max(floor, Math.min(o.maxY, y));
+        }
+        return floor > box.minY ? box.setMinY(floor) : box;
+    }
+
     /** Whether the hitbox with {@code pad} round it is clear of blocks at (x, y, z). */
     public static boolean passes(AwakenMob m, double x, double y, double z, double pad) {
         return m.level().noBlockCollision(m, padded(m, x, y, z, pad));

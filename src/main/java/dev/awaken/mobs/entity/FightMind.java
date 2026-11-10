@@ -87,6 +87,11 @@ final class FightMind {
         hasPos = false;
     }
 
+    /** The entity id the read is for (the target it last watched), or -1. */
+    int reading() {
+        return target;
+    }
+
     /** Every tick of the fight: what the target is doing now. */
     void watch(@Nullable LivingEntity t, long now) {
         if (t == null || !t.isAlive()) {
