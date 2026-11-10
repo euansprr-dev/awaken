@@ -15,12 +15,15 @@ TOURS = {
     "w1": "run-autopilot/screenshots-ci/way-up-42864057722",
     "w2": "run-autopilot/screenshots-ci/way-up-42868121143",
     "w3": "run-autopilot/screenshots-ci/way-up-42874946585",
+    "w4": "run-autopilot/screenshots-ci/way-up-42879026051",
 }
 # page picture -> (tour, shot, crop as fractions (x0, y0, x1, y1) or None)
 CUTS = {
-    "built_rope": ("w3", "way_vow_08", None),
+    "built_rope": ("w4", "way_vow_08", None),
+    "built_sky_told": ("w4", "way_13_sky_told", None),
+    "built_wings_gift": ("w4", "way_sky_01", None),
     "built_rope_card": ("w2", "way_vow_13_card", None),
-    "built_beam": ("w3", "way_01_vault_told", None),
+    "built_beam": ("w4", "way_01_vault_told", None),
     "built_leap": ("w3", "way_10_leap_figure", None),
     "built_leap_card": ("w1", "way_12_leap_card", None),
     "built_wings": ("w2", "way_sky_10_pier_first_person", None),
@@ -45,7 +48,7 @@ CUTS = {
 }
 # @@FIG:key@@ -> (picture, caption)
 FIGS = {
-    "built_rope": ("built_rope", "<b>Built: the vault's mast.</b> Your own key, with \"Throw it at the mast\", sits on the mast until you throw the rope yourself."),
+    "built_rope": ("built_rope", "<b>Built: the vault's mast.</b> Your own key, with \"Throw it at the mast\", sits on the mast until you throw the rope yourself. The rope's title now sits below the vault's discovery card."),
     "built_leap": ("built_leap", "<b>Built: the leap's moment.</b> One plain sentence, and your key under the crosshair until you press it in the air."),
     "built_wings": ("built_wings", "<b>Built: the first flight.</b> A line of rings off the pier, and your key on the way out."),
     "built_sky": ("built_sky", "<b>Built: flight's keys as a strip</b> at the top of the screen, out of the fight's way. (Shown here outside the fight, by a tour command.)"),
@@ -61,13 +64,15 @@ FIGS = {
 # @@FIG:key@@ -> [(picture, caption), ...] as a row of three
 STRIPS = {
     "vow_strip": [
-        ("built_beam", "<b>Built: a vault lights up.</b> The thin green line over the roofs is its beam, 450 blocks away. The message was still a toast here and its last words were cut; it is now a panel that shows all of them."),
+        ("built_beam", "<b>Built: a vault lights up.</b> The thin green line over the roofs is its beam, 450 blocks away. The panel at the top is still typing: it ends \"It's 450 blocks north-east of here.\""),
         ("built_rope_card", "<b>Built: the rope thrown by hand.</b> The prompt has gone and the rope's card of keys shows for four seconds."),
         ("vow_a", "<b>Before: the vault's rope scene, out of reach in a new world.</b> The rope has just pulled the player up the pylon. Its words, \"The line is yours\", are drawn underneath the vault's own discovery card. The tour forced the two together; the scene itself holds nothing back."),
         ("vow_b", "<b>Before: then it asked you to use it,</b> \"Reach the beacon mast\", with a ring of light on the mast at the left."),
         ("tasks_vow", "<b>Before: the Tasks page at D-rank, rope in hand.</b> The card at the bottom right, \"Keep the Tether Vow\", can never be done in a new world: the vow only starts for someone without the rope."),
     ],
     "wings_strip": [
+        ("built_sky_told", "<b>Built: a sky platform lights up.</b> Where it is, and how you climb it."),
+        ("built_wings_gift", "<b>Built: the core's gift,</b> one plain sentence."),
         ("built_wings_open", "<b>Built: wings open on the second press,</b> and the Wings card shows."),
         ("wings_after", "<b>Before: four seconds after the gift.</b> The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened."),
         ("wings_k", "<b>Before: the K menu at C-rank with wings.</b> The next row still says the sky \"calls you to a trial\". That trial can no longer be reached."),
