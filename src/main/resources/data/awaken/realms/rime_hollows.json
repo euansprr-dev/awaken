@@ -18,13 +18,13 @@
     ],
     "lens": "rime_hollows",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "snow",
       "wind",
-      "drips",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "drips"
     ]
   },
   "life": {

@@ -18,11 +18,11 @@
     ],
     "lens": "glass_warrens",
     "air": [
+      "beams",
+      "shaft_dust",
       "sand",
       "dust",
-      "shaft_dust",
-      "wind",
-      "beams"
+      "wind"
     ]
   },
   "life": {

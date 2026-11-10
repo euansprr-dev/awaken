@@ -170,7 +170,7 @@ final class WorldAir {
             Air a = make(level, GatesRegistry.P_WISP.get(), p.x, p.y, p.z, 0, -0.003, 0, pale(s.rgb()), s.radius() * (5F + r.nextFloat() * 3F));
             if (a != null) {
                 a.glow = true;
-                a.peak = 0.05F + 0.06F * Math.min(1F, s.strength());
+                a.peak = 0.06F + 0.07F * Math.min(1F, s.strength());
                 a.setLifetime(160 + r.nextInt(100));
             }
         }

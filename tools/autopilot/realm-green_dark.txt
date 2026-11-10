@@ -23,36 +23,36 @@ wait 300
 look 0 -8
 cmd awaken gate realm_at MOUTH 0 0 0 3
 look 0 10
-wait 80
+wait 200
 shot green_dark_mouth
 cmd awaken gate realm_leg FIGHT 0 6 3
-wait 80
+wait 200
 shot green_dark_first_fight
 cmd awaken gate realm_leg FIGHT 1 6 3
-wait 80
+wait 200
 shot green_dark_second_fight
 cmd awaken gate realm_leg AMBUSH 0 6 3
-wait 80
+wait 200
 shot green_dark_ambush
 cmd awaken gate realm_leg WARDEN 0 7 3
-wait 80
+wait 200
 shot green_dark_warden
 cmd awaken gate realm_leg LORD 0 9 4
-wait 80
+wait 200
 shot green_dark_lord
 cmd awaken gate realm_leg LORD 0 -9 5
-wait 80
+wait 200
 shot green_dark_lord_back
 cmd awaken gate realm_leg MOVEMENT 0 0 2
-wait 80
+wait 200
 shot green_dark_move1
 cmd awaken gate realm_leg MOVEMENT 1 0 2
-wait 80
+wait 200
 shot green_dark_move2
 cmd awaken gate realm_leg MOVEMENT 2 0 2
-wait 80
+wait 200
 shot green_dark_move3
 cmd awaken gate realm_leg TRAP 0 8 2
-wait 80
+wait 200
 shot green_dark_trap
 quit

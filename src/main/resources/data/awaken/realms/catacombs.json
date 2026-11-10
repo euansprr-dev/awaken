@@ -18,15 +18,15 @@
     ],
     "lens": "catacombs",
     "air": [
-      "mist",
+      "beams",
+      "floor_mist",
       "shaft_dust",
+      "mist",
       "dust",
       "drips",
       "bats",
       "rats",
-      "far_toll",
-      "beams",
-      "floor_mist"
+      "far_toll"
     ]
   },
   "life": {

@@ -18,13 +18,13 @@
     ],
     "lens": "frozen_cells",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "snow",
       "wind",
-      "shaft_dust",
-      "dust",
-      "beams",
-      "floor_mist"
+      "dust"
     ]
   },
   "life": {

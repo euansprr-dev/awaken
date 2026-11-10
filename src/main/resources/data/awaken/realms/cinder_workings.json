@@ -18,14 +18,14 @@
     ],
     "lens": "cinder_workings",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "smoke",
       "ash",
       "embers",
       "dust",
-      "steam",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "steam"
     ]
   },
   "life": {

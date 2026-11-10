@@ -18,14 +18,14 @@
     ],
     "lens": "hollow_hills",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "dust",
       "drips",
       "bats",
-      "wind",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "wind"
     ]
   },
   "life": {

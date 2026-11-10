@@ -18,15 +18,15 @@
     ],
     "lens": "root_cellars",
     "air": [
-      "mist",
+      "beams",
+      "floor_mist",
       "shaft_dust",
+      "mist",
       "spores",
       "drips",
       "moths",
       "fireflies",
-      "petals",
-      "beams",
-      "floor_mist"
+      "petals"
     ]
   },
   "life": {

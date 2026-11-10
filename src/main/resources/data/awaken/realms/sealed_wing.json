@@ -18,10 +18,10 @@
     ],
     "lens": "sealed_wing",
     "air": [
-      "steam",
-      "dust",
+      "beams",
       "shaft_dust",
-      "beams"
+      "steam",
+      "dust"
     ]
   },
   "life": {

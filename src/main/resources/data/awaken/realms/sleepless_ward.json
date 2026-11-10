@@ -18,13 +18,13 @@
     ],
     "lens": "sleepless_ward",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "dust",
       "moths",
-      "procession",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "procession"
     ]
   },
   "life": {

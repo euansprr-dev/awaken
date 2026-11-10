@@ -18,13 +18,13 @@
     ],
     "lens": "stopped_works",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "smoke",
       "steam",
       "embers",
-      "dust",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "dust"
     ]
   },
   "life": {

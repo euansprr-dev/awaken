@@ -18,14 +18,14 @@
     ],
     "lens": "sunken_stacks",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "paper",
       "drips",
       "dust",
-      "pale_fish",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "pale_fish"
     ]
   },
   "life": {

@@ -17,9 +17,9 @@ for arg in sys.argv[1:]:
            'cmd awaken powers starter 1', 'wait 20', 'screen close', 'cmd difficulty normal', 'cmd gamerule send_command_feedback false', '',
            '# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.',
            'cmd awaken gate realm_enter %s awaken:%s %s' % (rank, kind, seed), 'need realm', 'hud off', 'wait 30', 'wait 300', 'look 0 -8',
-           'cmd awaken gate realm_at MOUTH 0 0 0 3', 'look 0 10', 'wait 80', 'shot %s_mouth' % kind]
+           'cmd awaken gate realm_at MOUTH 0 0 0 3', 'look 0 10', 'wait 200', 'shot %s_mouth' % kind]
     for shot, leg in SHOTS:
-        out += ['cmd awaken gate realm_leg ' + leg, 'wait 80', 'shot %s_%s' % (kind, shot)]
+        out += ['cmd awaken gate realm_leg ' + leg, 'wait 200', 'shot %s_%s' % (kind, shot)]  # ten seconds: the air fills as it would round someone standing there
     out += ['quit', '']
     open('tools/autopilot/realm-%s.txt' % kind, 'w').write('\n'.join(out))
     print('wrote', kind, seed)

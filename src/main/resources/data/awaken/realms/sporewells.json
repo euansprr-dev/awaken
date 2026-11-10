@@ -18,14 +18,14 @@
     ],
     "lens": "sporewells",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "spores",
       "fireflies",
       "drips",
-      "moths",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "moths"
     ]
   },
   "life": {

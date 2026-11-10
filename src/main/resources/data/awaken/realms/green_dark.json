@@ -18,15 +18,15 @@
     ],
     "lens": "green_dark",
     "air": [
+      "beams",
+      "floor_mist",
+      "shaft_dust",
       "mist",
       "spores",
       "fireflies",
       "drips",
       "moths",
-      "petals",
-      "shaft_dust",
-      "beams",
-      "floor_mist"
+      "petals"
     ]
   },
   "life": {
