@@ -6306,9 +6306,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     copy swap into the main target". While Pixels lends the main target its smaller texture, the picture's next stop
     is Pixels' upscale, which can read any texture: Pixels makes one more colour texture the world's size
     (`lowOut`), Tiles hands it to the pass that draws into swap as its colour target, the copy into the main target
-    is left out (`PostPass`'s frame lambda, cancelled at its head), and the upscale reads `lowOut`. Only with one post
-    effect requested, the steady pass off, the sizes equal, and on the chains `lens_cinematic`, `lens_ultra` and
-    `lens_swift`; otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
+    is left out (`PostPass`'s frame lambda, cancelled at its head), and the upscale reads `lowOut` (through the steady
+    pass when that is on: it takes the picture from wherever it went. The first build left Steady out, and CI showed
+    straight out never engaging, since Steady is on in every preset but one and in Euan's own settings). Only with
+    one post effect requested, the sizes equal, and on the chains `lens_cinematic`, `lens_ultra` and `lens_swift`;
+    otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
     reads the finished picture's neighbours.
   - **Near clouds in the composite.** The walk of the near clouds (`include/lens_cloud_walk.glsl`, `cloudNear`) runs
     inside the composite, per pixel against that pixel's depth, and once more at half size in the bloom prefilter

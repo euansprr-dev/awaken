@@ -91,9 +91,9 @@ final class PixelsFrame {
             low = sized(low, "Pixels world", sw, sh, main.getColorTexture().getFormat(), main.getDepthTexture().getFormat());
             lowHand = sized(lowHand, "Pixels hand depth", sw, sh, null, hand.getDepthTexture().getFormat());
             lend(main, hand);
-            // straight out: when one post effect runs (Lens's chain; Tiles knows its own) and the steady pass, which
-            // reads the low world texture itself, doesn't
-            if (!steady && net.minecraft.client.Minecraft.getInstance().gameRenderer.getRequestedPostEffects().size() == 1) {
+            // straight out: when one post effect runs (Lens's chain; Tiles knows its own). The steady pass reads the
+            // picture from wherever it went (it was left out at first, and Steady is on in every preset but one)
+            if (net.minecraft.client.Minecraft.getInstance().gameRenderer.getRequestedPostEffects().size() == 1) {
                 lowOut = sized(lowOut, "Pixels straight out", sw, sh, main.getColorTexture().getFormat(), null);
                 dev.awaken.turbo.tiles.Tiles.straightOut(lowOut.getColorTextureView());
             }
@@ -126,13 +126,9 @@ final class PixelsFrame {
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             // steadied first, at the world's resolution; then upscaled as ever (native: copied out, nothing sharpened that
             // wasn't before)
-            GpuTextureView world;
-            if (steady) {
-                world = PixelsSteady.resolve(encoder, low, lowHand);
-            } else {
-                world = straight ? lowOut.getColorTextureView() : low.getColorTextureView();
-                PixelsSteady.skip();
-            }
+            GpuTextureView world = straight ? lowOut.getColorTextureView() : low.getColorTextureView();
+            if (steady) world = PixelsSteady.resolve(encoder, low, lowHand, world);
+            else PixelsSteady.skip();
             if (low.width >= main.width && low.height >= main.height) {
                 pass(encoder, BILINEAR_LABEL, main.getColorTextureView(), PixelsPipelines.BILINEAR, world, FilterMode.NEAREST);
             } else if (upscaler == PixelsConfig.Upscaler.FSR) {
