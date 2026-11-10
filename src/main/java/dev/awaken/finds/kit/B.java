@@ -163,7 +163,8 @@ public final class B {
         for (int i = 0; a0 + i <= a1 - i; i++) {
             int lo = a0 + i, hi = a1 - i, yy = y + 1 - over + i;
             for (int b = b0; b <= b1; b++) {
-                boolean gone = holes > 0 && n(s, b * 1.0 + 5, lo * 1.0 + yy, 3.2) * 100 < holes, gone2 = holes > 0 && n(s, b * 1.0 - 9, hi * 1.0 - yy, 3.2) * 100 < holes;
+                // a roof that has fallen in keeps its eaves, its gable ends and its ridge beam: nothing left hanging from nothing
+                boolean gone = holes > 0 && i > 1, gone2 = gone;
                 if (lo == hi) {                                   // the ridge: a beam with a slab cap
                     put(s, alongX, b, yy - 1, lo, axis(p.log(), alongX ? Direction.Axis.X : Direction.Axis.Z));
                     if (!gone) put(s, alongX, b, yy, lo, p.slab());
@@ -171,6 +172,7 @@ public final class B {
                 }
                 if (!gone) put(s, alongX, b, yy, lo, stair(p.stair(), alongX ? Direction.SOUTH : Direction.EAST));
                 if (!gone2) put(s, alongX, b, yy, hi, stair(p.stair(), alongX ? Direction.NORTH : Direction.WEST));
+                if (gone && hi - lo == 1) put(s, alongX, b, yy - 1, lo, axis(p.log(), alongX ? Direction.Axis.X : Direction.Axis.Z));
             }
             // the gable ends, walled under every stair so each row stands on the wall and not only on its neighbour's corner
             if (i > 0) for (int a = Math.max(lo, alongX ? z0 : x0); a <= Math.min(hi, alongX ? z1 : x1); a++) {
@@ -197,7 +199,7 @@ public final class B {
         for (int x = -ir; x <= ir; x++)
             for (int z = -ir; z <= ir; z++) {
                 double d = Math.sqrt(x * x + z * z);
-                if (d >= r - 0.5 && d < r + 0.5) s.put(cx + x, y, cz + z, st);
+                if (d >= r - 0.71 && d < r + 0.71) s.put(cx + x, y, cz + z, st);
             }
     }
 
@@ -229,7 +231,7 @@ public final class B {
             for (int z = -ir; z <= ir; z++)
                 for (int k = 0; k <= ir; k++) {
                     double d = Math.sqrt(x * x + z * z + k * k);
-                    if (d >= r - 0.5 && d < r + 0.5) s.put(cx + x, y + k, cz + z, st);
+                    if (d >= r - 0.95 && d < r + 0.5) s.put(cx + x, y + k, cz + z, st);
                 }
     }
 
@@ -263,12 +265,28 @@ public final class B {
 
     /** A lump of something with a rough skin: a boulder, a mound, a crag. {@code pick} gets the position's hash. */
     public static void blob(Scene s, int cx, int cy, int cz, double rx, double ry, double rz, IntFunction<BlockState> pick) {
-        for (int x = (int) -rx - 1; x <= rx + 1; x++)
-            for (int y = (int) -ry - 1; y <= ry + 1; y++)
-                for (int z = (int) -rz - 1; z <= rz + 1; z++) {
+        int ax = (int) rx + 2, ay = (int) ry + 2, az = (int) rz + 2, wx = 2 * ax + 1, wy = 2 * ay + 1, wz = 2 * az + 1;
+        boolean[] in = new boolean[wx * wy * wz], ok = new boolean[wx * wy * wz];
+        for (int x = -ax; x <= ax; x++)
+            for (int y = -ay; y <= ay; y++)
+                for (int z = -az; z <= az; z++) {
                     double f = x * x / (rx * rx) + y * y / (ry * ry) + z * z / (rz * rz);
-                    if (f <= 0.78 + n(s, cx + x + y * 0.7, cz + z - y * 0.7, 3.0) * 0.44) s.put(cx + x, cy + y, cz + z, pick.apply(h(s, cx + x, cy + y, cz + z)));
+                    in[((x + ax) * wy + y + ay) * wz + z + az] = f <= 0.78 + n(s, cx + x + y * 0.7, cz + z - y * 0.7, 3.0) * 0.44;
                 }
+        // a lump is one piece: only what joins its middle by a face is kept, so no speck hangs off its skin
+        java.util.ArrayDeque<int[]> q = new java.util.ArrayDeque<>();
+        q.add(new int[] {0, 0, 0});
+        ok[(ax * wy + ay) * wz + az] = true;
+        while (!q.isEmpty()) {
+            int[] c = q.poll();
+            s.put(cx + c[0], cy + c[1], cz + c[2], pick.apply(h(s, cx + c[0], cy + c[1], cz + c[2])));
+            for (int d = 0; d < 6; d++) {
+                int x = c[0] + (d == 0 ? 1 : d == 1 ? -1 : 0), y = c[1] + (d == 2 ? 1 : d == 3 ? -1 : 0), z = c[2] + (d == 4 ? 1 : d == 5 ? -1 : 0);
+                if (Math.abs(x) > ax || Math.abs(y) > ay || Math.abs(z) > az) continue;
+                int i = ((x + ax) * wy + y + ay) * wz + z + az;
+                if (in[i] && !ok[i]) { ok[i] = true; q.add(new int[] {x, y, z}); }
+            }
+        }
     }
 
     /**
@@ -294,7 +312,6 @@ public final class B {
                 int d = Math.max(1, (int) Math.round(depth * (1 - f * f * 0.75)));
                 for (int k = 0; k < d; k++) s.put(cx + x, y - k, cz + z, WATER);
                 s.put(cx + x, y - d, cz + z, h(s, cx + x, y, cz + z) < 90 ? bedB : bed);
-                for (int k = 1; k <= 3; k++) if (!s.taken(cx + x, y + k, cz + z)) s.put(cx + x, y + k, cz + z, AIR);
             }
     }
 
@@ -332,7 +349,14 @@ public final class B {
             for (int y = -ir; y <= ir; y++)
                 for (int z = -ir; z <= ir; z++) {
                     double f = (x * x + y * y * 1.7 + z * z) / (r * r);
-                    if (f <= 0.7 + h(s, cx + x, cy + y, cz + z) / 255.0 * 0.4 && !s.taken(cx + x, cy + y, cz + z)) s.put(cx + x, cy + y, cz + z, leaf);
+                    if (f > 1.1 || s.taken(cx + x, cy + y, cz + z)) continue;
+                    // a solid middle, and loose leaves outside it only where one face touches the middle
+                    boolean core = f <= 0.72, touch = false;
+                    if (!core) for (int d = 0; d < 6 && !touch; d++) {
+                        int nx = x + (d == 0 ? 1 : d == 1 ? -1 : 0), ny = y + (d == 2 ? 1 : d == 3 ? -1 : 0), nz = z + (d == 4 ? 1 : d == 5 ? -1 : 0);
+                        touch = (nx * nx + ny * ny * 1.7 + nz * nz) / (r * r) <= 0.72;
+                    }
+                    if (core || touch && h(s, cx + x, cy + y, cz + z) < 150) s.put(cx + x, cy + y, cz + z, leaf);
                 }
     }
 
@@ -366,7 +390,11 @@ public final class B {
             double a = d * Math.PI / 4 + 0.3;
             for (int j = 1; j <= tr + 3; j++) {
                 int rx = x + (int) Math.round(Math.cos(a) * (tr + j)), rz = z + (int) Math.round(Math.sin(a) * (tr + j));
-                for (int k = Math.max(y - 7, Math.min(y - 1, s.g(rx, rz))); k <= y + Math.max(0, 2 - j); k++) s.put(rx, k, rz, log);
+                // a root runs down to the ground, or to whatever the tree stands on
+                for (int k = y + Math.max(0, 2 - j); k >= Math.min(y - 1, s.g(rx, rz)); k--) {
+                    if (k < y && s.taken(rx, k, rz)) break;
+                    s.put(rx, k, rz, log);
+                }
             }
             int lx = x + (int) Math.round(Math.cos(a) * (tr + r * 0.8)), lz = z + (int) Math.round(Math.sin(a) * (tr + r * 0.8)), ly = y + h - 2 - (d & 1) * 2;
             limb(s, x + (int) Math.round(Math.cos(a) * tr), ly - 2, z + (int) Math.round(Math.sin(a) * tr), lx, ly, lz, log);
@@ -380,13 +408,18 @@ public final class B {
         BlockState log = Blocks.JUNGLE_LOG.defaultBlockState(), frond = leaf(Blocks.JUNGLE_LEAVES);
         int tx = x, tz = z;
         for (int i = 0; i < h; i++) {
-            if (i == h / 2 || i == h * 3 / 4) tx += DX[lean & 3];
+            if (i == h / 2 || i == h * 3 / 4) {                   // the lean: an elbow, so the trunk stays one piece
+                tx += DX[lean & 3];
+                tz += DZ[lean & 3];
+                s.put(tx, y + i - 1, tz, log);
+            }
             s.put(tx, y + i, tz, log);
         }
         s.put(tx, y + h, tz, frond);
         for (int d = 0; d < 8; d++) {
-            int ax = d < 4 ? DX[d] : (d == 4 || d == 7 ? 1 : -1), az = d < 4 ? DZ[d] : (d < 6 ? 1 : -1);
-            for (int j = 1; j <= (d < 4 ? 4 : 3); j++) s.put(tx + ax * j, y + h - (j >= 3 ? j - 2 : 0), tz + az * j, frond);
+            int ax = d < 4 ? DX[d] : (d == 4 || d == 7 ? 1 : -1), az = d < 4 ? DZ[d] : (d < 6 ? 1 : -1), len = d < 4 ? 4 : 3;
+            limb(s, tx, y + h, tz, tx + ax * 2, y + h, tz + az * 2, frond);
+            limb(s, tx + ax * 2, y + h, tz + az * 2, tx + ax * len, y + h - 2, tz + az * len, frond);
         }
     }
 
@@ -459,6 +492,7 @@ public final class B {
         int dx = door == 1 ? x1 : door == 3 ? x0 : mx, dz = door == 0 ? z0 : door == 2 ? z1 : mz;
         s.put(dx, y + 1, dz, AIR);
         s.put(dx, y + 2, dz, AIR);
+        if (holes > 30) for (int k = y + 3; k <= y + wallH + 1; k++) s.put(dx, k, dz, AIR); // a ruin's doorway is open to the sky: no lintel left on nothing
         gable(s, x0, z0, x1, z1, y + wallH, p, alongX, 1, holes);
         int w = (alongX ? z1 - z0 : x1 - x0) + 3, ridge = y + wallH + (w - 1) / 2;
         if (holes < 30) s.put(mx, w % 2 == 1 ? ridge - 2 : ridge - 1, mz, lantern(true, false));

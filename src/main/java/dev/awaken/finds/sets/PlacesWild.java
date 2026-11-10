@@ -38,8 +38,8 @@ final class PlacesWild {
         for (int i = 0; i <= n; i++) {
             int x = x0 + Math.round((x1 - x0) * i / (float) Math.max(1, n)), z = z0 + Math.round((z1 - z0) * i / (float) Math.max(1, n));
             for (int w = 0; w <= 1; w++) {
-                if (s.get(x + px * w, y, z + pz * w) == null) s.put(x + px * w, y, z + pz * w, top(slab));
-                if (s.get(x - pz * w, y, z - px * w) == null && w == 1) s.put(x + px, y, z + pz, top(slab));
+                BlockState was = s.get(x + px * w, y, z + pz * w);
+                if (was == null || was.isAir()) s.put(x + px * w, y, z + pz * w, top(slab));
             }
             if (i % 4 == 2) for (int k = y - 1; k >= -3; k--) if (s.get(x, k, z) == null || s.get(x, k, z) == WATER) s.put(x, k, z, post);
         }
@@ -81,7 +81,7 @@ final class PlacesWild {
                         for (int x = cx - 2; x <= cx + 2; x += 4) for (int z = cz - 2; z <= cz + 2; z += 4) for (int y = -3; y <= 6; y++) s.put(x, y, z, post);
                         fill(s, cx - 2, 3, cz - 2, cx + 2, 3, cz + 2, plank);
                         gable(s, cx - 2, cz - 2, cx + 2, cz + 2, 6, p, i % 2 == 0, 1, 0);
-                        s.put(cx, 6, cz, lantern(true, false));
+                        s.put(cx, 7, cz, lantern(true, false));
                         Direction in = Math.abs(cx) > Math.abs(cz) ? (cx > 0 ? Direction.WEST : Direction.EAST) : Direction.SOUTH;
                         int fx = cx + in.getStepX() * 2, fz = cz + in.getStepZ() * 2, sx = in.getStepZ(), sz = in.getStepX();
                         for (int k = -1; k <= 1; k++) s.put(fx + sx * k, 4, fz + sz * k, k == 0 ? AIR : top(st(Blocks.SPRUCE_SLAB)));
@@ -135,9 +135,9 @@ final class PlacesWild {
                                 for (int z = -6; z <= 6; z++) {
                                     double d = Math.sqrt(x * x + z * z);
                                     if (d > 2.6 && d <= 5.6 && s.get(tx + x, lvl, tz + z) == null) s.put(tx + x, lvl, tz + z, deck);
-                                    else if (d > 5.6 && d <= 6.4 && Math.abs(x) > 1 && Math.abs(z) > 1 && lvl == 14) s.put(tx + x, 15, tz + z, rail);
+                                    if (d > 4.8 && d <= 5.6 && Math.abs(x) > 1 && Math.abs(z) > 1 && lvl == 14) s.put(tx + x, 15, tz + z, rail);
                                 }
-                        for (int d = 0; d < 4; d++) { int px = tx + (d < 2 ? 4 : -4), pz = tz + (d % 2 == 0 ? 4 : -4); for (int y = 15; y <= 17; y++) s.put(px, y, pz, rail); s.put(px, 13, pz, lantern(true, false)); }
+                        for (int d = 0; d < 4; d++) { int px = tx + (d < 2 ? 3 : -3), pz = tz + (d % 2 == 0 ? 3 : -3); for (int y = 15; y <= 17; y++) s.put(px, y, pz, rail); s.put(px, 13, pz, lantern(true, false)); }
                         stilled(s, tx + 4, 15, tz + (i % 2 == 0 ? 0 : 1), i, i % 2 == 0 ? Direction.WEST : Direction.EAST);
                         vines(s, tx - 4, 2, tz - 4, tx + 4, 13, tz + 4, 22);
                     }
@@ -156,12 +156,12 @@ final class PlacesWild {
                     s.part("cache", 12, 22, -11);
                     stilled(s, 14, 22, -9, 2, Direction.WEST);
                     // bridges along the square's sides and in to a hanging floor in the middle
-                    for (int k = -3; k <= 3; k++)
+                    for (int k = -5; k <= 5; k++)
                         for (int w = -1; w <= 1; w++) {
                             for (int side = -10; side <= 10; side += 20) {
-                                s.put(k, 14, side + w, deck);
-                                s.put(side + w, 14, k, deck);
-                                if (w != 0) { s.put(k, 15, side + w, rail); s.put(side + w, 15, k, rail); }
+                                if (s.get(k, 14, side + w) == null) s.put(k, 14, side + w, deck);
+                                if (s.get(side + w, 14, k) == null) s.put(side + w, 14, k, deck);
+                                if (w != 0 && Math.abs(k) <= 3) { s.put(k, 15, side + w, rail); s.put(side + w, 15, k, rail); }
                             }
                         }
                     for (int k = 3; k <= 8; k++) for (int w = -1; w <= 1; w++) { s.put(w, 14, k, deck); s.put(w, 14, -k, deck); if (w != 0 && k < 8) { s.put(w, 15, k, rail); s.put(w, 15, -k, rail); } }
@@ -381,7 +381,7 @@ final class PlacesWild {
                     s.part("furnace", -10, 1, -11);
                     s.put(-11, 1, -11, brick);
                     s.put(-9, 1, -11, brick);
-                    for (int y = 1; y <= 18; y++) for (int x = -17; x <= -15; x++) for (int z = -14; z <= -12; z++) if ((x != -16 || z != -13) && !(y > 11 && h(s, x, y, z) < 40)) s.put(x, y, z, y > 15 && h(s, x, y, z) < 110 ? AIR : h(s, x, y, z) < 50 ? st(Blocks.GRANITE) : brick);
+                    for (int y = 1; y <= 18; y++) for (int x = -17; x <= -15; x++) for (int z = -14; z <= -12; z++) if ((x != -16 || z != -13) && !(y == 18 && h(s, x, y, z) < 110)) s.put(x, y, z, h(s, x, y, z) < 50 ? st(Blocks.GRANITE) : brick);
                     // the pit, the crane over it, and what is in the mould
                     for (int x = 2; x <= 10; x++)
                         for (int z = -6; z <= 2; z++) {

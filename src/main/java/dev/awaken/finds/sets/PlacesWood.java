@@ -137,8 +137,8 @@ final class PlacesWood {
                     for (int y = -1; y <= 5; y++)
                         for (int z = -5; z <= 1; z++) {
                             double d = Math.sqrt((y - 2) * (y - 2) + (z + 2) * (z + 2));
-                            if (d >= 2.5 && d < 3.5 && !(y == 5 && z == -2)) s.put(3, y, z, st(Blocks.SPRUCE_PLANKS));
-                            else if (d > 0.5 && d < 2.5 && (y == 2 || z == -2)) s.put(3, y, z, st(Blocks.SPRUCE_FENCE));
+                            if (d >= 2.1 && d < 3.5 && !(y == 5 && z == -2)) s.put(3, y, z, st(Blocks.SPRUCE_PLANKS));
+                            else if (d > 0.5 && d < 2.1 && (y == 2 || z == -2)) s.put(3, y, z, st(Blocks.SPRUCE_FENCE));
                         }
                     for (int x = 3; x <= 6; x++) s.put(x, 2, -2, axis(st(Blocks.DARK_OAK_LOG), Direction.Axis.X));
                     s.part("paddle", 3, 5, -2);
@@ -226,16 +226,12 @@ final class PlacesWood {
                     air(s, 0, 1, 4, 0, 3, 5);                              // the split that is the door
                     s.put(1, 1, 4, AIR);
                     s.put(1, 2, 4, AIR);
-                    BlockState lo = st(Blocks.OAK_SLAB), hi = top(lo);
-                    for (int i = 0; i < 56; i++) {                         // the stair round the inside, half a block a step
-                        double a = Math.toRadians(100 + i * 20);
-                        int x = (int) Math.round(Math.cos(a) * 3), z = (int) Math.round(Math.sin(a) * 3), y = 1 + i / 2;
-                        s.put(x, y, z, i % 2 == 0 ? lo : hi);
-                    }
-                    for (int y : new int[] {10, 20}) {
-                        disc(s, 0, 0, 2.0, y, plank);
+                    for (int y : new int[] {10, 20}) {                     // two floors, wall to wall, a ladder through each
+                        for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) if (x * x + z * z < 16) s.put(x, y, z, plank);
                         s.put(0, y - 1, 0, lantern(true, false));
                     }
+                    for (int y = 1; y <= 10; y++) s.put(3, y, 0, ladder(Direction.WEST));
+                    for (int y = 11; y <= 20; y++) s.put(-3, y, 0, ladder(Direction.EAST));
                     // ground floor: the store
                     s.put(-2, 1, -2, st(Blocks.BARREL));
                     s.part("chest", -2, 1, -2);
@@ -409,7 +405,7 @@ final class PlacesWood {
                     s.part("altar", 0, 14, -21);
                     s.put(-1, 13, -21, candles(3, true));
                     s.put(1, 13, -21, candles(2, true));
-                    s.put(0, 15, -20, lantern(true, false));
+                    s.put(0, 16, -20, lantern(true, false));
                     s.part("cache", 0, 13, -19);
                     for (int x = -2; x <= 2; x++) s.put(x, 11, -16, stair(st(Blocks.STONE_BRICK_STAIRS), Direction.NORTH));
                     stilled(s, 1, s.g(1, 4) + 1, 4, 1, Direction.SOUTH);

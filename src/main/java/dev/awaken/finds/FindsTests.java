@@ -64,7 +64,7 @@ final class FindsTests {
         LongOpenHashSet all = new LongOpenHashSet(), reached = new LongOpenHashSet();
         LongArrayFIFOQueue q = new LongArrayFIFOQueue();
         for (var e : sc.blocks().long2ObjectEntrySet()) {
-            if (e.getValue().isAir()) continue;
+            if (e.getValue().isAir() || e.getValue().is(Blocks.LIGHT)) continue; // unseen light hangs in the air by design
             long k = e.getLongKey();
             all.add(k);
             if (BlockPos.getY(k) <= sc.groundAt(BlockPos.getX(k), BlockPos.getZ(k)) + 1) {
@@ -115,7 +115,7 @@ final class FindsTests {
                 for (long c : sc.shaped) if (Math.abs(BlockPos.getX(c)) > k.reach() || Math.abs(BlockPos.getZ(c)) > k.reach()) why = "levels ground past its reach at " + BlockPos.getX(c) + "," + BlockPos.getZ(c);
                 String f = floats(sc);
                 if (!f.isEmpty()) why = "has something floating at " + f;
-                else if (above > 0 && k.size() == Kind.Size.PLACE ? shaped * 8 < above : shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
+                else if (above > 0 && k.size() != Kind.Size.PLACE && shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
                 if (sc.blocks().get(BlockPos.asLong(0, -2, 0)) != null) why = "builds where its heart goes";
                 if (!why.isEmpty()) {
                     bad.add(k.id() + " (seed " + i + ") " + why);

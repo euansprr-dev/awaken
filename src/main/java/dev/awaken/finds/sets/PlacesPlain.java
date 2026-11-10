@@ -203,15 +203,12 @@ final class PlacesPlain {
                     dome(s, 0, 0, 7, 11, copper);
                     for (int z = -8; z <= -1; z++) for (int y = 12; y <= 19; y++) if (s.get(0, y, z) != null) s.put(0, y, z, AIR);   // the slot
                     BlockState brass = st(Blocks.CUT_COPPER_STAIRS.waxed().unaffected());
-                    for (int k = 0; k <= 8; k++) s.put(0, 8 + k, 3 - k, stair(brass, Direction.NORTH));                         // the tube
-                    s.put(0, 7, 3, st(Blocks.CUT_COPPER.waxed().unaffected()));
+                    for (int k = 0; k <= 8; k++) { s.put(0, 8 + k, 3 - k, stair(brass, Direction.NORTH)); s.put(0, 7 + k, 3 - k, st(Blocks.CUT_COPPER.waxed().unaffected())); }   // the tube, two thick so it is one piece
+                    s.put(0, 6, 3, st(Blocks.DARK_OAK_PLANKS));
                     // the gallery and the stair up to it
-                    BlockState lo = st(Blocks.DARK_OAK_SLAB), hi = top(lo);
-                    for (int i = 0; i < 12; i++) {
-                        double a = Math.toRadians(70 - i * 17);
-                        s.put((int) Math.round(Math.cos(a) * 5.5), 1 + i / 2, (int) Math.round(Math.sin(a) * 5.5), i % 2 == 0 ? lo : hi);
-                    }
-                    for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) { double d = Math.sqrt(x * x + z * z); if (d >= 4.4 && d < 6.5 && !(x > 2 && z > 0 && z < 5)) s.put(x, 6, z, hi); }
+                    BlockState hi = top(st(Blocks.DARK_OAK_SLAB));
+                    for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) { double d = Math.sqrt(x * x + z * z); if (d >= 3.4 && d < 6.5) s.put(x, 6, z, hi); }
+                    for (int y = 1; y <= 6; y++) s.put(6, y, 0, ladder(Direction.WEST));
                     for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) { double d = Math.sqrt(x * x + z * z); if (d >= 3.5 && d < 4.4) s.put(x, 7, z, st(Blocks.DARK_OAK_FENCE)); }
                     stilled(s, 1, 7, 5, 1, Direction.NORTH);
                     // the orrery and its three rings, and the marks they go to
@@ -232,12 +229,12 @@ final class PlacesPlain {
                     s.put(-4, 2, -3, st(Blocks.BOOKSHELF));
                     s.put(0, 5, 0, lantern(true, true));
                     s.put(0, 6, 0, st(Blocks.IRON_CHAIN));
-                    for (int y = 7; y <= 10; y++) s.put(0, y, 0, st(Blocks.IRON_CHAIN));
+                    for (int y = 7; y <= 17; y++) s.put(0, y, 0, st(Blocks.IRON_CHAIN));
                     for (int x = -1; x <= 1; x += 2) lamp(s, x * 2, 1, 9, 2, st(Blocks.DIORITE_WALL), true);
                     // outside: the keeper's hut, a sundial, the old dome lying where it fell
                     house(s, 9, -12, 13, -8, 0, 2, p, 2, 0);
                     s.put(-9, 1, 9, Props.SUNDIAL.get().of(0));
-                    for (int x = -13; x <= -7; x++) for (int z = -13; z <= -9; z++) for (int y = 1; y <= 4; y++) { double d = Math.sqrt((x + 10) * (x + 10) + (z + 9) * (z + 9) + (y - 1) * (y - 1)); if (d >= 3.0 && d < 4.0) s.put(x, y, z, h(s, x, y, z) < 60 ? AIR : green); }
+                    for (int x = -13; x <= -7; x++) for (int z = -13; z <= -9; z++) for (int y = 1; y <= 4; y++) { double d = Math.sqrt((x + 10) * (x + 10) + (z + 9) * (z + 9) + (y - 1) * (y - 1)); if (d >= 2.6 && d < 4.1) s.put(x, y, z, green); }
                     path(s, 0, 18, 0, 14, 1, st(Blocks.POLISHED_ANDESITE), st(Blocks.GRAVEL));
                     s.cam(0, 12, 34, 180, 2).cam(14, 28, 14, 135, 46).cam(0, 2, 13, 180, -8).cam(3, 2, 4, 140, -18);
                 })
@@ -392,8 +389,10 @@ final class PlacesPlain {
                         }
                     for (int z = -6; z <= 6; z += 6) {
                         for (int x = -2; x <= 2; x += 4) pillar(s, x, z, -1, 2 + (h(s, x, 0, z) & 3), brick, st(Blocks.CHISELED_STONE_BRICKS));
+                        for (int x = -4; x <= 4; x += 8) for (int y = 0; y <= 7; y++) s.put(x, y, z, y < 3 ? mossy : brick);   // a whole pier under each truss
                         for (int x = -4; x <= 4; x++) s.put(x, 8, z, axis(st(Blocks.DARK_OAK_LOG), Direction.Axis.X));
-                        for (int k = 1; k <= 4; k++) { s.put(-4 + k, 8 + k, z, oak); s.put(4 - k, 8 + k, z, oak); }
+                        limb(s, -4, 8, z, 0, 12, z, oak);
+                        limb(s, 4, 8, z, 0, 12, z, oak);
                         s.put(0, 7, z, st(Blocks.IRON_CHAIN));
                         s.put(0, 6, z, lantern(true, true));
                     }

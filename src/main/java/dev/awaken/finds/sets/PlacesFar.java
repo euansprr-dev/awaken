@@ -185,18 +185,17 @@ final class PlacesFar {
                     for (int y = 0; y <= 4; y++) disc(s, 0, 12, 4.4, y, st(Blocks.STONE));
                     for (int x = -5; x <= 5; x++) for (int z = 7; z <= 17; z++) { double d = Math.sqrt(x * x + (z - 12) * (z - 12)); if (d >= 3.5 && d < 4.5) for (int y = 5; y <= 24; y++) s.put(x, y, z, y == 5 ? st(Blocks.POLISHED_ANDESITE) : y >= 13 && y <= 15 ? red : h(s, x, y, z) < 40 ? st(Blocks.DIORITE) : white); else if (d < 3.5) for (int y = 5; y <= 24; y++) s.put(x, y, z, AIR); }
                     air(s, 0, 5, 8, 0, 6, 8);
-                    BlockState lo = st(Blocks.SPRUCE_SLAB), hi = top(lo);
-                    for (int i = 0; i < 38; i++) { double a = Math.toRadians(250 + i * 22); s.put((int) Math.round(Math.cos(a) * 2.4), 5 + i / 2, 12 + (int) Math.round(Math.sin(a) * 2.4), i % 2 == 0 ? lo : hi); }
+                    BlockState hi = top(st(Blocks.SPRUCE_SLAB));
+                    for (int y = 5; y <= 24; y++) s.put(0, y, 15, ladder(Direction.NORTH));
                     for (int y = 9; y <= 21; y += 6) for (int d = 0; d < 4; d++) s.put(DX[d] * 4, y, 12 + DZ[d] * 4, along(st(Blocks.GLASS_PANE), DX[d] == 0));
                     // the gallery, the lamp room, the cap
-                    for (int x = -6; x <= 6; x++) for (int z = 6; z <= 18; z++) { double d = Math.sqrt(x * x + (z - 12) * (z - 12)); if (d < 5.6 && !(Math.abs(x) <= 1 && Math.abs(z - 12) <= 1 && false)) { if (d >= 1.6 || true) s.put(x, 24, z, d < 3.5 && Math.abs(x) + Math.abs(z - 12) <= 1 ? AIR : hi); } if (d >= 5.0 && d < 5.9) s.put(x, 25, z, st(Blocks.IRON_BARS)); if (d >= 2.5 && d < 3.4) for (int y = 25; y <= 27; y++) s.put(x, y, z, st(Blocks.GLASS)); }
+                    for (int x = -6; x <= 6; x++) for (int z = 6; z <= 18; z++) { double d = Math.sqrt(x * x + (z - 12) * (z - 12)); if (d < 5.6) s.put(x, 24, z, hi); if (d >= 5.0 && d < 5.9) s.put(x, 25, z, st(Blocks.IRON_BARS)); if (d >= 2.5 && d < 3.4) for (int y = 25; y <= 27; y++) s.put(x, y, z, st(Blocks.GLASS)); }
                     s.put(0, 24, 12, hi);
-                    s.put(1, 24, 13, AIR);
+                    s.put(0, 24, 15, ladder(Direction.NORTH));
                     cone(s, 0, 12, 3, 28, st(Blocks.CUT_COPPER.waxed().weathered()), st(Blocks.CUT_COPPER_SLAB.waxed().weathered()));
                     s.put(0, 25, 12, st(Blocks.POLISHED_ANDESITE));
                     s.put(0, 26, 12, st(Blocks.REDSTONE_LAMP));
                     s.part("lamp", 0, 26, 12);
-                    for (int y = 25; y <= 26; y++) s.put(0, y, 15, AIR);
                     stilled(s, 0, 25, 17, 1, Direction.SOUTH);
                     // the way up the rock to the door
                     steps(s, -1, 1, -2, 2, 4, 3, st(Blocks.COBBLESTONE_STAIRS), st(Blocks.STONE));
@@ -234,12 +233,14 @@ final class PlacesFar {
                     for (int x = -17; x <= 17; x++) {
                         double w = 4.4 * Math.sqrt(Math.max(0, 1 - (x / 17.6) * (x / 17.6))) + 0.4;
                         for (int o = (int) -w; o <= (int) w; o++) {
-                            int bottom = 1 + (int) Math.round((o / w) * (o / w) * 3.0);
+                            int bottom = 1 + (int) Math.round((o / w) * (o / w) * 3.0), out = Math.abs(o) + 1;
+                            // the planking is one skin: each strake comes up to meet the foot of the next one out
+                            int meet = out <= (int) w ? 1 + (int) Math.round((out / w) * (out / w) * 3.0) : bottom;
                             boolean side = Math.abs(o) == (int) w;
                             for (int y = bottom; y <= 6; y++) {
                                 boolean gap = y == 3 && o == (int) w && x >= 0 && x <= 2;
                                 if (gap) { s.part("plank", x, y, -9 + o); continue; }
-                                if (y == bottom || side || y == 6) s.put(x, y, -9 + o, y == 6 ? deck : (x >= 3 && x <= 6 && o == (int) w && y <= 4) ? st(Blocks.BIRCH_PLANKS) : h(s, x, y, o) < 50 ? spruce : hull);
+                                if (y <= meet || side || y == 6) s.put(x, y, -9 + o, y == 6 ? deck : (x >= 3 && x <= 6 && o == (int) w && y <= 4) ? st(Blocks.BIRCH_PLANKS) : h(s, x, y, o) < 50 ? spruce : hull);
                                 else s.put(x, y, -9 + o, AIR);
                             }
                             if (side && Math.abs(x) < 16) s.put(x, 7, -9 + o, fence);
@@ -380,7 +381,7 @@ final class PlacesFar {
                     s.put(0, 27, -21, st(Blocks.AMETHYST_CLUSTER));
                     s.part("prize", 0, 27, -21);
                     s.part("cache", 1, 26, -22);
-                    s.put(-1, 28, -22, st(Blocks.SHROOMLIGHT));
+                    s.put(-1, 29, -22, st(Blocks.SHROOMLIGHT));
                     stilled(s, 2, 1, -17, 3, Direction.NORTH);
                     for (int i = 0; i < 70; i++) { int x = s.rnd.nextInt(53) - 26, z = s.rnd.nextInt(53) - 26; if (!s.taken(x, 1, z) && x * x + z * z < 700 && Math.abs(x) > 1) s.put(x, 1, z, st(i % 6 == 0 ? Blocks.RED_MUSHROOM : i % 6 == 1 ? Blocks.BROWN_MUSHROOM : i % 6 == 2 ? Blocks.CARPET.pick(DyeColor.PURPLE) : i % 6 == 3 ? Blocks.CARPET.pick(DyeColor.MAGENTA) : i % 6 == 4 ? Blocks.AMETHYST_CLUSTER : Blocks.FERN)); }
                     s.spawn(EntityTypes.MOOSHROOM, 12, 14, 0, "cow").spawn(EntityTypes.MOOSHROOM, -13, 2, 0, "cow");
