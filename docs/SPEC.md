@@ -847,8 +847,10 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.client.FirstPersonDress` (client; §44.1, 2026-11-10) — what your own limbs wear in first person:
   `register(Dresser)`, `limb(Limb, PoseStack, SubmitNodeCollector, light)` (the pose on the limb's bone) and
   `hand(AvatarRenderer, HumanoidArm, PoseStack, SubmitNodeCollector, light)` (straight after vanilla's own hand
-  draw). Whoever draws a first-person limb asks; the armour answers. A power's light on the arm belongs here too
-  when it is built (the dresser's draw takes an energy and an accent already).
+  draw). Whoever draws a first-person limb asks; the armour answers. A light on the limb passes through here too (§32.N,
+  "The light on what you wear"): `glow(rgb, amount)` / `glowColour()` / `glowAmount()` tell the dresser the light on the limb
+  about to be dressed, and `register(Surfaces)` / `surface(Limb)` hand back the shape of what it wears (`Surface`: triangles,
+  normals, texels, the texture with its material half, a style name) so the light can be drawn on that shape.
 - `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
@@ -11939,8 +11941,37 @@ What follows replaces that. Nothing here changes what a power does to a number u
   space (x from `x0/16` to `x1/16`, y `-2/16` at the shoulder end to `10/16` at the hand, z `±2/16`). `ArmLayers.add(Layer)`;
   `Layer.draw(Arm, PoseStack, SubmitNodeCollector)`; `Arm` says which arm, whether it holds something, and the light keyed on it.
   The arm's armour (§44.1, `core.client.FirstPersonDress`) is drawn first, stretched with the arm, and `Arm.dressed` says it was:
-  what a layer puts on the skin may be under a plate. The light then draws itself 0.16 nearer your eye along the line of sight (the
-  same place on the screen, on the plate in place of the skin), leaving out the faces turned away.
+  what a layer puts on the skin may be under a plate. A layer's `prepare(Arm)` runs before the arm is dressed.
+- **The light on what you wear** (`powers.client.fx.ArmourLight`; Euan, 10 Nov 2026: the light must "map to the shape of the armor
+  itself and the arm, instead of sitting below it and looking glitchy", with "custom styling for each armor piece for the different
+  powers"). On an arm that wears armour the light is never drawn on the skin. Two things pass through `FirstPersonDress` (§12):
+  - `glow(rgb, amount)`, set by the light before the arm is dressed and cleared after. The armour answers in its own shader: for that
+    draw its accent is the type's colour and it flares by the amount (`ArmourClient.dressArm`), so the piece's edges and what glows of
+    itself take the colour.
+  - `surface(limb)`: the shape of what the limb wears (the armour gives the worn chestplate's arm mesh, its texture and the set's id).
+    The light cuts it into cells, one a texel of every face, once a shape. Each cell plays a part read from the set's own texture
+    (its colour half and its material half): **cloth**, **plate**, a **line** (a trim: bright glossy metal that is the rim of a plate
+    or a strip a texel or two wide; the middle of a wide bright plate is plate) or what **glows of itself** (material blue over
+    0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
+    own face.
+  The light is drawn cell by cell on the faces themselves, 0.003 off them (faces turned from the eye left out), with a soft additive
+  spill round the brightest cells. Rule for every type: **the set's lines carry the type, and the type's motif lies on the rest one
+  face at a time**, moving the way it moves on bare skin (to the fist, or back from the hand). Kinetic: the lines pulse, a seam
+  wanders down each face. Heat: the hand's end burns, the lines glow hot, embers in the rest. Velocity: streaks down every line and
+  one lane a face. Flight: motes, the lines pale. Gravity: falling bands, ink at the wrist with the lines lit over it. Energy and
+  Prism: a pulse down the lines, a forking vein a face. Charge: lightning crawling the lines in jumps. Shadow: ink from the hand, the
+  lines lit in it. Mind and Soul: rings round the wrist across all they cross. Architect: the lines inked in, a rule every third row.
+  Tech: the lines lit and a scan row sweeping. Spirit: tongues from the hand, taller on the lines. Frost: rime on the lines first,
+  then crystals across the rest.
+  **A set's record** (`ArmourLight.SETS`) says how its materials take it: a gain for cloth, plate, lines and glowing parts; `lead`,
+  how many rows its lines run ahead of the rest (metal conducts); `soak`, how much its cloth holds a glow where the light has been
+  (hide and cloth); `shimmer`, how much what glows of itself flickers (crystal). Records exist for the sets whose arms are finished,
+  the armour's C rank on 10 Nov 2026: Gatewrought (a leather sleeve under a plated glove: lead 1.5, soak 0.12), Vaultbreaker (steel:
+  lead 2.5), Frostwalker (hide: lead 0.5, soak 0.2), Sunward (cloth under gold bands and a stone: lead 1.5, soak 0.14, shimmer 0.5),
+  Shardcrown (crystal: shimmer 1, glowing parts 1.3). Every other set takes the default (lead 1) until its arm is finished and it
+  gets its own. `tools/art/arm_light_preview.py` draws the same cells and rules off line, a sheet a set; its `light` and
+  `ArmourLight.light` are kept line for line. A dresser that gives no shape gets the stopgap: the skin's light drawn 0.16 nearer the
+  eye along the line of sight.
 - **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style
   (15), drawn on the skin's own pixel grid (4 x 12 a face, 3 wide on slim arms) 0.004 above it, running toward the fist as the charge
   climbs, with a soft halo. A cast with no light track gets one from its age against its release tick. Powers that sit on you (Barrier,
