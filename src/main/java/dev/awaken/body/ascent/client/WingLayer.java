@@ -198,6 +198,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     }
 
     static void reset() {
+        studioEntity = studioMode = studioRung = -1;
         java.util.Arrays.fill(SEEN, -1);
         for (Wings w : WINGS) w.entity = -1;
         for (int i = 0; i < FLOURISH.length; i++) FLOURISH[i] = -1;
@@ -243,6 +244,55 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     static void flare(int entityId) {
         Wings w = find(entityId);
         if (w != null) w.flareAt = AscentMoves.ticks;
+    }
+
+    // ---- the studio (a look tour, /awaken wings show) ------------------------------------------------------------------
+
+    /** An entity whose wings are held in one state (-1 none) and at one rung (-1 its own; 0 wings, 1 Skyborn, 2 the Sovereign's form). */
+    private static int studioEntity = -1, studioMode = -1, studioRung = -1;
+    static final String[] MODES = {"folded", "open", "glide", "fly", "dive", "hover", "land", "gather"};
+
+    /**
+     * Holds this entity's wings in a state by name (see {@link #MODES}; "off" lets go) at a rung ("wings", "skyborn",
+     * "sovereign", or "" for its own), so they can be looked at from every side without flying. False for a name it
+     * doesn't know.
+     */
+    static boolean studio(int entityId, String mode, String rung) {
+        if (mode.equals("off")) {
+            studioEntity = studioMode = studioRung = -1;
+            return true;
+        }
+        int m = java.util.Arrays.asList(MODES).indexOf(mode);
+        if (m < 0) return false;
+        studioEntity = entityId;
+        studioMode = m;
+        studioRung = switch (rung) {
+            case "wings" -> 0;
+            case "skyborn" -> 1;
+            case "sovereign" -> 2;
+            default -> -1;
+        };
+        Wings w = find(entityId);
+        if (w != null && w.mode == m && m != FOLDED) w.mode = FOLDED; // asked for again: the state plays from the fold
+        return true;
+    }
+
+    /** A number of the wings' look set by name while the game runs (/awaken wings set); false for a name it doesn't know. */
+    static boolean tune(String key, float value) {
+        switch (key) {
+            case "fp_ahead" -> fpAhead = value;
+            case "fp_up" -> fpUp = value;
+            case "fp_alpha" -> fpAlpha = Mth.clamp(value, 0, 1);
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int rungOf(Wings w) {
+        if (w.entity == studioEntity && studioRung >= 0) return studioRung;
+        return SovereignClient.radiant(w.entity) ? 2 : w.skyborn ? 1 : 0;
     }
 
     /** True on the tick a feathered wing's downstroke begins (the beat's sound and the air it moves follow the wing). */
@@ -295,6 +345,10 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             // one slow beat in the middle, the wings showing their whole span
             if (e != mc.player) seen(e.getId(), false);
             touch(e, AscentState.GLIDE, 0, left == 22 ? AscentMoves.ticks : -100, 0, 0, true);
+        }
+        if (studioEntity >= 0) {
+            Entity held = mc.level.getEntity(studioEntity);
+            if (held != null) slot(held);
         }
         for (Wings w : WINGS) {
             if (w.entity < 0) continue;
@@ -353,6 +407,13 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         w.skyborn = skyborn(w.entity);
         int age = AscentMoves.ticks - w.modeAt;
         boolean gathering = AscentMoves.ticks - w.gatherAt <= 1;
+        if (w.entity == studioEntity && studioMode >= 0) {
+            // held for looking at: the one state, played from its start, and nothing else decides
+            w.show = Math.min(1, w.show + 0.34F);
+            w.gather = 1;
+            if (w.mode != studioMode) set(w, studioMode);
+            return;
+        }
         if (w.open) {
             w.show = Math.min(1, w.show + 0.34F);
             if (w.mode == FOLDED || w.mode == GATHER) {
@@ -468,16 +529,18 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     }
 
     private static float[][] pairs(Wings w) {
-        return SovereignClient.radiant(w.entity) ? WingForm.PAIRS_SOVEREIGN : w.skyborn ? WingForm.PAIRS_SKYBORN : WingForm.PAIRS_WINGS;
+        int rung = rungOf(w);
+        return rung == 2 ? WingForm.PAIRS_SOVEREIGN : rung == 1 ? WingForm.PAIRS_SKYBORN : WingForm.PAIRS_WINGS;
     }
 
     /** Fills a view for this frame; false when there is nothing to draw. */
     private static boolean prepare(Wings w, View v, float pt, int lod, boolean first) {
         float show = Mth.lerp(pt, w.showO, w.show);
         if (show < 0.02F) return false;
-        boolean radiant = SovereignClient.radiant(w.entity);
+        int rung = rungOf(w);
+        boolean radiant = rung == 2;
         v.pairs = pairs(w);
-        v.pal = radiant ? WingFeathers.GOLD : w.skyborn ? WingFeathers.SKY : WingFeathers.LIGHT;
+        v.pal = radiant ? WingFeathers.GOLD : rung == 1 ? WingFeathers.SKY : WingFeathers.LIGHT;
         for (int i = 0; i < v.pairs.length; i++) poseNow(w, pt, v.pairs[i][2], v.pose[i]);
         v.alpha = show * (first ? fpAlpha : 1F);
         v.glow = GLOW_BY[w.mode];

@@ -109,6 +109,11 @@ public final class AscentPilot {
                 mc.options.keyUse.setDown(true);
             }
             case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
+            // the wings' studio (SPEC §62): "wings <state|off> [rung]" holds your wings in a state; "wingset <key> <value>" a number
+            case "wings" -> {
+                if (mc.player != null) WingLayer.studio(mc.player.getId(), a[1], a.length > 2 ? a[2] : "");
+            }
+            case "wingset" -> WingLayer.tune(a[1], Float.parseFloat(a[2]));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }

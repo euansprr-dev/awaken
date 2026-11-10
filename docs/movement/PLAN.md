@@ -1,10 +1,25 @@
 # Rope and Wings: the plan record (10 Nov 2026)
 
-Status: **APPROVED in full by Euan on 10 Nov 2026, with one change** (below). Being built on
+Status: **APPROVED in full by Euan on 10 Nov 2026, with one change** (below), and **BUILT the same day** on
 `claude/movement-plan-e38dfa`, the whole plan coded first and tested once at the end (his rule of 10 Nov). The approval page is https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w
 (source `docs/movement/page.src.html`, built by `build_page.py`; his answers save in its `answers` collection, `d1` to
 `d12` and `feel`). This file is the builder's contract once Euan says yes. It follows `.claude/PLANNING-PROCESS.md` and holds
 the standard of `.claude/UI-EXCELLENCE.md` for how movement looks, sounds and reads on screen.
+
+## Built (10 Nov 2026)
+
+All of it is coded on `claude/movement-plan-e38dfa`: the rope (sling, earlier let-go, the chain through a landing, the
+spring, the marker, the fist), the feathered wings one to one with the page's model and its remade beat, the air's
+contract, the four new moves, the sounds as scores of the game's own recordings, tips, Tasks rows and tests. What the
+code does, with its numbers and where it differs from this plan, is SPEC §62 "Built". The differences, in short:
+
+- The oak wood's holding-bot median is 180, not the trial's 203: the built sling is swept with the body's box.
+- A pull up a wall is limited by its sweep, not by 16 blocks (the limit cut off cliffs the old rope reached).
+- The takeoff is "look up, sneak a moment, jump" (holding jump can't be told from the game's own hop).
+- The two rappel loops keep their old sound.
+- First-person wing placement is two numbers set from a tour, live-tunable with `/awaken wings set`.
+
+Nobody has played it yet. Sounds are unheard. `/awaken wings show <state> [rung]` holds the wings to look at.
 
 ## The approval (10 Nov 2026, in chat)
 

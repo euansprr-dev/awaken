@@ -21247,3 +21247,105 @@ without Minecraft, 40 runs of 15 s, median blocks):**
 - **Bench and tests:** real woods, hills and a street of stair roofs in `SwingBench`, every gate also run by a bot that
   only holds the key; §17.31's gates plus, holding: oak 190, lane 240, city 250, and no hard hit in free flight; one
   GameTest a mechanism.
+
+**Built (10 Nov 2026, branch `claude/movement-plan-e38dfa`; coded whole, tested once at the end; unseen in game by Euan):**
+
+*The rope (`AscentSwing`, `AscentMoves`; switch `ropeGuide` in `awaken-feel-client.toml`, off = §17.31 exactly).*
+- `AscentSwing.findSling`: rays 6 to 44 up and 0 to 30 degrees aside along the heading; a top is taken when it is 6 to
+  30 ahead (`slingFrom`, `slingReach`), at least 1 over the hand and no steeper than 1.2 a block. The pull is toward a
+  point `slingOver` 2.4 over the top at `slingPull` 0.13 a tick² up to `slingTop` 1.3 b/t; it lets go within
+  `slingNear` 4.5 of the point, past `slingSteep` 50 degrees or after `slingTicks` 34, with the rise that clears the
+  top. `slingClear` plays the whole pull and the flight after it with the body's box (a quarter block spare) and takes
+  the candidate only if nothing is met, or only a landing after the let-go. To the server and to watchers a sling is a
+  ZIP; its let-go is `EV_SLING`.
+- Held, a swing lets go at `apexHeld` 55 degrees while it still rises and the flight after is clear (95 otherwise, as
+  before). With the key held and a run on, three ticks on the ground hop into the next rope. A pull up a wall is taken
+  only by a clear, swept way (`zipClear`; the 16-block limit of the plan cut off cliffs the old rope reached, so the
+  limit is `wallZip` 44 and the sweep decides). A top reached with forward held at Tether mastery 3 is sprung off
+  (0.6 b/t on, 0.46 up; `EV_SPRING`). A rope the server refuses is not thrown at that block for a second, and the
+  server logs why. The marker is a ring for a swing, a chevron for a sling, a bracket for a pull; the rope's halo
+  swells and whitens through the let-go window. The first-person fist sits at (0.46, -0.3, -0.8).
+- **Bench, holding bot, 40 runs of 15 s, median blocks:** lane 271, city 260, forest 260, cliff 122, plains 103, spire
+  109, oak wood 180, spruce wood 165, hills 138, stair roofs 192. No hard hit on a rope anywhere, no stopped run; a hard
+  hit in free flight in two places (lane 1, forest 1 of 40 runs), none in the new places. **The oak wood is 180, not
+  the trial's 203 or the plan's gate of 190:** the trial's sling was not swept with the body's box; swept, some crowns
+  are refused. The gates in `ascent_swing_bench` are the built numbers (oak 165, spruce 150, hills 120, roofs 170,
+  lane 240, city 245, forest 240, each a little under its median).
+
+*The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
+- `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
+  secondaries, 9 primaries, coverts 13 and 11; **231 boxes a wing** up close. The five poses, the opening (a gather,
+  a spread past open, a settle; 0.9 s), the glide (with up to 12% of the dive's tuck as speed builds), the dive, the
+  flare, and the remade beat: one cycle, down 42% of it, every term periodic and eased, most of the bend from the
+  elbow out with each joint a little late, a feather taking the flap of its own place on the span. Flight beats every
+  19 ticks, a hover every 32, on whole-tick clocks.
+- What the wings do is read from what the body does: opening, glide, beat (flight), dive (falling steeper than 0.6 of
+  the speed above 0.9 b/t), hover (flight under 0.45 b/t), flare, fold; a change is a 0.32 s crossfade. Closed wings
+  stay folded 4 s and fade into the mark (a dark plate and a breathing core between the shoulder blades, worn by anyone
+  this client knows has wings: yourself by tier, others once seen with them open). The body rides the beat by 1.3
+  texels. Motes are shed from the tips of the large wings on a downstroke and on a flare.
+- Rungs: one pair (0.94), Skyborn two (1.18 and 0.6 under it), the Sovereign's form three gold pairs and a ring of 14
+  boxes. Others' rung is known once they are seen in flight.
+- Far forms: past 48 blocks every other feather, broader, no coverts or shafts (51 boxes); past 96 the three bones and
+  six slabs (27).
+- Drawn in their own pipeline (`awaken:pipeline/ascent_wing_feather`: the entity shaders unlit and unshaded, depth
+  written, both sides): vanilla's emissive type writes no depth, so 231 overlapping boxes would draw in the order sent.
+  Each face carries its shade in its colour, as the model's do. Halos are additive discs facing the eye
+  (`ascent_wing_halo`). Vanilla types stand in if either fails to build.
+- First person: the outer feathers only, set `fpAhead` 0.9 ahead of the eye and `fpUp` 0.3 over it. **These two
+  numbers were set by reasoning about the view and are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
+  changes them while the game runs, and `/awaken wings show <state> [rung]` holds the wings in any state to look at.
+- Known limit: the game culls a player by their own box, so wings three blocks wide vanish when the body is just off
+  screen (as the old wings did).
+
+*The air (`AirRules`, `AscentMoves`).*
+- **A push carries.** While a state holds the body the client leaves the body's game motion at nothing between steps
+  (the server already left its copy so). Whatever is found there at the next step was put there from outside, set or
+  added alike, and joins the state's velocity: added in the free states, only its part across the rope on a swing, none
+  on a zip or a rappel; never past 3.0 b/t unless the body already had more. A cast of your own that sets a motion
+  gives it along its own way and never slows you (`AirRules.cast`). The server leaves a real push (over 0.2 b/t) that
+  has yet to be synced until it has gone out. `MovementHooks.push(player, vec)` says it plainly. A state that ends
+  hands its speed back to the body.
+- **A blink keeps your state:** a teleport within 20 ticks of a cast of your own and 16 blocks moves a free state with
+  the body, speed kept; a rope never survives one; anything else ends the state as before.
+- **A cast shows:** the powers' client reports each cast pose (`PlayerClips.cast`, one line in `CastAnims.start`); a
+  body flying free, on wings or in flight plays one of five gestures over its flight clip (thrust, sweep, stamp, lift,
+  throw; lying on the air or upright), and a weapon swung in the air a sixth. In first person the free states' fists
+  stand aside for a cast, a swing or a thing in use. The powers session's `__air` first-person clips are theirs.
+- **The aim hold:** on wings and in flight, with the use key, a power's key or the ultimate's held, the flight keeps
+  the line it had and the look is free; let go, it eases back to the look over 6 ticks. A hit ends the hold.
+- **Levitation** lifts the free states by the game's own rule (so Updraft's lift reaches open wings).
+
+*The moves.*
+- **The flare:** coming down under 0.95 b/t, falling under 0.6, within 1.8 of the ground, the wings begin to cup;
+  landing so is a flare (no roll, `EV_FLARE`, a link once in three seconds).
+- **The skim** (Wings mastery 3): a glide at 1.0 b/t or more within 2.5 of ground or water, or with a wall two blocks
+  beside it, has half the glide's drag, a wake of motes and Flow; `EV_SKIM` after six ticks of it.
+- **The takeoff** (Skyborn): on the ground, looking up 20 degrees or more, sneak held 8 ticks (the folded wings lift),
+  then jump: 14 blocks straight up over 16 ticks into flight, a tenth of the Aether (the server takes it on
+  `EV_TAKEOFF`, only for a flight begun within 10 ticks).
+- **The rope strike** (Tether mastery 5): an attack on the rope or flying free at a creature under the crosshair (3
+  degrees) or locked on, more than 4 blocks off and in the rope's reach, never a player. The client sends `Strike`
+  then a ZIP whose anchor is the creature; the server lets the rope bite only a creature the look could mean
+  (`Aim.meant`) and takes a creature for an anchor only then. The pull is the client's (`AirRules.strikeStep`); at 2.4
+  it sends `EV_STRIKE` and comes off upward (0.62) with its air moves back. The blow is the server's: the creature
+  it let the rope bite, alive, the body within reach of it, once; the hand's damage and 2.5 a block a tick of speed
+  up to 6 more, as a player's attack, with knockback, a `FightMoments.HIT` and a link.
+
+*Sound (`AscentScores`, `tools/art/specs/ascent_scores.py`; switch `movementScores`, off = the old sounds).*
+- 22 of the Ascent's 24 sounds and 8 new ones are scores: 66 layers, each a registered sound whose sounds.json entry
+  names a vanilla sound event (`"type": "event"`), played at the same place, volume and pitch after its own delay.
+  Every `awaken:ascent.*` sound about to play, whoever asked for it, is taken and its score played instead. The wind is
+  the elytra's own loop; the rope hums (the same loop, high) through its let-go window. **The two rappel loops stay
+  as they were** (no vanilla recording loops as a rope through a hand does). `ascent_scores.py listen` builds a local
+  page (Classic beside New) from this machine's own game files; nothing of Mojang's is in the repo. **Unheard by Euan.**
+
+*Tips, Tasks, tests.*
+- Six tips in `assets/awaken/tips/ascent/` (sling, spring, strike, flare, skim, takeoff), each offered where its move
+  would work and done when it is made. Four rows on the Tasks page (`AscentGoals`, Out there, told as leads): the
+  spring, then the strike; the takeoff, or the skim; each shows the mastery it waits on, then how, until made once.
+- GameTests: `ascent_swing_bench` (the gates above), `ascent_sling_level` (a real oak gives no swing but a sling, the
+  server takes its anchor, nothing is met), `ascent_air_push`, `ascent_air_blink_and_aim`, `ascent_air_moves`,
+  `ascent_rope_strike`, `ascent_wing_form` (the beat closes on itself and never moves a term 6 in a frame; 231, 51
+  and 27 boxes).
+- Look tour `tools/autopilot/movement-built.txt`.

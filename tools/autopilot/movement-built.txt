@@ -1,0 +1,697 @@
+# Rope and Wings as built (SPEC §62, docs/movement/PLAN.md): the rope held through a real forest (the sling, the chain
+# through a landing), the lane and the street, the feathered wings held in each state at each rung from behind and in
+# front (the studio: `pilot wings <state> <rung>`), then in real flight, the takeoff and the Sovereign's form.
+# Shots only; the log's [ascent] trace says what each rope did.
+# Look tour: tools/tour-ci.sh tools/autopilot/movement-built.txt 3000
+# ci knobs: LENS=cinematic
+world movement_built survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -256 2047 255
+
+# ---- a real forest, the rope held all the way: slings, landings, the chain going on ----
+cmd awaken ascent grant none
+cmd awaken ascent grant tether
+cmd awaken terrain visit minecraft:forest
+waitpassage
+wait 200
+screen close
+info
+camera back
+wait 10
+shotnow a_wood_tp_00
+cmd awaken ascent pilot hold forward,sprint 470
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 440
+wait 13
+shotnow a_wood_tp_01
+wait 13
+shotnow a_wood_tp_02
+wait 13
+shotnow a_wood_tp_03
+wait 13
+shotnow a_wood_tp_04
+wait 13
+shotnow a_wood_tp_05
+wait 13
+shotnow a_wood_tp_06
+wait 13
+shotnow a_wood_tp_07
+wait 13
+shotnow a_wood_tp_08
+wait 13
+shotnow a_wood_tp_09
+wait 13
+shotnow a_wood_tp_10
+wait 13
+shotnow a_wood_tp_11
+wait 13
+shotnow a_wood_tp_12
+wait 13
+shotnow a_wood_tp_13
+wait 13
+shotnow a_wood_tp_14
+wait 13
+shotnow a_wood_tp_15
+wait 13
+shotnow a_wood_tp_16
+wait 13
+shotnow a_wood_tp_17
+wait 13
+shotnow a_wood_tp_18
+wait 13
+shotnow a_wood_tp_19
+wait 13
+shotnow a_wood_tp_20
+wait 13
+shotnow a_wood_tp_21
+wait 13
+shotnow a_wood_tp_22
+wait 13
+shotnow a_wood_tp_23
+wait 13
+shotnow a_wood_tp_24
+wait 13
+shotnow a_wood_tp_25
+wait 13
+shotnow a_wood_tp_26
+wait 13
+shotnow a_wood_tp_27
+wait 13
+shotnow a_wood_tp_28
+wait 13
+shotnow a_wood_tp_29
+wait 13
+shotnow a_wood_tp_30
+cmd awaken ascent pilot stop
+wait 30
+camera first
+hud on
+cmd awaken ascent pilot hold forward,sprint 250
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 220
+wait 15
+shotnow a_wood_fp_01
+wait 15
+shotnow a_wood_fp_02
+wait 15
+shotnow a_wood_fp_03
+wait 15
+shotnow a_wood_fp_04
+wait 15
+shotnow a_wood_fp_05
+wait 15
+shotnow a_wood_fp_06
+wait 15
+shotnow a_wood_fp_07
+wait 15
+shotnow a_wood_fp_08
+wait 15
+shotnow a_wood_fp_09
+wait 15
+shotnow a_wood_fp_10
+wait 15
+shotnow a_wood_fp_11
+wait 15
+shotnow a_wood_fp_12
+wait 15
+shotnow a_wood_fp_13
+cmd awaken ascent pilot stop
+hud off
+wait 20
+
+# ---- the sandbox on a floor at y 150: the lane of giant trees and the street ----
+cmd tp @s 2000.5 152 0.5 0 0
+wait 200
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd tp @s 2000.5 151 0.5 0 0
+wait 20
+cmd awaken ascent grant all
+cmd awaken ascent sandbox
+wait 200
+screen close
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+
+# the lane with the rope held, third person
+camera back
+cmd tp @s 2000.5 151 5.5 0 -10
+wait 20
+cmd awaken ascent pilot hold forward,sprint 208
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 188
+wait 14
+shotnow b_lane_tp_01
+wait 14
+shotnow b_lane_tp_02
+wait 14
+shotnow b_lane_tp_03
+wait 14
+shotnow b_lane_tp_04
+wait 14
+shotnow b_lane_tp_05
+wait 14
+shotnow b_lane_tp_06
+wait 14
+shotnow b_lane_tp_07
+wait 14
+shotnow b_lane_tp_08
+wait 14
+shotnow b_lane_tp_09
+wait 14
+shotnow b_lane_tp_10
+wait 14
+shotnow b_lane_tp_11
+wait 14
+shotnow b_lane_tp_12
+cmd awaken ascent pilot stop
+wait 20
+# the street (towers either side), the rope held
+cmd tp @s 2000.5 151 -6.5 180 -10
+wait 20
+cmd awaken ascent pilot hold forward,sprint 184
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 164
+wait 14
+shotnow c_street_tp_01
+wait 14
+shotnow c_street_tp_02
+wait 14
+shotnow c_street_tp_03
+wait 14
+shotnow c_street_tp_04
+wait 14
+shotnow c_street_tp_05
+wait 14
+shotnow c_street_tp_06
+wait 14
+shotnow c_street_tp_07
+wait 14
+shotnow c_street_tp_08
+wait 14
+shotnow c_street_tp_09
+wait 14
+shotnow c_street_tp_10
+cmd awaken ascent pilot stop
+wait 20
+
+# ---- the wings' studio on the high deck at dusk: every state at every rung, from behind and in front ----
+cmd time set 12700
+cmd tp @s 2000.5 291 0.5 0 12
+wait 40
+cmd awaken ascent pilot wings folded wings
+look 0 12
+camera back
+wait 16
+shotnow s_wings_folded_back
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_folded_front
+cmd awaken ascent pilot wings open wings
+look 0 12
+camera back
+wait 26
+shotnow s_wings_open_back
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_open_front
+cmd awaken ascent pilot wings glide wings
+look 0 12
+camera back
+wait 16
+shotnow s_wings_glide_back
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_glide_front
+cmd awaken ascent pilot wings fly wings
+look 0 12
+camera back
+wait 14
+shotnow s_wings_fly_back
+wait 5
+shotnow s_wings_fly_back_2
+wait 5
+shotnow s_wings_fly_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_fly_front
+cmd awaken ascent pilot wings dive wings
+look 0 12
+camera back
+wait 16
+shotnow s_wings_dive_back
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_dive_front
+cmd awaken ascent pilot wings hover wings
+look 0 12
+camera back
+wait 16
+shotnow s_wings_hover_back
+wait 5
+shotnow s_wings_hover_back_2
+wait 5
+shotnow s_wings_hover_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_hover_front
+cmd awaken ascent pilot wings land wings
+look 0 12
+camera back
+wait 22
+shotnow s_wings_land_back
+look 0 -4
+camera front
+wait 6
+shotnow s_wings_land_front
+cmd awaken ascent pilot wings folded skyborn
+look 0 12
+camera back
+wait 16
+shotnow s_skyborn_folded_back
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_folded_front
+cmd awaken ascent pilot wings open skyborn
+look 0 12
+camera back
+wait 26
+shotnow s_skyborn_open_back
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_open_front
+cmd awaken ascent pilot wings glide skyborn
+look 0 12
+camera back
+wait 16
+shotnow s_skyborn_glide_back
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_glide_front
+cmd awaken ascent pilot wings fly skyborn
+look 0 12
+camera back
+wait 14
+shotnow s_skyborn_fly_back
+wait 5
+shotnow s_skyborn_fly_back_2
+wait 5
+shotnow s_skyborn_fly_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_fly_front
+cmd awaken ascent pilot wings dive skyborn
+look 0 12
+camera back
+wait 16
+shotnow s_skyborn_dive_back
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_dive_front
+cmd awaken ascent pilot wings hover skyborn
+look 0 12
+camera back
+wait 16
+shotnow s_skyborn_hover_back
+wait 5
+shotnow s_skyborn_hover_back_2
+wait 5
+shotnow s_skyborn_hover_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_hover_front
+cmd awaken ascent pilot wings land skyborn
+look 0 12
+camera back
+wait 22
+shotnow s_skyborn_land_back
+look 0 -4
+camera front
+wait 6
+shotnow s_skyborn_land_front
+cmd awaken ascent pilot wings folded sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_sovereign_folded_back
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_folded_front
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow s_sovereign_open_back
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_open_front
+cmd awaken ascent pilot wings glide sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_sovereign_glide_back
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_glide_front
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow s_sovereign_fly_back
+wait 5
+shotnow s_sovereign_fly_back_2
+wait 5
+shotnow s_sovereign_fly_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_fly_front
+cmd awaken ascent pilot wings dive sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_sovereign_dive_back
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_dive_front
+cmd awaken ascent pilot wings hover sovereign
+look 0 12
+camera back
+wait 16
+shotnow s_sovereign_hover_back
+wait 5
+shotnow s_sovereign_hover_back_2
+wait 5
+shotnow s_sovereign_hover_back_3
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_hover_front
+cmd awaken ascent pilot wings land sovereign
+look 0 12
+camera back
+wait 22
+shotnow s_sovereign_land_back
+look 0 -4
+camera front
+wait 6
+shotnow s_sovereign_land_front
+cmd awaken ascent pilot wings off
+wait 20
+# the same wings by day, the first rung
+cmd time set 5000
+wait 20
+cmd awaken ascent pilot wings open wings
+look 0 12
+camera back
+wait 26
+shotnow s_day_open_back
+look 0 -4
+camera front
+wait 6
+shotnow s_day_open_front
+cmd awaken ascent pilot wings fly wings
+look 0 12
+camera back
+wait 14
+shotnow s_day_fly_back
+look 0 -4
+camera front
+wait 6
+shotnow s_day_fly_front
+cmd awaken ascent pilot wings land wings
+look 0 12
+camera back
+wait 22
+shotnow s_day_land_back
+look 0 -4
+camera front
+wait 6
+shotnow s_day_land_front
+cmd awaken ascent pilot wings off
+wait 20
+
+# ---- the wings: a glide off the high deck ----
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera back
+wait 40
+cmd awaken ascent pilot run glide
+wait 36
+shotnow d_glide_back_00
+wait 10
+shotnow d_glide_back_01
+wait 10
+shotnow d_glide_back_02
+wait 10
+shotnow d_glide_back_03
+wait 10
+shotnow d_glide_back_04
+wait 10
+shotnow d_glide_back_05
+wait 10
+shotnow d_glide_back_06
+wait 10
+shotnow d_glide_back_07
+wait 10
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera front
+wait 40
+cmd awaken ascent pilot run glide
+wait 40
+shotnow d_glide_front_00
+wait 11
+shotnow d_glide_front_01
+wait 11
+shotnow d_glide_front_02
+wait 11
+shotnow d_glide_front_03
+wait 11
+shotnow d_glide_front_04
+wait 11
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+hud on
+wait 40
+cmd awaken ascent pilot run glide
+wait 40
+shotnow d_glide_fp_00
+wait 14
+shotnow d_glide_fp_01
+wait 14
+shotnow d_glide_fp_02
+wait 14
+shotnow d_glide_fp_03
+wait 14
+hud off
+# a dive to the boom and the pull out
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera back
+wait 40
+cmd awaken ascent pilot run boom
+wait 50
+shotnow d_boom_back_00
+wait 14
+shotnow d_boom_back_01
+wait 14
+shotnow d_boom_back_02
+wait 14
+shotnow d_boom_back_03
+wait 14
+shotnow d_boom_back_04
+wait 14
+shotnow d_boom_back_05
+wait 14
+# flight: take off, cruise, boost, a banked turn, a hover
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera back
+wait 40
+cmd awaken ascent pilot run soar
+wait 34
+shotnow e_soar_back_00
+wait 15
+shotnow e_soar_back_01
+wait 15
+shotnow e_soar_back_02
+wait 15
+shotnow e_soar_back_03
+wait 15
+shotnow e_soar_back_04
+wait 15
+shotnow e_soar_back_05
+wait 15
+shotnow e_soar_back_06
+wait 15
+shotnow e_soar_back_07
+wait 15
+shotnow e_soar_back_08
+wait 15
+shotnow e_soar_back_09
+wait 15
+shotnow e_soar_back_10
+wait 15
+shotnow e_soar_back_11
+wait 15
+shotnow e_soar_back_12
+wait 15
+shotnow e_soar_back_13
+wait 15
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera front
+wait 40
+cmd awaken ascent pilot run soar
+wait 40
+shotnow e_soar_front_00
+wait 22
+shotnow e_soar_front_01
+wait 22
+shotnow e_soar_front_02
+wait 22
+shotnow e_soar_front_03
+wait 22
+shotnow e_soar_front_04
+wait 22
+shotnow e_soar_front_05
+wait 22
+shotnow e_soar_front_06
+wait 22
+shotnow e_soar_front_07
+wait 22
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+hud on
+wait 40
+cmd awaken ascent pilot run soar
+wait 40
+shotnow e_soar_fp_00
+wait 28
+shotnow e_soar_fp_01
+wait 28
+shotnow e_soar_fp_02
+wait 28
+shotnow e_soar_fp_03
+wait 28
+shotnow e_soar_fp_04
+wait 28
+shotnow e_soar_fp_05
+wait 28
+hud off
+cmd awaken ascent pilot stop
+
+# ---- the takeoff: look up, sneak, jump ----
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 151 4.5 0 -40
+camera back
+cmd awaken ascent pilot aether 1
+wait 30
+shotnow h_takeoff_00
+cmd awaken ascent pilot hold sneak 34
+wait 6
+shotnow h_takeoff_01_crouch
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 4
+shotnow h_takeoff_02
+wait 4
+shotnow h_takeoff_03
+wait 4
+shotnow h_takeoff_04
+wait 4
+shotnow h_takeoff_05
+wait 4
+shotnow h_takeoff_06
+wait 4
+shotnow h_takeoff_07
+wait 4
+shotnow h_takeoff_08
+wait 4
+shotnow h_takeoff_09
+wait 4
+shotnow h_takeoff_10
+wait 4
+shotnow h_takeoff_11
+wait 30
+shotnow h_takeoff_12_hover
+# ---- the Sovereign's form: six wings and a halo ----
+cmd awaken ascent pilot aether 1
+cmd awaken ascent pilot ascend
+wait 12
+shotnow i_sovereign_back_01
+wait 12
+shotnow i_sovereign_back_02
+wait 12
+shotnow i_sovereign_back_03
+wait 12
+shotnow i_sovereign_back_04
+wait 12
+shotnow i_sovereign_back_05
+wait 12
+shotnow i_sovereign_back_06
+camera front
+wait 12
+shotnow i_sovereign_front_01
+wait 12
+shotnow i_sovereign_front_02
+wait 12
+shotnow i_sovereign_front_03
+wait 12
+shotnow i_sovereign_front_04
+cmd awaken ascent pilot stop
+wait 20
+quit
