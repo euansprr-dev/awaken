@@ -97,4 +97,15 @@ public final class ArmourPayloads {
                 ByteBufCodecs.VAR_INT, Charge::flash, Charge::new);
         @Override public Type<Charge> type() { return TYPE; }
     }
+
+    /**
+     * Server → the wearer and everyone near: the last piece went on and the set is whole on them (SPEC §44.11). The
+     * armour wakes feet to crown and sounds its three notes; {@code first} when they have never worn this set whole.
+     */
+    public record Whole(int entity, int set, boolean first) implements CustomPacketPayload {
+        public static final Type<Whole> TYPE = new Type<>(Awaken.id("armour_whole"));
+        public static final StreamCodec<ByteBuf, Whole> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Whole::entity, ByteBufCodecs.VAR_INT, Whole::set, ByteBufCodecs.BOOL, Whole::first, Whole::new);
+        @Override public Type<Whole> type() { return TYPE; }
+    }
 }

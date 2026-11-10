@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "name": "Kingsroot Keep",
+  "line": "Every gate in this castle is shut. Where the roots have broken the walls, you can climb them.",
+  "form": "stronghold",
+  "theme": "overgrown_temple",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:kingsroot_keep",
+    "water": 62
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/keep_rain",
+      "awaken:realm/keep_hall"
+    ],
+    "lens": "kingsroot_keep",
+    "air": [
+      "rain",
+      "mist",
+      "smoke",
+      "embers",
+      "drips",
+      "moths",
+      "dust",
+      "lightning"
+    ]
+  },
+  "life": {
+    "herds": [
+      "scree_marmot"
+    ],
+    "predators": [
+      "wisp_hound"
+    ],
+    "ambient": [
+      "bog_toad",
+      "hollow_owl"
+    ]
+  },
+  "folk": {
+    "kit": "wall_hobs",
+    "villages": 1
+  },
+  "law": {
+    "kind": "climb",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 16
+  },
+  "heart": {
+    "lord": "root_saint",
+    "seat": "great_hall"
+  },
+  "moods": [
+    "evening_rain"
+  ]
+}

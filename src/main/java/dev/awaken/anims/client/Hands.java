@@ -466,6 +466,7 @@ final class Hands implements FirstPerson.Player {
         var skin = avatar.skin.body().texturePath();
         if (right) renderer.renderRightHand(ps, e.getSubmitNodeCollector(), e.getPackedLight(), skin, avatar.showRightSleeve);
         else renderer.renderLeftHand(ps, e.getSubmitNodeCollector(), e.getPackedLight(), skin, avatar.showLeftSleeve);
+        dev.awaken.core.client.FirstPersonDress.hand(renderer, right ? net.minecraft.world.entity.HumanoidArm.RIGHT : net.minecraft.world.entity.HumanoidArm.LEFT, ps, e.getSubmitNodeCollector(), e.getPackedLight());
         ps.popPose();
     }
 }

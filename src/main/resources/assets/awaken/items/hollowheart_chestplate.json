@@ -1,6 +1,26 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/hollowheart_chestplate"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": [
+          "gui"
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/hollowheart_chestplate"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "awaken:item/hollowheart_chestplate_held",
+      "model": {
+        "type": "awaken:armour_piece",
+        "set": "hollowheart",
+        "piece": "chestplate"
+      }
+    }
   }
 }

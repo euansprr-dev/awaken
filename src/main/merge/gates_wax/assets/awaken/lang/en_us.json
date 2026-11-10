@@ -1,0 +1,20 @@
+{
+  "block.awaken.wax_cold": "Cold Wax",
+  "block.awaken.wax_old": "Yellowed Wax",
+  "block.awaken.wax_run": "Run Wax",
+  "block.awaken.wax_comb": "Comb Wall",
+  "block.awaken.wax_cell": "Lit Comb Cell",
+  "block.awaken.wax_deck": "Wax Tile",
+  "block.awaken.wax_soot": "Soot Rock",
+  "block.awaken.wax_soot_band": "Banded Soot Rock",
+  "block.awaken.wax_bead_drip": "Wax Beads",
+  "block.awaken.wax_drip": "Wax Drip",
+  "block.awaken.wax_arch": "Wax Arch",
+  "block.awaken.wax_candle_bank": "Bank of Candle Stubs",
+  "block.awaken.wax_comb_cell": "Open Comb Cell",
+  "block.awaken.wax_comb_cell_lit": "Honey Comb Cell",
+  "block.awaken.wax_fall": "Falling Wax",
+  "block.awaken.wax_cold_slab": "Cold Wax Slab",
+  "block.awaken.wax_cold_stairs": "Cold Wax Stairs",
+  "block.awaken.wax_warm": "Warm Wax"
+}

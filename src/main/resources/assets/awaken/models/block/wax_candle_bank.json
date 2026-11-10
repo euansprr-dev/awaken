@@ -1,0 +1,354 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wax": "awaken:block/wax_cold",
+    "run": "awaken:block/wax_run",
+    "flame": "awaken:block/wax_flame",
+    "particle": "awaken:block/wax_cold"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        1,
+        15
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wax"
+        },
+        "up": {
+          "texture": "#wax"
+        },
+        "north": {
+          "texture": "#wax"
+        },
+        "south": {
+          "texture": "#wax"
+        },
+        "west": {
+          "texture": "#wax"
+        },
+        "east": {
+          "texture": "#wax"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        1,
+        2
+      ],
+      "to": [
+        5,
+        9,
+        5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#run"
+        },
+        "up": {
+          "texture": "#run"
+        },
+        "north": {
+          "texture": "#run"
+        },
+        "south": {
+          "texture": "#run"
+        },
+        "west": {
+          "texture": "#run"
+        },
+        "east": {
+          "texture": "#run"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        9,
+        3
+      ],
+      "to": [
+        4,
+        11,
+        4
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flame"
+        },
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        },
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        10,
+        1,
+        3
+      ],
+      "to": [
+        13,
+        6,
+        6
+      ],
+      "faces": {
+        "down": {
+          "texture": "#run"
+        },
+        "up": {
+          "texture": "#run"
+        },
+        "north": {
+          "texture": "#run"
+        },
+        "south": {
+          "texture": "#run"
+        },
+        "west": {
+          "texture": "#run"
+        },
+        "east": {
+          "texture": "#run"
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        6,
+        4
+      ],
+      "to": [
+        12,
+        8,
+        5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flame"
+        },
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        },
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        6,
+        1,
+        7
+      ],
+      "to": [
+        9,
+        11,
+        10
+      ],
+      "faces": {
+        "down": {
+          "texture": "#run"
+        },
+        "up": {
+          "texture": "#run"
+        },
+        "north": {
+          "texture": "#run"
+        },
+        "south": {
+          "texture": "#run"
+        },
+        "west": {
+          "texture": "#run"
+        },
+        "east": {
+          "texture": "#run"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        11,
+        8
+      ],
+      "to": [
+        8,
+        13,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flame"
+        },
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        },
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        2,
+        1,
+        10
+      ],
+      "to": [
+        5,
+        5,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#run"
+        },
+        "up": {
+          "texture": "#run"
+        },
+        "north": {
+          "texture": "#run"
+        },
+        "south": {
+          "texture": "#run"
+        },
+        "west": {
+          "texture": "#run"
+        },
+        "east": {
+          "texture": "#run"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        5,
+        11
+      ],
+      "to": [
+        4,
+        7,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flame"
+        },
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        },
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        11,
+        1,
+        10
+      ],
+      "to": [
+        14,
+        8,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#run"
+        },
+        "up": {
+          "texture": "#run"
+        },
+        "north": {
+          "texture": "#run"
+        },
+        "south": {
+          "texture": "#run"
+        },
+        "west": {
+          "texture": "#run"
+        },
+        "east": {
+          "texture": "#run"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        8,
+        11
+      ],
+      "to": [
+        13,
+        10,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flame"
+        },
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        },
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ],
+  "ambientocclusion": false
+}

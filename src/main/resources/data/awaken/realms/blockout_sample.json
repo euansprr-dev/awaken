@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Blockout sample",
+  "form": "land",
+  "theme": "hive",
+  "ranks": [],
+  "land": {
+    "program": "awaken:blockout",
+    "water": 62
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/amber_meadow"
+    ]
+  },
+  "heart": {
+    "lord": "hive_regent"
+  }
+}

@@ -499,10 +499,13 @@ final class WorldBody {
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
         int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
+        // the limb wears what you wear (once it is more there than not: armour can't fade)
+        boolean dressed = w > 0.5F && dress(ps, out, part, light);
         if (layered != null) {
             // the arm's layers (a cast's light), in the cube's own space: where the model's part puts it
             ArmLayers.Arm arm = layered;
             layered = null;
+            arm.dressed = dressed;
             ps.pushPose();
             ps.translate(part.x / 16F, part.y / 16F, part.z / 16F);
             ArmLayers.draw(arm, ps, out);
@@ -514,6 +517,27 @@ final class WorldBody {
             tipAcross = Float.NaN;
         }
         ps.popPose();
+    }
+
+    /** What the limb wears (core.client.FirstPersonDress), where the limb was just drawn. */
+    private static boolean dress(PoseStack ps, SubmitNodeCollector out, ModelPart part, int light) {
+        dev.awaken.core.client.FirstPersonDress.Limb limb = limbOf(wide, part);
+        if (limb == null) limb = limbOf(slim, part);
+        if (limb == null) return false;
+        ps.pushPose();
+        part.translateAndRotate(ps);
+        boolean drew = dev.awaken.core.client.FirstPersonDress.limb(limb, ps, out, light);
+        ps.popPose();
+        return drew;
+    }
+
+    private static dev.awaken.core.client.FirstPersonDress.Limb limbOf(PlayerModel m, ModelPart part) {
+        if (m == null) return null;
+        if (part == m.rightArm) return dev.awaken.core.client.FirstPersonDress.Limb.RIGHT_ARM;
+        if (part == m.leftArm) return dev.awaken.core.client.FirstPersonDress.Limb.LEFT_ARM;
+        if (part == m.rightLeg) return dev.awaken.core.client.FirstPersonDress.Limb.RIGHT_LEG;
+        if (part == m.leftLeg) return dev.awaken.core.client.FirstPersonDress.Limb.LEFT_LEG;
+        return null;
     }
 
     private static ModelPart part(PlayerModel m, FirstPerson.Limb l) {

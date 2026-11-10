@@ -15,6 +15,33 @@ public final class ArmourBonus {
 
     public record Line(int pieces, String text) {}
 
+    /**
+     * One quiet line about what a figure wears, for the Status page under the name: "Lordscale, whole. Mastery III",
+     * "Lordscale, 3 of 4", or null with no piece of ours on. The set with the most pieces is named; mastery is the
+     * lowest of the whole set's four pieces (the step the set as one has reached). Works on either side.
+     */
+    public static @org.jspecify.annotations.Nullable String statusLine(net.minecraft.world.entity.LivingEntity e) {
+        ArmourSet best = null;
+        int most = 0, mastery = Integer.MAX_VALUE;
+        int[] count = new int[ArmourSet.values().length];
+        for (net.minecraft.world.item.equipment.ArmorType type : ForgeSong.PIECES) {
+            net.minecraft.world.item.ItemStack stack = e.getItemBySlot(type.getSlot());
+            ArmourLooks.Look l = ArmourLooks.of(stack);
+            if (l == null || l.piece() != type) continue;
+            if (++count[l.set().ordinal()] > most) {
+                most = count[l.set().ordinal()];
+                best = l.set();
+            }
+        }
+        if (best == null) return null;
+        if (most < 4) return best.setName + ", " + most + " of 4";
+        for (net.minecraft.world.item.equipment.ArmorType type : ForgeSong.PIECES) {
+            Forged f = e.getItemBySlot(type.getSlot()).get(ArmourContent.FORGED.get());
+            mastery = Math.min(mastery, f == null ? 0 : f.masteryStep());
+        }
+        return best.setName + ", whole. Mastery " + Forged.numeral(mastery);
+    }
+
     public static String half(Archetype a) {
         return switch (a) {
             case BULWARK -> "+1 heart";

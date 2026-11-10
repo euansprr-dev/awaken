@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "name": "The Wax Galleries",
+  "line": "A hollow lined with a thousand years of melted candles, lit by comb the size of cathedrals, over a lake of wax that hasn't set.",
+  "form": "deep",
+  "theme": "hive",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:wax_galleries",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/wax_hollow",
+      "awaken:realm/wax_seat"
+    ],
+    "lens": "wax_galleries",
+    "air": [
+      "mist",
+      "embers",
+      "shaft_dust",
+      "dust",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [
+      "pollen_grazer"
+    ],
+    "predators": [
+      "drone_bee"
+    ],
+    "ambient": [
+      "amberfly",
+      "lumen_moth"
+    ]
+  },
+  "folk": {
+    "kit": "wax_folk",
+    "villages": 1
+  },
+  "law": {
+    "kind": "wax",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 14
+  },
+  "heart": {
+    "lord": "hive_regent",
+    "seat": "hanging_comb"
+  },
+  "moods": [
+    "deep_quiet"
+  ]
+}

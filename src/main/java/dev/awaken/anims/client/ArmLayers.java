@@ -27,6 +27,8 @@ public final class ArmLayers {
         public boolean main;
         /** A grip's arm (it holds something) rather than an empty fist's. */
         public boolean grip;
+        /** The arm wears something drawn over the skin (core.client.FirstPersonDress drew on it): what sits on the skin may be covered. */
+        public boolean dressed;
         /** The cube's extent across, in pixels from the arm's pivot. */
         public float x0, x1;
         /** The clip's own light for this hand when {@code keyed} (0..1 along the arm, heat 0..1 and a little over). */

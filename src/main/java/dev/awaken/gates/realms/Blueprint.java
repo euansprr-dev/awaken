@@ -21,10 +21,12 @@ public record Blueprint(int schemaVersion, String name, String form, String them
         ).apply(i, LandSpec::new));
     }
 
-    public record Sky(List<String> biomes, String lens) {
+    /** {@code air}: the kinds of moving air and small life the client makes here (SPEC 38.9's list: mist, shaft_dust, fireflies, moths...). */
+    public record Sky(List<String> biomes, String lens, List<String> air) {
         static final Codec<Sky> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().fieldOf("biomes").forGetter(Sky::biomes),
-                Codec.STRING.optionalFieldOf("lens", "").forGetter(Sky::lens)
+                Codec.STRING.optionalFieldOf("lens", "").forGetter(Sky::lens),
+                Codec.STRING.listOf().optionalFieldOf("air", List.of()).forGetter(Sky::air)
         ).apply(i, Sky::new));
     }
 
