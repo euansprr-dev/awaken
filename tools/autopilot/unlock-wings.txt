@@ -1,0 +1,96 @@
+# Movement unlocks, the audit (docs/movement-unlocks/PLAN.md): Wings as a player gets them today. C-rank with only the
+# rope, under a sky platform's lowest ring; the pilot climbs the rings, the perch and the pier, walks to the core, and the
+# core gives wings (its scene). A shot every 30 ticks across the climb's end and the gift, then the K stage's Powers place.
+# Run on CI: tools/tour-ci.sh tools/autopilot/unlock-wings.txt 1500
+world autopilot_unlock_wings survival 4246
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken admin levels 25
+wait 40
+key dismiss
+wait 10
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd tick sprint 6200
+wait 240
+cmd time set 5500
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 80
+camera back
+hud on
+shot wings_00_under
+cmd awaken ascent pilot run climb
+wait 200
+shotnow wings_01_climb
+wait 200
+shotnow wings_02
+wait 30
+shotnow wings_03
+wait 30
+shotnow wings_04
+wait 30
+shotnow wings_05
+wait 30
+shotnow wings_06
+wait 30
+shotnow wings_07
+wait 30
+shotnow wings_08
+wait 30
+shotnow wings_09
+wait 30
+shotnow wings_10
+wait 30
+shotnow wings_11
+wait 30
+shotnow wings_12
+wait 30
+shotnow wings_13
+wait 30
+shotnow wings_14
+wait 30
+shotnow wings_15
+wait 30
+shotnow wings_16
+wait 30
+shotnow wings_17
+wait 30
+shotnow wings_18
+wait 30
+shotnow wings_19
+wait 30
+cmd awaken ascent pilot stop
+key dismiss
+wait 10
+screen close
+screen band powers
+wait 30
+shotnow wings_20_powers
+screen close
+info
+quit

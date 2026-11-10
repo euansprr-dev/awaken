@@ -1,0 +1,112 @@
+# Movement unlocks, the audit (docs/movement-unlocks/PLAN.md): the open sky (Skyborn) and the Sovereign as a player gets
+# them today. Level 70 at B-rank, the A Reassessment for real (the Sky Warden's Proving): at a third of its health the
+# roof lifts and "the sky remembers you" (flight is given there), its fall gives "The sky is yours". Then, home, the
+# story's ending chosen (/awaken admin story ending choose ascend): the Sovereign's gift.
+# Run on CI: tools/tour-ci.sh tools/autopilot/unlock-sky.txt 1800
+world autopilot_unlock_sky survival 20261111
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd awaken admin levels 70
+wait 40
+key dismiss
+wait 10
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+cmd awaken ascent grant wings
+hud on
+camera first
+cmd awaken admin trial A
+# the bell, the Fault, the wake on the cloud, the lift up the shaft (11 s at most), the Sky Warden's light
+wait 420
+shotnow sky_01_cloud
+wait 420
+shotnow sky_02_warden
+cmd awaken admin trial half
+wait 240
+shotnow sky_03_aisles
+cmd awaken admin trial third
+wait 24
+shotnow sky_04_edge
+wait 20
+shotnow sky_05_edge
+wait 30
+shotnow sky_06_edge
+wait 60
+shotnow sky_07_after_edge
+cmd kill @e[type=awaken:proving_sky_warden]
+wait 40
+shotnow sky_08_fallen
+wait 24
+shotnow sky_09_gift
+wait 30
+shotnow sky_10_gift
+wait 40
+shotnow sky_11_gift
+wait 60
+shotnow sky_12_gift_end
+# home with the rank at 15 s
+wait 200
+shotnow sky_13_home
+wait 200
+key dismiss
+wait 10
+screen close
+shotnow sky_14_tip
+screen band powers
+wait 30
+shotnow sky_15_powers
+screen close
+# ---- the story's end: the Sovereign's gift ----
+cmd awaken admin story ending
+wait 60
+shotnow sov_01_ending
+cmd awaken admin story ending choose ascend
+wait 60
+shotnow sov_02
+wait 60
+shotnow sov_03
+wait 60
+shotnow sov_04
+wait 60
+shotnow sov_05
+wait 60
+shotnow sov_06
+wait 60
+shotnow sov_07
+wait 100
+key dismiss
+wait 10
+screen close
+shotnow sov_08
+info
+quit

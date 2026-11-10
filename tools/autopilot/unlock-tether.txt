@@ -1,0 +1,79 @@
+# Movement unlocks, the audit (docs/movement-unlocks/PLAN.md): the Tether as a player gets it today, for real. Level 10 at
+# E-rank, the D Reassessment (the Ringer's Proving, a real run: /awaken admin trial D with the Reassessment waiting), the
+# Ringer beaten on the chancel, its chain at your feet (the rope is given there), home with the rank, whatever teaches the
+# rope after, then the K stage's Tasks and Powers places at D with the rope held.
+# Run on CI: tools/tour-ci.sh tools/autopilot/unlock-tether.txt 1500
+world autopilot_unlock_tether survival 20261110
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken admin levels 10
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+hud on
+camera first
+shot tether_00_before
+cmd awaken admin trial D
+# the bell, the Great Fault, the hall readied, the wake inside the door
+wait 500
+shotnow tether_01_wake
+# onto the chancel: it drops into the light
+cmd tp @s ~ ~1.2 ~-30 180 0
+wait 120
+shotnow tether_02_ringer
+cmd kill @e[type=awaken:proving_ringer]
+look 180 40
+wait 34
+shotnow tether_03_fallen
+wait 20
+shotnow tether_04_chain
+wait 20
+shotnow tether_05_chain_after
+look 180 0
+wait 40
+shotnow tether_06_tenor
+wait 100
+shotnow tether_07_waiting
+# home with the rank at 15 s
+wait 120
+shotnow tether_08_home
+wait 60
+shotnow tether_09_home
+wait 100
+shotnow tether_10_rank
+wait 200
+shotnow tether_11_tip
+wait 300
+shotnow tether_12_later
+key dismiss
+wait 10
+screen close
+screen band tasks
+wait 30
+shotnow tether_13_tasks
+screen band powers
+wait 30
+shotnow tether_14_powers
+screen close
+info
+quit
