@@ -19,6 +19,7 @@ uniform sampler2D HeightSampler;
 uniform sampler2D SunmapSampler;    // lens_sunmap.fsh: the height above which the sun reaches each column
 uniform sampler2D CloudNoiseSampler; // Lens 2's clouds (L4): their shadows on the land and in the beams
 uniform sampler2D HistorySampler;   // last frame's light buffer (persistent)
+uniform sampler2D BlocksSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
 
@@ -44,15 +45,91 @@ layout(location = 0) out vec4 fragColor;
 
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
-// the heightfield, from the surface toward the light: 0 under solid blocks, dimmed through leaves
+// The Sun Pass (SPEC §22 "Steady Light"; frame texel 17: z the block map's trusted reach in blocks, 0 without one;
+// w its lowest y): from o toward the light through the block map, block by block. Where the heightfield has one top
+// a column, the map has every block, so light passes under a canopy, through a doorway and under an arch, and a shadow
+// is the block's own shape. Returns what gets through; status 0 when the walk settled it (a block stopped the sun), 1
+// when the ray left the map in the open at tOut (the heightfield carries on from there), 2 where the map isn't read
+// yet (the heightfield's own answer stands).
+float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
+    vec4 f17 = F(17);
+    vec3 cam = F(12).xyz;
+    float reach = f17.z, yMin = f17.w;
+    ivec3 c = ivec3(floor(o));
+    ivec3 stp = ivec3(l.x < 0.0 ? -1 : 1, l.y < 0.0 ? -1 : 1, l.z < 0.0 ? -1 : 1);
+    vec3 inv = 1.0 / max(abs(l), vec3(1.0e-5));
+    vec3 next = (vec3(c) + max(vec3(stp), 0.0) - o) * vec3(stp) * inv;
+    float t = 0.0;
+    status = 1;
+    tOut = 0.0;
+    for (int i = 0; i < 72; i++) {
+        // into the next block the ray crosses (never the one it starts in: a stair's own step, a slab's own top)
+        if (next.x < next.y && next.x < next.z) {
+            t = next.x;
+            next.x += inv.x;
+            c.x += stp.x;
+        } else if (next.y < next.z) {
+            t = next.y;
+            next.y += inv.y;
+            c.y += stp.y;
+        } else {
+            t = next.z;
+            next.z += inv.z;
+            c.z += stp.z;
+        }
+        tOut = t;
+        if (abs(float(c.x) + 0.5 - cam.x) > reach || abs(float(c.z) + 0.5 - cam.z) > reach || float(c.y) < yMin || float(c.y) >= yMin + 128.0) return 1.0;
+        vec4 raw = texelFetch(BlocksSampler, ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7)), 0);
+        uint bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        if (bits == 0xFFFFFFFFu) {
+            status = 2;
+            return 1.0;
+        }
+        uint k = (bits >> uint(2 * (c.y & 15))) & 3u;
+        if (k == 0u) continue;
+        if (k == 2u) {
+            // leaves: three texels in ten of the face the ray comes in by let the sun through, so a canopy's shade is
+            // flecked with light, in the leaf texture's own pixels
+            vec3 q = floor((o + l * t) * 16.0 + 0.5);
+            if (fract(sin(dot(q, vec3(12.9898, 78.233, 37.719))) * 43758.5453) < 0.3) continue;
+        } else if (k == 3u) {
+            // a block's lower half: only if the ray is under half height somewhere in it
+            float yIn = o.y + l.y * t - float(c.y), yOut = o.y + l.y * min(next.x, min(next.y, next.z)) - float(c.y);
+            if (min(yIn, yOut) >= 0.5) continue;
+        }
+        status = 0;
+        return 0.0;
+    }
+    return 1.0;
+}
+
+// the heightfield, from o (a point in the world's ring) toward the light: 0 under solid blocks, dimmed through leaves
+float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof);
+
+// how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
+// reaches, the map's (the heightfield can only say "something stands between"; the map knows what and where)
 float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     vec4 f12 = F(12), f15 = F(15);
     if (f15.x < 1.0) return 1.0;
     vec3 o = p + vec3(f12.x, f12.y, f12.z) + n * 0.06;
+    float vis = heightRay(o, l, noise, ultra, true);
+    if (vis > 0.97 || F(17).z <= 0.0) return vis;
+    if (max(abs(o.x - f12.x), abs(o.z - f12.z)) > F(17).z - 1.0) return vis;
+    int status;
+    float tOut;
+    float through = blockRay(o, l, status, tOut);
+    if (status == 2) return vis;
+    if (status == 0) return 0.0;
+    // out of the map in the open: the land beyond it, by the heightfield from there
+    return through * heightRay(o + l * tOut, l, noise, ultra, false);
+}
+
+float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof) {
+    vec4 f12 = F(12), f15 = F(15);
     // under a roof or in a cave: nothing from the sun (the composite fades its model out there). A heightmap counts a
     // slab, a stair or a fence as its whole block, so its own column only shadows from a block above the surface
     ivec2 own = ivec2(floor(o.xz));
-    if (o.y < heightAt(own, 0).g - 1.0) return 0.0;
+    if (roof && o.y < heightAt(own, 0).g - 1.0) return 0.0;
     float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3), vis = 1.0;
     // near: every column the ray crosses, at its lowest point over it (where it enters: it climbs), so a step's or a
     // wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
@@ -103,6 +180,13 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
 float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra) {
     int steps = ultra ? 12 : 6;
     float len = clamp(0.35 + dist * 0.025, 0.35, 3.0);
+    // the Air (frame texel 22 w): near the eye the small things cast whole shadows, a block and a half long (a flower,
+    // a plate on the path, a mob), walked in more and even steps so every screen pixel of a texel agrees
+    if (F(22).w > 0.0) {
+        steps = ultra ? 24 : 16;
+        len = max(len, 1.6 * (1.0 - smoothstep(26.0, 60.0, dist)));
+        noise = 0.5;
+    }
     vec3 o = p + n * (0.02 + dist * 0.0008);
     for (int i = 0; i < steps; i++) {
         float t = (float(i) + noise) / float(steps);
@@ -170,7 +254,9 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
     }
     const float g = 0.6;
     float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));
-    return 1.0 - exp(-acc * dt * 0.0016 * strength * phase);
+    // (the Air: the low sun's air holds more light)
+    float low = F(22).w > 0.0 ? 1.0 + 1.6 * (1.0 - smoothstep(0.1, 0.5, F(22).y)) * (1.0 - F(16).y) : 1.0;
+    return 1.0 - exp(-acc * dt * 0.0016 * strength * phase * low);
 }
 
 // last frame's answer for this surface (or sky direction): xyz the light, w how much of the 2x2 history saw the same
@@ -229,7 +315,10 @@ void main() {
     if (!sky && dist >= 1.25 && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
-        if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {
+        // (a face turned from the light is left to the composite, except inside the Sun Pass's block map, where the
+        // block it belongs to shades it exactly)
+        bool mapped = F(17).z > 0.0 && max(abs(p.x), abs(p.z)) < F(17).z - 1.0;
+        if (f14.w > 0.0 && P(17).r > 0.0 && (mapped || dot(n, f14.xyz) > -0.1)) {
             // the sun as a small disc (about 1.4 degrees across): each frame's ray leans a little across it, so a
             // shadow's edge is a penumbra that widens away from what casts it, smoothed by the frames below the light
             // buffer's texels (a crisp edge at 960 x 540 would show as stairs of four pixels on a 4K screen)
@@ -245,11 +334,12 @@ void main() {
                     vec3 w = p + vec3(f12.x, f12.y, f12.z);
                     ps = mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
                 }
-                rad *= 0.4;
+                // a low sun's shadows are long and their edges wide: the disc grows as it sinks
+                rad *= 0.4 + 2.6 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
             vis = sunVisibility(ps, n, l, noise, ultra);
-            if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+            if (vis > 0.0 && dist < 96.0) vis *= contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
             // and a storm cell's, long across the land when the sun is low

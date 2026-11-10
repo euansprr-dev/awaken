@@ -59,6 +59,21 @@ public final class LensClient {
     // Lens 2's light (Cinematic and Ultra): created the first time either tier is chosen, kept until the game closes
     private static LensFrame lensFrame;
     private static LensHeightfield heightfield;
+    // the Sun Pass's block map (SPEC §22 "Steady Light"): which blocks near the camera stop the sun
+    private static LensBlocks blocks;
+    static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
+    private static boolean sunPass = true;
+    private static @org.jspecify.annotations.Nullable Boolean forcedSunPass;
+
+    /** Autopilot {@code lens sunpass on|off|setting}: the A/B switch for the block map's shadows. */
+    public static String sunPass(String arg) {
+        forcedSunPass = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "sun pass " + (forcedSunPass != null ? forcedSunPass : "from the setting");
+    }
     private static boolean lit, sunHere;
     private static float lightStrength, rain, warmth;
     private static boolean moonLight;
@@ -200,6 +215,7 @@ public final class LensClient {
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
         temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
         air = forcedAir != null ? forcedAir : AwakenConfig.Client.LENS_AIR.get();
+        sunPass = forcedSunPass != null ? forcedSunPass : AwakenConfig.Client.LENS_SUN_PASS.get();
         // the VFX tier is ImmersiveVFX alone: no Lens at all, story scenes included (without that mod it reads as Swift)
         boolean vfx = setting == AwakenConfig.Client.LensLook.VFX && Companions.immersiveVfxLoaded();
         boolean off = setting == AwakenConfig.Client.LensLook.OFF || vfx;
@@ -276,6 +292,7 @@ public final class LensClient {
         if (lit && sunHere) {
             var at = mc.gameRenderer.mainCamera().blockPosition();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
+            if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
         }
         if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
                 air && sunHere, sunDir.y, rain);
@@ -409,8 +426,10 @@ public final class LensClient {
         // registered before the chain that reads them first loads: a post pass keeps the texture it found then
         lensFrame = new LensFrame();
         heightfield = new LensHeightfield();
+        blocks = new LensBlocks();
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
+        Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
     }
 
@@ -469,6 +488,7 @@ public final class LensClient {
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
+        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

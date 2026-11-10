@@ -217,7 +217,15 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
         // game's own face shading and only cast shadows show; by golden hour every face is lit or shaded by its turn
         float lowSun = 1.0 - smoothstep(0.5, 0.92, f14.y);
-        float direct = lr.r * mix(1.0, smoothstep(-0.08, 0.3, dot(n, f14.xyz)), lowSun);
+        // the Sun Pass (frame texel 17 z: the block map's reach): inside the map a face turned from the sun is shaded by
+        // the block it belongs to, exactly, so the turn of the face decides nothing there. (Deciding by the face lit the
+        // one-pixel sides of path plates and block lips while the ground beside them lay in shade: bright rims round
+        // every small edge at dusk, Euan 10 Nov.)
+        float inMap = F(17).z > 0.0 ? 1.0 - smoothstep(F(17).z - 6.0, F(17).z - 1.0, max(abs(p.x), abs(p.z))) : 0.0;
+        float direct = lr.r * mix(1.0, smoothstep(-0.08, 0.3, dot(n, f14.xyz)), lowSun * (1.0 - inMap));
+        // the Air: a low sun gives the ground little. Its light fades into the shade as it sinks, so dusk is one soft
+        // light and not a floor of long streaks (each a gap between two far trees, stretched thirty blocks)
+        direct *= mix(1.0, smoothstep(0.05, 0.55, f14.y), airOn() * (1.0 - f16.y));
         // golden hour: the key warms and the shade deepens as the sun lowers (by its height, or the sunrise colour's
         // strength, texel 1 a, whichever is more), never by moonlight
         float golden = max(p1.a, 1.0 - smoothstep(0.1, 0.5, f14.y)) * (1.0 - f16.y);
@@ -235,8 +243,12 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
             key = mix(key, mix(vec3(1.24, 1.17, 0.98), key * vec3(1.14, 1.07, 0.99), max(golden, f16.y)), air);
             shade *= mix(1.0, (1.0 - min(0.85, depthOfShade * mix(1.9, 1.35, f16.y))) / max(1.0 - min(0.85, depthOfShade), 0.15), air);
         }
-        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
-        m = mix(vec3(1.0), mix(shade, key, direct), k);
+        // the Sun Pass (frame texel 17 z: the block map's reach): under cover the heightfield had no sun to give, so the
+        // model stood back and left the game's light. The map knows where the sun does come in (a doorway, a window,
+        // under an arch): there the key shows as a patch of sunlight; the rest of the room stays the game's
+        float kOpen = max(open, direct * inMap);
+        float k = kOpen * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
+        m = mix(vec3(1.0), mix(mix(vec3(1.0), shade, open), key, direct), k);
         // golden light is rich light: sunlit colour gains a little saturation as the sun lowers
         rich = golden * k * direct * 0.16;
         dbg = vec4(n * 0.5 + 0.5, direct);
@@ -409,7 +421,13 @@ void main() {
             float t = d / reach;
             float wy = pRel.y + F(12).y;
             float thin = mix(1.0, exp(-max(wy - F(12).y - 24.0, 0.0) / 150.0), 0.55);
-            float fog = (1.0 - exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * lensOpen * airK;
+            // and the air between here and there: a haze that starts a few blocks out, thin by day, thicker at dusk and
+            // dawn and by night, lying low (full at and under the eye's height, thinner above it), so each line of
+            // trees stands a little paler than the one before it and the far fog has something leading into it
+            vec3 hrA = airHour(f22.y);
+            float lying = mix(0.4, 1.0, exp(-max(wy - F(12).y + 3.0, 0.0) / 42.0));
+            float near = (1.0 - exp(-max(d - 4.0, 0.0) / mix(280.0, 150.0, clamp(max(hrA.y, hrA.z * 0.85) + 0.5 * rainA, 0.0, 1.0)))) * lying;
+            float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * lensOpen * airK;
             vec3 fc = airFog(dirA, f22.xyz, rainA);
             c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
             c = mix(c, fc, fog);
@@ -523,7 +541,7 @@ void main() {
 #endif
             float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
             // (the Air: the sunlit mist is stronger, so beams stand in the air between the trees)
-            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 2.7, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
+            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 3.4, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

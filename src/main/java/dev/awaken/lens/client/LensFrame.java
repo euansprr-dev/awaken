@@ -65,6 +65,15 @@ final class LensFrame {
         stars = starBrightness;
     }
 
+    // the Sun Pass's block map: how far from the camera it can be trusted (0: none), and its lowest y
+    private float blocksReach, blocksMinY;
+
+    /** This frame's block map (LensBlocks): its trusted reach in blocks (0: not used) and its lowest y. */
+    void blocks(float reach, float minY) {
+        blocksReach = reach;
+        blocksMinY = minY;
+    }
+
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
     void clouds(float base, float cover, double drift, int colour) {
         cloudBase = base;
@@ -126,7 +135,8 @@ final class LensFrame {
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
         // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost; y 1 when the clouds
         // and light are spread over frames (lensTemporal)
-        put(17, (float) ((now - start) / 1.0e9 % 3600.0), temporal ? 1f : 0f, 0f, 0f);
+        // z, w: the Sun Pass's block map (its trusted reach, 0 without one; its lowest y)
+        put(17, (float) ((now - start) / 1.0e9 % 3600.0), temporal ? 1f : 0f, blocksReach, blocksMinY);
         // 18-19: the clouds: base height (0 none), cover, the camera's x and z plus the wind's drift (modulo the noise's
         // 30720-block repeat); their colour (the game's, by time and weather) and alpha
         double period = 30720.0;

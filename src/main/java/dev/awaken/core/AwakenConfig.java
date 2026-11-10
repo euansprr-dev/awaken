@@ -152,6 +152,10 @@ public final class AwakenConfig {
                         "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
                         "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
                 .define("lensAir", true);
+        public static final ModConfigSpec.BooleanValue LENS_SUN_PASS = C
+                .comment("The Sun Pass (Cinematic and Ultra): shadows from a map of the blocks near you, so a shadow is the block's",
+                        "own shape and the sun comes in under trees, through doorways and under arches. Off: the height-map shadows.")
+                .define("lensSunPass", true);
         public static final ModConfigSpec.BooleanValue LENS_TILES = C
                 .comment("Lens's passes as Apple's (tile-based) GPUs want them: no depth buffers, separate clears or reloads of the frame",
                         "between its passes. The picture is the same; it saves memory traffic. Off: exactly as the game does it.")

@@ -970,6 +970,12 @@
           "target": "awaken:lens_hist"
         },
         {
+          "sampler_name": "Blocks",
+          "location": "awaken:lens_blocks",
+          "width": 128,
+          "height": 1024
+        },
+        {
           "sampler_name": "Frame",
           "location": "awaken:lens_frame",
           "width": 48,

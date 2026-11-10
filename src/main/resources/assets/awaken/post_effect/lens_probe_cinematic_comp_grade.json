@@ -35,12 +35,12 @@
       "height": 300
     },
     "awaken:lens_light": {
-      "width": 960,
-      "height": 540
+      "width": 1440,
+      "height": 810
     },
     "awaken:lens_hist": {
-      "width": 960,
-      "height": 540,
+      "width": 1440,
+      "height": 810,
       "persistent": true
     },
     "awaken:lens_sunmap": {
@@ -48,12 +48,12 @@
       "height": 512
     },
     "awaken:lens_clouds": {
-      "width": 560,
-      "height": 315
+      "width": 800,
+      "height": 450
     },
     "awaken:lens_clouds_hist": {
-      "width": 560,
-      "height": 315,
+      "width": 800,
+      "height": 450,
       "persistent": true
     }
   },
@@ -968,6 +968,12 @@
         {
           "sampler_name": "History",
           "target": "awaken:lens_hist"
+        },
+        {
+          "sampler_name": "Blocks",
+          "location": "awaken:lens_blocks",
+          "width": 128,
+          "height": 1024
         },
         {
           "sampler_name": "Frame",

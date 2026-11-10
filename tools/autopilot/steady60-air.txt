@@ -21,6 +21,11 @@ lookswitch cinematic
 wait 400
 # ---- the saved view through the day
 shot a1_morning
+lens sunpass off
+wait 60
+shot a1_morning_nosunpass
+lens sunpass setting
+wait 40
 lens air off
 wait 60
 shot a1_morning_off
