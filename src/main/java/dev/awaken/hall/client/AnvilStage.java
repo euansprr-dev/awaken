@@ -373,7 +373,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             } else {
                 float cx = sealCx(i);
                 s.titleCentre(riteTitle(i), cx, y + iconSize + 2F, 2F, titleColour);
-                s.centre(s.fit(o.headline(), SEAL_W + 60F, 3F), cx, y + iconSize + 62F, 3F, o.ready() ? Stage.GOOD : Stage.LANTERN);
+                s.fitted(o.headline(), cx, y + iconSize + 62F, SEAL_W + 60F, 3F, o.ready() ? Stage.GOOD : Stage.LANTERN, 0);
             }
         }
     }
@@ -441,7 +441,13 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             notes(s, extra, Stage.LABEL);
             return;
         }
-        if (!o.says().isEmpty()) says = s.wrap(o.says().getFirst().text(), PLATE_W, 3F);
+        most = "";
+        List<AnvilPayloads.Say> told = new ArrayList<>(o.says());
+        for (AnvilPayloads.Say say : o.says()) if (say.tone() == AnvilPayloads.Say.MOST) {
+            most = say.text();
+            told.remove(say);
+        }
+        if (!told.isEmpty()) says = s.wrap(told.getFirst().text(), PLATE_W, 3F);
         for (AnvilPayloads.Cost c : o.costs()) needs.add(need(s, c));
         canAct = o.ready();
         if (o.ready()) {
@@ -455,8 +461,23 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             why = s.wrap(o.line(), PLATE_W, 3F);
         }
         List<String> extra = new ArrayList<>(3);
-        for (int i = 1; i < o.says().size(); i++) extra.add(o.says().get(i).text());
+        for (int i = 1; i < told.size(); i++) extra.add(told.get(i).text());
         notes(s, extra, Stage.LABEL);
+    }
+
+    /** What the weapon would be at its highest Temper ("Damage 12"), "" when this rite doesn't say. */
+    private String most = "";
+
+    /** The Temper it has, the one this heat takes it to, and how far it can go: a pip each, the most it can be at the end. */
+    private void temperPips(Stage s, float x, float y) {
+        int now = Upgrades.temperOf(weapon), to = now;
+        AnvilPayloads.Option o = option(TEMPER);
+        for (Upgrades.Change c : o.changes()) if (c.label().equals("Temper")) for (int t = 1; t <= Upgrades.MAX_TEMPER; t++) if (Upgrades.roman(t).equals(c.to())) to = t;
+        for (int i = 0; i < Upgrades.MAX_TEMPER; i++) {
+            float px = x + i * 22F;
+            s.fill(px, y, px + 16F, y + 16F, i < now ? Stage.GOOD : i < to ? Stage.LANTERN : 0x736F829C);
+        }
+        s.text(Upgrades.roman(Upgrades.MAX_TEMPER) + " · " + most, x + Upgrades.MAX_TEMPER * 22F + 8F, y - 1F, 2F, Stage.LABEL);
     }
 
     private void notes(Stage s, List<String> extra, int colour) {
@@ -478,15 +499,39 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
         return Language.getInstance().has(key) ? Language.getInstance().getOrDefault(key) : "";
     }
 
+    /**
+     * Lines centred on the plate, in the room of {@code most} of them. It drew {@code most} and dropped the rest; nothing is
+     * cut now (SPEC §57.6): more than fit are set again a size smaller, which fits half as many lines again in the same room.
+     */
     private static void centred(Stage s, List<FormattedCharSequence> lines, float y, int most, int colour) {
-        for (int i = 0; i < Math.min(most, lines.size()); i++) {
-            FormattedCharSequence l = lines.get(i);
-            s.text(l, CX - s.font.width(l) * s.snap(3F) / 2F, y + i * 30F, 3F, colour);
+        if (lines.size() <= most) {
+            for (int i = 0; i < lines.size(); i++) {
+                FormattedCharSequence l = lines.get(i);
+                s.text(l, CX - s.font.width(l) * s.snap(3F) / 2F, y + i * 30F, 3F, colour);
+            }
+            return;
+        }
+        StringBuilder whole = new StringBuilder();
+        for (FormattedCharSequence l : lines) {
+            if (!whole.isEmpty()) whole.append(' ');
+            l.accept((index, style, code) -> {
+                whole.appendCodePoint(code);
+                return true;
+            });
+        }
+        float step = 10F * s.snap(2F), ly = y;
+        for (FormattedCharSequence l : s.wrap(whole.toString(), PLATE_W, 2F)) {
+            s.text(l, CX - s.font.width(l) * s.snap(2F) / 2F, ly, 2F, colour);
+            ly += step;
         }
     }
 
     private void plate(Stage s, float mx, float my, float dt) {
         float noteY = SMALL_Y + 3 * SMALL_STEP + 20F;
+        if (!most.isEmpty() && armed == TEMPER) {
+            temperPips(s, SMALL_X, noteY);
+            noteY += 32F;
+        }
         for (FormattedCharSequence l : notes) {
             s.text(l, SMALL_X, noteY, 2F, Stage.LABEL);
             noteY += 21F;
@@ -578,7 +623,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             Panel.icon(s, stoneIcons[i], mid - 32F, STONES_TOP, 4F);
             s.centre(st.name(), mid, STONES_TOP + 68F, 3F, has ? 0xFF000000 | st.colour() : Stage.DIM);
             String sub = st.on() ? "On it now" : has ? st.have() + " " + st.stone() : st.stone(); // never dimmed: you should know it when you find it
-            s.centre(s.fit(sub, STONE_STEP - 6F, 2F), mid, STONES_TOP + 96F, 2F, st.on() ? Stage.GOOD : has ? Stage.LABEL : Stage.DIM);
+            s.fitted(sub, mid, STONES_TOP + 96F, STONE_STEP - 6F, 2F, st.on() ? Stage.GOOD : has ? Stage.LABEL : Stage.DIM, 0);
             if (on) s.fill(mid - 38F, STONES_TOP + 114F, mid + 38F, STONES_TOP + 117F, 0xFF000000 | st.colour());
         }
         stoneHover = over;
@@ -634,8 +679,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
     }
 
     private void foot(Stage s, float mx, float my) {
-        s.text("Esc", 28F, 918F, 3F, Stage.EDGE);
-        s.text(armed >= 0 ? "Back to the three rites" : "Step away from the anvil", 96F, 918F, 3F, Stage.LABEL);
+        s.hint("Esc", armed >= 0 ? "Back to the three rites" : "Step away from the anvil", 28F, 918F);
         String list = "The Armoury";
         float w = s.width(list, 3F);
         armouryX0 = 1684F - w;

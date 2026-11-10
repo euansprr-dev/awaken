@@ -43,9 +43,13 @@ final class CoreSections {
 
     static void register() {
         // the Status page is a sheet about you: the hero, then the six stats (SPEC §30.3)
+        // the band's stage (SPEC §57.4): Status is a place of its own; the sections below are the old band's and the flat screen's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.STATUS.ordinal(), new StatusPlace());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
+        // on the stage the Journal is one wall (SPEC §57.8); the strip above is the classic band's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.JOURNAL.ordinal(), new JournalPlace());
         StatusSections.add(StatusSections.Tab.JOURNAL, new Catalogue.Empty());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
@@ -402,12 +406,7 @@ final class CoreSections {
                 String head = entry.found() ? entry.title() : "?";
                 ui.textAt(head, a[0] + 5, a[1] + 4, cardW - 10, Glass.a(entry.found() ? Glass.TITLE : Glass.LABEL, 1f), false);
                 String text = entry.found() ? entry.body() : entry.title();
-                var body = SignalText.wrapAtMost(text, cardW - 10, 2, f::width);
-                int ty = a[1] + 15;
-                for (String l : body) {
-                    g.text(f, l, a[0] + 5, ty, Glass.a(Glass.LABEL, 1f), false);
-                    ty += 9;
-                }
+                ui.boxAt(text, a[0] + 5, a[1] + 15, cardW - 10, 2, Glass.a(Glass.LABEL, 1f), false); // fitted, never cut (SPEC §57.6)
                 boolean cut = SignalText.wrap(text, cardW - 10, f::width).size() > 2 || f.width(head) > cardW - 10;
                 if (hover && cut) {
                     g.tooltip(f, f.split(Component.literal(head + "\n" + text), 220), ui.mouseX(), ui.mouseY());

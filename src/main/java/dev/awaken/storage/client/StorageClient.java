@@ -110,7 +110,7 @@ public final class StorageClient {
             e.addListener(new GlassKey(s, () -> 119, () -> row, 23, 11, "Tidy", "Line up your bag by what things are. " + rule, () -> tidy(s, Section.BAG)));
             e.addListener(new GlassKey(s, () -> 144, () -> row, 25, 11, "Pin", pinTip, StorageClient::togglePinMode).lit(() -> pinMode));
         }
-        String undo = "Undo (" + UNDO.getTranslatedKeyMessage().getString() + ")";
+        String undo = "Undo";
         int w = Minecraft.getInstance().font.width(undo) + 8;
         undoKey = new GlassKey(s, () -> s.getImageWidth() - w, () -> Tray.lineY(s, s.height) - 1 - s.getTopPos(), w, 11, undo, "Put everything back where it was.", () -> undo(s));
         undoKey.visible = false;
@@ -124,7 +124,19 @@ public final class StorageClient {
         if (!(e.getScreen() instanceof AbstractContainerScreen<?> s) || !offered(s)) return;
         if (undoKey != null) undoKey.visible = Tray.canUndo();
         Tray.draw(e.getGuiGraphics(), s, s.height);
+        // the keys that work here, in the band's caps, under the panel where there's room (SPEC §57.9)
+        int y = s.getTopPos() + s.getImageHeight() + 19;
+        if (y + 10 > s.height) return;
+        HINTS.clear();
+        HINTS.add(dev.awaken.core.client.ui.Kit.Hint.of("Tidy", TIDY.getTranslatedKeyMessage().getString()));
+        HINTS.add(dev.awaken.core.client.ui.Kit.Hint.of("Pin a slot", net.minecraft.util.Util.getPlatform() == net.minecraft.util.Util.OS.OSX ? "Option" : "Alt", "Click"));
+        if (Tray.canUndo()) HINTS.add(dev.awaken.core.client.ui.Kit.Hint.of("Undo", UNDO.getTranslatedKeyMessage().getString()));
+        var font = Minecraft.getInstance().font;
+        int w = dev.awaken.core.client.ui.Kit.hintLineWidth(font, HINTS);
+        dev.awaken.core.client.ui.Kit.hintLine(e.getGuiGraphics(), font, HINTS, s.getLeftPos() + (s.getImageWidth() - w) / 2, y, 1F);
     }
+
+    private static final java.util.List<dev.awaken.core.client.ui.Kit.Hint> HINTS = new java.util.ArrayList<>();
 
     private static void togglePinMode() {
         pinMode = !pinMode;

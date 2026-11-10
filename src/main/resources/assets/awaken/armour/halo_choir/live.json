@@ -1,0 +1,107 @@
+[
+ {
+  "piece": "helmet",
+  "bone": "head",
+  "mesh": "helmet_head_live0",
+  "kind": "tilt",
+  "pivot": [
+   0.0,
+   -0.4375,
+   0.4375
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "u": [
+   -1.0,
+   -0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.045,
+  "amount": 6.0,
+  "reach": 0.0,
+  "bob": 0.025,
+  "phase": 0.0,
+  "idle": 0.35,
+  "stride": 0.65,
+  "wind": 0.0,
+  "kick": 0.6
+ },
+ {
+  "piece": "helmet",
+  "bone": "head",
+  "mesh": "helmet_head_live1",
+  "kind": "sway",
+  "pivot": [
+   0.28125,
+   -0.375,
+   0.4375
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "u": [
+   -1.0,
+   -0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.045,
+  "amount": 5.0,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 1.0,
+  "stride": 0.0,
+  "wind": 0.0,
+  "kick": 2.5
+ },
+ {
+  "piece": "helmet",
+  "bone": "head",
+  "mesh": "helmet_head_live2",
+  "kind": "sway",
+  "pivot": [
+   -0.28125,
+   -0.375,
+   0.4375
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   1.0
+  ],
+  "u": [
+   1.0,
+   0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "speed": 0.045,
+  "amount": 5.0,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 1.0,
+  "stride": 0.0,
+  "wind": 0.0,
+  "kick": 2.5
+ }
+]

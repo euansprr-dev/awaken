@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "name": "The Glass Warrens",
+  "line": "Warrens under a desert where lightning fused the sand to glass, and some of the glass is still hot.",
+  "form": "dungeon",
+  "theme": "glass_desert",
+  "ranks": [
+    "D",
+    "C"
+  ],
+  "land": {
+    "program": "awaken:glass_warrens",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:gate_glass_desert"
+    ],
+    "lens": "glass_warrens",
+    "air": [
+      "shaft_dust",
+      "dust",
+      "embers"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "glass_serpent",
+    "seat": "under_the_dunes"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

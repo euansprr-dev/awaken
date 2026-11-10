@@ -134,18 +134,28 @@ public final class AwakenConfig {
          * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
          * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
          */
-        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA }
+        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA, VFX }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
                 .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
-                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
-                        "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
+                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps), ULTRA",
+                        "(the same at higher quality; 60+ fps) or VFX (Lens stays off and ImmersiveVFX draws instead; without",
+                        "that mod it reads as SWIFT). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec.BooleanValue LENS_TEMPORAL = C
                 .comment("Lens 2 (Cinematic and Ultra) spreads its clouds and light over frames: each pixel's clouds are worked out one",
                         "frame in four and its light every other frame, the rest carried forward from the frames before (still and",
                         "slow views look the same; a fast turn settles in a few frames). Off: every pixel every frame.")
                 .define("lensTemporal", true);
+        public static final ModConfigSpec.BooleanValue LENS_AIR = C
+                .comment("The Air (Cinematic and Ultra): Lens's own sky, a far fog of the sky's own colour that takes the land into",
+                        "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
+                        "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
+                .define("lensAir", true);
+        public static final ModConfigSpec.BooleanValue LENS_SUN_PASS = C
+                .comment("The Sun Pass (Cinematic and Ultra): shadows from a map of the blocks near you, so a shadow is the block's",
+                        "own shape and the sun comes in under trees, through doorways and under arches. Off: the height-map shadows.")
+                .define("lensSunPass", true);
         public static final ModConfigSpec.BooleanValue LENS_TILES = C
                 .comment("Lens's passes as Apple's (tile-based) GPUs want them: no depth buffers, separate clears or reloads of the frame",
                         "between its passes. The picture is the same; it saves memory traffic. Off: exactly as the game does it.")
@@ -159,6 +169,11 @@ public final class AwakenConfig {
                         "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
                         "is installed.")
                 .defineEnum("farSight", FarSight.FULL);
+        public static final ModConfigSpec.BooleanValue TURBO_CHUNK_PACING = C
+                .comment("When chunks leave the view, take them out of the renderer a few a frame and not all in one (a whole row",
+                        "leaving at once, flying, made that frame late). Nothing drawn changes. Needs Sodium; off: Sodium frees them",
+                        "exactly as its own code does.")
+                .define("turboChunkPacing", true);
         public static final ModConfigSpec.BooleanValue FAR_SIGHT_WATER_EDGES = C
                 .comment("While Far Sight draws, leave out the water walls at the edge of the loaded chunks (thin pale lines over the",
                         "far sea after a teleport or in fast flight). Needs Sodium; off: water meshes exactly as Sodium's.")

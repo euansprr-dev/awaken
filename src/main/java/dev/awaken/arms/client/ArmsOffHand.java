@@ -11,6 +11,8 @@ import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
@@ -42,7 +44,14 @@ final class ArmsOffHand {
         Archetypes.Loaded style = Arms.styleOf(main);
         FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
         if (st == null || !st.twin()) return ItemStack.EMPTY;
-        return TWINS.computeIfAbsent(main, ItemStack::copy);
+        ItemStack twin = TWINS.get(main);
+        if (twin == null) {
+            twin = main.copy();
+            // what the off hand holds isn't the main hand's twin (the Shieldblade's shield): the copy names its own model
+            if (st.off() != null) twin.set(DataComponents.ITEM_MODEL, BuiltInRegistries.ITEM.getKey(main.getItem()).withSuffix(st.off().model()));
+            TWINS.put(main, twin);
+        }
+        return twin;
     }
 
     /** What the main hand shows this frame (still the old stack while it sinks after a switch) and its equip drop. */
@@ -66,7 +75,7 @@ final class ArmsOffHand {
 
     /** How far the twin is dropped by the main hand's equip (vanilla's inverse arm height: 0 up, 1 down). */
     static float equip() {
-        return mainEquip;
+        return ArmsComfort.weaponDraw() ? ArmsHands.equip : mainEquip; // a pair is drawn together, on the draw's own clock (SwingWeight)
     }
 
     /** For Hands (FirstPerson.offHandShows): the off hand holds the twin, so a stance's fist never takes its place. */
@@ -90,8 +99,8 @@ final class ArmsOffHand {
         PoseStack ps = e.getPoseStack();
         ps.pushPose();
         // vanilla's resting hand on the off side, risen as far as the main hand (a pair is drawn together)
-        ps.translate(inv * 0.56F, -0.52F + Math.max(mainEquip, away) * -0.6F, -0.72F);
-        ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv);
+        ps.translate(inv * 0.56F, -0.52F + Math.max(equip(), away) * -0.6F, -0.72F);
+        ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv, true);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);
         ArmsFilm.twinPass = true;

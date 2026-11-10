@@ -1,0 +1,724 @@
+<title>Weight in the Hand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column (max 62rem), wide figures break to the full column; "today" is steel, "the plan" is forge. */
+:root {
+  --bg: #f2f3f5; --panel: #ffffff; --ink: #15181d; --muted: #596170; --line: #d7dbe2; --soft: #e9ebef;
+  --steel: #2f6388; --forge: #a9560f; --ok: #2c7a4b; --warn: #8f5d00; --bad: #ad3535;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1216; --panel: #171b21; --ink: #e7e9ed; --muted: #9aa2af; --line: #2a303a; --soft: #1e232b;
+  --steel: #86b6d6; --forge: #eda155; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1216; --panel: #171b21; --ink: #e7e9ed; --muted: #9aa2af; --line: #2a303a; --soft: #1e232b;
+  --steel: #86b6d6; --forge: #eda155; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px }
+.wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 56px }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.45rem, 3.5vw, 1.9rem); font-weight: 600; letter-spacing: -0.01em }
+h3 { font-size: 1.12rem; font-weight: 600 }
+p, ul, ol { margin: 0; max-width: 68ch }
+ul, ol { padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+.lead { font-size: 1.14rem; max-width: 62ch }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+q { font-style: italic }
+header { display: flex; flex-direction: column; gap: 16px }
+.answer { border-left: 3px solid var(--forge); padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 8px }
+.answer li { max-width: 64ch }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap }
+.tag.ok { color: var(--ok) } .tag.warn { color: var(--warn) } .tag.bad { color: var(--bad) } .tag.steel { color: var(--steel) } .tag.forge { color: var(--forge) }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line) }
+tr:last-child td { border-bottom: 0 }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--soft) }
+td.num, th.num { text-align: right; white-space: nowrap }
+.finding { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); gap: 4px 14px; padding-top: 18px; border-top: 1px solid var(--line) }
+.finding .big { font-family: var(--display); font-weight: 700; font-size: 1.9rem; color: var(--forge); line-height: 1 }
+.finding > div { display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.change { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px }
+.change h3 { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.change h3 .n { font-family: var(--mono); color: var(--forge); font-size: 0.95rem }
+dl.rows { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 8px 16px; margin: 0 }
+dl.rows dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px }
+dl.rows dd { margin: 0; max-width: 64ch }
+@media (max-width: 560px) { dl.rows { grid-template-columns: 1fr; gap: 2px 0 } dl.rows dd { margin-bottom: 8px } .finding { grid-template-columns: 1fr } }
+/* the strike's timeline: widths are milliseconds */
+.tl { display: flex; flex-direction: column; gap: 6px }
+.tl .bar { display: flex; height: 44px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line) }
+.tl .bar div { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.68rem; color: var(--ink); min-width: 0; overflow: hidden; white-space: nowrap; border-right: 1px solid var(--bg) }
+.tl .wind { background: color-mix(in srgb, var(--steel) 22%, var(--panel)) }
+.tl .cut { background: var(--forge); color: var(--bg) !important }
+.tl .frz { background: color-mix(in srgb, var(--bad) 55%, var(--panel)) }
+.tl .aft { background: color-mix(in srgb, var(--steel) 45%, var(--panel)) }
+.tl .still { background: repeating-linear-gradient(135deg, var(--soft) 0 6px, var(--panel) 6px 12px) }
+.tl .ruler { display: flex; font-family: var(--mono); font-size: 0.66rem; color: var(--muted) }
+.tl .ruler span { flex: 1 1 0; border-left: 1px solid var(--line); padding-left: 3px; min-width: 0; overflow: hidden }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; color: var(--muted) }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--line) }
+/* the player */
+.player { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 14px }
+.screens { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px }
+@media (max-width: 640px) { .screens { grid-template-columns: 1fr } }
+.screen { display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.screen canvas { width: 100%; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 5px; background: #0d1116; display: block }
+.screen .cap { display: flex; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--muted) }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center }
+.controls .grp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+button { font: inherit; font-size: 0.86rem; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 6px 11px; cursor: pointer }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--forge); outline-offset: 2px }
+input[type="range"] { flex: 1 1 220px; min-width: 0; accent-color: var(--forge) }
+label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 0.86rem }
+.readout { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); min-height: 1.3em }
+.frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px }
+.frames figure { margin: 0; display: flex; flex-direction: column; gap: 6px }
+.frames img { width: 100%; border-radius: 5px; display: block; border: 1px solid var(--line) }
+.frames figcaption { font-size: 0.84rem; color: var(--muted) }
+.decision { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 16px 20px; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 6px 12px }
+.decision .n { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--forge); line-height: 1.1 }
+.decision > div { display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.decision .rec { color: var(--ok); font-weight: 600 }
+.note { font-size: 0.9rem; color: var(--muted); max-width: 70ch }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px }
+.opt { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: var(--panel); display: flex; flex-direction: column; gap: 8px }
+.opt.pick { border-color: var(--forge); box-shadow: inset 0 0 0 1px var(--forge) }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); padding: 1px 5px; border-radius: 3px }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">AWAKEN · weapon motion and fight feel · approved in full 10 Nov 2026 · stages 0 to 5 built and merged · played once, briefly</div>
+  <h1>Weight in the Hand</h1>
+  <p class="lead">The swings are decent, as you said. What keeps them from the top level is not the swings. It is what happens around them: whether a hit you see really landed, whether you can hear it, whether the blade and the world agree on which way it went, and whether the weapon has any weight when it stops. This plan keeps every swing and fixes those.</p>
+  <p class="note"><strong>Where it stands.</strong> You said "Go ahead with all" on 10 Nov, then asked for all of it to be coded first and tested once at the end. Stages 0 to 5 are built and merged into the build (f00f43572): honest hits, the fourteen sounds made from Minecraft's own recordings, the shake, the settle and the breath, the eased guard, a draw for every weapon, the Katana's lowered rest, walls, the glance and cut grass. Stage 6, one round by hand for each weapon you flag, waits for your notes.</p>
+  <p class="note"><strong>The one test pass.</strong> The weapon tests pass, 78 of 78. Look tours on GitHub showed the game starts with all of it, every hit shown was confirmed by the server (4 of 4, no ghosts), and a blow that does no damage is answered with a dull knock. Their film also showed four faults, all fixed since: the weapon blinked out for two frames in mid-draw, the Katana jumped to its rest in one frame, its rest showed a forearm and no blade, and the sparks off a wall could not be seen. Not shown by any tour: a sweep cutting grass (its test passes; the tour's studio stands in the city, where sweeps leave plants alone).</p>
+  <p class="note"><strong>What is still yours.</strong> You played it for four minutes on 10 Nov: about sixty strikes in the air and one hit, which the server confirmed. That is too few hits to say whether the ghost hits are gone, so the ten minutes in section 9 still stand, with the Katana added. The fourteen sounds are my first picks until you mark the listening page. Nothing here has been judged by your eye or ear yet.</p>
+  <div class="answer">
+    <div class="eyebrow">The short version</div>
+    <ul>
+      <li><strong>Keep all 179 moves as they are.</strong> You haven't played the merged round yet, so no weapon's motion is changed on a guess.</li>
+      <li><strong>Make hits honest first.</strong> In your last 15 fight sessions, 3 in every 10 hits you saw and heard did no damage on the server.</li>
+      <li><strong>Then sound.</strong> The hit sounds are almost all bass that a laptop can't play, and the parry is the kind of synthetic ding you turned down in the powers.</li>
+      <li><strong>Then weight.</strong> A shake in the freeze, a settle after the cut, a draw for every weapon, a blade that bounces off stone.</li>
+    </ul>
+  </div>
+</header>
+
+<section id="brief">
+  <div class="eyebrow">1 · What you asked for</div>
+  <h2>A small polish pass that pushes it as far as it can go</h2>
+  <p>Your words: <q>It's already quite decent. I'm just thinking, how can we push it to the maximum level? I don't want to completely scrap everything. It's more so a way to really see what's the kind of small polish pass that we can do to massively bring it to the most extreme and awesome level.</q></p>
+  <p>How I read that:</p>
+  <ul>
+    <li><strong>The job.</strong> You fight with these weapons for hours. Every swing, hit, block and draw should feel good enough that you want to do it again.</li>
+    <li><strong>Keep.</strong> The swings, the holds, the one chain, tap or hold, and everything from the 9 Nov round.</li>
+    <li><strong>Not this plan.</strong> A rewrite, new weapons, new moves, balance changes. Weapon shapes belong to the weapon models session.</li>
+    <li><strong>What I couldn't know.</strong> How the merged round feels in your hands. It went into the build today (43dceee2a) and your play copy is still on yesterday's (abf3bbd49).</li>
+  </ul>
+  <h3>"Satisfying", turned into things I can measure</h3>
+  <div class="scroll"><table>
+    <tr><th>What you feel</th><th>What I measure</th><th>Today</th><th>Done when</th></tr>
+    <tr><td>A hit is a hit</td><td>Hits shown on screen that the server confirms</td><td class="num">235 of 334 (70%)</td><td>95% or more in your next play log</td></tr>
+    <tr><td>You hear the hit</td><td>Share of a hit sound above 300 Hz, the part a laptop plays</td><td class="num">2 to 20%</td><td>At least vanilla's own strong attack (39%), then your ear</td></tr>
+    <tr><td>No fake ding</td><td>Sound files with a thin held tone above 800 Hz</td><td class="num">36 of 102</td><td>None you would pick out by ear</td></tr>
+    <tr><td>The blow goes where the blade went</td><td>Cuts whose camera kick and knockback match the blade on screen</td><td class="num">111 of 139</td><td class="num">139 of 139</td></tr>
+    <tr><td>The weapon has weight</td><td>Motion during the freeze, and after the blade stops</td><td>None, and none</td><td>A shake and a settle you pick over today's in a blind A/B</td></tr>
+    <tr><td>Every weapon has a presence</td><td>Its own motion and sound when you change to it</td><td class="num">0 of 16</td><td class="num">16 of 16</td></tr>
+    <tr><td>The world answers</td><td>A swing into a wall</td><td>Passes through, silent</td><td>Stops, clanks, sparks</td></tr>
+  </table></div>
+  <p class="note">Not acceptable at any stage: a new glitch of any kind in your animation rules, any change to how fast a tap strikes, or anything that makes a weapon feel floaty.</p>
+</section>
+
+<section id="found">
+  <div class="eyebrow">2 · What I found</div>
+  <h2>Six things, each checked against the real game</h2>
+  <p>I read the hands code, the whole weapons section of the spec, your rules from 9 Nov, and your own play logs. I measured all 179 baked moves frame by frame, all 102 weapon sound files, and the 447 seconds of your play that the black box kept on 9 Nov (16,384 frames at 75 a second, 200 presses).</p>
+
+  <div class="finding"><div class="big">1</div><div>
+    <h3>Three in ten of your hits are ghosts <span class="tag bad">from your logs</span></h3>
+    <p>The game plays a hit the moment your blade arrives, then the server confirms it. When the server doesn't, you saw the sparks, heard the hit and felt the freeze, and nothing happened to the creature. The game counts these when you leave a world. Across your last 15 fight sessions:</p>
+    <div class="scroll"><table>
+      <tr><th>Sessions</th><th class="num">Hits shown</th><th class="num">Confirmed</th><th class="num">Did nothing</th></tr>
+      <tr><td>4 Nov, four sessions</td><td class="num">44</td><td class="num">40</td><td class="num">4 (9%)</td></tr>
+      <tr><td>8 Nov, six sessions</td><td class="num">226</td><td class="num">159</td><td class="num">67 (30%)</td></tr>
+      <tr><td>9 Nov, five sessions</td><td class="num">64</td><td class="num">36</td><td class="num">28 (44%)</td></tr>
+      <tr><td><strong>All fifteen</strong></td><td class="num"><strong>334</strong></td><td class="num"><strong>235</strong></td><td class="num"><strong>99 (30%)</strong></td></tr>
+    </table></div>
+    <p>One session had 19 ghosts in 25 hits. On 8 Nov you said hits <q>feel random</q>. This is the number behind that.</p>
+    <p><strong>What I don't know: the cause.</strong> Three fixes went in after these logs (only the hands decide the combo, a boss's body arrives on time, a hit waits for the blade). Nobody has measured since. And the server never tells the game <em>why</em> it disagreed, so the logs can't say. I have two guesses and neither is proven. One: the game draws other bodies about three ticks behind where the server has them, so a creature your last strike knocked back is already out of reach on the server when your next strike "hits" it on screen. (In today's film, against a husk that can't move, all 9 hits shown were confirmed. So the ghosts come with moving creatures and fast chains, not with every hit.) Two: when you click faster than the chain, the server can land a blow under one press's number while your game files it under the next, so the blow is played twice and one copy is counted as a ghost.</p>
+  </div></div>
+
+  <div class="finding"><div class="big">2</div><div>
+    <h3>You can barely hear your hits on a laptop <span class="tag bad">measured</span></h3>
+    <p>On 9 Nov you said a late block <q>barely makes any sound, it feels like nothing</q>. The cause was that the block's thud was almost all below 300 Hz, which laptop speakers don't play. It was fixed with Minecraft's own shield and iron golem recordings. The hit sounds have the same fault and were never fixed:</p>
+    <div class="scroll"><table>
+      <tr><th>Sound</th><th class="num">Below 300 Hz</th><th class="num">Above 300 Hz</th></tr>
+      <tr><td>Our hit on flesh</td><td class="num">84%</td><td class="num">16%</td></tr>
+      <tr><td>Our heavy hit on flesh</td><td class="num">96%</td><td class="num">4%</td></tr>
+      <tr><td>Our blunt hit (the Maul)</td><td class="num">98%</td><td class="num">2%</td></tr>
+      <tr><td>Our kill</td><td class="num">93%</td><td class="num">7%</td></tr>
+      <tr><td>Our Execution</td><td class="num">97%</td><td class="num">3%</td></tr>
+      <tr><td>The old block, before its fix</td><td class="num">85%</td><td class="num">15%</td></tr>
+      <tr><td>Minecraft's own strong attack</td><td class="num">61%</td><td class="num">39%</td></tr>
+      <tr><td>Minecraft's shield block</td><td class="num">28%</td><td class="num">72%</td></tr>
+    </table></div>
+    <p>The swish is fine (three quarters of it sits between 1 and 6 kHz). So you hear the blade through the air clearly, and then the hit itself is a low thump you mostly can't hear.</p>
+  </div></div>
+
+  <div class="finding"><div class="big">3</div><div>
+    <h3>The parry is a synthetic ding <span class="tag bad">measured</span></h3>
+    <p>On 9 Nov you said of the powers: <q>the dings, like the high-pitched sounds, I really don't like how that sounds. Sounds super synthetic.</q> I ran the same checker over the weapon sounds. 36 of 102 files have that thin held tone: <strong>every</strong> parry, every glance off the guard, the charge and its glint (the "yellow ting"), the cleave, the perfect dodge and the Art. These were built on 25 Oct from a synth kit, before you set the rule about using Minecraft's own recordings. On 8 Nov you also said there is <q>no real parry sound</q>.</p>
+    <p class="note">The checker also flags real metal (an anvil rings in thin tones too), so it can't tell a real ring from a fake one. Your ear decides. The plan gives you a listening page.</p>
+  </div></div>
+
+  <div class="finding"><div class="big">4</div><div>
+    <h3>Twenty-eight cuts kick or throw the wrong way <span class="tag bad">measured</span></h3>
+    <p>The view's kick on a hit, and the side a creature is thrown to, are both read from an old pair of numbers in the timing table. The blade you see comes from the baked keys. Most of the time they agree. On 28 of 139 cuts they don't, and on eleven of them the creature is thrown to the <em>opposite</em> side from your cut:</p>
+    <ul>
+      <li><strong>Axe</strong>, fourth strike. <strong>Maul</strong>, second strike. <strong>War-staff</strong>, fourth strike. <strong>Daggers</strong>, fifth strike. <strong>Gauntlets</strong>, fourth strike.</li>
+      <li><strong>Twin Blades</strong>, strikes 2, 3 and 4, the heavy, the Slipcut and the Undercut. The 9 Nov spins changed the table's timings but not its direction numbers, which still describe the old figure-eight.</li>
+    </ul>
+    <p>The other seventeen throw the right way but kick the view 49 to 73 degrees off the blade (the Maul's first strike, six Scythe moves and three Gauntlet moves among them).</p>
+    <p class="note">Corrected on 10 Nov. This page first said 17 of 143, and named the Daggers' Art. That count forgot to mirror the strikes thrown by the off hand. The numbers here are from the tool that was then built (<code>tools/arms/blows.py report</code>), and they are what the fix covers.</p>
+  </div></div>
+
+  <div class="finding"><div class="big">5</div><div>
+    <h3>The weapon is a statue at the moments your eye is on it <span class="tag bad">measured</span></h3>
+    <p>You press about every 190 ms in a string (the middle of 177 gaps in your log), and your clicks last about 1 ms. At that pace the chain runs as fast as it is allowed, a Longsword strike every 300 ms. This is one of them, to scale:</p>
+    <div class="tl" aria-label="One Longsword strike at your pace, to scale in milliseconds">
+      <div class="bar">
+        <div class="wind" style="flex: 75 1 0">wind-up 75</div>
+        <div class="cut" style="flex: 25 1 0">cut</div>
+        <div class="frz" style="flex: 45 1 0">freeze 45</div>
+        <div class="cut" style="flex: 62 1 0">through, stop 62</div>
+        <div class="aft" style="flex: 75 1 0">backs up 75</div>
+        <div class="still" style="flex: 18 1 0"></div>
+      </div>
+      <div class="ruler"><span>0 ms</span><span>50</span><span>100</span><span>150</span><span>200</span><span>250</span><span>300 · next strike</span></div>
+    </div>
+    <div class="legend"><span><i style="background: var(--forge)"></i>The cut: its fast part is about 3 frames at 60 a second, the blade crossing two thirds of the screen</span><span><i style="background: color-mix(in srgb, var(--bad) 55%, var(--panel))"></i>The freeze on the hit</span></div>
+    <p>Your eye gets the fast part of the cut for about three frames. It gets the freeze and what follows for four times as long. And in that time:</p>
+    <ul>
+      <li><strong>In the freeze,</strong> the creature trembles but your weapon just holds its pose. Nothing on it answers the hit.</li>
+      <li><strong>After it,</strong> the blade is at a dead stop about 60 ms after the freeze lets go. It backs up a little, and then holds as good as still for as long as you wait (speed 0.00 in the keys; under a centimetre of creep in the film).</li>
+      <li><strong>At rest,</strong> every weapon trails your view by the same spring. A Maul follows your look exactly as a dagger does.</li>
+    </ul>
+    <p>Section 3 says how the dead stop got there.</p>
+  </div></div>
+
+  <div class="finding"><div class="big">6</div><div>
+    <h3>You approved these on 28 Oct and they were never built <span class="tag warn">checked on every branch</span></h3>
+    <p>The Fight Feel plan had eight changes. You said <q>Go ahead with the fight feel plan</q>. Stage 1 was built and merged. Then that session went into the dagger rounds, and these stayed on the page:</p>
+    <ul>
+      <li><strong>The draw.</strong> Changing weapon is still vanilla's dip, with no sound. And vanilla brings the new weapon up only as fast as its attack cooldown refills, a cooldown the fighting doesn't use. In the film the screen held no weapon for nine ticks after a change to the Katana. By that rule the Maul, with a 29-tick cooldown, is out of view for about a second. A strike thrown in that time is drawn that far below the frame (read from the code, not filmed).</li>
+      <li><strong>The katana's sheath.</strong> Its first strike after two seconds' rest hits ×1.7. Nothing on screen or in your ears says so.</li>
+      <li><strong>Walls.</strong> Blows land through walls, and a swing into stone is silent.</li>
+      <li><strong>Counter-hits</strong> and <strong>cutting wild grass</strong>.</li>
+    </ul>
+  </div></div>
+
+  <h3>Smaller things, same check</h3>
+  <ul>
+    <li>The guard comes up in a straight line over two ticks and drops in a single frame (measured in the film on the Longsword and the Maul).</li>
+    <li>In third person the Longsword's heavy is still the old rising cut, while first person chops.</li>
+    <li>Third person as others see it was filmed for the Shieldblade on 9 Nov, and for none of the other fifteen since that round.</li>
+    <li>The lab's own check of which part of a weapon leads into the hit fails on 12 first-person and 31 third-person moves of the merged build, nearly all on the four hand-keyed weapons. That check was written for the rule-made swings and may simply not fit them. It is a flag for your eye: does a Twin Blade or a Dagger slash ever lead with the back of the blade?</li>
+  </ul>
+
+  <h3>What is right and stays untouched</h3>
+  <p>The holds from 9 Nov. The one chain. Tap or hold with nothing on screen for four ticks. The blend and its clock. The hit landing when the blade crosses. The ribbons. The kill moment and the cleave. The struck body's recoil. Sparks by what you hit. Forged weapons glowing as they charge. You said <q>it's so so so much better</q> on 9 Nov; none of that is changed.</p>
+</section>
+
+<section id="rounds">
+  <div class="eyebrow">3 · The lesson from the sixteen rounds</div>
+  <h2>Why they made it worse, and what this plan does instead</h2>
+  <ul>
+    <li><strong>They tuned to scores.</strong> One score, "drift", counted any slow motion after the hit as a fault. Round 2 took it from 172 moves to 2, and round 3 made each strike stop in view and hold for the next press. Between them they left the dead stop in finding 5. Round 3 even listed "the settle is now seen" as a cost.</li>
+    <li><strong>No capture had a real click.</strong> Films ran at a tenth of speed and test clicks lasted ticks. Yours last about a millisecond.</li>
+    <li><strong>They changed motion you hadn't asked about,</strong> one complaint at a time, each change moving something else.</li>
+  </ul>
+  <p>So this plan sets itself four rules. No script score is ever a target. No weapon's motion changes until your hands have flagged it. Every new feel layer is tried on two weapons first, and you pick between it and today's in the game before it goes anywhere else. Your play log is read before any theory.</p>
+</section>
+
+<section id="options">
+  <div class="eyebrow">4 · Options</div>
+  <h2>Three ways to do it, and the one I recommend</h2>
+  <div class="grid2">
+    <div class="opt"><h3>A · Only fix what is wrong</h3><p>Ghost hits, the wrong-way kicks, the hit sounds. Small and safe. It gets the fights to "correct" and stops there. No weight, no draws, no world.</p></div>
+    <div class="opt pick"><h3>B · Keep every swing, add truth, sound and weight around it <span class="tag forge">recommended</span></h3><p>Everything in A, plus layers that sit on top of the same keys: the shake, the settle, the draw, the glance off a wall. Each has its own switch. Each is tried small before it spreads.</p></div>
+    <div class="opt"><h3>C · Re-make the twelve rule-made weapons by hand</h3><p>Bring every weapon to the Daggers' hand-keyed standard, or drive weapons by physics. This is the rewrite you said you don't want, and it repeats the rounds' mistake: changing motion you haven't judged.</p></div>
+  </div>
+  <p><strong>The aim in one sentence.</strong> Every blow you throw is answered by the creature, the view, your ears and the weapon's own weight, and the answer always matches what the blade did.</p>
+  <p><strong>Why B.</strong> The measurements say the swings are not where the gap is. The gap is in the 250 ms around each hit and in everything that isn't a swing. B closes that without touching a key.</p>
+  <p><strong>What would change my mind.</strong> If your play of the merged round flags many of the swings themselves, the weapon-by-weapon pass (stage 6) grows and comes sooner. If your A/B says you prefer today's dead stop, the settle is dropped, not tuned.</p>
+</section>
+
+<section id="plan">
+  <div class="eyebrow">5 · The plan</div>
+  <h2>Eight changes</h2>
+  <p>Numbers below are first values to start from. Where a change is about feel, your hands decide, not the numbers.</p>
+
+  <div class="change"><h3><span class="n">1</span>A hit you see is a hit that landed</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>99 of 334 hits shown did no damage. Cause unknown.</dd>
+      <dt>Change</dt><dd>First, find out. In development runs the server says why it turned down a hit the game showed: out of its reach (how far, how many ticks apart), struck but immune, the move refused, already dead. The black box records every hit shown, confirmed or not. You play ten minutes and I read the reasons. Then the fix follows the cause. If it is the three-tick lag, the server accepts a hit your game showed when the body was in reach within the last few ticks, inside strict limits. If it is the press numbers, both sides are made to file a blow under the same press. If it is immunity, the game shows a dull knock instead of a full hit.</dd>
+      <dt>You get</dt><dd>Hits you can trust. Every other change here rests on that.</dd>
+      <dt>Keeps</dt><dd>The server's final word on damage. The hit at once.</dd>
+      <dt>Risk</dt><dd>Letting the server accept late hits makes fights slightly easier. The limits are set from your log, and shown to you first.</dd>
+      <dt>Test</dt><dd>Your next play log: ghosts under 5% of hits shown. A GameTest for each cause found.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">2</span>Sound you can hear and believe</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>Hits on flesh and armour, the blunt hit, the kill and the Execution are 80 to 98% below 300 Hz. 36 of 102 files carry the synthetic tone, every parry among them.</dd>
+      <dt>Change</dt><dd>Fourteen sounds are remade from Minecraft's own recordings, named in <code>sounds.json</code> and layered in code, the way the block was fixed: the hits on flesh, heavy flesh, armour and spirits, the blunt hit, a blow landing on you, the parry and the glance, the charge and its glint, the kill, the cleave, the Execution, the perfect dodge. The swishes stay unless your ear says otherwise. The Art, the stance break and the guard break are next in line if you want them. Before anything is built you get a listening page: each sound in the rhythm of a real fight, my best pick and two others per row, and you mark keep or remake.</dd>
+      <dt>First picks</dt><dd>Flesh: Minecraft's strong attack over a quiet low thump. Finishers: its critical hit. Armour: the iron golem being struck. A blow on you: Minecraft's own player hurt. The parry: an anvil landing, pitched up, over the shield block. The glint: the crossbow locking, a wooden click with no ding. These are guesses until you have heard them.</dd>
+      <dt>Keeps</dt><dd>Which sound plays when, the pitch climbing with your rhythm, the timing on the blade.</dd>
+      <dt>Risk</dt><dd>A sound can measure right and still not belong. That is why the page comes first. It stays on this Mac, because it plays Mojang's audio and can't be hosted.</dd>
+      <dt>Test</dt><dd>Your ear on the listening page, then in a fight.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">3</span>The blade and the world agree</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>28 of 139 cuts kick or throw off the blade; 11 throw the creature the opposite way.</dd>
+      <dt>Change</dt><dd>When the swings are baked, each cut's real direction on screen at the hit is written into the timing table once. The view's kick, the side the creature is thrown, the turn of its recoil and the way a kill falls all read that one number.</dd>
+      <dt>You get</dt><dd>Cut left to right and it flies right, on every weapon, with the view going with it.</dd>
+      <dt>Keeps</dt><dd>Every key. Knockback strength. The 126 cuts that already agree don't change.</dd>
+      <dt>Risk</dt><dd>Nine moves throw to the other side from before. That is the fix.</dd>
+      <dt>Test</dt><dd>A GameTest holds every cut's number within 20 degrees of its baked blade, so a re-keyed weapon can never drift again.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">4</span>Weight in the freeze and after it</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>In the freeze the weapon only holds its pose. After the cut it stops dead within 60 ms and holds at speed 0.00.</dd>
+      <dt>Change</dt><dd>Three small layers drawn over the same keys, in your own game only:
+        <br><strong>The shake.</strong> While a landed blow is frozen, the weapon shudders along the cut and dies away by the end of the freeze. About 5 pixels for daggers, 9 for a blade, 13 for the Maul on a 1080p screen.
+        <br><strong>The settle.</strong> Where the blade stops after a cut, it carries a little past and comes back once, with no bounce. Quick and small for daggers (it peaks in 0.05 s and is gone by 0.2), slower and bigger for the Maul (0.1 s, gone by 0.5). Only along the way the blade was already going.
+        <br><strong>The living hold.</strong> While a strike waits for your next press, and at rest, the hands breathe: under 3 mm, once every four or five seconds.</dd>
+      <dt>You get</dt><dd>The hit feels like it met something, and each weapon stops like its own weight.</dd>
+      <dt>Keeps</dt><dd>Every key and every timing. A press still shows nothing for four ticks. The server knows nothing about it.</dd>
+      <dt>Risk</dt><dd>This is the one that could go wrong. You once called the katana floaty, and on 9 Nov a dip on the way home read as a glitch. So it is built for the Longsword and the Maul only, behind a key that flips between today's and the new one, and you choose. If you choose today's, the layer is removed.</dd>
+      <dt>Test</dt><dd>Your A/B. Pure-maths tests hold each layer to its size, to nothing at all when switched off, and to no movement on a hand that is already at rest.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">5</span>The guard and the parry</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>In the film the guard rises in a straight line over two ticks and is back at rest one frame after the key comes up. The parry's sound is the ding.</dd>
+      <dt>Change</dt><dd>The guard comes up on a curve and seats with a small settle, in the same two ticks. It lowers over three ticks. On a parry the blade is thrown toward the blow and back, a third harder than today's jolt, with its new sound from change 2.</dd>
+      <dt>Keeps</dt><dd>The parry and block windows exactly. They are the server's, and only the picture changes.</dd>
+      <dt>Risk</dt><dd>A slower drop could look like the guard is still up when it isn't. Three ticks is the first value; the picture never leads the rule by more than that.</dd>
+      <dt>Test</dt><dd>The film of the guard, before and after, at the same view. Your play.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">6</span>Presence: the draw, the sheath, the weight in your look</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>No draw motion or sound on any weapon, and the new weapon stays below the frame for 9 ticks (Katana) to over 20 (Maul) after a change. The katana's bonus is invisible. One look-lag for all sixteen.</dd>
+      <dt>Change</dt><dd><strong>The draw</strong>, as you approved on 28 Oct, with one addition. The weapon comes up on the draw's own clock, 6 ticks for daggers, 8 for a blade, 10 for the Maul, with a small turn of the wrist and a settle, in place of vanilla's cooldown rise. It plays a sound by family. Blades ring, hafted weapons knock, the Chain-blade rattles, Gauntlets creak, the Precursor Arm hums. Everyone near hears it. Sounds from Minecraft's recordings, on the same listening page.
+        <br><strong>The katana's sheath.</strong> After two seconds' rest the hands lower it to the hip with a soft click. The drawn strike has its own sound and a brighter ribbon, so the ×1.7 is something you see and hear.
+        <br><strong>Weight in the look.</strong> The hands trail your view by the weapon's weight: daggers tight, a blade as today, the Maul and Greatblade slower and further.</dd>
+      <dt>Keeps</dt><dd>You can strike the moment you can today; the strike just takes over from wherever the draw has got to. The draw never plays after a power cast puts the weapon back.</dd>
+      <dt>Risk</dt><dd>A flourish on every swap can get old. It is short, it halves with reduced motion, and it has a switch.</dd>
+      <dt>Test</dt><dd>Film of all sixteen draws. Your ear and your play.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">7</span>The world answers</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>Blows pass through walls. A swing into stone is silent. Approved 28 Oct, never built.</dd>
+      <dt>Change</dt><dd>As approved. A creature is hit only if a line from your eye reaches one of three points on it, so one half behind a door frame still counts. A strike that meets a wall instead <strong>glances</strong>: stone and metal clank and spark, wood knocks, earth thuds. The blade bounces back for two ticks and the view kicks one degree. The chain goes on and the block isn't damaged. Sweeps cut wild grass and ferns, never flowers, crops or anything near a Hearth or a village.</dd>
+      <dt>Keeps</dt><dd>Aimed hits on rifts and other things that aren't alive. Mining with a weapon outside a fight.</dd>
+      <dt>Risk</dt><dd>Some blows you land round corners today will miss. It has a server switch.</dd>
+      <dt>Test</dt><dd>GameTests: a zombie behind a wall isn't hit, one half behind a door frame is, grass is cut, a poppy isn't.</dd>
+    </dl></div>
+
+  <div class="change"><h3><span class="n">8</span>Weapon by weapon, from your hands</h3>
+    <dl class="rows">
+      <dt>Evidence</dt><dd>Four weapons are hand-keyed (Daggers, Scythe, Twin Blades, Shieldblade). Twelve are still made by rule. You haven't played either set as merged.</dd>
+      <dt>Change</dt><dd>After you play, each weapon you flag gets one round by hand, the way the Daggers were done: keyed pose by pose, filmed, and settled by a quick either-or from you in the game. One round per weapon unless you ask for more. A weapon you don't flag isn't touched. Third person is checked last, against first person, once first person is signed off.</dd>
+      <dt>Keeps</dt><dd>The timing table. Any change to a move's speed is stated with what it does to damage per second.</dd>
+      <dt>Risk</dt><dd>This is where the rounds went wrong. The guard against it is the rule in section 3: your hands flag it, a film shows it, you choose.</dd>
+      <dt>Test</dt><dd>Your play, with the black box on.</dd>
+    </dl></div>
+</section>
+
+<section id="see">
+  <div class="eyebrow">6 · See it</div>
+  <h2>The same strike, today and with the plan</h2>
+  <p>This player draws the blade from the game's own baked keys: the same numbers the hands play. The left screen is today. The right adds changes 3 and 4. It is a drawing, not the game: no arms and no light. Step through it frame by frame around the hit.</p>
+  <div class="player" id="player">
+    <div class="controls">
+      <div class="grp" role="group" aria-label="Move">
+        <button type="button" data-seq="long_chain" aria-pressed="true">Longsword chain</button>
+        <button type="button" data-seq="maul_1" aria-pressed="false">Maul, slam</button>
+        <button type="button" data-seq="maul_2" aria-pressed="false">Maul, 2nd strike</button>
+        <button type="button" data-seq="axe_4" aria-pressed="false">Axe, 4th strike</button>
+        <button type="button" data-seq="katana_1" aria-pressed="false">Katana, 1st</button>
+      </div>
+    </div>
+    <div class="screens">
+      <div class="screen"><canvas id="cv-today" width="960" height="540" aria-label="The strike as the game draws it today"></canvas><div class="cap"><span class="tag steel">Today</span><span id="cap-today"></span></div></div>
+      <div class="screen"><canvas id="cv-plan" width="960" height="540" aria-label="The strike with the plan's layers"></canvas><div class="cap"><span class="tag forge">With the plan</span><span id="cap-plan"></span></div></div>
+    </div>
+    <div class="controls">
+      <div class="grp">
+        <button type="button" id="btn-play">Play</button>
+        <button type="button" id="btn-back" aria-label="Back one frame">◀ frame</button>
+        <button type="button" id="btn-fwd" aria-label="Forward one frame">frame ▶</button>
+      </div>
+      <div class="grp" role="group" aria-label="Speed">
+        <button type="button" data-speed="1" aria-pressed="false">Real speed</button>
+        <button type="button" data-speed="0.25" aria-pressed="true">Quarter</button>
+        <button type="button" data-speed="0.1" aria-pressed="false">Tenth</button>
+      </div>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Scrub through the move">
+    </div>
+    <div class="controls">
+      <label class="chk"><input type="checkbox" id="ly-shake" checked> The shake</label>
+      <label class="chk"><input type="checkbox" id="ly-settle" checked> The settle</label>
+      <label class="chk"><input type="checkbox" id="ly-dir" checked> Kick and throw follow the blade</label>
+      <label class="chk"><input type="checkbox" id="ly-breath" checked> The living hold</label>
+    </div>
+    <div class="readout" id="readout"></div>
+    <p class="note">What to look for. <strong>Longsword chain:</strong> pause on the freeze and step. Left, nothing moves. Right, the blade shudders, then carries past its stop and comes back. <strong>Maul, 2nd strike</strong> and <strong>Axe, 4th strike:</strong> on the left the creature is thrown against the cut and the view kicks the wrong way. Real speed shows how little of the cut itself your eye gets.</p>
+  </div>
+
+  <h3>The real game, today</h3>
+  <p>Frames from the merged build (43dceee2a), filmed today on GitHub's runner with the world slowed to a tenth so every frame can be read. Slow films hide glitches, as 9 Nov taught, so these show poses only. They say nothing about how it feels at speed.</p>
+  <!--FRAMES-->
+</section>
+
+<section id="weapons">
+  <div class="eyebrow">7 · Weapon by weapon, move by move</div>
+  <h2>What each one gets</h2>
+  <h3>The eight parts of a blow</h3>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>Today</th><th>Verdict</th><th>In the plan</th></tr>
+    <tr><td>Anticipation</td><td>Wind-ups of one to six ticks by weight. A tap from rest plays its wind-up at twice speed, the trade made on 9 Nov so a tap is never late. A charge is drawn in view</td><td>Keep</td><td>Unchanged. If a wind-up reads too short in your hands, that weapon goes to stage 6</td></tr>
+    <tr><td>Contact</td><td>The hit plays when the blade crosses. On the cuts and thrusts I measured, the blade is on the creature at the hit</td><td>Keep, but 3 in 10 are ghosts</td><td>Change 1</td></tr>
+    <tr><td>Hit-stop</td><td>40 to 70 ms on light strikes, 70 to 130 on finishers and heavies, 220 on an Execution, 40 more on a kill. The weapon is still</td><td>Keep the lengths</td><td>The shake (change 4)</td></tr>
+    <tr><td>Follow-through</td><td>The blade slows through the body, then stops dead and holds</td><td>Add to it</td><td>The settle and the living hold (change 4)</td></tr>
+    <tr><td>Camera</td><td>Leans with the swing, from 0.6° on a dagger stab to 8° on the Maul's slam. Kicks up to 2.4° on a hit. The big moments push the field of view</td><td>Keep; 17 kicks point wrong</td><td>Change 3</td></tr>
+    <tr><td>Sound</td><td>The swish peaks as the blade crosses. The hit is picked by what you struck</td><td>Hits too low to hear; dings</td><td>Change 2</td></tr>
+    <tr><td>Particles</td><td>A ribbon on the blade, sparks by what you hit, a flare on a kill</td><td>Keep</td><td>Sparks and dust on a glance (change 7). Nothing else is added</td></tr>
+    <tr><td>The creature's reaction</td><td>It freezes and trembles, springs back, is thrown along the cut, and falls the way the blade went on a kill</td><td>Keep; 9 thrown the wrong way</td><td>Change 3</td></tr>
+  </table></div>
+  <h3>The sixteen weapons</h3>
+  <p>Every weapon gets the shared layers by its weight: the shake, the settle, the weighted look, its draw, the new hit sounds. The last column is what my measurements flagged for your eye. Nothing in that column is changed until you have played it.</p>
+  <div class="scroll"><table>
+    <tr><th>Weapon</th><th>Weight</th><th>Made</th><th>Draw</th><th>Flagged for your eye</th></tr>
+    <tr><td>Longsword (and every vanilla sword)</td><td>Blade</td><td>By rule</td><td>Steel ring</td><td>Third person's heavy is still the old rising cut</td></tr>
+    <tr><td>Katana</td><td>Blade</td><td>By rule</td><td>Steel ring; the sheath</td><td>The sheath bonus can't be seen</td></tr>
+    <tr><td>Greatblade</td><td>Heavy</td><td>By rule</td><td>Steel ring, heaved</td><td>Nothing measured</td></tr>
+    <tr><td>Axe (and vanilla axes)</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>4th strike throws the creature the opposite way</td></tr>
+    <tr><td>Maul (and the mace)</td><td>Heavy</td><td>By rule</td><td>Wooden knock, heaved</td><td>2nd strike throws the opposite way. The slam kicks 49° off</td></tr>
+    <tr><td>Spear</td><td>Blade</td><td>By rule</td><td>Wooden knock</td><td>Nothing measured</td></tr>
+    <tr><td>Glaive</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>Nothing measured</td></tr>
+    <tr><td>Scythe</td><td>Heavy</td><td>By hand, 3 Nov</td><td>Wooden knock</td><td>Six moves kick 50 to 67° off. Third person: both hands on for only half of strike 2, and off in the Undercut</td></tr>
+    <tr><td>War-staff</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>4th strike throws the opposite way</td></tr>
+    <tr><td>Rapier</td><td>Snap</td><td>By rule</td><td>Thin steel ring</td><td>Nothing measured</td></tr>
+    <tr><td>Daggers</td><td>Snap</td><td>By hand, 9 Nov</td><td>Two short rings</td><td>5th strike throws the opposite way. 3rd strike kicks 66° off</td></tr>
+    <tr><td>Gauntlets</td><td>Snap</td><td>By rule</td><td>Leather creak, a clench</td><td>4th strike throws the opposite way. Undercut, Plunge and Execution kick 55 to 67° off</td></tr>
+    <tr><td>Twin Blades</td><td>Blade</td><td>By hand, 9 Nov</td><td>Steel ring, a half turn</td><td>Six moves throw the opposite way (old table)</td></tr>
+    <tr><td>Chain-blade</td><td>Blade</td><td>By rule</td><td>Chain rattle</td><td>Nothing measured</td></tr>
+    <tr><td>Shieldblade</td><td>Blade</td><td>By hand, 9 Nov</td><td>Ring and a shield knock</td><td>Nothing measured</td></tr>
+    <tr><td>Precursor Arm</td><td>Blade</td><td>By rule</td><td>Hum</td><td>Nothing measured</td></tr>
+  </table></div>
+
+  <h3>Every kind of move</h3>
+  <div class="scroll"><table>
+    <tr><th>Move</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>The light chain</td><td>A clean cut, a still freeze, a dead stop, a quiet thump</td><td>The same cut. The blade shudders in the freeze and settles by its weight. A hit you can hear. The creature flies the way you cut</td></tr>
+    <tr><td>The heavy and its charge</td><td>Drawn in view, a slow strain, a synthetic ting at full, lands when the blade crosses</td><td>The same draw and strain. A wooden lock at full in place of the ting. A harder shake and a longer settle on the blow</td></tr>
+    <tr><td>Riposte, Slipcut, Undercut, Plunge, Execution, the Art</td><td>Their own clips; some kick off the blade</td><td>Same clips, direction fixed, new hit and kill sounds. Not re-keyed</td></tr>
+    <tr><td>Block and parry</td><td>Up in a line, down in a frame; a ding on the parry</td><td>Up on a curve with a settle, down over three ticks; the blade thrown at the blow; a real ring</td></tr>
+    <tr><td>Draw and sheathe</td><td>Vanilla's dip, silent; the weapon out of view for 9 to 20 ticks</td><td>A draw of 6 to 10 ticks by weight and a sound for each family; the katana rests at the hip</td></tr>
+    <tr><td>Idle</td><td>Perfectly still; one look-lag for all</td><td>A slow breath; the look-lag by weight</td></tr>
+    <tr><td>Sprint</td><td>The body's sprint, the weapon kept in hand</td><td>Unchanged. The weighted look carries into it</td></tr>
+    <tr><td>Into a wall</td><td>Through it, silent</td><td>Stops, clanks, sparks, bounces</td></tr>
+    <tr><td>Third person, as others see it</td><td>Clips and wrists from before the 9 Nov round, unseen since</td><td>Checked against first person after it is signed off; the draw's sound reaches others</td></tr>
+  </table></div>
+</section>
+
+<section id="safe">
+  <div class="eyebrow">8 · How it is kept safe</div>
+  <h2>The rules every change is held to</h2>
+  <ul>
+    <li><strong>One side decides.</strong> Every new layer is drawn by your game from what the hands already decided. No message from the server changes what is on screen. The blow's direction is baked once and both sides read the same number.</li>
+    <li><strong>No float clocks.</strong> The layers run on the hands' own double clock, the one fixed on 9 Nov.</li>
+    <li><strong>A press still shows nothing for four ticks.</strong> Not touched.</li>
+    <li><strong>A hand at rest stays at rest.</strong> The settle acts only where the blade was moving. The breath is under 3 mm and slower than one in four seconds; the 8 Hz tremble you called a glitch is the line it stays far from.</li>
+    <li><strong>Every layer has a switch</strong> in the arms settings. Off is today's picture, frame for frame, and a test holds that. Reduced motion halves or removes each one.</li>
+    <li><strong>Nothing is told by sound alone.</strong> Every new sound comes with something you see.</li>
+    <li><strong>Each stage is its own merge.</strong> If one reads wrong, it comes out without the others.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>What could go wrong</th><th>What happens</th><th>Kept safe by</th></tr>
+    <tr><td>The settle reads as floaty or as a dip</td><td>You'd feel it at once</td><td>Two weapons first, your A/B, and removal if you pick today's</td></tr>
+    <tr><td>A layer produces a bad number (the 9 Nov NaN)</td><td>The weapon would vanish</td><td>Each layer is clamped to its size and tested; the black box marks which layer was on in every frame</td></tr>
+    <tr><td>Accepting late hits lets a blow land that shouldn't</td><td>Fights get easier</td><td>Limits from your own log, a server switch, and the reasons kept in the log</td></tr>
+    <tr><td>Walls stop a blow you expected to land</td><td>A miss that feels unfair</td><td>Three lenient points, a server switch</td></tr>
+    <tr><td>High ping in multiplayer</td><td>The kill's extra freeze arrives late</td><td>As today: it is dropped, never replayed. The layers are local, so ping can't touch them</td></tr>
+    <tr><td>Frame cost</td><td>Fights get heavier</td><td>The layers are a few additions per frame with nothing allocated. Measured on your Mac before merge, at a time agreed with the shaders session</td></tr>
+  </table></div>
+  <h3>How one blow flows, and where the plan touches it</h3>
+  <div class="scroll" style="padding: 12px"><pre class="mermaid">
+flowchart LR
+  P["Your press"] --> H["The hands decide the strike"]
+  H --> B["The blade crosses the creature"]
+  B --> S["Your game shows the hit at once"]
+  B --> V["The server sweeps and decides the damage"]
+  V -->|confirmed| K["A kill or a cleave is added"]
+  V -.->|"new: refused, and why"| L["Play log and black box"]
+  D["New: the cut's direction, baked once"] --> S
+  D --> V
+  S --> W["New: shake, settle, living hold"]
+  S --> A["New: sounds from Minecraft's recordings"]
+  V --> G["New: walls stop it, the blade glances"]
+</pre></div>
+  <p class="note">Everything marked new sits beside the existing path. The press, the hands' decision and the server's damage are not changed.</p>
+  <h3>With the other three sessions</h3>
+  <ul>
+    <li><strong>Weapon models.</strong> Stages 0 to 5 don't depend on any shape. Stage 6 keys against final shapes, so it follows theirs. A new shape moves only where a weapon rests, never where a blow lands, because the swings are solved in view terms. The four hand-keyed weapons carry their blade lengths in their keys and need a re-bake if a length changes. A scabbard for the katana is theirs to draw if you want one.</li>
+    <li><strong>Powers.</strong> The hands are shared. A cast puts the weapon away and brings it back; the new draw doesn't play then. Both plans use the same sound rule.</li>
+    <li><strong>Armour.</strong> If the first-person sleeves or the gauntlet sleeve change, the grips are re-checked in film.</li>
+  </ul>
+</section>
+
+<section id="stages">
+  <div class="eyebrow">9 · Stages</div>
+  <h2>Seven stages: 0 to 5 are built, 6 waits for you</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What is built</th><th>What I need from you</th><th>Gate to go on</th><th class="num">Size</th></tr>
+    <tr><td><strong>0 · Truth</strong> <span class="tag ok">built</span></td><td>No feel change. The server's reasons for a refused hit, the black box recording hits, the listening page</td><td>Ten minutes of play (below), and your marks on the listening page</td><td>The cause of the ghosts is known</td><td class="num">2–3 h</td></tr>
+    <tr><td><strong>1 · Honest hits</strong> <span class="tag ok">built</span></td><td>The ghost fix by its cause; the blow's direction from the blade (changes 1, 3)</td><td>A fight or two</td><td>Ghosts under 5%; 139 of 139</td><td class="num">2–4 h</td></tr>
+    <tr><td><strong>2 · Sound</strong> <span class="tag ok">built</span></td><td>The fourteen sounds you marked (change 2)</td><td>Your ear in a fight</td><td>You'd keep them</td><td class="num">3–4 h</td></tr>
+    <tr><td><strong>3 · Weight</strong> <span class="tag ok">built</span></td><td>The shake, settle and living hold on the Longsword and Maul, with the A/B key; then all sixteen (change 4)</td><td>The A/B, two minutes</td><td>You pick the new one</td><td class="num">4–5 h</td></tr>
+    <tr><td><strong>4 · Guard and presence</strong> <span class="tag ok">built</span></td><td>The guard, the sixteen draws, the sheath, the weighted look (changes 5, 6)</td><td>Play and listen</td><td>Nothing reads as a glitch</td><td class="num">4–5 h</td></tr>
+    <tr><td><strong>5 · The world</strong> <span class="tag ok">built</span></td><td>Walls, the glance, grass (change 7)</td><td>A fight in a cave</td><td>No miss that feels unfair</td><td class="num">3–4 h</td></tr>
+    <tr><td><strong>6 · Your notes</strong></td><td>One hand-keyed round per weapon you flag; third person checked (change 8)</td><td>Your notes as you play, and an either-or per weapon</td><td>You sign each weapon off</td><td class="num">1–2 h each</td></tr>
+  </table></div>
+  <p class="note">On 10 Nov you asked for the code first and one test at the end, so stages 1 to 5 were built in one run without a stop between them. The stops in this table are now one stop: the ten minutes below test all of it together. Each layer has its own switch, and <code>/awaken swing weight off</code> turns the weight layers off at once if you want to compare. The sizes were estimates from this project's own pace. The manager session merges the branch; I never merge into the build myself.</p>
+  <h3>The ten minutes</h3>
+  <ol>
+    <li>Take the Longsword, the Maul, the Daggers and the Katana. Let the Katana rest two seconds and watch it lower; the first strike out of that rest is its drawn cut.</li>
+    <li>Fight a few zombies in the open with each. Chain them the way you normally do.</li>
+    <li>Fight one boss you know.</li>
+    <li>Block a few blows. Swap weapons a few times.</li>
+    <li>End on whatever felt worst. The log keeps every hit of the session, but the black box keeps only the last three and a half minutes of frames.</li>
+    <li>Stop clicking and quit to the title straight after. That writes the log and the black box. I read both.</li>
+  </ol>
+</section>
+
+<section id="decide">
+  <div class="eyebrow">10 · Decisions for you</div>
+  <h2>Six, with my pick first</h2>
+  <div class="decision"><div class="n">1</div><div><h3>The approach</h3><p><span class="rec">Recommend: B.</span> Keep every swing and add truth, sound and weight around it, in the seven stages above. Or A (only the fixes), or C (re-make the weapons).</p></div></div>
+  <div class="decision"><div class="n">2</div><div><h3>When you play</h3><p><span class="rec">Recommend: I build stage 0 first, then you play once.</span> That way one session gives both your first feel of the merged round and the reasons behind any ghost hits. Or you play now and again after stage 0.</p></div></div>
+  <div class="decision"><div class="n">3</div><div><h3>Which sounds are remade</h3><p><span class="rec">Recommend: the fourteen that failed</span> (the hits, a blow on you, parry, glance, charge, glint, kill, cleave, Execution, perfect dodge) plus the new draws. The swishes stay. Or all 26, or the hits and the parry only.</p></div></div>
+  <div class="decision"><div class="n">4</div><div><h3>Walls</h3><p><span class="rec">Recommend: blows stop at walls, with the glance,</span> as you approved on 28 Oct. Or the glance only (the blade clanks off stone but hits still pass through), or leave walls alone.</p></div></div>
+  <div class="decision"><div class="n">5</div><div><h3>Counter-hits</h3><p>You approved them on 28 Oct: a blow that lands while a creature winds up does ×1.5 to its stance and cuts off a small creature's attack. Since then the bosses got minds that read you, and this rule changes their balance. <span class="rec">Recommend: not in this pass.</span> I hand it to the fights session to place with their numbers, and build its sound and look when they turn it on. Or build it here as approved.</p></div></div>
+  <div class="decision"><div class="n">6</div><div><h3>The katana at rest</h3><p><span class="rec">Recommend: lowered to the hip with no new model</span> for now. Or ask the weapon models session for a scabbard, and the sheath waits for it.</p></div></div>
+  <p>Answered on 10 Nov: "Go ahead with all". All six as recommended.</p>
+</section>
+
+<section id="limits">
+  <div class="eyebrow">11 · What I could not check</div>
+  <h2>Where this plan is still a guess</h2>
+  <ul>
+    <li><strong>How anything feels at speed.</strong> I can't play. Every claim about feel here is a measurement or your own words, and every feel change waits for your hands.</li>
+    <li><strong>Any sound, by ear.</strong> I measured where the energy sits. I haven't heard a single one.</li>
+    <li><strong>Why the ghost hits happen.</strong> The three-tick lag is a guess. Stage 0 exists to replace it with a fact.</li>
+    <li><strong>The ghost rate on today's build.</strong> The logs are from 4 to 9 Nov. It may already be lower.</li>
+    <li><strong>Third person and multiplayer.</strong> Not filmed since the 9 Nov round. Latency with a real second player has never been tested.</li>
+    <li><strong>A second dip on a weapon change.</strong> In the film the Katana sank once more part-way up. That may come from the film's own command. It needs a look in real play.</li>
+    <li><strong>Frame cost on your Mac.</strong> Not measured; the shaders session is measuring on it now.</li>
+    <li><strong>The player above is a drawing.</strong> The shake and settle in it are my first values, drawn in a browser. They show the idea. Stage 3 is where you judge the real thing.</li>
+  </ul>
+  <p class="note">The measuring scripts are on the branch <code>claude/weapon-feel-plan-f370cc</code> in <code>docs/weapon-feel/harness/</code>, with the film tour <code>tools/autopilot/arms-feel-baseline.txt</code>. No game code was changed.</p>
+</section>
+
+</div>
+
+<script>
+/*KEYS*/
+(function () {
+  "use strict";
+  var ASP = 16 / 9, FRAME = 1000 / 60;
+  var W = { snap: { shake: 0.010, settle: 0.030, tau: 45 }, blade: { shake: 0.016, settle: 0.050, tau: 70 }, heavy: { shake: 0.024, settle: 0.080, tau: 110 } };
+  var SEQ = {
+    long_chain: { moves: ["longsword.strike_1", "longsword.strike_2", "longsword.strike_3"], gap: 300, kind: "blade", name: "Longsword" },
+    maul_1: { moves: ["maul.strike_1"], gap: 0, kind: "maul", name: "Maul" },
+    maul_2: { moves: ["maul.strike_2"], gap: 0, kind: "maul", name: "Maul" },
+    axe_4: { moves: ["axe.strike_4"], gap: 0, kind: "axe", name: "Axe" },
+    katana_1: { moves: ["katana.strike_1"], gap: 0, kind: "blade", name: "Katana" }
+  };
+  function unit(x, y) { var n = Math.hypot(x, y); return n < 1e-6 ? [0, 0] : [x / n, y / n]; }
+  // per move: the blade's way on screen at the hit, where it stops after, how long each part lasts
+  Object.keys(KEYS).forEach(function (id) {
+    var m = KEYS[id], k = m.keys, i;
+    function at(t) {
+      var x = Math.max(0, Math.min(k.length - 1.0001, t / 0.25)), a = Math.floor(x), u = x - a, p = k[a], q = k[Math.min(k.length - 1, a + 1)], o = [], j;
+      for (j = 1; j < 8; j++) o.push(p[j] + (q[j] - p[j]) * u);
+      return o;
+    }
+    m.at = at;
+    function mid(t) { var p = at(t); return [(p[0] + (p[2] - p[0]) * 0.78) * ASP, p[1] + (p[3] - p[1]) * 0.78]; }
+    var a = mid(m.hit - 0.25), b = mid(m.hit + 0.25);
+    m.way = unit(b[0] - a[0], b[1] - a[1]);
+    m.rowWay = unit(m.row[0], m.row[1]);
+    m.side = (b[0] - a[0]) / Math.max(1e-6, Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]));
+    m.rowSide = m.row[0] / Math.max(0.05, Math.abs(m.row[0]) + Math.abs(m.row[1]));
+    var sp = [], pk = 0;
+    for (i = 1; i < k.length; i++) { var c = mid(k[i][0]), d = mid(k[i - 1][0]); sp.push(Math.hypot(c[0] - d[0], c[1] - d[1])); pk = Math.max(pk, sp[i - 1]); }
+    m.stop = k[k.length - 1][0];
+    for (i = Math.round(m.hit / 0.25) + 1; i < sp.length; i++) if (sp[i] < 0.06 * pk) { m.stop = k[i][0]; break; }
+    var e = mid(m.stop - 0.25), f = mid(m.stop - 0.5);
+    m.stopWay = unit(e[0] - f[0], e[1] - f[1]);
+    m.drive = m.hit;
+    for (i = Math.round(m.hit / 0.25) - 1; i > 0; i--) if (sp[i] < 0.25 * pk) { m.drive = k[i + 1][0]; break; }
+    m.end = k[k.length - 1][0];
+    m.hitMs = m.hit * 50;
+    var br = m.bite[0], bt = m.bite[1], past = m.stop - m.hit;
+    m.stopMs = m.hitMs + m.hitstop + (past <= bt * br ? past / br : bt + (past - bt * br)) * 50;
+    m.lenMs = m.hitMs + m.hitstop + (bt + (m.end - m.hit - bt * br)) * 50;
+  });
+  function tickOf(m, tau) {
+    if (tau < m.hitMs) return tau / 50;
+    if (tau < m.hitMs + m.hitstop) return m.hit;
+    var e = (tau - m.hitMs - m.hitstop) / 50, br = m.bite[0], bt = m.bite[1];
+    return Math.min(m.end, e < bt ? m.hit + e * br : m.hit + bt * br + (e - bt));
+  }
+  function plan(seqId) {
+    var s = SEQ[seqId], t = 0, list = [];
+    s.moves.forEach(function (id, n) {
+      var m = KEYS[id];
+      list.push({ m: m, start: t, id: id });
+      t += n < s.moves.length - 1 ? s.gap : m.lenMs + 250;
+    });
+    return { list: list, total: t, seq: s };
+  }
+  function state(pl, t, mode, ly) {
+    var cur = pl.list[0], i;
+    for (i = 0; i < pl.list.length; i++) if (pl.list[i].start <= t) cur = pl.list[i];
+    var m = cur.m, tau = t - cur.start, tick = tickOf(m, tau), p = m.at(tick), w = W[m.weight];
+    var gx = p[0], gy = p[1], tx = p[2], ty = p[3], phase, froze = tau >= m.hitMs && tau < m.hitMs + m.hitstop;
+    if (tau < m.drive * 50) phase = "wind-up"; else if (tau < m.hitMs) phase = "cut"; else if (froze) phase = "freeze on the hit";
+    else if (tau < m.stopMs) phase = "follow-through"; else phase = tick >= m.end - 0.01 || Math.abs(tau - m.stopMs) > 400 ? "hold" : "after the stop";
+    var isPlan = mode === "plan";
+    if (isPlan && ly.shake && froze) {
+      var u = (tau - m.hitMs) / m.hitstop, sgn = Math.floor(tau / 16) % 2 ? 1 : -1, a = w.shake * (1 - u) * sgn;
+      gx += m.way[0] / ASP * a * 0.7; gy += m.way[1] * a * 0.7; tx += m.way[0] / ASP * a * 1.2; ty += m.way[1] * a * 1.2;
+    }
+    if (isPlan && ly.settle && tau >= m.stopMs) {
+      var s = tau - m.stopMs, o = w.settle * (s / w.tau) * Math.exp(1 - s / w.tau);
+      gx += m.stopWay[0] / ASP * o * 0.6; gy += m.stopWay[1] * o * 0.6; tx += m.stopWay[0] / ASP * o * 1.3; ty += m.stopWay[1] * o * 1.3;
+    }
+    if (isPlan && ly.breath) { var b = 0.006 * Math.sin(t / 4500 * Math.PI * 2); gy += b; ty += b; }
+    // the answer: the view's kick and the body's throw
+    var kick = [0, 0], body = 0, tremble = 0, hitAge = tau - m.hitMs;
+    var way = isPlan && ly.dir ? m.way : m.rowWay, side = isPlan && ly.dir ? m.side : m.rowSide;
+    if (hitAge >= 0) {
+      var deg = Math.min(2.4, m.hitstop / 40), ku = Math.min(1, hitAge / 300), kw = (1 - ku) * (1 - ku);
+      kick = [-way[0] * deg * 0.0249 / ASP * kw, -way[1] * deg * 0.0249 * kw];
+      if (froze) tremble = (Math.floor(tau / 16) % 2 ? 1 : -1) * 0.012 * (1 - 0.6 * (hitAge / m.hitstop));
+      else body = side * 0.34 * (1 - Math.exp(-(hitAge - m.hitstop) / 130));
+    }
+    return { g: [gx, gy], t: [tx, ty], phase: phase, kick: kick, body: body, tremble: tremble, side: side, froze: froze, m: m, tau: tau, way: way, hit: hitAge >= 0 };
+  }
+  function draw(cv, pl, t, mode, ly) {
+    var c = cv.getContext("2d"), Wd = cv.width, H = cv.height, s = state(pl, t, mode, ly), kind = pl.seq.kind;
+    function X(x) { return (x + 1) / 2 * Wd; } function Y(y) { return (1 - y) / 2 * H; }
+    c.fillStyle = "#0d1116"; c.fillRect(0, 0, Wd, H);
+    // the world: it shifts with the view's kick
+    var kx = s.kick[0], ky = s.kick[1];
+    c.strokeStyle = "#1c2430"; c.lineWidth = 2; c.beginPath();
+    for (var gxi = -1.4; gxi <= 1.41; gxi += 0.2) { c.moveTo(X(gxi + kx), 0); c.lineTo(X(gxi + kx), H); }
+    c.moveTo(0, Y(-0.55 + ky)); c.lineTo(Wd, Y(-0.55 + ky)); c.stroke();
+    c.fillStyle = "#141b24"; c.fillRect(0, Y(-0.55 + ky), Wd, H);
+    // the creature
+    var bx = s.body + s.tremble * s.side + kx, bw = 0.2, top = 0.42 + ky, bot = -0.86 + ky;
+    c.fillStyle = s.froze ? "#7a3f3f" : "#3c5a4a"; c.fillRect(X(bx - bw / 2), Y(top), (bw / 2) * Wd, Y(bot) - Y(top));
+    c.fillStyle = s.froze ? "#8d4a4a" : "#47695a"; c.fillRect(X(bx - bw * 0.36), Y(top + 0.3), bw * 0.36 * Wd, Y(top) - Y(top + 0.3));
+    if (s.hit && !s.froze && Math.abs(s.body) > 0.02) {
+      c.strokeStyle = mode === "plan" ? "#eda155" : "#86b6d6"; c.lineWidth = 3; c.beginPath();
+      var ax = X(bx + (s.side > 0 ? bw / 2 + 0.03 : -bw / 2 - 0.03)), ay = Y(0.62 + ky), dx = (s.side > 0 ? 1 : -1) * 0.1 * Wd / 2;
+      c.moveTo(ax, ay); c.lineTo(ax + dx, ay); c.lineTo(ax + dx * 0.7, ay - 8); c.moveTo(ax + dx, ay); c.lineTo(ax + dx * 0.7, ay + 8); c.stroke();
+    }
+    // the ribbon: where the point has been for the last 150 ms
+    c.lineCap = "round";
+    for (var r = 18; r > 0; r--) {
+      var a = state(pl, Math.max(0, t - r * 8), mode, ly), b = state(pl, Math.max(0, t - (r - 1) * 8), mode, ly);
+      if (a.m !== b.m) continue;
+      c.strokeStyle = "rgba(160,215,255," + (0.5 * (1 - r / 18)).toFixed(3) + ")"; c.lineWidth = 7 * (1 - r / 18) + 1;
+      c.beginPath(); c.moveTo(X(a.t[0]), Y(a.t[1])); c.lineTo(X(b.t[0]), Y(b.t[1])); c.stroke();
+    }
+    // the weapon, from its grip to its point
+    var g = [X(s.g[0]), Y(s.g[1])], p = [X(s.t[0]), Y(s.t[1])], vx = p[0] - g[0], vy = p[1] - g[1], L = Math.hypot(vx, vy) || 1, ux = vx / L, uy = vy / L, nx = -uy, ny = ux;
+    c.lineCap = "butt";
+    if (kind === "blade") {
+      c.fillStyle = "#cfd8e2"; c.beginPath(); c.moveTo(g[0] + nx * 13, g[1] + ny * 13); c.lineTo(p[0] - ux * 30 + nx * 9, p[1] - uy * 30 + ny * 9); c.lineTo(p[0], p[1]);
+      c.lineTo(p[0] - ux * 30 - nx * 9, p[1] - uy * 30 - ny * 9); c.lineTo(g[0] - nx * 13, g[1] - ny * 13); c.closePath(); c.fill();
+      c.strokeStyle = "#7fb0d0"; c.lineWidth = 3; c.beginPath(); c.moveTo(g[0], g[1]); c.lineTo(p[0] - ux * 26, p[1] - uy * 26); c.stroke();
+      c.strokeStyle = "#c9a04a"; c.lineWidth = 12; c.beginPath(); c.moveTo(g[0] + nx * 34, g[1] + ny * 34); c.lineTo(g[0] - nx * 34, g[1] - ny * 34); c.stroke();
+    } else {
+      c.strokeStyle = "#8a6a45"; c.lineWidth = 13; c.beginPath(); c.moveTo(g[0], g[1]); c.lineTo(p[0], p[1]); c.stroke();
+      if (kind === "maul") { c.fillStyle = "#b9c2cc"; c.save(); c.translate(p[0] - ux * 26, p[1] - uy * 26); c.rotate(Math.atan2(uy, ux)); c.fillRect(-34, -62, 68, 124); c.fillStyle = "#c9a04a"; c.fillRect(-34, -62, 68, 14); c.fillRect(-34, 48, 68, 14); c.restore(); }
+      else { c.fillStyle = "#c2cbd5"; c.beginPath(); c.moveTo(p[0] - ux * 80 + nx * 6, p[1] - uy * 80 + ny * 6); c.quadraticCurveTo(p[0] - ux * 40 + nx * 95, p[1] - uy * 40 + ny * 95, p[0] + nx * 6, p[1] + ny * 6); c.closePath(); c.fill(); }
+    }
+    c.strokeStyle = "#5a4630"; c.lineWidth = 15; c.beginPath(); c.moveTo(g[0], g[1]); c.lineTo(g[0] - ux * L * 0.22, g[1] - uy * L * 0.22); c.stroke();
+    // the crosshair
+    c.strokeStyle = "rgba(255,255,255,0.85)"; c.lineWidth = 2; c.beginPath(); c.moveTo(Wd / 2 - 9, H / 2); c.lineTo(Wd / 2 + 9, H / 2); c.moveTo(Wd / 2, H / 2 - 9); c.lineTo(Wd / 2, H / 2 + 9); c.stroke();
+    return s;
+  }
+  var cvA = document.getElementById("cv-today"), cvB = document.getElementById("cv-plan");
+  if (!cvA || !cvB || !cvA.getContext) return;
+  var seqId = "long_chain", pl = plan(seqId), t = KEYS["longsword.strike_1"].hitMs + 12, playing = false, speed = 0.25, last = 0;
+  var scrub = document.getElementById("scrub"), readout = document.getElementById("readout"), btnPlay = document.getElementById("btn-play");
+  function layers() { return { shake: document.getElementById("ly-shake").checked, settle: document.getElementById("ly-settle").checked, dir: document.getElementById("ly-dir").checked, breath: document.getElementById("ly-breath").checked }; }
+  function render() {
+    var ly = layers(), a = draw(cvA, pl, t, "today", ly), b = draw(cvB, pl, t, "plan", ly);
+    scrub.value = Math.round(t / pl.total * 1000);
+    var flip = a.m.rowSide * a.m.side < -0.04;
+    readout.textContent = pl.seq.name + " · " + Math.round(t) + " ms · frame " + Math.round(t / FRAME) + " at 60 a second · " + a.phase
+      + " · freeze " + a.m.hitstop + " ms" + (flip ? " · today this move throws the creature against the cut" : "");
+    document.getElementById("cap-today").textContent = a.phase;
+    document.getElementById("cap-plan").textContent = b.phase;
+  }
+  function loop(now) {
+    if (!playing) return;
+    var dt = Math.min(50, now - last); last = now; t += dt * speed;
+    if (t >= pl.total) t = 0;
+    render(); requestAnimationFrame(loop);
+  }
+  function setPlaying(on) { playing = on; btnPlay.textContent = on ? "Pause" : "Play"; if (on) { last = performance.now(); requestAnimationFrame(loop); } }
+  btnPlay.addEventListener("click", function () { setPlaying(!playing); });
+  document.getElementById("btn-back").addEventListener("click", function () { setPlaying(false); t = Math.max(0, t - FRAME); render(); });
+  document.getElementById("btn-fwd").addEventListener("click", function () { setPlaying(false); t = Math.min(pl.total - 1, t + FRAME); render(); });
+  scrub.addEventListener("input", function () { setPlaying(false); t = scrub.value / 1000 * pl.total; render(); });
+  Array.prototype.forEach.call(document.querySelectorAll("#player [data-seq]"), function (b) {
+    b.addEventListener("click", function () {
+      seqId = b.getAttribute("data-seq"); pl = plan(seqId); t = pl.list[0].m.hitMs + 12;
+      Array.prototype.forEach.call(document.querySelectorAll("#player [data-seq]"), function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      render();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#player [data-speed]"), function (b) {
+    b.addEventListener("click", function () {
+      speed = parseFloat(b.getAttribute("data-speed"));
+      Array.prototype.forEach.call(document.querySelectorAll("#player [data-speed]"), function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+    });
+  });
+  ["ly-shake", "ly-settle", "ly-dir", "ly-breath"].forEach(function (id) { document.getElementById(id).addEventListener("change", render); });
+  render();
+})();
+</script>

@@ -45,6 +45,31 @@ void main() {
     }
     // where the world was really drawn (WorldProjection: a camera mod's roll included)
     vec2 sun = clamp(F(21).xy, -1.0, 2.0);
+    vec2 wide = vec2(OutSize.x / OutSize.y, 1.0);
+    if (F(22).w > 0.0) {
+        // the Air (SPEC §22 "Steady Light"): rays. The light is the sky round the sun itself; a pixel gathers it along
+        // its line to the sun, so a cloud, a crown of leaves or a ridge on that line leaves a dark lane behind it and
+        // the gaps between them stand out as beams, fanning from the sun. Each pixel starts its steps a little
+        // differently (the same pattern every frame: a quarter-size buffer blurs it away) so the steps never show
+        const int N = 40;
+        vec2 dir = (sun - texCoord) / float(N);
+        float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+        vec2 p = texCoord + dir * j;
+        float light = 0.0, norm = 0.0;
+        for (int i = 0; i < N; i++) {
+            vec2 d = (p - sun) * wide;
+            float src = exp(-dot(d, d) * 14.0);
+            light += texture(InSampler, p).a * src;
+            norm += src;
+            p += dir;
+        }
+        // (how much of the sun's neighbourhood this pixel can see, 0..1; fainter with distance from the sun, and gone
+        // where the sun is far off screen)
+        float r = length((sun - texCoord) * wide);
+        float away = exp(-r * 1.9) * (1.0 - smoothstep(1.2, 1.9, r));
+        fragColor = vec4(light / max(norm, 1.0) * strength * away, fog);
+        return;
+    }
     const int STEPS = 24;
     vec2 dir = (sun - texCoord) * (0.92 / float(STEPS));
     vec2 p = texCoord;
@@ -55,6 +80,6 @@ void main() {
         decay *= 0.93;
     }
     // fades out toward the screen edges the sun is beyond, and with distance from the sun
-    float close = 1.0 - smoothstep(0.0, 1.1, length((sun - texCoord) * vec2(OutSize.x / OutSize.y, 1.0)));
+    float close = 1.0 - smoothstep(0.0, 1.1, length((sun - texCoord) * wide));
     fragColor = vec4(light / float(STEPS) * strength * (0.35 + 0.65 * close), fog);
 }

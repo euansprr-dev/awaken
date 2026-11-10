@@ -239,7 +239,13 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
                 int most = Math.min(src.size(), Math.max(1, Math.min(2, (floor - y2 - 9) / 9)));
                 for (int i = 0; i < most; i++) {
                     String line = src.get(i).getString();
-                    if (i == most - 1 && most < src.size()) line = font.plainSubstrByWidth(line, dw - 28 - font.width("...")).stripTrailing() + "...";
+                    // the last line that fits carries the rest, smaller: never cut (SPEC §57.6)
+                    if (i == most - 1 && most < src.size()) {
+                        StringBuilder rest = new StringBuilder(line);
+                        for (int k = most; k < src.size(); k++) rest.append(' ').append(src.get(k).getString());
+                        dev.awaken.signal.client.Ui.fitted(g, font, rest.toString(), dx + 28, y2 + 9 + i * 9, dw - 28, 1, DIM, false);
+                        continue;
+                    }
                     g.text(font, line, dx + 28, y2 + 9 + i * 9, DIM, false);
                 }
                 y2 += 9 * most;

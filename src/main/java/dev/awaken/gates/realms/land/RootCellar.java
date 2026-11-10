@@ -136,7 +136,7 @@ public final class RootCellar extends GeneratedCrawl<VineSeat.M> {
     protected void adorn(V v, VineSeat.M m, Part part, int x, int y, int z, boolean onFloor, boolean underRoof, int wx, int wz) {
         // the thin ways stay bare: there is no room in them for anything
         if (part.name.equals("slip") || part.name.startsWith("side_")) return;
-        boolean wall = wx != 0 || wz != 0, shaft = part instanceof Shaft;
+        boolean wall = wx != 0 || wz != 0, shaft = part instanceof Shaft || part instanceof Chasm; // a pit's floor is far below: nothing here is "overhead"
         int up = y - Part.airFrom(part.feet2(x, z));
         if (wall) {
             int ax = x + wx, az = z + wz;
@@ -193,7 +193,7 @@ public final class RootCellar extends GeneratedCrawl<VineSeat.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xd8f0b0, 0.75F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xd8f0b0, 0.75F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x2f4a36, 0.5F).light(lord.cx, lord.feet + 5, lord.cz, 0xc8e070, 18, 0.6F);
         return air.build();
     }

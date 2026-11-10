@@ -28,6 +28,9 @@ final class ArmsState {
     dev.awaken.powers.PowerType.@org.jspecify.annotations.Nullable Family echoFamily, edgeFamily;
     int edgeHits;
     int step = -1, cadence, moveSeq, recovery;
+    /** The last chain strike begun and when: a client's word for the next is taken only just after it (ArmsRules.follow). */
+    int lastStep = -1;
+    long lastStepAt;
     boolean perfectHeavy;
     /** A Lord-forged Art's move has let go this move (it fires once, at the end of the wind-up). */
     boolean unleashed;
@@ -41,6 +44,13 @@ final class ArmsState {
     // who this move has hit (one hit each)
     final int[] hit = new int[16];
     int hitCount;
+    // blows the hands played that this move hasn't struck yet (ArmsServer.claimed): the body, the move's ordinal, and the
+    // tick the word runs out; tried again each active tick of the move they name
+    final int[] claimBody = new int[4], claimMove = new int[4];
+    final long[] claimUntil = new long[4];
+    /** Wild plants this move has cut (ArmsWalls.GRASS_MAX a blow), and the last weapon drawn for those near to hear. */
+    int grassCut;
+    long drewAt = Long.MIN_VALUE / 2;
     long lastHitstopAt = Long.MIN_VALUE / 2;
     // the bodies this move has struck (the cleave), and its one freeze: the move it froze, the body it began on, its
     // own length before a cleave grows it

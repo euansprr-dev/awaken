@@ -247,6 +247,17 @@ final class ArmsFeel implements CombatFeedback.Sink {
         return nanos() < holdUntil;
     }
 
+    /** When the hold on the hands now began (the feel's clock): which freeze it is, for what plays through it (the weapon's shake). */
+    static long holdStart() {
+        return holdStart;
+    }
+
+    /** How far through the hold on the hands (0..1), or -1 when nothing holds them. */
+    static float holdU() {
+        long now = nanos();
+        return now >= holdUntil || holdUntil <= holdStart ? -1F : (now - holdStart) / (float) (holdUntil - holdStart);
+    }
+
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (fovTicks > 0) fovTicks--;
@@ -285,9 +296,10 @@ final class ArmsFeel implements CombatFeedback.Sink {
         float k = ArmsComfort.kick();
         if (p == null || k <= 0 || !mc.options.getCameraType().isFirstPerson() || !ArmsPredict.fights(p)) return;
         Archetypes.Loaded style = ArmsPredict.style;
-        Archetype.Move m = ArmsPredict.move;
-        if (style == null || ArmsPredict.charging) m = null;
-        float t = ArmsPredict.viewTime();
+        boolean undecided = ArmsPredict.undecided(); // a press not yet a tap or a hold: the view goes on with what it was doing
+        Archetype.Move m = undecided ? ArmsPredict.underMove() : ArmsPredict.move;
+        if (style == null || ArmsPredict.drawn()) m = null; // a strike waiting under the draw leans nothing
+        float t = undecided ? ArmsPredict.underTime() : ArmsPredict.viewTime();
         boolean has = m != null && FpSwings.camera(FpSwings.style(style.id()), m, t, LEAN);
         if (!has) LEAN[0] = LEAN[1] = LEAN[2] = 0;
         // a change of move carries the lean across (a chained strike's starts level: the view never snaps; SwingBlend)
@@ -307,6 +319,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         e.setYaw(e.getYaw() + LEAN_NOW.x * inv * k);
         e.setPitch(e.getPitch() + LEAN_NOW.y * k);
         e.setRoll(e.getRoll() + LEAN_NOW.z * inv * k);
+        ArmsBlackBox.lean(LEAN_NOW.x * inv * k, LEAN_NOW.y * k, LEAN_NOW.z * inv * k);
     }
 
     private static final dev.awaken.arms.SwingBlend.Vec LEAN_BLEND = new dev.awaken.arms.SwingBlend.Vec();

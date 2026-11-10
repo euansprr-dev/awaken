@@ -21,7 +21,7 @@
    "base": "awaken:item/beastbound_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "beastbound_shieldblade"
+    "weapon": "beastbound_shieldblade_blade"
    }
   }
  }

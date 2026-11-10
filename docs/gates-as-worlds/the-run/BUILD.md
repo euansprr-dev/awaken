@@ -108,6 +108,30 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
      teeth up across the gallery, the reliquary's door shut, the break in the tower stair). The Broodwarren with named
      monsters (42794222878): the Thousandfoot in the comb ring with its guard, Lurkers in the larder (on the floor in the shot,
      not yet hung), and in the played moment the larder's ambush sprang, its sacs burst and the skin sealed the way out.
+- **Euan, 10 Nov evening:** the rolled dungeons "look great, actually... maybe 20 or 30... some go up and down more, some
+  have a different style... sections where you have to do some parkour... the bigger, more intense ones from time to time".
+  Done for that: sizes and shapes in the generator, the chasm, and a skin per gate theme from the builders in rounds of three
+  (round 1: Cinder Workings, Sunken Stacks, Sporewells). Two faults the wider tests caught: a skin's roots grew across the
+  chasm (the generator now clears every chasm's crossing), and a shelf held on to a thing drawn only in a chunk's margin and
+  floated (`adorn` is now told only about the dungeon's own rock).
+- **Euan, same evening, on the monsters:** "all the mobs are not custom... I basically want like really high quality mobs."
+  Counted: 95 of the 100 gate monsters wear a re-tinted vanilla body. My answer: the gates need their own bodies, built as a
+  few animated families with per-theme bodies, proved on one theme with clips first; a card proposes a session to plan it
+  by his process (not started by me).
+- **10 Nov, about 20:20 local: fourteen kinds, three more with the builders.** Round 2 (Frozen Cells, Glass Warrens, Stopped
+  Works) and round 3 (Silvered Halls, Sealed Wing, Sleepless Ward) are merged; round 4 is briefed (The Unlit Stair for the
+  Abyssal Shrine on `claude/skin-abyss`, The Rime Hollows as a second Frost kind on `claude/skin-rime`, The Green Dark as a
+  second Overgrown kind on `claude/skin-green`). After those every theme that suits a crawl has a kind; Sky Archipelago
+  (fliers, open sky) and the Night Market (neutral monsters, a Lord who trades) do not suit one as the generator stands.
+  What the real-game walks of rounds 1 and 2 showed, and what changed:
+  - The Sunken Stacks, The Cinder Workings and The Stopped Works read well. The Glass Warrens glowed over half its walls (less
+    now). The Sporewells was a chequer of five blocks; rewritten to the rule now in SPEC 50.9 ("a wall is one thing with
+    things in it"), and briefs carry that rule.
+  - A great run's chasm was near black, and two skins lit no shaft at all. The generator now lights every climb itself.
+  - A layout comes from the seed alone, whatever the kind, so the test had only ever tried eight layouts. It tries 86 now
+    (seeds 1 and 2 for every kind, six more that no other kind uses), and all pass. Seed 1 is a great delve with a shaft at
+    about -33 181 78 and a chasm at -184 124 189 in every kind; seed 2 is a short plunge.
+  - The Lord's camera in a rolled kind's tour stands eight blocks from the middle (inside the pillar ring).
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 

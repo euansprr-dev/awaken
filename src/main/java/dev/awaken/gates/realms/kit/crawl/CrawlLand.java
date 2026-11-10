@@ -52,12 +52,18 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return f != NONE && y >= airFrom(f) && y < roof(x, z);
         }
 
-        /** Takes the rock out. */
+        /** How many cells of water stand on this column's floor (a pool at the bottom of a pit). */
+        public int wet(int x, int z) {
+            return 0;
+        }
+
+        /** Takes the rock out, and stands water in what it says is a pool. */
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
                 int f = feet2(x, z);
                 if (f == NONE) continue;
-                for (int y = Math.floorDiv(f, 2), top = roof(x, z); y < top; y++) v.set(x, y, z, null);
+                int from = Math.floorDiv(f, 2), wet = wet(x, z);
+                for (int y = from, top = roof(x, z); y < top; y++) v.set(x, y, z, y < from + wet ? WATER : null);
             }
         }
 
@@ -301,6 +307,19 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return dome(x, z);
         }
 
+        /** The shaft is air but for its ledge: two cells thick under your feet, and the half step where it has one. */
+        @Override
+        public boolean open(int x, int y, int z) {
+            if (x < x0 || x > x1 || z < z0 || z > z1 || !in(x, z) || y < bottom || y >= dome(x, z)) return false;
+            for (int k = -1; k * perTurn <= drop; k++) {
+                int f = ledge2(x, z, k);
+                if (f == NONE) continue;
+                int base = Math.floorDiv(f, 2);
+                if (y == base - 1 || y == base - 2 || y == base && (f & 1) != 0) return false;
+            }
+            return true;
+        }
+
         @Override
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
@@ -333,6 +352,101 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             double a = (turns + start * 0.25) * Math.PI * 2, d = r - ledge / 2;
             int x = cx + (int) Math.round(Math.sin(a) * d), z = cz - (int) Math.round(Math.cos(a) * d);
             return new int[]{x, top - (int) Math.floor(turns * perTurn), z};
+        }
+    }
+
+    /**
+     * A chasm crossed on pillars (SPEC §50.9): a long room with no floor but a pool far below, a shelf at each end, and a row
+     * of flat-topped pillars between them, two or three cells apart, each a sprint from the last and never higher than it.
+     * It runs straight along x or z. A ramp down one wall goes from the shelf you start on into the pool, so whoever falls
+     * (and isn't caught) can walk back up and try again; there is no way up at the far end but across.
+     */
+    public static final class Chasm extends Part {
+        public final int ax, az, dx, dz, half, top, depth, height, length, exitFeet, exitFrom;
+        final int[] start, len, off, down;
+
+        /**
+         * @param ax,az  where the first shelf begins, {@code top} your feet on it
+         * @param dx,dz  the way it runs: one of them 1 or -1, the other 0
+         * @param length about how long to make it (it ends where its last pillar leaves room for the far shelf)
+         * @param fall   how far the pillars step down in all, at most
+         */
+        public Chasm(String name, int ax, int top, int az, int dx, int dz, int length, int half, int height, int depth, int fall, long seed) {
+            this.name = name;
+            this.ax = ax;
+            this.az = az;
+            this.dx = dx;
+            this.dz = dz;
+            this.half = half;
+            this.top = top;
+            this.depth = depth;
+            this.height = height;
+            java.util.Random r = new java.util.Random(seed);
+            List<int[]> made = new ArrayList<>();
+            int pos = 4, gap = 2, lateral = r.nextInt(3) - 1, low = 0;
+            while (true) {
+                // a gap of three wants a run-up, so the pillar before one is a cell longer
+                int next = r.nextInt(3) == 0 ? 3 : 2, size = next == 3 ? 4 : 3;
+                if (pos + gap + size + next + 4 > length) break;
+                if (low < fall && r.nextInt(3) == 0) low++;
+                made.add(new int[]{pos + gap, size, lateral, low});
+                pos += gap + size;
+                gap = next;
+                lateral = Math.max(-(half - 4), Math.min(half - 4, lateral + r.nextInt(3) - 1));
+            }
+            exitFrom = pos + gap;
+            this.length = exitFrom + 4;
+            exitFeet = top - low;
+            start = new int[made.size()];
+            len = new int[made.size()];
+            off = new int[made.size()];
+            down = new int[made.size()];
+            for (int i = 0; i < made.size(); i++) {
+                start[i] = made.get(i)[0];
+                len[i] = made.get(i)[1];
+                off[i] = made.get(i)[2];
+                down[i] = made.get(i)[3];
+            }
+            int ex = ax + dx * this.length, ez = az + dz * this.length, px = Math.abs(dz) * (half + 2), pz = Math.abs(dx) * (half + 2);
+            x0 = Math.min(ax, ex) - px - 1;
+            x1 = Math.max(ax, ex) + px + 1;
+            z0 = Math.min(az, ez) - pz - 1;
+            z1 = Math.max(az, ez) + pz + 1;
+        }
+
+        public int pillars() {
+            return start.length;
+        }
+
+        /** Where to stand on a pillar (or, for -1, the first shelf; for the count, the far one): x, feet, z. */
+        public int[] stand(int pillar) {
+            int along = pillar < 0 ? 1 : pillar >= start.length ? exitFrom + 2 : start[pillar] + len[pillar] / 2, side = pillar < 0 || pillar >= start.length ? 0 : off[pillar];
+            int feet = pillar < 0 ? top : pillar >= start.length ? exitFeet : top - down[pillar];
+            return new int[]{ax + dx * along - dz * side, feet, az + dz * along + dx * side};
+        }
+
+        @Override
+        public int feet2(int x, int z) {
+            int a = (x - ax) * dx + (z - az) * dz, c = -(x - ax) * dz + (z - az) * dx;
+            if (a < 0 || a > length || Math.abs(c) > half) return NONE;
+            if (a < 4) return 2 * top;
+            if (a >= exitFrom) return 2 * exitFeet;
+            for (int i = 0; i < start.length; i++) if (a >= start[i] && a < start[i] + len[i] && Math.abs(c - off[i]) <= 1) return 2 * (top - down[i]);
+            int bed = 2 * (top - depth);
+            // the way back out: down the wall on one side from the first shelf, half a block a cell, into the pool
+            return c >= half - 1 ? Math.max(bed, 2 * top - (a - 3)) : bed;
+        }
+
+        @Override
+        public int wet(int x, int z) {
+            int f = feet2(x, z);
+            return f == NONE ? 0 : Math.max(0, top - depth + 2 - Math.floorDiv(f + 1, 2));
+        }
+
+        @Override
+        public int roof(int x, int z) {
+            int c = -(x - ax) * dz + (z - az) * dx;
+            return top + Math.max(4, height - (int) Math.round((double) c * c / (half * half) * 2.5));
         }
     }
 
@@ -404,7 +518,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     protected abstract BlockState doorBlock(M m);
 
     /**
-     * One cell of air that touches rock: {@code onFloor} (rock under it), {@code underRoof} (rock over it), and
+     * One cell of air that touches the dungeon's own rock (never something another call of this put there, so nothing can
+     * be hung on a thing that isn't in the next chunk): {@code onFloor} (rock under it), {@code underRoof} (rock over it), and
      * {@code wx}, {@code wz} the way to a wall beside it (both 0 for none). Put here what grows on this land's walls,
      * hangs from its roofs and lies on its floors; you may also change the rock you were pointed at. Decide by position,
      * never by chance that differs between calls: the same cell is asked about from more than one chunk.
@@ -418,6 +533,9 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     protected final int rockTop() {
         return top;
     }
+
+    /** Whatever must be put right after the walls are dressed. */
+    protected void finish(V v, M m) {}
 
     /** Whether a cell is air in the land as it is drawn. */
     public final boolean open(int x, int y, int z) {
@@ -482,22 +600,34 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (Part p : near) p.carve(v);
         for (Part p : near) p.lay(v, this, m);
         special(v, m);
-        for (Part p : near) dress(v, m, p);
+        for (Part p : near) dress(v, m, p, near);
+        finish(v, m);
         drawPieces(v, m);
     }
 
-    private void dress(V v, M m, Part p) {
+    /**
+     * The dungeon's own rock (or what a land's {@link #special} made of it): solid by the parts' shapes, and still there.
+     * Never something {@link #adorn} put into the air. A shelf, a root or a hanging thing may only hold on to this: what
+     * one rule hangs in a chunk's margin isn't always hung in the chunk that owns the cell, and whatever held on to it
+     * there would be left in the air.
+     */
+    private static boolean rock(V v, List<Part> near, int x, int y, int z) {
+        for (Part q : near) if (q.open(x, y, z)) return false;
+        return V.holds(v.get(x, y, z));
+    }
+
+    private void dress(V v, M m, Part p, List<Part> near) {
         for (int x = Math.max(p.x0, v.x0 - 1); x <= Math.min(p.x1, v.x0 + 16); x++) for (int z = Math.max(p.z0, v.z0 - 1); z <= Math.min(p.z1, v.z0 + 16); z++) {
             int f = p.feet2(x, z);
             if (f == NONE) continue;
             for (int y = Math.floorDiv(f, 2), roof = p.roof(x, z); y < roof; y++) {
                 if (v.get(x, y, z) != null) continue;
-                boolean onFloor = V.holds(v.get(x, y - 1, z)), underRoof = V.holds(v.get(x, y + 1, z));
+                boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
                 int wx = 0, wz = 0;
-                if (V.holds(v.get(x + 1, y, z))) wx = 1;
-                else if (V.holds(v.get(x - 1, y, z))) wx = -1;
-                else if (V.holds(v.get(x, y, z + 1))) wz = 1;
-                else if (V.holds(v.get(x, y, z - 1))) wz = -1;
+                if (rock(v, near, x + 1, y, z)) wx = 1;
+                else if (rock(v, near, x - 1, y, z)) wx = -1;
+                else if (rock(v, near, x, y, z + 1)) wz = 1;
+                else if (rock(v, near, x, y, z - 1)) wz = -1;
                 if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
             }
         }

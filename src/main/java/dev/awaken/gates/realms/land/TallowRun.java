@@ -193,7 +193,7 @@ public final class TallowRun extends GeneratedCrawl<WaxGalleries.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xffd890, 0.8F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffd890, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0xd8a040, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xffc050, 18, 0.9F);
         if (ambush != null) air.light(ambush.cx, ambush.feet + 3, ambush.cz, 0xffc050, 12, 0.7F);
         return air.build();

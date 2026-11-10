@@ -781,7 +781,9 @@ of `AwakenConfig.Client`.
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
   clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
-  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26; `lagReach`, `lagRate`: how far and how quickly the
+  hands trail the view's turn against the body's own, 1 and 1 unless what is held sets them each frame, additive, Arms
+  2026-11-10, §25 "Weight in the Hand"). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -842,6 +844,17 @@ of `AwakenConfig.Client`.
   `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
   `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
   `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
+- `dev.awaken.core.client.FirstPersonDress` (client; §44.1, 2026-11-10) — what your own limbs wear in first person:
+  `register(Dresser)`, `limb(Limb, PoseStack, SubmitNodeCollector, light)` (the pose on the limb's bone) and
+  `hand(AvatarRenderer, HumanoidArm, PoseStack, SubmitNodeCollector, light)` (straight after vanilla's own hand
+  draw). Whoever draws a first-person limb asks; the armour answers. A power's light on the arm belongs here too
+  when it is built (the dresser's draw takes an energy and an accent already).
+- `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
+  (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
+  `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
+  frame) and `BandPlaces` (`Place`, `set(pageOrdinal, place)`: what a band page shows on the stage). `Goals.Step.icon`
+  (`Builder.icon(itemId)`) names the real item that stands for a step there; `Builder.makes(item)` says the step is the making
+  of that item (a War Anvil, an Inscribing Table), so the stage draws its recipe until you carry one.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
@@ -1960,7 +1973,7 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render distance 16: depth read, far terrain
   intact, haze across the vanilla edge within ~0.03 of itself away from silhouettes; logs/lens-dh-sheet.jpg). Params
   texels: 13 the ritual, 14 Holo.
-- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
+- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers (four with ImmersiveVFX installed, below), and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
@@ -1979,6 +1992,18 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   | DH `enableAntiAliasing` (file only) | false | true | true |
   | Iris shaders switch | off | off | off (was on; Lens 2's Ultra replaced Iris, §22) |
   | Sodium, vanilla options | none | none | none |
+
+  VFX, the fourth tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
+  stays off, story scenes included, while ImmersiveVFX draws. Offered only with that mod installed; a saved VFX without
+  it reads as Swift. No frame-time budget is promised. The mod has no off switch and a jar can't be unloaded, so the
+  three Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
+  FML's `ModConfigs` by key, so no compile dependency): every on/off setting false, the choices in `Look.VFX_ASLEEP`,
+  then `spec.save()`, which writes the file and fires the reload the mod listens for, as its menu does. What the player
+  had waits in config/awaken-immersivevfx-kept.json (`schemaVersion`) and comes back with VFX. The first client tick
+  agrees the mod with the saved Look. Its 24 client mixins stay applied while it sleeps. The mod is CurseForge only and
+  All Rights Reserved: pack/lock.json pins its URL and hash (`handPinned`, kept through `pack.py lock`, left out of
+  `pack.py export`), the jar is fetched at install and never committed. Before any public pack release, get the
+  author's OK or wait for the open licence promised on its page.
 
   DH values are pack/dh/swift.json and cinematic.json (a GameTest compares them); keys the tiers agree on (threads,
   cloud layers) aren't owned. DH: the six keys its 3.3.4 config API offers are set at once
@@ -6093,6 +6118,182 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     it. The rest is the full-size passes; time them per pass next.
   - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
+**Steady Light** (Euan, 2026-11-10: "nearly on par with immersive VFX ... a stable 60 but extremely high quality"; plan
+docs/perf/steady60/PLAN.md, page https://claude.ai/artifact/4UjwicVDJEoS9vceUanMyQ, state docs/perf/steady60/STATUS.md).
+ImmersiveVFX's look, made in Lens inside a frame budget. Measured on his Dell (4K at 120 Hz, the world at 2880x1620,
+RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass redrawn every frame; Cinematic 8.7.
+- **The Air** (Cinematic and Ultra under an overworld sky; client `lensAir`, default on; autopilot `lens air`).
+  `include/lens_air.glsl`, frame texels 22 (toward the sun, under the horizon by night; w the Air's strength) and 23
+  (the game's sky colour, its star brightness).
+  - **Sky**: Lens's own, in the composite for sky pixels: a violet-blue gradient by day (zenith (0.33, 0.41, 0.86), mid
+    (0.53, 0.61, 0.95), horizon (0.83, 0.86, 0.98)), rose and gold toward the sun and violet away from it at dusk and
+    dawn (from sin 0.50 of sun height down to -0.32), near-black blue by night, a glow round the sun, greyed by rain.
+    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour.
+  - **Night sky** (`airNight`, from sun height sin 0.06 down to -0.20, not in rain; Euan 2026-11-10: "ours has
+    basically no stars ... like a fantasy shader"). It turns with the sun about the world's z, as the game's stars do.
+    Stars in four sizes, each a square of the game's own kind with its own brightness, tint (blue-white to warm) and
+    slow twinkle: a dust of faint ones (a grid 230 cells across the sky, 7.5% of cells, up to 27.5% along the galaxy),
+    small (140, 8.5 to 18.5%), middling (70, 8.5%), and the few bright ones (27, 8.5%) with four thin points. The
+    galaxy: a soft band (pole (0.32, 0.47, 0.82), `exp(-13 b²)`) of blue to violet noise with dark lanes and a warmer
+    heart. A shooting star: one chance in two every nine seconds, 0.9 s long. A wide halo round the moon.
+  - **Wisps** (`airWisps`): a second, high layer 680 blocks up, over the sky and under the block clouds: feathered
+    streaks of noise (26-block cells, longer east-west so they gather toward a low sun, bent by two slow drifts so
+    none is a ruled line), drifting 2.2 blocks a second. White at up to 34% by day, rose and gold at up to 50% at dusk
+    and dawn, none by night (they drew dark lanes through the stars). No march: one plane, three noise reads.
+  - **Fog**: land fades into the sky that stands behind it (`airFog`: the sky's colour in the pixel's own direction,
+    the horizon's from above). Far: `1 - exp(-3.2 t²)` over the render distance (five times that while a far renderer
+    draws), a little thinner 40 blocks and more above the eye. Near: `1 - exp(-(d - 4) / L)`, L 280 blocks by day to 150
+    at dusk, dawn, night and in rain, so each line of trees is paler than the one before; thinner only well above
+    the eye (130-block scale: a haze that thinned over a tree's height left dark crowns on vanished trunks). It is the
+    air along the view: only a camera under cover (parameter texel 21) looking at a covered point is left out. Gates
+    and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
+  - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
+    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. The noise repeats
+    every 128 cells, so the whole field of cells is one fixed 128x128 texture (`awaken:lens_cloud_cells`, 16 bits a
+    cell, made by `tools/lens/cloud_cells.py` from the noise): a cell is one exact read by cell number modulo 128. Walked cell by
+    cell (exact entry and exit), sigma 0.95 a block
+    (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
+    2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
+    little by the face the ray came in by (0.75 to 1; a joined block keeps the first face), the sky's light 86% on an
+    underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
+    white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
+    a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
+      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+      depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
+      the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
+      The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
+      Cinematic; `blockPiece` from 640 blocks on for up to 600 more, 800 on Ultra), walked every frame with nothing
+      carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
+      the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
+      like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
+    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
+  - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
+    cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
+    sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
+    as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
+    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
+    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
+    the clouds and light are always spread over frames (`lensTemporal` as if on).
+  - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
+    through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
+    the sunlit dust, which stands only where the lit air (below) says the sun reaches, under a canopy too. Lens's
+    particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
+    particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
+    depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
+  across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
+  block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
+  half (a slab); all ones is a section not read yet. Up to 14 sections read a tick nearest first, 6 looked at again,
+  the 3x3x3 round the camera every 10 ticks, 6 chunks uploaded a tick; frame texel 17 z the trusted reach (46 blocks),
+  w the lowest y. Where the heightfield says shade and the point is inside the map, the light pass walks the map
+  toward the light (`blockRay`, up to 72 blocks, never the block it starts in): a block stops it, three texels in ten
+  of a leaf face pass it, a lower half stops it under half height; out of the map in the open, the heightfield
+  carries on from there. Inside the map every face is asked and the turn of a face decides nothing (deciding by the
+  face lit the one-pixel sides of path plates and block lips while the ground lay in shade: bright rims at dusk, Euan
+  2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
+  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 960x540. Before it walks, the
+  light pass asks the lit air (below) at the point, half a block off its face: three slices, each smoothed over four
+  cells, all over 0.996 is a walk that would meet nothing, so it is skipped and the heightfield carries on from where
+  the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
+  never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
+  beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
+- **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
+  - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
+    R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
+    from the volume's own corner (frame texels 15 w, 20 zw and 21 w: whether it is there and the camera's place in
+    it). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
+    lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
+    a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
+    what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is
+    dappled in whole blocks), a section not read yet 1. Beyond the window the air is lit: the volume holds only what
+    its own blocks do, and the land out there is the light pass's to judge. A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
+    20 ticks at rest and every 5 once the camera is 5 blocks off the volume's middle; none where the light leaves the
+    x-y plane or sits under sin 0.02. The light pass's mist march spends its first 60 blocks in it (12 steps, 18 on
+    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side), each
+    step times the sun map's answer at the point where the sun's ray leaves the volume (the same far shade the ground
+    gets), and the rest in the sun map as before (5 steps, 10 on Ultra).
+  - **Rays on the screen** (`lens_shafts.fsh` under the Air): the light is the sky round the sun itself
+    (`exp(-14 d²)` of screen heights), gathered in 40 jittered steps along each pixel's line to the sun, so a cloud, a
+    crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from
+    the sun; fainter with distance (`exp(-1.9 r)`). The prefilter's sky mask under the Air is the open sky whatever
+    its colour, cut whole by Lens's clouds. Composite strength 0.95 of the look's shafts (0.35 without the Air).
+- **Lens's own tick work** (the heightfield, the block map, the lit air's hand-over; autopilot `lens cost`): each has a
+  time limit of 0.5 ms a tick on top of its counts (what waits is read on the next tick, nearest first), and the
+  re-reads of the terrain round the camera go in turn, a few a tick (the heightfield's 25 chunks three a tick, the
+  block map's 27 sections three a tick), where they went all at once every 10 ticks: those ticks took 2 to 5 ms.
+  Measured in flight after: heightfield 0.15 to 0.2 ms a tick (worst 1 to 2), block map 0.3 (worst under 1), lit air
+  0.02; the worker's sweep 2.5 to 8.5 ms, its upload 0.06 to 0.5 ms.
+- **Measured** (the Dell, his settings, a copy of his world, 10 Nov; data in `docs/perf/steady60/data/`).
+  - Quiet Mac, the first pass (dell-6): the game alone 2.8 ms of GPU time, Cinematic before 8.9, the Air and the Sun
+    Pass 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays (vsync, 60 cap) 98.6% of
+    frames on time standing, 98.9% turning, 95.2% flying ("on time": the gap to the next frame rounds to exactly two
+    refreshes of the 120 Hz screen).
+  - This pass, on a Mac busy with other sessions (dell-7 to dell-9; the same runs put Cinematic-before at 9.9 to 10.7,
+    so every figure is about a tenth high): all of the above 11.3 to 11.9 standing (71 to 77 fps uncapped), which is 1.0
+    to 1.5 ms over Cinematic-before in the same run (2.3 in the first pass: the light buffer is 960x540 again and the
+    lit air's sure answers save the block walks they cost); 12.0 to 12.1 at night looking up; the lit air off changes
+    nothing measurable, the Sun Pass off saves 0.2 to 0.6. As he plays: 99.1 to 99.9% on time standing, 96.4 to 98.5%
+    turning, 92.2 to 93.6% flying.
+  - Flying is not the look's (fly-1: the same route back and forth over loaded land, as he plays): the Air 92.2 to
+    95.6% on time over four legs, the Sun Pass off 93.5 and 94.0, the lit air off 91.1 and 93.7, the Air off (Cinematic
+    before) 92.4 and 94.9. The legs differ more than the settings do. In flight as he plays the GPU's world pass is
+    12.5 ms (p99 14.6) with the Air and 10.9 (p99 13.1) without, both inside the 15 ms a 60 fps frame leaves it; the
+    late frames are the game's own chunk work on the render thread, which the next step profiles.
+  - With the near clouds at the frame's size (dell-10, dell-11; Cinematic-before 10.1 in the same runs): 11.9 standing
+    (74 fps uncapped), 12.2 to 12.6 flying under open sky (71 fps), 12.6 to 13.2 at night looking up. The cloud pass
+    is about 0.3 ms standing in the clearing and 0.8 flying. As he plays: 99.0 to 99.8% on time standing, 98.7 to
+    99.0% turning, 89.0 to 91.1% flying. The cell texture changed nothing measurable: the cost is the full-size pass
+    and its walks, not the cell reads.
+  - The ImmersiveVFX pairs: https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`,
+    `tools/steady60-tour.sh`.
+- **The late frames in flight** (Euan 2026-11-10: "let's really see how much we can push the performance ... can we
+  optimize how chunks load?"). Measured with `LateFrames` (dev; autopilot `late on|calibrate|report <label>|off`):
+  every frame split on the render thread into its ticks, its render and the rest, and a watcher that takes the render
+  thread's stack twice a millisecond only while a part has already run well past its usual length. Data
+  `docs/perf/steady60/data/late-1`, `pace-1`, `batch-1`; tours `steady60-late.txt`, `steady60-pace.txt`.
+  - **Why a frame is late.** At 60 a second on a 120 Hz screen the GPU's work starts only after the frame's ticks and
+    extraction, and takes about 12 ms of the 16.7: the CPU has three to five milliseconds before the frame misses its
+    refresh. The usual tick is 1.5 to 2 ms (one frame in three has one) and the render 0.7 to 0.9; no frame ran two
+    ticks, and the collector's pauses were under a millisecond in every window. The late frames (3 to 4% flying over
+    loaded land, 9 to 15% over land never seen) lose their time in single spikes: about two thirds of it between the
+    render events (extraction, packets, the submit), a fifth in ticks.
+  - **What the spikes were** (shares of the render thread's samples in long parts, flying over loaded land): Sodium
+    taking the sections of unloaded chunks out of its renderer, all in the frame after they leave (sort triggers out
+    of an interval tree, meshes back into the buffer arenas), 38 to 45%; the Vulkan submit, 6 to 12%; the game's
+    client light engine (it copies its section maps whenever a frame changed any), 5 to 10%; chunk packets being
+    taken in, 2 to 8%; Sodium cloning sections for rebuild tasks, 4 to 8%; Lens's own tick work, 3 to 6%; the Atlas
+    (a chunk's columns sampled as it loads, and re-read in its tick), 2 to 5%; other Awaken client ticks (Wild Tint,
+    Kin, Delve, Ritual), 2 to 5%.
+  - **Chunk pacing** (Turbo: `dev.awaken.turbo.chunkpace`, `awaken.chunkpace.mixins.json`, client setting
+    `turboChunkPacing`, autopilot `chunkpace on|off|setting`; version-locked to Minecraft 26.3, NeoForge 26.3.0.95 and
+    Sodium 0.9.3-beta.1+mc26.3; approved by Euan on 2026-11-10, asked about this hook by name: "Yes, turn it on". On by
+    default; its line in CLAUDE.md's Turbo list is still to be added by a session that may edit that file). A pseudo mixin in
+    Sodium's `ChunkTracker.forEachEvent`: before it runs, all but three of the queued unloads (or a fortieth of a long
+    queue) are lifted out of `unloadQueue`, and after it they go back in, so between frames the queue is Sodium's own
+    and a chunk that returns before its turn is taken off it by Sodium's own bookkeeping. A waiting chunk is one
+    already out of view, drawn a few frames longer at the far edge. Same flight, legs alternating (pace-1, as he
+    plays): 94.9% of frames on time against 93.3%, late frames 2.8% against 3.5%, every paced leg above every unpaced
+    one; Sodium's removals fell from 29% of the long-part samples to 5 to 7%.
+  - **Tried and dropped**: the client asking the server for 2.5 ms' worth of chunks a tick where the game asks for 7
+    ms' worth (`ChunkBatchSizeCalculator`). With unloads paced in both, alternating legs (batch-1): 94.2% against
+    94.0% over loaded land, 77.2% against 82.1% over new land. Smaller batches put chunk work into more frames, and
+    with so little to spare a frame with a little of it is as late as a frame with all of it.
+  - **Lens's own share**: the block map's reader remembers the last block's kind (a column is runs of one state; the
+    id lookup behind it was a hash probe a block).
+  - **What is left**, in order: the game's client light engine and chunk packets (vanilla), Sodium's rebuild task
+    preparation, the Atlas and the other Awaken client ticks (their modules'), and land never seen before, where the
+    integrated server's world generation is the load.
+  - **A terrain renderer of our own in Sodium's place** (Euan asked, 2026-11-10): not now. With Sodium the whole
+    world pass is 2.8 ms of GPU time at his settings, Lens's passes about 9: the terrain is a fifth of the frame at
+    most, and the CPU spikes above are bookkeeping that small hooks pace. Our own passes are the larger and safer
+    target. It is worth asking again if, after those, the terrain pass is what limits the frame, or as Far Sight
+    drawn inward (Sodium for the near chunks, our meshes beyond) once Far Sight costs less than it does (4.2 ms at
+    near reach).
+- **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
+  each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
+  Swift (it has no view direction there), ground mist, the Look page rows.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
@@ -6841,27 +7042,64 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   arc went on filling to 24 past the ting. Now the arc is full and gold at the ting and stays so; the server counts a
   tick short as full (`ArmsServer.GLINT_GRACE`: its count starts when it hears the charge, a tick or so late). **Tap or hold**
   (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
-  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
-  the strike's hit waits at its wind-up's end while the key stays down (`ArmsPredict.waitHit`). The hands hold at the
-  strike's set, where its drive begins (`fp_swings.json`'s `set`, Swing Studio round 8), not at the hit (Euan
-  2026-10-29: "it attacks on the click when you are still loading": at the hit the blade had already struck, to the
-  eye, before the charge took it, and a dagger's 1-tick stab froze on the target for most of every click). Let go
-  before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then, its drive from the set to the hit
-  run 1.6 times as fast (`ArmsPredict.RUSH`), giving back some of the wait. The key's release is read every frame
-  (`ArmsPredict.frame`), not on the next tick (up to 50 ms late). While a strike waits, the client's chain clock waits
-  as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
-  time the next press alike: unmoved, the client ran each dagger strike a tick or two ahead of the server, cut the last
+  attacks"; 2026-11-09: "it should go straight into an animation... the moment you start clicking long... it brings the
+  weapon into its charge like form. But right now it just glitches into its form, or sometimes it starts an attack and
+  then cancels the animation midway"). **The draw** (`ChargeDraw`): someone drawing a weapon back doesn't begin a light
+  blow and swap to a heavy one; every press starts the same pull back, and letting go early just looses it sooner. Rounds
+  of 2026-10-26, 10-29 and Swing Studio's round 8 each moved where in the light strike a held press waited (its hit, then
+  its `set`), so every hold still showed 300 ms of a light attack and then swapped clips at the mark; the fault was showing
+  the strike at all. Drawing from the press's first frame (9 Nov, first try) was wrong the other way (Euan 2026-11-09: "it
+  just sometimes thinks you're going into a heavy hold or like a heavy strike when you're not, and it makes it look
+  glitchy"): every click showed the start of the heavy's pose and then snapped into the strike, by an amount that depended
+  on how long the finger happened to stay down, on every weapon. No capture saw it: at a tenth of play's speed it was a slow
+  small dip, and at real speed on the slow runner a click's ticks ran inside one frame (`tap drawn` was 0 on all 99 clicks).
+  Now **until a press has outlasted a click nothing on screen knows about it** (`ChargeDraw.GRACE`, 4 ticks, 200 ms;
+  `ArmsPredict.undecided`): the hands and the view's lean go on with what they were doing, the move that was running
+  playing on to its end (`underMove`, `underTime`) or the stance holding. After the grace it is a hold, and the hands
+  leave for the heavy's drawn pose (its clip's first key, the very pose it is loosed from) on one curve (`ChargeDraw.ticks`,
+  `SwingBlend`'s quintic: 0.6 of the weapon's glint, 7.8 ticks on the Daggers to 12 on the Maul, there before the glint),
+  from wherever they are. The draw and the charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks
+  down, `PRESS_CHARGE`) moves nothing; the arm's strain grows from nothing after it (slow, about 3 Hz: the old 8 Hz tremble
+  read as a glitch), and the charge's meter fills from the end of the grace to the glint, so a tap never lights it and it
+  doesn't jump. **A release** gives the hands 1 tick to reach the loosed heavy from a full draw and up to 3 from one barely
+  begun (`releaseTicks`). The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
+  `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
+  hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
+  in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
+  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **One chain** (Euan 2026-11-09: "the combo stops being the usual one", "it just switches to something else"): the two
+  sides time the windows on their own clocks, more so with a busy server, so left to decide alone they disagree on a window's
+  edge: one counts a strike the other never played, and the combo repeats a strike or skips one. Only the hands decide. The
+  press carries what they did (`Press.claim`: the move they began, or `CLAIM_NOTHING` for a press too early to count) and the
+  server plays that: never a strike they don't show, and never another in its place. A strike they began is kept however early
+  the server's clock calls it, and waits for the server's own window (`ArmsRules.HEARD_BUFFER`), so nothing strikes faster than
+  the rules allow. A press that only repeats the strike already queued says so (`CLAIM_AGAIN`), so it can't count as another. A claim must still be legal (`ArmsRules.follow`: starting again, or the strike after the last within 60
+  ticks; a move off the chain only if the server saw its deflect, dodge, slide or fall, give or take `HEARD_SLACK`). A move off
+  the chain it can't grant lands no blow and starts nothing else. The server's reply never changes the strike the hands are in
+  or the step they count from; only what they couldn't know (an execution on a heavy's release) takes over. Any real difference
+  is logged (`[arms]`), and each session logs what the hands played (`strikes played`). In a development run the last minute or so of the hands, every frame, is written to `logs/arms-blackbox.tsv` on leaving the world (`ArmsBlackBox`). **The blend's clock is a double** (found with the black box, Euan 2026-11-09): the hands' clock counts from the machine's boot, and as a float it moved in steps of 268 ms on a Mac up 34 days, so each `SwingBlend` sat frozen and then snapped, and about one strike start in four flashed the pose of up to 268 ms earlier for one frame (the draw into a charge "teleported" the same way). Test machines boot fresh, so no tour could show it. **A tap** (let go before the mark, `PRESS_TAP`,
+  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
+  are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
+  hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a
+  late tap from nearly full draw doesn't snap across). That is the one trade: the blade reaches its hit 9 to 25 ms later
+  than when the wind-up played under the press on a 60 ms click, 17 to 44 ms on a 100 ms click (the Daggers, which struck on
+  the press until now, 38 and 85 ms); the server's hit is where it was. A tap with no strike of its own (one still queued,
+  or a press too early to count) hands the blade back to what was running. While a strike waits, the client's chain clock
+  waits as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
+  time the next press alike: unmoved, the client ran each strike a tick or two ahead of the server, cut the last
   strike's carry short, and took presses the server's buffer refused, so strikes never landed and the chain fell out
   of step (the server's MOVE then swapped the clip mid-swing). A hit's hold freezes the hands only while the strike it
-  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and
-  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
-  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
-  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
-  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
-  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
-  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
-  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
-  Test `arms_tap_or_hold`. A block under the
+  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and the strike is dropped
+  unlanded and unseen and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is dropped too). The
+  charge holds at full for as long as the key is down, trembling, and goes only on the release (no auto-release; held past
+  full it counts as full); the heavy's clip begins on the pose the hands are in, so the release has nothing to carry. The
+  server never holds a blow on the client's word alone: with no tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4)
+  ticks after the charge's mark. In third person nobody near sees a waiting strike (`ArmsServer.shown`): no swing, no
+  swish, no clip. The fighter's own body starts its held draw with the hands, over the same ticks, and a tap's strike clip
+  takes it over; everyone else's copy of it starts on the server's word at the mark, over 5 ticks (`ArmsBodies.SEEN_DRAW`,
+  was 2), and the weapon's wrist comes round with the clip (`ArmsWrist`; it snapped on at once). A riposte, Slipcut,
+  Undercut or Plunge starts as it always did, and a press held on through one draws after its blow.
+  Tests `arms_tap_or_hold`, `arms_dagger_click` and `arms_draw_smooth` (every style, from rest and from each chain strike's
+  recovery: no frame steps further than the curve or the motion it came in on). A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
@@ -7017,7 +7255,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
   a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
   level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
-  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, shove,
   chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
   the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
   backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
@@ -7038,16 +7276,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
-  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
-  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
-  (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. **Standing as a
+  vanilla sword stands** (Euan 2026-11-09, of the Longsword turned to roll 135 by the weapon audit: "it looks like it's being
+  held the completely wrong way", "a vanilla sword ... actually feels like it has the sharp edge like forwards"): vanilla's
+  `item/handheld` turn stands the blade up, leaned about 20 degrees back toward the eye, edge straight ahead, flat to the
+  side, and because the hand is to the right of the eye the flat still shows. The Longsword, the Shieldblade's sword, the
+  Axe, the Katana and the Greatblade now stand that way (`arms_holds.STANDING`, `FORWARD`; yaw 180 is the lean back), the
+  Glaive keeps its line with its edge square down (roll 90). A swing's blade is solved in view terms, so a new hold moves
+  only the rest and the way to and from it, never where a blow lands (`anim_lab.py bake`).
+  Longsword standing, 72 up (size 0.85); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the right shoulder, standing, 78 up (size 0.9);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
-  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
-  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  across the body (58, 28); Greatblade two-handed, standing near the middle, 82 up (size 0.75); Maul two hands low on the haft,
+  the head up (6, 58); Axe standing, its bit ahead, 80 up (size 0.75); Daggers short, the
   point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
-  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  on its chain (18, 38); Shieldblade a sword in the hand and the shield on the other arm ("The Shieldblade"); Precursor Arm forward like a
   drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
@@ -7213,6 +7457,21 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
+- **What play showed about the rigged moves** (Euan 2026-11-09). *No dip on the way home:* a move whose hand is already home
+  when its follow-through ends has nothing left to do, so `swing_studio.cut_pose` returns the rest there; the recovery's rise
+  used to run anyway, and the War-staff's strikes 1 and 3 and the Spear's strike 3 sank and came back up after settling.
+  *The Maul's uppercut* keeps its face to the front: a two-headed weapon has no reason to turn over, and the 170 degrees it
+  unwound about its haft while rising read as a spin glitch (`tools/arms/feel/maul.json`, form `rise`, `roll0` 16). *The
+  Greatblade's heavy* is a chop, not a rise: charged high in view, tip up, grip right of centre, and brought down across the
+  crosshair. The rise it shared held the blade off the bottom of the screen for the whole charge (0% on screen, now 100%);
+  its server row is the same chop (`archetypes.json`, form `chop`, dir [-0.3, -1]). *The Katana is held edge down in third
+  person* (`arms_holds.EDGE_DOWN3`): vanilla's handheld hold puts a design's +x side up as the arm hangs, so it is turned
+  half round about its length, and the rig solves each move's wrist from that hold, so the edge still leads every blow.
+  *The Gauntlets are the arm* in first person ("as if it was like your entire hand, basically like a glove"): no arm rises to
+  them (`ArmsHands.worn`), because a bare fist was showing round a smaller gauntlet, and each runs on past its rim into a sleeve
+  of its own cuff and metal, banded every 8 texels, out of the view however far a punch carries it (`<id>_arm.mesh` and
+  `.png`, drawn by `WeaponRenderer` in first person only; `arms_weapons.gauntlet_sleeve`). From outside the cuff already runs up
+  the forearm, so nothing changes there.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
   tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
@@ -7226,17 +7485,53 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
     a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
     keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
-  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
-    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
-    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
-    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
-    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
-    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
-    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
-    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
-    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
-    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
-    release is the drive; the Plunge is armed raised, points down.
+  - *The Daggers* (Euan 2026-11-09, after the first stabs-only rebuild: "barely even hitting", "add the slash back in", "a similar
+    animation to before, just polished up with everything we've learned and without the glitches"): a forward grip in both hands.
+    Strike 1 the right stabs, strike 2 the left, strike 3 the right slashes, strike 4 both stab at once, strike 5 (mastery) the
+    left slashes. A stab drives the fist forward and in, the point travelling up the screen toward the crosshair, because a
+    point that stays put on the screen reads as nothing moving however far it goes (that was "barely moving forwards"). Every
+    blow is one stroke: from a stop, through the hit, to one stop a little deeper, then a slower way back. Nothing chambers
+    first: a chamber, a blow and a follow-through inside 1.3 ticks was the jitter. At every blow the fist stays low and on its
+    own side, no higher than -0.55 on the screen and no nearer the middle than 0.26 ("the hands still go way too upwards"); a
+    slash carries the fist across the middle and stops by 0.06, where the old one threw it to -0.30 ("way too much to the left
+    side"). The hand not striking draws back into its guard (0.54, -0.92) while the other drives, so each blow starts where
+    its hand already is; before the slash the right has turned its edge out and waits, cocked out to the right with the blade
+    showing its length, through the whole window a press can land in, and before the finisher both gather low at the hips. The
+    view leans a hair with a stab and rolls with a slash. The heavy charges at the hips and its release is both stabs in half
+    a tick. The riposte is the chain's stab at full reach. The slipcut (wide, a little low) and the undercut (at the legs) are the
+    slash. The server's rows are the slashes' again: strike 3 and 5 arc 90, the slipcut 120, the undercut 160, each with the light
+    whoosh. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. `arms_keys.py check` and the test
+    `arms_dagger_stabs` hold the rules (which strikes slash, the fist low and on its own side at the blow, never crossing over).
+  - *The Twin Blades* (Euan 2026-11-09: "way too fast", "no spinning animation or anything that makes it look really like
+    cinematic and awesome", "too much movement, so it makes the trail ... take up too much of the screen"; replaces round 5's
+    figure-eight): one double-ended blade twirled in one hand. Every strike is whole turns about the true middle of the shaft
+    (`handGrip`, where the fist is), and the fist moves very little: the spin is the motion, so the ribbon is a thin line near
+    the tips at 60% light. A light strike is one turn: half of it arrives on the hit, with the upper blade at the crosshair,
+    and the second half brings the same blade home, the hit's speed carried through it so there is no stop inside. Strikes 1
+    and 2 turn opposite ways, strike 3 is near flat, strike 4 (and mastery's 5) are two turns with the hit after the first.
+    Slower than before, about the same damage over a combo: the chain takes 37 ticks where it took 24, and each strike's motion
+    is higher to match. The turn is written as a turn, an angle against time (`Spin` in `tools/art/arms_keys.py`) and not as
+    poses to blend between, because a turn between poses takes the short way and can't go past half. Third person's wrist
+    (`_spin_wrists`) is the same turn about the weapon's flat, leaning onto first person's plane by the hit; solving it from
+    where the blade points flips each time the blade passes the far side of its axis (179 degrees in a key). The two moves
+    that don't spin (plunge, execution) reach for whichever end is nearer.
+  - *The Shieldblade* (Euan 2026-11-09: "reinvent that one from scratch"; "when you push with it, it doesn't feel like a push";
+    "it feels like it's hitting the wrong side"; "the blocking with it doesn't even block with the shield side"; "it just looks
+    like a tiny dagger swung out of a shield"): one item that is two things. A sword as long as a Longsword in the main hand, a
+    shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
+    draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
+    (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). Its cuts (strike 1, the slipcut, the undercut) run on the Longsword's own line: the point travels straight through the crosshair on the hit with the blade square to the way it goes (Euan 2026-11-09: "it reads as just waving the swords instead of swinging it blade side"; the old keys laid the blade over, so the point went over the top of the frame and off to the far left and never crossed the target). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
+    alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
+    hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is
+    charged with the shield gathered further still. The guard is the shield: raised to the middle of the view with the crosshair
+    over its rim and the sword held back at the side; in third person `arms_shieldblade_guard` lays the arm across the front and
+    `off.guard3` turns the shield square to the front (a left-handed player's isn't turned, as for every third-person wrist). Through the
+    sword's cuts in third person the shield stays on its arm's clip and no wrist turns it; it leaves the clip only when it does
+    something (`shield3`, its own weight in `_shield_weight`), and its wrist is the whole frame, never the shortest turn to a line,
+    because which way a shield's front looks is the point of it. Reaches now match the Longsword's (3.0, 2.8 for the shove, 3.2,
+    3.6).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
@@ -7272,18 +7567,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
     belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
     drives the Scythe.
+  - *A charge is held in view* (Euan 2026-11-09, of a heavy charged under the view: "you can't even see the blade anymore"):
+    a heavy's first pose is what a charge holds for as long as the press lasts, so its draw back is cut until the blade's
+    middle sits at most 0.75 of the way to the frame's edge (`swing_studio.HEAVY_SET`), an overhead's too (one that rose out
+    of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
+    cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
+    `arms_heavy` is still the rising cut.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
-    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. The Daggers' freezes
+    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
+    hold was its wind-up) but its weapon has still to cross, so its impact waits for the blade to cross (`FpSwings.lands`:
+    a hand-keyed clip's own `hit`, any other's halfway through its active ticks, where the lab bakes it; a server HIT that
+    comes first waits with it, never more than a tick, and so does the freeze of a posture that blow broke): on the first frame after the release
+    the freeze held the weapon wound back with the target already reeling, and only then let it go (seen on the
+    Shieldblade's film, 2026-11-09). The Daggers' freezes
     are 50 ms on strikes 1 and 2, 60 on strike 3 and
     80 on the finisher (were 35, 35, 40 and 55; archetypes.json). A keyed move carries its own kick (`kick` [yaw, pitch],
     a unit, scaled by the freeze as every kick is, `ArmsPredict.impact`), worked out by the bake from the blade the keys
     draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
     cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
     Every other style kicks along its row's from/to as before.
-  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
-    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
-    press waits at its set (arms_tap_or_hold).
+  - *Strike on the click* (`ArmsRules.waitsOnHold`, 2026-11-02 to 2026-11-09): a dagger's strike landed as it came even
+    while the press was still down, and a held press charged after the stab. Undone by Euan's 2026-11-09 "it still sometimes
+    attacks once before starting the charge": a dagger's press now waits unseen under the draw like every other
+    (**Tap or hold**, arms_dagger_click). `ArmsRules.STRIKE_ON_PRESS` is the list to name it in again.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
@@ -7444,8 +7751,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     with most weapons hides the weapon under your view"):
     - Every chain strike's clip says where its drive begins (`set`, `swing_studio.set_of`: the last moment before the
       hit its blade's middle is near still; 0 for a quick stab driven from its start, the daggers' strikes 1, 2 and 4).
-      A press still down waits there (the tap or hold rule, §25 above), never at the hit. Test `arms_feel_rules`: every
-      strike's set is at or before its hit.
+      A press still down waited there until the draw (2026-11-09, the tap or hold rule, §25 above); nothing in play reads
+      it now but the wind-up checks. Test `arms_feel_rules`: every strike's set is at or before its hit.
     - Every style holds a guard of its own (`guard`, `swing_studio.guard_pose`), put on the item's hand transform, the
       hands' grips and a pair's twin (mirrored): the grip low on the right (ndc 0.5, -0.76, 0.62 ahead of the eye), the
       blade rising to the left at 46 degrees on the screen, its tip leant 30 degrees away along the eye's ray (which
@@ -7807,6 +8114,176 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
+**Weight in the Hand** (the polish pass on the weapons' motion and the fight's feel; page
+https://claude.ai/artifact/7myPKAY51tmf9kCzryQdVw, its source docs/weapon-feel/plan.src.html with the measuring scripts in
+docs/weapon-feel/harness/; Euan 2026-11-10: "the animations are still decent... what's the kind of small polish pass that we
+can do to massively bring it to the most extreme and awesome level", then "Go ahead with all": all six decisions as
+recommended).
+- **What it is.** Every one of the 179 first-person moves is kept. The pass adds what is round them: hits that are honest,
+  sounds that can be heard, a blow whose direction is the blade's, weight in the freeze and after it, a guard that eases, a
+  draw for every weapon, a world that answers. Measured before anything was built (the page's section 2): 99 of the 334 hits
+  his game showed in fifteen sessions (4 to 9 Nov) were never confirmed by the server; the hits on flesh and armour, the blunt
+  hit, the kill and the Execution carry 80 to 98% of their sound below 300 Hz (the block's old fault, §47.3); 36 of the 102
+  weapon sound files hold the thin tone he calls a synthetic ding; the view's kick and the knockback's side read the timing
+  table's old `from`/`to` and disagree with the baked blade on 28 of 139 cuts, eleven thrown the opposite way (the page's
+  first count, 17 and nine, had not mirrored the off hand's moves); the fast part of
+  a cut is about three frames at 60 a second, and after its freeze the blade is at a dead stop within 60 ms; the guard drops in
+  one frame; a changed weapon stays below the frame for its attack cooldown (vanilla's `FirstPersonHandsAndItems`), 9 ticks
+  filmed for the Katana; Fight Feel's stages 2 to 4 (above) were never built.
+- **The rules of the pass** (from the sixteen Swing Studio rounds, which tuned to scores): no script score is a target; no
+  weapon's motion changes until he has flagged it in play; every feel layer is built for the Longsword and the Maul first and
+  he picks between it and today's in the game before it goes to the other fourteen; his play log is read before any theory.
+  Every layer is drawn by the client from what the hands already decided, on the hands' own double clock, has its switch in
+  `awaken-arms-client.toml` (off: today's picture, frame for frame), and never moves a hand that is at rest.
+- **The decisions** (2026-11-10): the layers, not a re-make (1); stage 0 is built before he plays, so one session gives his
+  first feel of the 9 Nov round and the ghosts' causes (2); the fourteen sounds that failed are remade from Minecraft's own
+  recordings named in `sounds.json`, after a listening page, with the draws' new sounds, and the swishes stay (3); blows stop
+  at walls, with the glance (4); counter-hits are not in this pass: their rule goes to the fights' owner, who places it with
+  the bosses' minds (5); the Katana rests lowered at the hip with no new model (6).
+- **Code first** (Euan 2026-11-10, after stage 0: "The whole plan is approved. Just go ahead and actually do everything and
+  code everything... prioritize coding over testing... code at the best possible level of code... and then do a test"):
+  stages 1 to 5 were built in one run with their first values and one test pass at the end. Where the plan said "after your
+  play" the best call was made and its switch and its measurement kept, so his play corrects it: the ghosts' fixes without
+  his log (the ghost report stays on), the sounds on the listening page's first pick for each row (the page stays), the
+  weight layers on for all sixteen weapons (one command flips them: `/awaken swing weight on|off`). Stage 6 needs his notes.
+- **The stages**: 0 truth; 1 honest hits, and the blow's direction
+  from the baked blade; 2 sound; 3 weight (the shake in the freeze, the settle where the blade stops, the living hold); 4 the
+  guard, the draws, the Katana's sheath, the look-lag by weight; 5 walls, the glance, grass; 6 his notes weapon by weapon, by
+  hand as the Daggers were, then third person against first.
+- **Stage 0, truth** (built 2026-11-10; nothing a player sees or feels changes). *The ghost report*, development runs only
+  (the black box's switch, `!FMLEnvironment.isProduction()`): the server keeps, per press and body, the nearest it came to
+  landing a blow (`arms.HitWhy`, fixed arrays, written only while a development client in the same JVM has it on, as
+  `FilmLog` is): what it did with each press (the hands said nothing, too early, a move it couldn't grant, queued, run), and
+  for every foe within 4 blocks past a sweep's reach that the sweep left unstruck whether it was out of reach (the gap and the
+  reach), outside the arc (the degrees) or out of the height's band, and for every body struck whether damage landed (with the
+  damage cooldown vanilla saw). The game notes each blow it plays (`ArmsGhosts.shown`: the press, the body, the gap it saw, the
+  reach), and when the ledger counts one as never confirmed (`HitLedger.ghosts`) the server's record gives its cause
+  (`HitWhy.explain`): out of reach, outside the arc, out of height, struck with no damage, landed under another press (a blow
+  on the same body within 1.5 s under a different press: the same blow filed differently, which the game then played twice),
+  nowhere near, the press ran no move, landed and the word not matched, or no record (a server in another process). Each is
+  a line of the play log (`[arms] ghost: seq 212 strike_2 on minecraft:husk: shown at gap 2.91 (reach 3.30); out of reach: on
+  the server it was 0.82 beyond reach ...`) and an E row of the black box, with `shown` and `confirmed` rows beside the
+  `impact` one; on leaving the world `[arms] ghosts by cause, N of M blows shown: ...` follows the old count. Test
+  `arms_hit_why` (the nearest call is kept, each cause is told apart, nothing is kept while off, the ledger tells each ghost
+  once, the real sweep and blow write the record). *The listening page* (`tools/art/weapon_listen.py`, written to the
+  gitignored `run-autopilot/weapon-listen/` and served to the browser pane; it plays Minecraft's own recordings from this
+  machine's asset cache, so it is never hosted or committed): each of the fourteen sounds and the five draws in a scene at the
+  game's own timing, today's sound beside three picks made of named recordings, his mark for each saved to `picks.json`
+  there. *The baseline film*: `tools/autopilot/arms-feel-baseline.txt` (CI run 42788877636).
+- **Stage 1, honest hits and the blade's own direction** (built 2026-11-10).
+  - *The direction.* `tools/arms/blows.py` writes each cut's travel on the screen at its hit into its swing row of
+    archetypes.json as `blow` [x right, y up] (`Archetype.Swing.blow`, optional), read from the blade the baked keys draw: the
+    blade's middle over the half tick round the hit, mirrored for a move the off hand strikes, the two together for both
+    hands; a hand-keyed move keeps the direction its own bake worked out (its `kick`); a thrust has none. `ArmsRules.blowX`,
+    `blowY` and `side` read it (the row's `from`/`to` only where a move has none), so the knockback's side, the struck
+    body's recoil and a kill's fall follow the blade, and so does the view's kick (`ArmsPredict.impact`: a thrust now nods
+    the view in as the hand-keyed stabs do, `THRUST_NOD` 0.6, and a left-handed fighter's kick is mirrored as their screen
+    is). `blows.py check` fails when a row is more than 20 degrees off the bake: run it after any re-bake. Test
+    `arms_blow_dir`.
+  - *A blow always lands whole.* `ArmsServer.hit` clears the struck body's damage cooldown before every Arms blow, whoever
+    hurt it last (it was cleared only after the fighter's own): vanilla's half second of immunity after fire, a fall, a
+    pet's or another fighter's blow swallowed or shrank blows the game had shown. Each move still strikes a body once.
+  - *One blow, one press.* The two sides can file a strike under different presses (a queued strike pressed again moves to
+    the newer press on each side's own clock, and a HIT sent in between carries the older number): its impact then played
+    twice and one copy was a ghost. `HitLedger.confirm` matches the server's word by the press, then by the body and the
+    move (the oldest such blow still waiting, `reconciled` counted in the log's line); `HitLedger.struck` keeps the hands
+    off a body the server already struck with the same move under another press (`SAME_BLOW`, 12 ticks); and a HIT is held
+    for the blade by the move, not the press (`ArmsPredict.early`), also for a strike still queued behind the one on the
+    hands (the server ran ahead), never longer than `QUEUE_WAIT` (8 ticks).
+  - *The hands' word.* The game draws a creature about three ticks behind where the server has it (26.3's stepped
+    interpolation, by the entity type's update interval), so one just knocked back can look in reach and be a block further
+    on. When the hands play a blow they say so (`ArmsPayloads.PRESS_HIT`: the move's press, the body, the move's
+    ordinal), and the server lands it by their word (`ArmsServer.claimed`, `grantClaims`) when its own sweep left that body:
+    only a creature its sweep would look at (a foe or the aimed one, never a person), once a move, only while the move they
+    name runs here (from 3 ticks before its first active tick to 6 after its last; a word that comes before its move waits
+    up to 20), and only within `CLAIM_REACH` 1.25 blocks and `CLAIM_ARC` 20 degrees past the move's own reach and arc, and
+    never through a wall. The damage, the push and everything after are the server's own. Switch `claimedHits`
+    (awaken-arms.toml, on); `[arms] N landed by the hands' word (x past the server's reach on average)` in a development
+    run's log says how much it is used. Test `arms_claim`.
+  - *Struck, no harm.* A blow that strikes and does no damage (an invulnerable body, another mod's refusal) is answered
+    (`ArmsPayloads.DULL`): Minecraft's own weak-attack sound, and the ledger counts it answered, not a ghost.
+- **Stage 2, sound** (built 2026-11-10 on the listening page's first pick for each row; his ear is still the judge, and
+  the page stays). Fourteen sounds play as mixes of Minecraft's own recordings (`ArmsSounds.mix`, `Voice`), each recording
+  named as an event of its own in the merged sounds.json (`fight.*`, `"type": "event"`, so it follows the game's own
+  variants and no file of Mojang's is in the repo), layered in code on both sides (`ArmsSounds.play`, `ArmsAudio.play`):
+  a hit on flesh the strong attack over the kit's thump at 0.45; a heavy one the critical hit (pitch 0.85) and the knockback
+  hit (0.7 at 0.8) over the thump at 0.5; the Maul's the mace's own blow (0.8) over its thump; armour an iron golem struck
+  (0.9 at 1.2) with the strong attack (0.6); a spirit a breeze hurt (0.8) with a sweep of air (0.6 at 1.2); a blow on you
+  the knockback hit (0.9 at 0.8) over the thump; the parry an anvil landing (0.45 at 1.6) over the shield block (at 1.1);
+  the glance a breeze turning a shot; the charge a crossbow drawn (0.8 at 0.8) and its glint the crossbow locking (0.9 at
+  1.2), a wooden click in place of the ting; the kill the critical hit (at 0.8) over the body drop; the cleave Minecraft's
+  own sweep; the Execution the mace's heaviest ground blow (0.9) with the critical hit (0.9 at 0.7); the perfect dodge a
+  dragon's wingbeat (0.6 at 1.7). The swishes, bone, wood, stone, slime, the block, the tells and the Art are as they were.
+  Switch `recordedSounds` (awaken-arms-client.toml; off: the 25 Oct kit).
+- **Stage 3, weight** (built 2026-11-10; `arms.SwingWeight`, plain maths, drawn by `ArmsHands` over the same keys; test
+  `arms_weight`). By `ArmsRules.heft` (snap / blade / heavy):
+  - *The shake* (`weaponShake`): while a landed blow of the move on the hands is frozen, the striking hand shudders along the
+    blow's own direction, 0.005 / 0.008 / 0.012 blocks at first (about 5, 9 and 13 pixels at 1080p), dying to nothing by the
+    freeze's end, its sign turning every 16 ms. Added after the blend, so it is never carried into the next move.
+  - *The settle* (`weaponSettle`): where a baked move's hand stops after its hit (`SwingWeight.stop`: the first key under
+    6% of the move's fastest, found once a clip) it carries 0.015 / 0.025 / 0.04 blocks and 1.5 / 2.5 / 4 degrees past, along
+    the way it came in, peaking 0.9 / 1.4 / 2.2 ticks after the stop and back to nothing with no second swing (x e^(1-x)).
+    A stop within 0.05 of the pose the move ends on is the rest itself and is never settled: 138 of the 179 moves have a
+    stop, the rest go home in one motion.
+  - *The living hold* (`livingHold`, off under reduced motion): a held weapon rises and sinks 3 mm once in 4.5 s, and the
+    hands trail the view's turn by the weapon's weight (`FirstPerson.lagReach`, `lagRate`, §12, read by Hands' look-lag:
+    0.75 of the reach and 1.3 of the rate for a dagger, 1.45 and 0.65 for a Maul).
+  - Reduced motion halves the shake and the settle. `/awaken swing weight on|off` flips the shake, the settle, the living
+    hold, the draw and the guard's ease together.
+- **Stage 4, the guard and presence** (built 2026-11-10).
+  - *The guard* (`guardEase`): it comes up on an ease-out that seats with a small settle, in the server's own two ticks
+    (past nine tenths by a tick and a half), and lowers over three, from wherever it is (`SwingWeight.guardUp`,
+    `guardDown`). On film it rose in a straight line and was back at rest one frame after the key came up. Only the
+    picture: the windows are the server's. A deflect throws the blade at the blow and back, a third harder than a block's
+    knock (`ArmsHands.parry`).
+  - *The draw* (`weaponDraw`): a change of the fighting weapon in hand (its item or its slot, seen each tick) plays its
+    family's sound (blades Minecraft's iron armour going on, pitched by the blade; hafted weapons an axe biting wood; the
+    Chain-blade a chain; the Gauntlets leather; the Precursor Arm a conduit waking; `ArmsSounds.draw`, those near from the
+    server on the equipment change) and the weapon comes up on the draw's own clock, 6 / 8 / 10 ticks by weight on an
+    ease-out that seats a hair above its place, its wrist turned in 22 degrees at first (`SwingWeight.drawSink`,
+    `drawTurn`). It replaces vanilla's rise for a fighting weapon: vanilla raises a changed item only as its attack cooldown
+    refills (the item swap scale, cubed), a cooldown Arms never uses, so the weapon was out of view for nine ticks on film
+    with the Katana and by that rule over twenty with the Maul, and a strike thrown meanwhile was drawn that far under the
+    frame. A strike begun during a draw brings the weapon up within 2 ticks from where it is. A power's stow never draws.
+    The hand's own transform takes the stack vanilla's hand drew last tick when it is the same item as the one held: a
+    slot the server re-sends (wear, any sync) is a new object until the next tick, and told apart by identity the weapon
+    fell back to vanilla's place and sink for those frames (the proof tour's film: out of view for 0.4 ticks mid-draw).
+  - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks from the last move's end, the count
+    the server grants the cut on: a press, a hold not yet a move and a dodge leave it be, so the hands show the cut
+    exactly when it will be given), it is lowered across the body: the hand just under the frame's edge, the blade low
+    with its point to the off side, its edge down and its flat turned up to the eye, the guard showing (`ArmsHands.HIP_D`
+    (-0.15, 0.04, 0), `HIP_Q` 88 degrees over, 3 forward, rolled 80 about its length; the first value, back past the
+    hip, hid the blade and laid a forearm across the frame, and the second showed the re-cut blade from its spine, a
+    grey line). The pose is picked offline with `tools/art/swing_studio.py` `lead_points`, which matches the game's own
+    blade within about 6 degrees.
+    It lowers and rises over 6 ticks on the hands' own clock from wherever it is (`SwingWeight.lowered`, `ArmsHands.hip`:
+    the rest pose itself moves, so the strike that draws it is carried out by the blend, and nothing that starts or
+    breaks the rest moves the hand in one frame), with a soft click on the way down. A change of weapon is the one place
+    it is set outright, and only unseen: the weapon going away keeps its pose while it sinks, and the one coming up
+    takes its own rest on its first frame, still under the frame, so a rested Katana rises straight to this rest. The drawn cut has its own sound over the swish (a rasp and a ring) and a
+    ribbon half again as bright. No scabbard (decision 6).
+- **Stage 5, the world answers** (built 2026-11-10; `arms.ArmsWalls`, one set of rules for the server's sweep and the
+  client's prediction; tests `arms_walls`, `arms_cut_grass`).
+  - *Walls stop blows* (`wallsStopBlows`, awaken-arms.toml, on): a body is struck only when a line from the eye to its
+    nearest point, its middle or its top is clear of every block a body can't pass. Three points, so a creature half
+    behind a door frame still counts; glass, fences and leaves stop a blade, tall grass doesn't. The hands' word is held
+    to it too. Things that aren't alive (a rift's core) are struck as before.
+  - *The glance* (`glance`, client): a strike that has struck no body by a third of a tick past its hit, and whose blade
+    meets a block within the move's reach (three lines 14 degrees either side of the look; a pinning blow one more, 25
+    degrees down), glances off it: the block's own hit sound, lower and louder, with a ring over stone and metal; its
+    chips (three); sparks off stone and metal (warm, `FxClient.guardSpark` at size 0.85, under the size that adds a
+    deflect's ring) and duller ones off wood (0.5), started 0.08 blocks off the face and thrown out of it along the
+    blade's way. They are the guard's near-eye sparks and not a body's: a wall is struck within a blade's length of the
+    eye, and the effects engine shows no glow inside 1.5 blocks and only part of one inside 4, so a body's sparks at a
+    wall were never seen (two proof tours, 10 Nov). The blade is knocked back against its cut for two and a half ticks;
+    the view kicked one degree against it; a 30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
+    block isn't harmed and the chain goes on. Those near hear the block's hit from the server on the move's last active
+    tick.
+  - *Grass* (`cutGrass`, awaken-arms.toml, on): each active tick cuts the plants tagged `#awaken:cut_by_sweeps` (short
+    and tall grass, ferns, dead and plain bushes, dry grass) in the sweep's arc and reach, as a player's break
+    (`CommonHooks.fireBlockBreak`, so a claim can refuse; drops as vanilla's), at most 12 a blow; never where the
+    fighter can't build, at a Hearth, in the city or in a village.
+
 **Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
 moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,
 undercut, plunge), its own guard and dodge numbers and its base speed (recovery scales with the item's attack speed
@@ -7843,7 +8320,8 @@ against it, so a vanilla item plays its designed tempo).
 - **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
   blocks in.
 - **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
-  second strike a shield bash; the riposte a bash that throws (1.0).
+  second strike and the heavy a shove with the shield that throws its target back; the riposte a stab from behind the shield that
+  throws (1.0).
 - **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
   so a staff fighter's powers come round faster.
 - **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6
@@ -7914,6 +8392,23 @@ against it, so a vanilla item plays its designed tempo).
   texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
   every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
   (`docs/combat/weapons-voxel-2026-10-26.png`).
+- **The weapon polish pass** (Euan 2026-11-10: "some of the blades to me look a bit fat... the Maul is really, really
+  good... the Katana is decent, but I think can still be slightly improved... I don't want to completely scrap
+  everything"; plan docs/weapon-polish/PLAN.md, page https://claude.ai/artifact/EZkCwbGng9aNhA6rB4t6rC, approved
+  "This is great go ahead with the full plan"). The cause: the look was built from a hammer, so every blade had a
+  hammer's body, a post 3 wide and 3 deep down a blade 5 wide, and since the swords stand edge ahead (9 Nov) the eye
+  looks straight at it. A first answer, blades ground to a slanted bevel and a smooth point, he turned down: "it
+  doesn't feel like MC at all anymore... it has to stay that voxel style. Just extremely well polished voxel style."
+  **So weapons are boxes at whole-texel sizes and the whole-angle turned boxes they already had, nothing else, ever.**
+  Inside that: every straight blade 4 or wider takes the Rapier's cut (a slab one texel thick with a ridge one texel
+  wide, three on the Greatblades; `blade()`), points step finer and longer and end one texel square (`point()`), the
+  Katana is one texel thick on an even curve with its point stepped up to the back, the Glaive and Scythe are a thin
+  flat with a back three deep along the spine (`curved()`), the tusk and talon Daggers and the tusk Twinblades lose a
+  texel of depth, and the Shieldblade's sword is the Longsword's width with its lit fuller as its ridge. 63 of the 111
+  change (docs/weapon-polish/changed.json: 57 forged, 6 Lord-forged); the Maul, War-staff, Precursor Arm, Gauntlets,
+  Rapier, Axes and the Chainblades' tusk hooks do not. No weapon's length, grip, width, edge side, hold or swing
+  changed (each end within half a texel), so nothing was re-solved. The build was checked corner for corner against
+  the drafts he approved (docs/weapon-polish/fingerprint.py).
 - **The weapon audit** (Euan 2026-11-02, of the Longsword in first person: "not long enough... it almost looks like a
   small dagger... the two blocky things at the bottom look very, very chunky, and you can barely see the blade
   itself"; the hammer "perfect right now"): every weapon measured and graded against the Maul (session weapon-designs,
@@ -10137,7 +10632,19 @@ read this too, so their fields shift a little in new worlds).
 **Painting** (`RoadPiece`, `RoadPaint`, `RoadMarks`, `Waymarks`): each leg paints the chunks it touches through the
 settlement painter (fell the trees within reach, sweep what hangs over, fill to rock, `CityWriter`), pure per chunk;
 thin-beard markers under every dry point ease the land to the road's heights (the pieces themselves take no beard, so a
-bridge never dams a river). The carriageway is a two-track country road in the land's own ground: a crown grown over
+bridge never dams a river). **Tall things keep off**: a road or settlement only clears a few blocks over its ground, so a
+spire it meets lost a slice and its top hung in the air, and a neighbouring chunk's feature can land before the paint as
+well as after it, so no sweep afterwards could be safe. The placement modifier `awaken:clear_of_settlements` (`reach`, last
+in the placed feature) drops a feature whose reach, plus 8 for a road's banks, touches land a road or settlement referenced
+from its chunk or those beside it uses: frost spires and glass shards (13, small 8), floating shards (16), boulders and
+shale boulders (6). New chunks only. It reads only what the region decorating the chunk holds (vanilla's FEATURES step:
+references in the chunks beside it, starts out to 8 chunks): the chunks under the footprint, no further out than those
+beside the centre (whatever could cut the feature's own blocks is named there), and a start a reference names past 8
+chunks (a road leg reaching 8 chunks from its lattice start, named from the chunk beside) keeps the feature off rather
+than being read (reading it crashed world generation, CI tour 10 Nov: "Requested chunk unavailable during world
+generation"). A layout is asked in its own plan coordinates (offsets from its origin, as the painter asks it); asked in
+the world's, the first version saw no real road or settlement. Tests: `village_tall_things_keep_off`,
+`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin). The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
@@ -17540,10 +18047,65 @@ blocks through stone, no marks, no danger sense).
 - The shader `awaken:core/armour` (the weapons' kind, its own copy): metal catches a studio reflection, a sheen climbs
   from feet to crown, emissive seams glow in the dark and pulse, enchanted pieces shimmer (the foil bit in the overlay
   channel). If the pipeline doesn't build, the same mesh draws through vanilla's entity cutout.
-- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). `ArmourClient.dressArm(player, side,
-  poseStack, collector, light)` is public for every other first-person arm drawer: the pose on the arm's bone, it draws
-  the worn cuirass's arm and returns whether it drew.
+- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). Every other limb of yours that our own
+  code draws wears it too, through `core.client.FirstPersonDress` (2026-11-10, the Armour Finish, stage 0; before it the
+  armour came off your arms in every cast, at the wrist, in two-handed moves and on the world body, because nothing
+  called the dresser): a drawer that has drawn a skin limb calls `FirstPersonDress.limb(limb, pose, collector, light)`
+  with the pose on the limb's bone, or `FirstPersonDress.hand(renderer, side, ...)` straight after
+  `renderRightHand`/`renderLeftHand`; the armour registers as the dresser (an arm: the cuirass's arm mesh; a leg: the
+  greaves' and the sabatons'). The cast arms (`CastAnims`), the hands' off arm (`Hands`), the wrist (`Wrist`, both
+  sites) and the world body's arms, fists and legs (`WorldBody`, once a limb's weight passes a half: armour can't fade
+  in) all ask. Your own arm and legs are drawn with your set's own charge, flare, low-health beat, mastery, accent and
+  enchantment light, as everyone else sees them on you (they were drawn dark). A dresser that throws turns dressing off
+  for the session, logged once. `ArmourClient.dressArm` and `dressLeg` stay public for a drawer with the player in hand.
 - Nothing new is sent: equipment already syncs to everyone who sees you.
+- **The finish** (the Armour Finish; plan `docs/armour/polish/PLAN.md`, page https://claude.ai/artifact/JtNLQPLzyWQBUjiUEfZnMy;
+  Euan approved all of it 2026-11-10: "Go with the full plan and all recommendations"). One pass laid over every set's
+  own design (`tools/art/specs/armour_finish.py`, applied by the kit after each design; `ARMOUR_FINISH=0` builds the
+  sets bare for a before picture). **No helm and no silhouette changes, ever.** Nothing is added that is a lone cube
+  (stud knuckles were tried and read as stuck on).
+  - **Light** (stage 1, `armour.fsh`): an edge turned up to the open sky takes a little of it in the plate's own
+    colour, bright metal most (never more than rim 0.6: a forearm seen edge-on from your own eyes would take all of
+    it, and the sky's white washed dark iron grey); cloth and hide take a soft fuzz instead. Under an open sky at
+    night what is turned up, and every edge, still catches the moon (scaled by the sky light in UV2 and by how dark
+    the world's light is: none underground or by a fire). Up is the sum of vanilla's two light directions, so a menu's
+    figure is lit the right way up. The sheen and mastery's trims are under the world's light (the sheen used to cross
+    a figure standing in the dark every five seconds).
+  - **Spill** (stage 1, the kit): what glows (emissive 0.5 or more) lights the texels beside it on its own face, a
+    quarter of its light and 30% of its colour one texel out, a tenth two out. A slit reads as a light.
+  - **The night rule** (stage 1): from C-rank up the thing a stranger would name stays lit after dark; E and D stay
+    dark, so rank reads by how much of a set is alight. Lit by the pass: Sunward's disc, boss and rays; Shardcrown's
+    crystals; Vaultbreaker's diamonds; Tidebreaker's spines; Cloudrunner's storm stone; Leviathan's fins; Halo Choir's
+    halo; Dreamsteel's shards; Sovereign Weave's crown; Signal's Echo's marker; Galewing's wing hems (storm light);
+    Amberwing's wings a little more (the one E set whose wings were lit already).
+  - **Gauntlets** (stage 2): on every set the forearm's shell ends at the wrist (y -7 of the arm's 2..-10) in a
+    flared cuff of the set's trim, a texel proud and open toward the body; under it a glove half a texel proud of the
+    hand (five wide where the shell is six, so the wrist reads) in the material the old cap under the hand was, its
+    fingers grooved; on the back of the hand a plate of the set's plate with a lip of its trim and, from C, two lit
+    texels of its glow. The four sets with a molten line down the forearm (Lordscale, Sovereign Weave, Hornlord,
+    Deepcarapace) keep the outer face clear and run the line on down a longer hand plate. A set that already wore a
+    flare or a feature there keeps it (Bellguard, Vaultbreaker, Veilwoven, Nightcourt, Signal's Echo, Cleftrunner take
+    the glove alone; Frostwalker, Lanternlight and Beastbound the glove and plate under their own cuff or strap;
+    Wildhide, Rootwarden and Amberwing a cuff on the front and back only, round their toggles and inlays; Bladeward
+    none behind, where its couter sits; Dreamsteel and Riftwalker a cuff under their floating plate). `GAUNTLET` in
+    the kit is the table.
+  - **Plate languages** (a first version; stage 3 hand-finishes them): on the limb and belt plates of the later sets
+    the one rimmed panel is replaced by a painter of the set's own (`LANGUAGE`: rivets for Vaultbreaker and
+    Lanternlight, cut faces for Frostwalker, Shardcrown, Dreamsteel and Starfall, flutes for Sunward and Halo Choir,
+    shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
+    and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
+    step brighter, to part the two.
+  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+    **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
+    blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
+    under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
+    a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
+    forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
+    own (cut-ice plates, fluted gold) and nothing more.
+  - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
+    one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
+    kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
+    details, which now keep their outer face (`cuff_sides`, `cuff_of` in `GAUNTLET`) or take no cuff.
 - **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
   texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
   seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
@@ -17871,7 +18433,8 @@ an inlay gives its Force's colour; one dye you carry colours the whole worn suit
 up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
 
 **44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
-settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour camera cinematic|first`):
+settings screen; also `/awaken armour sculpted on|near|off`, `/awaken armour camera cinematic|first`,
+`/awaken armour motion true|false` and `/awaken armour movesound <0-100>`):
 - **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
   painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
   view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
@@ -17883,6 +18446,131 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+- **Armour motion** on (default) / off: whether a set's living parts move (§44.10). Off: every part is rigid on its
+  bone, exactly as before the Finish.
+- **Armour movement sound** 0 to 100 (default 60; 0 off): the soft sound a set makes at each stride (§44.12).
+
+**44.10 Living parts (the Finish, stage 4).** One or two things on a set that should never stand still move: a halo, a
+marker, a plume, lanterns, wings. Twelve sets have them; the rest stand still on purpose (a Bellguard or a Beastbound
+that fidgets would be wrong).
+- **How it is made.** A living part is some of a bone's own boxes, named in the kit (`tools/art/specs/armour_finish.py`,
+  `LIVE`: the piece, the bone, the part names, the motion, a pivot and an axis in the design's own texels). The kit writes
+  those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
+  and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
+  (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
+- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+  **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
+  axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
+  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+- **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
+  1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
+  (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
+  same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
+- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+  halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
+  stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
+  a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
+  even apart. Riftwalker: the rift's tear and glow shiver. Hollowheart: the caged heart beats, about once a second.
+  Leviathan: the frills breathe. Veilwoven: the arm ribbons swing.
+- **A check the kit runs** (`sweep`): every living part is moved through its whole range (age, stride, wind) and may not
+  pass through the rest of its set, except where it is joined to a part or allowed through one by name (the plume
+  through its own ridge, the rays behind their disc).
+- **Mastery IV grows in.** A piece's awakened parts no longer pop: they grow from their own middle over half a second
+  the first time they show on a wearer (`ArmourLive.Wake`, client only, per entity id, forgotten when you leave).
+- **Fallback.** No `live.json`, a mesh missing or a name the game does not know: the set is drawn whole and rigid, and
+  the log says so once.
+
+**44.11 Moments and marks (the Finish, stage 6).** Getting a set and how it was made both show on the body.
+- **The wake.** When the last piece goes on and the four are one set (`ArmourAbilities.whole`), the server tells the
+  wearer and everyone within 80 blocks (`ArmourPayloads.Whole`: entity, set, first). The armour lights feet to crown:
+  each piece flares 160 ms after the one below it, a 100 ms rise and a 760 ms fade (`ArmourGlow.flash(glow, piece)`,
+  the shader's own flash, raised from 0.18 to 0.34 of the accent on plain plate so it reads on a set with nothing
+  that glows; an ability's release flare is the same term and reads better for it), on the body, on your own first-person arms and legs
+  and on the Status figure. It sounds the set's three notes (§44.12). Not for what you log in wearing, and at most
+  once in ten seconds (`WHOLE_COOLDOWN`), so swapping a piece in and out stays quiet.
+- **The first time** a player wears a set whole, the System says one line in the set's rank colour: "Bellguard is
+  whole on you. Ring: deflect a blow and your armour rings like a bell, staggering everyone close to you." (the set's
+  own twist, else its archetype's ability). Remembered in `awaken:armoury` (`ArmouryMemory.worn`, schema 3; a schema
+  2 save reads it empty). No window, no toast.
+- **Forge marks.** A forged piece shows how it was made, as weapons do (§46.7), in the armour shader, a texel at a
+  time, on its steel only (`ArmourLayer.marks`, three spare bits of the overlay: bit 15 of x, bits 14 and 15 of y):
+  a **scale flaw** (`Forged.flaw`) leaves patches of dull blue-grey scale; on a set that is folded in the making (A and
+  S, `ForgeSong.folds`) a piece that came out **Masterwork or better** shows the fold's ripples in its steel; a
+  **Flawless** piece carries its **maker's mark**, a small hollow diamond cut dark with the set's own light breathing in
+  it. The kit leaves room for the mark (`armour_finish.maker_marks`: four texels that glow nothing but carry a flow of
+  1, on the plainest place near the back of the helm, the outside of the right forearm where your own eyes see it, the
+  right thigh and the right boot); a piece with no plain place carries none. Worn, on the Fitting Stand, in first
+  person and held.
+- **A piece in the world is the piece.** The 23 sets with items of their own draw a piece as its real meshes in a hand,
+  on the ground, in an item frame and on a shelf (`ArmourPieceRenderer`, special model `awaken:armour_piece` {set,
+  piece}; each bone at rest as on the stand's form, measured once so the whole piece, crests and wings and all, just fills
+  a block, with its cape left off; base `awaken:item/<id>_held` on `armour_piece_held`, a block's own display
+  transforms). The inventory keeps the flat icon. It carries its mastery, accent, enchantment light and marks.
+  The six Hunter sets' items are the gear module's and keep their icons.
+- **Icons.** Greaves stand like an A (each leg turned 7 degrees out from the hip, seen nearly straight on) and read as
+  legs; boots stand apart with the background between them and read as a pair (`ICON_VIEW`, `ICON_SPREAD`,
+  `ICON_SPLAY`).
+- **The Status line** is offered, not built: `ArmourBonus.statusLine(entity)` gives "Lordscale, whole. Mastery III" or
+  "Lordscale, 3 of 4" (null with nothing of ours on) for the K menu's owner to place under the name.
+
+**44.12 Sound (the Finish, stage 5).** Every armour sound is one of Minecraft's own recordings, named in sounds.json
+(Euan 2026-11-09: built sounds read fake). No audio of ours is added, and none of Mojang's is in the repo.
+- **One table** (`tools/art/armour_sounds.py`, `ROWS`): 45 sounds, each with three picks, a pick a recipe of recordings
+  (one of Minecraft's events, a volume, a pitch, a start in ms). Pick 1 is the best guess and what the game plays until
+  Euan has listened; `tools/art/specs/armour_sound_picks.json` holds his choices (1, 2, 3 or "today"), written by
+  `apply` from his marks. `build` writes armour's sounds.json entries and `assets/awaken/armour/sound_layers.json`;
+  `check` fails on a recording this game does not have.
+- **In the game.** An event's entry in sounds.json is the recipe's first recording, as a reference to Minecraft's event
+  (`"type": "event"`, with the recipe's volume and pitch: vanilla multiplies them in, and its own variants come along).
+  A recipe's other recordings cannot be said in sounds.json, so the client adds them (`ArmourSoundsClient`, on
+  NeoForge's `PlaySoundEvent`): at the same place, scaled by the volume and pitch the caller asked for (a pitched note
+  stays in tune), at once or a tick or more late. No `sound_layers.json`: the first recording plays alone.
+- **The 25 sounds built on 29 October** (seven hammers, the bellows, pull, quench, count, note, cut, fit, wake, miss;
+  charged, Bastion, Flow, Edge, rune, overchannel, Ring, Rooted, Gore) are remade this way. Their old files stay in the
+  repo until Euan has marked the page ("As built" plays them; `specs/armour_sounds_before.json` is their entries), then
+  go.
+- **What a set is made of** (`ArmourSounds.Family`): hide (Wildhide, Rootwarden, Nightcourt), cloth (Cleftrunner,
+  Veilwoven, Sovereign Weave, Signal's Echo), mail (Amberwing, Lanternlight, Tidebreaker, Riftwalker), plate
+  (Bellguard, Bladeward, Gatewrought, Sunward), heavy plate (Hornlord, Vaultbreaker, Lordscale, Leviathan, Starfall),
+  crystal (Frostwalker, Shardcrown, Halo Choir, Dreamsteel), bone and shell (Beastbound, Deepcarapace, Hollowheart),
+  feathers (Cloudrunner, Galewing).
+- **Putting a piece on** sounds like what it is made of (`armour.equip_<family>`, the piece's own equip sound), for the
+  23 sets with items of their own. The six Hunter sets' items are the gear module's and keep their rank's vanilla
+  sound until that module asks `ArmourSounds.equip(set)`.
+- **Walking in a set** (`armour.move_<family>`, client only): one soft sound a stride (1.7 blocks on the ground) from
+  every armoured player within 12 blocks, by their cuirass (else their greaves), a quarter louder at a sprint, silent
+  at a sneak (subtitle "Armour shifts": every sound event of ours has one, `audio_events_resolve`). Setting **Armour
+  movement sound** 0 to 100, default 60, where a stride plays as loud as its recipe
+  says; 0 is off (`/awaken armour movesound <0-100>`).
+- **A blow landing on your armour** (`armour.struck_soft|plate|crystal|bone`, server): under Minecraft's own hurt
+  sound, on what the cuirass is made of, louder with the damage (0.35 + 0.05 a point, at most 0.9).
+- **A set becoming whole** (§44.11): the first three notes of the Forge Song it is made with (`forge.note`, pitched,
+  three ticks apart, the last a little louder) at its wearer, the stand's `forge.wake` quiet under them.
+- **By ear.** Nobody has heard any of it. `python3 tools/art/armour_sounds.py listen` serves a page on 127.0.0.1 only
+  (`run-autopilot/armour-listen/`, gitignored, never hosted) that plays every pick alone and in its moment from this
+  machine's own copy of the game; Euan marks one a row, `apply` then `build` puts his choices in the game. His ear is
+  the gate: the picks are guesses until then.
+- Test `armour_sounds_named`: every armour and forge sound event has its entry, every entry and layer names one of
+  Minecraft's events, every set has its family and its pieces go on with its sound.
+
+**44.13 The bigger options (after the Finish; Euan chose Admire and the abilities that use the suit).**
+- **The suit answers its ability.** When a set's ability or twist fires (the release's flare, `ArmourPayloads.Charge`
+  with a flash), its living parts (§44.10) take a **kick** for 0.7 s: at once to full, easing out
+  (`ArmourGlow.kick`). Each part's own `kick` in the kit's `LIVE` table says how hard: a sway swings that many times its
+  amount further (the wind or the kick, whichever is larger, never both), a tilt or a drift grows by that share, a
+  pulse swells by it, a turn whips half a turn times it and settles back. So on Gust Galewing's wings are thrown open
+  (30 degrees) and fold; on Hymn the halo rings wider and its wings beat; on Riftstep the rift tears five times as
+  wide; on Hollow Pulse the heart swells; the System's marker whips round on Echo; Leviathan's frills flare on Abyss
+  Pull; plumes, lanterns, ribbons, the sun's rays and Dreamsteel's shards answer too. The 17 sets without living
+  parts keep the flare alone. From the render state and the glow record: nothing new is sent. The kit's sweep check
+  covers the kicked range (three kicks were lowered because a lantern, the halo and the shards reached their set).
+  `/awaken armour kick` flares your own set on your client (tours and demos).
+- **Admire.** Hold **O** (`key.awaken.admire`, "Admire your armour (hold)") with a piece of ours on and nothing open:
+  the view leaves your eyes, starts in front of you and circles you once, close (4 blocks, field of view 42, six
+  seconds: three blocks of height in frame, so the tallest crest and the boots both show), stopping short of any wall between it and you. You stand still (`InputLock`), the HUD steps aside, and
+  the set is drawn in a **hero light**: never darker than block light 11, what glows as if half charged. Letting go,
+  moving, a blow, death or anything opening ends it at once. It rides the Forge Song's camera (`ForgeCamera`), which
+  now leaves your body drawn while Admire has it. `/awaken armour admire` runs one circle without the key.
 
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
@@ -20659,6 +21347,265 @@ these two brighter than the game does.
 **Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
 no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
 gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.
+
+**Sizes and shapes of a rolled crawl.** A seed also rolls how long the run is and which way it goes.
+- Size: short (one or two legs between the first fight and the Warden, besides the ambush), standard (three or four), great
+  (three, then the Warden, then three more with a second ambush and a second Warden before the Lord). Three in ten, about
+  half, one in six. A great run is about fifteen legs.
+- Shape: delve (steadily down, four to seven a way), plunge (six to eight a way, two shafts first out of its bag), climb (the
+  Mouth is at the bottom and every way rises to a Lord at the top; a shaft is walked upward and has no breaks, since nobody
+  jumps a gap upward), sprawl (wide rooms, no shaft, nearly level). Forty, twenty-five, seventeen and eighteen in a hundred.
+- Legs of the same kind after the first take a number (`shaft2`, `ambush2`, `warden2`).
+
+**The chasm** (`CrawlLand.Chasm`, a MOVEMENT leg). A straight room with no floor but a pool ten blocks down, a shelf at each
+end, and a row of flat-topped pillars between them: three cells long (four before a gap of three), two or three cells apart,
+each beside the last by at most one cell and never higher than it. A fall is caught as on any course. A ramp down one wall goes
+from the first shelf into the pool, so whoever lands in it walks back up; the far end can only be reached across. The
+generator clears anything with a body out of the air over the pool and off the pillars after a skin has dressed the place.
+
+**What a skin's growths may hold on to.** `adorn` is told about a wall, floor or roof only when it is the dungeon's own rock
+(solid by the parts' shapes, and still there), never something another `adorn` call put into the air. Found the hard way: a
+shelf fungus had attached itself to a hanging glowcap that one chunk had drawn in its margin and the next chunk, which owned
+the cell, had not; the shelf was left floating. Nothing can hold on to a thing that isn't rock, so nothing can be left behind.
+
+Three more skins from builders, one per gate theme with that theme's own blocks, monsters and Lord: **The Cinder Workings**
+(`awaken:cinder_workings`, Ember Mines), **The Sunken Stacks** (`awaken:sunken_stacks`, Drowned Archive, ranks D and C),
+**The Sporewells** (`awaken:sporewells`, Fungal Hollow). The Realms dimension lists every gate theme's biome, so a skin
+takes its theme's air and sky.
+
+Three more, the same way: **The Frozen Cells** (`awaken:frozen_cells`, Frost Monastery, ranks C and B: a monastery's cells
+under ice, pale stone and ring-lamps), **The Glass Warrens** (`awaken:glass_warrens`, Glass Desert, ranks D and C: burrows in
+sandstone shot through with lit amber glass), **The Stopped Works** (`awaken:stopped_works`, Clockwork Foundry, ranks D and C:
+riveted plate, brass and furnace light, machines stopped mid-stroke).
+
+**A wall is one thing with things in it.** Seen in the real game on The Sporewells: a skin that picks each wall cell's block at
+random from four or five (rock, lit rock, moss, stalk, cap, gills) reads as a chequer and nothing else, however good each block
+is. A wall is its rock (courses or veins from noise); growths and fittings come in whole patches a few cells across (a bracket
+of fungus is a dark cap with its gills lit along the underside), and a floor is one stuff with beds of another. Light comes from
+the fittings, never from salting lit blocks through the rock. A great run's crossing over a pool is lit from its walls alone, so
+a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
+
+**A climb is never dark.** Skins light rooms, and two of them lit no shaft at all. So the generator itself sets an unseen light
+(level 14) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
+skin has dressed the place. A skin still dresses a climb's walls; it no longer has to make the jumps visible.
+
+Three more kinds: **The Silvered Halls** (`awaken:silvered_halls`, Mirror Palace, ranks C and B: bays of tall mirror between dark
+piers, a gilt cornice, chequered floors), **The Sealed Wing** (`awaken:sealed_wing`, Precursor Lab, ranks C and B: pale panels,
+lit strips at knee height and under the roof, tanks for pillars), **The Sleepless Ward** (`awaken:sleepless_ward`, Nightmare,
+ranks C and B: papered corridors as a dream remembers them, a rail that slips out of line, doors and windows that lead nowhere).
+The false doors are real doors set in solid wall: a player may open one and finds wall.
+
+Three more, which bring the kinds to seventeen: **The Unlit Stair** (`awaken:unlit_stair`, Abyssal Shrine, ranks A and S: black
+dressed stone with one pale band every sixth course, niches with votives, a pale line down every way, nothing on the floors),
+and two second kinds for themes that had a built one, each wild where the first is built: **The Rime Hollows**
+(`awaken:rime_hollows`, Frost Monastery: natural ice caves, stone at a wall's foot, then snow, then blue ice, sheets of it lit
+from inside, icicles in clusters) and **The Green Dark** (`awaken:green_dark`, Overgrown Temple: wet jungle caves, moss taking
+whole walls, curtains of vine and glow berries along lines in the roof). With these every theme that suits a crawl has a kind.
+Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
+a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
+
+## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
+
+Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
+rule: **the band shows you things, and speaks only about the one you point at.** Built in stages (PLAN §6); the old band stays behind
+`classicBand` in `awaken-holo-client.toml` for one build. With his approval he asked for two things: on Status the real player stands
+under the armour and looks at the pointer as in the bag, and every icon and name is the real item's own ("all the icons are actually
+correct and the names are actually correct").
+
+### 57.1 The sheet and the kit (`core.client.ui`)
+- **One sheet.** `Sheet`: 1708 x 960 (the Hall's, §52), fitted to the window and letterboxed, so the band no longer depends on the GUI
+  scale. Type roles in sheet pixels to a font pixel: numeral 6, display 5, title 3 (4 for the step in focus), body 2, label 1.5; each
+  snaps to whole real pixels, and Band size (§30.6) moves every one a real pixel down or up.
+- **Colours** are `signal.client.Glass`'s, by job: EDGE what you can act on, AMBER what waits on you, GOOD have and ready, WARN short,
+  LANTERN home. Never colour alone: a count, a tick, a glint or a rim goes with it. Under the game's High Contrast option the plate is
+  solid and the quiet text brightens.
+- **The kit** (`Kit`): a thing in its well lit by its state (not found, known, ready, yours, waits, in focus); a need as the real item
+  with have/need and its name; a recipe as a grid, an arrow and what it makes; a number with its caption; a needle (up is ahead) and a
+  distance; key caps and the bar of keys; buttons (primary, plain, on, quiet; a hold fills); chips; the name under the pointer in the
+  band's glass. **Every icon is the real item, drawn by the game (`g.item`), and a plain item's name is the item's own**; nothing in
+  the kit draws a picture of its own. What stands in for something not found is a dark diamond that gives nothing away.
+- **What can be clicked** (`Hot`): each part that draws something clickable adds its rectangle and what a click does, in the same
+  pass, so drawing and clicking can't disagree.
+
+### 57.2 The band's stage (`holo.client.BandStage`, geometry `holo.ui.StageLayout`)
+- K opens the stage: the band's glass as one plate (152,40 to 1680,884) with you (level, rank, XP) and the six places down the wrist
+  edge (Status, Tasks, Hearth, Powers, Journal, Map: same names, order, icons and number keys), the open place's name, the stage
+  (192,144 to 1640,856, its right 440 the panel that speaks about the thing in focus) and one bar of keys under it.
+- The glass unfolds from the wrist as the band's 3D panel and lands on the plate's rectangle, where the flat face takes over (the
+  bag's hand-over, §16; the same `HoloPanel`, so others still see the STATUS kind and nothing of its content). Changing place prints
+  the stage in behind a scan line (220 ms; a cut with reduced motion). Without the holo shaders the plate is solid.
+- **Keys, the same on every AWAKEN screen:** Esc one step back (then it shuts), Tab and Shift+Tab the next thing, Q and E the place
+  beside this one (the Map keeps its own key and screen), 1 to 6 a place, K shuts it, T tracks, hold commits, Z takes back. The bar
+  shows the ones that work now.
+- **Places** (`BandPlaces.set`): a module gives its page a `Place` (draw, hints, key, next, back, scroll). A page without one shows its
+  old sections on the stage (`LegacyPlace`): columns of the old band's width, each section to the shortest column, a unit two sheet
+  pixels; Tab, Q and E keep their shared meaning there. Stage 0 moved Tasks; the others follow in PLAN §6's order.
+- A glint on a rail node says something waits: points to spend (amber), new steps, new Journal lines.
+- Tours: `screen band [status|tasks|hearth|powers|journal]`, `band click <x> <y>` (sheet pixels), `screenkey` (now also x, z, esc,
+  enter, left, right, back, 1 to 6), `tasks focus <step key or its start>`, `holo classic on|off|auto`.
+
+### 57.3 Tasks on the stage (`tasks.client.TasksPlace`; the model of §27.13 and §53 is unchanged)
+- **No tabs.** The goals are lanes at the right (Hearth, Armour, Weapons, Bells, Gates, Out there), each with its rows as tiles (the
+  step's real items, its name on up to three lines, pips for how much of what it takes you have, a glint when new, an amber rim on
+  the step on top) and a "+n" tile for what waits in Later, which opens that list in the focus area (Track, Put back). A lane shows
+  once it has something.
+- **The step in focus** (the one on top when you arrive; click a tile or Tab for another): whose it is and why it's in front
+  (Tracked, Do this next, When you want, Also open to you; READY), its name, one line (`opens`, else `why`; two lines at most, the
+  rest as the tip), then its picture:
+  - picks → side by side: armour as figures wearing each set (a `ClientMannequin`, so a body is under the armour), anything else as
+    the things themselves; click or Left/Right looks at one and lists what it takes; Enter or the button chooses; "See them worn"
+    opens the Hall's line-up (§52);
+  - something it needs that you place and craft → its recipe drawn as a grid (`TaskPayloads.RecipeRow`), the thing beside it, and
+    how many you have;
+  - only a place → a needle, the distance as a number and the direction;
+  - else the thing itself on the lit floor.
+  Under it: what it takes as the real items with have/need (where a missing one comes from is its tip), the way as a small needle,
+  and what comes after.
+- **Track** replaces the word Pin on this page (the same `PIN`/`UNPIN` and the same HUD card); Set aside (X) and Undo (Z, for the
+  same ten seconds) as before, never on the step on top.
+- **Pictures.** A step is pictured by its picks, else what it takes, else `Goals.Step.icon`, else its goal's own item (`EMBLEM`).
+- **Recipes** (`tasks.TaskRecipes`, in `tasks_view`, payload version 3): for each unmet need of a shown row that is a block you place,
+  the crafting recipe that carries the item's own id, read from the server's recipes (shaped or shapeless; a tag's members turn a
+  second each). Materials get none.
+
+### 57.4 Status on the stage (`progression.client.StatusPlace`)
+- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you
+  (`InventoryScreen.extractEntityInInventoryFollowsMouse`): your body is under your armour, and you turn to the pointer as in
+  vanilla's inventory (Euan, 10 Nov). Your name and title under it.
+- **Level and rank as numbers**, when the next rank comes (the rank's tip says what it opens for you), your path; XP as 32 segments.
+- **What comes next:** the level road's next three stops as tiles (level, name; the long line is the tip).
+- **Stats:** the six as columns. A click (or arrows and Space) places a point; nothing is sent until **Hold to confirm** (Enter held
+  or the button held, 0.6 s: spent points can't be taken back), Undo (Backspace) takes the last one back. The same
+  `spend_many` request and the same placed list as §30.3, so points placed on the old band are still placed here.
+- **Truths as marks:** one diamond each (32), yours lit green, the closest three rimmed amber, the rest dark and unnamed. Point at
+  or click one and the panel reads it: its words, what it takes with a bar, what it gives. Nothing is named until it's yours or close.
+- **The panel** otherwise says what happened lately (the Journal's three newest lines) and three deeds as numbers, and under them
+  holds what only applies now or hasn't moved yet, as it was written (`SectionHost`): a decision waiting, this gate, the Deep Pack,
+  this room, your mount, the path choice, titles and latents. The Now row is gone: the glint on Tasks says it.
+- `SectionHost` (progression.client) is how old sections show on the stage: columns of 232 units, a unit two sheet pixels, each
+  section to the shortest column, tooltips sent to the real pointer (`GuiCanvas.tooltipsAt`).
+- **Words:** Track replaces Pin wherever a step is tracked (the Bell Book's leads, a beast's want, the old band's Tasks page).
+- Tests: `band_stage_layout` (the stage's geometry at seven window shapes), `tasks_stage_pictures` (a Fitting Stand's and a crafting
+  table's recipes are the game's own, a material gets none, every picture is a registered item, a recipe stops being sent once
+  you have the thing, the page survives the wire). Not tested yet: the key meanings across screens and a word budget on the copy.
+
+- Keys: Left and Right (or Tab) walk the stats, Space places a point, Enter held confirms, Backspace undoes; Up and Down read
+  the Truths one at a time (true, then closest to true) without the pointer, and Esc lets the Truth go.
+
+### 57.5 Powers on the stage (`powers.client.PowersPlace`)
+- Your six keys with the power on each and your own binding under it, your energy as a bar; every power you own in one grid, thirteen
+  across, so all 63 show with no scrolling (level pips, mastery under them, a dot when it's on a key or always on); the panel at the
+  right reads the power you point at, else the one you picked, else the one Tab walked to, else the one on your first key, so it is
+  never an empty box (the old card was, with nothing under the pointer). It holds the power's kind, name, icon, energy and cooldown
+  as numbers, mastery as segments and in words, what it does, what to press, and its ladder.
+- Picking, the keys (your bindings), the key that doesn't fit and the server's say are the old page's own (`PowersSection.selected`,
+  `equip`). Esc lets go of a pick before it shuts the band; Tab walks the grid, Enter picks.
+- What your body does, your crafts, the Veil and the Armoury's line follow under the grid as they were written (`SectionHost`).
+
+### 57.6 Nothing is ever cut off (Euan, 10 Nov 2026: "you can actually always read everything that you need to read")
+A stat's line ended "…and you shrug off more h..." on the first build. The rule since, across the band:
+- **On the stage** (`core.client.ui`): there is no way to shorten text. `Sheet.lines`, `linesCentred` and `linesRight` draw every
+  wrapped line; nothing takes a "most" and nothing adds dots. What holds words grows to hold them: a tile is as tall as its longest
+  name, a need as its name, a row of picks as its longest name and line, the Later rows and the set-aside line as their words. If a
+  side still comes out taller than the stage (the step in focus, the lanes, a power's panel) that side scrolls, with a bar and "More"
+  on the bar of keys. A list that shows only the newest few shows each whole or not at all.
+- **Old sections** (`signal.client.Ui`): `textAt` and the new `boxAt` fit a line into its slot instead of ending it in "…"
+  (`SignalText.fitBox`): as written if it fits; else a whole real pixel smaller per font pixel at a time, never under half size or two
+  real pixels, wrapped onto the lines the slot then holds (two lines at half size fill the same height as one); and if even that
+  doesn't fit, every line at the smallest, running on below. `textAtMost` wraps in full. The Hearth's room tiles, the Journal's
+  cards and names, the Crafts' perks and the gate-world cards all go through these. A section that draws with the graphics
+  itself uses the static `Ui.fitted` (the Journal's chains, the Almanac's names, who can ride with you, the Now row); a row's
+  `button`, `chip`, `item` and `text` fit a label wider than the row the same way.
+- Not yet under the rule, each still shortening by hand (found by grep, 10 Nov): the workshops and their screens (the Hall of
+  Arms, the anvil and the line-up through `hall.client.Stage.fit`; the Fitting Stand's and the Armoury's old screens; the
+  Inscribing Table; the Ledger), the map's lists, the Tab glance, name plates, the JEI pages, the Look screen, and the classic
+  band's own Status sheet. They join in the plan's later stages (the workshops in Stage 4, the glance in Stage 3). The HUD's
+  cards, toasts and tracker lines page or shorten long lines by design: they are glanced at, not read.
+- Test `ui_text_never_cut`: for many lines, slots and pixel sizes, every word is still there, the size is on whole real pixels and
+  never under half, and each line is inside its slot.
+
+### 57.7 Hearth on the stage: one Hearth, two doors (`hearth.client.HearthPlace`)
+- **What shows:** the home's name, tier, Forge tier, Comfort as pips and Rested; every room kind as a tile with its own
+  signature piece (the last piece of its furniture), lit by state (yours: warm with a tick; started: amber with a pip for
+  each piece; open: plain; a kind whose rare piece you haven't met: a dark shape, no name); the rooms as the Hearth reads
+  them, each a chip with its grade; who lives here (your beasts and the kinds you know drawn as themselves, a kind you've
+  only heard of a dark shape, the people and those who could come as chips); and what the home asks for, a line each.
+- **The panel** reads what you point at, else what you clicked. A room kind: what it does, its pieces as real items with
+  have/need (the tip says where one comes from), its condition, the closed-room rule, why it isn't one yet and where the
+  ticked pieces stand (the server's reading), and the game's own recipe for the first missing piece; a built kind shows its
+  rooms' readings (grade, six readings as pips with the weakest in amber, the one thing that lifts it). A beast: itself,
+  what it's doing, how it feels, and its name (the naming window). A kind: where, its job, what it wants, your standing, a
+  rumour with Track (T). A neighbour: their role and what they wait for. With nothing in focus: the home in numbers
+  (radius, rest, Rested), where you wake, what adds a point of Comfort, the land, Oren's cottage while it's on offer, and
+  the next tier with its needs and its parts as items.
+- **Two doors.** K looks and tracks. Using the Anchor (or the first fire) opens this same place (`Guide.Show` with open;
+  `GuideClient`), and there the next tier is raised (hold Enter or the button, 0.6 s) and Oren's offer is taken; through K
+  the place says "Raise it at your Anchor" and the head carries "At your Anchor you can do more". The separate window
+  (`HearthScreen`) stays for the classic band and for a bare wrist. The place asks the server for its reading while it
+  shows (`Guide.Act.REFRESH` every two seconds) and says it has left.
+- Removed with it: the second copy of the Tasks card ("Next for your home"), "Everything for your home ›" (the Hearth lane
+  on Tasks), "Rooms and upgrades ›".
+- Keys: Tab walks the room kinds you know, T tracks, Enter held raises the tier at the Anchor, Esc lets go of the focus.
+- `kin.client.KinStrip` is the kin module's public reading of its page for this place (beasts, kinds, wants, a kind's body).
+
+### 57.8 The Journal on the stage: one wall (`progression.client.JournalPlace`)
+- The twelve category chips were a mode each. They are an index down the left (a picture, the name, how much you have, "n
+  new") that jumps one wall on which every shelf stands; Up and Down step shelf by shelf, Tab walks what you've found.
+- A shelf with a fixed set (creatures, beasts, cave regions, ores, enchantments) shows the things themselves: a found
+  creature or beast stands on its tile as itself (`Catalogue.Slot.creature`, `Kit.creature`), a found thing is its own item,
+  a find with no picture is its name. **Not found is a dark shape and nothing else**: no number, no name, no hint (the old
+  grid numbered them). Bosses, Lords and story finds are in none of these sets and stay sealed.
+- The shelves still written as sections stand on the same wall as they were (`SectionHost.flat`): the gate worlds'
+  paintings, the Bell Book (its ten by ten board already lights a bell in its rank's colour), lore, happenings, and Your
+  story (the log, recent messages, what waits, records, the chains you follow). An open-ended shelf with nothing yet says
+  what it keeps.
+- The panel reads the find you point at (or clicked): its shelf, its name, itself large on a lit floor, and what you've
+  learned; at rest it counts each fixed shelf.
+- `Kit.creature` keeps one body per kind for the world and draws it through the inventory's own figure code; a kind whose
+  renderer balks at a body that was never in the world falls back to its item (its egg), once, for the session. Only tiles
+  in view draw a body.
+- Not moved yet: chains and bounties still stand under Your story (the plan moves them to Tasks' Out there lane).
+
+### 57.9 The bag's tooltip, the Tab glance, cards
+- **Tooltips:** wherever the band's look is on (not Classic), an item's tooltip takes the band's glass: the style
+  `awaken:glass` set on `RenderTooltipEvent.Texture` (sprites `tooltip/glass_background`, `tooltip/glass_frame`, made by
+  `tools/art/tooltip_glass.py`). A stack that brings its own style keeps it.
+- **The Tab glance** (§40.7) is a third shorter with the same facts: the vitals stand two to a row, each the band's own
+  mark (a heart, a spark, an apple, a plate), a bar and its number, where each had a row and a word; a task's name and its
+  current step take the lines they need (they were cut with "…"); the "next step" row is gone (the count says how many are
+  left). `GlanceRules.rows(vitals, title, step, heading, hotbar, out)`; test `hud_glance_rows`.
+- **One key cap:** `Kit.cap` and `Kit.hintLine` are the stage's key caps in GUI pixels. Choice cards draw Y and N with
+  them (it was "[Y]"), the bag shows Tidy, Pin a slot and Undo under its panel, the Look screen's foot is a bar of keys.
+
+### 57.10 The workshops
+- **The Hall of Arms** (§52): its sheet's colours are the band's (`hall.client.Stage` reads `signal.client.Glass`; one
+  list of rank colours, `Sheet.RANK`); `Stage.fitted` replaces `Stage.fit` (smaller by half sizes, then wrapped, never
+  "..."); the foot of every view is the band's key caps (`Stage.hint`: Esc, Drag, Click), and Track shows its T.
+  "What makes it different" is marks with their numbers (`HallSpecial.Mark`: "From behind ×2", "Heavy reaches 5 blocks"),
+  the whole sentence by the pointer; it was a paragraph each, and paragraphs that didn't fit were dropped.
+- **The War Anvil:** "At most it can take Temper VI, which would make its damage 12." is six pips (what it has, what this
+  heat makes it, how far it goes) with "VI · Damage 12" at the end (`AnvilPayloads.Say.MOST`); the plate's lines are all
+  drawn, a size smaller when there are more than their room (it drew two and dropped the rest).
+- **The Inscribing Table:** a price is its things with counts (levels as a bottle o' enchanting, lapis as lapis); it read
+  "6 levels and 2 lapis". The line about how deep you can write here is fitted, never cut.
+- **Boards, books and the map:** the Ledger, the Precursor panels, the old forge, anvil and armoury screens, the map's
+  lists and its title, and the Look screen fit long text (`Ui.fitted`) where they cut it.
+- Still shortening by hand: an enchantment's name on the table's page (its width places the level arrows), creature and
+  boss name plates, the JEI pages, and the HUD's cards, toasts and tracker (glanced at, not read).
+
+### 57.11 The shared keys and the word budget, as tests
+- `holo.ui.StageKeys` is the whole table: Esc back, Tab the next thing, Q and E the view beside, T Track, X set aside, Z
+  undo, Enter held to commit; the band, the Hall and the map read its constants. Three exceptions are written in it with
+  their reasons: Q and E turn the map (it is a camera), and T in the bag is Tidy (the player's own binding; there is
+  nothing to track in a bag). The numbers are the game's key codes (SDL scancodes in 26.3); the client checks them against
+  `InputConstants` as it starts. Test `ui_keys_one_meaning`: a shared key has its one verb on every surface, every
+  exception says why, and there are exactly three.
+- Test `ui_word_budget`: every room (name 3 words, what it gives 12, what it does 40), every power (name 4, what it does
+  60) and every step a fresh hunter is given (name 14, why 40, what it opens 24) is within what the stage shows without a
+  scroll. **The plan's tighter budget (one sentence of 14 words up front, the rest a tip) has not been written**: it is a
+  rewrite of about 110 lines of copy across many modules, and wants its author's eye.
+- **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
+  the plan deletes them one build after the stage has been played, and it has not been played yet.
 
 ## 60. Monsters of the Gates (plan docs/gates-as-worlds/monsters/PLAN.md, page https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ; Euan approved option B on 2026-11-10)
 

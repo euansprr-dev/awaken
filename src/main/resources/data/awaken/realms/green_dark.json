@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "The Green Dark",
+  "line": "Wet caves a long way under the temple, where everything is growing and nothing was ever built.",
+  "form": "dungeon",
+  "theme": "overgrown_temple",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:green_dark",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/keep_hall"
+    ],
+    "lens": "green_dark",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "dust",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "root_saint",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

@@ -63,6 +63,10 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.95,
+              -0.32
             ]
           }
         },
@@ -95,6 +99,10 @@
             "dir": [
               0.9,
               0.45
+            ],
+            "blow": [
+              0.96,
+              0.29
             ]
           }
         },
@@ -126,6 +134,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.4,
+              -0.92
             ]
           }
         },
@@ -177,17 +189,27 @@
           },
           "swing": {
             "from": [
-              0.05,
-              0.4,
-              -75
+              -0.45,
+              0.9,
+              -18,
+              -20
             ],
             "to": [
-              -1.0,
-              0.75,
-              30
+              -0.5,
+              0.05,
+              -18,
+              105
             ],
             "lunge": 0.4,
-            "form": "rise"
+            "form": "chop",
+            "dir": [
+              -0.45,
+              -1.0
+            ],
+            "blow": [
+              -0.57,
+              -0.82
+            ]
           },
           "swish": "heavy"
         },
@@ -241,7 +263,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           }
         },
         "execution": {
@@ -268,7 +294,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.35,
+              -0.94
+            ]
           },
           "swish": "heavy"
         },
@@ -298,7 +328,11 @@
               90
             ],
             "lunge": 0.6,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.12
+            ]
           },
           "swish": "art"
         },
@@ -323,7 +357,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.15
+            ]
           }
         },
         "plunge": {
@@ -349,7 +387,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.38,
+              -0.93
+            ]
           },
           "swish": "heavy"
         }
@@ -418,6 +460,10 @@
             "dir": [
               -0.5,
               -1.0
+            ],
+            "blow": [
+              -0.65,
+              -0.76
             ]
           }
         },
@@ -450,6 +496,10 @@
             "dir": [
               1.0,
               0.15
+            ],
+            "blow": [
+              0.99,
+              0.12
             ]
           }
         },
@@ -481,6 +531,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.32,
+              -0.95
             ]
           },
           "swish": "heavy"
@@ -511,6 +565,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.96,
+              -0.27
             ]
           },
           "swish": "heavy"
@@ -550,6 +608,10 @@
             "dir": [
               0.0,
               -1.0
+            ],
+            "blow": [
+              0.04,
+              -1.0
             ]
           },
           "swish": "heavy"
@@ -578,7 +640,11 @@
               85
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.86,
+              -0.51
+            ]
           },
           "swish": "heavy"
         },
@@ -608,7 +674,11 @@
               100
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           },
           "swish": "art"
         },
@@ -634,7 +704,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.22
+            ]
           }
         },
         "undercut": {
@@ -658,7 +732,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.19
+            ]
           }
         },
         "plunge": {
@@ -684,7 +762,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.33,
+              -0.94
+            ]
           },
           "swish": "heavy"
         },
@@ -712,7 +794,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.28,
+              -0.96
+            ]
           },
           "swish": "heavy"
         }
@@ -779,6 +865,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.44,
+              -0.9
             ]
           },
           "swish": "heavy"
@@ -812,6 +902,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.95,
+              -0.32
             ]
           },
           "swish": "heavy"
@@ -844,6 +938,10 @@
             "dir": [
               0.0,
               -1.0
+            ],
+            "blow": [
+              -0.06,
+              -1.0
             ]
           },
           "swish": "heavy"
@@ -872,7 +970,11 @@
               -40
             ],
             "lunge": 0.3,
-            "form": "rise"
+            "form": "rise",
+            "blow": [
+              -0.32,
+              0.95
+            ]
           },
           "swish": "heavy"
         },
@@ -911,6 +1013,10 @@
             "dir": [
               0.0,
               -1.0
+            ],
+            "blow": [
+              -0.06,
+              -1.0
             ]
           },
           "swish": "heavy"
@@ -939,7 +1045,11 @@
               80
             ],
             "lunge": 0.35,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.89,
+              -0.46
+            ]
           },
           "swish": "heavy"
         },
@@ -971,7 +1081,11 @@
               130
             ],
             "lunge": 0.3,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.38,
+              -0.93
+            ]
           },
           "swish": "art"
         },
@@ -997,7 +1111,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.96,
+              -0.29
+            ]
           }
         },
         "undercut": {
@@ -1021,7 +1139,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.96,
+              -0.27
+            ]
           }
         },
         "plunge": {
@@ -1047,7 +1169,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.43,
+              -0.9
+            ]
           },
           "swish": "heavy"
         },
@@ -1075,7 +1201,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.39,
+              -0.92
+            ]
           },
           "swish": "heavy"
         }
@@ -1203,6 +1333,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.13
             ]
           }
         },
@@ -1353,7 +1487,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.14
+            ]
           }
         },
         "undercut": {
@@ -1377,7 +1515,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.11
+            ]
           }
         },
         "plunge": {
@@ -1403,7 +1545,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.35,
+              -0.94
+            ]
           },
           "swish": "heavy"
         },
@@ -1431,7 +1577,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.33,
+              -0.94
+            ]
           },
           "swish": "heavy"
         }
@@ -1498,6 +1648,10 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.95,
+              -0.32
             ]
           },
           "swish": "heavy"
@@ -1531,6 +1685,10 @@
             "dir": [
               1.0,
               0.15
+            ],
+            "blow": [
+              0.99,
+              0.1
             ]
           },
           "swish": "heavy"
@@ -1561,6 +1719,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.11
             ]
           },
           "swish": "heavy"
@@ -1593,6 +1755,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.33,
+              -0.94
             ]
           },
           "swish": "heavy"
@@ -1616,17 +1782,27 @@
           },
           "swing": {
             "from": [
-              0.05,
-              0.4,
-              -75
+              -0.45,
+              0.9,
+              -18,
+              -20
             ],
             "to": [
-              -1.0,
-              0.75,
-              30
+              -0.5,
+              0.05,
+              -18,
+              105
             ],
             "lunge": 0.4,
-            "form": "rise"
+            "form": "chop",
+            "dir": [
+              -0.3,
+              -1.0
+            ],
+            "blow": [
+              -0.43,
+              -0.9
+            ]
           },
           "swish": "heavy"
         },
@@ -1652,7 +1828,11 @@
               60
             ],
             "lunge": 0.4,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.96,
+              -0.27
+            ]
           },
           "swish": "heavy"
         },
@@ -1682,7 +1862,11 @@
               90
             ],
             "lunge": 0.6,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.11
+            ]
           },
           "swish": "art"
         },
@@ -1708,7 +1892,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.17
+            ]
           }
         },
         "undercut": {
@@ -1732,7 +1920,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.15
+            ]
           }
         },
         "plunge": {
@@ -1758,7 +1950,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.39,
+              -0.92
+            ]
           },
           "swish": "heavy"
         },
@@ -1786,7 +1982,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.34,
+              -0.94
+            ]
           },
           "swish": "heavy"
         }
@@ -1914,6 +2114,10 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.95,
+              -0.32
             ]
           }
         },
@@ -2064,7 +2268,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           }
         },
         "undercut": {
@@ -2088,7 +2296,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.14
+            ]
           }
         },
         "plunge": {
@@ -2114,7 +2326,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.37,
+              -0.93
+            ]
           },
           "swish": "heavy"
         },
@@ -2276,6 +2492,10 @@
             "dir": [
               -1.0,
               -0.15
+            ],
+            "blow": [
+              -0.89,
+              -0.47
             ]
           },
           "swish": "light"
@@ -2337,6 +2557,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.94,
+              -0.34
             ]
           },
           "swish": "light"
@@ -2458,7 +2682,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.93,
+              -0.37
+            ]
           }
         },
         "undercut": {
@@ -2482,7 +2710,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.95,
+              -0.32
+            ]
           }
         },
         "plunge": {
@@ -2608,6 +2840,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.12
             ]
           }
         },
@@ -2640,6 +2876,10 @@
             "dir": [
               0.9,
               0.45
+            ],
+            "blow": [
+              0.96,
+              0.29
             ]
           }
         },
@@ -2671,6 +2911,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.4,
+              -0.91
             ]
           }
         },
@@ -2736,6 +2980,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.97,
+              -0.25
             ]
           },
           "swish": "heavy"
@@ -2762,7 +3010,11 @@
               80
             ],
             "lunge": 0.5,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.13
+            ]
           }
         },
         "art": {
@@ -2791,7 +3043,11 @@
               92
             ],
             "lunge": 0.8,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.12
+            ]
           },
           "swish": "art"
         },
@@ -2817,7 +3073,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.16
+            ]
           }
         },
         "undercut": {
@@ -2841,7 +3101,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.14
+            ]
           }
         },
         "plunge": {
@@ -2867,7 +3131,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.4,
+              -0.92
+            ]
           },
           "swish": "heavy"
         },
@@ -2895,7 +3163,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.38,
+              -0.93
+            ]
           },
           "swish": "heavy"
         }
@@ -2935,14 +3207,14 @@
       "late": 5,
       "moves": {
         "strike_1": {
-          "windup": 2,
+          "windup": 3,
           "active": 2,
-          "recovery": 3,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.65,
+          "motion": 1.0,
           "posture": 3,
           "arc": 110,
           "reach": 2.9,
@@ -2963,18 +3235,22 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.37,
+              -0.93
             ]
           }
         },
         "strike_2": {
-          "windup": 1,
+          "windup": 3,
           "active": 2,
-          "recovery": 4,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.65,
+          "motion": 1.0,
           "posture": 3,
           "arc": 110,
           "reach": 2.9,
@@ -2995,18 +3271,22 @@
             "dir": [
               0.9,
               0.45
+            ],
+            "blow": [
+              -0.66,
+              -0.75
             ]
           }
         },
         "strike_3": {
-          "windup": 1,
+          "windup": 3,
           "active": 2,
-          "recovery": 4,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.7,
+          "motion": 1.1,
           "posture": 3,
           "arc": 120,
           "reach": 2.9,
@@ -3027,14 +3307,18 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.18,
+              -0.98
             ]
           }
         },
         "strike_4": {
-          "windup": 2,
-          "active": 3,
-          "recovery": 7,
-          "motion": 1.3,
+          "windup": 5,
+          "active": 4,
+          "recovery": 8,
+          "motion": 2.0,
           "posture": 8,
           "arc": 360,
           "reach": 3.0,
@@ -3056,14 +3340,18 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.98,
+              -0.18
             ]
           }
         },
         "strike_5": {
-          "windup": 2,
-          "active": 3,
-          "recovery": 8,
-          "motion": 1.6,
+          "windup": 5,
+          "active": 4,
+          "recovery": 9,
+          "motion": 2.4,
           "posture": 10,
           "arc": 360,
           "reach": 3.1,
@@ -3085,6 +3373,10 @@
             "dir": [
               1.0,
               0.15
+            ],
+            "blow": [
+              0.55,
+              0.84
             ]
           }
         },
@@ -3121,12 +3413,16 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.97,
+              0.23
             ]
           },
           "swish": "heavy"
         },
         "riposte": {
-          "windup": 1,
+          "windup": 2,
           "active": 2,
           "recovery": 7,
           "motion": 2.5,
@@ -3147,7 +3443,11 @@
               85
             ],
             "lunge": 0.4,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.32,
+              -0.95
+            ]
           }
         },
         "art": {
@@ -3176,12 +3476,16 @@
               100
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.28,
+              -0.96
+            ]
           },
           "swish": "art"
         },
         "slipcut": {
-          "windup": 1,
+          "windup": 2,
           "active": 2,
           "recovery": 7,
           "motion": 2.6,
@@ -3202,11 +3506,15 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              0.11,
+              -0.99
+            ]
           }
         },
         "undercut": {
-          "windup": 1,
+          "windup": 2,
           "active": 3,
           "recovery": 7,
           "motion": 1.1,
@@ -3226,7 +3534,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              0.35,
+              -0.94
+            ]
           }
         },
         "plunge": {
@@ -3252,7 +3564,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.88,
+              -0.48
+            ]
           },
           "swish": "heavy"
         },
@@ -3280,7 +3596,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.97,
+              -0.23
+            ]
           },
           "swish": "heavy"
         }
@@ -3347,6 +3667,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -1.0,
+              -0.09
             ]
           },
           "swish": "heavy"
@@ -3380,6 +3704,10 @@
             "dir": [
               1.0,
               0.15
+            ],
+            "blow": [
+              1.0,
+              0.08
             ]
           },
           "swish": "heavy"
@@ -3410,6 +3738,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.1
             ]
           },
           "swish": "heavy"
@@ -3476,6 +3808,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.98,
+              -0.18
             ]
           },
           "swish": "heavy"
@@ -3502,7 +3838,11 @@
               90
             ],
             "lunge": 0.35,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.1
+            ]
           },
           "swish": "heavy"
         },
@@ -3532,7 +3872,11 @@
               100
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -1.0,
+              -0.09
+            ]
           },
           "swish": "art"
         },
@@ -3558,7 +3902,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.1
+            ]
           }
         },
         "undercut": {
@@ -3582,7 +3930,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -1.0,
+              -0.08
+            ]
           }
         },
         "plunge": {
@@ -3608,7 +3960,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.43,
+              -0.9
+            ]
           },
           "swish": "heavy"
         },
@@ -3636,7 +3992,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.38,
+              -0.92
+            ]
           },
           "swish": "heavy"
         }
@@ -3705,6 +4065,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.15,
+              -0.99
             ]
           },
           "swish": "heavy"
@@ -3772,6 +4136,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.17,
+              -0.99
             ]
           },
           "swish": "heavy"
@@ -3802,6 +4170,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.64,
+              -0.77
             ]
           },
           "swish": "heavy"
@@ -3841,6 +4213,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.21,
+              -0.98
             ]
           },
           "swish": "heavy"
@@ -3869,7 +4245,11 @@
               20
             ],
             "lunge": 0.4,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.16,
+              -0.99
+            ]
           },
           "swish": "heavy"
         },
@@ -3899,7 +4279,11 @@
               100
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.64,
+              -0.77
+            ]
           },
           "swish": "art"
         },
@@ -3925,7 +4309,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.43,
+              -0.9
+            ]
           }
         },
         "undercut": {
@@ -3949,7 +4337,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.41,
+              -0.91
+            ]
           }
         },
         "plunge": {
@@ -3975,7 +4367,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.09,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -4003,7 +4399,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.19,
+              -0.98
+            ]
           },
           "swish": "heavy"
         }
@@ -4133,7 +4533,11 @@
               30
             ],
             "lunge": 0.35,
-            "form": "hook"
+            "form": "hook",
+            "blow": [
+              -0.97,
+              0.24
+            ]
           }
         },
         "strike_4": {
@@ -4161,7 +4565,11 @@
             ],
             "lunge": 0.4,
             "form": "upper",
-            "hand": "off"
+            "hand": "off",
+            "blow": [
+              0.5,
+              0.87
+            ]
           },
           "swish": "heavy"
         },
@@ -4253,7 +4661,11 @@
               -20
             ],
             "lunge": 0.5,
-            "form": "upper"
+            "form": "upper",
+            "blow": [
+              -0.56,
+              0.83
+            ]
           },
           "swish": "heavy"
         },
@@ -4311,7 +4723,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "hook"
+            "form": "hook",
+            "blow": [
+              -0.97,
+              0.24
+            ]
           }
         },
         "undercut": {
@@ -4335,7 +4751,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "upper"
+            "form": "upper",
+            "blow": [
+              -0.55,
+              0.83
+            ]
           }
         },
         "plunge": {
@@ -4361,7 +4781,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "over"
+            "form": "over",
+            "blow": [
+              -0.93,
+              -0.38
+            ]
           },
           "swish": "heavy"
         },
@@ -4389,7 +4813,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "over"
+            "form": "over",
+            "blow": [
+              -0.94,
+              -0.34
+            ]
           },
           "swish": "heavy"
         }
@@ -4459,6 +4887,10 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.95,
+              -0.32
             ]
           }
         },
@@ -4491,6 +4923,10 @@
             "dir": [
               0.9,
               0.45
+            ],
+            "blow": [
+              0.97,
+              0.23
             ]
           }
         },
@@ -4520,6 +4956,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.11
             ]
           },
           "swish": "heavy"
@@ -4611,7 +5051,11 @@
               60
             ],
             "lunge": 0.4,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.19
+            ]
           }
         },
         "art": {
@@ -4640,7 +5084,11 @@
               100
             ],
             "lunge": 0.3,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           },
           "swish": "art"
         },
@@ -4666,7 +5114,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           }
         },
         "undercut": {
@@ -4690,7 +5142,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.14
+            ]
           }
         },
         "plunge": {
@@ -4716,7 +5172,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.36,
+              -0.93
+            ]
           },
           "swish": "heavy"
         },
@@ -4744,7 +5204,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.34,
+              -0.94
+            ]
           },
           "swish": "heavy"
         }
@@ -4796,7 +5260,7 @@
           "motion": 0.85,
           "posture": 5,
           "arc": 90,
-          "reach": 2.8,
+          "reach": 3.0,
           "hitstop": 45,
           "swing": {
             "from": [
@@ -4814,11 +5278,15 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.77,
+              -0.64
             ]
           }
         },
         "strike_2": {
-          "windup": 2,
+          "windup": 3,
           "active": 2,
           "recovery": 7,
           "cadence": [
@@ -4827,9 +5295,9 @@
           ],
           "motion": 0.95,
           "posture": 8,
-          "arc": 30,
-          "reach": 2.6,
-          "hitstop": 60,
+          "arc": 70,
+          "reach": 2.8,
+          "hitstop": 85,
           "swing": {
             "from": [
               -0.3,
@@ -4843,7 +5311,7 @@
               -10,
               40
             ],
-            "lunge": 0.7,
+            "lunge": 0.9,
             "form": "bash"
           },
           "swish": "heavy"
@@ -4855,7 +5323,7 @@
           "motion": 1.4,
           "posture": 10,
           "arc": 60,
-          "reach": 3.0,
+          "reach": 3.2,
           "hitstop": 70,
           "finisher": true,
           "swing": {
@@ -4876,6 +5344,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.63,
+              -0.77
             ]
           }
         },
@@ -4886,7 +5358,7 @@
           "motion": 1.6,
           "posture": 12,
           "arc": 30,
-          "reach": 3.2,
+          "reach": 3.6,
           "hitstop": 75,
           "finisher": true,
           "swing": {
@@ -4914,16 +5386,16 @@
           "recovery": 10,
           "motion": 1.9,
           "posture": 20,
-          "arc": 30,
-          "reach": 2.8,
-          "hitstop": 100,
+          "arc": 80,
+          "reach": 3.0,
+          "hitstop": 130,
           "charge": {
             "min": 6,
             "glint": 15,
             "max": 22,
             "glintMotion": 2.6,
             "glintPosture": 30,
-            "glintHitstop": 120
+            "glintHitstop": 160
           },
           "swing": {
             "from": [
@@ -4938,7 +5410,7 @@
               -10,
               45
             ],
-            "lunge": 0.9,
+            "lunge": 1.3,
             "form": "bash"
           },
           "swish": "heavy"
@@ -4950,7 +5422,7 @@
           "motion": 2.4,
           "posture": 26,
           "arc": 70,
-          "reach": 2.8,
+          "reach": 3.4,
           "hitstop": 100,
           "window": 14,
           "swing": {
@@ -4978,7 +5450,7 @@
           "motion": 7.0,
           "posture": 34,
           "arc": 90,
-          "reach": 3.0,
+          "reach": 3.2,
           "hitstop": 150,
           "bossCap": 0.12,
           "art": {
@@ -5025,7 +5497,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.92,
+              -0.39
+            ]
           }
         },
         "undercut": {
@@ -5035,7 +5511,7 @@
           "motion": 1.1,
           "posture": 8,
           "arc": 160,
-          "reach": 2.8,
+          "reach": 3.0,
           "hitstop": 50,
           "swing": {
             "from": [
@@ -5049,7 +5525,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.95,
+              -0.3
+            ]
           }
         },
         "plunge": {
@@ -5075,7 +5555,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.39,
+              -0.92
+            ]
           },
           "swish": "heavy"
         },
@@ -5103,7 +5587,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.23,
+              -0.97
+            ]
           },
           "swish": "heavy"
         }
@@ -5173,6 +5661,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.13
             ]
           },
           "swish": "heavy"
@@ -5206,6 +5698,10 @@
             "dir": [
               1.0,
               0.15
+            ],
+            "blow": [
+              1.0,
+              0.09
             ]
           },
           "swish": "heavy"
@@ -5238,6 +5734,10 @@
             "dir": [
               -0.22,
               -1.0
+            ],
+            "blow": [
+              -0.36,
+              -0.93
             ]
           },
           "swish": "heavy"
@@ -5268,6 +5768,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.67,
+              -0.74
             ]
           },
           "swish": "heavy"
@@ -5307,6 +5811,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              0.4,
+              -0.92
             ]
           },
           "swish": "heavy"
@@ -5333,7 +5841,11 @@
               80
             ],
             "lunge": 0.35,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -5365,7 +5877,11 @@
               115
             ],
             "lunge": 0.3,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.3,
+              -0.95
+            ]
           },
           "swish": "art"
         },
@@ -5391,7 +5907,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.98,
+              -0.19
+            ]
           }
         },
         "undercut": {
@@ -5415,7 +5935,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           }
         },
         "plunge": {
@@ -5441,7 +5965,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.35,
+              -0.94
+            ]
           },
           "swish": "heavy"
         },
@@ -5469,7 +5997,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.3,
+              -0.95
+            ]
           },
           "swish": "heavy"
         }
@@ -5539,6 +6071,10 @@
             "dir": [
               -0.9,
               -0.55
+            ],
+            "blow": [
+              -0.94,
+              -0.34
             ]
           }
         },
@@ -5571,6 +6107,10 @@
             "dir": [
               0.9,
               0.45
+            ],
+            "blow": [
+              0.95,
+              0.31
             ]
           }
         },
@@ -5600,6 +6140,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.99,
+              -0.12
             ]
           },
           "swish": "heavy"
@@ -5666,6 +6210,10 @@
             "dir": [
               -1.0,
               -0.2
+            ],
+            "blow": [
+              -0.97,
+              -0.26
             ]
           },
           "swish": "heavy"
@@ -5724,7 +6272,11 @@
               90
             ],
             "lunge": 0.6,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.12
+            ]
           },
           "swish": "art"
         },
@@ -5750,7 +6302,11 @@
               85
             ],
             "lunge": 0.25,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.17
+            ]
           }
         },
         "undercut": {
@@ -5774,7 +6330,11 @@
               95
             ],
             "lunge": 0.2,
-            "form": "slash"
+            "form": "slash",
+            "blow": [
+              -0.99,
+              -0.15
+            ]
           }
         },
         "plunge": {
@@ -5800,7 +6360,11 @@
               120
             ],
             "lunge": 0.0,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.38,
+              -0.93
+            ]
           },
           "swish": "heavy"
         },
@@ -5828,7 +6392,11 @@
               105
             ],
             "lunge": 0.5,
-            "form": "chop"
+            "form": "chop",
+            "blow": [
+              -0.35,
+              -0.94
+            ]
           },
           "swish": "heavy"
         }

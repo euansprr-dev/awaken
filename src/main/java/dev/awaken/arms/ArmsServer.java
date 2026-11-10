@@ -141,6 +141,10 @@ final class ArmsServer {
 
     static void onPress(ServerPlayer p, ArmsPayloads.Press msg) {
         ArmsState s = state(p);
+        if (msg.what() == ArmsPayloads.PRESS_HIT) { // no press: a blow the hands played, under the press of its move (often not the newest)
+            if (Arms.fights(p) && !off(p)) claimed(p, s, msg.claim(), msg.target(), now(p));
+            return;
+        }
         if (msg.seq() < s.seq) return; // stale
         if (!Arms.fights(p) || off(p)) {
             refuse(p, msg.seq());
@@ -159,7 +163,7 @@ final class ArmsServer {
                 s.holdSeq = msg.seq();
                 s.holdFrom = now;
                 s.holdOpen = chargeable(style);
-                strike(p, s, style, now, msg.seq());
+                strike(p, s, style, now, msg.seq(), msg.claim());
             }
             case ArmsPayloads.PRESS_TAP -> {
                 if (msg.seq() != s.holdSeq) return;
@@ -196,41 +200,92 @@ final class ArmsServer {
     }
 
     /**
-     * A tap: a riposte or a Slipcut when one is open, an Undercut out of a slide, a Plunge armed in a fall, else the
-     * chain's next strike (now, or buffered for its window).
+     * Ticks a riposte or Slipcut the hands began may run past the server's own read of its window: the two sides saw the
+     * deflect or the dodge a trip apart.
      */
-    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq) {
-        Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
-        if (riposte != null && now - s.deflectAt <= riposte.window()) {
-            s.deflectAt = Long.MIN_VALUE / 2;
-            begin(p, s, style, Archetype.Move.RIPOSTE, -1, 0, now, seq);
+    static final int HEARD_SLACK = 6;
+
+    /** Blocks of fall a Plunge the hands armed may be short of on the server: the two sides' falls differ by a tick. */
+    static final float HEARD_FALL = 1F;
+
+    /**
+     * A tap: what the hands did with it (SPEC §25 "One chain"). They count a press for nothing, or begin a strike, and the
+     * server plays that: never a strike they don't show, never another in its place. With no word from them (claim
+     * CLAIM_OPEN), the server's own read.
+     */
+    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, int claim) {
+        if (claim == ArmsPayloads.CLAIM_NOTHING) { // too early for the hands: a mash far ahead of the window
+            HitWhy.press(seq, now, HitWhy.NOTHING);
             return;
         }
-        Archetype.MoveDef slip = style.move(Archetype.Move.SLIPCUT);
+        if (claim == ArmsPayloads.CLAIM_AGAIN) { // the strike they queued, pressed again: still one strike, and this press is its press now
+            if (s.buffered != null) s.bufferedSeq = seq;
+            else s.moveSeq = seq;
+            HitWhy.press(seq, now, s.buffered != null ? HitWhy.QUEUED : s.move != null ? HitWhy.RAN : HitWhy.NOTHING);
+            return;
+        }
+        Archetype.Move said = Archetype.Move.byId(claim);
+        int claimed = said == null ? -1 : ArmsRules.stepOf(style, said);
         int mastery = ArmsMastery.step(p, style);
-        if (slip != null && now - s.dodgeAt <= style.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(mastery) && now - s.dodgeAt >= 1) {
-            s.dodgeAt = Long.MIN_VALUE / 2;
-            begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
+        if (claimed < 0) {
+            if (offChain(p, s, style, now, seq, said, mastery)) return;
+            if (said != null) { // hands on a move the server can't grant: no blow, and no strike in its place
+                HitWhy.press(seq, now, HitWhy.NOT_GRANTED);
+                return;
+            }
+        }
+        int strikes = ArmsMastery.strikes(mastery);
+        ArmsRules.Decision d = ArmsRules.follow(style, ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, strikes,
+                        said == null ? style.def().buffer() : ArmsRules.HEARD_BUFFER), claimed, s.lastStep, now - s.lastStepAt, strikes);
+        if (d == null) { // too early: a mash far ahead of the window counts for nothing
+            HitWhy.press(seq, now, HitWhy.TOO_EARLY);
             return;
         }
-        if (style.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) {
-            begin(p, s, style, Archetype.Move.UNDERCUT, -1, 0, now, seq);
-            return;
+        if (d.step() >= 0) { // on the press, not its start: a strike still queued counts, or the next claim would look like a skip
+            s.lastStep = d.step();
+            s.lastStepAt = now;
         }
-        if (style.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) {
-            s.plungeSeq = seq;
-            s.plungeAt = now;
-            s.plungeFall = p.fallDistance;
-            return; // it strikes where it lands
-        }
-        ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, ArmsMastery.strikes(mastery));
-        if (d == null) return; // too early: a mash far ahead of the window counts for nothing
         if (d.startAt() > now) {
             s.buffered = d;
             s.bufferedSeq = seq;
+            HitWhy.press(seq, now, HitWhy.QUEUED);
             return;
         }
         begin(p, s, style, d.move(), d.step(), d.cadence(), now, seq);
+    }
+
+    /**
+     * A move off the chain, when one is open and the hands began it (or gave no word): a riposte or a Slipcut in its window,
+     * an Undercut out of a slide, a Plunge armed in a fall. False when it started nothing.
+     */
+    private static boolean offChain(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, Archetype.@Nullable Move said, int mastery) {
+        boolean heard = said != null;
+        Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
+        if (riposte != null && (!heard || said == Archetype.Move.RIPOSTE) && now - s.deflectAt <= riposte.window() + (heard ? HEARD_SLACK : 0)) {
+            s.deflectAt = Long.MIN_VALUE / 2;
+            begin(p, s, style, Archetype.Move.RIPOSTE, -1, 0, now, seq);
+            return true;
+        }
+        Archetype.MoveDef slip = style.move(Archetype.Move.SLIPCUT);
+        long sinceDodge = now - s.dodgeAt;
+        if (slip != null && (!heard || said == Archetype.Move.SLIPCUT) && sinceDodge >= (heard ? 0 : 1)
+                && sinceDodge <= style.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(mastery) + (heard ? HEARD_SLACK : 0)) {
+            s.dodgeAt = Long.MIN_VALUE / 2;
+            begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
+            return true;
+        }
+        if (style.move(Archetype.Move.UNDERCUT) != null && (!heard || said == Archetype.Move.UNDERCUT) && Body.isSliding(p)) {
+            begin(p, s, style, Archetype.Move.UNDERCUT, -1, 0, now, seq);
+            return true;
+        }
+        if (style.move(Archetype.Move.PLUNGE) != null && (!heard || said == Archetype.Move.PLUNGE)
+                && ArmsRules.plunges(p.onGround(), p.fallDistance + (heard ? HEARD_FALL : 0F), p.isInLiquid())) {
+            s.plungeSeq = seq;
+            s.plungeAt = now;
+            s.plungeFall = p.fallDistance;
+            return true; // it strikes where it lands
+        }
+        return false;
     }
 
     static void heavy(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.MoveDef heavy, int held, long now, int seq) {
@@ -278,11 +333,11 @@ final class ArmsServer {
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
-        // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
-        // becomes the charge instead (the swing starts at once either way: a tap is never late); a dagger's lands as it
-        // comes, and the hold charges after it (ArmsRules.waitsOnHold)
+        // a chain strike begun by a press still down waits at its hit for the press's end, unseen (the client's hands
+        // are on the draw, ChargeDraw): a tap lands it, a hold becomes the charge instead (ArmsRules.waitsOnHold)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
         FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
+        HitWhy.press(seq, now, HitWhy.RAN);
         s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
@@ -294,6 +349,7 @@ final class ArmsServer {
         s.recovery = ArmsRules.recovery(def, style, p.getAttributeValue(Attributes.ATTACK_SPEED));
         s.moveEnd = now + def.windup() + def.active() + s.recovery;
         s.hitCount = 0;
+        s.grassCut = 0;
         s.perfectHeavy = false;
         s.unleashed = false;
         s.rhythm = false;
@@ -395,7 +451,100 @@ final class ArmsServer {
             }
             sweep(p, s, def, now);
         }
+        if (rel >= def.windup() - CLAIM_EARLY && rel < def.activeEnd() + CLAIM_LATE && Arms.fights(p)) grantClaims(p, s, def, now);
+        if (rel == def.activeEnd() - 1 && s.hitCount == 0 && Arms.fights(p)) glanced(p, def);
     }
+
+    /**
+     * A strike that struck no body and met a block: those near hear the block's own hit, as the fighter's game plays it for
+     * them with the sparks and the blade's bounce (ArmsWalls.glance; the block isn't harmed).
+     */
+    private static void glanced(ServerPlayer p, Archetype.MoveDef def) {
+        net.minecraft.world.phys.BlockHitResult hit = ArmsWalls.glance(p.level(), p.getEyePosition(), p.getYRot(), p.getXRot(), def.reach(), ArmsRules.lift(def) < 0);
+        if (hit == null) return;
+        net.minecraft.world.level.block.SoundType type = p.level().getBlockState(hit.getBlockPos()).getSoundType(p.level(), hit.getBlockPos(), p);
+        Vec3 at = hit.getLocation();
+        p.level().playSound(p, at.x, at.y, at.z, type.getHitSound(), SoundSource.BLOCKS, Math.min(1F, type.getVolume() * 0.9F), type.getPitch() * 0.75F);
+    }
+
+    /**
+     * A fighting weapon comes to hand: those near hear its draw, by its family (SPEC §25 "Weight in the Hand"; the fighter
+     * hears their own game's). Only a change of weapon, never its wear, and not in the first second after joining.
+     */
+    static void onEquip(net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || e.getSlot() != net.minecraft.world.entity.EquipmentSlot.MAINHAND) return;
+        if (e.getFrom().getItem() == e.getTo().getItem() || p.tickCount < 20 || !Arms.fights(p)) return;
+        Archetypes.Loaded style = Arms.styleOf(e.getTo());
+        ArmsState s = state(p);
+        long now = now(p);
+        if (style == null || now - s.drewAt < 4) return;
+        s.drewAt = now;
+        soundForOthers(p, ArmsSounds.draw(style.id()), ArmsSounds.drawVolume(style.id()), ArmsSounds.drawPitch(style.id()));
+    }
+
+    // ---- the hands' word (SPEC §25 "Weight in the Hand", stage 1) ----------------------------------------------------
+
+    /**
+     * How far past a move's own reach and arc a blow the hands played is still landed (blocks, degrees). The game draws a
+     * creature about three ticks behind where the server has it (its interpolation), so one just knocked back at 0.4 blocks a
+     * tick can look in reach and be a block further on: Euan's logs of 4 to 9 Nov held 99 such shown hits in 334.
+     */
+    static final double CLAIM_REACH = 1.25;
+    static final float CLAIM_ARC = 20F;
+    /** Ticks before a move's first active tick and after its last that the hands' word for it is heard, and how long one waits for its move. */
+    static final int CLAIM_EARLY = 3, CLAIM_LATE = 6, CLAIM_HOLD = 20;
+
+    /**
+     * The hands played a blow of {@code move} on {@code body}: kept, and landed once the move they name is at its blow, if
+     * the server's own sweep hasn't struck that body and it stands within the limits. Never a person, never twice a move,
+     * never a body the sweep itself wouldn't look at; the damage, the push and everything after are the server's own.
+     */
+    static void claimed(ServerPlayer p, ArmsState s, int move, int body, long now) {
+        if (!ArmsConfig.claimedHits() || body < 0) return;
+        int free = -1;
+        for (int i = 0; i < s.claimBody.length; i++) {
+            if (s.claimUntil[i] > now && s.claimBody[i] == body && s.claimMove[i] == move) return; // said already
+            if (s.claimUntil[i] <= now && free < 0) free = i;
+        }
+        if (free < 0) return; // four waiting already: a sweep through a crowd says the rest on its own
+        s.claimBody[free] = body;
+        s.claimMove[free] = move;
+        s.claimUntil[free] = now + CLAIM_HOLD;
+        if (s.move == null || s.style == null || s.move.ordinal() != move) return; // its move hasn't begun here yet: it waits
+        Archetype.MoveDef def = s.style.move(s.move);
+        long rel = now - s.moveStart;
+        if (def != null && !s.waitHit && rel >= def.windup() - CLAIM_EARLY && rel < def.activeEnd() + CLAIM_LATE) grantClaims(p, s, def, now);
+    }
+
+    /** Lands each waiting word for the running move whose body the sweep left and the limits allow. */
+    private static void grantClaims(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now) {
+        if (s.move == null || s.waitHit) return;
+        for (int i = 0; i < s.claimBody.length; i++) {
+            if (s.claimUntil[i] <= now || s.claimMove[i] != s.move.ordinal()) continue;
+            s.claimUntil[i] = 0; // tried once the move is at its blow: landed or not, the word is spent
+            int id = s.claimBody[i];
+            if (s.hasHit(id) || !(p.level().getEntity(id) instanceof LivingEntity t) || !t.isAlive() || t instanceof Player) continue;
+            boolean aimed = id == s.aimed;
+            if (!aimed && !foe(p, t)) continue;
+            float grow = s.style == null || s.step < 0 || !s.move.strike() ? 0F : s.style.def().traits().reachPerStep() * s.step;
+            double reach = def.reachAt(Math.min(now - s.moveStart, def.activeEnd() - 1)) + 0.3 + grow
+                    + (aimed && s.style != null && stepsIn(s) ? Aim.stepIn(s.style.id()) : 0F);
+            Vec3 eye = p.getEyePosition();
+            if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), p.getYRot() + focusTurn(p, s), def.arc() + CLAIM_ARC, reach + CLAIM_REACH, aimed, aimed)) {
+                HitWhy.body(s.moveSeq, id, now, HitWhy.REACH, (float) Aim.gap(eye, t.getBoundingBox()), (float) (reach + CLAIM_REACH));
+                continue;
+            }
+            if (ArmsConfig.wallsStopBlows() && !ArmsWalls.sees(p.level(), eye, t.getBoundingBox())) {
+                HitWhy.body(s.moveSeq, id, now, HitWhy.WALL, 0F, 0F);
+                continue;
+            }
+            HitWhy.granted((float) (Aim.gap(eye, t.getBoundingBox()) - reach));
+            s.markHit(id);
+            hit(p, s, def, t, now);
+        }
+    }
+
+    // ---- the sweep ----------------------------------------------------------------------------------------------------
 
     /** The arc's work for one active tick: every creature in reach and in the arc, once. */
     static void sweep(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now) {
@@ -408,6 +557,8 @@ final class ArmsServer {
         // the meant creature (a press's, checked by Aim.meant) is reached by the step in and above the band: a flier
         // circling overhead is struck when it is the one you meant (SPEC §40)
         double meantReach = reach + (s.style != null && stepsIn(s) ? Aim.stepIn(s.style.id()) : 0F);
+        boolean walls = ArmsConfig.wallsStopBlows();
+        if (ArmsConfig.cutGrass()) s.grassCut += ArmsWalls.cutGrass(p, eye, yaw, def.arc(), reach, s.grassCut);
         AABB box = p.getBoundingBox().inflate(meantReach + 1, Math.max(1.5, meantReach), meantReach + 1);
         for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, box, t -> t != p && t.isAlive() && !s.hasHit(t.getId()))) {
             boolean aimed = t.getId() == s.aimed;
@@ -415,6 +566,11 @@ final class ArmsServer {
             boolean meant = aimed && !(t instanceof Player);
             // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §47.1)
             if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), yaw, def.arc(), meant ? meantReach : reach, aimed, meant)) continue;
+            // and never through a wall (ArmsWalls.sees: three lines, so half behind a door frame still counts)
+            if (walls && !ArmsWalls.sees(level, eye, t.getBoundingBox())) {
+                HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.WALL, 0F, 0F);
+                continue;
+            }
             s.markHit(t.getId());
             FilmLog.server("hit " + s.move.key + " rel " + (now - s.moveStart) + " tick " + now);
             hit(p, s, def, t, now);
@@ -435,6 +591,30 @@ final class ArmsServer {
             s.markHit(t.getId());
             strikeThing(p, s, def, t, now);
         }
+        if (HitWhy.on) unstruck(p, s, def, now, eye, yaw, reach, meantReach);
+    }
+
+    /**
+     * Development only ({@link HitWhy}): every foe near this sweep that it did not strike, and why, so a hit the fighter's
+     * game showed and this server never confirmed can be given its cause. It looks {@link HitWhy#LOOK} past the reach.
+     */
+    private static void unstruck(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now, Vec3 eye, float yaw, double reach, double meantReach) {
+        AABB wide = p.getBoundingBox().inflate(meantReach + HitWhy.LOOK);
+        for (LivingEntity t : p.level().getEntitiesOfClass(LivingEntity.class, wide, t -> t != p && t.isAlive() && !s.hasHit(t.getId()))) {
+            boolean aimed = t.getId() == s.aimed;
+            if (!aimed && !foe(p, t)) continue;
+            double r = aimed && !(t instanceof Player) ? meantReach : reach;
+            AABB box = t.getBoundingBox();
+            double gap = Aim.gap(eye, box);
+            if (gap > r) {
+                HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.REACH, (float) gap, (float) r);
+                continue;
+            }
+            float toward = (float) (Mth.atan2((box.minZ + box.maxZ) * 0.5 - eye.z, (box.minX + box.maxX) * 0.5 - eye.x) * Mth.RAD_TO_DEG) - 90F;
+            float outside = Math.abs(Mth.wrapDegrees(toward - yaw)) - def.arc() / 2;
+            if (!aimed && outside > 0) HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.ARC, outside, def.arc());
+            else HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.HEIGHT, (float) (box.minY - eye.y), 0F);
+        }
     }
 
     /** The anomalies a sweep strikes in its arc (anything else not alive is struck only when aimed, as vanilla's is). */
@@ -449,8 +629,8 @@ final class ArmsServer {
     static void strikeThing(ServerPlayer p, ArmsState s, Archetype.MoveDef def, Entity t, long now) {
         float damage = (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * ArmsRules.motion(def, s.cadence, s.perfectHeavy);
         if (!t.hurtServer(p.level(), p.damageSources().playerAttack(p), Math.max(1F, damage))) return;
-        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()),
-                SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
+        ArmsSounds.play(p.level(), p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()),
+                1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         int ms = def.hitstop();
         if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
@@ -552,8 +732,11 @@ final class ArmsServer {
         boolean pushes = ArmsConfig.directionalKnockback() && !ArmsRules.lordBody(t.getMaxHealth());
         pendingPush = pushes;
         pendingPushScale = ArmsRules.pushScale(def);
-        // a combo's blows come faster than vanilla's half second of immunity: each move strikes each creature once
-        if (t.getLastHurtByMob() == p) t.damageCooldownTime = 0;
+        // a combo's blows come faster than vanilla's half second of immunity, and each move strikes each creature once, so
+        // an Arms blow always lands whole: vanilla's immunity after a hurt (fire, a fall, a pet's or another fighter's
+        // blow) swallowed or shrank blows at random, shown by the game and gone on the server (SPEC §25 "Weight in the Hand")
+        int cooldown = t.damageCooldownTime;
+        t.damageCooldownTime = 0;
         try {
             if (speed != null) speed.addOrUpdateTransientModifier(FULL_STRENGTH_MOD);
             p.attack(t);
@@ -562,7 +745,13 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
             pendingPush = false;
         }
-        if (!pendingLanded) return;
+        HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
+        if (!pendingLanded) {
+            // struck, and nothing took (an invulnerable body, another mod's refusal): the hands hear a dull knock, so a blow
+            // they showed is answered and not left a ghost
+            AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.DULL, t.getId(), 0, s.move == null ? 0 : s.move.ordinal()));
+            return;
+        }
         int lift = ArmsRules.lift(def);
         // a player's push is sent and put back by vanilla's attack; only a creature is pinned or lifted here
         if (pushes && lift != 0 && !(t instanceof Player)) {
@@ -583,7 +772,7 @@ final class ArmsServer {
         if (def.finisher() && s.rhythm) Marks.fire(p, Marks.Trigger.FINISHER, t);
         if (s.perfectHeavy) Marks.fire(p, Marks.Trigger.PERFECT_HEAVY, t);
         if (s.edgeHits > 0) ArmsWeaves.edge(p, s, t, now, (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * pendingMotion);
-        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
+        ArmsSounds.play(p.level(), p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
         s.focusSeenAt = now;
@@ -1202,11 +1391,11 @@ final class ArmsServer {
 
     /** Heard by everyone near but the fighter, whose client already played it on its own prediction or result. */
     private static void soundForOthers(ServerPlayer p, SoundEvent sound, float volume, float pitch) {
-        p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+        ArmsSounds.play(p.level(), p, p.getX(), p.getY(), p.getZ(), sound, volume, pitch);
     }
 
     private static void sound(Entity at, SoundEvent sound, float volume, float pitch) {
-        at.level().playSound(null, at.getX(), at.getY(), at.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+        ArmsSounds.play(at.level(), null, at.getX(), at.getY(), at.getZ(), sound, volume, pitch);
     }
 
     /** Tests: the hold queue is empty between tests. */

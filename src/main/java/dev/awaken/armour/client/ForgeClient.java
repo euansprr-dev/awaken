@@ -60,7 +60,7 @@ public final class ForgeClient {
                                     autoplay = com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on");
                                     return 1;
                                 })))
-                        // the settings file's two choices, from chat (SPEC §44.9)
+                        // the settings file's choices, from chat (SPEC §44.9)
                         .then(net.minecraft.commands.Commands.literal("sculpted").then(net.minecraft.commands.Commands.argument("how",
                                 com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
                                     String how = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "how").toUpperCase(java.util.Locale.ROOT);
@@ -72,6 +72,24 @@ public final class ForgeClient {
                                         }
                                     return 0;
                                 })))
+                        .then(net.minecraft.commands.Commands.literal("motion").then(net.minecraft.commands.Commands.argument("on",
+                                com.mojang.brigadier.arguments.BoolArgumentType.bool()).executes(c -> {
+                                    ArmourClientConfig.motion(com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on"));
+                                    return 1;
+                                })))
+                        .then(net.minecraft.commands.Commands.literal("admire").executes(c -> ArmourAdmire.once() ? 1 : 0))
+                        // tours and demos: your own set flares as if its ability had just fired (this client only)
+                        .then(net.minecraft.commands.Commands.literal("kick").executes(c -> {
+                            var me = Minecraft.getInstance().player;
+                            if (me == null) return 0;
+                            ArmourGlow.on(new ArmourPayloads.Charge(me.getId(), 0, 0, 255));
+                            return 1;
+                        }))
+                        .then(net.minecraft.commands.Commands.literal("movesound").then(net.minecraft.commands.Commands.argument("level",
+                                com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 100)).executes(c -> {
+                                    ArmourClientConfig.moveSound(com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "level"));
+                                    return 1;
+                                })))
                         .then(net.minecraft.commands.Commands.literal("camera").then(net.minecraft.commands.Commands.argument("view",
                                 com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
                                     boolean first = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "view").startsWith("first");
@@ -81,6 +99,7 @@ public final class ForgeClient {
                                 }))))));
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ForgeSongScreen.last = null;
+            ArmourAdmire.stop();
             ForgeCamera.end();
         });
     }
@@ -122,7 +141,7 @@ public final class ForgeClient {
             if (mc.getConnection() != null) send(ForgeSongScreen.last, ArmourPayloads.LEAVE, 0, 0F, 0F);
             ForgeSongScreen.last = null;
         }
-        if (!ForgeCamera.active()) return;
+        if (!ForgeCamera.active() || ArmourAdmire.on()) return; // Admire holds the camera by its key, and lets go itself
         boolean ours = mc.gui.screen() instanceof ForgeScreen || mc.gui.screen() instanceof ForgeSongScreen;
         if (!ours || mc.player == null || !mc.player.isAlive()) ForgeCamera.end();
     }

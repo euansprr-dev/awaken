@@ -63,10 +63,19 @@ final class CraftsSection implements StatusSections.Section {
                 if (lv >= perk.level()) open.append(open.isEmpty() ? "" : " · ").append(perk.title());
                 else if (next == null) next = perk;
             }
-            // what it has on one line (cut with a mark if it runs long), the next perk on its own below
+            // what it has on one line, the next perk on its own below
             String has = open.isEmpty() ? "no perks yet" : open.toString();
-            if (font.width(has) > width - 4) has = font.plainSubstrByWidth(has, width - 4 - font.width("…")) + "…";
-            HudLook.text(g, font, has, x + 4, row + 11, 0xFF8FA7C4, false);
+            // never cut (SPEC §57.6): a long list of perks is drawn a step smaller, or on two short lines
+            var fit = dev.awaken.signal.ui.SignalText.fitBox(has, width - 4, 1, dev.awaken.signal.client.Ui.unitPixelsNow(), font::width);
+            float fy = row + 11 + (fit.lines().size() == 1 ? (9f - 9f * fit.scale()) / 2f : 0f);
+            for (String part : fit.lines()) {
+                g.pose().pushMatrix();
+                g.pose().translate(x + 4, fy);
+                g.pose().scale(fit.scale(), fit.scale());
+                HudLook.text(g, font, part, 0, 0, 0xFF8FA7C4, false);
+                g.pose().popMatrix();
+                fy += 9f * fit.scale();
+            }
             if (next != null) HudLook.text(g, font, "next: " + next.title() + " at " + next.level(), x + 4, row + 20, 0xFF5E7590, false);
             row += ROW;
         }

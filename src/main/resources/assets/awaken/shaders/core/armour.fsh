@@ -22,6 +22,8 @@ layout(location = 6) in vec3 viewNormal;
 layout(location = 7) flat in vec4 state;
 layout(location = 8) flat in vec2 mastery;
 layout(location = 9) flat in vec2 script;
+layout(location = 10) flat in float skyLight;
+layout(location = 11) flat in float marks;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -29,6 +31,7 @@ const vec3 KEY = vec3(-0.4511, 0.7018, 0.5514); // the studio key, view space (u
 const vec3 SKY = vec3(0.78, 0.86, 1.0);
 const vec3 GROUND = vec3(0.40, 0.36, 0.34);
 const vec3 STRIP = vec3(1.0, 0.97, 0.9);
+const vec3 MOON = vec3(0.50, 0.62, 0.92); // what an edge takes from an open night sky
 const float TAU = 6.2831853;
 // each enchantment's own light (SPEC §45.11), by the palette index the renderer packs: 1 Heat Ward ember, 2 Frost Ward
 // ice, 3 Charge Ward gold, 4 Gravity Ward violet, 5 Spirit Ward teal, 6 the other wards steel, 7 Clear Blood green,
@@ -36,6 +39,16 @@ const float TAU = 6.2831853;
 const vec3 SCRIPT[13] = vec3[](vec3(0.0), vec3(1.0, 0.54, 0.30), vec3(0.56, 0.85, 1.0), vec3(1.0, 0.85, 0.29),
         vec3(0.73, 0.58, 1.0), vec3(0.31, 0.88, 0.76), vec3(0.73, 0.76, 0.82), vec3(0.62, 0.88, 0.48),
         vec3(1.0, 0.37, 0.39), vec3(0.95, 0.77, 0.35), vec3(0.31, 0.71, 0.92), vec3(0.95, 0.92, 0.84), vec3(0.55, 0.42, 1.0));
+
+float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
 
 // the studio a metal reflects: a cool sky over a warm dark floor, a soft-box strip above
 vec3 studio(vec3 r) {
@@ -71,21 +84,59 @@ void main() {
     float spec = pow(max(dot(r, KEY), 0.0), 6.0 + 84.0 * gloss) * gloss;
     col += spec * mix(vec3(1.0), min(alb.rgb * 1.7, vec3(1.0)), metal) * 0.85;
     float rim = pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 3.0);
+    // form light (SPEC §44.1, the Armour Finish): every edge turned up to the open sky takes a little of it, bright
+    // metal most, so plates part from one another and from what stands behind them; cloth and hide take a soft fuzz
+    // instead. Up is where the two lights come from (the world's y, or a menu's own, whose y runs down).
+    vec3 upDir = Light0_Direction + Light1_Direction;
+    upDir = dot(upDir, upDir) > 0.01 ? normalize(upDir) : vec3(0.0, 1.0, 0.0);
+    float up = smoothstep(-0.5, 0.6, dot(nw, upDir));
+    // In the plate's own colour, and never more than a little: adding the sky's white washed dark iron grey and a red
+    // stone pale, and a forearm seen edge-on from your own eyes took the whole of it.
+    col += (alb.rgb * 1.3 + SKY * 0.04) * min(rim, 0.6) * up * (0.06 + 0.18 * gloss) * (1.0 - 0.6 * emit);
+    col += alb.rgb * rim * 0.25 * (1.0 - metal) * (1.0 - gloss);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
 
+    // what the forge left on the piece (SPEC §44.11), as the weapons show theirs: set in the pixel art, a texel at a
+    // time, on its steel only, and lit like the plate it is in
+    int forged = int(marks + 0.5);
+    if (forged != 0 && state.w < 0.5) {
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float steel = smoothstep(0.35, 0.6, metal) * (1.0 - step(0.002, emit));
+        if ((forged & 1) != 0) {
+            // a scale flaw: the bar came out of the fire late, and patches of dull blue-grey scale never left the plate
+            float patch = smoothstep(0.52, 0.66, vnoise(px / 5.0 + 17.0));
+            col = mix(col, col * vec3(0.40, 0.38, 0.47) + vec3(0.012, 0.012, 0.02), patch * step(0.45, hash21(px)) * steel * 0.85);
+        }
+        if ((forged & 2) != 0) {
+            // the fold: light and dark bands a texel wide, waving across the steel (the weapons' twist: SPEC §46.9)
+            float w = (px.x + px.y) * 0.42 + 1.8 * sin(px.y * 0.31 + px.x * 0.17) + 1.4 * vnoise(px / 3.0);
+            col *= mix(1.0, mix(0.86, 1.10, smoothstep(0.35, 0.65, abs(fract(w * 0.5) * 2.0 - 1.0))), steel);
+        }
+        // the maker's mark, struck where the kit left room for it (flow with nothing glowing): cut dark, the set's own
+        // light breathing in the cut
+        if ((forged & 4) != 0 && emit < 0.002 && flow > 0.9)
+            col = col * 0.42 + accent * (0.30 + 0.12 * sin(GameTime * 240.0 * TAU * 0.25));
+    }
+
     // the world's light (sky and blocks) on everything but what glows of itself
-    col *= lightMapColor.rgb;
+    vec3 world = lightMapColor.rgb;
+    float dark = 1.0 - clamp(dot(world, vec3(0.30, 0.59, 0.11)), 0.0, 1.0);
+    col *= world;
+    // under an open sky at night what is turned up to it, and every edge, still catches the moon: a set keeps its
+    // shape in the dark (never its colours), bright metal most; none of it underground or by a fire
+    col += MOON * (0.30 * max(dot(nw, upDir), 0.0) + 0.45 * rim * up) * (0.03 + 0.20 * gloss) * (0.35 + 0.65 * max(alb.r, max(alb.g, alb.b))) * skyLight * dark;
 
     // a sheen runs feet to crown every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
+    // under the world's light, like the plate it runs on (it used to cross a figure standing in the dark)
     float cycle = fract(GameTime * 240.0);
     float band = exp(-pow((along - (cycle * 1.8 - 0.4)) * 7.0, 2.0));
-    col += band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash);
+    col += band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash) * max(world, vec3(flash));
 
     // mastery (SPEC §44.5): from II the trims (bright gloss metal) catch more light; from III what glows of itself
     // glows more, and when the wearer is low it beats with their heart (a double beat, about seventy a minute)
     float step = mastery.x;
     float trims = step >= 1.0 ? metal * gloss * smoothstep(0.35, 0.7, max(alb.r, max(alb.g, alb.b))) : 0.0;
-    col += alb.rgb * trims * (0.22 + 0.25 * spec) + accent * trims * rim * 0.25;
+    col += (alb.rgb * trims * (0.22 + 0.25 * spec) + accent * trims * rim * 0.25) * world; // lit by the world too
     float beat = 0.0;
     if (step >= 2.0 && mastery.y > 0.5) {
         float ph = fract(GameTime * 1200.0 * 1.15);
@@ -97,7 +148,9 @@ void main() {
     float pulse = flow > 0.0 ? 0.55 + 0.45 * sin(GameTime * 240.0 * TAU * 0.6 - flow * 12.0) : 1.0;
     col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6 * seams;
     col += accent * beat * (0.12 + 0.5 * emit) * 0.8;
-    col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
+    // a flare (an ability's release, the wake climbing the body when a set becomes whole) must read on plain plate too:
+    // at 0.18 it only showed on what already glowed
+    col += accent * flash * (0.34 + 0.6 * emit + 0.5 * rim);
 
     // an enchantment's own light (SPEC §45.11): a thin line of script along the piece's edges in that enchantment's
     // colour, its letters drifting feet to crown, what glows of itself taking the colour, a few pixels catching it; with

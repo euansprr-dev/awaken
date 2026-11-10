@@ -283,7 +283,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         int key = event.key();
         CloseView c = close;
         if (c != null) {
-            if (key == InputConstants.KEY_ESCAPE) {
+            if (key == dev.awaken.holo.ui.StageKeys.BACK) {
                 c.closing = true;
                 return true;
             }
@@ -310,11 +310,11 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             case InputConstants.KEY_UP -> moveCursor(0, 1);
             case InputConstants.KEY_DOWN -> moveCursor(0, -1);
             case InputConstants.KEY_RETURN -> enter();
-            case InputConstants.KEY_TAB -> {
+            case dev.awaken.holo.ui.StageKeys.NEXT -> {
                 if (wing == ARMS) wall.filter = (wall.filter + 1) % 3;
                 else terrace.filter = (terrace.filter + 1) % 3;
             }
-            case InputConstants.KEY_Q, InputConstants.KEY_E -> wing(wing == ARMS ? ARMOUR : ARMS);
+            case dev.awaken.holo.ui.StageKeys.BESIDE_BACK, dev.awaken.holo.ui.StageKeys.BESIDE_ON -> wing(wing == ARMS ? ARMOUR : ARMS);
             default -> {
                 return super.keyPressed(event);
             }

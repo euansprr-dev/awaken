@@ -54,6 +54,8 @@ final class ArmourTests {
         AwakenTests.register("armour_numbers", 20, ArmourTests::numbers);
         AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
         AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
+        AwakenTests.register("armour_whole_wakes", 40, ArmourTests::wholeWakes);
+        AwakenTests.register("armour_sounds_named", 20, ArmourTests::soundsNamed);
         AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
         AwakenTests.register("armour_forge_tune_inlay", 40, ArmourTests::tuneInlay);
         AwakenTests.register("armour_looks_accents", 20, ArmourTests::looksAccents);
@@ -131,8 +133,43 @@ final class ArmourTests {
             for (String[] pb : new String[][]{{"chestplate", "right_arm"}, {"chestplate", "left_arm"}, {"boots", "left_leg"}}) {
                 h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + pb[0] + "_" + pb[1] + ".mesh"), s.id + " dresses " + pb[1]);
             }
+            living(h, s);
         }
         h.succeed();
+    }
+
+    private static final java.util.Set<String> LIVE_BONES = java.util.Set.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg",
+            "cape0", "cape1", "cape2", "front_cloth", "back_cloth");
+    private static final java.util.Set<String> LIVE_KINDS = java.util.Set.of("turn", "tilt", "sway", "drift", "pulse");
+
+    /**
+     * A set's living parts (SPEC §44.10), where it has any: every entry of live.json names a real piece, bone and motion,
+     * ships its own mesh, and carries every number the client reads (one missing and the whole set would stand still).
+     */
+    private static void living(GameTestHelper h, ArmourSet s) {
+        String file = "/assets/awaken/armour/" + s.id + "/live.json";
+        if (!exists(file)) return;
+        com.google.gson.JsonArray parts;
+        try (InputStream in = ArmourTests.class.getResourceAsStream(file)) {
+            parts = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+        } catch (IOException | RuntimeException e) {
+            throw h.assertionException(file + " does not read: " + e);
+        }
+        h.assertTrue(!parts.isEmpty(), file + " names a part");
+        for (var el : parts) {
+            var o = el.getAsJsonObject();
+            String piece = o.get("piece").getAsString(), bone = o.get("bone").getAsString();
+            boolean real = false;
+            for (ArmorType type : ForgeSong.PIECES) real |= type.getName().equals(piece);
+            h.assertTrue(real, file + ": " + piece + " is a piece");
+            h.assertTrue(LIVE_BONES.contains(bone), file + ": " + bone + " is a bone");
+            h.assertTrue(LIVE_KINDS.contains(o.get("kind").getAsString()), file + ": " + o.get("kind") + " is a motion");
+            h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + o.get("mesh").getAsString() + ".mesh"), file + " ships " + o.get("mesh"));
+            for (String v : new String[]{"pivot", "axis", "u", "v"})
+                h.assertTrue(o.has(v) && o.getAsJsonArray(v).size() == 3, file + ": " + v + " has three numbers");
+            for (String n : new String[]{"speed", "amount", "reach", "bob", "phase", "idle", "stride", "wind", "kick"})
+                h.assertTrue(o.has(n) && o.get(n).getAsJsonPrimitive().isNumber(), file + ": " + n + " is a number");
+        }
     }
 
     private static boolean exists(String path) {
@@ -239,10 +276,15 @@ final class ArmourTests {
         m.patterns.add("halo_choir");
         m.forged.add("wildhide");
         m.masterwork.add(ArmouryMemory.key(ArmourSet.WILDHIDE, ArmorType.BOOTS));
+        m.worn.add("bellguard");
         var codec = ArmouryMemory.CODEC.codec();
         ArmouryMemory mb = codec.encodeStart(ops, m).flatMap(t -> codec.parse(ops, t)).getOrThrow();
         h.assertTrue(mb.patterns.equals(m.patterns) && mb.forged.equals(m.forged) && mb.fromMemory(ArmourSet.WILDHIDE, ArmorType.BOOTS)
                 && mb.forgedWhole(ArmourSet.WILDHIDE), "the Armoury's memory round-trips");
+        h.assertTrue(mb.wornWhole(ArmourSet.BELLGUARD) && !mb.wornWhole(ArmourSet.WILDHIDE), "schema 3's sets worn whole too");
+        var older = new net.minecraft.nbt.CompoundTag();
+        older.putInt("schemaVersion", 2);
+        h.assertTrue(codec.parse(ops, older).getOrThrow().worn.isEmpty(), "a schema 2 memory reads with no set worn whole");
         h.succeed();
     }
 
@@ -817,6 +859,84 @@ final class ArmourTests {
     }
 
     /** Puts the first n pieces of a set on (helm, cuirass, greaves, boots) and the rest off, and counts them. */
+    /**
+     * Armour's sounds (SPEC §44.12): every sound event of the module has its entry in sounds.json, and every entry and
+     * every layer names one of Minecraft's own events, never a file of ours, unless Euan kept it as built; every set is
+     * made of something, and its pieces go on with that thing's sound.
+     */
+    private static void soundsNamed(GameTestHelper h) {
+        com.google.gson.JsonObject sounds = json(h, "/assets/awaken/sounds.json"), layers = json(h, "/assets/awaken/armour/sound_layers.json");
+        int ours = 0;
+        for (var id : net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.keySet()) {
+            if (!id.getNamespace().equals(dev.awaken.Awaken.MODID) || !(id.getPath().startsWith("armour.") || id.getPath().startsWith("forge."))) continue;
+            h.assertTrue(sounds.has(id.getPath()), id + " has its entry in sounds.json");
+            for (var s : sounds.getAsJsonObject(id.getPath()).getAsJsonArray("sounds")) {
+                if (!s.isJsonObject() || !s.getAsJsonObject().has("type")) continue; // kept as built: a file of ours
+                String name = s.getAsJsonObject().get("name").getAsString();
+                h.assertTrue(name.startsWith("minecraft:") && net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT
+                        .containsKey(net.minecraft.resources.Identifier.parse(name)), id + " names Minecraft's own event, got " + name);
+                ours++;
+            }
+        }
+        h.assertTrue(ours >= 40, "armour's sounds are Minecraft's recordings by name, got " + ours);
+        for (var e : layers.entrySet()) {
+            h.assertTrue(sounds.has(e.getKey().substring(e.getKey().indexOf(':') + 1)), "a layer's event " + e.getKey() + " is in sounds.json");
+            for (var l : e.getValue().getAsJsonArray()) {
+                String name = l.getAsJsonObject().get("sound").getAsString();
+                h.assertTrue(net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(net.minecraft.resources.Identifier.parse(name)),
+                        e.getKey() + "'s layer is one of Minecraft's events, got " + name);
+            }
+        }
+        for (ArmourSet s : ArmourSet.values()) {
+            ArmourSounds.Family f = ArmourSounds.of(s);
+            h.assertTrue(ArmourSounds.move(f) != null && ArmourSounds.struck(f) != null, s.id + " has its stride and its blow");
+            if (s.hunter != null || !s.made()) continue;
+            var worn = ArmourItems.stack(s, ArmorType.CHESTPLATE).get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+            h.assertTrue(worn != null && worn.equipSound().value() == ArmourSounds.equip(s).value(), s.id + "'s cuirass goes on with its own sound");
+        }
+        h.succeed();
+    }
+
+    private static com.google.gson.JsonObject json(GameTestHelper h, String path) {
+        try (InputStream in = ArmourTests.class.getResourceAsStream(path)) {
+            if (in == null) throw h.assertionException(path + " is not shipped");
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (IOException e) {
+            throw h.assertionException(path + " does not read: " + e);
+        }
+    }
+
+    /**
+     * The moment a set becomes whole (SPEC §44.11): not for what you logged in wearing, once when the last piece goes on,
+     * remembered so the System speaks the first time only, and not again while pieces are swapped in and out.
+     */
+    private static void wholeWakes(GameTestHelper h) {
+        ServerPlayer p = survivor(h);
+        ArmourAbilities.State s = ArmourAbilities.state(p);
+        s.counted = false; // as at login, whatever ticked before
+        long never = s.wholeAt;
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.full() == ArmourSet.BELLGUARD && s.wholeAt == never && !ArmouryMemory.of(p).wornWhole(ArmourSet.BELLGUARD),
+                "what you arrive wearing does not wake");
+        wear(p, ArmourSet.BELLGUARD, 3);
+        wear(p, ArmourSet.BELLGUARD, 4);
+        long woke = s.wholeAt;
+        h.assertTrue(woke == h.getLevel().getGameTime() && ArmouryMemory.of(p).wornWhole(ArmourSet.BELLGUARD), "the last piece on: it wakes, and is remembered");
+        wear(p, ArmourSet.BELLGUARD, 3);
+        s.wholeAt = woke - 1; // a tick later, still inside the quiet time
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.wholeAt == woke - 1, "a piece swapped out and in again stays quiet");
+        s.wholeAt = woke - ArmourAbilities.WHOLE_COOLDOWN;
+        wear(p, ArmourSet.BELLGUARD, 3);
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.wholeAt == h.getLevel().getGameTime(), "after the quiet time it wakes again");
+        h.assertTrue(ArmourAbilities.wholeLine(ArmourSet.BELLGUARD).startsWith("Bellguard is whole on you. Ring:"), "the System's line names the set and its twist");
+        h.assertTrue("Bellguard, whole. Mastery I".equals(ArmourBonus.statusLine(p)), "the status line, got " + ArmourBonus.statusLine(p));
+        wear(p, ArmourSet.BELLGUARD, 3);
+        h.assertTrue("Bellguard, 3 of 4".equals(ArmourBonus.statusLine(p)), "three pieces, got " + ArmourBonus.statusLine(p));
+        h.succeed();
+    }
+
     private static void wear(ServerPlayer p, ArmourSet set, int n) {
         for (int i = 0; i < 4; i++) {
             ArmorType type = ForgeSong.PIECES[i];

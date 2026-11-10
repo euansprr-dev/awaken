@@ -98,6 +98,7 @@ public final class ArmsModule {
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
         bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsArmoury.forget(e.getEntity().getUUID()); ArmsStands.forget(e.getEntity().getUUID()); });
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
+        bus.addListener(ArmsServer::onEquip);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);
         registerCommands();

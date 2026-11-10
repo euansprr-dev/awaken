@@ -1,7 +1,16 @@
 {
   "style": "greatblade",
   "round": 3,
-  "_notes": "Round 2: the studio's shapes and timing (its defaults for the weapon's weight).",
+  "_notes": "Round 2: the studio's shapes and timing (its defaults for the weapon's weight). Round 4 (Euan 2026-11-09): the heavy charged under the view and rose; now it is held up in view over the shoulder and cleaves down.",
   "cut": {},
-  "thrust": {}
+  "thrust": {},
+  "moves": {
+    "heavy": {
+      "cut": {
+        "pre": 34.0,
+        "creep": 3.0,
+        "roll0": 18.0
+      }
+    }
+  }
 }

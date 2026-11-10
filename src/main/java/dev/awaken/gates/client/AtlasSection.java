@@ -97,12 +97,7 @@ final class AtlasSection extends UiSection {
         int ty = y + ph + 8;
         ui.textAt(c.name(), x + 6, ty, w - 12, Glass.a(Glass.TITLE, 1f), false);
         ui.textAt(tierWord(c.tier(), c.rarity()), x + 6, ty + 10, w - 12, Glass.a(tier, 1f), false);
-        var body = SignalText.wrapAtMost(c.line(), w - 12, 2, f::width);
-        int ly = ty + 21;
-        for (String l : body) {
-            g.text(f, l, x + 6, ly, Glass.a(Glass.LABEL, 0.85f), false);
-            ly += 9;
-        }
+        ui.boxAt(c.line(), x + 6, ty + 21, w - 12, 2, Glass.a(Glass.LABEL, 0.85f), false); // fitted, never cut (SPEC §57.6)
         String stats = "Moods " + c.moods().size() + "/" + c.moodsAll() + (c.secretsAll() > 0 ? " · Secrets " + c.secrets().size() + "/" + c.secretsAll() : "");
         ui.textAt(stats, x + 6, y + h - 11, w - 12, Glass.a(Glass.LABEL, 0.7f), false);
         if (hover) g.tooltip(f, f.split(Component.literal(details(c)), 240), ui.mouseX(), ui.mouseY());

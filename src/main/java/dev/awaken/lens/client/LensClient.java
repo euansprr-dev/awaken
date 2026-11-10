@@ -59,6 +59,65 @@ public final class LensClient {
     // Lens 2's light (Cinematic and Ultra): created the first time either tier is chosen, kept until the game closes
     private static LensFrame lensFrame;
     private static LensHeightfield heightfield;
+    // the Sun Pass's block map (SPEC §22 "Steady Light"): which blocks near the camera stop the sun
+    private static LensBlocks blocks;
+    static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
+    // the lit air (SPEC §22 "Steady Light"): which air near the camera the sun reaches, for its rays
+    private static LensLit litAir;
+    static final Identifier LIT = Awaken.id("textures/effect/lens_lit.png");
+    private static boolean sunPass = true;
+    private static @org.jspecify.annotations.Nullable Boolean forcedSunPass;
+
+    /** Autopilot {@code lens sunpass on|off|setting}: the A/B switch for the block map's shadows. */
+    public static String sunPass(String arg) {
+        forcedSunPass = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "sun pass " + (forcedSunPass != null ? forcedSunPass : "from the setting");
+    }
+    private static boolean rays;
+    private static @org.jspecify.annotations.Nullable Boolean forcedRays;
+
+    /** Autopilot {@code lens rays on|off|setting}: the A/B switch for the lit air (the sun's rays). */
+    public static String rays(String arg) {
+        forcedRays = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "rays " + (forcedRays != null ? forcedRays : "on with the Sun Pass") + (litAir != null ? ", " + litAir.report() : "");
+    }
+
+    // what Lens's own tick work costs the render thread (the heightfield, the block map, the lit air's hand-over): the
+    // sum, the worst and the count since the last report
+    private static final long[] costSum = new long[3], costMax = new long[3];
+    private static int costTicks;
+
+    private static void cost(int what, long nanos) {
+        costSum[what] += nanos;
+        costMax[what] = Math.max(costMax[what], nanos);
+        if (what == 0) costTicks++;
+    }
+
+    /** Autopilot {@code lens cost}: the tick work's mean and worst time since the last call, and starts over. */
+    public static String cost() {
+        int n = Math.max(1, costTicks);
+        String out = String.format(java.util.Locale.ROOT,
+                "tick cost over %d ticks, mean/worst ms: heightfield %.3f/%.2f, block map %.3f/%.2f, lit air %.3f/%.2f%s", costTicks,
+                costSum[0] / 1.0e6 / n, costMax[0] / 1.0e6, costSum[1] / 1.0e6 / n, costMax[1] / 1.0e6, costSum[2] / 1.0e6 / n, costMax[2] / 1.0e6,
+                litAir != null ? "; " + litAir.report() : "");
+        java.util.Arrays.fill(costSum, 0L);
+        java.util.Arrays.fill(costMax, 0L);
+        costTicks = 0;
+        return out;
+    }
+
+    /** How much of the sun reaches a point by the lit air, 0..1; -1 where it has no answer (LensParticles' motes). */
+    static float litAir(double x, double y, double z) {
+        return rays && litAir != null ? litAir.at(x, y, z) : -1f;
+    }
     private static boolean lit, sunHere;
     private static float lightStrength, rain, warmth;
     private static boolean moonLight;
@@ -108,6 +167,22 @@ public final class LensClient {
     private static boolean temporal = true;
     private static @org.jspecify.annotations.Nullable Boolean forcedTemporal;
 
+    // the Air (SPEC §22 "Steady Light"): the lensAir setting, or the autopilot's override for A/Bs
+    private static boolean air = true;
+    private static @org.jspecify.annotations.Nullable Boolean forcedAir;
+    // the game's sky colour and star brightness this frame (what it drew behind the sun, moon and stars)
+    private static float skyR, skyG, skyB, starBrightness;
+
+    /** Autopilot {@code lens air on|off|setting}: the A/B switch for the Air. */
+    public static String air(String arg) {
+        forcedAir = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "air " + (forcedAir != null ? forcedAir : "from the setting");
+    }
+
     /** Autopilot {@code lens temporal on|off|setting}: the A/B switch for the interleaved clouds and light. */
     public static String temporal(String arg) {
         forcedTemporal = switch (arg.trim()) {
@@ -149,6 +224,7 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
         // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
@@ -182,12 +258,19 @@ public final class LensClient {
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
-        temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
-        boolean off = setting == AwakenConfig.Client.LensLook.OFF;
+        air = forcedAir != null ? forcedAir : AwakenConfig.Client.LENS_AIR.get();
+        // (with the Air the clouds and light are always spread over frames: its clouds are walked exactly, so a carried
+        // pixel is as true as a fresh one, and its larger light buffer is sized for it. Measured on the Dell at Euan's
+        // settings: 13.0 ms of GPU time without, 11.0 with)
+        temporal = forcedTemporal != null ? forcedTemporal : (AwakenConfig.Client.LENS_TEMPORAL.get() || air);
+        sunPass = forcedSunPass != null ? forcedSunPass : AwakenConfig.Client.LENS_SUN_PASS.get();
+        // the VFX tier is ImmersiveVFX alone: no Lens at all, story scenes included (without that mod it reads as Swift)
+        boolean vfx = setting == AwakenConfig.Client.LensLook.VFX && Companions.immersiveVfxLoaded();
+        boolean off = setting == AwakenConfig.Client.LensLook.OFF || vfx;
         // a story scene's look plays like a cutscene even with Lens off (unless the player said no), then fades out
         boolean scene = overrideLook != null || tearStep > 0 || linger > 0;
         if (linger > 0) linger--;
-        boolean on = (!off || scene && scenesAllowed()) && !Companions.shaderPackActive();
+        boolean on = (!off || scene && !vfx && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : switch (setting) {
             case CINEMATIC -> CINEMATIC;
             case ULTRA -> ULTRA;
@@ -256,9 +339,25 @@ public final class LensClient {
         sunHere = mc.level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD;
         if (lit && sunHere) {
             var at = mc.gameRenderer.mainCamera().blockPosition();
+            long t0 = System.nanoTime();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
+            long t1 = System.nanoTime();
+            if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
+            cost(0, t1 - t0);
+            cost(1, System.nanoTime() - t1);
         }
-        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null);
+        rays = lit && sunHere && sunPass && air && (forcedRays != null ? forcedRays : true) && blocks != null && litAir != null;
+        if (rays) {
+            var at = mc.gameRenderer.mainCamera().blockPosition();
+            long t0 = System.nanoTime();
+            litAir.tick(blocks, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y, moonLight ? -sunDir.z : sunDir.z,
+                    at.getX(), at.getZ());
+            cost(2, System.nanoTime() - t0);
+        } else if (litAir != null) {
+            litAir.forget();
+        }
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
+                air && sunHere, sunDir.y, rain);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
@@ -389,8 +488,12 @@ public final class LensClient {
         // registered before the chain that reads them first loads: a post pass keeps the texture it found then
         lensFrame = new LensFrame();
         heightfield = new LensHeightfield();
+        blocks = new LensBlocks();
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
+        litAir = new LensLit();
+        Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
+        Minecraft.getInstance().getTextureManager().register(LIT, litAir.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
     }
 
@@ -401,8 +504,16 @@ public final class LensClient {
      */
     private static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent e) {
         var state = e.getRenderState();
+        var sky = state.skyRenderState;
+        if (sky.skyColor != null) {
+            skyR = sky.skyColor.x();
+            skyG = sky.skyColor.y();
+            skyB = sky.skyColor.z();
+        }
+        starBrightness = sky.starBrightness;
+        // (with the Air on, Lens's clouds are part of its sky: drawn whatever the Clouds video setting says)
         cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
-                && e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF;
+                && (air || e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF);
         if (!cloudsHere) return;
         cloudColour = state.cloudColor;
         cloudHeight = state.cloudHeight;
@@ -439,7 +550,13 @@ public final class LensClient {
         float weather = Math.max(0f, rain - dev.awaken.living.client.StormSky.localRain());
         float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + weather * 0.4f) : 0f;
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
-        lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
+        // (the drift by the frame's own share of the tick: stepped twenty times a second, clouds drawn exactly showed it)
+        double drift = ((ticks % 768_000L) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) * 0.04;
+        lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, drift, cloudColour);
+        lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
+        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
+        lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
+                rays && litAir.valid());
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

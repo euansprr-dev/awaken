@@ -30,7 +30,9 @@ public final class RealmTests {
     }
 
     /** Every skin on the crawl generator: each has to play on any seed. */
-    private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs"};
+    private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs",
+            "awaken:sunken_stacks", "awaken:sporewells", "awaken:cinder_workings", "awaken:frozen_cells", "awaken:glass_warrens", "awaken:stopped_works",
+            "awaken:silvered_halls", "awaken:sealed_wing", "awaken:sleepless_ward", "awaken:unlit_stair", "awaken:rime_hollows", "awaken:green_dark"};
 
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
@@ -368,22 +370,44 @@ public final class RealmTests {
             }
             h.succeed();
         });
-        // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
+        // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does.
+        // A layout comes from the seed alone, whatever the kind. In the suite every kind is tried on seed 1 (a great run: a shaft, a chasm,
+        // both traps, two Wardens) and on one seed no other kind is tried on: 34 checks, about four seconds each on the Mac and far more on
+        // GitHub's runners, where the whole suite has 45 minutes. The wide sweep (eight seeds a kind, 104 layouts) is run by hand whenever
+        // the generator or a skin changes: AWAKEN_CRAWL_SEEDS=8 tools/gradle.sh 1700 runGameTestServer -Ptests=realm_generated
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
-            for (String program : CRAWLS) for (long seed = 1; seed <= 6; seed++) {
+            int perKind = 2;
+            String wide = System.getenv("AWAKEN_CRAWL_SEEDS");
+            if (wide != null) try {
+                perKind = Math.max(2, Math.min(40, Integer.parseInt(wide.trim())));
+            } catch (NumberFormatException ignored) {}
+            Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
+            List<String> bad = new java.util.ArrayList<>();
+            for (int k = 0; k < CRAWLS.length; k++) for (int i = 0; i < perKind; i++) {
+                String program = CRAWLS[k];
+                long seed = i == 0 ? 1 : i == 2 ? 2 : 100 + k * 40L + i; // the wide sweep holds every seed the suite tries
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
                 String at = program + " seed " + seed + ": ";
                 var walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
-                if (!walk.unreachable().isEmpty()) h.fail(at + "can't reach " + walk.unreachable());
+                if (!walk.unreachable().isEmpty()) bad.add(at + "can't reach " + walk.unreachable());
                 var route = dev.awaken.gates.realms.check.RouteCheck.check(land, walk);
-                if (!route.problems().isEmpty()) h.fail(at + route.summary() + ": " + route.problems());
+                if (!route.problems().isEmpty()) bad.add(at + route.summary() + ": " + route.problems());
                 int half = land.halfSize();
                 FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
-                if (!r.clean()) h.fail(at + r.summary());
-                if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) h.fail(at + "the Lord's door or a fight's doors are missing");
+                if (!r.clean()) bad.add(at + r.summary());
+                if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) bad.add(at + "the Lord's door or a fight's doors are missing");
+                var rolled = (dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?>) land;
+                sizes.add(rolled.size().name());
+                shapes.add(rolled.shape().name());
             }
+            // every fault is listed in the log, so one run says everything that is wrong
+            for (String line : bad) dev.awaken.Awaken.LOG.error("[realms] rolled crawl: {}", line);
+            if (!bad.isEmpty()) h.fail(bad.size() + " rolled crawls are wrong, the first: " + bad.get(0));
+            // so many seeds must not all be the same run: on the wide sweep every size and every shape turns up
+            if (sizes.size() < (perKind >= 8 ? 3 : 2) || shapes.size() < (perKind >= 8 ? 4 : 2)) h.fail("the seeds rolled only " + sizes + " and " + shapes);
+            dev.awaken.Awaken.LOG.info("[realms] rolled crawls: {} kinds on {} seeds each, sizes {}, shapes {}", CRAWLS.length, perKind, sizes, shapes);
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)

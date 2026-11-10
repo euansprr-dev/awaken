@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "name": "The Frozen Cells",
+  "line": "The monks cut these cells into the mountain to be alone with the cold, and the cold has had the place to itself ever since.",
+  "form": "dungeon",
+  "theme": "frost_monastery",
+  "ranks": [
+    "C",
+    "B"
+  ],
+  "land": {
+    "program": "awaken:frozen_cells",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:gate_frost_monastery"
+    ],
+    "lens": "frozen_cells",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "dust",
+      "drips"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "abbot_of_frost",
+    "seat": "under_the_ice"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

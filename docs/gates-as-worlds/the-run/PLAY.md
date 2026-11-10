@@ -16,8 +16,25 @@ Stand anywhere in the overworld, as an admin:
 | The Hollow Hills | `/awaken gate realm_enter E awaken:hollow_hills 1` | Barrow passages rolled from the seed |
 | The Root Cellars | `/awaken gate realm_enter E awaken:root_cellars 1` | A temple's undercroft rolled from the seed |
 | The Tallow Runs | `/awaken gate realm_enter E awaken:tallow_runs 1` | Wax runs rolled from the seed |
+| The Cinder Workings | `/awaken gate realm_enter E awaken:cinder_workings 1` | A burning mine rolled from the seed |
+| The Sporewells | `/awaken gate realm_enter E awaken:sporewells 1` | Fungal wells rolled from the seed |
+| The Sunken Stacks | `/awaken gate realm_enter D awaken:sunken_stacks 1` | A drowned library rolled from the seed (rank D) |
+| The Frozen Cells | `/awaken gate realm_enter C awaken:frozen_cells 1` | A monastery's cells under ice, rolled from the seed (rank C) |
+| The Glass Warrens | `/awaken gate realm_enter D awaken:glass_warrens 1` | Burrows under the glass desert, rolled from the seed (rank D) |
+| The Stopped Works | `/awaken gate realm_enter D awaken:stopped_works 1` | A foundry stopped mid-stroke, rolled from the seed (rank D) |
+| The Silvered Halls | `/awaken gate realm_enter C awaken:silvered_halls 1` | A mirror palace's back halls, rolled from the seed (rank C) |
+| The Sealed Wing | `/awaken gate realm_enter C awaken:sealed_wing 1` | A sealed laboratory wing, rolled from the seed (rank C) |
+| The Sleepless Ward | `/awaken gate realm_enter C awaken:sleepless_ward 1` | A house as a bad dream remembers it, rolled from the seed (rank C) |
+| The Rime Hollows | `/awaken gate realm_enter C awaken:rime_hollows 1` | Ice caves under the monastery's mountain, rolled from the seed (rank C) |
+| The Green Dark | `/awaken gate realm_enter E awaken:green_dark 1` | Jungle caves under the temple, rolled from the seed |
+| The Unlit Stair | `/awaken gate realm_enter A awaken:unlit_stair 1` | A shrine cut down into nothing, rolled from the seed (rank A) |
 
-The last five take any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
+A seed also decides how long a rolled run is and which way it goes: short, standard or great (a great one has a second
+Warden and about fifteen legs), and delving, plunging, climbing to a Lord at the top, or sprawling nearly level. The layout
+comes from the seed alone, so the same number gives the same layout in every kind: seed 1 is a great delve with a shaft and
+a chasm you cross on pillars, seed 2 a short plunge down two shafts, seed 3 a short climb, seed 5 a standard delve.
+
+Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a
 creative player, and packs do not notice one.
 
@@ -57,5 +74,10 @@ creative player, and packs do not notice one.
 - The Hour Crypt still looks flatter and bluer than its painting, and The Quiet Barrow is still short of its painting (listed
   in `../round-two/STATUS.md`). This work was about play, not those looks.
 - The rolled dungeons are plainer than a gate built by hand from a painting. They are meant to be the short gates in the mix.
-- The three skins the builders wrote (Hollow Hills, Root Cellars, Tallow Runs) have been checked on the bench and by test on
-  six seeds each, and looked at once.
+- Every rolled kind is checked by test on eight seeds, 104 different layouts in all (each can be walked end to end, nothing
+  floats, every fight has room). All seventeen kinds have been seen in the real game.
+- The Sporewells' walls were a clutter of five blocks on its first walk; it was rewritten and its second walk reads as a
+  fungus cave, still the busiest kind. The Glass Warrens glowed over half its walls; that is turned down, and its second
+  walk is calmer. The Unlit Stair is the darkest kind and The Rime Hollows the brightest.
+- A great run's chasm was too dark in the real game. Every shaft and chasm is lit by the generator now, and that was seen
+  working in The Lower Combs, The Silvered Halls and The Sealed Wing.

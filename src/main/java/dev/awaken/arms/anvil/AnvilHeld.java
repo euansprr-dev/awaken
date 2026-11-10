@@ -126,8 +126,8 @@ final class AnvilHeld {
             headline = moved.isEmpty() ? "To Temper " + Upgrades.roman(to) : moved.getFirst().label() + " " + moved.getFirst().from() + " to " + moved.getFirst().to();
             if (to < Upgrades.MAX_TEMPER && !moved.isEmpty()) {
                 Upgrades.Change most = Upgrades.temperChanges(p, weapon, Upgrades.MAX_TEMPER).getFirst();
-                says.add(new AnvilPayloads.Say(AnvilPayloads.Say.PLAIN, "At most it can take Temper " + Upgrades.roman(Upgrades.MAX_TEMPER) + ", which would make its "
-                        + most.label().toLowerCase(java.util.Locale.ROOT) + " " + most.to() + "."));
+                // it read "At most it can take Temper VI, which would make its damage 12.": the anvil draws six pips and this at the end
+                says.add(new AnvilPayloads.Say(AnvilPayloads.Say.MOST, most.label() + " " + most.to()));
             }
         }
         String button = t.target() > t.from() ? "Temper it to " + Upgrades.roman(t.target()) : "Temper it";

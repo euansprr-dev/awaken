@@ -601,6 +601,19 @@ def bake_all(styles=None):
     return old
 
 
+def bake_moves(names):
+    """Solves only the named moves (style:move) into DATA, the rest of it as it was."""
+    from multiprocessing import Pool
+    jobs = [tuple(n.split(":")) for n in names]
+    old = load()
+    with Pool(min(6, len(jobs))) as pool:
+        for style, mv, res in pool.imap_unordered(rig_one, jobs):
+            old.setdefault(style, {})[mv] = res
+    with open(DATA, "w") as fh:
+        json.dump({"generatedBy": "tools/art/specs/arms_rig4.py bake", "dt": DT, "styles": old}, fh, separators=(",", ":"))
+    return old
+
+
 def load():
     return json.load(open(DATA))["styles"] if os.path.exists(DATA) else {}
 

@@ -1,0 +1,6 @@
+{
+  "parent": "awaken:item/armour_piece_held",
+  "textures": {
+    "particle": "awaken:item/armour/signals_echo_helmet"
+  }
+}

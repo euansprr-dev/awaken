@@ -58,6 +58,10 @@ public final class HoloConfig {
                     "when you change slot, the way when you drift off it; hold Tab for the rest on your wrist), with a dot only when you",
                     "can mine, place or use something. CLEAR_CROSSHAIR is the same with the crosshair kept. CLASSIC is the HUD as it was.")
             .defineEnum("screen", dev.awaken.core.api.HudState.Screen.CLEAR);
+    public static final ModConfigSpec.BooleanValue CLASSIC_BAND = B
+            .comment("The K menu as it was before the stage (SPEC 57): a panel beside you with its pages in a column.",
+                    "Kept for one build while the stage is new; with it off, K fills the view with the band's glass.")
+            .define("classicBand", false);
     public static final ModConfigSpec SPEC = B.build();
 
     // cached once a tick
@@ -68,6 +72,8 @@ public final class HoloConfig {
     static boolean hudFade = true;
     static BandSize bandSize = BandSize.NORMAL;
     static dev.awaken.core.api.HudState.Screen screen = dev.awaken.core.api.HudState.Screen.CLEAR;
+    static boolean classicBand;
+    static Boolean forcedClassicBand;
     /** Overrides for the autopilot (null = use the config). */
     static HudMotion forcedHudMotion;
     static StatusStyle forcedStyle;
@@ -92,6 +98,7 @@ public final class HoloConfig {
             inventoryStyle = forcedInventory != null ? forcedInventory : INVENTORY_STYLE.get();
             hudFade = forcedHudFade != null ? forcedHudFade : HUD_FADE.get();
             bandSize = BAND_SIZE.get();
+            classicBand = forcedClassicBand != null ? forcedClassicBand : CLASSIC_BAND.get();
             screen = forcedScreen != null ? forcedScreen : SCREEN.get();
         } catch (RuntimeException e) {
             // keep the last good values

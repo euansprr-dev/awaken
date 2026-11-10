@@ -86,7 +86,7 @@ final class ArmsFx {
                 // our own off-hand strike seen from outside: the twin lays its own ring (round 14), as in first person
                 boolean twin = mc.player != null && e.getId() == mc.player.getId()
                         && FpSwings.hand(FpSwings.style(p.style.id()), p.move) == FpSwings.Hand.OFF;
-                BladeTrail.open(e.getId(), twin ? 1 : 0, (def.active() + 1) * 50 + 30, argb, 1F);
+                if (!def.swing().form().equals("bash")) BladeTrail.open(e.getId(), twin ? 1 : 0, (def.active() + 1) * 50 + 30, argb, 1F); // a shield lays no ribbon
             }
             if (def.art().isPresent()) artWave(e, def);
             return;
@@ -149,16 +149,34 @@ final class ArmsFx {
         }
         float yaw = by.getYRot() * Mth.DEG_TO_RAD;
         float fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
-        float side = 0;
-        if (def.swish() != Archetype.Swish.THRUST) {
-            List<Float> from = def.swing().from(), to = def.swing().to();
-            float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
-            side = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
-            if (by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT) side = -side;
-        }
+        // the cut's side on the screen, by the one rule everything that answers a blow reads (the baked blade's own way)
+        float side = dev.awaken.arms.ArmsRules.side(def, by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT);
         dev.awaken.core.api.CombatFeedback.blow(target.getId(), fx * (1 - 0.6F * Math.abs(side)) + rx * side, fz * (1 - 0.6F * Math.abs(side)) + rz * side,
                 Mth.clamp(def.motion() / 1.2F, 0.6F, 3F));
     }
+
+    /**
+     * Where a blade glanced off a block (SPEC §25 "Weight in the Hand", stage 5): sparks off stone and metal, duller chips
+     * of light off wood, thrown out of the face and on along the blade's way ({@code travel}, in the world; zero for a
+     * thrust, whose sparks come straight back), started a little off the face. Earth and soft things only shed their own
+     * block's chips.
+     * <p>
+     * The guard's sparks, not a body's: a wall is struck within a blade's length of the eye, and the effects engine shows
+     * no glow inside 1.5 blocks and only part of one inside 4 (so nothing fills the view). A body's sparks at a wall were
+     * never seen at all (the proof tours' film, 10 Nov). These are the ones made for arm's length: drawn at any distance
+     * from the eye and sized for it, under the size that adds a deflect's ring.
+     */
+    static void glance(Vec3 at, Vec3 normal, Vec3 travel, int kind) {
+        boolean hard = kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD;
+        if (!hard && kind != dev.awaken.arms.ArmsWalls.GLANCE_WOOD) return;
+        Vec3 from = at.add(normal.scale(GLANCE_OFF));
+        Vec3 way = normal.scale(0.7).add(travel.scale(0.7)).normalize();
+        FxClient.guardSpark(from.x, from.y, from.z, way.x, way.y, way.z, hard ? GLANCE_STONE : GLANCE_WOOD, hard ? 0.85F : 0.5F, true);
+    }
+
+    /** How far off a block's face a glance's sparks start (blocks), and their light: warm off stone and metal, pale tan off wood. */
+    private static final double GLANCE_OFF = 0.08;
+    private static final int GLANCE_STONE = 0xFFB85C, GLANCE_WOOD = 0xD8B884;
 
     /** Where a blade landed, along the line from the wielder. */
     static void hit(Entity target, Entity by, Archetype.MoveDef def, dev.awaken.arms.Blow b) {

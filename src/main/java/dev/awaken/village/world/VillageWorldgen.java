@@ -40,9 +40,18 @@ public final class VillageWorldgen {
     public static final DeferredHolder<MapCodec<? extends StructurePlacement>, MapCodec<dev.awaken.village.road.RoadPlacement>> ROAD_LATTICE =
             PLACEMENTS.register("road_lattice", () -> dev.awaken.village.road.RoadPlacement.CODEC);
 
+    /** (SPEC §28.9) Tall features keep off the land roads and settlements use. */
+    private static final DeferredRegister<MapCodec<? extends net.minecraft.world.level.levelgen.placement.PlacementModifier>> MODIFIERS =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.PLACEMENT_MODIFIER_TYPE, dev.awaken.Awaken.MODID);
+
+    static {
+        MODIFIERS.register("clear_of_settlements", () -> dev.awaken.village.road.ClearOfSettlements.CODEC);
+    }
+
     public static void init(IEventBus modBus) {
         TYPES.register(modBus);
         PIECES.register(modBus);
         PLACEMENTS.register(modBus);
+        MODIFIERS.register(modBus);
     }
 }

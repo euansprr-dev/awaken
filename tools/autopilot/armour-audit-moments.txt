@@ -1,0 +1,183 @@
+# Armour polish audit (moments and marks: the wake, a piece in the hand, in a frame and on the ground, forge marks). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit6 creative 5156
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 150 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone
+cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+opt fov 50
+wait 20
+wait 260
+cmd item replace entity @s armor.head with awaken:lordscale_helmet
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+cmd item replace entity @s armor.legs with awaken:lordscale_leggings
+cmd item replace entity @s armor.feet with awaken:lordscale_boots
+cmd item replace entity @s armor.head with minecraft:air
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 30
+shot m_lordscale_wake_0
+cmd item replace entity @s armor.head with awaken:lordscale_helmet
+wait 2
+shotnow m_lordscale_wake_a
+wait 2
+shotnow m_lordscale_wake_b
+wait 2
+shotnow m_lordscale_wake_c
+wait 2
+shotnow m_lordscale_wake_d
+wait 3
+shotnow m_lordscale_wake_e
+wait 3
+shotnow m_lordscale_wake_f
+wait 4
+shotnow m_lordscale_wake_g
+wait 6
+shotnow m_lordscale_wake_h
+wait 220
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
+cmd item replace entity @s armor.feet with awaken:halo_choir_boots
+cmd item replace entity @s armor.head with minecraft:air
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 30
+shot m_halo_choir_wake_0
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+wait 2
+shotnow m_halo_choir_wake_a
+wait 2
+shotnow m_halo_choir_wake_b
+wait 2
+shotnow m_halo_choir_wake_c
+wait 2
+shotnow m_halo_choir_wake_d
+wait 3
+shotnow m_halo_choir_wake_e
+wait 3
+shotnow m_halo_choir_wake_f
+wait 4
+shotnow m_halo_choir_wake_g
+wait 6
+shotnow m_halo_choir_wake_h
+wait 220
+cmd item replace entity @s armor.head with awaken:bellguard_helmet
+cmd item replace entity @s armor.chest with awaken:bellguard_chestplate
+cmd item replace entity @s armor.legs with awaken:bellguard_leggings
+cmd item replace entity @s armor.feet with awaken:bellguard_boots
+cmd item replace entity @s armor.feet with minecraft:air
+camera first
+hud on
+opt fov 70
+cmd tp @s 0.5 150 0.5 0 0
+look 0 10
+wait 220
+cmd item replace entity @s armor.feet with awaken:bellguard_boots
+wait 7
+shotnow m_wake_fp_a
+wait 6
+shotnow m_wake_fp_b
+wait 30
+shot m_wake_line
+hud off
+hud on
+cmd item replace entity @s weapon.mainhand with awaken:galewing_helmet
+camera first
+wait 12
+shot m_held_helmet_fp
+cmd item replace entity @s weapon.mainhand with awaken:galewing_chestplate
+camera first
+wait 12
+shot m_held_chestplate_fp
+cmd item replace entity @s weapon.mainhand with awaken:galewing_leggings
+camera first
+wait 12
+shot m_held_leggings_fp
+cmd item replace entity @s weapon.mainhand with awaken:galewing_boots
+camera first
+wait 12
+shot m_held_boots_fp
+cmd item replace entity @s weapon.mainhand with awaken:sunward_helmet
+cmd item replace entity @s weapon.offhand with awaken:hollowheart_chestplate
+wait 10
+shot m_held_both_fp
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot m_held_front
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd summon minecraft:item_frame -3 152 10 {Facing:2b,Item:{id:"awaken:sunward_helmet"}}
+cmd summon minecraft:item -2.5 150.2 8.5 {Item:{id:"awaken:sunward_helmet",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item_frame -2 152 10 {Facing:2b,Item:{id:"awaken:halo_choir_helmet"}}
+cmd summon minecraft:item -1.3 150.2 8.5 {Item:{id:"awaken:halo_choir_helmet",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item_frame -1 152 10 {Facing:2b,Item:{id:"awaken:hollowheart_chestplate"}}
+cmd summon minecraft:item -0.10000000000000009 150.2 8.5 {Item:{id:"awaken:hollowheart_chestplate",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item_frame 0 152 10 {Facing:2b,Item:{id:"awaken:galewing_chestplate"}}
+cmd summon minecraft:item 1.0999999999999996 150.2 8.5 {Item:{id:"awaken:galewing_chestplate",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item_frame 1 152 10 {Facing:2b,Item:{id:"awaken:bladeward_leggings"}}
+cmd summon minecraft:item 2.3 150.2 8.5 {Item:{id:"awaken:bladeward_leggings",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item_frame 2 152 10 {Facing:2b,Item:{id:"awaken:nightcourt_boots"}}
+cmd summon minecraft:item 3.5 150.2 8.5 {Item:{id:"awaken:nightcourt_boots",count:1},PickupDelay:32767,Age:-32768}
+camera first
+opt fov 50
+cmd tp @s 0.5 150 5.0 0 -4
+wait 30
+shot m_frames
+cmd tp @s 0.5 150 6.6 0 28
+wait 14
+shot m_ground
+cmd kill @e[type=minecraft:item_frame]
+cmd kill @e[type=minecraft:item]
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:0}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:0}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:0}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:0}}}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:3}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:3}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:3}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:3}}}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",quality:1,flaw:1b}}}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:3}}}}}
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[110f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},chest:{id:"awaken:vaultbreaker_chestplate",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},legs:{id:"awaken:vaultbreaker_leggings",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}},feet:{id:"awaken:vaultbreaker_boots",components:{"awaken:forged":{set:"vaultbreaker",quality:1,flaw:1b}}}}}
+opt fov 30
+cmd tp @s 0.5 150 2.5 0 4
+wait 30
+shot m_marks_row
+opt fov 40
+cmd tp @s -3.5 150 5.3 0 2
+wait 12
+shot m_marks_0
+cmd tp @s -1.5 150 5.3 0 2
+wait 12
+shot m_marks_1
+cmd tp @s 0.5 150 5.3 0 2
+wait 12
+shot m_marks_2
+cmd tp @s 2.5 150 5.3 0 2
+wait 12
+shot m_marks_3
+cmd tp @s 4.5 150 5.3 0 2
+wait 12
+shot m_marks_4
+quit

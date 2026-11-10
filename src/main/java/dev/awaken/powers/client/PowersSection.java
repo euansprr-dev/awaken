@@ -36,7 +36,7 @@ final class PowersSection implements StatusSections.Section {
     private static final int CELL = 22, PAD = 3;
     private static final int KEYCAP = 9;
 
-    private static @Nullable String selected;
+    static @Nullable String selected;
     // the card's height fits the longest description you own, so the page never jumps as you hover
     private static int cardFor = -1, cardOwned = -1, cardH;
 
@@ -68,7 +68,7 @@ final class PowersSection implements StatusSections.Section {
         return 0xFF000000 | Glass.EDGE;
     }
 
-    private static List<PowerType> owned(Loadout l) {
+    static List<PowerType> owned(Loadout l) {
         List<PowerType> out = new ArrayList<>();
         for (Loadout.Owned o : l.owned().values()) {
             PowerType t = PowerRegistry.get(o.id());
@@ -247,7 +247,7 @@ final class PowersSection implements StatusSections.Section {
     }
 
     /** What to press now, in plain words. */
-    private static String hint(PowerType show, @Nullable PowerType pick) {
+    static String hint(PowerType show, @Nullable PowerType pick) {
         if (show.isPassive()) return "A passive is always on: it needs no key.";
         if (show != pick) return "Click it to pick it.";
         return switch (show.slot) {
@@ -259,7 +259,7 @@ final class PowersSection implements StatusSections.Section {
     }
 
     /** "Mastery 34% to level 4: Corona", or "Mastered". */
-    private static String masteryLine(int level, float progress, PowerType t) {
+    static String masteryLine(int level, float progress, PowerType t) {
         if (level >= Loadout.MAX_LEVEL) return "Mastered";
         String next = PowerLadder.entry(t.path) == null ? "" : ": " + PowerLadder.name(t.path, level + 1).getString();
         return "Mastery " + (int) Math.floor(100 * progress) + "% to level " + (level + 1) + next;
@@ -317,7 +317,7 @@ final class PowersSection implements StatusSections.Section {
         g.fill(x + w - 1, y + h - t, x + w, y + h, c);
     }
 
-    private static String trim(double v) {
+    static String trim(double v) {
         return v == Math.floor(v) ? String.valueOf((int) v) : String.format(Locale.ROOT, "%.1f", v);
     }
 
@@ -347,7 +347,7 @@ final class PowersSection implements StatusSections.Section {
     }
 
     /** Puts the picked power on key s, or says why not. */
-    private static void equip(int s) {
+    static void equip(int s) {
         Loadout l = ClientPowers.loadout();
         PowerType t = PowerRegistry.get(selected == null ? "" : selected);
         if (l == null || t == null) return;
@@ -400,7 +400,7 @@ final class PowersSection implements StatusSections.Section {
         return false;
     }
 
-    private static void click() {
+    static void click() {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 }
