@@ -58,7 +58,7 @@ def main():
         rows = [(n, c) for n, c in rows if have(n)]
         strip = ""
         if rows:
-            strip = '<div class="three">' + "".join(figure(n, c) for n, c in rows) + "</div>"
+            strip = '<div class="strip">' + "".join(figure(n, c) for n, c in rows) + "</div>"
         s = s.replace("@@FIG:" + key + "@@", strip)
     # a mock-up's background
     for key, name in ns["IMGS"].items():

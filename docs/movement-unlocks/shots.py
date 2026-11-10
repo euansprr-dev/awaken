@@ -6,6 +6,7 @@ TOURS = {
     "belfry": J + "fights-belfry-41447743108",
     "cathedral": J + "fights-cathedral-41493288235",
     "movement": M + "movement-now-42840884113",
+    "vow": "run-autopilot/screenshots-ci/unlock-vow-42851970427",
 }
 # page picture -> (tour, shot, crop as fractions (x0, y0, x1, y1) or None)
 CUTS = {
@@ -13,6 +14,9 @@ CUTS = {
     "sky_now": ("cathedral", "cath_09_open", None),
     "sov_now": ("movement", "g_sovereign_back_02", None),
     "wings_now": ("movement", "d_glide_back_04", None),
+    "vow_a": ("vow", "vow_06", None),
+    "vow_b": ("vow", "vow_12", None),
+    "spire": ("vow", "spire_01_up", None),
 }
 # @@FIG:key@@ -> (picture, caption)
 FIGS = {
@@ -24,17 +28,23 @@ FIGS = {
 }
 # @@FIG:key@@ -> [(picture, caption), ...] as a row of three
 STRIPS = {
-    "vow_strip": [],
+    "vow_strip": [
+        ("vow_a", "<b>The vault's rope scene: built, tested, and out of reach in a new world.</b> The rope has just pulled the player up the pylon. Its words, \"The line is yours\", are drawn underneath the vault's own discovery card."),
+        ("vow_b", "<b>Then it makes you use it.</b> \"Reach the beacon mast\", with a ring of light on the mast at the left."),
+    ],
+    "leap_strip": [
+        ("spire", "<b>A Tether Spire, from its plaza.</b> There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope."),
+    ],
     "wings_strip": [],
 }
 # @@IMG:key@@ -> the picture behind a mock-up
 IMGS = {
-    "vow_place": "vow_place",
+    "vow_place": "vow_b",
     "leap_place": "leap_place",
     "wings_place": "wings_place",
     "sky_place": "sky_now",
 }
 TEXT = {
-    "VOW_PIN_X": "58%", "VOW_PIN_Y": "42%",
+    "VOW_PIN_X": "28%", "VOW_PIN_Y": "25%",
     "BEAM_X": "64%", "BEAM_H": "46%",
 }

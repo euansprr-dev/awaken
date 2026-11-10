@@ -88,6 +88,9 @@ Hours are the pacing sim's balanced player; a careful player takes about a third
    "Sovereign."). *Verified in code; the tours' pictures are in 2.4.*
 9. **Mastery, which gates three of the six new moves, has no face** but one quiet line over the hotbar when a level is
    gained. *Verified.*
+10. **The moment can be buried.** `VowScene` holds nothing back (the gifts' `AscentScene` does hold tips and notices).
+    In the vault's tour the rope's words, "The line is yours." and its key line, were drawn underneath the vault's own
+    DISCOVERY card, and neither could be read. *Seen: run 42851970427, `vow_06`.*
 
 ### 2.3 Root causes
 
@@ -100,8 +103,14 @@ Hours are the pacing sim's balanced player; a careful player takes about a third
 
 ### 2.4 The tours
 
-Filled in when the runs land (run ids, what each picture shows, anything that went wrong). The page's "today" pictures
-are theirs.
+All on GitHub's macOS runners, 10 Nov. The page's pictures are cut from them by `build_page.py cut` (`shots.py` names
+each).
+
+- **`unlock-vow.txt`, run 42851970427 (passed, 18 shots).** The Tether Vow forced at the spawn vault (D-rank without the
+  rope, the door opened by command). The line threw itself and pulled the player up the pylon in 13 ticks ("zip arrived:
+  up onto the top"); "Reach the beacon mast." showed with its ring on the mast. Its words were drawn under the vault's
+  DISCOVERY card (finding 10). The tour's first two shots, meant for the E-rank stir, are of Carillon: the command had
+  not moved the player yet, so the stir is not pictured. Then a Tether Spire from its plaza.
 
 ## 3. Approaches
 
@@ -209,7 +218,7 @@ thing to aim at, and everything leaves the screen the second you have done it.
 
 | Part | What it is | Reuses |
 |---|---|---|
-| The gift | The rising light and swell, 2.5 s, one plain sentence. Never over a fight: a rung given mid-fight shows only the key strip | `AscentScene`, the sister plan's sounds |
+| The gift | The rising light and swell, 2.5 s, one plain sentence. Never over a fight: a rung given mid-fight shows only the key strip. The whole Lesson claims the notification director (§26): nothing else is drawn over it, and what was held plays after | `AscentScene`, `Notices`, the sister plan's sounds |
 | Your key, on the thing | A key cap with your own binding and up to seven words, pinned to the target in the world (the pylon's plate, the chasm's far lip, the pier's end). Off screen it sits at the edge with an arrow. One at a time | `Kit`'s key caps (§57.1), the rope's marker |
 | The gold figure | A pale gold you does the move once, ahead of you, from a recorded run. Again after 12 s if you haven't | `GauntletGhost`, `AscentRoutes` |
 | Do it once | The server sees the state begin (it already counts this for tips). The prompt goes at that tick | `AscentTips` |

@@ -21658,7 +21658,9 @@ screen's edge with an arrow when off it; a pale gold figure doing the move once 
 `AscentRoutes`), again after 12 s; gone at the tick the server sees the state begin; then a four-second card of the move's
 keys. The band's Powers place shows a row a rung with its keys as caps and its mastery as ten pips, the next pip that gives
 a move marked. The six moves of §62 use the same Lesson where each can first be done. Reduced motion: the key cap only.
-Nothing is cut off (§57.6).
+Nothing is cut off (§57.6). A Lesson claims the notification director (§26) for its length, the Vow's included: today
+`VowScene` holds nothing back, and the audit's tour (run 42851970427) shows its words drawn under the vault's own
+DISCOVERY card.
 
 **63.4 Tasks.** One thread, `rank.way_up`, Gates and rank, Lead voice, one row at a time, each `.teaches` its rung. Nothing
 is listed for flight or the form (a Proving is never named ahead, §43).
