@@ -141,7 +141,7 @@ public final class StationTests {
     }
 
     /**
-     * The bench view (SPEC §63.1): a table's own view is the same from wherever you stand on one side of it, it looks
+     * The bench view (SPEC §64.1): a table's own view is the same from wherever you stand on one side of it, it looks
      * down on the grid from over the near edge, every slot lies inside the room at seven window sizes with and without
      * side panels, and a click on a slot's middle picks it.
      */
@@ -206,7 +206,7 @@ public final class StationTests {
     }
 
     /**
-     * The carrying hand (SPEC §63.2): with a stack held over any slot, at seven window sizes and for either main hand,
+     * The carrying hand (SPEC §64.2): with a stack held over any slot, at seven window sizes and for either main hand,
      * the arm's far end is under the inventory strip or off the frame (no sleeve end in view), the arm never lies over
      * the result, and the only squares under the sleeve are nearer to you than the one the stack is over (they are then
      * shown through it).
@@ -255,7 +255,7 @@ public final class StationTests {
     }
 
     /**
-     * Presence (SPEC §63.5): a player who opens a crafting table's menu just after using the table is marked as at it,
+     * Presence (SPEC §64.5): a player who opens a crafting table's menu just after using the table is marked as at it,
      * with what lies on it; a slot they change is passed on as a beat, at most one every three ticks; a menu that is not
      * the station's, or one opened without using a station, marks nobody; shutting the menu takes the mark away. A box
      * shows its six largest stacks, one of each kind of thing, biggest first.
@@ -308,7 +308,7 @@ public final class StationTests {
     }
 
     /**
-     * Living slots (SPEC §63.7): a stack sent from one slot to another without carrying it is one move with its count; a
+     * Living slots (SPEC §64.7): a stack sent from one slot to another without carrying it is one move with its count; a
      * stack split across two slots is two; a change the pointer made is none; a tick that changed more than six slots is
      * none (a Tidy shows its own).
      */
@@ -346,7 +346,7 @@ public final class StationTests {
     }
 
     /**
-     * The six workstations (SPEC §63.8): each block is its kind (a grindstone only on the floor), each kind's slots lie
+     * The six workstations (SPEC §64.8): each block is its kind (a grindstone only on the floor), each kind's slots lie
      * on its own block, apart from one another, and from each of its three views, from all four sides, at four window
      * sizes, every slot is inside the room and a click on its middle picks it.
      */
@@ -418,7 +418,7 @@ public final class StationTests {
     }
 
     /**
-     * Every block a player works has a touch (SPEC §63.9): vanilla's by class, ours by id (each id is a real block: a
+     * Every block a player works has a touch (SPEC §64.9): vanilla's by class, ours by id (each id is a real block: a
      * renamed block would lose its hand silently); what the hand holds decides a put from a take, and the Forge's blows
      * from its palm; how high the thing is against the body is low, middle or high.
      */

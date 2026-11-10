@@ -104,7 +104,7 @@ public final class AscentPilot {
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
             case "hover" -> dev.awaken.anims.client.station.StationClient.devHover(Integer.parseInt(a[1]));
-            // clip <name>|stop: a body clip on your own body, so a tour can film a pose in third person (SPEC §63.5)
+            // clip <name>|stop: a body clip on your own body, so a tour can film a pose in third person (SPEC §64.5)
             case "clip" -> {
                 if (a[1].equals("stop")) dev.awaken.core.api.PlayerClips.stop(p.getId());
                 else Awaken.LOG.info("[ascent] pilot clip {} {}", a[1], dev.awaken.core.api.PlayerClips.play(p.getId(), a[1], a.length > 2 ? Integer.parseInt(a[2]) : 2));

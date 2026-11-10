@@ -1,4 +1,4 @@
-# Hands at Work, as built (SPEC 63, docs/interactions/PLAN.md): one look at every scene. The crafting table from two
+# Hands at Work, as built (SPEC 64, docs/interactions/PLAN.md): one look at every scene. The crafting table from two
 # blocks, a corner, four blocks and third person (the bench view, the carrying hand, piles and counts); the furnace's
 # crouch; the six workstations; a chest and a barrel (the lid in your hands, looking in); the four screens on glass; a
 # lever and a bell; and each body clip on your own body in third person. Shots and clips h_*. Screens are shut with

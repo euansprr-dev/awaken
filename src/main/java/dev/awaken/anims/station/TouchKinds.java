@@ -63,7 +63,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * What kind of touch a block gets (SPEC §24 "Touches", §63.9), by what the block is, for both sides: the client plays
+ * What kind of touch a block gets (SPEC §24 "Touches", §64.9), by what the block is, for both sides: the client plays
  * your own hands from it, and the server passes it on so everyone who can see you sees your body reach (a clip by how
  * the hand works and how high the thing is). Vanilla's blocks by class, ours by id. The action itself is the block's
  * own: this only names the gesture.
@@ -142,7 +142,7 @@ public final class TouchKinds {
         return null;
     }
 
-    // ---- the body, for others (SPEC §63.9) --------------------------------------------------------------------------
+    // ---- the body, for others (SPEC §64.9) --------------------------------------------------------------------------
 
     /** How high the thing touched is against the body: under 0.6 over the feet low, under 1.4 middle, else high. */
     public static int height(double feetY, double hitY) {

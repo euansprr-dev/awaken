@@ -80,7 +80,7 @@ final class Touches {
     private static int ticks;
     private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
     /**
-     * The box whose lid you lifted and whose screen is open (SPEC §63.7): the view looks in while it is, and the hands
+     * The box whose lid you lifted and whose screen is open (SPEC §64.7): the view looks in while it is, and the hands
      * let the lid down when it shuts. Its screen opens at once (it used to wait four ticks for the hands): no click waits.
      */
     private static @Nullable BlockPos box;
@@ -236,7 +236,7 @@ final class Touches {
             return;
         }
         if (p.isShiftKeyDown() && !p.getMainHandItem().isEmpty()) return; // a sneak-use places or uses the item
-        // a station whose scene is about to open: its own hands take over (SPEC §63.2), so no touch plays over them
+        // a station whose scene is about to open: its own hands take over (SPEC §64.2), so no touch plays over them
         if (FirstPerson.stationsOn.getAsBoolean() && !p.isShiftKeyDown() && dev.awaken.anims.station.StationView.kindOf(s) != null) return;
         Touch t = forUse(s);
         if (t == null) return;
@@ -420,7 +420,7 @@ final class Touches {
     }
 
     /**
-     * The glass rises out of the box (SPEC §63.7): for a quarter of a second after a box's screen opens, two thin lines
+     * The glass rises out of the box (SPEC §64.7): for a quarter of a second after a box's screen opens, two thin lines
      * of light run from the box's mouth, where the world shows it, to the foot of the screen's panel. The slots are in
      * their places and clickable from the first frame; only the light moves.
      */
@@ -455,7 +455,7 @@ final class Touches {
     }
 
     /**
-     * Looking in (SPEC §63.7): while a box's screen is open the view tips toward the box, up to four degrees, and
+     * Looking in (SPEC §64.7): while a box's screen is open the view tips toward the box, up to four degrees, and
      * narrows a touch. Your own look is not moved, and with reduced motion nothing happens.
      */
     static void lookIn(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles e) {

@@ -53,7 +53,7 @@ public final class FirstPerson {
         public float glow;
         /**
          * The arms lie along their own lines in the world, root to fist (a station's arm reaching over a table, SPEC
-         * §63.2), at {@link #handDistance}'s scale, instead of rising to the fist from under the frame's corner.
+         * §64.2), at {@link #handDistance}'s scale, instead of rising to the fist from under the frame's corner.
          */
         public boolean worldArms;
         /** With {@link #worldArms}: how much longer than its model each arm is drawn (right, left; 1 for as it is). */
@@ -61,7 +61,7 @@ public final class FirstPerson {
         /** Warm light on the arms from a fire they reach toward (0..1), added to the block light they are drawn in. */
         public float fireLight;
         /**
-         * The source has the hands though it draws none this frame (a furnace scene between reaches, SPEC §63.6): the
+         * The source has the hands though it draws none this frame (a furnace scene between reaches, SPEC §64.6): the
          * game's own hand and what it holds stay out of the view.
          */
         public boolean noHands;
@@ -369,7 +369,7 @@ public final class FirstPerson {
         return p != null && p.armsInWorld();
     }
 
-    /** Station scenes go to the station's own view (the feel settings' stationBenchView, SPEC §63.1); off, they frame from your eyes. */
+    /** Station scenes go to the station's own view (the feel settings' stationBenchView, SPEC §64.1); off, they frame from your eyes. */
     public static volatile java.util.function.BooleanSupplier stationBench = () -> true;
     /** The station scenes' switch (the feel settings' stationScenes): the crafting table worked by hand. */
     public static volatile java.util.function.BooleanSupplier stationsOn = () -> true;

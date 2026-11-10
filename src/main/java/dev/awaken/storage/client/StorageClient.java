@@ -87,7 +87,7 @@ public final class StorageClient {
         Class<?> c = s.getClass(), m = s.getMenu().getClass();
         return (c == ContainerScreen.class || c == GlassChestScreen.class) && m == ChestMenu.class
                 || (c == ShulkerBoxScreen.class || c == GlassShulkerScreen.class) && m == ShulkerBoxMenu.class
-                // the glass hopper and dispenser (anims.client.glass, SPEC §63.9) are subclasses of vanilla's
+                // the glass hopper and dispenser (anims.client.glass, SPEC §64.9) are subclasses of vanilla's
                 || (c == DispenserScreen.class || c.getSuperclass() == DispenserScreen.class && c.getName().startsWith("dev.awaken.")) && m == DispenserMenu.class
                 || (c == HopperScreen.class || c.getSuperclass() == HopperScreen.class && c.getName().startsWith("dev.awaken.")) && m == HopperMenu.class;
     }

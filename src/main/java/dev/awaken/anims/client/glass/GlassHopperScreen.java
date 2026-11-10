@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.HopperMenu;
 
-/** A hopper in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §63.9). */
+/** A hopper in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §64.9). */
 final class GlassHopperScreen extends HopperScreen {
     private final Inventory inventory;
     private long opened;

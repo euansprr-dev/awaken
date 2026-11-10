@@ -3,7 +3,7 @@ package dev.awaken.anims.station;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Living slots' reading of a tick (SPEC §63.7), kept free of client classes so the GameTests can check it: from what
+ * Living slots' reading of a tick (SPEC §64.7), kept free of client classes so the GameTests can check it: from what
  * the slots held and what they hold now, which stacks travelled from one slot to another. Only moves made without
  * carrying (a shift-click, a number key) count: a stack that came from or went to the pointer was in your hand. A tick
  * that changed more than {@link #MOST} slots (a Tidy, a sort) is left to whoever made it.

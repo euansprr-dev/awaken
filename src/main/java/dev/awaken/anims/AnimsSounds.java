@@ -8,7 +8,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The sounds of working a station by hand (SPEC §63.4). Every one is one of Minecraft's own recordings, named in
+ * The sounds of working a station by hand (SPEC §64.4). Every one is one of Minecraft's own recordings, named in
  * {@code src/main/merge/anims/assets/awaken/sounds.json} by its vanilla sound event with a volume and a pitch: the game
  * plays its own files and none of Mojang's audio is in the repo. First picks; the owner's ear decides.
  */

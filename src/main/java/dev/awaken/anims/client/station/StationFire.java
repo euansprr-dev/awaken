@@ -14,7 +14,7 @@ import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The fire's answer at a furnace you are working (SPEC §63.6): fuel onto the coals brings a flare and a handful of
+ * The fire's answer at a furnace you are working (SPEC §64.6): fuel onto the coals brings a flare and a handful of
  * embers of our own (small bright squares that rise, drift and go out; not the game's particles), and while its screen
  * is open a glow stands over the coal bed as high as the fuel that is left. Drawn for you, in the scene only; the
  * furnace itself is vanilla's.
@@ -81,7 +81,7 @@ final class StationFire {
         }
     }
 
-    /** A bubble of its own in a bottle that is brewing (SPEC §63.8): from a point in the bottle, straight up. */
+    /** A bubble of its own in a bottle that is brewing (SPEC §64.8): from a point in the bottle, straight up. */
     static void bubble(double x, double y, double z) {
         int i = next++ % N, j = i * 3;
         AT[j] = x + (rnd() - 0.5) * 0.05;

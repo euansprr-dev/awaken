@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.CrafterMenu;
 
-/** A crafter (its switched-off slots and its redstone mark are still vanilla's own) in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §63.9). */
+/** A crafter (its switched-off slots and its redstone mark are still vanilla's own) in the band's glass: vanilla's own screen underneath, only the drawing changed (SPEC §64.9). */
 final class GlassCrafterScreen extends CrafterScreen {
     private final Inventory inventory;
     private long opened;

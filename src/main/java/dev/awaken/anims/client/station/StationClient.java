@@ -36,7 +36,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Station scenes (Hands P5, SPEC §24; Hands at Work, SPEC §63). At a crafting table the view goes to the table's own
+ * Station scenes (Hands P5, SPEC §24; Hands at Work, SPEC §64). At a crafting table the view goes to the table's own
  * place over its near edge (the bench view: the same from wherever you stand), the 3×3 grid IS the table top (each
  * ingredient lies on its square in the world, the result on the right border), and your own hand carries the stack on
  * your pointer over the grid and sets it down ({@link StationHands}). At a furnace, smoker or blast furnace the view crouches to its
@@ -76,7 +76,7 @@ public final class StationClient {
     private static final long[] LAID_AT = new long[10];
     private static long resultAt;
     private static final long SETTLE_NS = 110_000_000L, RESULT_NS = 200_000_000L;
-    /** What was used up as a result was taken (SPEC §63.3): each square's stack as it was, and when; and when the rest gave. */
+    /** What was used up as a result was taken (SPEC §64.3): each square's stack as it was, and when; and when the rest gave. */
     private static final ItemStackRenderState[] FLECKS = new ItemStackRenderState[10];
     private static final long[] FLECK_AT = new long[10];
     private static long gaveAt;
@@ -137,7 +137,7 @@ public final class StationClient {
             return;
         }
         reframe(s);
-        // a brewing stand at work: a bubble in each bottle, every third tick (SPEC §63.8)
+        // a brewing stand at work: a bubble in each bottle, every third tick (SPEC §64.8)
         if (kind == Kind.BREWING && ticks % 3 == 0 && s.getMenu() instanceof net.minecraft.world.inventory.BrewingStandMenu brew && brew.getBrewingTicks() > 0
                 && !FirstPerson.reducedMotion.getAsBoolean()) {
             for (int i = 0; i < 3; i++) {
@@ -179,7 +179,7 @@ public final class StationClient {
                 else StationSounds.lay(table, now, false);
                 if (StationHands.carrying() || !menu.getCarried().isEmpty()) StationHands.laid(i);
                 else if (!tapped) { StationHands.pass(i); tapped = true; }
-                // fuel onto the coals: the fire answers (SPEC §63.6)
+                // fuel onto the coals: the fire answers (SPEC §64.6)
                 if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationFire.flare(station);
             } else if (taken || (!more && !menu.getCarried().isEmpty())) {
                 StationHands.lifted();
@@ -189,7 +189,7 @@ public final class StationClient {
                     gaveAt = System.nanoTime();
                 } else StationSounds.lift(table);
                 // taking what an anvil, a smithing table or a grindstone made: the other hand's blows on the work,
-                // sparks off each (SPEC §63.8); the block's own sound is vanilla's
+                // sparks off each (SPEC §64.8); the block's own sound is vanilla's
                 if (taken && (kind == Kind.ANVIL || kind == Kind.SMITHING || kind == Kind.GRINDSTONE)) StationHands.blows(kind == Kind.SMITHING ? 1 : 0, kind == Kind.ANVIL ? 3 : 1);
             } else if (!tapped && i != res) { StationHands.pass(i); tapped = true; }
         }
@@ -471,7 +471,7 @@ public final class StationClient {
             StationCamera.place(w, w, (float) e.getPartialTick(), e.getYaw(), e.getPitch(), 0);
             return;
         }
-        // a furnace: the view goes down the way a body does (SPEC §63.6). Down first, on the knees; then in to the
+        // a furnace: the view goes down the way a body does (SPEC §64.6). Down first, on the knees; then in to the
         // mouth; a nod forward as the knees bend, and a small settle as it arrives.
         float u = progress((float) e.getPartialTick());
         float down = 1 - (1 - u) * (1 - u) * (1 - u) * (1 - u), across = Ease.at(Ease.IN_OUT_SINE, u);

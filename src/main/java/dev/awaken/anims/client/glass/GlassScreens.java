@@ -13,7 +13,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 
 /**
- * Vanilla's hopper, dispenser and dropper, crafter and beacon screens on the band's glass (SPEC §63.9), as storage put
+ * Vanilla's hopper, dispenser and dropper, crafter and beacon screens on the band's glass (SPEC §64.9), as storage put
  * chests and shulker boxes (§56): each replaces only the exact vanilla class, and only while the bag is glass, with a
  * subclass that changes the drawing and nothing else. The loom and the lectern keep vanilla's own screens: the loom's
  * is its pattern list and banner as much as its slots, and a lectern shows a book.

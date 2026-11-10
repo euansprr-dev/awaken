@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * An unregistered client camera entity, like the existing cinematic camera; the real player never moves. It carries the
- * view to a station's own place: a furnace's mouth, a table's bench view (SPEC §24, §63.1).
+ * view to a station's own place: a furnace's mouth, a table's bench view (SPEC §24, §64.1).
  */
 final class StationCamera extends Entity {
     private final EntityDimensions dimensions;
@@ -38,7 +38,7 @@ final class StationCamera extends Entity {
     }
 
     /**
-     * The view leaves your eyes for a place of the station's own (a furnace's mouth, a table's bench view, SPEC §63.1),
+     * The view leaves your eyes for a place of the station's own (a furnace's mouth, a table's bench view, SPEC §64.1),
      * when the way there is clear. {@code from}: where the view is now when it isn't at your eyes (a third-person
      * camera), else null; the view glides from there and goes back there.
      */
@@ -63,7 +63,7 @@ final class StationCamera extends Entity {
 
     /**
      * Where the view is: {@code across} of the way to the station's place over the ground and {@code down} of the way
-     * in height (a body goes down first and then in: SPEC §63.6), less {@code dip} (blocks: the settle as it arrives).
+     * in height (a body goes down first and then in: SPEC §64.6), less {@code dip} (blocks: the settle as it arrives).
      */
     static void place(float across, float down, float partial, float yaw, float pitch, double dip) {
         Minecraft mc = Minecraft.getInstance();

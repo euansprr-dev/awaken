@@ -2,7 +2,7 @@
 
 Plan record. **Approved in full by Euan on 10 Nov 2026, after trying the page: "Go with all recommendations and the
 full plan".** All ten decisions in §7 are yes as recommended. **Built** on branch `claude/interactions-plan-145244`, all
-seven stages in one run, then tested (§8 says what was built, what the look tours showed and what is left). SPEC §63 is
+seven stages in one run, then tested (§8 says what was built, what the look tours showed and what is left). SPEC §64 is
 the game as it is. Not merged; not yet played or heard by a person.
 Approval page (private): https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B (his answers are its `answers/d1` to `d10`).
 
@@ -395,7 +395,7 @@ look); third-person clips need a film to judge.
 
 ## 8. As built (10 to 11 Nov 2026)
 
-All seven stages were coded in one run and are on the branch; SPEC §63 describes each part. This section is the honest
+All seven stages were coded in one run and are on the branch; SPEC §64 describes each part. This section is the honest
 ledger against §4.
 
 **Built as planned:** the bench view from any standing place and from third person (§4.1); the carrying hand on the
@@ -429,7 +429,7 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
   Fixed. Its 36 shots before the crash showed the bench view, the arm, piles, counts, the result on the border, the
   crouch, embers and the workstations all drawing, and three faults: the table's view turned a few degrees by its
   result, the workstations framed so close that three slots filled the screen, and the game's own hand in the corner
-  before a furnace. All fixed (SPEC §63.1, §63.6) and guarded by tests (square on; the whole top in the room).
+  before a furnace. All fixed (SPEC §64.1, §64.6) and guarded by tests (square on; the whole top in the room).
 - Run 42883680457 (second, all 69 shots): the fixes hold (square views, whole workstations, no stray hand, the hint
   gone); the glass screens, the lever and bell, and the body clips (a lunge before a furnace, a bend to a chest, arms
   to a table) all draw. It showed three more faults, fixed: the stacks that should lie in an open chest were drawn

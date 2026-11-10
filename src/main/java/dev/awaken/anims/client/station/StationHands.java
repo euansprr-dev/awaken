@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The hands at a station (SPEC §63.2). While a stack is on your pointer and the pointer is over the station, your main
+ * The hands at a station (SPEC §64.2). While a stack is on your pointer and the pointer is over the station, your main
  * hand holds that stack: the stack is drawn exactly where the pointer's own line meets the air a little over the
  * surface (no lag: what you click is what it is over), the fist sits just short of it and one straight arm lies back
  * across the table toward you, its far end under the inventory strip. Empty, the hand waits at the near edge under the
@@ -339,7 +339,7 @@ final class StationHands {
                 sleeveOn = true;
             }
         }
-        // a lit fire lights the skin of an arm that reaches toward it (SPEC §63.6)
+        // a lit fire lights the skin of an arm that reaches toward it (SPEC §64.6)
         if (furnace && screen != null && screen.getMenu() instanceof net.minecraft.world.inventory.AbstractFurnaceMenu f) {
             rig.fireLight = Math.min(1F, (f.isLit() ? 0.45F : 0F) + StationFire.level());
         }

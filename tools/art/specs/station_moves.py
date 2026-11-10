@@ -1,4 +1,4 @@
-"""Your body at a station, as everyone else sees it in third person (SPEC §63.5; Player Animation Library clips, played by
+"""Your body at a station, as everyone else sees it in third person (SPEC §64.5; Player Animation Library clips, played by
 dev.awaken.anims.client.station.StationBodies through core.api.PlayerClips).
 
     python3 tools/art/specs/station_moves.py            the clips (+ clipping report) -> player_animations/station_moves.json
@@ -86,7 +86,7 @@ breathe("station_far", FAR, [nudge(FAR, ra=(-2, 0, 0)), nudge(FAR, re=2)], 40, "
 there_and_back("station_far_reach", FAR, pose(FAR, lean=8, ra=(-80, -2, 0), re=6), 6, "the arm out and back")
 
 
-# ---- quick touches (SPEC §63.9): the body reaches to the thing, by how the hand works and how high the thing is ------
+# ---- quick touches (SPEC §64.9): the body reaches to the thing, by how the hand works and how high the thing is ------
 STAND = pose()
 LOW = dict(lean=30, rl=(14, 0, 5), rk=34, ll=(-12, 0, -5), lk=30)   # bent to something under the knee
 HIGH = dict(lean=-4)                                                 # up to something at the head
