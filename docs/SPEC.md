@@ -847,8 +847,10 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.client.FirstPersonDress` (client; §44.1, 2026-11-10) — what your own limbs wear in first person:
   `register(Dresser)`, `limb(Limb, PoseStack, SubmitNodeCollector, light)` (the pose on the limb's bone) and
   `hand(AvatarRenderer, HumanoidArm, PoseStack, SubmitNodeCollector, light)` (straight after vanilla's own hand
-  draw). Whoever draws a first-person limb asks; the armour answers. A power's light on the arm belongs here too
-  when it is built (the dresser's draw takes an energy and an accent already).
+  draw). Whoever draws a first-person limb asks; the armour answers. A light on the limb passes through here too (§32.N,
+  "The light on what you wear"): `glow(rgb, amount)` / `glowColour()` / `glowAmount()` tell the dresser the light on the limb
+  about to be dressed, and `register(Surfaces)` / `surface(Limb)` hand back the shape of what it wears (`Surface`: triangles,
+  normals, texels, the texture with its material half, a style name, an accent colour) so the light can be drawn on that shape.
 - `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
@@ -11939,8 +11941,38 @@ What follows replaces that. Nothing here changes what a power does to a number u
   space (x from `x0/16` to `x1/16`, y `-2/16` at the shoulder end to `10/16` at the hand, z `±2/16`). `ArmLayers.add(Layer)`;
   `Layer.draw(Arm, PoseStack, SubmitNodeCollector)`; `Arm` says which arm, whether it holds something, and the light keyed on it.
   The arm's armour (§44.1, `core.client.FirstPersonDress`) is drawn first, stretched with the arm, and `Arm.dressed` says it was:
-  what a layer puts on the skin may be under a plate. The light then draws itself 0.16 nearer your eye along the line of sight (the
-  same place on the screen, on the plate in place of the skin), leaving out the faces turned away.
+  what a layer puts on the skin may be under a plate. A layer's `prepare(Arm)` runs before the arm is dressed.
+- **The light on what you wear** (`powers.client.fx.ArmourLight`; Euan, 10 Nov 2026: the light must "map to the shape of the armor
+  itself and the arm, instead of sitting below it and looking glitchy", with "custom styling for each armor piece for the different
+  powers"). On an arm that wears armour the light is never drawn on the skin. Two things pass through `FirstPersonDress` (§12):
+  - `glow(rgb, amount)`, set by the light before the arm is dressed and cleared after. The armour answers in its own shader: for that
+    draw its accent is the type's colour and it flares by the amount (`ArmourClient.dressArm`), so the piece's edges and what glows of
+    itself take the colour.
+  - `surface(limb)`: the shape of what the limb wears (the armour gives the worn chestplate's arm mesh, its texture and the set's id).
+    The light cuts it into cells, one a texel of every face, once a shape. Each cell plays a part read from the set's own texture
+    (its colour half and its material half): **cloth**, **plate**, a **line** (a trim: bright glossy metal, or the set's accent
+    colour wherever it is painted, that is a rim or a strip a texel or two wide; the middle of a wide one is plate or cloth again)
+    or what **glows of itself** (material blue over 0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
+    own face.
+  The light is drawn cell by cell on the faces themselves, 0.003 off them (faces turned from the eye left out), with a soft additive
+  spill round the lit lines only (when every lit cell spilt, the spills added up to a pale wash over the whole arm). Lines are crisp (cover 0.25 + 0.75 of their light); cloth and plate are tinted, never painted out
+  (0.1 + 0.55), and take the light by their own painting (times 0.5 + 0.65 of the texel's brightness), so the piece still reads. Rule for every type: **the set's lines carry the type, and the type's motif lies on the rest one
+  face at a time**, moving the way it moves on bare skin (to the fist, or back from the hand). Kinetic: the lines pulse, a seam
+  wanders down each face. Heat: the hand's end burns, the lines glow hot, embers in the rest. Velocity: streaks down every line and
+  one lane a face. Flight: motes, the lines pale. Gravity: falling bands, ink at the wrist with the lines lit over it. Energy and
+  Prism: a pulse down the lines, a forking vein a face. Charge: lightning crawling the lines in jumps. Shadow: ink from the hand, the
+  lines lit in it. Mind and Soul: rings round the wrist across all they cross. Architect: the lines inked in, a rule every third row.
+  Tech: the lines lit and a scan row sweeping. Spirit: tongues from the hand, taller on the lines. Frost: rime on the lines first,
+  then crystals across the rest.
+  **A set's record** (`ArmourLight.SETS`) says how its materials take it: a gain for cloth, plate, lines and glowing parts; `lead`,
+  how many rows its lines run ahead of the rest (metal conducts); `soak`, how much its cloth holds a glow where the light has been
+  (hide and cloth); `shimmer`, how much what glows of itself flickers (crystal). Records exist for the sets whose arms are finished,
+  the armour's C rank on 10 Nov 2026: Gatewrought (a leather sleeve under a plated glove: lead 1.5, soak 0.12), Vaultbreaker (steel:
+  lead 2.5), Frostwalker (hide: lead 0.5, soak 0.2), Sunward (cloth under gold bands and a stone: lead 1.5, soak 0.14, shimmer 0.5),
+  Shardcrown (crystal: shimmer 1, glowing parts 1.3). Every other set takes the default (lead 1) until its arm is finished and it
+  gets its own. `tools/art/arm_light_preview.py` draws the same cells and rules off line, a sheet a set; its `light` and
+  `ArmourLight.light` are kept line for line. A dresser that gives no shape gets the stopgap: the skin's light drawn 0.16 nearer the
+  eye along the line of sight.
 - **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style
   (15), drawn on the skin's own pixel grid (4 x 12 a face, 3 wide on slim arms) 0.004 above it, running toward the fist as the charge
   climbs, with a soft halo. A cast with no light track gets one from its age against its release tick. Powers that sit on you (Barrier,
@@ -18169,13 +18201,43 @@ blocks through stone, no marks, no danger sense).
     shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
     and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
     step brighter, to part the two.
-  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+  - **Stage 3, set by set** (limbs, belts and backs only; no helm is touched). Euan saw C-rank in his play copy
+    and said, on 11 Nov 2026: "with all B, A, and S plates... This is already great work so far. Let's fully update
+    this and finish it." C-rank:
     **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
     blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
     under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
     a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
     forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
     own (cut-ice plates, fluted gold) and nothing more.
+  - **B, A and S** (`armour_finish.PLATES`, parts named `p_*`, run before the language, night and gauntlet passes so
+    a new plate takes its set's surface and light like any other). Each set gets what its own idea was missing on
+    limbs and back, an elbow where Lordscale has one and it did not, and a sleeve where the wearer's own skin showed
+    under a pauldron (Deepcarapace, Tidebreaker, Hollowheart, Leviathan, Starfall, Riftwalker). Every box is whole
+    texels in size and joined to the suit; only Dreamsteel's and Riftwalker's plates stand a texel off, as they
+    already did. The three Hunter sets of these ranks (Veilwoven, Lordscale, Sovereign Weave) are not touched.
+    - **Deepcarapace**: a knuckled elbow with a spur swept back from it, another spur at the calf, a keel on the knee
+      like the breast's.
+    - **Cloudrunner**: the helm's and heel's feathered fins again at the forearm, swept back from a plated elbow; a
+      feather-tipped plate on each thigh.
+    - **Tidebreaker**: the crest's webbed fin and amethyst spines down the back of the forearm; a spine on the knee
+      (the spines hold their light at night, as the crest's do).
+    - **Hollowheart**: its spine: three vertebrae with their wings down the cape, where a back would be; a bone spur
+      at the elbow.
+    - **Leviathan**: the back's sail again on forearm and calf, a fin cut in three steps with a bone ray along its
+      top (lit at night with the other fins); a tooth on the knee.
+    - **Galewing**: a wing feather swept back from a steel elbow; two flight feathers laid over each thigh.
+    - **Halo Choir**: a choir's organ on the back: five pipes rising to the middle, a gold lip on each and a lit
+      mouth; a gilt elbow.
+    - **Dreamsteel**: the mirror on its back broken in three, each piece at its own depth, light in the cracks; a
+      plate on the upper arm and the thigh; a shard at the elbow.
+    - **Starfall**: the star again on the back as it fell, its tail burning up toward the shoulder; a pointed elbow.
+    - **Riftwalker**: the rift's light in the gap under the forearm's and the thigh's standing plates; the shoulder,
+      where the wearer's shirt showed, closed.
+    - **Nightcourt**: a duelist's half-cloak over the left shoulder to the elbow, in a lighter night blue with a
+      silver hem, the sword arm left free; a silver half-belt with two buttons across the back of the coat.
+    - **Signal's Echo**: the System's light down the back, three dashes that light in turn; a scanline plate on each
+      thigh; and its displaced slices of robe now really glitch (§44.10).
   - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
     one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
     kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
@@ -18532,15 +18594,19 @@ that fidgets would be wrong).
   those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
   and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
   (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
-- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+- **Six motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
   **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
   axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
-  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+  three slow sines), **pulse** (swells on a double beat) and **glitch** (jumps a texel along its axis and back for two
+  or three ticks, in about a third of its slots of 31 to 53 ticks; which slots and which way come from a hash of the
+  slot number, so every client shows the same jump with nothing sent; with the set's ability fired it tears back and
+  forth every two ticks). Any of the first five may bob up and down.
 - **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
   1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
   (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
   same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
-- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+- **The sets.** Signal's Echo: the marker turns and bobs, and the four slices of robe that sit out of line (on the
+  body, the cape and both skirts) glitch, each on its own clock, so one jumps somewhere every couple of seconds. Sunward: the rays turn slowly behind the disc. Halo Choir: the
   halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
   stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
   a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
@@ -21884,7 +21950,7 @@ Each is data on the def, judged by the server, and none changes another creature
 | An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
 | Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
 | A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
-| Planted to shoot | `.planted()` | It cannot turn while it winds up, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side |
+| Planted to shoot | `.planted()` | As a wind-up begins it squares up to its target (5 ticks, 45 degrees a tick), then cannot turn, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side. (Before the square-up it took whatever way its body faced, and a shooter backing off from you lost every shot as it began: the Riveter never fired on film.) |
 | A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
 | The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
 
@@ -21954,8 +22020,11 @@ with ordinary monsters are harder than they were between 25 Oct and this fix.
 
 **Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
 blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
-for `STRING_GAP` (5) ticks, steps in (0.42 b/t toward a target out of reach) and tells the next, with its own closing
-circle. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+for `STRING_GAP` (5) ticks, walking after a target its blow knocked back, and as it tells the next blow (with its own
+closing circle) it lunges across what is left of the gap (at most about 2.2 blocks). The first film showed why: the
+Bramble Hound's first bite knocked the dummy out of reach and its second bit air. The goal also holds through its
+rest (the 20-tick attack cooldown), so the rhythm is the monster's own, tell and rest; before, the selector stopped
+the goal after every blow and began it again at once, and creatures swung every 13 to 22 ticks instead of 28 to 40. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
 `blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
 own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
 did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
@@ -21985,7 +22054,10 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
 where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
-its fallen body goes at the end of its fall (no white death puff). Wherever a monster has matter the borrowed vanilla
+its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
+fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
+(`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
 puff, blast, portal sparkle or ink is not drawn.
 
 **Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
@@ -22026,13 +22098,19 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
 - From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
   body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
+- A gate monster's dive lands at the touch: its reach is half the two widths + 0.9 (the other fliers keep 1.3). On film
+  the Lantern Moth's blow landed a block and a half short of its target, a tenth of a second before it arrived.
+- A dormant gate monster wakes in its own matter and voice (`GateMonster.wake`), with the game's warning sound under
+  it, not the borrowed sparks. `/awaken admin monster target` and `act` rouse a dormant one (it otherwise waits for a
+  player to come near: on film the Security Unit slept through its fight).
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.
 - A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
   death that ends more than 12 px over the floor.
 - **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
-  monsters a reel, ten reels): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  monsters a reel, ten reels; `film --as <name> <id>...` writes one named reel for those monsters; frames 854x480,
+  since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
   striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
   a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.
 
