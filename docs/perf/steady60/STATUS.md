@@ -29,8 +29,8 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
 - **The late frames in flight, profiled** (`LateFrames`, autopilot `late ...`; SPEC §22 has the breakdown). The top
   cause was Sodium freeing every unloaded chunk in one frame. **Chunk pacing** (Turbo, `turboChunkPacing`,
   `dev.awaken.turbo.chunkpace`) lets three through a frame: 94.9% on time against 93.3% on alternating legs (pace-1).
-  Euan, shown the result on 10 Nov: "Push everything to the orchestrator since it's already a huge step forward".
-  The project guide's Turbo list (CLAUDE.md) still needs its line for it: this session may not edit that file.
+  **Off by default (`turboChunkPacing` false) until Euan says yes to the hook itself.** On his yes: the default to
+  true in `AwakenConfig`, and its line in CLAUDE.md's Turbo list (this session may not edit that file).
   A smaller chunk batch from the server was tried and dropped (batch-1).
 - **Tick work evened out** (autopilot `lens cost`): a 0.5 ms limit a tick for the heightfield and the block map, near
   re-reads in turn.

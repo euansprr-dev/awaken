@@ -69,7 +69,8 @@ public final class ChunkPace {
             if (gameOk == 0) Awaken.LOG.warn("[chunkpace] off: verified on Minecraft {} and NeoForge {}; this is {}, {}", MINECRAFT, NEOFORGE, mc, neo);
         }
         if (gameOk != 1) return false;
-        return forced != null ? forced : !AwakenConfig.Client.SPEC.isLoaded() || AwakenConfig.Client.TURBO_CHUNK_PACING.get();
+        // (off unless the setting says on: the hook waits for Euan's yes, and a config not loaded yet is no yes)
+        return forced != null ? forced : AwakenConfig.Client.SPEC.isLoaded() && AwakenConfig.Client.TURBO_CHUNK_PACING.get();
     }
 
     private static boolean sodium() {
