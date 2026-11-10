@@ -162,8 +162,9 @@ final class FindsDump {
                     // a column the terrace shaped and built nothing on: its ground should be there, in the land's own skin
                     if (!sc.shaped.contains(BlockPos.asLong(x, 0, z)) || sc.blocks().containsKey(BlockPos.asLong(x, want - s.y(), z))
                             || sc.blocks().containsKey(BlockPos.asLong(x, want + 1 - s.y(), z))) continue;
+                    // (not a whole block: a plant left standing at the floor falls as soon as the game looks at it)
                     var at = level.getBlockState(m.set(wx, want, wz));
-                    if (at.isAir() || at.canBeReplaced()) {
+                    if (at.getFluidState().isEmpty() && !at.isCollisionShapeFullBlock(level, m)) {
                         if (holes++ < 10) {
                             said.append("\n    hole at ").append(x).append(' ').append(want - s.y()).append(' ').append(z).append(" (the land stood at ").append(t.floor(wx, wz) - s.y()).append("):");
                             for (int y = want + 2; y >= want - 4; y--) said.append(' ').append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(m.set(wx, y, wz)).getBlock()).getPath());

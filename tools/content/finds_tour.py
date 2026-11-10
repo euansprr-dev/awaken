@@ -77,7 +77,9 @@ for part, mids in enumerate(PLACED):
            "# Look for: does each sit in its land (wall, eased ground, steps to real ground), is anything cut off, hanging or drowned."] \
         + head("monuments") + ["hud off", "opt fov 64"]
     for mid in mids:
-        out += ["cmd time set 6000", f"cmd awaken finds view {mid} 0", "wait 300", "waitpassage", "wait 100", f"cmd awaken finds view {mid} 0", "wait 100", "waitpassage", "wait 60"]
+        # (the first view looks for the nearest standing one from wherever the last was, on the server's own thread: for one
+        # eight kilometres off that took 45 seconds, and three pictures were taken of the place before it)
+        out += ["cmd time set 6000", f"cmd awaken finds view {mid} 0", "wait 1400", "waitpassage", "wait 100", f"cmd awaken finds view {mid} 0", "wait 100", "waitpassage", "wait 60"]
         for v, label in enumerate(["painting", "above", "door"]):
             out += [f"cmd awaken finds view {mid} {v}", "wait 70", f"shot {mid}_{v}_{label}"]
     out += ["info", "quit"]

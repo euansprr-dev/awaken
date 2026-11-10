@@ -23,7 +23,7 @@ hud off
 opt fov 64
 cmd time set 6000
 cmd awaken finds view clock_small 0
-wait 300
+wait 1400
 waitpassage
 wait 100
 cmd awaken finds view clock_small 0
@@ -41,7 +41,7 @@ wait 70
 shot clock_small_2_door
 cmd time set 6000
 cmd awaken finds view shaft_small 0
-wait 300
+wait 1400
 waitpassage
 wait 100
 cmd awaken finds view shaft_small 0
@@ -59,7 +59,7 @@ wait 70
 shot shaft_small_2_door
 cmd time set 6000
 cmd awaken finds view mast_fallen 0
-wait 300
+wait 1400
 waitpassage
 wait 100
 cmd awaken finds view mast_fallen 0
@@ -77,7 +77,7 @@ wait 70
 shot mast_fallen_2_door
 cmd time set 6000
 cmd awaken finds view dish_fallen 0
-wait 300
+wait 1400
 waitpassage
 wait 100
 cmd awaken finds view dish_fallen 0

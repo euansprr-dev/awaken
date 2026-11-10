@@ -69,6 +69,14 @@ public record FindsFeature() implements Feature {
         return full == Blocks.AIR ? null : full.defaultBlockState();
     }
 
+    /**
+     * The highest block to look at over a column: the land's real top with whatever stands on it (the heightmap the game
+     * keeps current while features are placed), never less than 46 over the floor nor more than 96.
+     */
+    private static int top(LevelAccessor level, int x, int z, int floor) {
+        return Math.min(floor + 96, Math.max(floor + 46, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z)));
+    }
+
     /** One of the land's own blocks, whole: what the ground of this country is made of, never something built. */
     private static boolean own(LevelAccessor level, BlockPos at, BlockState b) {
         return (skin(b) || b.is(BlockTags.DIRT) || b.is(BlockTags.BASE_STONE_OVERWORLD) || b.is(LANDS_GROUND) || b.is(Blocks.SANDSTONE) || b.is(Blocks.RED_SANDSTONE)
@@ -127,8 +135,10 @@ public record FindsFeature() implements Feature {
                 // was cleared, then loses its trunk to its own chunk's clearing, and the leaves were left in the air
                 if (x < cx0 || x > cx1 || z < cz0 || z > cz1 || dx * dx + dz * dz > cr * cr) continue;
                 // only what grows goes here; the ground is left as it is
-                int foot = Integer.MIN_VALUE;
-                for (int y = s.y() + sc.groundAt(dx, dz) + 46; y > s.y() + sc.groundAt(dx, dz); y--) {
+                // (up to whatever really stands there: a great tree on ground the terrace then cut down from under it
+                // stands higher than 46 over the floor, and its top was left hanging in the air beside the Archive)
+                int foot = Integer.MIN_VALUE, floor = s.y() + sc.groundAt(dx, dz);
+                for (int y = top(level, x, z, floor); y > floor; y--) {
                     m.set(x, y, z);
                     BlockState b = level.getBlockState(m);
                     // never what the place itself planted: past this chunk's edge the neighbour has already written its share
@@ -158,7 +168,7 @@ public record FindsFeature() implements Feature {
                     int x = s.x() + dx, z = s.z() + dz, d2 = dx * dx + dz * dz;
                     if (x < cx0 || x > cx1 || z < cz0 || z > cz1 || d2 <= cr * cr || d2 > or * or) continue;
                     int g = s.y() + sc.groundAt(dx, dz);
-                    for (int y = g + 46; y > g; y--) {
+                    for (int y = top(level, x, z, g); y > g; y--) {
                         m.set(x, y, z);
                         if (!level.getBlockState(m).is(BlockTags.LEAVES) || blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz))) continue;
                         boolean trunk = false;
@@ -188,8 +198,7 @@ public record FindsFeature() implements Feature {
             // (from the land's real top, not from twenty over the floor: where a hillside stood higher than that the
             // search began inside the hill, took its earth or rock for the land's skin and floored the terrace with
             // it, 160 squares of bare earth round one monument, and left the hillside above hanging)
-            int real = Math.min(want + 72, Math.max(want + 20, level.getHeight(level instanceof ServerLevel
-                    ? net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE : net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, x, z)));
+            int real = top(level, x, z, want);
             BlockState ground = null, land = null, stepped = null;
             boolean cut = false;
             for (; real > want - 48; real--) {
@@ -205,6 +214,14 @@ public record FindsFeature() implements Feature {
                 BlockState of = stepOf(b);
                 if (of != null) {
                     if (stepped == null) stepped = of;
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    continue;
+                }
+                // Only a whole block is ground. One of our own plants that nothing replaces (heather, bracken, clover)
+                // standing exactly at the floor was taken for it: the column stayed a block low under it, the plant
+                // fell when masonry replaced the grass it grew on, and the Sleepers' Hall had fifty pits in its lawn
+                // (the second game pictures).
+                if (!b.isCollisionShapeFullBlock(level, m)) {
                     level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     continue;
                 }
