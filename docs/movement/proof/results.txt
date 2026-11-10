@@ -1,0 +1,77 @@
+== the bench as it is: before 28 Oct (today) and the assisted rope with a bot that lets go by hand in the window (assist)
+lane   today   165.2 blocks   7.7 hits/min  hard 28/40 (rope 32, free 2)  stopped  3/40  ropes 5.1  window 0%
+lane   assist  189.7 blocks   0.2 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 4.9  window 44%
+city   today    93.4 blocks  10.5 hits/min  hard 10/40 (rope 9, free 2)  stopped 31/40  ropes 3.1  window 0%
+city   assist  243.4 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 7.8  window 45%
+forest today   165.0 blocks  11.6 hits/min  hard 36/40 (rope 48, free 8)  stopped  3/40  ropes 5.5  window 0%
+forest assist  196.3 blocks   0.6 hits/min  hard  3/40 (rope 0, free 3)  stopped  0/40  ropes 6.9  window 47%
+oak    today    92.4 blocks  10.8 hits/min  hard 27/40 (rope 29, free 7)  stopped  5/40  ropes 3.6  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  today    48.6 blocks  14.6 hits/min  hard 34/40 (rope 55, free 7)  stopped  7/40  ropes 3.4  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains today   103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+== a player who only holds the key (the rope lets go by itself at 95 degrees): the rope as it plays
+lane   assist  119.6 blocks   0.2 hits/min  hard  2/40 (rope 0, free 2)  stopped  0/40  ropes 5.0  window 0%
+city   assist  166.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 6.5  window 0%
+forest assist  123.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 6.1  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+== trial 1, holding: low anchors may swing (shortest rope 4.5)
+lane   assist   93.9 blocks   0.1 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 5.2  window 0%
+city   assist  142.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 6.6  window 0%
+forest assist  114.7 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 6.9  window 0%
+oak    assist   75.5 blocks   0.1 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 7.2  window 0%
+taiga  assist   90.6 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 4.4  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+== trial 2, holding: the sling, with a look-ahead
+lane   assist  189.1 blocks   0.3 hits/min  hard  3/40 (rope 0, free 3)  stopped  0/40  ropes 11.0  window 0%
+city   assist  223.7 blocks   0.2 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 9.3  window 0%
+forest assist  193.3 blocks   0.4 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 11.7  window 0%
+oak    assist  202.5 blocks   1.0 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 7.4  window 0%
+taiga  assist  197.6 blocks   2.5 hits/min  hard  5/40 (rope 0, free 5)  stopped  1/40  ropes 7.8  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+== trial 3, holding: the rope lets go by itself at 75, 62, 55, 50, 40 degrees
+-- 75
+lane   assist  149.1 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 4.5  window 0%
+city   assist  212.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 7.3  window 0%
+forest assist  161.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 6.1  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+-- 62
+lane   assist  194.1 blocks   0.4 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 4.6  window 0%
+city   assist  251.2 blocks   0.3 hits/min  hard  2/40 (rope 0, free 2)  stopped  1/40  ropes 8.7  window 0%
+forest assist  211.0 blocks   0.4 hits/min  hard  2/40 (rope 0, free 2)  stopped  0/40  ropes 7.1  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+-- 55
+lane   assist  215.6 blocks   1.1 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 5.1  window 0%
+city   assist  258.1 blocks   0.1 hits/min  hard  0/40 (rope 0, free 0)  stopped  1/40  ropes 8.2  window 0%
+forest assist  248.4 blocks   0.8 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 7.5  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+-- 50
+lane   assist  250.0 blocks   1.2 hits/min  hard  4/40 (rope 0, free 4)  stopped  0/40  ropes 5.6  window 0%
+city   assist  265.2 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 8.1  window 0%
+forest assist  256.2 blocks   0.7 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 8.0  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+-- 40
+lane   assist  300.8 blocks   0.1 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 6.6  window 0%
+city   assist  280.3 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  2/40  ropes 7.7  window 0%
+forest assist  289.0 blocks   0.4 hits/min  hard  3/40 (rope 0, free 3)  stopped  0/40  ropes 8.4  window 0%
+oak    assist  102.9 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+taiga  assist  101.5 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%
+== the proposal, holding: lets go at 55 degrees, with the sling
+lane   assist  253.3 blocks   0.4 hits/min  hard  3/40 (rope 0, free 3)  stopped  0/40  ropes 11.6  window 0%
+city   assist  264.8 blocks   0.1 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 9.7  window 0%
+forest assist  259.7 blocks   0.6 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 12.0  window 0%
+oak    assist  202.5 blocks   1.0 hits/min  hard  1/40 (rope 0, free 1)  stopped  0/40  ropes 7.4  window 0%
+taiga  assist  197.6 blocks   2.5 hits/min  hard  5/40 (rope 0, free 5)  stopped  1/40  ropes 7.8  window 0%
+plains assist  103.0 blocks   0.0 hits/min  hard  0/40 (rope 0, free 0)  stopped  0/40  ropes 0.0  window 0%

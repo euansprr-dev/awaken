@@ -20846,3 +20846,55 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
+
+## 62. Rope and Wings (the rope everywhere, feathered wings, powers in the air; plan docs/movement/PLAN.md, page https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w; PROPOSED 2026-11-10, not approved, nothing built)
+
+Euan, 10 Nov 2026: the swing "is just not good ... I want it to be a bit more guided, and it should feel like you're
+basically playing ... a Spider-Man game nearly"; the wings "look a bit rushed. I want them to truly feel cinematic and
+awesome"; "make sure you can use powers in the air"; and extra movement that is "truly insane, awesome to unlock". The
+plan record is `docs/movement/PLAN.md`; the approval page is built by `docs/movement/build_page.py`. **Nothing below is
+a rule of the game until he approves it.** What follows is what the audit found and what the plan proposes.
+
+**Found (verified unless marked; every bench number is `docs/movement/proof/run.sh`, the game's own swing code compiled
+without Minecraft, 40 runs of 15 s, median blocks):**
+- §17.31's planner needs an anchor 10.05 blocks over the ground (radius 6, the feet 2.5 clear, the hand 1.55 up). With
+  real-sized woods added to the bench, the assisted rope threw **0 ropes in 40 runs** in an oak wood (trunks 4-7) and a
+  spruce wood (5-8): 103 blocks, as on plains. `SwingBench`'s own "forest" is trees 13 to 21 tall.
+- §17.31's table (lane 190, city 243, forest 196) is a bot that lets go by hand in the window. A bot that **only holds
+  the key** (the rope lets go by itself at `apex` 95°) covers **120, 166, 124**. In tour run 42840884113 every let-go at
+  the top had window 0.00 and the body then moved slower than a walk for one to two seconds.
+- The held rope throws again only in the air: a landing with the key down ends the chain until a fresh press.
+- A swing that meets a wall may zip 41 blocks into a crown (a bonk of 1.16 b/t in the tour's lane run).
+- All 24 `ascent.*` sounds are synthesised; `ding_check.py` flags 8 (the throw, bite, let-go and snap among them).
+- `WingLayer` draws a wing as 14 flat strips of one painted picture; its beat turns the wing in its own plane; every
+  tier wears the same wing; closed wings aren't drawn.
+- While an Ascent state holds the body, `AscentMoves.apply` sets its motion from the state's own velocity each tick and
+  the server zeroes its copy's: a power's push on the caster is lost (Dash, the powers session's air ways, Updraft's
+  Levitation). A move of more than 3 blocks the state didn't ask for ends it (a blink closes the wings). The cast layer
+  (1500) plays under the moves layer (1600). *Read on both sides; a GameTest is the plan's stage 0.*
+- Trials, isolated (`proof/trial.patch`), holding bot: letting low anchors swing makes everything slower (oak 76, lane
+  94); a first sling with a look-ahead takes the oak wood to 203 and the spruce wood to 198; `apex` 55 takes the lane to
+  216 and the city to 258; **both together: oak 203, spruce 198, lane 253, city 265, forest 260**, no hard hit on a rope.
+
+**Proposed (docs/movement/PLAN.md §4):**
+- **The rope:** one planner, three answers in order: the swing (§17.31's numbers kept), a **sling** (a top ahead and
+  above the hand, 6-30 on: pulled toward a point 2.4 over it at 0.13 a tick² up to 1.3 b/t, let go before it, the whole
+  flight swept first), the pull up a wall (swept, 16 at most). Held, the let-go comes at `apex` 55° when the flight
+  after is clear; a landing with the key held and a run on hops into the next rope. A top reached with forward held is
+  sprung off. The first-person fist moves to the frame's lower corner. A refused rope isn't thrown at that block again for a second, and the reason
+  is logged. Marker shapes by answer. Decision 6 of 28 Oct stands: no rope in open sky. Switch `ropeGuide`.
+- **The wings:** three bones, 22 flight feathers and 24 coverts a wing, each a slab one texel thick with a stepped
+  point (about 230 boxes), drawn by `WingLayer`; poses: folded, opening (gather, spread, settle), glide, a beat about
+  the body's long axis with the feathers turned on the upstroke, dive, hover, flare; one pair for Wings, two for
+  Skyborn, six gold and a halo for the Sovereign; closed wings fold for 4 s then fade into a mark; far forms past 48
+  and 96 blocks. Switch `wingsLook`.
+- **The air:** a push from outside goes into the state's velocity (`MovementHooks.push`); a blink the client just cast
+  keeps the state; the cast's arms play over the flight clip; the aim hold (the guard, or a held power's key, keeps the
+  flight's line while the look is free); Updraft registers with `AirHooks`; an attack in flight shows.
+- **Moves:** the sling (with the rope), the spring (Tether mastery 3), the rope strike (Tether mastery 5: the pull is
+  the client's, the hit is the server's, a `PLAYER_ATTACK` and a `FightMoments.HIT`), the flare (Wings) and the skim (Wings
+  mastery 3: the glide's drag halved within 2.5 of a surface), the takeoff (Skyborn: look up, sneak 8 ticks, jump).
+- **Sound:** every movement sound as a score of Minecraft's own recordings by name, Classic or New.
+- **Bench and tests:** real woods, hills and a street of stair roofs in `SwingBench`, every gate also run by a bot that
+  only holds the key; §17.31's gates plus, holding: oak 190, lane 240, city 250, and no hard hit in free flight; one
+  GameTest a mechanism.
