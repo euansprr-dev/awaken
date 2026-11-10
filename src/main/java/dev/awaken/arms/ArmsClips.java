@@ -17,7 +17,7 @@ public final class ArmsClips {
     public static final String FILE = "assets/awaken/player_animations/arms_moves.json";
 
     /** Held while they last (loops), each with an {@code _end} settle. */
-    public static final String GUARD = "arms_guard", CHARGE = "arms_heavy_charge";
+    public static final String GUARD = "arms_guard", CHARGE = "arms_heavy_charge", SHIELD_GUARD = "arms_shieldblade_guard";
     /** A shot struck the guard: the blade knocked back toward the chest, the body rocked, braced again (once, back to {@link #GUARD}). */
     public static final String GUARD_JOLT = "arms_guard_jolt";
     /** The jolt's length in ticks (its last key: the guard pose again). */
@@ -27,7 +27,8 @@ public final class ArmsClips {
     public static final String DODGE_BACK = "arms_dodge_back", DODGE_LEFT = "arms_dodge_left", DODGE_RIGHT = "arms_dodge_right";
 
     public static final List<String> ALL = List.of("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy",
-            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", GUARD_JOLT, CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT, CHOP, CHOP + "_end",
+            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", GUARD_JOLT,
+            SHIELD_GUARD, SHIELD_GUARD + "_end", SHIELD_GUARD + "_jolt", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT, CHOP, CHOP + "_end",
             HACK, HACK + "_end");
 
     /**
@@ -37,11 +38,26 @@ public final class ArmsClips {
      * the rest, as do the styles keyed by hand (tools/art/arms_keys.py: the Daggers). Every other shares the Longsword's.
      */
     public static final java.util.Set<String> OWN_SHARED = java.util.Set.of("gauntlets", "katana", "greatblade", "maul", "spear",
-            "glaive", "scythe", "warstaff", "twinblades", "daggers");
+            "glaive", "scythe", "warstaff", "twinblades", "daggers", "shieldblade");
 
     /** Styles that hold their own heavy's draw while it charges (arms_<style>_heavy_charge: the very pose it is loosed from). */
     public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade", "maul", "spear", "glaive",
-            "scythe", "warstaff", "twinblades", "daggers");
+            "scythe", "warstaff", "twinblades", "daggers", "shieldblade");
+
+    /** The guard a style raises (the Shieldblade's, its shield up in front; every other's the blade across it). */
+    public static String guard(String style) {
+        return "shieldblade".equals(style) ? SHIELD_GUARD : GUARD;
+    }
+
+    /** Whether a clip is a guard (held while the use key is). */
+    public static boolean isGuard(@Nullable String clip) {
+        return GUARD.equals(clip) || SHIELD_GUARD.equals(clip);
+    }
+
+    /** The jolt a shot plays on a guard. */
+    public static String guardJolt(String clip) {
+        return clip + "_jolt";
+    }
 
     /** The held draw a style charges in. */
     public static String charge(String style) {
@@ -70,7 +86,7 @@ public final class ArmsClips {
     }
 
     public static boolean loops(String clip) {
-        return clip.equals(GUARD) || clip.endsWith("heavy_charge") || cuts(clip);
+        return isGuard(clip) || clip.endsWith("heavy_charge") || cuts(clip);
     }
 
     /** The chop's or the hack's loop. */

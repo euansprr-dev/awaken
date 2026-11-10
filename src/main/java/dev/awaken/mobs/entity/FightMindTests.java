@@ -148,7 +148,7 @@ public final class FightMindTests {
         boolean paused = a.on() == FightScripts.Fact.PAUSED;
         KitMoves.Move first = s.kit.moves().get(s.kit.moves().index(a.moves().get(0)));
         int wait = paused ? 76 : Math.max(s.mind.react, a.after()) + 2;
-        double edge = paused ? 3 : Mth.clamp((first.minRange() + first.maxRange()) * 0.5, first.minRange() + 0.3, first.maxRange() - 0.3);
+        double edge = paused ? 3 : standFor(h, s, first);
         Vec3[] stand = {s.at(edge)};
         s.player.setPos(stand[0]);
         s.run.idleFor(level, wait);
@@ -181,6 +181,32 @@ public final class FightMindTests {
             s.boss.discard();
             h.succeed();
         });
+    }
+
+    private static final double STAND_STEP = 0.1;
+
+    /**
+     * How far from the boss's edge to stand for this blow: the middle of its range or, as a lunge's run lengths
+     * ({@code BlowAim.RUNS}) leave thin bands it can't land from, the nearest place to that where it can.
+     */
+    private static double standFor(GameTestHelper h, Scene s, KitMoves.Move m) {
+        double low = m.minRange() + 0.3, high = m.maxRange() - 0.3, mid = Mth.clamp((m.minRange() + m.maxRange()) * 0.5, low, high);
+        for (double off = 0; off <= high - low; off += STAND_STEP) {
+            for (double edge : new double[]{mid + off, mid - off}) {
+                if (edge >= low && edge <= high && landsAround(s, m, edge)) return edge;
+            }
+        }
+        h.assertTrue(false, m.id() + " can't land from anywhere in its range");
+        return mid;
+    }
+
+    /** It lands from here and a step either way: a spot that only just lands is a coin toss on the tick it's asked. */
+    private static boolean landsAround(Scene s, KitMoves.Move m, double edge) {
+        for (double e : new double[]{edge - STAND_STEP, edge, edge + STAND_STEP}) {
+            s.player.setPos(s.at(e));
+            if (!s.run.couldLand(m, s.player)) return false;
+        }
+        return true;
     }
 
     /** At a string's fork the next blow is chosen by what you're doing now. */

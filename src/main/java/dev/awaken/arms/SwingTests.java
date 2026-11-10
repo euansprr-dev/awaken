@@ -17,6 +17,10 @@ final class SwingTests {
         AwakenTests.register("arms_swing_reload", 20, SwingTests::reload);
         AwakenTests.register("arms_feel_rules", 20, SwingTests::feelRules);
         AwakenTests.register("arms_chain_flow", 20, SwingTests::chainFlow);
+        AwakenTests.register("arms_draw_smooth", 20, SwingTests::drawSmooth);
+        AwakenTests.register("arms_dagger_stabs", 20, SwingTests::daggerStabs);
+        AwakenTests.register("arms_gauntlet_sleeves", 20, SwingTests::gauntletSleeves);
+        AwakenTests.register("arms_shieldblade_two_parts", 20, SwingTests::shieldbladeTwoParts);
     }
 
     /**
@@ -55,6 +59,36 @@ final class SwingTests {
         q.identity();
         b.apply(now + 3F, d, q);
         h.assertTrue(d.length() < 1e-5F && Math.abs(Math.abs(q.w) - 1) < 1e-5F && !b.active(now + 3F), "the new source by the end");
+
+        // a month after the machine booted (the hands' clock counts from then): the same blend, on the same frames
+        double month = 5.4E7;
+        SwingBlend late = new SwingBlend();
+        for (int i = 0; i <= 4; i++) {
+            d.set(0.4F, 0, 0);
+            q.identity();
+            late.apply(month + i * 0.25, d, q);
+        }
+        late.begin(month + 1, zero, id, zero, zero, 2F);
+        d.zero();
+        q.identity();
+        late.apply(month + 1.001, d, q);
+        h.assertTrue(Math.abs(d.x - 0.4F) < 0.01F, "a month after boot the first frame is still the last one shown (" + d.x + ")");
+        d.zero();
+        q.identity();
+        late.apply(month + 2, d, q);
+        h.assertTrue(d.x > 0.02F && d.x < 0.38F, "and the blend still decays frame by frame (" + d.x + ")");
+
+        // a hand that doesn't move across the change (a shield's shove leaves the sword at rest), its turn not quite a unit
+        // from rounding: no gap to carry, and no axis to carry it about. Its pose was NaN for the whole blend, so the sword
+        // left the screen for all of a held heavy's draw
+        SwingBlend same = new SwingBlend();
+        Quaternionf stance = new Quaternionf(0.3F, 0.4F, 0.5F, 0.7F), shown = new Quaternionf();
+        Vector3f restAt = new Vector3f(0.2F, -0.1F, 0.3F), shownAt = new Vector3f();
+        for (int i = 0; i <= 2; i++) same.apply(i * 0.25, shownAt.set(restAt), shown.set(stance));
+        same.begin(1, restAt, stance, zero, zero, 9F);
+        same.apply(1.5, shownAt.set(restAt), shown.set(stance));
+        h.assertTrue(Float.isFinite(shownAt.x) && Float.isFinite(shown.x) && Float.isFinite(shown.w) && shown.equals(stance, 1e-4F),
+                "a hand that stays where it is stays on the screen (" + shown + ")");
 
         SwingBlend.Vec v = new SwingBlend.Vec();
         Vector3f lean = new Vector3f(2, 4, 1);
@@ -102,14 +136,13 @@ final class SwingTests {
         h.succeed();
     }
 
-    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff",
-            "twinblades");
+    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff");
 
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
      * so the whoosh never trails the blow; every bite slows the hands without stopping them; the two-handed weapons,
      * and only they, close the off hand on the handle below the main, a hand's width or more from it. Round 8: every
-     * chain strike says where a press still down waits, at or before its hit; every style holds its guard with the hand
+     * chain strike says where its drive begins, at or before its hit; every style holds its guard with the hand
      * on the weapon in view (Euan 2026-10-29: "blocking with most weapons hides the weapon under your view").
      */
     static void feelRules(GameTestHelper h) {
@@ -125,7 +158,7 @@ final class SwingTests {
                         a.id() + " " + e.getKey().key + "'s swish starts by its hit (" + c.swish() + ")");
                 h.assertTrue(c.biteTicks() == 0 || c.biteRate() > 0 && c.biteRate() <= 1, a.id() + " " + e.getKey().key + "'s bite slows, never stops");
                 if (e.getKey().strike()) {
-                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + " waits at its set, by its hit (" + c.set() + ")");
+                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + "'s drive begins by its hit (" + c.set() + ")");
                 }
                 // round 14: a move's own ribbon ticks are its stroke alone, through the hit and never on into the way home
                 float hit = def.windup() > 0 ? def.windup() : def.active() * 0.5F;
@@ -142,6 +175,14 @@ final class SwingTests {
             q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
             float f = 1F / (float) Math.tan(Math.toRadians(35)), x = at.x / -at.z * f / (16F / 9F), y = at.y / -at.z * f;
             h.assertTrue(at.z < -0.2F && Math.abs(x) < 1 && Math.abs(y) < 1, a.id() + "'s guard holds its hand in view (" + x + ", " + y + ")");
+            // a charge holds the heavy's first pose for as long as the press lasts: its hand near the frame, never far under it
+            // (Euan 2026-11-09, of a heavy charged below the view: "you can't even see the blade anymore")
+            if (FpSwings.sample(st, Archetype.Move.HEAVY, 0F, true, d, q)) {
+                q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
+                x = at.x / -at.z * f / (16F / 9F);
+                y = at.y / -at.z * f;
+                h.assertTrue(at.z < -0.2F && Math.abs(x) < 2F && Math.abs(y) < 2.2F, a.id() + "'s charge keeps its hand by the frame (" + x + ", " + y + ")");
+            }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,
                     a.id() + (two ? " is held in both hands" : " is held in one"));
@@ -198,12 +239,196 @@ final class SwingTests {
         }
         h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
         h.assertTrue(twins > 0, "a both-hands strike's off hand is checked (the daggers' strike 4)");
-        // the Twin Blades' figure-eight (round 5): the ends take turns down the light chain, so the link above from a
-        // strike to one led by the other end holds only because the first carried on round end for end by the press
+        // the Twin Blades (SPEC §25 "The Twin Blades"): one hand, and every strike whole turns about the middle of the
+        // shaft, with no flip in them (a solver flips on a full spin) and home where they set off
         FpSwings.Style tw = FpSwings.style("twinblades");
-        boolean[] far = new boolean[3];
-        for (int i = 0; i < 3; i++) far[i] = FpSwings.far(tw, Archetype.Move.byKey("strike_" + (i + 1)));
-        h.assertTrue(tw != null && !far[0] && far[1] && !far[2], "the twin blades' ends take turns: strike 2 leads with the other end");
+        h.assertTrue(tw != null && tw.offHand() == null, "the twin blades are twirled in one hand");
+        for (int s = 1; s <= 5; s++) {
+            Archetype.Move m = Archetype.Move.byKey("strike_" + s);
+            FpSwings.sample(tw, m, 0, true, a, qa);
+            Quaternionf start = new Quaternionf(qa), last = new Quaternionf(qa);
+            float turned = 0F, most = 0F;
+            for (float t = 0.25F; t < 14F; t += 0.25F) {
+                FpSwings.sample(tw, m, t, true, b, qb);
+                float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(last.dot(qb)))));
+                turned += turn;
+                most = Math.max(most, turn);
+                last.set(qb);
+            }
+            float home = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(start.dot(last)))));
+            h.assertTrue(most < 62F, "twin blades strike " + s + " has no flip in its turn (" + most + " degrees in a key)");
+            h.assertTrue(turned > 340F, "twin blades strike " + s + " turns the whole way round (" + turned + " degrees)");
+            h.assertTrue(home < 3F, "twin blades strike " + s + " ends where it set off (" + home + " degrees off)");
+        }
         h.succeed();
+    }
+
+    /** One frame at 60 fps, in ticks. */
+    private static final float FRAME = 1F / 3F;
+
+    /**
+     * The draw (SPEC §25 "Tap or hold"; Euan 2026-11-09: "it just glitches into its form"): for every style, from rest and
+     * from the earliest press out of each chain strike's recovery, the hand goes to the charge form on one curve with no
+     * frame stepping further than that curve or the motion it was already in; the draw and the charge are one source, so
+     * the mark changes nothing; and it arrives by the mark. A tap's clock meets its hit with no step. A guard against the
+     * old swap, not a measure of how it looks.
+     */
+    static void drawSmooth(GameTestHelper h) {
+        h.assertTrue(ChargeDraw.source(true, 123L) == ChargeDraw.source(true, 456L), "the charge's mark starts no new source");
+        h.assertTrue(ChargeDraw.source(false, 123L) != ChargeDraw.source(true, 123L), "a move is another source than the draw");
+        h.assertTrue(ChargeDraw.handsFree(false, true, 2F, 4) == false && ChargeDraw.handsFree(false, true, 4F, 4), "a blow still landing goes through first");
+        h.assertTrue(ChargeDraw.GRACE * 50F >= 150F && !ChargeDraw.drawing(true, true, false, true, ChargeDraw.GRACE - 0.01F)
+                && ChargeDraw.drawing(true, true, false, true, ChargeDraw.GRACE), "a press moves nothing until it has outlasted a click");
+        Vector3f form = new Vector3f(), d = new Vector3f(), was = new Vector3f(), zero = new Vector3f();
+        Quaternionf formQ = new Quaternionf(), q = new Quaternionf(), wasQ = new Quaternionf(), id = new Quaternionf();
+        int runs = 0;
+        for (Archetypes.Loaded style : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(style.id());
+            Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
+            if (st == null || heavy == null || heavy.charge().isEmpty()) continue;
+            float draw = ChargeDraw.ticks(heavy.charge().get().glint());
+            h.assertTrue(ChargeDraw.GRACE + draw < heavy.charge().get().glint(), style.id() + "'s draw arrives before its glint");
+            h.assertTrue(FpSwings.sample(st, Archetype.Move.HEAVY, 0, true, form, formQ), style.id() + " has a charge form");
+            java.util.List<Archetype.Move> from = new java.util.ArrayList<>(style.chain());
+            from.add(null); // from rest
+            for (Archetype.Move prev : from) {
+                Archetype.MoveDef def = prev == null ? null : style.move(prev);
+                float press = def == null ? 0F : def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                SwingBlend b = new SwingBlend();
+                float now = 0F;
+                float carried = 0F, turned = 0F;
+                for (int i = -6; i <= 0; i++, now += FRAME) {
+                    if (prev != null) FpSwings.sample(st, prev, press + i * FRAME, true, d, q);
+                    else FpSwings.stance(st, true, d.zero(), q.identity());
+                    b.apply(now, d, q);
+                    if (i > -6) {
+                        carried = d.distance(was);
+                        turned = degrees(q, wasQ);
+                    }
+                    was.set(d);
+                    wasQ.set(q);
+                }
+                float gap = was.distance(form), turn = degrees(wasQ, formQ);
+                b.begin(now, form, formQ, zero, zero, draw);
+                // the curve's fastest frame, or the one the hand came in on, and a little for the blend's own rounding
+                float maxStep = Math.max(carried, 1.875F * gap / draw * FRAME) * 1.1F + 2e-3F;
+                float maxTurn = Math.max(turned, 1.875F * turn / draw * FRAME) * 1.1F + 0.3F;
+                String what = style.id() + " from " + (prev == null ? "rest" : prev.key);
+                for (float t = 0; t <= draw + 3F; t += FRAME, now += FRAME) {
+                    d.set(form);
+                    q.set(formQ);
+                    b.apply(now, d, q);
+                    h.assertTrue(d.distance(was) <= maxStep, what + ": no step across the draw at " + t + " (" + d.distance(was) + " > " + maxStep + ")");
+                    h.assertTrue(degrees(q, wasQ) <= maxTurn, what + ": no turn across the draw at " + t + " (" + degrees(q, wasQ) + " > " + maxTurn + ")");
+                    was.set(d);
+                    wasQ.set(q);
+                    if (t >= draw) {
+                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the draw's end (" + d.distance(form) + " off, " + degrees(q, formQ) + " degrees, " + t + " of " + draw + ")");
+                    }
+                }
+                runs++;
+            }
+            for (float drawn = 0F; drawn <= 1F; drawn += 0.25F) {
+                for (Archetype.Move m : style.chain()) {
+                    float w = style.move(m).windup(), ticks = ChargeDraw.launchTicks(w, drawn), rate = ChargeDraw.launchRate(w, drawn);
+                    h.assertTrue(ticks >= 0.5F && Math.abs(ChargeDraw.clock(ticks, w, rate) - w) < 1e-3F
+                                    && Math.abs(ChargeDraw.clock(ticks + 1e-3F, w, rate) - w) < 2e-2F,
+                            style.id() + " " + m.key + ": a tap's clock meets its hit at the launch's end, with no step");
+                }
+            }
+        }
+        h.assertTrue(runs >= 48, "every style's draw is checked (" + runs + ")");
+        h.succeed();
+    }
+
+    /** The first-person framing the Daggers' places were written in (fov 70, 16:9), and vanilla's resting hand. */
+    private static final float VIEW_TAN = 0.7002F, VIEW_ASPECT = 16F / 9F;
+
+    /**
+     * The Daggers' chain (SPEC §25 "The Daggers"; Euan 2026-11-09): strikes 3 and 5 are the slashes and the rest stab; at each
+     * blow the fist is low and on its own side ("the hands still go way too upwards"); a slash carries it across the middle and
+     * no further ("way too much to the left side"). A guard against the old poses coming back, not a measure of how it looks.
+     */
+    static void daggerStabs(GameTestHelper h) {
+        Archetypes.Loaded style = Archetypes.get("daggers");
+        FpSwings.Style st = FpSwings.style("daggers");
+        h.assertTrue(style != null && st != null, "the Daggers are loaded");
+        Vector3f d = new Vector3f(), fist = new Vector3f();
+        Quaternionf q = new Quaternionf();
+        java.util.List<Archetype.Move> moves = new java.util.ArrayList<>(style.chain());
+        moves.addAll(style.masteryChain());
+        for (Archetype.Move m : moves) {
+            Archetype.MoveDef def = style.move(m);
+            boolean slash = m.key.equals("strike_3") || m.key.equals("strike_5");
+            h.assertTrue(ArmsRules.thrusts(def) != slash, m.key + (slash ? " is a slash" : " is a stab"));
+            for (float t = 0F; t <= def.total(); t += 0.25F) {
+                h.assertTrue(FpSwings.sample(st, m, t, true, d, q), m.key + " has its keys");
+                q.transform(fist.set(st.grip())).add(d).add(0.56F, -0.52F, -0.72F);
+                float x = fist.x / (-fist.z * VIEW_TAN * VIEW_ASPECT), y = fist.y / (-fist.z * VIEW_TAN);
+                h.assertTrue(x >= -0.08F, m.key + ": the fist crosses over at " + t + " (" + x + ")");
+                if (Math.abs(t - def.windup()) < 1e-3F) {
+                    h.assertTrue(x >= 0.26F && y <= -0.55F, m.key + ": the fist is low and on its own side at the blow (" + x + ", " + y + ")");
+                }
+            }
+        }
+        h.succeed();
+    }
+
+    /** Every gauntlet has the sleeve that stands in for the arm in first person (SPEC §25; no arm is drawn, so a missing one is a stump). */
+    static void gauntletSleeves(GameTestHelper h) {
+        int n = 0;
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            if (!"gauntlets".equals(w.style())) continue;
+            for (String file : new String[] {"/assets/awaken/arms/weapons/" + w.id() + "_arm.mesh", "/assets/awaken/textures/item/arms/" + w.id() + "_arm.png"}) {
+                h.assertTrue(SwingTests.class.getResource(file) != null, "missing " + file);
+            }
+            n++;
+        }
+        h.assertTrue(n >= 7, "the gauntlets are checked (" + n + ")");
+        h.succeed();
+    }
+
+    /**
+     * The Shieldblade is a sword and a shield (SPEC §25 "The Shieldblade"; Euan 2026-11-09: "the blocking with it doesn't even block with the
+     * shield side"): the guard's shield shows its front to what's ahead, top up; the shove is the shield's own hand; and each weapon has both parts.
+     */
+    static void shieldbladeTwoParts(GameTestHelper h) {
+        FpSwings.Style st = FpSwings.style("shieldblade");
+        h.assertTrue(st != null && st.twin() && st.off() != null, "the off hand holds its own model");
+        h.assertTrue(FpSwings.hand(st, Archetype.Move.STRIKE_2) == FpSwings.Hand.OFF && FpSwings.hand(st, Archetype.Move.HEAVY) == FpSwings.Hand.OFF, "the shove is the shield's");
+        int n = 0;
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            if (!"shieldblade".equals(w.style())) continue;
+            for (String part : new String[] {"_blade", "_shield"}) {
+                h.assertTrue(SwingTests.class.getResource("/assets/awaken/arms/weapons/" + w.id() + part + ".mesh") != null, w.id() + part + " has a mesh");
+                h.assertTrue(SwingTests.class.getResource("/assets/awaken/textures/item/arms/" + w.id() + part + ".png") != null, w.id() + part + " has a texture");
+            }
+            var shieldItem = readJson("/assets/awaken/items/" + w.id() + "_shield.json");
+            h.assertTrue(shieldItem != null, w.id() + " has the shield's item model");
+            var fp = readJson("/assets/awaken/models/item/" + w.id() + "_shield_in_hand.json").getAsJsonObject("display").getAsJsonObject("firstperson_righthand").getAsJsonArray("rotation");
+            Quaternionf hold = new Quaternionf().rotationXYZ((float) Math.toRadians(fp.get(0).getAsFloat()), (float) Math.toRadians(fp.get(1).getAsFloat()), (float) Math.toRadians(fp.get(2).getAsFloat()));
+            Vector3f d = new Vector3f();
+            Quaternionf turn = new Quaternionf();
+            h.assertTrue(FpSwings.offGuard(st, d, turn), "the shield has its own guard");
+            Vector3f front = turn.transform(hold.transform(new Vector3f(0, 0, 1))), top = turn.transform(hold.transform(new Vector3f(1, 1, 0).normalize()));
+            h.assertTrue(front.z < -0.9F, w.id() + ": the guard shows the shield's front to what's ahead (" + front.z + ")");
+            h.assertTrue(top.y > 0.8F, w.id() + ": the guard holds it top up (" + top.y + ")");
+            n++;
+        }
+        h.assertTrue(n >= 7, "the shieldblades are checked (" + n + ")");
+        h.succeed();
+    }
+
+    private static com.google.gson.JsonObject readJson(String path) {
+        try (var in = SwingTests.class.getResourceAsStream(path)) {
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private static float degrees(Quaternionf a, Quaternionf b) {
+        // over their lengths: the baked keys are rounded to four places, so a key against itself can read half a degree off
+        return (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(a.dot(b)) / (float) Math.sqrt(a.lengthSquared() * b.lengthSquared()))));
     }
 }

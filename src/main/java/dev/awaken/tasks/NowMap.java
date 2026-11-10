@@ -51,6 +51,21 @@ final class NowMap {
             r("gate:", Goal.RANK, ""),
             r("progression:", Goal.RANK, ""));
 
+    /**
+     * The real item that pictures a suggestion on the band's stage (SPEC §57.3), by the start of its id; the first match
+     * wins. One without a line here shows its goal's own item. Never a picture of something the player hasn't met.
+     */
+    private static final String[][] ICONS = {
+            {"powers:first_power", "awaken:power_core"}, {"hearth:ember", "awaken:hearth_ember"}, {"hearth:shelter", "minecraft:oak_door"},
+            {"hearth:place", "awaken:hearth_anchor"}, {"hearth:craft", "awaken:hearth_anchor"}, {"hearth:heart", "awaken:lord_heart"},
+            {"hearth:room/sanctuary", "awaken:meditation_mat"}, {"hearth:mend", "minecraft:red_bed"},
+            {"progression:points", "awaken:holo_band"}, {"lesson:dream", "awaken:dream_journal"}, {"lesson:lucid", "awaken:dream_journal"}};
+
+    static String icon(String id) {
+        for (String[] i : ICONS) if (id.startsWith(i[0])) return i[1];
+        return "";
+    }
+
     static Rule rule(String id) {
         for (Rule r : RULES) if (id.startsWith(r.prefix)) return r;
         return new Rule("", Goal.OUT, Goals.NO_PATH, "", false);
@@ -83,6 +98,7 @@ final class NowMap {
         Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(priority)
                 .thread(threadOf(s.id()), s.id().startsWith("hearth:room/") ? AFTER_ADD : r.path != Goals.NO_PATH ? 0 : 100 - priority);
         s.where().ifPresent(b::at);
+        b.icon(icon(s.id()));
         if (r.optional) b.optional();
         return b.build();
     }

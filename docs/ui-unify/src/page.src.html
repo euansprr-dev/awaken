@@ -1,0 +1,389 @@
+<title>One Stage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Pixelify+Sans:wght@400;500;600&family=Jacquard+24&display=swap">
+<style>
+/* Layout: one reading column with wide figures; the band's own navy and signal blue, so the page sits beside its subject. */
+:root {
+  color-scheme: dark;
+  --ink: #0B111C; --panel: #111A2A; --raise: #16233A; --line: #24344F;
+  --fg: #DCE6F3; --quiet: #9FB2CB; --edge: #7FC3FF; --amber: #FFCF7A; --good: #8FF0C0; --warn: #FF8A7A;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --pixel: "Pixelify Sans", ui-monospace, monospace;
+}
+body { background: var(--ink); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.55; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 80px; }
+.col { max-width: 760px; margin: 0 auto; } .wide { max-width: 1180px; margin: 0 auto; }
+h1 { font-family: var(--pixel); font-weight: 600; font-size: clamp(40px, 7vw, 68px); line-height: 1; margin: 0; letter-spacing: 1px; text-wrap: balance; }
+h2 { font-family: var(--pixel); font-weight: 500; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+h3 { font-size: 19px; margin: 0 0 6px; } p { margin: 0 0 14px; } a { color: var(--edge); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--edge); margin: 0 0 12px; }
+header.top { padding: 64px 0 28px; } header.top p.lede { font-size: 20px; color: var(--fg); margin-top: 18px; max-width: 60ch; }
+section { padding: 44px 0 0; }
+.note { color: var(--quiet); font-size: 15px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 20px 0 0; }
+.fact { border-top: 2px solid var(--line); padding: 10px 0 0; } .fact b { display: block; font-family: var(--pixel); font-weight: 500; font-size: 30px; line-height: 1.1; color: var(--amber); } .fact span { font-size: 15px; color: var(--quiet); }
+figure { margin: 22px 0 0; } figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: #05080F; }
+figcaption { font-size: 15px; color: var(--quiet); padding: 8px 0 0; max-width: 80ch; } figcaption b { color: var(--fg); }
+.tag { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 7px; margin-right: 8px; border: 1px solid var(--line); color: var(--quiet); }
+.tag.real { color: var(--good); border-color: #2C6B55; } .tag.mock { color: var(--amber); border-color: #7A6230; }
+.pair { display: grid; gap: 18px; } @media (min-width: 1000px) { .pair.two { grid-template-columns: 1fr 1fr; } }
+.flip .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.flip button, .seg button, .ans button { font: inherit; font-size: 15px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; cursor: pointer; }
+.flip button[aria-pressed="true"], .seg button[aria-pressed="true"] { border-color: var(--edge); background: var(--raise); color: #fff; }
+button:focus-visible, textarea:focus-visible, .protoWrap:focus-within { outline: 2px solid var(--edge); outline-offset: 2px; }
+ol.changes { padding-left: 22px; margin: 14px 0 0; } ol.changes li { margin: 0 0 10px; } ol.changes b { color: #fff; }
+.thesis { font-family: var(--pixel); font-size: clamp(24px, 3.6vw, 32px); line-height: 1.25; color: #fff; border-left: 3px solid var(--edge); padding: 4px 0 4px 18px; margin: 8px 0 18px; text-wrap: balance; }
+.protoWrap { position: relative; width: 100%; aspect-ratio: 1708 / 960; overflow: hidden; border: 1px solid var(--line); background: #05080F; }
+.protoWrap > div { position: absolute; left: 0; top: 0; }
+.seg { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; align-items: center; }
+.tbl { overflow-x: auto; margin: 16px 0 0; } table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 620px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); } th { font-family: var(--mono); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--quiet); font-weight: 400; }
+td:first-child { color: #fff; min-width: 150px; } td .gone { color: var(--warn); } td .new { color: var(--good); }
+details { border-top: 1px solid var(--line); padding: 12px 0; } details summary { cursor: pointer; font-weight: 700; } details[open] summary { margin-bottom: 6px; }
+kbd { font-family: var(--mono); font-size: 13px; padding: 1px 6px; border: 1px solid var(--quiet); border-bottom-width: 2px; color: #fff; white-space: nowrap; }
+.stages { counter-reset: st -1; list-style: none; padding: 0; margin: 16px 0 0; } .stages li { counter-increment: st; padding: 12px 0 12px 54px; border-top: 1px solid var(--line); position: relative; }
+.stages li::before { content: counter(st); position: absolute; left: 0; top: 10px; font-family: var(--pixel); font-size: 30px; color: var(--edge); }
+.ask { background: var(--panel); border: 1px solid var(--line); padding: 18px 18px 14px; margin: 0 0 14px; }
+.ask h3 { font-size: 19px; } .ask .rec { color: var(--good); font-size: 15px; margin: 0 0 12px; }
+.ans { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .ans button[aria-pressed="true"].yes { border-color: var(--good); color: var(--good); } .ans button[aria-pressed="true"].no { border-color: var(--warn); color: var(--warn); }
+.ask textarea { width: 100%; box-sizing: border-box; margin-top: 10px; min-height: 44px; font: inherit; font-size: 15px; color: var(--fg); background: var(--ink); border: 1px solid var(--line); padding: 8px 10px; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--quiet); min-height: 1.4em; }
+ul.plain { padding-left: 20px; margin: 10px 0 0; } ul.plain li { margin: 0 0 6px; }
+/*__PROTO_CSS__*/
+/* the published page can't carry the game's font, so the clickable version uses a look-alike, sized up to the game font's height */
+@font-face { font-family: "PixLike"; font-weight: 400; src: url(https://fonts.gstatic.com/s/pixelifysans/v3/CHy2V-3HFUT7aC4iv1TxGDR9DHEserHN25py2TTp0E1fZZN4h1mWruk.woff2) format("woff2"); size-adjust: 128%; }
+#proto.aw { --pix: "PixLike", "Pixelify Sans", ui-monospace, monospace; }
+#proto.aw .caps { letter-spacing: 1px; }
+</style>
+
+<header class="top col">
+  <p class="eyebrow">AWAKEN · a plan for your yes or no · 10 November 2026</p>
+  <h1>One Stage</h1>
+  <p class="lede">The K menu, the bag, the Tab glance and the workshops, made into one system that shows you things instead of telling you about them.</p>
+  <p>Nothing in the game has changed. This page has real screenshots of today's screens, drawings of what I propose over the same view, and a version you can click through. Seven decisions are at the end. Yes to all of them is the plan I'd build.</p>
+  <p class="note">Every picture is marked <span class="tag real">Real</span> for a screenshot from the game or <span class="tag mock">Mock-up</span> for a drawing. The drawings use the game's own font and real item art, set over a real frame of your view.</p>
+</header>
+
+<section class="col">
+  <p class="eyebrow">1 · What's wrong today</p>
+  <h2>The band is a small slab, and everything in it became a sentence</h2>
+  <p>I toured every K page on GitHub's Macs at your window size and read the code behind them. The same cause sits under every page.</p>
+  <div class="facts">
+    <div class="fact"><b>29%</b><span>of your screen is the K panel. The other 71% shows nothing of the band.</span></div>
+    <div class="fact"><b>76 words</b><span>to tell you one step ("Build your Armoury"), with two tiny icons.</span></div>
+    <div class="fact"><b>24 tabs</b><span>six pages, six goal tabs inside Tasks, twelve category chips inside the Journal.</span></div>
+    <div class="fact"><b>13 of 13</b><span>room tiles on the Hearth page cut their one line off with "…".</span></div>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="pair two">
+    <figure><img src="shots/real_tasks_c_rank.jpg" alt="Today's Tasks page at C-rank: a small panel in the top left of a mostly empty screen" loading="lazy"><figcaption><span class="tag real">Real</span><b>Tasks, at your window size.</b> The panel sits in one corner. You see one step. The other eleven are behind six tabs and a scroll.</figcaption></figure>
+    <figure><img src="shots/real_hearth_rooms_crop.jpg" alt="Today's Hearth page: room tiles whose text is cut off" loading="lazy"><figcaption><span class="tag real">Real</span><b>Hearth.</b> "rest heals…", "armour mad…", "enchantmen…". Every tile has a line you can't read.</figcaption></figure>
+    <figure><img src="shots/real_journal_creatures_crop.jpg" alt="Today's Journal: twelve category chips and a grid of numbered question marks" loading="lazy"><figcaption><span class="tag real">Real</span><b>Journal.</b> Twelve chips take the top third. Under them, 44 numbered boxes each holding a question mark.</figcaption></figure>
+    <figure><img src="shots/real_powers_empty_card_crop.jpg" alt="Today's Powers page scrolled down: an empty dark box fills the panel" loading="lazy"><figcaption><span class="tag real">Real</span><b>Powers, one scroll down.</b> With all 63 powers the detail card is an empty box as tall as the panel. Below it the body's moves are paragraphs.</figcaption></figure>
+  </div>
+  <div class="col" style="margin-top:26px">
+    <p>Other things I found: recipes are written out as sentences ("Craft it from two sticks, a copper ingot, a block of wool and three planks") although the game can already draw a recipe grid. One action has four names: Pin on Tasks, Track on the Hearth page, Track it in the Hall, Set as destination on the map. Tab means three different things on three screens. Item names in the bag show in Minecraft's purple box inside the band's blue glass.</p>
+    <p><b>The bar already exists.</b> The Hall of Arms does the opposite of the K menu, and you said it looks amazing:</p>
+  </div>
+  <figure><img src="shots/real_hall_suit.jpg" alt="The Hall of Arms: a suit of armour in the middle, its ranks on the left, one panel of numbers and materials on the right" loading="lazy"><figcaption><span class="tag real">Real</span><b>The Hall of Arms, 9 November.</b> The thing itself in the middle. Its siblings down the left. One panel that only talks about what you're looking at. Big numbers, real items with what you have and need, keys along the foot.</figcaption></figure>
+</section>
+
+<section class="col">
+  <p class="eyebrow">2 · The idea</p>
+  <p class="thesis">The band shows you things, and speaks only about the one you point at.</p>
+  <ol class="changes">
+    <li><b>One stage.</b> K fills your view with the band's glass, laid out on the same sheet the Hall uses, instead of a slab in the corner.</li>
+    <li><b>One layout everywhere.</b> The thing in the middle, its neighbours beside it, one panel of words about it, one bar of keys under it. On K, in the Hall, in the bag.</li>
+    <li><b>Pictures before sentences.</b> The real item with what you have and need. A recipe drawn as a recipe. A needle and a distance. What you haven't found is a black shape.</li>
+    <li><b>No tabs inside tabs.</b> The six goals become six lanes on one view. The Journal's twelve categories become shelves on one wall.</li>
+    <li><b>One word and one key for each thing.</b> Track. Esc goes back, Tab moves to the next thing, hold to commit.</li>
+    <li><b>A word budget, checked by a test,</b> so the wall of text can't grow back when the next system is added.</li>
+  </ol>
+</section>
+
+<section class="wide">
+  <div class="col"><p class="eyebrow">3 · Before and after</p><h2>The same view, the same content</h2>
+  <p>Flip each one. The first pair is exact: the same C-rank save, the same frame of your view, the same twelve open steps.</p></div>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_tasks_c_rank.jpg" data-cap="Real. Tasks at C-rank. One step, then tabs and scrolling for the rest.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_tasks_dense.jpg" data-cap="Mock-up, over the same frame. The step in front with its four pieces and five materials, and every other open step in its lane. No tabs. Twelve steps on one view.">Proposed</button></div>
+    <img src="shots/mock_tasks_dense.jpg" alt="Tasks at C-rank, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_tasks_moment_small_window.jpg" data-cap="Real. Your moment: the fire set, a bed built, what next? 76 words. This one was taken in a half-size window, so the panel looks bigger here than on your screen.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_tasks_moment.jpg" data-cap="Mock-up, by day, at your window size. Both recipes are drawn the way Minecraft draws a recipe. One line of why. Everything else that's open is on the right.">Proposed</button></div>
+    <img src="shots/mock_tasks_moment.jpg" alt="Tasks at Euan's moment, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_hearth_rooms.jpg" data-cap="Real. Hearth, second screen of four.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_hearth_dense.jpg" data-cap="Mock-up, same home. Every room is its own block: warm when built, amber for what's next, dim when you could build it, a black shape when you haven't found its key piece. The panel reads the room you point at.">Proposed</button></div>
+    <img src="shots/mock_hearth_dense.jpg" alt="Hearth, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_journal_creatures.jpg" data-cap="Real. Journal, Creatures.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_journal.jpg" data-cap="Mock-up. One wall. Found things are themselves, unfound are dark. Gate worlds show their paintings. The pictures on the left jump the wall. Creatures are shown as their eggs here; decision 5 is about drawing the creature itself.">Proposed</button></div>
+    <img src="shots/mock_journal.jpg" alt="Journal, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_status.jpg" data-cap="Real. Status, first screen of about four. Below it: truths, the road, titles and latents as paragraphs.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_status_dense.jpg" data-cap="Mock-up, same save. You, wearing what you wear (a sample figure here). The next three stops as pictures. All 32 truths as marks: point at one for what it takes. Nothing scrolls.">Proposed</button></div>
+    <img src="shots/mock_status_dense.jpg" alt="Status, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+
+  <figure class="flip" data-flip>
+    <div class="tabs"><button type="button" aria-pressed="false" data-src="shots/real_powers.jpg" data-cap="Real. Powers with all 63. This page is already the band's best; it scrolls for three more screens.">Today</button><button type="button" aria-pressed="true" data-src="shots/mock_powers_dense.jpg" data-cap="Mock-up. All 63 fit with no scroll. The panel always shows a power, so there is no empty box. Your body's moves are a strip of icons.">Proposed</button></div>
+    <img src="shots/mock_powers_dense.jpg" alt="Powers, today and proposed" loading="lazy"><figcaption></figcaption>
+  </figure>
+</section>
+
+<section class="wide">
+  <div class="col"><p class="eyebrow">4 · Try it</p><h2>Click through the band</h2>
+  <p>This is a mock-up you can use, not the game. Click the stage first so it takes your keys. The font here is a look-alike; the still pictures above use the real one.</p></div>
+  <div class="seg" role="group" aria-label="Sample">
+    <span class="note">Sample:</span>
+    <button type="button" id="smp-moment" aria-pressed="true">Your moment (E-rank)</button>
+    <button type="button" id="smp-dense" aria-pressed="false">A lot open (C-rank)</button>
+    <button type="button" id="smp-fresh" aria-pressed="false">A new hunter</button>
+  </div>
+  <div class="protoWrap" id="protoWrap"><div id="proto"></div></div>
+  <div class="col" style="margin-top:16px">
+    <p><b>Things to try.</b> On Tasks, click "Choose your first armour" in the Armour lane, click a suit, then "See them worn" (that opens a real screenshot of the Hall's line-up; click a suit there, or the bottom left to go back). Press <kbd>T</kbd> to track it, then <kbd>K</kbd> to shut the band and see it on the HUD. Click another step and press <kbd>X</kbd> to set it aside, then <kbd>Z</kbd> to undo. <kbd>Tab</kbd> walks the steps, <kbd>Esc</kbd> goes back one step, <kbd>1</kbd> to <kbd>6</kbd> or <kbd>Q</kbd> <kbd>E</kbd> change place. On Status, press <kbd>Space</kbd> to place a point and <kbd>Enter</kbd> to confirm.</p>
+    <p class="note">What's pretend: all the numbers and names are sample data, a click stands in for a hold, and there is no sound or unfold. Only the E-rank sample has every place filled in.</p>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="col"><p class="eyebrow">5 · The rest of the system</p><h2>The same parts everywhere</h2>
+  <p>Every screen is built from one small kit. This is what makes the band, the bag and the workshops feel like one thing.</p></div>
+  <figure><img src="shots/mock_kit.jpg" alt="The kit: a thing lit by its state, what it takes, numbers, a recipe, keys, where it is, buttons, a name tip, chips, type sizes" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>The kit.</b> One way to show a thing and its state. One way to show what something takes. One set of keys. Item names move from the purple box into the band's glass.</figcaption></figure>
+
+  <div class="col" style="margin-top:34px"><h3>The Tab glance</h3><p>You said "the tab menu". I took that to mean the panel you get while holding Tab. It keeps every fact and its width, and gets a third shorter: the labels become marks, and your step is one line with what it takes as items.</p></div>
+  <div class="pair two">
+    <figure><img src="shots/mock_glance_before.jpg" alt="The Tab glance as it is today, rebuilt from the code" loading="lazy"><figcaption><span class="tag mock">Rebuilt from the code</span><b>Today.</b> I couldn't screenshot this one (no tour can hold Tab), so this is drawn from the code's own sizes and words.</figcaption></figure>
+    <figure><img src="shots/mock_glance_after.jpg" alt="The Tab glance, proposed" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>Proposed.</b> Same text size as today, so it reads as fast while you move.</figcaption></figure>
+  </div>
+
+  <div class="col" style="margin-top:34px"><h3>The Hall, pushed further</h3><p>The Hall stays its own place. It takes three things from the system: "What makes it different" becomes marks with numbers instead of two paragraphs, the foot becomes the shared key bar, and Track gets its key. The War Anvil's "At most it can take Temper VI…" becomes six pips. The Inscribing Table's "6 levels and 2 lapis" becomes the two items with counts.</p></div>
+  <div class="pair two">
+    <figure><img src="shots/real_hall_piece.jpg" alt="The Hall's weapon close-up today" loading="lazy"><figcaption><span class="tag real">Real</span><b>Today.</b> Still the best screen in the game. The right panel carries two paragraphs.</figcaption></figure>
+    <figure><img src="shots/mock_hall_after.jpg" alt="The Hall's weapon close-up with marks and numbers in place of paragraphs" loading="lazy"><figcaption><span class="tag mock">Mock-up over the real shot</span><b>Proposed.</b> 70%, 3.2 and 10 as numbers you can compare across weapons. The mark shapes are placeholders.</figcaption></figure>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <p><b>Two doors to every place.</b> The Hall already works this way: from K you look and track, at the anvil you forge. The Hearth gets the same rule. Your Anchor opens the same Hearth place the band does, with building the next tier added, and the separate guide window goes away.</p>
+    <p><b>Two materials, one layout.</b> Blue glass is what you wear: the band, the bag, the glance, the cards. Firelight is where you stand: the Hall, the anvil, the table. The material tells you which you're in; everything else is the same.</p>
+  </div>
+</section>
+
+<section class="col">
+  <p class="eyebrow">6 · Where everything goes</p>
+  <h2>Nothing you can do today is lost</h2>
+  <p>Every section on every page has a new home. Two copies are folded into one. Five things go because something else already says them.</p>
+  <details open><summary>Tasks</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>Tabs: Now, Hearth, Armour, Weapons, Bells, Gates</td><td><span class="gone">Gone.</span> Six lanes on one view. A lane appears when it first has something, as a tab does now.</td></tr>
+    <tr><td>Do this next, in full</td><td>The step in front: its picture, name, one line, what it takes.</td></tr>
+    <tr><td>Where each need comes from, as a sentence</td><td>The real item with have and need. A made thing shows its recipe. The sentence is the tip on the item.</td></tr>
+    <tr><td>Pin</td><td>Track, on <kbd>T</kbd>. Same thing, one name.</td></tr>
+    <tr><td>Set aside, Undo, Later, Choose, See them worn</td><td>All kept. Later is a "+6" tile at the end of a lane.</td></tr>
+    <tr><td>Every system's steps (core.api.Goals)</td><td><span class="new">Kept exactly.</span> New systems still show up here. One optional extra: a picture.</td></tr>
+  </table></div></details>
+  <details><summary>Status</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>Face, name, level, XP, rank</td><td>You as a figure, level and rank as big numbers.</td></tr>
+    <tr><td>Six stats, place then confirm, undo</td><td>The same. Confirm is a hold.</td></tr>
+    <tr><td>This gate, Deep Pack, This room, Riding</td><td>A chip in the header only while it applies. Click it for its panel.</td></tr>
+    <tr><td>A decision waiting</td><td>First in the panel, with Y and N.</td></tr>
+    <tr><td>Newest journal lines</td><td>"Lately", three lines.</td></tr>
+    <tr><td>Truths, titles, latents</td><td>Marks. Lit when true, amber for the closest three. The panel reads the one you point at.</td></tr>
+    <tr><td>The road</td><td>"What comes next": three stops as pictures. All of it one click away.</td></tr>
+    <tr><td>Records (on the Journal today)</td><td>Move here as Deeds.</td></tr>
+    <tr><td>"Now · 2 more on the Tasks page"</td><td><span class="gone">Gone.</span> The glint on Tasks says it.</td></tr>
+  </table></div></details>
+  <details><summary>Hearth</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>Name, tier, comfort</td><td>The header.</td></tr>
+    <tr><td>Next for your home (a copy of the Tasks card)</td><td><span class="gone">Folded.</span> It's the amber room.</td></tr>
+    <tr><td>19 room tiles with cut-off text</td><td>Rooms as their own block, lit by state. The panel reads the whole line.</td></tr>
+    <tr><td>A room's pieces and where they come from</td><td>The panel: real items with have and need.</td></tr>
+    <tr><td>Make it look good</td><td>Inside the built room's panel.</td></tr>
+    <tr><td>Beasts, nooks, rumours, wants</td><td>A strip of nooks with the beasts in them. Kinds you haven't met are dark shapes.</td></tr>
+    <tr><td>The guide window at your Anchor</td><td><span class="gone">Folded</span> into this place, with the next tier added at the Anchor.</td></tr>
+  </table></div></details>
+  <details><summary>Powers</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>Your keys, your powers, pick then press a key</td><td>The same, 13 across.</td></tr>
+    <tr><td>The power's card</td><td>The panel. Never empty.</td></tr>
+    <tr><td>The Ascent, The Body, Crafts, The Veil</td><td>Strips of icons. The panel says how each one is done.</td></tr>
+  </table></div></details>
+  <details><summary>Journal</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>12 category chips</td><td>Pictures with counts down the left. They jump the wall; they aren't a mode.</td></tr>
+    <tr><td>Numbered "?" boxes</td><td>The things themselves. Ordinary unfound things are black shapes. Bosses and Lords stay sealed: no shape, no name.</td></tr>
+    <tr><td>Bells as 100 numbers</td><td>100 bells. Held ones lit, leads amber.</td></tr>
+    <tr><td>Tracking and Also on (chains, bounties)</td><td>Move to Tasks, in the Out there lane. They're things to do.</td></tr>
+    <tr><td>Log and Recent messages</td><td>One timeline, Your story.</td></tr>
+  </table></div></details>
+  <details><summary>Map, bag, cards, plates</summary><div class="tbl"><table>
+    <tr><th>Today</th><th>Becomes</th></tr>
+    <tr><td>The map in the world</td><td>Unchanged. It takes the shared key bar.</td></tr>
+    <tr><td>The bag and the chests</td><td>Unchanged, except item names show in the band's glass.</td></tr>
+    <tr><td>Toasts, choice cards, the first-power cards</td><td>Unchanged. They take the shared key caps.</td></tr>
+    <tr><td>Creature plates, health line, power bar</td><td>Unchanged.</td></tr>
+  </table></div></details>
+</section>
+
+<section class="wide">
+  <div class="col"><p class="eyebrow">7 · Three ways to do it</p><h2>I looked at three directions</h2></div>
+  <div class="pair two">
+    <figure><img src="shots/mock_dirA.jpg" alt="Direction A: the band stays a slab, with pictures in it" loading="lazy"><figcaption><span class="tag mock">Study</span><b>A. Tidy the band.</b> The slab stays. Inner tabs go, rows get pictures. Cheap and safe, but the slab still can't hold a home, a wall of finds or a figure, so it can't reach the Hall's bar.</figcaption></figure>
+    <figure><img src="shots/mock_dirC.jpg" alt="Direction C: the band's stage projected in the world in front of your character, like the map" loading="lazy"><figcaption><span class="tag mock">Study</span><b>C. The band in the world.</b> Every K page as a projection in front of your character, the way the map opens. The most striking. It needs room behind you, falls back in caves and fights, and adds a camera move to every open.</figcaption></figure>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <p><b>I recommend B, the one stage you clicked through above.</b> It's the only one that fixes the cause: the slab. It reuses what the Hall already proved, and it can be built in stages with today's band one setting away.</p>
+    <p><b>What you give up with B.</b> Today the band leaves the right half of your view clear. The stage covers the view, with the world dim behind it, like the map's card. So the map's rule comes with it: if you're hit, or something hostile comes within 8 blocks, it folds at once. Also, Tab and Q/E change what they do inside K.</p>
+    <p class="note">C is worth one experiment later: Status as your real character, standing where you stand.</p>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="col"><p class="eyebrow">8 · How it behaves</p><h2>The same keys, and the hard cases</h2></div>
+  <div class="col"><div class="tbl"><table>
+    <tr><th>You want to</th><th>Mouse</th><th>Key</th><th>Today</th></tr>
+    <tr><td>See what a thing is</td><td>Point at it</td><td>Arrows</td><td>The same</td></tr>
+    <tr><td>Bring it in front</td><td>Click</td><td><kbd>Tab</kbd></td><td>Tab is the next page in K, the next gate on the map, the next piece in the Hall</td></tr>
+    <tr><td>Go back one step</td><td></td><td><kbd>Esc</kbd></td><td>The same</td></tr>
+    <tr><td>Go to the view beside this one</td><td>Click the rail</td><td><kbd>Q</kbd> <kbd>E</kbd>, or <kbd>1</kbd> to <kbd>6</kbd></td><td>Q/E are goal tabs, journal chips, Hall wings</td></tr>
+    <tr><td>Keep it on your screen</td><td>Track</td><td><kbd>T</kbd></td><td>Pin, Track, Track it, Set as destination</td></tr>
+    <tr><td>Do something you can't take back</td><td>Hold</td><td>Hold <kbd>Space</kbd></td><td>Hold in the Hall, click elsewhere</td></tr>
+    <tr><td>Take it back</td><td>Undo</td><td><kbd>Z</kbd></td><td>Z in the bag only</td></tr>
+  </table></div>
+  <p class="note" style="margin-top:10px">The map keeps Q and E for turning, because it's a camera.</p></div>
+  <div class="pair two" style="margin-top:18px">
+    <figure><img src="shots/mock_tasks_fresh.jpg" alt="A new hunter's Tasks: one lane, one step, a needle and a distance" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>A new hunter.</b> One step, one lane. Nothing is listed that hasn't opened.</figcaption></figure>
+    <figure><img src="shots/mock_tasks_chosen.jpg" alt="After choosing Wildhide: the step renamed, its materials shown, tracked" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>After you choose.</b> The step renames itself, lists what that suit takes, and shows as tracked.</figcaption></figure>
+    <figure><img src="shots/mock_tasks_hc.jpg" alt="The stage with higher contrast and no transparency" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>Higher contrast.</b> With Minecraft's High Contrast option the glass goes solid and the quiet text brightens, as the Hall already does.</figcaption></figure>
+    <figure><img src="shots/mock_closed.jpg" alt="The band shut: the world, with the tracked step on a HUD card" loading="lazy"><figcaption><span class="tag mock">Mock-up</span><b>Shut.</b> What you tracked leads the HUD card, as Pin does today.</figcaption></figure>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <ul class="plain">
+      <li><b>If the list hasn't arrived yet,</b> the stage opens and the panel says "Reading…". You can still change place or shut it.</li>
+      <li><b>If the server says no</b> (too far, a stale choice), the line under the button says why, in the server's words.</li>
+      <li><b>If a step finishes while you look at it,</b> its tile ticks and the next step takes its place. Nothing moves under your pointer.</li>
+      <li><b>Keys alone work for everything.</b> The narrator reads the panel's first line when you land on a thing, as it does now.</li>
+      <li><b>Words are capped.</b> Names and numbers on the stage. One sentence of 14 words or fewer in the panel. Longer help is a tip on the thing it explains. A test fails any step, room or power that breaks this.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="col">
+  <p class="eyebrow">9 · How it gets built</p>
+  <h2>In stages, with today's band one setting away</h2>
+  <ol class="stages">
+    <li><b>The proof, then you play it.</b> The shared sheet, the kit, the new K shell, and the Tasks place. Nothing else moves until you've played this.</li>
+    <li><b>Status and Powers.</b></li>
+    <li><b>Hearth and the Journal wall.</b> Your Anchor becomes the Hearth's second door.</li>
+    <li><b>The bag's item names, the Tab glance, the cards.</b></li>
+    <li><b>The workshops.</b> The Hall's panel and key bar, the anvil's pips, the table's costs, then the boards and books.</li>
+    <li><b>Clean up.</b> The old band and its sections are deleted one build after you've played the new one.</li>
+  </ol>
+  <p style="margin-top:16px"><b>What stays true.</b> The server still decides everything. Every progression system still puts its steps on Tasks. No boss is named, shown or shaped before you meet it. Other players still see only a glow. No save data changes, so going back is one setting.</p>
+  <p><b>The risk I can't answer from here.</b> A glass panel that covers the view costs more to draw than a slab. It must cost no more than the Hall's wall does today on Cinematic at 4K. That needs one timed run on your Mac (decision 7).</p>
+</section>
+
+<section class="col">
+  <p class="eyebrow">10 · What I checked and what I didn't</p>
+  <ul class="plain">
+    <li><b>Seen in the game</b> (GitHub's Macs, your window size, today's build): every K page top to bottom, the HUD at rest and in a fight, the first-power cards, the map, the Look screen. From other sessions' tours on 9 Nov: the Hall, the bag and chests, the Inscribing Table.</li>
+    <li><b>Read in the code only:</b> the Tab glance, the guide at your Anchor, the Notice Board, the Ledger, the Dream Journal, the Forge Song, sounds and narration.</li>
+    <li><b>The mock-up:</b> I did the main journey with keys alone and with the mouse, and rendered it over a bright sky and a dark night.</li>
+    <li><b>Not done:</b> nothing ran on your Mac, no frame times were measured, and nobody but me has used the mock-up. It can't show sound or feel.</li>
+  </ul>
+</section>
+
+<section class="col" id="decisions">
+  <p class="eyebrow">11 · Your decisions</p>
+  <h2>Seven things only you can decide</h2>
+  <p>Yes takes my recommendation. Your answers save as you click, and a note on any line goes with it.</p>
+  <p class="status" id="status" role="status">Connecting to the answers store…</p>
+
+  <div class="ask" data-q="direction"><h3>1. Build direction B, the one stage?</h3><p class="rec">Recommended: yes. No means tell me A or C in the note.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-direction" aria-label="Note on decision 1" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="tab-menu"><h3>2. By "the tab menu" did you mean the panel you get while holding Tab?</h3><p class="rec">I assumed yes and redesigned it (section 5). If you meant something else, say what in the note.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-tab-menu" aria-label="Note on decision 2" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="words-keys"><h3>3. One word and one set of keys?</h3><p class="rec">Recommended: yes. "Track" everywhere, on T (Pin stays the bag's word). Tab becomes "the next thing". Q and E step through K's six places.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-words-keys" aria-label="Note on decision 3" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="hearth-doors"><h3>4. One Hearth with two doors?</h3><p class="rec">Recommended: yes. Your Anchor opens the same Hearth place as K, with building the next tier added. The separate guide window goes.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-hearth-doors" aria-label="Note on decision 4" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="creatures"><h3>5. Try drawing found creatures as themselves in the Journal?</h3><p class="rec">Recommended: yes, as a trial in stage 2. If it costs frames, they stay as their eggs.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-creatures" aria-label="Note on decision 5" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="stage-zero"><h3>6. Stage 0 first, then you play before anything else is built?</h3><p class="rec">Recommended: yes. Tasks and the new shell only, with today's band one setting away.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-stage-zero" aria-label="Note on decision 6" placeholder="A note, if you want"></textarea></div>
+  <div class="ask" data-q="mac-run"><h3>7. One timed run on your Mac when stage 0 is ready?</h3><p class="rec">Recommended: yes. It launches the game for a few minutes to time the stage against today's band on Cinematic at 4K. I won't run it without your OK.</p><div class="ans"><button type="button" class="yes" aria-pressed="false">Yes</button><button type="button" class="no" aria-pressed="false">No</button></div><textarea id="note-mac-run" aria-label="Note on decision 7" placeholder="A note, if you want"></textarea></div>
+
+  <div class="seg"><button type="button" id="yes-all">Yes to everything not answered</button></div>
+  <p class="note">Still uncertain after all this: the real frame cost; whether black shapes for creatures tease too much or too little; how the longest names hold in other languages; and anything about sound and feel.</p>
+</section>
+
+<script>
+window.AW_ASSETS = 'proto/assets/';
+/*__PROTO_JS__*/
+</script>
+<script>
+(function () {
+  // before / after: one picture box, two buttons
+  document.querySelectorAll('[data-flip]').forEach(f => {
+    const img = f.querySelector('img'), cap = f.querySelector('figcaption'), btns = [...f.querySelectorAll('.tabs button')];
+    const show = b => { btns.forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); img.src = b.dataset.src; cap.textContent = b.dataset.cap; };
+    btns.forEach(b => b.addEventListener('click', () => show(b)));
+    show(btns.find(b => b.getAttribute('aria-pressed') === 'true') || btns[0]);
+  });
+  // the prototype, fitted to its box
+  const wrap = document.getElementById('protoWrap'), el = document.getElementById('proto');
+  AW_PROTO.mount(el, { place: 'tasks' });
+  const fit = () => { el.style.transform = 'scale(' + wrap.clientWidth / 1708 + ')'; };
+  new ResizeObserver(fit).observe(wrap); fit();
+  const samples = { 'smp-moment': null, 'smp-dense': 'dense', 'smp-fresh': 'fresh' };
+  Object.keys(samples).forEach(id => document.getElementById(id).addEventListener('click', () => {
+    Object.keys(samples).forEach(o => document.getElementById(o).setAttribute('aria-pressed', o === id ? 'true' : 'false'));
+    AW_PROTO.set({ set: samples[id], open: true, place: 'tasks', task: null, choice: null, chosen: null, tracked: null, aside: [], undo: null, placed: {}, hall: null, medal: null });
+  }));
+
+  // the decisions: saved to the page's own store as you click
+  const cards = [...document.querySelectorAll('.ask')], status = document.getElementById('status'), answers = {};
+  let db = null;
+  const say = t => { status.textContent = t; };
+  function paint() {
+    let done = 0;
+    for (const c of cards) {
+      const a = answers[c.dataset.q] || {};
+      c.querySelector('.yes').setAttribute('aria-pressed', a.answer === 'yes' ? 'true' : 'false');
+      c.querySelector('.no').setAttribute('aria-pressed', a.answer === 'no' ? 'true' : 'false');
+      const ta = c.querySelector('textarea');
+      if (document.activeElement !== ta && typeof a.note === 'string' && ta.value !== a.note) ta.value = a.note;
+      if (a.answer) done++;
+    }
+    say((db ? 'Saved. ' : 'Not saving on this view: tell Claude your answers in chat. ') + done + ' of ' + cards.length + ' answered.');
+  }
+  async function save(q) {
+    answers[q].at = new Date().toISOString();
+    paint();
+    if (!db) return;
+    try { await db.doc('answers/' + q).set(answers[q]); } catch (e) { say('That one did not save. Try again, or tell Claude in chat.'); }
+  }
+  for (const c of cards) {
+    const q = c.dataset.q;
+    const pick = a => { answers[q] = Object.assign({}, answers[q], { answer: answers[q] && answers[q].answer === a ? null : a }); save(q); };
+    c.querySelector('.yes').addEventListener('click', () => pick('yes'));
+    c.querySelector('.no').addEventListener('click', () => pick('no'));
+    c.querySelector('textarea').addEventListener('change', e => { answers[q] = Object.assign({}, answers[q], { note: e.target.value.trim() }); save(q); });
+  }
+  document.getElementById('yes-all').addEventListener('click', () => {
+    for (const c of cards) { const q = c.dataset.q; if (!(answers[q] && answers[q].answer)) { answers[q] = Object.assign({}, answers[q], { answer: 'yes' }); save(q); } }
+  });
+  const giveUp = setTimeout(() => { if (!db) paint(); }, 10000);
+  Promise.resolve(window.claude && window.claude.use ? window.claude.use('db') : null).then(found => {
+    clearTimeout(giveUp);
+    db = found || null;
+    paint();
+    if (!db) return;
+    db.collection('answers').onSnapshot(snap => {
+      for (const d of snap.docs) answers[d.id] = d.data();
+      paint();
+    }, () => say('Lost the connection to the answers store. Reload, or tell Claude your answers in chat.'));
+  }).catch(() => paint());
+})();
+</script>

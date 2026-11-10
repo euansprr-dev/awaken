@@ -115,6 +115,7 @@ public final class StatusSections {
     public static void drawingAt(int pixelsPerUnit, boolean reducedMotion) {
         ppu = pixelsPerUnit;
         still = reducedMotion;
+        dev.awaken.signal.client.Ui.unitPixels = pixelsPerUnit; // a line that doesn't fit its slot shrinks by whole real pixels (SPEC §57.6)
     }
 
     /** Whether the band should hold still (reduced motion, or the flat screen). */

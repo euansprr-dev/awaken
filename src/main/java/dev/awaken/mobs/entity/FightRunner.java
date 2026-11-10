@@ -702,6 +702,11 @@ final class FightRunner {
         return ok;
     }
 
+    /** Whether the move could begin on the target where it stands now, remembering nothing (tests: a fair place to stand). */
+    boolean couldLand(KitMoves.Move m, LivingEntity target) {
+        return inRange(m, target) && (!aimed(m) || solve(m, target, boss.yBodyRot, trial));
+    }
+
     /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */
     private boolean solve(KitMoves.Move m, LivingEntity target, float facing, BlowAim.Result out) {
         boolean turns = m.time().track() > 0;

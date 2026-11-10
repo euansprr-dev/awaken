@@ -49,10 +49,21 @@ public final class TaskPayloads {
      * step's voice (Goals.Voice's ordinal), its thread, its place on its tab ({@link #LATER}, {@link #SET_ASIDE} off it),
      * what it gets you, and whether it can't be set aside.
      */
-    public record Extra(String then, boolean ready, int voice, String thread, int place, String opens, boolean urgent) {
+    public record Extra(String then, boolean ready, int voice, String thread, int place, String opens, boolean urgent, String icon) {
         public static final StreamCodec<ByteBuf, Extra> STREAM_CODEC = StreamCodec.composite(
                 S, Extra::then, ByteBufCodecs.BOOL, Extra::ready, ByteBufCodecs.VAR_INT, Extra::voice, S, Extra::thread, ByteBufCodecs.VAR_INT, Extra::place,
-                S, Extra::opens, ByteBufCodecs.BOOL, Extra::urgent, Extra::new);
+                S, Extra::opens, ByteBufCodecs.BOOL, Extra::urgent, S, Extra::icon, Extra::new);
+    }
+
+    /**
+     * How a thing a step asks for is made (SPEC §57): the item it makes, the grid's width and height, each square's items (a
+     * tag's members; empty for an empty square) and how many it makes. Sent for a need you don't have yet that you place as a
+     * block and craft at a table, so the stage can draw the recipe instead of saying it.
+     */
+    public record RecipeRow(String item, int width, int height, List<List<String>> cells, int count) {
+        public static final StreamCodec<ByteBuf, RecipeRow> STREAM_CODEC = StreamCodec.composite(
+                S, RecipeRow::item, ByteBufCodecs.VAR_INT, RecipeRow::width, ByteBufCodecs.VAR_INT, RecipeRow::height,
+                S.apply(ByteBufCodecs.list(8)).apply(ByteBufCodecs.list(9)), RecipeRow::cells, ByteBufCodecs.VAR_INT, RecipeRow::count, RecipeRow::new);
     }
 
     /**
@@ -78,15 +89,23 @@ public final class TaskPayloads {
 
     /**
      * Server → the player: every step (each tab's rows in their places first, then what waits), the one on top, the pinned
-     * one, each goal's footer by ordinal, the goals whose tab has opened as bits, and whether the cap is on. Sent when it changes.
+     * one, each goal's footer by ordinal, the goals whose tab has opened as bits, whether the cap is on, and the recipes of
+     * what the shown steps still need. Sent when it changes.
      */
-    public record View(List<StepRow> steps, String top, String pinned, List<String> footers, int tabs, boolean capped) implements CustomPacketPayload {
+    public record View(List<StepRow> steps, String top, String pinned, List<String> footers, int tabs, boolean capped, List<RecipeRow> recipes) implements CustomPacketPayload {
         public static final Type<View> TYPE = new Type<>(Awaken.id("tasks_view"));
         public static final StreamCodec<ByteBuf, View> STREAM_CODEC = StreamCodec.composite(
                 StepRow.STREAM_CODEC.apply(ByteBufCodecs.list(96)), View::steps, S, View::top, S, View::pinned,
-                S.apply(ByteBufCodecs.list(8)), View::footers, ByteBufCodecs.VAR_INT, View::tabs, ByteBufCodecs.BOOL, View::capped, View::new);
+                S.apply(ByteBufCodecs.list(8)), View::footers, ByteBufCodecs.VAR_INT, View::tabs, ByteBufCodecs.BOOL, View::capped,
+                RecipeRow.STREAM_CODEC.apply(ByteBufCodecs.list(32)), View::recipes, View::new);
 
-        public static final View EMPTY = new View(List.of(), "", "", List.of(), 0, true);
+        public static final View EMPTY = new View(List.of(), "", "", List.of(), 0, true, List.of());
+
+        /** How {@code item} is made, if the server sent it. */
+        public @org.jspecify.annotations.Nullable RecipeRow recipe(String item) {
+            for (RecipeRow r : recipes) if (r.item().equals(item)) return r;
+            return null;
+        }
 
         public String footer(int goal) {
             return goal >= 0 && goal < footers.size() ? footers.get(goal) : "";

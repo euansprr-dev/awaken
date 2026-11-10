@@ -285,9 +285,9 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         String count = String.format(Locale.ROOT, "%,d places known", Discovery.CLIENT.count());
         int room = x1 - x0 - font.width(count) - 20;
         String title = "ATLAS" + (where == null ? "" : "  ·  " + where.toUpperCase(Locale.ROOT));
-        if (font.width(title) > room) title = font.plainSubstrByWidth(title, room - font.width("…")) + "…";
         int ty = scene ? y0 - 11 : MARGIN;
-        text(g, title, x0 + 2, ty, INK, false);
+        if (font.width(title) > room) dev.awaken.signal.client.Ui.fitted(g, font, title, x0 + 2, ty, room, 1, INK, false); // a long place name: smaller, never cut (SPEC §57.6)
+        else text(g, title, x0 + 2, ty, INK, false);
         text(g, count, x1 - font.width(count) - 2, ty, Glass.LABEL | 0xFF000000, false);
         // compass: north turns with the table
         int ccx = x1 - 18, ccy = y0 + 18;
@@ -664,8 +664,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 g.fill(x + 8, ry, x + 10, ry + 9, Glass.a(gt.colour(), gt.read() ? 0.6f : 1f));
                 String dist = gateDistance(mc, gt);
                 int dw = font.width(dist);
-                String name = font.plainSubstrByWidth((gt.broken() ? "! " : "") + gt.name(), w - 30 - dw);
-                plain(g, name, x + 17, ry, over || picked ? 0xFFFFFFFF : INK);
+                dev.awaken.signal.client.Ui.fitted(g, font, (gt.broken() ? "! " : "") + gt.name(), x + 17, ry, w - 30 - dw, 1, over || picked ? 0xFFFFFFFF : INK, false);
                 plain(g, dist, x + w - 6 - dw, ry, Glass.a(gt.broken() ? Glass.WARN : Glass.LABEL, 0.95f));
             }
             if (pointY > -1000) {
@@ -691,8 +690,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 g.fill(x + 6, ry + 1, x + 13, ry + 8, z.colour());
                 String sub = z.zone() == here ? "here" : z.sub();
                 int subW = font.width(sub);
-                String name = font.plainSubstrByWidth(z.name(), w - 30 - subW);
-                plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
+                dev.awaken.signal.client.Ui.fitted(g, font, z.name(), x + 17, ry, w - 30 - subW, 1, over ? 0xFFFFFFFF : INK, false);
                 plain(g, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f));
             }
         }
@@ -706,8 +704,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 WaypointGlyphs.glyph(g, wp.mark(), wp.fell(), x + 6, ry + 1, 0xFF000000 | wp.colour());
                 String dist = distance(mc, wp.x() + 0.5, wp.z() + 0.5);
                 int dw = font.width(dist);
-                String name = font.plainSubstrByWidth(wp.mine() ? wp.name() : wp.name() + " · " + wp.owner(), w - 30 - dw);
-                plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
+                dev.awaken.signal.client.Ui.fitted(g, font, wp.mine() ? wp.name() : wp.name() + " · " + wp.owner(), x + 17, ry, w - 30 - dw, 1, over ? 0xFFFFFFFF : INK, false);
                 plain(g, dist, x + w - 6 - dw, ry, Glass.a(Glass.LABEL, 0.95f));
             }
             String left = !showWaypoints ? "Hidden" : wpCount > wpRows.size() ? (wpCount - wpRows.size()) + " more" : "";
@@ -1161,13 +1158,13 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             dev.awaken.progression.client.ProgressionClient.openBand(page);
             return true;
         }
-        if (e.key() == InputConstants.KEY_TAB && !gateRows.isEmpty()) { // the next gate, nearest first
+        if (e.key() == dev.awaken.holo.ui.StageKeys.NEXT && !gateRows.isEmpty()) { // the next gate, nearest first
             int at = -1;
             for (int i = 0; i < gateRows.size(); i++) if (gateRows.get(i).pos().equals(chosen)) at = i;
             choose(gateRows.get((at + (e.hasShiftDown() ? gateRows.size() - 1 : 1)) % gateRows.size()));
             return true;
         }
-        if (e.key() == InputConstants.KEY_T && chosen != null) {
+        if (e.key() == dev.awaken.holo.ui.StageKeys.TRACK && chosen != null) {
             pointAtChosen();
             return true;
         }

@@ -21,7 +21,7 @@
    "base": "awaken:item/lordscale_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "lordscale_shieldblade"
+    "weapon": "lordscale_shieldblade_blade"
    }
   }
  }

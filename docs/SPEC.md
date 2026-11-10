@@ -842,6 +842,12 @@ of `AwakenConfig.Client`.
   `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
   `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
   `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
+- `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
+  (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
+  `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
+  frame) and `BandPlaces` (`Place`, `set(pageOrdinal, place)`: what a band page shows on the stage). `Goals.Step.icon`
+  (`Builder.icon(itemId)`) names the real item that stands for a step there; `Builder.makes(item)` says the step is the making
+  of that item (a War Anvil, an Inscribing Table), so the stage draws its recipe until you carry one.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
@@ -6853,27 +6859,64 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   arc went on filling to 24 past the ting. Now the arc is full and gold at the ting and stays so; the server counts a
   tick short as full (`ArmsServer.GLINT_GRACE`: its count starts when it hears the charge, a tick or so late). **Tap or hold**
   (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
-  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
-  the strike's hit waits at its wind-up's end while the key stays down (`ArmsPredict.waitHit`). The hands hold at the
-  strike's set, where its drive begins (`fp_swings.json`'s `set`, Swing Studio round 8), not at the hit (Euan
-  2026-10-29: "it attacks on the click when you are still loading": at the hit the blade had already struck, to the
-  eye, before the charge took it, and a dagger's 1-tick stab froze on the target for most of every click). Let go
-  before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then, its drive from the set to the hit
-  run 1.6 times as fast (`ArmsPredict.RUSH`), giving back some of the wait. The key's release is read every frame
-  (`ArmsPredict.frame`), not on the next tick (up to 50 ms late). While a strike waits, the client's chain clock waits
-  as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
-  time the next press alike: unmoved, the client ran each dagger strike a tick or two ahead of the server, cut the last
+  attacks"; 2026-11-09: "it should go straight into an animation... the moment you start clicking long... it brings the
+  weapon into its charge like form. But right now it just glitches into its form, or sometimes it starts an attack and
+  then cancels the animation midway"). **The draw** (`ChargeDraw`): someone drawing a weapon back doesn't begin a light
+  blow and swap to a heavy one; every press starts the same pull back, and letting go early just looses it sooner. Rounds
+  of 2026-10-26, 10-29 and Swing Studio's round 8 each moved where in the light strike a held press waited (its hit, then
+  its `set`), so every hold still showed 300 ms of a light attack and then swapped clips at the mark; the fault was showing
+  the strike at all. Drawing from the press's first frame (9 Nov, first try) was wrong the other way (Euan 2026-11-09: "it
+  just sometimes thinks you're going into a heavy hold or like a heavy strike when you're not, and it makes it look
+  glitchy"): every click showed the start of the heavy's pose and then snapped into the strike, by an amount that depended
+  on how long the finger happened to stay down, on every weapon. No capture saw it: at a tenth of play's speed it was a slow
+  small dip, and at real speed on the slow runner a click's ticks ran inside one frame (`tap drawn` was 0 on all 99 clicks).
+  Now **until a press has outlasted a click nothing on screen knows about it** (`ChargeDraw.GRACE`, 4 ticks, 200 ms;
+  `ArmsPredict.undecided`): the hands and the view's lean go on with what they were doing, the move that was running
+  playing on to its end (`underMove`, `underTime`) or the stance holding. After the grace it is a hold, and the hands
+  leave for the heavy's drawn pose (its clip's first key, the very pose it is loosed from) on one curve (`ChargeDraw.ticks`,
+  `SwingBlend`'s quintic: 0.6 of the weapon's glint, 7.8 ticks on the Daggers to 12 on the Maul, there before the glint),
+  from wherever they are. The draw and the charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks
+  down, `PRESS_CHARGE`) moves nothing; the arm's strain grows from nothing after it (slow, about 3 Hz: the old 8 Hz tremble
+  read as a glitch), and the charge's meter fills from the end of the grace to the glint, so a tap never lights it and it
+  doesn't jump. **A release** gives the hands 1 tick to reach the loosed heavy from a full draw and up to 3 from one barely
+  begun (`releaseTicks`). The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
+  `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
+  hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
+  in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
+  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **One chain** (Euan 2026-11-09: "the combo stops being the usual one", "it just switches to something else"): the two
+  sides time the windows on their own clocks, more so with a busy server, so left to decide alone they disagree on a window's
+  edge: one counts a strike the other never played, and the combo repeats a strike or skips one. Only the hands decide. The
+  press carries what they did (`Press.claim`: the move they began, or `CLAIM_NOTHING` for a press too early to count) and the
+  server plays that: never a strike they don't show, and never another in its place. A strike they began is kept however early
+  the server's clock calls it, and waits for the server's own window (`ArmsRules.HEARD_BUFFER`), so nothing strikes faster than
+  the rules allow. A press that only repeats the strike already queued says so (`CLAIM_AGAIN`), so it can't count as another. A claim must still be legal (`ArmsRules.follow`: starting again, or the strike after the last within 60
+  ticks; a move off the chain only if the server saw its deflect, dodge, slide or fall, give or take `HEARD_SLACK`). A move off
+  the chain it can't grant lands no blow and starts nothing else. The server's reply never changes the strike the hands are in
+  or the step they count from; only what they couldn't know (an execution on a heavy's release) takes over. Any real difference
+  is logged (`[arms]`), and each session logs what the hands played (`strikes played`). In a development run the last minute or so of the hands, every frame, is written to `logs/arms-blackbox.tsv` on leaving the world (`ArmsBlackBox`). **The blend's clock is a double** (found with the black box, Euan 2026-11-09): the hands' clock counts from the machine's boot, and as a float it moved in steps of 268 ms on a Mac up 34 days, so each `SwingBlend` sat frozen and then snapped, and about one strike start in four flashed the pose of up to 268 ms earlier for one frame (the draw into a charge "teleported" the same way). Test machines boot fresh, so no tour could show it. **A tap** (let go before the mark, `PRESS_TAP`,
+  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
+  are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
+  hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a
+  late tap from nearly full draw doesn't snap across). That is the one trade: the blade reaches its hit 9 to 25 ms later
+  than when the wind-up played under the press on a 60 ms click, 17 to 44 ms on a 100 ms click (the Daggers, which struck on
+  the press until now, 38 and 85 ms); the server's hit is where it was. A tap with no strike of its own (one still queued,
+  or a press too early to count) hands the blade back to what was running. While a strike waits, the client's chain clock
+  waits as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
+  time the next press alike: unmoved, the client ran each strike a tick or two ahead of the server, cut the last
   strike's carry short, and took presses the server's buffer refused, so strikes never landed and the chain fell out
   of step (the server's MOVE then swapped the clip mid-swing). A hit's hold freezes the hands only while the strike it
-  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and
-  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
-  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
-  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
-  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
-  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
-  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
-  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
-  Test `arms_tap_or_hold`. A block under the
+  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and the strike is dropped
+  unlanded and unseen and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is dropped too). The
+  charge holds at full for as long as the key is down, trembling, and goes only on the release (no auto-release; held past
+  full it counts as full); the heavy's clip begins on the pose the hands are in, so the release has nothing to carry. The
+  server never holds a blow on the client's word alone: with no tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4)
+  ticks after the charge's mark. In third person nobody near sees a waiting strike (`ArmsServer.shown`): no swing, no
+  swish, no clip. The fighter's own body starts its held draw with the hands, over the same ticks, and a tap's strike clip
+  takes it over; everyone else's copy of it starts on the server's word at the mark, over 5 ticks (`ArmsBodies.SEEN_DRAW`,
+  was 2), and the weapon's wrist comes round with the clip (`ArmsWrist`; it snapped on at once). A riposte, Slipcut,
+  Undercut or Plunge starts as it always did, and a press held on through one draws after its blow.
+  Tests `arms_tap_or_hold`, `arms_dagger_click` and `arms_draw_smooth` (every style, from rest and from each chain strike's
+  recovery: no frame steps further than the curve or the motion it came in on). A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
@@ -7029,7 +7072,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
   a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
   level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
-  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, shove,
   chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
   the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
   backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
@@ -7050,16 +7093,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
-  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
-  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
-  (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. **Standing as a
+  vanilla sword stands** (Euan 2026-11-09, of the Longsword turned to roll 135 by the weapon audit: "it looks like it's being
+  held the completely wrong way", "a vanilla sword ... actually feels like it has the sharp edge like forwards"): vanilla's
+  `item/handheld` turn stands the blade up, leaned about 20 degrees back toward the eye, edge straight ahead, flat to the
+  side, and because the hand is to the right of the eye the flat still shows. The Longsword, the Shieldblade's sword, the
+  Axe, the Katana and the Greatblade now stand that way (`arms_holds.STANDING`, `FORWARD`; yaw 180 is the lean back), the
+  Glaive keeps its line with its edge square down (roll 90). A swing's blade is solved in view terms, so a new hold moves
+  only the rest and the way to and from it, never where a blow lands (`anim_lab.py bake`).
+  Longsword standing, 72 up (size 0.85); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the right shoulder, standing, 78 up (size 0.9);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
-  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
-  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  across the body (58, 28); Greatblade two-handed, standing near the middle, 82 up (size 0.75); Maul two hands low on the haft,
+  the head up (6, 58); Axe standing, its bit ahead, 80 up (size 0.75); Daggers short, the
   point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
-  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  on its chain (18, 38); Shieldblade a sword in the hand and the shield on the other arm ("The Shieldblade"); Precursor Arm forward like a
   drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
@@ -7225,6 +7274,21 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
+- **What play showed about the rigged moves** (Euan 2026-11-09). *No dip on the way home:* a move whose hand is already home
+  when its follow-through ends has nothing left to do, so `swing_studio.cut_pose` returns the rest there; the recovery's rise
+  used to run anyway, and the War-staff's strikes 1 and 3 and the Spear's strike 3 sank and came back up after settling.
+  *The Maul's uppercut* keeps its face to the front: a two-headed weapon has no reason to turn over, and the 170 degrees it
+  unwound about its haft while rising read as a spin glitch (`tools/arms/feel/maul.json`, form `rise`, `roll0` 16). *The
+  Greatblade's heavy* is a chop, not a rise: charged high in view, tip up, grip right of centre, and brought down across the
+  crosshair. The rise it shared held the blade off the bottom of the screen for the whole charge (0% on screen, now 100%);
+  its server row is the same chop (`archetypes.json`, form `chop`, dir [-0.3, -1]). *The Katana is held edge down in third
+  person* (`arms_holds.EDGE_DOWN3`): vanilla's handheld hold puts a design's +x side up as the arm hangs, so it is turned
+  half round about its length, and the rig solves each move's wrist from that hold, so the edge still leads every blow.
+  *The Gauntlets are the arm* in first person ("as if it was like your entire hand, basically like a glove"): no arm rises to
+  them (`ArmsHands.worn`), because a bare fist was showing round a smaller gauntlet, and each runs on past its rim into a sleeve
+  of its own cuff and metal, banded every 8 texels, out of the view however far a punch carries it (`<id>_arm.mesh` and
+  `.png`, drawn by `WeaponRenderer` in first person only; `arms_weapons.gauntlet_sleeve`). From outside the cuff already runs up
+  the forearm, so nothing changes there.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
   tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
@@ -7238,17 +7302,53 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
     a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
     keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
-  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
-    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
-    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
-    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
-    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
-    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
-    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
-    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
-    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
-    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
-    release is the drive; the Plunge is armed raised, points down.
+  - *The Daggers* (Euan 2026-11-09, after the first stabs-only rebuild: "barely even hitting", "add the slash back in", "a similar
+    animation to before, just polished up with everything we've learned and without the glitches"): a forward grip in both hands.
+    Strike 1 the right stabs, strike 2 the left, strike 3 the right slashes, strike 4 both stab at once, strike 5 (mastery) the
+    left slashes. A stab drives the fist forward and in, the point travelling up the screen toward the crosshair, because a
+    point that stays put on the screen reads as nothing moving however far it goes (that was "barely moving forwards"). Every
+    blow is one stroke: from a stop, through the hit, to one stop a little deeper, then a slower way back. Nothing chambers
+    first: a chamber, a blow and a follow-through inside 1.3 ticks was the jitter. At every blow the fist stays low and on its
+    own side, no higher than -0.55 on the screen and no nearer the middle than 0.26 ("the hands still go way too upwards"); a
+    slash carries the fist across the middle and stops by 0.06, where the old one threw it to -0.30 ("way too much to the left
+    side"). The hand not striking draws back into its guard (0.54, -0.92) while the other drives, so each blow starts where
+    its hand already is; before the slash the right has turned its edge out and waits, cocked out to the right with the blade
+    showing its length, through the whole window a press can land in, and before the finisher both gather low at the hips. The
+    view leans a hair with a stab and rolls with a slash. The heavy charges at the hips and its release is both stabs in half
+    a tick. The riposte is the chain's stab at full reach. The slipcut (wide, a little low) and the undercut (at the legs) are the
+    slash. The server's rows are the slashes' again: strike 3 and 5 arc 90, the slipcut 120, the undercut 160, each with the light
+    whoosh. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. `arms_keys.py check` and the test
+    `arms_dagger_stabs` hold the rules (which strikes slash, the fist low and on its own side at the blow, never crossing over).
+  - *The Twin Blades* (Euan 2026-11-09: "way too fast", "no spinning animation or anything that makes it look really like
+    cinematic and awesome", "too much movement, so it makes the trail ... take up too much of the screen"; replaces round 5's
+    figure-eight): one double-ended blade twirled in one hand. Every strike is whole turns about the true middle of the shaft
+    (`handGrip`, where the fist is), and the fist moves very little: the spin is the motion, so the ribbon is a thin line near
+    the tips at 60% light. A light strike is one turn: half of it arrives on the hit, with the upper blade at the crosshair,
+    and the second half brings the same blade home, the hit's speed carried through it so there is no stop inside. Strikes 1
+    and 2 turn opposite ways, strike 3 is near flat, strike 4 (and mastery's 5) are two turns with the hit after the first.
+    Slower than before, about the same damage over a combo: the chain takes 37 ticks where it took 24, and each strike's motion
+    is higher to match. The turn is written as a turn, an angle against time (`Spin` in `tools/art/arms_keys.py`) and not as
+    poses to blend between, because a turn between poses takes the short way and can't go past half. Third person's wrist
+    (`_spin_wrists`) is the same turn about the weapon's flat, leaning onto first person's plane by the hit; solving it from
+    where the blade points flips each time the blade passes the far side of its axis (179 degrees in a key). The two moves
+    that don't spin (plunge, execution) reach for whichever end is nearer.
+  - *The Shieldblade* (Euan 2026-11-09: "reinvent that one from scratch"; "when you push with it, it doesn't feel like a push";
+    "it feels like it's hitting the wrong side"; "the blocking with it doesn't even block with the shield side"; "it just looks
+    like a tiny dagger swung out of a shield"): one item that is two things. A sword as long as a Longsword in the main hand, a
+    shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
+    draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
+    (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). Its cuts (strike 1, the slipcut, the undercut) run on the Longsword's own line: the point travels straight through the crosshair on the hit with the blade square to the way it goes (Euan 2026-11-09: "it reads as just waving the swords instead of swinging it blade side"; the old keys laid the blade over, so the point went over the top of the frame and off to the far left and never crossed the target). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
+    alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
+    hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is
+    charged with the shield gathered further still. The guard is the shield: raised to the middle of the view with the crosshair
+    over its rim and the sword held back at the side; in third person `arms_shieldblade_guard` lays the arm across the front and
+    `off.guard3` turns the shield square to the front (a left-handed player's isn't turned, as for every third-person wrist). Through the
+    sword's cuts in third person the shield stays on its arm's clip and no wrist turns it; it leaves the clip only when it does
+    something (`shield3`, its own weight in `_shield_weight`), and its wrist is the whole frame, never the shortest turn to a line,
+    because which way a shield's front looks is the point of it. Reaches now match the Longsword's (3.0, 2.8 for the shove, 3.2,
+    3.6).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
@@ -7284,18 +7384,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
     belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
     drives the Scythe.
+  - *A charge is held in view* (Euan 2026-11-09, of a heavy charged under the view: "you can't even see the blade anymore"):
+    a heavy's first pose is what a charge holds for as long as the press lasts, so its draw back is cut until the blade's
+    middle sits at most 0.75 of the way to the frame's edge (`swing_studio.HEAVY_SET`), an overhead's too (one that rose out
+    of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
+    cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
+    `arms_heavy` is still the rising cut.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
-    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. The Daggers' freezes
+    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
+    hold was its wind-up) but its weapon has still to cross, so its impact waits for the blade to cross (`FpSwings.lands`:
+    a hand-keyed clip's own `hit`, any other's halfway through its active ticks, where the lab bakes it; a server HIT that
+    comes first waits with it, never more than a tick, and so does the freeze of a posture that blow broke): on the first frame after the release
+    the freeze held the weapon wound back with the target already reeling, and only then let it go (seen on the
+    Shieldblade's film, 2026-11-09). The Daggers' freezes
     are 50 ms on strikes 1 and 2, 60 on strike 3 and
     80 on the finisher (were 35, 35, 40 and 55; archetypes.json). A keyed move carries its own kick (`kick` [yaw, pitch],
     a unit, scaled by the freeze as every kick is, `ArmsPredict.impact`), worked out by the bake from the blade the keys
     draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
     cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
     Every other style kicks along its row's from/to as before.
-  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
-    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
-    press waits at its set (arms_tap_or_hold).
+  - *Strike on the click* (`ArmsRules.waitsOnHold`, 2026-11-02 to 2026-11-09): a dagger's strike landed as it came even
+    while the press was still down, and a held press charged after the stab. Undone by Euan's 2026-11-09 "it still sometimes
+    attacks once before starting the charge": a dagger's press now waits unseen under the draw like every other
+    (**Tap or hold**, arms_dagger_click). `ArmsRules.STRIKE_ON_PRESS` is the list to name it in again.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
@@ -7456,8 +7568,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     with most weapons hides the weapon under your view"):
     - Every chain strike's clip says where its drive begins (`set`, `swing_studio.set_of`: the last moment before the
       hit its blade's middle is near still; 0 for a quick stab driven from its start, the daggers' strikes 1, 2 and 4).
-      A press still down waits there (the tap or hold rule, §25 above), never at the hit. Test `arms_feel_rules`: every
-      strike's set is at or before its hit.
+      A press still down waited there until the draw (2026-11-09, the tap or hold rule, §25 above); nothing in play reads
+      it now but the wind-up checks. Test `arms_feel_rules`: every strike's set is at or before its hit.
     - Every style holds a guard of its own (`guard`, `swing_studio.guard_pose`), put on the item's hand transform, the
       hands' grips and a pair's twin (mirrored): the grip low on the right (ndc 0.5, -0.76, 0.62 ahead of the eye), the
       blade rising to the left at 46 degrees on the screen, its tip leant 30 degrees away along the eye's ray (which
@@ -7855,7 +7967,8 @@ against it, so a vanilla item plays its designed tempo).
 - **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
   blocks in.
 - **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
-  second strike a shield bash; the riposte a bash that throws (1.0).
+  second strike and the heavy a shove with the shield that throws its target back; the riposte a stab from behind the shield that
+  throws (1.0).
 - **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
   so a staff fighter's powers come round faster.
 - **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6
@@ -20512,6 +20625,209 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 `ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
+
+## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
+
+Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
+rule: **the band shows you things, and speaks only about the one you point at.** Built in stages (PLAN §6); the old band stays behind
+`classicBand` in `awaken-holo-client.toml` for one build. With his approval he asked for two things: on Status the real player stands
+under the armour and looks at the pointer as in the bag, and every icon and name is the real item's own ("all the icons are actually
+correct and the names are actually correct").
+
+### 57.1 The sheet and the kit (`core.client.ui`)
+- **One sheet.** `Sheet`: 1708 x 960 (the Hall's, §52), fitted to the window and letterboxed, so the band no longer depends on the GUI
+  scale. Type roles in sheet pixels to a font pixel: numeral 6, display 5, title 3 (4 for the step in focus), body 2, label 1.5; each
+  snaps to whole real pixels, and Band size (§30.6) moves every one a real pixel down or up.
+- **Colours** are `signal.client.Glass`'s, by job: EDGE what you can act on, AMBER what waits on you, GOOD have and ready, WARN short,
+  LANTERN home. Never colour alone: a count, a tick, a glint or a rim goes with it. Under the game's High Contrast option the plate is
+  solid and the quiet text brightens.
+- **The kit** (`Kit`): a thing in its well lit by its state (not found, known, ready, yours, waits, in focus); a need as the real item
+  with have/need and its name; a recipe as a grid, an arrow and what it makes; a number with its caption; a needle (up is ahead) and a
+  distance; key caps and the bar of keys; buttons (primary, plain, on, quiet; a hold fills); chips; the name under the pointer in the
+  band's glass. **Every icon is the real item, drawn by the game (`g.item`), and a plain item's name is the item's own**; nothing in
+  the kit draws a picture of its own. What stands in for something not found is a dark diamond that gives nothing away.
+- **What can be clicked** (`Hot`): each part that draws something clickable adds its rectangle and what a click does, in the same
+  pass, so drawing and clicking can't disagree.
+
+### 57.2 The band's stage (`holo.client.BandStage`, geometry `holo.ui.StageLayout`)
+- K opens the stage: the band's glass as one plate (152,40 to 1680,884) with you (level, rank, XP) and the six places down the wrist
+  edge (Status, Tasks, Hearth, Powers, Journal, Map: same names, order, icons and number keys), the open place's name, the stage
+  (192,144 to 1640,856, its right 440 the panel that speaks about the thing in focus) and one bar of keys under it.
+- The glass unfolds from the wrist as the band's 3D panel and lands on the plate's rectangle, where the flat face takes over (the
+  bag's hand-over, §16; the same `HoloPanel`, so others still see the STATUS kind and nothing of its content). Changing place prints
+  the stage in behind a scan line (220 ms; a cut with reduced motion). Without the holo shaders the plate is solid.
+- **Keys, the same on every AWAKEN screen:** Esc one step back (then it shuts), Tab and Shift+Tab the next thing, Q and E the place
+  beside this one (the Map keeps its own key and screen), 1 to 6 a place, K shuts it, T tracks, hold commits, Z takes back. The bar
+  shows the ones that work now.
+- **Places** (`BandPlaces.set`): a module gives its page a `Place` (draw, hints, key, next, back, scroll). A page without one shows its
+  old sections on the stage (`LegacyPlace`): columns of the old band's width, each section to the shortest column, a unit two sheet
+  pixels; Tab, Q and E keep their shared meaning there. Stage 0 moved Tasks; the others follow in PLAN §6's order.
+- A glint on a rail node says something waits: points to spend (amber), new steps, new Journal lines.
+- Tours: `screen band [status|tasks|hearth|powers|journal]`, `band click <x> <y>` (sheet pixels), `screenkey` (now also x, z, esc,
+  enter, left, right, back, 1 to 6), `tasks focus <step key or its start>`, `holo classic on|off|auto`.
+
+### 57.3 Tasks on the stage (`tasks.client.TasksPlace`; the model of §27.13 and §53 is unchanged)
+- **No tabs.** The goals are lanes at the right (Hearth, Armour, Weapons, Bells, Gates, Out there), each with its rows as tiles (the
+  step's real items, its name on up to three lines, pips for how much of what it takes you have, a glint when new, an amber rim on
+  the step on top) and a "+n" tile for what waits in Later, which opens that list in the focus area (Track, Put back). A lane shows
+  once it has something.
+- **The step in focus** (the one on top when you arrive; click a tile or Tab for another): whose it is and why it's in front
+  (Tracked, Do this next, When you want, Also open to you; READY), its name, one line (`opens`, else `why`; two lines at most, the
+  rest as the tip), then its picture:
+  - picks → side by side: armour as figures wearing each set (a `ClientMannequin`, so a body is under the armour), anything else as
+    the things themselves; click or Left/Right looks at one and lists what it takes; Enter or the button chooses; "See them worn"
+    opens the Hall's line-up (§52);
+  - something it needs that you place and craft → its recipe drawn as a grid (`TaskPayloads.RecipeRow`), the thing beside it, and
+    how many you have;
+  - only a place → a needle, the distance as a number and the direction;
+  - else the thing itself on the lit floor.
+  Under it: what it takes as the real items with have/need (where a missing one comes from is its tip), the way as a small needle,
+  and what comes after.
+- **Track** replaces the word Pin on this page (the same `PIN`/`UNPIN` and the same HUD card); Set aside (X) and Undo (Z, for the
+  same ten seconds) as before, never on the step on top.
+- **Pictures.** A step is pictured by its picks, else what it takes, else `Goals.Step.icon`, else its goal's own item (`EMBLEM`).
+- **Recipes** (`tasks.TaskRecipes`, in `tasks_view`, payload version 3): for each unmet need of a shown row that is a block you place,
+  the crafting recipe that carries the item's own id, read from the server's recipes (shaped or shapeless; a tag's members turn a
+  second each). Materials get none.
+
+### 57.4 Status on the stage (`progression.client.StatusPlace`)
+- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you
+  (`InventoryScreen.extractEntityInInventoryFollowsMouse`): your body is under your armour, and you turn to the pointer as in
+  vanilla's inventory (Euan, 10 Nov). Your name and title under it.
+- **Level and rank as numbers**, when the next rank comes (the rank's tip says what it opens for you), your path; XP as 32 segments.
+- **What comes next:** the level road's next three stops as tiles (level, name; the long line is the tip).
+- **Stats:** the six as columns. A click (or arrows and Space) places a point; nothing is sent until **Hold to confirm** (Enter held
+  or the button held, 0.6 s: spent points can't be taken back), Undo (Backspace) takes the last one back. The same
+  `spend_many` request and the same placed list as §30.3, so points placed on the old band are still placed here.
+- **Truths as marks:** one diamond each (32), yours lit green, the closest three rimmed amber, the rest dark and unnamed. Point at
+  or click one and the panel reads it: its words, what it takes with a bar, what it gives. Nothing is named until it's yours or close.
+- **The panel** otherwise says what happened lately (the Journal's three newest lines) and three deeds as numbers, and under them
+  holds what only applies now or hasn't moved yet, as it was written (`SectionHost`): a decision waiting, this gate, the Deep Pack,
+  this room, your mount, the path choice, titles and latents. The Now row is gone: the glint on Tasks says it.
+- `SectionHost` (progression.client) is how old sections show on the stage: columns of 232 units, a unit two sheet pixels, each
+  section to the shortest column, tooltips sent to the real pointer (`GuiCanvas.tooltipsAt`).
+- **Words:** Track replaces Pin wherever a step is tracked (the Bell Book's leads, a beast's want, the old band's Tasks page).
+- Tests: `band_stage_layout` (the stage's geometry at seven window shapes), `tasks_stage_pictures` (a Fitting Stand's and a crafting
+  table's recipes are the game's own, a material gets none, every picture is a registered item, a recipe stops being sent once
+  you have the thing, the page survives the wire). Not tested yet: the key meanings across screens and a word budget on the copy.
+
+- Keys: Left and Right (or Tab) walk the stats, Space places a point, Enter held confirms, Backspace undoes; Up and Down read
+  the Truths one at a time (true, then closest to true) without the pointer, and Esc lets the Truth go.
+
+### 57.5 Powers on the stage (`powers.client.PowersPlace`)
+- Your six keys with the power on each and your own binding under it, your energy as a bar; every power you own in one grid, thirteen
+  across, so all 63 show with no scrolling (level pips, mastery under them, a dot when it's on a key or always on); the panel at the
+  right reads the power you point at, else the one you picked, else the one Tab walked to, else the one on your first key, so it is
+  never an empty box (the old card was, with nothing under the pointer). It holds the power's kind, name, icon, energy and cooldown
+  as numbers, mastery as segments and in words, what it does, what to press, and its ladder.
+- Picking, the keys (your bindings), the key that doesn't fit and the server's say are the old page's own (`PowersSection.selected`,
+  `equip`). Esc lets go of a pick before it shuts the band; Tab walks the grid, Enter picks.
+- What your body does, your crafts, the Veil and the Armoury's line follow under the grid as they were written (`SectionHost`).
+
+### 57.6 Nothing is ever cut off (Euan, 10 Nov 2026: "you can actually always read everything that you need to read")
+A stat's line ended "…and you shrug off more h..." on the first build. The rule since, across the band:
+- **On the stage** (`core.client.ui`): there is no way to shorten text. `Sheet.lines`, `linesCentred` and `linesRight` draw every
+  wrapped line; nothing takes a "most" and nothing adds dots. What holds words grows to hold them: a tile is as tall as its longest
+  name, a need as its name, a row of picks as its longest name and line, the Later rows and the set-aside line as their words. If a
+  side still comes out taller than the stage (the step in focus, the lanes, a power's panel) that side scrolls, with a bar and "More"
+  on the bar of keys. A list that shows only the newest few shows each whole or not at all.
+- **Old sections** (`signal.client.Ui`): `textAt` and the new `boxAt` fit a line into its slot instead of ending it in "…"
+  (`SignalText.fitBox`): as written if it fits; else a whole real pixel smaller per font pixel at a time, never under half size or two
+  real pixels, wrapped onto the lines the slot then holds (two lines at half size fill the same height as one); and if even that
+  doesn't fit, every line at the smallest, running on below. `textAtMost` wraps in full. The Hearth's room tiles, the Journal's
+  cards and names, the Crafts' perks and the gate-world cards all go through these. A section that draws with the graphics
+  itself uses the static `Ui.fitted` (the Journal's chains, the Almanac's names, who can ride with you, the Now row); a row's
+  `button`, `chip`, `item` and `text` fit a label wider than the row the same way.
+- Not yet under the rule, each still shortening by hand (found by grep, 10 Nov): the workshops and their screens (the Hall of
+  Arms, the anvil and the line-up through `hall.client.Stage.fit`; the Fitting Stand's and the Armoury's old screens; the
+  Inscribing Table; the Ledger), the map's lists, the Tab glance, name plates, the JEI pages, the Look screen, and the classic
+  band's own Status sheet. They join in the plan's later stages (the workshops in Stage 4, the glance in Stage 3). The HUD's
+  cards, toasts and tracker lines page or shorten long lines by design: they are glanced at, not read.
+- Test `ui_text_never_cut`: for many lines, slots and pixel sizes, every word is still there, the size is on whole real pixels and
+  never under half, and each line is inside its slot.
+
+### 57.7 Hearth on the stage: one Hearth, two doors (`hearth.client.HearthPlace`)
+- **What shows:** the home's name, tier, Forge tier, Comfort as pips and Rested; every room kind as a tile with its own
+  signature piece (the last piece of its furniture), lit by state (yours: warm with a tick; started: amber with a pip for
+  each piece; open: plain; a kind whose rare piece you haven't met: a dark shape, no name); the rooms as the Hearth reads
+  them, each a chip with its grade; who lives here (your beasts and the kinds you know drawn as themselves, a kind you've
+  only heard of a dark shape, the people and those who could come as chips); and what the home asks for, a line each.
+- **The panel** reads what you point at, else what you clicked. A room kind: what it does, its pieces as real items with
+  have/need (the tip says where one comes from), its condition, the closed-room rule, why it isn't one yet and where the
+  ticked pieces stand (the server's reading), and the game's own recipe for the first missing piece; a built kind shows its
+  rooms' readings (grade, six readings as pips with the weakest in amber, the one thing that lifts it). A beast: itself,
+  what it's doing, how it feels, and its name (the naming window). A kind: where, its job, what it wants, your standing, a
+  rumour with Track (T). A neighbour: their role and what they wait for. With nothing in focus: the home in numbers
+  (radius, rest, Rested), where you wake, what adds a point of Comfort, the land, Oren's cottage while it's on offer, and
+  the next tier with its needs and its parts as items.
+- **Two doors.** K looks and tracks. Using the Anchor (or the first fire) opens this same place (`Guide.Show` with open;
+  `GuideClient`), and there the next tier is raised (hold Enter or the button, 0.6 s) and Oren's offer is taken; through K
+  the place says "Raise it at your Anchor" and the head carries "At your Anchor you can do more". The separate window
+  (`HearthScreen`) stays for the classic band and for a bare wrist. The place asks the server for its reading while it
+  shows (`Guide.Act.REFRESH` every two seconds) and says it has left.
+- Removed with it: the second copy of the Tasks card ("Next for your home"), "Everything for your home ›" (the Hearth lane
+  on Tasks), "Rooms and upgrades ›".
+- Keys: Tab walks the room kinds you know, T tracks, Enter held raises the tier at the Anchor, Esc lets go of the focus.
+- `kin.client.KinStrip` is the kin module's public reading of its page for this place (beasts, kinds, wants, a kind's body).
+
+### 57.8 The Journal on the stage: one wall (`progression.client.JournalPlace`)
+- The twelve category chips were a mode each. They are an index down the left (a picture, the name, how much you have, "n
+  new") that jumps one wall on which every shelf stands; Up and Down step shelf by shelf, Tab walks what you've found.
+- A shelf with a fixed set (creatures, beasts, cave regions, ores, enchantments) shows the things themselves: a found
+  creature or beast stands on its tile as itself (`Catalogue.Slot.creature`, `Kit.creature`), a found thing is its own item,
+  a find with no picture is its name. **Not found is a dark shape and nothing else**: no number, no name, no hint (the old
+  grid numbered them). Bosses, Lords and story finds are in none of these sets and stay sealed.
+- The shelves still written as sections stand on the same wall as they were (`SectionHost.flat`): the gate worlds'
+  paintings, the Bell Book (its ten by ten board already lights a bell in its rank's colour), lore, happenings, and Your
+  story (the log, recent messages, what waits, records, the chains you follow). An open-ended shelf with nothing yet says
+  what it keeps.
+- The panel reads the find you point at (or clicked): its shelf, its name, itself large on a lit floor, and what you've
+  learned; at rest it counts each fixed shelf.
+- `Kit.creature` keeps one body per kind for the world and draws it through the inventory's own figure code; a kind whose
+  renderer balks at a body that was never in the world falls back to its item (its egg), once, for the session. Only tiles
+  in view draw a body.
+- Not moved yet: chains and bounties still stand under Your story (the plan moves them to Tasks' Out there lane).
+
+### 57.9 The bag's tooltip, the Tab glance, cards
+- **Tooltips:** wherever the band's look is on (not Classic), an item's tooltip takes the band's glass: the style
+  `awaken:glass` set on `RenderTooltipEvent.Texture` (sprites `tooltip/glass_background`, `tooltip/glass_frame`, made by
+  `tools/art/tooltip_glass.py`). A stack that brings its own style keeps it.
+- **The Tab glance** (§40.7) is a third shorter with the same facts: the vitals stand two to a row, each the band's own
+  mark (a heart, a spark, an apple, a plate), a bar and its number, where each had a row and a word; a task's name and its
+  current step take the lines they need (they were cut with "…"); the "next step" row is gone (the count says how many are
+  left). `GlanceRules.rows(vitals, title, step, heading, hotbar, out)`; test `hud_glance_rows`.
+- **One key cap:** `Kit.cap` and `Kit.hintLine` are the stage's key caps in GUI pixels. Choice cards draw Y and N with
+  them (it was "[Y]"), the bag shows Tidy, Pin a slot and Undo under its panel, the Look screen's foot is a bar of keys.
+
+### 57.10 The workshops
+- **The Hall of Arms** (§52): its sheet's colours are the band's (`hall.client.Stage` reads `signal.client.Glass`; one
+  list of rank colours, `Sheet.RANK`); `Stage.fitted` replaces `Stage.fit` (smaller by half sizes, then wrapped, never
+  "..."); the foot of every view is the band's key caps (`Stage.hint`: Esc, Drag, Click), and Track shows its T.
+  "What makes it different" is marks with their numbers (`HallSpecial.Mark`: "From behind ×2", "Heavy reaches 5 blocks"),
+  the whole sentence by the pointer; it was a paragraph each, and paragraphs that didn't fit were dropped.
+- **The War Anvil:** "At most it can take Temper VI, which would make its damage 12." is six pips (what it has, what this
+  heat makes it, how far it goes) with "VI · Damage 12" at the end (`AnvilPayloads.Say.MOST`); the plate's lines are all
+  drawn, a size smaller when there are more than their room (it drew two and dropped the rest).
+- **The Inscribing Table:** a price is its things with counts (levels as a bottle o' enchanting, lapis as lapis); it read
+  "6 levels and 2 lapis". The line about how deep you can write here is fitted, never cut.
+- **Boards, books and the map:** the Ledger, the Precursor panels, the old forge, anvil and armoury screens, the map's
+  lists and its title, and the Look screen fit long text (`Ui.fitted`) where they cut it.
+- Still shortening by hand: an enchantment's name on the table's page (its width places the level arrows), creature and
+  boss name plates, the JEI pages, and the HUD's cards, toasts and tracker (glanced at, not read).
+
+### 57.11 The shared keys and the word budget, as tests
+- `holo.ui.StageKeys` is the whole table: Esc back, Tab the next thing, Q and E the view beside, T Track, X set aside, Z
+  undo, Enter held to commit; the band, the Hall and the map read its constants. Three exceptions are written in it with
+  their reasons: Q and E turn the map (it is a camera), and T in the bag is Tidy (the player's own binding; there is
+  nothing to track in a bag). The numbers are the game's key codes (SDL scancodes in 26.3); the client checks them against
+  `InputConstants` as it starts. Test `ui_keys_one_meaning`: a shared key has its one verb on every surface, every
+  exception says why, and there are exactly three.
+- Test `ui_word_budget`: every room (name 3 words, what it gives 12, what it does 40), every power (name 4, what it does
+  60) and every step a fresh hunter is given (name 14, why 40, what it opens 24) is within what the stage shows without a
+  scroll. **The plan's tighter budget (one sentence of 14 words up front, the rest a tip) has not been written**: it is a
+  rewrite of about 110 lines of copy across many modules, and wants its author's eye.
+- **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
+  the plan deletes them one build after the stage has been played, and it has not been played yet.
 
 ## 58. Over Every Hill: finds (plan docs/finds/PLAN.md, page https://claude.ai/artifact/G9fPfsJmTjj8xbaRnrScSw; Euan approved the full plan and every recommendation 2026-11-10: "make sure it doesn't feel like a fairground... you should still have stretches where you don't find much. It should feel very natural")
 

@@ -58,7 +58,7 @@ final class TaskPage extends UiSection {
         undo(ui);
         StepRow top = TaskCache.step(v.top());
         if (top != null) {
-            heading(ui, top.key().equals(v.pinned()) ? "PINNED" : "DO THIS NEXT");
+            heading(ui, top.key().equals(v.pinned()) ? "TRACKED" : "DO THIS NEXT");
             step(ui, v, top, true);
             ui.gap(6);
         }
@@ -201,7 +201,7 @@ final class TaskPage extends UiSection {
         ui.card(pinned ? Glass.GOOD : s.optional() ? Glass.LABEL : Glass.EDGE, b -> {
             Ui.Flow tags = b.flow();
             tags.chip(goalName(s).toUpperCase(java.util.Locale.ROOT), Glass.LABEL);
-            if (pinned) tags.chip("PINNED", Glass.GOOD);
+            if (pinned) tags.chip("TRACKED", Glass.GOOD);
             if (s.fresh()) tags.chip("NEW", Glass.AMBER);
             if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             tags.end();
@@ -258,7 +258,7 @@ final class TaskPage extends UiSection {
             Ui.Flow tags = b.flow();
             if (lead) tags.chip(goalName(s).toUpperCase(java.util.Locale.ROOT), Glass.LABEL);
             else if (top) tags.chip("NEXT", Glass.AMBER);
-            if (pinned) tags.chip("PINNED", Glass.GOOD);
+            if (pinned) tags.chip("TRACKED", Glass.GOOD);
             if (s.fresh()) tags.chip("NEW", Glass.AMBER);
             if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             if (s.optional()) tags.chip("WHEN YOU WANT", Glass.LABEL);
@@ -344,11 +344,11 @@ final class TaskPage extends UiSection {
 
     private static void pin(Ui.Flow f, TaskPayloads.View v, StepRow s) {
         if (s.key().equals(v.pinned())) {
-            if (f.button("Unpin", Glass.EDGE, true)) {
+            if (f.button("Stop tracking", Glass.EDGE, true)) {
                 TaskCache.act(TaskPayloads.UNPIN, s.key());
                 StatusSections.cue(StatusSections.Cue.UNDO);
             }
-        } else if (f.button("Pin", Glass.EDGE, true)) {
+        } else if (f.button("Track", Glass.EDGE, true)) {
             TaskCache.act(TaskPayloads.PIN, s.key());
             StatusSections.cue(StatusSections.Cue.CONFIRM);
         }

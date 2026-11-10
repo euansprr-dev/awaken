@@ -110,7 +110,7 @@ final class AnvilHeldScreen extends Screen implements dev.awaken.signal.client.Q
         if (on) g.fill(x + 1, y + CARD_H - 1, x + w - 1, y + CARD_H + 1, PAGE); // it runs on into its page
         g.fill(x + w - 9, y + 6, x + w - 5, y + 10, o.ready() ? GOOD : RULE);
         g.text(font, o.name(), x + 7, y + 5, on ? TITLE : LABEL, false);
-        g.text(font, font.plainSubstrByWidth(o.headline(), w - 12), x + 7, y + 16, o.ready() ? GOOD : LANTERN, false);
+        dev.awaken.signal.client.Ui.fitted(g, font, o.headline(), x + 7, y + 16, w - 12, 1, o.ready() ? GOOD : LANTERN, false); // whole, never cut (SPEC §57.6)
     }
 
     // ---- the page ----------------------------------------------------------------------------------------------------
@@ -189,7 +189,9 @@ final class AnvilHeldScreen extends Screen implements dev.awaken.signal.client.Q
                 case AnvilPayloads.Say.QUIET -> QUIET;
                 default -> LABEL;
             };
-            for (FormattedCharSequence l : font.split(Component.literal(s.text()), w)) {
+            // the old screen says in words what the stage draws as pips
+            String text = s.tone() == AnvilPayloads.Say.MOST ? "At most, Temper " + dev.awaken.hearth.Upgrades.roman(dev.awaken.hearth.Upgrades.MAX_TEMPER) + ": " + s.text() + "." : s.text();
+            for (FormattedCharSequence l : font.split(Component.literal(text), w)) {
                 g.text(font, l, x, y, colour, false);
                 y += LINE;
             }

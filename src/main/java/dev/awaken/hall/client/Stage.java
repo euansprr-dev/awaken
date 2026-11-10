@@ -19,11 +19,14 @@ import java.util.List;
  */
 final class Stage {
     static final int W = 1708, H = 960;
-    static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
+    // one palette (SPEC §57.10): these are the band's own colours (signal.client.Glass), opaque. The Hall's lantern light is
+    // the band's amber; its title white is a touch warmer than the band's, which is what firelight does to it.
+    static final int EDGE = 0xFF000000 | dev.awaken.signal.client.Glass.EDGE, LANTERN = 0xFF000000 | dev.awaken.signal.client.Glass.AMBER,
+            TITLE = 0xFFF4F6FB, GOOD = 0xFF000000 | dev.awaken.signal.client.Glass.GOOD, BAD = 0xFF000000 | dev.awaken.signal.client.Glass.WARN;
     /** The quiet text colours, brighter under the game's High Contrast option. */
     static int LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299;
     /** E, D, C, B, A, S. */
-    static final int[] RANK = {0xF4F6FB, 0x5FD08F, 0x6FB3FF, 0xB48CFF, 0xF2A541, 0xFF5A6A};
+    static final int[] RANK = dev.awaken.core.client.ui.Sheet.RANK;
     static final Identifier GLOW = Awaken.id("textures/gui/hall/glow.png");
     private static final Style TITLE_STYLE = Style.EMPTY.withFont(new FontDescription.Resource(Awaken.id("hall_title")));
 
@@ -163,10 +166,43 @@ final class Stage {
         return font.split(Component.literal(s), Math.max(1, (int) (width / snap(n))));
     }
 
-    String fit(String s, float width, float n) {
-        if (width(s, n) <= width) return s;
-        int room = (int) (width / snap(n)) - font.width("...");
-        return font.plainSubstrByWidth(s, room).stripTrailing() + "...";
+    /**
+     * Text fitted into a slot and never cut (SPEC §57.6; it ended in "..." here): at size n if it fits; else half a size
+     * smaller at a time, down to half of n; else wrapped at that smallest. {@code align}: -1 from x, 0 centred on x, 1 up
+     * to x. Returns the height it took.
+     */
+    float fitted(String s, float x, float y, float width, float n, int colour, int align) {
+        float least = Math.max(1.5F, n / 2F);
+        for (float size = n; size >= least; size -= .5F) {
+            float w = width(s, size);
+            if (w > width) continue;
+            text(s, align < 0 ? x : align == 0 ? x - w / 2F : x - w, y + (snap(n) - snap(size)) * 4F, size, colour);
+            return 10F * snap(n);
+        }
+        float step = 10F * snap(least), ly = y;
+        for (FormattedCharSequence l : wrap(s, width, least)) {
+            float w = font.width(l) * snap(least);
+            text(l, align < 0 ? x : align == 0 ? x - w / 2F : x - w, ly, least, colour);
+            ly += step;
+        }
+        return ly - y;
+    }
+
+    /** A key cap, the band's own (core.client.ui.Kit.key), on this sheet: returns its width. */
+    float key(String key, float x, float y) {
+        float tw = width(key, 1.5F), w = Math.max(28F, tw + 14F);
+        fill(x, y, x + w, y + 28F, 0xB305080F);
+        outline(x, y, x + w, y + 28F, 1, argb(LABEL, .6F));
+        fill(x, y + 28F, x + w, y + 30F, argb(LABEL, .35F));
+        text(key, x + (w - tw) / 2F, y + (28F - 7F * snap(1.5F)) / 2F, 1.5F, TITLE);
+        return w;
+    }
+
+    /** A hint as on the band's bar of keys: the cap, then what it does. Returns the x after it. */
+    float hint(String key, String label, float x, float y) {
+        float kw = key(key, x, y - 3F);
+        text(label, x + kw + 10F, y, 2F, LABEL);
+        return x + kw + 10F + width(label, 2F) + 28F;
     }
 
     /** A line in the Hall's blackletter (the bitmap's 24-pixel design at n = 1). */

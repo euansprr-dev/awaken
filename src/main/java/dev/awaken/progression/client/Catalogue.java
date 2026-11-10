@@ -22,10 +22,34 @@ public final class Catalogue {
     private Catalogue() {}
 
     /** One slot: its name and what you've learned once found; {@code icon} may be empty. */
-    public record Slot(String name, boolean found, String body, ItemStack icon) {
-        public static Slot unknown() {
-            return new Slot("", false, "", ItemStack.EMPTY);
+    public record Slot(String name, boolean found, String body, ItemStack icon, net.minecraft.world.entity.@Nullable EntityType<?> creature) {
+        public Slot(String name, boolean found, String body, ItemStack icon) {
+            this(name, found, body, icon, null);
         }
+
+        public static Slot unknown() {
+            return new Slot("", false, "", ItemStack.EMPTY, null);
+        }
+
+        /** The same slot with the creature it is: the Journal's wall draws a found creature as itself (SPEC §57.8). */
+        public Slot as(net.minecraft.world.entity.@Nullable EntityType<?> body) {
+            return new Slot(name, found, this.body, icon, body);
+        }
+    }
+
+    /** A fixed category's slots, or null when the category is open-ended (or its data isn't here yet). */
+    static @Nullable List<Slot> slots(StatusSections.Shelf shelf) {
+        Supplier<List<Slot>> f = FIXED.get(shelf);
+        if (f == null) return null;
+        try {
+            return f.get();
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    static String keeps(StatusSections.Shelf shelf) {
+        return emptyLine(shelf);
     }
 
     private static final Map<StatusSections.Shelf, Supplier<List<Slot>>> FIXED = new EnumMap<>(StatusSections.Shelf.class);

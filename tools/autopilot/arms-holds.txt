@@ -1,0 +1,252 @@
+# Every weapon's first-person hold in the real game beside a vanilla sword (SPEC §25 "First person, the hold"; Euan 2026-11-09: "it actually has to
+# feel like you're holding it in the way you're supposed to"). A still of each at rest, then slowed strikes and a held heavy for the weapons re-held.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsholds creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio minecraft:diamond_sword
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_vanilla_sword
+arms studio minecraft:diamond_axe
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_vanilla_axe
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_longsword
+arms studio awaken:gatewrought_shieldblade
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_shieldblade
+arms studio awaken:gatewrought_katana
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_katana
+arms studio awaken:gatewrought_greatblade
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_greatblade
+arms studio awaken:gatewrought_axe
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_axe
+arms studio awaken:gatewrought_maul
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_maul
+arms studio awaken:gatewrought_glaive
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_glaive
+arms studio awaken:gatewrought_spear
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_spear
+arms studio awaken:gatewrought_rapier
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_rapier
+arms studio awaken:gatewrought_warstaff
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_warstaff
+arms studio awaken:gatewrought_scythe
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_scythe
+arms studio awaken:gatewrought_daggers
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_daggers
+arms studio awaken:gatewrought_twinblades
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_twinblades
+arms studio awaken:gatewrought_chainblade
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_chainblade
+arms studio awaken:gatewrought_precursor
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_precursor
+arms studio awaken:gatewrought_gauntlets
+arms waitserver 100
+look 0 6
+wait 20
+shot hold_gauntlets
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film longsword_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_katana
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film katana_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_greatblade
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film greatblade_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_axe
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film axe_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_glaive
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film glaive_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_shieldblade
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shieldblade_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film longsword_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_katana
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film katana_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+quit

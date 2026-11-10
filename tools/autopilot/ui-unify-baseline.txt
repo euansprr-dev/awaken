@@ -1,0 +1,208 @@
+# UI audit baseline (docs/ui-unify): every K page and the HUD as they are today, at Euan's window size (1708 x 960
+# points, the Hall of Arms tours' size), so before and after share one viewport. C-rank with a fire, a bedroom, an
+# Anchor, an Armoury grown into a Forge, every power owned and points to spend. Shots: the first-power cards; the HUD at
+# rest and in a fight; the band raised with no panel yet (a clean frame); Tasks (Now, Hearth, Armour, Weapons, Gates);
+# Status top to bottom; Powers top to bottom; Hearth top to bottom; the Journal (creatures, bells, gate worlds, story);
+# the bag; the map; the Look screen.
+# Run on CI: tools/tour-ci.sh tools/autopilot/ui-unify-baseline.txt 1500
+world autopilot_ui_unify creative 27132713
+waitworld
+gui 0
+window 1708 960
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 120
+shot u01_first_power
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin levels 6
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the fire, set on open ground ----
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- a bedroom: timber, a door, a window, a bed, two lanterns ----
+cmd fill ~4 ~-1 ~-3 ~10 ~3 ~3 minecraft:spruce_planks hollow
+cmd setblock ~4 ~ ~ minecraft:oak_door[half=lower,facing=west]
+cmd setblock ~4 ~1 ~ minecraft:oak_door[half=upper,facing=west]
+cmd setblock ~10 ~1 ~ minecraft:glass_pane
+cmd setblock ~6 ~ ~-1 minecraft:red_bed[part=foot,facing=north]
+cmd setblock ~6 ~ ~-2 minecraft:red_bed[part=head,facing=north]
+cmd setblock ~8 ~ ~-2 minecraft:lantern
+cmd setblock ~8 ~ ~2 minecraft:lantern
+wait 20
+cmd awaken admin hearth read
+wait 200
+screen close
+# ---- an Anchor, then the Armoury and the Forge in the same room ----
+cmd awaken admin ember raise
+wait 120
+screen close
+cmd setblock ~5 ~ ~2 minecraft:crafting_table
+cmd setblock ~7 ~ ~2 awaken:fitting_stand
+cmd setblock ~9 ~ ~2 minecraft:anvil
+cmd setblock ~9 ~ ~-2 awaken:forge
+cmd summon minecraft:armor_stand ~7 ~ ~0
+wait 20
+cmd awaken admin hearth read
+wait 60
+screen close
+# ---- up to C-rank, every power ----
+cmd awaken admin levels 6
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 80
+key dismiss
+wait 10
+screen close
+cmd awaken admin levels 14
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 200
+key dismiss
+wait 10
+screen close
+cmd awaken admin power all
+wait 40
+key dismiss
+wait 10
+screen close
+# ---- the HUD: at rest, then in a fight ----
+wait 60
+shot u02_hud_rest
+holo fight on
+wait 20
+shot u03_hud_fight
+holo fight off
+wait 40
+# ---- the band raised, no panel yet: a clean frame of this view ----
+screen holo tasks
+holo at 120
+shot u04_band_raised
+holo run
+wait 40
+# ---- Tasks ----
+tasks now
+wait 60
+shot u10_tasks_now
+scroll -6
+wait 10
+shot u11_tasks_now_lower
+tasks hearth
+wait 30
+shot u12_tasks_hearth
+tasks armour
+wait 30
+shot u13_tasks_armour
+tasks weapons
+wait 30
+shot u14_tasks_weapons
+tasks gates
+wait 30
+shot u15_tasks_gates
+screen close
+wait 10
+# ---- Status, top to bottom ----
+screen holo status
+wait 60
+shot u20_status
+scroll -6
+wait 10
+shot u21_status_2
+scroll -6
+wait 10
+shot u22_status_3
+scroll -8
+wait 10
+shot u23_status_4
+scroll -12
+wait 10
+shot u24_status_5
+screen close
+wait 10
+# ---- Powers, top to bottom ----
+screen holo powers
+wait 60
+shot u30_powers
+scroll -8
+wait 10
+shot u31_powers_2
+scroll -8
+wait 10
+shot u32_powers_3
+scroll -12
+wait 10
+shot u33_powers_4
+screen close
+wait 10
+# ---- Hearth, top to bottom ----
+screen holo hearth
+wait 60
+shot u40_hearth
+scroll -6
+wait 10
+shot u41_hearth_2
+scroll -8
+wait 10
+shot u42_hearth_3
+scroll -12
+wait 10
+shot u43_hearth_4
+screen close
+wait 10
+# ---- the Journal ----
+screen holo journal
+journal creatures
+wait 60
+shot u50_journal_creatures
+journal bells
+wait 40
+shot u51_journal_bells
+journal gates
+wait 40
+shot u52_journal_gates
+journal story
+wait 40
+shot u53_journal_story
+screen close
+wait 10
+# ---- the bag, the band on the wrist ----
+holo inv open
+wait 40
+shot u60_bag
+holo inv close
+wait 20
+# ---- the map in the world ----
+screen map
+wait 80
+shot u61_map
+screen close
+wait 30
+# ---- the Look screen ----
+screen look
+wait 30
+shot u62_look
+screen close
+wait 10
+quit

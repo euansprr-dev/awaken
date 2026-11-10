@@ -67,6 +67,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_chain_follows", 20, ArmsTests::chainFollows);
         AwakenTests.register("arms_dagger_click", 40, ArmsTests::daggerClick);
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
@@ -174,7 +175,8 @@ final class ArmsTests {
             }
             com.google.gson.JsonObject fallback = json("/assets/awaken/items/" + w.id() + ".json").getAsJsonObject("model").getAsJsonObject("fallback");
             com.google.gson.JsonObject special = fallback.getAsJsonObject("model");
-            h.assertTrue("awaken:weapon".equals(special.get("type").getAsString()) && w.id().equals(special.get("weapon").getAsString()),
+            String drawn = w.style().equals("shieldblade") ? w.id() + "_blade" : w.id(); // its hands draw the sword and the shield apart
+            h.assertTrue("awaken:weapon".equals(special.get("type").getAsString()) && drawn.equals(special.get("weapon").getAsString()),
                     w.id() + ": the hands draw it with the weapon renderer");
             WeaponMesh mesh;
             try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/arms/weapons/" + w.id() + ".mesh")) {
@@ -430,6 +432,10 @@ final class ArmsTests {
                 FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
                 int i = chain.indexOf(e.getKey());
                 FpSwings.Hand mine = FpSwings.hand(st, e.getKey());
+                if (e.getKey() == Archetype.Move.HEAVY) { // loosed from the hold, it still has to cross before it lands (SPEC §25 "The hit on the blade")
+                    float lands = FpSwings.lands(st, e.getKey(), def);
+                    h.assertTrue(lands > 0 && lands < def.activeEnd(), a.id() + "'s heavy lands as its weapon crosses, inside its active ticks (" + lands + ")");
+                }
                 FpSwings.Hand next = i >= 0 && i + 1 < chain.size() ? FpSwings.hand(st, chain.get(i + 1)) : null;
                 boolean waits = next != null && def.hasCadence() && mine != FpSwings.Hand.BOTH && next != FpSwings.Hand.BOTH && next != mine;
                 if (waits && FpSwings.idle(st, chain.get(i + 1), 0, true, w, qw)) {
@@ -437,7 +443,7 @@ final class ArmsTests {
                     FpSwings.sample(st, e.getKey(), def.cadence().get(0), true, w, qw);
                     h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F,
                             a.id() + " " + e.getKey() + " waits still from the earliest press to its end");
-                } else if (FpSwings.stance(st, true, w, qw)) { // a hand-keyed style rests in its stance (SPEC §25 "Hand-keyed moves")
+                } else if (mine == FpSwings.Hand.OFF && FpSwings.offStance(st, w, qw) || FpSwings.stance(st, true, w, qw)) { // a hand-keyed style rests in its stance (SPEC §25 "Hand-keyed moves"), a shield in its own
                     h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends in its stance");
                 } else {
                     h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
@@ -856,11 +862,56 @@ final class ArmsTests {
     }
 
     /**
-     * A press held into a charge never strikes on the way: its strike starts on the press but waits at its hit, and the
-     * charge takes its place; a charge held long past full goes only when let go. A tap lands its strike on time, and
-     * with no word from the client at all the strike lands at the charge's mark plus {@link ArmsServer#HOLD_WAIT}.
+     * A press held into a charge never strikes on the way, on any weapon: its strike starts on the press but waits at its
+     * hit unseen (the hands are on the draw, ChargeDraw), and the charge takes its place; a charge held long past full goes
+     * only when let go. A tap lands its strike on time, and with no word from the client at all the strike lands at the
+     * charge's mark plus {@link ArmsServer#HOLD_WAIT}.
      */
+    static void chainFollows(GameTestHelper h) {
+        Archetypes.Loaded a = longsword();
+        ArmsRules.Decision restart = new ArmsRules.Decision(Archetype.Move.STRIKE_1, 0, 100, 0);
+        ArmsRules.Decision carried = ArmsRules.follow(a, restart, 1, 0, 12, 0);
+        h.assertTrue(carried.step() == 1 && carried.move() == Archetype.Move.STRIKE_2 && carried.startAt() == 100, "the client's chain counts on a window's edge");
+        h.assertTrue(ArmsRules.follow(a, restart, 2, 0, 12, 0) == restart, "but it can't skip a strike");
+        h.assertTrue(ArmsRules.follow(a, restart, 1, 0, ArmsRules.CHAIN_SLACK + 1, 0) == restart, "or carry on long after the chain ended");
+        h.assertTrue(ArmsRules.follow(a, new ArmsRules.Decision(Archetype.Move.STRIKE_2, 1, 100, 0), 0, 0, 12, 0).step() == 0, "starting again is always allowed");
+        h.assertTrue(ArmsRules.follow(a, null, 1, 0, 12, 0) == null, "a press far too early still counts for nothing");
+        h.assertTrue(ArmsRules.follow(a, restart, -1, 0, 12, 0) == restart, "no claim, the server's own");
+        for (int i = 0; i < a.chain().size(); i++) h.assertTrue(ArmsRules.stepOf(a, a.chain().get(i)) == i, "strike " + i + " knows its place");
+        h.assertTrue(ArmsRules.stepOf(a, Archetype.Move.HEAVY) == -1, "a heavy is no chain strike");
+        // the server plays what the hands play: never a strike they don't show, never one dropped that they do
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ArmsState s = ArmsServer.state(p);
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.moveStart == t0 && s.buffered == null, "the hands' first strike starts");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_NOTHING));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.moveStart == t0 && s.buffered == null, "a press the hands counted for nothing starts nothing");
+        int window = a.move(Archetype.Move.STRIKE_1).cadence().get(0);
+        h.assertTrue(window > a.def().buffer(), "this press must be too early for the server's own read");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(3, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_2.ordinal()));
+        h.assertTrue(s.buffered != null && s.buffered.move() == Archetype.Move.STRIKE_2 && s.buffered.startAt() == t0 + window,
+                "a strike the hands began isn't dropped, however early it looks here, and still waits for its window");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(4, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_AGAIN));
+        h.assertTrue(s.buffered != null && s.bufferedSeq == 4 && s.buffered.step() == 1, "the queued strike pressed again stays one strike, on its newest press");
+        s.buffered = null;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(5, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_AGAIN));
+        h.assertTrue(s.buffered == null && s.move == Archetype.Move.STRIKE_1 && s.moveSeq == 5, "and once begun here it doesn't start the strike after it");
+        s.clearMove();
+        s.deflectAt = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(6, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1, "a riposte the hands didn't play isn't played");
+        s.clearMove();
+        s.deflectAt = Long.MIN_VALUE / 2;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(7, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.RIPOSTE.ordinal()));
+        h.assertTrue(s.move == null && s.buffered == null, "nor one the server can't grant, and no strike goes in its place");
+        h.succeed();
+    }
+
     static void tapOrHold(GameTestHelper h) {
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            if (ArmsServer.chargeable(a)) h.assertTrue(ArmsRules.waitsOnHold(a.id()), a.id() + "'s held press waits, never landing its strike first");
+        }
         ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
         LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
         ArmsState s = ArmsServer.state(p);
@@ -911,9 +962,8 @@ final class ArmsTests {
     }
 
     /**
-     * A dagger strikes on the click (SPEC §25 "Hand-keyed moves"): a press still down lands its strike at its wind-up's
-     * end, as a tap's does, shown to everyone near at once; held on, the charge follows the stab and never takes it back.
-     * Every other style's held press still waits (arms_tap_or_hold).
+     * A dagger's press waits like every weapon's (SPEC §25 "Tap or hold"; Euan 2026-11-09, undoing the 2026-11-02 strike on
+     * the click): held to the charge's mark no stab lands and none is shown, and let go it lands on the next tick.
      */
     static void daggerClick(GameTestHelper h) {
         ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
@@ -925,19 +975,23 @@ final class ArmsTests {
         Archetype.Charge c = daggers.move(Archetype.Move.HEAVY).charge().orElseThrow();
         long t0 = ArmsServer.now(p);
         ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
-        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && !s.waitHit && !s.waitSeen, "a dagger's press starts strike 1, shown at once, never waiting on the press");
-        int landed = -1;
-        for (int t = 0; t < c.min(); t++) {
-            ArmsServer.moveTick(p, s, t0 + t);
-            if (landed < 0 && pig.getHealth() < 200) landed = t;
-        }
-        h.assertTrue(landed == s1.windup(), "held down, it lands at its wind-up's end all the same, " + s1.windup() + " ticks in (landed at " + landed + ")");
-        float struck = pig.getHealth();
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.waitHit && s.waitSeen, "a dagger's press starts strike 1 unseen, waiting on the press");
+        for (int t = 0; t < c.min(); t++) ArmsServer.moveTick(p, s, t0 + t);
+        h.assertTrue(pig.getHealth() == 200, "held to the charge's mark, no stab landed first (took " + (200 - pig.getHealth()) + ")");
         ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
-        h.assertTrue(s.chargeSeq == 1 && s.chargeStart != ArmsState.NO_CHARGE && pig.getHealth() == struck,
-                "held on, the charge follows the stab and the stab stands");
+        h.assertTrue(s.move == null && s.chargeSeq == 1 && s.chargeStart != ArmsState.NO_CHARGE, "the hold becomes the charge, the stab dropped unshown");
         ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
         h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
+        s.clearMove();
+        s.chargeStart = ArmsState.NO_CHARGE;
+        pig.setHealth(200);
+        long t1 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        for (int t = 0; t <= s1.windup() + 1; t++) ArmsServer.moveTick(p, s, t1 + t);
+        h.assertTrue(pig.getHealth() == 200 && s.waitHit, "still down past its wind-up, it waits");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_TAP, 0F, 0F, -1));
+        ArmsServer.moveTick(p, s, t1 + s1.windup() + 2);
+        h.assertTrue(pig.getHealth() < 200, "let go, the stab lands on the next tick");
         done(h, p);
     }
 
