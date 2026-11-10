@@ -69,25 +69,25 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--panel-2); 
 </style>
 
 <div class="col">
-  <p class="eyebrow">AWAKEN · Gates as Worlds · built 10 Nov 2026 · not yet played · all seven walked in the real game</p>
+  <p class="eyebrow">AWAKEN · Gates as Worlds · built 10 Nov 2026 · not yet played · all sixteen walked in the real game</p>
   <h1>The Run, Built</h1>
-  <p class="lede">While you were out I built the plan you approved and went past it. There are seven gates you can walk into by command. Two were made by hand. Five are rolled from a seed, so each one is a different dungeon every time. Nothing here has been played by a person yet. You are the first.</p>
+  <p class="lede">While you were out I built the plan you approved and went past it. There are sixteen gates you can walk into by command. Two were made by hand. Fourteen are kinds of dungeon rolled from a seed, so each one is a different dungeon every time: short or great, going down, plunging, climbing or sprawling, some with a chasm to cross on pillars. Nothing here has been played by a person yet. You are the first.</p>
   <div class="pick">
     <h3>Where it is</h3>
-    <p>Branch <code>claude/gates-as-worlds-plan-fcb81b</code>, commit <code>33b7df434</code>, pushed. All 46 gate tests pass. It is <strong>not</strong> in your play copy until that branch is merged. The new gates stay behind their switch, so the old gates are untouched.</p>
+    <p>Branch <code>claude/gates-as-worlds-plan-fcb81b</code>, commit <code>71559e056</code>, pushed. All 47 gate tests pass, and the rolled kinds are tested on 86 different layouts. It is <strong>not</strong> in your play copy until that branch is merged. The new gates stay behind their switch, so the old gates are untouched.</p>
   </div>
 </div>
 
 <section>
   <div class="col">
     <p class="eyebrow">Play</p>
-    <h2>Seven gates, one command each</h2>
-    <p>Stand anywhere in the overworld and type the command. Play in survival: packs ignore a creative player and an ambush will not spring. For the five rolled gates, change the number at the end to get a different layout. <code>/awaken gate leave</code> takes you out.</p>
+    <h2>Sixteen gates, one command each</h2>
+    <p>Stand anywhere in the overworld and type the command. Play in survival: packs ignore a creative player and an ambush will not spring. For the fourteen rolled kinds, change the number at the end to get a different dungeon: 1 is a great run with a chasm, 2 is a short plunge down two shafts, and any other whole number works. The letter is the rank. <code>/awaken gate leave</code> takes you out.</p>
   </div>
   <div class="wide scroll">
     <table>
       <thead><tr><th>Gate</th><th>Command</th><th>How far it is proven</th></tr></thead>
-      <tbody><tr><td><strong>The Hour Crypt</strong><br><span class="muted small">The crypt you know, now a run of 16 legs</span></td><td><code>/awaken gate realm_enter E awaken:hour_crypt</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Broodwarren</strong><br><span class="muted small">A short crawl built by hand, fifty blocks down</span></td><td><code>/awaken gate realm_enter E awaken:broodwarren</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Lower Combs</strong><br><span class="muted small">A brood nest, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:brood_burrow 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Bone Roads</strong><br><span class="muted small">Catacombs, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:catacombs 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Hollow Hills</strong><br><span class="muted small">Barrow passages, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:hollow_hills 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Root Cellars</strong><br><span class="muted small">A temple undercroft, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:root_cellars 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Tallow Runs</strong><br><span class="muted small">Wax runs, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:tallow_runs 1</code></td><td><span class="proof game">seen in the real game</span></td></tr></tbody>
+      <tbody><tr><td><strong>The Hour Crypt</strong><br><span class="muted small">The crypt you know, now a run of 16 legs</span></td><td><code>/awaken gate realm_enter E awaken:hour_crypt</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Broodwarren</strong><br><span class="muted small">A short crawl built by hand, fifty blocks down</span></td><td><code>/awaken gate realm_enter E awaken:broodwarren</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Lower Combs</strong><br><span class="muted small">A brood nest</span></td><td><code>/awaken gate realm_enter E awaken:brood_burrow 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Bone Roads</strong><br><span class="muted small">Catacombs</span></td><td><code>/awaken gate realm_enter E awaken:catacombs 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Hollow Hills</strong><br><span class="muted small">Barrow passages</span></td><td><code>/awaken gate realm_enter E awaken:hollow_hills 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Root Cellars</strong><br><span class="muted small">A temple undercroft taken by roots</span></td><td><code>/awaken gate realm_enter E awaken:root_cellars 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Tallow Runs</strong><br><span class="muted small">Wax runs</span></td><td><code>/awaken gate realm_enter E awaken:tallow_runs 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Cinder Workings</strong><br><span class="muted small">A burning mine</span></td><td><code>/awaken gate realm_enter E awaken:cinder_workings 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Sporewells</strong><br><span class="muted small">Fungal wells</span></td><td><code>/awaken gate realm_enter E awaken:sporewells 1</code></td><td><span class="proof game">seen in the real game, twice</span></td></tr><tr><td><strong>The Sunken Stacks</strong><br><span class="muted small">A drowned library</span></td><td><code>/awaken gate realm_enter D awaken:sunken_stacks 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Glass Warrens</strong><br><span class="muted small">Burrows under the glass desert</span></td><td><code>/awaken gate realm_enter D awaken:glass_warrens 1</code></td><td><span class="proof game">seen in the real game, toned down since</span></td></tr><tr><td><strong>The Stopped Works</strong><br><span class="muted small">A foundry stopped mid-stroke</span></td><td><code>/awaken gate realm_enter D awaken:stopped_works 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Frozen Cells</strong><br><span class="muted small">A monastery's cells under ice</span></td><td><code>/awaken gate realm_enter C awaken:frozen_cells 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Silvered Halls</strong><br><span class="muted small">A mirror palace's back halls</span></td><td><code>/awaken gate realm_enter C awaken:silvered_halls 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Sealed Wing</strong><br><span class="muted small">A sealed laboratory wing</span></td><td><code>/awaken gate realm_enter C awaken:sealed_wing 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Sleepless Ward</strong><br><span class="muted small">A house as a bad dream remembers it</span></td><td><code>/awaken gate realm_enter C awaken:sleepless_ward 1</code></td><td><span class="proof game">seen in the real game</span></td></tr></tbody>
     </table>
   </div>
 </section>
@@ -149,6 +149,34 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--panel-2); 
 
 <section>
   <div class="col">
+    <p class="eyebrow">Since you asked for more</p>
+    <h2>Fourteen kinds, three sizes, four shapes</h2>
+    <p>You said the rolled dungeons were way better than what we had, and asked for twenty or thirty, some that go up and down more, some with parkour, and bigger ones from time to time. This is where that stands.</p>
+    <ul>
+      <li><strong>Fourteen kinds.</strong> Almost every gate theme now has a kind of its own, with that theme's blocks, monsters and Lord. Three more are with the builders now. That will be seventeen.</li>
+      <li><strong>Three sizes.</strong> The seed rolls a short run of about eight legs, a standard one, or a great one with a second Warden and about fifteen legs. About one in six is great.</li>
+      <li><strong>Four shapes.</strong> A run delves down in turns, plunges down two shafts, climbs to a Lord at the top, or sprawls nearly level.</li>
+      <li><strong>Parkour.</strong> A great run has a chasm you cross on pillars over a pool, and a shaft with a broken spiral ledge. If you fall you lose a little health and stand on the last ledge again.</li>
+      <li><strong>A boss room at the end.</strong> Every run ends in its Lord's hall, behind a door that opens when the Wardens are dead.</li>
+      <li><strong>Tested on 86 layouts.</strong> I found the test had only ever tried the same eight layouts over and over. It now tries 86 different ones. Every place can be walked to, nothing floats and every fight has room, in all 86.</li>
+    </ul>
+    <p>A builder writes a kind from a thirty-line brief in five to twenty minutes. I read it, merge it, test it and walk it in the real game. Every picture below is from the real game.</p>
+  </div>
+  <div class="wide"><figure><img src="built-09.jpg" alt="The chasm in three kinds"><figcaption><span class="proof game">real game</span> The chasm in three kinds: The Lower Combs, The Silvered Halls, The Sealed Wing. You cross on the pillars. The first walk of the brood one was nearly black, so the generator now lights every chasm and shaft itself, whatever the kind.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-10.jpg" alt="Real-game shots of The Silvered Halls"><figcaption><span class="proof game">real game</span> The Silvered Halls. Bays of tall mirror between dark piers, a gilt band under the roof, chequered floors. Silver Knights stand in the first fight. On the right is the Lord&rsquo;s hall.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-11.jpg" alt="Real-game shots of The Sealed Wing"><figcaption><span class="proof game">real game</span> The Sealed Wing. Pale panels, lit strips at knee height and under the roof, a lit line down the middle of the ways. The pillars in the Lord&rsquo;s hall are tanks.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-12.jpg" alt="Real-game shots of The Sleepless Ward"><figcaption><span class="proof game">real game</span> The Sleepless Ward. Papered walls over dark boards, a rail that slips out of line, lit windows with nothing behind them, lamps on cords, a floor whose pattern drifts.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-13.jpg" alt="Real-game shots of The Frozen Cells"><figcaption><span class="proof game">real game</span> The Frozen Cells. Pale stone under blue ice, ring-lamps in the walls, lanterns on chains.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-14.jpg" alt="Real-game shots of The Sunken Stacks"><figcaption><span class="proof game">real game</span> The Sunken Stacks. A drowned library: shelves to the roof, green stone, lanterns on chains.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-15.jpg" alt="Real-game shots of The Cinder Workings"><figcaption><span class="proof game">real game</span> The Cinder Workings. A burning mine. A Slag Boar and Ember Imps in a den, and the Overseer in the Warden&rsquo;s room.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-16.jpg" alt="Real-game shots of The Stopped Works"><figcaption><span class="proof game">real game</span> The Stopped Works. Riveted plate, brass and furnace light.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-17.jpg" alt="Real-game shots of The Glass Warrens"><figcaption><span class="proof game">real game</span> The Glass Warrens. Sandstone burrows shot through with hot amber glass. In this walk more than half of every wall glowed. I turned that down afterwards, and nobody has seen the calmer version yet.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-18.jpg" alt="Real-game shots of The Sporewells"><figcaption><span class="proof game">real game</span> The Sporewells, second walk. On the first walk every wall was a clutter of five different blocks. I rewrote it: dark rock with pale threads, whole brackets of fungus lit along the underside, moss in beds. It is still the busiest of the kinds.</figcaption></figure></div>
+  <div class="col"><p class="muted small">Left for later: the Sky Archipelago and the Night Market have no kind. One is open sky with fliers and the other has a Lord who trades, and neither suits a dungeon as the generator stands.</p></div>
+</section>
+
+<section>
+  <div class="col">
     <p class="eyebrow">Straight</p>
     <h2>What nobody has checked</h2>
     <ul>
@@ -157,9 +185,12 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--panel-2); 
       <li><strong>Traps and the fall catch acting on a player.</strong> The teeth are up in a real-game shot, but nothing has been hit by one yet.</li>
       <li><strong>Two of the rolled dungeons were too dark on the first walk.</strong> The Bone Roads and The Hollow Hills could barely be read. I brightened both and walked them again. They read now, as the pictures above show. The checker had drawn them brighter than the game does, so I judge light only from the real game from now on.</li>
       <li><strong>How the cave creatures fight as gate monsters.</strong> In one shot the Lurkers were standing on the larder floor, not yet hanging from its roof.</li>
-      <li><strong>New creatures.</strong> I did not build new bodies or animations. I cannot watch them move, and the last batch built that way came out looking wrong. I used the ones that are already good.</li>
+      <li><strong>The monsters.</strong> You are right that most of them wear vanilla bodies. I counted 95 of the 100 gate monsters. I did not build new bodies blind from here. That plan is on its own page and waits on your ten decisions: <a href="https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ">Monsters of the Gates</a>.</li>
+      <li><strong>The climbs, by a player.</strong> The chasm and the shaft are tested as walkable and seen lit in the real game. Nobody has jumped them.</li>
       <li><strong>Sound.</strong> Traps and doors use sounds the mod already had.</li>
     </ul>
+    <h3>One thing I got wrong</h3>
+    <p>I told you a player could dig through a sealed door, and asked whether to protect gate blocks. That was wrong. Gates already protect their blocks, and that covers these gates: no breaking, no placing, no buckets, no blast damage. Nothing needed changing. There is a test for it now.</p>
     <h3>One thing I found and fixed late</h3>
     <p>A real-game walk showed that packs I had named by monster were not spawning those monsters. They fell back to a random pick. The tests had not caught it. It is fixed and there is a test for it now.</p>
   </div>
@@ -170,10 +201,10 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--panel-2); 
     <p class="eyebrow">Yours to decide</p>
     <h2>What I need from you</h2>
     <ol>
-      <li><strong>Play The Broodwarren and The Hour Crypt first</strong>, then one or two rolled ones. Tell me what is right and what is wrong.</li>
-      <li><strong>Breaking blocks inside a gate.</strong> Today a player can dig through a sealed door. I recommend protecting gate blocks. I have not changed it, because it changes a rule of the game.</li>
+      <li><strong>Play The Broodwarren and The Hour Crypt first</strong>, then a few rolled ones. Seed 1 of any kind is a great run with a chasm. Seed 2 is a short plunge. Tell me what is right and what is wrong.</li>
       <li><strong>Merging.</strong> Say when you want this in your play copy.</li>
-      <li><strong>What comes next.</strong> My pick is to give The Quiet Barrow and The Wax Galleries designed runs, then more skins. The other choice is to fix the Crypt's and the Barrow's look first.</li>
+      <li><strong>The monsters.</strong> Ten decisions wait on the <a href="https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ">monsters page</a>.</li>
+      <li><strong>What comes next here.</strong> When the three kinds in hand are done, every theme that suits a dungeon has one. Past that, more means a second look per theme (two of the three in hand are that), or new things in the generator itself. My pick is to wait for what you miss when you play, and add that.</li>
     </ol>
     <p class="muted small">Play notes with every command and what to look for are in the branch at <code>docs/gates-as-worlds/the-run/PLAY.md</code>.</p>
   </div>
