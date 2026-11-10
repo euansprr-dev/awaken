@@ -46,13 +46,11 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # the_curator (The Curator)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -7.5 201.58 2.6 -90 -6
+cmd tp @s -14.3 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
@@ -76,12 +74,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_curator_death 50 2
 wait 54
 # cog_hound (The Cog Hound)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 200.04 2.6 -90 4
 look -90 4
 wait 6
@@ -100,12 +96,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec cog_hound_death 50 2
 wait 54
 # rivet_gunner (The Riveter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.1 200.09 4.5 -90 4
 look -90 4
 wait 6
@@ -124,13 +118,11 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec rivet_gunner_death 50 2
 wait 54
 # spark_drone (The Governor)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -6.2 201.58 2.6 -90 -6
+cmd tp @s -9.6 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
@@ -148,12 +140,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec spark_drone_death 50 2
 wait 54
 # foundry_marshal (The Steam Hammer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.8 200.37 2.6 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec foundry_marshal_death 50 2
 wait 54
 # the_regulator (The Regulator)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.9 200.42 2.6 -90 4
 look -90 4
 wait 6
@@ -205,12 +193,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_regulator_death 50 2
 wait 54
 # glass_husk (The Shardwalker)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.7 200.31 2.6 -90 4
 look -90 4
 wait 6
@@ -229,12 +215,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec glass_husk_death 50 2
 wait 54
 # sand_stalker (The Sand Stalker)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.4 199.66 2.6 -90 4
 look -90 4
 wait 6
@@ -252,8 +236,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec sand_stalker_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info
