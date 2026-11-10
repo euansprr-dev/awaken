@@ -18,6 +18,10 @@
     },
     {
       "type": "minecraft:biome"
+    },
+    {
+      "type": "awaken:clear_of_settlements",
+      "reach": 6
     }
   ]
 }
