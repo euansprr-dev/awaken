@@ -298,6 +298,14 @@ final class MobGoals {
         @Override public boolean requiresUpdateEveryTick() { return true; }
 
         @Override
+        public void stop() {
+            // its target is gone mid-dive: the dive is over, and so is whatever it was telling
+            mob.diving = false;
+            if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
+            tellLeft = -1;
+        }
+
+        @Override
         public void tick() {
             LivingEntity t = mob.getTarget();
             if (t == null) return;
@@ -310,6 +318,7 @@ final class MobGoals {
                 // brought down: the dive it was telling is lost, and it waits a moment once up again
                 if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
                 tellLeft = -1;
+                mob.diving = false;
                 attackCooldown = Math.max(attackCooldown, 10);
                 retarget = 0;
                 return;
@@ -331,6 +340,7 @@ final class MobGoals {
                     else if (tellLeft == 0) {
                         mob.setTell(0, Strikes.Kind.NONE);
                         diveTicks = 30;
+                        mob.diving = true; // its body holds the dive's shape until it hits or gives it up
                     }
                     mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
                     return;
@@ -343,6 +353,7 @@ final class MobGoals {
                     attackCooldown = 30 + mob.getRandom().nextInt(20);
                     tellLeft = -1;
                     retarget = 0;
+                    mob.diving = false;
                 }
                 return;
             }

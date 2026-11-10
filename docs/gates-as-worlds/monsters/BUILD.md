@@ -73,8 +73,34 @@ not act an ability the bestiary gives its monster, or dies without ending on the
   (their old bodies hopped or walked); the Nothing is on the ground now (the Wither flew).
 - Sizes: entity scales were dropped so each body is the size it was drawn, except the Gel Sample (1.6).
 
+## The fight pass (10 Nov, after Euan saw the bodies)
+
+Euan's words: "Do a full pass for all of these now, and let's work on the animations... on par with the fresh animations
+resource pack, and even better... some still fire ordinary arrows... all of the fighting for all of these feels very
+unique and very smooth... on par with the system we have for the circles that close in."
+
+- **A bug that mattered more than any of it.** The first film showed the Empty Suit raise its mace at a dummy and lower
+  it again without striking. In play no ordinary creature's plain blow ever landed: the melee goal stopped itself two
+  ticks into every wind-up (it stands still to wind up, and vanilla reads standing still as the chase being over).
+  Abilities worked, which hid it, and the old test drove the goal by hand. Fixed; a test now runs the real loop. This
+  touches every creature with a told melee, not only the gates', so ordinary creatures hit harder in practice than they
+  did before the fix (SPEC §60.8).
+- **Nothing fires an arrow.** Each of the 26 shooters throws its own thing (18 kinds: ribs, spore pods, cinders,
+  thorns, ink, quills, index cards, rivets, glass, oil flasks, hail, ice points, arcs, gusts, quarrels, spars, hollow
+  rings, hoods), from where its body holds it (SPEC §60.7).
+- **Each monster hits its own way** (SPEC §60.8): its plain blow has its own rhythm (a slow heavy swing, two quick
+  bites, a duelist's three cuts), every blow of a string told with its own closing circle and weighed so the damage
+  per second is what its number says; the 21 bodies that string blows have a second swing (the backhand, the other
+  fan, the thrust); its blows throw its own matter (bronze sparks, paper, honey, slivers) in place of the vanilla
+  puffs; and it has two fight voices of its own.
+- **Motion** (SPEC §60.9): wind-ups ease in and out, strikes and flinches settle, long idles keep the small gestures
+  written into them.
+- **Film.** `python3 tools/art/specs/gate_monsters.py film` writes ten reels (`tools/autopilot/monsters-film-<n>.txt`),
+  eight monsters each, filmed close from the side: standing, fighting a dummy, each move, dying.
+
 ## What is not done
 
-- Nothing has been played. The look tours on CI and Euan's own eye are the next check.
-- No new particles or sounds per move: each ability keeps the effects it had.
+- Nothing has been played by Euan. The film reels on CI are how the fight pass was checked.
+- The fight voices are picked by ear of memory, not heard: they need his ear.
+- The shared carriers (wave, lobbed globe, ground line, pull) are the same for every creature on purpose (SPEC §47.2).
 - Small rule gaps are listed in SPEC §60.6.

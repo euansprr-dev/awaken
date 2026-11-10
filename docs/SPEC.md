@@ -20831,6 +20831,15 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
 - Loops keep what is written into them: a long idle is sampled finely and its even keys doubled until a straight line
   between neighbours is within 0.8°, 0.1 px and 1.5% of scale of the function (`K.enough_keys`), so a glance or a twitch
   a quarter of a second wide plays as written.
+- Loops have no seam. The game's curve through a clip's keys (vanilla `CATMULLROM`) takes each key's slope from its two
+  neighbours and clamps at the clip's two ends, so a looping clip lost about half its speed for an instant every time
+  it came round: a hitch in every wingbeat, stride and breath. `K.seal_loops` gives every looping clip one key before
+  its start and one after its end (the loop carried on a step either way; a wheel that turns steadily keeps turning),
+  and `HeroRig.problems` and the rig check allow those two keys on a looping clip. The older hero rigs' loops (the Drip
+  Lurker's and the rest of `fauna_rig`'s users) still have the hitch; the same call would cure them.
+- A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
+  it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
+  strike ever played.
 - A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
   death that ends more than 12 px over the floor.
 - **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight

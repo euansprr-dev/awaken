@@ -104,6 +104,8 @@ public class AwakenMob extends Monster {
     /** Server: which blow of its string it is telling or throwing (0 the first), and whether that one ends the string (MobGoals.ToldMelee). */
     int blowAt;
     boolean blowLast = true;
+    /** Server: a flier between the end of its dive's tell and the dive's end (it hit, or gave it up): MobGoals.FlyHunt. */
+    boolean diving;
     protected @Nullable ServerBossEvent bar;
     /** Players tracking this mob. Its bar shows to the ones near its height: tracking ignores height, and a gate's
      *  floors are stacked 32 blocks apart, so a living Lord would otherwise show its bar on every floor above it. */

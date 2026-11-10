@@ -127,8 +127,9 @@ public class GateMonster extends AwakenMob implements RigBody {
             }
             cueAbility = a;
         }
-        // a blow that was told and never swung (its target gone): let the pose go
-        if (meleeTold && tellKind() == Strikes.Kind.NONE && ++meleeIdle > 3) {
+        // a blow that was told and never swung (its target gone): let the pose go. A flier's dive holds its wind-up
+        // (tucked, mouth forward) all the way in: the strike comes when it hits, the pose goes when it gives the dive up
+        if (meleeTold && tellKind() == Strikes.Kind.NONE && !diving && ++meleeIdle > 3) {
             meleeTold = false;
             cue(FaunaMob.CUE_NONE, -1);
         }

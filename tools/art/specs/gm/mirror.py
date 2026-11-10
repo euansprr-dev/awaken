@@ -222,7 +222,9 @@ def glass_duelist():
           {"arm_r": (-20, 0, 0), "fore_r": (20, 0, 0), "chest": (14, -30, 0), "body": {"pos": (0, -2, -5)}}, w=0.8, length=0.45, t_hit=0.07, plant=legs, lag=lagc, stuck=spent)
     K.plain(r, {"arm_r": (-30, 0, -30), "fore_r": (-40, 0, 0), "chest": (0, 14, 0)}, {"arm_r": (0, 0, 30), "fore_r": (16, 0, 0), "chest": (4, -18, 0), "body": {"pos": (0, 0, -2)}},
             # its other swing: out of the cut's end, a straight thrust
-            second=({"arm_r": (-10, 0, 40), "fore_r": (-50, 0, 0), "chest": (0, -16, 0)}, {"arm_r": (-70, 0, -10), "fore_r": (6, 0, 0), "chest": (6, 14, 0), "body": {"pos": (0, 0, -2.4)}}),
+            # (the hand drawn straight back with the blade kept level: the upper arm drops and the forearm takes it back)
+            second=({"arm_r": (44, 0, 0), "fore_r": (-44, 0, 0), "chest": (-4, 14, 0), "body": {"pos": (0, 0, 1.0)}},
+                    {"arm_r": (-12, 0, 0), "fore_r": (12, 0, 0), "chest": (8, -16, 0), "body": {"pos": (0, -0.5, -3.0)}}),
             plant=legs, lag=lagc)
     K.loop(r, "idle", 4.0, lambda p: {"arm_r": (3 * s(p), 0, 4 * s(p, 0.25)), "foil": (4 * s(p * 2), 0, 4 * s(p * 2, 0.25)), "chest": (1.0 * s(p), 3 * s(p, 0.2), 0), "head": (0, 6 * s(p, 0.4), 0),
                                       "body": {"pos": (0, 0.5 * s(p * 2), 0)}}, n=14)
