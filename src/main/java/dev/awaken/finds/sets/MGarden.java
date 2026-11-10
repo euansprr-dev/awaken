@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Dream Gardens (SPEC §62.8, family 8): where some of those who went in chose to sleep standing, in the open, among
+ * The Dream Gardens (SPEC §64.8, family 8): where some of those who went in chose to sleep standing, in the open, among
  * flowers. A walled garden round a still pool. Its gate opens only at night; then the flowers light one after another
  * from the gate to the pavilion in the pool, and you follow them. (From inside, the gate opens at any hour: nobody is
  * ever shut in.)

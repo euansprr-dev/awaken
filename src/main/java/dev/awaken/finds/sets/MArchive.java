@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Archives (SPEC §62.8, family 3): round houses of stone shelves under a dome, where the old world wrote everything
+ * The Archives (SPEC §64.8, family 3): round houses of stone shelves under a dome, where the old world wrote everything
  * down. The tablets are thrown about. You put the five that fell back in their order (the studs in the floor before
  * each niche say which is first), the reading wheel turns, and what it was guarding is yours.
  */

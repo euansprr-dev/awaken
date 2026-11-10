@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Mooring Masts (SPEC §62.8, family 5): where the ships of those who went up tied on. A needle of a tower with a
+ * The Mooring Masts (SPEC §64.8, family 5): where the ships of those who went up tied on. A needle of a tower with a
  * stair wound inside it and bronze gantries reaching out, and on one of them a hull still hanging by its chains. You
  * climb inside to the gantry and knock out the pin; what hangs comes down and breaks open.
  */

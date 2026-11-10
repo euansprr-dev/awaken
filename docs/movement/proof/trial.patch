@@ -1,0 +1,224 @@
+--- a/src/main/java/dev/awaken/body/ascent/AscentSwing.java	2026-11-10 21:21:53
++++ trial/dev/awaken/body/ascent/AscentSwing.java	2026-11-10 22:03:38
+@@ -20,6 +20,8 @@
+     private AscentSwing() {}
+ 
+     private static final double D2R = Math.PI / 180;
++    /** The audit's trial: low anchors swing too (a shorter rope, the feet a block over the ground). */
++    public static boolean LOW;
+ 
+     /** The numbers (SPEC §17.31's table). Built from a map so a tuning file can name any of them. */
+     public static final class Tune {
+@@ -215,7 +217,7 @@
+         Tune t = T;
+         double dx = x - hx, dy = y - hy, dz = z - hz;
+         double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+-        if (dy < 4 || len > reach || len < t.lenMin) return false;
++        if (dy < (LOW ? 2.5 : 4) || len > reach || len < t.lenMin) return false;
+         double fx = fx(heading), fz = fz(heading);
+         double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx);
+         if (ahead < 2 || side > t.sideMax) return false;
+@@ -226,7 +228,9 @@
+         double floor = 0;
+         for (double o : FLOOR_AT) floor = Math.max(floor, s.floorUnder(px + fx * o, y - 1.2, pz + fz * o));
+         // the radius that keeps the feet clear of that floor at the bottom, as a rope to the real anchor
+-        double rad = Math.min(Math.sqrt(dy * dy + ahead * ahead), y - floor - t.bottomClear - AscentRules.HAND_HEIGHT);
++        double raw = y - floor - AscentRules.HAND_HEIGHT;
++        double clear = LOW ? Math.max(1.0, Math.min(t.bottomClear, 0.25 * raw)) : t.bottomClear;
++        double rad = Math.min(Math.sqrt(dy * dy + ahead * ahead), raw - clear);
+         double fitLen = Math.min(len, Math.sqrt(rad * rad + side * side));
+         if (rad < t.lenMin - 2 || fitLen < len * 0.7) return false;
+         out.score = gauss(elev, t.elevBest, t.elevSpread) * gauss(rad, t.lenBest, t.lenSpread)
+--- a/src/main/java/dev/awaken/body/ascent/SwingBench.java	2026-11-10 21:21:53
++++ trial/dev/awaken/body/ascent/SwingBench.java	2026-11-10 22:23:55
+@@ -80,6 +80,31 @@
+                     }
+                 }
+             }
++            case "oak" -> {
++                Rng r = new Rng(21);
++                for (double z = 8; z < 260; z += 4 + Math.floor(r.next() * 4)) {
++                    for (int k = 0; k < 2; k++) {
++                        double x = (r.next() - 0.5) * 34, h = 4 + Math.floor(r.next() * 4);
++                        if (Math.abs(x) < 1.5 && z < 14) continue;
++                        double fx = Math.floor(x);
++                        b.add(fx, 0, z, fx + 1, h, z + 1, false);
++                        b.add(fx - 2, h - 2, z - 2, fx + 3, h + 2, z + 3, true);
++                    }
++                }
++            }
++            case "taiga" -> {
++                Rng r = new Rng(23);
++                for (double z = 8; z < 260; z += 4 + Math.floor(r.next() * 4)) {
++                    for (int k = 0; k < 2; k++) {
++                        double x = (r.next() - 0.5) * 34, h = 5 + Math.floor(r.next() * 4);
++                        if (Math.abs(x) < 1.5 && z < 14) continue;
++                        double fx = Math.floor(x);
++                        b.add(fx, 0, z, fx + 1, h, z + 1, false);
++                        b.add(fx - 2, 2, z - 2, fx + 3, h - 1, z + 3, true);
++                        b.add(fx - 1, h - 1, z - 1, fx + 2, h + 2, z + 2, true);
++                    }
++                }
++            }
+             case "cliff" -> {
+                 b.add(-80, 0, 60, 80, 30, 200, false);
+                 b.add(-80, 25, 57, 80, 30, 60, false);
+@@ -213,7 +238,90 @@
+         final SwingSpace.Hit hit = new SwingSpace.Hit();
+         final double[] s = new double[3], a = new double[3];
+         final double z0;
+-        boolean onRope, zip, wasDown, markerOn;
++        boolean onRope, zip, wasDown, markerOn, sling;
++        double sx, sy, sz;
++        int slingT, slings;
++        static boolean SLING;
++        static double SLING_PULL = 0.13, SLING_TOP = 1.3, SLING_OVER = 2.4;
++
++        final AscentRules.Kin probe = new AscentRules.Kin();
++
++        /** One tick of the pull toward a point; true when it lets go (rising enough to clear the point). */
++        static boolean slingStep(AscentRules.Kin k, double x, double y, double z, int age) {
++            double dx = x - k.x, dy = y - k.y, dz = z - k.z, h = Math.sqrt(dx * dx + dz * dz), d = Math.sqrt(h * h + dy * dy);
++            if (h < 4.5 || age > 34 || Math.atan2(dy, h) > Math.toRadians(50)) {
++                double hs = Math.max(0.3, Math.sqrt(k.vx * k.vx + k.vz * k.vz)), tt = h / hs;
++                k.vy = Math.max(k.vy, Math.min(0.9, dy / Math.max(1, tt) + 0.5 * AscentRules.G * tt));
++                return true;
++            }
++            k.vx += dx / d * SLING_PULL;
++            k.vy += dy / d * SLING_PULL - AscentRules.G * 0.4;
++            k.vz += dz / d * SLING_PULL;
++            double sp = k.speed();
++            if (sp > SLING_TOP) k.scaleV(SLING_TOP / sp);
++            k.x += k.vx;
++            k.y += k.vy;
++            k.z += k.vz;
++            return false;
++        }
++
++        /** The sling played forward from the hand (the pull, the let-go, then free flight): false if the body meets anything on the way up or over. */
++        boolean slingClear(double x, double y, double z) {
++            int bx = hit.bx;
++            double hx0 = hit.x, hy0 = hit.y, hz0 = hit.z;
++            probe.set(k.x, k.y, k.z, k.vx, k.vy, k.vz);
++            boolean free = false, ok = true;
++            int age = 0;
++            for (int i = 0; i < 60; i++) {
++                double px = probe.x, py = probe.y, pz = probe.z;
++                if (!free) {
++                    if (slingStep(probe, x, y, z, ++age)) free = true;
++                } else {
++                    probe.vy = (probe.vy - AscentRules.G) * AscentRules.CARRY_DRAG_V;
++                    probe.vx *= AscentRules.CARRY_DRAG_H;
++                    probe.vz *= AscentRules.CARRY_DRAG_H;
++                    probe.x += probe.vx;
++                    probe.y += probe.vy;
++                    probe.z += probe.vz;
++                }
++                if (AscentSwing.swept(w, px, py, pz, probe.x, probe.y, probe.z)) {
++                    // coming down onto something once past the point is a landing; anything else is a hit
++                    ok = free && probe.vy < 0 && i > 14;
++                    break;
++                }
++            }
++            hit.bx = bx;
++            hit.x = hx0;
++            hit.y = hy0;
++            hit.z = hz0;
++            return ok;
++        }
++
++        /** A top ahead and above to sling past: the furthest good one near the heading. */
++        boolean findSling(double yaw) {
++            double hx = b.x, hy = b.y + AscentRules.HAND_HEIGHT, hz = b.z, best = 0;
++            boolean any = false;
++            for (double up : new double[] {6, 12, 18, 26, 34, 44}) {
++                for (double dyaw : new double[] {0, -9, 9, -18, 18, -30, 30}) {
++                    double c = Math.cos(Math.toRadians(up));
++                    if (!w.ray(hx, hy, hz, AscentSwing.fx(yaw + dyaw) * c, Math.sin(Math.toRadians(up)), AscentSwing.fz(yaw + dyaw) * c, 30, hit)) continue;
++                    double top = hit.bx >= 0 ? w.box(hit.bx)[4] : hit.y;
++                    double dx = hit.x - hx, dz = hit.z - hz, fx = AscentSwing.fx(yaw), fz = AscentSwing.fz(yaw);
++                    double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + SLING_OVER - hy;
++                    if (ahead < 6 || rise < 1 || rise > ahead * 1.2 || top - hit.y > 8) continue;
++                    double sc = Math.exp(-sq((ahead - 16) / 9)) * Math.exp(-sq(side / 7)) * (0.5 + 0.5 * Math.exp(-sq((rise - 5) / 5)));
++                    if (sc > best && slingClear(hit.x, top + SLING_OVER, hit.z)) {
++                        best = sc;
++                        sx = hit.x;
++                        sy = top + SLING_OVER;
++                        sz = hit.z;
++                        any = true;
++                    }
++                }
++            }
++            return any;
++        }
++
+         // the old rope's: its anchor, length and the length it reels to
+         double tax, tay, taz, tlen, ttarget;
+         int t, travel, held, ropeStart, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+@@ -265,6 +373,18 @@
+             } else {
+                 // the marker shows where a press would bite; the press itself looks again from here
+                 AscentSwing.Pick p = AscentSwing.find(w, k, yaw, AscentRules.TETHER_RANGE, work, pick) ? pick : markerOn && marker.zip ? marker : null;
++                if ((p == null || p.zip) && SLING && findSling(yaw)) {
++                    sling = true;
++                    zip = false;
++                    slingT = 0;
++                    slings++;
++                    travel = 1;
++                    onRope = true;
++                    run.ropes++;
++                    ropeStart = t;
++                    return true;
++                }
++                sling = false;
+                 if (p != null && !p.zip) {
+                     rope.set(p.x, p.y, p.z, p.len, p.fitLen);
+                     zip = false;
+@@ -402,6 +522,8 @@
+                             yank(yaw);
+                         }
+                     }
++                } else if (sling) {
++                    if (slingStep(k, sx, sy, sz, ++slingT)) go = true;
+                 } else if (zip) {
+                     double dx = tax - k.x, dy = tay - k.y, dz = taz - k.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                     if (d < AscentRules.ZIP_ARRIVE) {
+@@ -493,6 +615,8 @@
+      * to start. On the old rope it presses when airborne and falling and lets go at its best window; on the assisted one
+      * it holds the rope and lets go in the window.
+      */
++    static boolean HOLD;
++
+     static Run play(String place, boolean assist, double x0, double zOff, double pitch, double speed, int ticks) {
+         Sim sim = new Sim(place(place), assist, x0, zOff, speed);
+         Body b = sim.b;
+@@ -508,10 +632,10 @@
+                 rope = assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10;
+             } else {
+                 rope = true;
+-                if (sim.travel == 0 && !sim.zip) {
++                if (sim.travel == 0 && !sim.zip && !sim.sling) {
+                     double q = assist ? AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work)
+                             : AscentRules.releaseQuality(sim.k, sim.tax, sim.tay, sim.taz);
+-                    if (q > 0.85) rope = false;
++                    if (q > 0.85 && !HOLD) rope = false;
+                 }
+             }
+             sim.step(rope, 1, yaw, pitch, jump);
+@@ -562,7 +686,15 @@
+ 
+     /** {@code java ... dev.awaken.body.ascent.SwingBench}: every place on both ropes. */
+     public static void main(String[] args) {
+-        for (String p : PLACES) {
++        String[] places = args.length > 0 ? args : PLACES;
++        Sim.SLING = System.getProperty("sling") != null;
++        HOLD = System.getProperty("hold") != null;
++        if (System.getProperty("apex") != null) AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("apex", Double.parseDouble(System.getProperty("apex"))));
++        if (System.getProperty("low") != null) {
++            AscentSwing.LOW = true;
++            AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("lenMin", Double.parseDouble(System.getProperty("low"))));
++        }
++        for (String p : places) {
+             System.out.println(bench(p, false));
+             System.out.println(bench(p, true));
+         }

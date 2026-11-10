@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Listening Dishes (SPEC §62.8, family 1): ears the old world built to hear the layers under it. One generator; a
+ * The Listening Dishes (SPEC §64.8, family 1): ears the old world built to hear the layers under it. One generator; a
  * dish is a row of numbers. You set its fallen stones back in the rim, it hums, and the door in its spike lets go.
  */
 final class MDish {

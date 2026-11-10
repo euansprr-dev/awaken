@@ -49,7 +49,7 @@ public final class Kinds {
         return monuments;
     }
 
-    /** The remains (SPEC §62.6): small pieces of the old world that stand near a monument and point to it. */
+    /** The remains (SPEC §64.6): small pieces of the old world that stand near a monument and point to it. */
     public static List<Kind> remains() {
         return remains;
     }

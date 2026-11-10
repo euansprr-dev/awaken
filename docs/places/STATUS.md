@@ -1,7 +1,7 @@
 # Places: where they stand (10 Nov 2026)
 
-> **After the first game pictures, 11 Nov (SPEC §62.3 "Clear of what else stands there", "Writing it into the land",
-> "Snow"; §62.9).** Three of the four placement tours came back (39 pictures; the fourth lost its GPU on the runner).
+> **After the first game pictures, 11 Nov (SPEC §64.3 "Clear of what else stands there", "Writing it into the land",
+> "Snow"; §64.9).** Three of the four placement tours came back (39 pictures; the fourth lost its GPU on the runner).
 > Most monuments sat well; five things were wrong in how any monument is written into the land, all fixed: snow lay in
 > squares and in the outlines of rooms; one-block pits in lawns (a branch over a column was taken for its ground);
 > squares of bare earth and stone (felled trees, lifted soft steps, deep cuts); a mast in the middle of one of our own
@@ -15,7 +15,7 @@
 > **Euan's to decide:** other landmarks may stand 40 blocks from a monument's edge (a spire 80 from the Small Ear); at
 > 80 only 167 monuments stand, because this world has something within 150 of nearly every spot.
 
-> **Placement finalised, 11 Nov (SPEC §62.2, §62.3, §62.9).** Euan on the built sixty: "these are fantastic... make sure
+> **Placement finalised, 11 Nov (SPEC §64.2, §64.3, §64.9).** Euan on the built sixty: "these are fantastic... make sure
 > they're placed in the right ways... tied into the world generation... never glitchy, like vanilla villages... very rarely
 > see two of the same... finalize it all." Done: a monument is tried as the shape it is (its own terrace, the ring round
 > it, its piers), in all four turns at every spot, and the best taken; the land near a cliff's lip is refused; what it
@@ -26,7 +26,7 @@
 > https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z . Not merged, unplayed. Out when this was written: the full suite and
 > four placement tours (`placed-a..d`) on GitHub. Follow-up, not mine: the village roads do not know of monuments.
 
-> **Built, 10 Nov ~17:00 UTC: the long world (SPEC §62).** Euan approved the plan in full ("Go with the full plan") and
+> **Built, 10 Nov ~17:00 UTC: the long world (SPEC §64).** Euan approved the plan in full ("Go with the full plan") and
 > added that everything must sit naturally in the land and come closer to its painting. All of it is coded: sixty
 > monuments in twelve families, fifteen remains, twelve relics that grow, terraces that meet the land. The four `finds_`
 > tests are green over all 75 kinds. Page of the sixty (paintings beside block drawings, game pictures as tours land):

@@ -740,7 +740,7 @@ of `AwakenConfig.Client`.
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
-- `dev.awaken.finds.api.Monuments` (§62.3) — `near(ServerLevel, x, z, margin)`: whether a column lies on a monument's
+- `dev.awaken.finds.api.Monuments` (§64.3) — `near(ServerLevel, x, z, margin)`: whether a column lies on a monument's
   ground (everything within its reach) or within a margin of it. Pure from the seed, any thread, no land made; the
   first ask of a stretch of country runs the search for its monuments' spots, so a planner asks from its own thread.
   For whatever is laid across the land (a road, a yard) to keep off a monument; nothing calls it yet.
@@ -6170,8 +6170,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
     white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
     a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
-    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
-      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) are walked at the frame's own size (at first in
+      a pass of their own, since "The trim" inside the composite): every pixel walks its ray every frame against its own
       depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
       the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
       The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
@@ -6184,8 +6184,16 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
     as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
-    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
-    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
+    streaks. A shadow keeps the texture's pixels close to the eye, and holds still: within 10 blocks
+    (fading out by 18) the composite reads the sun's light, and only that, at the centre of the pixel's own 1/16-block
+    texel (`upsampleAt`), and the light pass gives such a texel one unchanging answer (along the sun's own line, with
+    no disc, and a march jitter fixed to the texel), so a texel is wholly lit or wholly shaded and the edge runs along
+    texel edges. The soft shade and the mist are always read at the pixel's own place. (First the whole sample was
+    held across the texel out to 72 blocks: the mist and the soft shade, new every frame, made each grass texel
+    flicker as a block, and the sun's disc sampled once a texel made a shadow's edge a dither of light and dark
+    texels that changed every frame: "the floor was shimmering ... a grid style where the shadows were broken", Euan
+    2026-11-10. Checked with `steady60-still-ci.txt` and `tools/steady60-flicker.py`: frames of a still scene
+    compared.) With the Air on
     the clouds and light are always spread over frames (`lensTemporal` as if on).
   - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
     through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
@@ -6302,9 +6310,89 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     target. It is worth asking again if, after those, the terrain pass is what limits the frame, or as Far Sight
     drawn inward (Sodium for the near chunks, our meshes beyond) once Far Sight costs less than it does (4.2 ms at
     near reach).
+- **The trim** (Euan 2026-11-10, shown the six changes and asked about the hook by name: "look into this too ... and
+  then apply all of the other ones. Let's make this GREAT"). Lens's chain was 16 passes, three of them the size of the
+  frame; on this GPU a frame-size pass costs 0.3 to 0.45 ms before it does any work. Built whole, the picture checked
+  on CI, frame times owed from a quiet Mac.
+  - **Straight out** (Tiles, Turbo; autopilot `lens straight on|off|setting`). A Lens chain ends "composite into swap,
+    copy swap into the main target". While Pixels lends the main target its smaller texture, the picture's next stop
+    is Pixels' upscale, which can read any texture: Pixels makes one more colour texture the world's size
+    (`lowOut`), Tiles hands it to the pass that draws into swap as its colour target, the copy into the main target
+    is left out (`PostPass`'s frame lambda, cancelled at its head), and the upscale reads `lowOut` (through the steady
+    pass when that is on: it takes the picture from wherever it went). The first build never once engaged it, as CI
+    showed, for two reasons: it left Steady out, and Steady is on in every preset but one and in Euan's own
+    settings; and it counted the renderer's list of requested effects, which always opens with the game's own
+    "end_of_frame" slot and so is never one long. It counts the frame's own list now (`gameRenderState()
+    .requestedPostEffects`, the effects that passed the game's check). Only with one post effect applied, the sizes
+    equal, and on the chains `lens_cinematic`, `lens_ultra` and `lens_swift`;
+    otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
+    reads the finished picture's neighbours.
+  - **Near clouds in the composite.** The walk of the near clouds (`include/lens_cloud_walk.glsl`, `cloudNear`) runs
+    inside the composite, per pixel against that pixel's depth, and once more at half size in the bloom prefilter
+    (the glow and the rays' mask). It was a frame-size pass and target of its own (`lens_cloud_blocks`,
+    `lens_cloudblocks`), both gone: the chain is 15 passes. The cells' shared definitions moved to
+    `include/lens_cloud_cells.glsl`.
+  - **The sky buffer** (`lens_airsky.fsh`, target `awaken:lens_airsky`, 512x288): the parts of the sky that are
+    noise and have no sharp edge, once a frame: the galaxy's light (with the night's share and its rise from the
+    horizon, stored as a square root) and the wisps' cover (`airSlow`). The composite reads them with one filtered
+    lookup a sky pixel, where it worked out eight noise values a pixel for the wisps by day and six more for the
+    galaxy by night. Stars, the shooting star, the moon's halo and the wisps' colour stay in the composite.
+  - **The sun map on the CPU** (`LensSunMap`, texture `awaken:lens_sunmap`, RGBA8 1024x1024, one cell a block on
+    every tier). It was a pass marched for every column every frame (512x512 with two-block cells on Cinematic, 24
+    steps). The sun travels in the x-y plane, so each row of the ring has an exact answer in one sweep from the sun's
+    side (a column's own top, or the height handed on from the column sunward less the light's drop over a block): a
+    worker sweeps the whole trusted window every 8 ticks from the heightfield's mirror, and the result goes up an
+    eighth of the texture a tick. The pass, its target and its shader are gone.
+  - **The wide glow in one pass** (`lens_downblur.fsh`, all three chains): the downsample to eighth size and the blur
+    there, as one shader whose nine blur taps are each the downsample's five reads at the tap's own place; the
+    eighth-size target between them is gone. Cinematic and Ultra are 14 passes (two the size of the frame, one with
+    straight out), Swift 8.
+  - **The governor**, first step: a frame more than 19 ms after the last marks a second in which the heightfield's and
+    the block map's reading take 0.15 ms a tick where they may take 0.5 (`LensClient.tickBudget`). Nothing drawn
+    changes: the maps catch up a little later. Not built: updating the glow and the rays on alternate frames (a
+    frame's lag shows on small bright things when the view turns fast) and shedding the far cloud walk (it pops).
+- **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
+  the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
+  to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
+  player's choice of colour and air over every place's own look. Two ship: **Awaken**, the look as built (the
+  default; nothing changes for a player who never touches it), and **Vivid**.
+  - **A grade is a file**: `assets/<namespace>/lens_grade/<id>.json` (`LensGrade`, schema 1: `name`, `order`,
+    `colour`, `air`, `look`). `LensGrades` reads every one in every namespace on a resource reload, so a new grade,
+    ours or a resource pack's, is a file and no code. "awaken" is built in and always first.
+  - **The setting** is `lensGrade` (a grade's id; an id no file has reads as the look as built). The Look page has a
+    **COLOUR GRADE** row under LOOK that steps through the grades on offer, and the world behind the page changes as
+    it does. (The page's LENS OVER FRAMES row is left out while the Air is on: the Air always spreads its work over
+    frames, so the row did nothing, and the page keeps its height.) Autopilot: `lens grade <id>|setting`.
+  - **What a grade may change.** `colour`: its own step at the end of Lens's colour stage (`lensGrade` in
+    lens_composite.glsl, after the place's exposure, tints, contrast and saturation, before the cave and held-item
+    floors), on all three tiers, skipped when every number is zero. Eight numbers, each 0..1: `vibrance` (the less
+    saturated a colour, the more it gains; a flower or a glow that is already rich stays put), `dark` (the darks keep
+    their colour), `rise` (the lights and upper mids come up, the darks stay), `punch` (an S around the middle, half
+    strength below it so night and shade keep their depth), `azure` (a violet blue toward azure, by blue's lead over
+    red and green; purples keep their hue), `leaf` (greens toward a sunlit yellow-green), `gold` (warm colours glow),
+    `split` (lights a little warm, shade a little cool). Each works by how far one channel leads the others, so it is
+    smooth over a gradient. The sky, the far fog and the clouds' shade are one colour model (the Air), and the step
+    is laid over all of them alike, so the land still fades into exactly the sky behind it. `air.haze` (1..3)
+    thickens the Air's near haze. `look.scale` and `look.add` change any single number of the place's look by its
+    name in the looks files (bloom, sunGlow, mist, ...). Clouds, shadows and the passes are not a grade's to change.
+  - **Where it holds.** Every world (it is the player's taste, not a place's). A story moment's look
+    (`LensClient.override`) plays as it was authored: the grade eases out for its length and back after. A change of
+    grade eases over about a third of a second. Parameter texels 22 to 24 carry it.
+  - **Vivid**: an azure sky (`azure` 0.5), bright greens (`leaf` 0.65), `vibrance` 0.4, `dark` 0.3, `rise` 0.1,
+    `punch` 0.25, `gold` 0.3, `split` 0.25, the near haze 1.25 times as thick, and a little more bloom, sun glow, sky
+    glow and mist. Tuned offline on finished frames against his three pictures, then compared on CI
+    (`tools/autopilot/steady60-grade-ci.txt`: a garden under both grades at morning, noon, golden hour, dusk, night
+    and rain). The first comparison (run 42853594714) found two faults, both in `azure`: by moonlight it turned a
+    purple flower blue (its guard was an absolute difference, and every difference is small in the dark; it is now
+    red over green by a share of the blue), and a bright sky paled to cyan (green rose with it; now red gives way
+    and green hardly moves). The second (run 42860718291) showed the allium still drifting blue at night, at a
+    ratio of -0.10: the guard now closes from 0 to -0.08. Vivid on Swift drew correctly there too. Test:
+    `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
+    (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
+    `docs/perf/steady60/grades/`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
-  Swift (it has no view direction there), ground mist, the Look page rows.
+  Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
@@ -22435,14 +22523,387 @@ The `finds_` tests hold every monument to what they held a place to; all three w
 olden stone. Tours: `monument-<id>.txt`, the first camera where the painting stands. Not done: seven to nine more monuments
 (Euan's call after these three); the relic list beyond three; sounds and motes of their own; hand clips. Unplayed.
 
-## 62. The Long World: sixty monuments in twelve families (plan docs/places/PLAN.md, page https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1; Euan, 10 Nov 2026: "Go with the full plan", and the same hour: "everything actually looks naturally placed... make sure it's at actual AAA level for each. And focus on coding more than checking over and over")
+## 62. Rope and Wings (the rope everywhere, feathered wings, powers in the air; plan docs/movement/PLAN.md, page https://claude.ai/artifact/31giigd6bKnX4kS2sLZ22w; Euan approved all of it 2026-11-10: "make this one-to-one ... Go ahead and build all of this one-to-one", with the flying beat remade)
+
+Euan, 10 Nov 2026: the swing "is just not good ... I want it to be a bit more guided, and it should feel like you're
+basically playing ... a Spider-Man game nearly"; the wings "look a bit rushed. I want them to truly feel cinematic and
+awesome"; "make sure you can use powers in the air"; and extra movement that is "truly insane, awesome to unlock". The
+plan record is `docs/movement/PLAN.md`; the approval page is built by `docs/movement/build_page.py`. The page's wing model
+(`docs/movement/src/wings.js`) is the reference for the wings, one to one. What follows is what the audit found, what
+the plan sets, and (under "Built") what the code does.
+
+**Found (verified unless marked; every bench number is `docs/movement/proof/run.sh`, the game's own swing code compiled
+without Minecraft, 40 runs of 15 s, median blocks):**
+- §17.31's planner needs an anchor 10.05 blocks over the ground (radius 6, the feet 2.5 clear, the hand 1.55 up). With
+  real-sized woods added to the bench, the assisted rope threw **0 ropes in 40 runs** in an oak wood (trunks 4-7) and a
+  spruce wood (5-8): 103 blocks, as on plains. `SwingBench`'s own "forest" is trees 13 to 21 tall.
+- §17.31's table (lane 190, city 243, forest 196) is a bot that lets go by hand in the window. A bot that **only holds
+  the key** (the rope lets go by itself at `apex` 95°) covers **120, 166, 124**. In tour run 42840884113 every let-go at
+  the top had window 0.00 and the body then moved slower than a walk for one to two seconds.
+- The held rope throws again only in the air: a landing with the key down ends the chain until a fresh press.
+- A swing that meets a wall may zip 41 blocks into a crown (a bonk of 1.16 b/t in the tour's lane run).
+- All 24 `ascent.*` sounds are synthesised; `ding_check.py` flags 8 (the throw, bite, let-go and snap among them).
+- `WingLayer` draws a wing as 14 flat strips of one painted picture; its beat turns the wing in its own plane; every
+  tier wears the same wing; closed wings aren't drawn.
+- While an Ascent state holds the body, `AscentMoves.apply` sets its motion from the state's own velocity each tick and
+  the server zeroes its copy's: a power's push on the caster is lost (Dash, the powers session's air ways, Updraft's
+  Levitation). A move of more than 3 blocks the state didn't ask for ends it (a blink closes the wings). The cast layer
+  (1500) plays under the moves layer (1600). *Read on both sides; a GameTest is the plan's stage 0.*
+- Trials, isolated (`proof/trial.patch`), holding bot: letting low anchors swing makes everything slower (oak 76, lane
+  94); a first sling with a look-ahead takes the oak wood to 203 and the spruce wood to 198; `apex` 55 takes the lane to
+  216 and the city to 258; **both together: oak 203, spruce 198, lane 253, city 265, forest 260**, no hard hit on a rope.
+
+**The plan (docs/movement/PLAN.md §4):**
+- **The rope:** one planner, three answers in order: the swing (§17.31's numbers kept), a **sling** (a top ahead and
+  above the hand, 6-30 on: pulled toward a point 2.4 over it at 0.13 a tick² up to 1.3 b/t, let go before it, the whole
+  flight swept first), the pull up a wall (swept, 16 at most). Held, the let-go comes at `apex` 55° when the flight
+  after is clear; a landing with the key held and a run on hops into the next rope. A top reached with forward held is
+  sprung off. The first-person fist moves to the frame's lower corner. A refused rope isn't thrown at that block again for a second, and the reason
+  is logged. Marker shapes by answer. Decision 6 of 28 Oct stands: no rope in open sky. Switch `ropeGuide`.
+- **The wings:** three bones, 22 flight feathers and 24 coverts a wing, each a slab one texel thick with a stepped
+  point (about 230 boxes), drawn by `WingLayer`; poses: folded, opening (gather, spread, settle), glide, a beat about
+  the body's long axis with the feathers turned on the upstroke, dive, hover, flare; one pair for Wings, two for
+  Skyborn, six gold and a halo for the Sovereign; closed wings fold for 4 s then fade into a mark; far forms past 48
+  and 96 blocks. Switch `wingsLook`.
+- **The air:** a push from outside goes into the state's velocity (`MovementHooks.push`); a blink the client just cast
+  keeps the state; the cast's arms play over the flight clip; the aim hold (the guard, or a held power's key, keeps the
+  flight's line while the look is free); Updraft registers with `AirHooks`; an attack in flight shows.
+- **Moves:** the sling (with the rope), the spring (Tether mastery 3), the rope strike (Tether mastery 5: the pull is
+  the client's, the hit is the server's, a `PLAYER_ATTACK` and a `FightMoments.HIT`), the flare (Wings) and the skim (Wings
+  mastery 3: the glide's drag halved within 2.5 of a surface), the takeoff (Skyborn: look up, sneak 8 ticks, jump).
+- **Sound:** every movement sound as a score of Minecraft's own recordings by name, Classic or New.
+- **Bench and tests:** real woods, hills and a street of stair roofs in `SwingBench`, every gate also run by a bot that
+  only holds the key; §17.31's gates plus, holding: oak 190, lane 240, city 250, and no hard hit in free flight; one
+  GameTest a mechanism.
+
+**Built (10 Nov 2026, branch `claude/movement-plan-e38dfa`; coded whole, tested once at the end; unseen in game by Euan):**
+
+*The rope (`AscentSwing`, `AscentMoves`; switch `ropeGuide` in `awaken-feel-client.toml`, off = §17.31 exactly).*
+- `AscentSwing.findSling`: rays 6 to 44 up and 0 to 30 degrees aside along the heading; a top is taken when it is 6 to
+  30 ahead (`slingFrom`, `slingReach`), at least 1 over the hand and no steeper than 1.2 a block. The pull is toward a
+  point `slingOver` 3.3 over the top at `slingPull` 0.15 a tick² up to `slingTop` 1.3 b/t, the rope carrying all of
+  gravity (`slingCarry` 1); it lets go within `slingNear` 5.25 of the point, past `slingSteep` 50 degrees or after
+  `slingTicks` 34, thrown upward by what clears the top, 1.3 b/t at most (`slingLift`). (The plan's 2.4 over, 0.13 and
+  a lift of 0.9 were measured only in a dense wood: from a sprint jump at ONE tree the swept sling was refused four
+  times in five, its let-go too weak to lift the body over the crown. With these numbers a hundred single oaks 8 to 26
+  ahead are slung 87 times from a sprint jump, 77 at a run, 71 fast; the bench test holds that.) `slingClear` plays the whole pull and the flight after it with the body's box (a quarter block spare) and takes
+  the candidate only if nothing is met, or only a landing after the let-go. To the server and to watchers a sling is a
+  ZIP; its let-go is `EV_SLING`.
+- Held, a swing lets go at `apexHeld` 55 degrees while it still rises and the flight after is clear (95 otherwise, as
+  before). With the key and forward held, three ticks on the ground at a run (or stopped against something) hop into
+  the next rope, ten ticks at least after the last throw; running, the hop takes a swing or a sling, and stopped against
+  a face the pull up it too.
+- **The step the body really took.** Inside the input step the game has not yet moved the body this tick, so
+  `x - xo` is nothing there. The Ascent read it in nine places: every move begun from the ground or a fall (the first
+  rope, a double jump, a dash, opening the wings, taking flight) started with no speed across the ground, and the hop
+  above, which asks whether you are running, never fired (the first tour of the built game: one rope in the lane, then
+  nine seconds of running with the key held). `AscentMoves` now keeps the step taken since the last input step and
+  uses that. Moves begun from a run keep their run. A pull up a wall is taken
+  only by a clear, swept way (`zipClear`; the 16-block limit of the plan cut off cliffs the old rope reached, so the
+  limit is `wallZip` 44 and the sweep decides). A top reached with forward held at Tether mastery 3 is sprung off
+  (0.6 b/t on, 0.46 up; `EV_SPRING`). A rope the server refuses is not thrown at that block for a second, and the
+  server logs why. The marker is a ring for a swing, a chevron for a sling, a bracket for a pull; the rope's halo
+  swells and whitens through the let-go window. The first-person fist sits at (0.46, -0.3, -0.8).
+- **Bench, 40 runs of 15 s, median blocks.** Two bots hold the rope. The "holding" bot of the audit never lets go by
+  hand, but it also taps jump on every landing and throws only in the air, from a launch tower where a place has one:
+  lane 243, city 263, forest 249, cliff 122, plains 103, spire 109, oak wood 198, spruce wood 192, hills 192, stair
+  roofs 194; no hard hit anywhere and no stopped run. **The key-only bot is the player Euan is** (the rope on one key,
+  jump on another, one thumb): forward and the rope held from the ground, jump never pressed (the game's auto-jump hops
+  a block in its way), a ground sprint of 0.28, the game's own rule for a throw from the ground: **lane 261, city 247,
+  forest 247, oak wood 152, spruce wood 195, hills 150, stair roofs 177** (running alone covers 75), no hard hit on a
+  rope, one flying free in the lane and one in the hills of 40 runs each. Hills stop it in 7 runs of 40: a face two
+  blocks high with nothing over it wants a jump or a climb. The gates in `ascent_swing_bench` are a little under these
+  for both bots, and the single-tree count above.
+- **In the game (tour 42872444094: forward and the rope held, jump never pressed).** The lane of giant trees: seven
+  ropes thrown from the ground and the air, 218 blocks in 8.4 s, to 2.6 b/t. The street: nine ropes, 193 blocks in
+  8.8 s. **A real forest is slower than the bench says: 104 blocks in the first 15 s** (a pull onto a top, then five
+  slings), where the bench's oak wood gives 152. The time goes on the crowns. The sling needs a top ahead and above the
+  hand (the plan's rule), so on the highest crown about the rope finds nothing; the body crosses the crown (the runner
+  vaults, hangs on and climbs a leaf step there, a second and more), walks off its edge, falls ten blocks and slings
+  again from the ground: three and four seconds between slings, twice. The bench has no crown to cross. Not built,
+  **Euan's call**: let the held rope also take the next crown ahead at or a little under the hand (a skip from crown to
+  crown, told from bare ground by what stands under it), which would keep the chain in the canopy.
+
+*The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
+- `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
+  secondaries, 9 primaries, coverts 13 and 11; **231 boxes a wing** up close. The five poses, the opening (a gather,
+  a spread past open, a settle; 0.9 s), the glide (with up to 12% of the dive's tuck as speed builds), the dive, the
+  flare, and the remade beat: one cycle, down 42% of it, every term periodic and eased, most of the bend from the
+  elbow out with each joint a little late, a feather taking the flap of its own place on the span. Flight beats every
+  19 ticks, a hover every 32, on whole-tick clocks.
+- What the wings do is read from what the body does: opening, glide, beat (flight), dive (falling steeper than 0.6 of
+  the speed above 0.9 b/t), hover (flight under 0.45 b/t), flare, fold; a change is a 0.32 s crossfade. Closed wings
+  stay folded 4 s and fade into the mark (a dark plate and a breathing core between the shoulder blades, worn by anyone
+  this client knows has wings: yourself by tier, others once seen with them open). The body rides the beat by 1.3
+  texels. Motes are shed from the tips of the large wings on a downstroke and on a flare.
+- Rungs: one pair (0.94), Skyborn two (1.18 and 0.6 under it), the Sovereign's form three gold pairs and a ring of 14
+  boxes. Others' rung is known once they are seen in flight.
+- Far forms: past 48 blocks every other feather, broader, no coverts or shafts (51 boxes); past 96 the three bones and
+  six slabs (27).
+- Drawn in their own pipeline, depth written, both sides, unlit: vanilla's emissive type writes no depth, so 231
+  overlapping boxes would draw in the order sent. Each face carries its shade in its colour, as the model's do. Halos
+  are additive discs facing the eye (`ascent_wing_halo`). Each pair is its own draw (a render type a pair).
+  **A feather is sent as a position and a colour, 16 bytes a vertex** (`ascent_wing_feather_lean`, the game's lightning
+  shaders; in fog a wing thins toward nothing). The first build sent the entity format (`ascent_wing_feather`, the
+  entity shaders, 36 bytes, most of it unread): it stays as the fallback, and vanilla's translucent type after it.
+- **Why lean (three probe tours, 10 Nov; runs 42887752940, 42891139345, 42894655667).** On the look tours' machine
+  (GitHub's macOS runner: MoltenVK on Apple's virtual GPU) the Sovereign's six wings, 33,600 vertices and 1.2 MB a
+  frame in the entity format, threw stray triangles and a white wash in some frames and not in others: by the camera's
+  direction, by Lens's look, by the minute of the run, and with Lens off too. Nothing on the wings changed it (halos,
+  ring, Lens's tiles and temporal pass each taken away); every vertex the wing code can send was checked outside the
+  game (550 million, none farther than 4.3 blocks, none not a number). What decides it is how much lies in the frame's
+  shared vertex buffer: `/awaken wings set probe_pad <n>` sends n vertices of no size with the wings, and with 20,000
+  the first rung's single pair, whole in every tour before, broke the same way (10,000: whole). The six wings sat on
+  that edge by themselves. Lean, six wings are 0.54 MB and were whole in 50 shots of 50, with up to 80,000 vertices
+  sent ahead of them (120,000: broken; Skyborn whole at 120,000), and then in all 62 of the Sovereign's own tour
+  (42899604284: every state at dusk and by day, the real form in flight). **Not known: whether a real GPU has any such edge**
+  (nothing here says Euan's Mac does; a crowd of vanilla mobs would cross it too). `probe_lean 0` draws the entity
+  format again, `probe_lod`, `probe_pairs`, `probe_ring`, `probe_halos`, `probe_plain` and `probe_pad_after` are the
+  other probes.
+- The feathers' types carry their order-independent pipelines (`OitPipelineSet`): with the video setting Improved
+  Transparency on, the game draws every blended type through such a set and throws for a type without one. The first
+  build's feathers had none (the setting is off in the play copy and on the tour machine).
+- **By day Lens shades the wings** (its contact shadows march the depth the feathers write): a wing's coverts shadow
+  its own flight feathers, and the Sovereign's three pairs shadow one another into grey patches (tour 42881881936,
+  `d_*`). One pair reads as feathers in sunlight; six gold ones read patchy. Lens has no way to be told "this gives
+  light" beyond the Holo's plates (`lens_light.fsh`, `onPlate`); a rule for it is the Lens module's to add.
+- First person: the outer feathers only, set `fpAhead` 0.8 ahead of the eye and `fpUp` -0.12 under it (where the wings
+  really are nothing of them is in view). A tour of three placements in real flight (run 42863429201) showed them at
+  the frame's lower sides in a glide and sweeping in on a beat or a turn; the opening fades in as it spreads, and
+  folded or lifting wings are not drawn through your own eyes, nor is a pair raised over the shoulders (the
+  Sovereign's upper pair lay across the top of the view as two slabs: tour 42899604284; the fix is unpictured).
+  **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
+  changes them while the game runs, and `/awaken wings show <state> [rung]` holds the wings in any state to look at.
+- Known limit: the game culls a player by their own box, so wings three blocks wide vanish when the body is just off
+  screen (as the old wings did).
+
+*The air (`AirRules`, `AscentMoves`).*
+- **A push carries.** While a state holds the body the client leaves the body's game motion at nothing between steps
+  (the server already left its copy so). Whatever is found there at the next step was put there from outside, set or
+  added alike, and joins the state's velocity: added in the free states, only its part across the rope on a swing, none
+  on a zip or a rappel; never past 3.0 b/t unless the body already had more. A cast of your own that sets a motion
+  gives it along its own way and never slows you (`AirRules.cast`). The server leaves a real push (over 0.2 b/t) that
+  has yet to be synced until it has gone out. `MovementHooks.push(player, vec)` says it plainly. A state that ends
+  hands its speed back to the body.
+- **A blink keeps your state:** a teleport within 20 ticks of a cast of your own and 16 blocks moves a free state with
+  the body, speed kept; a rope never survives one; anything else ends the state as before.
+- **A cast shows:** the powers' client reports each cast pose (`PlayerClips.cast`, one line in `CastAnims.start`); a
+  body flying free, on wings or in flight plays one of five gestures over its flight clip (thrust, sweep, stamp, lift,
+  throw; lying on the air or upright), and a weapon swung in the air a sixth. In first person the free states' fists
+  stand aside for a cast, a swing or a thing in use. The powers session's `__air` first-person clips are theirs.
+- **The aim hold:** on wings and in flight, with the use key, a power's key or the ultimate's held, the flight keeps
+  the line it had and the look is free; let go, it eases back to the look over 6 ticks. A hit ends the hold.
+- **Levitation** lifts the free states by the game's own rule (so Updraft's lift reaches open wings).
+
+*The moves.*
+- **The flare:** coming down under 0.95 b/t, falling under 0.6, within 1.8 of the ground, the wings begin to cup;
+  landing so is a flare (no roll, `EV_FLARE`, a link once in three seconds).
+- **The skim** (Wings mastery 3): a glide at 1.0 b/t or more within 2.5 of ground or water, or with a wall two blocks
+  beside it, has half the glide's drag, a wake of motes and Flow; `EV_SKIM` after six ticks of it.
+- **The takeoff** (Skyborn): on the ground, looking up 20 degrees or more, sneak held 8 ticks (the folded wings lift),
+  then jump: 14 blocks straight up over 16 ticks into flight, a tenth of the Aether (the server takes it on
+  `EV_TAKEOFF`, only for a flight begun within 10 ticks).
+- **The rope strike** (Tether mastery 5): an attack on the rope or flying free at a creature under the crosshair (3
+  degrees) or locked on, more than 4 blocks off and in the rope's reach, never a player. The client sends `Strike`
+  then a ZIP whose anchor is the creature; the server lets the rope bite only a creature the look could mean
+  (`Aim.meant`) and takes a creature for an anchor only then. The pull is the client's (`AirRules.strikeStep`); at 2.4
+  it sends `EV_STRIKE` and comes off upward (0.62) with its air moves back. The blow is the server's: the creature
+  it let the rope bite, alive, the body within reach of it, once; the hand's damage and 2.5 a block a tick of speed
+  up to 6 more, as a player's attack, with knockback, a `FightMoments.HIT` and a link.
+
+*Sound (`AscentScores`, `tools/art/specs/ascent_scores.py`; switch `movementScores`, off = the old sounds).*
+- 22 of the Ascent's 24 sounds and 8 new ones are scores: 66 layers, each a registered sound whose sounds.json entry
+  names a vanilla sound event (`"type": "event"`), played at the same place, volume and pitch after its own delay.
+  Every `awaken:ascent.*` sound about to play, whoever asked for it, is taken and its score played instead. The wind is
+  the elytra's own loop; the rope hums (the same loop, high) through its let-go window. **The two rappel loops stay
+  as they were** (no vanilla recording loops as a rope through a hand does). `ascent_scores.py listen` builds a local
+  page (Classic beside New) from this machine's own game files; nothing of Mojang's is in the repo. **Unheard by Euan.**
+
+*Tips, Tasks, tests.*
+- Six tips in `assets/awaken/tips/ascent/` (sling, spring, strike, flare, skim, takeoff), each offered where its move
+  would work and done when it is made. Four rows on the Tasks page (`AscentGoals`, Out there, told as leads): the
+  spring, then the strike; the takeoff, or the skim; each shows the mastery it waits on, then how, until made once.
+- GameTests: `ascent_swing_bench` (the gates above), `ascent_sling_level` (a real oak gives no swing but a sling, the
+  server takes its anchor, nothing is met), `ascent_air_push`, `ascent_air_blink_and_aim`, `ascent_air_moves`,
+  `ascent_rope_strike`, `ascent_wing_form` (the beat closes on itself and never moves a term 6 in a frame; 231, 51
+  and 27 boxes).
+- Look tour `tools/autopilot/movement-built.txt`.
+
+## 63. The Way Up (how each move is earned; plan docs/movement-unlocks/PLAN.md, page https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN; Euan approved all twelve recommendations 2026-11-10: "Go with all recommendations")
+
+Euan, 10 Nov 2026: "it should be kind of a natural progression ... it shouldn't be impossible to unlock the future movement.
+Like maybe we make it unlock more with ... the rank assessments ... and then that unlocks somewhere that you discovered that
+you can go and unlock that item, and then it actually shows you how to use it ... it has to be clear the moment that you
+unlock it." Where this section and §17, §27.3 or §47 differ, this section holds (with `wayUp` on, the default). Its
+sister is §62 (Rope and Wings: how the rope and wings feel, and six new moves); this section is how every rung and move is
+earned and taught.
+
+**The audit (verified in code, 10 Nov).** The rope is given by the D Proving (`AscentTrials`, `TrialHooks.RINGER`) and
+flight by the A Proving's roof (`TrialHooks.SKY_WARDEN`); neither can be missed. The leap waits on Tether mastery 4 (400
+points, shown nowhere) and a scripted gate opened once and left out of the Now line (`GatesNow`); wings wait on a sky
+platform found by chance at C. The movement module registers no `core.api.Goals` step. `Ascent.grant` gives every rung
+under the one granted, so a core or the Sky Warden's roof hands lower rungs over with no scene of their own. The Tether Vow
+(§17.7) and the Sky Leviathan's trial (§17.18) can't be reached in a new world (D always comes with the rope, A with
+flight), and the first vault's "Its line waits for a D-rank hunter" is never paid. The band's Ascent rows for the rope and
+flight, the level road's stop at 73 and the Wings trail's second step describe the old rules. The Sovereign's form is given
+after an ending. Hours (pacing_sim, balanced): D 3.4, C 10.2, B 23.8, A 35.8, S 47.2, Sovereign 61.4. The nearest site by
+the structure sets' own spacing (median; worst seen): a vault 260 to 350 (1,140), a Tether Spire 160 to 290 (1,050), a sky
+platform 280 to 380 (1,290).
+
+**63.1 The rule.** A rank fight opens a rung; a place gives it; the way out of the place is the move. On a Proving's win
+the System wakes one place of the rung's kind for each winner: one in their Saved for later book (§27.1) if there is one,
+else the nearest by the seed (found on a later tick, never loading chunks on the server thread, §28.9). It is lit in the
+rank's colour, carried on the Now line for ten minutes, and held as one row on Tasks until visited. Any place of the kind
+serves. A later Proving still hands down any rung not yet held, and each rung handed down is flagged "lesson owed".
+
+**63.2 The rungs.**
+- *The rope (D).* The Ringer's chain is given as built, but `TrialHooks.done(RINGER)` no longer grants the tier. The Tether
+  Vow (§17.7) gives it in any vault's forecourt to an awake D-rank player without the rope; its door rule is dropped (the
+  rank that won the chain is the proof). The spawn vault exists in every world.
+- *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
+  Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
+  is a Tasks row with its place until run, and is opened again if lost.
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+  light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
+  platform's ward a fall is a soft landing.
+- *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
+  before with their own beat. The Sky Leviathan's trial (§17.18) is retired: its trigger, toast, level-road stop and trail
+  step go.
+- *The Sovereign (the last Proving).* The form is given at the Last Loop's fall (§47.10), not at an ending; an ending still
+  gives it to a save without it. `Sovereign.field` no longer clears the target of, or routs, a Lord, Warden, guardian,
+  Sovereign or the last; it slows them a quarter at most.
+
+**63.3 The Lesson** (one kit for every unlock, client). The gift (today's scene, 2.5 s, one plain sentence, never over a
+fight); the player's own key as a `Kit` key cap with up to seven words, pinned to the target in the world and held at the
+screen's edge with an arrow when off it; a pale gold figure doing the move once from a recorded route (`GauntletGhost`,
+`AscentRoutes`), again after 12 s; gone at the tick the server sees the state begin; then a four-second card of the move's
+keys. The band's Powers place shows a row a rung with its keys as caps and its mastery as ten pips, the next pip that gives
+a move marked. The six moves of §62 use the same Lesson where each can first be done. Reduced motion: the key cap only.
+Nothing is cut off (§57.6). A Lesson claims the notification director (§26) for its length, the Vow's included: today
+`VowScene` holds nothing back, and the audit's tour (run 42851970427) shows its words drawn under the vault's own
+DISCOVERY card.
+
+**63.4 Tasks.** One thread, `rank.way_up`, Gates and rank, Lead voice, one row at a time, each `.teaches` its rung. Nothing
+is listed for flight or the form (a Proving is never named ahead, §43).
+
+**63.5 Words.** Every line in plain speech; the table is in PLAN.md 4.8.
+
+**63.6 Data.** `AscentMemory` schema 4 (reads 3): per rung, the place that woke, given, lesson done, lesson owed. Per
+player, kept through death, synced to its owner. World option `wayUp` in `awaken-body.toml` (on); off, every rule of §17
+and §47 exactly as before.
+
+**63.7 Tests (planned).** `way_up_road` (a fresh player walked rung by rung: one way-up row or a Proving ahead at every
+stop, every row with a place, no rung held with its lesson neither done nor owed), `way_up_places` (200 seeds), one per
+mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_ledger` green.
+
+**Audit tours (as the game is):** `tools/autopilot/unlock-tether.txt`, `unlock-vow.txt`, `unlock-wings.txt`,
+`unlock-sky.txt`, and the existing `leaper-trial.txt`.
+
+**63.8 Built (11 Nov 2026; `claude/movement-unlocks-b62e18`; what the code does, and where it differs from 63.1 to 63.7).**
+- **The rule** (`body.ascent.WayUp`, its own player tick). Every 5 s a player's road is read from what is true of them:
+  `waiting(p)` is the rope at D-rank without it, wings at C-rank with the rope and without them, else the leap with the
+  rope and without it. For the rung that waits a place is found with `RuinLocator.near` (the structure sets' own maths, 12
+  terrain samples a call at most, nothing loaded): a vault within 2,000 (else the spawn vault), a Tether Spire within
+  1,500, a sky platform within 3,000 then 8,000. A ruin the player has already found (`AboveData`) is taken first when it
+  is no more than twice as far as the nearest. A candidate inside the city's reserve (`terrain.api.CityBasin.reserved`)
+  is skipped: the locator's placement maths names chunks there, but no ruin forms in them (the second built tour was sent
+  to a vault 110 blocks off inside Carillon's basin). *Differs:* found ruins, not the Saved for later book.
+- **The record** is its own attachment, `awaken:way_up` (`WayMemory`, schema 1: places, told, done, owed, the Gauntlet's
+  gate), not `AscentMemory` schema 4, so the ladder's record and the §62 branch's edits to it never meet. Kept through
+  death; synced to its owner as `ascent_way` when it changes.
+- **When:** a place is told twenty seconds after its rung began to wait and with the player on the ground, so the rank
+  fight's own messages come first; then as a CRITICAL line, because the director files a paced line that has waited
+  45 s and this one must be seen (neither built tour's shots caught it while it was IMPORTANT). The gate at a crown's
+  foot is said the same way.
+- **Told:** one System panel, title and body, twelve seconds (`WayUp.say`: "A vault has lit up for you" · "It wants the
+  chain you're carrying. It's 310 blocks east of here."; "A sky platform has lit up for you" · "It's … You climb its
+  rings by rope."; a toast cut the same words off after two short lines, §57.6), `NowHooks` for ten minutes with its needle (priority 60), and
+  a thin beam of the rope's own light on the place, in the rank's colour, drawn from 24 to 1,400 blocks
+  (`WayClient.onSubmit`). Fog takes everything past the view distance, so a beam further off than 0.55 of it is drawn
+  nearer on the same line of sight, the whole of it scaled about the eye: it looks as it would from there, and may show
+  over a hill that would hide it. *Differs:* the platform's rings are not made brighter; the beam is the light.
+- **Tasks** (`WayUp.steps`, thread `rank.way_up`, Lead, `.covers("ascent:way/")`): "Take the Ringer's chain to the vault
+  that lit up"; "Climb a Tether Spire with your rope" (or "Get to know your rope" with no spire in reach); "Run the gate
+  that opened where you climbed"; "Climb the sky platform that lit up"; "Jump from somewhere high and open your wings"
+  (wings held, never opened). Nothing for flight or the form.
+- **The rope.** `TrialHooks.done(RINGER)` gives nothing; `TetherVow.ready` is D-rank at any vault's forecourt (its door's
+  rank and whether it is open no longer matter; a ranked hunter is never stirred at for a sealed door).
+- **The leap.** `SpireCrownBlockEntity.reached` calls `WayUp.crownReached` once the climb is by the line, before the
+  crown's own stricter test (a third of the last 20 s in the air), which the pilot's eight-second climb failed in three
+  tours and a careful climber who stops to aim would fail too: without the leap and with no gate opened yet,
+  `AscentTrials.openLeaper(p, near)` opens the Gauntlet 9 out from the crown's column at the plaza's height, toward where
+  the climber stands. Either way in (a crown, or Tether mastery 4 as before) the gate's id and place go on the road; if
+  its record is gone when the player is within 96 blocks it is opened again there. *Differs:* the row's needle is the
+  nearest Tether Spire only (hero trees are not in the locator; their crowns still open the gate).
+- **Wings.** After the core's gift `WayUp.firstFlight` sends the pier's end (the core + `SkyRig.PIER` along x and z) and
+  the way off it. Once the gift's scene ends the client begins the first flight's Lesson: the cap 3 past the pier's end,
+  four rings of light a second sinking along the line, the gold figure running off the end. Its words are "Run off the
+  end, then press twice": with the leap held (a core always hands it down) the first press in the air is the double jump
+  and the second opens the wings. A fall is a soft landing for 60 s after the gift. *Differs:* soft anywhere, not only inside the platform's ward (a first glide leaves it).
+- **The open sky.** `AscentTrials.skyEdge`: wings never earned are given first (`WINGS_EDGE`, a short moment) and flight
+  40 ticks later; both the leap and those wings are owed their lessons. With The Way Up on, `SKY_EDGE` draws no title:
+  the Lesson's strip of three keys at the top of the screen, until flight begins or 10 s. `skybornDue` is false (the
+  Leviathan's trial is never offered; its code and dev command stay).
+- **The Sovereign.** `WayUp.read` gives the form at Sovereign rank (so it arrives home with the rank; any ending still
+  gives it). `Sovereign.field` gives a boss (`powers.Combat.isBoss`) Slowness I and leaves its target and its feet alone.
+- **Handed down.** `Ascent.onGranted`: a rung under the highest one held at that moment is owed (not in a body's first
+  100 ticks, which is an old world's first load). Done is read by the server: the rope's mastery up by two throws or the
+  Vow kept, any Leaper mastery, a GLIDE, a SOAR, any Sovereign mastery.
+- **The Lesson** (`body.ascent.client.Lesson`, layer `ascent_lesson`). Kinds: the vault's mast, the chasm's edge, the first
+  flight, the sky's strip, the form, and the three owed ones (offered when free for 12 s, again a minute later, and never
+  within twenty seconds of a rung being handed down, so one never sits on another's gift). The cap
+  is `Kit.cap` with the player's binding and up to seven words on a dark plate, pinned by projecting the target through
+  the camera, with a stem and a breathing ring, or held at the edge with an arrow; with no target it sits under the
+  crosshair (the form's low, over the gold line). The prompt leaves when the key is pressed (the rope's key held two
+  ticks; jump pressed in the air; wings open; the Ascend key with the line full). The card: the rung's name and its keys
+  (`Kit.hintLine`), four seconds, over the hotbar. While a prompt or card shows, `TipHooks` and `Notices` are held; the
+  Vow now holds them too and claims the director at its call. A hold stops what is still to come, not the director's big
+  card already on screen (arriving at a vault for the first time is also a discovery, and the built tour showed "It's a
+  rope now." under "Sealed Vault"): `Notices.Client.showing()` (new, a default method; `Herald` answers with its moment)
+  tells a scene the card is up, and the Vow's and the gifts' titles are then drawn at 0.60 of the screen's height. *Differs:* the gold figure is the Gauntlet's ghost
+  (`gates.entity.GauntletGhost`, the gates' own entity type, used from the client only) moved along a computed path (a
+  swing's sag to the mast, two hops along the look, a run off the pier), not a recorded route; none with reduced motion.
+- **K, Powers** (`body.client.AscentSection`): a row a rung held with its keys in the player's bindings in brackets and a
+  mastery bar; "You haven't used it yet." in amber until its lesson is done; the next rung as "◆ Next" with a Lead; the
+  rest dark diamonds. *Differs:* text and a bar, not caps and ten pips (a band section draws text and bars), and no mark
+  on the pip that gives a move until §62's moves are merged.
+- **Words:** every `awaken.ascent.vow.*`, `gift.*`, `edge.*` and `core.*` line in plain speech; with The Way Up on a gift
+  shows its sentence only (the clipped second line is gone: the Lesson or the card says how). The trail steps "Reach the
+  vault's beacon mast by rope." and "Take flight."; the level road's 58 and 73.
+- **Option:** `wayUp` in `awaken-body.toml` (SYNCED, on). Off: `TrialHooks.done(RINGER)` gives the rope, the Vow keeps its
+  door rule, the Leviathan's trial is offered, the scenes keep both lines, no row, no beam, no Lesson.
+- **Dev:** `/awaken ascent way` (the road read now, and said), `/awaken ascent scene <wings|leap|leap_edge|sky|sky_edge|
+  sovereign|wings_edge>`, `/awaken ascent pier`. Tour `tools/autopilot/way-up.txt`.
+- **Seen:** CI look tours `way-up.txt` (runs 42864057722, 42868121143, 42874946585, 42879026051) and `way-up-leap.txt`
+  (42885496256): the reveal's panel and the beam over Carillon's roofs from 450 blocks; the vault's cap on the mast, the
+  rope thrown and its card; the title under the discovery card; the Gauntlet's gate standing at a spire's foot after its
+  crown was reached; the leap's prompt and card; the platform's panel; the core's sentence; the ring line off the pier,
+  wings opened on the second press and their card; the sky's strip; the form's prompt; the Tasks rows and the K rows.
+  **Not clearly seen:** the gold figure (hidden by the tours' cameras), the gate's own panel (its tour's shots came a few
+  seconds before the gate), a first glide carried by a windway, and the Tasks row for the gate (covered by
+  `way_up_road`). The pilot's spire climb ends on the crown's rim or beyond: in four tours it never came within the 2.6
+  blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing.
+- **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
+  (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
+  (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the
+  field by the slowness it lays (III on a zombie, I on a boss): a monster can't be made to target a test's mock player,
+  so "a boss keeps its target" is read in the code, not asserted. All four pass (local run of `-Ptests=way_`, 11 Nov). Changed for the new
+  rule: `ascent_tether_vow` runs with the option off (the door rule is the old rule), the sky trial's test gives its taker
+  wings first, the Ringer's Proving test expects the cold chain. *Not written:* `way_up_places` (a test world has one
+  seed; the distances in the audit come from the placement maths).
+- **Not built:** the six new moves' Lessons and the takeoff's at home (they wait for §62 to be merged: each is one more
+  `Lesson.Kind` and its trigger); the platform's brighter rings; a needle to hero trees.
+
+## 64. The Long World: sixty monuments in twelve families (plan docs/places/PLAN.md, page https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1; Euan, 10 Nov 2026: "Go with the full plan", and the same hour: "everything actually looks naturally placed... make sure it's at actual AAA level for each. And focus on coding more than checking over and over")
+
+(Numbered 64: it was built as §62 on its own branch while Rope and Wings took that number in the build. Its commits before 11 Nov say 62.)
 
 Module `dev.awaken.finds`. What §61 began with three, built out as approved: twelve ideas, each painted first
 (`docs/places/img/`), each a generator; five named monuments of each, found further and further out; every site aged by
 its own seed and its land; one relic a family that grows; small remains between them that point the way. Working notes:
 `docs/places/BUILD.md`.
 
-### 62.1 Families and tiers
+### 64.1 Families and tiers
 
 `Family` (twelve, in the four groups the story has; the groups are never named to a player): DISH, ROAD, ARCHIVE (before
 the split); STAIR, MAST, ORRERY (up); HALL, GARDEN, CLOCK (in); SHAFT, CHAINS, DOOR (down). A monument is a `Kind` with a
@@ -22452,7 +22913,7 @@ three of §61 are tier 3 of their families and keep their ids. One file a family
 `sets/Mon`. Each of a family's five has its own name, Journal text and three carvings; a family's fifteen carvings are
 that group's account.
 
-### 62.2 Bands, and the deal
+### 64.2 Bands, and the deal
 
 Euan, 11 Nov 2026, on the built sixty: "make sure they're placed in the right ways... tied into the world generation in a
 way that makes it never glitchy, similar to vanilla villages... and how far out you can find them, and a ton of
@@ -22476,14 +22937,14 @@ no ground here or stands too near something: a card, not a fresh deal, so the bl
 kind turns up where its land did not ask for it. Across the edge of two blocks, a card yields where a cell with first
 say (the lower hash) within six cells stands the same kind; only cells that hold that very card are asked what they
 built. So from any monument the next of its kind is never nearer than 2,300 blocks, and in a counted world it is
-kilometres further (§62.9). Lands by family are in each file's `lands(...)`: every land has at least three families at
+kilometres further (§64.9). Lands by family are in each file's `lands(...)`: every land has at least three families at
 rank 0.
 
 (The first deal, twelve cells by twelve with one card each and a yield to any cell that had only drawn the kind, was
 counted in a real world on 11 Nov: no twin nearer than 2,589, but nothing within a kilometre of the start, one cell in
 five lost to a twin that never stood and one in five to a structure that could not have been there.)
 
-### 62.3 Meeting the ground
+### 64.3 Meeting the ground
 
 The first count of a real world with the three (10 Nov) stood 12 monuments in 616 choosing cells: a footprint a hundred
 wide found no ground level to a few blocks. A monument no longer asks for level ground; it is placed where it can be
@@ -22527,7 +22988,7 @@ mouth: `Terrain.starts`, each set asked one square of its spacing at a time); no
 and 150, ours first (`awaken:settlement_grid`; a walled village is some 80 across from its anchor, which the land may
 move 32), then outposts and mansions, and not the city; and no monument with first say stands within 300, or within
 both their widths and 24, so two never share ground or crowd each other. Found by the first worlds made without a
-client (§62.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
+client (§64.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
 was asked, which our villages' pack empties; and a Tether Spire stood in a Water Clock's lawn, because only two chunks
 from the monument's middle were asked. The margin from other landmarks is forty and not more because this world has
 something standing within 150 blocks of nearly every spot: at eighty, 167 monuments stood where 263 do.
@@ -22581,7 +23042,7 @@ its fallen vault and great trees, or a clerestory house; the Shaft its giants or
 
 **The site box** for clicks is 64 below to 128 above the heart (`Site.holds`).
 
-### 62.4 The kit, and the things you do
+### 64.4 The kit, and the things you do
 
 Added to `kit/M`: `giant` (a robed, hooded figure 15 and more tall, standing, seated or lying on its back, broken at the
 waist), `ring` (a band of a ring in any plane, broken by degrees), `ringStuff`, `dome` (shell, ribs, eye, with a keep
@@ -22597,7 +23058,7 @@ open (Garden); open the sluices from the top down, and real water runs (Clock, `
 ledges to the one door that is only latched (Shaft); push the capstan round six times (Chains); dig the door out (Door,
 `Dig`). No fights, and no way to be shut in.
 
-### 62.5 No two sites alike
+### 64.5 No two sites alike
 
 `M.finish(wet, wear)` is every monument's last pass: `age` with what its land adds (desert and badlands dry and worn,
 with sand drifted against the side the wind comes from; jungle and swamp wet, with vines down the faces; forest and the
@@ -22605,7 +23066,7 @@ dark woods a little of both; mountain and snow bare and worn), shifted ten eithe
 fell, which corner slumped, which giant lost what, are picked from the seed (`Mon.pick`). `Mon.camp` leaves one of five
 kinds of later people at its foot: climbers, herders, pilgrims, a hermit, or nobody.
 
-### 62.6 Remains
+### 64.6 Remains
 
 Layer 1 (cells 256, chance 0.8 in lively land): fifteen kinds of `FSet.REMAINS` (`sets/Remains`), small, from the same
 kit: a giant's head, a lone arch, milestones, a pier with no bridge, a fallen column, steps to nothing, a piece of a
@@ -22614,7 +23075,7 @@ waymark. A remain stands only where a monument stands within 1,000 blocks and ou
 turned to face it. Its one carving has the System say its line, then which way and about how far; that way is kept as a
 lead (Tasks page). No relic.
 
-### 62.7 Relics that grow, and hoards
+### 64.7 Relics that grow, and hoards
 
 Twelve, one a family (`finds/Relics`), given by code the first time any of a family's five is finished at a site;
 `Family.done` (how many of the five a player has done) is the relic's step, 1..5, so nothing is saved on the item and a
@@ -22631,7 +23092,7 @@ touches another system uses vanilla attributes and effects only.
 Hoards: `finds/hoard_e` .. `hoard_s` by the kind's rank: olden stone and bronze (which can be had no other way) and
 one to three rolls of the finds' own tier table. A site pays a player once.
 
-### 62.8 The twelve
+### 64.8 The twelve
 
 | Family | Tier 1 | 2 | 3 (painted) | 4 | 5 |
 |---|---|---|---|---|---|
@@ -22651,7 +23112,7 @@ one to three rolls of the finds' own tier table. A site pays a player once.
 Changed from the plan's first list while drawing them: the Sky Cradle became the Orrery, the Lantern House the Water
 Clock, the Deep Well the Door in the Sand (each was too like another family in shape or in what you do).
 
-### 62.9 Checks
+### 64.9 Checks
 
 The `finds_` tests hold all sixty and the fifteen remains to what they held the three to (every scene stands, nothing
 floats, every walkthrough is finished by a scripted player). The dump writes every monument on a level pad and the
@@ -22672,12 +23133,12 @@ four nearest the start, the eight on the roughest ground, the nearest painted on
   without a client. It also says what is wrong where each stands: holes (a column the terrace shaped whose ground is
   not there, with what is in it), bare earth, and how near the next settlement and the next other landmark start. Ten
   minutes for twenty-three, where a look tour waits hours for a runner; this is what found the mast in a village and
-  the spire in a lawn (§62.3). The script throws away the land an earlier run made, or a changed feature would be read
+  the spire in a lawn (§64.3). The script throws away the land an earlier run made, or a changed feature would be read
   back as it was. The renderer draws our own blocks from their models and the soft land's slabs as slabs
   (`FINDS_VIEWS=se,nw` for only those views, `FINDS_JOBS` for how many at once: a world as made is large).
 
 The first game pictures of monuments where a world put them (tours `placed-a..d`, 39 pictures, 11 Nov) found five
-things wrong in how any monument is written into the land, all in §62.3 now: snow in squares and in the outlines of
+things wrong in how any monument is written into the land, all in §64.3 now: snow in squares and in the outlines of
 rooms, pits in lawns, squares of bare earth and stone, a mast in one of our villages, a spire in a lawn. The second
 (48 pictures, the same day, on those fixes) found two more: pits where one of our own plants stood at the floor, and
 leaves left in the air over a clearing. The dump's count of holes now takes anything at the floor that is not a

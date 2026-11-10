@@ -54,7 +54,7 @@ journal = ["# The places in the Journal as One Stage shows it (SPEC 57): the wal
         "screen close", "screen band tasks", "wait 60", "shot journal_tasks", "screen close", "quit"]
 (ROOT / "tools/autopilot/places-journal.txt").write_text("\n".join(journal) + "\n")
 # The monuments (SPEC 61): one tour each. The first camera stands where the monument's painting does.
-# The long world (SPEC 62): the painted one of each of the twelve families, and each family's whole one.
+# The long world (SPEC 64): the painted one of each of the twelve families, and each family's whole one.
 MONUMENTS = ("listening_dish", "road_long", "archive", "stair_that_stops", "mast", "orrery", "sleepers_hall", "garden", "clock", "shaft", "chains", "door",
              "dish_whole", "road_whole", "archive_whole", "stair_whole", "mast_whole", "orrery_whole", "hall_whole", "garden_whole", "clock_whole", "shaft_whole",
              "chains_whole", "door_whole", "dish_twin", "stair_twin", "orrery_great", "door_gate")
@@ -67,7 +67,7 @@ for mid in MONUMENTS:
     out += ["cmd time set 13000", f"cmd awaken finds view {mid} 0", "wait 70", f"shot {mid}_4_dusk", f"cmd awaken finds view {mid} 2", "wait 60", f"shot {mid}_5_door_dusk",
             "cmd time set 18000", f"cmd awaken finds view {mid} 0", "wait 70", f"shot {mid}_6_night", "info", "quit"]
     (ROOT / f"tools/autopilot/monument-{mid}.txt").write_text("\n".join(out) + "\n")
-# How they sit (SPEC 62.3, 62.9): four tours of four monuments each, where the world put them, by day. Three pictures of
+# How they sit (SPEC 64.3, 62.9): four tours of four monuments each, where the world put them, by day. Three pictures of
 # each: from where its painting stands, from above, and at the way in. The first tour is what stands nearest the start
 # in the counted world (seed 4242), the other three the painted one of each family.
 PLACED = (("clock_small", "shaft_small", "mast_fallen", "dish_fallen"), ("listening_dish", "road_long", "archive", "stair_that_stops"),

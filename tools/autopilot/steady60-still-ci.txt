@@ -1,0 +1,122 @@
+# The shimmer check on CI (SPEC §22 "Steady Light"): a small built scene (grass, flowers, a tree, a wall) on a platform
+# in the air, the camera at rest, three frames a few frames apart at four sun heights, near and far, and once with the
+# Air off for the old path's own level. tools/steady60-flicker.py compares the frames: what differs between frames of
+# a still scene is shimmer. Run: tools/tour-ci.sh tools/autopilot/steady60-still-ci.txt 1500
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fill 9 120 -6 16 120 -2 minecraft:dirt_path
+cmd setblock 3 121 2 minecraft:dandelion
+cmd setblock 4 121 -1 minecraft:cornflower
+cmd setblock 2 121 -3 minecraft:poppy
+cmd setblock 6 121 1 minecraft:oxeye_daisy
+cmd fill 8 121 4 8 125 4 minecraft:oak_log
+cmd fill 7 125 3 9 127 5 minecraft:oak_leaves[persistent=true]
+cmd setblock 8 125 4 minecraft:oak_log
+cmd fill 12 121 -9 12 123 -4 minecraft:stone_bricks
+cmd fill 5 121 -6 7 121 -6 minecraft:oak_fence
+cmd setblock 10 121 1 minecraft:stone_slab
+cmd fill -8 121 6 -6 123 6 minecraft:cobblestone
+cmd tp @s 0.5 121 0.5 -90 20
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 3000
+look -90 32
+wait 160
+shotnow s3000_near_1
+wait 2
+shotnow s3000_near_2
+wait 2
+shotnow s3000_near_3
+wait 2
+look -90 9
+wait 160
+shotnow s3000_far_1
+wait 2
+shotnow s3000_far_2
+wait 2
+shotnow s3000_far_3
+wait 2
+cmd time set 10800
+look -90 32
+wait 160
+shotnow s10800_near_1
+wait 2
+shotnow s10800_near_2
+wait 2
+shotnow s10800_near_3
+wait 2
+look -90 9
+wait 160
+shotnow s10800_far_1
+wait 2
+shotnow s10800_far_2
+wait 2
+shotnow s10800_far_3
+wait 2
+cmd time set 11300
+look -90 32
+wait 160
+shotnow s11300_near_1
+wait 2
+shotnow s11300_near_2
+wait 2
+shotnow s11300_near_3
+wait 2
+look -90 9
+wait 160
+shotnow s11300_far_1
+wait 2
+shotnow s11300_far_2
+wait 2
+shotnow s11300_far_3
+wait 2
+cmd time set 700
+look -90 32
+wait 160
+shotnow s700_near_1
+wait 2
+shotnow s700_near_2
+wait 2
+shotnow s700_near_3
+wait 2
+look -90 9
+wait 160
+shotnow s700_far_1
+wait 2
+shotnow s700_far_2
+wait 2
+shotnow s700_far_3
+wait 2
+cmd time set 10800
+lens air off
+look -90 32
+wait 200
+shotnow s10800_nearoff_1
+wait 2
+shotnow s10800_nearoff_2
+wait 2
+shotnow s10800_nearoff_3
+wait 2
+lens air setting
+quit

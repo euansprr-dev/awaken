@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Counts what a real world places, without a client (SPEC §62.9): a dedicated dev server (headless, seed 4242 unless
+# Counts what a real world places, without a client (SPEC §64.9): a dedicated dev server (headless, seed 4242 unless
 # run/server.properties says otherwise) counts every monument within <rings> cells of the start into its log and stops.
 #
 # With REAL=1 it also writes about twenty of the standing ones on the generator's own ground into run/finds-real:

@@ -45,7 +45,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The relics (SPEC §62.7): one to a family of monuments, found nowhere else, each with one real use. A relic is given
+ * The relics (SPEC §64.7): one to a family of monuments, found nowhere else, each with one real use. A relic is given
  * the first time any monument of its family is finished, and it grows a step with each further one of the family's
  * five: its step is simply how many of them the player has done, so nothing about it is saved on the item and a relic
  * that was lost and given again is as strong as the one it replaces. None is a weapon and none is needed for anything:

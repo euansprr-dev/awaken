@@ -34,7 +34,7 @@ public interface Terrain {
     /**
      * Where the things that stand on the land start inside a rectangle of blocks, as the middles of their start chunks
      * ({x, z}): the sparse structures (a ruin, a temple, a spire), or with {@code settlements} the wide ones (our own
-     * settlements, villages, outposts, mansions). A monument's spot is tried against these (SPEC §62.3).
+     * settlements, villages, outposts, mansions). A monument's spot is tried against these (SPEC §64.3).
      */
     default java.util.List<int[]> starts(int x0, int z0, int x1, int z1, boolean settlements) {
         return java.util.List.of();
@@ -94,7 +94,7 @@ public interface Terrain {
 
     /**
      * A hillside falling to the south with a roll in it, far above any sea: what the picture maker stands a monument on to
-     * see how it meets land that is not level (SPEC §62.3). About sixteen blocks from top to bottom across a monument.
+     * see how it meets land that is not level (SPEC §64.3). About sixteen blocks from top to bottom across a monument.
      */
     static Terrain hill(int y) {
         return new Terrain() {

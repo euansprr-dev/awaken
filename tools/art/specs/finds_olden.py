@@ -381,7 +381,7 @@ def relics():
     lamp_ = ["................", ".......oo.......", "......orro......", "......o..o......", ".....oobboo.....", "....occccbao....",
              "....obggggao....", "....obghhgao....", "....obhiihao....", "....obhiihao....", "....obghhgao....", "....obggggao....",
              "....obbbbaao....", "...oaaaaaaaao...", "...oooooooooo...", "................"]
-    # the nine that came with the long world (SPEC 62.7): the same bronze, stone, teal and gold, one plain shape each
+    # the nine that came with the long world (SPEC 64.7): the same bronze, stone, teal and gold, one plain shape each
     pal = {"o": o, "a": bz[1], "b": bz[2], "c": bz[3], "d": bz[5], "r": br[4], "s": br[2], "k": dk[1], "e": st[1], "f": st[2], "g": st[3], "h": st[5],
            "t": tl[4], "u": tl[2], "y": gd[3], "z": gd[5]}
     way = ["................", "......oooo......", ".....ohggfo.....", ".....ohggfo.....", ".....occbao.....", ".....ohggfo.....",
@@ -424,7 +424,7 @@ RELICS = {"relic_counterweight": "The Counterweight", "relic_listening_stone": "
           "relic_waystone": "The Waystone", "relic_reading_glass": "The Reading Glass", "relic_mooring_ring": "The Mooring Ring",
           "relic_pocket_rings": "The Pocket Rings", "relic_night_bloom": "The Night Bloom", "relic_float": "The Float", "relic_seal_shard": "The Seal Shard",
           "relic_link": "The Link", "relic_diggers_glass": "The Digger's Glass"}
-# A monument's hoard (SPEC 62.7): its own stone and bronze, which can be had no other way, and by rank what the game already
+# A monument's hoard (SPEC 64.7): its own stone and bronze, which can be had no other way, and by rank what the game already
 # keeps at that distance (the finds' own tier table, rolled this many times). The relic is given by code, once a family.
 HOARDS = {"e": ("e_big", 1, 1.0), "d": ("d_big", 1, 1.2), "c": ("c_big", 2, 1.5), "b": ("b_big", 2, 1.8), "a": ("a_big", 2, 2.2), "s": ("a_big", 3, 2.6)}
 STONE = [("awaken:olden_stone", 10, 18), ("awaken:olden_block", 6, 10), ("awaken:olden_band", 3, 6), ("awaken:olden_bronze", 3, 6), ("awaken:olden_bronze_band", 2, 4),

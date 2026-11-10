@@ -14,7 +14,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * What a remain does (SPEC §62.6): it has one carving, and the carving points. Reading it has the System say its line
+ * What a remain does (SPEC §64.6): it has one carving, and the carving points. Reading it has the System say its line
  * and then which way the monument it belongs to lies and about how far; the way is kept as a lead on the Tasks page.
  * It can be read as often as anyone likes; the first reading is what finishes it.
  */

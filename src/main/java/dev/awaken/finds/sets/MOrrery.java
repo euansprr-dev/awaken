@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Orreries (SPEC §62.8, family 6): how those who went up worked out the way. Great bronze rings leaning round a
+ * The Orreries (SPEC §64.8, family 6): how those who went up worked out the way. Great bronze rings leaning round a
  * stone globe on a terrace, and a wheel-house for each ring. A post by the globe faces each wheel-house and carries
  * studs; you give each wheel as many turns as its post has studs, the rings agree, the markers light and the vault
  * under the globe lets go.

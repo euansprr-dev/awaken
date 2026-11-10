@@ -416,17 +416,27 @@ void main() {
             // from the centre of its 1/16-block texel, so every screen pixel of that texel gets one answer and a
             // shadow's edge runs along texel edges, like the art it falls on; the sun's disc is narrower
             vec3 ps = p;
+            float still = noise;
             if (F(22).w > 0.0) {
                 vec3 an = abs(n);
-                if (max(an.x, max(an.y, an.z)) > 0.99) {
-                    vec3 w = p + vec3(f12.x, f12.y, f12.z);
-                    ps = mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
-                }
                 // a low sun's shadows are long and their edges wide: the disc grows as it sinks
                 rad *= 0.2 + 2.8 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
+                if (max(an.x, max(an.y, an.z)) > 0.99) {
+                    vec3 w = p + vec3(f12.x, f12.y, f12.z), tex = floor(w * 16.0);
+                    ps = mix((tex + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
+                    // close to the eye a texel is many screen pixels, and its light must hold still from frame to
+                    // frame: it asks along the sun's own line (no disc: a disc sampled once a texel made a shadow's edge
+                    // a dither of light and dark texels, a broken grid, that changed every frame: the shimmer, Euan
+                    // 2026-11-10), with a march jitter of its own that never changes. A shadow there is each texel
+                    // wholly lit or wholly shaded. From 10 to 18 blocks the disc and the frame's noise come back,
+                    // and the frames soften the edge as before
+                    float crisp = 1.0 - smoothstep(10.0, 18.0, dist);
+                    rad *= 1.0 - crisp;
+                    if (crisp > 0.0) still = fract(sin(dot(tex, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+                }
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
-            vis = sunVisibility(ps, n, l, noise, ultra);
+            vis = sunVisibility(ps, n, l, still, ultra);
             if (vis > 0.0 && dist < 96.0) vis *= contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);

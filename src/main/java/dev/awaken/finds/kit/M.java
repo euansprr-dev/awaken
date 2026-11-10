@@ -302,7 +302,7 @@ public final class M {
         for (long k : gone) m.remove(k);
     }
 
-    // ---- big pieces (SPEC §62.4) --------------------------------------------------------------------------------------
+    // ---- big pieces (SPEC §64.4) --------------------------------------------------------------------------------------
 
     /** Puts a figure's block: its own right, up and front, turned to face a way, or laid on its back with its head that way. */
     private static void fig(Scene s, int ox, int oy, int oz, Direction facing, boolean lying, int r, int u, int f, BlockState b) {
@@ -496,7 +496,7 @@ public final class M {
         return (int) Math.round(rise * (1 - Math.sqrt(Math.max(0, 1 - (2 * t - 1) * (2 * t - 1)))));
     }
 
-    // ---- wear by land (SPEC §62.5) ------------------------------------------------------------------------------------
+    // ---- wear by land (SPEC §64.5) ------------------------------------------------------------------------------------
 
     /**
      * The last pass of every monument: {@link #age} with the wet and the wear its land gives it, then what that land

@@ -4,7 +4,7 @@ Approved in full: "Go with the full plan". Added by him the same hour: everythin
 way in looked broken and bulky, the Dish's pylon floated), each closer to its painting, AAA for each, and code more than
 check: one test and picture pass at the end.
 
-## Decisions taken while building (each goes into SPEC §62 at the end)
+## Decisions taken while building (each goes into SPEC §64 at the end)
 
 - **A monument is a `Kind`** with a `Family` and a tier 1..5 (`Kind.family`, `Kind.tier`). Sixty kinds, ids
   `<family>_<n>` except the three built (`listening_dish`, `stair_that_stops`, `sleepers_hall` stay, tier 3).
@@ -36,7 +36,7 @@ check: one test and picture pass at the end.
 - [x] Remains x15
 - [x] Art and data: nine relic sprites, lang, hoard tables, Journal by family
 - [x] Compile, tests, dump on flat and on a hill, draw all, fix (finds tests green over all 75; game's own blocks 0.2% to 20%)
-- [ ] Merge build in, CI suite, twelve tours, world count, page of sixty, SPEC §62, notes
+- [ ] Merge build in, CI suite, twelve tours, world count, page of sixty, SPEC §64, notes
 
 ## Where things are (after the 14:47 UTC restart wiped the scratchpad)
 
@@ -70,6 +70,6 @@ pictures go in through `keep.json`, one list of checked shots per painted monume
 - Lands: pits and chains also stand in snow and plains (chains in dark forest too); the three down families weigh 16 to 18.
 - Count: `/awaken finds census` says how many stand, of how many kinds, how far to the next and to the next twin, and how
   far the nearest is from any spot. Without a client: `tools/content/finds_census.sh` (five minutes, headless server),
-  `REAL=1` adds drawings of real placements (`run/finds-real` → `finds_render.py`). Numbers: SPEC §62.9.
+  `REAL=1` adds drawings of real placements (`run/finds-real` → `finds_render.py`). Numbers: SPEC §64.9.
 - The CI tour queue was forty deep on 11 Nov; the headless count and the real-land drawings are what the placement was
   tuned from. Tours `placed-a..d` (twelve monuments where the world put them) are the game's own pictures of it.

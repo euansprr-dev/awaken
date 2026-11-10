@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * What the twelve families share (SPEC §62): how one of their five is registered, the small things every monument has
+ * What the twelve families share (SPEC §64): how one of their five is registered, the small things every monument has
  * (a plinth with its prize, a carving, a door that lets go), and what later people left at its foot.
  */
 final class Mon {
@@ -76,7 +76,7 @@ final class Mon {
         for (int i = 0; i < c.count(part); i++) c.set(part, i, c.turned(to));
     }
 
-    // ---- what later people left (SPEC §62.5): one of five, by the site ---------------------------------------------------
+    // ---- what later people left (SPEC §64.5): one of five, by the site ---------------------------------------------------
 
     /** On the ground round (x, z), about seven by six; it levels a small pad for itself. */
     static void camp(Scene s, int x, int z) {

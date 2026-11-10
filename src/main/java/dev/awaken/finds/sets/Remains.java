@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.Blocks;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The remains (SPEC §62.6): the land between the monuments. Small pieces of the same world from the same kit, each
+ * The remains (SPEC §64.6): the land between the monuments. Small pieces of the same world from the same kit, each
  * standing only where a monument stands within a thousand blocks, each turned to face it (a kind's south is its front),
  * each with one carving that says which way and how far. No relic and nothing to solve: they are the edge of something
  * big, and how the world tells you where to go without a marker.

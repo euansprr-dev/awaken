@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Blocks;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Long Road (SPEC §62.8, family 2): the road the old world built before it split, carried over the land on arches,
+ * The Long Road (SPEC §64.8, family 2): the road the old world built before it split, carried over the land on arches,
  * with a station every day's walk. One span is down. You wind out the planks the last travellers left, cross, and the
  * station that still has its door lets you in. It needs no terrace: its piers go down to whatever ground is under them.
  */

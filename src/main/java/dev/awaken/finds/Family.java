@@ -5,7 +5,7 @@ import net.minecraft.world.item.Item;
 import java.util.function.Supplier;
 
 /**
- * The twelve families of monuments (SPEC §62.1): one idea each, five monuments of it found further and further out, and
+ * The twelve families of monuments (SPEC §64.1): one idea each, five monuments of it found further and further out, and
  * one relic that grows a step with each of the five a player finishes. The four groups are the story's own (before the
  * split, up, in, down) and are never named to the player: the monuments say it a piece at a time.
  */

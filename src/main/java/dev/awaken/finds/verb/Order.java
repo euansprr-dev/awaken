@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.function.BiConsumer;
 
 /**
- * One after another (SPEC §62.4): the parts of a name are worked in their own order, first to last (sluices from the top
+ * One after another (SPEC §64.4): the parts of a name are worked in their own order, first to last (sluices from the top
  * down). Each, in its turn, does what the kind says; one worked out of turn gives a dull knock and nothing else.
  * {@link #times}: one part worked that many times instead (a capstan, a bar pushed round). Numbers: 0 how many are done.
  */

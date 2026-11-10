@@ -6,7 +6,7 @@ import net.minecraft.core.Direction;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * How a monument meets the ground (SPEC §62.3). A monument does not ask the land to be level; it brings its ground with
+ * How a monument meets the ground (SPEC §64.3). A monument does not ask the land to be level; it brings its ground with
  * it, the way real ones do: a terrace whose floor is level and whose edge is masonry wherever the land is not. Where the
  * land falls away the edge is a battered retaining wall standing on the land itself, column by column; where it rises
  * the cut is faced; where it is level there is a kerb flush with the grass. No dirt ramps, and nothing left hanging:
@@ -56,7 +56,7 @@ public final class G {
     }
 
     /**
-     * The terrace (SPEC §62.3). Inside the footprint the ground is set to {@code top}. Round it the land is eased over
+     * The terrace (SPEC §64.3). Inside the footprint the ground is set to {@code top}. Round it the land is eased over
      * {@link #SKIRT} blocks until it stands no more than {@link #WALL} below the floor or {@link #CUT} above it, the way
      * ground is made up to a village: a long gentle regrade in the land's own skin. What is left the masonry takes: the
      * first course outside the footprint is the wall, the second its batter (two thirds as high, with a sloped top).

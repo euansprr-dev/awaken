@@ -33,7 +33,7 @@ public final class FindsClient {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFogColour);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFog);
-        // a relic's tooltip says which of its five steps it is at (SPEC §62.7)
+        // a relic's tooltip says which of its five steps it is at (SPEC §64.7)
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.ItemTooltipEvent e) -> {
             if (e.getEntity() == null) return;
             var line = dev.awaken.finds.Relics.stepLine(e.getEntity(), e.getItemStack());

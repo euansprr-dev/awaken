@@ -44,7 +44,7 @@ final class FindsEvents {
     }
 
     /**
-     * A count without a client (SPEC §62.9): with AWAKEN_FINDS_CENSUS=&lt;rings of cells&gt; in its environment a dedicated
+     * A count without a client (SPEC §64.9): with AWAKEN_FINDS_CENSUS=&lt;rings of cells&gt; in its environment a dedicated
      * dev server counts the world's monuments into its log as soon as the regions are known, and stops. The count asks
      * only the generator's noise, so no land is made for it: a world of 17 km square is counted in a minute or two,
      * where a look tour waits its turn on a runner for hours.

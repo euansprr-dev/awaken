@@ -44,7 +44,7 @@ public final class Scene {
     @Nullable BlockPos tell;
     /** Columns whose ground the scene set itself (turned offsets): the feature fills or cuts the land to them even where nothing is built. */
     public final it.unimi.dsi.fastutil.longs.LongOpenHashSet shaped = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
-    /** Where steps leave a terrace, in the kind's own offsets: {x, z, step x, step z}. The first is the way in (SPEC §62.3). */
+    /** Where steps leave a terrace, in the kind's own offsets: {x, z, step x, step z}. The first is the way in (SPEC §64.3). */
     public final java.util.List<int[]> ways = new java.util.ArrayList<>();
     /** Where a camera stands to look at the place, for the tours: {x, y, z (turned offsets), yaw, pitch}. */
     final List<int[]> cams = new ArrayList<>();
@@ -95,7 +95,7 @@ public final class Scene {
      * A column's height from one of the two maps, which fill as they are asked. A scene is read by every worldgen
      * thread that writes a chunk of it and by the server, so the maps are only touched under their lock: read bare,
      * a column's ground came back wrong now and then while another thread grew the map, and the feature dug or left
-     * a one-block pit in a lawn (the first worlds made without a client, SPEC §62.9). The land is asked outside it.
+     * a one-block pit in a lawn (the first worlds made without a client, SPEC §64.9). The land is asked outside it.
      */
     private int ask(Long2IntOpenHashMap map, long k, int dx, int dz) {
         int v;

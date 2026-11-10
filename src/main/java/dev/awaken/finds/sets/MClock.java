@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Water Clocks (SPEC §62.8, family 9): stepped mounts that counted how long the sleepers would sleep, by water run
+ * The Water Clocks (SPEC §64.8, family 9): stepped mounts that counted how long the sleepers would sleep, by water run
  * down their faces from a cistern on top. They stopped. You climb the stair and open the sluices from the top down;
  * real water runs tier to tier down the south face into the basin, the works take up again and the vault at the foot
  * lets go. Hollow: a mount is its walls and its ledges.

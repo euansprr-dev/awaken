@@ -193,7 +193,7 @@ public record FindsFeature() implements Feature {
             // search carries on to the floor and under it: taken as "the first thing that isn't air or a plant", a
             // tree's side branch or a nest over a column was its ground, the column was cut to the floor and nothing
             // was looked for beneath, so a pit one block wide was left down to wherever the land really was (the
-            // first worlds made without a client found two in most lawns, SPEC §62.9). Down to 48 under the floor: a
+            // first worlds made without a client found two in most lawns, SPEC §64.9). Down to 48 under the floor: a
             // ravine or a cave's mouth under a monument is filled from its own floor, never bridged.
             // (from the land's real top, not from twenty over the floor: where a hillside stood higher than that the
             // search began inside the hill, took its earth or rock for the land's skin and floored the terrace with
@@ -299,7 +299,7 @@ public record FindsFeature() implements Feature {
             level.setBlock(heart, FindsContent.HEART.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             any = true;
         }
-        // In snow country the snow comes back wherever the sky sees (SPEC §62.3): by the world's own rule on the ground
+        // In snow country the snow comes back wherever the sky sees (SPEC §64.3): by the world's own rule on the ground
         // the clearing bared and on the land the terrace made, and in drifts on what was built, so a find is neither a
         // bare patch in a white wood nor a sheet of white. The drifts are a noise of the site's own: the first game
         // pictures had snow lying in the outlines of rooms and cuts, wherever the scene had not written air.

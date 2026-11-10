@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Doors in the Sand (SPEC §62.8, family 12): the fronts those who went down built over the ways they left open, for
+ * The Doors in the Sand (SPEC §64.8, family 12): the fronts those who went down built over the ways they left open, for
  * anyone who changed their mind. The sand has shut them. Seated giants either side of a bronze door, buried to the
  * chest. You dig the door out; it lets go; behind it is a hall and what was left there.
  */

@@ -36,7 +36,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             .filter(t -> t != Tier.VFX || Companions.immersiveVfxLoaded()).toArray(Tier[]::new);
     private static final LookPresets.Preset[] PRESETS = LookPresets.Preset.values();
     // the clickable setting rows, in order
-    private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
+    private static final int S_LOOK = 0, S_GRADE = 1, S_FAR = 2, S_DISTANCE = 3, S_SCALE = 4, S_STEADY = 5, S_TEMPORAL = 6, SETTINGS = 7;
     // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
     private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
     private static final List<dev.awaken.core.client.ui.Kit.Hint> FOOT_KEYS = List.of(dev.awaken.core.client.ui.Kit.Hint.of("A look", "1-4"),
@@ -181,7 +181,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         int noteRoom = room.isEmpty() ? 0 : 3 + Math.min(3, font.split(Component.literal(room), innerW).size()) * LINE;
         // the presets with their heading, a rule, the settings, a rule, a line per row, the note
         int presetsH = LINE + 1 + pch + 3;
-        int bodyH = 5 + SETTINGS * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
+        // (LENS OVER FRAMES does nothing while the Air is on, which always spreads its work over frames: the row stays
+        // away then, and the page keeps the height it had before COLOUR GRADE joined it)
+        boolean framesRow = !AwakenConfig.Client.LENS_AIR.get();
+        int bodyH = 5 + (SETTINGS - (framesRow ? 0 : 1)) * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
         int ph = TOP + ch + 5 + presetsH + bodyH + FOOT;
         int py = Math.max(6, (height - ph) / 2);
         cardsY = py + TOP;
@@ -209,6 +212,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         int y = presetsY + pch + 3;
         y = rule(g, innerX, innerW, y);
         for (int i = 0; i < SETTINGS; i++) {
+            if (i == S_TEMPORAL && !framesRow) {
+                settingY[i] = -1;
+                continue;
+            }
             settingY[i] = y;
             setting(g, innerX, innerW, y, i);
             y += LINE;
@@ -253,6 +260,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         if (hover) g.fill(x - 2, y - 1, x + w + 2, y + LINE - 1, Glass.a(Glass.EDGE, 0.10f));
         String label = switch (i) {
             case S_LOOK -> "LOOK";
+            case S_GRADE -> "COLOUR GRADE";
             case S_FAR -> "FAR TERRAIN";
             case S_DISTANCE -> "RENDER DISTANCE";
             case S_SCALE -> "RENDER SCALE ON 4K";
@@ -262,6 +270,8 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         Tier t = LookSwitch.current();
         String value = switch (i) {
             case S_LOOK -> t == null ? "off" : t.pretty();
+            // Lens's grade (SPEC §22 "Grades"): the colours and the air over every place's own look
+            case S_GRADE -> dev.awaken.lens.client.LensClient.gradeName();
             case S_FAR -> switch (LookPresets.far()) {
                 case FULL -> "Full, 16 km";
                 case NEAR -> "Near, 4 km";
@@ -284,6 +294,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
                 Tier t = LookSwitch.current();
                 pick(TIERS[Math.floorMod((t == null ? -step : t.ordinal()) + step, TIERS.length)]);
             }
+            case S_GRADE -> dev.awaken.lens.client.LensClient.stepGrade(step);
             case S_FAR -> {
                 AwakenConfig.Client.FarSight[] all = AwakenConfig.Client.FarSight.values();
                 LookPresets.setFar(all[Math.floorMod(LookPresets.far().ordinal() - step, all.length)]);

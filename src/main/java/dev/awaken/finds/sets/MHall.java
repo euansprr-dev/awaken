@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Sleepers' Halls (SPEC §62.8, family 7): where those who went in lay down. A hall under the ground with stone beds
+ * The Sleepers' Halls (SPEC §64.8, family 7): where those who went in lay down. A hall under the ground with stone beds
  * down both sides. You light the lamps in the order the sleepers lay down, and the round door at the far end turns.
  * One generator; a hall is how long it is, how deep, what is left of its roof and how much water stands in it.
  */
@@ -142,7 +142,7 @@ final class MHall {
         s.put(L + 6, F + 6, 0, M.lamp(true));
         Mon.carving(s, L + 8, F + 2, 2);
         Mon.carving(s, L / 2 - 3, F + 2, -11);
-        // -- what shows above the ground (SPEC §62.3, the skyline rule: the first Hall was a stairwell in a meadow)
+        // -- what shows above the ground (SPEC §64.3, the skyline rule: the first Hall was a stairwell in a meadow)
         if (d.above() == 0) {
             // the ribs of the vault that fell: piers either side of the slot, arching in, most of them broken at the crown
             for (int x = -L + 6; x <= L - 6; x += 12) {

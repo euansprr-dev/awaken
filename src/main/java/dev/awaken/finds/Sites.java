@@ -35,7 +35,7 @@ public final class Sites {
     /** The chance a cell holds something where the land is at its usual liveliness. */
     // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
     // stay in the code as furnishing and for their tests; their layers are off.
-    // Layer 1 is the remains (SPEC §62.6): small, and only where a monument stands near.
+    // Layer 1 is the remains (SPEC §64.6): small, and only where a monument stands near.
     static final double[] BASE = {0, 0.8, 0.85};
     /** How far past its own reach a monument keeps from anything else that stands on the land (a spire, a temple, a ruin). */
     static final int APART = 40;
@@ -146,8 +146,8 @@ public final class Sites {
             Kind k = kinds.get(i);
             if (!k.fits(group)) continue;
             if (layer == 2 && k.set() != Kind.FSet.MONUMENTS) continue; // the thirty everyday places are not dealt (rejected, SPEC §61.1)
-            if (layer == 1 && k.set() != Kind.FSet.REMAINS) continue;   // nor the small finds: only the remains (SPEC §62.6)
-            // Bands (SPEC §62.2): nothing stands nearer home than its own rank, so each band out holds monuments the
+            if (layer == 1 && k.set() != Kind.FSet.REMAINS) continue;   // nor the small finds: only the remains (SPEC §64.6)
+            // Bands (SPEC §64.2): nothing stands nearer home than its own rank, so each band out holds monuments the
             // last did not. At the land's rank and one under it a kind is at full weight; older ones thin by half a rank.
             // (and one band early, three times in ten: a foretaste of what the next band out holds)
             if (k.rank() > rank + (layer == 2 ? 1 : 0)) continue;
@@ -180,7 +180,7 @@ public final class Sites {
     private static final ConcurrentHashMap<Long, int[]> DEALS = new ConcurrentHashMap<>();
 
     /**
-     * The deal of one block of cells (SPEC §62.2): like a hand from a shuffled deck. The block's cells that hold
+     * The deal of one block of cells (SPEC §64.2): like a hand from a shuffled deck. The block's cells that hold
      * something take their turn in the order of their hashes; each draws, by the weights of its own land and rank, from
      * the kinds no cell of the block has drawn yet. So a kind stands at most once in 3,072 blocks square, and where the
      * land offers few kinds the cells left over stay empty, which is the quiet between. A cell also passes over the
@@ -257,7 +257,7 @@ public final class Sites {
     }
 
     /**
-     * A monument's cell (SPEC §62.2, §62.3). Its kind is the deal's: its card, and if that cannot stand here, its second
+     * A monument's cell (SPEC §64.2, §64.3). Its kind is the deal's: its card, and if that cannot stand here, its second
      * card. A card yields where a cell with first say (the lower hash) within six cells, in another block, stands the same
      * kind; it needs ground it can stand a terrace on, in a land it belongs to across its footprint and not only at its
      * middle; it keeps clear of villages and the city; and it never stands within three hundred blocks, or its own width

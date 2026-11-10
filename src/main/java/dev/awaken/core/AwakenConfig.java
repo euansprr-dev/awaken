@@ -154,6 +154,11 @@ public final class AwakenConfig {
                         "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
                         "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
                 .define("lensAir", true);
+        public static final ModConfigSpec.ConfigValue<String> LENS_GRADE = C
+                .comment("Lens's grade: your choice of colour and atmosphere over every place's own look. \"awaken\" is the look as",
+                        "built; \"vivid\" has an azure sky, bright greens, warm light and a paler haze. The Look page steps through",
+                        "them. A grade is a file, assets/<namespace>/lens_grade/<id>.json, so a resource pack can add its own.")
+                .define("lensGrade", "awaken");
         public static final ModConfigSpec.BooleanValue LENS_SUN_PASS = C
                 .comment("The Sun Pass (Cinematic and Ultra): shadows from a map of the blocks near you, so a shadow is the block's",
                         "own shape and the sun comes in under trees, through doorways and under arches. Off: the height-map shadows.")

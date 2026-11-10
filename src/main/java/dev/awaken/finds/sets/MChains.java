@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Chain Works (SPEC §62.8, family 11): what those who went down left at the top, to hold something. A block of
+ * The Chain Works (SPEC §64.8, family 11): what those who went down left at the top, to hold something. A block of
  * masonry like a fortress, and from rings in its face chains with links the size of houses running across the ground
  * and down a cleft in the rock. You climb to the capstan and push it round; far below, something takes up the slack,
  * the loose link at the cleft's lip is drawn tight, and the vault in the block lets go.

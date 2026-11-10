@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Stairs (SPEC §62.8, family 4): what those who went up climbed. A hall at the foot where they waited, and a stair
+ * The Stairs (SPEC §64.8, family 4): what those who went up climbed. A hall at the foot where they waited, and a stair
  * on arches that goes up out of it. You climb to the last step that stands and let the counterweight go; the doors of
  * the hall come open. Two pieces: {@link #hall} and {@link #flight}; the five are what stands of them.
  */

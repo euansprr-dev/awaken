@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.Blocks;
 import static dev.awaken.finds.kit.B.*;
 
 /**
- * The Sealed Shafts (SPEC §62.8, family 10): the way those who went down took, and shut behind them. A round pit with
+ * The Sealed Shafts (SPEC §64.8, family 10): the way those who went down took, and shut behind them. A round pit with
  * giants standing round its rim, a ledge winding down its wall past door after sealed door, black water at the bottom.
  * One door is not sealed. You go down to it. The pit's middle is set north of the site's heart, so the heart lies under
  * the rim's masonry and never hangs in the void.

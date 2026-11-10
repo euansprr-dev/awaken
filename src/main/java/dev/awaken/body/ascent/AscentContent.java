@@ -111,6 +111,13 @@ public final class AscentContent {
     /** Motes of the Signal's light: sparks where a rope bites, feathers off the wings, the shock ring's grit. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("ascent_mote", () -> new SimpleParticleType(false));
 
+    static {
+        // the scores' layers (SPEC §62): each names one of the game's own recordings in sounds.json (ascent_scores.py)
+        for (int i = 0; i < AscentScoreTable.NAMES.length; i++) {
+            for (int j = 0; j < AscentScoreTable.DELAYS[i].length; j++) sound("ascent.score." + AscentScoreTable.NAMES[i] + "." + j);
+        }
+    }
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
     }

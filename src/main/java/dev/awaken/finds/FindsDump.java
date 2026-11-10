@@ -37,7 +37,7 @@ final class FindsDump {
                 Awaken.LOG.error("[finds] dump: {} doesn't build", k.id(), e);
             }
         }
-        // the painted one of each family again, on a hillside: how each meets land that is not level (SPEC §62.3)
+        // the painted one of each family again, on a hillside: how each meets land that is not level (SPEC §64.3)
         for (Kind k : Kinds.monuments()) {
             if (k.tier() != 3) continue;
             try {
@@ -77,7 +77,7 @@ final class FindsDump {
     private static java.util.function.IntBinaryOperator water;
 
     /**
-     * Monuments where a world really put them, on the generator's own ground (SPEC §62.9): what the count stood, drawn
+     * Monuments where a world really put them, on the generator's own ground (SPEC §64.9): what the count stood, drawn
      * with the land twenty blocks past each one's reach and the water that lies on it, to see how each meets its land
      * without the game. Trees and what else grows are not in it.
      */
@@ -111,7 +111,7 @@ final class FindsDump {
     }
 
     /**
-     * The same monuments as the world really made them (SPEC §62.9): the chunks each stands in are generated and every
+     * The same monuments as the world really made them (SPEC §64.9): the chunks each stands in are generated and every
      * block open to the air is written, trees, snow and all, so the drawing is the game's own with no client. It also
      * says what is wrong where one stands: ground its terrace asked for that is not there.
      */

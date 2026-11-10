@@ -17,7 +17,7 @@ final class Anchors {
     private static final int[][] OFF = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
 
     /**
-     * What a monument's spot is asked besides its ground (SPEC §62.3): 0 where it may stand, else why not, in the
+     * What a monument's spot is asked besides its ground (SPEC §64.3): 0 where it may stand, else why not, in the
      * caller's own numbers (a settlement near, another monument, the wrong land).
      */
     @FunctionalInterface
@@ -114,7 +114,7 @@ final class Anchors {
     }
 
     /**
-     * A monument's own ground (SPEC §62.3), in its own unturned offsets on a lattice eight apart: the columns its
+     * A monument's own ground (SPEC §64.3), in its own unturned offsets on a lattice eight apart: the columns its
      * terrace levels, the ring round them that the land is eased over, and what else it builds on the land's own ground
      * (piers, a fallen piece). And where its steps leave the terrace: {x, z, step x, step z}.
      */
@@ -191,7 +191,7 @@ final class Anchors {
     }
 
     /**
-     * Ground a monument can stand on (SPEC §62.3), by its own footprint. A cell offers forty-nine spots, 24 apart, and at
+     * Ground a monument can stand on (SPEC §64.3), by its own footprint. A cell offers forty-nine spots, 24 apart, and at
      * each the monument is tried in all four turns. A spot and a turn fit when:
      * <ul>
      * <li>every column the terrace levels is dry, and they lie within the kind's slope (and two) of each other. The

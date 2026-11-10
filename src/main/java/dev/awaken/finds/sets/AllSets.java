@@ -28,7 +28,7 @@ public final class AllSets {
         PlacesWild.init();
         PlacesStone.init();
         PlacesFar.init();
-        // the twelve families of monuments (SPEC §62), in Journal order, and the remains that point to them
+        // the twelve families of monuments (SPEC §64), in Journal order, and the remains that point to them
         MDish.init();
         MRoad.init();
         MArchive.init();

@@ -42,7 +42,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         /** Dry ground that can be levelled: no more than {@link Kind#slope} between any two of seventeen points across the footprint. */
         FIELD,
         /**
-         * Ground a monument can stand a terrace on (SPEC §62.3): dry, and no more than {@link Kind#slope} between any two
+         * Ground a monument can stand a terrace on (SPEC §64.3): dry, and no more than {@link Kind#slope} between any two
          * of seventeen points. The site's height is toward the top of them, so the terrace is built up more than it is
          * cut in, and the kind is turned so that its front (south) looks downhill.
          */
@@ -169,7 +169,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         public Builder play(Play p) { play = p; return this; }
         /** How often it's dealt against its neighbours (10 is usual). */
         public Builder weight(int w) { weight = w; return this; }
-        /** One of a family's five monuments (SPEC §62.1): {@code tier} 1 is met first, 5 furthest out. Sets the rank. */
+        /** One of a family's five monuments (SPEC §64.1): {@code tier} 1 is met first, 5 furthest out. Sets the rank. */
         public Builder family(Family f, int tier) { family = f; this.tier = tier; rank = f.rankOf(tier); return this; }
 
         public Kind add() {

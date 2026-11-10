@@ -8,7 +8,10 @@ uniform sampler2D ParamsSampler;
 #ifdef LENS_LIGHT
 uniform sampler2D CloudsSampler;   // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 uniform sampler2D FrameSampler;    // LensFrame: texel 22 w the Air
-uniform sampler2D CloudBlocksSampler; // the Air's near clouds (lens_cloud_blocks.fsh), in front of the others
+#include <awaken:lens_frame.glsl>
+#include <awaken:lens_air.glsl>
+#include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_cloud_walk.glsl>
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -32,8 +35,14 @@ void main() {
     float sky = texture(DepthSampler, texCoord).r < 1.0e-7 ? 1.0 : 0.0;
 #ifdef LENS_LIGHT
     // the clouds are part of the sky that blooms and that the shafts are made of: bright edges glow, cloud cuts the rays
-    vec4 cl = texture(CloudsSampler, texCoord), cb = texture(CloudBlocksSampler, texCoord);
-    cl = vec4(cb.rgb + cb.a * cl.rgb, cb.a * cl.a);
+    vec4 cl = texture(CloudsSampler, texCoord);
+    {
+        // the Air's near clouds in front of the others: walked here at this pass's own half size (lens_cloud_walk.glsl)
+        float dz = texture(DepthSampler, texCoord).r;
+        vec3 pw = unproject(frameMat(0), texCoord, sky > 0.5 ? 1.0e-5 : dz, F(16).x > 0.5);
+        vec4 cb = cloudNear(normalize(pw), sky > 0.5 ? 1.0e9 : length(pw));
+        cl = vec4(cb.rgb + cb.a * cl.rgb, cb.a * cl.a);
+    }
     // (the shafts read the open sky's own brightness: bright cloud tops below the camera mustn't streak into rays)
     float openLuma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     if (sky > 0.5) c = c * cl.a + cl.rgb;
