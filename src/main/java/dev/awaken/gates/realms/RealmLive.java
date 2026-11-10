@@ -47,8 +47,11 @@ public final class RealmLive {
     private static final int WAKE = 80, LORD_WAKE = 44;
     /** When each gate's players last made headway (a pack woken, a monster down), waves sent since, and whether the hunter has come. Not saved: a restart is a rest. */
     private static final Map<Integer, long[]> HEADWAY = new HashMap<>();
-    /** Of the pay that isn't earned kill by kill, what one Warden banks; the Lord pays whatever's left. */
-    private static final double WARDEN_SHARE = 1 / 6.0;
+    /**
+     * Of the pay that isn't earned kill by kill: the Wardens bank half between them (a sixth each where there are three), or
+     * four tenths where the land has a hidden place, which keeps 15% for whoever finds it. The Lord pays whatever's left.
+     */
+    private static final double WARDENS_TOTAL = 0.5, WARDENS_BESIDE_HIDDEN = 0.4, HIDDEN_TOTAL = 0.15;
 
     /** First steps in: the arch home is lit once, and the System says the only thing it will say about the place. */
     public static void arrive(ServerPlayer p, GateRecord g) {
@@ -91,6 +94,7 @@ public final class RealmLive {
             if (t % 600 < 10) Signal.toast(p, Component.literal("The wind won't let you go any further this way."));
         }
         wake(server, level, g, plan, ref, lx, lz);
+        RealmRun.tick(server, level, p, g, plan, ref, lx, lz);
         if (RealmPacks.notice(level, p) > 0) madeHeadway(level, g);
         seal(server, level, p, g, plan, ref, lx, lz, t);
         pressure(level, p, g, plan, lx, lz);
@@ -178,13 +182,16 @@ public final class RealmLive {
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
             switch (s.kind()) {
                 case DEN -> {
+                    Land.Leg leg = land.legOfDen(s.index());
+                    if (leg != null && leg.kind() == Land.LegKind.AMBUSH) continue; // an ambush isn't standing there to be seen: RealmRun springs it
                     if (d2 >= WAKE * WAKE || !level.isLoaded(at) || !st.woken.add("den" + s.index())) continue;
-                    RealmPacks.den(level, g, f, at, s.index());
+                    RealmPacks.den(level, g, f, at, s.index(), leg == null ? List.of() : leg.pack(), null);
                     data.setDirty();
                 }
                 case WARDEN -> {
                     if (d2 >= WAKE * WAKE || !level.isLoaded(at) || !st.woken.add("warden" + s.index())) continue;
-                    LivingEntity e = RealmPacks.warden(level, g, f, at, s.index());
+                    Land.Leg leg = land.legOfWarden(s.index());
+                    LivingEntity e = RealmPacks.warden(level, g, f, at, s.index(), leg == null ? List.of() : leg.pack());
                     if (e != null) e.getPersistentData().putInt(SITE, s.index());
                     data.setDirty();
                 }
@@ -288,6 +295,8 @@ public final class RealmLive {
         RealmState st = RealmData.get(server).state(g.id);
         for (Land.Site s : plan.land().sites(Land.SiteKind.WARDEN)) {
             if (st.wardensDown.contains(s.index()) || !st.woken.contains("warden" + s.index())) continue;
+            Land.Leg leg = plan.land().legOfWarden(s.index());
+            if (leg != null && plan.land().seals(leg.id())) continue; // this one has doors, and they are shut
             double dx = s.x() - lx, dz = s.z() - lz, d = Math.hypot(dx, dz), ring = Math.max(12, s.radius()) + 6;
             if (d <= ring || d > ring + 12 || Math.abs(p.getBlockY() - s.y()) > 16) continue;
             if (!RealmPacks.fighting(level, Realms.world(ref.cell(), s.x(), s.y(), s.z()), "w" + s.index())) continue;
@@ -305,6 +314,10 @@ public final class RealmLive {
         long[] h = headway(level, g);
         long quiet = level.getGameTime() - h[0];
         if (quiet < RealmPacks.QUIET + h[1] * RealmPacks.PERIOD || plan.land().inHeart(lx, p.getBlockY(), lz)) return;
+        // nothing comes for you while you rest where the run means you to
+        for (Land.Leg leg : plan.land().route()) {
+            if (leg.kind() == Land.LegKind.BREATHER && (leg.x() - lx) * (leg.x() - lx) + (leg.z() - lz) * (leg.z() - lz) <= leg.radius() * leg.radius() && Math.abs(leg.y() - p.getBlockY()) <= 8) return;
+        }
         boolean hunter = quiet >= RealmPacks.HUNTER && h[2] == 0;
         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
         if (RealmPacks.wave(level, g, f, p, (int) h[1], hunter) > 0 && h[1] == 0) Signal.toast(p, Component.literal("You've been still too long. Something has come looking for you."));
@@ -326,7 +339,7 @@ public final class RealmLive {
         for (ServerPlayer p : level.players()) {
             RunState run = Runs.run(p);
             if (run.gateId != g.id) continue;
-            run.satchelXp += pool(p, g) * (1 - Curve.KILL_SHARE) * WARDEN_SHARE;
+            run.satchelXp += pool(p, g) * (1 - Curve.KILL_SHARE) * wardenShare(plan.land());
             Hud.send(p);
         }
         if (st.wardensDown.size() >= plan.land().sites(Land.SiteKind.WARDEN).size()) openHeart(level, g);
@@ -361,14 +374,42 @@ public final class RealmLive {
         return sum;
     }
 
-    /** How many shares the kill pay is split into: a den's monsters are about five, a Warden and its company seven. */
+    /** How many shares the kill pay is split into: a den's monsters are about five, a Warden and its company seven; a pack the sheet names counts what it names. */
     public static int units(GateRecord g) {
         RealmPlan plan = Realms.plan(g);
-        return plan == null ? 1 : Math.max(1, plan.land().sites(Land.SiteKind.DEN).size() * 5 + plan.land().sites(Land.SiteKind.WARDEN).size() * 7);
+        if (plan == null) return 1;
+        int n = 0;
+        for (Land.Leg leg : plan.land().route()) {
+            if (leg.kind() == Land.LegKind.FIGHT || leg.kind() == Land.LegKind.AMBUSH) n += leg.pack().isEmpty() ? 5 : leg.packSize();
+            else if (leg.kind() == Land.LegKind.WARDEN) n += 4 + (leg.pack().isEmpty() ? 3 : leg.packSize());
+        }
+        return Math.max(1, n);
     }
 
-    /** The share of the land's non-kill pay the Wardens have already banked. */
+    private static int hiddenLegs(Land land) {
+        int n = 0;
+        for (Land.Leg leg : land.route()) if (leg.kind() == Land.LegKind.HIDDEN) n++;
+        return n;
+    }
+
+    /** What one Warden banks of the land's non-kill pay. */
+    static double wardenShare(Land land) {
+        return (hiddenLegs(land) > 0 ? WARDENS_BESIDE_HIDDEN : WARDENS_TOTAL) / Math.max(1, land.sites(Land.SiteKind.WARDEN).size());
+    }
+
+    /** What one hidden place pays whoever finds it, of the land's non-kill pay. */
+    static double hiddenShare(Land land) {
+        int n = hiddenLegs(land);
+        return n == 0 ? 0 : HIDDEN_TOTAL / n;
+    }
+
+    /**
+     * The share of the land's non-kill pay that the Lord doesn't pay: what the Wardens have banked, and what the hidden
+     * places hold whether or not anyone found them (a place you walked past is pay you didn't earn).
+     */
     public static double banked(MinecraftServer server, GateRecord g) {
-        return Math.min(1, RealmData.get(server).state(g.id).wardensDown.size() * WARDEN_SHARE);
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null) return 0;
+        return Math.min(1, RealmData.get(server).state(g.id).wardensDown.size() * wardenShare(plan.land()) + (hiddenLegs(plan.land()) > 0 ? HIDDEN_TOTAL : 0));
     }
 }

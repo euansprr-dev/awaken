@@ -62,7 +62,24 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   named error and rerun the same chain once.
   Not checked: no GameTest spawns a pack (it needs a live Realm); the seal and pressure have never run. Euan's play is the test.
 
-## Stage 1 design (thought through, not built)
+- 17:00 stage 0 green first time: 6 tests, and the real-game walk (run 42780890866, all shots inside): packs stand waiting in
+  the nave and the Ossuary, each Warden on its plate with its company. One fault seen: nothing stood in the Sunk Aisle, because
+  a pack's spot had to be dry. Fixed in stage 1 (a monster may stand wading one deep).
+- 17:10 to 19:30 stages 1 and 2 written in one pass, no intermediate builds. Decisions taken while reading:
+  - The old rig (`RigDirector`, the Gauntlet) is tied to a floor's room grid and its own state per room. Not ported. Movement
+    legs are plain geometry a sprint clears, with a fall catch (`Land.Course`); traps are `RealmTraps` (press, spit, crumble),
+    stateless on the Realm's clock, hurting exactly as the Gauntlet does.
+  - Each theme has three or four ordinary monsters, one elite, one Warden kind and one Lord. "Different herds" therefore come
+    from a leg naming its pack (`Rooms.signature` spawns by id), not from new creatures.
+  - Doors: a leg's `seal_`/`unseal_` moments; which are shut is saved (`RealmState.sealed`) so a restart can't strand a door.
+  - Pay: kill share untouched; hidden legs hold 15% of the rest, Wardens 40% beside one (50% without), the Lord the remainder.
+  - `crypt_bell_rope` is climbable now (tag, merge folder `gates_run`): the Crypt's shortcut is a rope from the bridge.
+  - Blocks in a gate can be broken by hand (no protection found in `gates/`), so a skin or bars can be dug through. Not
+    changed here; a follow-up for whoever owns gate rules.
+  New: `Land.Leg/Trap/Course`, `RealmRun`, `RealmTraps`, `check/RouteCheck`, `kit/crawl/CrawlLand`, `land/Broodwarren`, the
+  Brood block family (13 blocks), SPEC 50.9. Changed: `RealmPacks`, `RealmLive`, `RealmToll`, `WalkCheck`, `Bench`, `HourCrypt`.
+
+## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,
   kinds ARRIVE, FIGHT, AMBUSH, MOVEMENT, TRAP, WARDEN, BREATHER, SHORTCUT, LORD, HIDDEN. `Land.route()` has a default that derives

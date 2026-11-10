@@ -177,6 +177,13 @@ public final class ThemeBlocks {
             Def.of("wax_soot", C, MapColor.COLOR_BLACK, SoundType.TUFF, 0), Def.of("wax_soot_band", C, MapColor.COLOR_BROWN, SoundType.TUFF, 0), Def.soft("wax_bead_drip", H, MapColor.COLOR_YELLOW, SoundType.CANDLE, 8),
             new Def("wax_candle_bank", PR, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 13, new double[]{1, 0, 1, 15, 9, 15}, true), new Def("wax_comb_cell", PR, MapColor.TERRACOTTA_WHITE, SoundType.CORAL_BLOCK, 0, new double[]{0, 0, 0, 16, 16, 16}, true),
             new Def("wax_comb_cell_lit", PR, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 12, new double[]{0, 0, 0, 16, 16, 16}, true), Def.soft("wax_fall", F, MapColor.COLOR_ORANGE, SoundType.EMPTY, 10),
+            // The Brood family, the Hive's nests (50.9): grey nest paper in layers, dark resin underfoot, comb with something alive in it. Its slab is registered below.
+            Def.soft("brood_paper", C, MapColor.TERRACOTTA_LIGHT_GRAY, SoundType.WOOL, 0), Def.soft("brood_paper_dark", C, MapColor.TERRACOTTA_BROWN, SoundType.WOOL, 0), Def.soft("brood_paper_pale", C, MapColor.SAND, SoundType.WOOL, 0),
+            Def.of("brood_earth", C, MapColor.DIRT, SoundType.ROOTED_DIRT, 0), Def.of("brood_resin", C, MapColor.TERRACOTTA_RED, SoundType.PACKED_MUD, 0),
+            Def.soft("brood_cell", C, MapColor.COLOR_BROWN, SoundType.CORAL_BLOCK, 0), Def.soft("brood_cell_lit", C, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 10),
+            Def.soft("brood_sac_drip", H, MapColor.COLOR_ORANGE, SoundType.SLIME_BLOCK, 7), Def.soft("brood_membrane", G, MapColor.COLOR_RED, SoundType.SLIME_BLOCK, 4),
+            Def.soft("brood_jelly", C, MapColor.COLOR_YELLOW, SoundType.SLIME_BLOCK, 12),
+            Def.soft("brood_spitter", C, MapColor.COLOR_BROWN, SoundType.CORAL_BLOCK, 0), Def.soft("brood_spitter_lit", C, MapColor.COLOR_YELLOW, SoundType.CORAL_BLOCK, 12),
             // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak
             Def.of("knell_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
             Def.of("knell_stone_worn", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),
@@ -464,6 +471,8 @@ public final class ThemeBlocks {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
         for (Def d : DEFS) out.put(d.name(), blocks.registerBlock(d.name(), factory(d), p -> props(d, p)));
         dev.awaken.gates.realms.WarmWaxBlock.register(blocks, out);
+        out.put("brood_resin_slab", blocks.registerBlock("brood_resin_slab", net.minecraft.world.level.block.SlabBlock::new,
+                p -> p.mapColor(MapColor.TERRACOTTA_RED).sound(SoundType.PACKED_MUD).strength(1.5F)));
         return out;
     }
 

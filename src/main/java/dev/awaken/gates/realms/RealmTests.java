@@ -24,6 +24,11 @@ public final class RealmTests {
             new Blueprint.Life(List.of("g"), List.of("p"), List.of("a")), new Blueprint.Folk("wax_folk", 1), new Blueprint.Law("updrafts", Map.of()),
             new Blueprint.Sites(3, 0, 24), new Blueprint.Heart("hive_regent", "mother_comb"), List.of("late_harvest"), "");
 
+    private static Land brood(long seed) {
+        return new dev.awaken.gates.realms.land.Broodwarren(new Land.Ctx(new Blueprint(1, "t", "dungeon", "hive", List.of("E"), new Blueprint.LandSpec("awaken:broodwarren", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:broodwarren", Rank.E, seed, 1));
+    }
+
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:hour_crypt", Rank.E, seed, 1));
@@ -333,6 +338,50 @@ public final class RealmTests {
             dev.awaken.gates.realms.land.VineSeat land = vine(1);
             if (land.curtainCount() < 5) h.fail("only " + land.curtainCount() + " curtains");
             if (land.change("roots_shut_0").isEmpty() || land.change("roots_open_0").isEmpty()) h.fail("a curtain does nothing");
+            h.succeed();
+        });
+        // The Run (SPEC §50.9): a designed run has to be playable as written, and a land nobody designed still has one read off its sites
+        AwakenTests.register("realm_hour_route_plays", 2400, h -> {
+            Land land = hour(1);
+            var route = dev.awaken.gates.realms.check.RouteCheck.check(land, dev.awaken.gates.realms.check.WalkCheck.walk(land));
+            if (!route.problems().isEmpty()) h.fail(route.summary() + ": " + route.problems());
+            if (land.route().size() != 15 || !land.designed()) h.fail("the Crypt's run isn't its fifteen legs: " + land.route().size());
+            if (land.change("relic_open").isEmpty() || land.change("relic_open").size() != land.change("relic_shut").size()) h.fail("the reliquary's door doesn't go both ways");
+            if (land.change("shortcut_balcony").isEmpty() || !land.seals("bones") || land.seals("ropes")) h.fail("the rope, or the Wardens' doors, aren't as the sheet says");
+            h.succeed();
+        });
+        AwakenTests.register("realm_brood_plays", 2400, h -> {
+            for (long seed : new long[]{1, 2}) {
+                Land land = brood(seed);
+                var walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
+                if (!walk.unreachable().isEmpty()) h.fail("seed " + seed + ": can't reach " + walk.unreachable());
+                var route = dev.awaken.gates.realms.check.RouteCheck.check(land, walk);
+                if (!route.problems().isEmpty()) h.fail("seed " + seed + ": " + route.summary() + ": " + route.problems());
+                int half = land.halfSize();
+                FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
+                if (!r.clean()) h.fail("seed " + seed + ": " + r.summary());
+                for (String leg : new String[]{"ante", "larder", "ring"}) if (!land.seals(leg)) h.fail(leg + " has no doors to shut");
+                if (land.change("heart_open").isEmpty() || land.change("shortcut_crawl").isEmpty() || land.change("ambush_larder").isEmpty()) h.fail("the way down, the crawl or the larder's sacs don't change");
+            }
+            h.succeed();
+        });
+        AwakenTests.register("realm_route_read_off_sites", 200, h -> {
+            Land land = amber(1);
+            int dens = land.sites(Land.SiteKind.DEN).size(), wardens = land.sites(Land.SiteKind.WARDEN).size();
+            if (land.designed() || land.route().size() != 2 + dens + wardens) h.fail("Amber's run isn't its sites: " + land.route().size() + " legs for " + dens + " dens and " + wardens + " Wardens");
+            if (land.legOfDen(0) == null || land.legOfDen(0).kind() != Land.LegKind.FIGHT || land.legOfWarden(0) == null) h.fail("a den or a Warden has no leg");
+            if (Math.abs(RealmLive.wardenShare(land) - 1 / 6.0) > 1e-9 || RealmLive.hiddenShare(land) != 0) h.fail("a land with three Wardens and nothing hidden pays as it did");
+            Land crypt = hour(1);
+            if (Math.abs(3 * RealmLive.wardenShare(crypt) + RealmLive.hiddenShare(crypt) - 0.55) > 1e-9) h.fail("the Crypt's Wardens and its reliquary don't bank 55% between them");
+            h.succeed();
+        });
+        AwakenTests.register("realm_traps_keep_time", 20, h -> {
+            var air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            Land.Trap press = new Land.Trap("t", Land.TrapKind.PRESS, 0, 0, 0, 0, 2, 4, 100, 70, air, air), spit = new Land.Trap("t", Land.TrapKind.SPIT, 0, 0, 0, 5, 0, 0, 60, 20, air, air);
+            // phase 70 of 100: down from tick 30 to 60, warning for the second and a half before
+            if (RealmTraps.pressDown(press, 29) || !RealmTraps.pressDown(press, 30) || !RealmTraps.pressDown(press, 59) || RealmTraps.pressDown(press, 60)) h.fail("a press isn't down for its second and a half");
+            if (!RealmTraps.pressWarns(press, 10) || RealmTraps.pressWarns(press, 40) || RealmTraps.pressWarns(press, 95)) h.fail("a press doesn't warn just before it comes");
+            if (!RealmTraps.spitLit(spit, 25) || !RealmTraps.spitFires(spit, 45) || RealmTraps.spitFires(spit, 55) || RealmTraps.spitLit(spit, 0)) h.fail("a spitter doesn't light, strike and rest in turn");
             h.succeed();
         });
         AwakenTests.register("realm_hour_doors_toll", 200, h -> {

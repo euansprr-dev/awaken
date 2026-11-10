@@ -31,6 +31,8 @@ final class RealmToll {
         if (st.tollOpenAt != 0 && now >= st.tollOpenAt) {
             st.tollOpenAt = 0;
             apply(level, ref, plan.land(), "toll_open");
+            // the one door that works the other way round shuts again, unless someone has been through it: then it stays open for good
+            if (!st.woken.contains("hidden_reliquary")) apply(level, ref, plan.land(), "relic_shut");
             for (ServerPlayer p : players(level, g)) level.playSound(null, p.blockPosition(), SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.7F, 0.55F);
         }
         // the bell's tongue swings for as long as the doors are down, and each stroke after the first sounds again, quieter
@@ -41,6 +43,7 @@ final class RealmToll {
         st.tollAt = now + PERIOD;
         st.tollOpenAt = now + SHUT;
         apply(level, ref, plan.land(), "toll_shut");
+        apply(level, ref, plan.land(), "relic_open");
         for (ServerPlayer p : players(level, g)) {
             level.playSound(null, p.blockPosition(), GatesRegistry.SND_WORLD_GREAT.get(), SoundSource.BLOCKS, 1.4F, 0.75F);
             level.playSound(null, p.blockPosition(), SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS, 0.8F, 0.5F);

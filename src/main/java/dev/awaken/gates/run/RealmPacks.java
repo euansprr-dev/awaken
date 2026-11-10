@@ -41,11 +41,13 @@ public final class RealmPacks {
         return s.getCollisionShape(level, p).isEmpty() && s.getFluidState().isEmpty();
     }
 
-    /** Somewhere a monster can stand: two clear cells over something with a body. Never looks into land that isn't there yet. */
+    /** Somewhere a monster can stand: two clear cells over something with a body, or wading one deep with its head in the air. Never looks into land that isn't there yet. */
     private static boolean standable(ServerLevel level, BlockPos p) {
         if (!level.isLoaded(p)) return false;
         BlockPos under = p.below();
-        return clear(level, p) && clear(level, p.above()) && !level.getBlockState(under).getCollisionShape(level, under).isEmpty();
+        if (level.getBlockState(under).getCollisionShape(level, under).isEmpty() || !clear(level, p.above())) return false;
+        var feet = level.getBlockState(p);
+        return feet.getCollisionShape(level, p).isEmpty() && (feet.getFluidState().isEmpty() || feet.is(net.minecraft.world.level.block.Blocks.WATER));
     }
 
     private static BlockPos settle(ServerLevel level, BlockPos p) {
@@ -54,6 +56,18 @@ public final class RealmPacks {
             if (standable(level, q)) return q;
         }
         return null;
+    }
+
+    /** A pack as a sheet writes it ("id" or "id*n"), one name a monster, with one more of the first for every two ranks. Empty when the pack rolls from the theme. */
+    static List<String> roll(List<String> pack, int rank) {
+        List<String> out = new java.util.ArrayList<>();
+        for (String e : pack) {
+            int star = e.indexOf('*');
+            String id = star < 0 ? e : e.substring(0, star);
+            for (int i = star < 0 ? 1 : Integer.parseInt(e.substring(star + 1)); i > 0; i--) out.add(id);
+        }
+        if (!out.isEmpty()) for (int i = 0; i < rank / 2; i++) out.add(out.getFirst());
+        return out;
     }
 
     /** One monster of a pack, standing at its spot and waiting. Null when the gate is full or nothing can stand there. */
@@ -65,34 +79,68 @@ public final class RealmPacks {
         return e;
     }
 
-    /** A den's pack: four or five at E rank and more above, in a loose ring, the elite (from five up) in the middle. */
-    public static int den(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site) {
+    /** One monster a sheet named. A name the mobs module doesn't know gets one of the theme's own instead, so a typo never empties a room. */
+    private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String id, BlockPos pos, String pack, ServerPlayer wakeFor) {
+        LivingEntity e = Rooms.signature(level, g, f, -1, id, pos);
+        if (e == null) e = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, pos);
+        if (e == null) return null;
+        e.getPersistentData().putString(PACK, pack);
+        if (wakeFor == null) Encounters.holdFree(e);
+        else if (e instanceof Mob m) m.setTarget(wakeFor);
+        return e;
+    }
+
+    /**
+     * A den's pack. Rolled from the theme: four or five at E rank and more above, in a loose ring, the elite (from five up)
+     * in the middle. Named by the sheet: exactly those. With {@code wakeFor} it's an ambush: they come up awake, a few
+     * steps further out, already after that player.
+     */
+    public static int den(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> pack, ServerPlayer wakeFor) {
         var rnd = level.getRandom();
-        int n = 4 + g.plan.rank().ordinal() / 2 + rnd.nextInt(2), made = 0;
+        List<String> names = roll(pack, g.plan.rank().ordinal());
+        int n = names.isEmpty() ? 4 + g.plan.rank().ordinal() / 2 + rnd.nextInt(2) : names.size(), made = 0;
         double turn = rnd.nextDouble() * Math.PI * 2;
         for (int i = 0; i < n; i++) {
-            double a = turn + i * (Math.PI * 2 / Math.max(1, n - 1)), r = i == 0 ? 0 : 3.5 + rnd.nextDouble() * 3;
+            double a = turn + i * (Math.PI * 2 / Math.max(1, n - 1)), r = wakeFor != null ? 4.5 + rnd.nextDouble() * 3 : i == 0 ? 0 : 3.5 + rnd.nextDouble() * 3;
             BlockPos at = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
+            if (at == null) at = settle(level, center);
             if (at == null) continue;
-            if (stand(level, g, f, i == 0 && n >= 5 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, "d" + site) != null) made++;
+            LivingEntity e;
+            if (!names.isEmpty()) e = named(level, g, f, names.get(i), at, "d" + site, wakeFor);
+            else {
+                e = wakeFor == null ? stand(level, g, f, i == 0 && n >= 5 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, "d" + site) : Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, at);
+                if (e != null && wakeFor != null) {
+                    e.getPersistentData().putString(PACK, "d" + site);
+                    if (e instanceof Mob m) m.setTarget(wakeFor);
+                }
+            }
+            if (e != null) made++;
         }
         return made;
     }
 
-    /** A Warden and the company that stands with it. The Warden comes even where its company finds no footing. */
-    public static LivingEntity warden(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site) {
+    /** A Warden and the company that stands with it: the sheet's, or three of the theme's and more with rank. The Warden comes even where its company finds no footing. */
+    public static LivingEntity warden(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> company) {
         BlockPos at = settle(level, center);
         LivingEntity w = stand(level, g, f, MobRole.Role.WARDEN, at == null ? center : at, "w" + site);
         if (w == null) return null;
         var rnd = level.getRandom();
-        int n = 3 + g.plan.rank().ordinal() / 2;
+        List<String> names = roll(company, g.plan.rank().ordinal());
+        int n = names.isEmpty() ? 3 + g.plan.rank().ordinal() / 2 : names.size();
         double turn = rnd.nextDouble() * Math.PI * 2;
         for (int i = 0; i < n; i++) {
             double a = turn + i * (Math.PI * 2 / n), r = 4.5 + rnd.nextDouble() * 2.5;
             BlockPos spot = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
-            if (spot != null) stand(level, g, f, MobRole.Role.NORMAL, spot, "w" + site);
+            if (spot == null) continue;
+            if (names.isEmpty()) stand(level, g, f, MobRole.Role.NORMAL, spot, "w" + site);
+            else named(level, g, f, names.get(i), spot, "w" + site, null);
         }
         return w;
+    }
+
+    /** Whether any of a pack is still alive near its place. Only asked while someone is near, so the pack is in the world to be found. */
+    public static boolean alive(ServerLevel level, BlockPos center, String pack) {
+        return !level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(56, 28, 56), m -> m.isAlive() && pack.equals(packOf(m))).isEmpty();
     }
 
     /** Wakes every pack someone has come close to, been seen by or hurt. Returns how many packs woke. */

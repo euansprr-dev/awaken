@@ -114,7 +114,9 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         // the Ossuary, east: a low gallery of bones, a side aisle crossing it, and the round room at its end
         room(new Hall(true, 42, 56, 0, 5, F, 1, 41, 0, false));
         room(new Hall(true, 56, 128, 0, 10, F, 3, 43, 1, false));
-        room(new Hall(false, -30, 30, 92, 7, F, 2, 45, 1, false));
+        room(new Hall(false, -30, 38, 92, 7, F, 2, 45, 1, false));
+        // the reliquary, at the south end of the Ossuary's cross aisle, behind the one door that stands open only while the bell rings
+        room(new Round(92, 48, 9, F, 2, 67, 1, false));
         room(new Hall(true, 128, 136, 0, 5, F, 1, 47, 1, false));
         room(new Round(156, 0, 21, F, 4, 49, 1, false));
         // the Sunk Aisle, west: a stair down, a flooded hall with the moon coming through the roof, and a drowned round room
@@ -134,6 +136,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         pieces.add(new Cut(-162, -150, -4, 4, F - 13, F - 9, -1));
         pieces.add(new Cut(-4, 4, 50, 62, F + 1, F + 5, -1));
         pieces.add(new Cut(-3, 3, 50, 62, BALC + 1, BALC + 5, BALC));
+        pieces.add(new Cut(89, 95, 36, 42, F + 1, F + 5, -1));
         for (int[] st : new int[][]{{-58, -76}, {-58, -56}, {-82, -76}, {-82, -56}}) pieces.add(new dev.awaken.gates.realms.kit.piece.Stall(st[0], st[1], seed + st[0], this));
         pieces.add(new Balcony());
         pieces.add(new GreatBell());
@@ -145,6 +148,8 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         door(new TollDoor(false, 0, 62, 3, BALC));
         for (Piece<? super M> p : List.copyOf(pieces)) if (p instanceof TollDoor) pieces.remove(p);
         pieces.addAll(doors);
+        pieces.add(relic);
+        relic.edits(relicShut, false);
         grilles();
 
         site(SiteKind.MOUTH, 0, F + 11, -106, 12, "");
@@ -154,15 +159,65 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         site(SiteKind.WARDEN, -178, F - 13, 0, 16, "water");
         site(SiteKind.WARDEN, 0, BALC + 1, 92, 14, "ropes");
         site(SiteKind.VILLAGE, -70, F + 1, -66, 26, "");
-        for (int[] d : new int[][]{{84, 0}, {112, 0}, {92, -22}, {92, 22}, {-120, 0}, {-104, 7}, {-136, -7}, {0, -66}}) site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
+        for (int[] d : DENS) site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
         waystone(16, -66, "the foot of the stair");
         waystone(92, 0, "the crossing in the Ossuary");
         waystone(-120, -9, "the flooded aisle");
         finds();
         clearSites();
+        run();
+    }
+
+    /** Where packs are: the nave, the Ossuary, its north chapel (an ambush), the Sunk Aisle, and its far bays (an ambush). */
+    static final int[][] DENS = {{0, -66}, {112, 0}, {92, -22}, {-112, 0}, {-138, 0}};
+    /** The stone teeth across the Ossuary's gallery: where each row stands along the hall. */
+    static final int[] TEETH = {65, 69, 73};
+    /** Where the ringers' rope comes down from the bridge to the bell, once the Warden of the ropes has fallen. */
+    static final int ROPE_X = 2, ROPE_Z = 40;
+
+    /**
+     * The run (SPEC §50.9). The nave, then the walk round the pit, and three wings off it in any order: east through the
+     * teeth to the Ossuary and its Warden, west down into the water and its Warden, south up the broken stair of the
+     * tower to the Warden among the ropes, whose fall lets a rope down from the bridge so nobody walks the tower twice.
+     */
+    private void run() {
+        M m = m();
+        List<String> none = List.of();
+        leg("stair", LegKind.ARRIVE, "The stair head", 0, F + 11, -106, 12, -1, none, "", "nave");
+        leg("nave", LegKind.FIGHT, "The nave", 0, F + 1, -66, 24, 0, List.of("toll_ghoul*3", "crypt_archer*2"), "", "drum");
+        leg("drum", LegKind.BREATHER, "The walk round the pit", 0, F + 1, -38, 12, -1, none, "", "gallery", "sunk", "tower", "lord");
+        leg("gallery", LegKind.TRAP, "The Ossuary gallery", 69, F + 1, 0, 10, -1, none, "", "ossuary");
+        leg("ossuary", LegKind.FIGHT, "The Ossuary", 112, F + 1, 0, 12, 1, List.of("crypt_archer*3", "bell_wisp*2", "crypt_keeper"), "", "bones", "chapel");
+        leg("chapel", LegKind.AMBUSH, "The north chapel", 92, F + 1, -22, 6, 2, List.of("bell_wisp*4", "toll_ghoul"), "", "reliquary");
+        leg("reliquary", LegKind.HIDDEN, "The reliquary", 92, F + 2, 48, 7, -1, none, "", "ossuary");
+        leg("bones", LegKind.WARDEN, "The round room of bones", 156, F + 2, 0, 18, 0, List.of("crypt_archer*3"), "", "drum");
+        leg("sunk", LegKind.FIGHT, "The Sunk Aisle", -112, F - 14, 0, 13, 3, List.of("toll_ghoul*3", "bell_wisp*2"), "", "bays");
+        leg("bays", LegKind.AMBUSH, "The drowned bays", -138, F - 14, 0, 9, 4, List.of("bell_wisp*3", "crypt_archer*2"), "", "water");
+        leg("water", LegKind.WARDEN, "The drowned round room", -178, F - 13, 0, 18, 1, List.of("toll_ghoul*3"), "", "drum");
+        leg("tower", LegKind.MOVEMENT, "The ringers' tower", 0, F + 1, Tower.CZ, 22, -1, none, "", "ropes");
+        leg("ropes", LegKind.WARDEN, "The ringing chamber", 0, BALC + 1, 92, 16, 2, List.of("bell_wisp*4"), "", "balcony");
+        leg("balcony", LegKind.SHORTCUT, "The ringers' rope", 0, BALC + 1, ROPE_Z, 4, -1, none, "warden2", "drum");
+        leg("lord", LegKind.LORD, "Under the bell", 0, PIT + 2, 0, 28, -1, none, "");
+        // three rows of teeth come up out of the gallery floor one after another, east to west and round again: there is always a gap to stand in
+        BlockState air = Blocks.AIR.defaultBlockState();
+        int[] phase = {0, 70, 40};
+        for (int i = 0; i < TEETH.length; i++) trap(new Trap("gallery", TrapKind.PRESS, TEETH[i], F + 1, -9, TEETH[i], F + 3, 9, 100, phase[i], m.pale, air));
+        // the tower's stair is broken in three places; these are its ledges, lowest first: the door, then each corner and the far side of each break
+        int cz = Tower.CZ;
+        course(new Course("tower", -Tower.SIZE, F, cz - Tower.SIZE, Tower.SIZE, BALC - 1, cz + Tower.SIZE, List.of(
+                new int[]{0, F + 1, cz - 18}, new int[]{19, F + 17, cz - 20}, new int[]{19, F + 17, cz - 7}, new int[]{19, F + 33, cz + 20},
+                new int[]{7, F + 33, cz + 19}, new int[]{-19, F + 49, cz + 20}, new int[]{-19, F + 49, cz + 7})));
+    }
+
+    @Override
+    public String shortcutLine(String legId) {
+        return "Something has given way on the bridge out to the bell. There's a rope down from it now, all the way to the floor.";
     }
 
     private final List<TollDoor> doors = new ArrayList<>();
+    /** The reliquary's door works the other way round: shut all the time, open only while the bell rings (and for good once someone has been in). */
+    private final TollDoor relic = new TollDoor(false, 92, 34, 6, F);
+    private final List<Edit> relicShut = new ArrayList<>();
 
     private void door(TollDoor d) {
         doors.add(d);
@@ -170,7 +225,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
 
     /** What's worth finding: a few in plain sight, more for those who climb or wade to look. */
     private void finds() {
-        int[][] at = {{-24, -46}, {24, -78}, {92, -28}, {92, 28}, {74, 8}, {118, -8}, {-128, 11}, {-110, -11}, {-146, 10}, {-96, -80}, {-54, -50}, {168, 8}, {-190, -8}};
+        int[][] at = {{-24, -46}, {24, -78}, {92, -28}, {92, 28}, {74, 8}, {118, -8}, {-128, 11}, {-110, -11}, {-146, 10}, {-96, -80}, {-54, -50}, {168, 8}, {-190, -8}, {88, 51}, {96, 51}};
         int i = 0;
         for (int[] f : at) {
             int gy = ground(f[0], f[1]);
@@ -229,9 +284,28 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
             case "toll_open" -> {
                 for (TollDoor d : doors) d.edits(out, true);
             }
+            case "relic_open", "found_reliquary" -> relic.edits(out, true);
+            case "relic_shut" -> out.addAll(relicShut);
+            // a Warden's fight shuts the door of its wing; the tower's has the stair behind it, so nothing there is shut
+            case "seal_bones" -> doors.get(1).edits(out, false);
+            case "unseal_bones" -> doors.get(1).edits(out, true);
+            case "seal_water" -> doors.get(3).edits(out, false);
+            case "unseal_water" -> doors.get(3).edits(out, true);
+            case "shortcut_balcony" -> rope(out);
+            case "walk_open" -> {
+                relic.edits(out, true);
+                rope(out);
+            }
             default -> {}
         }
         return out;
+    }
+
+    /** A gap in the bridge's rail and a bell rope from it down to the walk round the pit. */
+    private void rope(List<Edit> out) {
+        M m = m();
+        out.add(new Edit(1, BALC + 1, ROPE_Z, Blocks.AIR.defaultBlockState()));
+        for (int y = F + 1; y <= BALC + 1; y++) out.add(new Edit(ROPE_X, y, ROPE_Z, m.rope));
     }
 
     /** How the Lord's floor gives way: the outer ring first, in alternate wedges, then the middle ring. Stage 0 puts it all back. */
@@ -321,6 +395,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         }
         drawPieces(v, m);
         for (Edit e : grille) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
+        for (Edit e : relicShut) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
         shafts(v);
         settle(v, m);
     }
@@ -1118,7 +1193,17 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
 
         @Override
         int floor(int x, int z) {
-            return F + rise(x, z - CZ);
+            return F + (gap(x, z - CZ) ? 0 : rise(x, z - CZ));
+        }
+
+        /**
+         * Where the stair is broken: three cells gone out of the level run of the east, south and west walls, each a slot
+         * open all the way down to the shaft's floor. A sprint clears one; a fall is caught (the tower is a course).
+         */
+        static boolean gap(int dx, int dz) {
+            if (SIZE - 1 - Math.max(Math.abs(dx), Math.abs(dz)) >= STRIP) return false;
+            if (Math.abs(dz) > Math.abs(dx)) return dz > 0 && dx >= 10 && dx <= 12;
+            return dx > 0 ? dz >= -12 && dz <= -10 : dz >= 10 && dz <= 12;
         }
 
         /** How high the stair has got at this column; zero for the shaft's own floor. */
@@ -1166,7 +1251,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                 }
                 if (far >= SIZE) continue;
                 int e = rise(dx, dz), fl = F + e;
-                if (o < STRIP) {
+                if (o < STRIP && !gap(dx, dz)) {
                     for (int y = F; y < fl; y++) v.set(x, y, z, course(m, x, y, z));
                     Direction d = up(dx, dz);
                     boolean flight = e % 16 != 0;

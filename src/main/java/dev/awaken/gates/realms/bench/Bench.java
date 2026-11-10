@@ -128,16 +128,16 @@ public final class Bench {
                 return new Timed<>(null, System.currentTimeMillis() - t);
             }
         };
-        java.util.concurrent.Callable<Timed<List<String>>> walk = () -> {
+        java.util.concurrent.Callable<Timed<WalkCheck.Walk>> walk = () -> {
             long t = System.currentTimeMillis();
             try {
-                return new Timed<>(WalkCheck.unreachable(land), System.currentTimeMillis() - t);
+                return new Timed<>(WalkCheck.walk(land), System.currentTimeMillis() - t);
             } catch (OutOfMemoryError e) {
                 return new Timed<>(null, System.currentTimeMillis() - t);
             }
         };
         Future<Timed<FloatCheck.Report>> floats = only || !together ? null : POOL.submit(scan);
-        Future<Timed<List<String>>> reach = only || !together ? null : POOL.submit(walk);
+        Future<Timed<WalkCheck.Walk>> reach = only || !together ? null : POOL.submit(walk);
         Preview.Drawn drawn;
         try {
             drawn = Preview.draw(land, bp, lines, a.shotName(), a.eye(), a.root(), a.out());
@@ -169,13 +169,15 @@ public final class Bench {
             if (!names.isEmpty()) s.append("shot: ").append(a.out().resolve(names.getFirst() + ".png").toAbsolutePath()).append('\n');
         } else {
             Timed<FloatCheck.Report> fl = together ? floats.get() : scan.call();
-            Timed<List<String>> re = together ? reach.get() : walk.call();
+            Timed<WalkCheck.Walk> walked = together ? reach.get() : walk.call();
+            Timed<List<String>> re = new Timed<>(walked.value() == null ? null : walked.value().unreachable(), walked.millis());
+            dev.awaken.gates.realms.check.RouteCheck.Report route = dev.awaken.gates.realms.check.RouteCheck.check(land, walked.value());
             long t1 = System.currentTimeMillis();
             Path sheet = sheet(a.out(), names);
             long sheetMs = System.currentTimeMillis() - t1;
             int sites = 0;
             for (Land.Site site : land.sites()) if (site.kind() != Land.SiteKind.PORTAL) sites++;
-            clean = fl.value() != null && fl.value().clean() && re.value() != null && re.value().isEmpty();
+            clean = fl.value() != null && fl.value().clean() && re.value() != null && re.value().isEmpty() && route.problems().isEmpty();
             s.append(String.format(Locale.ROOT, "BENCH %s seed %d   total %d ms  (paint %d, floats %d, reach %d, shots %d, sheet %d)%n", id, a.seed(),
                     System.currentTimeMillis() - t0, drawn.paintMs(), fl.millis(), re.millis(), drawn.shotsMs(), sheetMs));
             if (fl.value() == null) s.append("floats: NOT SCANNED, the scan ran out of memory (").append(across * across).append(" chunks, heap ").append(Runtime.getRuntime().maxMemory() >> 20)
@@ -189,6 +191,8 @@ public final class Bench {
                 s.append("reach: ").append(re.value().size()).append(" of ").append(sites).append(" sites can't be walked to from the Mouth\n");
                 for (String bad : re.value()) s.append("  ").append(bad).append('\n');
             }
+            s.append(route.summary()).append('\n');
+            for (String wrong : route.problems()) s.append("  ").append(wrong).append('\n');
             s.append("shots: ").append(names.size());
             if (!flagged.isEmpty()) s.append(", flagged ").append(flagged.size()).append(": ").append(String.join("; ", flagged));
             s.append('\n');

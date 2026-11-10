@@ -17,6 +17,8 @@ public final class RealmState {
     public final Set<Integer> waystonesFound = new LinkedHashSet<>();
     /** Which sites have been woken (their monsters are in the world or dead). */
     public final Set<String> woken = new LinkedHashSet<>();
+    /** The legs whose doors are shut on a fight right now (SPEC §50.9). */
+    public final Set<String> sealed = new LinkedHashSet<>();
     public boolean built, heartOpen, lordWoken;
     /** The door has closed behind whoever's fighting the Lord. */
     public boolean doorShut;
@@ -51,8 +53,9 @@ public final class RealmState {
             Codec.BOOL.fieldOf("lord_woken").forGetter(s -> s.lordWoken),
             Codec.BOOL.optionalFieldOf("door_shut", false).forGetter(s -> s.doorShut),
             Codec.INT.optionalFieldOf("heart_stage", 0).forGetter(s -> s.heartStage),
-            Codec.INT.optionalFieldOf("folk_trades", 0).forGetter(s -> s.folkTrades)
-    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs, ft) -> {
+            Codec.INT.optionalFieldOf("folk_trades", 0).forGetter(s -> s.folkTrades),
+            Codec.STRING.listOf().optionalFieldOf("sealed", List.of()).forGetter(s -> List.copyOf(s.sealed))
+    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs, ft, se) -> {
         RealmState s = new RealmState();
         s.wardensDown.addAll(w);
         s.densCleared.addAll(d);
@@ -65,6 +68,7 @@ public final class RealmState {
         s.doorShut = ds;
         s.heartStage = hs;
         s.folkTrades = ft;
+        s.sealed.addAll(se);
         return s;
     }));
 }

@@ -1,4 +1,4 @@
-# The Hour Crypt with its packs standing where they wait (SPEC 50.9, stage 0). Difficulty is normal; the camera is in creative, so nothing wakes.
+# The Hour Crypt as a run (SPEC 50.9): its packs standing where they wait, the teeth across the gallery, the broken stair, the reliquary's door. Difficulty is normal; the camera is in creative, so nothing wakes.
 world autopilot_realm_hour_packs creative 20261113
 waitworld
 gui 0
@@ -20,28 +20,40 @@ hud off
 wait 30
 wait 300
 look 0 -8
-cmd awaken gate realm_at DEN 7 0 3 -14
+cmd awaken gate realm_at DEN 0 0 3 -14
 look 0 10
 wait 80
 shot packs_nave
-cmd awaken gate realm_at DEN 0 -14 3 0
+cmd awaken gate realm_at DEN 1 -14 3 0
 look -90 10
 wait 80
 shot packs_ossuary
+cmd awaken gate realm_at WARDEN 0 -98 1 0
+look -90 6
+wait 80
+shot run_teeth
+cmd awaken gate realm_at DEN 2 0 1 46
+look 0 2
+wait 80
+shot run_reliquary_door
 cmd awaken gate realm_at WARDEN 0 -17 4 0
-look -90 10
+look -90 12
 wait 80
 shot packs_warden_bones
-cmd awaken gate realm_at WARDEN 1 17 4 0
-look 90 10
-wait 80
-shot packs_warden_water
-cmd awaken gate realm_at WARDEN 2 0 3 -12
-look 0 8
-wait 80
-shot packs_warden_ropes
-cmd awaken gate realm_at DEN 4 14 3 0
+cmd awaken gate realm_at DEN 3 14 3 0
 look 90 10
 wait 80
 shot packs_sunk_aisle
+cmd awaken gate realm_at WARDEN 1 17 4 0
+look 90 12
+wait 80
+shot packs_warden_water
+cmd awaken gate realm_at WARDEN 2 19 -48 -27
+look 0 22
+wait 80
+shot run_tower_gap
+cmd awaken gate realm_at WARDEN 2 0 3 -12
+look 0 12
+wait 80
+shot packs_warden_ropes
 quit
