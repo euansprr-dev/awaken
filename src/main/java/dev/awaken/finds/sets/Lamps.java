@@ -81,10 +81,8 @@ final class Lamps {
                     s.column(0, 0, 0, 5, log);
                     s.up(1, 0, 4, branch);
                     s.up(2, 0, 4, branch);
-                    for (int x = -2; x <= 3; x++)
-                        for (int z = -2; z <= 2; z++)
-                            for (int k = 5; k <= 6; k++)
-                                if (!(x == 0 && z == 0 && k == 5) && Math.abs(x) + Math.abs(z) + (k - 5) * 2 <= 4 && s.rnd.nextInt(5) != 0) s.up(x, z, k, LEAF);
+                    Dress.crown(s, 0, 0, 5, 3, LEAF);
+                    s.up(0, 0, 5, log);
                     s.partOn("lamp", 2, 0, 3, Props.PAPER_LANTERN.get().of(0));
                     s.tell(2, 0, 3);
                     s.partOn("cache", 2, 0, 0);

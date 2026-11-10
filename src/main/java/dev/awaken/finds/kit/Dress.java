@@ -86,6 +86,22 @@ public final class Dress {
         return h - 1;
     }
 
+    /**
+     * A crown of leaves round a point {@code k} above a column's ground: everything within {@code r - 1} steps, and a
+     * ragged outer layer. Every leaf touches one nearer the middle, so nothing hangs loose; the middle itself is left
+     * for the trunk.
+     */
+    public static void crown(Scene s, int cx, int cz, int k, int r, BlockState leaf) {
+        for (int x = -r; x <= r; x++)
+            for (int z = -r; z <= r; z++)
+                for (int y = -1; y <= r; y++) {
+                    int d = Math.abs(x) + Math.abs(z) + Math.abs(y) * (y < 0 ? 2 : 1);
+                    if (d == 0 || d > r || (d == r && s.rnd.nextBoolean())) continue;
+                    int dy = s.g(cx, cz) + 1 + k + y;
+                    if (!s.taken(cx + x, dy, cz + z)) s.put(cx + x, dy, cz + z, leaf);
+                }
+    }
+
     /** A few loose things of one kind lying within {@code r} of a point, never where something already is. */
     public static void scatter(Scene s, int cx, int cz, int r, int n, java.util.function.Supplier<BlockState> what) {
         for (int i = 0, tries = 0; i < n && tries < n * 8; tries++) {

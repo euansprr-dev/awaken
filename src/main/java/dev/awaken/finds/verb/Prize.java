@@ -34,6 +34,14 @@ public final class Prize implements Script {
         return this;
     }
 
+    /** Whoever takes the prize is carried to another part (a basket that goes up). */
+    public Prize lift(String toPart) {
+        this.lift = toPart;
+        return this;
+    }
+
+    private String lift = "";
+
     /** One of what's held is given up. */
     public Prize takes() {
         takes = true;
@@ -45,6 +53,10 @@ public final class Prize implements Script {
         if (!name.equals(part) || !with.test(held)) return false;
         if (takes && !p.isCreative()) held.shrink(1);
         then.accept(c, i);
+        if (!lift.isEmpty()) {
+            var to = c.pos(lift, 0);
+            p.teleportTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+        }
         c.complete(p);
         return true;
     }

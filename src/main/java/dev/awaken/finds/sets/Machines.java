@@ -103,7 +103,6 @@ final class Machines {
                 s.put(x, 0, zz, m.stone());
                 s.air(x, 1, zz);
                 s.air(x, 2, zz);
-                s.put(x, 3, zz, m.stone());
             }
         s.put(0, 1, z + 2, Blocks.DECORATED_POT.defaultBlockState());
         s.part("cache", 0, 2, z + 2);

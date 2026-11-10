@@ -42,12 +42,8 @@ final class High {
                         BlockState stub = log.hasProperty(RotatedPillarBlock.AXIS) ? log.setValue(RotatedPillarBlock.AXIS, SX[d] != 0 ? Direction.Axis.X : Direction.Axis.Z) : log;
                         s.up(SX[d], SZ[d], k, stub);
                     }
-                    for (int x = -3; x <= 3; x++)
-                        for (int z = -3; z <= 3; z++)
-                            for (int k = 10; k <= 13; k++) {
-                                int far = Math.max(Math.abs(x), Math.abs(z));
-                                if (far >= 2 && far + (k == 13 ? 1 : 0) <= 3 && s.rnd.nextInt(5) != 0) s.up(x, z, k, leaf);
-                            }
+                    Dress.crown(s, 0, 0, 12, 3, leaf);
+                    for (int k = 12; k <= 15; k++) s.air(0, s.g(0, 0) + 1 + k, -1);
                     s.partOn("prize", 0, 0, 13, Props.NEST.get().of(2));
                     s.partOn("cache", 0, 0, 14);
                     s.tell(0, 0, 14);

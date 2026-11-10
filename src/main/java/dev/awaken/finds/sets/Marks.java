@@ -35,12 +35,9 @@ final class Marks {
                     s.clear(6);
                     BlockState leaf = Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
                     s.column(0, 0, 0, 5, m.log());
-                    for (int x = -3; x <= 3; x++)
-                        for (int z = -3; z <= 3; z++)
-                            for (int k = 4; k <= 6; k++) {
-                                int d = Math.abs(x) + Math.abs(z) + (k - 4);
-                                if ((x != 0 || z != 0 || k == 6) && d <= 4 && (d < 4 || s.rnd.nextBoolean())) s.up(x, z, k, leaf);
-                            }
+                    for (int[] a : new int[][] {{2, 0}, {-2, 0}, {0, 2}, {0, -2}, {1, 1}}) s.up(a[0], a[1], 4, leaf);
+                    for (int[] a : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) s.up(a[0], a[1], 4, leaf);
+                    Dress.crown(s, 0, 0, 5, 3, leaf);
                     int[][] at = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}, {1, 1}};
                     for (int i = 0; i < 5; i++) s.partOn("mark", at[i][0], at[i][1], 3, Props.GOURD.get().of(i & 3));
                     s.partOn("cache", 1, 0, 0);

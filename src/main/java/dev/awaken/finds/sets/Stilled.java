@@ -127,11 +127,10 @@ final class Stilled {
                     s.partOn("string", 0, 0, 0);
                     BlockState leaf = Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
                     s.column(7, 3, 0, 3, m.log());
-                    for (int x = 5; x <= 9; x++)
-                        for (int z = 1; z <= 5; z++)
-                            for (int k = 3; k <= 5; k++)
-                                if (!(x == 7 && z == 3 && k == 3) && Math.abs(x - 7) + Math.abs(z - 3) + (k - 3) <= 3 && !(x == 6 && z == 3 && k == 3)) s.up(x, z, k, leaf);
+                    Dress.crown(s, 7, 3, 4, 2, leaf);
+                    s.up(7, 3, 4, m.log());
                     s.partOn("loose", 6, 3, 3, Props.KITE.get().of(0, Direction.EAST));
+                    s.up(6, 3, 4, leaf);
                     s.partOn("cache", 1, 0, 0);
                     Dress.skirt(s, 5, m);
                 })

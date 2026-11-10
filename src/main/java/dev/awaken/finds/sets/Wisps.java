@@ -159,18 +159,14 @@ final class Wisps {
                             int x = w[i - 1][0] + (w[i][0] - w[i - 1][0]) * k / n, z = w[i - 1][1] + (w[i][1] - w[i - 1][1]) * k / n;
                             if (s.depth(x, z) > 0) continue;
                             if ((i + k) % 3 == 0) s.floor(x, z, Blocks.MUDDY_MANGROVE_ROOTS.defaultBlockState());
-                            else if (!s.taken(x, s.g(x, z) + 1, z) && (x != w[i][0] || z != w[i][1])) s.on(x, z, Blocks.MANGROVE_ROOTS.defaultBlockState());
+                            else if (!s.taken(x, s.g(x, z) + 1, z) && (x != w[i][0] || z != w[i][1])) s.on(x, z, Props.ROOT_LOOP.get().of(s.rnd.nextInt(4), Direction.from2DDataValue(s.rnd.nextInt(4))));
                         }
                     }
                     int x = w[8][0], z = w[8][1];
                     for (int dx = 0; dx <= 1; dx++)
                         for (int dz = 0; dz <= 1; dz++) s.column(x + 1 + dx, z + 1 + dz, 0, 9, m.log());
-                    for (int dx = -2; dx <= 4; dx++)
-                        for (int dz = -2; dz <= 4; dz++)
-                            for (int k = 8; k <= 11; k++) {
-                                int d = Math.abs(dx - 1) + Math.abs(dz - 1) + (k - 8);
-                                if (d <= 5 && !(dx >= 1 && dx <= 2 && dz >= 1 && dz <= 2 && k <= 9) && (d < 5 || s.rnd.nextBoolean())) s.up(x + dx, z + dz, k, LEAF);
-                            }
+                    Dress.crown(s, x + 1, z + 1, 10, 4, LEAF);
+                    Dress.crown(s, x + 2, z + 2, 10, 3, LEAF);
                     s.partOn("cache", x, z + 1, 0, Props.HOARD.get().of(0));
                     s.tell(x, z, 1);
                 })

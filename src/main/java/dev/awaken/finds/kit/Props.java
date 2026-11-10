@@ -133,6 +133,8 @@ public final class Props {
     public static final DeferredBlock<PropBlock> OLD_BELL = prop("find_old_bell", 4.0F, 0.0F, 4.0F, 12.0F, 14.0F, 12.0F, true, 9, 0);
     /** Mill Wheel. */
     public static final DeferredBlock<PropBlock> MILL_WHEEL = prop("find_mill_wheel", 4.0F, 0.0F, 0.0F, 12.0F, 16.0F, 16.0F, true, 9, 0);
+    /** Surface Root. */
+    public static final DeferredBlock<PropBlock> ROOT_LOOP = prop("find_root_loop", 5.0F, 0.0F, 0.0F, 11.0F, 6.0F, 16.0F, false, 9, 0);
     /** Small Hoard. */
     public static final DeferredBlock<PropBlock> HOARD = prop("find_hoard", 4.0F, 0.0F, 4.0F, 12.0F, 4.0F, 12.0F, false, 9, 0);
 

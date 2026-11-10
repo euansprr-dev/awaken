@@ -241,7 +241,7 @@ final class Gods {
                     }
                     for (int x = -1; x <= 1; x += 2)
                         for (int z = -1; z <= 1; z += 2) s.up(x, z, 2, cap);
-                    s.up(0, 0, 3, cap);
+                    s.up(0, 0, 2, cap);
                     s.partOn("bowl", 0, 0, 0, Props.STONE_BOWL.get().of(0));
                     BlockState trail = Blocks.CARPET.pick(net.minecraft.world.item.DyeColor.LIGHT_GRAY).defaultBlockState();
                     for (int i = 0; i < 5; i++) {
