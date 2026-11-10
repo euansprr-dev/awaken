@@ -25,7 +25,8 @@ person, and as quick to use as the plain screen.
 1. The hand does not carry anything. The stack on your pointer is a flat screen icon; your hands wait at the table's
    corners and tap a square after the click has already happened.
 2. The scene is only as good as the spot you happen to stand on. The view is framed from your own eyes, so two blocks
-   back a grid square is a 68 by 21 pixel sliver seen from 18 degrees, and four blocks back it is 114 by 18.
+   back a grid square is a 68 by 21 pixel sliver seen from 18 degrees, and four blocks back it is 114 by 18. From a
+   corner the grid is a diamond. From two blocks back the hands are not in the frame at all.
 3. In third person there is no scene at all: the plain grey screen opens and your character does nothing but vanilla's
    arm swing. Nobody else ever sees you work.
 4. At the furnace the view drops to the mouth, but nothing crouches: no body, no bend in the move, no weight.
@@ -63,7 +64,8 @@ War Anvil's, Inscribing Table's and Forge's own scenes (they are already at the 
 ## 2. The audit
 
 Tours on CI at his window size (`tools/autopilot/interact-audit-stations.txt`, `-vanilla.txt`, `-awaken.txt`,
-`-plates.txt`); pictures and frame strips are on the page. Sizes below come from the game's own camera maths
+`-plates.txt`; runs 42851717030, 42851757952 and the two after them); pictures and frame strips are on the page.
+`docs/interactions/make_assets.py` cuts them. Sizes below come from the game's own camera maths
 (`StationView.frame`, ported in `docs/interactions/proto/stationgeo.py`) at a 488 by 266 GUI.
 
 ### 2.1 What exists
@@ -112,7 +114,10 @@ pad, ghost door and lever, Stillpoint door, left chest, carved token, fallen sta
 | The centre square at four blocks | 114 by 18, seen from 9 degrees, field of view 5.7 | shot `a_table_far` |
 | The same square from the view this plan proposes | 31 by 26, seen from 54 degrees, from any distance | plate `p_table_empty` |
 | Time before the grid holds still after you use the table | 12 ticks (0.6 s); 6 if you come back within 12 s | `StationClient.weight`; clip `a_table_in` |
-| The hand's answer to a click | Starts after the slot has changed, 9 ticks out and back, restarts from rest on the next click | `StationClient.tick`, `pose`; clips `a_table_lay`, `a_table_fast` |
+| The hand's answer to a click | Starts after the slot has changed, 9 ticks out and back, restarts from rest on the next click | `StationClient.tick`, `pose` (read in the code; the CI runner filmed a frame about every 10 ticks, too coarse to show a 9-tick tap) |
+| The hands at two blocks | Out of the frame through a whole lay (0, 12, 22, 32 ticks); one reaches it after three quick clicks | clips `a_table_lay`, `a_table_fast` |
+| From a corner | The grid is drawn turned 45 degrees, a diamond | shot `a_table_corner` |
+| Your character in third person | One vanilla arm swing | clip `a_table_3p_front` |
 | Sounds for laying, lifting, the result | None | No sound call in `anims.client.station` |
 | A stack's count on a square | Not shown | `StationClient.onSubmit` draws the item only |
 | Third person | The plain vanilla screen; no scene | `StationClient.on()`; shots `a_table_3p`, `a_furnace_3p` |

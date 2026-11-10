@@ -88,6 +88,74 @@ def build_html(gui):
         '[hidden]{display:none!important}</style></head><body>' + src + '</body></html>')
 
 
-if __name__ == '__main__':
+def unblue(im, box):
+    """Takes a hovered slot's thin blue outline off a plate: each outline pixel takes the colour beside it (the table's
+    texels are flat, so nothing else changes). box: pixels (x0, y0, x1, y1)."""
+    import numpy as np
+    a = np.array(im).astype(int)
+    x0, y0, x1, y1 = box
+    reg = a[y0:y1, x0:x1]
+    mask = (reg[:, :, 2] > reg[:, :, 0] + 25) & (reg[:, :, 2] > 120)
+    for _ in range(12):
+        if not mask.any():
+            break
+        for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            src = np.roll(reg, (dy, dx), axis=(0, 1))
+            ok = np.roll(~mask, (dy, dx), axis=(0, 1)) & mask
+            reg[ok] = src[ok]
+            mask = mask & ~ok
+    a[y0:y1, x0:x1] = reg
+    return Image.fromarray(a.astype('uint8'))
+
+
+def paste_from(dst, src, frac):
+    """A region of one shot replaced by the same region of another taken from the same place (a toast, a chat line)."""
+    W, H = dst.size
+    box = (int(frac[0] * W), int(frac[1] * H), int(frac[2] * W), int(frac[3] * H))
+    dst.paste(src.crop(box), box[:2])
+    return dst
+
+
+def save(im, name, w=1366, q=86):
+    im.resize((w, round(w * im.height / im.width)), Image.LANCZOS).save(os.path.join(IMG, name + '.jpg'), quality=q, optimize=True)
+
+
+def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     os.makedirs(IMG, exist_ok=True)
-    print('use the functions from a session; see PLAN.md for which shots the page shows')
+    S = lambda n: os.path.join(stations, n + '.png')
+    P = lambda n: os.path.join(plates, n + '.png')
+    C = lambda n: os.path.join(sclips, n)
+    # ---- today, from four places ----
+    shot(S('a_table_near_carry'), 'today_near')
+    shot(S('a_table_laid'), 'today_mid')
+    shot(S('a_table_far_carry'), 'today_far')
+    shot(S('a_table_corner'), 'today_corner')
+    shot(P('p_table_stand_mid'), 'today_mid_clean')
+    shot(P('p_table_pick'), 'bench')
+    print('lay', strip(C('a_table_lay'), [0, 2, 3, 4], 'strip_lay', w=510))
+    print('fast', strip(C('a_table_fast'), [1, 3, 4], 'strip_fast', w=680))
+    shot(S('a_table_3p'), 'today_3p')
+    shot(S('a_furnace_3p'), 'today_3p_furnace')
+    print('3p', strip(C('a_table_3p_front'), [0, 1, 2], 'strip_3p', w=680, crop=(0.15, 0.0, 0.85, 1.0)))
+    print('furnace in', strip(C('a_furnace_in'), [1, 2, 3], 'strip_furnace', w=680))
+    # ---- plates the page draws on (hands hidden; a hovered outline, a toast and a chat line taken off) ----
+    empty = Image.open(P('p_table_empty')).convert('RGB')
+    empty = unblue(empty, (1512, 760, 1903, 1137))
+    save(empty, 'p_table_empty', q=88)
+    hands = Image.open(P('p_table_hands')).convert('RGB')
+    hands = paste_from(hands, Image.open(P('p_table_empty')).convert('RGB'), (0.64, 0.0, 1.0, 0.14))
+    hands = paste_from(hands, Image.open(P('p_table_pick_hands')).convert('RGB'), (0.0, 0.79, 0.26, 0.88))
+    hands = unblue(hands, (1512, 760, 1903, 1137))
+    save(hands, 'p_table_hands', q=88)
+    shot(S('a_furnace_lit'), 'p_furnace_lit', q=88)
+    shot(P('p_chest_open'), 'p_chest_open', q=88)
+    if vanilla:
+        V = lambda n: os.path.join(vanilla, n + '.png')
+        sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)
+        for n, o in (('v_anvil', 'v_anvil'), ('v_brewing_stand', 'v_brewing'), ('v_grindstone', 'v_grindstone'), ('v_chest', 'v_chest')):
+            shot(V(n), o, w=910)
+    build_html((488, 266))
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])

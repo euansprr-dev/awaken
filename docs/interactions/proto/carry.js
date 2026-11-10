@@ -178,8 +178,8 @@
       var mid = add(e, add(mul(a, len / 2), mul(normals[f], w / 2)));
       if (dot(normals[f], mul(mid, -1)) <= 0) continue;
       for (j = 0; j < rowsN; j++) for (i = 0; i < 4; i++) {
-        var base = j < 4 ? skin : sleeve, hsh = ((i * 7 + j * 13 + f * 5) % 9) / 9;
-        var k = light * shades[f] * (0.94 + 0.1 * hsh) * (j === 4 ? 0.82 : 1);
+        var base = j < 4 ? skin : j === 4 ? (drawArm.cuff || sleeve) : sleeve, hsh = ((i * 7 + j * 13 + f * 5) % 9) / 9;
+        var k = light * shades[f] * (0.95 + 0.08 * hsh);
         quad(ctx, W, H, [cam.screen(P(i, j, f)), cam.screen(P(i + 1.03, j, f)), cam.screen(P(i + 1.03, j + 1.03, f)), cam.screen(P(i, j + 1.03, f))], shade(base, k));
       }
     }
@@ -197,6 +197,7 @@
    * mount(canvas, opts): opts.plate (the empty table, hands hidden), opts.plateHands (the same with today's hands), both
    * Image objects already loaded; opts.eye relative to the table's corner; opts.gui [w, h]; opts.onState(text).
    */
+  drawArm.cuff = '#d8b848';
   function mount(canvas, opts) {
     var ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height, aspect = W / H;
     var gw = opts.gui[0], gh = opts.gui[1], lay = layout(gw, gh, 1);
@@ -344,7 +345,7 @@
         if (along > -halfW && off < halfW * 1.6 && k > 0.5) hidden.push(s);
       }
       S.covered = hidden.length;
-      drawArm(ctx, W, H, cam, e, a, w, opts.skin || '#c9906a', opts.sleeve || '#2e4a5e', 1.0, upC, [(lay.py0 + 12) / gh, lay.px0 / gw, lay.px1 / gw]);
+      drawArm(ctx, W, H, cam, e, a, w, opts.skin || '#9a6240', opts.sleeve || '#a9c6c4', 1.0, upC, [(lay.py0 + 12) / gh, lay.px0 / gw, lay.px1 / gw]);
       for (var h = 0; h < hidden.length; h++) {
         var hs = hidden[h], st = hs === 0 ? S.result : S.grid[hs - 1], hp = spot(hs);
         drawItem(ctx, W, H, cam, st.art, [hp[0], 1.2, hp[2] - 0.11], [-1, 0, 0], [0, 0, 1], 0.15, 1.5, 0.42);

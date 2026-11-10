@@ -118,17 +118,18 @@ svg text { font-family: var(--mono) }
     <li><div><b>Quick clicks twitch.</b> Each click sends the hand back to its rest before it goes out again.</div></li>
   </ol>
 
-  <h3>The same table from three places</h3>
-  <div class="trio">
+  <h3>The same table from four places</h3>
+  <div class="pair">
     <figure><img src="img/today_near.jpg" alt="The crafting table scene from right against the table" loading="lazy"><figcaption><span class="tag real">Today · real</span>Pressed against it<span class="num">42 × 22<small>pixels a square, seen from 30°</small></span></figcaption></figure>
-    <figure><img src="img/today_mid.jpg" alt="The crafting table scene from two blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>Two blocks back, where you usually stand<span class="num">68 × 21<small>seen from 18°</small></span></figcaption></figure>
+    <figure><img src="img/today_mid.jpg" alt="The crafting table scene from two blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>Two blocks back, where you usually stand. The hands are out of the frame.<span class="num">68 × 21<small>seen from 18°</small></span></figcaption></figure>
     <figure><img src="img/today_far.jpg" alt="The crafting table scene from four blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>Four blocks back<span class="num">114 × 18<small>seen from 9°</small></span></figcaption></figure>
+    <figure><img src="img/today_corner.jpg" alt="The crafting table scene from a corner: the grid turned like a diamond" loading="lazy"><figcaption><span class="tag real">Today · real</span>From a corner<span class="num">a diamond<small>the grid turns with you</small></span></figcaption></figure>
   </div>
-  <p class="note">Sizes are in GUI pixels from the game's own camera maths; a vanilla slot is 16 × 16. The view zooms to fit the grid, so the further back you stand the flatter and more stretched it gets.</p>
+  <p class="note">Sizes are the centre square in GUI pixels, from the game's own camera maths; a vanilla slot is 16 × 16. The view zooms to fit the grid, so the further back you stand the flatter and more stretched it gets. In each picture the small numbered icon is the stack on the pointer.</p>
 
   <h3>Carrying and laying, frame by frame</h3>
-  <figure><img src="img/strip_lay.jpg" alt="Frame strip: a plank carried on the pointer as a flat icon, then laid, then the hand taps the square" loading="lazy"><figcaption><span class="tag real">Today · real</span>The plank rides the pointer as a flat icon, lands on the square in one frame, and only then does a hand go out to tap where it already is.</figcaption></figure>
-  <figure><img src="img/strip_fast.jpg" alt="Frame strip: three quick clicks, the hand restarting from rest each time" loading="lazy"><figcaption><span class="tag real">Today · real</span>Three clicks six ticks apart. The hand jumps back to its corner at the start of each one.</figcaption></figure>
+  <figure><img src="img/strip_lay.jpg" alt="Frame strip: a plank carried on the pointer as a flat icon, then laid, then the hand taps the square" loading="lazy"><figcaption><span class="tag real">Today · real</span>Two blocks back, at 0, 12, 22 and 32 ticks. The planks ride the pointer as a small flat icon and appear on their squares. No hand is in the frame at any point.</figcaption></figure>
+  <figure><img src="img/strip_fast.jpg" alt="Frame strip: three quick clicks, the hand restarting from rest each time" loading="lazy"><figcaption><span class="tag real">Today · real</span>Three clicks six ticks apart, at 0, 17 and 24 ticks. A hand reaches the frame only after the third. In the code each click restarts it from its rest, which is why it never catches up.</figcaption></figure>
 
   <h3>Third person, and the screens that cover the hands</h3>
   <div class="pair">
@@ -213,7 +214,7 @@ svg text { font-family: var(--mono) }
 <section id="furnace">
   <h2>The furnace: you really crouch</h2>
   <p class="col">Today the view drops to the mouth on a plain ease and your body is simply hidden. In the plan the view goes down the way a body does (a dip and a nod as the knees bend, then down and in), your character kneels where others can see it, and your hand takes the food in.</p>
-  <figure><img src="img/strip_furnace.jpg" alt="Frame strip: the furnace view dropping today" loading="lazy"><figcaption><span class="tag real">Today · real</span>The drop to the mouth as it is: a straight slide down. Nothing in it says knees.</figcaption></figure>
+  <figure><img src="img/strip_furnace.jpg" alt="Frame strip: the furnace view dropping today" loading="lazy"><figcaption><span class="tag real">Today · real</span>Using a furnace, at 0, 3 and 8 ticks. The view slides straight down to the mouth and your body is hidden. It is a good view. Nothing in the move says knees.</figcaption></figure>
   <div class="proto">
     <canvas id="furn" width="1366" height="743" aria-label="Mock-up: a hand carrying food into the furnace's mouth"></canvas>
   </div>
@@ -294,10 +295,9 @@ svg text { font-family: var(--mono) }
     <li><b>What others see.</b> Your character bent over the table, down on one knee at the furnace, bent to a chest with a hand on its lid, and reaching to each slot as you click it. They see what lies on your table and the largest stacks in a chest whose lid is up, the way they already see inside a furnace.</li>
     <li><b>How it stays honest.</b> Your clicks reach the server as they always have. The server passes on which slot you touched, at most six times a second, and nothing is saved. It shows no more than standing behind you would.</li>
   </ul>
-  <div class="pair">
-    <figure><img src="img/today_3p_furnace.jpg" alt="Third person at the furnace today" loading="lazy"><figcaption><span class="tag real">Today · real</span>At the furnace in third person: standing straight, a grey screen.</figcaption></figure>
-    <figure><img src="img/o_smith.jpg" alt="The smith at the War Anvil in third person" loading="lazy"><figcaption><span class="tag real">Today · real</span>The standard we already hold: the smith at the War Anvil, a full-body clip. Stations get clips made the same way.</figcaption></figure>
-  </div>
+  <figure><img src="img/strip_3p.jpg" alt="Frame strip: the character from the front as they use a crafting table, one arm swing" loading="lazy"><figcaption><span class="tag real">Today · real</span>Your character using a crafting table, seen from the front with the screen shut, at 0, 4 and 14 ticks. One vanilla arm swing, then nothing.</figcaption></figure>
+  <figure style="max-width:36rem"><img src="img/today_3p_furnace.jpg" alt="Third person at the furnace today" loading="lazy"><figcaption><span class="tag real">Today · real</span>At the furnace in third person: a grey screen, and your character standing straight behind it.</figcaption></figure>
+  <p class="col">The machinery for a body at work already exists: the smith at the War Anvil is a full-body clip that others see (SPEC 46.7). Stations get clips made the same way: bent over a table, on one knee at a furnace, bent to a box.</p>
 </section>
 
 <section id="build">
@@ -377,10 +377,10 @@ svg text { font-family: var(--mono) }
   img('img/p_furnace_lit.jpg').then(function (plate) {
     var c = document.getElementById('furn'), ctx = c.getContext('2d'), W = c.width, H = c.height, aspect = W / H;
     if (!plate) { blank(c, 'The picture did not load'); return; }
-    var lay = A.layout(GUI[0], GUI[1], 2), eye = /*FEYE*/[0.5, 0.57, -2.1]/*FEYE*/;
+    var lay = A.layout(GUI[0], GUI[1], 2), eye = [0.5, 0.57, -1.4];
     var boxes = [[0.65, 0.57, 0.1875, 0.15, 0.15, 0.05], [0.5, 0.26, 0.1875, 0.15, 0.15, 0.05], [0.35, 0.57, 0.1875, 0.15, 0.15, 0.05]];
     var fr = A.frameBoxes(boxes, eye, lay, GUI[0], GUI[1], aspect), cam = new A.Camera(eye, fr.yaw, fr.pitch, fr.tan, aspect);
-    var out = [0.42, 0.5, -0.55], spots = { food: [0.65, 0.6, 0.1], coal: [0.5, 0.42, -0.06], done: [0.35, 0.6, 0.1] };
+    var out = [0.2, 0.42, -0.5], spots = { food: [0.65, 0.6, 0.1], coal: [0.5, 0.42, -0.06], done: [0.35, 0.6, 0.1] };
     var up = [cam.r[1], cam.u[1], cam.f[1]], t0 = performance.now();
     function mix(a, b, k) { return [V.lerp(a[0], b[0], k), V.lerp(a[1], b[1], k), V.lerp(a[2], b[2], k)]; }
     function frame(now) {
@@ -394,9 +394,9 @@ svg text { font-family: var(--mono) }
       ctx.drawImage(plate, 0, 0, W, H);
       if (flare > 0) { var fp = cam.project([0.5, 0.3, 0.2]), g = ctx.createRadialGradient(fp[0] * W, fp[1] * H, 0, fp[0] * W, fp[1] * H, W * 0.16); g.addColorStop(0, 'rgba(255,190,90,' + 0.75 * flare + ')'); g.addColorStop(1, 'rgba(255,120,30,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
       if (toss) A.drawItem(ctx, W, H, cam, 'coal', toss, [-1, 0, 0], [0, 1, 0], 0.13, 1, 1);
-      var pc = cam.toCam(hand), root = cam.toCam([hand[0] - 0.35, hand[1] - 0.5, hand[2] - 1.6]), a = V.norm(V.sub(root, pc)), e = V.add(pc, V.mul(a, 0.07));
+      var pc = cam.toCam(hand), root = cam.toCam([hand[0] - 0.6, hand[1] - 0.5, hand[2] - 0.35]), a = V.norm(V.sub(root, pc)), e = V.add(pc, V.mul(a, 0.07));
       var lit = 1 + 0.25 * flare + 0.12 * Math.max(0, 1 - Math.abs(hand[2] - 0.05) * 3);
-      A.drawArm(ctx, W, H, cam, e, a, 0.13, '#c9906a', '#2e4a5e', lit, up, [2, 0, 0]);
+      A.drawArm(ctx, W, H, cam, e, a, 0.11, '#9a6240', '#a9c6c4', lit, up, [2, 0, 0]);
       if (held) A.drawItem(ctx, W, H, cam, held, [hand[0], hand[1] + 0.03, hand[2]], [-1, 0, 0], [0, 1, 0], 0.14, 1 + 0.2 * flare, 1);
       ctx.save(); ctx.globalAlpha = 0.9; var sx = lay.px0 / GUI[0], sy = lay.py0 / GUI[1], sw = (lay.px1 - lay.px0) / GUI[0], sh = (lay.py1 - lay.py0) / GUI[1];
       ctx.drawImage(plate, sx * plate.width, sy * plate.height, sw * plate.width, sh * plate.height, sx * W, sy * H, sw * W, sh * H); ctx.restore();
@@ -409,24 +409,37 @@ svg text { font-family: var(--mono) }
   img('img/p_chest_open.jpg').then(function (plate) {
     var c = document.getElementById('chest'), ctx = c.getContext('2d'), W = c.width, H = c.height, aspect = W / H;
     if (!plate) { blank(c, 'The picture did not load'); return; }
-    var cam = new A.Camera(/*CEYE*/[0.5, 2.12, -0.31]/*CEYE*/, 0, 54, Math.tan(35 * Math.PI / 180), aspect), up = [cam.r[1], cam.u[1], cam.f[1]];
-    var inside = [['plank', 0.3, 0.42, 4], ['coal', 0.52, 0.36, 3], ['beef', 0.7, 0.5, 2], ['stick', 0.42, 0.66, 2], ['steak', 0.68, 0.7, 1]], t0 = performance.now();
+    var cam = new A.Camera([0.5, 2.12, -0.31], 0, 54, Math.tan(35 * Math.PI / 180), aspect), up = [cam.r[1], cam.u[1], cam.f[1]];
+    var inside = [['plank', 0.33, 0.34, 3], ['coal', 0.64, 0.3, 2], ['beef', 0.7, 0.6, 1], ['stick', 0.38, 0.66, 2], ['steak', 0.54, 0.5, 1]], t0 = performance.now();
+    function icon(art, x, y, sz, al) { var rows = A.ART[art], px = sz / 16, i, j; ctx.globalAlpha = al; for (j = 0; j < 16; j++) for (i = 0; i < 16; i++) if (rows[j][i] !== '.') { ctx.fillStyle = A.PAL[rows[j][i]]; ctx.fillRect(x + i * px, y + j * px, px + 0.5, px + 0.5); } ctx.globalAlpha = 1; }
     function frame(now) {
-      var t = ((now - t0) / 1000) % 6, k = V.smooth(Math.min(1, t / 0.6)) * (t > 5 ? V.smooth((6 - t) / 0.8) : 1), i, n;
+      var t = ((now - t0) / 1000) % 8, fade = t > 7.2 ? V.smooth((8 - t) / 0.8) : 1, i, n;
       ctx.drawImage(plate, 0, 0, W, H);
+      // what lies in the box
+      var k = V.smooth((t - 0.3) / 0.6) * fade;
       for (i = 0; i < inside.length; i++) for (n = 0; n < inside[i][3]; n++)
-        A.drawItem(ctx, W, H, cam, inside[i][0], [inside[i][1] + n * 0.02, 0.6 + n * 0.012, inside[i][2] - n * 0.015], [-1, 0, 0], [0, 0, 1], 0.2, 0.8 + 0.05 * n, k);
-      for (var s = -1; s <= 1; s += 2) {
-        var hand = [0.5 + s * 0.3, 0.93 + 0.5 * k, 0.1 + 0.62 * k], pc = cam.toCam(hand), root = cam.toCam([hand[0] + s * 0.12, hand[1] - 0.2, hand[2] - 1.5]);
-        var a = V.norm(V.sub(root, pc));
-        A.drawArm(ctx, W, H, cam, V.add(pc, V.mul(a, 0.02)), a, 0.2, '#c9906a', '#2e4a5e', 1, up, [2, 0, 0]);
+        A.drawItem(ctx, W, H, cam, inside[i][0], [inside[i][1] + n * 0.022, 0.34 + n * 0.014, inside[i][2] - n * 0.018], [-1, 0, 0], [0, 0, 1], 0.25, 0.86 + 0.07 * n, k);
+      // both hands on the lid's edge, then away
+      var hold = t < 1.3 ? 1 : 1 - V.smooth((t - 1.3) / 0.7);
+      if (hold > 0.01) for (var sd = -1; sd <= 1; sd += 2) {
+        var hand = [0.5 + sd * 0.36, 1.4 - (1 - hold) * 1.1, 0.74 - (1 - hold) * 0.9], pc = cam.toCam(hand), root = cam.toCam([hand[0] + sd * 0.1, hand[1] - 0.25, hand[2] - 1.4]);
+        var ar = V.norm(V.sub(root, pc));
+        A.drawArm(ctx, W, H, cam, V.add(pc, V.mul(ar, 0.02)), ar, 0.15, '#9a6240', '#a9c6c4', 1, up, [2, 0, 0]);
       }
-      if (t > 0.5 && t < 5.2) { // the glass rising out of the box
-        var g = Math.min(1, (t - 0.5) / 0.5) * (t > 4.8 ? (5.2 - t) / 0.4 : 1), m = cam.project([0.5, 0.95, 0.5]), gw = W * 0.34, gh = H * 0.2, gx = W * 0.5 - gw / 2, gy = H * 0.07;
-        ctx.strokeStyle = 'rgba(127,195,255,' + 0.5 * g + ')'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(m[0] * W - 40, m[1] * H); ctx.lineTo(gx, gy + gh); ctx.moveTo(m[0] * W + 40, m[1] * H); ctx.lineTo(gx + gw, gy + gh); ctx.stroke();
-        ctx.fillStyle = 'rgba(15,23,36,' + 0.78 * g + ')'; ctx.fillRect(gx, gy, gw, gh); ctx.strokeStyle = 'rgba(127,195,255,' + g + ')'; ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
-        var cw = gw / 9.6, ch = gh / 3.5;
-        for (var r = 0; r < 3; r++) for (var q = 0; q < 9; q++) { ctx.strokeStyle = 'rgba(127,195,255,' + 0.28 * g + ')'; ctx.strokeRect(gx + cw * 0.3 + q * cw + 0.5, gy + ch * 0.25 + r * ch + 0.5, cw - 4, ch - 4); }
+      // the glass, risen out of the box: the same stacks on the band's glass
+      var g = V.smooth((t - 1.5) / 0.5) * fade;
+      if (g > 0.01) {
+        var gw = W * 0.4, gh = gw * 3.2 / 9, gx = (W - gw) / 2, gy = H * 0.05 + (1 - g) * H * 0.12, m0 = cam.project([0.12, 0.6, 0.5]), m1 = cam.project([0.88, 0.6, 0.5]);
+        var gr = ctx.createLinearGradient(0, gy + gh, 0, m0[1] * H); gr.addColorStop(0, 'rgba(127,195,255,' + 0.55 * g + ')'); gr.addColorStop(1, 'rgba(127,195,255,0)');
+        ctx.strokeStyle = gr; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(gx, gy + gh); ctx.lineTo(m0[0] * W, m0[1] * H); ctx.moveTo(gx + gw, gy + gh); ctx.lineTo(m1[0] * W, m1[1] * H); ctx.stroke();
+        ctx.fillStyle = 'rgba(15,23,36,' + 0.82 * g + ')'; ctx.fillRect(gx, gy, gw, gh);
+        ctx.strokeStyle = 'rgba(127,195,255,' + g + ')'; ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
+        var cw = (gw - 16) / 9, pad = 8, put = { 0: 'plank', 1: 'coal', 4: 'beef', 9: 'stick', 13: 'steak' };
+        for (var r = 0; r < 3; r++) for (var q = 0; q < 9; q++) {
+          var x = gx + pad + q * cw, y = gy + pad + r * cw;
+          ctx.strokeStyle = 'rgba(127,195,255,' + 0.25 * g + ')'; ctx.strokeRect(x + 1.5, y + 1.5, cw - 3, cw - 3);
+          if (put[r * 9 + q]) icon(put[r * 9 + q], x + cw * 0.14, y + cw * 0.14, cw * 0.72, g);
+        }
       }
       requestAnimationFrame(frame);
     }
