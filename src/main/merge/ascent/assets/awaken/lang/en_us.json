@@ -72,7 +72,5 @@
   "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed its rings by rope.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
-  "block.awaken.spire_crown": "Spire Crown",
-  "awaken.ascent.way.gate.crown": "A gate has opened at the foot of what you climbed. It is a course, not a fight.",
-  "awaken.ascent.way.gate.here": "A gate has opened in front of you. It is a course, not a fight."
+  "block.awaken.spire_crown": "Spire Crown"
 }

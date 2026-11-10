@@ -170,8 +170,8 @@ final class AscentTrials {
             WayUp.gateOpened(p, id, at);
         }
         // with The Way Up it answers the climber's own deed, so it is said at once (a paced line can be filed unseen)
-        if (way) Signal.toast(p, Component.translatable(near != null ? "awaken.ascent.way.gate.crown" : "awaken.ascent.way.gate.here"),
-                dev.awaken.core.api.Notices.Tier.CRITICAL, "ascent_way");
+        if (way) WayUp.say(p, "A gate has opened for you", near != null ? "It stands at the foot of what you climbed. It is a course, not a fight."
+                : "It stands in front of you. It is a course, not a fight.");
         else Signal.toast(p, Component.translatable("awaken.ascent.trial.leaper.open"));
         DirectorLog.log(p, "ascent", "the Leaper's Gauntlet opens (gate " + id + ")");
         return id;

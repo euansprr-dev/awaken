@@ -360,16 +360,23 @@ public final class WayUp {
 
     private static void tell(ServerPlayer p, Rung r, BlockPos at) {
         String where = whereFrom(p, at);
-        String line = switch (r) {
-            case ROPE -> "A vault has lit up for the chain you're carrying. It's " + where + ".";
-            case WINGS -> "A sky platform has lit up for you. It's " + where + ". You climb its rings by rope.";
-            default -> null;
-        };
+        // a panel, never a toast: a toast holds two short lines and cuts the rest, and nothing is ever cut off (§57.6);
         // the leap's first row is told by the Tasks page alone: there is nothing to see light up yet
-        if (line != null) Signal.toast(p, Component.literal(line), dev.awaken.core.api.Notices.Tier.CRITICAL, "ascent_way");
+        switch (r) {
+            case ROPE -> say(p, "A vault has lit up for you", "It wants the chain you're carrying. It's " + where + ".");
+            case WINGS -> say(p, "A sky platform has lit up for you", "It's " + where + ". You climb its rings by rope.");
+            default -> { }
+        }
         Progression.markNewThing(p, "way " + r.name().toLowerCase(java.util.Locale.ROOT));
         DirectorLog.log(p, "ascent", "the way up: " + r + " wakes at " + at.toShortString() + " (" + where + ")");
         dev.awaken.Awaken.LOG.info("[ascent] the way up: {} wakes for {} at {} ({})", r, p.getPlainTextName(), at.toShortString(), where);
+    }
+
+    /** One of the road's own lines: said at once, whole, for twelve seconds (the director files a paced line that waits). */
+    static void say(ServerPlayer p, String title, String body) {
+        Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal(title))
+                .body(Component.literal(body)).presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL)
+                .tier(dev.awaken.core.api.Notices.Tier.CRITICAL).topic("ascent_way").ttl(20 * 12).build());
     }
 
     // ---- the Tasks row and the Now line ------------------------------------------------------------------------------

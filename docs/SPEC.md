@@ -21694,8 +21694,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   fight's own messages come first; then as a CRITICAL line, because the director files a paced line that has waited
   45 s and this one must be seen (neither built tour's shots caught it while it was IMPORTANT). The gate at a crown's
   foot is said the same way.
-- **Told:** one toast ("A vault has lit up for the chain you're carrying. It's 310 blocks east of here."; "A sky platform
-  has lit up for you. It's … You climb its rings by rope."), `NowHooks` for ten minutes with its needle (priority 60), and
+- **Told:** one System panel, title and body, twelve seconds (`WayUp.say`: "A vault has lit up for you" · "It wants the
+  chain you're carrying. It's 310 blocks east of here."; "A sky platform has lit up for you" · "It's … You climb its
+  rings by rope."; a toast cut the same words off after two short lines, §57.6), `NowHooks` for ten minutes with its needle (priority 60), and
   a thin beam of the rope's own light on the place, in the rank's colour, drawn from 24 to 1,400 blocks
   (`WayClient.onSubmit`). Fog takes everything past the view distance, so a beam further off than 0.55 of it is drawn
   nearer on the same line of sight, the whole of it scaled about the eye: it looks as it would from there, and may show
@@ -21706,7 +21707,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   (wings held, never opened). Nothing for flight or the form.
 - **The rope.** `TrialHooks.done(RINGER)` gives nothing; `TetherVow.ready` is D-rank at any vault's forecourt (its door's
   rank and whether it is open no longer matter; a ranked hunter is never stirred at for a sealed door).
-- **The leap.** `SpireCrownBlockEntity.reached` calls `WayUp.crownReached`: without the leap and with no gate opened yet,
+- **The leap.** `SpireCrownBlockEntity.reached` calls `WayUp.crownReached` once the climb is by the line, before the
+  crown's own stricter test (a third of the last 20 s in the air), which the pilot's eight-second climb failed in three
+  tours and a careful climber who stops to aim would fail too: without the leap and with no gate opened yet,
   `AscentTrials.openLeaper(p, near)` opens the Gauntlet 9 out from the crown's column at the plaza's height, toward where
   the climber stands. Either way in (a crown, or Tether mastery 4 as before) the gate's id and place go on the road; if
   its record is gone when the player is within 96 blocks it is opened again there. *Differs:* the row's needle is the
