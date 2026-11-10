@@ -62,7 +62,7 @@ KINDS = [
     ("precursor", "keep", "Good", "its blade is light", "untouched", ""),
     ("gauntlets", "keep", "Good", "it is armour", "untouched", ""),
 ]
-SWORDLIKE = ("longsword", "katana", "greatblade", "shieldblade", "daggers", "twinblades", "rapier", "scythe")
+SCREEN = ("longsword", "katana", "greatblade", "shieldblade", "daggers", "rapier")  # held edge ahead: the width on screen is the thickness you see
 UNCHANGED = ("maul", "warstaff", "precursor", "gauntlets")
 
 
@@ -82,17 +82,17 @@ def grades(M):
     rows = []
     for kind, cls, verdict, today, prop, _ in KINDS:
         name = AW.STYLES[kind][0]
-        if kind in SWORDLIKE:
+        if kind in SCREEN:
             ids = [r[0] for r in AW.CATALOG if r[8] == kind and r[0] not in AW.LORD_COLOUR and r[0] != "beastbound_rapier"]
-            pcts = [round((M[i][1] / M[i][0] - 1) * 100) for i in ids if i in M and M[i][0]]
+            thin = [round((1 - M[i][1] / M[i][0]) * 100) for i in ids if i in M and M[i][0]]
             c = M.get("gatewrought_" + kind)
-            lo, hi = min(pcts), max(pcts)
-            rng = f"{lo}%" if lo == hi else f"{hi}% to {lo}%"
-            screen = f"{c[0]} → {c[1]} px<br><span class=\"muted\">{rng} across the six</span>"
+            lo, hi = min(thin), max(thin)
+            rng = f"up to {hi}% thinner" if lo <= 1 else (f"{hi}% thinner" if lo == hi else f"{lo}% to {hi}% thinner")
+            screen = f"{c[0]} → {c[1]} px<br><span class=\"muted\">{rng} across the six ranks</span>"
         elif kind in UNCHANGED:
             screen = "no change"
         else:
-            screen = "<span class=\"muted\">the head changes, not the haft</span>"
+            screen = "<span class=\"muted\">about the same width: the edge and the point change</span>"
         rows.append(f"        <tr><td><b>{name}</b></td><td><span class=\"v {cls}\">{verdict}</span></td><td class=\"n\">{today}</td>"
                     f"<td class=\"n\">{prop}</td><td class=\"n\">{screen}</td></tr>")
     return "\n".join(rows)
@@ -180,6 +180,9 @@ def main(argv):
     page = page.replace("<!--LS_TODAY-->", str(ls[0])).replace("<!--VANILLA-->", str(vanilla))
     page = page.replace("<!--GRADES-->", grades(M)).replace("<!--GALLERY-->", gallery())
     before, after = (argv + [None, None])[:2]
+    early = ('\n  <p class="muted">These shots are of an earlier cut of the drafts: its points run one texel longer than the plan\'s, its Katana two, '
+             'and its Sovereign Greatblade has a longer point. The four-view pictures further down are the plan as proposed. The tour of '
+             'the final drafts is waiting in GitHub\'s queue and I will swap its shots in here when it comes back.</p>') if "early" in argv else ""
     ingame = before_fig = real = ""
     if before and os.path.isdir(before):
         three = [shot(before, n, "found", (0.42, 0.0, 1.0, 1.0), 560) for n in ("fp_longsword", "fp_greatblade", "fp_katana")]
@@ -194,7 +197,7 @@ def main(argv):
             ingame = f'''<section>
   <span class="eyebrow">In the real game</span>
   <h2>The same tour, today and with the drafts</h2>
-  <p>I ran one look tour twice on GitHub's machines: once on the build as it stands, once on a throwaway branch with the draft models written over the game's. Same world, same camera, same script. The throwaway branch is never merged.</p>
+  <p>I ran one look tour twice on GitHub's machines: once on the build as it stands, once on a throwaway branch with the draft models written over the game's. Same world, same camera, same script. The throwaway branch is never merged.</p>{early}
   <h3>First person, at rest</h3>
 {fp}
   <h3>Third person, from the front</h3>
