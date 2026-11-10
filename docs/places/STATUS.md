@@ -1,5 +1,14 @@
 # Places: where they stand (10 Nov 2026)
 
+> **After four rounds of game pictures, 12 Nov (SPEC §64.3, §64.9; the Long World is §64 now, build took 62 and 63).**
+> 157 pictures looked at. Nine faults in how any monument is written into the land, all fixed: the five below, then the
+> Sleepers' Hall's fifty lawn pits (its own moss mats in the ground), leaves left in the air (a tree is felled whole
+> now), a planted tree's crown left by a village road (scene trees get living leaves), and the tours' own crashes (the
+> view command searched on the server thread). Made-land check on 23: no holes, hanging leaf clusters 16 where there
+> were 123. Count unchanged, 263 of 51 kinds. A road crosses the ground of 3 of the 23: the fix is the village road
+> planner's (`finds.api.Monuments.near` in its `Keep`), not done. Page version 5, with the game's pictures:
+> https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z . A fifth round of tours is queued to confirm the last two fixes.
+
 > **After the first game pictures, 11 Nov (SPEC §64.3 "Clear of what else stands there", "Writing it into the land",
 > "Snow"; §64.9).** Three of the four placement tours came back (39 pictures; the fourth lost its GPU on the runner).
 > Most monuments sat well; five things were wrong in how any monument is written into the land, all fixed: snow lay in
