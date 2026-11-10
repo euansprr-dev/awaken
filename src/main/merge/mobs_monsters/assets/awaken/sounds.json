@@ -2775,5 +2775,590 @@
       }
     ],
     "subtitle": "subtitles.awaken.monster.the_lamplighter.step"
+  },
+  "monster.rime_acolyte.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:entity.stray.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.rime_acolyte.ambient"
+  },
+  "monster.rime_acolyte.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.stray.hurt",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.rime_acolyte.hurt"
+  },
+  "monster.rime_acolyte.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.stray.death",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.rime_acolyte.death"
+  },
+  "monster.rime_acolyte.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.powder_snow.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.rime_acolyte.step"
+  },
+  "monster.hail_stray.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.stray.ambient",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block.wool.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hail_stray.ambient"
+  },
+  "monster.hail_stray.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.stray.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hail_stray.hurt"
+  },
+  "monster.hail_stray.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.stray.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hail_stray.death"
+  },
+  "monster.hail_stray.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.snow.step",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hail_stray.step"
+  },
+  "monster.frost_wisp.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:entity.breeze.idle_air",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.frost_wisp.ambient"
+  },
+  "monster.frost_wisp.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block.amethyst_cluster.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.frost_wisp.hurt"
+  },
+  "monster.frost_wisp.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:block.amethyst_cluster.break",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.frost_wisp.death"
+  },
+  "monster.ice_hound.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.aggro",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.glass.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ice_hound.ambient"
+  },
+  "monster.ice_hound.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ice_hound.hurt"
+  },
+  "monster.ice_hound.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ice_hound.death"
+  },
+  "monster.ice_hound.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ice_hound.step"
+  },
+  "monster.chant_master.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:event.raid.horn",
+        "type": "event",
+        "volume": 0.12,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.wool.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.chant_master.ambient"
+  },
+  "monster.chant_master.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.stray.hurt",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.copper.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.chant_master.hurt"
+  },
+  "monster.chant_master.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.stray.death",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.copper.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.chant_master.death"
+  },
+  "monster.chant_master.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.snow.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.chant_master.step"
+  },
+  "monster.the_yeti.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.ambient",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.ravager.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_yeti.ambient"
+  },
+  "monster.the_yeti.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.hurt",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_yeti.hurt"
+  },
+  "monster.the_yeti.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.death",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_yeti.death"
+  },
+  "monster.the_yeti.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.polar_bear.step",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_yeti.step"
+  },
+  "monster.silver_knight.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.chain.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.silver_knight.ambient"
+  },
+  "monster.silver_knight.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:block.iron.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.silver_knight.hurt"
+  },
+  "monster.silver_knight.death": {
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_netherite",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.iron.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.silver_knight.death"
+  },
+  "monster.silver_knight.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.iron.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.silver_knight.step"
+  },
+  "monster.glint_mite.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.8
+      },
+      {
+        "name": "minecraft:entity.endermite.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glint_mite.ambient"
+  },
+  "monster.glint_mite.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.6
+      },
+      {
+        "name": "minecraft:entity.endermite.hurt",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glint_mite.hurt"
+  },
+  "monster.glint_mite.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:entity.endermite.death",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glint_mite.death"
+  },
+  "monster.glint_mite.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.endermite.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glint_mite.step"
+  },
+  "monster.glass_duelist.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block.glass.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glass_duelist.ambient"
+  },
+  "monster.glass_duelist.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block.amethyst_cluster.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glass_duelist.hurt"
+  },
+  "monster.glass_duelist.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.amethyst_cluster.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glass_duelist.death"
+  },
+  "monster.glass_duelist.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.step",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.glass_duelist.step"
+  },
+  "monster.the_unblinking.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:entity.enderman.stare",
+        "type": "event",
+        "volume": 0.15,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_unblinking.ambient"
+  },
+  "monster.the_unblinking.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.hit",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_unblinking.hurt"
+  },
+  "monster.the_unblinking.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block.wood.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_unblinking.death"
+  },
+  "monster.the_unblinking.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_unblinking.step"
   }
 }

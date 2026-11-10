@@ -218,17 +218,17 @@ final class GateBestiary {
     }
 
     private static void frostMonastery(List<MobDef> out) {
-        out.add(m("rime_acolyte", "Rime Acolyte", Theme.FROST, Tier.NORMAL, Model.PILLAGER, "Frost Palm: a cold shove that slows").hp(20).dmg(3.5).spd(0.26).traits(SLOW_TOUCH)
+        out.add(m("rime_acolyte", "The Frozen Monk", Theme.FROST, Tier.NORMAL, Model.PILLAGER, "A kneeling figure frozen in a block of ice that slides at you, one great palm out; the palm draws back before the shove").hp(20).dmg(3.5).spd(0.26).traits(SLOW_TOUCH).rig().size(0.8F, 1.0F).open(26).fall(24)
                 .ab(a(GUST, "Frost Palm").radius(3).power(0.8F).bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 60, 1)).build());
-        out.add(m("hail_stray", "Hail Stray", Theme.FROST, Tier.NORMAL, Model.STRAY, "Hail Volley: three chilling arrows").hp(18).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED)
+        out.add(m("hail_stray", "The Hail Slinger", Theme.FROST, Tier.NORMAL, Model.STRAY, "A small thing with one arm twice as long as itself; the long arm whips right round behind it before it throws").hp(18).dmg(3).spd(0.24).traits(RANGED).rig().size(0.6F, 1.1F).open(22).fall(22)
                 .ab(a(ARROWS, "Hail Volley").n(3).fx(MobEffects.SLOWNESS, 60, 0)).build());
-        out.add(m("frost_wisp", "Frost Wisp", Theme.FROST, Tier.NORMAL, Model.BREEZE, "Blizzard Bolts on the wind").hp(16).dmg(3).spd(0.28).tint(0xC0E8FF).traits(RANGED)
+        out.add(m("frost_wisp", "The Snow Star", Theme.FROST, Tier.NORMAL, Model.BREEZE, "A six-pointed crystal that turns in the air; its points fly off as bolts and grow back").hp(16).dmg(3).spd(0.28).traits(RANGED).rig().moves(Model.Move.FLY).size(0.9F, 0.9F).open(22)
                 .ab(a(BOLT, "Blizzard Bolt").n(2).bolt(BoltKind.FROST), a(GUST, "Gale").radius(4).power(0.3F)).build());
-        out.add(m("ice_hound", "Ice Hound", Theme.FROST, Tier.NORMAL, Model.SNOW_WOLF, "Ice Pounce; its bite slows").hp(16).dmg(3).spd(0.35).traits(SLOW_TOUCH)
+        out.add(m("ice_hound", "The Ice Hound", Theme.FROST, Tier.NORMAL, Model.SNOW_WOLF, "A lean hound of clear ice, its spine showing through; a pounce that misses skids on past you").hp(16).dmg(3).spd(0.35).traits(SLOW_TOUCH).rig().size(0.7F, 1.2F).miss(34).fall(20)
                 .ab(a(LEAP, "Ice Pounce").radius(1.8F).bolt(BoltKind.FROST)).build());
-        out.add(m("chant_master", "Chant Master", Theme.FROST, Tier.ELITE, Model.EVOKER, "Chants up a wisp; ice spikes under your feet").hp(24).dmg(4).spd(0.25).tint(0xC8E8FF).traits(RANGED)
+        out.add(m("chant_master", "The Long Horn", Theme.FROST, Tier.ELITE, Model.EVOKER, "A temple horn longer than its bearer is tall: it comes up to sound, and while it is up the bearer under it has no guard").hp(24).dmg(4).spd(0.25).traits(RANGED).rig().size(0.8F, 1.7F).stopped().open(26).fall(28)
                 .ab(a(SUMMON, "Chant").summon("frost_wisp").n(1), a(NOVA, "Frost Nova").n(10).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(3).bolt(BoltKind.FROST)).build());
-        out.add(m("the_yeti", "The Yeti", Theme.FROST, Tier.WARDEN, Model.POLAR_BEAR, "Avalanche Slam and freezing breath").hp(38).dmg(7).spd(0.3).scale(1.4F).traits(HUNTER)
+        out.add(m("the_yeti", "The Yeti", Theme.FROST, Tier.WARDEN, Model.POLAR_BEAR, "Huge in front and small behind, its fur full of icicles and frozen prayer flags; it rises on its hind legs before the slam, and its breath slows you").hp(38).dmg(7).spd(0.3).traits(HUNTER).rig().size(1.6F, 2.2F).open(30).miss(30).fall(40)
                 .ab(a(SLAM, "Avalanche Slam").radius(4).bolt(BoltKind.FROST).heavy(), a(CHARGE, "Snow Charge"), a(CONE, "Frost Breath").bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 60, 2)).build());
         out.add(m("abbot_of_frost", "The Abbot of Frost", Theme.FROST, Tier.LORD, Model.EVOKER, "Frost Hymns and Ice Spikes; the choir joins; then the Glacial Vow").hp(86.5).dmg(4.3).spd(0.25).scale(1.9F).size(0.9F, 2.0F).tint(0xD8F0FF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Chanting above a sea of clouds.")
@@ -241,13 +241,13 @@ final class GateBestiary {
     private static void mirrorPalace(List<MobDef> out) {
         out.add(m("mirror_shade", "Mirror Shade", Theme.MIRROR, Tier.NORMAL, Model.MIMIC, "Wears your face and steps out behind you").hp(18).dmg(3.5).spd(0.28).traits(MIMIC, HAUNTED)
                 .ab(a(BLINK, "Behind You")).build());
-        out.add(m("silver_knight", "Silver Knight", Theme.MIRROR, Tier.NORMAL, Model.ZOMBIE, "Parries: raises its blade, then punishes the swing").hp(22).dmg(4).spd(0.24).armor(4).tint(0xD8E0F0).hold(Items.IRON_SWORD).wear(EquipmentSlot.CHEST, Items.IRON_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.IRON_HELMET)
+        out.add(m("silver_knight", "The Empty Suit", Theme.MIRROR, Tier.NORMAL, Model.ZOMBIE, "A suit of mirror plate with nobody in it, the plates hanging a little apart; its shield is a mirror with you in it, and it parries: wait for its own swing").hp(22).dmg(4).spd(0.24).armor(4).rig().size(0.8F, 1.9F).fall(26)
                 .ab(a(GUARD, "Parry")).build());
-        out.add(m("glint_mite", "Glint Mite", Theme.MIRROR, Tier.NORMAL, Model.ENDERMITE, "Jumps from reflection to reflection").hp(8).dmg(2).spd(0.33).scale(2.2F)
+        out.add(m("glint_mite", "The Glint", Theme.MIRROR, Tier.NORMAL, Model.ENDERMITE, "A shard of mirror on six needle legs, thin as a blade edge-on; it jumps from one reflection to the next").hp(8).dmg(2).spd(0.33).rig().size(0.6F, 0.9F).fall(18)
                 .ab(a(BLINK, "Glint").power(0.8F).cd(90)).build());
-        out.add(m("glass_duelist", "Glass Duelist", Theme.MIRROR, Tier.ELITE, Model.SKELETON, "Ripostes your blows and sends your arrows back").hp(24).dmg(5).spd(0.28).hold(Items.IRON_SWORD).traits(REFLECT)
+        out.add(m("glass_duelist", "The Glass Duelist", Theme.MIRROR, Tier.ELITE, Model.SKELETON, "A fencer of clear glass with one arm far longer than the other: it answers every blow you land badly, and a lunge that misses leaves it stretched out").hp(24).dmg(5).spd(0.28).traits(REFLECT).rig().size(0.7F, 2.0F).miss(30).fall(26)
                 .ab(a(GUARD, "Riposte"), a(CHARGE, "Mirror Lunge")).build());
-        out.add(m("the_unblinking", "The Unblinking", Theme.MIRROR, Tier.WARDEN, Model.ENDERMAN, "Never blinks: teleports when you look away, gaze like a blade").hp(34).dmg(6.5).spd(0.3).scale(1.2F).tint(0xE0E8F8).traits(HUNTER)
+        out.add(m("the_unblinking", "The Unblinking", Theme.MIRROR, Tier.WARDEN, Model.ENDERMAN, "A tall standing mirror on clawed feet, one eye filling the glass; it moves when you look away, and its gaze cuts in a line: the eye narrows first").hp(34).dmg(6.5).spd(0.3).traits(HUNTER).rig().size(1.1F, 2.4F).open(28).fall(32)
                 .ab(a(BLINK, "Never Blinks"), a(BEAM, "Silver Gaze").bolt(BoltKind.GLASS), a(DECOY, "Reflections").n(2)).build());
         out.add(m("mirror_knight", "The Mirror Knight", Theme.MIRROR, Tier.LORD, Model.MIMIC, "Wears your face, parries perfectly, splits into reflections").hp(116.4).dmg(2.38).spd(0.28).scale(1.9F).size(0.6F, 1.8F).hold(Items.DIAMOND_SWORD).wear(EquipmentSlot.CHEST, Items.DIAMOND_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.DIAMOND_HELMET).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(22)
                 .intro("Footsteps that match yours.")

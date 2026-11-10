@@ -49,6 +49,16 @@
     "pickpocket": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 4, "flick": 2, "settle": 1}, "headSpeed": 7.0, "springHz": 2.6, "arms": 0.0},
     "wick_slime": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.4, "springGain": 1.6},
     "masked_duelist": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 3, "settle": 2}, "arms": 0.2, "headSpeed": 5.0, "springHz": 2.0},
-    "the_lamplighter": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 3, "settle": 2}, "mass": 2.0, "arms": 0.2, "headSpeed": 3.5, "springHz": 1.2, "springGain": 1.4}
+    "the_lamplighter": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 3, "settle": 2}, "mass": 2.0, "arms": 0.2, "headSpeed": 3.5, "springHz": 1.2, "springGain": 1.4},
+    "rime_acolyte": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "arms": 0.0, "bob": 0.0, "sway": 0.3, "mass": 2.4},
+    "hail_stray": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 4, "settle": 1}, "arms": 0.2, "headSpeed": 6.0, "springHz": 2.2},
+    "frost_wisp": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}},
+    "ice_hound": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 3, "sniff": 2, "flick": 2, "stretch": 1}, "springHz": 2.6},
+    "chant_master": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 2, "settle": 2}, "arms": 0.0, "mass": 1.6, "springHz": 1.4, "springGain": 1.3},
+    "the_yeti": {"blink": [0, 0], "temperament": "beast", "idles": {"look": 3, "sniff": 1, "shake": 1, "settle": 2}, "mass": 3.6, "springHz": 1.2, "springGain": 1.3},
+    "silver_knight": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"look": 3, "settle": 2}, "arms": 0.2, "mass": 1.6, "springHz": 1.6},
+    "glint_mite": {"blink": [0, 0], "temperament": "insect", "breathDepth": 0.0, "idles": {"settle": 2, "flick": 1}},
+    "glass_duelist": {"blink": [0, 0], "temperament": "hunter", "breathDepth": 0.0, "idles": {"look": 3, "settle": 2}, "arms": 0.0, "headSpeed": 5.0, "springHz": 2.2},
+    "the_unblinking": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "mass": 2.4, "springHz": 1.2}
   }
 }
