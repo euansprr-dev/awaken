@@ -1,11 +1,15 @@
-# Movement as it plays today (the movement plan's audit, docs/movement/PLAN.md): the rope among ordinary trees (what
-# most of the overworld offers), in the sandbox's lane of giant trees and its city street (the rope at its best), then
-# the wings from behind, from the front and in first person: a glide, flight, the gift's scene and the Sovereign's gold.
-# Shots only; the log's [ascent] trace says what each rope did (swing, zip, miss).
+# Movement as it plays today (the movement plan's audit, docs/movement/PLAN.md): the rope in a real forest (what most
+# of the overworld offers), in the sandbox's lane of giant trees and its street (the rope at its best), then the wings
+# from behind, from the front and in first person: a glide, a dive, flight, the gift's scene, the Sovereign's gold.
+# Shots only; the log's [ascent] trace says what each rope did (swing, zip, miss, refused).
+# Look tour: tools/tour-ci.sh tools/autopilot/movement-now.txt 2400
 # ci knobs: LENS=cinematic
-world movement_now survival 4242
+world movement_now survival 4261
 waitworld
-window 1440 900
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
 gui 0
 hud off
 info
@@ -22,101 +26,20 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# the floor for the sandbox, far from the city, loaded while the forest part runs
+cmd forceload add 1968 -256 2047 255
 
-# ---- floor A (x -30..30): ordinary trees at their real sizes ----
-cmd tp @s 0.5 152 60.5 0 0
-wait 120
-cmd fill -30 150 -12 30 150 250 minecraft:grass_block
-cmd tp @s 0.5 151 60.5 0 0
-wait 10
-cmd place feature minecraft:oak 5 151 14
-cmd place feature minecraft:birch -6 151 18
-cmd place feature minecraft:oak 11 151 16
-cmd place feature minecraft:spruce -10 151 20
-cmd place feature minecraft:oak 16 151 19
-cmd place feature minecraft:birch -18 151 15
-cmd place feature minecraft:fancy_oak 6 151 22
-cmd place feature minecraft:pine -6 151 26
-cmd place feature minecraft:oak 11 151 24
-cmd place feature minecraft:birch -10 151 28
-cmd place feature minecraft:dark_oak 16 151 27
-cmd place feature minecraft:spruce -16 151 23
-cmd place feature minecraft:oak 4 151 30
-cmd place feature minecraft:birch -6 151 34
-cmd place feature minecraft:oak 10 151 32
-cmd place feature minecraft:spruce -11 151 36
-cmd place feature minecraft:oak 17 151 35
-cmd place feature minecraft:birch -18 151 31
-cmd place feature minecraft:fancy_oak 4 151 38
-cmd place feature minecraft:pine -6 151 42
-cmd place feature minecraft:oak 12 151 40
-cmd place feature minecraft:birch -11 151 44
-cmd place feature minecraft:dark_oak 16 151 43
-cmd place feature minecraft:spruce -16 151 39
-cmd place feature minecraft:oak 4 151 46
-cmd place feature minecraft:birch -6 151 50
-cmd place feature minecraft:oak 12 151 48
-cmd place feature minecraft:spruce -10 151 52
-cmd place feature minecraft:oak 18 151 51
-cmd place feature minecraft:birch -18 151 47
-cmd place feature minecraft:fancy_oak 6 151 54
-cmd place feature minecraft:pine -4 151 58
-cmd place feature minecraft:oak 11 151 56
-cmd place feature minecraft:birch -12 151 60
-cmd place feature minecraft:dark_oak 16 151 59
-cmd place feature minecraft:spruce -18 151 55
-cmd place feature minecraft:oak 6 151 62
-cmd place feature minecraft:birch -6 151 66
-cmd place feature minecraft:oak 11 151 64
-cmd place feature minecraft:spruce -11 151 68
-cmd place feature minecraft:oak 16 151 67
-cmd place feature minecraft:birch -16 151 63
-cmd place feature minecraft:fancy_oak 4 151 70
-cmd place feature minecraft:pine -4 151 74
-cmd place feature minecraft:oak 11 151 72
-cmd place feature minecraft:birch -10 151 76
-cmd place feature minecraft:dark_oak 18 151 75
-cmd place feature minecraft:spruce -18 151 71
-cmd place feature minecraft:oak 4 151 78
-cmd place feature minecraft:birch -4 151 82
-cmd place feature minecraft:oak 12 151 80
-cmd place feature minecraft:spruce -10 151 84
-cmd place feature minecraft:oak 16 151 83
-cmd place feature minecraft:birch -17 151 79
-cmd place feature minecraft:fancy_oak 4 151 86
-cmd place feature minecraft:pine -4 151 90
-cmd place feature minecraft:oak 12 151 88
-cmd place feature minecraft:birch -12 151 92
-cmd place feature minecraft:dark_oak 18 151 91
-cmd place feature minecraft:spruce -18 151 87
-cmd place feature minecraft:oak 6 151 94
-cmd place feature minecraft:birch -6 151 98
-cmd place feature minecraft:oak 11 151 96
-cmd place feature minecraft:spruce -10 151 100
-cmd place feature minecraft:oak 18 151 99
-cmd place feature minecraft:birch -17 151 95
-cmd place feature minecraft:fancy_oak 5 151 102
-cmd place feature minecraft:pine -5 151 106
-cmd place feature minecraft:oak 12 151 104
-cmd place feature minecraft:birch -11 151 108
-cmd place feature minecraft:dark_oak 17 151 107
-cmd place feature minecraft:spruce -17 151 103
-cmd place feature minecraft:oak 4 151 110
-cmd place feature minecraft:birch -6 151 114
-cmd place feature minecraft:oak 12 151 112
-cmd place feature minecraft:spruce -12 151 116
-cmd place feature minecraft:oak 16 151 115
-cmd place feature minecraft:birch -16 151 111
-wait 20
+# ---- a real forest: sprint, jump, hold the rope ----
 cmd awaken ascent grant none
 cmd awaken ascent grant tether
-
-# the rope in an ordinary wood, third person: sprint, jump, hold the rope, six times
+cmd awaken terrain visit minecraft:forest
+wait 300
+screen close
 camera back
-cmd tp @s 0.5 151 4.5 0 -12
-wait 30
+wait 10
 shotnow a_wood_tp_0_start
-cmd awaken ascent pilot hold forward,sprint 330
+cmd awaken ascent pilot hold forward,sprint 400
 wait 8
 cmd awaken ascent pilot hold jump 2
 wait 5
@@ -172,14 +95,12 @@ wait 12
 shotnow a_wood_tp_12
 wait 14
 cmd awaken ascent pilot stop
-wait 20
-# the same, first person
+wait 30
 camera first
 hud on
-cmd tp @s 0.5 151 4.5 0 -12
-wait 30
+wait 10
 shotnow a_wood_fp_0_start
-cmd awaken ascent pilot hold forward,sprint 330
+cmd awaken ascent pilot hold forward,sprint 400
 wait 8
 cmd awaken ascent pilot hold jump 2
 wait 5
@@ -216,161 +137,71 @@ shotnow a_wood_fp_7
 wait 12
 shotnow a_wood_fp_8
 wait 14
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 34
-wait 10
-shotnow a_wood_fp_9
-wait 12
-shotnow a_wood_fp_10
-wait 14
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 34
-wait 10
-shotnow a_wood_fp_11
-wait 12
-shotnow a_wood_fp_12
-wait 14
 cmd awaken ascent pilot stop
-wait 20
+wait 30
 hud off
 
-# ---- floor B (x 170..230): the sandbox's giant trees and its street ----
-cmd tp @s 200.5 152 -120.5 0 0
+# ---- the sandbox on a floor at y 150: the lane of giant trees and the street ----
+cmd tp @s 2000.5 152 0.5 0 0
+wait 200
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
 wait 120
-cmd fill 170 150 -250 230 150 -12 minecraft:grass_block
-cmd tp @s 200.5 152 60.5 0 0
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
 wait 120
-cmd fill 170 150 -12 230 150 250 minecraft:grass_block
-cmd tp @s 200.5 151 0.5 0 0
-wait 10
+cmd tp @s 2000.5 151 0.5 0 0
+wait 20
 cmd awaken ascent grant all
 cmd awaken ascent sandbox
 wait 200
 screen close
-cmd fill 197 290 -3 203 290 3 minecraft:polished_deepslate
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
 
-# the lane of giant trees with the rope held (the assisted chain), third person then first
+# the lane with the rope held (the assisted chain), third person then first
 camera back
-cmd tp @s 200.5 151 5.5 0 -10
+cmd tp @s 2000.5 151 5.5 0 -10
 wait 30
-cmd awaken ascent pilot hold forward,sprint 216
+cmd awaken ascent pilot hold forward,sprint 208
 wait 10
 cmd awaken ascent pilot hold jump 2
 wait 5
-cmd awaken ascent pilot hold tether 196
-wait 11
+cmd awaken ascent pilot hold tether 188
+wait 12
 shotnow b_lane_tp_00
-wait 11
+wait 12
 shotnow b_lane_tp_01
-wait 11
+wait 12
 shotnow b_lane_tp_02
-wait 11
+wait 12
 shotnow b_lane_tp_03
-wait 11
+wait 12
 shotnow b_lane_tp_04
-wait 11
+wait 12
 shotnow b_lane_tp_05
-wait 11
+wait 12
 shotnow b_lane_tp_06
-wait 11
+wait 12
 shotnow b_lane_tp_07
-wait 11
+wait 12
 shotnow b_lane_tp_08
-wait 11
+wait 12
 shotnow b_lane_tp_09
-wait 11
+wait 12
 shotnow b_lane_tp_10
-wait 11
+wait 12
 shotnow b_lane_tp_11
-wait 11
+wait 12
 shotnow b_lane_tp_12
-wait 11
+wait 12
 shotnow b_lane_tp_13
-wait 11
-shotnow b_lane_tp_14
-wait 11
-shotnow b_lane_tp_15
 cmd awaken ascent pilot stop
 wait 40
 camera first
 hud on
-cmd tp @s 200.5 151 5.5 0 -10
-wait 30
-cmd awaken ascent pilot hold forward,sprint 144
-wait 10
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 124
-wait 13
-shotnow b_lane_fp_00
-wait 13
-shotnow b_lane_fp_01
-wait 13
-shotnow b_lane_fp_02
-wait 13
-shotnow b_lane_fp_03
-wait 13
-shotnow b_lane_fp_04
-wait 13
-shotnow b_lane_fp_05
-wait 13
-shotnow b_lane_fp_06
-wait 13
-shotnow b_lane_fp_07
-cmd awaken ascent pilot stop
-wait 40
-hud off
-
-# the street (towers 22-39 high either side), the rope held
-camera back
-cmd tp @s 200.5 151 -6.5 180 -10
-wait 30
-cmd awaken ascent pilot hold forward,sprint 216
-wait 10
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 196
-wait 11
-shotnow c_street_tp_00
-wait 11
-shotnow c_street_tp_01
-wait 11
-shotnow c_street_tp_02
-wait 11
-shotnow c_street_tp_03
-wait 11
-shotnow c_street_tp_04
-wait 11
-shotnow c_street_tp_05
-wait 11
-shotnow c_street_tp_06
-wait 11
-shotnow c_street_tp_07
-wait 11
-shotnow c_street_tp_08
-wait 11
-shotnow c_street_tp_09
-wait 11
-shotnow c_street_tp_10
-wait 11
-shotnow c_street_tp_11
-wait 11
-shotnow c_street_tp_12
-wait 11
-shotnow c_street_tp_13
-wait 11
-shotnow c_street_tp_14
-wait 11
-shotnow c_street_tp_15
-cmd awaken ascent pilot stop
-wait 40
-camera first
-hud on
-cmd tp @s 200.5 151 -6.5 180 -10
+cmd tp @s 2000.5 151 5.5 0 -10
 wait 30
 cmd awaken ascent pilot hold forward,sprint 124
 wait 10
@@ -378,245 +209,267 @@ cmd awaken ascent pilot hold jump 2
 wait 5
 cmd awaken ascent pilot hold tether 104
 wait 14
+shotnow b_lane_fp_00
+wait 14
+shotnow b_lane_fp_01
+wait 14
+shotnow b_lane_fp_02
+wait 14
+shotnow b_lane_fp_03
+wait 14
+shotnow b_lane_fp_04
+wait 14
+shotnow b_lane_fp_05
+cmd awaken ascent pilot stop
+wait 40
+hud off
+
+# the street (towers 22-39 high either side), the rope held
+camera back
+cmd tp @s 2000.5 151 -6.5 180 -10
+wait 30
+cmd awaken ascent pilot hold forward,sprint 184
+wait 10
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 164
+wait 12
+shotnow c_street_tp_00
+wait 12
+shotnow c_street_tp_01
+wait 12
+shotnow c_street_tp_02
+wait 12
+shotnow c_street_tp_03
+wait 12
+shotnow c_street_tp_04
+wait 12
+shotnow c_street_tp_05
+wait 12
+shotnow c_street_tp_06
+wait 12
+shotnow c_street_tp_07
+wait 12
+shotnow c_street_tp_08
+wait 12
+shotnow c_street_tp_09
+wait 12
+shotnow c_street_tp_10
+wait 12
+shotnow c_street_tp_11
+cmd awaken ascent pilot stop
+wait 40
+camera first
+hud on
+cmd tp @s 2000.5 151 -6.5 180 -10
+wait 30
+cmd awaken ascent pilot hold forward,sprint 104
+wait 10
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 84
+wait 16
 shotnow c_street_fp_00
-wait 14
+wait 16
 shotnow c_street_fp_01
-wait 14
+wait 16
 shotnow c_street_fp_02
-wait 14
+wait 16
 shotnow c_street_fp_03
-wait 14
-shotnow c_street_fp_04
-wait 14
-shotnow c_street_fp_05
 cmd awaken ascent pilot stop
 wait 40
 hud off
 
 # ---- the wings: a glide off the high deck ----
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera back
 wait 40
 cmd awaken ascent pilot run glide
 wait 36
 shotnow d_glide_back_00
-wait 9
+wait 10
 shotnow d_glide_back_01
-wait 9
+wait 10
 shotnow d_glide_back_02
-wait 9
+wait 10
 shotnow d_glide_back_03
-wait 9
+wait 10
 shotnow d_glide_back_04
-wait 9
+wait 10
 shotnow d_glide_back_05
-wait 9
+wait 10
 shotnow d_glide_back_06
-wait 9
+wait 10
 shotnow d_glide_back_07
-wait 9
-shotnow d_glide_back_08
-wait 9
+wait 10
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera front
 wait 40
 cmd awaken ascent pilot run glide
 wait 40
 shotnow d_glide_front_00
-wait 10
+wait 11
 shotnow d_glide_front_01
-wait 10
+wait 11
 shotnow d_glide_front_02
-wait 10
+wait 11
 shotnow d_glide_front_03
-wait 10
+wait 11
 shotnow d_glide_front_04
-wait 10
-shotnow d_glide_front_05
-wait 10
+wait 11
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera first
 hud on
 wait 40
 cmd awaken ascent pilot run glide
 wait 40
 shotnow d_glide_fp_00
-wait 12
+wait 14
 shotnow d_glide_fp_01
-wait 12
+wait 14
 shotnow d_glide_fp_02
-wait 12
+wait 14
 shotnow d_glide_fp_03
-wait 12
-shotnow d_glide_fp_04
-wait 12
+wait 14
 hud off
 # a dive to the boom and the pull out
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera back
 wait 40
 cmd awaken ascent pilot run boom
 wait 50
 shotnow d_boom_back_00
-wait 12
+wait 14
 shotnow d_boom_back_01
-wait 12
+wait 14
 shotnow d_boom_back_02
-wait 12
+wait 14
 shotnow d_boom_back_03
-wait 12
+wait 14
 shotnow d_boom_back_04
-wait 12
+wait 14
 shotnow d_boom_back_05
-wait 12
-shotnow d_boom_back_06
-wait 12
-shotnow d_boom_back_07
-wait 12
+wait 14
 # flight: take off, cruise, boost, a banked turn, a hover
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera back
 wait 40
 cmd awaken ascent pilot run soar
 wait 34
 shotnow e_soar_back_00
-wait 13
+wait 15
 shotnow e_soar_back_01
-wait 13
+wait 15
 shotnow e_soar_back_02
-wait 13
+wait 15
 shotnow e_soar_back_03
-wait 13
+wait 15
 shotnow e_soar_back_04
-wait 13
+wait 15
 shotnow e_soar_back_05
-wait 13
+wait 15
 shotnow e_soar_back_06
-wait 13
+wait 15
 shotnow e_soar_back_07
-wait 13
+wait 15
 shotnow e_soar_back_08
-wait 13
+wait 15
 shotnow e_soar_back_09
-wait 13
+wait 15
 shotnow e_soar_back_10
-wait 13
+wait 15
 shotnow e_soar_back_11
-wait 13
+wait 15
 shotnow e_soar_back_12
-wait 13
+wait 15
 shotnow e_soar_back_13
-wait 13
-shotnow e_soar_back_14
-wait 13
-shotnow e_soar_back_15
-wait 13
+wait 15
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera front
 wait 40
 cmd awaken ascent pilot run soar
 wait 40
 shotnow e_soar_front_00
-wait 16
+wait 22
 shotnow e_soar_front_01
-wait 16
+wait 22
 shotnow e_soar_front_02
-wait 16
+wait 22
 shotnow e_soar_front_03
-wait 16
+wait 22
 shotnow e_soar_front_04
-wait 16
+wait 22
 shotnow e_soar_front_05
-wait 16
+wait 22
 shotnow e_soar_front_06
-wait 16
+wait 22
 shotnow e_soar_front_07
-wait 16
-shotnow e_soar_front_08
-wait 16
-shotnow e_soar_front_09
-wait 16
-shotnow e_soar_front_10
-wait 16
-shotnow e_soar_front_11
-wait 16
+wait 22
 cmd awaken ascent pilot stop
-cmd tp @s 200.5 291 -2.5 0 10
+cmd tp @s 2000.5 291 -2.5 0 10
 camera first
 hud on
 wait 40
 cmd awaken ascent pilot run soar
 wait 40
 shotnow e_soar_fp_00
-wait 22
+wait 28
 shotnow e_soar_fp_01
-wait 22
+wait 28
 shotnow e_soar_fp_02
-wait 22
+wait 28
 shotnow e_soar_fp_03
-wait 22
+wait 28
 shotnow e_soar_fp_04
-wait 22
+wait 28
 shotnow e_soar_fp_05
-wait 22
-shotnow e_soar_fp_06
-wait 22
-shotnow e_soar_fp_07
-wait 22
+wait 28
 hud off
 cmd awaken ascent pilot stop
 
 # ---- the wings up close: the gift's scene on the ground ----
-cmd tp @s 0.5 151 -6.5 0 0
+cmd tp @s 2000.5 151 4.5 0 0
 camera front
-wait 40
+wait 60
 cmd awaken ascent remember
-wait 36
+wait 34
 shotnow f_gift_front_00
-wait 9
+wait 10
 shotnow f_gift_front_01
-wait 9
+wait 10
 shotnow f_gift_front_02
-wait 9
+wait 10
 shotnow f_gift_front_03
-wait 9
+wait 10
 shotnow f_gift_front_04
-wait 9
+wait 10
 shotnow f_gift_front_05
-wait 9
-shotnow f_gift_front_06
-wait 9
-shotnow f_gift_front_07
-wait 9
-wait 60
-cmd tp @s 0.5 151 -6.5 0 0
+wait 10
+wait 80
+cmd tp @s 2000.5 151 4.5 0 0
 camera back
-wait 40
-cmd awaken ascent remember
-wait 36
-shotnow f_gift_back_00
-wait 9
-shotnow f_gift_back_01
-wait 9
-shotnow f_gift_back_02
-wait 9
-shotnow f_gift_back_03
-wait 9
-shotnow f_gift_back_04
-wait 9
-shotnow f_gift_back_05
-wait 9
-shotnow f_gift_back_06
-wait 9
-shotnow f_gift_back_07
-wait 9
 wait 60
+cmd awaken ascent remember
+wait 34
+shotnow f_gift_back_00
+wait 10
+shotnow f_gift_back_01
+wait 10
+shotnow f_gift_back_02
+wait 10
+shotnow f_gift_back_03
+wait 10
+shotnow f_gift_back_04
+wait 10
+shotnow f_gift_back_05
+wait 10
+wait 80
 
 # ---- the Sovereign: gold wings, the form's lift and its hover ----
 cmd awaken ascent grant sovereign
