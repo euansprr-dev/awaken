@@ -20,16 +20,30 @@ import realm_knell as KN  # noqa: E402
 
 RAMPS = dict(KN.RAMPS)
 RAMPS.update({
-    "heath": ["#4a3a52", "#62486e", "#7d5a8c", "#9a70a8", "#b78cc2", "#d2aedb"],
-    "heathdry": ["#8a8478", "#a39c8c", "#bab3a0", "#cfc8b4", "#e0dac8", "#efeadc"],
-    "stem": ["#3c4234", "#4c5440", "#5e684e", "#727c5e", "#879070", "#9ca584"],
-    "bent": ["#7c7a58", "#94916a", "#aba87c", "#c0bd90", "#d3d0a6", "#e4e1bf"],
-    "peat": ["#4a3e34", "#5c4d40", "#6f5d4d", "#82705c", "#96836d", "#aa9880"],
+    # look round 1: a dusty mauve over dark olive, dry straw that isn't white, peat that is brown
+    "heath": ["#4a3f4c", "#5c4e5e", "#6f5f72", "#837186", "#97859a", "#ab9aae"],
+    "heathdry": ["#6f6850", "#847c5f", "#99906f", "#ada480", "#bfb692", "#cfc7a5"],
+    "stem": ["#2f3425", "#3b412d", "#484f37", "#565d41", "#656c4d", "#747b59"],
+    "straw": ["#5e5638", "#726944", "#877d52", "#9b9161", "#aea472", "#c0b685"],
+    "bent": ["#6d6442", "#83794f", "#998e5e", "#ada26e", "#c0b580", "#d1c794"],
+    "peat": ["#3b2e23", "#4a3a2c", "#5a4736", "#6a5541", "#7b634d", "#8c725a"],
     "clay": ["#6a4a3a", "#825a46", "#9a6c54", "#b08064", "#c49678", "#d6ae90"],
     "cloth": ["#5a3230", "#70403c", "#874f48", "#9d6056", "#b27466", "#c58a7a"],
     "grave": ["#4c8a6a", "#62a882", "#7cc49a", "#9cdcb4", "#c0f0d0", "#e4ffee"],
     "board": ["#5a4a3a", "#6e5b47", "#836d55", "#978064", "#ab9475", "#bea888"],
 })
+
+
+
+def _dim(name, f):
+    """A ramp taken down in brightness, hue kept: how the plants were brought to the tones look round 1 asks for."""
+    RAMPS[name] = ["#%02x%02x%02x" % tuple(min(255, int(int(h[i:i + 2], 16) * f)) for i in (1, 3, 5)) for h in RAMPS[name]]
+
+
+_dim("heath", 0.75)
+_dim("heathdry", 0.74)
+_dim("straw", 0.85)
+_dim("bent", 0.79)
 
 BLOCKS = {
     "barrow_heather": ("Barrow Heather", None),
@@ -53,9 +67,9 @@ def _P():
     return K.px(RAMPS)
 
 
-def tex_heather(P, flower, seed):
+def tex_heather(P, flower, seed, stem="stem"):
     """Knee-high sprigs: wiry stems that lean, flowers crowded up the top two thirds of each."""
-    st, fl = P.ramp("stem"), P.ramp(flower)
+    st, fl = P.ramp(stem), P.ramp(flower)
     rng = P.rng_for("heather", seed)
     c = P.Canvas(16, 16)
     for i in range(7):
@@ -185,7 +199,7 @@ def tex_sail(P):
 def textures():
     P = _P()
     return {
-        "barrow_heather": tex_heather(P, "heath", "h"), "barrow_heather_pale": tex_heather(P, "heathdry", "p"), "barrow_bent": tex_bent(P),
+        "barrow_heather": tex_heather(P, "heath", "h"), "barrow_heather_pale": tex_heather(P, "heathdry", "p", stem="straw"), "barrow_bent": tex_bent(P),
         "barrow_turf": tex_turf(P, False), "barrow_turf_top": tex_turf(P, True),
         "barrow_menhir_cap": KN.stained(P, KN.cut_block(P, "astone", "cap", lo=2, span=3, chips=6), "amoss", "cap", runs=3),
         "barrow_kerb": KN.cut_block(P, "apale", "kerb", lo=1, span=3, chips=5),
