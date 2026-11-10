@@ -20602,3 +20602,24 @@ south aisle in front of the reliquary's door, which is why you wait for the toll
 
 **A cache per herd.** When a fight's or an ambush's pack is all down, a gate cache appears where it stood (as a room's does in
 the old gates), with the cache sound and a burst of light.
+
+**Rolled crawls** (`kit/crawl/GeneratedCrawl`). A crawl whose run is rolled from the gate's seed, so one blueprint is a
+different dungeon every time it forms. Always: the way in, a fight in sight of it, two to five legs out of a bag (more fights,
+a gallery of spitters, a hall of three teeth, a shaft with a broken ledge and thin floor, and always one ambush), the Warden
+behind its door, the Lord behind the heart's door. Ways turn (they try up to seven headings and take the first that runs into
+nothing; galleries, halls and shafts keep to the four straight ways) and drop four to seven blocks each; a run with a shaft in
+it may climb three now and then. Every fight, ambush and Warden room has a door on each way out of it. A side cell off the first
+fight joins the way beyond it, so there is always a way round (and a find in it); a hidden cell goes off the ambush where there
+is room (two finds, and the hidden share of the pay). The same checks as a designed run prove every seed (test
+`realm_generated_crawls_play`, six seeds a skin).
+
+A **skin** is the land that extends it: rock, floors, the half step, the door, what grows on the walls (`adorn`), who lives
+there (a few herds it goes round, the ambush, the Warden's company), what its spitters, teeth and thin floor are made of, and
+how much it wanders (1 dug, 0 built). A new skin is a new kind of dungeon; its layouts come free. Skins so far:
+- **The Lower Combs** (`awaken:brood_burrow`, Hive): the Brood family, as The Broodwarren. Larvae and slimes, drones and a
+  guard, lurkers in the roof with larvae under them, slimes and drones; the Thousandfoot as Warden; the Hive Regent.
+- **The Bone Roads** (`awaken:catacombs`, Bell Crypt): the Knell family, built (clean round vaults, straight ways, coursed
+  stone with a band every six). Skulls in niches at head height, bone packed into the walls in patches, candles gathered along
+  the foot of every wall with a light over each cluster, a small bell on its rope here and there, bell ropes down every shaft.
+  Ghouls and archers, archers and wisps, Hushlings with a ghoul, wisps and a Crypt Keeper; the Sexton; the Bell Warden. Teeth of
+  pale stone, a bronze mouth that turns gilt before it spits, boards that give way.

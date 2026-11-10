@@ -78,9 +78,16 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     public static class Cave extends Part {
         public final int cx, cz, feet, height;
         public final double rx, rz;
+        /** How far the rim wanders in and out, as a share of the radius: about 0.16 for something dug, 0 for something built. */
+        public final double rim;
         final SimplexNoise n;
 
         public Cave(String name, int cx, int feet, int cz, double rx, double rz, int height, long seed) {
+            this(name, cx, feet, cz, rx, rz, height, 0.16, seed);
+        }
+
+        public Cave(String name, int cx, int feet, int cz, double rx, double rz, int height, double rim, long seed) {
+            this.rim = rim;
             this.name = name;
             this.cx = cx;
             this.cz = cz;
@@ -98,7 +105,7 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         /** How far out a column is: 0 at the middle, 1 at the rim. */
         public double out(int x, int z) {
             double dx = (x - cx) / rx, dz = (z - cz) / rz;
-            return Math.sqrt(dx * dx + dz * dz) / (1 + 0.16 * n.get(x / 7.0, z / 7.0));
+            return Math.sqrt(dx * dx + dz * dz) / (1 + rim * n.get(x / 7.0, z / 7.0));
         }
 
         @Override
@@ -109,7 +116,7 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         @Override
         public int roof(int x, int z) {
             double d = Math.min(1, out(x, z));
-            return feet + Math.max(3, 2 + (int) Math.round((height - 2) * Math.pow(1 - d * d, 0.55) + 1.1 * n.get(x / 4.0 + 40, z / 4.0)));
+            return feet + Math.max(3, 2 + (int) Math.round((height - 2) * Math.pow(1 - d * d, 0.55) + 1.1 * Math.min(1, rim * 8) * n.get(x / 4.0 + 40, z / 4.0)));
         }
     }
 
@@ -119,15 +126,13 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         final double turn;
 
         public Arena(String name, int cx, int feet, int cz, double r, int height, int pillars, long seed) {
-            super(name, cx, feet, cz, r, r, height, seed);
-            this.pillars = pillars;
-            turn = (seed & 63) / 64.0 * Math.PI;
+            this(name, cx, feet, cz, r, height, pillars, 0.06, seed);
         }
 
-        @Override
-        public double out(int x, int z) {
-            double dx = (x - cx) / rx, dz = (z - cz) / rz;
-            return Math.sqrt(dx * dx + dz * dz) / (1 + 0.06 * n.get(x / 7.0, z / 7.0));
+        public Arena(String name, int cx, int feet, int cz, double r, int height, int pillars, double rim, long seed) {
+            super(name, cx, feet, cz, r, r, height, rim, seed);
+            this.pillars = pillars;
+            turn = (seed & 63) / 64.0 * Math.PI;
         }
 
         /** Whether a column is one of the pillars. */
@@ -152,9 +157,16 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     public static final class Tunnel extends Part {
         final double ax, az, bx, bz, len, half;
         final int ay, by, height;
+        /** How far its sides wander: about 0.4 for something dug, 0 for something built (then it is exactly as wide as it says). */
+        final double wander;
         final SimplexNoise n;
 
         public Tunnel(String name, int ax, int ay, int az, int bx, int by, int bz, double half, int height, long seed) {
+            this(name, ax, ay, az, bx, by, bz, half, height, 0.4, seed);
+        }
+
+        public Tunnel(String name, int ax, int ay, int az, int bx, int by, int bz, double half, int height, double wander, long seed) {
+            this.wander = wander;
             this.name = name;
             this.ax = ax;
             this.az = az;
@@ -185,7 +197,7 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         @Override
         public int feet2(int x, int z) {
             double t = along(x, z);
-            return off(x, z, t) <= half + 0.4 * n.get(x / 5.0, z / 5.0) ? (int) Math.round(2 * (ay + (by - ay) * t)) : NONE;
+            return off(x, z, t) <= half + wander * n.get(x / 5.0, z / 5.0) ? (int) Math.round(2 * (ay + (by - ay) * t)) : NONE;
         }
 
         @Override
@@ -204,6 +216,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
      */
     public static final class Shaft extends Part {
         public final int cx, cz, top, bottom, perTurn, drop, water;
+        /** The side the ledge starts on: 0 north, 1 east, 2 south, 3 west. It always turns north, east, south, west. */
+        public final int start;
         public final double r, ledge;
         final double[] gaps;
         final SimplexNoise n;
@@ -216,6 +230,11 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
          * @param gaps   where the ledge is broken, in turns from its start (0.25 is the east side of the first turn)
          */
         public Shaft(String name, int cx, int top, int cz, double r, double ledge, int perTurn, int drop, int bottom, int water, long seed, double... gaps) {
+            this(name, 0, cx, top, cz, r, ledge, perTurn, drop, bottom, water, seed, gaps);
+        }
+
+        public Shaft(String name, int start, int cx, int top, int cz, double r, double ledge, int perTurn, int drop, int bottom, int water, long seed, double... gaps) {
+            this.start = start;
             this.name = name;
             this.cx = cx;
             this.cz = cz;
@@ -245,8 +264,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
 
         /** How far round from the north side a column is, going through east: 0 to 1. */
         private double round(int x, int z) {
-            double a = Math.atan2(x - cx, -(z - cz)) / (Math.PI * 2);
-            return a < 0 ? a + 1 : a;
+            double a = Math.atan2(x - cx, -(z - cz)) / (Math.PI * 2) - start * 0.25;
+            return a - Math.floor(a);
         }
 
         /** Twice your feet's height on the ledge's k-th time past this column, or NONE where it has ended, is broken, or this column isn't on the ledge. */
@@ -260,7 +279,7 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             if (fall > drop) return NONE;
             for (double g : gaps) {
                 if (Math.abs(turns - g) > 0.1) continue;
-                int quarter = Math.floorMod((int) Math.round(g * 4), 4);
+                int quarter = Math.floorMod((int) Math.round(g * 4) + start, 4);
                 int across = quarter % 2 == 0 ? x - cx : z - cz;
                 if (Math.abs(across) <= 1) return NONE;
             }
@@ -311,7 +330,7 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
 
         /** Where to stand on the ledge a given part of a turn from its start, midway across it: x, feet, z. */
         public int[] stand(double turns) {
-            double a = turns * Math.PI * 2, d = r - ledge / 2;
+            double a = (turns + start * 0.25) * Math.PI * 2, d = r - ledge / 2;
             int x = cx + (int) Math.round(Math.sin(a) * d), z = cz - (int) Math.round(Math.cos(a) * d);
             return new int[]{x, top - (int) Math.floor(turns * perTurn), z};
         }

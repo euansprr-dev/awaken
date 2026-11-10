@@ -365,6 +365,24 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
+        AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
+            for (String program : new String[]{"awaken:brood_burrow", "awaken:catacombs"}) for (long seed = 1; seed <= 6; seed++) {
+                Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
+                        AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
+                Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
+                String at = program + " seed " + seed + ": ";
+                var walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
+                if (!walk.unreachable().isEmpty()) h.fail(at + "can't reach " + walk.unreachable());
+                var route = dev.awaken.gates.realms.check.RouteCheck.check(land, walk);
+                if (!route.problems().isEmpty()) h.fail(at + route.summary() + ": " + route.problems());
+                int half = land.halfSize();
+                FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
+                if (!r.clean()) h.fail(at + r.summary());
+                if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) h.fail(at + "the Lord's door or a fight's doors are missing");
+            }
+            h.succeed();
+        });
         AwakenTests.register("realm_route_read_off_sites", 200, h -> {
             Land land = amber(1);
             int dens = land.sites(Land.SiteKind.DEN).size(), wardens = land.sites(Land.SiteKind.WARDEN).size();
