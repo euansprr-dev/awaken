@@ -462,9 +462,14 @@ final class FightRunner {
 
     /** Whether a move could begin now, as an answer or at a fork. */
     private boolean ready(int i, LivingEntity target) {
+        return ready(i, target, true);
+    }
+
+    /** {@code remember} false: a test's look, which leaves the blow's retry as it was. */
+    private boolean ready(int i, LivingEntity target, boolean remember) {
         KitMoves.Move m = moves.get(i);
         if (mind != null && (!mind.follows(i) || !inPhase(m.id()))) return false;
-        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !reaches(i, target)) return false;
+        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !(remember ? reaches(i, target) : couldLand(m, target))) return false;
         if (m.ability().isEmpty()) return true;
         Ability a = boss.ability(m.ability().get());
         return a == null || !(boss.level() instanceof ServerLevel sl) || boss.abilityRunner().room(sl, a);
@@ -716,6 +721,38 @@ final class FightRunner {
         if (!inRange(m, target)) return Float.NaN;
         if (!aimed(m)) return 0;
         return solve(m, target, boss.yBodyRot, trial) ? trial.step : Float.NaN;
+    }
+
+    /** Whether one of the answer's moves, one its phase has, could land on the target now (tests: a drink in reach, §48.5). */
+    boolean inReach(FightScripts.Answer a, LivingEntity target) {
+        for (String id : a.moves()) {
+            int i = moves.index(id);
+            if (i >= 0 && inPhase(id) && couldLand(moves.get(i), target)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether the mind may answer with one of the answer's moves now, by the rule it answers by (§48.2: in its phase, not
+     * the move it just made, able to land, room for its ability), remembering nothing (tests).
+     */
+    boolean couldAnswer(FightScripts.Answer a, LivingEntity target) {
+        for (String id : a.moves()) {
+            int i = moves.index(id);
+            if (i >= 0 && ready(i, target, false)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Between blows, where its tick weighs an answer next (tests): nothing playing, no opening, recoil, notice or phase
+     * change under way, not broken, staggered, fallen or dormant. Not reeling either: a notice given then is drawn as the
+     * reel, so a test watching for the notice wouldn't see it.
+     */
+    boolean betweenBlows() {
+        return introduced && studio.isEmpty() && !byHand && move < 0 && gap <= 0 && recoil <= 0 && notice <= 0 && pendingPhase < 0
+                && !boss.broken() && !Stances.broken(boss) && !boss.staggered() && !boss.reeling()
+                && !boss.flag(AwakenMob.F_FALLEN) && !boss.flag(AwakenMob.F_DORMANT);
     }
 
     /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */

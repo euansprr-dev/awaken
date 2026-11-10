@@ -32,8 +32,11 @@ public final class FightMindTests {
 
     static final String[] PILOTS = {"hive_regent", "gearwright_colossus"};
     private static final int ROOM = FightRecorder.ROOM;
-    /** A potion's drink, and how far apart the drink test starts them (farther than the longest answer rests). */
-    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 56;
+    /**
+     * A potion's drink, how far apart the drink test starts them (farther than the longest answer rests), and how many:
+     * enough that one run's fight doesn't decide the share (448 take some 45 s on CI).
+     */
+    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 448;
     private static final int SWIG = DRINKS * (DRINK_EVERY + 40);
     /** Each pilot's answers: tests register before data loads, so the count is pinned and checked in {@link #answer}. */
     private static final int ANSWERS = 6;
@@ -313,17 +316,31 @@ public final class FightMindTests {
         });
     }
 
-    /** A real fight with someone in reach, near and further off in turn, drinking now and then: most drinks are answered. */
+    /**
+     * A real fight with someone in reach, near and further off in turn, drinking now and then: most drinks in reach are
+     * answered (SPEC §48.5), and every one it was free to answer is. The bar is over drinks in reach, as §48.5 has it,
+     * and over enough of them to be a measure: with 56 a run's own fight moved the share by 6% either way, so the Regent
+     * (about 70% since the Stinger Volley waits for phase 2, c6270a8c8) passed or failed on the dice; fifteen fights of
+     * 224 still ran from 65% to 79%. A drink it can't answer by §48.2 (one that comes and goes inside its own blow, or
+     * when only the move it just made reaches) is still counted when one of its answers could land.
+     */
     private static void drinks(GameTestHelper h, String id) {
         Scene s = scene(h, id);
+        // standing, as a player stands: a test player is never ticked onto the ground, and a kit flier follows anyone
+        // three seconds off it to a block under their feet (§47.15), here into the floor
+        s.player.setOnGround(true);
+        FightScripts.Answer drink = s.kit.fight().mind().orElseThrow().answers().stream().filter(a -> a.on() == FightScripts.Fact.DRINK).findFirst().orElse(null);
+        h.assertTrue(drink != null, id + " answers a drink");
         double[] edges = {2.0, 7.0};
         Vec3[] stand = {s.at(edges[0])};
         s.player.setPos(stand[0]);
         s.boss.getRandom().setSeed(id.hashCode() * 17L);
         net.minecraft.util.RandomSource dice = net.minecraft.util.RandomSource.create(id.hashCode());
-        int[] tick = {0}, next = {60}, drinkEnd = {-1}, drinks = {0}, noticeWas = {0};
-        int[][] answered = {{0, 0}, {0, 0}}; // answered and drunk, near and further off
-        boolean[] done = {false};
+        int[] tick = {0}, next = {60}, drinkStart = {-1}, drinkEnd = {-1}, drinks = {0}, noticeWas = {0};
+        int[][] answered = {{0, 0}, {0, 0}}; // answered and in reach, near and further off
+        int[] free = {0};
+        boolean[] done = {false}, reach = {false}, couldHave = {false};
+        StringBuilder missed = new StringBuilder();
         h.onEachTick(() -> {
             int t = ++tick[0];
             s.boss.setTarget(s.player);
@@ -333,25 +350,39 @@ public final class FightMindTests {
             // from the room's middle: a boss drops a target that leaves its arena
             if (t == next[0] - 40) stand[0] = s.home.add(0, 0, edges[where] + s.boss.getBbWidth() * 0.5 + s.player.getBbWidth() * 0.5);
             if (t == next[0] && drinks[0] < DRINKS) {
+                drinkStart[0] = t;
                 drinkEnd[0] = t + DRINK_TICKS;
-                answered[where][1]++;
                 drinks[0]++;
-                done[0] = false;
+                done[0] = reach[0] = couldHave[0] = false;
                 next[0] = t + DRINK_EVERY + dice.nextInt(40);
                 Watch.stage(s.player, Watch.DRINK);
             }
-            if (t == drinkEnd[0]) Watch.stage(s.player, 0);
             boolean noticing = s.boss.kitPose() == AwakenBoss.KIT_POSE_NOTICE;
-            if (noticing && noticeWas[0] == 0 && t <= drinkEnd[0] && !done[0]) {
-                done[0] = true;
-                answered[(drinks[0] - 1) & 1][0]++;
-            }
+            if (noticing && noticeWas[0] == 0 && t <= drinkEnd[0] && !done[0]) done[0] = true;
             noticeWas[0] = noticing ? 1 : 0;
+            // once it can believe the drink: could an answer land, and was it free to give one (in time to be seen)?
+            if (drinkStart[0] >= 0 && !done[0] && t >= drinkStart[0] + s.mind.react && t <= drinkEnd[0]) {
+                if (s.run.inReach(drink, s.player)) reach[0] = true;
+                if (t <= drinkEnd[0] - 3 && s.run.betweenBlows() && s.run.couldAnswer(drink, s.player)) couldHave[0] = true;
+            }
+            if (t == drinkEnd[0]) Watch.stage(s.player, 0);
+            if (t == drinkEnd[0] + 1) {
+                int was = (drinks[0] - 1) & 1;
+                if (reach[0] || done[0]) answered[was][1]++;
+                if (done[0]) answered[was][0]++;
+                if (couldHave[0]) {
+                    free[0]++;
+                    if (!done[0]) missed.append(' ').append(drinks[0]);
+                }
+            }
         });
         h.runAfterDelay(SWIG, () -> {
-            int yes = answered[0][0] + answered[1][0];
-            Awaken.LOG.info("[mind] {}: {} of {} drinks answered ({} of {} near, {} of {} further off)", id, yes, drinks[0], answered[0][0], answered[0][1], answered[1][0], answered[1][1]);
-            h.assertTrue(yes * 100 >= drinks[0] * 60, id + " answered " + yes + " of " + drinks[0] + " drinks");
+            int yes = answered[0][0] + answered[1][0], inReach = answered[0][1] + answered[1][1];
+            Awaken.LOG.info("[mind] {}: {} of {} drinks in reach answered ({} of {} near, {} of {} further off; {} drinks), every one of {} it was free to answer{}",
+                    id, yes, inReach, answered[0][0], answered[0][1], answered[1][0], answered[1][1], drinks[0], free[0], missed.isEmpty() ? "" : " but" + missed);
+            h.assertTrue(inReach * 4 >= drinks[0] * 3, id + ": only " + inReach + " of " + drinks[0] + " drinks were in reach of an answer (the stands are wrong)");
+            h.assertTrue(yes * 100 >= inReach * 60, id + " answered " + yes + " of " + inReach + " drinks in reach");
+            h.assertTrue(missed.isEmpty(), id + " was free to answer drinks" + missed + " and didn't");
             Watch.stage(s.player, 0);
             s.boss.discard();
             h.succeed();

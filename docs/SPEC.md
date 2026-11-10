@@ -20067,7 +20067,12 @@ blow that punishes it. Tests (`FightMindTests`, one per mechanism): the read wai
 moves with its tell after the notice, each fork, the caught dodge, the facts themselves (`arms_watched`, `powers_watched_cast`). Gates,
 in `fights_record_*` for any fight with a mind: every repeat is that last resort (exact, since a percentage of a dozen moves is noise;
 the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at least 60%
-of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
+of drinks in reach (one of the answer's moves, in its phase, could land while the drink is seen) get an answer that starts
+before the drink ends, over 448 drinks (with 56, one run's own fight moved the share 6% either way, and the Regent's,
+about 70% since the Stinger Volley waits for phase 2, passed or failed on the dice; fifteen fights of 224 still ran from
+65% to 79%); every drink it was free to answer
+(between blows, a move it may answer with able to land, 3 ticks before the drink ends) is answered; at least three in
+four drinks are in reach; the player stands on the ground. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
 
 **48.6 Every boss has a mind (Euan 2026-11-09, after playing the pilots: "apply these changes ... to all bosses").** The 45 others
