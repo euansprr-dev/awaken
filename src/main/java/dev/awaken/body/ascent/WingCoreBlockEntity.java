@@ -66,6 +66,8 @@ public class WingCoreBlockEntity extends BlockEntity {
         p.level().playSound(null, pos, AscentContent.VOW_CALL.get(), net.minecraft.sounds.SoundSource.BLOCKS, 1F, 1.2F);
         dev.awaken.progression.Progression.count(p, "awaken:ascent_wings_core");
         dev.awaken.core.api.Promises.keptAll(p, "wing_core:");
+        // the way down is the lesson (SPEC §63.2): a line of light off the pier, and for a minute a fall is a soft landing
+        WayUp.firstFlight(p, pos);
         dev.awaken.core.DirectorLog.log(p, "ascent", "the sky platform's core gives wings at " + pos.toShortString());
         return true;
     }

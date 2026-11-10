@@ -2,7 +2,7 @@
   "schema": 2,
   "level": 73,
   "title": "The open sky",
-  "text": "The sky asks for you. At A-rank, with wings you know well, the Sky Leviathan's gate opens. 24 essence.",
+  "text": "You can fly now. Go somewhere you could never have climbed to. 24 essence.",
   "grants": [
     {
       "type": "item",
@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Beat the Sky Leviathan in its gate",
+    "now": "Earn the open sky",
     "done": {
       "type": "counter",
       "counter": "awaken:ascent_skyborn_trial",

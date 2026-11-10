@@ -22441,6 +22441,171 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   and 27 boxes).
 - Look tour `tools/autopilot/movement-built.txt`.
 
+## 63. The Way Up (how each move is earned; plan docs/movement-unlocks/PLAN.md, page https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN; Euan approved all twelve recommendations 2026-11-10: "Go with all recommendations")
+
+Euan, 10 Nov 2026: "it should be kind of a natural progression ... it shouldn't be impossible to unlock the future movement.
+Like maybe we make it unlock more with ... the rank assessments ... and then that unlocks somewhere that you discovered that
+you can go and unlock that item, and then it actually shows you how to use it ... it has to be clear the moment that you
+unlock it." Where this section and §17, §27.3 or §47 differ, this section holds (with `wayUp` on, the default). Its
+sister is §62 (Rope and Wings: how the rope and wings feel, and six new moves); this section is how every rung and move is
+earned and taught.
+
+**The audit (verified in code, 10 Nov).** The rope is given by the D Proving (`AscentTrials`, `TrialHooks.RINGER`) and
+flight by the A Proving's roof (`TrialHooks.SKY_WARDEN`); neither can be missed. The leap waits on Tether mastery 4 (400
+points, shown nowhere) and a scripted gate opened once and left out of the Now line (`GatesNow`); wings wait on a sky
+platform found by chance at C. The movement module registers no `core.api.Goals` step. `Ascent.grant` gives every rung
+under the one granted, so a core or the Sky Warden's roof hands lower rungs over with no scene of their own. The Tether Vow
+(§17.7) and the Sky Leviathan's trial (§17.18) can't be reached in a new world (D always comes with the rope, A with
+flight), and the first vault's "Its line waits for a D-rank hunter" is never paid. The band's Ascent rows for the rope and
+flight, the level road's stop at 73 and the Wings trail's second step describe the old rules. The Sovereign's form is given
+after an ending. Hours (pacing_sim, balanced): D 3.4, C 10.2, B 23.8, A 35.8, S 47.2, Sovereign 61.4. The nearest site by
+the structure sets' own spacing (median; worst seen): a vault 260 to 350 (1,140), a Tether Spire 160 to 290 (1,050), a sky
+platform 280 to 380 (1,290).
+
+**63.1 The rule.** A rank fight opens a rung; a place gives it; the way out of the place is the move. On a Proving's win
+the System wakes one place of the rung's kind for each winner: one in their Saved for later book (§27.1) if there is one,
+else the nearest by the seed (found on a later tick, never loading chunks on the server thread, §28.9). It is lit in the
+rank's colour, carried on the Now line for ten minutes, and held as one row on Tasks until visited. Any place of the kind
+serves. A later Proving still hands down any rung not yet held, and each rung handed down is flagged "lesson owed".
+
+**63.2 The rungs.**
+- *The rope (D).* The Ringer's chain is given as built, but `TrialHooks.done(RINGER)` no longer grants the tier. The Tether
+  Vow (§17.7) gives it in any vault's forecourt to an awake D-rank player without the rope; its door rule is dropped (the
+  rank that won the chain is the proof). The spawn vault exists in every world.
+- *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
+  Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
+  is a Tasks row with its place until run, and is opened again if lost.
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+  light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
+  platform's ward a fall is a soft landing.
+- *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
+  before with their own beat. The Sky Leviathan's trial (§17.18) is retired: its trigger, toast, level-road stop and trail
+  step go.
+- *The Sovereign (the last Proving).* The form is given at the Last Loop's fall (§47.10), not at an ending; an ending still
+  gives it to a save without it. `Sovereign.field` no longer clears the target of, or routs, a Lord, Warden, guardian,
+  Sovereign or the last; it slows them a quarter at most.
+
+**63.3 The Lesson** (one kit for every unlock, client). The gift (today's scene, 2.5 s, one plain sentence, never over a
+fight); the player's own key as a `Kit` key cap with up to seven words, pinned to the target in the world and held at the
+screen's edge with an arrow when off it; a pale gold figure doing the move once from a recorded route (`GauntletGhost`,
+`AscentRoutes`), again after 12 s; gone at the tick the server sees the state begin; then a four-second card of the move's
+keys. The band's Powers place shows a row a rung with its keys as caps and its mastery as ten pips, the next pip that gives
+a move marked. The six moves of §62 use the same Lesson where each can first be done. Reduced motion: the key cap only.
+Nothing is cut off (§57.6). A Lesson claims the notification director (§26) for its length, the Vow's included: today
+`VowScene` holds nothing back, and the audit's tour (run 42851970427) shows its words drawn under the vault's own
+DISCOVERY card.
+
+**63.4 Tasks.** One thread, `rank.way_up`, Gates and rank, Lead voice, one row at a time, each `.teaches` its rung. Nothing
+is listed for flight or the form (a Proving is never named ahead, §43).
+
+**63.5 Words.** Every line in plain speech; the table is in PLAN.md 4.8.
+
+**63.6 Data.** `AscentMemory` schema 4 (reads 3): per rung, the place that woke, given, lesson done, lesson owed. Per
+player, kept through death, synced to its owner. World option `wayUp` in `awaken-body.toml` (on); off, every rule of §17
+and §47 exactly as before.
+
+**63.7 Tests (planned).** `way_up_road` (a fresh player walked rung by rung: one way-up row or a Proving ahead at every
+stop, every row with a place, no rung held with its lesson neither done nor owed), `way_up_places` (200 seeds), one per
+mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_ledger` green.
+
+**Audit tours (as the game is):** `tools/autopilot/unlock-tether.txt`, `unlock-vow.txt`, `unlock-wings.txt`,
+`unlock-sky.txt`, and the existing `leaper-trial.txt`.
+
+**63.8 Built (11 Nov 2026; `claude/movement-unlocks-b62e18`; what the code does, and where it differs from 63.1 to 63.7).**
+- **The rule** (`body.ascent.WayUp`, its own player tick). Every 5 s a player's road is read from what is true of them:
+  `waiting(p)` is the rope at D-rank without it, wings at C-rank with the rope and without them, else the leap with the
+  rope and without it. For the rung that waits a place is found with `RuinLocator.near` (the structure sets' own maths, 12
+  terrain samples a call at most, nothing loaded): a vault within 2,000 (else the spawn vault), a Tether Spire within
+  1,500, a sky platform within 3,000 then 8,000. A ruin the player has already found (`AboveData`) is taken first when it
+  is no more than twice as far as the nearest. A candidate inside the city's reserve (`terrain.api.CityBasin.reserved`)
+  is skipped: the locator's placement maths names chunks there, but no ruin forms in them (the second built tour was sent
+  to a vault 110 blocks off inside Carillon's basin). *Differs:* found ruins, not the Saved for later book.
+- **The record** is its own attachment, `awaken:way_up` (`WayMemory`, schema 1: places, told, done, owed, the Gauntlet's
+  gate), not `AscentMemory` schema 4, so the ladder's record and the §62 branch's edits to it never meet. Kept through
+  death; synced to its owner as `ascent_way` when it changes.
+- **When:** a place is told twenty seconds after its rung began to wait and with the player on the ground, so the rank
+  fight's own messages come first; then as a CRITICAL line, because the director files a paced line that has waited
+  45 s and this one must be seen (neither built tour's shots caught it while it was IMPORTANT). The gate at a crown's
+  foot is said the same way.
+- **Told:** one System panel, title and body, twelve seconds (`WayUp.say`: "A vault has lit up for you" · "It wants the
+  chain you're carrying. It's 310 blocks east of here."; "A sky platform has lit up for you" · "It's … You climb its
+  rings by rope."; a toast cut the same words off after two short lines, §57.6), `NowHooks` for ten minutes with its needle (priority 60), and
+  a thin beam of the rope's own light on the place, in the rank's colour, drawn from 24 to 1,400 blocks
+  (`WayClient.onSubmit`). Fog takes everything past the view distance, so a beam further off than 0.55 of it is drawn
+  nearer on the same line of sight, the whole of it scaled about the eye: it looks as it would from there, and may show
+  over a hill that would hide it. *Differs:* the platform's rings are not made brighter; the beam is the light.
+- **Tasks** (`WayUp.steps`, thread `rank.way_up`, Lead, `.covers("ascent:way/")`): "Take the Ringer's chain to the vault
+  that lit up"; "Climb a Tether Spire with your rope" (or "Get to know your rope" with no spire in reach); "Run the gate
+  that opened where you climbed"; "Climb the sky platform that lit up"; "Jump from somewhere high and open your wings"
+  (wings held, never opened). Nothing for flight or the form.
+- **The rope.** `TrialHooks.done(RINGER)` gives nothing; `TetherVow.ready` is D-rank at any vault's forecourt (its door's
+  rank and whether it is open no longer matter; a ranked hunter is never stirred at for a sealed door).
+- **The leap.** `SpireCrownBlockEntity.reached` calls `WayUp.crownReached` once the climb is by the line, before the
+  crown's own stricter test (a third of the last 20 s in the air), which the pilot's eight-second climb failed in three
+  tours and a careful climber who stops to aim would fail too: without the leap and with no gate opened yet,
+  `AscentTrials.openLeaper(p, near)` opens the Gauntlet 9 out from the crown's column at the plaza's height, toward where
+  the climber stands. Either way in (a crown, or Tether mastery 4 as before) the gate's id and place go on the road; if
+  its record is gone when the player is within 96 blocks it is opened again there. *Differs:* the row's needle is the
+  nearest Tether Spire only (hero trees are not in the locator; their crowns still open the gate).
+- **Wings.** After the core's gift `WayUp.firstFlight` sends the pier's end (the core + `SkyRig.PIER` along x and z) and
+  the way off it. Once the gift's scene ends the client begins the first flight's Lesson: the cap 3 past the pier's end,
+  four rings of light a second sinking along the line, the gold figure running off the end. Its words are "Run off the
+  end, then press twice": with the leap held (a core always hands it down) the first press in the air is the double jump
+  and the second opens the wings. A fall is a soft landing for 60 s after the gift. *Differs:* soft anywhere, not only inside the platform's ward (a first glide leaves it).
+- **The open sky.** `AscentTrials.skyEdge`: wings never earned are given first (`WINGS_EDGE`, a short moment) and flight
+  40 ticks later; both the leap and those wings are owed their lessons. With The Way Up on, `SKY_EDGE` draws no title:
+  the Lesson's strip of three keys at the top of the screen, until flight begins or 10 s. `skybornDue` is false (the
+  Leviathan's trial is never offered; its code and dev command stay).
+- **The Sovereign.** `WayUp.read` gives the form at Sovereign rank (so it arrives home with the rank; any ending still
+  gives it). `Sovereign.field` gives a boss (`powers.Combat.isBoss`) Slowness I and leaves its target and its feet alone.
+- **Handed down.** `Ascent.onGranted`: a rung under the highest one held at that moment is owed (not in a body's first
+  100 ticks, which is an old world's first load). Done is read by the server: the rope's mastery up by two throws or the
+  Vow kept, any Leaper mastery, a GLIDE, a SOAR, any Sovereign mastery.
+- **The Lesson** (`body.ascent.client.Lesson`, layer `ascent_lesson`). Kinds: the vault's mast, the chasm's edge, the first
+  flight, the sky's strip, the form, and the three owed ones (offered when free for 12 s, again a minute later, and never
+  within twenty seconds of a rung being handed down, so one never sits on another's gift). The cap
+  is `Kit.cap` with the player's binding and up to seven words on a dark plate, pinned by projecting the target through
+  the camera, with a stem and a breathing ring, or held at the edge with an arrow; with no target it sits under the
+  crosshair (the form's low, over the gold line). The prompt leaves when the key is pressed (the rope's key held two
+  ticks; jump pressed in the air; wings open; the Ascend key with the line full). The card: the rung's name and its keys
+  (`Kit.hintLine`), four seconds, over the hotbar. While a prompt or card shows, `TipHooks` and `Notices` are held; the
+  Vow now holds them too and claims the director at its call. A hold stops what is still to come, not the director's big
+  card already on screen (arriving at a vault for the first time is also a discovery, and the built tour showed "It's a
+  rope now." under "Sealed Vault"): `Notices.Client.showing()` (new, a default method; `Herald` answers with its moment)
+  tells a scene the card is up, and the Vow's and the gifts' titles are then drawn at 0.60 of the screen's height. *Differs:* the gold figure is the Gauntlet's ghost
+  (`gates.entity.GauntletGhost`, the gates' own entity type, used from the client only) moved along a computed path (a
+  swing's sag to the mast, two hops along the look, a run off the pier), not a recorded route; none with reduced motion.
+- **K, Powers** (`body.client.AscentSection`): a row a rung held with its keys in the player's bindings in brackets and a
+  mastery bar; "You haven't used it yet." in amber until its lesson is done; the next rung as "◆ Next" with a Lead; the
+  rest dark diamonds. *Differs:* text and a bar, not caps and ten pips (a band section draws text and bars), and no mark
+  on the pip that gives a move until §62's moves are merged.
+- **Words:** every `awaken.ascent.vow.*`, `gift.*`, `edge.*` and `core.*` line in plain speech; with The Way Up on a gift
+  shows its sentence only (the clipped second line is gone: the Lesson or the card says how). The trail steps "Reach the
+  vault's beacon mast by rope." and "Take flight."; the level road's 58 and 73.
+- **Option:** `wayUp` in `awaken-body.toml` (SYNCED, on). Off: `TrialHooks.done(RINGER)` gives the rope, the Vow keeps its
+  door rule, the Leviathan's trial is offered, the scenes keep both lines, no row, no beam, no Lesson.
+- **Dev:** `/awaken ascent way` (the road read now, and said), `/awaken ascent scene <wings|leap|leap_edge|sky|sky_edge|
+  sovereign|wings_edge>`, `/awaken ascent pier`. Tour `tools/autopilot/way-up.txt`.
+- **Seen:** CI look tours `way-up.txt` (runs 42864057722, 42868121143, 42874946585, 42879026051) and `way-up-leap.txt`
+  (42885496256): the reveal's panel and the beam over Carillon's roofs from 450 blocks; the vault's cap on the mast, the
+  rope thrown and its card; the title under the discovery card; the Gauntlet's gate standing at a spire's foot after its
+  crown was reached; the leap's prompt and card; the platform's panel; the core's sentence; the ring line off the pier,
+  wings opened on the second press and their card; the sky's strip; the form's prompt; the Tasks rows and the K rows.
+  **Not clearly seen:** the gold figure (hidden by the tours' cameras), the gate's own panel (its tour's shots came a few
+  seconds before the gate), a first glide carried by a windway, and the Tasks row for the gate (covered by
+  `way_up_road`). The pilot's spire climb ends on the crown's rim or beyond: in four tours it never came within the 2.6
+  blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing.
+- **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
+  (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
+  (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the
+  field by the slowness it lays (III on a zombie, I on a boss): a monster can't be made to target a test's mock player,
+  so "a boss keeps its target" is read in the code, not asserted. All four pass (local run of `-Ptests=way_`, 11 Nov). Changed for the new
+  rule: `ascent_tether_vow` runs with the option off (the door rule is the old rule), the sky trial's test gives its taker
+  wings first, the Ringer's Proving test expects the cold chain. *Not written:* `way_up_places` (a test world has one
+  seed; the distances in the audit come from the placement maths).
+- **Not built:** the six new moves' Lessons and the takeoff's at home (they wait for §62 to be merged: each is one more
+  `Lesson.Kind` and its trigger); the platform's brighter rings; a needle to hero trees.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 64. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md, page https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B; Euan approved all ten recommendations 2026-11-10: "Go with all recommendations and the full plan")

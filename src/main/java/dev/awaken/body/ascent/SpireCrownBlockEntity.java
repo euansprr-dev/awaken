@@ -126,6 +126,10 @@ public class SpireCrownBlockEntity extends BlockEntity {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
         }
+        // The Way Up (SPEC §63.2): the first crown reached by rope opens the Leaper's Gauntlet at its foot. By the line is
+        // enough: the crown's own record below also wants a third of the last 20 s spent in the air, which a careful
+        // climber who stops on each platform to aim does not have, and the leap must not hang on a stopwatch
+        WayUp.crownReached(p, worldPosition, plazaY());
         if (!ArrivalHooks.byMovement(p) || !Ascent.arrivedByMovement(p, 20)) {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
