@@ -8070,8 +8070,11 @@ recommended).
   - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks from the last move's end, the count
     the server grants the cut on: a press, a hold not yet a move and a dodge leave it be, so the hands show the cut
     exactly when it will be given), it is lowered across the body: the hand just under the frame's edge, the blade low
-    with its point to the off side and its edge down, the guard showing (`ArmsHands.HIP_D` (-0.10, 0.15, 0), `HIP_Q` 70
-    degrees over and 15 forward; the first value, back past the hip, hid the blade and laid a forearm across the frame).
+    with its point to the off side, its edge down and its flat turned up to the eye, the guard showing (`ArmsHands.HIP_D`
+    (-0.15, 0.04, 0), `HIP_Q` 88 degrees over, 3 forward, rolled 80 about its length; the first value, back past the
+    hip, hid the blade and laid a forearm across the frame, and the second showed the re-cut blade from its spine, a
+    grey line). The pose is picked offline with `tools/art/swing_studio.py` `lead_points`, which matches the game's own
+    blade within about 6 degrees.
     It lowers and rises over 6 ticks on the hands' own clock from wherever it is (`SwingWeight.lowered`, `ArmsHands.hip`:
     the rest pose itself moves, so the strike that draws it is carried out by the blend, and nothing that starts or
     breaks the rest moves the hand in one frame), with a soft click on the way down. A change of weapon is the one place
