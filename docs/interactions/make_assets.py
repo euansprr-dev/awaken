@@ -168,6 +168,9 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     built_b = os.environ.get('BUILT_B')  # the short tour's folder (hands-at-work-b)
     if built_b:
         shot(os.path.join(built_b, 'h2_brewing_carry_wart.png'), 'built_brewing')
+    built_c = os.environ.get('BUILT_C')  # the run that filmed the chest
+    if built_c:
+        shot(os.path.join(built_c, 'h2_chest_lid_down.png'), 'built_chest')
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
         sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)

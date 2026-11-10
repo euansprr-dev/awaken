@@ -444,6 +444,12 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
   late). Run 42901587111 confirmed three: at the brewing stand the hand carries the bottle and the wart and nothing
   rests in the frame; before a furnace the game's own hand is gone; at the table both empty hands rest off their
   corners. It showed one more fault, fixed: the carried stack was drawn a frame behind the hand that holds it (seen on
-  a machine that draws two frames a second). **The chest was not filmed** in it (the script looked at the floor): the
-  lid in your hands and what lies in an open chest are still unseen.
+  a machine that draws two frames a second). The chest was not filmed in it (the script looked at the floor).
+- Run 42906598736 filmed the chest: both arms take the lid up as the screen opens and bring it down as it shuts, the
+  largest stacks lie in the chest's mouth and show through the screen's glass, and before the furnace the carried
+  stack is at the fist. At 1.4 blocks the two arms fill much of the frame for the half second they hold the lid: a
+  thing for Euan's eye.
+
+**Still unseen by any run:** motion (the runner draws about two frames a second). **Section number:** this plan was
+SPEC §63 while it was built; it became §64 on 11 Nov when The Way Up took 63 in build.
 
