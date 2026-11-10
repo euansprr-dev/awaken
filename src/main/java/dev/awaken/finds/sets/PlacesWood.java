@@ -275,9 +275,9 @@ final class PlacesWood {
                             for (int y = 0; y <= Math.max(0, 4 - j * 2 / 3); y++) s.put(x, y, z, bark);
                         }
                     }
-                    air(s, 0, 1, 4, 0, 3, 5);                              // the split that is the door
-                    s.put(1, 1, 4, AIR);
-                    s.put(1, 2, 4, AIR);
+                    air(s, 0, 1, 4, 0, 3, 9);                              // the split that is the door, cut out through the flare of the roots
+                    air(s, 1, 1, 4, 1, 2, 9);
+                    for (int z = 6; z <= 9; z++) if (s.get(-1, 4, z) != null) s.put(0, 4, z, bark);   // bark closing over the top of the split
                     for (int y : new int[] {10, 20}) {                     // two floors, wall to wall, a ladder through each
                         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) if (x * x + z * z < 16) s.put(x, y, z, plank);
                         s.put(0, y - 1, 0, lantern(true, false));

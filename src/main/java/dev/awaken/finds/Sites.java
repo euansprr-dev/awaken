@@ -133,7 +133,9 @@ public final class Sites {
         double[] w = new double[kinds.size()];
         RegionMap.Region r = a.map.regionAt(x, z);
         int rank = Math.min(5, RegionMap.rankOf(a.map.levelAt(x, z)));
-        RegionMap.Group group = a.map.landOf(r).group();
+        // a place goes by the biome where it stands, not by its region's name: a region is named for its heart, and the first
+        // tours had a desert caravanserai in a jungle
+        RegionMap.Group group = layer == 2 ? landAt(a, x, z) : a.map.landOf(r).group();
         long dx = x - a.spawnX, dz = z - a.spawnZ;
         boolean home = dx * dx + dz * dz < (long) HOME * HOME;
         for (int i = 0; i < w.length; i++) {
@@ -213,6 +215,7 @@ public final class Sites {
             // a place keeps clear of villages and the city by its own width and more (the first tours had the quarry
             // against Carillon's wall and the temple in a village's garden)
             boolean place = k.size() == Kind.Size.PLACE;
+            if (at != null && place && !k.fits(landAt(a, at[0], at[2]))) at = null;   // the ground it found is in another country
             if (at == null) LOST[0]++;
             else if (a.terrain.structureNear(at[0], at[2], place ? 2 : 1)) LOST[1]++;
             else if (place && a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) LOST[2]++;
@@ -220,7 +223,7 @@ public final class Sites {
             if (at != null && !a.terrain.structureNear(at[0], at[2], place ? 2 : 1)
                     && !(place && (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4) || cityNear(a, at[0], at[2], k.reach() + 56)))) {
                 RegionMap.Region r = a.map.regionAt(at[0], at[2]);
-                return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], a.map.landOf(r).group(),
+                return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], place ? landAt(a, at[0], at[2]) : a.map.landOf(r).group(),
                         Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
             }
             taken.set(choice); // the ground doesn't suit it: deal again
@@ -231,6 +234,14 @@ public final class Sites {
 
     /** Why deals failed since the last census: no ground, a structure, a settlement, the city. A check's counters, nothing reads them in play. */
     private static final int[] LOST = new int[4];
+
+    /** The country at a spot, from the biome there (the same naming the regions use for their hearts). */
+    private static RegionMap.Group landAt(Ask a, int x, int z) {
+        var b = a.level.getUncachedNoiseBiome(x >> 2, 63 >> 2, z >> 2);
+        var arch = dev.awaken.terrain.api.BiomeTable.archetype(b);
+        String path = arch != null ? arch.identifier().getPath() : b.unwrapKey().map(k -> k.identifier().getPath()).orElse("plains");
+        return dev.awaken.living.region.RegionService.land(path).group();
+    }
 
     private static boolean cityNear(Ask a, int x, int z, int r) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -378,7 +389,7 @@ public final class Sites {
                 cells++;
                 long h = cellHash(a.seed, 2, cx0 + i, cz0 + j);
                 int x = cellX(h, 2, cx0 + i), z = cellZ(h, 2, cz0 + j);
-                lands[a.map.landOf(a.map.regionAt(x, z)).group().ordinal()]++;
+                lands[landAt(a, x, z).ordinal()]++;
                 ranks[Math.min(5, RegionMap.rankOf(a.map.levelAt(x, z)))]++;
                 int base = basePick(a, 2, cx0 + i, cz0 + j);
                 if (base < 0) continue;

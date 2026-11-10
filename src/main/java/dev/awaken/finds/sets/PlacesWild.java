@@ -289,6 +289,11 @@ final class PlacesWild {
                             }
                     }
                     boulder(s, -22, -8, 3.0, st(Blocks.STONE), st(Blocks.ANDESITE), calcite);
+                    // hot water doesn't freeze: an unseen light over the baths and the basins keeps the ice off them in snow country,
+                    // and lets them glow a little after dark
+                    for (int x = -3; x <= 5; x += 3) for (int z = 4; z <= 6; z += 2) s.put(x, 1, z, light(13));
+                    for (int x = -11; x <= -7; x += 2) for (int z = 4; z <= 8; z += 2) s.put(x, 1, z, light(13));
+                    for (int k = 0; k <= 3; k++) s.put(-19 + k * 3, 6 - k, -3 + k * 3, light(13));
                     boulder(s, -8, 12, 1.8, st(Blocks.STONE), st(Blocks.ANDESITE), st(Blocks.MOSSY_COBBLESTONE));
                     boulder(s, 8, 9, 1.6, st(Blocks.STONE), st(Blocks.ANDESITE), st(Blocks.MOSSY_COBBLESTONE));
                     // the tea house across the yard, and the chimney that smokes over it all
