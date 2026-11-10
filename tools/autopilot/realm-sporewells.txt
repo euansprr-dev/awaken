@@ -44,7 +44,7 @@ cmd awaken gate realm_at WARDEN 0 0 2 -10
 look 0 8
 wait 80
 shot sporewells_warden
-cmd awaken gate realm_at LORD 0 0 2 -16
+cmd awaken gate realm_at LORD 0 0 2 -8
 look 0 4
 wait 80
 shot sporewells_lord
