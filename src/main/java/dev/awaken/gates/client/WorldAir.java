@@ -31,7 +31,7 @@ final class WorldAir {
     private WorldAir() {}
 
     static final int MOST = 260;
-    static final int WISP = 0, STREAK = 1, FLAKE = 2, ORB = 3, FLASH = 4, BEAM = 5;
+    static final int WISP = 0, STREAK = 1, FLAKE = 2, ORB = 3, FLASH = 4, BEAM = 5, HAZE = 6;
 
     private static final List<Air> LIVE = new ArrayList<>();
     private static int ticks, nextFlash = 300, thunderIn, nextToll = 1200, tolls, nextWalk = 200;
@@ -47,6 +47,7 @@ final class WorldAir {
         e.registerSpriteSet(GatesRegistry.P_ORB.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, ORB));
         e.registerSpriteSet(GatesRegistry.P_FLASH.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, FLASH));
         e.registerSpriteSet(GatesRegistry.P_BEAM.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, BEAM));
+        e.registerSpriteSet(GatesRegistry.P_HAZE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, HAZE));
         // the server's coloured motes and flakes (a rule's trail, an event's drift): lit like the air's own
         e.registerSpriteSet(GatesRegistry.P_TRAIL.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> {
             Air a = new Air(l, x, y, z, xa, ya, za, s, ORB);
@@ -160,7 +161,7 @@ final class WorldAir {
      * coming and going slowly, so a shaft reads as one from the side and not only by what it lights. Each bar is only just
      * over a tenth opaque, which is as faint as the game will draw a sprite at all (anything under a tenth is thrown
      * away, and a first try with fainter wisps drew nothing); where three or four overlap the middle of the beam is
-     * brighter than its ragged edge.
+     * brighter than its edge. The sprite is fine-grained (a second try, a coarse one, showed pixels half a block wide).
      */
     private static void beams(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
         if ((ticks & 3) != 0) return;
@@ -184,8 +185,8 @@ final class WorldAir {
     }
 
     /**
-     * Mist lying on a dry floor (SPEC §38.9): low wisps on whatever floor there is inside one of Gate Air's mist layers
-     * near you, in the layer's colour made pale, thicker for a denser layer.
+     * Mist lying on a dry floor (SPEC §38.9): low fine-grained hazes on whatever floor there is inside one of Gate Air's
+     * mist layers near you, in the layer's colour made pale, thicker for a denser layer.
      */
     private static void floorMist(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
         if ((ticks & 1) != 0 || air.mists().isEmpty()) return;
@@ -195,11 +196,11 @@ final class WorldAir {
         double x = pl.getX() + (r.nextFloat() - 0.5) * 36, z = pl.getZ() + (r.nextFloat() - 0.5) * 36;
         for (int y = Mth.floor(mid - half - 1); y <= Mth.ceil(mid + half); y++) {
             if (!WorldLife.open(level, new Vec3(x, y + 0.5, z)) || WorldLife.open(level, new Vec3(x, y - 0.5, z))) continue;
-            Air a = make(level, GatesRegistry.P_WISP.get(), x, y + 0.2 + r.nextFloat() * 0.9, z, (r.nextFloat() - 0.5) * 0.012, 0, (r.nextFloat() - 0.5) * 0.012,
-                    pale(m.rgb()), 7F + r.nextFloat() * 6F);
+            Air a = make(level, GatesRegistry.P_HAZE.get(), x, y + 0.3 + r.nextFloat() * 0.8, z, (r.nextFloat() - 0.5) * 0.012, 0, (r.nextFloat() - 0.5) * 0.012,
+                    pale(m.rgb()), 10F + r.nextFloat() * 7F);
             if (a != null) {
-                // strong enough that the middle of a wisp is over the tenth the game needs to draw it at all
-                a.peak = 0.2F + 0.14F * Math.min(1F, m.density());
+                // each one only just over the tenth the game needs to draw it at all: the mist is where they overlap
+                a.peak = 0.108F + 0.05F * Math.min(1F, m.density());
                 a.setLifetime(200 + r.nextInt(120));
             }
             return;
@@ -484,7 +485,7 @@ final class WorldAir {
             this.alpha = 0;
             this.base = quadSize = kind == STREAK ? 0.12F : kind == FLASH || kind == BEAM ? 1F : 0.1F;
             this.lifetime = 100;
-            this.roll = kind == WISP || kind == FLAKE ? random.nextFloat() * Mth.TWO_PI : 0;
+            this.roll = kind == WISP || kind == FLAKE || kind == HAZE ? random.nextFloat() * Mth.TWO_PI : 0;
             this.oRoll = roll;
         }
 
@@ -507,6 +508,11 @@ final class WorldAir {
             float t = age / (float) lifetime;
             float fade = kind == FLASH ? 1 - t : Math.min(1, Math.min(t * 6, (1 - t) * 4));
             alpha = peak * fade * (blink ? 0.4F + 0.6F * Math.max(0, Mth.sin(age * 0.15F + (float) (x * 3))) : 1);
+            if (kind == BEAM) {
+                // a bar of light is to be seen from outside it: one that stands on you would be a veil over the whole view
+                Player near = Minecraft.getInstance().player;
+                if (near != null) alpha *= Mth.clamp((float) ((Math.hypot(x - near.getX(), z - near.getZ()) - 2) / 2.5), 0, 1);
+            }
             quadSize += grow;
             if (!Float.isNaN(walk)) {
                 // a ghost light of the procession: it walks the way, a little behind the one in front, bobbing
@@ -525,7 +531,7 @@ final class WorldAir {
                 zd += (random.nextFloat() - 0.5) * sway * 0.2;
                 roll += 0.03F;
             }
-            if (kind == WISP) roll += 0.004F;
+            if (kind == WISP || kind == HAZE) roll += 0.004F;
             move(xd, yd, zd);
             if (hasPhysics && (onGround || x == xo && z == zo && y == yo)) remove();
         }

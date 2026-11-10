@@ -12481,11 +12481,14 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   shaft (as many tries a tick as a third of the shafts, from 2 to 8, so one shaft among twenty is as full as one among
   five). `beams` (11 Nov, for the rolled dungeons, §50.9): down every shaft within 44 a few upright bars of light
   (`gate_air_beam`, a sixth sprite), one over another, coming and going slowly, in the shaft's colour made pale, so a shaft
-  reads as light in the air from the side. Minecraft's particle shader throws away anything under a tenth opaque, so a
-  beam cannot be a faint gradient (the first try, fainter wisps, drew nothing at all): each bar is just over a tenth, and
-  the beam's soft edge is their ragged sides not lining up. `floor_mist` (the same day): low wisps on whatever dry floor
-  lies inside one of Gate Air's mist layers near you, in the layer's colour made pale, thicker for a denser layer, strong
-  enough that a wisp's middle clears that same tenth. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  reads as light in the air from the side; a bar within two blocks of you is not drawn, so you never look through one.
+  `floor_mist` (the same day): low round hazes (`gate_air_haze`, a seventh) on whatever dry floor lies inside one of Gate
+  Air's mist layers near you, in the layer's colour made pale, thicker for a denser layer. **How faint a sprite can be.**
+  Minecraft's particle shader throws away anything under a tenth opaque. So neither of these can be a faint gradient
+  (the first try, fainter wisps, drew nothing at all), and a 16 pixel sprite stretched over six blocks showed pixels half
+  a block wide with hard steps for an edge (the second try: it read as a glitch). Both sprites are fine-grained instead,
+  64 and 32 pixels: every lit pixel is fully there, and it is how many are lit that falls off toward the edge. Each is
+  drawn just over a tenth opaque and the light or the mist is where several overlap. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
   within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
   open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
   three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
