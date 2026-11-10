@@ -1,0 +1,80 @@
+# The trim's picture check on CI (SPEC §22 "Steady Light"): the still scene with Pixels at 0.75, so the composite goes
+# straight out into Pixels' texture; the same ground view with straight out off (the two must match); the day sky, the
+# dusk sky and the night sky (the wisps and the galaxy from the sky buffer, the clouds walked in the composite); and
+# the tick report with the sun map's sweep. Run: tools/tour-ci.sh tools/autopilot/steady60-trim-ci.txt 1500
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fill 9 120 -6 16 120 -2 minecraft:dirt_path
+cmd setblock 3 121 2 minecraft:dandelion
+cmd setblock 4 121 -1 minecraft:cornflower
+cmd setblock 2 121 -3 minecraft:poppy
+cmd setblock 6 121 1 minecraft:oxeye_daisy
+cmd fill 8 121 4 8 125 4 minecraft:oak_log
+cmd fill 7 125 3 9 127 5 minecraft:oak_leaves[persistent=true]
+cmd setblock 8 125 4 minecraft:oak_log
+cmd fill 12 121 -9 12 123 -4 minecraft:stone_bricks
+cmd fill 5 121 -6 7 121 -6 minecraft:oak_fence
+cmd setblock 10 121 1 minecraft:stone_slab
+cmd fill -8 121 6 -6 123 6 minecraft:cobblestone
+cmd tp @s 0.5 121 0.5 -90 20
+camera first
+hud on
+lookswitch cinematic
+wait 400
+pixels 0.75 sharp
+wait 60
+cmd time set 3000
+look -90 34
+wait 200
+shotnow t1_ground
+lens straight off
+wait 20
+shotnow t1_ground_copy
+lens straight setting
+wait 20
+look -90 8
+wait 100
+shot t2_far
+look -90 -35
+wait 100
+shot t3_sky_day
+look 0 -75
+wait 60
+shot t3_sky_up
+cmd time set 11800
+look 90 -14
+wait 200
+shot t4_dusk
+cmd time set 18000
+look 0 -45
+wait 200
+shot t5_night
+look -90 -78
+wait 60
+shot t5_night_up
+cmd time set 700
+look -90 6
+wait 200
+shot t6_low_sun
+lens cost
+lens straight setting
+quit

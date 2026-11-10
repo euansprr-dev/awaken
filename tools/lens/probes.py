@@ -13,7 +13,7 @@ GROUPS = {
     "light": ["awaken:post/lens_light"],
     "clouds": ["awaken:post/lens_clouds"],
     "prefilter": ["awaken:post/lens_prefilter_lit"],
-    "bloom": ["awaken:post/lens_down", "awaken:post/lens_blur"],
+    "bloom": ["awaken:post/lens_down", "awaken:post/lens_blur", "awaken:post/lens_downblur"],
     "shafts": ["awaken:post/lens_shafts"],
     "composite": ["awaken:post/lens_composite_lit"],
 }

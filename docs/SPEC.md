@@ -6325,7 +6325,15 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     steps). The sun travels in the x-y plane, so each row of the ring has an exact answer in one sweep from the sun's
     side (a column's own top, or the height handed on from the column sunward less the light's drop over a block): a
     worker sweeps the whole trusted window every 8 ticks from the heightfield's mirror, and the result goes up an
-    eighth of the texture a tick. The pass, its target and its shader are gone: 14 passes with the sky buffer counted.
+    eighth of the texture a tick. The pass, its target and its shader are gone.
+  - **The wide glow in one pass** (`lens_downblur.fsh`, all three chains): the downsample to eighth size and the blur
+    there, as one shader whose nine blur taps are each the downsample's five reads at the tap's own place; the
+    eighth-size target between them is gone. Cinematic and Ultra are 14 passes (two the size of the frame, one with
+    straight out), Swift 8.
+  - **The governor**, first step: a frame more than 19 ms after the last marks a second in which the heightfield's and
+    the block map's reading take 0.15 ms a tick where they may take 0.5 (`LensClient.tickBudget`). Nothing drawn
+    changes: the maps catch up a little later. Not built: updating the glow and the rays on alternate frames (a
+    frame's lag shows on small bright things when the view turns fast) and shedding the far cloud walk (it pops).
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows.

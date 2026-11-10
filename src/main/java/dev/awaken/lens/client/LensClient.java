@@ -549,7 +549,21 @@ public final class LensClient {
 
     private static void nothing() {}
 
+    // the governor (SPEC §22 "Steady Light", the trim): when a frame came late, Lens's own tick work stands back for a
+    // second (a third of its usual time a tick), so what little the CPU has to spare goes to the game's own spikes
+    private static long lastFrameNanos, lateNanos;
+
+    /** What a tick of the heightfield's or the block map's reading may take now, in nanoseconds. */
+    static long tickBudget() {
+        return System.nanoTime() - lateNanos < 1_000_000_000L ? 150_000L : 500_000L;
+    }
+
     private static void writeFrame(RenderLevelStageEvent.AfterLevel e) {
+        long nowNanos = System.nanoTime();
+        // (19 ms: past the 16.7 of a frame at 60 with room for the clock's own wobble; a faster screen's frames never
+        // reach it unless they are late too)
+        if (lastFrameNanos != 0L && nowNanos - lastFrameNanos > 19_000_000L && nowNanos - lastFrameNanos < 250_000_000L) lateNanos = nowNanos;
+        lastFrameNanos = nowNanos;
         var state = e.getLevelRenderState();
         float lx = moonLight ? -sunDir.x : sunDir.x, ly = moonLight ? -sunDir.y : sunDir.y, lz = moonLight ? -sunDir.z : sunDir.z;
         // the clouds' cover: the look's, thickening toward overcast in rain and storms (not for the rain a Rolling Storm
