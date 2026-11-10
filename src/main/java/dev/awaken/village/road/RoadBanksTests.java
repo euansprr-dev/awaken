@@ -33,7 +33,8 @@ final class RoadBanksTests {
         AwakenTests.register("ground_road_bank_profile", 100, RoadBanksTests::profile);
     }
 
-    private static RoadPiece road(String key, int x0, int z0, int x1, int z1, int y) {
+    /** A straight road's one leg as its piece (also {@code RoadTests}' region test). */
+    static RoadPiece road(String key, int x0, int z0, int x1, int z1, int y) {
         int n = Math.max(Math.abs(x1 - x0), Math.abs(z1 - z0)) / 4 + 1;
         float[] xs = new float[n], zs = new float[n];
         int[] ys = new int[n];

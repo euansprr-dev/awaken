@@ -159,7 +159,7 @@ final class ArmsServer {
                 s.holdSeq = msg.seq();
                 s.holdFrom = now;
                 s.holdOpen = chargeable(style);
-                strike(p, s, style, now, msg.seq());
+                strike(p, s, style, now, msg.seq(), msg.claim());
             }
             case ArmsPayloads.PRESS_TAP -> {
                 if (msg.seq() != s.holdSeq) return;
@@ -196,41 +196,81 @@ final class ArmsServer {
     }
 
     /**
-     * A tap: a riposte or a Slipcut when one is open, an Undercut out of a slide, a Plunge armed in a fall, else the
-     * chain's next strike (now, or buffered for its window).
+     * Ticks a riposte or Slipcut the hands began may run past the server's own read of its window: the two sides saw the
+     * deflect or the dodge a trip apart.
      */
-    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq) {
-        Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
-        if (riposte != null && now - s.deflectAt <= riposte.window()) {
-            s.deflectAt = Long.MIN_VALUE / 2;
-            begin(p, s, style, Archetype.Move.RIPOSTE, -1, 0, now, seq);
+    static final int HEARD_SLACK = 6;
+
+    /** Blocks of fall a Plunge the hands armed may be short of on the server: the two sides' falls differ by a tick. */
+    static final float HEARD_FALL = 1F;
+
+    /**
+     * A tap: what the hands did with it (SPEC §25 "One chain"). They count a press for nothing, or begin a strike, and the
+     * server plays that: never a strike they don't show, never another in its place. With no word from them (claim
+     * CLAIM_OPEN), the server's own read.
+     */
+    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, int claim) {
+        if (claim == ArmsPayloads.CLAIM_NOTHING) return; // too early for the hands: a mash far ahead of the window
+        if (claim == ArmsPayloads.CLAIM_AGAIN) { // the strike they queued, pressed again: still one strike, and this press is its press now
+            if (s.buffered != null) s.bufferedSeq = seq;
+            else s.moveSeq = seq;
             return;
         }
-        Archetype.MoveDef slip = style.move(Archetype.Move.SLIPCUT);
+        Archetype.Move said = Archetype.Move.byId(claim);
+        int claimed = said == null ? -1 : ArmsRules.stepOf(style, said);
         int mastery = ArmsMastery.step(p, style);
-        if (slip != null && now - s.dodgeAt <= style.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(mastery) && now - s.dodgeAt >= 1) {
-            s.dodgeAt = Long.MIN_VALUE / 2;
-            begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
-            return;
+        if (claimed < 0) {
+            if (offChain(p, s, style, now, seq, said, mastery)) return;
+            if (said != null) return; // hands on a move the server can't grant: no blow, and no strike in its place
         }
-        if (style.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) {
-            begin(p, s, style, Archetype.Move.UNDERCUT, -1, 0, now, seq);
-            return;
-        }
-        if (style.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) {
-            s.plungeSeq = seq;
-            s.plungeAt = now;
-            s.plungeFall = p.fallDistance;
-            return; // it strikes where it lands
-        }
-        ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, ArmsMastery.strikes(mastery));
+        int strikes = ArmsMastery.strikes(mastery);
+        ArmsRules.Decision d = ArmsRules.follow(style, ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, strikes,
+                        said == null ? style.def().buffer() : ArmsRules.HEARD_BUFFER), claimed, s.lastStep, now - s.lastStepAt, strikes);
         if (d == null) return; // too early: a mash far ahead of the window counts for nothing
+        if (d.step() >= 0) { // on the press, not its start: a strike still queued counts, or the next claim would look like a skip
+            s.lastStep = d.step();
+            s.lastStepAt = now;
+        }
         if (d.startAt() > now) {
             s.buffered = d;
             s.bufferedSeq = seq;
             return;
         }
         begin(p, s, style, d.move(), d.step(), d.cadence(), now, seq);
+    }
+
+    /**
+     * A move off the chain, when one is open and the hands began it (or gave no word): a riposte or a Slipcut in its window,
+     * an Undercut out of a slide, a Plunge armed in a fall. False when it started nothing.
+     */
+    private static boolean offChain(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, Archetype.@Nullable Move said, int mastery) {
+        boolean heard = said != null;
+        Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
+        if (riposte != null && (!heard || said == Archetype.Move.RIPOSTE) && now - s.deflectAt <= riposte.window() + (heard ? HEARD_SLACK : 0)) {
+            s.deflectAt = Long.MIN_VALUE / 2;
+            begin(p, s, style, Archetype.Move.RIPOSTE, -1, 0, now, seq);
+            return true;
+        }
+        Archetype.MoveDef slip = style.move(Archetype.Move.SLIPCUT);
+        long sinceDodge = now - s.dodgeAt;
+        if (slip != null && (!heard || said == Archetype.Move.SLIPCUT) && sinceDodge >= (heard ? 0 : 1)
+                && sinceDodge <= style.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(mastery) + (heard ? HEARD_SLACK : 0)) {
+            s.dodgeAt = Long.MIN_VALUE / 2;
+            begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
+            return true;
+        }
+        if (style.move(Archetype.Move.UNDERCUT) != null && (!heard || said == Archetype.Move.UNDERCUT) && Body.isSliding(p)) {
+            begin(p, s, style, Archetype.Move.UNDERCUT, -1, 0, now, seq);
+            return true;
+        }
+        if (style.move(Archetype.Move.PLUNGE) != null && (!heard || said == Archetype.Move.PLUNGE)
+                && ArmsRules.plunges(p.onGround(), p.fallDistance + (heard ? HEARD_FALL : 0F), p.isInLiquid())) {
+            s.plungeSeq = seq;
+            s.plungeAt = now;
+            s.plungeFall = p.fallDistance;
+            return true; // it strikes where it lands
+        }
+        return false;
     }
 
     static void heavy(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.MoveDef heavy, int held, long now, int seq) {
@@ -278,9 +318,8 @@ final class ArmsServer {
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
-        // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
-        // becomes the charge instead (the swing starts at once either way: a tap is never late); a dagger's lands as it
-        // comes, and the hold charges after it (ArmsRules.waitsOnHold)
+        // a chain strike begun by a press still down waits at its hit for the press's end, unseen (the client's hands
+        // are on the draw, ChargeDraw): a tap lands it, a hold becomes the charge instead (ArmsRules.waitsOnHold)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
         FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
         s.swishAt = 0;

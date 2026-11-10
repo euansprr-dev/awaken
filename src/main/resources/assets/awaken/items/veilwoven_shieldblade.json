@@ -21,7 +21,7 @@
    "base": "awaken:item/veilwoven_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "veilwoven_shieldblade"
+    "weapon": "veilwoven_shieldblade_blade"
    }
   }
  }

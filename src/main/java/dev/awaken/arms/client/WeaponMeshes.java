@@ -27,7 +27,13 @@ final class WeaponMeshes {
 
     static void reload(ResourceManager manager) {
         MESHES.clear();
-        for (ArmsData.Weapon w : ArmsData.WEAPONS) load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
+            if (GAUNTLETS.equals(w.style())) load(manager, w.id() + SLEEVE, Awaken.id("arms/weapons/" + w.id() + SLEEVE + ".mesh"));
+            if (SHIELDBLADE.equals(w.style())) { // the hands draw its two parts (arms_weapons.pair_of)
+                for (String part : PARTS) load(manager, w.id() + part, Awaken.id("arms/weapons/" + w.id() + part + ".mesh"));
+            }
+        }
         for (PickForm f : PickForm.values()) for (int t = 0; t < PickStats.TIERS; t++) { // the forged picks (SPEC §49)
             String id = ForgedPicks.id(f, t);
             load(manager, id, Awaken.id("arms/weapons/" + id + ".mesh"));
@@ -37,6 +43,10 @@ final class WeaponMeshes {
         WeaponPipelines.recheck();
     }
 
+    /** The first-person sleeve a gauntlet runs on into (WeaponRenderer): its own mesh and texture, this suffix on the weapon's id. */
+    static final String SLEEVE = "_arm";
+    private static final String GAUNTLETS = "gauntlets", SHIELDBLADE = "shieldblade";
+    private static final String[] PARTS = {"_blade", "_shield"};
     private static final String[] TOOLS = {"hammer", "tongs", "stone_hammer"};
 
     private static void load(ResourceManager manager, String id, Identifier file) {

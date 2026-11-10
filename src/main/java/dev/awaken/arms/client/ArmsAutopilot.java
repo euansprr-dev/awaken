@@ -117,6 +117,10 @@ public final class ArmsAutopilot {
                 traceUntil = ArmsPredict.ticks + (a.length > 1 ? Integer.parseInt(a[1]) : 40);
                 return "tracing";
             }
+            case "walkhold" -> { // forward held that long while the script goes on (a fight on the move)
+                hold(mc.options.keyUp, a.length > 1 ? Integer.parseInt(a[1]) : 40);
+                return "walking";
+            }
             case "heavy" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting";
                 int ticks = a.length > 1 ? Integer.parseInt(a[1]) : 16;

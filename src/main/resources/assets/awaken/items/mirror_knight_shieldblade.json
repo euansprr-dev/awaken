@@ -21,7 +21,7 @@
    "base": "awaken:item/mirror_knight_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "mirror_knight_shieldblade"
+    "weapon": "mirror_knight_shieldblade_blade"
    }
   }
  }

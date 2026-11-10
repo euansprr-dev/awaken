@@ -21,7 +21,7 @@
    "base": "awaken:item/gatewrought_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "gatewrought_shieldblade"
+    "weapon": "gatewrought_shieldblade_blade"
    }
   }
  }

@@ -1,0 +1,10 @@
+{
+ "model": {
+  "type": "minecraft:special",
+  "base": "awaken:item/veilwoven_shieldblade_shield_in_hand",
+  "model": {
+   "type": "awaken:weapon",
+   "weapon": "veilwoven_shieldblade_shield"
+  }
+ }
+}

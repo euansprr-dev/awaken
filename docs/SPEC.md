@@ -6859,27 +6859,64 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   arc went on filling to 24 past the ting. Now the arc is full and gold at the ting and stays so; the server counts a
   tick short as full (`ArmsServer.GLINT_GRACE`: its count starts when it hears the charge, a tick or so late). **Tap or hold**
   (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
-  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
-  the strike's hit waits at its wind-up's end while the key stays down (`ArmsPredict.waitHit`). The hands hold at the
-  strike's set, where its drive begins (`fp_swings.json`'s `set`, Swing Studio round 8), not at the hit (Euan
-  2026-10-29: "it attacks on the click when you are still loading": at the hit the blade had already struck, to the
-  eye, before the charge took it, and a dagger's 1-tick stab froze on the target for most of every click). Let go
-  before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then, its drive from the set to the hit
-  run 1.6 times as fast (`ArmsPredict.RUSH`), giving back some of the wait. The key's release is read every frame
-  (`ArmsPredict.frame`), not on the next tick (up to 50 ms late). While a strike waits, the client's chain clock waits
-  as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
-  time the next press alike: unmoved, the client ran each dagger strike a tick or two ahead of the server, cut the last
+  attacks"; 2026-11-09: "it should go straight into an animation... the moment you start clicking long... it brings the
+  weapon into its charge like form. But right now it just glitches into its form, or sometimes it starts an attack and
+  then cancels the animation midway"). **The draw** (`ChargeDraw`): someone drawing a weapon back doesn't begin a light
+  blow and swap to a heavy one; every press starts the same pull back, and letting go early just looses it sooner. Rounds
+  of 2026-10-26, 10-29 and Swing Studio's round 8 each moved where in the light strike a held press waited (its hit, then
+  its `set`), so every hold still showed 300 ms of a light attack and then swapped clips at the mark; the fault was showing
+  the strike at all. Drawing from the press's first frame (9 Nov, first try) was wrong the other way (Euan 2026-11-09: "it
+  just sometimes thinks you're going into a heavy hold or like a heavy strike when you're not, and it makes it look
+  glitchy"): every click showed the start of the heavy's pose and then snapped into the strike, by an amount that depended
+  on how long the finger happened to stay down, on every weapon. No capture saw it: at a tenth of play's speed it was a slow
+  small dip, and at real speed on the slow runner a click's ticks ran inside one frame (`tap drawn` was 0 on all 99 clicks).
+  Now **until a press has outlasted a click nothing on screen knows about it** (`ChargeDraw.GRACE`, 4 ticks, 200 ms;
+  `ArmsPredict.undecided`): the hands and the view's lean go on with what they were doing, the move that was running
+  playing on to its end (`underMove`, `underTime`) or the stance holding. After the grace it is a hold, and the hands
+  leave for the heavy's drawn pose (its clip's first key, the very pose it is loosed from) on one curve (`ChargeDraw.ticks`,
+  `SwingBlend`'s quintic: 0.6 of the weapon's glint, 7.8 ticks on the Daggers to 12 on the Maul, there before the glint),
+  from wherever they are. The draw and the charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks
+  down, `PRESS_CHARGE`) moves nothing; the arm's strain grows from nothing after it (slow, about 3 Hz: the old 8 Hz tremble
+  read as a glitch), and the charge's meter fills from the end of the grace to the glint, so a tap never lights it and it
+  doesn't jump. **A release** gives the hands 1 tick to reach the loosed heavy from a full draw and up to 3 from one barely
+  begun (`releaseTicks`). The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
+  `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
+  hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
+  in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
+  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **One chain** (Euan 2026-11-09: "the combo stops being the usual one", "it just switches to something else"): the two
+  sides time the windows on their own clocks, more so with a busy server, so left to decide alone they disagree on a window's
+  edge: one counts a strike the other never played, and the combo repeats a strike or skips one. Only the hands decide. The
+  press carries what they did (`Press.claim`: the move they began, or `CLAIM_NOTHING` for a press too early to count) and the
+  server plays that: never a strike they don't show, and never another in its place. A strike they began is kept however early
+  the server's clock calls it, and waits for the server's own window (`ArmsRules.HEARD_BUFFER`), so nothing strikes faster than
+  the rules allow. A press that only repeats the strike already queued says so (`CLAIM_AGAIN`), so it can't count as another. A claim must still be legal (`ArmsRules.follow`: starting again, or the strike after the last within 60
+  ticks; a move off the chain only if the server saw its deflect, dodge, slide or fall, give or take `HEARD_SLACK`). A move off
+  the chain it can't grant lands no blow and starts nothing else. The server's reply never changes the strike the hands are in
+  or the step they count from; only what they couldn't know (an execution on a heavy's release) takes over. Any real difference
+  is logged (`[arms]`), and each session logs what the hands played (`strikes played`). In a development run the last minute or so of the hands, every frame, is written to `logs/arms-blackbox.tsv` on leaving the world (`ArmsBlackBox`). **The blend's clock is a double** (found with the black box, Euan 2026-11-09): the hands' clock counts from the machine's boot, and as a float it moved in steps of 268 ms on a Mac up 34 days, so each `SwingBlend` sat frozen and then snapped, and about one strike start in four flashed the pose of up to 268 ms earlier for one frame (the draw into a charge "teleported" the same way). Test machines boot fresh, so no tour could show it. **A tap** (let go before the mark, `PRESS_TAP`,
+  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
+  are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
+  hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a
+  late tap from nearly full draw doesn't snap across). That is the one trade: the blade reaches its hit 9 to 25 ms later
+  than when the wind-up played under the press on a 60 ms click, 17 to 44 ms on a 100 ms click (the Daggers, which struck on
+  the press until now, 38 and 85 ms); the server's hit is where it was. A tap with no strike of its own (one still queued,
+  or a press too early to count) hands the blade back to what was running. While a strike waits, the client's chain clock
+  waits as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
+  time the next press alike: unmoved, the client ran each strike a tick or two ahead of the server, cut the last
   strike's carry short, and took presses the server's buffer refused, so strikes never landed and the chain fell out
   of step (the server's MOVE then swapped the clip mid-swing). A hit's hold freezes the hands only while the strike it
-  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and
-  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
-  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
-  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
-  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
-  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
-  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
-  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
-  Test `arms_tap_or_hold`. A block under the
+  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and the strike is dropped
+  unlanded and unseen and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is dropped too). The
+  charge holds at full for as long as the key is down, trembling, and goes only on the release (no auto-release; held past
+  full it counts as full); the heavy's clip begins on the pose the hands are in, so the release has nothing to carry. The
+  server never holds a blow on the client's word alone: with no tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4)
+  ticks after the charge's mark. In third person nobody near sees a waiting strike (`ArmsServer.shown`): no swing, no
+  swish, no clip. The fighter's own body starts its held draw with the hands, over the same ticks, and a tap's strike clip
+  takes it over; everyone else's copy of it starts on the server's word at the mark, over 5 ticks (`ArmsBodies.SEEN_DRAW`,
+  was 2), and the weapon's wrist comes round with the clip (`ArmsWrist`; it snapped on at once). A riposte, Slipcut,
+  Undercut or Plunge starts as it always did, and a press held on through one draws after its blow.
+  Tests `arms_tap_or_hold`, `arms_dagger_click` and `arms_draw_smooth` (every style, from rest and from each chain strike's
+  recovery: no frame steps further than the curve or the motion it came in on). A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
@@ -7035,7 +7072,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
   a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
   level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
-  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, shove,
   chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
   the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
   backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
@@ -7056,16 +7093,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
-  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
-  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
-  (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. **Standing as a
+  vanilla sword stands** (Euan 2026-11-09, of the Longsword turned to roll 135 by the weapon audit: "it looks like it's being
+  held the completely wrong way", "a vanilla sword ... actually feels like it has the sharp edge like forwards"): vanilla's
+  `item/handheld` turn stands the blade up, leaned about 20 degrees back toward the eye, edge straight ahead, flat to the
+  side, and because the hand is to the right of the eye the flat still shows. The Longsword, the Shieldblade's sword, the
+  Axe, the Katana and the Greatblade now stand that way (`arms_holds.STANDING`, `FORWARD`; yaw 180 is the lean back), the
+  Glaive keeps its line with its edge square down (roll 90). A swing's blade is solved in view terms, so a new hold moves
+  only the rest and the way to and from it, never where a blow lands (`anim_lab.py bake`).
+  Longsword standing, 72 up (size 0.85); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the right shoulder, standing, 78 up (size 0.9);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
-  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
-  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  across the body (58, 28); Greatblade two-handed, standing near the middle, 82 up (size 0.75); Maul two hands low on the haft,
+  the head up (6, 58); Axe standing, its bit ahead, 80 up (size 0.75); Daggers short, the
   point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
-  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  on its chain (18, 38); Shieldblade a sword in the hand and the shield on the other arm ("The Shieldblade"); Precursor Arm forward like a
   drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
@@ -7231,6 +7274,21 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
+- **What play showed about the rigged moves** (Euan 2026-11-09). *No dip on the way home:* a move whose hand is already home
+  when its follow-through ends has nothing left to do, so `swing_studio.cut_pose` returns the rest there; the recovery's rise
+  used to run anyway, and the War-staff's strikes 1 and 3 and the Spear's strike 3 sank and came back up after settling.
+  *The Maul's uppercut* keeps its face to the front: a two-headed weapon has no reason to turn over, and the 170 degrees it
+  unwound about its haft while rising read as a spin glitch (`tools/arms/feel/maul.json`, form `rise`, `roll0` 16). *The
+  Greatblade's heavy* is a chop, not a rise: charged high in view, tip up, grip right of centre, and brought down across the
+  crosshair. The rise it shared held the blade off the bottom of the screen for the whole charge (0% on screen, now 100%);
+  its server row is the same chop (`archetypes.json`, form `chop`, dir [-0.3, -1]). *The Katana is held edge down in third
+  person* (`arms_holds.EDGE_DOWN3`): vanilla's handheld hold puts a design's +x side up as the arm hangs, so it is turned
+  half round about its length, and the rig solves each move's wrist from that hold, so the edge still leads every blow.
+  *The Gauntlets are the arm* in first person ("as if it was like your entire hand, basically like a glove"): no arm rises to
+  them (`ArmsHands.worn`), because a bare fist was showing round a smaller gauntlet, and each runs on past its rim into a sleeve
+  of its own cuff and metal, banded every 8 texels, out of the view however far a punch carries it (`<id>_arm.mesh` and
+  `.png`, drawn by `WeaponRenderer` in first person only; `arms_weapons.gauntlet_sleeve`). From outside the cuff already runs up
+  the forearm, so nothing changes there.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
   tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
@@ -7244,17 +7302,53 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
     a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
     keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
-  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
-    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
-    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
-    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
-    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
-    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
-    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
-    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
-    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
-    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
-    release is the drive; the Plunge is armed raised, points down.
+  - *The Daggers* (Euan 2026-11-09, after the first stabs-only rebuild: "barely even hitting", "add the slash back in", "a similar
+    animation to before, just polished up with everything we've learned and without the glitches"): a forward grip in both hands.
+    Strike 1 the right stabs, strike 2 the left, strike 3 the right slashes, strike 4 both stab at once, strike 5 (mastery) the
+    left slashes. A stab drives the fist forward and in, the point travelling up the screen toward the crosshair, because a
+    point that stays put on the screen reads as nothing moving however far it goes (that was "barely moving forwards"). Every
+    blow is one stroke: from a stop, through the hit, to one stop a little deeper, then a slower way back. Nothing chambers
+    first: a chamber, a blow and a follow-through inside 1.3 ticks was the jitter. At every blow the fist stays low and on its
+    own side, no higher than -0.55 on the screen and no nearer the middle than 0.26 ("the hands still go way too upwards"); a
+    slash carries the fist across the middle and stops by 0.06, where the old one threw it to -0.30 ("way too much to the left
+    side"). The hand not striking draws back into its guard (0.54, -0.92) while the other drives, so each blow starts where
+    its hand already is; before the slash the right has turned its edge out and waits, cocked out to the right with the blade
+    showing its length, through the whole window a press can land in, and before the finisher both gather low at the hips. The
+    view leans a hair with a stab and rolls with a slash. The heavy charges at the hips and its release is both stabs in half
+    a tick. The riposte is the chain's stab at full reach. The slipcut (wide, a little low) and the undercut (at the legs) are the
+    slash. The server's rows are the slashes' again: strike 3 and 5 arc 90, the slipcut 120, the undercut 160, each with the light
+    whoosh. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. `arms_keys.py check` and the test
+    `arms_dagger_stabs` hold the rules (which strikes slash, the fist low and on its own side at the blow, never crossing over).
+  - *The Twin Blades* (Euan 2026-11-09: "way too fast", "no spinning animation or anything that makes it look really like
+    cinematic and awesome", "too much movement, so it makes the trail ... take up too much of the screen"; replaces round 5's
+    figure-eight): one double-ended blade twirled in one hand. Every strike is whole turns about the true middle of the shaft
+    (`handGrip`, where the fist is), and the fist moves very little: the spin is the motion, so the ribbon is a thin line near
+    the tips at 60% light. A light strike is one turn: half of it arrives on the hit, with the upper blade at the crosshair,
+    and the second half brings the same blade home, the hit's speed carried through it so there is no stop inside. Strikes 1
+    and 2 turn opposite ways, strike 3 is near flat, strike 4 (and mastery's 5) are two turns with the hit after the first.
+    Slower than before, about the same damage over a combo: the chain takes 37 ticks where it took 24, and each strike's motion
+    is higher to match. The turn is written as a turn, an angle against time (`Spin` in `tools/art/arms_keys.py`) and not as
+    poses to blend between, because a turn between poses takes the short way and can't go past half. Third person's wrist
+    (`_spin_wrists`) is the same turn about the weapon's flat, leaning onto first person's plane by the hit; solving it from
+    where the blade points flips each time the blade passes the far side of its axis (179 degrees in a key). The two moves
+    that don't spin (plunge, execution) reach for whichever end is nearer.
+  - *The Shieldblade* (Euan 2026-11-09: "reinvent that one from scratch"; "when you push with it, it doesn't feel like a push";
+    "it feels like it's hitting the wrong side"; "the blocking with it doesn't even block with the shield side"; "it just looks
+    like a tiny dagger swung out of a shield"): one item that is two things. A sword as long as a Longsword in the main hand, a
+    shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
+    draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
+    (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). Its cuts (strike 1, the slipcut, the undercut) run on the Longsword's own line: the point travels straight through the crosshair on the hit with the blade square to the way it goes (Euan 2026-11-09: "it reads as just waving the swords instead of swinging it blade side"; the old keys laid the blade over, so the point went over the top of the frame and off to the far left and never crossed the target). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
+    alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
+    hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is
+    charged with the shield gathered further still. The guard is the shield: raised to the middle of the view with the crosshair
+    over its rim and the sword held back at the side; in third person `arms_shieldblade_guard` lays the arm across the front and
+    `off.guard3` turns the shield square to the front (a left-handed player's isn't turned, as for every third-person wrist). Through the
+    sword's cuts in third person the shield stays on its arm's clip and no wrist turns it; it leaves the clip only when it does
+    something (`shield3`, its own weight in `_shield_weight`), and its wrist is the whole frame, never the shortest turn to a line,
+    because which way a shield's front looks is the point of it. Reaches now match the Longsword's (3.0, 2.8 for the shove, 3.2,
+    3.6).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
@@ -7290,18 +7384,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
     belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
     drives the Scythe.
+  - *A charge is held in view* (Euan 2026-11-09, of a heavy charged under the view: "you can't even see the blade anymore"):
+    a heavy's first pose is what a charge holds for as long as the press lasts, so its draw back is cut until the blade's
+    middle sits at most 0.75 of the way to the frame's edge (`swing_studio.HEAVY_SET`), an overhead's too (one that rose out
+    of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
+    cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
+    `arms_heavy` is still the rising cut.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
-    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. The Daggers' freezes
+    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
+    hold was its wind-up) but its weapon has still to cross, so its impact waits for the blade to cross (`FpSwings.lands`:
+    a hand-keyed clip's own `hit`, any other's halfway through its active ticks, where the lab bakes it; a server HIT that
+    comes first waits with it, never more than a tick, and so does the freeze of a posture that blow broke): on the first frame after the release
+    the freeze held the weapon wound back with the target already reeling, and only then let it go (seen on the
+    Shieldblade's film, 2026-11-09). The Daggers' freezes
     are 50 ms on strikes 1 and 2, 60 on strike 3 and
     80 on the finisher (were 35, 35, 40 and 55; archetypes.json). A keyed move carries its own kick (`kick` [yaw, pitch],
     a unit, scaled by the freeze as every kick is, `ArmsPredict.impact`), worked out by the bake from the blade the keys
     draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
     cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
     Every other style kicks along its row's from/to as before.
-  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
-    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
-    press waits at its set (arms_tap_or_hold).
+  - *Strike on the click* (`ArmsRules.waitsOnHold`, 2026-11-02 to 2026-11-09): a dagger's strike landed as it came even
+    while the press was still down, and a held press charged after the stab. Undone by Euan's 2026-11-09 "it still sometimes
+    attacks once before starting the charge": a dagger's press now waits unseen under the draw like every other
+    (**Tap or hold**, arms_dagger_click). `ArmsRules.STRIKE_ON_PRESS` is the list to name it in again.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
@@ -7462,8 +7568,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     with most weapons hides the weapon under your view"):
     - Every chain strike's clip says where its drive begins (`set`, `swing_studio.set_of`: the last moment before the
       hit its blade's middle is near still; 0 for a quick stab driven from its start, the daggers' strikes 1, 2 and 4).
-      A press still down waits there (the tap or hold rule, §25 above), never at the hit. Test `arms_feel_rules`: every
-      strike's set is at or before its hit.
+      A press still down waited there until the draw (2026-11-09, the tap or hold rule, §25 above); nothing in play reads
+      it now but the wind-up checks. Test `arms_feel_rules`: every strike's set is at or before its hit.
     - Every style holds a guard of its own (`guard`, `swing_studio.guard_pose`), put on the item's hand transform, the
       hands' grips and a pair's twin (mirrored): the grip low on the right (ndc 0.5, -0.76, 0.62 ahead of the eye), the
       blade rising to the left at 46 degrees on the screen, its tip leant 30 degrees away along the eye's ray (which
@@ -7861,7 +7967,8 @@ against it, so a vanilla item plays its designed tempo).
 - **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
   blocks in.
 - **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
-  second strike a shield bash; the riposte a bash that throws (1.0).
+  second strike and the heavy a shove with the shield that throws its target back; the riposte a stab from behind the shield that
+  throws (1.0).
 - **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
   so a staff fighter's powers come round faster.
 - **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6
@@ -10160,7 +10267,14 @@ spire it meets lost a slice and its top hung in the air, and a neighbouring chun
 well as after it, so no sweep afterwards could be safe. The placement modifier `awaken:clear_of_settlements` (`reach`, last
 in the placed feature) drops a feature whose reach, plus 8 for a road's banks, touches land a road or settlement referenced
 from its chunk or those beside it uses: frost spires and glass shards (13, small 8), floating shards (16), boulders and
-shale boulders (6). New chunks only. Test: `village_tall_things_keep_off`. The carriageway is a two-track country road in the land's own ground: a crown grown over
+shale boulders (6). New chunks only. It reads only what the region decorating the chunk holds (vanilla's FEATURES step:
+references in the chunks beside it, starts out to 8 chunks): the chunks under the footprint, no further out than those
+beside the centre (whatever could cut the feature's own blocks is named there), and a start a reference names past 8
+chunks (a road leg reaching 8 chunks from its lattice start, named from the chunk beside) keeps the feature off rather
+than being read (reading it crashed world generation, CI tour 10 Nov: "Requested chunk unavailable during world
+generation"). A layout is asked in its own plan coordinates (offsets from its origin, as the painter asks it); asked in
+the world's, the first version saw no real road or settlement. Tests: `village_tall_things_keep_off`,
+`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin). The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts

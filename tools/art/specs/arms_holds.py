@@ -4,7 +4,8 @@ like you're holding a spear. Right now in first person, it just looks like a swo
 A hold is written as the weapon is really held, in view terms, and solved for each weapon from its own mesh (so every
 weapon of a style, a Lord-forged one too, sits the same way in the hand whatever its outline):
   yaw, pitch   where the business end points at rest: yaw degrees to the left of straight ahead, pitch degrees up
-  roll         the weapon turned about its own length (0: its flat toward the eye as far as the pointing allows)
+  roll         the weapon turned about its own length (0: its flat toward the eye as far as the pointing allows; 90: its
+               flat to the side and its edge square to the view, how a blade is really held)
   grip         where the hand closes, from vanilla's resting hand (view space, blocks): every weapon is seated in it
   scale        one size for every style (SCALE), so a spear is as much longer than a longsword in hand as in F5, a
                dagger as much shorter; a style may carry a little more or less (two-handed weapons nearer the eye)
@@ -186,11 +187,18 @@ def flipped3(style, edge):
     return bool(edge and lead and edge != lead)
 
 
+# single-edged blades held edge down in third person (Euan 2026-11-09, the katana: "the blade is facing upwards instead of
+# downwards... he's not holding it correctly"): vanilla's handheld hold puts a design's +x side up as the arm hangs, so
+# these are turned half round about their length; the rig (arms_rig4) solves each move's wrist from this hold, so the
+# edge still leads every blow
+EDGE_DOWN3 = {"katana"}
+
+
 def third_person(style, edge):
     """The third-person holds (right, left, as written in the JSON), None keeping vanilla's handheld: turned half round
     about the weapon's length (the line through the item's centre) for a weapon turned over (flipped3), so the wrist's
     baked turn lays its edge into every blow; moved along its length so the fist closes down a haft (grip3)."""
-    flip = flipped3(style, edge)
+    flip = flipped3(style, edge) != (style in EDGE_DOWN3 and edge == 1)
     k = HAFT3.get(style, 0.0)
     if not flip and not k:
         return None
@@ -255,33 +263,36 @@ LEFT = (-1.0, 0.0, -0.3)  # a working side toward the middle of the view
 # 2026-10-26: "You're never going to hold an axe on its side like that. You're going to hold the sharp ends downwards,
 # similar to a sword"): the weapon turned a quarter about its length (roll 90), its flat to the side, never to the eye
 DOWN = (0.0, -0.8, -0.6)
+# a working side straight ahead, as vanilla's own sword is held: its item/handheld turn stands the blade up, leaned 18 to
+# 20 degrees back toward the eye, edge ahead, flat to the side (seen across the hand, so its face still shows). Euan
+# 2026-11-09, of our swords at roll 135: "it looks like it's being held the completely wrong way", "a vanilla sword ...
+# actually feels like it has the sharp edge like forwards". yaw 180 is that lean back (tip over the shoulder)
+FORWARD = (0.0, 0.0, -1.0)
+STANDING = dict(yaw=180, pitch=72, roll=90, grip=(-0.04, -0.10, 0.0), size=0.85, cut=FORWARD)
 
 HOLDS = {
-    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own); turned an eighth
-    # further than the quarter (roll 135) so the blade's face and the guard's spread show, never the guard's end on (the
-    # weapon audit, Euan 2026-11-02: "the two blocky things at the bottom look very, very chunky")
-    "longsword": dict(yaw=18, pitch=52, roll=135, grip=(0.02, 0.0, 0.02), cut=DOWN),
+    # one hand, the blade standing as a vanilla sword's does, its edge ahead
+    "longsword": dict(STANDING),
     # en garde: the point forward at the target's height, the hand a little in
     "rapier": dict(yaw=20, pitch=18, roll=90, grip=(-0.04, 0.03, -0.02)),
-    # two hands at the middle, the edge down toward the target, the point at it (chudan)
-    "katana": dict(yaw=10, pitch=36, roll=135, grip=(-0.14, 0.0, 0.04)),
+    # two hands, stood up at the right shoulder (hasso), the edge ahead, the curve showing its length
+    "katana": dict(yaw=180, pitch=78, roll=90, grip=(-0.08, -0.12, 0.02), size=0.9, cut=FORWARD),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
     # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
     # draws the resting hand about an eighth of the frame higher than mesh_render does: judged in the game, 2026-10-26)
     "spear": dict(yaw=46, pitch=13, grip=(0.02, -0.04, 0.06), size=1.3),
     # as the spear, the blade higher, its edge down toward the foe
-    "glaive": dict(yaw=54, pitch=22, roll=135, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
+    "glaive": dict(yaw=54, pitch=22, roll=90, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
     # the snath up, the blade at the top reaching in across the view
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
     "warstaff": dict(yaw=58, pitch=28, grip=(-0.08, -0.06, 0.0)),
-    # two hands, raised, big and near the middle; an edge down toward the foe, turned an eighth further than the quarter
-    # as the Longsword is (roll 135, the weapon audit), so its broad face and its guard's spread show
-    "greatblade": dict(yaw=20, pitch=60, roll=135, grip=(-0.10, -0.08, 0.04), cut=DOWN),
+    # two hands, stood up near the middle as the Longsword is, nearly straight, its edge ahead
+    "greatblade": dict(yaw=180, pitch=82, roll=90, grip=(-0.14, -0.14, 0.02), size=0.75, cut=FORWARD),
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
-    # one hand, the head up, its bit down toward the foe (never its flat to the eye)
-    "axe": dict(yaw=10, pitch=58, roll=135, grip=(0.02, -0.04, 0.02), cut=DOWN),
+    # one hand, the haft standing as a vanilla axe's does, its bit ahead
+    "axe": dict(STANDING, pitch=80, size=0.75),
     # short, the point forward, a little larger than true so its blade reads; one in each hand (the off hand's twin,
     # ArmsOffHand), held up enough that both blades show whole
     "daggers": dict(yaw=14, pitch=42, roll=90, grip=(-0.02, 0.07, -0.02), size=1.15, cut=DOWN),
@@ -289,8 +300,8 @@ HOLDS = {
     "twinblades": dict(yaw=62, pitch=34, grip=(-0.04, 0.02, 0.0)),
     # the head forward on its coiled chain
     "chainblade": dict(yaw=18, pitch=38, roll=90, grip=(0.02, 0.0, 0.02)),
-    # the shield to the front on the forearm, the blade above it
-    "shieldblade": dict(yaw=30, pitch=62, grip=(-0.02, -0.02, 0.02)),
+    # a sword held as a Longsword is; the shield is the off hand's (arms_weapons.pair_of)
+    "shieldblade": dict(STANDING),
     # the energy blade forward like a drawn arm
     "precursor": dict(yaw=14, pitch=24, roll=90, grip=(0.0, 0.0, 0.0)),
     # gauntlets keep their worn hold (arms_weapons.HOLDS["gauntlets"]): they were never a blade in the hand

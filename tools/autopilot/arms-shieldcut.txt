@@ -1,0 +1,44 @@
+# The Shieldblade's chain in the real game, slowed (SPEC §25 "The Shieldblade"; Euan 2026-11-09: "it reads as just waving the swords instead of
+# swinging it blade side"): strike 1's point must cross the crosshair, the blade square to the way it goes.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsholds creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_shieldblade
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shieldblade_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+quit
