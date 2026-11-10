@@ -83,8 +83,9 @@ unique and very smooth... on par with the system we have for the circles that cl
   it again without striking. In play no ordinary creature's plain blow ever landed: the melee goal stopped itself two
   ticks into every wind-up (it stands still to wind up, and vanilla reads standing still as the chase being over).
   Abilities worked, which hid it, and the old test drove the goal by hand. Fixed; a test now runs the real loop. This
-  touches every creature with a told melee, not only the gates', so ordinary creatures hit harder in practice than they
-  did before the fix (SPEC §60.8).
+  touches every ordinary monster in the game (the gates' and the world's), the hunters among the fauna and the Hush
+  cave creatures, so they hit harder in practice than before the fix. Named beasts and water creatures always landed
+  theirs (SPEC §60.8).
 - **Nothing fires an arrow.** Each of the 26 shooters throws its own thing (18 kinds: ribs, spore pods, cinders,
   thorns, ink, quills, index cards, rivets, glass, oil flasks, hail, ice points, arcs, gusts, quarrels, spars, hollow
   rings, hoods), from where its body holds it (SPEC §60.7).

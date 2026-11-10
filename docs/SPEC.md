@@ -21720,9 +21720,11 @@ navigation while it winds up, and vanilla's `MeleeAttackGoal.canContinueToUse` (
 path is done, so the goal selector ended the goal two ticks into every wind-up; twenty ticks later it began again and
 was ended again. Abilities were unaffected, which hid it, and `mobs_told_melee` drives the goal by hand and never met
 the selector. Fix: `ToldMelee.canContinueToUse` holds while a blow is being told or followed through, and the chase is
-taken up again as the blow is thrown. `gate_monster_plain_blow_lands` runs the real loop. Every creature with a told
-melee hits with its plain blow again (not only the gates'); fights with ordinary creatures are harder than they were
-between 25 Oct and this fix.
+taken up again as the blow is thrown (at the goal's own speed). `gate_monster_plain_blow_lands` runs the real loop.
+Who this changes: every creature whose melee does not follow a target it cannot see, which is every ordinary monster
+(`AwakenMob`: the gates' and the world's), the hunters among the fauna (`FaunaMob` HUNTER) and the Hush cave creatures
+(`CaveFauna`). The named beasts, the water creatures and the neutral fauna follow unseen and always landed. Fights
+with ordinary monsters are harder than they were between 25 Oct and this fix.
 
 **Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
 blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through

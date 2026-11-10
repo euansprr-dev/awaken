@@ -64,6 +64,7 @@ final class MobGoals {
         /** How far past its reach a target may be for the string to go on (it steps in after it). */
         private static final double STRING_REACH = 2.0;
         private final AwakenMob mob;
+        private final double speed;
         private int tellLeft, swings, stringAt, gapLeft;
         private Strikes.Kind telling = Strikes.Kind.NONE;
 
@@ -74,6 +75,7 @@ final class MobGoals {
         ToldMelee(AwakenMob mob, double speed, boolean followUnseen) {
             super(mob, speed, followUnseen);
             this.mob = mob;
+            this.speed = speed;
         }
 
         /** Ticks a blow of this creature is told for: its own rhythm's, else its rank's. */
@@ -205,7 +207,7 @@ final class MobGoals {
             } else {
                 stringAt = 0;
                 // the blow is thrown: it takes up the chase again (its rest before the next is the attack cooldown)
-                if (target != null && target.isAlive()) mob.getNavigation().moveTo(target, 1.0);
+                if (target != null && target.isAlive()) mob.getNavigation().moveTo(target, speed);
             }
             if (target == null || !target.isAlive() || !mob.isWithinMeleeAttackRange(target)) return; // stepped out: a whiff
             var dmg = mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
