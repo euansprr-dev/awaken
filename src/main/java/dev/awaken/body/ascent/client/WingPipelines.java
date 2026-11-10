@@ -39,6 +39,29 @@ final class WingPipelines {
             .withCull(false)
             .build();
 
+    /**
+     * The feathers under the video setting Improved Transparency: there every blended type is drawn through its own set
+     * of three pipelines, and a type without one throws as it draws. The game's own pairing for its unlit entity type
+     * (the eyes), both sides.
+     */
+    private static final OitPipelineSet FEATHER_OIT = OitPipelineSet.builder(Awaken.id("ascent_wing_feather"),
+            RenderPipeline.builder(RenderPipelines.OIT_ENTITY_SNIPPET, RenderPipelines.EYES_SNIPPET).withCull(false)).build();
+
+    /**
+     * The same feathers on a position and a colour alone: 16 bytes a vertex where the entity format takes 36 (a feather
+     * takes no light, its texture is one white texel and its shade is in its colour, so the rest was sent for nothing).
+     * The game's lightning shaders, alpha-blended, writing depth, both sides; in fog they thin toward nothing where the
+     * entity shader tints toward the fog's colour.
+     */
+    static final RenderPipeline FEATHER_LEAN = RenderPipeline.builder(RenderPipelines.LIGHTNING_SNIPPET)
+            .withLocation(Awaken.id("pipeline/ascent_wing_feather_lean"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withCull(false)
+            .build();
+
+    private static final OitPipelineSet FEATHER_LEAN_OIT = OitPipelineSet.builder(Awaken.id("ascent_wing_feather_lean"),
+            RenderPipeline.builder(RenderPipelines.LIGHTNING_SNIPPET).withCull(false)).build();
+
     private static final RenderPipeline.Snippet HALO_SNIPPET = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
             .withVertexShader("core/rendertype_lightning")
             .withFragmentShader("core/rendertype_lightning")
@@ -56,13 +79,18 @@ final class WingPipelines {
     private static final OitPipelineSet HALO_OIT = OitPipelineSet.builder(Awaken.id("ascent_wing_halo"),
             RenderPipeline.builder(HALO_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
-    private static final RenderType[] FEATHERS = new RenderType[3];
+    private static final RenderType[] FEATHERS = new RenderType[3], LEAN = new RenderType[3];
+    /** Which of the two the feathers are drawn through (/awaken wings set probe_lean). */
+    static boolean lean;
     private static RenderType halo;
     private static int ok = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(FEATHER);
         e.registerOptionalPipeline(HALO);
+        e.registerOptionalPipeline(FEATHER_LEAN);
+        e.registerOitPipelineSet(FEATHER_OIT);
+        e.registerOitPipelineSet(FEATHER_LEAN_OIT);
         e.registerOitPipelineSet(HALO_OIT);
     }
 
@@ -78,6 +106,20 @@ final class WingPipelines {
         return ok == 1;
     }
 
+    private static int leanOk = -1;
+
+    private static boolean leanOk() {
+        if (leanOk < 0) {
+            try {
+                leanOk = RenderSystem.getCompiledPipelineNullable(FEATHER_LEAN) != null ? 1 : 0;
+            } catch (RuntimeException ex) {
+                leanOk = 0;
+            }
+            if (leanOk == 0) Awaken.LOG.warn("[ascent] the wings' lean pipeline did not build; they draw with the entity format");
+        }
+        return leanOk == 1;
+    }
+
     /**
      * The feathers' type for one pair of wings (0 to 2); vanilla's translucent entity type if ours didn't build (lit by
      * the world, but there). A type a pair, the same in everything but name, so each pair is its own draw: the game joins
@@ -86,9 +128,17 @@ final class WingPipelines {
      */
     static RenderType feather(int pair) {
         int i = Math.max(0, Math.min(FEATHERS.length - 1, pair));
+        if (lean && ok() && leanOk()) {
+            if (LEAN[i] == null) {
+                LEAN[i] = RenderType.create("awaken_ascent_wing_feather_lean_" + i,
+                        RenderSetup.builder(FEATHER_LEAN).setOitPipelines(FEATHER_LEAN_OIT).createRenderSetup());
+            }
+            return LEAN[i];
+        }
         if (FEATHERS[i] == null) {
             FEATHERS[i] = ok() ? RenderType.create("awaken_ascent_wing_feather_" + i,
-                    RenderSetup.builder(FEATHER).withTexture("Sampler0", WHITE).createRenderSetup()) : RenderTypes.entityTranslucent(WHITE);
+                    RenderSetup.builder(FEATHER).withTexture("Sampler0", WHITE).setOitPipelines(FEATHER_OIT).createRenderSetup())
+                    : RenderTypes.entityTranslucent(WHITE);
         }
         return FEATHERS[i];
     }

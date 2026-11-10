@@ -303,6 +303,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             case "probe_pairs" -> probePairs = (int) value;
             case "probe_ring" -> probeRing = value != 0;
             case "probe_halos" -> probeHalos = value != 0;
+            case "probe_lean" -> WingPipelines.lean = value != 0;
             default -> {
                 return false;
             }
