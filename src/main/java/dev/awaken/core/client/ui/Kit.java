@@ -256,6 +256,43 @@ public final class Kit {
     }
 
     /** What one hint says: its keys ("Hold" first for a held one), and what they do, in a few plain words. */
+    // ---- the same caps where a screen is laid out in GUI pixels (a card, the bag, the Look screen: SPEC §57.9) -------
+
+    /** A key cap in GUI pixels, the sheet's cap at the game's own text size: returns its width. Ten pixels tall, from y - 1. */
+    public static int cap(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.Font font, String key, int x, int y, float a, boolean hold) {
+        int tw = font.width(key), w = Math.max(11, tw + 6);
+        g.fill(x, y - 1, x + w, y + 9, Sheet.argb(0x05080F, .7F * a));
+        int rim = hold ? Glass.a(Glass.AMBER, a) : Glass.a(Glass.LABEL, .6F * a);
+        g.fill(x, y - 1, x + w, y, rim);
+        g.fill(x, y + 8, x + w, y + 9, rim);
+        g.fill(x, y, x + 1, y + 8, rim);
+        g.fill(x + w - 1, y, x + w, y + 8, rim);
+        g.fill(x, y + 9, x + w, y + 10, hold ? Glass.a(Glass.AMBER, .5F * a) : Glass.a(Glass.LABEL, .35F * a));
+        g.text(font, key, x + (w - tw) / 2 + (tw % 2 == 0 ? 0 : 1), y, Glass.a(hold ? Glass.AMBER : Glass.TITLE, a), false);
+        return w;
+    }
+
+    /** A line of hints in GUI pixels from x: each its caps, then its words. Returns the x after the last. */
+    public static int hintLine(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.Font font, List<Hint> hints, int x, int y, float a) {
+        for (Hint h : hints) {
+            if (h.hold()) x += cap(g, font, "Hold", x, y, a, true) + 2;
+            for (String k : h.keys()) x += cap(g, font, k, x, y, a, false) + 2;
+            g.text(font, h.label(), x + 2, y, Glass.a(Glass.LABEL, a), false);
+            x += font.width(h.label()) + 12;
+        }
+        return x;
+    }
+
+    public static int hintLineWidth(net.minecraft.client.gui.Font font, List<Hint> hints) {
+        int w = 0;
+        for (Hint h : hints) {
+            if (h.hold()) w += Math.max(11, font.width("Hold") + 6) + 2;
+            for (String k : h.keys()) w += Math.max(11, font.width(k) + 6) + 2;
+            w += font.width(h.label()) + 12;
+        }
+        return Math.max(0, w - 10);
+    }
+
     public record Hint(String label, boolean hold, String... keys) {
         public static Hint of(String label, String... keys) {
             return new Hint(label, false, keys);

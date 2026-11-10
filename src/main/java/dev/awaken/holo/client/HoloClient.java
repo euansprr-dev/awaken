@@ -93,6 +93,11 @@ public final class HoloClient {
         // push last, pop first: nothing after us can cancel the layer and strand the translate
         bus.addListener(EventPriority.LOWEST, RenderGuiLayerEvent.Pre.class, HudMotion::pre);
         // the K menu is worked with the cursor; the crosshair would only sit on the panel's edge
+        // an item's name and lines in the band's glass, wherever the band's look is on (SPEC §57.9): the game's own tooltip,
+        // on the two sprites of the style awaken:glass. A stack that brings its own style keeps it.
+        bus.addListener(net.neoforged.neoforge.client.event.RenderTooltipEvent.Texture.class, e -> {
+            if (e.getOriginalTexture() == null && !dev.awaken.core.api.HudState.classic()) e.setTexture(GLASS_TIP);
+        });
         bus.addListener(RenderGuiLayerEvent.Pre.class, e -> {
             if (e.getName().equals(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR)
                     && (Minecraft.getInstance().gui.screen() instanceof HoloStatusScreen || Minecraft.getInstance().gui.screen() instanceof BandStage)) e.setCanceled(true);
@@ -140,6 +145,8 @@ public final class HoloClient {
         if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen(page, focus);
         return new StatusScreen(page, focus);
     }
+
+    static final net.minecraft.resources.Identifier GLASS_TIP = dev.awaken.Awaken.id("glass");
 
     /** Whether K opens the stage (SPEC §57) rather than the old band: a screen that folds into a place asks first. */
     public static boolean stage() {
