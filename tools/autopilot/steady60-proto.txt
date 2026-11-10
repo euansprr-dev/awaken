@@ -1,0 +1,74 @@
+# Measurement only (the look-steady-60 plan): the proof-of-concept look ("lensdebug 9": far blue fog, deeper sky, dusk
+# colours, sunlight that reads, shadows on the texel grid, the game's own clouds lit by Lens) beside today's Cinematic and
+# ImmersiveVFX, same spot and moment, in a copy of Euan's world. Shots only (run as a light tour on the MacBook's
+# screen): FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-proto.txt proto-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+opt clouds 2
+lookswitch cinematic
+wait 400
+# ---- morning
+shot p1_morning_cine
+lensdebug 9
+wait 80
+shot p1_morning_air
+lensdebug 0
+lookswitch vfx
+wait 200
+shot p1_morning_vfx
+# ---- dusk
+cmd time set 11800
+wait 120
+shot p2_dusk_vfx
+lookswitch cinematic
+wait 160
+shot p2_dusk_cine
+lensdebug 9
+wait 80
+shot p2_dusk_air
+# ---- noon
+cmd time set 6000
+wait 120
+shot p3_noon_air
+lensdebug 0
+wait 60
+shot p3_noon_cine
+lookswitch vfx
+wait 200
+shot p3_noon_vfx
+# ---- the open view from 45 up, morning
+cmd time set 3000
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 200
+shot p4_open_vfx
+lookswitch cinematic
+wait 160
+shot p4_open_cine
+lensdebug 9
+wait 80
+shot p4_open_air
+# ---- night
+cmd time set 18000
+wait 120
+shot p5_night_air
+lensdebug 0
+lookswitch vfx
+wait 200
+shot p5_night_vfx
+quit

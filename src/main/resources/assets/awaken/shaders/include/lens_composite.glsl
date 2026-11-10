@@ -224,6 +224,12 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float depthOfShade = l17.g * (1.0 + 0.3 * golden) * (1.0 + 0.35 * smoothstep(24.0, 160.0, dist));
         vec3 shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade));
         // a glow is light, not a lit surface: it keeps its brightness in the shade
+        // look-steady-60 proof of concept (lensdebug 9, never in play): sunlight that reads. A brighter, warmer key and a
+        // deeper cool shade, so a cast shadow is a shape on the ground and not a tint
+        if (int(P(0).r * 255.0 + 0.5) == 9) {
+            key = mix(vec3(1.22, 1.15, 0.96), key * vec3(1.12, 1.06, 0.98), max(golden, f16.y));
+            shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade * 1.85));
+        }
         float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
         m = mix(vec3(1.0), mix(shade, key, direct), k);
         // golden light is rich light: sunlit colour gains a little saturation as the sun lowers
@@ -381,6 +387,7 @@ void main() {
     // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
     int storms = stormCount();
+    float cl_cover = 0.0;
 #ifdef PROBE_NO_CLOUDS
     if (false) {
 #else
@@ -402,7 +409,10 @@ void main() {
                 behind = behind || dist > max(stormEntry(cv, k, camY), 16.0);
             }
         }
-        if (behind) c = c * cl.a + cl.rgb;
+        if (behind) {
+            c = c * cl.a + cl.rgb;
+            cl_cover = 1.0 - cl.a;
+        }
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
@@ -427,6 +437,49 @@ void main() {
     }
 #endif
     float l0 = luma(c);
+#ifdef LENS_LIGHT
+    // look-steady-60 proof of concept (lensdebug 9, never in play): "the Air". The land goes into a blue distance and
+    // the sky's horizon is that same colour, so the end of the world is never a line; the zenith is deeper; at dusk the
+    // sky and the fog turn rose and violet. No new pass, no new texture: this pixel's depth and direction only
+    bool air = int(p0.r * 255.0 + 0.5) == 9;
+    if (air) {
+        vec3 dirA = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+        vec4 fA = F(14);
+        float up = clamp(dirA.y, 0.0, 1.0);
+        float night = F(16).y;
+        float dusk = max(p1.a, 1.0 - smoothstep(0.08, 0.42, fA.y)) * (1.0 - night) * step(0.0001, fA.w);
+        float sunSide = 0.5 + 0.5 * dot(normalize(dirA.xz + vec2(1.0e-4)), normalize(fA.xz + vec2(1.0e-4)));
+        float fl = max(luma(fogColor.rgb), 0.02);
+        // the fog: the game's own horizon colour pulled toward blue by day, toward rose and violet at dusk
+        vec3 airFog = mix(fogColor.rgb, vec3(0.57, 0.67, 1.0) * fl * 1.2, 0.55 * (1.0 - night));
+        vec3 duskFog = mix(vec3(0.58, 0.46, 0.80), vec3(1.0, 0.64, 0.60), sunSide * sunSide) * (0.30 + 0.75 * fl);
+        airFog = mix(airFog, duskFog, dusk * 0.8);
+        if (sky) {
+            // a deeper zenith by day, the horizon band left as the fog
+            vec3 deep = max(mix(vec3(l0), c, 1.22), 0.0) * mix(vec3(1.0), vec3(0.86, 0.87, 1.07), 1.0 - night);
+            c = mix(deep, c, pow(1.0 - up, 3.0));
+            vec3 duskSky = mix(vec3(0.33, 0.27, 0.60), duskFog * 1.2, pow(1.0 - up, 1.6));
+            c = mix(c, duskSky * (0.6 + 1.4 * l0), dusk * 0.88 * (1.0 - cl_cover));
+            c = mix(c, airFog, pow(1.0 - up, 7.0) * 0.92 * (1.0 - cl_cover));
+        } else {
+            // the game's own clouds (their layer at 192.33, four blocks thick): seen far past the land's end, so their
+            // fog runs on a longer scale; a little whiter and softer against the sky
+            float wy = pRel.y + F(12).y;
+            bool cloud = wy > 191.0 && wy < 197.5 && d > 32.0 && !farTerrain;
+            float t = d / (cloud ? rdEnd * 4.5 : rdEnd);
+            // (a stand-in for the soft cloud of stage 1b: tinted by the hour, a third of the sky showing through)
+            if (cloud) {
+                vec3 through = mix(airFog, airFog * vec3(0.66, 0.72, 1.04), up);
+                c = mix(c * mix(vec3(0.95, 0.95, 1.0), duskFog * 1.7, dusk * 0.75), mix(through, duskFog, dusk * 0.6), 0.32);
+            }
+            float fog = (1.0 - exp(-t * t * 2.8)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * step(0.001, h.r);
+            if (plate) fog = 0.0;
+            c = mix(c, mix(c, vec3(l0), 0.25), fog);
+            c = mix(c, airFog, fog);
+        }
+        haze = 0.0;
+    }
+#endif
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);
 #ifdef LENS_LIGHT

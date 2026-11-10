@@ -129,7 +129,7 @@ public final class LensClient {
     }
 
     public static void debug(int mode) {
-        debug = Math.clamp(mode, 0, 8);
+        debug = Math.clamp(mode, 0, 9); // 9: the look-steady-60 proof of concept (measurement only, never in play)
         Awaken.LOG.info("[lens] debug view {}", debug);
     }
 
@@ -403,7 +403,8 @@ public final class LensClient {
      */
     private static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent e) {
         var state = e.getRenderState();
-        cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
+        // (debug 9, the look-steady-60 proof of concept: the game's own clouds stay, and Lens lights and fogs them)
+        cloudsHere = active && lit && debug != 9 && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
                 && e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF;
         if (!cloudsHere) return;
         cloudColour = state.cloudColor;

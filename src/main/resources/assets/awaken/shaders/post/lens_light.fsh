@@ -235,8 +235,20 @@ void main() {
             // buffer's texels (a crisp edge at 960 x 540 would show as stairs of four pixels on a 4K screen)
             vec3 l = f14.xyz, a1 = normalize(cross(l, abs(l.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)));
             float ang = ign(gl_FragCoord.xy + vec2(41.0, 11.0), f12.w + 53.0) * 6.2832, rad = 0.012 * sqrt(noise2);
+            // look-steady-60 proof of concept (lensdebug 9, never in play): shadows in the texture's own pixels. A point on a
+            // block face asks from the centre of its 1/16-block texel, so every screen pixel of that texel gets one answer
+            // and a shadow's edge runs along texel edges, like the art it falls on; the sun's disc is narrower
+            vec3 ps = p;
+            if (int(P(0).r * 255.0 + 0.5) == 9) {
+                vec3 an = abs(n);
+                if (max(an.x, max(an.y, an.z)) > 0.99) {
+                    vec3 w = p + vec3(f12.x, f12.y, f12.z);
+                    ps = mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
+                }
+                rad *= 0.35;
+            }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
-            vis = sunVisibility(p, n, l, noise, ultra);
+            vis = sunVisibility(ps, n, l, noise, ultra);
             if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
