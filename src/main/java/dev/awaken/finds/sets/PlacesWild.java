@@ -109,7 +109,7 @@ final class PlacesWild {
                     for (int i = 0; i < 14; i++) { double a = i * Math.PI / 7 + 0.2; int x = (int) Math.round(Math.cos(a) * 20), z = (int) Math.round(Math.sin(a) * 20); if (!s.taken(x, 1, z) && Math.abs(x) > 3) s.put(x, 1, z, st(i % 3 == 0 ? Blocks.MANGROVE_ROOTS : i % 3 == 1 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawn(EntityTypes.FROG, 15, 16, 0, "frog").spawn(EntityTypes.FROG, -16, -15, 0, "frog").spawnUp(EntityTypes.CAT, 0, 0, 13, Scene.Spawn.STAY, "cat");
                     wild(s, 22, 33, 7);
-                    s.cam(0, 12, 46, 180, 8).cam(18, 24, 18, 135, 40).cam(-1, 4, 15, 180, 4).cam(1, 4, 2, 160, 2);
+                    s.cam(0, 19, 46, 180, 17).cam(18, 24, 18, 135, 40).cam(-1, 4, 15, 180, 4).cam(1, 4, 2, 160, 2);
                 })
                 .script(() -> Steps.of(Sockets.need("socket", st -> st.is(Props.BASKET.get().asItem()), i -> Props.BASKET.get().of(1)).carry("loose"),
                         Prize.at("bell").then((c, i) -> c.sound(c.pos("bell", 0), SoundEvents.BELL_BLOCK, 2.5F, 1.0F))))
@@ -337,7 +337,7 @@ final class PlacesWild {
                     s.tell(-9, 6, 2);
                     s.spawn(EntityTypes.FOX, 14, -8, 0, "fox");
                     wild(s, 20, 33, 12);
-                    s.cam(0, 12, 42, 180, 10).cam(20, 24, 24, 140, 38).cam(0, 2, 21, 180, 0).cam(0, 1, -4, 0, -2);
+                    s.cam(0, 19, 42, 180, 17).cam(20, 24, 24, 140, 38).cam(0, 2, 21, 180, 0).cam(0, 1, -4, 0, -2);
                 })
                 .script(() -> Steps.of(Sockets.need("stove", st -> st.is(net.minecraft.tags.ItemTags.LOGS) || st.is(net.minecraft.tags.ItemTags.PLANKS),
                                 i -> st(Blocks.FURNACE).setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true)).carry("loose"),
@@ -471,7 +471,7 @@ final class PlacesWild {
                     rubble(s, -10, -2, 5, 12, p);
                     path(s, 1, 24, 1, 17, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
                     wild(s, 20, 31, 7);
-                    s.cam(0, 14, 44, 180, 10).cam(19, 24, 19, 135, 40).cam(1, 2, 21, 180, 0).cam(1, 2, 2, -100, 16);
+                    s.cam(0, 19, 44, 180, 17).cam(19, 24, 19, 135, 40).cam(1, 2, 21, 180, 0).cam(1, 2, 2, -100, 16);
                 })
                 .script(() -> Steps.of(Sockets.need("furnace", st -> st.is(Items.COAL) || st.is(Items.CHARCOAL) || st.is(Items.COAL_BLOCK),
                                 i -> st(Blocks.BLAST_FURNACE).setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true)).carry("loose"),

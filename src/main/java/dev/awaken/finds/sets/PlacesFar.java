@@ -166,7 +166,7 @@ final class PlacesFar {
                     stilled(s, 4, -4, 5, 3, Direction.WEST);
                     for (int z = 26; z >= 8; z--) for (int x = -1; x <= 1; x++) if (h(s, x, 3, z) < 200 && !s.taken(x, s.g(x, z) + 1, z)) s.put(x, s.g(x, z), z, st(Blocks.SMOOTH_SANDSTONE));
                     wild(s, 24, 35, 9);
-                    s.cam(0, 14, 50, 180, 18).cam(21, 22, 21, 135, 44).cam(0, 2, 28, 180, 12).cam(8, -3, 7, 135, 4);
+                    s.cam(0, 19, 50, 180, 18).cam(21, 22, 21, 135, 44).cam(0, 2, 28, 180, 12).cam(8, -3, 7, 135, 4);
                 })
                 .script(() -> Steps.of(Notes.of("stone", 5), Prize.at("prize")))
                 .play(t -> { for (int i : Notes.order(t.seed(), 5, 5)) t.use("stone", i); t.use("prize", 0); })
@@ -353,7 +353,7 @@ final class PlacesFar {
                     vines(s, -9, 2, -10, 9, 9, 4, 8);
                     s.spawn(EntityTypes.CHICKEN, 10, 2, 0, "hen").spawn(EntityTypes.CHICKEN, 12, 3, 0, "hen").spawn(EntityTypes.CAT, 3, 7, Scene.Spawn.STAY, "cat");
                     wild(s, 14, 25, 7);
-                    s.cam(0, 10, 36, 180, 8).cam(14, 18, 15, 135, 42).cam(0, 2, 11, 180, 0).cam(1, 2, -1, 110, 0);
+                    s.cam(0, 19, 36, 180, 17).cam(14, 18, 15, 135, 42).cam(0, 2, 11, 180, 0).cam(1, 2, -1, 110, 0);
                 })
                 .script(() -> Steps.of(Read.all("bed"), Sockets.need("stove", st -> st.is(net.minecraft.tags.ItemTags.LOGS),
                         i -> st(Blocks.FURNACE).setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true)).carry("loose"), Read.all("book")))

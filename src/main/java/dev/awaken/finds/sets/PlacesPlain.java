@@ -145,7 +145,7 @@ final class PlacesPlain {
                     path(s, 0, 27, 0, 21, 1, st(Blocks.DIRT_PATH), st(Blocks.GRASS_BLOCK));
                     wild(s, 23, 28, 7);
                     s.spawn(EntityTypes.WOLF, -10, 10, Scene.Spawn.NO_AI | Scene.Spawn.QUIET, "dog");
-                    s.cam(0, 13, 40, 180, 12).cam(20, 24, 20, 135, 40).cam(0, 2, 24, 180, -2).cam(0, 2, -3, 180, -6);
+                    s.cam(0, 19, 40, 180, 17).cam(20, 24, 20, 135, 40).cam(0, 2, 24, 180, -2).cam(0, 2, -3, 180, -6);
                 })
                 .script(() -> Steps.of(Light.all("hearth"), Sockets.need("stand", st -> st.is(net.minecraft.tags.ItemTags.WOOL_CARPETS), i -> st(Blocks.CARPET.pick(DyeColor.PINK))).carry("loose"),
                         Prize.at("bell").then((c, i) -> c.sound(c.pos("bell", 0), SoundEvents.BELL_BLOCK, 2.0F, 1.2F))))
@@ -220,7 +220,7 @@ final class PlacesPlain {
                         if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 0, z, h(s, x, 0, z) < 150 ? st(Blocks.DIRT_PATH) : st(Blocks.COARSE_DIRT));
                     }
                     wild(s, 23, 34, 9);
-                    s.cam(0, 16, 48, 180, 14).cam(21, 28, 21, 135, 42).cam(0, 2, 11, 180, 2).cam(0, 1, -2, 180, 8);
+                    s.cam(0, 19, 48, 180, 17).cam(21, 28, 21, 135, 42).cam(0, 2, 11, 180, 2).cam(0, 1, -2, 180, 8);
                 })
                 .script(() -> Steps.of(Read.all("stone"), Light.all("candle"), Prize.at("slab")))
                 .play(t -> { for (int i = 0; i < 4; i++) t.use("stone", i); t.hold(Items.FLINT_AND_STEEL); for (int i = 0; i < 4; i++) t.use("candle", i); t.use("slab", 0); })
@@ -344,7 +344,7 @@ final class PlacesPlain {
                     s.put(2, 1, 20, st(Blocks.CARVED_PUMPKIN));
                     path(s, 12, 24, 10, 11, 1, st(Blocks.SMOOTH_SANDSTONE), st(Blocks.SAND));
                     wild(s, 20, 31, 7);
-                    s.cam(0, 16, 46, 180, 14).cam(0, 32, -26, 0, 42).cam(0, 3, 10, 180, -12).cam(0, 12, -17, 0, 24);
+                    s.cam(0, 19, 46, 180, 17).cam(0, 32, -26, 0, 42).cam(0, 3, 10, 180, -12).cam(0, 12, -17, 0, 24);
                 })
                 .script(() -> Notes.of("stone", 4))
                 .play(t -> { for (int i : Notes.order(t.seed(), 4, 4)) t.use("stone", i); })
@@ -402,7 +402,7 @@ final class PlacesPlain {
                     for (int i = 0; i < 10; i++) { int x = 3 + s.rnd.nextInt(10), z = 6 + s.rnd.nextInt(7); if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 1, z, st(i % 2 == 0 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawn(EntityTypes.FROG, 8, 7, 0, "frog");
                     wild(s, 9, 44, 16);
-                    s.cam(0, 14, 40, 180, 4).cam(18, 30, 20, 150, 38).cam(-36, 2, 12, 180, -20).cam(-6, 17, 0, -90, 6);
+                    s.cam(0, 19, 40, 180, 17).cam(18, 30, 20, 150, 38).cam(-36, 2, 12, 180, -20).cam(-6, 17, 0, -90, 6);
                 })
                 .script(() -> Prize.at("gate").then((c, i) -> { PlacesWood.fillPart(c, "fall"); PlacesWood.fillPart(c, "run"); c.sound(c.pos("gate", 0), SoundEvents.IRON_DOOR_CLOSE, 2.0F, 0.6F); }))
                 .play(t -> t.use("gate", 0))
@@ -501,7 +501,7 @@ final class PlacesPlain {
                     s.put(0, 3, 0, light(5));
                     s.spawn(EntityTypes.FROG, 12, 20, 0, "frog").spawn(EntityTypes.FROG, -14, 18, 0, "frog");
                     wild(s, 22, 33, 7);
-                    s.cam(0, 12, 46, 180, 8).cam(17, 24, 17, 135, 40).cam(0, 1, 17, 180, -4).cam(1, 2, -11, 0, 6);
+                    s.cam(0, 19, 46, 180, 17).cam(17, 24, 17, 135, 40).cam(0, 1, 17, 180, -4).cam(1, 2, -11, 0, 6);
                 })
                 .script(() -> Steps.of(Light.all("candle"), Prize.at("rope").then((c, i) -> c.sound(c.pos("rope", 0), SoundEvents.BELL_BLOCK, 3.0F, 0.6F)), Prize.at("door").then((c, i) -> PlacesWood.fillPart(c, "door"))))
                 .play(t -> { t.hold(Items.FLINT_AND_STEEL); for (int i = 0; i < 3; i++) t.use("candle", i); t.use("rope", 0).use("door", 0); })

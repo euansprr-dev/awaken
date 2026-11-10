@@ -123,7 +123,7 @@ final class PlacesWood {
                     }
                     wild(s, 21, 30, 12);
                     s.spawn(EntityTypes.FOX, -14, -14, 0, "fox");
-                    s.cam(0, 14, 40, 180, 12).cam(18, 22, 20, 135, 40).cam(0, 2, 20, 180, 0).cam(3, 2, 2, -120, 0);
+                    s.cam(0, 19, 40, 180, 17).cam(18, 22, 20, 135, 40).cam(0, 2, 20, 180, 0).cam(3, 2, 2, -120, 0);
                 })
                 .script(() -> Steps.of(Light.all("kiln"), Prize.at("door").then((c, i) -> fillPart(c, "door"))))
                 .play(t -> t.hold(Items.FLINT_AND_STEEL).use("kiln", 0).use("door", 0))
@@ -239,7 +239,7 @@ final class PlacesWood {
                     path(s, 9, 33, 9, 4, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
                     wild(s, 24, 33, 10);
                     s.spawn(EntityTypes.FROG, -4, 6, 0, "frog").spawnUp(EntityTypes.COD, -11, -2, -2, 0, "fish").spawnUp(EntityTypes.COD, -9, 0, -2, 0, "fish");
-                    s.cam(-2, 13, 44, 175, 10).cam(-14, 26, 24, -140, 40).cam(9, 2, 13, 180, -8).cam(10, 1, 0, 135, 2);
+                    s.cam(-2, 19, 44, 175, 17).cam(-14, 26, 24, -140, 40).cam(9, 2, 13, 180, -8).cam(10, 1, 0, 135, 2);
                 })
                 .script(() -> Steps.of(Sockets.need("paddle", st -> st.is(Items.SPRUCE_SLAB) || st.is(net.minecraft.tags.ItemTags.PLANKS), i -> st(Blocks.SPRUCE_PLANKS)).carry("loose"),
                         Prize.at("lever").then((c, i) -> c.sound(c.pos("lever", 0), SoundEvents.GRINDSTONE_USE, 2.0F, 0.6F))))
@@ -565,7 +565,7 @@ final class PlacesWood {
                     path(s, 0, 30, 0, 16, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
                     wild(s, 19, 36, 9);
                     s.spawnUp(EntityTypes.BEE, 0, -4, 10, 0, "bee").spawnUp(EntityTypes.BEE, -8, 3, 6, 0, "bee").spawnUp(EntityTypes.BEE, 8, 10, 4, 0, "bee");
-                    s.cam(0, 14, 44, 180, 6).cam(22, 30, 26, 140, 38).cam(0, 2, 27, 180, -10).cam(0, 10, -12, 180, 4);
+                    s.cam(0, 19, 44, 180, 17).cam(22, 30, 26, 140, 38).cam(0, 2, 27, 180, -10).cam(0, 10, -12, 180, 4);
                 })
                 .script(() -> Steps.of(Sockets.need("skep", st -> st.is(Props.FIRE_BASKET.get().asItem()) || Hands.flame(st), i -> st(Blocks.HAY_BLOCK)).carry("loose").keep(),
                         Prize.at("extractor")))

@@ -47,6 +47,9 @@ public record FindsFeature() implements Feature {
     }
 
     /** The land's own top: what a cut or filled column is finished with. */
+    /** How far past a chunk its clearing reaches: as far as a tree's crown hangs over a chunk's edge. */
+    private static final int SPILL = 7;
+
     private static boolean skin(BlockState b) {
         return b.is(Blocks.GRASS_BLOCK) || b.is(Blocks.PODZOL) || b.is(Blocks.MYCELIUM) || b.is(BlockTags.SAND) || b.is(Blocks.SNOW_BLOCK) || b.is(Blocks.COARSE_DIRT)
                 || b.is(Blocks.MUD) || b.is(Blocks.MOSS_BLOCK) || b.is(BlockTags.TERRACOTTA) || b.is(Blocks.GRAVEL);
@@ -76,15 +79,21 @@ public record FindsFeature() implements Feature {
             if (x >= x0 && x <= x1 && z >= z0 && z <= z1) cols.add(k);
         }
         int cr = sc.clear;
+        // a site stood by hand passes the whole world as its rectangle: nothing to add to that
+        int cx0 = x0 == Integer.MIN_VALUE ? x0 : x0 - SPILL, cx1 = x1 == Integer.MAX_VALUE ? x1 : x1 + SPILL, cz0 = z0 == Integer.MIN_VALUE ? z0 : z0 - SPILL, cz1 = z1 == Integer.MAX_VALUE ? z1 : z1 + SPILL;
         for (int dx = -cr; dx <= cr; dx++)
             for (int dz = -cr; dz <= cr; dz++) {
                 int x = s.x() + dx, z = s.z() + dz;
-                if (x < x0 || x > x1 || z < z0 || z > z1 || dx * dx + dz * dz > cr * cr) continue;
+                // eight blocks past this chunk too: a tree in the next chunk hangs its leaves over this one after this one
+                // was cleared, then loses its trunk to its own chunk's clearing, and the leaves were left in the air
+                if (x < cx0 || x > cx1 || z < cz0 || z > cz1 || dx * dx + dz * dz > cr * cr) continue;
                 // only what grows goes here; the ground is left as it is
                 for (int y = s.y() + sc.groundAt(dx, dz) + 46; y > s.y() + sc.groundAt(dx, dz); y--) {
                     m.set(x, y, z);
                     BlockState b = level.getBlockState(m);
-                    if (!b.isAir() && b.getFluidState().isEmpty() && soft(b)) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    // never what the place itself planted: past this chunk's edge the neighbour has already written its share
+                    if (!b.isAir() && b.getFluidState().isEmpty() && soft(b) && !blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz)))
+                        level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
         // a tree felled at the clearing's edge leaves its crown hanging past it: leaves in a ring outside the clearing go
@@ -95,11 +104,11 @@ public record FindsFeature() implements Feature {
             for (int dx = -or; dx <= or; dx++)
                 for (int dz = -or; dz <= or; dz++) {
                     int x = s.x() + dx, z = s.z() + dz, d2 = dx * dx + dz * dz;
-                    if (x < x0 || x > x1 || z < z0 || z > z1 || d2 <= cr * cr || d2 > or * or) continue;
+                    if (x < cx0 || x > cx1 || z < cz0 || z > cz1 || d2 <= cr * cr || d2 > or * or) continue;
                     int g = s.y() + sc.groundAt(dx, dz);
                     for (int y = g + 46; y > g; y--) {
                         m.set(x, y, z);
-                        if (!level.getBlockState(m).is(BlockTags.LEAVES)) continue;
+                        if (!level.getBlockState(m).is(BlockTags.LEAVES) || blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz))) continue;
                         boolean trunk = false;
                         for (int ox = -2; ox <= 2 && !trunk; ox++)
                             for (int oz = -2; oz <= 2 && !trunk; oz++) {

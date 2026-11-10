@@ -168,7 +168,7 @@ final class PlacesStone {
                     s.spawnUp(EntityTypes.COD, 6, 5, -8, 0, "fish").spawnUp(EntityTypes.COD, -6, -4, -9, 0, "fish").spawnUp(EntityTypes.SALMON, 0, 6, -10, 0, "fish");
                     path(s, 0, 30, 0, 18, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
                     wild(s, 22, 33, 7);
-                    s.cam(0, 14, 48, 180, 16).cam(22, 22, 21, 135, 44).cam(0, 2, 22, 180, 12).cam(-16, -2, -5, -100, 14);
+                    s.cam(0, 19, 48, 180, 17).cam(22, 22, 21, 135, 44).cam(0, 2, 22, 180, 12).cam(-16, -2, -5, -100, 14);
                 })
                 .script(() -> Steps.of(Seal.opens("wedge", 3, Hands::pick), Prize.at("crane").then((c, i) -> { c.set("load", 0, AIR); c.sound(c.pos("crane", 0), SoundEvents.CHAIN_STEP, 2.0F, 0.6F); }), Prize.at("prize")))
                 .play(t -> t.hold(Items.IRON_PICKAXE).hit("wedge", 0).hit("wedge", 0).hit("wedge", 0).use("crane", 0).use("prize", 0))
@@ -238,7 +238,7 @@ final class PlacesStone {
                     s.part("cache", 6, 1, 3);
                     path(s, 0, 30, 2, 5, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
                     wild(s, 20, 31, 7);
-                    s.cam(0, 16, 46, 180, 6).cam(21, 26, 19, 135, 40).cam(-8, 2, -4, 180, 0).cam(-8, 1, -12, 180, 0);
+                    s.cam(0, 19, 46, 180, 17).cam(21, 26, 19, 135, 40).cam(-8, 2, -4, 180, 0).cam(-8, 1, -12, 180, 0);
                 })
                 .script(() -> Steps.of(Prize.at("cart").then((c, i) -> { c.set("cart", 0, st(Blocks.BARREL)); c.sound(c.pos("cart", 0), SoundEvents.WOOD_PLACE, 1.5F, 0.7F); }),
                         Prize.at("wheel").then((c, i) -> { PlacesWood.fillPart(c, "cage"); c.set("up", 0, st(Blocks.BARREL)); c.sound(c.pos("wheel", 0), SoundEvents.CHAIN_STEP, 2.0F, 0.5F); }), Prize.at("up")))
@@ -315,7 +315,7 @@ final class PlacesStone {
                     s.spawn(EntityTypes.LLAMA, 24, 8, 0, "llama");
                     path(s, 0, 36, 0, 16, 1, dyke, st(Blocks.SAND));
                     wild(s, 26, 37, 9);
-                    s.cam(0, 14, 52, 180, 12).cam(23, 26, 25, 135, 44).cam(0, 2, 19, 180, 8).cam(0, 2, 2, 135, 10);
+                    s.cam(0, 19, 52, 180, 17).cam(23, 26, 25, 135, 44).cam(0, 2, 19, 180, 8).cam(0, 2, 2, 135, 10);
                 })
                 .script(() -> Steps.of(Read.all("sluice").inOrder(), Sockets.need("scale", st -> st.is(Items.CALCITE) || st.is(Items.QUARTZ_BLOCK), i -> st(Blocks.CALCITE)).carry("loose")))
                 .play(t -> { for (int i = 0; i < 3; i++) t.use("sluice", i); t.use("loose", 0).hold(Items.CALCITE).use("scale", 0); })
@@ -391,7 +391,7 @@ final class PlacesStone {
                     s.spawn(EntityTypes.LLAMA, -15, -8, Scene.Spawn.STAY, "llama").spawn(EntityTypes.CAT, 12, 10, Scene.Spawn.STAY, "cat");
                     path(s, 0, 32, 0, 19, 1, st(Blocks.SMOOTH_SANDSTONE), st(Blocks.SAND));
                     wild(s, 22, 33, 7);
-                    s.cam(0, 16, 50, 180, 12).cam(23, 28, 23, 135, 44).cam(0, 2, 25, 180, -4).cam(5, 2, 9, 150, 0);
+                    s.cam(0, 19, 50, 180, 17).cam(23, 28, 23, 135, 44).cam(0, 2, 25, 180, -4).cam(5, 2, 9, 150, 0);
                 })
                 .script(() -> Steps.of(Prize.at("well").then((c, i) -> c.sound(c.pos("well", 0), SoundEvents.BUCKET_FILL, 1.5F, 1F)), Light.all("lamp"),
                         Sockets.need("door", st -> st.is(Props.BRASS_RING.get().asItem()), i -> AIR).carry("loose")))
@@ -465,7 +465,7 @@ final class PlacesStone {
                     }
                     path(s, 30, 0, 27, 0, 1, st(Blocks.RED_SAND), st(Blocks.COARSE_DIRT));
                     wild(s, 26, 37, 9);
-                    s.cam(0, 16, 54, 180, 8).cam(26, 28, 24, 130, 40).cam(29, 2, 0, 90, 0).cam(-4, 2, 0, -90, -18);
+                    s.cam(0, 19, 54, 180, 17).cam(26, 28, 24, 130, 40).cam(29, 2, 0, 90, 0).cam(-4, 2, 0, -90, -18);
                 })
                 .script(() -> Steps.of(Sockets.need("jaw", st -> st.is(Props.GREAT_RIB.get().asItem()), i -> Props.GREAT_RIB.get().of(0)).carry("loose"), Light.all("hearth"), Read.all("wall")))
                 .play(t -> { t.use("loose", 0).hold(Props.GREAT_RIB.get()).use("jaw", 0).hold(Items.FLINT_AND_STEEL).use("hearth", 0); for (int i = 0; i < 3; i++) t.use("wall", i); })
