@@ -31,6 +31,8 @@ final class FindsCommands {
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Kind.FSet.values()).map(s -> s.name().toLowerCase(java.util.Locale.ROOT)), b))
                             .executes(c -> gallery(c, StringArgumentType.getString(c, "set")))));
             f.then(Commands.literal("near").executes(FindsCommands::near));
+            f.then(Commands.literal("grant").then(Commands.argument("kind", StringArgumentType.word())
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.all().stream().map(Kind::id), b)).executes(FindsCommands::grant)));
             f.then(Commands.literal("visit").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99)).executes(FindsCommands::visit)));
             f.then(Commands.literal("locate").then(Commands.argument("kind", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.all().stream().map(Kind::id), b)).executes(FindsCommands::locate)));
@@ -69,6 +71,21 @@ final class FindsCommands {
         }
         int count = n, end = x;
         c.getSource().sendSuccess(() -> Component.literal(count + " finds stood east of you, as far as x " + end), false);
+        return n;
+    }
+
+    /** Files a kind in your Journal as done, for checking the Journal's pages: a kind's id, a set's name, or "all". */
+    private static int grant(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        String id = StringArgumentType.getString(c, "kind");
+        int n = 0;
+        for (Kind k : Kinds.all()) {
+            if (!id.equals("all") && !k.id().equals(id) && !k.set().name().equalsIgnoreCase(id)) continue;
+            p.setData(FindsContent.FINDS, p.getData(FindsContent.FINDS).withDone(k.id(), k.id() + "@" + (p.getBlockX() + n) + "," + p.getBlockZ()));
+            n++;
+        }
+        int count = n;
+        c.getSource().sendSuccess(() -> Component.literal(count + " kinds filed as done."), false);
         return n;
     }
 

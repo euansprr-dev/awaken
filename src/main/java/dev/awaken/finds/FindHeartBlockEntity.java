@@ -157,6 +157,11 @@ public final class FindHeartBlockEntity extends BlockEntity {
             be.setChanged();
         }
         be.script.tick(c);
+        // a find that wants a move you may not have yet is kept for you as a promise (SPEC §58.7), asked every two seconds
+        if (!s.kind().move().isEmpty() && now % 40 == 0 && !be.done())
+            for (var p : c.players(20))
+                if (!be.claimed(p.getUUID()))
+                    dev.awaken.core.api.Promises.seen(p, "find/" + s.key(), s.ground(), dev.awaken.core.api.Promises.Need.tier(s.kind().move()), s.kind().name());
     }
 
     public boolean done() {

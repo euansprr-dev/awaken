@@ -83,6 +83,7 @@ public final class Reward {
         LootTable table = c.level.getServer().reloadableRegistries().getLootTable(table(k));
         table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
                 .withParameter(LootContextParams.THIS_ENTITY, p).create(LootContextParamSets.CHEST), stack -> c.pop(from, stack));
+        dev.awaken.core.api.Promises.kept(p, "find/" + c.site.key());
         Progression.count(p, "awaken:finds_done");
         if (!Finds.counts(p)) return;
         boolean fresh = Progression.discover(p, k.key(), (k.size() == Kind.Size.CURIO ? 0.06 : 0.12) + 0.02 * k.rank());

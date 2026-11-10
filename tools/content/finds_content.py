@@ -510,6 +510,12 @@ def main():
     write(f"{MERGE}/assets/awaken/lang/en_us.json", lang)
     loot_tiers()
     loot_own()
+    # Vanilla calls a block solid when its collision box is a full block high or averages 35/48 of one across its three
+    # sides; every such block has to be in #minecraft:blocks_motion_no_leaves (test core_blocks_motion). The heart is a full cube.
+    motion = ["awaken:find_heart"] + ["awaken:" + n for n, (_, _, sh, solid, *_r) in PROPS.items()
+                                      if solid and ((sh[4] - sh[1]) >= 16 or ((sh[3] - sh[0]) + (sh[4] - sh[1]) + (sh[5] - sh[2])) / 48 >= 0.7291666)]
+    write("src/main/merge/finds/data/minecraft/tags/block/blocks_motion_no_leaves.json", {"replace": False, "values": sorted(motion)})
+    print("finds_content:", len(motion), "blocks in blocks_motion_no_leaves")
     java()
     print("finds_content: wrote", len(PROPS), "props,", len(TIERS), "loot tiers")
 

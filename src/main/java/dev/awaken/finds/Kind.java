@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public record Kind(String id, String name, FSet set, int number, Verb verb, Size size, int rank, Set<RegionMap.Group> lands,
                    Anchor anchor, Made made, String see, String learned, int reach, int slope, int length, Maker maker,
                    Supplier<Script> script, String loot, boolean persists, Tell tell, Supplier<ItemStack> icon, boolean needsMove,
-                   boolean lead, int weight, java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after, @org.jspecify.annotations.Nullable Play play, int ward) {
+                   boolean lead, int weight, java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after, @org.jspecify.annotations.Nullable Play play, int ward, String move) {
 
     /** The eighteen things your hands do. A kind is built on one; many borrow a second. */
     public enum Verb { STACK, CARRY, LIGHT, RING, TURN, OFFER, FOLLOW, DIG, PULL, POUR, SHOOT, RUN, REACH, WAIT, MEND, READ, BREAK, SNEAK }
@@ -96,6 +96,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         private java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after = c -> {};
         private Play play;
         private int ward;
+        private String move = "";
 
         private Builder(FSet set, int number, String id, String name) {
             this.set = set;
@@ -131,6 +132,8 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         public Builder persists() { persists = true; return this; }
         /** Needs a move or a power a player may not have yet: kept under "What waits" when met. */
         public Builder needsMove() { needsMove = true; return this; }
+        /** Needs a rung of the Ascent by its tier name ("tether", "wings"): met without it, it's kept as a promise and the world calls you back. */
+        public Builder needsMove(String tier) { needsMove = true; move = tier; return this; }
         /** Finishing it gives a direction to a rarer find further out. */
         public Builder lead() { lead = true; return this; }
         public Builder tell(Tell t) { tell = t; return this; }
@@ -146,7 +149,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
 
         public Kind add() {
             Kind k = new Kind(id, name, set, number, verb, size, rank, lands.isEmpty() ? Set.of() : EnumSet.copyOf(lands), anchor, made, see, learned,
-                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight, after, play, ward);
+                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight, after, play, ward, move);
             Kinds.register(k);
             return k;
         }

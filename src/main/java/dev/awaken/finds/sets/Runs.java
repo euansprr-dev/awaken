@@ -165,7 +165,7 @@ final class Runs {
         Kind.of(FSet.RUNS, 4, "ring_posts", "The Ring Posts").verb(Verb.RUN).curio().rank(1).lands(Group.JUNGLE, Group.FOREST, Group.DARK).anchor(Anchor.LINE).length(40).made(Made.BUILT)
                 .see("Tall posts with an iron ring at the top of each, a rope's length apart, and a stump with a ladder at the near end.")
                 .learned("Ring to ring on the rope without landing. It made the rope feel longer than it was.")
-                .reach(20).needsMove().icon(Props.RING_TARGET)
+                .reach(20).needsMove("tether").icon(Props.RING_TARGET)
                 .scene(s -> {
                     Mats m = Mats.of(s.site.group());
                     s.column(0, -16, 0, 2, m.log());

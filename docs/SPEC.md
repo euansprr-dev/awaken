@@ -20588,6 +20588,8 @@ pays you.
 - Binoculars: a `Spotting` source; holding the glass on a site marks its kind seen.
 - Atlas: the sites you've been paid at are marks (`MapMarks`). Nothing else of the finds is ever on a map.
 - Tasks: the two newest leads you hold, under "Out there", as leads (`FindsGoals`): a way to walk, no place and no distance.
+- What waits: a find that needs the rope or wings (`needsMove("tether")`, `"wings"`: the Ring Posts, the Needle, the Cloud Shelf) is
+  kept as a promise when you come within 20 blocks of it without that rung, and dropped when it pays you (`Promises`).
 - The look of the Journal and Tasks belongs to One Stage (§57); finds only feed them.
 
 ### 58.8 The kit
@@ -20614,5 +20616,4 @@ figures, not the Stilled module's own. Gifts that repeat by the day (the scarecr
 blows on seals. A few kinds stand in for what the catalogue describes with something plainer that can be finished by anyone:
 the Flag Line is five rings with five arrows, the Stopped Cart doesn't roll, the Sprung Boat gives a boat and no island, the
 Cloud Shelf is a spire you reach from above, the Chimney goes down from a hilltop, the Hundred Posts are thirteen and don't
-sink, the Otters' Slide is a timed run through three pools. Kinds marked `needsMove` (wall-run, the rope, a glide) are not yet
-filed under "What waits" (`Promises`). Placement in generated land is exercised only by the gallery tour's last twelve shots.
+sink, the Otters' Slide is a timed run through three pools. Placement in generated land is exercised only by the gallery tour's last twelve shots.

@@ -154,7 +154,7 @@ final class High {
         Kind.of(FSet.HIGH, 5, "needle", "The Needle").verb(Verb.REACH).find().rank(2).lands(Group.MOUNTAIN, Group.SNOW).anchor(Anchor.CLIFF).made(Made.NATURAL)
                 .see("A spike of rock standing clear of a lower stack, with a flag on the very top.")
                 .learned("Up the stack, across the gap on a rope, then hand over hand. The flag is yours, and so is the view.")
-                .reach(9).needsMove().icon(Props.FLAG)
+                .reach(9).needsMove("tether").icon(Props.FLAG)
                 .scene(s -> {
                     Mats m = Mats.of(s.site.group());
                     stack(s, -1, -4, new int[][] {{3, 5, 7}, {2, 6, 7}, {1, 4, 7}});
@@ -243,7 +243,7 @@ final class High {
         Kind.of(FSet.HIGH, 8, "cloud_shelf", "The Cloud Shelf").verb(Verb.REACH).find().rank(4).lands(Group.MOUNTAIN, Group.SNOW).anchor(Anchor.PEAK).made(Made.NATURAL)
                 .see("A spire with a flat top, higher than anything round it, and no way up that feet could use.")
                 .learned("Nothing climbs it. You came down on it from above, and nobody had touched what was there in a very long time.")
-                .reach(6).slope(3).needsMove().icon(Props.CAP_STONE)
+                .reach(6).slope(3).needsMove("wings").icon(Props.CAP_STONE)
                 .scene(s -> {
                     Mats m = Mats.of(s.site.group());
                     s.column(3, 0, 0, 15, STONE);

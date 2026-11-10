@@ -1,0 +1,32 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:find_boulder",
+    "awaken:find_brass_ring",
+    "awaken:find_cairn",
+    "awaken:find_cap_stone",
+    "awaken:find_flat_stones",
+    "awaken:find_footing",
+    "awaken:find_glass_pipe",
+    "awaken:find_gong",
+    "awaken:find_great_rib",
+    "awaken:find_heart",
+    "awaken:find_mill_wheel",
+    "awaken:find_mirror_disc",
+    "awaken:find_orrery",
+    "awaken:find_picture_stone",
+    "awaken:find_post",
+    "awaken:find_ring_post",
+    "awaken:find_ring_target",
+    "awaken:find_scarecrow",
+    "awaken:find_signpost",
+    "awaken:find_standing_stone",
+    "awaken:find_stilled",
+    "awaken:find_stilled_child",
+    "awaken:find_stone_basin",
+    "awaken:find_stone_horn",
+    "awaken:find_sundial",
+    "awaken:find_taut_rope",
+    "awaken:find_wind_harp"
+  ]
+}
