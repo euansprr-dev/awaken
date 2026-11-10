@@ -71,6 +71,8 @@ public final class ArmourClient {
         });
         // every first-person limb our own code draws (casts, the off arm, the wrist, the world body) wears the armour too
         dev.awaken.core.client.FirstPersonDress.register(ArmourClient::dressLimb);
+        // and the shape of the sleeve, for whoever lays light on it (a power being cast draws on the plates themselves)
+        dev.awaken.core.client.FirstPersonDress.register((dev.awaken.core.client.FirstPersonDress.Surfaces) ArmourClient::armSurface);
         ForgeClient.init(modBus);
         ArmourClientConfig.register(modBus);
     }
@@ -235,10 +237,76 @@ public final class ArmourClient {
         ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
         boolean low = player.getHealth() < player.getMaxHealth() * LOW_HEALTH;
         int flash = ArmourGlow.flash(glow, ArmorType.CHESTPLATE);
+        int accent = f == null ? 0 : f.accent();
+        // a light someone has put on this arm (a power being cast, FirstPersonDress.glow): the piece answers in its own
+        // materials, its edges and what glows of itself taking the light's colour for as long as it is there
+        float lit = dev.awaken.core.client.FirstPersonDress.glowAmount();
+        if (lit > 0F) {
+            accent = dev.awaken.core.client.FirstPersonDress.glowColour();
+            flash = Math.max(flash, Math.min(160, Math.round(lit * 96F)));
+        }
         ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), Math.max(ArmourGlow.energy(glow), flash * 3 / 4), flash, -1,
-                f == null ? 0 : f.masteryStep(), low, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(chest),
+                f == null ? 0 : f.masteryStep(), low, accent, dev.awaken.core.api.EnchantApi.glowBits(chest),
                 ArmourLayer.marks(f, look.set()));
         return true;
+    }
+
+    /** The worn chestplate's arm as a shape ({@link dev.awaken.core.client.FirstPersonDress.Surface}); a leg has none yet. */
+    private record ArmSurface(ArmourMesh mesh, dev.awaken.armour.ArmourSet set) implements dev.awaken.core.client.FirstPersonDress.Surface {
+        @Override
+        public Object key() {
+            return mesh;
+        }
+
+        @Override
+        public float[] positions() {
+            return mesh.pos();
+        }
+
+        @Override
+        public byte[] normals() {
+            return mesh.normal();
+        }
+
+        @Override
+        public float[] texels() {
+            return mesh.uv();
+        }
+
+        @Override
+        public net.minecraft.resources.Identifier texture() {
+            return ArmourMeshes.texture(set);
+        }
+
+        @Override
+        public String style() {
+            return set.id;
+        }
+
+        @Override
+        public int accent() {
+            return mesh.accent();
+        }
+    }
+
+    /** One kept a side, so asking every frame makes nothing. */
+    private static final ArmSurface[] ARM_SURFACES = new ArmSurface[2];
+
+    private static dev.awaken.core.client.FirstPersonDress.@org.jspecify.annotations.Nullable Surface armSurface(
+            dev.awaken.core.client.FirstPersonDress.Limb limb) {
+        boolean right = limb == dev.awaken.core.client.FirstPersonDress.Limb.RIGHT_ARM;
+        if (!right && limb != dev.awaken.core.client.FirstPersonDress.Limb.LEFT_ARM) return null;
+        var player = Minecraft.getInstance().player;
+        if (player == null || ArmourClientConfig.sculpted() == ArmourClientConfig.Sculpted.OFF) return null;
+        ArmourLooks.Look look = ArmourLooks.drawn(player.getItemBySlot(EquipmentSlot.CHEST));
+        if (look == null || look.piece() != ArmorType.CHESTPLATE) return null;
+        ArmourMesh[] bones = ArmourMeshes.piece(look.set(), ArmorType.CHESTPLATE);
+        ArmourMesh mesh = bones == null ? null : bones[(right ? Bone.RIGHT_ARM : Bone.LEFT_ARM).ordinal()];
+        if (mesh == null) return null;
+        int slot = right ? 0 : 1;
+        ArmSurface kept = ARM_SURFACES[slot];
+        if (kept == null || kept.mesh != mesh || kept.set != look.set()) ARM_SURFACES[slot] = kept = new ArmSurface(mesh, look.set());
+        return kept;
     }
 
     /**

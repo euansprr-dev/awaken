@@ -58,19 +58,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:hive_guard 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec hive_guard_idle 30 4
+cmd awaken ascent pilot rec hive_guard_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec hive_guard_fight 110 4
+cmd awaken ascent pilot rec hive_guard_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec hive_guard_m0 76 4
+cmd awaken ascent pilot rec hive_guard_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec hive_guard_m1 76 4
+cmd awaken ascent pilot rec hive_guard_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec hive_guard_death 50 4
+cmd awaken ascent pilot rec hive_guard_death 50 2
 wait 54
 # the_swarm_mind (The Swarm Mind)
 cmd kill @e[tag=p]
@@ -85,22 +85,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_swarm_mind 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_swarm_mind_idle 30 4
+cmd awaken ascent pilot rec the_swarm_mind_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_swarm_mind_fight 110 4
+cmd awaken ascent pilot rec the_swarm_mind_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_swarm_mind_m0 76 4
+cmd awaken ascent pilot rec the_swarm_mind_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_swarm_mind_m1 76 4
+cmd awaken ascent pilot rec the_swarm_mind_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_swarm_mind_m2 76 4
+cmd awaken ascent pilot rec the_swarm_mind_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_swarm_mind_death 50 4
+cmd awaken ascent pilot rec the_swarm_mind_death 50 2
 wait 54
 # sporeling (The Sporeling)
 cmd kill @e[tag=p]
@@ -115,16 +115,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sporeling 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec sporeling_idle 30 4
+cmd awaken ascent pilot rec sporeling_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec sporeling_fight 110 4
+cmd awaken ascent pilot rec sporeling_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec sporeling_m0 76 4
+cmd awaken ascent pilot rec sporeling_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec sporeling_death 50 4
+cmd awaken ascent pilot rec sporeling_death 50 2
 wait 54
 # mycelid (The Shelf)
 cmd kill @e[tag=p]
@@ -139,16 +139,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:mycelid 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec mycelid_idle 30 4
+cmd awaken ascent pilot rec mycelid_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec mycelid_fight 110 4
+cmd awaken ascent pilot rec mycelid_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec mycelid_m0 76 4
+cmd awaken ascent pilot rec mycelid_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec mycelid_death 50 4
+cmd awaken ascent pilot rec mycelid_death 50 2
 wait 54
 # capweaver (The Capweaver)
 cmd kill @e[tag=p]
@@ -163,16 +163,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:capweaver 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec capweaver_idle 30 4
+cmd awaken ascent pilot rec capweaver_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec capweaver_fight 110 4
+cmd awaken ascent pilot rec capweaver_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec capweaver_m0 76 4
+cmd awaken ascent pilot rec capweaver_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec capweaver_death 50 4
+cmd awaken ascent pilot rec capweaver_death 50 2
 wait 54
 # puffcap (The Puffcap)
 cmd kill @e[tag=p]
@@ -187,13 +187,13 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:puffcap 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec puffcap_idle 30 4
+cmd awaken ascent pilot rec puffcap_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec puffcap_fight 110 4
+cmd awaken ascent pilot rec puffcap_fight 110 2
 wait 114
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec puffcap_death 50 4
+cmd awaken ascent pilot rec puffcap_death 50 2
 wait 54
 # hollow_tender (The Tender)
 cmd kill @e[tag=p]
@@ -202,28 +202,28 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.7 200.70 2.6 -90 4
+cmd tp @s -8.7 200.70 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:hollow_tender 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec hollow_tender_idle 30 4
+cmd awaken ascent pilot rec hollow_tender_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec hollow_tender_fight 110 4
+cmd awaken ascent pilot rec hollow_tender_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec hollow_tender_m0 76 4
+cmd awaken ascent pilot rec hollow_tender_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec hollow_tender_m1 76 4
+cmd awaken ascent pilot rec hollow_tender_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec hollow_tender_m2 76 4
+cmd awaken ascent pilot rec hollow_tender_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec hollow_tender_death 50 4
+cmd awaken ascent pilot rec hollow_tender_death 50 2
 wait 54
 # the_rot (The Rot)
 cmd kill @e[tag=p]
@@ -238,22 +238,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_rot 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_rot_idle 30 4
+cmd awaken ascent pilot rec the_rot_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_rot_fight 110 4
+cmd awaken ascent pilot rec the_rot_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_rot_m0 76 4
+cmd awaken ascent pilot rec the_rot_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_rot_m1 76 4
+cmd awaken ascent pilot rec the_rot_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_rot_m2 76 4
+cmd awaken ascent pilot rec the_rot_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_rot_death 50 4
+cmd awaken ascent pilot rec the_rot_death 50 2
 wait 54
 cmd kill @e[tag=p]
 cmd kill @e[tag=d]
