@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # sand_stalker (The Sand Stalker)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.4 199.66 2.6 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec sand_stalker_death 50 2
 wait 54
 # glint_mite (The Glint)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.5 199.88 2.6 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec glint_mite_death 50 2
 wait 54
 # sleepwalker (The Sheet)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.2 200.53 2.6 -90 4
 look -90 4
 wait 6
@@ -118,12 +112,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec sleepwalker_death 50 2
 wait 54
 # the_tall_one (The Tall One)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.9 201.14 2.6 -90 4
 look -90 4
 wait 6
@@ -145,12 +137,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_tall_one_death 50 2
 wait 54
 # silent_stalker (The Silent One)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.2 200.15 2.6 -90 4
 look -90 4
 wait 6
@@ -169,12 +159,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec silent_stalker_death 50 2
 wait 54
 # the_unblinking (The Unblinking)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.7 200.70 2.6 -90 4
 look -90 4
 wait 6
@@ -199,12 +187,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_unblinking_death 50 2
 wait 54
 # the_lamplighter (The Lamplighter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.0 201.19 2.6 -90 4
 look -90 4
 wait 6
@@ -229,12 +215,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_lamplighter_death 50 2
 wait 54
 # gel_sample (The Gel Sample)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.1 199.93 2.6 -90 4
 look -90 4
 wait 6
@@ -252,8 +236,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec gel_sample_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

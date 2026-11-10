@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # the_gale (The Gale)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.3 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -76,12 +74,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_gale_death 50 2
 wait 54
 # abyss_watcher (The Watcher)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.8 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -100,12 +96,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec abyss_watcher_death 50 2
 wait 54
 # silent_stalker (The Silent One)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.2 200.15 2.6 -90 4
 look -90 4
 wait 6
@@ -124,12 +118,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec silent_stalker_death 50 2
 wait 54
 # void_spawn (The Void Spawn)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.3 199.79 2.6 -90 4
 look -90 4
 wait 6
@@ -148,12 +140,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec void_spawn_death 50 2
 wait 54
 # hollow_priest (The Hollow Priest)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.1 200.48 2.6 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hollow_priest_death 50 2
 wait 54
 # the_nothing (The Nothing)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.4 200.59 2.6 -90 4
 look -90 4
 wait 6
@@ -204,8 +192,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_nothing_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # heat_shimmer (The Shimmer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.2 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -73,12 +71,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec heat_shimmer_death 50 2
 wait 54
 # prism_sentinel (The Prism)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.1 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -100,12 +96,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec prism_sentinel_death 50 2
 wait 54
 # the_mirage (The Mirage)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.1 200.48 4.5 -90 4
 look -90 4
 wait 6
@@ -130,12 +124,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_mirage_death 50 2
 wait 54
 # lantern_moth (The Lantern Moth)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.9 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -154,12 +146,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec lantern_moth_death 50 2
 wait 54
 # pickpocket (The Magpie)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.7 200.31 2.6 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec pickpocket_death 50 2
 wait 54
 # wick_slime (The Hopping Lantern)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.5 199.82 2.6 -90 4
 look -90 4
 wait 6
@@ -199,12 +187,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec wick_slime_death 50 2
 wait 54
 # masked_duelist (The Fan Dancer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.1 200.48 2.6 -90 4
 look -90 4
 wait 6
@@ -226,12 +212,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec masked_duelist_death 50 2
 wait 54
 # the_lamplighter (The Lamplighter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.0 201.19 2.6 -90 4
 look -90 4
 wait 6
@@ -255,8 +239,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_lamplighter_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info
