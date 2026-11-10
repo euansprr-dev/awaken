@@ -20,7 +20,8 @@ public final class LandPrograms {
             Map.entry("awaken:wax_galleries", dev.awaken.gates.realms.land.WaxGalleries::new),
             Map.entry("awaken:broodwarren", dev.awaken.gates.realms.land.Broodwarren::new),
             Map.entry("awaken:brood_burrow", dev.awaken.gates.realms.land.BroodBurrow::new),
-            Map.entry("awaken:catacombs", dev.awaken.gates.realms.land.Catacomb::new));
+            Map.entry("awaken:catacombs", dev.awaken.gates.realms.land.Catacomb::new),
+            Map.entry("awaken:tallow_runs", dev.awaken.gates.realms.land.TallowRun::new));
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);
