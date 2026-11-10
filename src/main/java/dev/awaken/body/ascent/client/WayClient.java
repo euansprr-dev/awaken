@@ -39,7 +39,7 @@ public final class WayClient {
     private static @Nullable Vec3 pierEnd;
     private static double flyX, flyZ;
     private static boolean flightPending, formPending;
-    private static int clock;
+    private static int clock, flightFrom;
 
     /** The beam's own texture (the rope's braid of light, not the beacon's) and how near and far it is drawn. */
     private static final Identifier BEAM = Awaken.id("textures/ascent/rope.png");
@@ -76,6 +76,8 @@ public final class WayClient {
                 flyX = msg.dx();
                 flyZ = msg.dz();
                 flightPending = true;
+                // never before the gift's own scene (it is told in the same tick and starts a tick later)
+                flightFrom = clock + 12;
             }
         });
     }
@@ -138,7 +140,7 @@ public final class WayClient {
         if (!BodyConfig.wayUp()) return;
         // the first flight begins once the core's scene has had its say
         Vec3 end = pierEnd;
-        if (flightPending && end != null && !AscentScene.running()) {
+        if (flightPending && end != null && clock >= flightFrom && AscentScene.pending == 0 && !AscentScene.running()) {
             flightPending = false;
             Vec3 from = end.add(-flyX * 6, 0, -flyZ * 6);
             Lesson.begin(Lesson.Kind.FIRST_FLIGHT, end.add(flyX * 3, 0.6, flyZ * 3), Lesson.runOff(from, end, flyX, flyZ));
