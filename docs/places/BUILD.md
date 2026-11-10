@@ -35,7 +35,7 @@ check: one test and picture pass at the end.
 - [x] Down: Shaft x5, Chain Works x5, Door x5
 - [x] Remains x15
 - [x] Art and data: nine relic sprites, lang, hoard tables, Journal by family
-- [ ] Compile, tests, dump on flat and on a hill, draw all, fix
+- [x] Compile, tests, dump on flat and on a hill, draw all, fix (finds tests green over all 75; game's own blocks 0.2% to 20%)
 - [ ] Merge build in, CI suite, twelve tours, world count, page of sixty, SPEC §62, notes
 
 ## Where things are (after the 14:47 UTC restart wiped the scratchpad)
@@ -44,3 +44,6 @@ Working files live on the SSD in the worktree's `run/plan-page/` (gitignored): `
 javac's errors), `tests.sh [prefix]` (finds tests, writes `run/finds-dump/*.txt`), `site/` (the plan's page), `mon2/` (game
 pictures of the three, second round), `census5/`. Pictures of every scene: `python3 tools/content/finds_render.py run/finds-dump
 run/plan-page/render [ids]`. First clean compile of the whole build: commit 9d5f4a023.
+
+Page of the sixty: https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z (built by `run/plan-page/build_page.py` into `run/plan-page/site2/`; game
+pictures go in through `keep.json`, one list of checked shots per painted monument).

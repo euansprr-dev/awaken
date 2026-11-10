@@ -1,5 +1,12 @@
 # Places: where they stand (10 Nov 2026)
 
+> **Built, 10 Nov ~17:00 UTC: the long world (SPEC §62).** Euan approved the plan in full ("Go with the full plan") and
+> added that everything must sit naturally in the land and come closer to its painting. All of it is coded: sixty
+> monuments in twelve families, fifteen remains, twelve relics that grow, terraces that meet the land. The four `finds_`
+> tests are green over all 75 kinds. Page of the sixty (paintings beside block drawings, game pictures as tours land):
+> https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z . Working notes: `BUILD.md`. Not merged, unplayed. Still out when
+> this was written: twelve game tours, the world count and the full suite, all queued on GitHub.
+
 > **Third take, 10 Nov, waiting on Euan: the plan for the long world.** He approved the three paintings ("100% what I'm
 > looking for"), saw the three monuments in the game ("a massive improvement... this is awesome") and asked for many more,
 > by hand or by rule, so that the further you go the more new things you find. The answer is `PLAN.md`: twelve families
