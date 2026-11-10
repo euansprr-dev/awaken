@@ -31,6 +31,8 @@ import static dev.awaken.gates.realms.kit.N.rnd;
 public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     /** The moor never rises above this; the path, the pad you arrive on and the foot of the stair all lie at {@link #PATH_Y}. */
     static final int MOOR_TOP = 65, PATH_Y = 63, HILL0_TOP = 67, DECK = 103;
+    /** The pad you arrive on, from the blockout's mouth_pad (radius 4). */
+    static final double PAD = 4.5;
     static final int HX = -37, HZ = -50;
     static final double[][] PATH = {{0, -205}, {6, -185}, {-8, -168}, {-30, -156}, {-37, -150}};
     /** x, z, radius, height, the way the door faces (dx, dz). The first two are the pair either side of the path. */
@@ -42,7 +44,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
 
     public static final class M extends Mats {
         final BlockState bronze = b("knell_bronze"), patina = b("knell_patina"), iron = b("knell_iron"), ossuary = b("gate_ossuary"), bones = b("crypt_bones"), bell = b("gate_bell"),
-                link = Blocks.IRON_CHAIN.defaultBlockState(), timberX = timber.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X), brazier = Build.lit(b("temple_brazier")),
+                link = Blocks.IRON_CHAIN.defaultBlockState(), timberX = timber.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X), timberZ = timber.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z), brazier = Build.lit(b("temple_brazier")),
                 turf = b("barrow_turf"), heather = b("barrow_heather"), heatherPale = b("barrow_heather_pale"), bent = b("barrow_bent"), cap = b("barrow_menhir_cap"), kerb = b("barrow_kerb"),
                 shield = b("barrow_shield"), shieldSouth = b("barrow_shield_south"), urn = b("barrow_urn"), glow = b("barrow_grave_glow"), sail = b("barrow_sail"), water = Blocks.WATER.defaultBlockState();
         private final BlockState[] lit = new BlockState[6], out = new BlockState[6];
@@ -87,7 +89,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         }
     }
 
-    private final SimplexNoise n9, n31, weave;
+    private final SimplexNoise n9, n31, weave, crag;
+    private final Blockout.Mass[] rims;
     private final List<Flat> flats = new ArrayList<>();
     private final List<Barrow> barrows = new ArrayList<>();
     private final List<Edit> heartOpen = new ArrayList<>(), heartShut = new ArrayList<>();
@@ -104,6 +107,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         n9 = N.noise(seed ^ 0x9L);
         n31 = N.noise(seed ^ 0x31L);
         weave = N.noise(seed ^ 0x5A11L);
+        crag = N.noise(seed ^ 0xC2A6L);
+        rims = blockout.masses().stream().filter(k -> k.name.startsWith("rim_")).toArray(Blockout.Mass[]::new);
         hill0 = blockout.mass("hill0");
         hull = blockout.mass("hull");
         mast = blockout.mass("mast");
@@ -128,7 +133,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             int level = surf(w[0], w[1]);
             flats.add(new Flat((x, z) -> Math.hypot(x - w[0], z - w[1]) - 5, level, false, false));
         }
-        flats.add(new Flat((x, z) -> Math.hypot(x, z + 205) - 10.5, PATH_Y, false, false));
+        flats.add(new Flat((x, z) -> Math.hypot(x, z + 205) - PAD, PATH_Y, false, false));
+        flats.add(new Flat((x, z) -> box(x, z, -3, -212, 3, -210), PATH_Y, false, false)); // under the arch home
         flats.add(new Flat((x, z) -> pathDist(x, z) - 2.5, PATH_Y, false, false, 3)); // the path lies in the heather, not in a cutting
         flats.add(new Flat((x, z) -> box(x, z, -42, -150, -32, -141), PATH_Y, false, false));
         flats.add(new Flat((x, z) -> Math.hypot(x - 150, z + 40) - 28.5, 64, false, false));
@@ -292,6 +298,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         stair(v, m);
         path(v, m, s);
         hill(v, m, s);
+        rims(v, m, s);
         mouth(v, m);
         ship(v, m);
         longBarrow(v, m);
@@ -336,7 +343,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     /** What's laid on a floor: the round pad you arrive on, the worn green of the village, plain flags anywhere else. */
     private BlockState floor(M m, int x, int z) {
         double pad = Math.hypot(x, z + 205);
-        if (pad <= 10.5) return pad < 2.5 ? m.hexstone : pad > 8.5 ? (rnd(x, z, 0x71) < 0.8 ? m.pale : m.worn) : paving(m, x, z);
+        if (pad <= PAD) return pad < 1.5 ? m.hexstone : pad > 3.5 ? m.pale : paving(m, x, z);
         if (Math.hypot(x - 150, z + 40) <= 28.5) return n9.get(x / 9.0, z / 9.0) > 0.12 ? m.turf : rnd(x, z, 0x72) < 0.25 ? m.turf : paving(m, x, z);
         return paving(m, x, z);
     }
@@ -358,7 +365,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         if (v.x0 - 1 > 16 || v.x0 + 16 < -47 || v.z0 - 1 > -140 || v.z0 + 16 < -216) return;
         for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) {
             double d = pathDist(x, z);
-            if (d > 7.5 || Math.hypot(x, z + 205) <= 10.5 || box(x, z, -42, -150, -32, -141) <= 0) continue;
+            if (d > 7.5 || Math.hypot(x, z + 205) <= PAD || box(x, z, -42, -150, -32, -141) <= 0) continue;
             int top = s[(x - v.x0 + 2) * 20 + z - v.z0 + 2];
             if (top < 0 || top > MOOR_TOP || inBarrow(x, z)) continue;
             if (d <= 2.5) {
@@ -399,6 +406,27 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 for (int y = top + 1; y < high - 1; y++) v.set(x, y, z, course(m, x, y, z));
                 v.set(x, high - 1, z, Build.stair(m.stoneStairs, to));
             }
+        }
+    }
+
+    private boolean onRim(int x, int z) {
+        for (Blockout.Mass k : rims) if (k.span(x, z) >= 0) return true;
+        return false;
+    }
+
+    /** The hills round the edge aren't smooth: where a field of noise runs high the rock comes through, two to four cells proud of the turf. */
+    private void rims(V v, M m, int[] s) {
+        boolean any = false;
+        for (Blockout.Mass k : rims) if (k.x1 >= v.x0 - 1 && k.x0 <= v.x0 + 16 && k.z1 >= v.z0 - 1 && k.z0 <= v.z0 + 16) any = true;
+        if (!any) return;
+        for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) {
+            int top = s[(x - v.x0 + 2) * 20 + z - v.z0 + 2];
+            double over = crag.get(x / 15.0, z / 15.0) - 0.72;
+            if (top <= MOOR_TOP || over <= 0 || !onRim(x, z) || hill0.span(x, z) >= 0) continue;
+            // one rock to a patch, highest in its middle, so it reads as an outcrop and not as more standing stones
+            BlockState rock = n31.get(x / 40.0, z / 40.0) > 0 ? m.stoneA : m.deep;
+            v.foot(x, top, z, rock);
+            for (int y = top - 1; y <= top + Math.min(4, 2 + (int) (over * 16)); y++) v.set(x, y, z, rock);
         }
     }
 
@@ -461,13 +489,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         if (role == FOLIAGE) return sailAt(x, y) ? m.sail : null;
         if (role != GREAT) return role == WALL ? m.stoneA : null;
         if (yard.contains(x, y, z)) return m.timberX;
-        boolean post = false;
-        for (Blockout.Mass p : posts) {
-            if (!p.contains(x, y, z)) continue;
-            // the head keeps its square jaw; the neck under it loses its four corners
-            if (p == prowHead || !((x == p.x0 || x == p.x1) && (z == p.z0 || z == p.z1))) post = true;
-        }
-        if (post) return prowHead.contains(x, y, z) && x == -91 && y == 130 && z != -50 ? m.gold : course(m, x, y, z);
+        // the prow and the stern post are carved in ship(): the blockout's boxes only say where they stand
+        for (Blockout.Mass p : posts) if (p.contains(x, y, z)) return null;
         boolean in = false;
         for (int i = 0; i < hullParts.length; i++) if (hullParts[i].contains(x, y, z) && !rounded(hullParts[i], i, x, y, z)) in = true;
         if (!in) return null;
@@ -479,7 +502,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         return course(m, x, y, z);
     }
 
-    /** What stands on and hangs off the hull: strakes and shields down both sides, the urns, bones, candles and braziers on deck, the bell at the prow. */
+    /** What stands on and hangs off the hull: strakes and shields down both sides, thwarts across the deck with urns at their ends, bones, candles and braziers, the carved posts. */
     private void ship(V v, M m) {
         if (v.x0 - 1 > 22 || v.x0 + 16 < -100 || v.z0 - 1 > -39 || v.z0 + 16 < -61) return;
         for (int y = 98; y <= 104; y += 2) {
@@ -505,24 +528,89 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             for (int y = 98; y < 102 - i; y++) v.set(-31 - i, y, -47, m.pale);
             v.set(-31 - i, 102 - i, -47, Build.stair(m.flagStairs, Direction.EAST));
         }
-        // on deck: urns along both rails, the light in pools, three fires in iron
-        for (int i = 0; i < 12; i++) {
-            int x = -76 + i * 7;
-            v.set(x == -34 ? -32 : x, DECK + 1, -57, m.urn);
-            v.set(x, DECK + 1, -43, m.urn);
+        // shields along the inside of both rails too, at their top
+        for (int x = -78; x <= 4; x += 4) {
+            if (x < -40 || x > -34) v.add(x, 106, -57, m.shieldSouth);
+            v.add(x, 106, -43, m.shield);
         }
-        int[][] lights = {{-46, -55}, {-46, -45}, {-28, -55}, {-28, -45}, {-18, -53}, {-18, -47}, {-70, -52}, {-70, -48}, {-56, -50}, {-4, -52}, {-4, -48}, {2, -50}};
+        // thwarts: a beam across the deck every seven cells, open three wide in the middle to walk through; none over the hold
+        for (int x = -76; x <= 1; x += 7) {
+            if (x >= -45 && x <= -29) continue;
+            for (int z = -57; z <= -43; z++) if (z < -51 || z > -49) v.set(x, DECK + 1, z, m.timberZ);
+            // twenty-four urns, three to a thwart's end, on four of the thwarts
+            if (x != -76 && x != -55 && x != -27 && x != -6) continue;
+            for (int z = -57; z <= -43; z += 14) {
+                v.set(x - 1, DECK + 1, z, m.urn);
+                v.set(x + 1, DECK + 1, z, m.urn);
+                v.set(x, DECK + 2, z, m.urn);
+            }
+        }
+        // the light in pools, three fires in iron
+        int[][] lights = {{-46, -55}, {-46, -45}, {-28, -55}, {-28, -45}, {-18, -53}, {-18, -47}, {-70, -52}, {-70, -48}, {-52, -56}, {-4, -52}, {-4, -48}, {2, -50}};
         for (int[] c : lights) v.set(c[0], DECK + 1, c[1], m.candles(4 + (c[0] & 1), true));
         int[][] bones = {{-74, -45}, {-66, -55}, {-58, -46}, {-50, -53}, {-26, -51}, {-24, -46}, {-12, -55}, {-10, -45}, {0, -53}, {3, -46}};
         for (int[] c : bones) v.set(c[0], DECK + 1, c[1], m.bones);
-        for (int[] c : new int[][]{{-62, -50}, {-10, -50}, {-50, -50}}) {
+        for (int[] c : new int[][]{{-72, -50}, {-10, -50}, {-47, -50}}) {
             v.set(c[0], DECK + 1, c[1], m.iron);
             v.set(c[0], DECK + 2, c[1], m.brazier);
         }
-        // the bell under the prow's jaw, two links down
-        v.set(-88, 127, -50, m.link);
-        v.set(-88, 126, -50, m.link);
-        v.set(-88, 125, -50, m.bell);
+        sheer(v, m);
+        post(v, m, -93, -1, 22, 6, 3, 4, 4, 6, 3, 5, true);
+        post(v, m, 16, 1, 11, 3, 1.5, 2, 2, 3, 2, 3, false);
+    }
+
+    private boolean railAt(int x, int z) {
+        for (int i = 0; i < hullParts.length; i++) if (hullParts[i].contains(x, 106, z) && !rounded(hullParts[i], i, x, 106, z)) return true;
+        return false;
+    }
+
+    /** The sheer line: over the last sixteen cells toward each end the rail climbs one block every four, so the ship's side is a curve and not a ruler. */
+    private void sheer(V v, M m) {
+        for (int x = Math.max(-93, v.x0 - 1); x <= Math.min(17, v.x0 + 16); x++) {
+            int lift = ((x <= -78 ? -78 - x : x - 2) + 2) / 4;
+            if (x > -78 && x < 2 || lift <= 0) continue;
+            for (int z = -59; z <= -41; z++) {
+                if (!railAt(x, z) || railAt(x - 1, z) && railAt(x + 1, z) && railAt(x, z - 1) && railAt(x, z + 1)) continue;
+                v.set(x, 106, z, course(m, x, 106, z));
+                for (int y = 107; y <= 106 + lift; y++) v.set(x, y, z, y == 106 + lift ? m.pale : course(m, x, y, z));
+            }
+        }
+    }
+
+    /**
+     * A carved post: broad where it leaves the deck, leaning out over the end of the ship, curling back over it in an S, and ending in a head with a
+     * gold eye each side and an open jaw. Scales down its outer curve. The prow's has the bell under its jaw, four links down.
+     */
+    private void post(V v, M m, int baseX, int out, int neck, double amp, double back, int thick, int wide, int headLen, int headWide, int headTall, boolean bell) {
+        if (v.x0 - 1 > baseX + 12 || v.x0 + 16 < baseX - 12 || v.z0 - 1 > -48 || v.z0 + 16 < -53) return;
+        Direction in = out < 0 ? Direction.EAST : Direction.WEST;
+        double top = baseX;
+        for (int i = 0; i < neck; i++) {
+            double t = i / (double) (neck - 1), xc = baseX + out * (amp * Math.sin(Math.PI * t) - back * t * t);
+            int tx = Math.max(1, (int) Math.round(N.lerp(thick, thick / 2.0, t))), w = Math.max(1, (int) Math.round(N.lerp(wide, wide / 2.0, t)));
+            int xa = (int) Math.floor(xc - tx / 2.0 + 0.5), za = -50 - w / 2, y = 106 + i;
+            for (int x = xa; x < xa + tx; x++) for (int z = za; z < za + w; z++) v.set(x, y, z, course(m, x, y, z));
+            if ((i & 1) == 1 && i > 1) for (int z = za; z < za + w; z++) v.add(out < 0 ? xa - 1 : xa + tx, y, z, Build.under(m.stoneStairs, in));
+            top = xc;
+        }
+        // the head looks back down the ship: a jaw, an open mouth, the snout over it, a low crown
+        int y0 = 106 + neck, x0 = (int) Math.round(top) + out, za = -50 - headWide / 2;
+        for (int j = 0; j < headTall; j++) for (int a = 0; a <= headLen; a++) {
+            boolean jaw = j == 0 && a <= headLen - 2, hinge = j == 1 && a <= headLen / 2 - 1, crown = j == headTall - 1 && a >= 1 && a < headLen, skull = j >= 2 && j < headTall - 1;
+            if (headTall <= 3) {
+                hinge = false;
+                jaw = j == 0 && a <= 1;
+                skull = j == 1;
+                crown = j == 2 && a <= headLen - 1;
+            }
+            if (!(jaw || hinge || crown || skull)) continue;
+            boolean eye = j == headTall - 2 && a == headLen / 2;
+            for (int z = za; z < za + headWide; z++) v.set(x0 - out * a, y0 + j, z, eye && (z == za || z == za + headWide - 1) ? m.gold : course(m, x0 - out * a, y0 + j, z));
+        }
+        if (!bell) return;
+        int bx = x0 - out * (headLen - 2);
+        for (int k = 1; k <= 4; k++) v.set(bx, y0 - k, -50, m.link);
+        v.set(bx, y0 - 5, -50, m.bell);
     }
 
     /** The way aboard, which isn't there until the three Wardens are down: eight steps from the top of the hill, and the rail above them gone. */
@@ -544,7 +632,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
 
     // ---- the long barrow ------------------------------------------------------------------------------------------------------
 
-    /** The long barrow, where a Warden waits: faced in masonry, a low step round its foot, its hall lit and lined with the dead. Its door is at the east end and never sealed. */
+    /** The long barrow, where a Warden waits: grassed over, a low turf step round its foot with a kerb course, its hall lit and lined with the dead. Its door is at the east end and never sealed. */
     private void longBarrow(V v, M m) {
         Blockout.Mass lb = longBarrow;
         if (v.x0 - 1 > lb.x1 + 3 || v.x0 + 16 < lb.x0 - 3 || v.z0 - 1 > lb.z1 + 3 || v.z0 + 16 < lb.z0 - 3) return;
@@ -555,18 +643,22 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 int g = surf(x, z);
                 boolean outer = x == lb.x0 - 2 || x == lb.x1 + 2 || z == lb.z0 - 2 || z == lb.z1 + 2;
                 v.foot(x, g, z, m.deep);
-                for (int y = g + 1; y <= 66; y++) v.set(x, y, z, y < 66 ? course(m, x, y, z) : outer ? m.pale : m.turf);
+                for (int y = g + 1; y <= (outer ? 65 : 66); y++) v.set(x, y, z, outer && y == g + 1 ? (roll(x, z, 0x7E) < 0.75 ? m.pale : m.stoneA) : m.turf);
                 continue;
             }
             int top = lb.top(x, z);
-            if (x == lb.x0 || x == lb.x1 || z == lb.z0 || z == lb.z1) for (int y = 60; y <= top; y++) if (v.get(x, y, z) != null) v.set(x, y, z, y == top ? m.pale : course(m, x, y, z));
+            if (x == lb.x0 || x == lb.x1 || z == lb.z0 || z == lb.z1) {
+                // grassed sides, the top edge taken off by one cell; the east end keeps its stone doorway
+                boolean door = x == lb.x1 && z >= 103 && z <= 107;
+                for (int y = 60; y <= top; y++) if (v.get(x, y, z) != null) v.set(x, y, z, door && y <= 68 ? m.pale : y == top ? null : m.turf);
+            }
             boolean hall = x >= -154 && x <= -106 && z >= 102 && z <= 108, way = x >= -105 && z >= 104 && z <= 106;
             if (hall || way) {
                 v.set(x, 64, z, (x + z & 1) == 0 ? m.flag : m.hexstone);
                 if (hall && v.get(x, 70, z) != null) v.set(x, 70, z, (x & 3) == 0 ? m.timberX : m.deep);
                 if (way && v.get(x, 68, z) != null) v.set(x, 68, z, m.pale);
             } else if (x >= -155 && x <= -105 && z >= 101 && z <= 109 || x >= -105 && z >= 103 && z <= 107) {
-                for (int y = 65; y <= 69; y++) if (v.get(x, y, z) != null) v.set(x, y, z, (z == 101 || z == 109) && (y == 66 || y == 67) && Math.floorMod(x, 4) == 1 ? m.ossuary : x == lb.x1 ? m.pale : course(m, x, y, z));
+                for (int y = 65; y <= 69; y++) if (v.get(x, y, z) != null && x != lb.x1) v.set(x, y, z, (z == 101 || z == 109) && (y == 66 || y == 67) && Math.floorMod(x, 4) == 1 ? m.ossuary : course(m, x, y, z));
             }
             if (!hall) continue;
             if ((z == 102 || z == 108) && Math.floorMod(x, 6) == 0) v.set(x, 65, z, m.candles(3, true));
@@ -584,9 +676,9 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         return false;
     }
 
-    /** Nothing grows within two of the path, a doorway or anything you've come to put a hand on. */
+    /** Nothing grows on the path, in a doorway or round anything you've come to put a hand on. Heather comes right up to the paving. */
     private boolean bare(int x, int z) {
-        if (pathDist(x, z) <= 4.5 || Math.hypot(x, z + 205) <= 12.5 || x >= -44 && x <= -30 && z >= -152 && z <= -58 || tended(x, z)) return true;
+        if (pathDist(x, z) <= 2.5 || Math.hypot(x, z + 205) <= PAD || x >= -44 && x <= -30 && z >= -152 && z <= -58 || tended(x, z)) return true;
         if (box(x, z, -99, 102, -93, 108) <= 0) return true;
         for (Barrow b : barrows) if (b.apron(x, z)) return true;
         // nor where a picture is taken from the ground: a sprig in front of the eye is all the picture would show
@@ -600,6 +692,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             int top = -1;
             for (int y = 135; y >= 56 && top < 0; y--) if (v.get(x, y, z) != null) top = y;
             if (top < 0 || v.get(x, top, z) != m.turf || bare(x, z)) continue;
+            if (top >= 80 && roll(x, z, 0x80) > 0.3 && onRim(x, z)) continue; // the high rims are wind-bare: three plants in ten
             double tarn = Math.hypot(x, z - 150);
             if (tarn > 24.5 && tarn <= 27.5) {
                 if (roll(x, z, 0x7A) < 0.75) v.set(x, top + 1, z, m.bent); // reeds at the water's edge
@@ -614,7 +707,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     // ---- standing stones --------------------------------------------------------------------------------------------------------
 
     private boolean stoneCanStand(int x, int z) {
-        if (pathDist(x, z) < 4.5 || Math.hypot(x, z + 205) < 11.5 || x >= -44 && x <= -30 && z >= -152 && z <= -58) return false;
+        if (pathDist(x, z) < 4.5 || Math.hypot(x, z + 205) < PAD + 1 || x >= -44 && x <= -30 && z >= -152 && z <= -58) return false;
         if (x >= -100 && x <= 22 && z >= -62 && z <= -38 || Math.hypot(x, z - 150) < 30 || Math.hypot(x - 150, z + 40) < 30) return false;
         if (box(x, z, longBarrow.x0 - 3, longBarrow.z0 - 3, longBarrow.x1 + 6, longBarrow.z1 + 3) <= 0) return false;
         for (Barrow b : barrows) if (b.in(x, z) || b.apron(x, z)) return false;
@@ -622,16 +715,9 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         return g >= PATH_Y - 2;
     }
 
-    private void stone(int x, int z, int h, long salt) {
+    private void stone(int x, int z, long salt) {
         if (!stoneCanStand(x, z)) return;
-        double f = rnd(x, z, salt);
-        int w = f < 0.70 ? 1 : 2, d = f < 0.95 ? 1 : 2;
-        if (rnd(x, z, salt + 1) < 0.5) {
-            int t = w;
-            w = d;
-            d = t;
-        }
-        pieces.add(new Stone(x, z, w, d, h, salt));
+        pieces.add(new Stone(x, z, 5 + r.nextInt(5), salt, -1));
         stones++;
     }
 
@@ -644,7 +730,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             double ax = PATH[i][0], az = PATH[i][1], dx = PATH[i + 1][0] - ax, dz = PATH[i + 1][1] - az, len = Math.hypot(dx, dz);
             for (; along < len; along += 9 + r.nextInt(6)) {
                 double out = (5 + r.nextInt(4)) * (left ? 1 : -1);
-                stone((int) Math.round(ax + dx * along / len - dz / len * out), (int) Math.round(az + dz * along / len + dx / len * out), 3 + r.nextInt(5), 0x51);
+                stone((int) Math.round(ax + dx * along / len - dz / len * out), (int) Math.round(az + dz * along / len + dx / len * out), 0x51);
                 left = !left;
             }
             along -= len;
@@ -657,7 +743,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             for (int i = 0; i < n; i++) {
                 double a = turn + i * Math.PI * 2 / n;
                 if (Math.cos(a) * b.ux + Math.sin(a) * b.uz > 0.8) continue;
-                stone(b.cx + (int) Math.round(Math.cos(a) * (b.r + 3)), b.cz + (int) Math.round(Math.sin(a) * (b.r + 3)), 3 + r.nextInt(5), 0x52);
+                stone(b.cx + (int) Math.round(Math.cos(a) * (b.r + 3)), b.cz + (int) Math.round(Math.sin(a) * (b.r + 3)), 0x52);
             }
         }
         // the hill: the outer lip of every second step
@@ -666,53 +752,54 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             double a = r.nextDouble();
             while (a < Math.PI * 2) {
                 int x = HX + (int) Math.round(Math.cos(a) * (s[0] - 1.5)), z = HZ + (int) Math.round(Math.sin(a) * (s[1] - 1.5));
-                stone(x, z, 3 + r.nextInt(5), 0x53);
+                stone(x, z, 0x53);
                 a += (14 + r.nextInt(7)) / Math.hypot(s[0] * Math.sin(a), s[1] * Math.cos(a));
             }
         }
         // the ring where a Warden waits
-        for (int i = 0; i < 12; i++) stone(110 + (int) Math.round(Math.cos(i * Math.PI / 6) * 16), 120 + (int) Math.round(Math.sin(i * Math.PI / 6) * 16), 5 + (i & 1), 0x54);
+        for (int i = 0; i < 12; i++) stone(110 + (int) Math.round(Math.cos(i * Math.PI / 6) * 16), 120 + (int) Math.round(Math.sin(i * Math.PI / 6) * 16), 0x54);
         // a pair at each of the stair's landings, standing on its side walls
-        for (int z : new int[]{-131, -113, -95}) for (int x : new int[]{-41, -33}) pieces.add(new Stone(x, z, 1, 1, 4, 0x55, stairTop(z) + 1));
+        for (int z : new int[]{-131, -113, -95}) for (int x : new int[]{-41, -33}) pieces.add(new Stone(x, z, 5, 0x55, stairTop(z) + 1));
     }
 
-    /** A standing stone: rough courses, moss low down on some, and a stepped cap so none ends in a cube. Each column stands on the ground under it. */
+    /**
+     * A standing stone: one stone, one material, five to nine high, and a stepped cap so none ends in a cube. A tall one is two by two for its lower
+     * half. Each column stands on the ground under it.
+     */
     private final class Stone extends Piece<M> {
-        final int x, z, w, d, h, fixed;
+        final int x, z, h, fixed;
         final long salt;
 
-        Stone(int x, int z, int w, int d, int h, long salt) {
-            this(x, z, w, d, h, salt, -1);
-        }
-
-        Stone(int x, int z, int w, int d, int h, long salt, int fixed) {
+        Stone(int x, int z, int h, long salt, int fixed) {
             this.x = x;
             this.z = z;
-            this.w = w;
-            this.d = d;
             this.h = h;
             this.salt = salt;
             this.fixed = fixed;
             x0 = x;
             z0 = z;
-            x1 = x + w - 1;
-            z1 = z + d - 1;
+            x1 = x + (h > 6 ? 1 : 0);
+            z1 = z + (h > 6 ? 1 : 0);
             mayOverlap = true;
             label = "standing stone";
         }
 
         @Override
         public void draw(V v, M m) {
-            boolean mossy = rnd(x, z, salt + 2) < 0.5;
-            for (int a = 0; a < w; a++) for (int c = 0; c < d; c++) {
-                int px = x + a, pz = z + c, g = fixed >= 0 ? fixed : ground(px, pz), tall = Math.max(2, h - (a + c == 0 ? 0 : 1 + (int) (rnd(px, pz, salt) * 2)));
-                if (g < 0) continue;
-                v.foot(px, g, pz, m.stoneA);
-                for (int k = 1; k <= tall; k++) {
-                    double f = rnd(px * 13L + pz, g + k, salt);
-                    v.set(px, g + k, pz, k == 1 && mossy ? m.moss : f < 0.5 ? m.stoneA : f < 0.8 ? m.worn : m.pale);
-                }
-                v.set(px, g + tall + 1, pz, m.cap);
+            int g = fixed >= 0 ? fixed : ground(x, z);
+            if (g < 0) return;
+            BlockState stone = rnd(x * 31L + z, salt, 0x57) < 0.7 ? m.stoneA : m.pale;
+            v.foot(x, g, z, stone);
+            for (int k = 1; k <= h; k++) v.set(x, g + k, z, stone);
+            v.set(x, g + h + 1, z, m.cap);
+            if (h <= 6) return;
+            // the broad foot: three more columns up to half its height, each on its own ground
+            for (int a = 0; a <= 1; a++) for (int c = 0; c <= 1; c++) {
+                if (a + c == 0) continue;
+                int gg = fixed >= 0 ? fixed : ground(x + a, z + c);
+                if (gg < 0 || gg > g + h / 2) continue;
+                v.foot(x + a, gg, z + c, stone);
+                for (int y = gg + 1; y <= g + h / 2; y++) v.set(x + a, y, z + c, stone);
             }
         }
     }
@@ -724,8 +811,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     }
 
     /**
-     * A burial mound: three broad steps of masonry, each climbed by narrow courses, turf on the treads, a pale kerb at each lip. A doorway with pale
-     * jambs and a lintel, a corbelled passage, a round chamber with a coffin. Sealed, the doorway is walled up two deep and the candles inside are out;
+     * A burial mound: three broad steps under turf, each climbed by narrow ones, the corners gone soft, a kerb course of stone round the foot. A doorway
+     * with pale jambs and a lintel, a corbelled passage, a round chamber with a coffin. Sealed, the doorway is walled up two deep and the candles inside are out;
      * waking it takes the wall away and lights them.
      */
     private final class Barrow extends Piece<M> {
@@ -751,6 +838,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 tier[k] = k < a ? 0 : k < a + c ? 1 : 2;
                 rad[k] = r - k - tread * tier[k];
             }
+            // each broad step's corner is taken off by one cell, so the mound reads as grassed over, not as cut stone
+            for (int k = 1; k < h; k++) if (k == h - 1 || tier[k + 1] != tier[k]) rad[k]--;
             box(cx, cz, r + 5, r + 5);
             mayOverlap = true;
             label = "barrow";
@@ -827,10 +916,11 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 int n = courses(d);
                 for (int y = b + 1; y <= b + h + 3; y++) v.set(x, y, z, null);
                 v.foot(x, b, z, m.deep);
-                for (int k = 0; k < n; k++) {
-                    boolean lip = d > rad[k] - 0.5, last = k == h - 1 || tier[k + 1] != tier[k];
-                    v.set(x, b + 1 + k, z, last && lip ? m.pale : last && k == n - 1 ? m.turf : course(m, x, b + 1 + k, z));
-                }
+                // turf all the way up; the only stone is the kerb course round the foot
+                for (int k = 0; k < n; k++) v.set(x, b + 1 + k, z, k == 0 && n == 1 ? (roll(x, z, 0x7D) < 0.75 ? m.pale : m.stoneA) : m.turf);
+                // inside it is still built: the chamber's wall and its corbelled roof
+                if (d > 4.5 && d <= 5.5) for (int y = b + 1; y <= b + 3; y++) v.set(x, y, z, course(m, x, y, z));
+                if (d <= 4.5 && n >= 4) v.set(x, b + (d <= 2.5 ? 5 : 4), z, m.stoneA);
                 boolean chamber = d <= 4.5, way = t >= 4 && t <= r && s <= 1;
                 if (chamber || way) {
                     v.set(x, b, z, (x + z & 1) == 0 ? m.flag : m.worn);
@@ -843,8 +933,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 }
                 if (porch(x, z) && !chamber) {
                     // the porch stands proud of the mound's lowest steps: side walls, a slab roof, a lintel across the front
-                    if (s == 2) for (int y = b + 1; y <= b + 3; y++) v.set(x, y, z, t == r ? m.pale : course(m, x, y, z));
-                    if (v.get(x, b + 4, z) == null || t == r) v.set(x, b + 4, z, t == r ? m.paleSlab : m.stoneA);
+                    if (s == 2) for (int y = b + 1; y <= b + 3; y++) v.set(x, y, z, t == r ? m.pale : n >= 3 ? course(m, x, y, z) : m.turf);
+                    if (v.get(x, b + 4, z) == null || t == r) v.set(x, b + 4, z, t == r ? m.paleSlab : m.turf);
                 }
             }
             // inside: the coffin on the middle, bones about it, a candle at each quarter
@@ -860,7 +950,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
 
     // ---- the village ----------------------------------------------------------------------------------------------------------------
 
-    /** A candle-keeper's house: seven square, low stone walls, a corbelled roof under turf, a door, and a candle in a window slit. */
+    /** A candle-keeper's house: seven square, low stone walls, a turf roof stepping in with its corners off, a door, and a candle in a window slit. */
     private final class House extends Piece<M> {
         final int cx, cz, ux, uz, g;
         final long salt;
@@ -886,10 +976,10 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
                 if (ring == 3) {
                     boolean corner = Math.abs(a) == 3 && Math.abs(c) == 3;
                     for (int y = g + 1; y <= g + 3; y++) v.set(x, y, z, corner ? m.pale : course(m, x, y, z));
-                    Direction in = Math.abs(a) == 3 ? (a > 0 ? Direction.WEST : Direction.EAST) : c > 0 ? Direction.NORTH : Direction.SOUTH;
-                    v.set(x, g + 4, z, corner ? m.stoneSlab : Build.stair(m.stoneStairs, in));
-                } else if (ring == 2) v.set(x, g + 5, z, m.turf);
-                else v.set(x, g + 6, z, m.turf);
+                    if (!corner) v.set(x, g + 4, z, m.turf);
+                } else if (ring == 2) {
+                    if (Math.abs(a) != 2 || Math.abs(c) != 2) v.set(x, g + 5, z, m.turf);
+                } else if (ring == 0 || a == 0 || c == 0) v.set(x, g + 6, z, m.turf);
             }
             // the door, and across from it a slit with a candle on its sill
             for (int y = g + 1; y <= g + 2; y++) v.set(cx + ux * 3, y, cz + uz * 3, null);
@@ -913,7 +1003,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             find(b.cx, b.b + b.h, b.cz, i++);
         }
         for (int[] f : new int[][]{{70, -190}, {-120, -190}, {185, -170}, {-150, 40}, {60, 30}}) {
-            pieces.add(new Stone(f[0] + 2, f[1], 1, 1, 7, 0x56));
+            pieces.add(new Stone(f[0] + 2, f[1], 8, 0x56, -1));
             stones++;
             find(f[0], ground(f[0], f[1]), f[1], i++);
         }
