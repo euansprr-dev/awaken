@@ -45,3 +45,25 @@ question (who merges build/awaken-v1) is decision 2.
 
 Straight-in walk command with fail-fast; true-light preview; the texture brightness rule in `tools/art`; a Lens look made from a
 painting's palette; the painting / preview / game three-up sheet; the wall grammar; the non-cube shape set (Maximum only).
+
+## Update, 10 Nov, after Euan read the page
+
+Euan's two worries: gates starting to feel alike, and the hours. His idea: this session as orchestrator, two or three nested
+builder sessions, each build defined from its painting to the smallest detail so the code passes first time, checks that take a
+second or two. Tested against the records and adopted as the recommended way ("A fourth way" on the page).
+
+Measured for it: in a 32 s preview run of The Hour Crypt, painting every block took 354 ms (841 chunks) and the 15 pictures took
+2.1 s; the GameTest itself ran 3.7 s; the rest is Gradle and server start. A land file is 56-76k characters (1,100-1,550 lines).
+Saltcomb's code was written in 18 steps.
+
+Roles: the orchestrator writes a build sheet per gate (painter's camera, a blockout of the masses previewed against the painting,
+wall rhythms, the gate's own three to five small shapes, colours from the painting, light pools and shafts, what moves, rule,
+sites) and judges the result painting / preview / game. Three builders, each a small fresh session with one sheet, code and run
+the check until green; they never judge looks, run tours or touch shared files. One CI walk per finished gate in the background.
+The wall grammar is demoted to optional helpers; the look comes from the sheet. Small shapes move into every gate.
+
+Stages: 0 the kit (7% of a week, 6 h); 1 three gates at once, Hour Crypt remade with small shapes, Wax Galleries rebuilt, Quiet
+Barrow new (5%, 1.5 h), then Euan judges; 2 the E wave (9%); 3 on, about 1% a gate. All 88 in 15-25 clock hours against 65;
+usage about the same per gate (parallel cuts hours, not usage); the calendar is set by the weekly share.
+Unproven: whether a sheet can be exact enough for first-time-right code. Stage 1 counts the rounds; more than two means fall back
+to option B with one builder.

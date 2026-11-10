@@ -90,9 +90,9 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
   <p class="lede">You asked me to learn what's been built and the bar it's built to, then find how to build gates faster, better, in more volume, and closer to AAA. I read the handover, the code on all three branches, every painting and every shot, and the old session's own records. Nothing here is built yet. It waits for your yes.</p>
 
   <div class="pick">
-    <h3>What I recommend</h3>
-    <p><strong>Build the Gate Engine, then remake The Hour Crypt at the maximum level for you to play, then you choose the level for the other 86.</strong> The engine makes depth, light and "nothing floats" come out right by construction, so a gate costs about a third of what it did and can't come out vanilla blocky because a builder ran short. The Crypt at maximum shows you the top of the range in the real game before you spend three weeks of usage on it.</p>
-    <p class="muted small">Cost until you next decide: about 19% of one week's Fable allowance and about 16 hours of session time, in three stages that each end with pictures or something to play.</p>
+    <h3>What I recommend, updated after your feedback</h3>
+    <p><strong>Your way, with one addition. I write a build sheet for each gate from its painting, three builders code from the sheets side by side, and a check that answers in seconds tells them whether it's right.</strong> I measured it. Painting a whole gate takes a third of a second and drawing its fifteen pictures takes two. The other thirty seconds of every check today is the game starting up. A gate's code is about five minutes of typing. Everything else was loops, and an exact sheet plus a fast check are what remove them.</p>
+    <p class="muted small">Cost until you next decide: about 12% of one week's Fable allowance and 7 to 8 hours. It ends with three gates built at once for you to judge, The Hour Crypt among them with shapes smaller than a block. The details are in "A fourth way" below. My first recommendation (the Gate Engine with one builder) is option B.</p>
   </div>
 
   <p><strong>Look at these two first:</strong> decision 1 (which level) and decision 3 (how much of your week gates may use). They set everything else. Decision 2 is the handover's question: who merges into <span class="num">build/awaken-v1</span> now.</p>
@@ -246,6 +246,57 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
 
 <section>
   <div class="col">
+    <p class="eyebrow">Part 3, continued · added after your feedback</p>
+    <h2>A fourth way: build sheets and three builders</h2>
+    <p>You had two worries: gates starting to feel alike, and the hours. You suggested I act as the orchestrator, define each build from its painting down to the smallest thing, hand it to two or three nested sessions, and make checking so fast that the work is nearly all coding. I went back to the records to test that. It holds up, and it's better than what I proposed.</p>
+
+    <h3>What the measurements say</h3>
+    <ul>
+      <li><strong>The check can take seconds.</strong> In a 32-second preview run of The Hour Crypt, painting every block took 0.35 seconds and drawing all fifteen pictures took 2.1. The rest was Gradle and the game starting. A checker that stays running answers in about three seconds for a whole gate, under one for a single camera.</li>
+      <li><strong>The coding is the fast part.</strong> A gate's land is 56,000 to 76,000 characters of code, about five minutes of writing. Saltcomb's was written in 18 steps.</li>
+      <li><strong>The loops were the cost.</strong> 13 to 16 test runs per gate chasing floats, a third of walks photographing the wrong place, and every step re-reading a huge session.</li>
+    </ul>
+
+    <h3>Who does what</h3>
+    <ul>
+      <li><strong>I'm the eyes.</strong> For each gate I look at the painting and write its build sheet: where the painter stood, every mass with its size and place, each wall's rhythm, the gate's own small shapes, colours taken from the painting, where the light pools and shafts go, what moves, the rule, the sites. The masses go in first as a rough blockout that I can see against the painting in two seconds, before any detail exists. That is where a build stops drifting from its painting.</li>
+      <li><strong>Three builders are the hands.</strong> Each is a small fresh session with one sheet. It writes the gate, runs the check until it's green and hands back. Builders never judge looks, never run tours and never touch a file another gate uses.</li>
+      <li><strong>I judge the result.</strong> Painting, preview and game side by side. I accept it or send back a short exact list. One real walk per finished gate runs on GitHub in the background, so nobody waits on it.</li>
+    </ul>
+
+    <h3>So gates don't start to feel alike</h3>
+    <p>This was the real risk in option B, where a shared wall grammar did much of the look. Here the grammar becomes a box of helpers a builder may reach for, and the look always comes from the sheet.</p>
+    <ul>
+      <li>Every visible choice on a sheet comes from that gate's own painting.</li>
+      <li>Each gate gets three to five small shapes nobody else has. The Crypt gets pointed niches, chain links and bell-metal ribs. Saltcomb gets open comb cells. The Vine Seat gets roots and carved faces. This is the "nothing smaller than a block" finding, moved from the Maximum option into every gate.</li>
+      <li>Shared code only does what you can't see: holds things up, keeps routes open, puts light where the sheet says.</li>
+      <li>A sameness check compares any two gates' outlines, wall sections, colours and rhythm. I also look at each new gate on one sheet beside the last ten.</li>
+    </ul>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <tr><th>Stage</th><th>What gets built</th><th class="num">Cost</th><th>It passes when</th><th>You get</th></tr>
+      <tr><td><strong>0. The kit</strong></td><td>The checker that stays running. True light in the preview and the texture rule, with Knell and Keep re-toned. The straight-in walk. Each gate in its own files. Supports, so nothing can float. The sheet format and the blockout view. The maker for small shapes.</td><td class="num">7% · 6 h</td><td>A whole-gate check in under five seconds. The Crypt's preview and its game shot match side by side. Amber's three hashes unchanged.</td><td>Real shots of the five main-line gates beside their paintings. Four of them for the first time.</td></tr>
+      <tr><td><strong>1. Three gates at once</strong></td><td>One builder each, from my sheets: The Hour Crypt remade with small shapes and the bell swinging on its toll, The Wax Galleries rebuilt from scratch, The Quiet Barrow new.</td><td class="num">5% · 1.5 h</td><td>Each builder needs two rounds or fewer. Floats and reach green. Frame rate on the Crypt within 10% of today's, from one tour on your Mac if you allow it.</td><td><strong>Three gates beside their paintings, the Crypt to play, and the measured minutes and usage. Then you say go or change course.</strong></td></tr>
+      <tr><td><strong>2. The E wave</strong></td><td>Flooded Ossuary and Broodwarren new. Long Shaft and Ash Isles rebuilt. Glowroot, Sporefall, Cinder Stair, Kingsroot, Saltcomb and The Vine Seat finished and walked.</td><td class="num">9% · 3–4 h</td><td>Every gate passes the bar in Part 2. The whole test suite is green on CI.</td><td>Fourteen gates ready to switch on.</td></tr>
+      <tr><td><strong>3 on. D to S</strong></td><td>The D wave's 16 with four new themes, then C to S.</td><td class="num">about 1% a gate</td><td>Same bar, and the sameness check.</td><td>Shots in batches. You veto what you don't like.</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <h3>What it costs, plainly</h3>
+    <ul>
+      <li><strong>Hours:</strong> all 88 in about 15 to 25 hours on the clock, against 65 with one builder. With three builders flowing, a gate lands about every ten minutes.</li>
+      <li><strong>Usage:</strong> about 1% of a week per gate, so about one week's allowance for all 88. Three builders cut the hours and don't cut the usage. What cuts usage is code that passes first time and sessions that stay small.</li>
+      <li><strong>The calendar is set by your share, not by hours.</strong> At a quarter of your week, about 25 gates a week, so 88 in about four weeks. A bigger share or cloud credit is the only way to go sooner.</li>
+    </ul>
+    <h3>What isn't proven</h3>
+    <p>Whether a sheet can be exact enough that a builder's first code passes. Nothing in the records can tell me that. Stage 1 measures it: I count the rounds each builder needs. If it's more than two, I fall back to option B with one builder. The kit is the same, so nothing is wasted.</p>
+    <p>Nested builders went wrong three ways last time, and each has an answer here. They re-read huge sessions, so these stay small and fresh. They hadn't seen the bar, so they no longer judge looks. They stalled for hours on a stuck hook, so a builder that sees a step take ten minutes stops and says so.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
     <p class="eyebrow">Part 4</p>
     <h2>How a gate gets made, today and after</h2>
     <p class="small muted">Today. Red boxes are where time, usage or quality was lost.</p>
@@ -293,7 +344,8 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
 <section>
   <div class="col">
     <p class="eyebrow">Part 5</p>
-    <h2>The stages, and where each one stops</h2>
+    <h2>The stages for options A to C</h2>
+    <p class="muted">The fourth way has its own stages, in the section before Part 4. These are the stages if you'd rather have one builder.</p>
   </div>
   <div class="wide scroll">
     <table>
@@ -306,7 +358,7 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
     </table>
   </div>
   <div class="col">
-    <p><strong>Pace follows your share.</strong> At a quarter of a week for gates, level B is about 20 gates a week and all 88 land in about five weeks. Level C is 7 or 8 a week and about ten weeks.</p>
+    <p><strong>Pace follows your share.</strong> At a quarter of a week for gates, the fourth way is about 25 gates a week and all 88 land in about four weeks. Level B is about 20 a week and five weeks. Level C is 7 or 8 a week and about ten weeks.</p>
     <p><strong>Undoing it.</strong> New gates stay behind the <span class="num">gateRealms</span> switch, off by default. The old hand-built way keeps working until the engine has passed stage 1. If the engine's first two gates don't cost less and look better than hand-built ones, I stop and we stay at A. If the Crypt at maximum costs frames or you can't see the difference, we stay at B.</p>
     <h3>What I still don't know</h3>
     <ul>
@@ -326,7 +378,8 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
 
     <div class="decision" id="d1">
       <h3>1. Which level?</h3>
-      <label><input type="radio" name="d1" id="d1a" value="Engine first, then the Hour Crypt at maximum for me to play, then I pick the level" checked><span>Engine first, then The Hour Crypt at maximum for me to play, then I pick the level for the rest <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d1" id="d1e" value="The fourth way: build sheets and three builders. The kit first, then three gates at once (the Hour Crypt with small shapes among them) for me to judge" checked><span>The fourth way: build sheets and three builders. The kit first, then three gates at once for me to judge, The Hour Crypt with small shapes among them. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d1" id="d1a" value="Engine first with one builder, then the Hour Crypt at maximum for me to play, then I pick the level"><span>Engine first with one builder, then The Hour Crypt at maximum for me to play, then I pick the level for the rest</span></label>
       <label><input type="radio" name="d1" id="d1b" value="B, the Gate Engine, for everything; skip the maximum pilot"><span>B for everything. Skip the maximum pilot.</span></label>
       <label><input type="radio" name="d1" id="d1c" value="C, Maximum, for everything from the start"><span>C for everything from the start. About three weeks' allowance for 88.</span></label>
       <label><input type="radio" name="d1" id="d1d" value="A, Tighten only"><span>A. Keep building by hand, tightened.</span></label>
@@ -363,8 +416,9 @@ button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; back
 
     <div class="decision" id="d6">
       <h3>6. More than one builder?</h3>
-      <label><input type="radio" name="d6" id="d6a" value="One session for now; raise parallel or cloud builders again at the D wave" checked><span>One session for now. Ask again at the D wave. <span class="rec">my pick</span></span></label>
-      <label><input type="radio" name="d6" id="d6b" value="Two parallel builders as soon as the spec files exist"><span>Two builders as soon as the spec files exist</span></label>
+      <label><input type="radio" name="d6" id="d6e" value="Three builders under the gates session, started for the three proof gates once the kit is in" checked><span>Three builders under this session, started for the three proof gates once the kit is in <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d6" id="d6b" value="Two builders, not three"><span>Two builders, not three</span></label>
+      <label><input type="radio" name="d6" id="d6a" value="One session only"><span>One session only</span></label>
       <label><input type="radio" name="d6" id="d6c" value="Try one gate on a cloud session after stage 1 and report the price"><span>Try one gate in the cloud after stage 1 and tell me the price</span></label>
     </div>
 
