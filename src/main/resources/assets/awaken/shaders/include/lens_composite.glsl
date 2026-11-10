@@ -420,14 +420,21 @@ void main() {
             float reach = rdEnd * (p0.b > 0.5 ? 5.0 : 1.0);
             float t = d / reach;
             float wy = pRel.y + F(12).y;
-            float thin = mix(1.0, exp(-max(wy - F(12).y - 24.0, 0.0) / 150.0), 0.55);
+            float thin = mix(1.0, exp(-max(wy - F(12).y - 40.0, 0.0) / 220.0), 0.5);
             // and the air between here and there: a haze that starts a few blocks out, thin by day, thicker at dusk and
             // dawn and by night, lying low (full at and under the eye's height, thinner above it), so each line of
             // trees stands a little paler than the one before it and the far fog has something leading into it
             vec3 hrA = airHour(f22.y);
-            float lying = mix(0.4, 1.0, exp(-max(wy - F(12).y + 3.0, 0.0) / 42.0));
+            // (thinner only well above the eye, and slowly: a tree is one thing at one distance, and a haze that thinned
+            // over its own height left every far tree a dark crown on a vanished trunk, Euan 10 Nov)
+            float lying = mix(0.62, 1.0, exp(-max(wy - F(12).y - 16.0, 0.0) / 130.0));
             float near = (1.0 - exp(-max(d - 4.0, 0.0) / mix(280.0, 150.0, clamp(max(hrA.y, hrA.z * 0.85) + 0.5 * rainA, 0.0, 1.0)))) * lying;
-            float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * lensOpen * airK;
+            // The fog is the air along the view, so what is over the far point doesn't matter: only a camera that is
+            // itself under cover, looking at something under cover, is in a cave's air (parameter texel 21 r). (Leaving
+            // out every covered point left the ground under each ledge and the mouth of each cave as a dark hole in
+            // the haze.)
+            float inside = P(21).r * (1.0 - lensOpen);
+            float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - inside) * airK;
             vec3 fc = airFog(dirA, f22.xyz, rainA);
             c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
             c = mix(c, fc, fog);

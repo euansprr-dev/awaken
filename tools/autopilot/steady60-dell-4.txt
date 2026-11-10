@@ -31,6 +31,12 @@ pixels gpu reset
 perf air_raw_turn 12
 pixels gpu air_raw_turn
 shot d1_air_morning
+lens sunpass off
+wait 80
+pixels gpu reset
+perf air_nosunpass_raw_still 12
+pixels gpu air_nosunpass_raw_still
+lens sunpass setting
 lens air off
 wait 80
 pixels gpu reset

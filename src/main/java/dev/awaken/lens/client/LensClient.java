@@ -213,8 +213,11 @@ public final class LensClient {
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
-        temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
         air = forcedAir != null ? forcedAir : AwakenConfig.Client.LENS_AIR.get();
+        // (with the Air the clouds and light are always spread over frames: its clouds are walked exactly, so a carried
+        // pixel is as true as a fresh one, and its larger light buffer is sized for it. Measured on the Dell at Euan's
+        // settings: 13.0 ms of GPU time without, 11.0 with)
+        temporal = forcedTemporal != null ? forcedTemporal : (AwakenConfig.Client.LENS_TEMPORAL.get() || air);
         sunPass = forcedSunPass != null ? forcedSunPass : AwakenConfig.Client.LENS_SUN_PASS.get();
         // the VFX tier is ImmersiveVFX alone: no Lens at all, story scenes included (without that mod it reads as Swift)
         boolean vfx = setting == AwakenConfig.Client.LensLook.VFX && Companions.immersiveVfxLoaded();
