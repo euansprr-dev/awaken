@@ -34,7 +34,7 @@ public final class FightMindTests {
     private static final int ROOM = FightRecorder.ROOM;
     /**
      * A potion's drink, how far apart the drink test starts them (farther than the longest answer rests), and how many:
-     * enough that one run's fight doesn't decide the share (448 take some 45 s on CI).
+     * enough that one run's fight doesn't decide the share.
      */
     private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 448;
     private static final int SWIG = DRINKS * (DRINK_EVERY + 40);
@@ -341,7 +341,9 @@ public final class FightMindTests {
         int[] free = {0};
         boolean[] done = {false}, reach = {false}, couldHave = {false};
         StringBuilder missed = new StringBuilder();
-        h.onEachTick(() -> {
+        // a sequence's step, not onEachTick: that books one run per tick up to the timeout and walks them all every
+        // tick, which over this many ticks is minutes of the suite
+        h.startSequence().thenExecuteFor(SWIG, () -> {
             int t = ++tick[0];
             s.boss.setTarget(s.player);
             s.player.setHealth(s.player.getMaxHealth());
