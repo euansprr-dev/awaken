@@ -1,6 +1,26 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/frostwalker_helmet"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": [
+          "gui"
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/frostwalker_helmet"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "awaken:item/frostwalker_helmet_held",
+      "model": {
+        "type": "awaken:armour_piece",
+        "set": "frostwalker",
+        "piece": "helmet"
+      }
+    }
   }
 }
