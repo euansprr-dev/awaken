@@ -1,0 +1,178 @@
+<title>The Run, Built</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on a dark ground; tables and the route strip break out wider; decisions in a form at the end. */
+:root {
+  --bg: #0f131b; --panel: #171d28; --panel-2: #1d2532; --line: #2b3546;
+  --fg: #e8e4da; --muted: #9ba5b5; --accent: #f0b24a; --accent-ink: #1b1406;
+  --cool: #82b3ea; --good: #7fc98f; --bad: #ec7a68;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3; --fg: #19202e; --muted: #596376;
+  --accent: #9a6200; --accent-ink: #ffffff; --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3; --fg: #19202e; --muted: #596376;
+  --accent: #9a6200; --accent-ink: #ffffff; --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+.col { max-width: 46rem; margin-inline: auto; display: flex; flex-direction: column; gap: 1.05rem; }
+.wide { max-width: 68rem; margin-inline: auto; }
+section { display: flex; flex-direction: column; gap: 1.05rem; margin-top: 3rem; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; }
+h2 { font-size: 1.6rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.5rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.14rem; }
+.muted { color: var(--muted); } .small { font-size: 0.88rem; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+strong { font-weight: 600; }
+.pick { border: 1px solid var(--accent); background: var(--panel); border-radius: 10px; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.pick h3 { margin: 0; color: var(--accent); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 0.9rem; }
+.opt th:nth-child(3), .opt td:nth-child(3) { background: var(--panel); }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.have { color: var(--good); border-color: var(--good); } .tag.new { color: var(--accent); border-color: var(--accent); }
+.route { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.55rem; counter-reset: leg; }
+.route div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0.65rem 0.75rem; font-size: 0.87rem; min-width: 0; counter-increment: leg; }
+.route b { display: block; font-family: var(--display); font-size: 0.95rem; }
+.route b::before { content: counter(leg) ". "; color: var(--accent); }
+.route .k { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); }
+.decision { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.decision h3 { margin: 0; }
+.decision label { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0.5rem; border-radius: 6px; cursor: pointer; }
+.decision label:hover { background: var(--panel-2); }
+.decision input { margin-top: 0.3rem; accent-color: var(--accent); }
+.decision input:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+.rec { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 0.08rem 0.4rem; margin-left: 0.35rem; white-space: nowrap; }
+textarea { width: 100%; box-sizing: border-box; min-height: 9.5rem; background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 0.7rem 0.8rem; font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; }
+button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 0.6rem 1.1rem; cursor: pointer; }
+.row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+
+figure { margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+figure img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); }
+figcaption { color: var(--muted); font-size: 0.9rem; max-width: 46rem; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--panel-2); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+.proof { display: inline-block; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.45rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.proof.game { color: var(--good); border-color: var(--good); }
+.proof.bench { color: var(--cool); border-color: var(--cool); }
+</style>
+
+<div class="col">
+  <p class="eyebrow">AWAKEN · Gates as Worlds · built 10 Nov 2026 · not yet played</p>
+  <h1>The Run, Built</h1>
+  <p class="lede">While you were out I built the plan you approved and went past it. There are seven gates you can walk into by command. Two were made by hand. Five are rolled from a seed, so each one is a different dungeon every time. Nothing here has been played by a person yet. You are the first.</p>
+  <div class="pick">
+    <h3>Where it is</h3>
+    <p>Branch <code>claude/gates-as-worlds-plan-fcb81b</code>, commit <code>8f594cad8</code>, pushed. All 46 gate tests pass. It is <strong>not</strong> in your play copy until that branch is merged. The new gates stay behind their switch, so the old gates are untouched.</p>
+  </div>
+</div>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Play</p>
+    <h2>Seven gates, one command each</h2>
+    <p>Stand anywhere in the overworld and type the command. Play in survival: packs ignore a creative player and an ambush will not spring. For the five rolled gates, change the number at the end to get a different layout. <code>/awaken gate leave</code> takes you out.</p>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <thead><tr><th>Gate</th><th>Command</th><th>How far it is proven</th></tr></thead>
+      <tbody><tr><td><strong>The Hour Crypt</strong><br><span class="muted small">The crypt you know, now a run of 16 legs</span></td><td><code>/awaken gate realm_enter E awaken:hour_crypt</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Broodwarren</strong><br><span class="muted small">A short crawl built by hand, fifty blocks down</span></td><td><code>/awaken gate realm_enter E awaken:broodwarren</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Lower Combs</strong><br><span class="muted small">A brood nest, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:brood_burrow 1</code></td><td><span class="proof game">seen in the real game</span></td></tr><tr><td><strong>The Bone Roads</strong><br><span class="muted small">Catacombs, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:catacombs 1</code></td><td><span class="proof bench">checker pictures only</span></td></tr><tr><td><strong>The Hollow Hills</strong><br><span class="muted small">Barrow passages, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:hollow_hills 1</code></td><td><span class="proof bench">checker pictures only</span></td></tr><tr><td><strong>The Root Cellars</strong><br><span class="muted small">A temple undercroft, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:root_cellars 1</code></td><td><span class="proof bench">checker pictures only</span></td></tr><tr><td><strong>The Tallow Runs</strong><br><span class="muted small">Wax runs, different on every seed</span></td><td><code>/awaken gate realm_enter E awaken:tallow_runs 1</code></td><td><span class="proof bench">checker pictures only</span></td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">What changed</p>
+    <h2>A gate is a run now</h2>
+    <ul>
+      <li><strong>Packs wait where you can see them.</strong> They wake when you come close in their sight, or when you hurt one.</li>
+      <li><strong>Each fight is a different herd.</strong> A leg names who stands in it, so the nave is ghouls and archers and the Ossuary is archers, wisps and a Keeper.</li>
+      <li><strong>Custom creatures are in the gates.</strong> The Drip Lurker, the Hushling and the Thousandfoot already had their own bodies and the animation work. They are gate monsters now, with the habits they have in the caves.</li>
+      <li><strong>Doors shut on a fight</strong> and open when it is over or you are gone. Nobody is locked in or out.</li>
+      <li><strong>An ambush</strong> has nothing standing in it until you walk into the middle.</li>
+      <li><strong>Traps.</strong> Stone teeth that come up in rows, cells that light and then spit across a gallery, floor that gives way.</li>
+      <li><strong>A long fall</strong> on a climb costs a little health and puts you back on the last ledge you stood on.</li>
+      <li><strong>Loot per herd.</strong> A cache appears where a pack falls.</li>
+      <li><strong>Hidden places and shortcuts.</strong> A hidden place pays whoever finds it. A way opens behind you so you never walk a long stretch twice.</li>
+      <li><strong>The HUD shows the run:</strong> "Herds 2 / 5 · Wardens 1 / 3", then that the way on is open.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Built by hand</p>
+    <h2>The Broodwarren</h2>
+    <p>A nest dug down under a dead tree. Antechamber, a gallery of spitting cells, a shaft of hanging comb with a broken ledge, a larder whose sacs burst round you, the comb ring, the brood chamber. It has its own block family: grey nest paper, comb with something lit inside, hanging sacs, a red skin that grows over a door.</p>
+  </div>
+  <div class="wide"><figure><img src="built-brood.jpg" alt="Six real-game shots of the Broodwarren"><figcaption><span class="proof game">real game</span> Top row: the antechamber with its herd, the larder with Lurkers under the sacs, the comb ring with the Thousandfoot and its guard. Bottom row: the brood chamber, the hidden jelly cell, and the larder just after the ambush sprang. The sacs in the middle are gone and the red skin has sealed the way out.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-broodrooms.jpg" alt="Twelve real-game shots of the Broodwarren room by room"><figcaption><span class="proof game">real game</span> The same gate room by room, from the split root at the top left down to the brood chamber.</figcaption></figure></div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Built by hand</p>
+    <h2>The Hour Crypt as a run</h2>
+    <p>The nave, then the walk round the pit, then three wings in any order. East through the stone teeth to the Ossuary and its Warden. West down into the water. South up the tower, whose stair is now broken in three places. Off the Ossuary there is a reliquary whose door stands open only while the bell rings, with Hushlings in the dark in front of it. Kill the Warden among the ropes and a bell rope comes down from the bridge, so you never climb the tower twice.</p>
+  </div>
+  <div class="wide"><figure><img src="built-hour.jpg" alt="Nine real-game shots of the Hour Crypt"><figcaption><span class="proof game">real game</span> Packs standing in the nave and the Ossuary. A row of teeth up across the gallery. The reliquary door shut. Each Warden with its company. Monsters wading in the Sunk Aisle, which was empty before. The break in the tower stair.</figcaption></figure></div>
+  <div class="col"><p class="muted small">The Crypt still looks flatter and bluer than its painting. This work was about play. That look fault is still open.</p></div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Not one by one</p>
+    <h2>Dungeons that roll themselves</h2>
+    <p>You asked not to build these one at a time. So there is now a generator. It rolls a whole run from the gate's seed: a fight in sight of the way in, then two to five things out of a bag (more fights, a spitter gallery, a hall of teeth, a shaft with a broken ledge, an ambush), then the Warden, then the Lord. It turns as it goes and it goes down. There is always a side cell that makes a way round, and usually a hidden cell.</p>
+    <p>A <strong>skin</strong> decides what the dungeon is made of and who lives there. A skin is one file. I wrote two. Then I gave three builders a thirty-line brief each, and each came back with a working skin in ten to twenty minutes. Every skin is tested on six seeds: nothing floats, every place can be walked to, every fight has room.</p>
+  </div>
+  <div class="wide"><figure><img src="built-burrow.jpg" alt="Real-game shots of The Lower Combs"><figcaption><span class="proof game">real game</span> The Lower Combs, the brood skin. The first fight has a Hive Guard and drones. The Warden room has the Thousandfoot.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-roots.jpg" alt="Checker pictures of The Root Cellars"><figcaption><span class="proof bench">checker picture</span> The Root Cellars. A temple undercroft half swallowed by roots, with lit leaves, braziers and carvings. The best looking of the builders three.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-tallow.jpg" alt="Checker pictures of The Tallow Runs"><figcaption><span class="proof bench">checker picture</span> The Tallow Runs. Soot rock that pale wax has run down, with candle banks and lit comb. The pale boxes at the foot of the walls are candle banks, which this checker draws as plain blocks.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-bones.jpg" alt="Checker pictures of The Bone Roads"><figcaption><span class="proof bench">checker picture</span> The Bone Roads. Coursed stone, skulls in niches, bone packed into the walls, candles along the foot of the walls, small bells on ropes.</figcaption></figure></div>
+  <div class="wide"><figure><img src="built-hills.jpg" alt="Checker pictures of The Hollow Hills"><figcaption><span class="proof bench">checker picture</span> The Hollow Hills. Earth passages under a barrow, shored with stone, lit only by pale grave-lights. It is the darkest one on purpose, because Hushlings live in it. It is also the plainest.</figcaption></figure></div>
+  <div class="col"><p class="muted small">These rolled dungeons are plainer than a gate built from a painting. I mean them as the short gates in the mix, three in ten, beside the great ones.</p></div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Straight</p>
+    <h2>What nobody has checked</h2>
+    <ul>
+      <li><strong>Whether it is fun.</strong> I cannot judge that. You can.</li>
+      <li><strong>How hard it is.</strong> Packs are five to seven at E rank, Wardens have companies, and waves come after four idle minutes.</li>
+      <li><strong>Traps and the fall catch acting on a player.</strong> The teeth are up in a real-game shot, but nothing has been hit by one yet.</li>
+      <li><strong>How the cave creatures fight as gate monsters.</strong> In one shot the Lurkers were standing on the larder floor, not yet hanging from its roof.</li>
+      <li><strong>New creatures.</strong> I did not build new bodies or animations. I cannot watch them move, and the last batch built that way came out looking wrong. I used the ones that are already good.</li>
+      <li><strong>Sound.</strong> Traps and doors use sounds the mod already had.</li>
+    </ul>
+    <h3>One thing I found and fixed late</h3>
+    <p>A real-game walk showed that packs I had named by monster were not spawning those monsters. They fell back to a random pick. The tests had not caught it. It is fixed and there is a test for it now.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Yours to decide</p>
+    <h2>What I need from you</h2>
+    <ol>
+      <li><strong>Play The Broodwarren and The Hour Crypt first</strong>, then one or two rolled ones. Tell me what is right and what is wrong.</li>
+      <li><strong>Breaking blocks inside a gate.</strong> Today a player can dig through a sealed door. I recommend protecting gate blocks. I have not changed it, because it changes a rule of the game.</li>
+      <li><strong>Merging.</strong> Say when you want this in your play copy.</li>
+      <li><strong>What comes next.</strong> My pick is to give The Quiet Barrow and The Wax Galleries designed runs, then more skins. The other choice is to fix the Crypt's and the Barrow's look first.</li>
+    </ol>
+    <p class="muted small">Play notes with every command and what to look for are in the branch at <code>docs/gates-as-worlds/the-run/PLAY.md</code>.</p>
+  </div>
+</section>
