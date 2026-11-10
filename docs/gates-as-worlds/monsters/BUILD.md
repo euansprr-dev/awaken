@@ -4,6 +4,8 @@ Built 10 November 2026 on `claude/great-goldwasser-72ae9f`, after Euan approved 
 of its own for each of the 78 gate monsters that wore a Minecraft mob's body. He asked for it to be coded in one batch
 and tested at the end. The rules are in `docs/SPEC.md` §60. Nothing here has been seen in game yet.
 
+Page showing every body: https://claude.ai/artifact/Pc5goitkLQ66Ef7mekQude
+
 ## What was built
 
 | Rank | Theme | File | Bodies |
