@@ -38,6 +38,12 @@ import java.util.List;
  */
 public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, WildModel> {
     private static final float HOLD = 1.0F, FADE = 0.3F;
+    /**
+     * A gate monster's blow lands as its tell ends (SPEC §60.9): the wind-up is gathered this many seconds before the
+     * tell runs out and the strike begins there, so its hit frame (the kit's strikes reach it in 0.07 to 0.09 s) falls
+     * on the tick the server deals the blow and the closing circle shuts, not a tenth of a second after it.
+     */
+    private static final float STRIKE_LEAD = 0.08F;
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
             | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP | WildPose.S_GRAZE;
@@ -49,6 +55,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private final @Nullable Identifier blink;
     private final int[] windup, strike, open;
     private final float[] windupSeconds;
+    /** {@link #STRIKE_LEAD} for a gate monster's own body, 0 for the other bodies this draws. */
+    private final float lead;
     private final int roar, warn;
     private final float deathLength;
     /** How far the body reaches past its box sideways (the seep heart's roots run out over the floor), for culling. */
@@ -71,6 +79,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         windupSeconds = new float[windup.length];
         java.util.Arrays.fill(open, -1);
         reach = def.model == dev.awaken.mobs.def.Model.SEEP_HEART ? 1.8F : 0.0F;
+        lead = def.rig ? STRIKE_LEAD : 0.0F;
         roar = m.clip("roar");
         warn = m.clip("warn");
         deathLength = m.length(m.clip("death"));
@@ -154,7 +163,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         s.run = Mth.clamp((s.speed - rig.runFrom) / Math.max(0.01F, rig.runFull - rig.runFrom), 0.0F, 1.0F);
         s.angry = (l.fauna & FaunaMob.P_ANGRY) != 0 ? 1.0F : 0.0F;
         float now = s.ageInTicks;
-        resolve(f.cue(), (now - f.cueStart()) / 20.0F, s, false);
+        resolve(f.cue(), (now - f.cueStart()) / 20.0F + begun(f), s, false);
         s.prevClip = -1;
         s.prevWeight = 0;
         int was = FaunaMob.cueStage(f.prevCue());
@@ -185,6 +194,20 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         live(mob, s, l, f);
     }
 
+    /**
+     * How much of its strike the body had already played when the server said it struck: the strike begins
+     * {@link #lead} seconds before the tell ends (see resolve), so the strike's own cue carries on from there.
+     */
+    private float begun(RigBody f) {
+        if (lead <= 0) return 0;
+        int stage = FaunaMob.cueStage(f.cue()), slot = FaunaMob.cueSlot(f.cue());
+        if (stage != FaunaMob.CUE_STRIKE && stage != RigBody.CUE_OPEN) return 0;
+        if (FaunaMob.cueStage(f.prevCue()) != FaunaMob.CUE_WINDUP || FaunaMob.cueSlot(f.prevCue()) != slot) return 0;
+        if (slot < 0 || slot >= windupSeconds.length || windupSeconds[slot] <= 0 || strike[slot] < 0) return 0;
+        float gather = Math.max(0.05F, windupSeconds[slot] - lead);
+        return Mth.clamp((f.prevCueEnd() - f.prevCueStart()) / 20.0F - gather, 0.0F, lead);
+    }
+
     private void resolve(int cue, float since, WildRenderState s, boolean held) {
         int stage = FaunaMob.cueStage(cue), slot = FaunaMob.cueSlot(cue);
         s.cueClip = -1;
@@ -202,8 +225,16 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
                     letGo(s, since, len);
                     return;
                 }
-                s.cueClip = c;
-                s.cueTime = Math.min(len, since * len / real);
+                // a gate monster gathers a moment early and begins its strike there, holding at its hit frame until the
+                // server says it struck (a flier holds it all the way down its dive)
+                float gather = lead > 0 && strike[slot] >= 0 ? Math.max(0.05F, real - lead) : real;
+                if (gather < real && since > gather) {
+                    s.cueClip = strike[slot];
+                    s.cueTime = Math.min(since - gather, lead);
+                } else {
+                    s.cueClip = c;
+                    s.cueTime = Math.min(len, since * len / gather);
+                }
                 float over = since - real - (held ? 0 : HOLD);
                 s.cueWeight = held ? 1.0F : over <= 0 ? 1.0F : Math.max(0.0F, 1.0F - over / FADE);
             }
@@ -254,8 +285,10 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         int stage = FaunaMob.cueStage(f.cue());
         life.hurt = l.hurt;
         life.entity = mob.getId();
+        int slot = FaunaMob.cueSlot(f.cue());
+        boolean struck = slot >= 0 && slot < strike.length && s.cueClip == strike[slot] && windup[slot] != strike[slot]; // (its strike begun early)
         life.windup = stage == FaunaMob.CUE_WINDUP && s.cueClip >= 0 && s.cueWeight > 0 && s.cueClip != roar
-                ? Mth.clamp(s.cueTime / Math.max(0.01F, m.length(s.cueClip)), 0.0F, 1.0F) : -1;
+                ? struck ? 1.0F : Mth.clamp(s.cueTime / Math.max(0.01F, m.length(s.cueClip)), 0.0F, 1.0F) : -1;
         life.roar = s.cueWeight > 0 && s.cueClip >= 0 && (s.cueClip == roar || s.cueClip == warn);
         life.roarClip = roar >= 0;
         life.busy = s.cueWeight > 0.05F || s.melee >= 0 || s.hurt >= 0;

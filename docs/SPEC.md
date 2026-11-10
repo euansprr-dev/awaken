@@ -21785,6 +21785,11 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   its start and one after its end (the loop carried on a step either way; a wheel that turns steadily keeps turning),
   and `HeroRig.problems` and the rig check allow those two keys on a looping clip. The older hero rigs' loops (the Drip
   Lurker's and the rest of `fauna_rig`'s users) still have the hitch; the same call would cure them.
+- **The blow lands as the circle closes.** The server deals a blow on the tick its tell ends, and the closing circle
+  shuts then; the body's strike clip used to begin only when the client heard it had struck, so its hit frame came
+  0.07 to 0.09 s after the circle. A gate monster's wind-up is now gathered `STRIKE_LEAD` (0.08 s) before the tell ends
+  and its strike begins there (`WildRenderer.resolve`), holding at the hit frame until the strike's own cue takes it
+  on from where it had got to (`begun`). The other bodies the renderer draws are unchanged.
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.
