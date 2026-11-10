@@ -72,6 +72,10 @@ public final class Herald {
                 if (on) HOLDERS.add(owner);
                 else HOLDERS.remove(owner);
             }
+
+            @Override public boolean showing() {
+                return Moment.active();
+            }
         });
     }
 

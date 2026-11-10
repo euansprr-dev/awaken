@@ -11,7 +11,7 @@
   "steps": [
     {
       "id": "vow",
-      "text": "Keep the Tether Vow.",
+      "text": "Reach the vault's beacon mast by rope.",
       "done": [
         "counter:awaken:ascent_vow_kept"
       ]

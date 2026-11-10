@@ -103,7 +103,9 @@ public final class ProvingTests {
                         h.assertTrue(now - mark[0] >= Provings.OUTRO, "the water, the chain and the Tenor before home");
                         h.assertTrue(Trials.lastResult(sp.getUUID()).orElse(null) == Trials.State.PASSED, "passed");
                         h.assertTrue(Progression.rank(sp) == Rank.D, "rank D, was " + Progression.rank(sp));
-                        h.assertTrue(Promises.answered(sp, Promises.Need.tier("tether")), "its chain is the rope");
+                        // The Way Up (SPEC §63.2): the chain is cold until a vault wakes it; with the option off it is the rope
+                        h.assertTrue(Promises.answered(sp, Promises.Need.tier("tether")) != dev.awaken.body.BodyConfig.wayUp(),
+                                "its chain is cold until a vault wakes it");
                         step[0] = 5;
                     }
                     case 5 -> {

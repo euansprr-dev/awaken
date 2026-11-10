@@ -19,7 +19,7 @@
     },
     {
       "id": "skyborn",
-      "text": "Pass the Skyborn trial.",
+      "text": "Take flight.",
       "done": [
         "counter:awaken:ascent_skyborn_trial"
       ]
