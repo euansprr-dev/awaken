@@ -102,8 +102,14 @@ final class FindsCommands {
             return 0;
         }
         Site s = sites.get(n);
-        int back = Math.min(s.kind().reach(), 14) + 6;
-        p.teleportTo(level, s.x() + 0.5, s.y() + 5 + back * 0.35, s.z() + 0.5 - back, java.util.Set.of(), 0F, 28F, false);
+        // a little off to one side and above head height, on an unseen block so the view holds still (a check command: it leaves that block)
+        int back = Math.min(s.kind().reach(), 10) + 5;
+        BlockPos stand = new BlockPos(s.x() + 3, s.y() + 3 + back / 3, s.z() - back);
+        if (level.getBlockState(stand.below()).isAir()) level.setBlock(stand.below(), net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState(), 3);
+        level.setBlock(stand, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        level.setBlock(stand.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        float pitch = (float) Math.toDegrees(Math.atan2(3 + back / 3.0, back)) + 4;
+        p.teleportTo(level, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, java.util.Set.of(), (float) -Math.toDegrees(Math.atan2(-3, back)), pitch, false);
         c.getSource().sendSuccess(() -> Component.literal(s.kind().name() + " (" + s.kind().id() + ") at " + s.x() + " " + s.y() + " " + s.z()), true);
         Awaken.LOG.info("[finds] visit {}: {} at {} {} {}", n, s.kind().id(), s.x(), s.y(), s.z());
         return 1;

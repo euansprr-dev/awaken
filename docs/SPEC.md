@@ -20548,6 +20548,8 @@ Number 1 of a set is its plainest and is favoured near the spawn. A kind is writ
   fitting ground stays empty.
 - No twins: a cell won't take a kind that a cell within 4 rings (curios) or 5 (finds) with first say would take.
 - Never within 40 blocks of the spawn point, in the city, or on a structure. New chunks only.
+- In snow country the snow comes back after a find is written: on the ground its clearing bared and on top of what was
+  built, never where the scene keeps a place for a part.
 - A site, its turn and its scene are pure functions of the world seed. `FindsFeature` (`awaken:finds`, top layer step, every
   overworld biome) writes each chunk's share of every site within reach.
 
@@ -20613,9 +20615,10 @@ ledger as found at a find.
 - GameTests: `finds_catalogue_is_whole` (18 sets of 8, numbered, with words, a walkthrough and a loot name),
   `finds_every_scene_stands` (58.4, two seeds a kind), `finds_every_kind_plays` (a scripted player does every kind's own
   walkthrough: it finishes, pays once and fills its slot), `finds_quiet_land_is_quiet` (58.3).
-- `tools/content/finds_tour.py` writes the look tours for GitHub's runners (`tools/tour-ci.sh`): `finds-gallery-a`, `-b` and `-c`
-  (every kind on its own pad, in three parts so each fits a runner's hour), `finds-world` (the twelve finds nearest the
-  spawn as the world made them) and `finds-journal` (the Places shelf empty, part filled and at its end).
+- `tools/content/finds_tour.py` writes the look tours for GitHub's runners (`tools/tour-ci.sh`): `finds-gallery-a` to `-f` (every
+  kind on its own pad, three sets a tour), `finds-world` (the twelve finds nearest the spawn as the world made them) and
+  `finds-journal` (the Places shelf empty, part filled and at its end, and the Tasks page). A tour must skip the opening
+  (`cmd awaken opening skip`) or the opening's camera ride owns its first minute.
 
 ### 58.10 Simplified or not built in the first run
 

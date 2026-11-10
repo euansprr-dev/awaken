@@ -118,6 +118,30 @@ public record FindsFeature() implements Feature {
             level.setBlock(heart, FindsContent.HEART.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             any = true;
         }
+        // In snow country the snow comes back: on the ground the clearing bared and on top of what was built, so a find
+        // isn't a bare patch in a white wood. Never where the scene keeps a place for something (a part, a cut).
+        for (int dx = -cr; dx <= cr; dx++)
+            for (int dz = -cr; dz <= cr; dz++)
+                if (dx * dx + dz * dz <= cr * cr) cols.add(BlockPos.asLong(dx, 0, dz));
+        int sea = level.getSeaLevel();
+        BlockState snow = Blocks.SNOW.defaultBlockState();
+        for (long c : cols) {
+            int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
+            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
+            int base = s.y() + sc.groundAt(dx, dz);
+            for (int y = base + 36; y > base - 6; y--) {
+                m.set(x, y, z);
+                BlockState b = level.getBlockState(m);
+                if (b.isAir()) continue;
+                BlockPos above = m.above();
+                if (b.getBlock() instanceof dev.awaken.finds.kit.PropBlock || blocks.containsKey(BlockPos.asLong(dx, y + 1 - s.y(), dz))) break;
+                if (!level.getBiome(above).value().coldEnoughToSnow(above, sea) || !snow.canSurvive(level, above)) break;
+                level.setBlock(above, snow, Block.UPDATE_CLIENTS);
+                if (b.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY))
+                    level.setBlock(m, b.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY, true), Block.UPDATE_CLIENTS);
+                break;
+            }
+        }
         return any;
     }
 
