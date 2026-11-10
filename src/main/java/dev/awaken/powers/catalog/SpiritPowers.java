@@ -200,8 +200,9 @@ public final class SpiritPowers {
             c.feel(hit.get(0), 40, 2f);
             return Result.OK;
         }
-        LivingEntity t = Combat.aimEntity(c, 4.5, 0.6);
+        LivingEntity t = Combat.aimEntity(c, dev.awaken.powers.ArmsDuets.reach(c, 4.5), 0.6); // a War-staff carries it further (Long Reach)
         if (t == null) return Result.fail("no_target");
+        dev.awaken.powers.ArmsDuets.reached(c, t, 4.5);
         c.hurt(t, c.dmg(), Forces.Force.SPIRIT);
         // Lotus (2): pushes harder
         Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)), 0.35);
@@ -739,6 +740,7 @@ public final class SpiritPowers {
         // a frost ring, ice shards flung out, cold mist and a frosted crack in the ground
         Fx.at(c, FxKind.FROST, c.pos()).scale(radius).flag(FxEvent.REACH).send();
         c.voice(Beat.RELEASE, PowerSounds.FROST, 1.2f, 1f);
+        dev.awaken.powers.ArmsDuets.frost(c, radius); // a Maul's heavy on this ground throws spikes (Icebreaker)
         Fx.quake(c.level, at, 12, 1.5f);
         return Result.OK;
     }

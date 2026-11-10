@@ -106,7 +106,12 @@ public enum FxKind {
      * A beat of a power's voice (powers.fx.Voice): ticks = the beat's ordinal, scale = intensity (a charge's share), and the
      * power's classic sound for players who chose it: colour = its registry id (-1 none), d.x = its volume, aux = its pitch.
      */
-    VOICE;
+    VOICE,
+    /**
+     * A Break finisher (SPEC §50, "Break finishers"): a power cast into a body whose stance has just broken. At the target
+     * (target id), d = the way the cast went; the client draws the family's own ending and hitches the caster's view.
+     */
+    FINISHER;
 
     private static final FxKind[] VALUES = values();
 

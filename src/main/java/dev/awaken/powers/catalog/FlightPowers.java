@@ -196,6 +196,7 @@ final class FlightPowers {
         int wellTicks = c.ticks(80);
         // a void core with a violet rim, rings contracting into it, real loose things drawn in; the throb is the client's for its whole life
         Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(wellTicks).flag(FxEvent.REPULSE, repulse).flag(FxEvent.REACH).send();
+        if (!repulse) dev.awaken.powers.ArmsDuets.well(c, centre, radius, wellTicks); // a Scythe's sweep through it cuts everything inside (Reap)
         boolean lootSafe = !repulse && landsSafely(c, centre);
         Running r = Casting.start(c, wellTicks).at(centre);
         r.tick(rr -> {

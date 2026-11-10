@@ -186,6 +186,7 @@ public final class VelocityPowers {
         Moves.addMod(c.player, Attributes.ATTACK_SPEED, "flow_attack", 0.4, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         Moves.postOn(c.player, Moves.FX_FLOW);
         c.voice(Beat.RELEASE, PowerSounds.FLOW_START, 1f, 1f);
+        dev.awaken.powers.ArmsDuets.flow(c, ticks); // a Katana's cuts hang until time comes back (Still Cut)
         // a ripple of slowed time, then trailing afterimages for as long as it lasts
         Fx.at(c, FxKind.RING, c.pos()).scale(5).ticks(14).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLOW.ordinal()).ticks(ticks).noAnim().send();
@@ -199,6 +200,7 @@ public final class VelocityPowers {
             Moves.removeMod(c.player, Attributes.ATTACK_SPEED, "flow_attack");
             Moves.postOff(c.player, Moves.FX_FLOW);
             c.voice(Beat.END, PowerSounds.FLOW_END, 0.9f, 1f);
+            dev.awaken.powers.ArmsDuets.flowEnded(c);
             if (why == Running.Why.CANCELLED || !c.player.isAlive()) return;
             // started a tick later: a Running can't start another from inside its own end
             if (c.step(4)) Scheduler.after(1, () -> tempo(c));
@@ -320,6 +322,8 @@ public final class VelocityPowers {
             Combat.stun(e, 12);
             last = e;
         }
+        // Twin Blades drawn: everything on the line is cut again as you arrive (Crossing)
+        dev.awaken.powers.ArmsDuets.crossing(c, Combat.alongLine(c.player, from.add(0, 1, 0), to.add(0, 1, 0), STEP_WIDTH), dmg);
         if (c.step(5)) {
             // Thunder Step: everything on and beside the path is held longer
             int stun = 12 + (int) c.num(5, "stun", 10);

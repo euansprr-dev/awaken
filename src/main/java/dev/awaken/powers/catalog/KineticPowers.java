@@ -305,6 +305,7 @@ final class KineticPowers {
             if (c.step(4) && charge >= 1 && !c.is(2)) Steps.carry(c, t, dmg * c.num(4, "fly", 0.6f), 20);
             // a clean one folds it, and the wall it lands against cracks and hits it again
             if (clean && c.variant == 0) WallSlam.watch(c, t, 26, dmg * 0.5f, PowerStance.MEDIUM, 1.2f, PowerSounds.HAY_WALL);
+            dev.awaken.powers.ArmsDuets.haymaker(c, t, dmg, charge); // Gauntlets on: the other fist follows (Both Barrels)
             Fx.at(c, FxKind.IMPACT, at).target(t).dir(look).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
             if (clean) Fx.at(c, FxKind.PERFECT, at).target(t).dir(look).noAnim().send();
             if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(clean ? 3 : 2.2).noAnim().send();

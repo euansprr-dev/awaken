@@ -22,6 +22,7 @@ public final class PowersModule {
     private PowersModule() {}
 
     public static void init(IEventBus modBus) {
+        ArmsDuets.init(); // the blade's moments answer what a cast left open (SPEC §50, "Arms Duets")
         PowerCatalog.bootstrap();
         PowerSounds.SOUNDS.register(modBus);
         PowerContent.init(modBus);

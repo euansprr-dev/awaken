@@ -137,6 +137,101 @@ final class Signatures {
         }
     }
 
+    // ---- Break finishers: each family ends it its own way -------------------------------------------------------------
+
+    /**
+     * A power cast into a stance just broken (FxKind.FINISHER): the family's own ending on the body, and for the caster a
+     * held beat. Nine looks, by the power's family; the style of the power colours it.
+     */
+    static void finisher(FxEvent e, FxStyle st, @Nullable Entity caster, boolean mine) {
+        PowerType type = e.power() > 0 ? PowerRegistry.byIndex(e.power() - 1) : null;
+        if (type == null) return;
+        double x = e.x(), y = e.y(), z = e.z();
+        float l = Mth.sqrt(e.dx() * e.dx() + e.dy() * e.dy() + e.dz() * e.dz());
+        float dx = l > 1e-4f ? e.dx() / l : 0, dy = l > 1e-4f ? e.dy() / l : 0, dz = l > 1e-4f ? e.dz() / l : 1;
+        double gy = FxWorld.groundY(x, y, z);
+        FxRecipes.flare(x, y, z, 2.2f, st, 6);
+        switch (type.family) {
+            case KINETIC -> {
+                // it goes straight through: a shock ring across the blow, the ground breaking under it
+                FxRecipes.ring(x, y, z, 0.3f, 3.2f, 0.5f, 0.1f, 9, alpha(st.core, 1f), alpha(st.mid, 0), dx, dy, dz);
+                FxRecipes.debris(x, gy + 0.1, z, 1.4f, n(14), 0.5f, 0.3f);
+                FxRecipes.decal(x, gy + 0.02, z, CRACK, 3.2f, 0xD0FFFFFF, 160);
+                FxRecipes.dustRing(x, gy, z, 1.6f, n(18), st, 0.16f);
+            }
+            case VELOCITY -> {
+                // you were already past it: cuts through the body from every side
+                for (int i = 0; i < n(7); i++) {
+                    float a = R.f() * Mth.TWO_PI, h = R.f(-0.5f, 0.6f);
+                    FxRecipes.arc(x + Mth.cos(a) * 1.8, y + h, z + Mth.sin(a) * 1.8, x - Mth.cos(a) * 1.8, y - h * 0.6, z - Mth.sin(a) * 1.8, st, 4 + R.i(3), 0.05f);
+                }
+                if (caster != null) FxAfterimages.capture(caster, 14, st.mid, 0);
+                FxRecipes.sparks(x, y, z, n(14), 0.5f, st, 7, 0.01f, dx, dy, dz, 0.4f);
+            }
+            case FLIGHT -> {
+                // the ground lets go of it
+                FxRecipes.ring(x, gy + 0.1, z, 0.4f, 2.6f, 0.4f, 0.1f, 12, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
+                for (int i = 0; i < 3; i++) FxRecipes.ring(x, gy + 0.6 + i * 0.9, z, 1.4f - i * 0.3f, 0.3f, 0.2f, 0.05f, 10 + i * 3, alpha(st.mid, 0.8f), alpha(st.core, 0), 0, 1, 0);
+                FxRecipes.debris(x, gy + 0.1, z, 1.2f, n(10), 0.7f, 0.05f);
+                FxRecipes.motes(x, y + 0.6, z, n(14), 1.0f, st, 0.05f);
+            }
+            case ENERGY -> {
+                // the light goes in and comes out of its back
+                FxRecipes.arc(x - dx * 1.5, y - dy * 1.5, z - dz * 1.5, x + dx * 7, y + dy * 7, z + dz * 7, st, 7, 0.22f);
+                FxRecipes.flare(x + dx * 1.2, y + dy * 1.2, z + dz * 1.2, 2.8f, st, 7);
+                FxRecipes.sparks(x + dx * 0.8, y + dy * 0.8, z + dz * 0.8, n(20), 0.7f, st, 9, 0.01f, dx, dy, dz, 1.6f);
+                FxRecipes.decal(x + dx * 2.5, gy + 0.02, z + dz * 2.5, SCORCH, 2.4f, 0xC0FFFFFF, 160);
+            }
+            case SHADOW -> {
+                // your shadow finishes it a beat after you
+                if (caster != null) FxAfterimages.capture(caster, 20, st.edge, 0);
+                FxRecipes.tendrils(x, gy + 0.1, z, n(8), st);
+                FxRecipes.smokePuffs(x, y, z, n(10), 0.8f, 1.2f, st, 0.03f, 26);
+                FxRecipes.ring(x, y, z, 2.2f, 0.2f, 0.3f, 0.05f, 8, alpha(st.mid, 0.9f), alpha(st.edge, 0), dx, dy, dz);
+            }
+            case MIND -> {
+                // it stops: rings closing on its head
+                double hy = y + 0.9;
+                for (int i = 0; i < 4; i++) FxRecipes.ring(x, hy, z, 2.2f - i * 0.4f, 0.25f, 0.12f, 0.04f, 8 + i * 3, alpha(st.mid, 0.9f), alpha(st.core, 0.2f), 0, 1, 0);
+                FxRecipes.glyphAt(x, gy + 0.05, z, 1.8f, st, 30, 0.06f);
+                FxRecipes.wisps(x, hy, z, n(8), 0.5f, st, 0.02f);
+            }
+            case ARCHITECT -> {
+                // the floor comes up and pins it
+                for (int i = 0; i < 4; i++) {
+                    float a = i * Mth.HALF_PI + 0.4f;
+                    FxRecipes.debris(x + Mth.cos(a) * 0.9, gy + 0.1, z + Mth.sin(a) * 0.9, 0.3f, n(4), 0.8f, 0.0f);
+                    FxRecipes.arc(x + Mth.cos(a) * 1.6, gy + 0.05, z + Mth.sin(a) * 1.6, x + Mth.cos(a) * 0.5, y + 0.6, z + Mth.sin(a) * 0.5, st, 12, 0.09f);
+                }
+                FxRecipes.glyphAt(x, gy + 0.05, z, 2.2f, st, 34, 0f);
+                FxRecipes.dustRing(x, gy, z, 1.2f, n(12), st, 0.1f);
+            }
+            case TECH -> {
+                // everything you have placed fires at once: lines converging from all round
+                for (int i = 0; i < n(6); i++) {
+                    float a = R.f() * Mth.TWO_PI;
+                    FxRecipes.arc(x + Mth.cos(a) * 6, y + R.f(1.5f, 4f), z + Mth.sin(a) * 6, x, y, z, st, 5 + R.i(4), 0.06f);
+                }
+                FxRecipes.sparks(x, y, z, n(22), 0.6f, st, 8, 0.04f, 0, 1, 0, 0.3f);
+                FxRecipes.sphereBurst(x, y, z, 0.3f, 1.8f, 6, st);
+            }
+            default -> {
+                // Spirit: one palm, and the echo comes out the other side
+                FxWorld.sprite(PALM, x - dx * 0.4, y - dy * 0.4, z - dz * 0.4, dx * 0.03, dy * 0.03, dz * 0.03, 10, 1.2f, 3.2f, st.core, alpha(st.mid, 0), FxPool.ADD);
+                for (int i = 0; i < 4; i++) {
+                    float d = 0.3f + i * 0.6f;
+                    FxRecipes.ring(x + dx * d, y + dy * d, z + dz * d, 0.2f, 1.0f + i * 0.35f, 0.2f, 0.05f, 7 + i * 2, alpha(st.core, 0.9f), alpha(st.mid, 0), dx, dy, dz);
+                }
+                FxRecipes.wisps(x + dx * 1.5, y + dy * 1.5, z + dz * 1.5, n(10), 0.6f, st, 0.04f);
+            }
+        }
+        if (mine) {
+            FxScreen.fovPunch(-0.06f, 10);
+            FxScreen.flash(st.mid, 0.1f, 6);
+            dev.awaken.lens.client.LensClient.pulse(0.3f);
+        }
+    }
+
     // ---- Frost Nova: the cold runs out along the ground and stands up ---------------------------------------------------
 
     private static final int ARMS = 9;

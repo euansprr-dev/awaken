@@ -127,6 +127,7 @@ final class EnergyPowers {
         r.end((rr, why) -> {
             Fx.end(c, c.player, 0);
             c.voice(Beat.END, PowerSounds.BEAM_END, 0.8f, 1f);
+            dev.awaken.powers.ArmsDuets.beamHeld(c, rr.age); // a blade in the hand keeps the light for its next heavy (Edge of Light)
             if (c.step(5) && why != Running.Why.CANCELLED && rr.age > 6) sunspear(c, held, range);
         });
         r.tick(rr -> {
@@ -299,6 +300,7 @@ final class EnergyPowers {
         // Halo Ward (5): plates that stop arrows outright (PowerEvents)
         if (c.step(5)) st.buff(PowerState.Buffs.BARRIER_PLATES, c.now() + ticks, c.num(5, "blocks", 3));
         c.voice(Beat.RELEASE, PowerSounds.BARRIER, 1f, 1.2f);
+        dev.awaken.powers.ArmsDuets.barrier(c, ticks); // a Shieldblade's clean block throws it back (Mirror Guard)
         // a bubble with a bright rim and a hex skin that follows you
         Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.35).ticks(ticks).flag(FxEvent.FOLLOW).send();
         Running r = Casting.start(c, ticks);
@@ -316,6 +318,7 @@ final class EnergyPowers {
                 ForceInteractions.chargeSummons(c.player, at, 4);
                 Fx.at(c, FxKind.NOVA, at).scale(4).style(FxStyle.CHARGE).flag(FxEvent.REACH).noAnim().send();
                 c.voice(Beat.END, PowerSounds.BARRIER_BREAK, 1.2f, 1f);
+                dev.awaken.powers.ArmsDuets.barrierDown(c.player);
                 // Second Skin (4): a thinner shell flickers back, once
                 if (c.step(4)) Scheduler.after(4, () -> secondSkin(c, amount * c.num(4, "strength", 0.33f), (int) c.num(4, "reform", 60)));
             } else {

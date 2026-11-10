@@ -113,6 +113,7 @@ public final class ShadowPowers {
         if (t != null) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.MARK.ordinal()).ticks(60).noAnim().send();
         c.voice(from, Beat.RELEASE, PowerSounds.SHADOW, 0.9f, 1f);
         c.voice(to, Beat.IMPACT, PowerSounds.SHADOW, 0.9f, 1.3f);
+        dev.awaken.powers.ArmsDuets.stepped(c); // a Daggers kill straight after brings the Step back (Chain Step)
         if (c.step(5)) {
             // Night Cut: the crescent lands the backstab by itself; tendrils from the pool hold the foes round you
             if (t != null) {
