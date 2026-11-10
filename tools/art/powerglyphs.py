@@ -873,7 +873,66 @@ def _sword(g, bx, by, tx, ty, v=MAIN, hw=2.9):
     g.line(bx - ux * 1.5, by - uy * 1.5, bx - ux * 7, by - uy * 7, 3.6, v)
 
 
+def brand(g):
+    # a mark seared in: a ring with a rune inside it, its heart still white-hot, heat lifting off the top
+    for x in (10.5, 16, 21.5):
+        g.line(x, 4.8, x + 1.2, 1.6, 2.0, DIM)
+    g.ring(16, 18, 10.2, 3.8)
+    g.line(16, 12.5, 16, 24, 3.8)
+    g.line(16, 12.8, 11.6, 17.4, 3.6)
+    g.line(16, 12.8, 20.4, 17.4, 3.6)
+    g.line(16, 15.5, 16, 22.5, 1.6, HOT)
+
+
+def hoarfrost_lances(g):
+    # three lances of ice hanging in a fan, points forward, frost falling off them
+    def lance(x0, y0, x1, y1, w, v=MAIN):
+        dx, dy = x1 - x0, y1 - y0
+        ln = math.hypot(dx, dy)
+        nx, ny = -dy / ln, dx / ln
+        mx, my = x0 + dx * 0.3, y0 + dy * 0.3
+        g.poly([(x0, y0), (mx + nx * w, my + ny * w), (x1, y1), (mx - nx * w, my - ny * w)], v)
+    for x, y in ((5, 26.5), (9.5, 29), (2.8, 21.5)):
+        g.disc(x, y, 1.0, DIM)
+    lance(4.5, 12.5, 21.5, 3.2, 2.4)
+    lance(5.5, 20.5, 28.5, 8.5, 3.0)
+    lance(10.5, 27, 27.5, 18.2, 2.4)
+    g.line(9.5, 18.4, 24, 10.6, 1.2, HOT)
+
+
+def updraft(g):
+    # a column of air lifting off the ground: two curls of wind winding up round a rising arrow
+    g.ellipse(16, 27.4, 9.5, 2.2, DIM)
+    g.ellipse(16, 27.4, 5.4, 0.8, ERASE)
+    _blade(g, (6.5, 24.5), (2.5, 13), (9.5, 5.5), 4.6, MAIN)
+    _blade(g, (25.5, 24.5), (29.5, 13), (22.5, 5.5), 4.6, MAIN)
+    g.poly([(16, 3), (20.4, 9.4), (17.9, 9.4), (17.9, 22.5), (14.1, 22.5), (14.1, 9.4), (11.6, 9.4)])
+    g.line(16, 8, 16, 21, 1.4, HOT)
+
+
+def backdraft(g):
+    # a breath of fire: everything drawn in to one point on the left, thrown back out as a widening tongue of flame
+    for y in (9, 16, 23):
+        g.line(1.5, y, 5.2, 16 + (y - 16) * 0.45, 2.2, DIM)
+    _blade(g, (8, 16), (17, 4.5), (29, 5.5), 6.2, MAIN)
+    _blade(g, (8, 16), (17, 27.5), (29, 26.5), 6.2, MAIN)
+    _blade(g, (7.5, 16), (18, 14.5), (30.5, 16), 7.4, MAIN)
+    _blade(g, (9, 16), (16, 15.4), (24.5, 16), 3.0, HOT)
+
+
+def thornwake(g):
+    # roots bursting out of the ground and closing like a hand, thorns along them, one new leaf between them
+    g.line(3, 27.6, 29, 27.6, 3.0, DIM)
+    _blade(g, (7.5, 27), (2.5, 14), (12.6, 6.5), 5.2, MAIN)
+    _blade(g, (24.5, 27), (29.5, 14), (19.4, 6.5), 5.2, MAIN)
+    _blade(g, (16, 27.5), (17.5, 20), (16, 14), 4.6, MAIN)
+    for x0, y0, x1, y1 in ((5.6, 19, 1.8, 17.2), (26.4, 19, 30.2, 17.2), (7.6, 12, 5.2, 8.6), (24.4, 12, 26.8, 8.6)):
+        g.line(x0, y0, x1, y1, 2.2)
+    g.ellipse(16, 8.6, 2.2, 3.2, HOT)
+
+
 GLYPHS = {
+    "brand": brand, "hoarfrost_lances": hoarfrost_lances, "updraft": updraft, "backdraft": backdraft, "thornwake": thornwake,
     "haymaker": haymaker, "ground_slam": ground_slam, "lightning_step": lightning_step, "meteor_dive": meteor_dive,
     "prism_lance": prism_lance, "shadow_step": shadow_step, "dominate": dominate, "rampart": rampart,
     "railgun": railgun, "storm_call": storm_call,

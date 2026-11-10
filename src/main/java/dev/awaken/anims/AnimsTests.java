@@ -38,14 +38,22 @@ final class AnimsTests {
             if (c.fists) {
                 if (c.toStance) continue; // played over a stance: it ends where the stance holds the hands
                 float[] r = dev.awaken.core.api.FirstPerson.View.REST_FIST;
-                boolean mainRest = !c.hasMain() || Math.abs(m[0] - r[0]) < 1e-3 && Math.abs(m[1] - r[1]) < 1e-3 && Math.abs(m[2] - r[2]) < 1e-3;
-                boolean offRest = !c.hasOff() || o[1] <= -0.9F
-                        || Math.abs(o[0] + r[0]) < 1e-3 && Math.abs(o[1] - r[1]) < 1e-3 && Math.abs(o[2] - r[2]) < 1e-3;
+                // a hand that keeps what it holds while the other casts (schema 2, "mainMoves" / "offMoves") is keyed as offsets: it ends at none
+                boolean mainRest = !c.hasMain() || (c.mainMoves ? still(m) : Math.abs(m[0] - r[0]) < 1e-3 && Math.abs(m[1] - r[1]) < 1e-3 && Math.abs(m[2] - r[2]) < 1e-3);
+                boolean offRest = !c.hasOff() || (c.offMoves ? still(o) : o[1] <= -0.9F
+                        || Math.abs(o[0] + r[0]) < 1e-3 && Math.abs(o[1] - r[1]) < 1e-3 && Math.abs(o[2] - r[2]) < 1e-3);
                 h.assertTrue(mainRest && offRest, c.name + " gives its fists back (at rest, or the off hand out under the frame)");
+                // the casts' own rule (SPEC §32.N): one hand casting never puts the weapon away, and both hands casting ease it away
+                if (c.arm) h.assertTrue(c.mainMoves || c.offMoves ? !c.stow : !c.stow || c.ease, c.name + ": a one-handed cast keeps the weapon; a two-handed one eases it away");
             } else {
                 for (int i = 0; i < 6; i++) h.assertTrue(Math.abs(m[i]) < 1e-3 && Math.abs(o[i]) < 1e-3, c.name + " ends at rest");
             }
         }
         h.succeed();
+    }
+
+    private static boolean still(float[] v) {
+        for (int i = 0; i < 6; i++) if (Math.abs(v[i]) > 1e-3) return false;
+        return true;
     }
 }

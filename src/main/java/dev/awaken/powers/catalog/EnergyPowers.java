@@ -4,6 +4,7 @@ import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.CastPoints;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 import dev.awaken.powers.fx.FxStyle;
 
 import dev.awaken.core.Forces;
@@ -118,14 +119,15 @@ final class EnergyPowers {
 
     static Result beam(Cast c) {
         double range = c.range(c.is(2) ? 32 : 24);
-        c.sound(PowerSounds.BEAM_GATHER, 0.9f, 1f);
+        c.voice(Beat.GATHER, PowerSounds.BEAM_GATHER, 0.9f, 1f);
         // the light gathers at the palm while the arm comes up, then the layered beam itself (see beamRay)
         Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.7).send();
         Running r = Casting.channel(c, c.type.maxDuration);
         BeamHeld held = new BeamHeld();
         r.end((rr, why) -> {
             Fx.end(c, c.player, 0);
-            c.sound(PowerSounds.BEAM_END, 0.8f, 1f);
+            c.voice(Beat.END, PowerSounds.BEAM_END, 0.8f, 1f);
+            dev.awaken.powers.ArmsDuets.beamHeld(c, rr.age); // a blade in the hand keeps the light for its next heavy (Edge of Light)
             if (c.step(5) && why != Running.Why.CANCELLED && rr.age > 6) sunspear(c, held, range);
         });
         r.tick(rr -> {
@@ -140,7 +142,7 @@ final class EnergyPowers {
                 }
             }
             // the hum starts when the arm is up (tick 5) and is re-laid every half second over a 0.62 s file
-            if (rr.age % 10 == 5) c.sound(PowerSounds.BEAM_LOOP, 0.6f, 1f);
+            if (rr.age % 10 == 5) c.voice(Beat.HOLD, PowerSounds.BEAM_LOOP, 0.6f, 1f);
         });
         return Result.OK;
     }
@@ -207,17 +209,23 @@ final class EnergyPowers {
         dev.awaken.powers.Scheduler.after(travel, () -> {
             if (!c.player.isAlive()) return;
             Fx.at(c, FxKind.NOVA, at).scale(2.4).plain().send();
-            c.sound(at, PowerSounds.tier(c.type.family, 5), 1f, 1f);
+            c.voice(at, Beat.EXTRA_B, PowerSounds.tier(c.type.family, 5), 1f, 1f);
             if (share > 0) for (LivingEntity e : Combat.foesAround(c.player, at, 2.4)) c.hurt(e, share, Forces.Force.HEAT);
         });
     }
 
     static Result nova(Cast c) {
-        Vec3 at = c.pos().add(0, 1, 0);
-        double radius = c.radius(6);
+        // thrown out of the air it goes off beneath you, a little wider, and the push of it lifts you (SPEC §32, "Ways")
+        boolean air = c.way == dev.awaken.powers.fx.Ways.AIR && c.variant == 0 && !c.step(5);
+        Vec3 at = c.pos().add(0, air ? -1.2 : 1, 0);
+        double radius = c.radius(6) * (air ? 1.15 : 1);
+        if (air) {
+            Moves.launch(c.player, new Vec3(0, 0.55, 0));
+            Moves.noFall(c, 60);
+        }
         if (c.is(2)) {
             for (LivingEntity e : Combat.foesAround(c.player, at, radius + 2)) Combat.push(e, at.subtract(e.position()).normalize().scale(0.8).add(0, 0.2, 0));
-            c.sound(PowerSounds.GRAVITY, 1f, 1.4f);
+            c.voice(Beat.GATHER, PowerSounds.GRAVITY, 1f, 1.4f);
             Fx.at(c, FxKind.CHARGE, at).ticks(9).scale(1.6).anim(CastAnim.CHARGE2).send();
             Fx.at(c, FxKind.VORTEX, at).scale(radius + 2).ticks(9).noAnim().send();
             Running r = Casting.start(c, 9);
@@ -231,7 +239,7 @@ final class EnergyPowers {
             Moves.launch(c.player, new Vec3(0, c.num(5, "rise", 0.35f), 0));
             Moves.noFall(c, 60);
             Fx.at(c, FxKind.CHARGE, at).ticks(6).scale(1.4).noAnim().send();
-            c.sound(PowerSounds.NOVA, 0.7f, 1.6f);
+            c.voice(Beat.PEAK, PowerSounds.NOVA, 0.7f, 1.6f);
         }
         int delay = c.step(5) ? 5 : 0;
         if (c.is(1)) {
@@ -257,7 +265,7 @@ final class EnergyPowers {
         }
         // a sphere of burning light with a white flash at its heart, embers and sparks thrown out
         Fx.at(c, FxKind.NOVA, at).scale(radius).flag(FxEvent.REACH).send();
-        c.sound(at, PowerSounds.NOVA, 1.3f, 1f);
+        c.voice(at, Beat.RELEASE, PowerSounds.NOVA, 1.3f, 1f);
         Fx.quake(c.level, at, 16, 3f);
         c.feel(null, 0, 2.5f);
         // Flare Arcs (4): plasma leaps from the shell to foes just past it
@@ -297,7 +305,8 @@ final class EnergyPowers {
         if (c.is(1)) st.buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, 0.33);
         // Halo Ward (5): plates that stop arrows outright (PowerEvents)
         if (c.step(5)) st.buff(PowerState.Buffs.BARRIER_PLATES, c.now() + ticks, c.num(5, "blocks", 3));
-        c.sound(PowerSounds.BARRIER, 1f, 1.2f);
+        c.voice(Beat.RELEASE, PowerSounds.BARRIER, 1f, 1.2f);
+        dev.awaken.powers.ArmsDuets.barrier(c, ticks); // a Shieldblade's clean block throws it back (Mirror Guard)
         // a bubble with a bright rim and a hex skin that follows you
         Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.35).ticks(ticks).flag(FxEvent.FOLLOW).send();
         Running r = Casting.start(c, ticks);
@@ -314,7 +323,8 @@ final class EnergyPowers {
                 Moves.blast(c, at, 4, shock, Forces.Force.CHARGE, 1.0, 0.3);
                 ForceInteractions.chargeSummons(c.player, at, 4);
                 Fx.at(c, FxKind.NOVA, at).scale(4).style(FxStyle.CHARGE).flag(FxEvent.REACH).noAnim().send();
-                c.sound(PowerSounds.BARRIER_BREAK, 1.2f, 1f);
+                c.voice(Beat.END, PowerSounds.BARRIER_BREAK, 1.2f, 1f);
+                dev.awaken.powers.ArmsDuets.barrierDown(c.player);
                 // Second Skin (4): a thinner shell flickers back, once
                 if (c.step(4)) Scheduler.after(4, () -> secondSkin(c, amount * c.num(4, "strength", 0.33f), (int) c.num(4, "reform", 60)));
             } else {
@@ -329,7 +339,7 @@ final class EnergyPowers {
         Moves.addMod(c.player, Attributes.MAX_ABSORPTION, "barrier_skin", amount, AttributeModifier.Operation.ADD_VALUE);
         c.player.setAbsorptionAmount(Math.max(c.player.getAbsorptionAmount(), amount));
         Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.25).ticks(ticks).flag(FxEvent.FOLLOW).plain().send();
-        c.sound(PowerSounds.BARRIER, 0.7f, 1.6f);
+        c.voice(Beat.EXTRA_A, PowerSounds.BARRIER, 0.7f, 1.6f);
         Running r = Casting.start(c, "barrier_skin", ticks);
         r.tick(rr -> {
             if (rr.age > 2 && c.player.getAbsorptionAmount() <= 0.01f) rr.stop(Running.Why.DONE);
@@ -355,7 +365,7 @@ final class EnergyPowers {
                 b.hitVolume = 0.45f;
                 b.hitPitch = 1.35f;
             }
-            c.sound(PowerSounds.LIGHTNING_RELEASE, 0.9f, 1.25f);
+            c.voice(Beat.RELEASE, PowerSounds.LIGHTNING_RELEASE, 0.9f, 1.25f);
             return Result.OK;
         }
         // the charge itself is heard from the hands while it is held (the profile's holdSound; HoldSound on every client)
@@ -363,7 +373,7 @@ final class EnergyPowers {
         Running r = Casting.channel(c, c.type.maxDuration);
         int fullAt = c.chargeTicks(30); // Coil (2): charges sooner
         r.tick(rr -> {
-            if (rr.age == fullAt - 1) c.sound(PowerSounds.LIGHTNING_FULL, 0.9f, 1f);
+            if (rr.age == fullAt - 1) c.voice(Beat.PEAK, PowerSounds.LIGHTNING_FULL, 0.9f, 1f);
         }).end((rr, why) -> {
             double charge = Math.min(1.0, rr.age / (double) fullAt);
             // Overcharge (4): held past full, the orb turns white and the bolt pierces
@@ -379,6 +389,7 @@ final class EnergyPowers {
             b.stun = 10 + (int) (20 * charge);
             b.cast = c;
             if (over) b.pierce = 1;
+            b.pierce = Math.max(b.pierce, dev.awaken.powers.ArmsDuets.javelin(c, charge)); // off a Spear it's a javelin (Thunder Javelin)
             if (c.is(1)) b.bounces = 2;
             b.fly = PowerSounds.LIGHTNING_SIZZLE.get();
             b.hitSound = PowerSounds.LIGHTNING_THUNDER.get();
@@ -398,8 +409,8 @@ final class EnergyPowers {
                 if (full && c.step(5)) thunderLance(c, muzzle, lands);
             });
             // the crack grows with the charge; past half, a boom under it
-            c.sound(PowerSounds.LIGHTNING_RELEASE, 0.75f + 0.35f * (float) charge, 1.2f - 0.3f * (float) charge);
-            if (charge > 0.5) c.sound(PowerSounds.LIGHTNING_BOOM, (float) (charge - 0.3) * 1.4f, 1.1f - 0.2f * (float) charge);
+            c.voice(Beat.RELEASE, PowerSounds.LIGHTNING_RELEASE, 0.75f + 0.35f * (float) charge, 1.2f - 0.3f * (float) charge);
+            if (charge > 0.5) c.voice(Beat.TAIL, PowerSounds.LIGHTNING_BOOM, (float) (charge - 0.3) * 1.4f, 1.1f - 0.2f * (float) charge);
             c.feel(null, 0, 0.8f + 1.5f * (float) charge);
         });
         return Result.OK;
@@ -414,7 +425,7 @@ final class EnergyPowers {
         double len = from.distanceTo(to);
         Vec3 step = to.subtract(from).normalize();
         for (double d = 1.5; d < len; d += 2.5) Riders.lingerAt(c, from.add(step.scale(d)), "shock", ticks, 1.2f, dps, false);
-        c.sound(to, PowerSounds.tier(c.type.family, 5), 1f, 1f);
+        c.voice(to, Beat.EXTRA_B, PowerSounds.tier(c.type.family, 5), 1f, 1f);
     }
 
     static Result overload(Cast c) {
@@ -424,7 +435,7 @@ final class EnergyPowers {
             st.buff(PowerState.Buffs.CONDUIT, c.now() + ticks, 1);
             if (c.step(4)) st.buff(PowerState.Buffs.LIVE_WIRE, c.now() + ticks, c.num(4, "live", 0.4f));
             st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
-            c.sound(PowerSounds.OVERLOAD, 1f, 1.5f);
+            c.voice(Beat.GATHER, PowerSounds.OVERLOAD, 1f, 1.5f);
             Fx.at(c, FxKind.CAST, c.pos()).anim(CastAnim.SKYWARD).send();
             Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.OVERLOAD.ordinal()).ticks(ticks).noAnim().send();
             Running r = Casting.start(c, "overload_glow", ticks);
@@ -436,7 +447,7 @@ final class EnergyPowers {
             return Result.OK;
         }
         Moves.addMod(c.player, Attributes.MOVEMENT_SPEED, "overload_windup", -0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        c.sound(PowerSounds.OVERLOAD, 1.2f, 0.8f);
+        c.voice(Beat.PEAK, PowerSounds.OVERLOAD, 1.2f, 0.8f);
         // a second of gathering everything: both hands pulled in, a growing orb, the air crackling
         Fx.at(c, FxKind.CHARGE, c.pos().add(0, 1, 0)).ticks(20).scale(1.8).send();
         Fx.at(c, FxKind.VORTEX, c.pos().add(0, 1, 0)).scale(4).ticks(20).style(FxStyle.CHARGE).noAnim().send();
@@ -451,7 +462,7 @@ final class EnergyPowers {
                 for (LivingEntity e : Combat.foesAround(c.player, at, c.radius(9) + 3)) {
                     Combat.push(e, at.subtract(e.position()).normalize().scale(c.num(5, "pull", 0.8f)).add(0, 0.15, 0));
                 }
-                c.sound(PowerSounds.GRAVITY, 1.2f, 0.6f);
+                c.voice(Beat.EXTRA_A, PowerSounds.GRAVITY, 1.2f, 0.6f);
             }
         });
         r.end((rr, why) -> {
@@ -474,7 +485,7 @@ final class EnergyPowers {
             ForceInteractions.chargeSummons(c.player, at, radius);
             // the release: an ultimate's screen beat rides on the nova (impact frame, flash, FOV punch)
             Fx.at(c, FxKind.NOVA, at).scale(radius).flag(FxEvent.REACH).send();
-            c.sound(at, PowerSounds.BLAST, 2f, 0.6f);
+            c.voice(at, Beat.RELEASE, PowerSounds.BLAST, 2f, 0.6f);
             Fx.quake(c.level, at, 32, 6f);
             c.feel(first, first != null ? 80 : 0, 6f);
             // Fork (3): lightning thrown on to the foes just beyond the blast
@@ -507,7 +518,7 @@ final class EnergyPowers {
     }
 
     static Result prismLance(Cast c) {
-        c.sound(PowerSounds.BEAM, 1f, 0.7f);
+        c.voice(Beat.RELEASE, PowerSounds.BEAM, 1f, 0.7f);
         int splits = c.is(1) ? 6 : 4;
         // Refraction (2): the split beams reach further
         double splitReach = 9 + c.num(2, "reach", 0);
@@ -571,7 +582,7 @@ final class EnergyPowers {
                     }
                 }
             }
-            if (rr.age % 12 == 0) c.sound(hit.end(), PowerSounds.BEAM, 0.6f, 1.6f);
+            if (rr.age % 12 == 0) c.voice(hit.end(), Beat.HOLD, PowerSounds.BEAM, 0.6f, 1.6f);
         });
         return Result.OK;
     }

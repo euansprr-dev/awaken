@@ -197,7 +197,7 @@ final class LadderFx {
 
     /** A level-5 power's events draw in its family's awakened palette; an explicit colour leans halfway toward it. */
     static FxEvent restyle(FxEvent e) {
-        if (e.power() <= 0 || Fx.levelOf(e) < 5 || e.kind() == FxKind.SOUND || e.kind() == FxKind.POSE) return e;
+        if (e.power() <= 0 || Fx.levelOf(e) < 5 || e.kind() == FxKind.SOUND || e.kind() == FxKind.VOICE || e.kind() == FxKind.POSE) return e;
         FxStyle a = e.style().awakened();
         if (a == e.style()) return e;
         int colour = e.colour() == 0 ? 0 : FxWorld.mix(e.colour() | 0xFF000000, a.mid, 0.5f);
@@ -214,7 +214,7 @@ final class LadderFx {
     static void decorate(FxEvent e) {
         int power = e.power() - 1;
         int level = Fx.levelOf(e);
-        if (power < 0 || level < 2 || e.kind() == FxKind.SOUND || e.kind() == FxKind.POSE || e.has(FxEvent.RIDER)) return;
+        if (power < 0 || level < 2 || e.kind() == FxKind.SOUND || e.kind() == FxKind.VOICE || e.kind() == FxKind.POSE || e.has(FxEvent.RIDER)) return;
         Layer[][][] t = table();
         if (power >= t.length) return;
         long bit = 1L << e.kind().ordinal();

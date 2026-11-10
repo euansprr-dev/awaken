@@ -82,7 +82,7 @@ final class PowersTests {
             // every power named by content (path signatures, latents) exists and is hidden
             for (String id : List.of("thunderclap", "lightning_step", "prism_lance", "legion", "foresight", "citadel", "drone_swarm",
                     "bulwark", "hundred_palms", "void_maw", "waking_dream", "storm_call", "ember_step", "frost_nova", "ghost_step",
-                    "twin_strike", "gravity_flip")) {
+                    "twin_strike", "gravity_flip", "brand", "hoarfrost_lances", "updraft", "backdraft", "thornwake")) {
                 PowerType t = PowerRegistry.get(id);
                 h.assertTrue(t != null, "missing power " + id);
                 h.assertTrue(t.hidden, id + " must be hidden (never rolled from cores)");

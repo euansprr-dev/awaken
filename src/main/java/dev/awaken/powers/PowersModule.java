@@ -22,6 +22,8 @@ public final class PowersModule {
     private PowersModule() {}
 
     public static void init(IEventBus modBus) {
+        ArmsDuets.init(); // the blade's moments answer what a cast left open (SPEC §50, "Arms Duets")
+        Earned.init(); // how the five earned powers come to you, and their steps on Tasks (SPEC §50, "Earned powers")
         PowerCatalog.bootstrap();
         PowerSounds.SOUNDS.register(modBus);
         PowerContent.init(modBus);
@@ -61,6 +63,7 @@ public final class PowersModule {
         PowerLadderTests.register(); // the ladders (SPEC 36.9)
         TogetherPowerTests.register();
         StarterTests.register();
+        PowerNextTests.register(); // the next level: scores, takes, ways, duets, finishers, the earned five (SPEC 32.N, 50.8-50.11)
         PowersTests.registerIsolated(modBus);
     }
 
