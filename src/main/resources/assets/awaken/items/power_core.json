@@ -443,6 +443,41 @@
           "type": "minecraft:model",
           "model": "awaken:item/power_core/twin_strike"
         }
+      },
+      {
+        "when": "brand",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/brand"
+        }
+      },
+      {
+        "when": "hoarfrost_lances",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/hoarfrost_lances"
+        }
+      },
+      {
+        "when": "backdraft",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/backdraft"
+        }
+      },
+      {
+        "when": "thornwake",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/thornwake"
+        }
+      },
+      {
+        "when": "updraft",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/updraft"
+        }
       }
     ],
     "fallback": {

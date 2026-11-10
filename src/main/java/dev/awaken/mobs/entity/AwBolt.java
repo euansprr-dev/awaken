@@ -34,6 +34,8 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> DATA_CLASS = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_THEME = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.INT);
+    /** What it is drawn as (def.ShotLook, one-based; 0: the plain glow): a gate monster's own shot (SPEC §60.7). */
+    private static final EntityDataAccessor<Byte> DATA_LOOK = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
     private static final ItemStack[] STACKS = new ItemStack[BoltKind.values().length];
     /** A seep heart's shard is a real Deepglass shard (the delve module's item), else an amethyst one. */
     private static final net.minecraft.resources.Identifier DEEPGLASS_SHARD = dev.awaken.Awaken.id("deepglass_shard");
@@ -67,6 +69,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         if (fired != null) b.strike = fired;
         b.entityData.set(DATA_CLASS, (byte) b.strike.ordinal());
         b.entityData.set(DATA_THEME, owner.def().glow);
+        if (owner.def().shot != null) b.entityData.set(DATA_LOOK, (byte) (owner.def().shot.ordinal() + 1));
         b.setDeltaMovement(dir.normalize().scale(speed));
         level.addFreshEntity(b);
         return b;
@@ -88,6 +91,11 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         return v[Math.max(0, Math.min(v.length - 1, i))];
     }
 
+    /** What it is drawn as, or null (the plain glow). */
+    public dev.awaken.mobs.def.@Nullable ShotLook look() {
+        return dev.awaken.mobs.def.ShotLook.byIndex(entityData.get(DATA_LOOK));
+    }
+
     /** Its maker's theme colour (the trail's smoke and sparks). */
     public int theme() {
         return entityData.get(DATA_THEME);
@@ -104,6 +112,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         b.define(DATA_KIND, (byte) 0);
         b.define(DATA_CLASS, (byte) 0);
         b.define(DATA_THEME, 0xFFFFFF);
+        b.define(DATA_LOOK, (byte) 0);
     }
 
     @Override

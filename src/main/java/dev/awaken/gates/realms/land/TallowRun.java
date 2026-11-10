@@ -198,4 +198,11 @@ public final class TallowRun extends GeneratedCrawl<WaxGalleries.M> {
         if (ambush != null) air.light(ambush.cx, ambush.feet + 3, ambush.cz, 0xffc050, 12, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): wax that ran and set: round runs, tall rifts, pits where it pooled. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.RIFT, Cave.Form.PIT, Cave.Form.OVAL), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.ROTUNDA, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.STEPS, Chasm.Kind.HANGERS, Chasm.Kind.FORD), false, 2.3, 4);
+    }
 }

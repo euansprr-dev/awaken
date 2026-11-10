@@ -196,4 +196,11 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
         if (lord != null) air.mist(lord.feet + 1, 4, 0x5a6a60, 0.45F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a barrow: round chambers, a ring round a standing core, a ledge of earth along one side. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.RING, Cave.Form.TERRACE, Cave.Form.OVAL), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.RING, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.FORD, Chasm.Kind.STEPS, Chasm.Kind.LEDGES), false, 2.0, 4);
+    }
 }

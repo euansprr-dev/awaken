@@ -44,6 +44,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.HeroTests.register(); // hero bodies, their clips and the creatures' voices
         dev.awaken.mobs.entity.BodyInBlocksTests.register(); // no body of ours in a block (SPEC §39.12)
         dev.awaken.mobs.entity.LifeTests.register(); // the life layer's data and bindings (SPEC §23)
+        dev.awaken.mobs.entity.GateMonsterTests.register(); // the gates' monsters on bodies of their own, and their rules (SPEC §60)
         dev.awaken.mobs.entity.TellTests.register(); // tells, classes and stances (SPEC §24)
         dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled

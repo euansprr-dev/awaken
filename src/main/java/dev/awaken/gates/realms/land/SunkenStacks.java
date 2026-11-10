@@ -206,4 +206,11 @@ public final class SunkenStacks extends GeneratedCrawl<SunkenStacks.M> {
         if (lord != null) air.mist(lord.feet + 1, 4, 0x2a5a6a, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0x7fe0e8, 20, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a library: long reading halls, galleries along one side, flooded floors with what is left to step on. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.CROSS, Cave.Form.TERRACE), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE, Arena.Plan.ROTUNDA), List.of(Chasm.Kind.FORD, Chasm.Kind.BRIDGE, Chasm.Kind.BEAMS, Chasm.Kind.FALLING), true, 2.8, 5);
+    }
 }

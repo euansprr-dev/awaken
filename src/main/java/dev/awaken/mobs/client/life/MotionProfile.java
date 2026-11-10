@@ -27,6 +27,8 @@ import java.util.Set;
  */
 public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable Fly fly) {
     public static final String PATH = "/assets/awaken/life/motion.json";
+    /** The gate monsters' entries, in the same shape (tools/art/specs/gate_monsters.py writes it). */
+    public static final String MONSTERS = "/assets/awaken/life/monsters_motion.json";
 
     /**
      * The leg patterns: one foot at a time from the back forward, opposite sets, or the first slow and the second fast;
@@ -130,12 +132,21 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable
         }
         if (root.get("schemaVersion").getAsInt() != 1) throw new IllegalStateException(PATH + ": unknown schemaVersion");
         Map<String, MotionProfile> m = new HashMap<>();
-        for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("creatures").entrySet()) {
-            JsonObject c = e.getValue().getAsJsonObject();
-            Gait g = c.has("gait") ? gait(e.getKey(), c.getAsJsonObject("gait")) : null;
-            Body b = c.has("body") ? body(e.getKey(), c.getAsJsonObject("body")) : Body.NONE;
-            Fly f = c.has("fly") ? fly(e.getKey(), c.getAsJsonObject("fly")) : null;
-            m.put(e.getKey(), new MotionProfile(e.getKey(), g, b, f));
+        java.util.List<JsonObject> files = new java.util.ArrayList<>(java.util.List.of(root.getAsJsonObject("creatures")));
+        // the gates' monsters keep theirs in a file of their own, written with their rigs (SPEC §60)
+        try (InputStream in = MotionProfile.class.getResourceAsStream(MONSTERS)) {
+            if (in != null) files.add(JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("creatures"));
+        } catch (IOException e) {
+            throw new IllegalStateException("can't read " + MONSTERS, e);
+        }
+        for (JsonObject creatures : files) {
+            for (Map.Entry<String, JsonElement> e : creatures.entrySet()) {
+                JsonObject c = e.getValue().getAsJsonObject();
+                Gait g = c.has("gait") ? gait(e.getKey(), c.getAsJsonObject("gait")) : null;
+                Body b = c.has("body") ? body(e.getKey(), c.getAsJsonObject("body")) : Body.NONE;
+                Fly f = c.has("fly") ? fly(e.getKey(), c.getAsJsonObject("fly")) : null;
+                m.put(e.getKey(), new MotionProfile(e.getKey(), g, b, f));
+            }
         }
         return Map.copyOf(m);
     }

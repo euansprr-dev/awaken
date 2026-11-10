@@ -17,6 +17,16 @@ final class Blasts {
     private Blasts() {}
 
     static void fire(ServerLevel level, AwakenMob body, Vec3 at, float power, float peak) {
+        if (body.def().matter != null) {
+            // a gate monster bursts as what it is made of (SPEC §60.8): vanilla's push, its damage curve and its sound,
+            // none of its white smoke or black flecks (on film the Puffcap went off like a creeper)
+            dev.awaken.mobs.MobParticles.Shot shape = dev.awaken.mobs.MobParticles.Shot.values()[body.def().matter.ordinal()];
+            net.minecraft.core.particles.ParticleOptions bit = dev.awaken.mobs.MobParticles.shot(shape, body.def().matterRgb);
+            level.explode(body, body.damageSources().explosion(body, body), new Fair(peak), at.x, at.y, at.z, power, false, Level.ExplosionInteraction.NONE,
+                    bit, bit, net.minecraft.util.random.WeightedList.of(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE);
+            Abilities.shed(level, body, at.add(0, 0.6, 0), 30 + (int) (power * 10), power * 0.45, 0.5, power * 0.45, 0.3);
+            return;
+        }
         level.explode(body, body.damageSources().explosion(body, body), new Fair(peak), at.x, at.y, at.z, power, false, Level.ExplosionInteraction.NONE);
     }
 

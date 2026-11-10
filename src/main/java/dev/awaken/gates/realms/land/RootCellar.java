@@ -197,4 +197,11 @@ public final class RootCellar extends GeneratedCrawl<VineSeat.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x2f4a36, 0.5F).light(lord.cx, lord.feet + 5, lord.cz, 0xc8e070, 18, 0.6F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): an undercroft: pillared cellars, a raised walk, and roots where the floors have gone. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.PIERS, Cave.Form.HALL, Cave.Form.TERRACE, Cave.Form.CROSS), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.BEAMS, Chasm.Kind.FORD, Chasm.Kind.LEDGES), true, 2.6, 5);
+    }
 }

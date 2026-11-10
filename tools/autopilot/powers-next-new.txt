@@ -1,0 +1,245 @@
+# Powers, the next level: the five earned powers and the weapon answering them (SPEC 50.11, 50.9), in first person with
+# real key presses, slow motion (/tick rate 4), the clip recorder and stills. A sword stays in the right hand for Brand and the
+# Lances: the left hand casts, the weapon lowers, and the blow that follows spends what the cast left.
+# Watch: the arm's light, the weapon staying in the hand, the mark on the body and its burst, the lances over the shoulders
+# and one fewer after each blow, the column's edge, the breath, the roots.
+# Look tour: tools/tour-ci.sh tools/autopilot/powers-next-new.txt 2400 PACK=feel
+world powersnext survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:slow_falling 60 1 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 400
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 -6 14 214 30 minecraft:air
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+cmd tp @s 0.5 200 0.5 0 0
+wait 60
+camera first
+look 0 4
+wait 20
+shotnow nb_rest
+# brand, then a blow
+cmd kill @e[type=minecraft:husk]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.1 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 2.0 200 4.0 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -1.2 200 4.2 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase brand 1
+cmd item replace entity @s weapon.mainhand with minecraft:iron_sword
+camera first
+look 0 4
+wait 16
+shotnow nn_brand_rest
+cmd tick rate 4
+wait 3
+cmd awaken ascent pilot rec nn_brand 60 2
+hold power1 2
+wait 1
+shotnow nn_brand_a
+wait 2
+shotnow nn_brand_b
+wait 2
+shotnow nn_brand_c
+wait 4
+shotnow nn_brand_d
+wait 8
+shotnow nn_brand_marked
+key attack
+wait 1
+shotnow nn_brand_blow
+wait 2
+shotnow nn_brand_burst_a
+wait 2
+shotnow nn_brand_burst_b
+wait 6
+shotnow nn_brand_burst_c
+wait 10
+cmd tick rate 20
+wait 30
+# hoarfrost lances, two blows, then the second press
+cmd kill @e[type=minecraft:husk]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.1 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 8.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase hoarfrost_lances 1
+cmd item replace entity @s weapon.mainhand with minecraft:iron_sword
+camera first
+look 0 -6
+wait 16
+cmd tick rate 4
+wait 3
+cmd awaken ascent pilot rec nn_lances 80 2
+hold power1 2
+wait 2
+shotnow nn_lances_a
+wait 3
+shotnow nn_lances_b
+wait 3
+shotnow nn_lances_c
+wait 6
+shotnow nn_lances_hang
+look 0 4
+wait 4
+key attack
+wait 3
+shotnow nn_lances_blow_a
+wait 3
+shotnow nn_lances_blow_b
+wait 8
+key attack
+wait 3
+shotnow nn_lances_blow_c
+wait 8
+look 0 -6
+wait 3
+shotnow nn_lances_one_left
+hold power1 2
+wait 3
+shotnow nn_lances_thrown
+wait 10
+cmd tick rate 20
+wait 30
+# updraft: cast, step in, rise
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd effect clear @s minecraft:slow_falling
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 1.8 200 1.2 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase updraft 1
+camera first
+look 0 8
+wait 16
+cmd tick rate 4
+wait 3
+cmd awaken ascent pilot rec nn_updraft 60 2
+hold power1 2
+wait 2
+shotnow nn_updraft_a
+wait 2
+shotnow nn_updraft_b
+wait 2
+shotnow nn_updraft_c
+wait 6
+shotnow nn_updraft_d
+cmd tick rate 20
+wait 30
+look 0 40
+wait 4
+shotnow nn_updraft_rising
+wait 30
+shotnow nn_updraft_top
+wait 60
+# the same column from outside: cast, step back eight blocks, look at it
+cmd effect clear @s minecraft:levitation
+cmd effect clear @s minecraft:slow_falling
+cmd tp @s 0.5 200 0.5 0 0
+wait 20
+cmd awaken admin power showcase updraft 1
+wait 10
+hold power1 2
+wait 8
+cmd effect clear @s minecraft:levitation
+cmd tp @s 0.5 200 -8.5 0 -18
+wait 12
+shotnow nn_updraft_outside_a
+wait 20
+shotnow nn_updraft_outside_b
+wait 60
+cmd tp @s 0.5 200 0.5 0 0
+wait 20
+# backdraft: fire all round, then the breath
+cmd kill @e[type=minecraft:husk]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 2.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.0 200 6.0 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd fill -3 200 -2 -3 200 2 minecraft:fire
+cmd fill 4 200 -2 4 200 2 minecraft:fire
+cmd awaken admin power showcase backdraft 1
+camera first
+look 0 4
+wait 16
+shotnow nn_backdraft_fires
+cmd tick rate 4
+wait 3
+cmd awaken ascent pilot rec nn_backdraft 70 2
+hold power1 2
+wait 2
+shotnow nn_backdraft_a
+wait 3
+shotnow nn_backdraft_b
+wait 2
+shotnow nn_backdraft_c
+wait 2
+shotnow nn_backdraft_d
+wait 2
+shotnow nn_backdraft_e
+wait 3
+shotnow nn_backdraft_f
+wait 6
+shotnow nn_backdraft_g
+wait 12
+cmd tick rate 20
+wait 30
+cmd fill -14 200 -6 14 201 30 minecraft:air replace minecraft:fire
+# thornwake: green ground, flowers, three bodies
+cmd kill @e[type=minecraft:husk]
+cmd tp @s 0.5 200 0.5 0 0
+cmd setblock 2 200 3 minecraft:poppy
+cmd setblock -2 200 4 minecraft:dandelion
+cmd setblock 1 200 6 minecraft:oxeye_daisy
+cmd setblock -1 200 2 minecraft:short_grass
+cmd setblock 3 200 5 minecraft:fern
+cmd setblock -3 200 6 minecraft:allium
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.0 200 6.0 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 5.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase thornwake 1
+camera first
+look 0 10
+wait 16
+cmd tick rate 4
+wait 3
+cmd awaken ascent pilot rec nn_thornwake 70 2
+hold power1 2
+wait 2
+shotnow nn_thornwake_a
+wait 3
+shotnow nn_thornwake_b
+wait 2
+shotnow nn_thornwake_c
+wait 3
+shotnow nn_thornwake_d
+wait 4
+shotnow nn_thornwake_e
+wait 8
+shotnow nn_thornwake_f
+wait 14
+cmd tick rate 20
+wait 30
+quit
