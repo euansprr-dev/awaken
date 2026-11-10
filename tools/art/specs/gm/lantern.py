@@ -54,7 +54,7 @@ def lantern_moth():
     glow = lambda k: {"abdomen": {"scale": (k, k, k)}}  # noqa: E731
     lagc = {"wing_low_l": 0.04, "wing_low_r": 0.04, "antenna_l": 0.06, "antenna_r": 0.06}
     K.moves(r, dive="Drawn to Light")
-    grounded = K.on_floor(r, K.plus(flap(-50), glow(0.8), {"body": (40, 0, 30), "antenna_l": (40, 0, 0), "antenna_r": (40, 0, 0)}))
+    grounded = K.on_floor(r, K.lying(r, K.plus(flap(-50), glow(0.8), {"body": (40, 0, 30), "antenna_l": (40, 0, 0), "antenna_r": (40, 0, 0)})))
     K.act(r, "dive", K.plus(flap(60), glow(1.25), {"body": {"rot": (-26, 0, 0), "pos": (0, 1.5, 1.5)}}), K.plus(flap(-56), glow(1.1), {"body": {"rot": (40, 0, 0), "pos": (0, -1, -5)}}),
           w=0.7, length=0.4, t_hit=0.07, lag=lagc, stuck=grounded)
     K.keyed(r, "dive_open", 2.0, [(t, K.plus(grounded, flap(a))) for t, a in ((0, 0), (0.25, 26), (0.5, -4), (0.8, 18), (1.1, -2), (1.5, 10), (2.0, 0))])   # it beats at the floor, weaker each time
@@ -410,7 +410,7 @@ def lamplighter():
     sat = K.planted(r, {"body": {"pos": (0, -6, 0)}, "chest": (20, 0, 0), "head": (20, 0, 0), "arm_r": (30, 0, 0), "pole": (30, 0, 0)}, legs)
     flat = {"body": (80, 0, 6), "chest": (6, 0, 0), "head": (10, 30, 0), "arm_r": (-80, 0, 30), "pole": (60, 0, 0), "arm_l": (-70, 0, -40), "leg1_l": (-40, 0, 6), "leg1_r": (-56, 0, -6),
             "shin1_l": (70, 0, 0), "shin1_r": (96, 0, 0), "lamp": (-80, 0, 0)}
-    skip = ("shaftp", "snuffer", "hookp", "tails0", "tails1", "chainl", "lampb")
+    skip = ("shaftp", "snuffer", "hookp", "tails0", "tails1")
     K.keyed(r, "death", 2.0, [(0, {}), (0.25, K.planted(r, {"chest": (-12, 0, 0), "head": (-14, 0, 0), "body": {"pos": (0, 1.5, 0)}}, legs)), (0.9, sat)]
             + K.fall(r, 0.9, sat, 1.5, flat, steps=6, skip=skip) + [(1.64, K.on_floor(r, K.plus(flat, {"body": (-4, 0, 0)}), skip=skip)), (2.0, K.on_floor(r, flat, skip=skip))], lag=lagc)
     return r

@@ -147,14 +147,14 @@ public class GateMonster extends AwakenMob implements RigBody {
     }
 
     /** Moves that leave it open: the ones it commits its body to, not a call or a guard. */
-    private static boolean opens(Ability a) {
+    static boolean opens(Ability a) {
         return switch (a.kind()) {
             case SUMMON, HEAL, GUARD, DECOY, FRENZY, BLINK -> false;
             default -> true;
         };
     }
 
-    private void open(int ticks) {
+    void open(int ticks) {
         openTicks = Math.max(openTicks, ticks);
         holdStill(ticks);
     }

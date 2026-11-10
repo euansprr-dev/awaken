@@ -172,7 +172,7 @@ def crane():
     K.moves(r, cut="Papercut")
     wind = dict(flap(62, -40), body={"rot": (-24, 0, 0), "pos": (0, 1.5, 1.5)}, neck=(-30, 0, 0), head=(20, 0, 0), tail=(20, 0, 0))
     hit = dict(flap(-10, -24), body={"rot": (14, 0, 0), "pos": (0, -1, -5)}, neck=(46, 0, 0), head=(-78, 0, 0), tail=(-30, 0, 0))
-    soggy = K.on_floor(r, dict(flap(-22, -30), body=(8, 0, 64), neck=(40, 0, 0), head=(-30, 0, 0), tail=(-20, 0, 0)))
+    soggy = K.on_floor(r, K.lying(r, dict(flap(-22, -30), body=(8, 0, 64), neck=(40, 0, 0), head=(-30, 0, 0), tail=(-20, 0, 0))))     # flat on the floor, not propped on a wing
     K.act(r, "cut", wind, hit, w=0.6, length=0.4, t_hit=0.07, stuck=soggy, lag=lagc)
     K.plain(r, {"neck": (-34, 0, 0), "head": (-20, 0, 0), "body": {"rot": (-10, 0, 0), "pos": (0, 0.5, 1)}},
             {"neck": (40, 0, 0), "head": (20, 0, 0), "body": {"rot": (12, 0, 0), "pos": (0, 0, -3)}}, lag=lagc)

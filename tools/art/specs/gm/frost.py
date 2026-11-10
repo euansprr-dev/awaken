@@ -65,8 +65,8 @@ def frozen_monk():
     K.flinch(r, K.plus(reach(-1.5), {"body": {"rot": (-7, 0, 5), "pos": (0, 0, 1.5)}}))
     gone = {"shell": {"scale": (0.02, 0.02, 0.02)}}
     K.keyed(r, "death", 1.2, [(0, {}), (0.12, {"body": (-6, 0, 3), "shell": {"scale": (1.06, 1.04, 1.06)}}), (0.3, K.plus(gone, reach(2, 30, 30), {"body": (10, 0, 0)})),
-                              (0.8, K.on_floor(r, K.plus(gone, reach(3, 60, 20), {"body": (80, 0, 8)}))), (0.92, K.on_floor(r, K.plus(gone, reach(3, 60, 20), {"body": (75, 0, 8)}))),
-                              (1.2, K.on_floor(r, K.plus(gone, reach(3, 60, 20), {"body": (80, 0, 8)})))])
+                              (0.8, K.on_floor(r, K.plus(gone, reach(2, -76, 0), {"body": (80, 0, 8)}))), (0.92, K.on_floor(r, K.plus(gone, reach(2, -76, 0), {"body": (75, 0, 8)}))),
+                              (1.2, K.on_floor(r, K.plus(gone, reach(2, -76, 0), {"body": (80, 0, 8)})))])     # face down, its arm out along the floor ahead of it
     return r
 
 
@@ -338,7 +338,7 @@ def long_horn():
     knees = K.planted(r, K.plus(up(-6, -14), {"body": {"pos": (0, -1.6, 0)}}), legs)
     flat = {"body": (78, 0, 10), "chest": (4, 0, 0), "head": (10, 30, 0), "horn": (-96, 0, 30), "arm_l": (-30, 0, -40), "arm_r": (-30, 0, 40), "leg1_l": (-50, 0, 0), "leg1_r": (-60, 0, 0),
             "shin1_l": (60, 0, 0), "shin1_r": (74, 0, 0)}
-    skip = ("ribbon0", "ribbon1", "rimh")
+    skip = ("ribbon0", "ribbon1")
     K.keyed(r, "death", 1.4, [(0, {}), (0.18, K.planted(r, up(30, 12), legs)), (0.6, knees)] + K.fall(r, 0.6, knees, 1.05, flat, steps=5, skip=skip)
             + [(1.16, K.on_floor(r, K.plus(flat, {"body": (-5, 0, 0)}), skip=skip)), (1.4, K.on_floor(r, flat, skip=skip))], lag=lagc)
     return r

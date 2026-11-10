@@ -88,6 +88,7 @@ def toller():
     K.flinch(r, {"chest": (-13, 0, 0), "neck": (-6, 0, 0), "head": (-10, 0, 20), "clapper": (0, 0, -26)}, plant=limbs)
     lying = {"chest": (44, 0, 6), "head": (30, 0, 44), "leg0_l": (-80, 0, -52), "leg0_r": (-72, 0, 58), "shin0_l": (30, 0, 0), "shin0_r": (36, 0, 0),
              "leg1_l": (40, 0, 0), "leg1_r": (48, 0, 0), "shin1_l": (60, 0, 0), "shin1_r": (64, 0, 0), "body": {"rot": (20, 0, 0)}}
+    lying = K.lying(r, lying)     # no arm left holding it up off the floor
     fl = lambda q, sink=0.0: K.on_floor(r, q, sink=sink)  # noqa: E731
     K.keyed(r, "death", 1.3, [
         (0.0, {}),

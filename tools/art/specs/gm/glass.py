@@ -198,7 +198,7 @@ def shimmer():
     K.flinch(r, K.plus(stack(-20, 1.4), {"body": {"rot": (-16, 0, 24), "pos": (0, 0, 2)}}))
     apart = {f"plate{k}": {"rot": (20 * (k - 2), 30 * k, 16 * (2 - k)), "pos": (1.5 * (k - 2), -1.5 * k, 0)} for k, _, _ in PLATES}
     K.keyed(r, "death", 1.0, [(0, {}), (0.1, stack(-20, 1.6)), (0.4, K.plus(apart, {"body": {"pos": (0, -4, 0), "rot": (20, 0, 20)}})),
-                              (0.75, K.on_floor(r, K.plus(apart, {"body": (86, 0, 30)}))), (1.0, K.on_floor(r, K.plus(apart, {"body": (88, 0, 34), "bead": {"scale": (0.02, 0.02, 0.02)}})))])
+                              (0.75, K.on_floor(r, K.plus(stack(40, -2.2), {"body": (6, 30, 8)}))), (1.0, K.on_floor(r, K.plus(stack(44, -2.25), {"body": (3, 34, 5), "bead": {"scale": (0.02, 0.02, 0.02)}})))])     # the plates lie in a heap, flat on the floor
     return r
 
 

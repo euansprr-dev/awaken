@@ -120,6 +120,7 @@ def keyed(rig, name, length, keys, loop=False, lag=None, interp="cat"):
             if out[-1][0] < length - 1e-4 and not loop:
                 out.append((length,) + out[-1][1:])
             getattr(clip, target)(b, out, interp)
+    rig._lying = None       # a fall's laying-down belongs to the clip that held it (see fall, lying)
     return clip
 
 
@@ -160,11 +161,29 @@ def act(rig, mv, wind, hit, *, w=0.6, length=0.55, t_hit=0.09, over=0.14, back=0
         sway = scaled(held, 0.05)
         keyed(rig, mv + "_open", 2.6, [(0, pl(held)), (0.65, pl(plus(held, sway))), (1.3, pl(plus(held, scaled(sway, -1)))),
                                        (1.95, pl(plus(held, scaled(sway, 0.6)))), (2.6, pl(held))], lag=lag)
+        if not hasattr(rig, "_spent"):
+            rig._spent = (pl(held), lag)      # the body's spent pose, for its moves that were given none (fill_opens)
     names = [ab for ab, m in getattr(rig, "_abilities", {}).items() if m == mv]
     if not names and mv != "_plain":
         raise ValueError(f"{rig.id}: move {mv} answers to no ability; name it in moves()")
     for ab in names:
         rig.moves[ab] = mv
+
+
+def fill_opens(rig):
+    """Every move the body acts gets an <mv>_open clip. A move authored without one takes the body's own spent pose (the
+    first one any of its moves was given), eased into from rest, since that move's strike ends at rest: so whichever
+    move the server says left it open, the body shows it. A body with no spent pose at all is left alone."""
+    spent = getattr(rig, "_spent", None)
+    if spent is None:
+        return
+    held, lag = spent
+    sway = scaled(held, 0.05)
+    for mv in dict.fromkeys(rig.moves.values()):
+        if mv + "_open" in rig.clips:
+            continue
+        keyed(rig, mv + "_open", 2.6, [(0, {}), (0.14, scaled(held, 0.45)), (0.32, held), (0.9, plus(held, sway)), (1.5, plus(held, scaled(sway, -1))),
+                                       (2.1, plus(held, scaled(sway, 0.6))), (2.6, held)], lag=lag)
 
 
 def moves(rig, **ability_of):
@@ -433,6 +452,7 @@ def lowest(rig, pose=None, skip=()):
 def on_floor(rig, pose, root="body", skip=(), sink=0.0):
     """The pose with its root raised or lowered so the body rests on the ground: nothing under the floor, nothing
     hovering (a fall's last poses, a body lying flat). sink: px it may settle into the floor."""
+    pose = _relaid(rig, pose)
     low, _ = lowest(rig, pose, skip)
     p = norm(pose)
     e = p.setdefault(root, {"rot": (0, 0, 0), "pos": (0, 0, 0), "scale": (1, 1, 1)})
@@ -440,13 +460,133 @@ def on_floor(rig, pose, root="body", skip=(), sink=0.0):
     return p
 
 
+def _parent(bone):
+    return bone.parent if not isinstance(bone.parent, str) else bone.rig.by_name[bone.parent]
+
+
+def _trunk(rig):
+    """A body's biggest box and the bone it is on: what should be lying on the floor when the body has fallen."""
+    best = None
+    for b in rig.bones:
+        for cb in b.cubes:
+            if best is None or cb.w * cb.h * cb.d > best[0]:
+                best = (cb.w * cb.h * cb.d, cb, b)
+    return best[1], best[2]
+
+
+def lying(rig, pose, root="body", skip=(), tries=80, step=12.0, rest=2.5):
+    """A fallen body laid down properly. on_floor() lifts a body until nothing is under the floor, so an arm or a leg
+    pointing down holds the whole body up in the air like a prop. Here, while something that is not the trunk (its
+    biggest box, and the bones that carry it) holds the trunk more than `rest` px off the floor, the limb that reaches
+    lowest is turned at its shoulder or hip (or at the joint that touches), whichever way brings it up toward the
+    trunk's own level fastest; then the next lowest, until the trunk rests. Returns the pose with those limbs turned
+    (its root where it was: floor it with on_floor)."""
+    p = norm(pose)
+    cube, tb = _trunk(rig)
+    chain = set()
+    b = tb
+    while b is not None:
+        chain.add(b.name)
+        b = _parent(b)
+    owner = {cb.name: bn for bn in rig.bones for cb in bn.cubes}
+    kids = {}
+    for bn in rig.bones:
+        if _parent(bn) is not None:
+            kids.setdefault(_parent(bn).name, []).append(bn)
+
+    def subtree(bone):
+        out, todo = [], [bone]
+        while todo:
+            x = todo.pop()
+            out.append(x)
+            todo += kids.get(x.name, [])
+        return out
+
+    def low_of(fr, bones):
+        low = -1e9
+        for bn in bones:
+            M, T = fr[bn.name]
+            if min(abs(M[0][0]) + abs(M[1][0]) + abs(M[2][0]), abs(M[0][1]) + abs(M[1][1]) + abs(M[2][1])) < 0.06:
+                continue    # scaled away
+            for cb in bn.cubes:
+                if cb.name in skip:
+                    continue
+                for x in (cb.x, cb.x + cb.w):
+                    for y in (cb.y, cb.y + cb.h):
+                        for z in (cb.z, cb.z + cb.d):
+                            low = max(low, R._mv(M, (x, y, z))[1] + T[1])
+        return low
+
+    def trunk_low(fr):
+        M, T = fr[tb.name]
+        return max(R._mv(M, (x, y, z))[1] + T[1] for x in (cube.x, cube.x + cube.w) for y in (cube.y, cube.y + cube.h) for z in (cube.z, cube.z + cube.d))
+
+    def turned(q, bone, axis, d):
+        e = dict(q.get(bone, {"rot": (0, 0, 0), "pos": (0, 0, 0), "scale": (1, 1, 1)}))
+        r_ = list(e["rot"])
+        r_[axis] += d
+        e["rot"] = tuple(r_)
+        q2 = dict(q)
+        q2[bone] = e
+        return q2
+    for _ in range(tries):
+        fr = fk(rig, p)
+        low, nm = lowest(rig, p, skip)
+        if low - trunk_low(fr) <= rest or nm not in owner:
+            break
+        low_bone = owner[nm]
+        if low_bone.name in chain:
+            break       # the trunk's own bones hold it: that is how it lies
+        base = low_bone
+        while _parent(base) is not None and _parent(base).name not in chain:
+            base = _parent(base)
+        limb = subtree(base)
+        depth = low_of(fr, limb) - trunk_low(fr)
+        best = None
+        for target in dict.fromkeys((base.name, low_bone.name)):
+            for axis in (0, 2):
+                for d in (step, -step):
+                    q = turned(p, target, axis, d)
+                    f2 = fk(rig, q)
+                    d2 = low_of(f2, limb) - trunk_low(f2)
+                    if best is None or d2 < best[0]:
+                        best = (d2, q)
+        if best is None or best[0] > depth - 0.05:
+            break
+        p = best[1]
+    return p
+
+
+def _relaid(rig, pose):
+    """After a fall laid a body down (lying), the poses that follow it in the same death (its bounce, its last rest) are
+    written from the pose as it was authored: they take the same turns, so the limbs stay where the fall left them."""
+    lay = getattr(rig, "_lying", None)
+    if lay is None:
+        return pose
+    was, now = lay
+    p = norm(pose)
+    for bone, e in now.items():
+        w = was.get(bone, {"rot": (0, 0, 0)})["rot"]
+        if e["rot"] != w and bone in p and all(abs(a - b) < 1e-6 for a, b in zip(p[bone]["rot"], w)):
+            p[bone] = dict(p[bone], rot=e["rot"])
+        elif e["rot"] != w and bone not in p and all(abs(a) < 1e-6 for a in w):
+            p[bone] = {"rot": e["rot"], "pos": (0, 0, 0), "scale": (1, 1, 1)}
+    return p
+
+
 def fall(rig, t0, a, t1, b, steps=3, root="body", skip=(), sink=0.0, ease=1.6):
     """Keys for a fall from pose a (at t0) to pose b (at t1), the body resting on the floor all the way down and
-    gathering speed as it goes."""
+    gathering speed as it goes. It ends lying down properly (lying): no limb left holding it up; the keys written after
+    it in the same death follow suit."""
+    rig._lying = None
+    laid = lying(rig, b, root, skip)
+    was = norm(b)
+    b = laid
     out = []
     for k in range(1, steps + 1):
         u = k / steps
         out.append((t0 + (t1 - t0) * u ** (1.0 / ease), on_floor(rig, blend(a, b, u), root, skip, sink)))
+    rig._lying = (was, laid)
     return out
 
 
@@ -716,6 +856,7 @@ class Monster:
             r = self.make()
             if r.id != self.id:
                 raise ValueError(f"{self.id}: its rig is called {r.id}")
+            fill_opens(r)
             mo = self.motion(r) if callable(self.motion) else dict(self.motion)
             g = mo.get("gait")
             if g and "stride" in g:

@@ -130,8 +130,38 @@ def bestiary():
         line = mo.group(0)
         spd = re.search(r'\.spd\(([0-9.]+)\)', line)
         sc = re.search(r'\.scale\(([0-9.]+)F\)', line)
+        whole = re.search(r'm\("' + mo.group(1) + r'",.*?\.build\(\)\);', src, re.S)
+        block = whole.group(0) if whole else line
+        if "\n        out.add(" in block:      # ran on into the next monster: this one's own text ends where that begins
+            block = block.split("\n        out.add(")[0]
+        op, mi = re.search(r'\.open\((\d+)\)', line), re.search(r'\.miss\((\d+)\)', line)
         out[mo.group(1)] = {"spd": float(spd.group(1)) if spd else 0.25, "scale": float(sc.group(1)) if sc else 1.0, "tier": mo.group(2),
-                            "rig": ".rig()" in line, "line": line}
+                            "rig": ".rig()" in line, "line": line, "abilities": re.findall(r'a\((\w+), "([^"]+)"\)', block),
+                            "open": int(op.group(1)) if op else 0, "miss": int(mi.group(1)) if mi else 0}
+    return out
+
+
+#: Ability kinds that never leave a body open (GateMonster.opens): a call or a guard, not a move it commits itself to.
+NO_OPENING = {"SUMMON", "HEAL", "GUARD", "DECOY", "FRENZY", "BLINK"}
+
+
+def moves_match(m, rig, d):
+    """A body acts every ability the bestiary gives its monster, and no others: each has its move, the move its wind-up
+    and strike, and (where the server will leave it open after it, or stuck after a lunge that missed) its open clip."""
+    out = []
+    for kind, name in d["abilities"]:
+        mv = rig.moves.get(name)
+        if not mv:
+            out.append(f"{m.id}: the bestiary gives it {name} ({kind}) and its body has no move for it")
+            continue
+        for suf in ("_windup", "_strike"):
+            if mv + suf not in rig.clips:
+                out.append(f"{m.id}: {name}: no {mv}{suf} clip")
+        lunges = kind in ("CHARGE", "LEAP")
+        if ((lunges and d["miss"]) or (d["open"] and kind not in NO_OPENING)) and mv + "_open" not in rig.clips:
+            out.append(f"{m.id}: {name} ({kind}) leaves it open or stuck and its body has no {mv}_open clip to show it")
+    for name in set(rig.moves) - {n for _, n in d["abilities"]}:
+        out.append(f"{m.id}: its body acts {name}, which the bestiary does not give it")
     return out
 
 
@@ -177,6 +207,26 @@ def knees(m, rig):
     return out
 
 
+def lies_down(m, rig):
+    """A death ends with the body on the floor: its trunk (its biggest box) no more than 12 px over it. Further up and
+    something is holding it in the air like a prop: an arm or a leg left pointing down (kit.lying lays it flat)."""
+    import gm.kit as K
+    from gm.kit import R
+    clip = rig.clips.get("death")
+    if clip is None:
+        return []
+    pose = rig.sample([("death", clip.length, 1.0)])
+    pose = {bn: {"rot": tuple(a / K.DEG for a in v["rot"]), "pos": (v["pos"][0], -v["pos"][1], v["pos"][2]), "scale": v["scale"]} for bn, v in pose.items()}
+    cube, tb = K._trunk(rig)
+    M, T = K.fk(rig, pose)[tb.name]
+    if min(abs(M[0][0]) + abs(M[1][0]) + abs(M[2][0]), abs(M[0][1]) + abs(M[1][1]) + abs(M[2][1])) < 0.2:
+        return []       # it shrinks away to nothing, or goes flat: nothing left to lie
+    low = max(R._mv(M, (x, y, z))[1] + T[1] for x in (cube.x, cube.x + cube.w) for y in (cube.y, cube.y + cube.h) for z in (cube.z, cube.z + cube.d))
+    if 24.0 - low > 12.0:
+        return [f"{m.id}/death: it ends with its {cube.name} {24.0 - low:.1f} px over the floor, held up by {K.lowest(rig, pose)[1]}"]
+    return []
+
+
 def check(ms, tiers=None):
     problems = []
     defs = bestiary()
@@ -212,6 +262,10 @@ def check(ms, tiers=None):
                 if b.name.split("_")[0].rstrip("0123456789") == bad:
                     problems.append(f"{m.id}: bone {b.name} would bind as {'an eyelid' if bad == 'lid' else 'a second body'}")
         problems += knees(m, rig)
+        if m.kind != "floater" or m.grounds:
+            problems += lies_down(m, rig)
+        if m.id in defs:
+            problems += moves_match(m, rig, defs[m.id])
         # at rest it stands on the ground (a floater hangs over it), and no clip drives it into the floor. Walking and
         # running, the game plants the feet itself, so a limb's boxes are left out there; a floater is only ever on
         # the floor where a miss left it.

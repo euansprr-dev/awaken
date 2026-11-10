@@ -20659,3 +20659,89 @@ these two brighter than the game does.
 **Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
 no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
 gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.
+
+## 60. Monsters of the Gates (plan docs/gates-as-worlds/monsters/PLAN.md, page https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ; Euan approved option B on 2026-11-10)
+
+Every gate monster that wore a Minecraft mob's body has a body of its own: 78 of them, across the fifteen gate themes
+(48 normal, 15 elite, 15 Wardens). The Mirror Shade keeps the player's face, which is its point. Lords, Provings and
+the Gate Worlds' creatures already had bodies and are untouched. A monster's bestiary id, numbers, abilities, drops and
+spawn rules do not change; its name and one-line description may (`docs/gates-as-worlds/monsters/ROSTER.md`).
+
+### 60.1 Bodies
+
+- One rig and animation system: the hero rigs (§23), drawn by `WildRenderer` with the life layer and the motion layer.
+  A gate monster's rig id is its bestiary id. `MobDef.rig()` marks it; `MobTypes` then makes it a
+  `mobs.entity.GateMonster`, and `AwRenderers` draws it on its rig. If the rig is missing the old body draws instead,
+  silently (the fallback): the old skins stay in `textures/entity/mobs/`, the new ones are in
+  `textures/entity/monsters/<id>.png` and `<id>_glow.png`.
+- Authoring: `tools/art/specs/gm/<theme>.py` on `gm/kit.py`; `tools/art/specs/gate_monsters.py` builds
+  (`python3 tools/art/build_all.py gate_monsters`), checks (`... gate_monsters.py check [theme|id]`) and previews
+  (`... preview DIR theme`). Generated, never edited by hand: `mobs/client/anim/GateMonsterData.java`,
+  `assets/awaken/life/monsters_motion.json` and `monsters_creatures.json` (read beside `motion.json` and
+  `creatures.json`, same shape), the textures, and `src/main/merge/mobs_monsters/` (voices, names).
+- Each theme has one rule of colour, set against its room so its monsters read at twenty blocks, and one light of its
+  own (the Bell Crypt's cold wisp, the Hive's amber, the Abyss's single violet ring, and so on). No Minecraft or Fresh
+  Animations asset is used or copied.
+- Size: a body is its own size (entity scales were removed, except the Gel Sample's 1.6). Hitboxes come from
+  `.size()` on the def. Bone budgets: 40 for a normal monster, 60 for an elite or a Warden.
+- Clips every body has: idle, walk and run (or fly), angry, hurt, death, its plain blow (`windup`, `strike`, and
+  `heavy_windup`, `heavy_strike` on big bodies), and for each ability its move's `<move>_windup`, `<move>_strike` and
+  `<move>_open`. A wind-up is stretched to the ability's real wind-up time, so the body's tell is the server's tell.
+- Voices: `monster.<id>.<ambient|hurt|death|step>`, each a list of Minecraft's own sound events named in
+  `sounds.json` with a volume and pitch (never a new recording, never a built sound).
+- Legs: a four-legged body's forelegs bend knee-forward and its hind legs hock-back, as the motion layer bends them
+  (§23.1) and as an animal's do; a knuckle-walker (the Toller, the Yeti) is the other way round. The offline check
+  refuses a quadruped whose joints both fold in under the belly. A crawler's leg may hang from a mount turned its way
+  (`splay_pairs(mounts=True)`), so its knee stands as high as it was drawn however far round it is turned. Two bodies
+  walk on three legs (the Riveter, the Security Unit): two in front and one behind, which the motion layer ranks as a
+  hind leg.
+
+### 60.2 The cue
+
+A gate monster tells its body what it is doing in one synced int (`RigBody`, shared with the fauna): slot + 1,
+stage << 8, a serial << 11. Stages: none, wind-up, strike, roar, warn, and two new ones: OPEN 5 (the move fired and
+left it open: the body plays the strike, then holds `<move>_open` until the server lets it go) and STUCK 6 (a lunge
+missed: the body goes into `<move>_open` from wherever it stands). The plain blow has two slots after the abilities
+(light, heavy). A late joiner gets the current cue with the entity's data.
+
+### 60.3 The fight rules
+
+Each is data on the def, judged by the server, and none changes another creature's numbers:
+
+| Rule | On the def | What it does |
+|---|---|---|
+| An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
+| Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
+| A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
+| Planted to shoot | `.planted()` | It cannot turn while it winds up, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side |
+| A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
+| The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
+
+`.moves(Move)` overrides how a body moves where its old body's way no longer fits (the Shimmer, the Prism, the Snow
+Star, the Puffer, the Balloonist and the Gale fly; the Honeypot walks; the Nothing is on the ground).
+
+### 60.4 Engine changes this needed
+
+- `LegSurface.clear` samples a leg's line every 0.1 block, leaving 0.2 at each end, as `LegBlockTrial` does (it took
+  0.25-block steps and could let a leg cross a kerb's corner). This is shared by every body with planted feet.
+- `AwakenMob.holdStill(ticks)`: stand still and start nothing, without ending what it is doing (an opening).
+
+### 60.5 Tests
+
+`gate_monsters_own_bodies` (all 78 have a body, and the body acts every ability the bestiary gives its monster, with
+an open pose wherever the server can leave it open), and one test for each rule: `gate_monster_front_holds`,
+`gate_monster_open_bites_deeper`, `gate_monster_stopped_by_a_blow`, `gate_monster_miss_leaves_it_stuck`,
+`gate_monster_planted_loses_its_aim`. The life layer's tests (`creature_`, `life_`) cover every rig's legs, springs and
+motion profile. The offline check (`gate_monsters.py check`) covers what needs no game: bone budgets, clips, the floor
+(nothing more than 2 px under it in any clip), strike begins where wind-up ends, stride cadence at full chase (0.6 to
+3.6 a second), leg joints, voices, the bestiary's abilities against the body's moves, and that a death ends with
+the body lying on the floor (`kit.lying` folds any limb that would hold a fallen body up in the air; `fall` does it
+for every death that uses it).
+
+### 60.6 Known gaps (nothing here was seen in game when this was written)
+
+- The Mourner still fires ordinary arrows, not its ribs; the Gel Sample's two halves keep their glass; the Mirage's
+  "only the real one casts a shadow" and the Sheet's "moves only when you blink" lean on rules the bestiary already
+  had (DECOY, HAUNTED) and were not re-tuned.
+- The Empty Suit's own swing does not open it (it parries with the GUARD ability it always had).
+- Particles and sounds for the new moves reuse each ability's existing effects.
