@@ -20,15 +20,16 @@ TEXT = {
     "ROPE4_HEAD": "<b>A landing ends the chain.</b> With the key still held, nothing more is thrown until you let go and press again. In the lane of giant trees the runner threw one rope and then ran for seven seconds.",
     "ROPE4_EV": "Read in code (the held rope throws again only in the air) and seen in the tour.",
     "WING2_HEAD": "<b>A beat doesn't push down.</b> The flap turns the wing toward your head and back. Standing, that looks like a beat. Flying belly down, the wings scissor forward and never press on the air.",
+    "SOV_NOTE": "In the last tour all 62 pictures of the six wings were whole: every state at dusk and by day, and the real form in flight.",
     "WING2_EV": "Read in code. Press Flying in the model below with Today selected: it runs the game's own numbers.",
 }
 
 # The game as built: pictures from the game itself. The wings are from the first tour (movement-built, run 42862885263),
 # the rope and the takeoff from the second (run 42872444094: forward and the rope held, no jump pressed), the Sovereign
-# from the tour of its own (movement-sovereign). In the second tour a rolling storm of the Living Wilds stood behind the
+# from the last tour of its own (movement-sovereign, run 42899604284, the lean feathers). In the second tour a rolling storm of the Living Wilds stood behind the
 # wings' studio, so its wing pictures are not used.
 R2 = "RUN:movement-built-42872444094:"
-R3 = "RUN:movement-sovereign-42881881936:"
+R3 = "RUN:movement-sovereign-42899604284:"
 BUILT = [
     ("built_wood_sling", R2 + "a_wood_tp_06", None, "<b>The rope in a real forest.</b> Only forward and the rope are held. The line is a sling: it throws the runner up and over the next treetop."),
     ("built_wood_water", R2 + "a_wood_tp_14", None, "<b>The same run, twelve seconds on.</b> Still in the air, the chain unbroken through every landing."),
@@ -40,5 +41,6 @@ BUILT = [
     ("built_skyborn_open", "BUILT:s_skyborn_open_back", None, "<b>Skyborn's two pairs, from behind.</b>"),
     ("built_takeoff", R2 + "h_takeoff_03", None, "<b>The takeoff.</b> Look up, hold sneak, jump: the wings beat you off the ground."),
     ("built_sovereign_back", R3 + "s_open_back", None, "<b>The Sovereign's six gold wings and the ring, in the game.</b> Held open with <code>/awaken wings show open sovereign</code>, from behind."),
-    ("built_sovereign_front", R3 + "s_land_front", None, "<b>The same from the front,</b> cupped for a landing. @@SOV_NOTE@@"),
+    ("built_sovereign_front", R3 + "s_open_front", None, "<b>The same from the front.</b>"),
+    ("built_sovereign_form", R3 + "i_form_front_01", None, "<b>The real form, in flight.</b> The pale gold over everything is the form's own colour look, from the day the form was made."),
 ]

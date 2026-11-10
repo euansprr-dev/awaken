@@ -24,6 +24,14 @@ code does, with its numbers and where it differs from this plan, is SPEC §62 "B
   the bench's oak wood: 104 blocks in the first 15 s against 152, because the sling needs a top above the hand and on
   the highest crown there is none (the body crosses the crown, walks off, falls and slings again from the ground).
   Letting the rope skip to a crown at or under the hand is not in the plan and not built: Euan's call.
+- The Sovereign's six wings broke in some frames on the tours' machine. Three probe tours showed why: that machine's
+  virtual GPU draws wrongly once a frame's shared vertex buffer holds more than about 1.2 MB, and six wings in the entity
+  format were that much. A feather is now sent as a position and a colour (16 bytes a vertex for 36); six wings were
+  whole in every shot after. Whether a real GPU has any such edge is not known.
+- The feathers' render types carry their Improved Transparency pipelines (without them the game throws when that video
+  setting is on; it is off on Euan's Mac).
+- By day Lens's contact shadows fall on the wings (one pair reads well, the six gold ones go patchy): Euan's call, and
+  a rule in Lens if he wants them pure light.
 - The takeoff is "look up, sneak a moment, jump" (holding jump can't be told from the game's own hop).
 - The two rappel loops keep their old sound.
 - First-person wing placement is two numbers set from a tour, live-tunable with `/awaken wings set`.

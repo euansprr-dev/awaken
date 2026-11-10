@@ -22279,7 +22279,8 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   shared vertex buffer: `/awaken wings set probe_pad <n>` sends n vertices of no size with the wings, and with 20,000
   the first rung's single pair, whole in every tour before, broke the same way (10,000: whole). The six wings sat on
   that edge by themselves. Lean, six wings are 0.54 MB and were whole in 50 shots of 50, with up to 80,000 vertices
-  sent ahead of them (120,000: broken; Skyborn whole at 120,000). **Not known: whether a real GPU has any such edge**
+  sent ahead of them (120,000: broken; Skyborn whole at 120,000), and then in all 62 of the Sovereign's own tour
+  (42899604284: every state at dusk and by day, the real form in flight). **Not known: whether a real GPU has any such edge**
   (nothing here says Euan's Mac does; a crowd of vanilla mobs would cross it too). `probe_lean 0` draws the entity
   format again, `probe_lod`, `probe_pairs`, `probe_ring`, `probe_halos`, `probe_plain` and `probe_pad_after` are the
   other probes.
@@ -22293,7 +22294,9 @@ without Minecraft, 40 runs of 15 s, median blocks):**
 - First person: the outer feathers only, set `fpAhead` 0.8 ahead of the eye and `fpUp` -0.12 under it (where the wings
   really are nothing of them is in view). A tour of three placements in real flight (run 42863429201) showed them at
   the frame's lower sides in a glide and sweeping in on a beat or a turn; the opening fades in as it spreads, and
-  folded or lifting wings are not drawn through your own eyes. **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
+  folded or lifting wings are not drawn through your own eyes, nor is a pair raised over the shoulders (the
+  Sovereign's upper pair lay across the top of the view as two slabs: tour 42899604284; the fix is unpictured).
+  **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
   changes them while the game runs, and `/awaken wings show <state> [rung]` holds the wings in any state to look at.
 - Known limit: the game culls a player by their own box, so wings three blocks wide vanish when the body is just off
   screen (as the old wings did).

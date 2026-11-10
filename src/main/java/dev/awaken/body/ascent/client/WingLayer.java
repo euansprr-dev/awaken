@@ -70,8 +70,16 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 (pose, vc) -> feathers(pose, vc, 2)};
         final SubmitNodeCollector.CustomGeometryRenderer lights = this::lights;
 
+        /**
+         * Through your own eyes a pair raised over the shoulders (the Sovereign's upper pair, 50 degrees up) is not
+         * drawn: set ahead of the eye like the rest, it lay across the top of the view as two slabs (tour 42899604284).
+         */
+        private boolean hidden(int i) {
+            return i >= pairs.length || probePairs > 0 && i >= probePairs || first && pairs[i][1] < -30;
+        }
+
         private void feathers(PoseStack.Pose pose, VertexConsumer vc, int i) {
-            if (i >= pairs.length || probePairs > 0 && i >= probePairs) return;
+            if (hidden(i)) return;
             WingFeathers.pair(pose, vc, this.pose[i], 0, pairs[i], i, pal, alpha, lod, first);
             if (i == 0 && ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
         }
@@ -79,8 +87,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         private void lights(PoseStack.Pose pose, VertexConsumer vc) {
             if (!probeHalos) return;
             WingFeathers.faceEye(pose, AscentRender.eye());
-            int n = probePairs > 0 ? Math.min(probePairs, pairs.length) : pairs.length;
-            for (int i = 0; i < n; i++) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
+            for (int i = 0; i < pairs.length; i++) if (!hidden(i)) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
             if (ring && !first) WingFeathers.ringGlow(pose, vc, alpha);
         }
     }
