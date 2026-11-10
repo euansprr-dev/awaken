@@ -106,7 +106,7 @@ final class AscentScene {
         Minecraft mc = Minecraft.getInstance();
         if (age < 0 || mc.player == null || mc.gui.hud.isHidden()) return;
         float t = age + dt.getGameTimeDeltaPartialTick(false);
-        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.30F);
+        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * (dev.awaken.core.api.Notices.client().showing() ? 0.60F : 0.30F));
         boolean edge = edge(playingMode);
         // The Way Up (SPEC §63.3): in a fight there is no scene, only the Lesson's strip of keys; and no gift carries a
         // line of clipped words any more (its Lesson or its card of keys says how)

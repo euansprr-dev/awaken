@@ -171,7 +171,8 @@ final class VowScene {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden()) return;
         float pt = dt.getGameTimeDeltaPartialTick(false);
-        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.28F);
+        // under the director's big card when one is up (arriving at a vault for the first time is also a discovery)
+        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * (dev.awaken.core.api.Notices.client().showing() ? 0.60F : 0.28F));
         if (title != null) {
             float a = env(clock + pt - titleAt, titleFor);
             if (a <= 0.01F && clock - titleAt > titleFor) title = null;

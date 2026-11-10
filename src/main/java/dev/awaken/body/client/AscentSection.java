@@ -32,7 +32,7 @@ final class AscentSection extends UiSection {
             new Row(AscentPayloads.Tier.LEAPER, AscentMemory.Track.LEAPER, WayUp.Rung.LEAP, "The leap",
                     "In the air: [{key.jump}] again, [{key.sprint}] to dash, [{key.sneak}] to slam from high up."),
             new Row(AscentPayloads.Tier.WINGS, AscentMemory.Track.WINGS, WayUp.Rung.WINGS, "Wings",
-                    "In a fall: [{key.jump}] to open them. Look to steer, dive for speed. [{key.sneak}] folds them."),
+                    "In a fall: [{key.jump}] twice to open them. Look to steer, dive for speed. [{key.sneak}] folds them."),
             new Row(AscentPayloads.Tier.SKYBORN, AscentMemory.Track.SKYBORN, WayUp.Rung.SKY, "The open sky",
                     "On open wings: [{key.jump}] again to fly, [{key.forward}] to push on, [{key.sprint}] to boost."),
             new Row(AscentPayloads.Tier.SOVEREIGN, AscentMemory.Track.SOVEREIGN, WayUp.Rung.FORM, "The Sovereign's form",

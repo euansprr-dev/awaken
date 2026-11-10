@@ -42,11 +42,12 @@ key dismiss
 wait 10
 screen close
 cmd awaken ascent way
-wait 30
+# the toast is paced by the director: two looks at it, toward the vault (its beam over the roofs)
+cmd tp @s ~ ~ ~ facing 27 140 -341
+wait 120
 shotnow way_01_vault_told
-cmd tp @s ~ ~ ~ facing 27 150 -341
-wait 40
-shot way_02_vault_beam
+wait 240
+shotnow way_02_vault_beam
 screen band tasks
 wait 30
 shotnow way_03_tasks_rope_row
@@ -91,7 +92,6 @@ shotnow way_vow_12_thrown
 wait 30
 shotnow way_vow_13_card
 wait 80
-camera back
 shotnow way_vow_14_after
 screen band tasks
 wait 30
@@ -99,11 +99,13 @@ shotnow way_05_tasks_leap_row
 screen close
 # ---- a Tether Spire climbed by rope: the gate opens at its foot ----
 cmd awaken ascent spire goto
-wait 140
+wait 100
+camera back
 cmd awaken ascent pilot run spire
-wait 420
-shotnow way_06_crown
-wait 60
+wait 500
+shotnow way_06_climbing
+wait 400
+camera first
 shotnow way_07_crown_gate_told
 cmd awaken ascent pilot stop
 screen band tasks
@@ -111,8 +113,6 @@ wait 30
 shotnow way_08_tasks_gate_row
 screen close
 # ---- the leap's Lesson (its edge moment, then its gift's card) ----
-cmd spreadplayers ~30 ~30 0 6 false @s
-wait 60
 camera back
 cmd awaken ascent scene leap_edge
 wait 16
@@ -178,8 +178,11 @@ shotnow way_sky_11_rings
 camera back
 cmd awaken ascent pilot hold forward,sprint 40
 wait 26
+# with the leap held, the first press in the air is the double jump and the second opens the wings
 cmd awaken ascent pilot hold jump 2
-wait 6
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 8
 shotnow way_sky_12_opened
 wait 24
 shotnow way_sky_13_card
@@ -187,17 +190,17 @@ wait 60
 shotnow way_sky_14_glide
 wait 200
 # ---- the sky's strip of keys, and the Sovereign's prompt ----
-cmd spreadplayers ~ ~ 0 6 false @s
-wait 80
+wait 200
 cmd awaken ascent scene sky_edge
 wait 20
 shotnow way_16_sky_strip
 wait 200
 cmd awaken ascent grant sovereign
 cmd awaken ascent scene sovereign
-wait 60
+# the gift waits for feet on the ground, or thirty seconds
+wait 640
 shotnow way_17_sovereign_gift
-wait 100
+wait 140
 cmd awaken ascent pilot aether 1
 wait 30
 shotnow way_18_form_prompt

@@ -45,8 +45,8 @@ final class Lesson {
         LEAP_EDGE(WayUp.Rung.LEAP, false, "Press again in the air"),
         LEAP_OWED(WayUp.Rung.LEAP, false, "Jump, then press again in the air"),
         /** Off a sky platform's pier. */
-        FIRST_FLIGHT(WayUp.Rung.WINGS, false, "Run off the end, press in the air"),
-        WINGS_OWED(WayUp.Rung.WINGS, false, "Press in a long fall to open wings"),
+        FIRST_FLIGHT(WayUp.Rung.WINGS, false, "Run off the end, then press twice"),
+        WINGS_OWED(WayUp.Rung.WINGS, false, "In a long fall, press twice"),
         /** In the Sky Warden's fight: keys only, top of the screen. */
         SKY_STRIP(WayUp.Rung.SKY, false, ""),
         FORM(WayUp.Rung.FORM, false, "Press when the gold line is full");
@@ -124,7 +124,7 @@ final class Lesson {
             }
             case WINGS -> {
                 cardName = "Wings";
-                cardHints = List.of(Kit.Hint.of("in the air: open", jump), Kit.Hint.of("look to steer"), Kit.Hint.of("fold", sneak));
+                cardHints = List.of(Kit.Hint.of("twice in the air: open", jump), Kit.Hint.of("look to steer"), Kit.Hint.of("fold", sneak));
             }
             case SKY -> {
                 cardName = "The open sky";

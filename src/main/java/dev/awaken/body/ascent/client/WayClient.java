@@ -148,9 +148,9 @@ public final class WayClient {
         if (Lesson.kind() == Lesson.Kind.FIRST_FLIGHT && end != null && clock % 20 == 0) {
             // a line of rings of light off the pier's end, sinking as a glide would
             Vec3 way = new Vec3(flyX, -0.14, flyZ).normalize();
-            for (int i = 1; i <= 5; i++) {
-                double d = 4 + i * 7;
-                AscentFx.ring(end.x + flyX * d, end.y + 1.2 - d * 0.14, end.z + flyZ * d, way, 1.7F);
+            for (int i = 1; i <= 4; i++) {
+                double d = 6 + i * 10;
+                AscentFx.ring(end.x + flyX * d, end.y + 1.2 - d * 0.14, end.z + flyZ * d, way, 1.2F);
             }
         } else if (Lesson.kind() != Lesson.Kind.FIRST_FLIGHT && !flightPending && pierEnd != null && AscentMoves.state().airborne()) {
             pierEnd = null;
@@ -183,12 +183,19 @@ public final class WayClient {
         if (d2 < BEAM_NEAR * BEAM_NEAR || d2 > BEAM_FAR * BEAM_FAR) return;
         // the rank's colour: D green for the vault, C blue for the sky platform
         int colour = r == WayUp.Rung.ROPE ? 0xFF6FE09A : 0xFF8FBEFF;
+        double d = Math.sqrt(d2);
         // wider with distance so it stays a line you can see, never a pillar up close
-        float wide = (float) Math.min(1.6, 0.25 + Math.sqrt(d2) / 420.0);
+        float wide = (float) Math.min(3.2, 0.3 + d / 160.0);
+        // fog takes everything past the view distance: a far beam is drawn nearer on the same line of sight, the whole
+        // of it scaled about the eye, so it looks exactly as it would from here (it may show over a hill that would hide it)
+        double clear = Math.max(64, mc.options.getEffectiveRenderDistance() * 16 * 0.55);
+        float s = d > clear ? (float) (clear / d) : 1F;
         PoseStack ps = e.getPoseStack();
         float time = (e.getLevelRenderState().gameTime % 40) + e.getLevelRenderState().worldPartialTicks;
         ps.pushPose();
-        ps.translate(dx - 0.5, -64 - cam.y, dz - 0.5);
+        ps.translate(dx * s, (-64 - cam.y) * s, dz * s);
+        ps.scale(s, s, s);
+        ps.translate(-0.5, 0, -0.5);
         BeaconRenderer.submitBeaconBeam(ps, e.getSubmitNodeCollector(), BEAM, 1F, time, 0, 448, colour, wide * 0.5F, wide);
         ps.popPose();
     }

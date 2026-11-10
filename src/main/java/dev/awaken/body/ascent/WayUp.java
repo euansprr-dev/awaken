@@ -319,6 +319,7 @@ public final class WayUp {
         BlockPos near = new BlockPos(crown.getX() + (int) Math.round(dx / len * 9), footY, crown.getZ() + (int) Math.round(dz / len * 9));
         int id = AscentTrials.openLeaper(p, near);
         if (id >= 0) DirectorLog.log(p, "ascent", "a crown by rope: the Leaper's Gauntlet opens at its foot (gate " + id + ")");
+        dev.awaken.Awaken.LOG.info("[ascent] the way up: a crown by rope for {}: the Gauntlet's gate {} near {}", p.getPlainTextName(), id, near.toShortString());
     }
 
     // ---- telling ----------------------------------------------------------------------------------------------------
@@ -347,6 +348,7 @@ public final class WayUp {
         if (line != null) Signal.toast(p, Component.literal(line), dev.awaken.core.api.Notices.Tier.IMPORTANT, "ascent_way");
         Progression.markNewThing(p, "way " + r.name().toLowerCase(java.util.Locale.ROOT));
         DirectorLog.log(p, "ascent", "the way up: " + r + " wakes at " + at.toShortString() + " (" + where + ")");
+        dev.awaken.Awaken.LOG.info("[ascent] the way up: {} wakes for {} at {} ({})", r, p.getPlainTextName(), at.toShortString(), where);
     }
 
     // ---- the Tasks row and the Now line ------------------------------------------------------------------------------
@@ -418,6 +420,7 @@ public final class WayUp {
         Ascent.Tier top = Ascent.highest(p);
         WayMemory m = memory(p).withPlace(r, null);
         boolean handedDown = top != null && t.ordinal() < top.ordinal() && p.tickCount > 100;
+        dev.awaken.Awaken.LOG.info("[ascent] the way up: {} given to {}{}", r, p.getPlainTextName(), handedDown ? " (handed down: its lesson is owed)" : "");
         if (handedDown) m = m.withOwed(r);
         if (r == Rung.LEAP) m = m.withGate(-1, null);
         set(p, m);
