@@ -1,5 +1,16 @@
 # Places: where they stand (10 Nov 2026)
 
+> **Rejected as content, 10 Nov 2026, on the picture page.** Euan: "they basically just feel like decoration... no meaning to
+> them, no lore to them, no gameplay mechanics to them. They're kind of all just empty buildings... They look very vanilla
+> and boring and flat right now. They don't have depth." He wants the remains of a world inhabited for a very long time:
+> a little broken down, each with its own loot, lore, something to do, and a look that makes you stop. **Do not merge the
+> thirty.** What carries over is the engine (SPEC §59.2 to §59.4, §59.7). The second take is three concept paintings
+> (`img/stair.jpg`, `img/dish.jpg`, `img/hall.jpg`; page https://claude.ai/artifact/1Fign2AXfzSB9AhJwe9Jns) built by the
+> Gates' own rule (SPEC §50.8 and "Quality as a process gate" in docs/gates-as-worlds/PLAN.md): painting first, a block
+> family of its own, relief at three scales, at most a third vanilla, the game picture beside the painting, one monument
+> proved before a second is started. Waiting on Euan: the look, ten to twelve monuments instead of thirty, the relics,
+> danger or none, which to build first. Everything below describes the thirty as they were shown to him.
+
 Branch `claude/finds-over-every-hill`, not merged. Design: SPEC §59. Briefs: `BRIEFS.md`. Nothing here has been played by a
 person. Euan's bar: real places that stand out when you discover them, with atmosphere, natural to their land, never a
 fairground (memory: finds-places-not-objects, finds-not-a-fairground, wonders-aaa-bar).
