@@ -44,6 +44,11 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:vine_seat", Rank.E, seed, 1));
     }
 
+    private static dev.awaken.gates.realms.land.QuietBarrow barrow(long seed) {
+        return new dev.awaken.gates.realms.land.QuietBarrow(new Land.Ctx(new Blueprint(1, "t", "land", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:quiet_barrow", 62, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:quiet_barrow", Rank.E, seed, 1));
+    }
+
     private static Land amber(long seed) {
         return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
     }
@@ -277,6 +282,24 @@ public final class RealmTests {
         AwakenTests.register("realm_vine_nothing_floats", 2400, h -> {
             FloatCheck.Report r = FloatCheck.scan(vine(1), -416, -416, 416, 416);
             if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_quiet_barrow_walks_to_everything", 2400, h -> {
+            for (long seed : new long[]{1, 2}) {
+                List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(barrow(seed));
+                if (!bad.isEmpty()) h.fail("seed " + seed + ": can't reach " + bad);
+            }
+            h.succeed();
+        });
+        AwakenTests.register("realm_quiet_barrow_nothing_floats", 2400, h -> {
+            dev.awaken.gates.realms.land.QuietBarrow land = barrow(1);
+            FloatCheck.Report r = FloatCheck.scan(land, -256, -256, 256, 256);
+            dev.awaken.Awaken.LOG.info("[realms] the Quiet Barrow: {} standing stones, {} mounds asleep; {}", land.stoneCount(), land.sleepers().size(), dev.awaken.gates.realms.kit.Settle.lastTally(land).line());
+            if (!r.clean()) h.fail(r.summary());
+            // each mound that sleeps has a seal to take out and a den behind it, and the way aboard is shut until it's opened
+            if (land.sleepers().size() != 9 || land.sites(Land.SiteKind.DEN).size() != 9) h.fail("nine mounds should sleep, each with its den");
+            for (int i = 0; i < 9; i++) if (land.change("wake_" + i).size() < 18) h.fail("mound " + i + " has no seal to take out");
+            if (land.change("heart_open").isEmpty() || land.change("heart_shut").isEmpty()) h.fail("the way aboard doesn't open and shut");
             h.succeed();
         });
         AwakenTests.register("realm_vine_curtains_part", 200, h -> {

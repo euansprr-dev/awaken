@@ -178,6 +178,18 @@ public final class ThemeBlocks {
             Def.of("knell_patina", C, MapColor.COLOR_CYAN, SoundType.COPPER, 0),
             Def.of("knell_bronze_key", C, MapColor.GOLD, SoundType.COPPER, 0),
             Def.of("knell_iron", C, MapColor.COLOR_BLACK, SoundType.IRON, 0),
+            // The Quiet Barrow (SPEC 50.8, gate 6): tools/art/specs/realm_barrow.py
+            Def.soft("barrow_heather", PL, MapColor.COLOR_PURPLE, SoundType.GRASS, 0),
+            Def.soft("barrow_heather_pale", PL, MapColor.SAND, SoundType.GRASS, 0),
+            Def.soft("barrow_bent", PL, MapColor.SAND, SoundType.GRASS, 0),
+            Def.soft("barrow_turf", C, MapColor.PODZOL, SoundType.ROOTED_DIRT, 0),
+            Def.box("barrow_menhir_cap", PR, MapColor.COLOR_GRAY, SoundType.STONE, 0, 0, 0, 0, 16, 12, 16),
+            Def.box("barrow_kerb", PR, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 2, 0, 2, 14, 10, 14),
+            Def.box("barrow_shield", PR, MapColor.WOOD, SoundType.WOOD, 0, 1, 1, 11, 15, 15, 16),
+            Def.box("barrow_shield_south", PR, MapColor.WOOD, SoundType.WOOD, 0, 1, 1, 0, 15, 15, 5),
+            Def.box("barrow_urn", PR, MapColor.TERRACOTTA_ORANGE, SoundType.DECORATED_POT, 0, 2, 0, 2, 14, 14, 14),
+            Def.of("barrow_grave_glow", C, MapColor.COLOR_LIGHT_GREEN, SoundType.FROGLIGHT, 11),
+            Def.box("barrow_sail", PR, MapColor.TERRACOTTA_RED, SoundType.WOOL, 0, 0, 0, 6, 16, 16, 10),
             // Amber Reach, the first Realm's own materials (50.7): the warm mid-tones of its painting
             Def.of("amber_stone", C, MapColor.COLOR_ORANGE, SoundType.STONE, 0),
             Def.of("amber_stone_worn", C, MapColor.TERRACOTTA_ORANGE, SoundType.STONE, 0),
