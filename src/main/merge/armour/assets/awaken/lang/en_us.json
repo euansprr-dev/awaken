@@ -149,5 +149,13 @@
   "subtitles.awaken.armour.struck_plate": "A blow lands on armour",
   "subtitles.awaken.armour.struck_crystal": "A blow lands on armour",
   "subtitles.awaken.armour.struck_bone": "A blow lands on armour",
-  "key.awaken.admire": "Admire your armour (hold)"
+  "key.awaken.admire": "Admire your armour (hold)",
+  "subtitles.awaken.armour.move_hide": "Armour shifts",
+  "subtitles.awaken.armour.move_cloth": "Armour shifts",
+  "subtitles.awaken.armour.move_mail": "Armour shifts",
+  "subtitles.awaken.armour.move_plate": "Armour shifts",
+  "subtitles.awaken.armour.move_heavy": "Armour shifts",
+  "subtitles.awaken.armour.move_crystal": "Armour shifts",
+  "subtitles.awaken.armour.move_bone": "Armour shifts",
+  "subtitles.awaken.armour.move_feather": "Armour shifts"
 }

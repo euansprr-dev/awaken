@@ -185,35 +185,35 @@ ROWS = [
         ("A parrot's wings, quiet, with leather raised", [v("entity.parrot.fly", 0.5, 1.2), v("item.armor.equip_leather", 0.6, 1.2)]),
         ("A phantom's wingbeat, quiet and raised, with plain armour", [v("entity.phantom.flap", 0.5, 1.4), v("item.armor.equip_generic", 0.6, 1.2)])]),
     # ---- new: the sound of a set as you move, one soft sound a stride ------------------------------------------------
-    row("armour.move_hide", "Walking in hide", "walk", new=True, picks=[
+    row("armour.move_hide", "Walking in hide", "walk", new=True, subtitle="Armour shifts", picks=[
         ("Leather creaking, quiet and raised", [v("item.armor.equip_leather", 0.25, 1.4)]),
         ("A soft step on wool, lowered", [v("block.wool.step", 0.5, 0.8)]),
         ("A saddle's creak, very quiet", [v("entity.horse.saddle", 0.2, 1.5)])]),
-    row("armour.move_cloth", "Walking in cloth", "walk", new=True, picks=[
+    row("armour.move_cloth", "Walking in cloth", "walk", new=True, subtitle="Armour shifts", picks=[
         ("A step on wool, raised: cloth brushing", [v("block.wool.step", 0.6, 1.3)]),
         ("An elytra's cloth, very quiet and raised", [v("item.armor.equip_elytra", 0.2, 1.5)]),
         ("A step on a moss carpet, raised", [v("block.moss_carpet.step", 0.5, 1.2)])]),
-    row("armour.move_mail", "Walking in mail", "walk", new=True, picks=[
+    row("armour.move_mail", "Walking in mail", "walk", new=True, subtitle="Armour shifts", picks=[
         ("A step on chain, raised: links shifting", [v("block.chain.step", 0.5, 1.3)]),
         ("Chain mail, very quiet and raised", [v("item.armor.equip_chain", 0.22, 1.5)]),
         ("A chain tapped, quiet and raised", [v("block.chain.hit", 0.3, 1.5)])]),
-    row("armour.move_plate", "Walking in plate", "walk", new=True, picks=[
+    row("armour.move_plate", "Walking in plate", "walk", new=True, subtitle="Armour shifts", picks=[
         ("Iron armour, very quiet and raised: a soft clink", [v("item.armor.equip_iron", 0.22, 1.5)]),
         ("A step on chain with plain armour under it, both quiet", [v("block.chain.step", 0.35, 1.0), v("item.armor.equip_generic", 0.15, 1.3)]),
         ("An iron golem's step, very quiet and well raised", [v("entity.iron_golem.step", 0.25, 1.8)])]),
-    row("armour.move_heavy", "Walking in heavy plate", "walk", new=True, picks=[
+    row("armour.move_heavy", "Walking in heavy plate", "walk", new=True, subtitle="Armour shifts", picks=[
         ("Netherite armour, quiet: a low clank", [v("item.armor.equip_netherite", 0.25, 1.1)]),
         ("An iron golem's step, quiet and raised", [v("entity.iron_golem.step", 0.35, 1.4)]),
         ("A step on netherite, with iron armour very quiet", [v("block.netherite_block.step", 0.6, 0.9), v("item.armor.equip_iron", 0.12, 1.1)])]),
-    row("armour.move_crystal", "Walking in crystal", "walk", new=True, picks=[
+    row("armour.move_crystal", "Walking in crystal", "walk", new=True, subtitle="Armour shifts", picks=[
         ("A step on amethyst: a small glassy ring", [v("block.amethyst_block.step", 0.6, 1.1)]),
         ("A step on an amethyst cluster, with iron armour very quiet", [v("block.amethyst_cluster.step", 0.5, 1.0), v("item.armor.equip_iron", 0.12, 1.5)]),
         ("Diamond armour, very quiet and raised", [v("item.armor.equip_diamond", 0.2, 1.5)])]),
-    row("armour.move_bone", "Walking in bone and shell", "walk", new=True, picks=[
+    row("armour.move_bone", "Walking in bone and shell", "walk", new=True, subtitle="Armour shifts", picks=[
         ("A skeleton's step: bones knocking", [v("entity.skeleton.step", 0.5, 1.1)]),
         ("A step on bone, raised", [v("block.bone_block.step", 0.5, 1.2)]),
         ("A turtle shell, very quiet and raised", [v("item.armor.equip_turtle", 0.2, 1.4)])]),
-    row("armour.move_feather", "Walking in feathers", "walk", new=True, picks=[
+    row("armour.move_feather", "Walking in feathers", "walk", new=True, subtitle="Armour shifts", picks=[
         ("An elytra's cloth, very quiet and well raised", [v("item.armor.equip_elytra", 0.2, 1.6)]),
         ("A parrot's step with a wool step, raised", [v("entity.parrot.step", 0.5, 1.0), v("block.wool.step", 0.4, 1.4)]),
         ("A chicken's step, raised", [v("entity.chicken.step", 0.4, 1.2)])]),

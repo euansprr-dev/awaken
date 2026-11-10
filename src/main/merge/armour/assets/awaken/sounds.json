@@ -363,6 +363,7 @@
     ]
   },
   "armour.move_hide": {
+    "subtitle": "subtitles.awaken.armour.move_hide",
     "sounds": [
       {
         "name": "minecraft:item.armor.equip_leather",
@@ -373,6 +374,7 @@
     ]
   },
   "armour.move_cloth": {
+    "subtitle": "subtitles.awaken.armour.move_cloth",
     "sounds": [
       {
         "name": "minecraft:block.wool.step",
@@ -383,6 +385,7 @@
     ]
   },
   "armour.move_mail": {
+    "subtitle": "subtitles.awaken.armour.move_mail",
     "sounds": [
       {
         "name": "minecraft:block.chain.step",
@@ -393,6 +396,7 @@
     ]
   },
   "armour.move_plate": {
+    "subtitle": "subtitles.awaken.armour.move_plate",
     "sounds": [
       {
         "name": "minecraft:item.armor.equip_iron",
@@ -403,6 +407,7 @@
     ]
   },
   "armour.move_heavy": {
+    "subtitle": "subtitles.awaken.armour.move_heavy",
     "sounds": [
       {
         "name": "minecraft:item.armor.equip_netherite",
@@ -413,6 +418,7 @@
     ]
   },
   "armour.move_crystal": {
+    "subtitle": "subtitles.awaken.armour.move_crystal",
     "sounds": [
       {
         "name": "minecraft:block.amethyst_block.step",
@@ -423,6 +429,7 @@
     ]
   },
   "armour.move_bone": {
+    "subtitle": "subtitles.awaken.armour.move_bone",
     "sounds": [
       {
         "name": "minecraft:entity.skeleton.step",
@@ -433,6 +440,7 @@
     ]
   },
   "armour.move_feather": {
+    "subtitle": "subtitles.awaken.armour.move_feather",
     "sounds": [
       {
         "name": "minecraft:item.armor.equip_elytra",

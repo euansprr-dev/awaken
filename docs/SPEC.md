@@ -18173,7 +18173,8 @@ that fidgets would be wrong).
   sound until that module asks `ArmourSounds.equip(set)`.
 - **Walking in a set** (`armour.move_<family>`, client only): one soft sound a stride (1.7 blocks on the ground) from
   every armoured player within 12 blocks, by their cuirass (else their greaves), a quarter louder at a sprint, silent
-  at a sneak. Setting **Armour movement sound** 0 to 100, default 60, where a stride plays as loud as its recipe
+  at a sneak (subtitle "Armour shifts": every sound event of ours has one, `audio_events_resolve`). Setting **Armour
+  movement sound** 0 to 100, default 60, where a stride plays as loud as its recipe
   says; 0 is off (`/awaken armour movesound <0-100>`).
 - **A blow landing on your armour** (`armour.struck_soft|plate|crystal|bone`, server): under Minecraft's own hurt
   sound, on what the cuirass is made of, louder with the damage (0.35 + 0.05 a point, at most 0.9).
