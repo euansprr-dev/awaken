@@ -484,8 +484,13 @@ public final class StationView {
             z0 = Math.min(z0, p[2] - m);
             z1 = Math.max(z1, p[2] + m);
         }
+        // a bench is looked at square on: straight along the way in, whatever lies to one side of it (a table's result)
+        // (from the station's own views, which stand on its middle line: your own eyes, the fallback, frame what they see)
+        boolean square = stage(s, new double[4])
+                && Math.abs((ex - s.pos().getX() - 0.5) * s.rx() + (ez - s.pos().getZ() - 0.5) * s.rz()) < 0.02;
         double ax = (x0 + x1) / 2 - ex, ay = (y0 + y1) / 2 - ey, az = (z0 + z1) / 2 - ez;
         float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG), pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
+        if (square) yaw = (float) (Mth.atan2(-s.fx(), s.fz()) * Mth.RAD_TO_DEG);
         // the room in the screen's -1..1 (y up)
         double nx0 = l.rx0() * 2.0 / guiW - 1, nx1 = l.rx1() * 2.0 / guiW - 1, ny0 = 1 - l.ry0() * 2.0 / guiH, ny1 = 1 - l.ry1() * 2.0 / guiH;
         double hx = (nx1 - nx0) / 2, hy = (ny0 - ny1) / 2, ncx = (nx0 + nx1) / 2, ncy = (ny0 + ny1) / 2;
@@ -500,8 +505,10 @@ public final class StationView {
             u.set(0, 1, 0).rotate(q);
             r.set(1, 0, 0).rotate(q);
             bounds(s, ex, ey, ez, f, u, r, p, b);
-            tan = Mth.clamp(Math.max((b[1] - b[0]) / (2 * aspect * hx), (b[3] - b[2]) / (2 * hy)) * MARGIN, 0.05, tanMax);
-            yaw += (float) Math.toDegrees(Math.atan((b[0] + b[1]) / 2) - Math.atan(ncx * tan * aspect));
+            // (square on, the width to fit is twice the wider side's, about the view's own middle)
+            double wide = square ? 2 * Math.max(Math.abs(b[0]), Math.abs(b[1])) : b[1] - b[0];
+            tan = Mth.clamp(Math.max(wide / (2 * aspect * hx), (b[3] - b[2]) / (2 * hy)) * MARGIN, 0.05, tanMax);
+            if (!square) yaw += (float) Math.toDegrees(Math.atan((b[0] + b[1]) / 2) - Math.atan(ncx * tan * aspect));
             pitch += (float) Math.toDegrees(Math.atan(ncy * tan) - Math.atan((b[2] + b[3]) / 2));
         }
         out[0] = yaw;
@@ -509,11 +516,52 @@ public final class StationView {
         out[2] = (float) Math.toDegrees(2 * Math.atan(tan));
     }
 
-    /** The slots' bounds in the view's tangent plane (x right, y up): min x, max x, min y, max y. */
+    /**
+     * The stage a bench view frames beside the slots themselves, so the station is seen whole and square on: half its
+     * width across, half its depth along the way in, and the heights it lies between over the block's foot (SPEC §63.1).
+     * A table's is as wide as its result's far edge on both sides and no deeper than its slots (its grid fills its top,
+     * and a view opened to the whole top would make every square smaller); a workstation's is its whole top; a brewing
+     * stand's is the stand, foot to top. A furnace is framed by its slots alone.
+     */
+    static boolean stage(Station s, double[] out) {
+        Kind k = s.kind();
+        if (k == Kind.FURNACE) return false;
+        if (k == Kind.TABLE) {
+            out[0] = RESULT_SIDE + RESULT_HALF + 0.01;
+            out[1] = RESULT_HALF + 0.01;
+            out[2] = out[3] = 1.0;
+        } else if (k == Kind.BREWING) {
+            out[0] = 0.42;
+            out[1] = 0;
+            out[2] = 0;
+            out[3] = 1.05;
+        } else {
+            out[0] = 0.5;
+            out[1] = 0.5;
+            out[2] = out[3] = k.work;
+        }
+        return true;
+    }
+
+    /** The slots' and the stage's bounds in the view's tangent plane (x right, y up): min x, max x, min y, max y. */
     private static void bounds(Station s, double ex, double ey, double ez, Vector3f f, Vector3f u, Vector3f r, double[] p, double[] b) {
         b[0] = b[2] = 1e9;
         b[1] = b[3] = -1e9;
         double fx = s.fx(), fz = s.fz(), rx = s.rx(), rz = s.rz();
+        double[] st = new double[4];
+        if (stage(s, st)) {
+            double cx = s.pos().getX() + 0.5, cz = s.pos().getZ() + 0.5, base = s.pos().getY();
+            for (int c = 0; c < 8; c++) {
+                double a = (c & 1) == 0 ? -st[0] : st[0], up = (c & 2) == 0 ? st[2] : st[3], in = (c & 4) == 0 ? -st[1] : st[1];
+                double wx = cx + rx * a + fx * in - ex, wy = base + up - ey, wz = cz + rz * a + fz * in - ez;
+                double z = Math.max(0.05, wx * f.x + wy * f.y + wz * f.z);
+                double tx = (wx * r.x + wy * r.y + wz * r.z) / z, ty = (wx * u.x + wy * u.y + wz * u.z) / z;
+                b[0] = Math.min(b[0], tx);
+                b[1] = Math.max(b[1], tx);
+                b[2] = Math.min(b[2], ty);
+                b[3] = Math.max(b[3], ty);
+            }
+        }
         for (int i = 0; i < s.kind().slots; i++) {
             spot(s, i, p, 0);
             double ma = reach(s, i, 0), mu = reach(s, i, 1), mi = reach(s, i, 2);

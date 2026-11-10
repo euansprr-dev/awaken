@@ -113,8 +113,10 @@ final class WorldBody {
             List<FirstPerson.WorldSource> sources = FirstPerson.worldSources();
             boolean posed = false;
             for (int i = 0; i < sources.size() && !posed; i++) posed = sources.get(i).pose().pose(pt, RIG);
-            if (!posed || !RIG.any()) return;
-            armsThisFrame = RIG.arms();
+            if (!posed) return;
+            // a source may hold the hands and draw none: vanilla's hand stays away (drawArms skips what has no weight)
+            armsThisFrame = RIG.arms() || RIG.noHands;
+            if (!RIG.any()) return;
             submit(mc, e);
         } catch (RuntimeException ex) {
             broken = true;

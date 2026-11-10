@@ -26,6 +26,8 @@ final class StationFire {
     private static final double[] AT = new double[N * 3], VEL = new double[N * 3];
     private static final long[] BORN = new long[N];
     private static final float[] LIFE = new float[N];
+    /** A bubble in a brewing bottle, not an ember: pale, slow, and it only rises. */
+    private static final boolean[] BUBBLE = new boolean[N];
     private static int next;
     private static long flareAt, last;
     private static int seed = 0x2F6E2B1;
@@ -56,6 +58,7 @@ final class StationFire {
             VEL[j + 1] = 0.5 + rnd() * 0.9;
             VEL[j + 2] = s.rz() * (rnd() - 0.5) * 0.5 - s.fz() * (0.15 + rnd() * 0.5);
             BORN[i] = flareAt;
+            BUBBLE[i] = false;
             LIFE[i] = (float) (0.45 + rnd() * 0.5);
         }
     }
@@ -73,8 +76,23 @@ final class StationFire {
             VEL[j + 1] = 0.5 + rnd() * 1.0;
             VEL[j + 2] = Math.sin(a) * out;
             BORN[i] = now;
+            BUBBLE[i] = false;
             LIFE[i] = (float) (0.22 + rnd() * 0.3);
         }
+    }
+
+    /** A bubble of its own in a bottle that is brewing (SPEC §63.8): from a point in the bottle, straight up. */
+    static void bubble(double x, double y, double z) {
+        int i = next++ % N, j = i * 3;
+        AT[j] = x + (rnd() - 0.5) * 0.05;
+        AT[j + 1] = y + (rnd() - 0.5) * 0.03;
+        AT[j + 2] = z + (rnd() - 0.5) * 0.05;
+        VEL[j] = 0;
+        VEL[j + 1] = 0.1 + rnd() * 0.08;
+        VEL[j + 2] = 0;
+        BORN[i] = System.nanoTime();
+        BUBBLE[i] = true;
+        LIFE[i] = (float) (0.5 + rnd() * 0.4);
     }
 
     /** How bright the flare is now (0..0.55), for the light on your arm. */
@@ -102,6 +120,10 @@ final class StationFire {
             AT[j] += VEL[j] * dt;
             AT[j + 1] += VEL[j + 1] * dt;
             AT[j + 2] += VEL[j + 2] * dt;
+            if (BUBBLE[i]) {
+                any = true;
+                continue;
+            }
             VEL[j + 1] -= (LIFE[i] < 0.53F ? 3.2 : 0.9) * dt; // embers slow as they rise; a blow's sparks fall
             VEL[j] *= 1 - 1.5 * dt;
             VEL[j + 2] *= 1 - 1.5 * dt;
@@ -137,11 +159,17 @@ final class StationFire {
                 if (u >= 1) continue;
                 int j = i * 3;
                 float x = (float) (AT[j] - cam.x), y = (float) (AT[j + 1] - cam.y), z = (float) (AT[j + 2] - cam.z), r = 0.012F * (1 - 0.5F * u);
-                int g = Math.round(230 - 150 * u), b = Math.round(160 * (1 - u) * (1 - u)), a = Math.round(255 * (1 - u * u));
-                vc.addVertex(pose, x - RIGHT.x * r - UP.x * r, y - RIGHT.y * r - UP.y * r, z - RIGHT.z * r - UP.z * r).setColor(255, g, b, a);
-                vc.addVertex(pose, x + RIGHT.x * r - UP.x * r, y + RIGHT.y * r - UP.y * r, z + RIGHT.z * r - UP.z * r).setColor(255, g, b, a);
-                vc.addVertex(pose, x + RIGHT.x * r + UP.x * r, y + RIGHT.y * r + UP.y * r, z + RIGHT.z * r + UP.z * r).setColor(255, g, b, a);
-                vc.addVertex(pose, x - RIGHT.x * r + UP.x * r, y - RIGHT.y * r + UP.y * r, z - RIGHT.z * r + UP.z * r).setColor(255, g, b, a);
+                int red = 255, g = Math.round(230 - 150 * u), b = Math.round(160 * (1 - u) * (1 - u)), a = Math.round(255 * (1 - u * u));
+                if (BUBBLE[i]) {
+                    // pale, small, fading in and out as it rises
+                    r = 0.007F;
+                    red = 190; g = 225; b = 255;
+                    a = Math.round(150 * Mth.sin(u * Mth.PI));
+                }
+                vc.addVertex(pose, x - RIGHT.x * r - UP.x * r, y - RIGHT.y * r - UP.y * r, z - RIGHT.z * r - UP.z * r).setColor(red, g, b, a);
+                vc.addVertex(pose, x + RIGHT.x * r - UP.x * r, y + RIGHT.y * r - UP.y * r, z + RIGHT.z * r - UP.z * r).setColor(red, g, b, a);
+                vc.addVertex(pose, x + RIGHT.x * r + UP.x * r, y + RIGHT.y * r + UP.y * r, z + RIGHT.z * r + UP.z * r).setColor(red, g, b, a);
+                vc.addVertex(pose, x - RIGHT.x * r + UP.x * r, y - RIGHT.y * r + UP.y * r, z - RIGHT.z * r + UP.z * r).setColor(red, g, b, a);
             }
         });
     }

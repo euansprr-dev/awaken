@@ -1,7 +1,8 @@
 # Hands at Work, as built (SPEC 63, docs/interactions/PLAN.md): one look at every scene. The crafting table from two
 # blocks, a corner, four blocks and third person (the bench view, the carrying hand, piles and counts); the furnace's
 # crouch; the six workstations; a chest and a barrel (the lid in your hands, looking in); the four screens on glass; a
-# lever and a bell; and each body clip on your own body in third person. Shots and clips h_*.
+# lever and a bell; and each body clip on your own body in third person. Shots and clips h_*. Screens are shut with
+# Esc as a player shuts them ("screen close" only drops the client's screen: the server would think the menu still open).
 # Run on CI: tools/tour-ci.sh tools/autopilot/hands-at-work.txt 2400
 # ci knobs: PACK=feel
 world hands_at_work survival 4311
@@ -127,7 +128,7 @@ wait 6
 cmd awaken ascent pilot station 37 0
 wait 6
 cmd awaken ascent pilot rec h_table_out 18 3
-screen close
+screenkey esc
 wait 30
 
 # ---- a fast crafter: three squares, a click every other tick ----
@@ -145,7 +146,7 @@ wait 30
 shotnow h_table_fast
 cmd awaken ascent pilot station 37 0
 wait 6
-screen close
+screenkey esc
 wait 30
 
 # ---- the same table from a corner, from four blocks back, from right against it: the same view each time ----
@@ -163,7 +164,7 @@ wait 8
 shotnow h_table_corner
 cmd awaken ascent pilot station 37 0
 wait 6
-screen close
+screenkey esc
 wait 30
 cmd tp @s 1.5 200 -0.4 0 14
 wait 20
@@ -177,7 +178,7 @@ wait 8
 shotnow h_table_far
 cmd awaken ascent pilot station 37 0
 wait 6
-screen close
+screenkey esc
 wait 30
 cmd tp @s 1.5 200 2.5 0 50
 wait 20
@@ -190,7 +191,7 @@ wait 8
 shotnow h_table_near
 cmd awaken ascent pilot station 37 0
 wait 6
-screen close
+screenkey esc
 wait 30
 
 # ---- third person: the view goes to the bench and comes home to third person ----
@@ -203,7 +204,7 @@ cmd awaken ascent pilot use
 wait 34
 shotnow h_table_3p
 cmd awaken ascent pilot rec h_table_3p_out 26 3
-screen close
+screenkey esc
 wait 40
 shotnow h_table_3p_home
 camera first
@@ -246,14 +247,14 @@ wait 30
 cmd awaken ascent pilot station 30 0
 wait 6
 cmd awaken ascent pilot rec h_furnace_out 18 3
-screen close
+screenkey esc
 wait 30
 cmd tp @s 3.4 200 3.5 -90 30
 wait 20
 cmd awaken ascent pilot use
 wait 30
 shotnow h_furnace_from_side
-screen close
+screenkey esc
 wait 30
 cmd tp @s 5.5 200 -0.4 0 14
 wait 20
@@ -261,7 +262,7 @@ cmd awaken ascent pilot rec h_furnace_far_in 26 3
 cmd awaken ascent pilot use
 wait 30
 shotnow h_furnace_far
-screen close
+screenkey esc
 wait 30
 
 # ---- the anvil: a worn sword and a diamond, the name line and the cost ----
@@ -296,7 +297,7 @@ wait 26
 shotnow h_anvil_taken
 cmd awaken ascent pilot station 30 0
 wait 6
-screen close
+screenkey esc
 wait 30
 
 # ---- the smithing table: template, sword, ingot ----
@@ -327,7 +328,7 @@ wait 14
 cmd awaken ascent pilot hover 3
 wait 8
 shotnow h_smithing_result
-screen close
+screenkey esc
 wait 30
 
 # ---- the grindstone: an enchanted sword ----
@@ -347,7 +348,7 @@ wait 14
 cmd awaken ascent pilot hover 2
 wait 8
 shotnow h_grindstone_result
-screen close
+screenkey esc
 wait 30
 
 # ---- the stonecutter: a stack of stone and its choices ----
@@ -365,7 +366,7 @@ shotnow h_stonecutter_carry
 cmd awaken ascent pilot station 0 0
 wait 14
 shotnow h_stonecutter_choices
-screen close
+screenkey esc
 wait 30
 
 # ---- the cartography table: paper ----
@@ -383,7 +384,7 @@ shotnow h_cartography_carry
 cmd awaken ascent pilot station 1 0
 wait 14
 shotnow h_cartography_laid
-screen close
+screenkey esc
 wait 30
 
 # ---- the brewing stand: three bottles, wart, powder ----
@@ -422,7 +423,7 @@ shotnow h_brewing_carry
 cmd awaken ascent pilot station 3 0
 wait 40
 shotnow h_brewing_brewing
-screen close
+screenkey esc
 wait 30
 
 # ---- a chest: the lid in your hands, looking in, a stack lifted and laid ----
@@ -443,7 +444,7 @@ click 213 98
 wait 8
 shotnow h_chest_laid
 cmd awaken ascent pilot rec h_chest_close 26 3
-screen close
+screenkey esc
 wait 30
 cmd tp @s 30.5 200 1.6 0 30
 wait 20
@@ -453,7 +454,7 @@ wait 8
 shotnow h_barrel_hatch
 wait 26
 shotnow h_barrel_screen
-screen close
+screenkey esc
 wait 30
 
 # ---- a chest in third person: your body bent to it (the screen shut at once so the body shows) ----
@@ -465,7 +466,7 @@ cmd awaken ascent pilot rec h_chest_3p 40 3
 cmd awaken ascent pilot use
 wait 14
 shotnow h_chest_3p_screen
-screen close
+screenkey esc
 wait 30
 camera first
 wait 10
@@ -476,28 +477,28 @@ wait 20
 cmd awaken ascent pilot use
 wait 30
 shotnow h_glass_hopper
-screen close
+screenkey esc
 wait 20
 cmd tp @s 36.5 200 1.6 0 30
 wait 20
 cmd awaken ascent pilot use
 wait 30
 shotnow h_glass_dispenser
-screen close
+screenkey esc
 wait 20
 cmd tp @s 39.5 200 1.6 0 30
 wait 20
 cmd awaken ascent pilot use
 wait 30
 shotnow h_glass_crafter
-screen close
+screenkey esc
 wait 20
 cmd tp @s 42.5 200 1.6 0 30
 wait 20
 cmd awaken ascent pilot use
 wait 30
 shotnow h_glass_beacon
-screen close
+screenkey esc
 wait 20
 
 # ---- a lever and a bell, in your hands and on your body ----

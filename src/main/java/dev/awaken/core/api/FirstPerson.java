@@ -60,6 +60,11 @@ public final class FirstPerson {
         public final float[] armStretch = {1F, 1F};
         /** Warm light on the arms from a fire they reach toward (0..1), added to the block light they are drawn in. */
         public float fireLight;
+        /**
+         * The source has the hands though it draws none this frame (a furnace scene between reaches, SPEC §63.6): the
+         * game's own hand and what it holds stay out of the view.
+         */
+        public boolean noHands;
 
         public void clear() {
             java.util.Arrays.fill(weight, 0F);
@@ -69,6 +74,7 @@ public final class FirstPerson {
             worldArms = false;
             armStretch[0] = armStretch[1] = 1F;
             fireLight = 0;
+            noHands = false;
         }
 
         public void limb(Limb l, double rx, double ry, double rz, double tx, double ty, double tz, double frx, double fry, double frz, float w) {

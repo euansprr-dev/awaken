@@ -179,6 +179,10 @@ public final class StationTests {
                         StationView.frame(first, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
                         String at = "view " + b + " at " + w + "x" + gh + (sides ? " with JEI" : "");
                         h.assertTrue(view[2] < StationView.MAX_FOV - 0.01F, "the bench view frames the table without opening past the most, " + at);
+                        // square on: the view looks straight along the way in (the result on the right border does not turn it)
+                        float along = (float) Math.toDegrees(Math.atan2(-first.fx(), first.fz()));
+                        h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(view[0] - along)) < 0.25F, "the bench view is square to the table, " + at
+                                + " (" + net.minecraft.util.Mth.wrapDegrees(view[0] - along) + ")");
                         StationView.rotation(view[0], view[1], rot);
                         for (int i = 0; i < 10; i++) {
                             StationView.spot(first, i, p, 0);
@@ -385,6 +389,19 @@ public final class StationTests {
                         StationView.Layout l = StationView.layout(w, gh, 2, true);
                         StationView.frame(s, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
                         StationView.rotation(view[0], view[1], rot);
+                        // the station is seen whole and square on: the view looks along the way in, and (unless the
+                        // window is too small for it) the four corners of its top are inside the room
+                        float along = (float) Math.toDegrees(Math.atan2(-s.fx(), s.fz()));
+                        h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(view[0] - along)) < 0.25F,
+                                kind + " is looked at square on from view " + b + " at " + w + "x" + gh + " (" + net.minecraft.util.Mth.wrapDegrees(view[0] - along) + ")");
+                        if (kind != StationView.Kind.BREWING && view[2] < StationView.MAX_FOV - 0.01F) {
+                            for (int c = 0; c < 4; c++) {
+                                double a = (c & 1) == 0 ? -0.49 : 0.49, in = (c & 2) == 0 ? -0.49 : 0.49;
+                                h.assertTrue(StationView.project(TABLE.getX() + 0.5 + s.rx() * a + s.fx() * in, TABLE.getY() + kind.work, TABLE.getZ() + 0.5 + s.rz() * a + s.fz() * in,
+                                                eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q) && l.inRoom(q[0], q[1]),
+                                        kind + "'s whole top is inside the room from view " + b + " at " + w + "x" + gh);
+                            }
+                        }
                         for (int i = 0; i < kind.slots; i++) {
                             StationView.spot(s, i, p, 0);
                             String at = kind + " slot " + i + " from view " + b + " at " + w + "x" + gh;

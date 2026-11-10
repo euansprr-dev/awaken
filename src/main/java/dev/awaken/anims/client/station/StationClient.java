@@ -76,11 +76,17 @@ public final class StationClient {
     private static final long[] LAID_AT = new long[10];
     private static long resultAt;
     private static final long SETTLE_NS = 110_000_000L, RESULT_NS = 200_000_000L;
+    /** What was used up as a result was taken (SPEC §63.3): each square's stack as it was, and when; and when the rest gave. */
+    private static final ItemStackRenderState[] FLECKS = new ItemStackRenderState[10];
+    private static final long[] FLECK_AT = new long[10];
+    private static long gaveAt;
+    private static final long FLECK_NS = 280_000_000L, GIVE_NS = 110_000_000L;
     private static final double[] HELD = new double[3];
 
     static {
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
         for (int i = 0; i < ITEMS.length; i++) ITEMS[i] = new ItemStackRenderState();
+        for (int i = 0; i < FLECKS.length; i++) FLECKS[i] = new ItemStackRenderState();
     }
 
     public static void init(IEventBus bus, IEventBus modBus) {
@@ -124,13 +130,23 @@ public final class StationClient {
             return;
         }
         reframe(s);
+        // a brewing stand at work: a bubble in each bottle, every third tick (SPEC §63.8)
+        if (kind == Kind.BREWING && ticks % 3 == 0 && s.getMenu() instanceof net.minecraft.world.inventory.BrewingStandMenu brew && brew.getBrewingTicks() > 0
+                && !FirstPerson.reducedMotion.getAsBoolean()) {
+            for (int i = 0; i < 3; i++) {
+                if (brew.getSlot(i).getItem().isEmpty()) continue;
+                spot(i, P, 0);
+                StationFire.bubble(P[0], P[1] - 0.03, P[2]);
+            }
+        }
         // what changed on the station after your own click: the hand that carries it dips as it is set down, a stack
         // picked up rises into it, and a change made without carrying (a shift-click, a key) gets one short pass
         AbstractContainerMenu menu = s.getMenu();
-        boolean yours = ticks - clickedAt <= 6, tapped = false;
+        boolean yours = ticks - clickedAt <= 6, tapped = false, took = false;
         int res = kind.result;
         for (int k = 0; k < kind.slots; k++) {
-            int i = (res + k) % kind.slots; // the result first: taking it empties the grid too, but the hand went to it
+            // the result first: taking it empties the grid too, but the hand went to it (a brewing stand has none)
+            int i = res < 0 ? k : (res + k) % kind.slots;
             ItemStack now = menu.getSlot(i).getItem();
             if (ItemStack.matches(now, SEEN[i])) continue;
             ItemStack was = SEEN[i];
@@ -142,6 +158,14 @@ public final class StationClient {
                 if (yours && kind.bench()) StationSounds.result(table);
             }
             if (!yours) continue;
+            if (took && i != res && !more) {
+                // used up by the result you just took: no hand goes to it; it gives, and a few flecks of it fall
+                if (!was.isEmpty() && Minecraft.getInstance().level != null) {
+                    Minecraft.getInstance().getItemModelResolver().updateForTopItem(FLECKS[i], was, ItemDisplayContext.FIXED, Minecraft.getInstance().level, null, 200 + i);
+                    FLECK_AT[i] = System.nanoTime();
+                }
+                continue;
+            }
             if (i != res && more) {
                 LAID_AT[i] = System.nanoTime();
                 if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationSounds.fuel(table);
@@ -152,8 +176,11 @@ public final class StationClient {
                 if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationFire.flare(station);
             } else if (taken || (!more && !menu.getCarried().isEmpty())) {
                 StationHands.lifted();
-                if (taken) StationSounds.take(table);
-                else StationSounds.lift(table);
+                if (taken) {
+                    StationSounds.take(table);
+                    took = true;
+                    gaveAt = System.nanoTime();
+                } else StationSounds.lift(table);
                 // taking what an anvil, a smithing table or a grindstone made: the other hand's blows on the work,
                 // sparks off each (SPEC §63.8); the block's own sound is vanilla's
                 if (taken && (kind == Kind.ANVIL || kind == Kind.SMITHING || kind == Kind.GRINDSTONE)) StationHands.blows(kind == Kind.SMITHING ? 1 : 0, kind == Kind.ANVIL ? 3 : 1);
@@ -331,6 +358,8 @@ public final class StationClient {
         open = true;
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
         java.util.Arrays.fill(LAID_AT, 0L);
+        java.util.Arrays.fill(FLECK_AT, 0L);
+        gaveAt = 0;
         resultAt = 0;
         StationHands.reset();
         StationFire.reset();
@@ -525,6 +554,10 @@ public final class StationClient {
                 double u = (now - LAID_AT[i]) / (double) SETTLE_NS;
                 if (u < 1) lift = StationView.HOVER * 0.85 * (1 - Ease.at(Ease.OUT_CUBIC, (float) u));
                 else LAID_AT[i] = 0;
+            } else if (gaveAt != 0) {
+                // what is left on the station gives a little as the result is taken from it
+                double u = (now - gaveAt) / (double) GIVE_NS;
+                if (u < 1) grow = 1F - 0.1F * Mth.sin((float) (u * Math.PI));
             }
             // a stack lies as a small pile (as dropped stacks do)
             int n = pile(st.getCount());
@@ -546,9 +579,30 @@ public final class StationClient {
                     // between the lines, a block half that)
                     ps.rotateDegrees(Axis.YP, 180F - yaw);
                     ps.rotateDegrees(Axis.XP, 90F);
-                    ps.scale(kind.size, kind.size, kind.size);
+                    ps.scale(kind.size * grow, kind.size * grow, kind.size * grow);
                 }
                 r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
+                ps.popPose();
+            }
+        }
+        // flecks of what a taken result used up: three small pieces of it thrown from its square, falling back
+        for (int i = 0; !furnace && i < kind.slots; i++) {
+            if (FLECK_AT[i] == 0) continue;
+            float u = (float) ((now - FLECK_AT[i]) / (double) FLECK_NS);
+            if (u >= 1 || FLECKS[i].isEmpty()) {
+                FLECK_AT[i] = 0;
+                continue;
+            }
+            spot(i, P, 0);
+            float size = kind.size * 0.22F * (1F - 0.5F * u);
+            for (int k = 0; k < 3; k++) {
+                float a = i * 2.4F + k * 2.1F, out = 0.03F + 0.09F * Ease.at(Ease.OUT_CUBIC, u);
+                ps.pushPose();
+                ps.translate(P[0] + Mth.cos(a) * out - cam.x, P[1] + 0.012 + (0.05 + 0.012 * k) * 4 * u * (1 - u) - cam.y, P[2] + Mth.sin(a) * out - cam.z);
+                ps.rotateDegrees(Axis.YP, a * 57.3F + u * 220F);
+                ps.rotateDegrees(Axis.XP, 90F - u * 120F);
+                ps.scale(size, size, size);
+                FLECKS[i].submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
                 ps.popPose();
             }
         }

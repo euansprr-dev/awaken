@@ -213,9 +213,10 @@ final class StationHands {
                 T[1] = eye.y - 0.42;
                 T[2] = eye.z + s.rz() * side * 0.34 + s.fz() * 0.45;
             } else {
-                double u = isMain ? (hasHit ? Mth.clamp(hu, -0.3, 0.3) : side * 0.2) : side * 0.34, v = isMain ? -0.56 : -0.6;
+                // (a hand with nothing to do rests off the near corner on its own side, clear of the strip's glass)
+                double u = isMain && hasHit ? Mth.clamp(hu, -0.3, 0.3) : side * 0.36, v = isMain && hasHit ? -0.56 : -0.6;
                 T[0] = cx + s.rx() * u + s.fx() * v;
-                T[1] = top + (isMain ? 0.05 : 0.03);
+                T[1] = top + (isMain && hasHit ? 0.05 : 0.03);
                 T[2] = cz + s.rz() * u + s.fz() * v;
             }
             if (passSlot >= 0 && passU < 1 && passHand == side) {
@@ -328,6 +329,12 @@ final class StationHands {
         // a lit fire lights the skin of an arm that reaches toward it (SPEC §63.6)
         if (furnace && screen != null && screen.getMenu() instanceof net.minecraft.world.inventory.AbstractFurnaceMenu f) {
             rig.fireLight = Math.min(1F, (f.isLit() ? 0.45F : 0F) + StationFire.level());
+        }
+        // before a furnace the hands are the scene's even while neither shows: the game's own hand and what it holds
+        // would sit in the corner of the lowered view
+        if (furnace && !posed && w > 0.01F) {
+            rig.noHands = true;
+            return true;
         }
         return posed;
     }

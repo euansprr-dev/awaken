@@ -37,6 +37,9 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     int hovered = -1;
     StationView.@Nullable Layout layout;
     private List<FormattedCharSequence> hint = List.of();
+    /** When this screen opened: its hint is read once and then leaves the view to the work (SPEC §63.1). */
+    private final long openedNs = System.nanoTime();
+    private static final float HINT_HOLD = 3.5F;
     // vanilla draws its slot highlight at a hovered slot's screen place, which is no longer the station's: while it
     // draws, the station's slots are never hovered
     private boolean drawing;
@@ -210,10 +213,15 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
         StationView.Layout l = layout;
         if (l == null) return;
         // centred in the room, over the strip (drawn from the image's corner)
+        // read once, then out of the way of the work: whole for 3.5 s, gone over the next 0.6
+        float seen = (System.nanoTime() - openedNs) / 1e9F;
+        float a = seen < HINT_HOLD ? 1F : 1F - (seen - HINT_HOLD) / 0.6F;
+        if (a <= 0.06F) return;
+        int col = (Math.round(255 * Math.min(1F, a)) << 24) | (HINT & 0xFFFFFF);
         int mid = (l.rx0() + l.rx1()) / 2;
         for (int i = 0; i < hint.size(); i++) {
             FormattedCharSequence line = hint.get(i);
-            g.text(font, line, mid - font.width(line) / 2 - leftPos, l.hintY() + i * StationView.LINE - topPos, HINT, true);
+            g.text(font, line, mid - font.width(line) / 2 - leftPos, l.hintY() + i * StationView.LINE - topPos, col, a > 0.6F);
         }
     }
 
@@ -292,19 +300,22 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
             // a furnace's three slots: the count under each stack's near corner, the one in your hand beside it
             for (int i = 0; i < n; i++) {
                 ItemStack stack = menu.getSlot(i).getItem();
+                if (stack.getCount() <= 1) counted[i] = 0;
                 StationView.spot(st, i, spot, 0);
                 if (stack.getCount() > 1 && project(spot[0] + st.rx() * 0.1 - st.fx() * 0.1, spot[1] - 0.1, spot[2] + st.rz() * 0.1 - st.fz() * 0.1, at)) {
-                    count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), stack.getCount());
+                    count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), stack.getCount(), i);
                 }
             }
             ItemStack held = menu.getCarried();
+            if (held.getCount() <= 1) counted[10] = 0;
             if (StationHands.carrying() && held.getCount() > 1 && StationHands.hit(spot) && project(spot[0] + st.rx() * 0.1, spot[1] - 0.1, spot[2] + st.rz() * 0.1, at)) {
-                count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), held.getCount());
+                count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), held.getCount(), 10);
             }
             return;
         }
         for (int i = 0; i < n; i++) {
             ItemStack stack = menu.getSlot(i).getItem();
+            if (stack.getCount() <= 1) counted[i] = 0;
             if (stack.isEmpty()) continue;
             StationView.spot(st, i, spot, 0);
             double half = StationView.reach(st, i, 0);
@@ -314,10 +325,11 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
             double w = Math.abs(at2[0] - at[0]);
             if (i != hovered && StationHands.over(i, width, height) && project(spot[0], spot[1] + 0.02, spot[2], at)) {
                 // under the sleeve: the item itself, on a small plate of glass where it lies
-                float k = (float) Math.max(0.5, w / 18.0);
+                // (two thirds of the square's own width: the game's icon stands taller than a thing lying flat)
+                float k = (float) Math.max(0.45, w / 18.0 * 0.66);
                 int x = (int) Math.round(at[0]), y = (int) Math.round(at[1]);
                 int r = Math.round(9 * k);
-                g.fill(x - r, y - r, x + r, y + r, 0xB00F1724);
+                g.fill(x - r, y - r, x + r, y + r, 0x900F1724);
                 g.outline(x - r, y - r, 2 * r, 2 * r, EDGE);
                 g.pose().pushMatrix();
                 g.pose().translate(x - 8 * k, y - 8 * k);
@@ -326,24 +338,53 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
                 g.pose().popMatrix();
             }
             if (stack.getCount() > 1 && project(spot[0] + st.rx() * half * 0.8 - st.fx() * half * 0.8, spot[1] + 0.02, spot[2] + st.rz() * half * 0.8 - st.fz() * half * 0.8, at)) {
-                count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), stack.getCount());
+                count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), stack.getCount(), i);
             }
         }
         // the stack in your hand
         ItemStack carried = carriedShown(menu.getCarried());
+        if (carried.getCount() <= 1) counted[10] = 0;
         if (StationHands.carrying() && carried.getCount() > 1 && StationHands.hit(spot)
                 && project(spot[0] + st.rx() * 0.07 - st.fx() * 0.07, spot[1] + 0.02, spot[2] + st.rz() * 0.07 - st.fz() * 0.07, at)) {
-            count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), carried.getCount());
+            count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), carried.getCount(), 10);
         }
     }
 
-    /** A count on a small tag of glass, its middle at (x, y). */
-    private void count(GuiGraphicsExtractor g, int x, int y, int count) {
+    /** What each tag last read, what it read before that and when it changed: a count rolls to its new number. */
+    private final int[] counted = new int[11], countedWas = new int[11];
+    private final long[] countedAt = new long[11];
+    private static final long ROLL_NS = 140_000_000L;
+
+    /**
+     * A count on a small tag of glass, its middle at (x, y). A tag that knows its slot (the last is the stack in your
+     * hand) rolls to a new number: the old one leaves upward as a larger one comes in from below, and the other way
+     * for a smaller (SPEC §63.3).
+     */
+    private void count(GuiGraphicsExtractor g, int x, int y, int count, int slot) {
         String text = Integer.toString(count);
         int w = font.width(text);
-        g.fill(x - w / 2 - 2, y - 5, x + w / 2 + 2, y + 5, 0xD00F1724);
-        g.outline(x - w / 2 - 2, y - 5, w + 4, 10, EDGE);
-        g.text(font, text, x - w / 2, y - 4, 0xFFE8F3FF, false);
+        long now = System.nanoTime();
+        if (slot >= 0 && counted[slot] != count) {
+            countedWas[slot] = counted[slot];
+            counted[slot] = count;
+            countedAt[slot] = countedWas[slot] > 1 ? now : 0; // a tag that has just appeared has nothing to roll from
+        }
+        float u = slot >= 0 && countedAt[slot] != 0 ? (now - countedAt[slot]) / (float) ROLL_NS : 1F;
+        if (u >= 1F || dev.awaken.core.api.FirstPerson.reducedMotion.getAsBoolean()) {
+            g.fill(x - w / 2 - 2, y - 5, x + w / 2 + 2, y + 5, 0xD00F1724);
+            g.outline(x - w / 2 - 2, y - 5, w + 4, 10, EDGE);
+            g.text(font, text, x - w / 2, y - 4, 0xFFE8F3FF, false);
+            return;
+        }
+        String old = Integer.toString(countedWas[slot]);
+        int wide = Math.max(w, font.width(old));
+        int dir = count > countedWas[slot] ? 1 : -1, d = Math.round(9 * u);
+        g.fill(x - wide / 2 - 2, y - 5, x + wide / 2 + 2, y + 5, 0xD00F1724);
+        g.outline(x - wide / 2 - 2, y - 5, wide + 4, 10, EDGE);
+        g.enableScissor(x - wide / 2 - 1, y - 4, x + wide / 2 + 1, y + 4);
+        g.text(font, old, x - font.width(old) / 2, y - 4 - dir * d, 0xFFE8F3FF, false);
+        g.text(font, text, x - w / 2, y - 4 + dir * (9 - d), 0xFFE8F3FF, false);
+        g.disableScissor();
     }
 
     /** The station slots live on the station: never drawn here. */
