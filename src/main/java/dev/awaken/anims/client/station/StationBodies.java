@@ -114,6 +114,10 @@ final class StationBodies {
             boolean far = p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > TOUCH * TOUCH;
             if (at.beats() != b.beats) {
                 b.beats = at.beats();
+                // someone else's hands at work are heard too, quieter (your own are played as you click)
+                if (p != mc.player && at.kind() != StationPresence.BOX && at.beatSlot() < at.shown().size() && !at.shown().get(at.beatSlot()).isEmpty()) {
+                    StationSounds.lay(pos, at.shown().get(at.beatSlot()), true);
+                }
                 String reach = far ? FAR_REACH : switch (at.kind()) {
                     case StationPresence.KNEEL -> KNEEL_REACH;
                     case StationPresence.BOX -> BOX_REACH;

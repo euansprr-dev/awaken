@@ -137,16 +137,23 @@ public final class StationClient {
             boolean taken = i == res && now.isEmpty() && !was.isEmpty();
             boolean more = !now.isEmpty() && (was.isEmpty() || !ItemStack.isSameItemSameComponents(now, was) || now.getCount() > was.getCount());
             SEEN[i] = now.copy();
-            if (i == res && !now.isEmpty() && was.isEmpty()) resultAt = System.nanoTime(); // the result comes together
+            if (i == res && !now.isEmpty() && was.isEmpty()) {
+                resultAt = System.nanoTime(); // the result comes together
+                if (yours && kind.bench()) StationSounds.result(table);
+            }
             if (!yours) continue;
             if (i != res && more) {
                 LAID_AT[i] = System.nanoTime();
+                if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationSounds.fuel(table);
+                else StationSounds.lay(table, now, false);
                 if (StationHands.carrying() || !menu.getCarried().isEmpty()) StationHands.laid(i);
                 else if (!tapped) { StationHands.pass(i); tapped = true; }
                 // fuel onto the coals: the fire answers (SPEC §63.6)
                 if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationFire.flare(station);
             } else if (taken || (!more && !menu.getCarried().isEmpty())) {
                 StationHands.lifted();
+                if (taken) StationSounds.take(table);
+                else StationSounds.lift(table);
                 // taking what an anvil, a smithing table or a grindstone made: the other hand's blows on the work,
                 // sparks off each (SPEC §63.8); the block's own sound is vanilla's
                 if (taken && (kind == Kind.ANVIL || kind == Kind.SMITHING || kind == Kind.GRINDSTONE)) StationHands.blows(kind == Kind.SMITHING ? 1 : 0, kind == Kind.ANVIL ? 3 : 1);
@@ -312,6 +319,7 @@ public final class StationClient {
             openedAt = ticks;
         } else if (k == Kind.FURNACE) {
             // a crouch: down and in over 8 ticks (5 coming back to it), up and out over 7
+            StationSounds.kneel(pos);
             inTicks = quick ? 5 : 8;
             outTicks = 7;
             openedAt = ticks;

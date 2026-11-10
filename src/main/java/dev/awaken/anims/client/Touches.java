@@ -248,6 +248,11 @@ final class Touches {
             Reaches.start(PUT, fixed(hit.x, hit.y, hit.z), rightMain(p), !rightMain(p), p.getMainHandItem());
             return;
         }
+        // a palm on a stone and both hands set to a thing have no sound of the game's own: one of its recordings each
+        if (t == PALM || t == SET) {
+            level.playLocalSound(hit.x, hit.y, hit.z, (t == PALM ? dev.awaken.anims.AnimsSounds.PALM : dev.awaken.anims.AnimsSounds.SET).get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1F, 1F, false);
+        }
         if (t == LID || t == HATCH) {
             lidAt = ticks;
             box = pos;

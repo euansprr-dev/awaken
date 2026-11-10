@@ -21617,8 +21617,8 @@ shows like the actual hand of the player going over the box with that item in it
 you're more at the distance, when you're closer. Think about the POV ... Maybe like the furnace, you actually crouch down
 ... Think about the animations and from third person as well."
 
-**Status: approved, being built stage by stage (PLAN §6). Each part is written into this section as it lands; until a
-part is here, §24 "Station scenes" and "Touches" describe the game as it is.** The plan record, the audit and its evidence are in `docs/interactions/PLAN.md`;
+**Status: built, stages 1 to 7 (PLAN §6), on `claude/interactions-plan-145244`; not merged, unplayed. Where this
+section and §24 "Station scenes" or "Touches" differ, this section is the game as it is.** The plan record, the audit and its evidence are in `docs/interactions/PLAN.md`;
 the page's source is `docs/interactions/page.src.html` (its pictures are CI tour shots, not in the repo); the mock-up
 that draws the carrying hand in the game's own camera is `docs/interactions/proto/` (`carry.js`, `stationgeo.py`, a port
 of `StationView`; planning tools, nothing in the game reads them).
@@ -21839,7 +21839,34 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
 - Tests: `touch_every_block` (29 vanilla blocks and 37 of ours each resolve to their touch, every id of ours is a real
   block, a held thing is put and an empty hand takes, the Forge's two, the three heights).
 
-**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings, picked by ear (§63.4). The click path
+### 63.4 Sound (`anims.AnimsSounds`, `anims.client.station.StationSounds`)
+Every sound is one of Minecraft's own, named in `src/main/merge/anims/assets/awaken/sounds.json` by its vanilla sound
+event with a volume and a pitch (the game plays its own files; none of Mojang's audio is in the repo). **First picks:
+none has been heard by Euan, and his ear decides.**
+
+| Event | Minecraft's sound | When |
+|---|---|---|
+| `station.lay` | `entity.item_frame.add_item` 0.55, 0.9 | a thing set down on a station |
+| `station.lay_metal` | `block.chain.place` 0.3, 1.25 | an ingot or a nugget (`c:ingots`, `c:nuggets`) |
+| `station.lay_stone` | `block.calcite.place` 0.35, 1.2 | a gem (`c:gems`) |
+| `station.lay_soft` | `block.wool.place` 0.5, 1.1 | food or wool (`c:foods`, `minecraft:wool`) |
+| (a block) | the block's own place sound at 0.3 | a block set down sounds like itself |
+| `station.lift` | `entity.item_frame.remove_item` 0.5, 1.0 | a stack picked up |
+| `station.result` | `item.bundle.insert` 0.6, 0.9 | a result comes together |
+| `station.take` | `entity.item.pickup` 0.28, 0.7 | a result taken |
+| `station.fuel`, `station.flare` | `block.gravel.hit` 0.6, 0.8; `item.firecharge.use` 0.22, 1.2 | fuel onto the coals, and the flare |
+| `station.kneel` | `item.armor.equip_leather` 0.35, 0.8 | going down before a furnace |
+| `touch.palm` | `block.stone.hit` 0.3, 0.8 | a palm pressed to a stone |
+| `touch.set` | `block.wood.hit` 0.3, 0.9 | both hands set to a thing |
+
+Played on the client for your own hands as you click (a set-down's pitch varies a little), and at 0.55 for the hands of
+another player whose beat you see (§63.5). A lid, a hatch, an anvil, a smithing table, a grindstone, a stonecutter's
+choice and a jukebox keep vanilla's own sounds. No listening page yet: these are named events, heard in the game.
+
+**Built:** stages 1 to 7 of PLAN §6. **Left, and why:** the loom's screen on glass (§63.9); flecks of an ingredient's own
+texture as a result is taken and a count that rolls (PLAN §4.3, §4.7: both want a look in the game before they are
+worth their code); doors that swing with the hand (not approved: a mixin). Nothing here has been played or heard by a
+person. The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts
