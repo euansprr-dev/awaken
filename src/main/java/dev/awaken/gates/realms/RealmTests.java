@@ -67,6 +67,7 @@ public final class RealmTests {
             if (RealmCells.cellAt(RealmCells.centerX(0) + RealmCells.HALF + 8, RealmCells.centerZ(0)) != -1) h.fail("the gap between cells belongs to one");
             h.succeed();
         });
+        AwakenTests.register("realm_truelight_matches_the_shader", 20, h -> { String why = dev.awaken.gates.realms.preview.TrueLight.problem(); if (!why.isEmpty()) h.fail(why); h.succeed(); });
         AwakenTests.register("realm_bag_empty", 20, h -> {
             Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
             if (Blueprints.pick(Theme.BELL_CRYPT, Rank.E, Set.of(), 1).isPresent()) h.fail("a theme with no Realm rolled one");
