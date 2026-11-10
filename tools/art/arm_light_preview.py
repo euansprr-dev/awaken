@@ -304,7 +304,7 @@ def light(style, c, t, seed, charge, awake, gains):
 def alpha(c, i):
     """ArmourLight: how much of a cell the light covers. The lines are crisp; cloth and plate are tinted, never painted out."""
     if i < 0:
-        return 0.78 * min(1.0, -i)
+        return 0.62 * min(1.0, -i)
     return max(0.0, min(1.0, 0.25 + 0.75 * i if c["role"] >= TRIM else 0.1 + 0.55 * i))
 
 

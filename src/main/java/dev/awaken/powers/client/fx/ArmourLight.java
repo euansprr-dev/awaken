@@ -480,7 +480,7 @@ final class ArmourLight {
                     float alpha;
                     if (i < 0f) { // ink: a dark cell over what is there, the piece still showing through it
                         colour = style.accent;
-                        alpha = 0.78f * fade * Math.min(1f, -i);
+                        alpha = 0.62f * fade * Math.min(1f, -i);
                     } else {
                         // the lines are crisp; cloth and plate are tinted, never painted out
                         colour = mix(style.mid, style.core, Mth.clamp((i - 0.55f) * 2.2f + flash, 0f, 1f));
