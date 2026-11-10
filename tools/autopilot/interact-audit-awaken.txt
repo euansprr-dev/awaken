@@ -30,9 +30,17 @@ screen close
 cmd effect give @s minecraft:slow_falling 30 1 true
 cmd tp @s 0.5 201 0.5 0 0
 wait 200
-cmd fill -2 199 -4 85 199 8 minecraft:smooth_stone
-cmd fill -2 200 -4 85 206 8 minecraft:air
-cmd fill -2 200 5 85 203 5 minecraft:spruce_planks
+cmd forceload add -16 -16 101 16
+wait 120
+cmd fill -2 199 -4 29 199 8 minecraft:smooth_stone
+cmd fill -2 200 -4 29 206 8 minecraft:air
+cmd fill -2 200 5 29 203 5 minecraft:spruce_planks
+cmd fill 30 199 -4 61 199 8 minecraft:smooth_stone
+cmd fill 30 200 -4 61 206 8 minecraft:air
+cmd fill 30 200 5 61 203 5 minecraft:spruce_planks
+cmd fill 62 199 -4 85 199 8 minecraft:smooth_stone
+cmd fill 62 200 -4 85 206 8 minecraft:air
+cmd fill 62 200 5 85 203 5 minecraft:spruce_planks
 cmd clear @s
 cmd setblock 2 200 3 awaken:forge[facing=north]
 cmd setblock 5 200 3 awaken:war_anvil
