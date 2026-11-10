@@ -100,6 +100,9 @@ public final class Autopilot {
     private static double glideX, glideY, glideZ;
     private static int glideTicks;
     private static int walkTicks;
+    /** {@code hold <key> <ticks>}: a key of ours kept down that long while the script goes on (a charged power, filmed). */
+    private static KeyMapping heldKey;
+    private static int heldTicks;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -276,6 +279,10 @@ public final class Autopilot {
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
         // walk: forward held down for a while (proves the player can move, e.g. after a scene let go)
+        if (heldTicks > 0 && heldKey != null) {
+            heldKey.setDown(--heldTicks > 0);
+            if (heldTicks == 0) heldKey = null;
+        }
         if (walkTicks > 0) {
             mc.options.keyUp.setDown(--walkTicks > 0);
             if (walkTicks == 0 && mc.player != null) Awaken.LOG.info("[autopilot] walked to {}", mc.player.blockPosition().toShortString());
@@ -433,6 +440,17 @@ public final class Autopilot {
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
+            }
+            case "hold" -> { // hold <key> <ticks>: press it and keep it down that long; the script carries on meanwhile
+                String[] h = arg.trim().split("\\s+");
+                KeyMapping k = KEYS.get(h[0]);
+                if (k == null || h.length < 2) Awaken.LOG.warn("[autopilot] hold <key> <ticks>: {}", arg);
+                else {
+                    KeyMapping.click(k.getKey());
+                    k.setDown(true);
+                    heldKey = k;
+                    heldTicks = Integer.parseInt(h[1]);
+                }
             }
             case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, q, e, or shift+ one of them
                 String k = arg.trim();
