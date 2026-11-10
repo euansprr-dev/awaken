@@ -79,3 +79,13 @@ Each builder ran at 190k to 380k of context per step, and the orchestrator at 65
 - Not run on the merged tree: the full GameTest suite (CI ran it on the pushes; check the Actions tab before merging to build).
 - SPEC 50 has none of this written in yet: bench, `realm_enter`, `need realm`, TrueLight numbers, tone rule, Settle, SheetLand,
   the blockout, carved blocks, `RealmClapper`, `RealmHush`, the two new gates.
+
+## 10 Nov, 15:30 local: "Gates You Play" plan published, waiting on Euan
+
+Euan on the test: "this looks pretty good... quite great"; usage is not a limit (banked resets); still too slow; wants a mix; and
+then corrected my "three sizes" answer: a gate is a dungeon-crawl run, not a place (his words are in `the-run/BRIEF.md`).
+He said "Yes, plan it". The plan is `docs/gates-as-worlds/the-run/` (BRIEF, AUDIT, page.html) and the approval page is
+https://claude.ai/artifact/S2hFD95MozxhM8twqcfXQ9. Recommended: option B, the Run (every sheet carries a route of legs; each leg
+kind runs on a system the old gates already have), with stage 0 switching the old fight systems on in the new gates. Proof to
+play: The Hour Crypt as a run and one short new dungeon crawl. Six decisions wait on him. Nothing from this plan is built.
+The look-round faults listed above for the three test gates are still open.
