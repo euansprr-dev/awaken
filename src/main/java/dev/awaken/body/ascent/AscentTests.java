@@ -34,6 +34,8 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_rappel", 60, AscentRappelTests::rappel);
         // the assisted swing (SPEC §17.31)
         AscentSwingTests.register();
+        // Rope and Wings: the air's contract, its moves, the wings' form (SPEC §62)
+        AirTests.register();
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */

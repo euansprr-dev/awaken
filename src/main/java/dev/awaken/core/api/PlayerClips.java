@@ -38,4 +38,27 @@ public final class PlayerClips {
         Player p = player;
         if (p != null) p.stop(entityId);
     }
+
+    // ---- casts, for the modules whose own clip holds the body --------------------------------------------------------
+
+    /**
+     * A cast's pose began on a player (any player this client sees; {@code kind} is the powers' CastAnim name, {@code ticks}
+     * its length). A module whose clip holds that body above the cast's (the Ascent's flight) shows the cast in its own
+     * way (SPEC §62, "a cast shows"). Client side.
+     */
+    @FunctionalInterface
+    public interface CastListener {
+        void cast(int entityId, String kind, int ticks);
+    }
+
+    private static final java.util.List<CastListener> CASTS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void onCast(CastListener l) {
+        CASTS.add(l);
+    }
+
+    /** The powers' client: a cast's pose began (with or without the animation library). */
+    public static void cast(int entityId, String kind, int ticks) {
+        for (CastListener l : CASTS) l.cast(entityId, kind, ticks);
+    }
 }

@@ -30,6 +30,8 @@ public final class AscentClient {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> e.register(SovereignClient.ASCEND));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        // the feathered wings' own pipelines (SPEC §62)
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, WingPipelines::onRegister);
         // on a rope the body hangs, never crouches (sneak is the rope's own key there: reeling in, the rappel)
         modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity,
@@ -46,6 +48,8 @@ public final class AscentClient {
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_notes"), AscentNotes::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CONTEXTUAL_INFO_BAR, dev.awaken.Awaken.id("ascent_aether"), AscentFlow::renderAether));
+        // a cast in the air shows over the flight (SPEC §62)
+        dev.awaken.core.api.PlayerClips.onCast(AscentAnims::cast);
         FeelDirector.init(modBus);
         RopeTuning.init();
         // the Tab glance shows the Aether (SPEC §40.7)
@@ -58,6 +62,8 @@ public final class AscentClient {
             if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) AscentFp.viewPose(pt, v);
         });
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        // the movement's sounds as scores of the game's own recordings (SPEC §62)
+        bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, AscentScores::onPlay);
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
         bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
@@ -78,6 +84,7 @@ public final class AscentClient {
             AscentPilot.stop();
             AscentRoutes.stop();
             AscentAnims.reset();
+            WingLayer.reset();
             FeelDirector.reset();
         });
     }
@@ -102,6 +109,8 @@ public final class AscentClient {
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
+        // a push on a body the Ascent holds (SPEC §62): into its state's velocity at the next step
+        event.register(AscentPayloads.Push.TYPE, (msg, ctx) -> AscentMoves.pushed(msg.x(), msg.y(), msg.z()));
         event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));

@@ -13,7 +13,8 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * {@code /awaken ascent} (game masters, Phase 0): {@code grant <all|none|tether|wings|skyborn>} sets the tiers you
  * hold, {@code sandbox} grows a grove of giant trees and a launch tower in front of you and puts you on the tower,
- * {@code pilot <line>} runs a line of the tour pilot on your client (scripted input: the autopilot can't hold keys).
+ * {@code pilot <line>} runs a line of the tour pilot on your client (scripted input: the autopilot can't hold keys),
+ * {@code aether full} fills the server's Aether meter (tours).
  */
 final class AscentCommands {
     private AscentCommands() {}
@@ -27,6 +28,12 @@ final class AscentCommands {
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(GRANTS, b))
                     .executes(c -> grant(c.getSource(), StringArgumentType.getString(c, "what")))));
             ascent.then(Commands.literal("sandbox").executes(c -> sandbox(c.getSource())));
+            // the server's own Aether, full (tours: the Sovereign's form asks the server for a full meter, and the
+            // pilot's "aether" line fills only the client's)
+            ascent.then(Commands.literal("aether").then(Commands.literal("full").executes(c -> {
+                AscentServer.motion(c.getSource().getPlayerOrException()).aether = 1;
+                return 1;
+            })));
             // replays "your body remembers" for the tiers held (Wings if none): for tours and the clip recorder
             ascent.then(Commands.literal("remember").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

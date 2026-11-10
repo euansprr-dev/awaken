@@ -1,0 +1,10 @@
+{
+  "text": "To take off from the ground, look up, hold {key.sneak} for a moment and press {key.jump}. Your wings throw you straight up into flight. It costs a tenth of your Aether.",
+  "short": "Look up, {key.sneak}, then {key.jump}",
+  "priority": 60,
+  "show_for": 220,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

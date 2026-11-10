@@ -21,8 +21,9 @@ import net.minecraft.util.Mth;
 public final class AscentFp {
     private AscentFp() {}
 
-    /** Where a rope leaves the main hand, in view space (fp_moves.py ROPE_FIST: keep the same numbers). */
-    public static final float ROPE_X = 0.3F, ROPE_Y = -0.02F, ROPE_Z = -0.72F;
+    /** Where a rope leaves the main hand, in view space (fp_moves.py ROPE_FIST: keep the same numbers). Low in the frame's
+     * corner since SPEC §62: at (0.3, -0.02, -0.72) the fist sat in the middle of the view, over where the swing was going. */
+    public static final float ROPE_X = 0.46F, ROPE_Y = -0.3F, ROPE_Z = -0.8F;
     /** The arms out flat on wings (fp_moves.py GLIDE_FIST), the main hand's; the other mirrors x. */
     static final float GLIDE_X = 0.86F, GLIDE_Y = -0.04F, GLIDE_Z = -0.86F;
     /** The fists raised for a dive slam (fp_moves.py SLAM_UP). */
@@ -42,6 +43,14 @@ public final class AscentFp {
 
     static void kicked() {
         kickAt = AscentMoves.ticks;
+    }
+
+    /** Until this client tick the free states' fists stand aside (a cast's own hands, a weapon's swing, a thing in use). */
+    private static int asideUntil = -100;
+
+    /** The hands are another's for this long (SPEC §62): flying free, on wings and in flight the stances let go of them. */
+    static void aside(int ticks) {
+        asideUntil = Math.max(asideUntil, AscentMoves.ticks + ticks);
     }
 
     private static AscentState was = AscentState.NONE;
@@ -120,6 +129,9 @@ public final class AscentFp {
         float m = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1 : 1; // the main hand's side
         if (SovereignClient.active()) v.tint = GOLD;
         float in = Ease.at(Ease.SMOOTH, age / 4F);
+        // a weapon swung or a thing in use (the guard, a bow) is the hands' own business; the stances come back over 3 ticks
+        if (p.isSwinging() || p.isUsingItem()) aside(4);
+        float own = 1F - Ease.at(Ease.SMOOTH, (asideUntil - t) / 3F);
         // on a rope or a zip line the hands hold it: what they hold is put away (Hands eases it out and back)
         if (st == AscentState.TETHER || st == AscentState.ZIP || st == AscentState.RAPPEL) v.climb = true;
         switch (st) {
@@ -181,8 +193,8 @@ public final class AscentFp {
                 } else {
                     // flying free: arms out low for balance, easing in
                     float sway = 0.02F * Mth.sin(t * 0.3F);
-                    FirstPerson.View.fist(v.fistMain, in, m * 0.82F, -0.4F + sway, -0.86F);
-                    FirstPerson.View.fist(v.fistOff, in, -m * 0.82F, -0.4F - sway, -0.86F);
+                    FirstPerson.View.fist(v.fistMain, in * own, m * 0.82F, -0.4F + sway, -0.86F);
+                    FirstPerson.View.fist(v.fistOff, in * own, -m * 0.82F, -0.4F - sway, -0.86F);
                 }
             }
             case GLIDE -> {
@@ -190,31 +202,31 @@ public final class AscentFp {
                 float tremble = (float) (0.004 + 0.006 * Mth.clamp(speed / 2.0, 0, 1)) * Mth.sin(t * 9.1F);
                 if (AscentMoves.keySneak) {
                     // folding into the dive: the arms sweep back out of the frame
-                    FirstPerson.View.fist(v.fistMain, 1, m * 0.7F, -0.9F, -0.6F);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * 0.7F, -0.9F, -0.6F);
+                    FirstPerson.View.fist(v.fistMain, own, m * 0.7F, -0.9F, -0.6F);
+                    FirstPerson.View.fist(v.fistOff, own, -m * 0.7F, -0.9F, -0.6F);
                 } else {
-                    FirstPerson.View.fist(v.fistMain, 1, m * GLIDE_X, GLIDE_Y + tremble, GLIDE_Z);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * GLIDE_X, GLIDE_Y - tremble, GLIDE_Z);
+                    FirstPerson.View.fist(v.fistMain, own, m * GLIDE_X, GLIDE_Y + tremble, GLIDE_Z);
+                    FirstPerson.View.fist(v.fistOff, own, -m * GLIDE_X, GLIDE_Y - tremble, GLIDE_Z);
                 }
             }
             case SOAR -> {
                 float breath = 0.012F * Mth.sin(t * 0.18F);
                 if (AscentMoves.keySprint && AscentMoves.keyFwd) {
                     // the boost: the main fist forward through the air, the other back out of the frame
-                    FirstPerson.View.fist(v.fistMain, 1, m * 0.14F, -0.08F, -1.05F);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * 0.6F, -1.1F, -0.8F);
+                    FirstPerson.View.fist(v.fistMain, own, m * 0.14F, -0.08F, -1.05F);
+                    FirstPerson.View.fist(v.fistOff, own, -m * 0.6F, -1.1F, -0.8F);
                 } else if (AscentMoves.keyJump) {
                     // climbing: the arms sweep up
-                    FirstPerson.View.fist(v.fistMain, 1, m * 0.6F, -0.08F, -0.9F);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * 0.6F, -0.08F, -0.9F);
+                    FirstPerson.View.fist(v.fistMain, own, m * 0.6F, -0.08F, -0.9F);
+                    FirstPerson.View.fist(v.fistOff, own, -m * 0.6F, -0.08F, -0.9F);
                 } else if (!AscentMoves.keyFwd) {
                     // hovering: palms down in front, breathing
-                    FirstPerson.View.fist(v.fistMain, 1, m * 0.34F, -0.48F + breath, -0.86F);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * 0.34F, -0.48F + breath, -0.86F);
+                    FirstPerson.View.fist(v.fistMain, own, m * 0.34F, -0.48F + breath, -0.86F);
+                    FirstPerson.View.fist(v.fistOff, own, -m * 0.34F, -0.48F + breath, -0.86F);
                 } else {
                     // cruising: the arms swept back low at the edges
-                    FirstPerson.View.fist(v.fistMain, 1, m * 0.84F, -0.46F + breath, -0.9F);
-                    FirstPerson.View.fist(v.fistOff, 1, -m * 0.84F, -0.46F - breath, -0.9F);
+                    FirstPerson.View.fist(v.fistMain, own, m * 0.84F, -0.46F + breath, -0.9F);
+                    FirstPerson.View.fist(v.fistOff, own, -m * 0.84F, -0.46F - breath, -0.9F);
                 }
             }
             default -> {

@@ -1,0 +1,259 @@
+# The feathered wings through your own eyes (SPEC §62): three placements of the first-person wings, each in a glide, in
+# flight and in a dive. Shots only. Look tour: tools/tour-ci.sh tools/autopilot/movement-fp.txt 1500
+# ci knobs: LENS=cinematic
+world movement_fp survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud on
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -256 2047 255
+# ---- the sandbox on a floor at y 150: the lane of giant trees and the street ----
+cmd tp @s 2000.5 152 0.5 0 0
+wait 200
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd tp @s 2000.5 151 0.5 0 0
+wait 20
+cmd awaken ascent grant all
+cmd awaken ascent sandbox
+wait 200
+screen close
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+
+# placement a: 0.8 ahead, -0.12 up
+cmd awaken ascent pilot wingset fp_ahead 0.8
+cmd awaken ascent pilot wingset fp_up -0.12
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run glide
+wait 12
+shotnow fp_a_glide_01
+wait 12
+shotnow fp_a_glide_02
+wait 12
+shotnow fp_a_glide_03
+wait 12
+shotnow fp_a_glide_04
+wait 12
+shotnow fp_a_glide_05
+wait 12
+shotnow fp_a_glide_06
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run soar
+wait 14
+shotnow fp_a_soar_01
+wait 14
+shotnow fp_a_soar_02
+wait 14
+shotnow fp_a_soar_03
+wait 14
+shotnow fp_a_soar_04
+wait 14
+shotnow fp_a_soar_05
+wait 14
+shotnow fp_a_soar_06
+wait 14
+shotnow fp_a_soar_07
+wait 14
+shotnow fp_a_soar_08
+wait 14
+shotnow fp_a_soar_09
+wait 14
+shotnow fp_a_soar_10
+wait 14
+shotnow fp_a_soar_11
+wait 14
+shotnow fp_a_soar_12
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run boom
+wait 10
+shotnow fp_a_boom_01
+wait 10
+shotnow fp_a_boom_02
+wait 10
+shotnow fp_a_boom_03
+wait 10
+shotnow fp_a_boom_04
+wait 10
+shotnow fp_a_boom_05
+wait 10
+shotnow fp_a_boom_06
+wait 10
+shotnow fp_a_boom_07
+wait 10
+shotnow fp_a_boom_08
+# placement b: 0.6 ahead, -0.2 up
+cmd awaken ascent pilot wingset fp_ahead 0.6
+cmd awaken ascent pilot wingset fp_up -0.2
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run glide
+wait 12
+shotnow fp_b_glide_01
+wait 12
+shotnow fp_b_glide_02
+wait 12
+shotnow fp_b_glide_03
+wait 12
+shotnow fp_b_glide_04
+wait 12
+shotnow fp_b_glide_05
+wait 12
+shotnow fp_b_glide_06
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run soar
+wait 14
+shotnow fp_b_soar_01
+wait 14
+shotnow fp_b_soar_02
+wait 14
+shotnow fp_b_soar_03
+wait 14
+shotnow fp_b_soar_04
+wait 14
+shotnow fp_b_soar_05
+wait 14
+shotnow fp_b_soar_06
+wait 14
+shotnow fp_b_soar_07
+wait 14
+shotnow fp_b_soar_08
+wait 14
+shotnow fp_b_soar_09
+wait 14
+shotnow fp_b_soar_10
+wait 14
+shotnow fp_b_soar_11
+wait 14
+shotnow fp_b_soar_12
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run boom
+wait 10
+shotnow fp_b_boom_01
+wait 10
+shotnow fp_b_boom_02
+wait 10
+shotnow fp_b_boom_03
+wait 10
+shotnow fp_b_boom_04
+wait 10
+shotnow fp_b_boom_05
+wait 10
+shotnow fp_b_boom_06
+wait 10
+shotnow fp_b_boom_07
+wait 10
+shotnow fp_b_boom_08
+# placement c: 0.9 ahead, -0.1 up
+cmd awaken ascent pilot wingset fp_ahead 0.9
+cmd awaken ascent pilot wingset fp_up -0.1
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run glide
+wait 12
+shotnow fp_c_glide_01
+wait 12
+shotnow fp_c_glide_02
+wait 12
+shotnow fp_c_glide_03
+wait 12
+shotnow fp_c_glide_04
+wait 12
+shotnow fp_c_glide_05
+wait 12
+shotnow fp_c_glide_06
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run soar
+wait 14
+shotnow fp_c_soar_01
+wait 14
+shotnow fp_c_soar_02
+wait 14
+shotnow fp_c_soar_03
+wait 14
+shotnow fp_c_soar_04
+wait 14
+shotnow fp_c_soar_05
+wait 14
+shotnow fp_c_soar_06
+wait 14
+shotnow fp_c_soar_07
+wait 14
+shotnow fp_c_soar_08
+wait 14
+shotnow fp_c_soar_09
+wait 14
+shotnow fp_c_soar_10
+wait 14
+shotnow fp_c_soar_11
+wait 14
+shotnow fp_c_soar_12
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run boom
+wait 10
+shotnow fp_c_boom_01
+wait 10
+shotnow fp_c_boom_02
+wait 10
+shotnow fp_c_boom_03
+wait 10
+shotnow fp_c_boom_04
+wait 10
+shotnow fp_c_boom_05
+wait 10
+shotnow fp_c_boom_06
+wait 10
+shotnow fp_c_boom_07
+wait 10
+shotnow fp_c_boom_08
+cmd awaken ascent pilot stop
+wait 20
+quit

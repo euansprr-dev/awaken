@@ -17,7 +17,10 @@ public final class AscentTips {
     public static final Identifier ROPE = Awaken.id("ascent/rope"), LEAPER = Awaken.id("ascent/leaper"), WINGS = Awaken.id("ascent/wings"),
             FLIGHT = Awaken.id("ascent/flight"), FREERUN = Awaken.id("ascent/freerun"), SOVEREIGN = Awaken.id("ascent/sovereign"),
             /** Paying the line out over a drop (SPEC §28.5): offered on a line with a long drop under it. */
-            RAPPEL = Awaken.id("ascent/rappel");
+            RAPPEL = Awaken.id("ascent/rappel"),
+            /** Rope and Wings (SPEC §62): each move's tip is offered where the move would work and done when it is made. */
+            SLING = Awaken.id("ascent/sling"), SPRING = Awaken.id("ascent/spring"), STRIKE = Awaken.id("ascent/strike"),
+            FLARE = Awaken.id("ascent/flare"), SKIM = Awaken.id("ascent/skim"), TAKEOFF = Awaken.id("ascent/takeoff");
 
     static @Nullable Identifier of(Ascent.Tier tier) {
         return switch (tier) {

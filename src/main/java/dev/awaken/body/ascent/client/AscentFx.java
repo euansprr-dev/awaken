@@ -181,6 +181,23 @@ final class AscentFx {
         }
     }
 
+    /**
+     * A skim's wake (SPEC §62): two motes a tick on the surface under the body, thrown out to either side of the way it
+     * flies, so a line of light opens behind like a boat's.
+     */
+    static void wake(LocalPlayer p, AscentRules.Kin k, double surfaceY) {
+        Minecraft mc = Minecraft.getInstance();
+        double h = k.hspeed();
+        if (mc.level == null || h < 0.2) return;
+        double rx = -k.vz / h, rz = k.vx / h;
+        var r = mc.level.getRandom();
+        for (int s = -1; s <= 1; s += 2) {
+            double out = 0.5 + r.nextDouble() * 0.5;
+            mc.level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), p.getX() + rx * s * out, surfaceY + 0.12, p.getZ() + rz * s * out,
+                    rx * s * 0.09 + k.vx * 0.15, 0.03 + r.nextDouble() * 0.03, rz * s * 0.09 + k.vz * 0.15);
+        }
+    }
+
     static void ring(double x, double y, double z, Vec3 dir, float size) {
         Shot s = shot(RING, 22);
         s.x = x;
