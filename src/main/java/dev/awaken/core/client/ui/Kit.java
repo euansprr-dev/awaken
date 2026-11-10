@@ -47,6 +47,48 @@ public final class Kit {
     }
 
     /** What stands in for something you haven't found: a dark diamond with a faint edge. It gives nothing away. */
+    // ---- creatures as themselves ------------------------------------------------------------------------------------
+
+    private static final java.util.Map<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.LivingEntity> BODIES = new java.util.HashMap<>();
+    private static net.minecraft.world.level.Level bodiesOf;
+
+    /**
+     * A creature drawn as itself in a box, turned by {@code turn} (radians, 0 faces you) and tipped by {@code tilt}: a beast
+     * that lives with you, a creature you've found (SPEC §57.7). Only ever something the player has met: what isn't found
+     * is {@link #unknown}. One body per kind is kept for the world; a kind that can't stand in a box (or whose renderer
+     * balks at a body that was never in the world) returns false, once, and its item is drawn instead.
+     */
+    public static boolean creature(Sheet s, net.minecraft.world.entity.EntityType<?> type, float x0, float y0, float x1, float y1, float turn, float tilt) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level == null || type == null) return false;
+        if (bodiesOf != mc.level) {
+            BODIES.clear();
+            bodiesOf = mc.level;
+        }
+        net.minecraft.world.entity.LivingEntity e = BODIES.get(type);
+        if (e == null) {
+            if (BODIES.containsKey(type)) return false;
+            try {
+                e = type.create(mc.level, net.minecraft.world.entity.EntitySpawnReason.LOAD) instanceof net.minecraft.world.entity.LivingEntity l ? l : null;
+            } catch (RuntimeException ex) {
+                e = null;
+            }
+            BODIES.put(type, e);
+            if (e == null) return false;
+        }
+        // as big as the box takes: its height, or its length where it is longer than tall (a body is wider than its hit box)
+        float span = Math.max(e.getBbHeight(), e.getBbWidth() * 1.5F), box = Math.min(x1 - x0, y1 - y0);
+        int size = Math.max(4, Math.round(box * .74F / Math.max(.3F, span) * s.k));
+        try {
+            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsAngle(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1),
+                    size, .0625F, turn, tilt, e);
+        } catch (RuntimeException ex) {
+            BODIES.put(type, null);
+            return false;
+        }
+        return true;
+    }
+
     public static void unknown(Sheet s, float cx, float cy, float r) {
         s.g.pose().pushMatrix().translate(cx, cy).rotate((float) (Math.PI / 4));
         int n = Math.round(r);
@@ -90,6 +132,20 @@ public final class Kit {
     }
 
     /** The glint on something new, or (amber) something that waits on you. */
+    /** As {@link #condition}, with every line of its words (SPEC §57.6): returns the y under it. */
+    public static float conditionLines(Sheet s, String words, boolean met, float x, float y, float width) {
+        if (met) s.text("✓", x, y, Sheet.BODY, Glass.a(Glass.GOOD, 1F));
+        else s.outline(x + 2, y + 2, x + 14, y + 14, 2, Glass.a(s.label, .8F));
+        return s.lines(words, x + 24, y, width - 24, Sheet.BODY, Glass.a(met ? Glass.GOOD : Glass.TEXT, 1F)) + 6;
+    }
+
+    /** Pips for a count out of a few (a home's Comfort, a room's reading): {@code of} squares, {@code met} of them lit in {@code rgb}. */
+    public static float pips(Sheet s, float x, float y, int met, int of, float size, int rgb) {
+        float step = size + Math.max(2F, Math.round(size * .4F));
+        for (int i = 0; i < of; i++) s.fill(x + i * step, y, x + i * step + size, y + size, i < met ? Glass.a(rgb, 1F) : Sheet.argb(0x6F829C, .45F));
+        return of * step;
+    }
+
     public static void glint(Sheet s, float cx, float cy, int rgb) {
         s.glow(cx - 5, cy - 5, cx + 5, cy + 5, rgb, .5F);
         s.g.pose().pushMatrix().translate(cx, cy).rotate((float) (Math.PI / 4));

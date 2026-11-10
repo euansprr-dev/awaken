@@ -63,7 +63,7 @@ final class KinPageSection extends UiSection {
                 continue;
             }
             String wants = r.get(5).equals("?") ? "" : "\nWhat it wants: " + r.get(5).replace("\n", " ");
-            out.add(new Catalogue.Slot(k.title, true, r.get(3) + "\n" + r.get(4) + wants, ItemStack.EMPTY));
+            out.add(new Catalogue.Slot(k.title, true, r.get(3) + "\n" + r.get(4) + wants, ItemStack.EMPTY, KinStrip.body(k.id())));
         }
         return out;
     }

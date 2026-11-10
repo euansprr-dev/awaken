@@ -247,6 +247,8 @@ public final class BandStage extends Screen implements QuietScreen {
         if (t == tab) return;
         StatusSections.cue(StatusSections.Cue.PAGE);
         StatusSections.narrate(t.label() + " page");
+        place(tab).released();
+        place(tab).left();
         tab = t;
         printed = 0F;
         place(t).opened();
@@ -328,6 +330,7 @@ public final class BandStage extends Screen implements QuietScreen {
     public void removed() {
         if (threeD()) panel.canvas.begin(panel.w, panel.h);
         place(tab).released();
+        place(tab).left();
         HoloClient.closeStagePanel();
         super.removed();
     }

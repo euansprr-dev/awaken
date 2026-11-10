@@ -105,6 +105,54 @@ public final class SectionHost {
         if (inside) hot.add(x0, y0, x1, y1, () -> click(imx, imy));
     }
 
+    /**
+     * Sections laid from a point down with no scroll or clip of their own (a shelf on the Journal's wall, which scrolls
+     * as one): columns as in {@link #draw}, drawn where they cross {@code viewY0..viewY1}. Returns the y under the last.
+     */
+    public static float flat(Sheet s, Hot hot, List<Section> secs, float x0, float y0, float x1, float viewY0, float viewY1, float mx, float my,
+                             boolean reducedMotion) {
+        if (secs.isEmpty()) return y0;
+        GuiGraphicsExtractor g = s.g;
+        float unit = s.snap(Sheet.BODY), w = (x1 - x0) / unit;
+        int cols = Math.max(1, (int) ((w + GAP) / (COL + GAP)));
+        int[] heights = new int[cols];
+        List<Laid> laid = new ArrayList<>(secs.size());
+        StatusSections.drawingAt(Math.max(1, Math.round(unit * s.rps)), reducedMotion);
+        for (Section sec : secs) {
+            int c = 0;
+            for (int i = 1; i < cols; i++) if (heights[i] < heights[c]) c = i;
+            int h = BandHeader.height(sec) + sec.height(COL);
+            if (h <= 0) continue;
+            laid.add(new Laid(sec, c * (COL + GAP), heights[c], h));
+            heights[c] += h + SECTION_GAP;
+        }
+        int tall = 0;
+        for (int h : heights) tall = Math.max(tall, h);
+        float umx = (mx - x0) / unit, umy = (my - y0) / unit;
+        boolean inside = umx >= 0 && umy >= 0 && umx < w && umy < tall && my >= viewY0 && my < viewY1;
+        int imx = inside ? Math.round(umx) : -10000, imy = inside ? Math.round(umy) : -10000;
+        g.pose().pushMatrix().translate(x0, y0).scale(unit, unit);
+        GuiCanvas.tooltipsAt(s.gx(mx), s.gy(my));
+        try {
+            for (Laid l : laid) {
+                float top = y0 + l.y * unit;
+                if (top + l.h * unit < viewY0 || top > viewY1) continue;
+                int hh = BandHeader.draw(g, s.font, l.s, l.x, l.y, COL);
+                l.s.render(g, l.x, l.y + hh, COL, imx, imy, 0F);
+            }
+        } finally {
+            GuiCanvas.tooltipsWhereAsked();
+            g.pose().popMatrix();
+        }
+        if (inside) hot.add(x0, y0, x1, y0 + tall * unit, () -> {
+            for (Laid l : laid) {
+                int top = l.y + BandHeader.height(l.s);
+                if (imx >= l.x && imx < l.x + COL && imy >= top && imy < l.y + l.h && l.s.click(imx, imy, l.x, top, COL)) return;
+            }
+        });
+        return y0 + tall * unit;
+    }
+
     /** A left click at a point in the sections' own units, already scrolled into view. */
     private void click(int mx, int my) {
         var font = net.minecraft.client.Minecraft.getInstance().font;

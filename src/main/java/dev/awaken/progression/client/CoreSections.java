@@ -48,6 +48,8 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
+        // on the stage the Journal is one wall (SPEC §57.8); the strip above is the classic band's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.JOURNAL.ordinal(), new JournalPlace());
         StatusSections.add(StatusSections.Tab.JOURNAL, new Catalogue.Empty());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);

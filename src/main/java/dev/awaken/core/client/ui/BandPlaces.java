@@ -22,6 +22,9 @@ public final class BandPlaces {
         /** The band came to this place; {@code focus} names what a link asked for (may be empty). */
         default void opened(String... focus) {}
 
+        /** The band left this place (another place, or the band shut): stop asking the server for it. */
+        default void left() {}
+
         /** Draws the stage and adds what can be clicked to {@code hot}. {@code dt}: seconds since the last frame. */
         void draw(Sheet s, Hot hot, float mx, float my, float dt);
 

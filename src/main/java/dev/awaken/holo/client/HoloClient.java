@@ -141,6 +141,11 @@ public final class HoloClient {
         return new StatusScreen(page, focus);
     }
 
+    /** Whether K opens the stage (SPEC §57) rather than the old band: a screen that folds into a place asks first. */
+    public static boolean stage() {
+        return !HoloConfig.classicBand;
+    }
+
     static HoloPanel statusPanel() {
         return STATUS;
     }
