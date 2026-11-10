@@ -617,10 +617,9 @@ public final class SystemHud {
     }
 
     private static void keyLine(GuiGraphicsExtractor g, Font font, String keyName, String label, int x, int y, int tw, int accent, float alpha) {
-        String key = "[" + SignalText.ellipsize(keyName, 40, font::width) + "]";
-        HudLook.text(g, font, key, x, y, Glass.a(accent, alpha), false);
-        int lx = x + font.width(key) + 4;
-        HudLook.text(g, font, SignalText.ellipsize(label, tw - (lx - x), font::width), lx, y, Glass.a(Glass.TITLE, alpha), false);
+        // the band's own key cap, as on the stage's bar of keys (SPEC §57.9); the answer's words whole (§57.6)
+        int lx = x + dev.awaken.core.client.ui.Kit.cap(g, font, keyName, x, y, alpha, false) + 5;
+        Ui.fitted(g, font, label, lx, y, tw - (lx - x), 1, Glass.a(accent == Glass.LABEL ? Glass.TEXT : Glass.TITLE, alpha), true);
     }
 
     private static Rect drawPanel(GuiGraphicsExtractor g, Font font, Panel p, int sw, int sh, double s, float pt) {

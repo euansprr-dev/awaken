@@ -24,6 +24,11 @@ public interface UiCanvas {
 
     void text(Font font, FormattedCharSequence s, int x, int y, int argb, boolean shadow);
 
+    /** Text at a scale (1 is the font's own size), from a point that needn't be whole. A canvas that can't scale draws it as written. */
+    default void textScaled(Font font, String s, float x, float y, float scale, int argb, boolean shadow) {
+        text(font, s, Math.round(x), Math.round(y), argb, shadow);
+    }
+
     /** A 16×16 item icon. */
     void item(ItemStack stack, int x, int y);
 

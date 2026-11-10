@@ -1,0 +1,284 @@
+# The band's stage (SPEC 57), Stage 0: the new K shell and the Tasks place, seen for real at Euan's window size.
+# E-rank with the fire set and a bed built (his moment): Tasks with the step on top, the armour step with the suits worn,
+# a pick looked at, tracked, set aside and undone, the Later list; the pages that haven't moved yet inside the shell.
+# Then C-rank with a Forge: the same page with a lot open. Last, the old band with the classic setting on.
+# Run on CI: tools/tour-ci.sh tools/autopilot/band-stage.txt 1500
+world autopilot_band_stage creative 27132713
+waitworld
+gui 0
+window 1708 960
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin levels 6
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the fire, set on open ground ----
+# well outside the city's walls (a home can't be made inside them)
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- a bedroom: timber, a door, a window, a bed, two lanterns ----
+cmd fill ~4 ~-1 ~-3 ~10 ~3 ~3 minecraft:spruce_planks hollow
+cmd setblock ~4 ~ ~ minecraft:oak_door[half=lower,facing=west]
+cmd setblock ~4 ~1 ~ minecraft:oak_door[half=upper,facing=west]
+cmd setblock ~10 ~1 ~ minecraft:glass_pane
+cmd setblock ~6 ~ ~-1 minecraft:red_bed[part=foot,facing=north]
+cmd setblock ~6 ~ ~-2 minecraft:red_bed[part=head,facing=north]
+cmd setblock ~8 ~ ~-2 minecraft:lantern
+cmd setblock ~8 ~ ~2 minecraft:lantern
+wait 20
+cmd awaken admin hearth read
+wait 200
+screen close
+# ---- the stage unfolding, then Tasks as you arrive ----
+screen band tasks
+holo at 200
+shot b00_unfold_200
+holo at 380
+shot b01_landing_380
+holo run
+wait 40
+shot b02_tasks_top
+screenkey tab
+wait 10
+shot b03_tasks_next_step
+tasks focus armour/
+wait 30
+shot b04_armour_step
+screenkey right
+wait 10
+shot b05_armour_looked
+screenkey right
+wait 10
+screenkey enter
+wait 40
+shot b06_armour_chosen
+screenkey t
+wait 30
+shot b07_tracked
+tasks focus kin/
+wait 20
+shot b08_lead_step
+screenkey x
+wait 20
+shot b09_set_aside
+screenkey z
+wait 30
+shot b10_undone
+tasks focus hale
+wait 10
+shot b11_go_step
+screenkey esc
+wait 10
+shot b12_back_to_top
+# ---- Status: you under your armour; then the places that haven't moved yet, in the same shell ----
+screen close
+wait 10
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+wait 10
+# a few creatures seen, so the Journal's wall has someone standing on it
+cmd awaken admin counter "awaken:discovered/creature/bog_toad" 1
+cmd awaken admin counter "awaken:discovered/creature/briar_sow" 1
+cmd awaken admin counter "awaken:discovered/creature/old_antler" 1
+cmd awaken admin counter "awaken:discovered/creature/stonehorn" 1
+cmd awaken admin counter "awaken:discovered/creature/plumed_coil" 1
+cmd awaken admin counter "awaken:discovered/creature/empress_moth" 1
+wait 20
+screen band status
+wait 60
+shot b20_status
+screenkey right
+screenkey space
+screenkey space
+wait 10
+shot b20b_status_placed
+screenkey down
+wait 10
+shot b20c_status_truth
+screenkey esc
+wait 5
+screen band hearth
+wait 80
+shot b21_hearth
+screenkey tab
+screenkey tab
+screenkey tab
+wait 20
+shot b21b_hearth_room
+screenkey esc
+wait 5
+screen band powers
+wait 40
+shot b22_powers
+screen band journal
+wait 80
+shot b23_journal
+screenkey tab
+wait 20
+shot b23b_journal_found
+screenkey down
+screenkey down
+screenkey down
+screenkey down
+wait 20
+shot b23c_journal_gates
+screen close
+wait 10
+# the fire is the Hearth's second door: the same place, where the tier is raised
+cmd awaken hearth guide
+wait 80
+shot b23d_hearth_fire_door
+screen close
+wait 20
+shot b24_closed_tracked
+# ---- an Anchor, then the Armoury and the Forge in the same room; up to C-rank ----
+cmd awaken admin ember raise
+wait 120
+screen close
+cmd setblock ~5 ~ ~2 minecraft:crafting_table
+cmd setblock ~7 ~ ~2 awaken:fitting_stand
+cmd setblock ~9 ~ ~2 minecraft:anvil
+cmd setblock ~9 ~ ~-2 awaken:forge
+cmd summon minecraft:armor_stand ~7 ~ ~0
+wait 20
+cmd awaken admin hearth read
+wait 60
+screen close
+cmd awaken admin levels 6
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 80
+key dismiss
+wait 10
+screen close
+cmd awaken admin levels 14
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 200
+key dismiss
+wait 10
+screen close
+screen band status
+wait 60
+shot b29_status_c_rank
+screenkey 2
+wait 40
+shot b30_tasks_c_rank
+tasks focus war anvil
+wait 20
+shot b31_weapons_step
+tasks focus hearth/add
+wait 20
+shot b32_add_to_home
+tasks later
+wait 20
+shot b33_later_list
+screen close
+wait 10
+# ---- every power owned: the grid, a power walked to and picked ----
+cmd awaken admin power all
+wait 60
+key dismiss
+wait 10
+screen close
+screen band powers
+wait 60
+shot b34_powers_all
+screenkey tab
+screenkey tab
+screenkey tab
+wait 10
+shot b35_power_walked
+screenkey enter
+wait 10
+shot b36_power_picked
+screenkey esc
+wait 5
+screen band status
+wait 40
+shot b37_status_all_powers
+screen close
+wait 10
+# ---- the Anchor door at C-rank, then the bag: the keys under it and a name in the band's glass ----
+cmd awaken hearth guide
+wait 80
+shot b38_hearth_anchor_door
+screenkey tab
+screenkey tab
+wait 20
+shot b39_hearth_anchor_room
+screen close
+wait 10
+cmd item replace entity @s inventory.0 with minecraft:iron_ingot 12
+cmd item replace entity @s inventory.1 with minecraft:copper_ingot 7
+cmd item replace entity @s inventory.2 with minecraft:oak_planks 40
+cmd item replace entity @s inventory.3 with minecraft:white_wool 3
+cmd item replace entity @s inventory.4 with minecraft:stick 16
+cmd item replace entity @s inventory.5 with minecraft:coal 9
+cmd item replace entity @s inventory.6 with minecraft:bread 5
+cmd item replace entity @s inventory.7 with minecraft:torch 32
+cmd item replace entity @s inventory.8 with minecraft:cobblestone 64
+cmd item replace entity @s inventory.9 with awaken:fitting_stand
+cmd item replace entity @s inventory.10 with awaken:war_anvil
+cmd item replace entity @s inventory.11 with minecraft:lantern 2
+cmd item replace entity @s inventory.12 with minecraft:book
+cmd item replace entity @s inventory.13 with minecraft:lapis_lazuli 6
+cmd item replace entity @s inventory.14 with minecraft:bone 4
+cmd item replace entity @s inventory.15 with minecraft:string 8
+cmd item replace entity @s inventory.16 with minecraft:flint 5
+cmd item replace entity @s inventory.17 with minecraft:leather 6
+cmd item replace entity @s inventory.18 with minecraft:iron_pickaxe
+cmd item replace entity @s inventory.19 with minecraft:water_bucket
+cmd item replace entity @s inventory.20 with minecraft:apple 3
+cmd item replace entity @s inventory.21 with minecraft:arrow 20
+cmd item replace entity @s inventory.22 with minecraft:bow
+cmd item replace entity @s inventory.23 with minecraft:shield
+cmd item replace entity @s inventory.24 with minecraft:campfire
+cmd item replace entity @s inventory.25 with minecraft:red_bed
+cmd item replace entity @s inventory.26 with minecraft:bell
+wait 10
+# the bag itself is the survival one (creative opens the game's own item picker)
+cmd gamemode survival
+wait 10
+holo inv open
+wait 60
+shot b50_bag
+screen close
+wait 10
+cmd gamemode creative
+wait 10
+# ---- the old band, one setting away ----
+holo classic on
+key status
+wait 60
+shot b40_classic_band
+screen close
+holo classic auto
+wait 10
+quit

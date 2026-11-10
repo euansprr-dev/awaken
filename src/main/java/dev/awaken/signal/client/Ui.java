@@ -98,17 +98,70 @@ public final class Ui {
         }
     }
 
-    /** Wrapped text, at most {@code max} lines (the last ends in "…"). */
+    /**
+     * Wrapped text. It once stopped at {@code max} lines and ended in "…"; nothing on the band is cut any more (SPEC §57.6),
+     * so every line shows and the section is as tall as its words.
+     */
     public void textAtMost(String s, int colour, int max) {
-        for (String line : SignalText.wrapAtMost(s, width, max, font::width)) {
-            if (drawing()) line(line, x, y, colour, false);
-            y += LINE;
+        text(s, colour, 0, false);
+    }
+
+    /** Real pixels to one unit where sections are drawing now (a host sets it; 0: the window's GUI scale). */
+    public static int unitPixels;
+
+    public static int unitPixelsNow() {
+        return unitPixels > 0 ? unitPixels : Math.max(1, (int) net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale());
+    }
+
+    /**
+     * One line at an absolute position, in a slot {@code maxW} wide. Never cut (SPEC §57.6): a line that doesn't fit is drawn
+     * a step smaller, and one that still doesn't is wrapped at the smallest size. Draw pass only; doesn't move the cursor.
+     */
+    public void textAt(String s, int tx, int ty, int maxW, int colour, boolean shadow) {
+        boxAt(s, tx, ty, maxW, 1, colour, shadow);
+    }
+
+    /** Text in a box {@code w} wide and {@code lines} lines tall, at an absolute position: fitted, never cut. Draw pass only. */
+    /**
+     * The same fit for a section that draws with the graphics itself (the Journal's chains, the Almanac, who can ride with
+     * you): as written if it fits its slot, else smaller and wrapped, never cut (SPEC §57.6). {@code lit} draws it as the
+     * band's light.
+     */
+    public static void fitted(GuiGraphicsExtractor g, Font font, String s, int x, int y, int w, int lines, int argb, boolean lit) {
+        if (s == null || s.isEmpty()) return;
+        if ((argb >>> 24) == 0) argb |= 0xFF000000;
+        if (lines == 1 && font.width(s) <= w) {
+            if (lit) HudLook.text(g, font, s, x, y, argb, false);
+            else g.text(font, s, x, y, argb, false);
+            return;
+        }
+        SignalText.Fitted f = SignalText.fitBox(s, w, lines, unitPixelsNow(), font::width);
+        float k = f.scale(), step = k >= 1f ? LINE : 9f * k + 1f, fy = y + (f.lines().size() == 1 ? (9f - 9f * k) / 2f : 0f);
+        for (String l : f.lines()) {
+            g.pose().pushMatrix();
+            g.pose().translate(x, fy);
+            g.pose().scale(k, k);
+            if (lit) HudLook.text(g, font, l, 0, 0, argb, false);
+            else g.text(font, l, 0, 0, argb, false);
+            g.pose().popMatrix();
+            fy += step;
         }
     }
 
-    /** One line at an absolute position, shortened to {@code maxW}. Draw pass only; doesn't move the cursor. */
-    public void textAt(String s, int tx, int ty, int maxW, int colour, boolean shadow) {
-        if (drawing()) line(SignalText.ellipsize(s, maxW, font::width), tx, ty, colour, shadow);
+    public void boxAt(String s, int tx, int ty, int w, int lines, int colour, boolean shadow) {
+        if (!drawing() || s == null || s.isEmpty()) return;
+        if (lines == 1 && font.width(s) <= w) {
+            line(s, tx, ty, colour, shadow);
+            return;
+        }
+        SignalText.Fitted f = SignalText.fitBox(s, w, lines, unitPixelsNow(), font::width);
+        if ((colour >>> 24) == 0) colour |= 0xFF000000;
+        float k = f.scale(), step = k >= 1f ? LINE : 9f * k + 1f, fy = ty + (f.lines().size() == 1 ? (9f - 9f * k) / 2f : 0f);
+        for (String l : f.lines()) {
+            if (k >= 1f) line(l, tx, Math.round(fy), colour, shadow);
+            else c.textScaled(font, l, tx, fy, k, colour, shadow);
+            fy += step;
+        }
     }
 
     /** A label on the left and a value on the right; when both don't fit, the value goes under, indented. */
@@ -190,7 +243,11 @@ public final class Ui {
     public boolean buttonAt(String label, int bx, int by, int bw, int bh, int accent, boolean enabled) {
         boolean hover = hover(bx, by, bw, bh);
         if (drawing()) {
-            Glass.button(c, font, SignalText.ellipsize(label, bw - 6, font::width), bx, by, bw, bh, hover, enabled, accent);
+            if (font.width(label) <= bw - 6) Glass.button(c, font, label, bx, by, bw, bh, hover, enabled, accent);
+            else { // a label wider than its button is fitted into it, never cut (SPEC §57.6)
+                Glass.button(c, font, "", bx, by, bw, bh, hover, enabled, accent);
+                boxAt(label, bx + 3, by + (bh - 8) / 2, bw - 6, 1, Glass.a(enabled ? Glass.TITLE : Glass.LABEL, 1f), false);
+            }
             return false;
         }
         if (mode == Mode.CLICK && enabled && hover && !consumed) {
@@ -281,28 +338,29 @@ public final class Ui {
         }
 
         public void chip(String label, int colour) {
-            String l = SignalText.ellipsize(label, width - 8, font::width);
-            int cw = font.width(l) + 8;
+            if (font.width(label) > width - 8) { // wider than the whole row: fitted as plain text, never cut (SPEC §57.6)
+                text(label, colour);
+                return;
+            }
+            int cw = font.width(label) + 8;
             place(cw, 11);
-            if (drawing()) Glass.chip(c, font, l, fx, y, colour);
+            if (drawing()) Glass.chip(c, font, label, fx, y, colour);
             fx += cw + 4;
         }
 
         /** An item icon with a short label after it (a checklist line, a price). */
         public void item(ItemStack stack, String label, int colour) {
-            String l = SignalText.ellipsize(label, width - ICON - 3, font::width);
-            int w = ICON + 3 + font.width(l);
+            int w = Math.min(width, ICON + 3 + font.width(label));
             place(w, ICON);
             itemAt(stack, fx, y, ICON);
-            if (drawing()) line(l, fx + ICON + 3, y + 2, colour, false);
+            if (drawing()) boxAt(label, fx + ICON + 3, y + 2, w - ICON - 3, 1, colour, false);
             fx += w + 8;
         }
 
         public void text(String s, int colour) {
-            String l = SignalText.ellipsize(s, width, font::width);
-            int tw = font.width(l);
+            int tw = Math.min(width, font.width(s));
             place(tw, 9);
-            if (drawing()) line(l, fx, y + 2, colour, false);
+            if (drawing()) boxAt(s, fx, y + 2, tw, 1, colour, false);
             fx += tw + 6;
         }
 

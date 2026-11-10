@@ -63,7 +63,7 @@ final class KinPageSection extends UiSection {
                 continue;
             }
             String wants = r.get(5).equals("?") ? "" : "\nWhat it wants: " + r.get(5).replace("\n", " ");
-            out.add(new Catalogue.Slot(k.title, true, r.get(3) + "\n" + r.get(4) + wants, ItemStack.EMPTY));
+            out.add(new Catalogue.Slot(k.title, true, r.get(3) + "\n" + r.get(4) + wants, ItemStack.EMPTY, KinStrip.body(k.id())));
         }
         return out;
     }
@@ -192,7 +192,7 @@ final class KinPageSection extends UiSection {
                 if (!rumour.isEmpty()) {
                     body.text(rumour, met ? 0xFF000000 | Glass.LABEL : DIM);
                     Ui.Flow f = body.flow();
-                    if (f.button("Pin", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new KinNet.Track(id));
+                    if (f.button("Track", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new KinNet.Track(id));
                     f.end();
                 }
             });

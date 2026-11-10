@@ -12,7 +12,64 @@ import java.util.Locale;
 final class HallSpecial {
     private HallSpecial() {}
 
+    /**
+     * One thing that sets a kind apart, as the Hall's panel shows it (SPEC §57.10): a few words, its number, and the whole
+     * sentence for when you point at it. It was a paragraph each.
+     */
+    record Mark(String label, String value, String says) {}
+
+    /** The sentences, as they were written: the narrator's, and any reader that wants them whole. */
     static List<String> of(String style) {
+        List<String> out = new ArrayList<>();
+        for (Mark m : marks(style)) out.add(m.says());
+        return out;
+    }
+
+    static List<Mark> marks(String style) {
+        Archetypes.Loaded l = Archetypes.get(style);
+        if (l == null) return List.of();
+        Archetype a = l.def();
+        Archetype.Traits t = a.traits();
+        Archetype.Guard g = a.guard();
+        Archetype.MoveDef heavy = l.move(Archetype.Move.HEAVY), counter = l.move(Archetype.Move.RIPOSTE);
+        List<Mark> out = new ArrayList<>(4);
+        List<String> said = sentences(style);
+        int i = 0;
+        if (t.backstab() > 1F) out.add(new Mark("From behind", "×" + n(t.backstab()), said.get(i++)));
+        if (t.drawIdle() > 0) out.add(new Mark("Drawn after " + n(t.drawIdle() / 20F) + " s sheathed", "×" + n(t.drawMotion()), said.get(i++)));
+        if (t.spirit() > 1F) out.add(new Mark("Against spirits", "×" + n(t.spirit()), said.get(i++)));
+        if (t.pull() > 0F) out.add(new Mark("Drags them to you", n(t.pull()) + " blocks", said.get(i++)));
+        if (t.energy() > 0F) out.add(new Mark("Energy a blow", "+" + n(t.energy()), said.get(i++)));
+        if (t.reachPerStep() > 0F) out.add(new Mark("Reach, each strike", "+" + n(t.reachPerStep()), said.get(i++)));
+        if (t.riposteThrow() > 0F) out.add(new Mark(style.equals("shieldblade") ? "Blocks, and a counter throws" : "A counter throws them", style.equals("shieldblade") ? pct(g.reduction()) : "", said.get(i++)));
+        if (out.isEmpty() && heavy != null && i < said.size()) {
+            String says = said.get(i++);
+            switch (style) {
+                case "longsword" -> out.add(new Mark("Blocks", pct(g.reduction()), says));
+                case "axe" -> out.add(new Mark("Heavy, off a stance", Integer.toString(Math.round(heavy.posture())), says));
+                case "maul" -> out.add(new Mark("Slam, off every stance", Integer.toString(Math.round(heavy.posture())), says));
+                case "spear" -> out.add(new Mark("Heavy reaches", n(heavy.reach()) + " blocks", says));
+                case "greatblade" -> out.add(new Mark("Blocks", pct(g.reduction()), says));
+                case "rapier" -> out.add(new Mark("Counter, off a stance", Integer.toString(Math.round((counter == null ? heavy : counter).posture())), says));
+                case "glaive" -> out.add(new Mark("Heavy sweeps round", n(heavy.reach()) + " blocks", says));
+                case "twinblades" -> out.add(new Mark("A combo's last strike", "spins", says));
+                default -> i--;
+            }
+        }
+        Archetype.MoveDef art = l.move(Archetype.Move.ART);
+        if (art != null && i < said.size()) {
+            String shape = art.arc() >= 300F ? "a full circle" : art.arc() <= 40F ? "a thrust" : "a wide cut";
+            out.add(new Mark("Its Art, " + shape, n(art.reach()) + " blocks", said.get(i)));
+        }
+        return out;
+    }
+
+    static List<Mark> lordMarks(LordForged.Forged f) {
+        LordForged.Signature s = f.art();
+        return List.of(new Mark("Its Art ends in " + s.name(), n(s.radius()) + " blocks · ×" + n(s.power()), lord(f).getFirst()));
+    }
+
+    private static List<String> sentences(String style) {
         Archetypes.Loaded l = Archetypes.get(style);
         if (l == null) return List.of();
         Archetype a = l.def();

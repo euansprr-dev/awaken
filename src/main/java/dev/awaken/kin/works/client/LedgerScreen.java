@@ -89,10 +89,10 @@ final class LedgerScreen extends Screen implements QuietScreen {
             if (pick) g.fill(px + 10, y - 1, px + W - 10, y + ROW - 1, Glass.a(Glass.AMBER, 0.22F));
             else if (over) g.fill(px + 10, y - 1, px + W - 10, y + ROW - 1, Glass.a(0xFFFFFF, 0.06F));
             g.item(l.stack(), px + 14, y);
-            g.text(font, font.plainSubstrByWidth(l.name(), 150), px + 36, y + 4, Glass.a(pick ? Glass.TITLE : Glass.TEXT, 1F), false);
+            dev.awaken.signal.client.Ui.fitted(g, font, l.name(), px + 36, y + 4, 150, 1, Glass.a(pick ? Glass.TITLE : Glass.TEXT, 1F), false); // whole, never cut (SPEC §57.6)
             String n = "×" + l.count();
             g.text(font, n, px + 194 - font.width(n), y + 4, Glass.a(Glass.AMBER, 1F), false);
-            if (!l.bay().equals(lastBay)) g.text(font, font.plainSubstrByWidth(l.bay(), 86), px + 202, y + 4, Glass.a(Glass.LABEL, 1F), false);
+            if (!l.bay().equals(lastBay)) dev.awaken.signal.client.Ui.fitted(g, font, l.bay(), px + 202, y + 4, 86, 1, Glass.a(Glass.LABEL, 1F), false);
             lastBay = l.bay();
         }
         if (shown.size() > ROWS) {
