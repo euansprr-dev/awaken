@@ -16,6 +16,7 @@ TOURS = {
     "w2": "run-autopilot/screenshots-ci/way-up-42868121143",
     "w3": "run-autopilot/screenshots-ci/way-up-42874946585",
     "w4": "run-autopilot/screenshots-ci/way-up-42879026051",
+    "wl": "run-autopilot/screenshots-ci/way-up-leap-42885496256",
 }
 # page picture -> (tour, shot, crop as fractions (x0, y0, x1, y1) or None)
 CUTS = {
@@ -26,6 +27,7 @@ CUTS = {
     "built_beam": ("w4", "way_01_vault_told", None),
     "built_leap": ("w3", "way_10_leap_figure", None),
     "built_leap_card": ("w1", "way_12_leap_card", None),
+    "built_gate": ("wl", "leap_04_gate_at_foot", None),
     "built_wings": ("w2", "way_sky_10_pier_first_person", None),
     "built_wings_open": ("w2", "way_sky_12_opened", None),
     "built_sky": ("w2", "way_16_sky_strip", None),
@@ -79,6 +81,7 @@ STRIPS = {
         ("sky_gift", "<b>Before: the Sky Warden falls.</b> \"The sky is yours.\" and four moves in one line of text."),
     ],
     "leap_strip": [
+        ("built_gate", "<b>Built: the course's gate at the foot of a Tether Spire,</b> opened by reaching its crown by rope."),
         ("built_leap_card", "<b>Built: the leap's card of keys.</b>"),
         ("spire", "<b>The place: a Tether Spire, from its plaza.</b> There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope."),
     ],

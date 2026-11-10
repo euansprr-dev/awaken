@@ -124,6 +124,21 @@ each).
   home. What stands: the fight's own picture, D-rank and the rope held after it, the rival's line at home, and the K
   stage's Tasks and Powers places (finding 11). All four scripts now wait for the sprint to end (`wait 2400`, `tick
   sprint stop`) and were run again.
+- **The re-runs, with the sprint over (all passed).** `unlock-tether.txt`, run 42860766756: the outro now takes its 15 s;
+  2.9 s after the Ringer falls its chain is on the floor and the only message on screen is Minecraft's "New Recipe(s)
+  Unlocked!" toast; home, the rival's lines and the rank's; no frame in the next 25 s shows the rope's toast or its tip.
+  `unlock-wings.txt`, run 42860879977: the climb, "Wings of light." and its line, then the cabin and nothing more.
+  `unlock-sky.txt`, run 42860942691 (a real A Reassessment): "The sky remembers you." and its line while the Sky Warden
+  winds up a blow; "The sky is yours." and four moves in one line. Its ending step named an ending that does not exist
+  ("ascend"; the three are Become, Break and Wake), so the Sovereign's gift is not pictured. `leaper-trial.txt`, run
+  42850633738: the chasm's edge, "Your legs remember the air." over the course's clock.
+
+## 2.5 After approval: the build's own tours
+
+`tools/autopilot/way-up.txt` and `way-up-leap.txt`; runs and what each showed are in SPEC §63.8 "Seen". What they
+changed in the build: the beam drawn past the fog; the title under the director's big card; "press twice" for wings; no
+place inside the city's reserve; the reveal as a panel that can't be filed or cut; an owed lesson never on another's
+gift; the gate on any climb by the line.
 
 ## 3. Approaches
 
