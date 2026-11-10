@@ -64,10 +64,14 @@ final class AscentRender {
     /** A taut swing's hum (0..1: the line trembling under the weight) and a let-go line's whip (0..1, fading). */
     private static final float[] RHUM = new float[MAX_ROPES], RWHIP = new float[MAX_ROPES];
     private static float nextHum, nextWhip;
+    /** How well a let-go now is timed (0..1): the rope brightens and thickens through its window (SPEC §62). */
+    private static final float[] RWIN = new float[MAX_ROPES];
+    private static float nextWin;
     /** The marker as drawn (eased toward where a press would throw, SPEC §17.31) and how much of it shows. */
     private static double markX, markY, markZ;
     private static float markA;
-    private static boolean markZip;
+    /** What a press would do there: 0 a swing, 1 a pull up a face, 2 a sling (SPEC §62: a shape each). */
+    private static int markKind;
     private static int ropes;
     /** The rope's line for the next rope() call, its flow and its reel. */
     private static int nextLine;
@@ -185,6 +189,7 @@ final class AscentRender {
             nextFlow = (float) (AscentMoves.paid * 0.9);
             nextReel = AscentMoves.reeling && AscentMoves.kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
             nextHum = AscentMoves.swinging() && AscentMoves.ropeTaut ? (float) Mth.clamp((AscentMoves.tension - 0.2) / 0.6, 0, 1) : 0;
+            nextWin = AscentMoves.swinging() && AscentMoves.ropeTaut ? AscentMoves.windowNow : 0;
             rope(hx, hy, hz, AscentMoves.ax, AscentMoves.ay, AscentMoves.az, sag, reach, 1F);
             if (st == AscentState.RAPPEL) {
                 if (first) cameraPoint(AscentFp.brakeNow[0], AscentFp.brakeNow[1], AscentFp.brakeNow[2], TMP);
@@ -268,7 +273,7 @@ final class AscentRender {
                 markY += (m.y - markY) * 0.35;
                 markZ += (m.z - markZ) * 0.35;
             }
-            markZip = m.zip;
+            markKind = m.zip ? 1 : m.sling ? 2 : 0;
         }
         markA += ((on ? 1F : 0F) - markA) * 0.25F;
     }
@@ -278,7 +283,7 @@ final class AscentRender {
             nextLine = 0;
             nextFlow = 0;
             nextReel = false;
-            nextHum = nextWhip = 0;
+            nextHum = nextWhip = nextWin = 0;
             return;
         }
         int i = ropes++;
@@ -287,10 +292,11 @@ final class AscentRender {
         RREEL[i] = nextReel;
         RHUM[i] = nextHum;
         RWHIP[i] = nextWhip;
+        RWIN[i] = nextWin;
         nextLine = 0;
         nextFlow = 0;
         nextReel = false;
-        nextHum = nextWhip = 0;
+        nextHum = nextWhip = nextWin = 0;
         RH[i * 3] = hx;
         RH[i * 3 + 1] = hy;
         RH[i * 3 + 2] = hz;
@@ -397,8 +403,11 @@ final class AscentRender {
             nearFade = true;
             int line = RLINE[i];
             if (glow) {
-                ribbon(vc, pose, PTS, n + 1, line == 1 ? 0.11F : 0.16F, line == 1 ? 0.11F : 0.16F, (int) (a * (line == 1 ? 34 : line == 2 ? 92 : 100)),
-                        line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0F, 1F);
+                // through the let-go window the halo swells and whitens: the moment to let go can be seen
+                float win = RWIN[i], gw = (line == 1 ? 0.11F : 0.16F) * (1 + 0.9F * win);
+                ribbon(vc, pose, PTS, n + 1, gw, gw, (int) (a * (line == 1 ? 34 : line == 2 ? 92 : 100) * (1 + 1.2F * win)),
+                        win > 0.01F ? mix(line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0xFFFFFF, win * 0.7F)
+                                : line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0F, 1F);
             } else {
                 // the light rope's strands run on their own; steel only moves as the rope runs through the hand; the
                 // Deepglass line's light drifts slowly along it
@@ -502,8 +511,9 @@ final class AscentRender {
     }
 
     /**
-     * The marker (SPEC §17.31): where a press would throw, a small bright point with four short ticks turning slowly
-     * round it, sized to stay readable far off; cool white for a swing, warm gold for a zip up to a lip.
+     * The marker (SPEC §17.31, §62): where a press would throw, a small bright point sized to stay readable far off, and
+     * round it the shape of what the press would do: four ticks turning slowly for a swing (cool white), a chevron over
+     * it for a sling (cool white: up and over), a bracket either side for a pull up a face (warm gold).
      */
     private static void drawMarker(VertexConsumer vc, PoseStack.Pose pose) {
         if (markA < 0.03F) return;
@@ -515,7 +525,7 @@ final class AscentRender {
         double pull = Math.min(0.6, scale * 1.8) / d;
         double markX = AscentRender.markX + (cx - AscentRender.markX) * pull, markY = AscentRender.markY + (cy - AscentRender.markY) * pull,
                 markZ = AscentRender.markZ + (cz - AscentRender.markZ) * pull;
-        int rgb = markZip ? 0xFFD58A : 0xD6F0FF;
+        int rgb = markKind == 1 ? 0xFFD58A : 0xD6F0FF;
         float pulse = 1F + 0.12F * Mth.sin(time * 0.35F);
         float c = scale * 0.55F * pulse;
         int a = (int) (230 * markA);
@@ -524,11 +534,13 @@ final class AscentRender {
                 markX + rx * c - ux * c, markY + ry * c - uy * c, markZ + rz * c - uz * c, 1, 1,
                 markX + rx * c + ux * c, markY + ry * c + uy * c, markZ + rz * c + uz * c, 1, 0,
                 markX - rx * c + ux * c, markY - ry * c + uy * c, markZ - rz * c + uz * c, 0, 0);
-        // the four ticks: small points on a turning square round it
+        // a swing: four ticks on a turning square; a sling: five in a chevron over it; a pull: three either side
         float spin = time * 0.05F;
-        for (int k = 0; k < 4; k++) {
+        float[] shape = markKind == 2 ? CHEVRON : markKind == 1 ? BRACKET : null;
+        int count = shape == null ? 4 : shape.length / 2;
+        for (int k = 0; k < count; k++) {
             float ang = spin + k * Mth.HALF_PI;
-            double ox = Mth.cos(ang) * scale * 1.6, oy = Mth.sin(ang) * scale * 1.6;
+            double ox = shape == null ? Mth.cos(ang) * scale * 1.6 : shape[k * 2] * scale, oy = shape == null ? Mth.sin(ang) * scale * 1.6 : shape[k * 2 + 1] * scale;
             double px = markX + rx * ox + ux * oy, py = markY + ry * ox + uy * oy, pz = markZ + rz * ox + uz * oy;
             float t = scale * 0.28F;
             quad2(vc, pose, (int) (a * 0.8F), rgb,
@@ -537,6 +549,15 @@ final class AscentRender {
                     px + rx * t + ux * t, py + ry * t + uy * t, pz + rz * t + uz * t, 1, 0,
                     px - rx * t + ux * t, py - ry * t + uy * t, pz - rz * t + uz * t, 0, 0);
         }
+    }
+
+    /** The marker's shapes, in marker sizes (x right, y up): a chevron over the point, a bracket either side of it. */
+    private static final float[] CHEVRON = {-1.7F, 0.5F, -0.85F, 1.15F, 0F, 1.8F, 0.85F, 1.15F, 1.7F, 0.5F},
+            BRACKET = {-1.7F, -1.1F, -1.7F, 0F, -1.7F, 1.1F, 1.7F, -1.1F, 1.7F, 0F, 1.7F, 1.1F};
+
+    private static int mix(int a, int b, float t) {
+        int r = (int) Mth.lerp(t, (a >> 16) & 255, (b >> 16) & 255), g = (int) Mth.lerp(t, (a >> 8) & 255, (b >> 8) & 255), bl = (int) Mth.lerp(t, a & 255, b & 255);
+        return r << 16 | g << 8 | bl;
     }
 
     private static void drawStars(VertexConsumer vc, PoseStack.Pose pose) {

@@ -21,8 +21,9 @@ import net.minecraft.util.Mth;
 public final class AscentFp {
     private AscentFp() {}
 
-    /** Where a rope leaves the main hand, in view space (fp_moves.py ROPE_FIST: keep the same numbers). */
-    public static final float ROPE_X = 0.3F, ROPE_Y = -0.02F, ROPE_Z = -0.72F;
+    /** Where a rope leaves the main hand, in view space (fp_moves.py ROPE_FIST: keep the same numbers). Low in the frame's
+     * corner since SPEC §62: at (0.3, -0.02, -0.72) the fist sat in the middle of the view, over where the swing was going. */
+    public static final float ROPE_X = 0.46F, ROPE_Y = -0.3F, ROPE_Z = -0.8F;
     /** The arms out flat on wings (fp_moves.py GLIDE_FIST), the main hand's; the other mirrors x. */
     static final float GLIDE_X = 0.86F, GLIDE_Y = -0.04F, GLIDE_Z = -0.86F;
     /** The fists raised for a dive slam (fp_moves.py SLAM_UP). */

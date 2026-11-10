@@ -225,21 +225,32 @@ public final class AscentServer {
         if (flying && ++m.aloft % 100 == 0) link(p, AscentMemory.Track.SKYBORN, 1);
     }
 
-    /** States refused since the server started (tests and the bench read it). */
+    /** States refused since the server started (tests and the bench read it), and why the last one was. */
     static int refusals;
+    static String lastRefusal = "";
+
+    /** Why an anchor isn't real, in words (the log's; SPEC §62: a refusal used to say nothing). */
+    private static String anchorWhy(ServerPlayer p, double ax, double ay, double az) {
+        double reach = reach(p, 10) + 6;
+        return p.distanceToSqr(ax, ay, az) > reach * reach
+                ? String.format("the anchor is %.1f from where the server has the body (reach %.1f)", Math.sqrt(p.distanceToSqr(ax, ay, az)), reach)
+                : String.format("no block's collision at the anchor (%.2f %.2f %.2f)", ax, ay, az);
+    }
 
     static void onState(ServerPlayer p, AscentPayloads.State msg) {
         AscentState s = AscentState.byId(msg.state());
         if (s == null) return;
         AscentMotion m = motion(p);
-        boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
-                || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z())
-                || s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE
-                || s == AscentState.RAPPEL && !rappelOk(p, m, msg);
-        if (refuse && s != AscentState.NONE) {
+        String why = !allowed(p, s) ? "the tier isn't held" : p.isPassenger() ? "riding" : p.isSpectator() ? "spectating"
+                : !dev.awaken.body.BodyConfig.ascent() ? "the Ascent is off in this world"
+                : s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z()) ? anchorWhy(p, msg.x(), msg.y(), msg.z())
+                : s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE ? "too little Aether"
+                : s == AscentState.RAPPEL && !rappelOk(p, m, msg) ? "the rappel's length" : null;
+        if (why != null && s != AscentState.NONE) {
             refusals++;
+            lastRefusal = why;
             AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
-            dev.awaken.Awaken.LOG.debug("[ascent] refused {} for {}", s, p.getPlainTextName());
+            dev.awaken.Awaken.LOG.info("[ascent] refused {} for {}: {}", s, p.getPlainTextName(), why);
             s = AscentState.NONE;
         }
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
@@ -329,6 +340,13 @@ public final class AscentServer {
         switch (msg.what()) {
             case AscentPayloads.EV_LAUNCH -> {
                 if (st == AscentState.TETHER) link(p, AscentMemory.Track.TETHER, 3);
+            }
+            // Rope and Wings (SPEC §62): a sling's let-go and a spring off a top are the rope's moves
+            case AscentPayloads.EV_SLING -> {
+                if (st == AscentState.ZIP) link(p, AscentMemory.Track.TETHER, 2);
+            }
+            case AscentPayloads.EV_SPRING -> {
+                if (Ascent.has(p, Ascent.Tier.TETHER) && st == AscentState.CARRY) link(p, AscentMemory.Track.TETHER, 2);
             }
             // a rappel's bound off the wall: a link, as any move on the rope
             case AscentPayloads.EV_RAPPEL_KICK -> {

@@ -140,6 +140,22 @@ public final class AscentMoves {
     /** This tick's input (the Runner's wall-run takes it when a swing hands the body over). */
     private static @org.jspecify.annotations.Nullable ClientInput input;
 
+    // ---- the rope finds the way (SPEC §62) ----
+    /** A sling: the ZIP state pulling toward a point over the top the rope bit (the rope still runs to the block). */
+    static boolean slinging;
+    static double sx, sy, sz;
+    private static int slingAge, slingStall;
+    /** The block the server last refused a rope at, and when: not thrown at again for a second. */
+    private static @org.jspecify.annotations.Nullable BlockPos refusedBlock;
+    private static int refusedAt = -100;
+    /** Ticks on the ground with no state: the held rope's hop into the next rope waits for a real landing. */
+    private static int groundFor;
+    /** A top reached with forward held is sprung off, not stood on (Tether mastery 3). */
+    private static boolean spring;
+    /** How well a let-go now is timed (0..1), eased, for the rope's glow and hum; when a sling last let go. */
+    static float windowNow;
+    static int slingAt = -100;
+
     private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
 
     static void trace(String what) {
@@ -261,7 +277,9 @@ public final class AscentMoves {
         }
         float yaw = p.getYRot(), pitch = p.getXRot();
         boolean assist = FeelConfig.ropeAssist();
+        AscentSwing.guide = assist && FeelConfig.ropeGuide();
         if (fireCool > 0) fireCool--;
+        windowNow *= 0.8F;
         // the rope held between swings throws again by itself (the chain), in the air, once the last let-go is behind
         boolean chain = assist && tether && !tetherPressed && fireCool == 0 && has(AscentPayloads.Tier.TETHER);
         marker(p, assist, tether);
@@ -270,10 +288,14 @@ public final class AscentMoves {
                 // a Runner move (a wall-run, a hang) holds the body: only the rope cuts in
                 boolean runner = dev.awaken.body.client.RunnerMoves.busy();
                 if (p.onGround()) airMovesUsed = 0;
+                groundFor = p.onGround() ? groundFor + 1 : 0;
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
                 } else if (chain && !runner && !p.onGround() && fire(p, false)) {
                     // walked or ran off an edge with the rope held: it swings
+                } else if (AscentSwing.guide && chain && !runner && groundFor >= 3 && fwd > 0 && ticks - fireAt >= 10 && running(p)
+                        && fire(p, false)) {
+                    // landed with the rope held and still running: a hop into the next rope (SPEC §62)
                 } else if (runner) {
                     // the Runner's own jumps (a wall jump, a ledge jump)
                 } else if (!p.onGround() && leaperMove(p, jumpPressed, sprintPressed, sneakPressed, true)) {
@@ -319,7 +341,9 @@ public final class AscentMoves {
                 }
             }
             case ZIP -> {
-                if (!tether && !heldForYou) {
+                if (!tether && slinging && pressThrow && ticks - fireAt <= AscentSwing.T.tapTicks && tapZip(p, yaw, pitch)) {
+                    // a tap, not a hold: a ledge in the look is zipped up to
+                } else if (!tether && !heldForYou) {
                     toCarry(p, "zip let go");
                     carry(yaw, fwd, right);
                 } else {
@@ -559,7 +583,9 @@ public final class AscentMoves {
         double hx0 = p.getX(), hy0 = p.getY() + AscentRules.HAND_HEIGHT, hz0 = p.getZ();
         boolean overhead = a != null && overhead(a.x() - hx0, a.y() - hy0, a.z() - hz0);
         if (assist && !overhead) {
-            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch);
+            // a pull up a face wants a press, or to be in the air already: the held rope's hop from the ground only swings or slings
+            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround());
+            if (pk != null && refusedLately(p, pk.x, pk.y, pk.z)) pk = null;
             if (pk != null) {
                 fired(p);
                 pressThrow = pressed;
@@ -585,7 +611,7 @@ public final class AscentMoves {
         }
         Vec3 v = state == AscentState.NONE ? new Vec3(p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo) : null;
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
-        swinging = false;
+        swinging = slinging = false;
         ax = a.x();
         ay = a.y();
         az = a.z();
@@ -647,13 +673,35 @@ public final class AscentMoves {
         if (p.onGround()) HAND.vy = Math.max(HAND.vy, 0.5);
     }
 
-    /** What a throw now takes: the best swing along the heading, else the marker's lip, else a lip in the look; or null. */
-    private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch) {
+    /**
+     * What a throw now takes: the best swing along the heading; with the guide (SPEC §62), where nothing swings, a sling
+     * past a top ahead; else ({@code lips}) the marker's lip or a lip in the look, with the guide only by a clear way; or null.
+     */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
         SPACE.at(p.level(), p);
         hand(p);
         if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
-        if (markerOn && MARKER.zip) return PICK.copy(MARKER);
-        return AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK) ? PICK : null;
+        if (AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
+        if (!lips) return null;
+        if (markerOn && MARKER.zip && zipOk(MARKER, HAND.x, HAND.y, HAND.z)) return PICK.copy(MARKER);
+        return AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK) && zipOk(PICK, HAND.x, HAND.y, HAND.z) ? PICK : null;
+    }
+
+    /** With the guide, a pull up a face is taken only by a clear way to it (never through a crown into a wall). */
+    private static boolean zipOk(AscentSwing.Pick lip, double hx, double hy, double hz) {
+        return !AscentSwing.guide || lip.len <= AscentSwing.T.wallZip && AscentSwing.zipClear(SPACE, hx, hy, hz, lip);
+    }
+
+    /** Moving at a run across the ground (the held rope's hop into the next rope asks for it). */
+    private static boolean running(LocalPlayer p) {
+        double dx = p.getX() - p.xo, dz = p.getZ() - p.zo;
+        return dx * dx + dz * dz > 0.15 * 0.15;
+    }
+
+    /** The server refused a rope at this point's block within the last second: it isn't thrown at again yet. */
+    private static boolean refusedLately(LocalPlayer p, double x, double y, double z) {
+        BlockPos r = refusedBlock;
+        return r != null && ticks - refusedAt < 20 && r.equals(AscentAnchors.blockOf(p.level(), x, y, z));
     }
 
     /** The rope thrown to a pick: a swing (fitted, no yank: it flies a tick or two and bites) or a zip up over a lip. */
@@ -665,6 +713,11 @@ public final class AscentMoves {
             zipUp(p, pk, true);
             return;
         }
+        if (pk.sling) {
+            slingTo(p, pk);
+            return;
+        }
+        slinging = false;
         ax = pk.x;
         ay = pk.y;
         az = pk.z;
@@ -681,9 +734,65 @@ public final class AscentMoves {
         tetherTick(p, heading, 0, 0, false);
     }
 
+    /**
+     * A sling (SPEC §62): the rope bites the top's block and pulls the body toward a point over it; it lets go by itself
+     * before the point. To the server and to watchers it is a zip (a rope pulling you along).
+     */
+    private static void slingTo(LocalPlayer p, AscentSwing.Pick pk) {
+        swinging = false;
+        slinging = true;
+        ax = pk.x;
+        ay = pk.y;
+        az = pk.z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
+        len = lenTarget = pk.len;
+        sx = pk.px;
+        sy = pk.py;
+        sz = pk.pz;
+        slingAge = slingStall = 0;
+        ropeTravel = 1;
+        ropeTaut = false;
+        setState(p, AscentState.ZIP);
+        zipFromX = K.x;
+        zipFromZ = K.z;
+        trace(String.format("sling %.1f (over a top at %.1f, %.0f° up, %.1f aside)", pk.len, pk.top, pk.elev, pk.side));
+        zipTick(p, p.getYRot());
+    }
+
+    /** A tick of a sling: the rope flies a tick, then pulls; it lets go before the top, or early with a hop if the way closes. */
+    private static void slingTick(LocalPlayer p, float yaw) {
+        if (ropeTravel > 0) {
+            ropeTravel--;
+            if (ropeTravel == 0) bite(p, 0.7F);
+            carry(yaw, 0, 0);
+            return;
+        }
+        slingStall = stateAge > 3 && lastMoved < 0.05 ? slingStall + 1 : 0;
+        boolean blocked = slingStall > 5 || AscentSwing.slingBlocked(SPACE.at(p.level(), p), K, sx, sy, sz, slingAge, WORK);
+        if (blocked) AscentSwing.wallHop(K);
+        if (!blocked && !AscentSwing.slingStep(K, sx, sy, sz, ++slingAge)) {
+            ropeTaut = true;
+            tension = AscentSwing.T.slingPull * 4;
+            return;
+        }
+        // let go: on over the top (or, blocked, a hop and whatever the free flight finds)
+        releaseAt = slingAt = ticks;
+        releaseQuality = blocked ? 0 : 0.6F;
+        fireCool = 2;
+        AscentFlow.gain(blocked ? 0.02F : 0.07F);
+        AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.6F, 1.12F);
+        if (!blocked) AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.5F, 1.2F);
+        FeelDirector.release(releaseQuality);
+        AscentFp.released();
+        event(AscentPayloads.EV_SLING, (float) K.speed());
+        trace(blocked ? "sling lets go early: the way closed" : String.format("sling lets go at %.2f b/t", K.speed()));
+        toCarry(p, "sling let go");
+        carry(yaw, 0, 0);
+    }
+
     /** A zip up to a lip and over it (the assisted rope's when nothing swings, or a tap, or a wall ahead). */
     private static void zipUp(LocalPlayer p, AscentSwing.Pick pk, boolean step) {
-        swinging = false;
+        swinging = slinging = false;
         ax = pk.x;
         ay = pk.y;
         az = pk.z;
@@ -720,12 +829,14 @@ public final class AscentMoves {
         SPACE.at(p.level(), p);
         if (AscentSwing.steerFree(SPACE, K, yaw, false, WORK) || !WORK.blocked) return false;
         Vec3 eye = p.getEyePosition();
-        if (AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK)) {
+        if (AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK)
+                && zipOk(PICK, K.x, K.y + AscentRules.HAND_HEIGHT, K.z) && !refusedLately(p, PICK.x, PICK.y, PICK.z)) {
             fired(p);
             throwTo(p, PICK, yaw);
             return true;
         }
-        AscentSwing.steerFree(SPACE, K, yaw, true, WORK);
+        // nothing bends round it or goes over: with the guide the body brakes, so what it meets it meets softly (SPEC §62)
+        if (!AscentSwing.steerFree(SPACE, K, yaw, true, WORK) && WORK.blocked && AscentSwing.guide) AscentSwing.brake(K);
         return false;
     }
 
@@ -745,7 +856,8 @@ public final class AscentMoves {
         hand(p);
         Vec3 eye = p.getEyePosition();
         markerOn = AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
-                || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER);
+                || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
+                || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
         markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
     }
 
@@ -765,7 +877,7 @@ public final class AscentMoves {
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
         if (state == AscentState.NONE) K.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
-        swinging = false;
+        swinging = slinging = false;
         ax = x;
         ay = y;
         az = z;
@@ -791,7 +903,7 @@ public final class AscentMoves {
         if (!has(AscentPayloads.Tier.TETHER) || off(p)) return false;
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
         K.set(hx, hy, hz, 0, 0, 0);
-        swinging = false;
+        swinging = slinging = false;
         ax = x;
         ay = y;
         az = z;
@@ -807,6 +919,10 @@ public final class AscentMoves {
     }
 
     private static void zipTick(LocalPlayer p, float yaw) {
+        if (slinging) {
+            slingTick(p, yaw);
+            return;
+        }
         if (ropeTravel > 0) {
             ropeTravel--;
             if (ropeTravel == 0) bite(p, 0.6F);
@@ -931,6 +1047,7 @@ public final class AscentMoves {
         len = ROPE.len;
         lenTarget = ROPE.fitLen;
         if (WORK.bent) trace(String.format("swing bends %.0f° round what's ahead", ROPE.bend));
+        if (ROPE.caught) windowNow = Math.max(windowNow, (float) AscentSwing.windowQuality(K, ROPE, yaw + ROPE.bend, WORK));
         double r = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
         ropeTaut = ROPE.caught && r >= len - 0.05;
         // the rope's pull: the turn's (v²/r) and the part of gravity along it
@@ -981,7 +1098,8 @@ public final class AscentMoves {
             p.setDeltaMovement(was);
         }
         double ex = K.x, ey = K.y - AscentRules.HAND_HEIGHT + p.getEyeHeight(), ez = K.z;
-        if (AscentSwing.zipTo(SPACE, ex, ey, ez, yaw, p.getXRot(), reach(p), WORK, PICK)) {
+        if (AscentSwing.zipTo(SPACE, ex, ey, ez, yaw, p.getXRot(), reach(p), WORK, PICK) && zipOk(PICK, K.x, K.y, K.z)
+                && !refusedLately(p, PICK.x, PICK.y, PICK.z)) {
             trace("swing meets a wall: up it on a new rope");
             AscentFx.loose(p.getId(), ax, ay, az);
             fired(p);
@@ -1218,6 +1336,9 @@ public final class AscentMoves {
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(state.ordinal(), ax, ay, az, (float) len));
     }
 
+    /** Tether mastery at which a top reached with forward held is sprung off. */
+    public static final int SPRING_LEVEL = 3;
+
     /** The body's half width and a little: how far out from a block's face the body clears it. */
     private static final double VAULT_CLEAR = 0.5 + 0.3 + 0.08;
 
@@ -1226,6 +1347,8 @@ public final class AscentMoves {
         K.vx = 0;
         K.vy = 0;
         K.vz = 0;
+        // forward held as the pull arrives (Tether mastery 3): off the top at a run, not onto it (SPEC §62)
+        spring = AscentSwing.guide && keyFwd && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= SPRING_LEVEL;
         pullTicks = 40;
         pullX = b.getX() + 0.5;
         pullZ = b.getZ() + 0.5;
@@ -1279,6 +1402,24 @@ public final class AscentMoves {
     private static void pullOver() {
         pullTicks--;
         double out = (K.x - pullX) * pullEX + (K.z - pullZ) * pullEZ;
+        LocalPlayer sp = Minecraft.getInstance().player;
+        if (spring && sp != null && K.y >= pullTop + 0.02) {
+            // the spring: the feet are over the lip; a leap along the look with a runner's speed, and the next rope
+            spring = false;
+            pullTicks = 0;
+            double yaw = sp.getYRot() * Mth.DEG_TO_RAD;
+            K.vx = -Math.sin(yaw) * AscentRules.SPRING_SPEED;
+            K.vz = Math.cos(yaw) * AscentRules.SPRING_SPEED;
+            K.vy = AscentRules.SPRING_UP;
+            fireCool = 2;
+            AscentFlow.gain(0.06F);
+            AscentSounds.local(sp, AscentContent.LAUNCH.get(), 0.55F, 1.25F);
+            FeelDirector.leapLaunch(0.5F);
+            AscentFp.launched();
+            event(AscentPayloads.EV_SPRING, (float) AscentRules.SPRING_SPEED);
+            trace("springs off the top");
+            return;
+        }
         if (K.y >= pullTop + 0.02) {
             double hx = pullX - K.x, hz = pullZ - K.z, hl = Math.sqrt(hx * hx + hz * hz);
             if (hl < 0.25) {
@@ -1718,6 +1859,9 @@ public final class AscentMoves {
         if (p == null || s == null || s != state) return;
         trace("server refused " + s);
         if (s.rope) {
+            // not thrown at that block again for a second (held, the rope would throw at it every tick: SPEC §62)
+            refusedBlock = anchorBlock;
+            refusedAt = ticks;
             setState(p, AscentState.CARRY);
         } else if (s == AscentState.SOAR) {
             // the server's Aether ran out first: hold a glide, as at our own empty
@@ -1740,7 +1884,10 @@ public final class AscentMoves {
         wallNX = wallNZ = 0;
         slamming = false;
         heldForYou = false;
-        swinging = markerOn = false;
+        swinging = slinging = markerOn = false;
+        spring = false;
+        groundFor = 0;
+        refusedBlock = null;
         heldOn = fireCool = 0;
         glideFromEmpty = false;
         airMovesUsed = 0;

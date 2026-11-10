@@ -22,7 +22,9 @@ public final class AscentPayloads {
              * ended; a Judgement Fall's landing (speed: its force). */
             EV_ASCEND = 14, EV_SOVEREIGN = 15, EV_SOVEREIGN_END = 16, EV_JUDGEMENT = 17,
             /** The rappel (SPEC §28.5): a kick off the wall, the feet back on it (speed: how hard each was). */
-            EV_RAPPEL_KICK = 18, EV_RAPPEL_PLANT = 19;
+            EV_RAPPEL_KICK = 18, EV_RAPPEL_PLANT = 19,
+            // Rope and Wings (SPEC §62): a sling's let-go, a spring off a top, a flare landing, a skim (every 2 s of it), a takeoff
+            EV_SLING = 20, EV_SPRING = 21, EV_FLARE = 22, EV_SKIM = 23, EV_TAKEOFF = 24, EV_STRIKE = 25;
 
     /**
      * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;

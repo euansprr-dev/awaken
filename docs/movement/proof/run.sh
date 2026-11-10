@@ -8,7 +8,8 @@ cd "$(dirname "$0")/../../.."
 JAVA=${JAVA_HOME:-/Volumes/MEDIA/.jdks/jdk-25.0.5+8/Contents/Home}/bin
 T=$(mktemp -d)
 mkdir -p $T/dev/awaken/body/ascent
-cp src/main/java/dev/awaken/body/ascent/{AscentSwing,AscentRules,SwingSpace,SwingBench}.java $T/dev/awaken/body/ascent/
+# the sources as they were when the audit ran (the build has since changed them)
+for f in AscentSwing AscentRules SwingSpace SwingBench; do git show a651866b3:src/main/java/dev/awaken/body/ascent/$f.java > $T/dev/awaken/body/ascent/$f.java; done
 cp -R docs/movement/proof/stubs/* $T/
 (cd $T/dev/awaken/body/ascent && patch -s -p0 AscentSwing.java < /dev/stdin) < <(sed -n '/AscentSwing.java/,/^--- a\/src.*SwingBench/p' docs/movement/proof/trial.patch | sed '$d')
 (cd $T/dev/awaken/body/ascent && patch -s -p0 SwingBench.java < /dev/stdin) < <(sed -n '/^--- a\/src.*SwingBench/,$p' docs/movement/proof/trial.patch)
