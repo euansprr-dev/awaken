@@ -350,7 +350,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         HudLook.text(g, font, label, x, y, LABEL, false);
         int room = w - font.width(label) - 10;
         String v = value;
-        if (font.width(v) > room) v = font.plainSubstrByWidth(v, Math.max(0, room - font.width("…"))).stripTrailing() + "…";
+        if (font.width(v) > room) { // a long value: smaller, never cut (SPEC §57.6)
+            dev.awaken.signal.client.Ui.fitted(g, font, v, x + w - room, y, room, 1, Glass.a(colour, 1f), true);
+            return;
+        }
         HudLook.text(g, font, v, x + w - font.width(v), y, Glass.a(colour, 1f), false);
     }
 

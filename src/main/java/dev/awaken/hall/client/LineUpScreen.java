@@ -147,16 +147,15 @@ public final class LineUpScreen extends Screen implements dev.awaken.signal.clie
         g.nextStratum();
         float title = Math.min(3F, 1400F / Math.max(1F, s.titleWidth(heading, 1F)));
         s.titleCentre(heading, 854F, 34F, Math.max(1F, (float) Math.floor(title)), Stage.TITLE);
-        s.centre(s.fit(why, 1560F, 3F), 854F, 124F, 3F, Stage.LABEL);
+        s.fitted(why, 854F, 124F, 1560F, 3F, Stage.LABEL, 0);
         for (int i = 0; i < names.length; i++) {
             float x = cx(i);
             s.titleCentre(names[i], x, 740F, 2F, offer.chosen(i) ? Stage.GOOD : Stage.TITLE);
-            s.centre(s.fit(offer.sub(i), 400F, 3F), x, 802F, 3F, Stage.EDGE);
-            s.centre(s.fit(offer.state(i), 400F, 3F), x, 834F, 3F, offer.chosen(i) ? Stage.GOOD : Stage.LANTERN);
+            s.fitted(offer.sub(i), x, 802F, 400F, 3F, Stage.EDGE, 0);
+            s.fitted(offer.state(i), x, 834F, 400F, 3F, offer.chosen(i) ? Stage.GOOD : Stage.LANTERN, 0);
         }
-        s.text("Esc", 28F, 918F, 3F, Stage.EDGE);
-        s.text("Back to your tasks", 96F, 918F, 3F, Stage.LABEL);
-        s.right("Click one to bring it close", 1684F, 918F, 3F, Stage.DIM);
+        s.hint("Esc", "Back to your tasks", 28F, 918F);
+        s.hint("Click", "Bring one close", 1684F - 28F - s.width("Click", 1.5F) - 24F - s.width("Bring one close", 2F), 918F);
         g.pose().popMatrix();
     }
 

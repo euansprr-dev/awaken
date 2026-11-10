@@ -504,8 +504,7 @@ final class SuitView extends CloseView {
         s.title(pieceName, X + (SuitState.hidden(HallClient.suits, set) ? 0F : 58F), y + 2F, 2F, Stage.LANTERN);
         y += 52F;
         if (showCompare) {
-            s.text(s.fit(compare, TEXT_W, 3F), X, y, 3F, compareColour);
-            y += 40F;
+            y += Math.max(40F, s.fitted(compare, X, y, TEXT_W, 3F, compareColour, -1) + 10F);
         }
 
         int pointed = -1;
@@ -538,13 +537,16 @@ final class SuitView extends CloseView {
         float x = X;
         for (int i = 0; i < subs.size() && i < subX0.length; i++) {
             Panel.Act a = subs.get(i);
-            float w = s.width(a.label(), 3F) + 24F;
+            String cap = a.key() == InputConstants.KEY_T ? "T" : "";
+            float capW = cap.isEmpty() ? 0F : 38F;
+            float w = s.width(a.label(), 3F) + 24F + capW;
             subX0[i] = x;
             subX1[i] = x + w;
             boolean over = fly >= 1F && a.enabled() && mx >= x && mx < x + w && my >= subY0 && my < subY1;
             if (over) s.fill(x, subY0, x + w, subY1, 0x552A3A56);
             s.outline(x, subY0, x + w, subY1, 2, a.enabled() ? 0xA07FC3FF : 0x602A3446);
-            s.text(a.label(), x + 12F, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
+            if (!cap.isEmpty()) s.key(cap, x + 10F, subY0 + 4F);
+            s.text(a.label(), x + 12F + capW, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
             x += w + 14F;
         }
         if (!hint && pointed >= 0) Panel.sourceTip(s, needs.get(pointed), belowNeeds);
@@ -588,10 +590,9 @@ final class SuitView extends CloseView {
 
     private void drawFoot(Stage s, float slide) {
         float y = 916F + 60F * slide;
-        s.text("Esc", 40F, y, 3F, Stage.EDGE);
-        s.text("Back", 120F, y, 3F, Stage.LABEL);
+        s.hint("Esc", "Back", 40F, y);
         s.text("< " + prevName, 250F, y, 3F, Stage.LABEL);
-        s.centre("Drag to turn", 622F, y, 3F, Stage.DIM);
+        s.hint("Drag", "Turn it", 545F, y);
         s.right(nextName + " >", 1000F, y, 3F, Stage.LABEL);
     }
 
