@@ -87,6 +87,8 @@ and combos. If he prefers other recordings on the listening page, the score syst
   offset. Two-handed casts put the weapon away through the existing ease (`Hands.STOW`, 2.5 ticks down, 3 back), never a pop. Body
   casts (a dash, a stomp) leave both hands on the weapon. If the off hand holds something (a twin, a shield) it sinks out for the cast.
   Left-handed play mirrors as today. Arms' grips need one new call for two-handed weapons: "the off hand leaves the grip for N ticks".
+  The weapon session's draw (Weight in the Hand, stage 4) plays only on a real change of the held item, never when a two-handed cast
+  gives the weapon back (its note, 10 Nov).
 - **Authoring rules** (each one a check on the clip data, `power_cast_frames`):
   every pose held 2 ticks or more is inside the safe frame (above the hotbar line); no hand sits in the middle fifth of the view for
   more than 2 ticks; a strike of 4 ticks or more has 2 ticks of anticipation; the two hands never start on the same tick; a strike
