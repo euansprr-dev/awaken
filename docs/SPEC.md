@@ -22625,6 +22625,24 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing (the rim's own
   watch came after those tours, and no tour has run since). The six moves: tour `way-up-moves.txt`, on a stone floor
   built in the open sky with flight by a dev grant (see "Seen, the moves" below).
+- **Seen, the moves** (CI look tours `way-up-moves.txt`, runs 42911204798, 42914634952, 42917835393, 42920044734 and
+  42922158444; "[ascent] the way up: the X lesson shows" in latest.log names each lesson as it begins): the takeoff's
+  prompt held under the top band with its arrow while standing, begun a quarter second after flight was held; the same
+  prompt on its ring in the sky once the look goes up; the takeoff made and its card; the flare's words from the moment
+  the wings open near the ground until three seconds after a hard landing; the sling's key pinned on a block's top on
+  foot, the pull over it and its card; the K rows with the sling's line and "◆ Another move at mastery 3."; the gold
+  figure standing six blocks ahead and rising. **The figure does not read as gold light:** it is your own skin drawn
+  solid with a shadow under it (the gates' ghost renderer does not draw its tint's see-through), plain in the fourth
+  tour and amber-brown with `Lesson.GOLD` in the fifth. It shows the move, but a figure of light needs a renderer of
+  its own (flat gold, lit, no shadow): not built. What the tours changed: the edge arrow moved onto the
+  plate; the flare's words were shortened; the sling gained its on-foot look (it had begun only as the key went down);
+  the takeoff's figure was slowed and moved further off; the figure's tint; and, after the last tour and so
+  unpictured, a words-only prompt sits over the crosshair on a screen under 340 tall (on a 240-tall one a tip already
+  up was drawn through the flare's words: the tips' box and the story line's slot fill the strip under the crosshair
+  there). **Not pictured:** the spring, the rope
+  strike and the skim (they need mastery a tour does not have), a real flare (the pilot lands hard), and the gate
+  opening from a crown's rim. A tour lesson: the message director holds for a world's first five minutes of game time
+  (`Herald.SETTLE`), so the standing lesson never shows in a short tour without a second sprint.
 - **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
   (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
   (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the

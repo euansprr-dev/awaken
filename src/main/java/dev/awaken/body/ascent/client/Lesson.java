@@ -637,9 +637,12 @@ final class Lesson {
         boolean pinned = target != null && project(mc, target, w, h);
         int px, py;
         if (target == null) {
-            // no thing to pin it to: under the crosshair; the form's sits low, over the gold line it speaks of
+            // no thing to pin it to: under the crosshair; the form's sits low, over the gold line it speaks of. On a
+            // short screen (240 tall at the MacBook's size) the tips' box and the story line's slot fill the strip
+            // under the crosshair, and a tip already up was drawn through the flare's words (the fifth look tour):
+            // there it sits over the crosshair instead, clear of both
             px = w / 2;
-            py = k == Kind.FORM ? h - 72 : h / 2 + 38;
+            py = k == Kind.FORM ? h - 72 : h / 2 + 58 < h - 116 ? h / 2 + 38 : h / 2 - 34;
         } else {
             px = Math.round(sx);
             py = Math.round(sy);
