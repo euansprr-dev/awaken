@@ -409,14 +409,14 @@ final class Signatures {
         for (int row = -1; row <= 1; row++) {
             for (int col = -2; col <= 2; col++) {
                 if (Math.abs(row) == 1 && Math.abs(col) == 2) continue;
-                double u = col * 0.42 + (row == 0 ? 0 : 0.21), v = row * 0.38 - 0.25;
-                double depth = 1.25 - 0.10 * (col * col) - 0.06 * (row * row);
+                double u = col * 0.33 + (row == 0 ? 0 : 0.165), v = row * 0.29 - 0.22;
+                double depth = 1.35 - 0.08 * (col * col) - 0.05 * (row * row);
                 double px = eye.x + look.x * depth + right.x * u + up.x * v, py = eye.y + look.y * depth + right.y * u + up.y * v,
                         pz = eye.z + look.z * depth + right.z * u + up.z * v;
                 // drawn over the world as well as adding light: a plate of light is invisible against a noon sky if it only adds
                 // (NEAR: the renderer hides glows within a block and a half of the eye, which is exactly where your own plate is)
-                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.mid, 0.5f * pulse * k), alpha(j.style.mid, 0.35f * k), FxPool.BRIGHT | FxPool.NEAR);
-                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.core, 0.4f * pulse * k), alpha(j.style.core, 0.12f * k), FxPool.ADD | FxPool.NEAR);
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.34f, 0.34f, alpha(j.style.mid, 0.34f * pulse * k), alpha(j.style.mid, 0.24f * k), FxPool.BRIGHT | FxPool.NEAR);
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.34f, 0.34f, alpha(j.style.core, 0.3f * pulse * k), alpha(j.style.core, 0.1f * k), FxPool.ADD | FxPool.NEAR);
             }
         }
     }
@@ -758,23 +758,25 @@ final class Signatures {
         float dx = l > 1e-4f ? j.dx / l : 0, dy = l > 1e-4f ? j.dy / l : 0, dz = l > 1e-4f ? j.dz / l : 1;
         float reach = j.radius, spread = (float) Math.tan(Math.toRadians(j.h)) * 0.75f;
         float strength = 1f - j.age / (float) j.life * 0.5f;
-        int count = n(j.full ? 12 : 8);
+        int count = n(j.full ? 16 : 11);
         for (int i = 0; i < count; i++) {
             float sx = R.s() * spread, sy = R.s() * spread * 0.7f, sz = R.s() * spread;
             float speed = reach / 9f * R.f(0.7f, 1.15f) * strength;
             double vx = (dx + sx) * speed, vy = (dy + sy) * speed + 0.01, vz = (dz + sz) * speed;
-            // two kinds of flame: a body of orange that is drawn over the world (so it shows at noon), and a white-hot heart that adds light
+            // it leaves from just past the hands, small, and grows as it goes: drawn near the eye, so the jet is whole from its start
+            double from = 0.9 + R.f() * 0.7;
+            double ox = j.x + dx * from, oy = j.y + dy * from, oz = j.z + dz * from;
             boolean core = i % 3 == 0;
-            int s = core
-                    ? FxWorld.sprite(FLARE, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 9 + R.i(4), 0.35f, 0.9f, 0xFFFFF3D0, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM)
-                    : FxWorld.sprite(GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 10 + R.i(5), 0.5f, 2.1f, alpha(i % 2 == 0 ? FLAME : EMBER_HOT, 0.85f),
-                            alpha(i % 2 == 0 ? FLAME : EMBER_HOT, 0), FxPool.BRIGHT);
-            FxWorld.drag(s, 0.93f);
-            if (!core && i % 2 == 0) {
-                // the same tongue again as light, so it burns bright where the flame is thick
-                int lit = FxWorld.sprite(GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 9 + R.i(4), 0.4f, 1.6f, alpha(EMBER_HOT, 0.6f), alpha(EMBER_DEEP, 0), FxPool.ADD);
-                FxWorld.drag(lit, 0.93f);
+            if (core) {
+                int s = FxWorld.sprite(FLARE, ox, oy, oz, vx, vy, vz, 9 + R.i(4), 0.25f, 0.8f, 0xFFFFF3D0, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM | FxPool.NEAR);
+                FxWorld.drag(s, 0.93f);
+                continue;
             }
+            // the body of the flame is drawn over the world (so it shows at noon) and again as light (so it burns at night)
+            int body = FxWorld.sprite(GLOW, ox, oy, oz, vx, vy, vz, 8 + R.i(4), 0.22f, 1.25f, i % 2 == 0 ? FLAME : EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.BRIGHT | FxPool.NEAR);
+            FxWorld.drag(body, 0.93f);
+            int lit = FxWorld.sprite(GLOW, ox, oy, oz, vx, vy, vz, 8 + R.i(4), 0.2f, 1.0f, alpha(EMBER_HOT, 0.7f), alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.NEAR);
+            FxWorld.drag(lit, 0.93f);
         }
         if (j.age % 2 == 0) {
             FxRecipes.embers(j.x + dx * reach * 0.5, j.y + dy * reach * 0.5, j.z + dz * reach * 0.5, n(5), reach * 0.25f, j.style, 0.02f);
