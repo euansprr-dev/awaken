@@ -134,12 +134,13 @@ public final class AwakenConfig {
          * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
          * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
          */
-        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA }
+        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA, VFX }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
                 .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
-                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
-                        "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
+                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps), ULTRA",
+                        "(the same at higher quality; 60+ fps) or VFX (Lens stays off and ImmersiveVFX draws instead; without",
+                        "that mod it reads as SWIFT). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec.BooleanValue LENS_TEMPORAL = C
                 .comment("Lens 2 (Cinematic and Ultra) spreads its clouds and light over frames: each pixel's clouds are worked out one",

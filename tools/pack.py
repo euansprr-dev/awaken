@@ -130,6 +130,9 @@ def cmd_lock():
         time.sleep(0.1)
     if missing:
         raise SystemExit("No " + mc + " " + loader + " build for: " + ", ".join(missing) + ". Lock not written.")
+    for e in load(LOCK)["files"] if LOCK.exists() else []:
+        if e.get("handPinned"):  # not on Modrinth, so this can't make it: it stays exactly as pinned
+            entries.setdefault(e["slug"], e)
     lock = {"schemaVersion": 1, "minecraft": mc, "loader": loader, "neoforge": spec.get("neoforge"),
             "generated": time.strftime("%Y-%m-%d %H:%M"), "files": sorted(entries.values(), key=lambda e: e["slug"])}
     save(LOCK, lock)
@@ -436,6 +439,7 @@ def env(e):
 def cmd_export(out, profiles, awaken_jar):
     lock = load(LOCK)
     chosen, names = select(lock, profiles)
+    chosen = [e for e in chosen if not e.get("handPinned")]  # a hand-pinned mod is for local installs: its licence may not allow a public pack
     jar = Path(awaken_jar)
     if not jar.exists():
         raise SystemExit(f"no Awaken jar at {jar}: run tools/gradle.sh 900 build first")

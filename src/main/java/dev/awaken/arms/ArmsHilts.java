@@ -38,13 +38,13 @@ public final class ArmsHilts {
             Map.entry("lordscale_daggers", new float[]{0.425F, 0.375F, 0.175F, 0F}),
             Map.entry("sovereign_daggers", new float[]{0.397F, 0.344F, 0.134F, 0F}),
             Map.entry("wildhide_katana", new float[]{0.364F, 0.294F, 0.042F, 0F}),
-            Map.entry("beastbound_katana", new float[]{0.392F, 0.325F, 0.084F, 0F}),
-            Map.entry("gatewrought_katana", new float[]{0.325F, 0.325F, 0.084F, 0F}),
-            Map.entry("veilwoven_katana", new float[]{0.392F, 0.325F, 0.084F, 0F}),
-            Map.entry("lordscale_katana", new float[]{0.392F, 0.325F, 0.084F, 0F}),
-            Map.entry("sovereign_katana", new float[]{0.392F, 0.325F, 0.084F, 0F}),
+            Map.entry("beastbound_katana", new float[]{0.392F, 0.326F, 0.085F, 0F}),
+            Map.entry("gatewrought_katana", new float[]{0.326F, 0.326F, 0.085F, 0F}),
+            Map.entry("veilwoven_katana", new float[]{0.392F, 0.326F, 0.085F, 0F}),
+            Map.entry("lordscale_katana", new float[]{0.392F, 0.326F, 0.085F, 0F}),
+            Map.entry("sovereign_katana", new float[]{0.392F, 0.326F, 0.085F, 0F}),
             Map.entry("glass_serpent_rapier", new float[]{0.279F, 0.222F, 0.109F, 0F}),
-            Map.entry("the_sleeper_katana", new float[]{0.392F, 0.325F, 0.084F, 0F}),
+            Map.entry("the_sleeper_katana", new float[]{0.392F, 0.326F, 0.085F, 0F}),
             Map.entry("hollow_herald_greatblade", new float[]{0.354F, 0.280F, 0.110F, 0F})
     );
 }

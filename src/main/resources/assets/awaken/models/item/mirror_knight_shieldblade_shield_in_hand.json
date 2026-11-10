@@ -1,0 +1,76 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "particle": "awaken:item/arms/mirror_knight_shieldblade_icon"
+ },
+ "display": {
+  "firstperson_righthand": {
+   "rotation": [
+    63.0,
+    90.0,
+    0.0
+   ],
+   "translation": [
+    -0.64,
+    0.417,
+    0.656
+   ],
+   "scale": [
+    0.3,
+    0.3,
+    0.3
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    -27.0,
+    90.0,
+    0.0
+   ],
+   "translation": [
+    -0.64,
+    0.417,
+    0.656
+   ],
+   "scale": [
+    0.3,
+    0.3,
+    0.3
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    135.0,
+    90.0,
+    0.0
+   ],
+   "translation": [
+    0.0,
+    -1.919,
+    5.928
+   ],
+   "scale": [
+    0.62,
+    0.62,
+    0.62
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    45.0,
+    90.0,
+    -0.0
+   ],
+   "translation": [
+    0.0,
+    -1.919,
+    5.928
+   ],
+   "scale": [
+    0.62,
+    0.62,
+    0.62
+   ]
+  }
+ }
+}

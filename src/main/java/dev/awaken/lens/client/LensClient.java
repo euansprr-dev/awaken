@@ -183,11 +183,13 @@ public final class LensClient {
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
         temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
-        boolean off = setting == AwakenConfig.Client.LensLook.OFF;
+        // the VFX tier is ImmersiveVFX alone: no Lens at all, story scenes included (without that mod it reads as Swift)
+        boolean vfx = setting == AwakenConfig.Client.LensLook.VFX && Companions.immersiveVfxLoaded();
+        boolean off = setting == AwakenConfig.Client.LensLook.OFF || vfx;
         // a story scene's look plays like a cutscene even with Lens off (unless the player said no), then fades out
         boolean scene = overrideLook != null || tearStep > 0 || linger > 0;
         if (linger > 0) linger--;
-        boolean on = (!off || scene && scenesAllowed()) && !Companions.shaderPackActive();
+        boolean on = (!off || scene && !vfx && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : switch (setting) {
             case CINEMATIC -> CINEMATIC;
             case ULTRA -> ULTRA;

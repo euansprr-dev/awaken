@@ -86,6 +86,8 @@ def single(feature, rarity, survive=None):
     if rarity > 1:
         p.append({"type": "minecraft:rarity_filter", "chance": rarity})
     p += [{"type": "minecraft:in_square"}, {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"}, {"type": "minecraft:biome"}]
+    if "boulder" in feature:  # a road or a village cuts what stands on its land (SPEC 28.9)
+        p.append({"type": "awaken:clear_of_settlements", "reach": 6})
     if survive:
         p.append({"type": "minecraft:block_predicate_filter", "predicate": {"type": "minecraft:would_survive", "state": survive}})
     return {"feature": feature, "placement": p}

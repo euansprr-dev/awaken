@@ -57,7 +57,8 @@ public final class AnvilPayloads {
 
     /** A plain sentence on a row's page. The tone: an ordinary line, the Force you're about to give it, what's on it now, or one that isn't yours to pick. */
     public record Say(int tone, String text) {
-        public static final int PLAIN = 0, CHOSEN = 1, NOW = 2, QUIET = 3;
+        /** MOST: what the weapon would be at its highest Temper ("Damage 12"); the anvil draws it as pips (SPEC §57.10). */
+        public static final int PLAIN = 0, CHOSEN = 1, NOW = 2, QUIET = 3, MOST = 4;
         public static final StreamCodec<ByteBuf, Say> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Say::tone, ByteBufCodecs.STRING_UTF8, Say::text, Say::new);
     }

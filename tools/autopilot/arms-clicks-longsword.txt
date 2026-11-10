@@ -1,0 +1,50 @@
+# The Longsword under a person's clicks (Euan 2026-11-09: "it looks like it glitches into a similar form as the heavy strike").
+# The real-speed tour couldn't show this: on the slow runner the ticks of a click ran inside one frame, so all 99 of its
+# clicks were let go about 15 ms after the press and none lasted a frame. Here the world runs at a tenth of play's speed,
+# so a click of 1 to 5 ticks (50 to 250 ms: quick, a normal click, a lazy one) lasts as many frames as it should, and a
+# 24-tick hold shows the whole draw. One take: read the point's path in track.tsv against the presses in events.tsv.
+world armsclickslongsword creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+camera first
+look 0 6
+wait 20
+arms rate 2
+wait 2
+arms film clicks 176 0.4 2
+wait 3
+arms strike 1
+wait 26
+arms strike 2
+wait 26
+arms strike 3
+wait 26
+arms strike 4
+wait 26
+arms strike 5
+wait 26
+arms strike 24
+wait 40
+arms rate 20
+wait 20
+quit

@@ -50,11 +50,12 @@ public final class ArmsRules {
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
     /**
-     * Styles whose strike lands on the press even while it is still down (SPEC §25 "Hand-keyed moves"; the dagger audit,
-     * Euan 2026-11-02): a dagger stabs on the click, and a press held on charges the heavy from where the stab ended.
-     * Every other style's held press waits at its set until it is a tap or the charge.
+     * Styles whose strike lands on the press even while it is still down, its charge drawn after the blow. None since
+     * Euan 2026-11-09 ("it still sometimes attacks once before starting the charge"): the Daggers were here from the
+     * 2026-11-02 audit, and name them again to have that back (a dagger's click then lands 40 to 85 ms sooner, SPEC §25
+     * "Tap or hold"). Every other press waits unseen under the draw until it is a tap or the charge.
      */
-    private static final java.util.Set<String> STRIKE_ON_PRESS = java.util.Set.of("daggers");
+    private static final java.util.Set<String> STRIKE_ON_PRESS = java.util.Set.of();
 
     /** Whether a strike begun by a press still down waits on that press (false: it lands as it comes). */
     public static boolean waitsOnHold(String style) {
@@ -76,6 +77,12 @@ public final class ArmsRules {
      */
     public static @Nullable Decision tap(Archetypes.Loaded a, Archetype.@Nullable Move current, long start, int step, int cadence, long now,
                                          int masterySteps) {
+        return tap(a, current, start, step, cadence, now, masterySteps, a.def().buffer());
+    }
+
+    /** As above; {@code buffer}: how many ticks ahead of its window a press may come and still be kept for it. */
+    public static @Nullable Decision tap(Archetypes.Loaded a, Archetype.@Nullable Move current, long start, int step, int cadence, long now,
+                                         int masterySteps, int buffer) {
         Archetype.MoveDef cur = current == null ? null : a.move(current);
         int chainLen = chainLength(a, masterySteps);
         if (cur == null || now >= start + cur.total() + a.def().late()) return new Decision(chainMove(a, 0), 0, now, 0);
@@ -85,7 +92,7 @@ public final class ArmsRules {
         if (chainStrike && next != 0 && cur.hasCadence()) {
             int c0 = cur.cadence().get(0), c1 = cur.cadence().get(1);
             if (rel >= c0 && rel <= c1) return new Decision(chainMove(a, next), next, now, Math.min(CADENCE_MAX, cadence + 1));
-            if (rel < c0) return c0 - rel <= a.def().buffer() ? new Decision(chainMove(a, next), next, start + c0, 0) : null;
+            if (rel < c0) return c0 - rel <= buffer ? new Decision(chainMove(a, next), next, start + c0, 0) : null;
             return new Decision(chainMove(a, next), next, now, 0);
         }
         if (chainStrike && next != 0) {
@@ -94,12 +101,41 @@ public final class ArmsRules {
             long link = start + cur.windup() + cur.active() + MASTERY_LINK;
             int carried = cadence >= step ? Math.min(CADENCE_MAX, cadence + 1) : cadence;
             if (now >= link) return new Decision(chainMove(a, next), next, now, carried);
-            return link - now <= a.def().buffer() ? new Decision(chainMove(a, next), next, link, carried) : null;
+            return link - now <= buffer ? new Decision(chainMove(a, next), next, link, carried) : null;
         }
         // a finisher, a heavy, a riposte: the next tap starts the chain again once it has recovered
         long end = start + cur.total();
         if (now >= end) return new Decision(chainMove(a, 0), 0, now, 0);
-        return end - now <= a.def().buffer() ? new Decision(chainMove(a, 0), 0, end, 0) : null;
+        return end - now <= buffer ? new Decision(chainMove(a, 0), 0, end, 0) : null;
+    }
+
+    /** Ticks after the last chain strike that a client's word can still carry the chain on. */
+    static final int CHAIN_SLACK = 60;
+
+    /**
+     * The buffer for a strike the hands have begun: it is kept however early the server's own clock calls it. It still
+     * waits for the server's window, so nothing strikes faster than the rules allow.
+     */
+    static final int HEARD_BUFFER = Integer.MAX_VALUE;
+
+    /**
+     * One chain (SPEC §25 "Tap or hold"; Euan 2026-11-09: "the combo stops being the usual one", "two uppercuts in a row").
+     * The two sides time the windows on their own clocks, so left to decide alone they disagree on a window's edge, and one
+     * counts a strike the other never played. Only the hands decide: the server plays the strike they began (starting
+     * again, or the strike after the last one, soon after it) and falls back on its own read only for a claim no chain allows.
+     */
+    public static @Nullable Decision follow(Archetypes.Loaded a, @Nullable Decision d, int claimed, int lastStep, long sinceLast, int masterySteps) {
+        if (d == null || claimed < 0 || claimed == d.step() || claimed >= chainLength(a, masterySteps)) return d;
+        if (claimed != 0 && (claimed != lastStep + 1 || sinceLast > CHAIN_SLACK)) return d;
+        return new Decision(chainMove(a, claimed), claimed, d.startAt(), d.cadence());
+    }
+
+    /** A chain strike's place in its chain, mastery's strikes after it; -1 if it isn't one of this style's. */
+    public static int stepOf(Archetypes.Loaded a, Archetype.Move m) {
+        int i = a.chain().indexOf(m);
+        if (i >= 0) return i;
+        int j = a.masteryChain().indexOf(m);
+        return j < 0 ? -1 : a.chain().size() + j;
     }
 
     static int chainLength(Archetypes.Loaded a, int masterySteps) {
@@ -332,7 +368,7 @@ public final class ArmsRules {
     /** A finisher, a perfect heavy or an Execution weighs this much more. */
     public static final float STRONG_WEIGHT = 1.3F;
     /** A thrust pushes straight away this much harder; a pinning blow this much softer, with no lift. */
-    public static final float THRUST_PUSH = 1.15F, PIN_PUSH = 0.7F;
+    public static final float THRUST_PUSH = 1.15F, PIN_PUSH = 0.7F, BASH_PUSH = 2.6F;
     /** An uppercut or a rise lifts the body this much more (blocks a tick). */
     public static final float LIFT = 0.18F;
     /** A side cut's push: this share along the blade's travel, the rest away from the striker (never toward). */
@@ -392,6 +428,7 @@ public final class ArmsRules {
 
     /** How hard a move pushes against vanilla's strength. */
     public static float pushScale(Archetype.MoveDef def) {
+        if (def.swing().form().equals("bash")) return BASH_PUSH; // a shove throws its target back (Euan 2026-11-09: "it doesn't feel like a push")
         if (thrusts(def)) return THRUST_PUSH;
         return lift(def) < 0 ? PIN_PUSH : 1F;
     }

@@ -687,10 +687,69 @@ MATS = {
 # ---------------------------------------------------------------------------------------------------------------------
 # Construction helpers (design space: texels; x across the blade, y up it from the grip's middle, z through its flat)
 
-def blade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, **data):
-    """A blade from the guard up, a segment at a time (y0, y1, width, core width): a thin edge slab the full width and
-    a thick core over its middle, so the section steps from edge to spine in whole texels; segments narrow to the
-    point. shift(y0) moves a segment sideways (a wave); data (a span, a column) goes to every box for its painter."""
+# edge materials that are the edge's colour over every texel (a point one texel square is cut from them); the others
+# paint only their own outer columns, so a point of theirs is the core's
+PLAIN_EDGES = ("flint_edge", "tusk_edge", "mirror_edge", "veil_edge", "spirit_edge", "ember_edge", "gold_edge", "horn_tip")
+
+
+def point(W, y_end, L, tail):
+    """A stepped point for a blade W wide ending at y_end: (y0, y1, width) stages W-2, W-4 .. 1, the last (one wide)
+    the longest step; the whole at least as long as the design's own (tail) and at most about a third of the blade (L).
+    Returns where it starts and its stages."""
+    widths = list(range(W - 2, 0, -2))
+    P = int(max(tail, min(round(1.6 * W), int(0.35 * L)), len(widths)))
+    last = max(1, min(P - (len(widths) - 1), round(P * 0.36))) if len(widths) > 1 else P
+    rest = P - last
+    n = len(widths) - 1
+    lens = [rest // n + (1 if k >= n - rest % n else 0) for k in range(n)] + [last] if n else [last]
+    out, y = [], y_end - P
+    for w, ln in zip(widths, lens):
+        out.append((y, y + ln, w))
+        y += ln
+    return y_end - P, out
+
+
+def blade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, ridge_mat=None, **data):
+    """A blade from the guard up, a segment at a time (y0, y1, width, core width). The weapon polish pass (Euan
+    2026-11-10: "some of the blades look a bit fat"; and of a slanted answer, "it has to stay that voxel style"): a blade
+    4 or wider is a slab one texel thick its full width (its outer texel a side the edge's material) with a ridge one
+    texel wide (three on a blade 9 or wider) standing a texel proud each side, the Rapier's cut, never a post; its
+    point is restaged in finer, longer steps (point) and ends one texel square. A blade 3 wide or less is the Rapier's
+    own (post_blade). shift(y0) moves a segment sideways (a wave); ridge_mat gives the ridge its own material (a lit
+    fuller); data (a span, a column) goes to every box for its painter."""
+    segs = sorted(segs)
+    W = max(s_[2] for s_ in segs)
+    if W <= 3:
+        return post_blade(segs, core, edge, core_d, edge_d, part, shift, x, **data)
+    rw = 1 if W <= 7 else 3
+    wide = [s_ for s_ in segs if s_[2] == W]
+    y_first, y_end = segs[0][0], segs[-1][1]
+    body = [s_[:3] for s_ in segs if s_[0] <= wide[-1][0]]
+    tail = y_end - wide[-1][1]
+    stages = [s_[:3] for s_ in segs if s_[0] > wide[-1][0]]
+    if tail > 0:
+        y_pt, staged = point(W, y_end, y_end - y_first, tail)
+        if y_pt >= wide[-1][0] + 2:  # (else the widest run is too short to give the point any more: the design's own steps)
+            body[-1] = (body[-1][0], y_pt, W)
+            stages = staged
+    B = []
+    for y0, y1, w in body + stages:
+        cx = x + shift(y0)
+        if w == 1:
+            B.append(VX.slab(cx - 0.5, cx + 0.5, y0, y1, 1, edge if edge in PLAIN_EDGES else core, part, **data))
+            continue
+        if w >= 3 and edge != "slate_flat":  # the flat between the edges in the core's material (it comes first: the earlier box keeps a shared plane)
+            B.append(VX.slab(cx - (w - 2) / 2, cx + (w - 2) / 2, y0, y1, 1, core, part, **data))
+        B.append(VX.slab(cx - w / 2, cx + w / 2, y0, y1, 1, edge, part, **data))
+        r = min(rw, w - 2)
+        if r >= 1:
+            B.append(VX.slab(cx - r / 2, cx + r / 2, y0, y1, 3, ridge_mat or core, part, **data))
+    return B
+
+
+def post_blade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, **data):
+    """A slim blade (3 wide or less), a segment at a time: a thin edge slab the full width and a core over its middle,
+    so the section steps from edge to spine in whole texels."""
     B = []
     for y0, y1, w, cw in segs:
         cx = x + shift(y0)
@@ -719,6 +778,33 @@ def chain(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
                            length=length, **data))
         p = p + d * length
     return out
+
+
+# a curved blade's back (the spine along the outside of its flat), by the curve's material
+SPINES = {"flint_kat": "flint", "tusk_kat": "horn", "slate_kat": "slate", "veil_kat": "obsidian", "lord_kat": "lord_dark",
+          "ivory_kat": "ivory_tip", "scythe_b": "obsidian", "scythe_s": "ivory_tip", "l_dream_kat": "obsidian"}
+THINNER = {5: 3, 4: 3, 3: 2, 2: 1, 1: 1}  # a tusk's or talon's depth, a texel off
+
+
+def curved(x, y, links, part, side=-1, back=None, stagger=0.05, cycle=2, **data):
+    """A curved blade: chain()'s links cut thin (the weapon polish pass, 2026-11-10), still whole boxes turned whole
+    angles. A tusk or talon (tusk, veil, flint) loses a texel of depth. Any other curve becomes a flat one texel thick;
+    a broad one (links 4 or wider: a Glaive, a Scythe) keeps a back one texel wide and three deep along its spine (the
+    outside of the curve; the inside with flip), and a slim one (a Katana) has no back and narrows toward it, so its
+    edge steps up to the point. Returns the flats first, in link order (designs hang things off them), then the backs."""
+    boxes = chain(x, y, links, part, side, back, stagger or 0.05, cycle, **data)  # thin links of one depth must never share a plane
+    if links[0][4] in ("tusk", "veil", "flint"):
+        return [VX.Box(b.c, [b.h[0], b.h[1], THINNER[int(round(2 * b.h[2]))] / 2], b.mat, b.part, b.R, b.name, **b.data) for b in boxes]
+    edge = -1 if data.get("flip") else 1  # which of a link's own sides the edge is on
+    w0 = links[0][2]
+    slim = w0 <= 3
+    flats, backs = [], []
+    for b, (_deg, length, width, _depth, m) in zip(boxes, links):
+        c = b.c + b.R[:, 0] * (-edge * (w0 - width) / 2 if slim and edge == 1 else 0.0)
+        flats.append(VX.Box(c, [width / 2, length / 2, 0.5], m, b.part, b.R, b.name, **b.data))
+        if width >= 4 and not slim:
+            backs.append(VX.Box(c - b.R[:, 0] * edge * (width / 2 - 0.5), [0.5, length / 2, 1.5], SPINES.get(m, m), b.part, b.R, b.name + ":back"))
+    return flats + backs
 
 
 def spin(boxes):
@@ -830,11 +916,11 @@ def beastbound():
     tusks for a guard, curling back to the hand from a riveted bronze collar; a grip wrapped in pelt between bronze
     rings; a bronze claw gripping a moss-green stone."""
     B = [VX.slab(-3.5, -2.5, 5, 25, 4, "bronze_back", "back"),
-         VX.slab(-2.5, 0.5, 5, 26, 3, "tusk", "blade", groove=-1),
+         VX.slab(-2.5, 0.5, 5, 26, 1, "tusk", "blade", groove=-1),  # (a texel thick: the bronze back is its spine)
          VX.slab(-2.5, 2.5, 5, 25, 1, "tusk_edge", "blade"),
          VX.slab(-2.5, 1.5, 25, 26, 1, "tusk_edge", "blade"),
-         VX.slab(-1.5, 0.5, 26, 28, 3, "tusk", "blade"),
-         VX.slab(-1.5, -0.5, 28, 29, 3, "tusk", "blade")]
+         VX.slab(-1.5, 0.5, 26, 28, 1, "tusk", "blade"),
+         VX.slab(-1.5, -0.5, 28, 29, 1, "tusk", "blade")]
     for y in (8, 12.5, 17, 21.5):  # teeth set in the back, leaning up the blade
         B.append(VX.rbox((-4.2, y + 0.6, 0), (1, 2, 1), 50, "tooth", "teeth"))
     B.append(VX.slab(-3.5, 3.5, 3, 5, 5, "bronze", "collar"))
@@ -1521,7 +1607,7 @@ def wildhide_greatblade():
         ".fffffffe",
         "efffffffe",  # 8..9
     ]
-    B = VX.sprite(rows_, -4, 34, {"f": ("flint", 3, "blade"), "e": ("flint_edge", 1, "blade")})
+    B = VX.sprite(rows_, -4, 34, {"f": ("flint", 1, "blade"), "e": ("flint_edge", 1, "blade")})  # a slab a texel thick
     B += ricasso("flint", "sinew")
     B += both(chain(-2.5, 7.5, [(70, 3, 1, 2, "antler"), (30, 2, 1, 1, "antler")], "lugs"))
     B.append(VX.slab(-5.5, 5.5, 3, 5, 5, "bone", "collar"))
@@ -1530,6 +1616,7 @@ def wildhide_greatblade():
     B += two_hands("bone_grip", "bone")
     B.append(ring(-6, -5, "bone", part="cup"))
     B.append(VX.slab(-1.5, 1.5, -9, -6, 3, "amber_gem", "bead"))
+    B.append(VX.slab(-1.5, 1.5, 8, 30, 3, "flint", "blade"))  # the slab's spine: three wide, a texel proud each side
     anchors = [((0, -7.5, 0), 2.2, RAMPS["amber"][5], 1)]
     return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-5, 3), focus=(0, 8))
 
@@ -1539,13 +1626,13 @@ def beastbound_greatblade():
     rising to a point at its back, where the back curls over into a hook like a boar's tusk; teeth set down the back
     below it; a pelt-bound ricasso ending in bronze lugs; a riveted bronze collar with short tusks curling back to the
     hands; a long pelt grip; a bronze claw round the moss stone."""
-    B = [VX.slab(-5.5, -4.5, 8, 29, 5, "bronze_back", "back"),
-         VX.slab(-4.5, 1.5, 8, 31, 3, "tusk", "blade", groove=-2),
+    B = [VX.slab(-5.5, -4.5, 8, 29, 3, "bronze_back", "back"),
+         VX.slab(-4.5, 1.5, 8, 31, 1, "tusk", "blade", groove=-2),  # (a texel thick, a thick tusk back beside the bronze: below)
          VX.slab(-4.5, 3.5, 8, 30, 1, "tusk_edge", "blade"),
          VX.slab(-4.5, 2.5, 30, 31, 1, "tusk_edge", "blade"),
-         VX.slab(-4.5, 0.5, 31, 32, 3, "tusk", "blade"),
-         VX.slab(-4.5, -1.5, 32, 33, 3, "tusk", "blade"),
-         VX.slab(-4.5, -2.5, 33, 34, 3, "tusk", "blade")]
+         VX.slab(-4.5, 0.5, 31, 32, 1, "tusk", "blade"),
+         VX.slab(-4.5, -1.5, 32, 33, 1, "tusk", "blade"),
+         VX.slab(-4.5, -2.5, 33, 34, 1, "tusk", "blade")]
     B += chain(-5.0, 28.5, [(40, 3, 2, 4, "horn"), (115, 3, 2, 2, "horn"), (170, 3, 1, 1, "horn_tip")], "hook")
     for y in (11, 15, 19, 23):
         B.append(VX.rbox((-6.2, y + 0.6, 0), (1, 2, 1), 50, "tooth", "teeth"))
@@ -1562,6 +1649,7 @@ def beastbound_greatblade():
     for sx in (-1, 1):
         for sz in (-1, 1):
             B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -9, -6, sz * 2 - 0.5, sz * 2 + 0.5, "bronze", "claw"))
+    B.append(VX.slab(-4.5, -2.5, 8, 29, 3, "tusk", "blade", groove=-2))  # the tusk's own back, two wide, a texel proud each side
     anchors = [((0, -7.5, 0), 2.2, RAMPS["moss"][6], 1)]
     return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-5, 3), focus=(-1, 8))
 
@@ -1575,11 +1663,11 @@ def gatewrought_greatblade():
     B = [VX.slab(-3.5, -2.5, 8, 30, 3, "slate", "blade"), VX.slab(2.5, 3.5, 8, 30, 3, "slate", "blade"),
          VX.slab(-2.5, -1.5, 15, 27, 3, "signal_line", "rim", span=GB_SPAN), VX.slab(1.5, 2.5, 15, 27, 3, "signal_line", "rim", span=GB_SPAN),
          VX.slab(-1.5, 1.5, 15, 16, 3, "signal_line", "rim", span=GB_SPAN), VX.slab(-1.5, 1.5, 26, 27, 3, "signal_line", "rim", span=GB_SPAN),
-         VX.slab(-2.5, 2.5, 8, 15, 3, "slate_rib", "blade", span=(8, 15), column=0),
-         VX.slab(-2.5, 2.5, 27, 30, 3, "slate_rib", "blade", span=(27, 30), column=0),
+         VX.slab(-2.5, 2.5, 8, 15, 1, "slate_rib", "blade", span=(8, 15), column=0),  # (the steel under and over the window a
+         VX.slab(-2.5, 2.5, 27, 30, 1, "slate_rib", "blade", span=(27, 30), column=0),  # texel thick, its ridges below)
          VX.slab(-4.5, -3.5, 8, 29, 1, "mirror_edge", "blade"), VX.slab(3.5, 4.5, 8, 29, 1, "mirror_edge", "blade"),
-         VX.slab(-3.5, 3.5, 30, 31, 3, "slate", "blade"), VX.slab(-2.5, 2.5, 31, 32, 3, "slate", "blade"),
-         VX.slab(-1.5, 1.5, 32, 33, 3, "slate", "blade"), VX.slab(-0.5, 0.5, 33, 34, 3, "slate", "blade")]
+         VX.slab(-3.5, 3.5, 30, 31, 1, "slate", "blade"), VX.slab(-2.5, 2.5, 31, 32, 1, "slate", "blade"),
+         VX.slab(-1.5, 1.5, 32, 33, 1, "slate", "blade"), VX.slab(-0.5, 0.5, 33, 34, 3, "slate", "blade")]
     B.append(VX.rbox((0, 21.0, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
     B += ricasso("slate_rib", "brass", span=(5, 8), column=0)
     B.append(VX.slab(-6.5, 6.5, 3, 5, 5, "brass", "bar"))
@@ -1589,6 +1677,8 @@ def gatewrought_greatblade():
     B += two_hands("slate_grip", "brass")
     B += VX.sprite(["RRRRR", "R...R", "R...R", "R...R", "RRRRR"], -2, -5, {"R": ("brass", 3, "loop")})
     B.append(VX.rbox((0, -7.5, 0), (2, 2, 2), 45, "signal_gem", "pommel_crystal"))
+    B += [VX.slab(-0.5, 0.5, 8, 15, 3, "slate_rib", "blade", span=(8, 15), column=0),  # the ridges: the circuit's rib, a texel proud
+          VX.slab(-0.5, 0.5, 27, 31, 3, "slate_rib", "blade", span=(27, 31), column=0)]
     anchors = [((0, 21.0, 0), 2.4, RAMPS["signal"][6], 1), ((0, -7.5, 0), 1.8, RAMPS["signal"][6], 1)]
     return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-5, 3), focus=(0, 12))
 
@@ -1601,7 +1691,7 @@ def veilwoven_greatblade():
     length, one edge living spirit light, the other mirror-honed; a mirror-banded ricasso ending in mirror hooks; short
     mirror quillons swept up like wings off a mirror heart holding the spirit stone; a long obsidian grip; a mirror drop
     round a second stone."""
-    B = [VX.slab(-2.5, 2.5, 8, 29, 3, "veil", "blade")]
+    B = [VX.slab(-2.5, 2.5, 8, 29, 1, "veil", "blade")]  # (a texel thick; its ridge below)
     for k, y0 in enumerate(range(8, 29, 2)):  # the flamberge: the edges swell and draw in, two texels each way
         w = FLAMBERGE[k % len(FLAMBERGE)]
         if w > 5:
@@ -1615,6 +1705,7 @@ def veilwoven_greatblade():
     B += two_hands("obsidian", "mirror", y1=2)
     B.append(VX.rbox((0, -7.4, 0), (3, 3, 5), 45, "mirror", "drop"))
     B.append(VX.rbox((0, -7.4, 0), (2, 2, 7), 45, "spirit_gem", "drop_gem"))
+    B.append(VX.slab(-0.5, 0.5, 8, 30, 3, "veil", "blade"))  # the flamberge's ridge, a texel proud each side
     anchors = [((0, 3.5, 0), 2.4, RAMPS["spirit"][6], 1), ((0, -7.4, 0), 1.9, RAMPS["spirit"][6], 1)]
     edge = [(-FLAMBERGE[((y - 8) // 2) % len(FLAMBERGE)] / 2, y + 0.5, 0.0) for y in range(8, 29, 2)]
     streams = [(WISP, RAMPS["spirit"][6], 6, 0.2, edge), (MOTE, RAMPS["spirit"][7], 2, 1.6, [(0, 3.5, 0)])]
@@ -1820,14 +1911,15 @@ def wildhide_daggers():
     """The Wildhide Daggers (E): a skinning knife of knapped flint, thick and straight along its back, its pale edge
     sweeping up to a point at the back; lashed with sinew; an antler tine bent round the knuckles for a guard; a bone
     grip wound in hide; an amber nub."""
-    B = [VX.slab(-2.5, 0.5, 3, 11, 3, "flint", "blade"), VX.slab(-2.5, 2.5, 3, 11, 1, "flint_edge", "blade"),
-         VX.slab(-2.5, -0.5, 11, 12, 3, "flint", "blade"), VX.slab(-2.5, 1.5, 11, 12, 1, "flint_edge", "blade"),
-         VX.slab(-2.5, -1.5, 12, 13, 3, "flint", "blade"), VX.slab(-2.5, 0.5, 12, 13, 1, "flint_edge", "blade"),
+    B = [VX.slab(-2.5, 0.5, 3, 11, 1, "flint", "blade"), VX.slab(-2.5, 2.5, 3, 11, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -0.5, 11, 12, 1, "flint", "blade"), VX.slab(-2.5, 1.5, 11, 12, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -1.5, 12, 13, 1, "flint", "blade"), VX.slab(-2.5, 0.5, 12, 13, 1, "flint_edge", "blade"),
          VX.slab(-2.5, -1.5, 13, 14, 1, "flint_edge", "blade")]
     B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "sinew", "lashing"))
     B += bow("antler", 3.0, 2.5, -2.5, depth=2)
     B.append(grip(-2, 2, "bone_grip"))
     B.append(VX.slab(-1.5, 1.5, -4, -2, 3, "amber_gem", "nub"))
+    B.append(VX.slab(-2.5, -1.5, 3, 12, 3, "flint", "blade"))  # the knife's thick back, a texel proud each side of a thin blade
     anchors = [((0, -3.0, 0), 1.4, RAMPS["amber"][5], 1)]
     return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7)
 
@@ -1835,7 +1927,7 @@ def wildhide_daggers():
 def beastbound_daggers():
     """The Beastbound Daggers (D): a boar's tusk, curved as it grew, honed along its inside; socketed in a riveted
     bronze collar; a bronze knuckle bow; a pelt grip; the moss stone for a pommel."""
-    B = chain(0.0, 3.0, [(5, 3, 3, 3, "tusk"), (24, 3, 3, 3, "tusk"), (46, 3, 2, 2, "tusk"), (66, 2, 1, 1, "horn_tip")], "blade",
+    B = curved(0.0, 3.0, [(5, 3, 3, 3, "tusk"), (24, 3, 3, 3, "tusk"), (46, 3, 2, 2, "tusk"), (66, 2, 1, 1, "horn_tip")], "blade",
               back=0.3, stagger=0.05)
     B.append(VX.slab(-2.5, 2.5, 2, 4, 5, "bronze", "collar"))
     for z0 in (2.5, -3.5):
@@ -1865,7 +1957,7 @@ def veilwoven_daggers():
     """The Veilwoven Daggers (B): a claw of near-black Veil-steel curving forward like a talon, its tip living spirit
     light; the spirit stone at its root in a mirror guard; a mirror ring at the pommel for a finger; an obsidian
     grip."""
-    B = chain(0.0, 3.0, [(8, 3, 3, 3, "veil"), (30, 3, 3, 3, "veil"), (58, 3, 2, 2, "veil"), (88, 2, 1, 1, "spirit_edge")], "blade",
+    B = curved(0.0, 3.0, [(8, 3, 3, 3, "veil"), (30, 3, 3, 3, "veil"), (58, 3, 2, 2, "veil"), (88, 2, 1, 1, "spirit_edge")], "blade",
               side=1, back=0.3, stagger=0.05, span=(3, 11))
     B.append(VX.slab(-2.5, 2.5, 2, 4, 5, "mirror", "guard"))
     B.append(VX.rbox((0, 3.0, 0), (2, 2, 7), 45, "spirit_gem", "stone"))
@@ -1918,12 +2010,14 @@ HOLDS["daggers"] = ([0, -72, 30], [-2.5, 3.0, -0.6], 0.76)
 # ---- Katanas: a gently curved single-edged blade of whole-angle turned links (never a staircase), its hamon painted
 # along the edge in the tier's accent; a disc tsuba; a long tsuka in diamond wrap; about 34 texels ------------------
 
-KATANA_LINKS = ((0, 5, 3, 2), (3, 5, 3, 2), (6, 5, 3, 2), (9, 4, 3, 2), (13, 3, 2, 2), (20, 2, 1, 1))
+# (degrees from straight up, length, width, depth): the bend spread evenly from the collar to the point (until the weapon
+# polish pass it ran 0, 3, 6, 9, 13, 20: straight, then a hook at the tip), the same 24 along the blade
+KATANA_LINKS = ((1, 5, 3, 2), (3, 5, 3, 2), (5, 4, 3, 2), (7, 4, 3, 2), (9, 3, 2, 2), (11, 3, 1, 1))
 
 
 def katana_blade(mat, y0=6.5):
     """The blade: links curving back toward the spine (the item's upper left), every other one lifted off the plane."""
-    return chain(0.0, y0, [(deg, l, w, d, mat) for deg, l, w, d in KATANA_LINKS], "blade", back=0.3, stagger=0.05, span=(6, 28))
+    return curved(0.0, y0, [(deg, l, w, d, mat) for deg, l, w, d in KATANA_LINKS], "blade", back=0.3, stagger=0.05, span=(6, 28))
 
 
 def disc(y0, y1, r, mat, part="tsuba"):
@@ -2057,7 +2151,7 @@ def wildhide_twinblades():
 def beastbound_twinblades():
     """The Beastbound Twinblades (D): two long boar tusks curving away from each other (the pair an S), each socketed
     in a riveted bronze collar; a pelt grip; the moss stone at its middle in a bronze ring."""
-    top = chain(0.0, 5.0, [(4, 5, 4, 3, "tusk"), (14, 4, 4, 3, "tusk"), (26, 4, 3, 3, "tusk"), (40, 3, 2, 2, "tusk"),
+    top = curved(0.0, 5.0, [(4, 5, 4, 3, "tusk"), (14, 4, 4, 3, "tusk"), (26, 4, 3, 3, "tusk"), (40, 3, 2, 2, "tusk"),
                            (56, 2, 1, 1, "horn_tip")], "blade", back=0.3, stagger=0.05)
     top += [VX.slab(-2.5, 2.5, 4, 6, 5, "bronze", "collar")]
     for z0 in (2.5, -3.5):
@@ -2188,7 +2282,7 @@ def glaive(t):
     hook, D a tusk hook, C a stepped brass spike, B a mirror crescent, A a gold wing, S a crown); a weighted butt."""
     k = KIT[t]
     B = [haft(3, 14, k["pole"]), haft(-4, 3, k["wrap"], "grip"), haft(-7, -4, k["pole"], "pole_low")]
-    blade_ = chain(0.0, 16.0, [(0, 5, 5, 3, k["curve"]), (10, 4, 5, 3, k["curve"]), (22, 4, 5, 3, k["curve"]), (36, 3, 4, 2, k["curve"]),
+    blade_ = curved(0.0, 16.0, [(0, 5, 5, 3, k["curve"]), (10, 4, 5, 3, k["curve"]), (22, 4, 5, 3, k["curve"]), (36, 3, 4, 2, k["curve"]),
                                (52, 3, 3, 2, k["curve"]), (70, 2, 2, 1, k["curve"])], "blade", back=0.3, stagger=0.05, span=(15, 32))
     B += blade_
     B.append(VX.slab(-2.5, 2.5, 12, 17, 5, "sinew" if t == "E" else k["metal"], "socket"))
@@ -2251,7 +2345,7 @@ def scythe(t):
     top = 21
     B = [shaft(0, top, k["pole"]), shaft(-5, 0, k["wrap"], "grip"), shaft(-11, -5, k["pole"], "snath_low")]
     B += [VX.slab(1, 5, 8, 9, 2, k["pole"], "nib"), VX.slab(3, 5, 5, 8, 2, k["wrap"], "nib_grip")]
-    blade_ = chain(-1.0, top - 0.5, [(a, l, w, d, SCYTHE_CURVE[t]) for a, l, w, d in SCYTHE_SWEEP[t]],
+    blade_ = curved(-1.0, top - 0.5, [(a, l, w, d, SCYTHE_CURVE[t]) for a, l, w, d in SCYTHE_SWEEP[t]],
                    "blade", back=0.3, stagger=0.05, flip=True, span=(10, 30))
     B += blade_
     back = edge_points(blade_, 1)  # the outside of the curve
@@ -2355,6 +2449,31 @@ def gauntlets(t):
 
 
 register("gauntlets", gauntlets)
+
+
+def gauntlet_sleeve(cuff, band, x=3.5, z=3.0, top=-7.0, end=-52.0):
+    """A gauntlet's sleeve past its rim, drawn only in first person (Euan 2026-11-09: "the gauntlets actually need to replace
+    the arms and the hands"): the armour runs on from the cuff, down out of the view, however far a punch carries the fist,
+    so no arm is drawn at all. A band of metal every 8 texels so it reads as plate; never seen from outside, where the cuff
+    already runs up the forearm (arms_holds.worn_third_person)."""
+    B = [VX.box(-x, x, end, top, -z, z, cuff, "sleeve", span=(end, top))]
+    y = top - 5.0
+    while y > end + 2:
+        B.append(VX.box(-x - 0.5, x + 0.5, y - 1, y, -z - 0.5, z + 0.5, band, f"band{int(-y)}"))
+        y -= 8.0
+    return B
+
+
+def sleeve_of(row):
+    """The first-person sleeve of a gauntlet's catalog row (None: any other weapon)."""
+    wid, tier, style = row[0], row[2], row[8]
+    if style != "gauntlets":
+        return None
+    if wid == "gearwright_colossus_gauntlets":
+        return gauntlet_sleeve("bronze_back", "brass", 4.0, 3.5, -8.0)
+    return gauntlet_sleeve(KIT[tier]["cuff"], KIT[tier]["metal"])
+
+
 # worn, not held: knuckles into the view and the back of the hand up, low at the right where the fist would be (the
 # rotation turns the design's +y forward and +z up; found with fp_screen)
 HOLDS["gauntlets"] = ([-80, 15, 55], [-4.0, 5.0, -0.6], 0.4)
@@ -2453,38 +2572,141 @@ def kite_shield(face, rim, top=14.0):
     return B
 
 
-def shieldblade(t):
-    """The Shieldblade: a shield face that fills the outline (E round, of laced hide on bone with an antler boss; D
-    round, of tusk plates in a bronze rim set with teeth; C, B, A, S kite-shaped: slate in brass with a lit circuit
-    cross; Veil-steel in mirror with a spirit cross; black scale in gold with a molten cross and two small wings; ivory
-    in gold with a crimson rune cross and a crown), a raised boss holding the stone, a short blade rising from its top
-    and the grip below it."""
+# ---- The Shieldblade (Euan 2026-11-09: "reinvent that one from scratch"; SPEC 25 "The Shieldblade"): a real sword in the
+# main hand and a real shield on the other arm, one item. The old one was a shield with a stub of blade on top: it had
+# the same face on both sides, so a push "feels like it's hitting the wrong side", and it blocked edge-on with "a tiny
+# dagger swung out of a shield". The shield has one front and one back and is built in front of the fist (the fist's
+# plane is z 0, its front toward +z), so what the arm holds is a grip on its back. The whole (sword behind shield) is
+# only for the inventory and stands; hands draw the two parts (<id>_blade, <id>_shield: pair_of). --------------------
+
+SHIELD_FP = 0.30  # the shield's scale in first person
+SHIELD_Z = 3.0  # the plate's middle, in front of the fist
+
+
+def shield_rows(kind):
+    """A shield's outline, bottom to top: (y0, y1, half width) in whole texels, the fist on its middle (y -1)."""
+    if kind == "round":
+        r, c = 10.5, -1.0
+        rows = []
+        for y in range(-11, 9, 2):
+            hw = math.sqrt(max(0.0, r * r - (y + 1 - c) ** 2))
+            if hw >= 2:
+                rows.append((float(y), y + 2.0, float(round(hw))))
+        return rows
+    rows = [(1.0 + 2 * k, 3.0 + 2 * k, 10.0) for k in range(5)]  # the flat of a heater, above the fist
+    rows += [(11.0, 12.0, 8.0)]  # its shoulders eased in
+    rows = [(-1.0, 1.0, 10.0)] + rows
+    for k, hw in enumerate((10, 9, 9, 8, 7, 5, 3, 1)):  # the long curve down to the point
+        rows.append((-3.0 - 2 * k, -1.0 - 2 * k, float(hw)))
+    return sorted(rows)
+
+
+def _layer(rows, z0, z1, mat, part, inset=0.0, **data):
+    return [VX.box(-(hw - inset), hw - inset, y0, y1, z0, z1, mat, part, f"{part}{y0}", **data) for y0, y1, hw in rows if hw - inset > 0.4]
+
+
+def shield_plate(kind, face, rim, back, wrap, strap):
+    """The plate: a rim the whole outline, a face inset on its front, a darker back inset behind it, and on the back only
+    the fist's bar across the middle on two posts and a strap for the forearm above it."""
+    r = shield_rows(kind)
+    z = SHIELD_Z
+    B = _layer(r, z - 1.0, z + 1.0, rim, "rim")
+    B += _layer(r, z, z + 2.0, face, "face", inset=1.0)
+    B += _layer(r, z - 2.0, z, back, "back", inset=1.0)
+    B += [VX.box(-4.0, 4.0, -2.0, 0.0, -1.0, 1.0, wrap, "bar", "bar"),  # what the fist closes on
+          VX.box(-5.0, -4.0, -2.0, 0.0, -1.0, z - 2.0, strap, "post", "post_l"), VX.box(4.0, 5.0, -2.0, 0.0, -1.0, z - 2.0, strap, "post", "post_r"),
+          VX.box(-7.0, 7.0, 3.0, 5.0, z - 3.0, z - 2.0, strap, "strap", "strap"),  # the forearm's strap
+          VX.box(-8.0, -7.0, 3.0, 5.0, z - 3.0, z - 2.0, wrap, "strap", "buckle_l"), VX.box(7.0, 8.0, 3.0, 5.0, z - 3.0, z - 2.0, wrap, "strap", "buckle_r")]
+    return B
+
+
+def shield_front(z):
+    return SHIELD_Z + 2.0 + z
+
+
+def moved(boxes, d, keep=lambda b: True):
+    """The same boxes shifted (design texels), those keep says to."""
+    d = np.asarray(d, dtype=float)
+    return [VX.Box(b.c + d, b.h, b.mat, b.part, b.R, b.name, **b.data) for b in boxes if keep(b)]
+
+
+def shieldblade_shield(t):
+    """The shield of each rank. E, D round: laced hide on bone with an antler boss; tusk plates in a bronze rim set with
+    teeth. C, B, A, S heaters: slate in brass with a lit circuit cross; Veil-steel in mirror with a spirit cross; black
+    scale in gold with a molten cross and wings; ivory in gold with a crimson rune cross and a crown."""
     k = KIT[t]
-    B = [grip(-4, 2, k["wrap"]), ring(-5, -4, k["metal"], part="pommel")]
-    B += blade([(14, 19, 5, 3), (19, 21, 3, 1), (21, 22, 1, 1)], k["core"], k["edge"], span=(14, 22), column=0)
-    if t in "ED":
-        B += round_shield(k["face"], "bone" if t == "E" else "bronze")
-        B += [VX.slab(-1.5, 1.5, 6.5, 9.5, 5, "antler" if t == "E" else "bronze", "boss"), stone_at(t, (0, 8, 0), 2, 7)]
-        if t == "D":
-            for a in range(0, 360, 60):
-                x, y = 7.4 * math.sin(math.radians(a)), 8 + 7.4 * math.cos(math.radians(a))
-                B.append(VX.rbox((x, y, 0), (1, 2, 1), -a, "tooth", f"tooth{a}"))
-        stone = (0, 8, 0)
+    rim = {"E": "bone", "D": "bronze", "C": "brass", "B": "mirror", "A": "gold", "S": "gold"}[t]
+    kind = "round" if t in "ED" else "heater"
+    B = shield_plate(kind, k["face"], rim, k["pole"], k["wrap"], k["bind"])
+    z = shield_front(0)
+    boss = "antler" if t == "E" else k["metal"]
+    B += [VX.box(-3.5, 3.5, -4.5, 2.5, z, z + 2.0, boss, "boss", "boss"), VX.box(-2.5, 2.5, -3.5, 1.5, z + 2.0, z + 3.0, boss, "boss", "boss_top")]
+    stone = (0.0, -1.0, z + 3.5)
+    B.append(VX.rbox(stone, (3, 3, 2), 45, k["gem"], "stone"))
+    if t == "E":
+        for sx in (-1, 1):  # the lacing: two cords from the boss out to the rim
+            B.append(VX.rbox((sx * 5.5, 2.5, z + 0.5), (6, 1, 1), sx * 35, k["bind"], f"lace{sx}"))
+            B.append(VX.rbox((sx * 5.5, -4.5, z + 0.5), (6, 1, 1), -sx * 35, k["bind"], f"lace_low{sx}"))
+    elif t == "D":
+        for a in range(0, 360, 45):
+            x, y = 9.6 * math.sin(math.radians(a)), -1.0 + 9.6 * math.cos(math.radians(a))
+            B.append(VX.rbox((x, y, SHIELD_Z), (1, 3, 3), -a, "tooth", f"tooth{a}"))
     else:
-        rim = {"C": "brass", "B": "mirror", "A": "gold", "S": "gold"}[t]
-        cross = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "ivory"}[t]
-        B += kite_shield(k["face"], rim)
-        B += [VX.slab(-0.5, 0.5, 5, 13, 6, cross, "cross", span=(4, 13), column=0), VX.slab(-4.5, 4.5, 10, 11, 6, cross, "cross_bar", span=(4, 13), column=0)]
-        B += [VX.slab(-1.5, 1.5, 9, 12, 7, rim, "boss"), stone_at(t, (0, 10.5, 0), 2, 9)]
+        cross = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}[t]
+        B += [VX.box(-1.0, 1.0, -11.0, 11.0, z, z + 1.0, cross, "cross", "cross", span=(-11, 11), column=0),
+              VX.box(-8.0, 8.0, 5.0, 7.0, z, z + 1.0, cross, "cross_bar", "cross_bar", span=(-11, 11), column=0)]
         if t == "A":
-            B += both(fan(-5.0, 13.5, [(40, 4, 2, 2, "gold"), (70, 3, 1, 1, "feather")], "wing"))
+            B += moved(both(fan(-8.0, 11.5, [(40, 5, 2, 3, "gold"), (70, 4, 1, 1, "feather")], "wing")), (0.0, 0.0, SHIELD_Z))
         if t == "S":
-            for x in (-4.0, 0.0, 4.0):
-                B.append(VX.rbox((x, 14.4, 0), (2, 2, 5), 45, "gold", f"crown{x}"))
-        stone = (0, 10.5, 0)
-    anchors = [(stone, 1.6, GLOW[t], 1)]
-    line = [(0.0, y, 1.0) for y in (5.0, 8.0, 12.0)] if t in "BAS" else []
-    return B, anchors, look_of(t, (-4, 2), (0, 9), line, stone)
+            for x in (-6.0, 0.0, 6.0):
+                B.append(VX.rbox((x, 13.0, SHIELD_Z), (2, 2, 3), 45, "gold", f"crown{x}"))
+    anchors = [(stone, 1.8, GLOW[t], 1)]
+    line = [(0.0, y, z + 0.5) for y in (-6.0, 2.0, 8.0)] if t in "BAS" else []
+    return B, anchors, look_of(t, (-2, 0), (0, -1), line, stone)
+
+
+def shieldblade_blade(t):
+    """The sword: as long as a Longsword and as wide (5; it was 6 with a 4 by 4 core, the fattest blade of all, until
+    the weapon polish pass), the same slab, its lit fuller from Gatewrought up standing as its ridge; a wide guard set
+    with the rank's stone (nothing deeper than 5)."""
+    k = KIT[t]
+    fuller = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}.get(t)
+    B = [grip(-4, 3, k["wrap"]), ring(-5, -4, k["metal"], part="pommel")]
+    B += blade([(5, 25, 5, 3), (25, 28, 3, 1), (28, 31, 1, 1)], k["core"], k["edge"], ridge_mat=fuller, span=(5, 31), column=0)
+    B += [VX.slab(-6.5, 6.5, 3, 5, 4, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 3, k["metal"], "guard_top")]
+    stone = (0.0, 4.0, 0.0)
+    B.append(stone_at(t, stone, 2, 5))
+    if t == "E":
+        for sx in (-1, 1):
+            B.append(VX.rbox((sx * 7.5, 6.0, 0), (2, 5, 3), -sx * 25, "antler", f"quillon{sx}"))
+    elif t == "D":
+        for sx in (-1, 1):
+            for y in (8.0, 14.0, 20.0):
+                B.append(VX.rbox((sx * 2.9, y, 0), (1, 3, 2), sx * 20, "tooth", f"tooth{sx}{y}"))
+    elif t == "A":
+        B += both(fan(-6.0, 5.0, [(35, 4, 2, 2, "gold"), (65, 3, 1, 1, "feather")], "guard_wing"))
+    elif t == "S":
+        for sx in (-1, 1):
+            B.append(VX.rbox((sx * 7.0, 5.0, 0), (2, 2, 3), 45, "gold", f"crown{sx}"))
+    anchors = [(stone, 1.4, GLOW[t], 1)]
+    line = [(0.0, y, 1.0) for y in (10.0, 18.0, 25.0)] if t in "BAS" else []
+    return B, anchors, look_of(t, (-4, 3), (0, 15), line, stone)
+
+
+def shield_over_sword(sword, shield, anchors_s, anchors_h):
+    """The whole, for the inventory and a stand: the shield over the lower blade (none of its hardware, which would run
+    through the sword), the blade's point above it and the hilt below."""
+    d = (0.0, 9.0, 1.0)
+    keep = lambda b: b.part not in ("bar", "post", "strap")  # noqa: E731
+    return sword + moved(shield, d, keep), [(tuple(np.asarray(c) + d), r, rgb, kind) for c, r, rgb, kind in anchors_h] + list(anchors_s[:0])
+
+
+def shieldblade(t):
+    """The Shieldblade as one thing (the inventory, a stand, a frame)."""
+    sb, sa, sl = shieldblade_blade(t)
+    hb, ha, _ = shieldblade_shield(t)
+    B, anchors = shield_over_sword(sb, hb, sa, ha)
+    return B, anchors, sl
 
 
 register("shieldblade", shieldblade)
@@ -2903,7 +3125,7 @@ def mother_of_spores_scythe():
     B += [VX.slab(1, 5, 8, 9, 2, "l_mycel", "nib"), VX.slab(3, 5, 5, 8, 2, "l_mycel", "nib_grip")]
     for y, x0, x1, d in ((14, 1, 4, 4), (11, -4, -1, 3), (2, 1, 3, 3)):  # shelf fungi
         B.append(VX.slab(x0, x1, y, y + 1, d, "l_cap", f"shelf{y}"))
-    blade_ = chain(-1.0, top - 0.5, [(74, 5, 6, 3, "l_gill"), (88, 5, 6, 3, "l_gill"), (102, 5, 5, 2, "l_gill"), (118, 4, 4, 2, "l_gill"),
+    blade_ = curved(-1.0, top - 0.5, [(74, 5, 6, 3, "l_gill"), (88, 5, 6, 3, "l_gill"), (102, 5, 5, 2, "l_gill"), (118, 4, 4, 2, "l_gill"),
                                      (136, 4, 3, 2, "l_gill"), (156, 3, 2, 1, "l_gill")], "blade", back=0.3, stagger=0.05, flip=True)
     B += blade_
     for i, b in enumerate(blade_[:4]):  # gill ridges standing off the flat, front and back
@@ -3078,7 +3300,7 @@ def abbot_of_frost_glaive():
     of ice grown off its back; the abbey's hymn running up the silver pole in pale blue; a frost stone at the socket; a
     silver bell-cap at its foot."""
     B = [haft(3, 14, "l_hymn", span=(-6, 15), column=0), haft(-4, 3, "mirror", "grip"), haft(-7, -4, "l_hymn", "pole_low", span=(-6, 15), column=0)]
-    blade_ = chain(0.0, 16.0, [(0, 5, 5, 3, "l_ice"), (10, 4, 5, 3, "l_ice"), (22, 4, 5, 3, "l_ice"), (36, 3, 4, 2, "l_ice"),
+    blade_ = curved(0.0, 16.0, [(0, 5, 5, 3, "l_ice"), (10, 4, 5, 3, "l_ice"), (22, 4, 5, 3, "l_ice"), (36, 3, 4, 2, "l_ice"),
                                (52, 3, 3, 2, "l_ice"), (70, 2, 2, 1, "l_ice_edge")], "blade", back=0.3, stagger=0.05)
     B += blade_
     for k, (x, y, deg) in enumerate(((-2.8, 19.0, 55), (-3.6, 23.0, 65), (-4.8, 26.5, 80))):  # ice shards off its back
@@ -3092,18 +3314,46 @@ def abbot_of_frost_glaive():
     return B, anchors, lord_look("abbot_of_frost_glaive", (-4, 3), (0, 18))
 
 
-def mirror_knight_shieldblade():
-    """The Mirror Knight's Reflection: a kite shield whose face is a mirror, glinting, trimmed all round in silver set
-    with diamonds; a great diamond for its boss; a short blade of mirror steel above it; a silver grip."""
-    B = [grip(-4, 2, "mirror"), ring(-5, -4, "mirror", part="pommel")]
-    B += blade([(14, 19, 5, 3), (19, 21, 3, 1), (21, 22, 1, 1)], "l_mirror_face", "mirror_edge")
-    B += kite_shield("l_mirror_face", "l_diamond_rim")
-    B += [VX.slab(-2.5, 2.5, 8, 13, 7, "mirror", "boss"), VX.rbox((0, 10.5, 0), (3, 3, 9), 45, "l_diamond", "diamond")]
-    for x in (-3.0, 3.0):
-        B.append(VX.rbox((x, 6.0, 0), (1, 1, 6), 45, "l_diamond", f"diamond{x}"))
+def mirror_knight_blade():
+    """The Mirror Knight's sword: a long blade of mirror steel, a guard of silver set with diamonds."""
+    B = [grip(-4, 3, "mirror"), ring(-5, -4, "mirror", part="pommel")]
+    B += blade([(5, 25, 6, 4), (25, 28, 5, 3), (28, 30, 3, 1), (30, 31, 1, 1)], "l_mirror_face", "mirror_edge", span=(5, 31), column=0)
+    B += [VX.slab(-6.5, 6.5, 3, 5, 4, "mirror", "guard"), VX.slab(-1.5, 1.5, 5, 7, 5, "mirror", "guard_top"), VX.rbox((0, 4, 0), (3, 3, 7), 45, "l_diamond", "stone")]
+    for x in (-5.0, 5.0):
+        B.append(VX.rbox((x, 4, 0), (1, 1, 6), 45, "l_diamond", f"diamond{x}"))
     c = LORD_COLOUR["mirror_knight_shieldblade"]
-    anchors = [((0, 10.5, 0), 2.8, c, 1)]
-    return B, anchors, lord_look("mirror_knight_shieldblade", (-4, 2), (0, 9))
+    return B, [((0, 4, 0), 2.0, c, 1)], lord_look("mirror_knight_shieldblade", (-4, 3), (0, 15))
+
+
+def mirror_knight_shield():
+    """The Mirror Knight's shield: a heater whose face is a mirror, trimmed all round in silver set with diamonds, and a
+    great diamond for its boss."""
+    B = shield_plate("heater", "l_mirror_face", "l_diamond_rim", "obsidian", "mirror", "mirror")
+    z = shield_front(0)
+    B += [VX.box(-3.5, 3.5, -4.5, 2.5, z, z + 2.0, "mirror", "boss", "boss")]
+    stone = (0.0, -1.0, z + 2.5)
+    B.append(VX.rbox(stone, (4, 4, 3), 45, "l_diamond", "diamond"))
+    for x, y in ((-6.0, 7.0), (6.0, 7.0), (0.0, -9.0)):
+        B.append(VX.rbox((x, y, z + 0.5), (2, 2, 1), 45, "l_diamond", f"diamond{x}{y}"))
+    c = LORD_COLOUR["mirror_knight_shieldblade"]
+    return B, [(stone, 2.8, c, 1)], lord_look("mirror_knight_shieldblade", (-2, 0), (0, -1))
+
+
+def mirror_knight_shieldblade():
+    """The Mirror Knight's Reflection, whole (the inventory, a stand)."""
+    sb, sa, sl = mirror_knight_blade()
+    hb, ha, _ = mirror_knight_shield()
+    B, anchors = shield_over_sword(sb, hb, sa, ha)
+    return B, anchors, sl
+
+
+def pair_of(row):
+    """A weapon drawn in the hands as two things: {suffix: (boxes, anchors, look)}, else None."""
+    if row[8] != "shieldblade":
+        return None
+    if row[0] in LORD_COLOUR:
+        return {"_blade": mirror_knight_blade(), "_shield": mirror_knight_shield()}
+    return {"_blade": shieldblade_blade(row[2]), "_shield": shieldblade_shield(row[2])}
 
 
 def unit_zero_precursor():
@@ -3144,7 +3394,7 @@ def sky_leviathan_twinblades():
     with two short rays trailing off its root, lightning caught in it, its leading edge crackling; a storm stone at the
     grip's heart; storm light lifting off the edges. (The weapon audit: three long rays along each fin were noise; now
     the fin's own curve carries it, each blade 15 like the forged Twinblades.)"""
-    top = chain(0.0, 5.0, [(0, 5, 5, 3, "l_storm"), (10, 4, 5, 3, "l_storm"), (22, 4, 4, 2, "l_storm"), (36, 3, 3, 2, "l_storm"),
+    top = curved(0.0, 5.0, [(0, 5, 5, 3, "l_storm"), (10, 4, 5, 3, "l_storm"), (22, 4, 4, 2, "l_storm"), (36, 3, 3, 2, "l_storm"),
                            (52, 2, 1, 2, "l_storm_edge")], "fin", back=0.3, stagger=0.05, span=(5, 20))
     edge = [VX.Box(b.c + b.R[:, 0] * (b.h[0] + 0.5) + np.array([0, 0, 0.05 * (k % 2)]), np.array([0.5, b.h[1] - 0.5, 0.5]), "l_storm_edge",
                    "edge", b.R, "edge", span=(5, 20)) for k, b in enumerate(top[1:4])]
@@ -3290,14 +3540,37 @@ def write_all(only=None):
         icon(make(row, clean=True)[0], look).save(os.path.join(tex_dir, wid + "_icon.png"))
         tex = "awaken:item/arms/" + wid
         _write(os.path.join(RES, "assets/awaken/models/item", wid + ".json"), {"parent": "minecraft:item/handheld", "textures": {"layer0": tex + "_icon"}})
+        pair, in_hand = pair_of(row), built
+        if pair is not None:  # the hands draw the parts, each its own mesh and texture
+            for suffix, (b_boxes, b_anchors, b_look) in pair.items():
+                part = VX.build(b_boxes, painter(False), to_item, width=64,
+                                anchors=[(tuple(to_item(np.array([c]))[0]), r * SCALE, hex_rgb(rgb), kind) for c, r, rgb, kind in b_anchors])
+                part.streams = [(kind, hex_rgb(rgb), rate, radius * SCALE, [tuple(q) for q in to_item(np.array(pts))])
+                                for kind, rgb, rate, radius, pts in b_look.get("streams", [])]
+                MS.write(os.path.join(mesh_dir, wid + suffix + ".mesh"), part, hex_rgb(b_look["accent"]))
+                Image.fromarray(part.texture(), "RGBA").save(os.path.join(tex_dir, wid + suffix + ".png"))
+                if suffix == "_blade":
+                    in_hand = part
         # the hands' base: a particle, no geometry of its own (the mesh draws itself), vanilla's third-person hold and
         # our own first-person one (FIRST_PERSON below)
         _write(os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json"), {
-            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, built.pos / 16.0)})
+            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, in_hand.pos / 16.0)})
         _write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
-            "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
+            "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand",
+                         "model": {"type": "awaken:weapon", "weapon": wid + ("_blade" if pair is not None else "")}}}})
+        if pair is not None:  # the shield: an item model of its own (no item: ArmsOffHand's copy of the stack names it)
+            _write(os.path.join(RES, "assets/awaken/models/item", wid + "_shield_in_hand.json"), {
+                "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": shield_hold(row_hold(row, in_hand.pos / 16.0))})
+            _write(os.path.join(RES, "assets/awaken/items", wid + "_shield.json"), {"model": {
+                "type": "minecraft:special", "base": "awaken:item/" + wid + "_shield_in_hand",
+                "model": {"type": "awaken:weapon", "weapon": wid + "_shield"}}})
+        sleeve = sleeve_of(row)
+        if sleeve is not None:  # drawn past the cuff in first person only (WeaponRenderer), with a texture of its own
+            arm = VX.build(sleeve, painter(False), to_item, width=64)
+            MS.write(os.path.join(mesh_dir, wid + "_arm.mesh"), arm, hex_rgb(look["accent"]))
+            Image.fromarray(arm.texture(), "RGBA").save(os.path.join(tex_dir, wid + "_arm.png"))
         write_recipe(wid, style, tier)
         for stale in (wid + "_icon_glow.png",):
             if os.path.exists(os.path.join(tex_dir, stale)):
@@ -3674,15 +3947,50 @@ def row_hold(row, pos):
     return out
 
 
+def shield_hold(hold):
+    """A shield's holds: first person as its sword's (its keys place it: arms_keys.py); third person strapped on the outside
+    of the forearm, its top up the arm toward the shoulder and its front out from the body. In ItemInHandLayer's frame a
+    held item's +z runs up the arm and its -x out from a left arm; a left hand's is written mirrored (ItemTransform)."""
+    import arms_holds as AH
+    out = {}
+    # first person: smaller than its sword's hold (at the sword's scale a shield fills the height of the screen), the fist where the sword's closes
+    fp = hold["firstperson_righthand"]
+    s0, s1 = fp["scale"][0], SHIELD_FP
+    R = MR.euler(*fp["rotation"])
+    t = np.asarray(fp["translation"], dtype=float) + 16 * (s0 - s1) * (R @ (AH.GRIP_ITEM - 0.5))
+    right = {"rotation": fp["rotation"], "translation": [round(float(v), 3) for v in t], "scale": [s1, s1, s1]}
+    lrot, ltr, _ = AH.mirror_display((tuple(fp["rotation"]), tuple(right["translation"]), s1), keep_edge=False)
+    out["firstperson_righthand"], out["firstperson_lefthand"] = right, {"rotation": lrot, "translation": ltr, "scale": [s1, s1, s1]}
+    sc = 0.62
+    (rx, ry, rz), t, s0 = AH.HANDHELD_3P
+    R0 = MR.euler(rx, ry, rz)
+    g = 16 * s0 * (R0 @ (AH.GRIP_ITEM - 0.5)) + np.asarray(t, dtype=float)  # where vanilla's handheld puts the grip (JSON px)
+    a, f = AH.AXIS_ITEM, AH.FACE_ITEM
+    for side, name in ((1.0, "thirdperson_righthand"), (-1.0, "thirdperson_lefthand")):
+        ta, tf = np.array([0.0, 0.0, 1.0]), np.array([side, 0.0, 0.0])
+        R = np.column_stack((ta, tf, np.cross(ta, tf))) @ np.column_stack((a, f, np.cross(a, f))).T
+        ex, ey, ez = AH.euler_xyz(R)
+        here = np.array([g[0] * side, g[1], g[2]]) - 16 * sc * (R @ (AH.GRIP_ITEM - 0.5))
+        out[name] = {"rotation": [round(ex, 2), round(side * ey, 2), round(side * ez, 2)],
+                     "translation": [round(float(here[0] * side), 3), round(float(here[1]), 3), round(float(here[2]), 3)],
+                     "scale": [sc, sc, sc]}
+    return out
+
+
 def write_holds():
     """Only the holds (models/item/<id>_in_hand.json), from the meshes already built: no mesh or texture is re-made."""
     for row in CATALOG:
         wid = row[0]
-        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ".mesh"))
+        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ("_blade" if row[8] == "shieldblade" else "") + ".mesh"))
         path = os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json")
         model = json.load(open(path))
         model["display"] = row_hold(row, m["pos"])
         _write(path, model)
+        if row[8] == "shieldblade":
+            path = os.path.join(RES, "assets/awaken/models/item", wid + "_shield_in_hand.json")
+            model = json.load(open(path))
+            model["display"] = shield_hold(row_hold(row, m["pos"]))
+            _write(path, model)
 
 
 def held_as(style):

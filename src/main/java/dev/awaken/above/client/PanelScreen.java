@@ -146,8 +146,7 @@ public final class PanelScreen extends Screen {
             g.fill(px + pw - 6, barY, px + pw - 4, barY + barH, Glass.a(accent, 0.5f));
         }
         if (!panel.footer().getString().isEmpty()) {
-            String f = font.plainSubstrByWidth(panel.footer().getString(), pw - 24);
-            g.text(font, f, px + 12, py + ph - 16, Glass.a(Glass.LABEL, 0.8f), false);
+            dev.awaken.signal.client.Ui.fitted(g, font, panel.footer().getString(), px + 12, py + ph - 16, pw - 24, 1, Glass.a(Glass.LABEL, 0.8f), false); // never cut (SPEC §57.6)
         }
         if (!hovered.isEmpty()) g.setTooltipForNextFrame(font, hovered, mouseX, mouseY);
     }

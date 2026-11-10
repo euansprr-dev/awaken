@@ -99,8 +99,7 @@ final class LooksView extends CloseView {
         accent(s, mx, my, open);
         s.g.pose().popMatrix();
         float fy = 916F + 60F * slide;
-        s.text("Esc", 40F, fy, 3F, Stage.EDGE);
-        s.text("Back", 120F, fy, 3F, Stage.LABEL);
+        s.hint("Esc", "Back", 40F, fy);
     }
 
     private void row(Stage s, int slot, float y, float mx, float my, boolean open) {
@@ -113,7 +112,7 @@ final class LooksView extends CloseView {
         }
         Panel.icon(s, it, Panel.X + 150F, y, 3F);
         ArmourSet drawn = ArmourLooks.drawn(it).set();
-        s.text(s.fit(drawn == own.set() ? drawn.setName + " (its own)" : drawn.setName, 340F, 3F), Panel.X + 212F, y + 14F, 3F, 0xFF000000 | drawn.rank.colour);
+        s.fitted(drawn == own.set() ? drawn.setName + " (its own)" : drawn.setName, Panel.X + 212F, y + 14F, 340F, 3F, 0xFF000000 | drawn.rank.colour, -1);
         if (open && choices(own.set()).size() > 1) {
             arrow(s, Panel.RIGHT - 90F, y + 6F, "<", mx, my);
             arrow(s, Panel.RIGHT - 40F, y + 6F, ">", mx, my);

@@ -19,8 +19,8 @@ import java.nio.file.StandardCopyOption;
 /**
  * Applies a Look tier (SPEC §14, the Look switch) to every mod that offers a supported way to set it, writing only the
  * keys {@link Look} lists: Lens (Awaken's client config), Distant Horizons (its config API now, its file for the next
- * start) and Iris's shaders switch (its API). Sodium is left alone: it has no supported way for another mod to set its
- * options, and its options file is in use while the game runs.
+ * start), Iris's shaders switch (its API) and ImmersiveVFX awake or asleep ({@link ImmersiveVfxLook}). Sodium is left
+ * alone: it has no supported way for another mod to set its options, and its options file is in use while the game runs.
  */
 public final class LookSwitch {
     private LookSwitch() {}
@@ -36,7 +36,18 @@ public final class LookSwitch {
 
     /** The tier the current settings are (null while Lens is off and no shaderpack draws). */
     public static @Nullable Tier current() {
-        return Look.current(AwakenConfig.Client.LENS.get(), Companions.irisShadersEnabled());
+        Tier tier = Look.current(AwakenConfig.Client.LENS.get(), Companions.irisShadersEnabled());
+        return tier == Tier.VFX && !Companions.immersiveVfxLoaded() ? Tier.SWIFT : tier; // the mod was taken out: Lens draws as Swift
+    }
+
+    /** Whether the first tick has agreed ImmersiveVFX with the saved Look yet. */
+    private static boolean vfxSettled;
+
+    /** The first client tick: the mod's own file may say otherwise (a first start with it, or its menu last time). */
+    static void settleVfx() {
+        if (vfxSettled) return;
+        vfxSettled = true;
+        if (Companions.immersiveVfxLoaded()) ImmersiveVfxLook.set(current() == Tier.VFX);
     }
 
     public static Look.Availability ultra() {
@@ -46,6 +57,7 @@ public final class LookSwitch {
     /** Applies the tier. False (and nothing changed) when the tier can't run here (Ultra without a working Iris). */
     public static boolean apply(Tier tier) {
         if (tier.irisShaders && !ultra().available()) return false;
+        if (tier == Tier.VFX && !Companions.immersiveVfxLoaded()) return false;
         AwakenConfig.Client.LENS.set(tier.lens);
         AwakenConfig.Client.LENS.save();
         if (DH) {
@@ -57,6 +69,7 @@ public final class LookSwitch {
                     : "set now, saved for the next start";
         }
         if (Companions.irisLoaded() && Companions.irisShadersEnabled() != tier.irisShaders) Companions.setIrisShaders(tier.irisShaders);
+        if (Companions.immersiveVfxLoaded()) ImmersiveVfxLook.set(tier == Tier.VFX);
         chosen = tier;
         Awaken.LOG.info("[look] {}: Lens {}, Distant Horizons {}, Iris shaders {}", tier, tier.lens, DH ? dhResult : "not installed",
                 Companions.irisLoaded() ? tier.irisShaders : "not installed");

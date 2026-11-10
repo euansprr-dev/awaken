@@ -42,8 +42,7 @@ final class SignalSections {
             boolean over = mx >= x && mx < x + w && my >= y && my < y + H;
             g.fillGradient(x, y, x + w, y + H, Glass.a(bar, over ? 0.16f : 0.10f), Glass.a(bar, 0.02f));
             g.fill(x, y, x + 2, y + H, Glass.a(bar, 0.95f));
-            String t = SignalText.ellipsize(KeyText.resolve(s.text().getString()), w - 10, f::width);
-            g.text(f, t, x + 6, y + 3, Glass.a(0xFFFFFF, 1f), false);
+            Ui.fitted(g, f, KeyText.resolve(s.text().getString()), x + 6, y + 3, w - 10, 1, Glass.a(0xFFFFFF, 1f), false); // never cut (SPEC §57.6)
             float small = StatusSections.small();
             String more = list.size() > 1 ? "NOW · " + (list.size() - 1) + " more on the Tasks page ›" : "NOW · on the Tasks page ›";
             g.pose().pushMatrix();
