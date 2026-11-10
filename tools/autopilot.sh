@@ -27,6 +27,8 @@ if [ -n "$PACK" ]; then
 elif [ -f run-autopilot/mods/.awaken-pack.json ]; then
   python3 -I tools/pack.py remove run-autopilot > /dev/null || exit 1
 fi
+# measurement only (tools/steady60-tour.sh NOVFX=1): the same pack without ImmersiveVFX's jar
+[ -n "$AWAKEN_STEADY60_NOVFX" ] && rm -f run-autopilot/mods/ImmersiveVFX-*.jar
 OPTS=run-autopilot/options.txt
 touch $OPTS
 # BACKEND=vulkan|opengl|default: tours run on Vulkan like players do (the pack's API since 2026-10-24); opengl for A/Bs
@@ -72,6 +74,8 @@ GRADLE_ARGS=()
 [ -n "$ZGC" ] && GRADLE_ARGS+=("-Pzgc")
 [ "${BACKEND:-vulkan}" != default ] && GRADLE_ARGS+=("-Pbackend=${BACKEND:-vulkan}")
 [ -n "$SETTLE" ] && GRADLE_ARGS+=("-Psettle=$SETTLE")
+# FOREGROUND=1 (measurement only, with the owner's OK): an ordinary front app, for a fullscreen tour on his own screen
+[ -n "$FOREGROUND" ] && GRADLE_ARGS+=("-Pforeground")
 cp "$SCRIPT" run-autopilot/script.txt
 rm -f run-autopilot/screenshots/*.png(N)
 rm -rf run-autopilot/saves   # every tour starts from a fresh world

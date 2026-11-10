@@ -1,0 +1,127 @@
+# Steady Light on the Dell: what makes frames late in flight (SPEC §22). The same flight as Euan plays it (vsync, 60 cap),
+# back and forth over land already loaded once: the Air as it is, then with the Sun Pass off, the lit air off, the Air
+# off, and the Air again. tools/steady60-tour.sh tools/autopilot/steady60-fly.txt fly-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch cinematic
+wait 900
+opt vsync 1
+opt maxFps 60
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+glide 0.8 0 0 420
+wait 430
+look 90 12
+glide -0.8 0 0 420
+wait 430
+look -90 12
+wait 40
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_air_1 20
+pixels gpu fly_air_1
+lens cost
+look 90 12
+wait 40
+glide -0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_air_back 20
+pixels gpu fly_air_back
+lens cost
+lens sunpass off
+wait 40
+look -90 12
+wait 40
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_nosunpass 20
+pixels gpu fly_nosunpass
+lens cost
+look 90 12
+wait 40
+glide -0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_nosunpass_back 20
+pixels gpu fly_nosunpass_back
+lens cost
+lens sunpass setting
+lens rays off
+wait 40
+look -90 12
+wait 40
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_norays 20
+pixels gpu fly_norays
+lens cost
+look 90 12
+wait 40
+glide -0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_norays_back 20
+pixels gpu fly_norays_back
+lens cost
+lens rays setting
+lens air off
+wait 40
+look -90 12
+wait 40
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_cine 20
+pixels gpu fly_cine
+lens cost
+look 90 12
+wait 40
+glide -0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_cine_back 20
+pixels gpu fly_cine_back
+lens cost
+lens air setting
+wait 40
+look -90 12
+wait 40
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_air_2 20
+pixels gpu fly_air_2
+lens cost
+look 90 12
+wait 40
+glide -0.8 0 0 400
+lens cost
+pixels gpu reset
+perf fly_air_2_back 20
+pixels gpu fly_air_2_back
+lens cost
+quit
