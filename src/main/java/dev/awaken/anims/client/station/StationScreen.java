@@ -172,6 +172,15 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
         super.slotClicked(slot, slotId, buttonNum, input);
     }
 
+    /** Dev (tours): the inventory image's corner, where the strip's slots are drawn from. */
+    int slotLeft() {
+        return leftPos;
+    }
+
+    int slotTop() {
+        return topPos;
+    }
+
     /** Dev (tours): the click a player would make on a slot (a station slot or the inventory). */
     void devClick(int slot, int button) {
         slotClicked(menu.getSlot(slot), slot, button, ContainerInput.PICKUP);

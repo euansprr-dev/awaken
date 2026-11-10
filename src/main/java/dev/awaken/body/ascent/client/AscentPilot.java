@@ -103,6 +103,7 @@ public final class AscentPilot {
             }
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
+            case "hover" -> dev.awaken.anims.client.station.StationClient.devHover(Integer.parseInt(a[1]));
             case "attack" -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
             case "usehold" -> {
                 useHold = Integer.parseInt(a[1]);

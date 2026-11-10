@@ -141,6 +141,32 @@ public final class StationClient {
         if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) s.devClick(slot, button);
     }
 
+    /**
+     * Dev (the pilot's "hover <slot>"): the mouse over a slot of the open station scene, where the view shows it (a
+     * station slot on the station, any other at its place on the strip), so a tour can film a carried stack over the grid.
+     */
+    public static void devHover(int slot) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(mc.gui.screen() instanceof StationScreen<?> s) || station == null) return;
+        double gx, gy;
+        if (slot < kind.slots) {
+            double[] at = new double[3], out = new double[2];
+            spot(slot, at, 0);
+            var cam = mc.gameRenderer.mainCamera();
+            Vec3 o = cam.position();
+            float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+            if (!StationView.project(at[0], at[1], at[2], o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect, s.width, s.height, out)) return;
+            gx = out[0];
+            gy = out[1];
+        } else {
+            var sl = s.getMenu().getSlot(slot);
+            gx = s.slotLeft() + sl.x + 8;
+            gy = s.slotTop() + sl.y + 8;
+        }
+        var w = mc.getWindow();
+        mc.mouseHandler.onMove(w.handle(), gx * w.getScreenWidth() / w.getGuiScaledWidth(), gy * w.getScreenHeight() / w.getGuiScaledHeight(), 0, 0);
+    }
+
     private static int mainSide() {
         LocalPlayer p = Minecraft.getInstance().player;
         return p != null && p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? 1 : 0;
