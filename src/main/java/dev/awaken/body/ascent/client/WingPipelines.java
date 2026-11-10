@@ -82,6 +82,8 @@ final class WingPipelines {
     private static final RenderType[] FEATHERS = new RenderType[3], LEAN = new RenderType[3];
     /** Which of the two the feathers are drawn through (/awaken wings set probe_lean). */
     static boolean lean;
+    /** A probe: the feathers through the game's own translucent entity type (lit by the world; /awaken wings set probe_plain). */
+    static boolean plain;
     private static RenderType halo;
     private static int ok = -1;
 
@@ -128,6 +130,7 @@ final class WingPipelines {
      */
     static RenderType feather(int pair) {
         int i = Math.max(0, Math.min(FEATHERS.length - 1, pair));
+        if (plain) return RenderTypes.entityTranslucent(WHITE);
         if (lean && ok() && leanOk()) {
             if (LEAN[i] == null) {
                 LEAN[i] = RenderType.create("awaken_ascent_wing_feather_lean_" + i,
