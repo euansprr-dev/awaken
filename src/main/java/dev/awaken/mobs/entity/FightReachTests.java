@@ -328,6 +328,10 @@ public final class FightReachTests {
         ServerLevel level = h.getLevel();
         for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
         ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        // standing, as a player stands: a test player's connection never ticks it, so nothing puts it on the ground, and
+        // a kit flier follows anyone three seconds off the ground to a block under their feet (SPEC §47.15), here into
+        // the floor, where it sat and climbed to go round
+        p.setOnGround(true);
         MobDef def = Bestiary.get(id);
         AwakenMob m = Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 11.5)), 10,
                 new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
