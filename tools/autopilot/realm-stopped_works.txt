@@ -1,4 +1,5 @@
-# The Stopped Works (SPEC 50.9): a stopped foundry rolled from the seed, room by room. Difficulty is normal; the camera is in creative, so nothing wakes.
+# The Stopped Works (SPEC 50.9): one rolled run of it (seed 507), leg by leg. Each camera stands where you would walk into the leg, whatever
+# the leg is cut like on this seed. Difficulty is normal; the camera is in creative, so nothing wakes.
 world autopilot_realm_stopped_works creative 20261113
 waitworld
 gui 0
@@ -14,7 +15,7 @@ cmd difficulty normal
 cmd gamerule send_command_feedback false
 
 # straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
-cmd awaken gate realm_enter D awaken:stopped_works
+cmd awaken gate realm_enter D awaken:stopped_works 507
 need realm
 hud off
 wait 30
@@ -24,32 +25,34 @@ cmd awaken gate realm_at MOUTH 0 0 0 3
 look 0 10
 wait 80
 shot stopped_works_mouth
-cmd awaken gate realm_at DEN 0 0 1 -8
-look 0 6
+cmd awaken gate realm_leg FIGHT 0 7 2
 wait 80
 shot stopped_works_first_fight
-cmd awaken gate realm_at DEN 0 4 2 4
-look -140 10
+cmd awaken gate realm_leg FIGHT 1 7 2
 wait 80
-shot stopped_works_first_fight_back
-cmd awaken gate realm_at DEN 1 0 1 -7
-look 0 4
+shot stopped_works_second_fight
+cmd awaken gate realm_leg AMBUSH 0 8 2
 wait 80
-shot stopped_works_second_den
-cmd awaken gate realm_at DEN 1 5 2 5
-look -150 8
-wait 80
-shot stopped_works_second_den_back
-cmd awaken gate realm_at WARDEN 0 0 2 -4
-look 0 8
+shot stopped_works_ambush
+cmd awaken gate realm_leg WARDEN 0 9 3
 wait 80
 shot stopped_works_warden
-cmd awaken gate realm_at LORD 0 0 2 -8
-look 0 4
+cmd awaken gate realm_leg LORD 0 15 4
 wait 80
 shot stopped_works_lord
-cmd awaken gate realm_at LORD 0 0 1 6
-look 180 -40
+cmd awaken gate realm_leg LORD 0 -12 5
 wait 80
-shot stopped_works_lord_up
+shot stopped_works_lord_back
+cmd awaken gate realm_leg MOVEMENT 0 0 2
+wait 80
+shot stopped_works_move1
+cmd awaken gate realm_leg MOVEMENT 1 0 2
+wait 80
+shot stopped_works_move2
+cmd awaken gate realm_leg MOVEMENT 2 0 2
+wait 80
+shot stopped_works_move3
+cmd awaken gate realm_leg TRAP 0 8 2
+wait 80
+shot stopped_works_trap
 quit
