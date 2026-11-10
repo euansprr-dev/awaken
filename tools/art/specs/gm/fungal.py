@@ -428,7 +428,7 @@ MONSTERS = [
               life=dict(STILL, temperament="monster", idles={"look": 3, "settle": 2}, headSpeed=3.6, springHz=1.4, springGain=1.4, arms=0.4),
               voice={"ambient": [("block.fungus.step", 0.5, 0.6), ("entity.witch.ambient", 0.35, 0.55)], "hurt": [("block.fungus.hit", 0.9, 0.7), ("entity.witch.hurt", 0.4, 0.6)],
                      "death": [("block.fungus.break", 1.0, 0.6), ("entity.witch.death", 0.4, 0.55)], "step": [("block.roots.step", 0.4, 0.8)]}),
-    K.Monster("the_rot", "The Rot", rot, paint_rot, kind="crawler", box=(1.6, 1.5), sunk=("moss0", "moss1", "moss2", "thigh0_l", "shinb0_l"),  # the game plants its feet
+    K.Monster("the_rot", "The Rot", rot, paint_rot, kind="crawler", box=(1.6, 1.5), sunk=("moss", "thigh", "shinb"),  # the game plants its feet
               motion=lambda r: {"gait": K.crawl_gait(K.room(r, K.legs_of(r), 0.6), duty=(0.76, 0.56), lift=(3.0, 4.6), swing=0.3, bob=0.5, roll=0.04, speed=1.0),
                                 "body": K.body(headLevel=0.0, twist=0.1, slope=0.8, land=1.5, shift=0.8)},
               life=dict(STILL, temperament="beast", idles={"settle": 3, "shake": 1}, mass=3.0, springHz=1.2, springGain=1.4),

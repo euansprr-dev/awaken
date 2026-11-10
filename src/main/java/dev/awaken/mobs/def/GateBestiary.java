@@ -181,15 +181,15 @@ final class GateBestiary {
     }
 
     private static void overgrownTemple(List<MobDef> out) {
-        out.add(m("vine_creaker", "Vine Creaker", Theme.TEMPLE, Tier.NORMAL, Model.CREAKING, "Only moves while you aren't looking at it").hp(25.3).dmg(4).spd(0.3).traits(WATCHED_FREEZE)
+        out.add(m("vine_creaker", "The Creaker", Theme.TEMPLE, Tier.NORMAL, Model.CREAKING, "A broken statue the roots carry about; it only walks while nobody is looking").hp(25.3).dmg(4).spd(0.3).traits(WATCHED_FREEZE).rig().size(1.1F, 1.9F).open(28).fall(26)
                 .ab(a(ROOT, "Root Grasp").radius(1.8F)).build());
-        out.add(m("thorn_archer", "Thorn Archer", Theme.TEMPLE, Tier.NORMAL, Model.BOGGED, "Thorn Arrows that poison").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, POISON_TOUCH)
+        out.add(m("thorn_archer", "The Thorn Bud", Theme.TEMPLE, Tier.NORMAL, Model.BOGGED, "A bud on a stalk that opens to spit poisoned thorns, and stays open a moment after").hp(20.7).dmg(3).spd(0.24).traits(RANGED, POISON_TOUCH).rig().size(0.6F, 1.9F).planted().open(24).fall(20)
                 .ab(a(ARROWS, "Thorn Arrows").n(2).fx(MobEffects.POISON, 60, 0)).build());
-        out.add(m("thorn_hound", "Thorn Hound", Theme.TEMPLE, Tier.NORMAL, Model.WOLF, "Bramble Pounce out of the undergrowth").hp(18.4).dmg(3).spd(0.34).tint(0x80B060)
+        out.add(m("thorn_hound", "The Bramble Hound", Theme.TEMPLE, Tier.NORMAL, Model.WOLF, "Lies like a bush, then pounces; a pounce that misses lands it badly").hp(18.4).dmg(3).spd(0.34).rig().size(0.7F, 1.2F).miss(30).fall(20)
                 .ab(a(LEAP, "Bramble Pounce").radius(1.8F)).build());
-        out.add(m("incense_priest", "Incense Priest", Theme.TEMPLE, Tier.ELITE, Model.EVOKER, "Root Fangs along the floor; incense that heals its flock").hp(27.6).dmg(4).spd(0.25).tint(0x9CCC88).traits(RANGED)
+        out.add(m("incense_priest", "The Censer", Theme.TEMPLE, Tier.ELITE, Model.EVOKER, "A burner on stilts: Root Fangs along the floor and smoke that heals the others; a blow while it gathers itself stops it").hp(27.6).dmg(4).spd(0.25).traits(RANGED).rig().size(1.0F, 1.7F).stopped().open(26).fall(26)
                 .ab(a(FANGS, "Root Fangs"), a(HEAL, "Incense"), a(CLOUD, "Incense Smoke").fx(MobEffects.WEAKNESS, 80, 0)).build());
-        out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple statue grown through with roots; rings of fangs").hp(43.7).dmg(7).spd(0.25).tint(0x8AB070).traits(HUNTER)
+        out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple pillar torn loose, its roof still on its head; its roots come up in rings").hp(43.7).dmg(7).spd(0.25).traits(HUNTER).rig().size(1.4F, 3.1F).open(30).fall(40)
                 .ab(a(SLAM, "Temple Fist").power(1.07F).radius(4).heavy(), a(FANGS_RING, "Root Ring").power(0.99F).n(10), a(ROOT, "Strangling Vines").radius(2.5F)).build());
         out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(186.4).dmg(0.86).spd(0.24).scale(1.8F).size(1.0F, 3.02F).bar(BossBarColor.GREEN).arena(22)
                 .intro("Incense and wet roots.")

@@ -44,8 +44,8 @@ def pickhead():
     r.shadow = 0.8
     body = K.at(r.bone("body", (0, 13, 0)), 13)
     body.cube("torso", -4, -4, -7, 8, 7, 14)
-    K.legs2(body, "0", (3, 1, -5), 5, 6, -14, thick=(3, 2))
-    K.legs2(body, "1", (3, 0, 5), 6, 6, 24, thick=(3, 2))
+    K.legs2(body, "0", (3, 1, -5), 5, 7, 40, thick=(3, 2))    # forelegs: knees ahead
+    K.legs2(body, "1", (3, 0, 5), 8, 5, -24, thick=(3, 2))    # hind legs: hocks behind
     hod = body.bone("cup", (0, -4, 2), (-8, 0, 0))
     hod.cube("hod", -4, -6, -3, 8, 6, 8)
     hod.cube("coals", -3, -7, -2, 6, 1, 6)
@@ -63,7 +63,7 @@ def pickhead():
     K.moves(r, swing="Ember Swing")
     stuck = {"body": {"rot": (8, 0, 0), "pos": (0, -1, -1)}, "neck": (62, 0, 0), "head": (24, 0, 0), "cup": (10, 0, 0)}
     K.act(r, "swing", {"body": {"rot": (-24, 0, 0), "pos": (0, 2, 2)}, "neck": (-44, 0, 0), "head": (-30, 0, 0), "cup": (-14, 0, 0),
-                       "leg0_l": (-40, 0, -8), "leg0_r": (-30, 0, 8), "shin0_l": (-20, 0, 0), "shin0_r": (-30, 0, 0)},
+                       "leg0_l": (-40, 0, -8), "leg0_r": (-30, 0, 8), "shin0_l": (20, 0, 0), "shin0_r": (30, 0, 0)},
           stuck, w=1.6, length=0.5, t_hit=0.1, over=0.0, back=0.0, after=stuck, plant=QUAD, lag={"cup": 0.08, "tail": 0.06}, open_pose=stuck)
     # stuck fast: it hauls at its own head, twice, and the third pull frees it
     K.keyed(r, "swing_open", 2.6, [(t, K.planted(r, K.plus(stuck, {"body": {"pos": (0, 0, z)}, "neck": (-z * 4, 0, 0)}), QUAD))
@@ -283,8 +283,8 @@ def slag_boar():
     body.cube("fire", -5, -8, -7, 10, 1, 14)
     for k in range(5):
         body.cube(f"bar{k}", -6, -9, -7 + 3 * k, 12, 2, 1, share=None if k == 0 else "bar0")
-    K.legs2(body, "0", (4.5, 3, -6), 6, 6, -14, thick=(4, 3))
-    K.legs2(body, "1", (4.5, 2, 6), 6, 7, 26, thick=(4, 3))
+    K.legs2(body, "0", (4.5, 3, -6), 5, 6, 39, thick=(4, 3))    # forelegs: knees ahead
+    K.legs2(body, "1", (4.5, 2, 6), 7, 5, -28, thick=(4, 3))    # hind legs: hocks behind
     head = body.bone("head", (0, -1, -9), (16, 0, 0))
     head.cube("skullb", -4.5, -4, -8, 9, 8, 8)
     head.cube("snout", -2.5, 0, -11, 5, 4, 3)
@@ -297,12 +297,12 @@ def slag_boar():
 
     K.moves(r, charge="Slag Charge", toss="Tusk Toss")
     vent = K.planted(r, {"body": {"pos": (0, -1.5, 0)}, "head": (26, 0, 0)}, QUAD)
-    lowered = {"body": {"rot": (8, 0, 0), "pos": (0, -1, 2.5)}, "head": (22, 0, 0), "leg0_l": (-36, 0, 0), "shin0_l": (-26, 0, 0), "tail": (-40, 0, 0)}
+    lowered = {"body": {"rot": (8, 0, 0), "pos": (0, -1, 2.5)}, "head": (22, 0, 0), "leg0_l": (-36, 0, 0), "shin0_l": (26, 0, 0), "tail": (-40, 0, 0)}
     K.act(r, "charge", lowered, {"body": {"rot": (-4, 0, 0), "pos": (0, 0.5, -6)}, "head": (-10, 0, 0)}, w=1.3, length=0.6, t_hit=0.12, plant=QUAD,
           lag={"tail": 0.08}, stuck=vent)
     # pawing: the raised hoof strikes the ground twice before it goes (the last key is where the strike begins)
     hoof = lambda up: K.planted(r, K.plus({k: v for k, v in lowered.items() if not k.endswith("0_l")},  # noqa: E731
-                                          {"leg0_l": (-36, 0, 0), "shin0_l": (-26, 0, 0)} if up else {"head": (4, 0, 0)}), QUAD)
+                                          {"leg0_l": (-36, 0, 0), "shin0_l": (26, 0, 0)} if up else {"head": (4, 0, 0)}), QUAD)
     K.keyed(r, "charge_windup", 1.3, [(0, {}), (0.3, hoof(True)), (0.5, hoof(False)), (0.7, hoof(True)), (0.9, hoof(False)), (1.1, hoof(True)),
                                       (1.3, K.planted(r, K.plus(lowered, K.scaled(lowered, 0.06)), QUAD))], lag={"tail": 0.08})
     K.act(r, "toss", {"head": (34, 0, 0), "body": {"pos": (0, -1.5, 1)}}, {"head": (-44, 0, 0), "body": {"pos": (0, 1, -2), "rot": (-8, 0, 0)}}, w=1.0, length=0.5,
@@ -463,11 +463,11 @@ MONSTERS = [
               voice={"ambient": FIRE + [("entity.blaze.ambient", 0.35, 1.3)], "hurt": [("entity.blaze.hurt", 0.6, 1.3), ("block.wood.hit", 0.6, 1.0)],
                      "death": [("block.fire.extinguish", 0.9, 0.9), ("block.wood.break", 0.7, 1.0)]}),
     K.Monster("scorch_crawler", "The Coal Tick", coal_tick, paint_coal_tick, kind="crawler", box=(0.6, 0.45),
-              motion=lambda r: {"gait": K.crawl_gait(K.room(r, K.legs_of(r), 0.5), crouch=0.5, speed=0.8), "body": K.body(headLevel=0.0, twist=0.2, slope=0.9, land=1.0, shift=0.3)},
+              motion=lambda r: {"gait": K.crawl_gait(K.room(r, K.legs_of(r), 0.5), crouch=0.5, speed=1.0), "body": K.body(headLevel=0.0, twist=0.2, slope=0.9, land=1.0, shift=0.3)},
               life=dict(STILL, temperament="insect", idles={"settle": 2, "flick": 1}),
               voice={"ambient": [("block.furnace.fire_crackle", 0.5, 1.4), ("entity.silverfish.ambient", 0.4, 0.8)], "hurt": [("entity.silverfish.hurt", 0.7, 0.8), ("block.stone.hit", 0.6, 1.3)],
                      "death": [("entity.silverfish.death", 0.8, 0.8), ("block.fire.extinguish", 0.6, 1.3)], "step": [("entity.silverfish.step", 0.3, 0.9)]}),
-    K.Monster("slag_boar", "The Slag Boar", slag_boar, paint_slag_boar, kind="runner", box=(1.3, 1.3), sunk=("shinb0_l", "shinb1_l"),  # the game plants its feet
+    K.Monster("slag_boar", "The Slag Boar", slag_boar, paint_slag_boar, kind="runner", box=(1.3, 1.3), sunk=("shinb", "thigh"),  # the game plants its feet
               motion=lambda r: {"gait": quad_gait(r, duty=(0.7, 0.44), lift=(2.4, 4.0), bob=0.6, swing=0.28), "body": K.body(headLevel=0.35, twist=0.18, slope=0.85, land=1.4, shift=0.7, nod=0.07)},
               life=dict(STILL, temperament="beast", idles={"look": 3, "sniff": 2, "shake": 1, "settle": 2}, mass=2.4),
               voice={"ambient": [("entity.hoglin.ambient", 0.7, 0.7)] + FIRE[:1], "hurt": [("entity.hoglin.hurt", 0.8, 0.7), ("block.iron.hit", 0.5, 0.7)],

@@ -555,5 +555,994 @@
       }
     ],
     "subtitle": "subtitles.awaken.monster.the_swarm_mind.death"
+  },
+  "monster.sporeling.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.sporeling.ambient"
+  },
+  "monster.sporeling.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.puffer_fish.hurt",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.sporeling.hurt"
+  },
+  "monster.sporeling.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.puffer_fish.blow_out",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.sporeling.death"
+  },
+  "monster.sporeling.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.sporeling.step"
+  },
+  "monster.mycelid.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block.roots.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.mycelid.ambient"
+  },
+  "monster.mycelid.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.fungus.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.mycelid.hurt"
+  },
+  "monster.mycelid.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.mycelid.death"
+  },
+  "monster.mycelid.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.roots.step",
+        "type": "event",
+        "volume": 0.45,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.mycelid.step"
+  },
+  "monster.capweaver.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.spider.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.capweaver.ambient"
+  },
+  "monster.capweaver.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.spider.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block.fungus.hit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.capweaver.hurt"
+  },
+  "monster.capweaver.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.spider.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.capweaver.death"
+  },
+  "monster.capweaver.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.spider.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.capweaver.step"
+  },
+  "monster.puffcap.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.puffcap.ambient"
+  },
+  "monster.puffcap.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.puffer_fish.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.puffcap.hurt"
+  },
+  "monster.puffcap.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.puffer_fish.blow_out",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity.creeper.death",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.puffcap.death"
+  },
+  "monster.puffcap.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.step",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.puffcap.step"
+  },
+  "monster.hollow_tender.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.witch.ambient",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 0.55
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hollow_tender.ambient"
+  },
+  "monster.hollow_tender.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity.witch.hurt",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hollow_tender.hurt"
+  },
+  "monster.hollow_tender.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fungus.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.witch.death",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.55
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hollow_tender.death"
+  },
+  "monster.hollow_tender.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.roots.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.hollow_tender.step"
+  },
+  "monster.the_rot.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.ravager.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.wood.step",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.4
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_rot.ambient"
+  },
+  "monster.the_rot.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.45
+      },
+      {
+        "name": "minecraft:entity.ravager.hurt",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_rot.hurt"
+  },
+  "monster.the_rot.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.4
+      },
+      {
+        "name": "minecraft:entity.ravager.death",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_rot.death"
+  },
+  "monster.the_rot.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_rot.step"
+  },
+  "monster.cinder_miner.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.goat.ambient",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block.furnace.fire_crackle",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.cinder_miner.ambient"
+  },
+  "monster.cinder_miner.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.goat.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.anvil.hit",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.cinder_miner.hurt"
+  },
+  "monster.cinder_miner.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.goat.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.55
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.cinder_miner.death"
+  },
+  "monster.cinder_miner.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.iron.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.cinder_miner.step"
+  },
+  "monster.slag_cube.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.lava.pop",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.lava.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_cube.ambient"
+  },
+  "monster.slag_cube.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.hit",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.lava.pop",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_cube.hurt"
+  },
+  "monster.slag_cube.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.lava.extinguish",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.iron.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_cube.death"
+  },
+  "monster.slag_cube.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.25,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_cube.step"
+  },
+  "monster.ember_imp.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.furnace.fire_crackle",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.fire.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:entity.blaze.ambient",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ember_imp.ambient"
+  },
+  "monster.ember_imp.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.blaze.hurt",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ember_imp.hurt"
+  },
+  "monster.ember_imp.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.wood.break",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.ember_imp.death"
+  },
+  "monster.scorch_crawler.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.furnace.fire_crackle",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:entity.silverfish.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.scorch_crawler.ambient"
+  },
+  "monster.scorch_crawler.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.stone.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.scorch_crawler.hurt"
+  },
+  "monster.scorch_crawler.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.scorch_crawler.death"
+  },
+  "monster.scorch_crawler.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.9
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.scorch_crawler.step"
+  },
+  "monster.slag_boar.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.hoglin.ambient",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.furnace.fire_crackle",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_boar.ambient"
+  },
+  "monster.slag_boar.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.hoglin.hurt",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.iron.hit",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_boar.hurt"
+  },
+  "monster.slag_boar.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.hoglin.death",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_boar.death"
+  },
+  "monster.slag_boar.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.hoglin.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.slag_boar.step"
+  },
+  "monster.the_overseer.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.blastfurnace.fire_crackle",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.smoker.smoke",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overseer.ambient"
+  },
+  "monster.the_overseer.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.nether_bricks.hit",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.anvil.hit",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overseer.hurt"
+  },
+  "monster.the_overseer.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.nether_bricks.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overseer.death"
+  },
+  "monster.the_overseer.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.netherite_block.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overseer.step"
+  },
+  "monster.vine_creaker.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.creaking.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.stone.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.vine_creaker.ambient"
+  },
+  "monster.vine_creaker.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity.creaking.sway",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.vine_creaker.hurt"
+  },
+  "monster.vine_creaker.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:entity.creaking.death",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.vine_creaker.death"
+  },
+  "monster.vine_creaker.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.roots.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.vine_creaker.step"
+  },
+  "monster.thorn_archer.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.vine.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.cherry_leaves.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_archer.ambient"
+  },
+  "monster.thorn_archer.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.bamboo.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
+      },
+      {
+        "name": "minecraft:block.vine.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_archer.hurt"
+  },
+  "monster.thorn_archer.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.bamboo.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.cherry_leaves.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_archer.death"
+  },
+  "monster.thorn_archer.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.vine.step",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_archer.step"
+  },
+  "monster.thorn_hound.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.aggro",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.vine.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_hound.ambient"
+  },
+  "monster.thorn_hound.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.hurt",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.bamboo.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_hound.hurt"
+  },
+  "monster.thorn_hound.death": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.fox.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.bamboo.break",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_hound.death"
+  },
+  "monster.thorn_hound.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.grass.step",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.1
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.thorn_hound.step"
+  },
+  "monster.incense_priest.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.campfire.crackle",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.incense_priest.ambient"
+  },
+  "monster.incense_priest.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.copper.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block.chain.hit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.incense_priest.hurt"
+  },
+  "monster.incense_priest.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.copper.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.incense_priest.death"
+  },
+  "monster.incense_priest.step": {
+    "sounds": [
+      {
+        "name": "minecraft:block.bamboo.step",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.incense_priest.step"
+  },
+  "monster.the_overgrowth.ambient": {
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.step",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.45
+      },
+      {
+        "name": "minecraft:entity.creaking.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overgrowth.ambient"
+  },
+  "monster.the_overgrowth.hurt": {
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.hit",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:entity.iron_golem.hurt",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overgrowth.hurt"
+  },
+  "monster.the_overgrowth.death": {
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.4
+      },
+      {
+        "name": "minecraft:entity.iron_golem.death",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overgrowth.death"
+  },
+  "monster.the_overgrowth.step": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.iron_golem.step",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.monster.the_overgrowth.step"
   }
 }

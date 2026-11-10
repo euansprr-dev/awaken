@@ -348,9 +348,31 @@ def fk(rig, pose=None):
     return out
 
 
+def frame(rig, bone, pose=None):
+    """(M, T) of one bone, through its own chain of parents only (fk() for a whole body; this for the solver)."""
+    chain = []
+    b = rig.by_name[bone]
+    while b is not None:
+        chain.append(b)
+        b = b.parent
+    M, T = ((1, 0, 0), (0, 1, 0), (0, 0, 1)), (0.0, 0.0, 0.0)
+    for b in reversed(chain):
+        v = pose.get(b.name) if pose else None
+        piv, rot, sc = b.pivot, b.rot, (1, 1, 1)
+        if v is not None:
+            piv = (piv[0] + v["pos"][0], piv[1] - v["pos"][1], piv[2] + v["pos"][2])
+            rot = (rot[0] + v["rot"][0], rot[1] + v["rot"][1], rot[2] + v["rot"][2])
+            sc = v["scale"]
+        T = tuple(T[i] + R._mv(M, piv)[i] for i in range(3))
+        M = R._mm(M, R._rot(rot[0] * DEG, rot[1] * DEG, rot[2] * DEG))
+        if sc != (1, 1, 1):
+            M = R._mm(M, ((sc[0], 0, 0), (0, sc[1], 0), (0, 0, sc[2])))
+    return M, T
+
+
 def point(rig, bone, local=(0, 0, 0), frames=None, pose=None):
-    """A point of a bone's own frame, in model space (at rest, or in a pose)."""
-    M, T = (frames or fk(rig, pose))[bone]
+    """A point of a bone's own frame, in model space (at rest, or in a pose: a normalised one, see norm())."""
+    M, T = frames[bone] if frames is not None else frame(rig, bone, norm(pose) if pose else None)
     q = R._mv(M, local)
     return (q[0] + T[0], q[1] + T[1], q[2] + T[2])
 
@@ -402,8 +424,9 @@ def solve(rig, pose, unknowns, tip, target, mask=(1, 1, 1), iters=14):
     p = norm(pose)
 
     def err(q):
-        t = point(rig, tip[0], tip[1], pose=q)
-        return [(t[i] - target[i]) * mask[i] for i in range(3)]
+        M, T = frame(rig, tip[0], q)
+        t = R._mv(M, tip[1])
+        return [(t[i] + T[i] - target[i]) * mask[i] for i in range(3)]
 
     def turned(q, k, d):
         bone, axis = unknowns[k]
@@ -461,7 +484,7 @@ def level(rig, pose, bone):
     """The pose with `bone` turned about its own x axis until its y axis points straight down again (a foot or a hand
     flat on the floor whatever the limb above it does)."""
     p = norm(pose)
-    M = fk(rig, p)[bone][0]
+    M = frame(rig, bone, p)[0]
     a = math.degrees(math.atan2(-M[2][1], M[2][2])) if abs(M[2][2]) + abs(M[2][1]) > 1e-6 else 0.0
     # of the two turns that level it, the one that leaves its y axis pointing down, not up
     c2, s2 = math.cos(a * DEG), math.sin(a * DEG)
@@ -633,7 +656,7 @@ class Monster:
     """One gate monster: its bestiary id (the rig takes it), the name players see, how to build, paint and move it."""
 
     def __init__(self, mid, name, make, paint, *, kind, motion=None, life=None, voice=None, box=None, scale=1.0, lift=0.0, poses=None,
-                 journal="", tex=None, sunk=(), grounds=True):
+                 journal="", tex=None, sunk=(), grounds=True, arms=False):
         self.id, self.name, self.make, self.paint = mid, name, make, paint
         self.kind = kind            # strider, runner, crawler, floater, slider, coiler
         self.motion = motion or {}  # the motion.json entry (gait/body, or fly)
@@ -645,6 +668,7 @@ class Monster:
         self.poses = poses or []    # [(label, pose)] for the preview's fight strip
         self.journal = journal
         self.grounds = grounds      # a floater a miss brings down to the floor (its _open clip lies on it); False: it stays aloft
+        self.arms = arms            # a knuckle-walker: its front limbs are arms (elbows back) and its knees point forward
         self.sunk = tuple(sunk)     # boxes meant to go into the floor (a spade's blade): the floor check leaves them out
 
     def build(self):

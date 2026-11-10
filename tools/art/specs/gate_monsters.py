@@ -144,6 +144,39 @@ def cadence(m, defs):
     return 1.6 * d["spd"] ** 2 * 20.0 / (g["stride"][1] * d["scale"])
 
 
+def knees(m, rig):
+    """A four-legged body's joints at rest: a foreleg's knee stands ahead of the line from its hip to its foot and a hind
+    leg's hock behind it, as the motion layer bends them (MotionProfile.Knees) and as an animal's do. Both folding in
+    under the belly reads as legs put on backwards. A knuckle-walker is the other way round (elbows back, knees
+    forward): Monster(arms=True). One row of legs (a biped) and a crawler's legs out to the side read either way."""
+    import gm.kit as K
+    if m.arms:
+        return []
+    fr = K.fk(rig)
+    rows = []
+    for hip, knee, tip in K.legs_of(rig):
+        h, k, t = K.point(rig, hip, frames=fr), K.point(rig, knee, frames=fr), K.point(rig, tip[0], tip[1], frames=fr)
+        span = t[1] - h[1]
+        if span < 1e-3:
+            continue
+        u = (k[1] - h[1]) / span
+        off_z = k[2] - (h[2] + (t[2] - h[2]) * u)  # the joint behind (+) or ahead (-) of the hip-to-foot line
+        off_x = k[0] - (h[0] + (t[0] - h[0]) * u)
+        if abs(off_z) > abs(off_x):
+            rows.append((hip, h[2], off_z))
+    zs = [z for _, z, _ in rows]
+    if not rows or max(zs) - min(zs) < 4.0:
+        return []
+    mid = (max(zs) + min(zs)) / 2
+    out = []
+    for hip, z, off in rows:
+        if z < mid and off > -0.5:
+            out.append(f"{m.id}: {hip} is a foreleg whose knee folds back under the belly (a foreleg's knee points forward)")
+        if z >= mid and off < 0.5:
+            out.append(f"{m.id}: {hip} is a hind leg whose joint folds forward under the belly (a hock points back)")
+    return out
+
+
 def check(ms, tiers=None):
     problems = []
     defs = bestiary()
@@ -178,6 +211,7 @@ def check(ms, tiers=None):
             for b in rig.bones:
                 if b.name.split("_")[0].rstrip("0123456789") == bad:
                     problems.append(f"{m.id}: bone {b.name} would bind as {'an eyelid' if bad == 'lid' else 'a second body'}")
+        problems += knees(m, rig)
         # at rest it stands on the ground (a floater hangs over it), and no clip drives it into the floor. Walking and
         # running, the game plants the feet itself, so a limb's boxes are left out there; a floater is only ever on
         # the floor where a miss left it.
@@ -190,7 +224,9 @@ def check(ms, tiers=None):
         for name, clip in rig.clips.items():
             if m.kind == "floater" and not (name.endswith("_open") and m.grounds):
                 continue
-            skip = set(m.sunk) | (limbs if name in ("walk", "run") else set())
+            every = [cb.name for cb in rig.cubes]
+            skip = {n for n in every if n.startswith(tuple(m.sunk))} if m.sunk else set()
+            skip |= limbs if name in ("walk", "run") else set()
             n = max(2, int(clip.length * 20) + 1)
             worst, part = -1e9, ""
             for k in range(n):
@@ -201,8 +237,10 @@ def check(ms, tiers=None):
                     worst, part = low, nm
             if worst > floor + 2.0:
                 problems.append(f"{m.id}/{name}: {part} goes {worst - floor:.1f} px into the floor")
-            if name == "idle" and m.kind != "floater" and worst < floor - 1.0:
-                problems.append(f"{m.id}: it stands {floor - worst:.1f} px off the ground at rest")
+            if name == "idle" and m.kind != "floater":
+                stands = K.lowest(rig, None)[0]
+                if stands < floor - 1.0:
+                    problems.append(f"{m.id}: it stands {floor - stands:.1f} px off the ground at rest")
         # a strike begins where its wind-up ends
         for ab, mv in list(rig.moves.items()) + [("", "")]:
             w, s_ = (mv + "_windup", mv + "_strike") if mv else ("windup", "strike")

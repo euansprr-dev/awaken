@@ -543,7 +543,7 @@ def sexton_motion(r):
 
 STILL = {"blink": [0, 0]}
 MONSTERS = [
-    K.Monster("toll_ghoul", "The Toller", toller, paint_toller, kind="strider", motion=toller_motion, box=(0.8, 1.7),
+    K.Monster("toll_ghoul", "The Toller", toller, paint_toller, kind="strider", motion=toller_motion, box=(0.8, 1.7), arms=True,
               life=dict(STILL, temperament="monster", idles={"look": 3, "settle": 2}, mass=1.5, headSpeed=4.5, springHz=1.6, springGain=1.3),
               voice={"ambient": [("block.bell.resonate", 0.16, 0.55), ("block.chain.step", 0.5, 0.6), ("entity.skeleton.ambient", 0.45, 0.5)],
                      "hurt": [("block.bell.use", 0.45, 0.7), ("entity.skeleton.hurt", 0.7, 0.55)],
@@ -560,7 +560,7 @@ MONSTERS = [
               voice={"ambient": [("block.amethyst_block.chime", 0.3, 0.6), ("entity.vex.ambient", 0.35, 0.6)], "hurt": [("block.bell.use", 0.35, 1.1)],
                      "death": [("block.bell.use", 0.5, 0.9), ("block.candle.extinguish", 1.0, 0.8)]}),
     K.Monster("crypt_keeper", "The Pallbearer", pallbearer, paint_pallbearer, kind="strider", motion=pallbearer_motion, box=(1.0, 2.2),
-              sunk=("thigh0_l", "shinb0_l", "footb0_l", "thigh0_r", "shinb0_r", "footb0_r"),  # in a cue the game keeps its hands planted; the clip alone lets them dip
+              sunk=("thigh", "shinb", "footb"),  # in a cue the game keeps its hands planted; the clip alone lets them dip
               life=dict(STILL, temperament="beast", breathDepth=0.0, idles={"settle": 2, "look": 1}, mass=2.6, bob=0.8),
               voice={"ambient": [("block.deepslate_bricks.step", 0.6, 0.5), ("entity.wither_skeleton.ambient", 0.45, 0.5)],
                      "hurt": [("block.stone.hit", 0.9, 0.6), ("entity.wither_skeleton.hurt", 0.6, 0.5)],
