@@ -58,19 +58,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:glass_duelist 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec glass_duelist_idle 30 4
+cmd awaken ascent pilot rec glass_duelist_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec glass_duelist_fight 110 4
+cmd awaken ascent pilot rec glass_duelist_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec glass_duelist_m0 76 4
+cmd awaken ascent pilot rec glass_duelist_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec glass_duelist_m1 76 4
+cmd awaken ascent pilot rec glass_duelist_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec glass_duelist_death 50 4
+cmd awaken ascent pilot rec glass_duelist_death 50 2
 wait 54
 # the_unblinking (The Unblinking)
 cmd kill @e[tag=p]
@@ -85,22 +85,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_unblinking 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_unblinking_idle 30 4
+cmd awaken ascent pilot rec the_unblinking_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_unblinking_fight 110 4
+cmd awaken ascent pilot rec the_unblinking_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_unblinking_m0 76 4
+cmd awaken ascent pilot rec the_unblinking_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_unblinking_m1 76 4
+cmd awaken ascent pilot rec the_unblinking_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_unblinking_m2 76 4
+cmd awaken ascent pilot rec the_unblinking_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_unblinking_death 50 4
+cmd awaken ascent pilot rec the_unblinking_death 50 2
 wait 54
 # test_subject (The Test Subject)
 cmd kill @e[tag=p]
@@ -115,16 +115,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:test_subject 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec test_subject_idle 30 4
+cmd awaken ascent pilot rec test_subject_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec test_subject_fight 110 4
+cmd awaken ascent pilot rec test_subject_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec test_subject_m0 76 4
+cmd awaken ascent pilot rec test_subject_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec test_subject_death 50 4
+cmd awaken ascent pilot rec test_subject_death 50 2
 wait 54
 # security_unit (The Security Unit)
 cmd kill @e[tag=p]
@@ -139,16 +139,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:security_unit 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec security_unit_idle 30 4
+cmd awaken ascent pilot rec security_unit_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec security_unit_fight 110 4
+cmd awaken ascent pilot rec security_unit_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec security_unit_m0 76 4
+cmd awaken ascent pilot rec security_unit_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec security_unit_death 50 4
+cmd awaken ascent pilot rec security_unit_death 50 2
 wait 54
 # coil_unit (The Coil)
 cmd kill @e[tag=p]
@@ -163,19 +163,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:coil_unit 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec coil_unit_idle 30 4
+cmd awaken ascent pilot rec coil_unit_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec coil_unit_fight 110 4
+cmd awaken ascent pilot rec coil_unit_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec coil_unit_m0 76 4
+cmd awaken ascent pilot rec coil_unit_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec coil_unit_m1 76 4
+cmd awaken ascent pilot rec coil_unit_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec coil_unit_death 50 4
+cmd awaken ascent pilot rec coil_unit_death 50 2
 wait 54
 # gel_sample (The Gel Sample)
 cmd kill @e[tag=p]
@@ -190,16 +190,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:gel_sample 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec gel_sample_idle 30 4
+cmd awaken ascent pilot rec gel_sample_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec gel_sample_fight 110 4
+cmd awaken ascent pilot rec gel_sample_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec gel_sample_m0 76 4
+cmd awaken ascent pilot rec gel_sample_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec gel_sample_death 50 4
+cmd awaken ascent pilot rec gel_sample_death 50 2
 wait 54
 # the_sweeper (The Sweeper)
 cmd kill @e[tag=p]
@@ -214,22 +214,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_sweeper 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_sweeper_idle 30 4
+cmd awaken ascent pilot rec the_sweeper_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_sweeper_fight 110 4
+cmd awaken ascent pilot rec the_sweeper_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_sweeper_m0 76 4
+cmd awaken ascent pilot rec the_sweeper_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_sweeper_m1 76 4
+cmd awaken ascent pilot rec the_sweeper_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_sweeper_m2 76 4
+cmd awaken ascent pilot rec the_sweeper_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_sweeper_death 50 4
+cmd awaken ascent pilot rec the_sweeper_death 50 2
 wait 54
 # sleepwalker (The Sheet)
 cmd kill @e[tag=p]
@@ -244,16 +244,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sleepwalker 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec sleepwalker_idle 30 4
+cmd awaken ascent pilot rec sleepwalker_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec sleepwalker_fight 110 4
+cmd awaken ascent pilot rec sleepwalker_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec sleepwalker_m0 76 4
+cmd awaken ascent pilot rec sleepwalker_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec sleepwalker_death 50 4
+cmd awaken ascent pilot rec sleepwalker_death 50 2
 wait 54
 cmd kill @e[tag=p]
 cmd kill @e[tag=d]

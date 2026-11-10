@@ -58,22 +58,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_curator 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_curator_idle 30 4
+cmd awaken ascent pilot rec the_curator_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_curator_fight 110 4
+cmd awaken ascent pilot rec the_curator_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_curator_m0 76 4
+cmd awaken ascent pilot rec the_curator_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_curator_m1 76 4
+cmd awaken ascent pilot rec the_curator_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_curator_m2 76 4
+cmd awaken ascent pilot rec the_curator_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_curator_death 50 4
+cmd awaken ascent pilot rec the_curator_death 50 2
 wait 54
 # cog_hound (The Cog Hound)
 cmd kill @e[tag=p]
@@ -88,16 +88,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:cog_hound 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec cog_hound_idle 30 4
+cmd awaken ascent pilot rec cog_hound_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec cog_hound_fight 110 4
+cmd awaken ascent pilot rec cog_hound_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec cog_hound_m0 76 4
+cmd awaken ascent pilot rec cog_hound_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec cog_hound_death 50 4
+cmd awaken ascent pilot rec cog_hound_death 50 2
 wait 54
 # rivet_gunner (The Riveter)
 cmd kill @e[tag=p]
@@ -112,16 +112,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:rivet_gunner 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec rivet_gunner_idle 30 4
+cmd awaken ascent pilot rec rivet_gunner_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec rivet_gunner_fight 110 4
+cmd awaken ascent pilot rec rivet_gunner_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec rivet_gunner_m0 76 4
+cmd awaken ascent pilot rec rivet_gunner_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec rivet_gunner_death 50 4
+cmd awaken ascent pilot rec rivet_gunner_death 50 2
 wait 54
 # spark_drone (The Governor)
 cmd kill @e[tag=p]
@@ -136,16 +136,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:spark_drone 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec spark_drone_idle 30 4
+cmd awaken ascent pilot rec spark_drone_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec spark_drone_fight 110 4
+cmd awaken ascent pilot rec spark_drone_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec spark_drone_m0 76 4
+cmd awaken ascent pilot rec spark_drone_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec spark_drone_death 50 4
+cmd awaken ascent pilot rec spark_drone_death 50 2
 wait 54
 # foundry_marshal (The Steam Hammer)
 cmd kill @e[tag=p]
@@ -160,19 +160,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:foundry_marshal 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec foundry_marshal_idle 30 4
+cmd awaken ascent pilot rec foundry_marshal_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec foundry_marshal_fight 110 4
+cmd awaken ascent pilot rec foundry_marshal_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec foundry_marshal_m0 76 4
+cmd awaken ascent pilot rec foundry_marshal_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec foundry_marshal_m1 76 4
+cmd awaken ascent pilot rec foundry_marshal_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec foundry_marshal_death 50 4
+cmd awaken ascent pilot rec foundry_marshal_death 50 2
 wait 54
 # the_regulator (The Regulator)
 cmd kill @e[tag=p]
@@ -187,22 +187,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_regulator 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_regulator_idle 30 4
+cmd awaken ascent pilot rec the_regulator_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_regulator_fight 110 4
+cmd awaken ascent pilot rec the_regulator_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_regulator_m0 76 4
+cmd awaken ascent pilot rec the_regulator_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_regulator_m1 76 4
+cmd awaken ascent pilot rec the_regulator_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_regulator_m2 76 4
+cmd awaken ascent pilot rec the_regulator_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_regulator_death 50 4
+cmd awaken ascent pilot rec the_regulator_death 50 2
 wait 54
 # glass_husk (The Shardwalker)
 cmd kill @e[tag=p]
@@ -217,16 +217,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:glass_husk 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec glass_husk_idle 30 4
+cmd awaken ascent pilot rec glass_husk_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec glass_husk_fight 110 4
+cmd awaken ascent pilot rec glass_husk_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec glass_husk_m0 76 4
+cmd awaken ascent pilot rec glass_husk_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec glass_husk_death 50 4
+cmd awaken ascent pilot rec glass_husk_death 50 2
 wait 54
 # sand_stalker (The Sand Stalker)
 cmd kill @e[tag=p]
@@ -241,16 +241,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:sand_stalker 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec sand_stalker_idle 30 4
+cmd awaken ascent pilot rec sand_stalker_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec sand_stalker_fight 110 4
+cmd awaken ascent pilot rec sand_stalker_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec sand_stalker_m0 76 4
+cmd awaken ascent pilot rec sand_stalker_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec sand_stalker_death 50 4
+cmd awaken ascent pilot rec sand_stalker_death 50 2
 wait 54
 cmd kill @e[tag=p]
 cmd kill @e[tag=d]

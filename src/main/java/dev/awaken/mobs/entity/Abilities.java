@@ -324,6 +324,8 @@ final class Abilities {
 
     /** Ticks between fangs along a line: 1.25 blocks every two ticks, slower than a dash. */
     static final int FANG_GAP = 2;
+    /** Ticks between a gate monster's spike stirring on the floor and bursting up (vanilla's fang bites 8 after it shows). */
+    static final int SPIKE_RISE = 8;
 
     static void fangRing(ServerLevel level, AwakenMob mob, Ability a) {
         double minY = mob.getY() - 2, maxY = mob.getY() + 1;
@@ -348,6 +350,12 @@ final class Abilities {
         } while (pos.getY() >= Mth.floor(minY) - 1);
         if (y < 0 && pos.getY() < level.getMinY()) return;
         if (y < 0) y = minY + 2;
+        if (mob.def().matter != null) {
+            // a gate monster raises no borrowed fangs: its own matter stirs where the line runs and bursts up out of
+            // the floor, biting for the ability's own damage, eight ticks after it stirs (a fang's own warning)
+            Hazards.rise(level, mob, new Vec3(x, y, z), 0.9F, delay, SPIKE_RISE, damage(mob, a), bolt(mob, a), effect(mob, a), a.strike());
+            return;
+        }
         EvokerFangs fang = new EvokerFangs(level, x, y, z, rot, delay, mob);
         if (mob instanceof AwakenBoss b && b.duel()) {
             // a duel's fang bites for the boss's own blow, nothing riding on it (SPEC §47.5)

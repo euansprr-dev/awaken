@@ -58,16 +58,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:rime_acolyte 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec rime_acolyte_idle 30 4
+cmd awaken ascent pilot rec rime_acolyte_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec rime_acolyte_fight 110 4
+cmd awaken ascent pilot rec rime_acolyte_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec rime_acolyte_m0 76 4
+cmd awaken ascent pilot rec rime_acolyte_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec rime_acolyte_death 50 4
+cmd awaken ascent pilot rec rime_acolyte_death 50 2
 wait 54
 # hail_stray (The Hail Slinger)
 cmd kill @e[tag=p]
@@ -82,16 +82,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:hail_stray 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec hail_stray_idle 30 4
+cmd awaken ascent pilot rec hail_stray_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec hail_stray_fight 110 4
+cmd awaken ascent pilot rec hail_stray_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec hail_stray_m0 76 4
+cmd awaken ascent pilot rec hail_stray_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec hail_stray_death 50 4
+cmd awaken ascent pilot rec hail_stray_death 50 2
 wait 54
 # frost_wisp (The Snow Star)
 cmd kill @e[tag=p]
@@ -106,19 +106,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:frost_wisp 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec frost_wisp_idle 30 4
+cmd awaken ascent pilot rec frost_wisp_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec frost_wisp_fight 110 4
+cmd awaken ascent pilot rec frost_wisp_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec frost_wisp_m0 76 4
+cmd awaken ascent pilot rec frost_wisp_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec frost_wisp_m1 76 4
+cmd awaken ascent pilot rec frost_wisp_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec frost_wisp_death 50 4
+cmd awaken ascent pilot rec frost_wisp_death 50 2
 wait 54
 # ice_hound (The Ice Hound)
 cmd kill @e[tag=p]
@@ -133,16 +133,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:ice_hound 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec ice_hound_idle 30 4
+cmd awaken ascent pilot rec ice_hound_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec ice_hound_fight 110 4
+cmd awaken ascent pilot rec ice_hound_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec ice_hound_m0 76 4
+cmd awaken ascent pilot rec ice_hound_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec ice_hound_death 50 4
+cmd awaken ascent pilot rec ice_hound_death 50 2
 wait 54
 # chant_master (The Long Horn)
 cmd kill @e[tag=p]
@@ -157,22 +157,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:chant_master 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec chant_master_idle 30 4
+cmd awaken ascent pilot rec chant_master_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec chant_master_fight 110 4
+cmd awaken ascent pilot rec chant_master_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec chant_master_m0 76 4
+cmd awaken ascent pilot rec chant_master_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec chant_master_m1 76 4
+cmd awaken ascent pilot rec chant_master_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec chant_master_m2 76 4
+cmd awaken ascent pilot rec chant_master_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec chant_master_death 50 4
+cmd awaken ascent pilot rec chant_master_death 50 2
 wait 54
 # the_yeti (The Yeti)
 cmd kill @e[tag=p]
@@ -187,22 +187,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_yeti 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_yeti_idle 30 4
+cmd awaken ascent pilot rec the_yeti_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_yeti_fight 110 4
+cmd awaken ascent pilot rec the_yeti_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_yeti_m0 76 4
+cmd awaken ascent pilot rec the_yeti_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_yeti_m1 76 4
+cmd awaken ascent pilot rec the_yeti_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_yeti_m2 76 4
+cmd awaken ascent pilot rec the_yeti_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_yeti_death 50 4
+cmd awaken ascent pilot rec the_yeti_death 50 2
 wait 54
 # silver_knight (The Empty Suit)
 cmd kill @e[tag=p]
@@ -217,16 +217,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:silver_knight 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec silver_knight_idle 30 4
+cmd awaken ascent pilot rec silver_knight_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec silver_knight_fight 110 4
+cmd awaken ascent pilot rec silver_knight_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec silver_knight_m0 76 4
+cmd awaken ascent pilot rec silver_knight_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec silver_knight_death 50 4
+cmd awaken ascent pilot rec silver_knight_death 50 2
 wait 54
 # glint_mite (The Glint)
 cmd kill @e[tag=p]
@@ -241,16 +241,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:glint_mite 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec glint_mite_idle 30 4
+cmd awaken ascent pilot rec glint_mite_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec glint_mite_fight 110 4
+cmd awaken ascent pilot rec glint_mite_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec glint_mite_m0 76 4
+cmd awaken ascent pilot rec glint_mite_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec glint_mite_death 50 4
+cmd awaken ascent pilot rec glint_mite_death 50 2
 wait 54
 cmd kill @e[tag=p]
 cmd kill @e[tag=d]

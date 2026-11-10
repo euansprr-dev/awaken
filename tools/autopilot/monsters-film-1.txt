@@ -58,16 +58,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:toll_ghoul 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec toll_ghoul_idle 30 4
+cmd awaken ascent pilot rec toll_ghoul_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec toll_ghoul_fight 110 4
+cmd awaken ascent pilot rec toll_ghoul_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec toll_ghoul_m0 76 4
+cmd awaken ascent pilot rec toll_ghoul_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec toll_ghoul_death 50 4
+cmd awaken ascent pilot rec toll_ghoul_death 50 2
 wait 54
 # crypt_archer (The Mourner)
 cmd kill @e[tag=p]
@@ -82,16 +82,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:crypt_archer 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec crypt_archer_idle 30 4
+cmd awaken ascent pilot rec crypt_archer_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec crypt_archer_fight 110 4
+cmd awaken ascent pilot rec crypt_archer_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec crypt_archer_m0 76 4
+cmd awaken ascent pilot rec crypt_archer_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec crypt_archer_death 50 4
+cmd awaken ascent pilot rec crypt_archer_death 50 2
 wait 54
 # bell_wisp (The Chime)
 cmd kill @e[tag=p]
@@ -106,16 +106,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:bell_wisp 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec bell_wisp_idle 30 4
+cmd awaken ascent pilot rec bell_wisp_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec bell_wisp_fight 110 4
+cmd awaken ascent pilot rec bell_wisp_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec bell_wisp_m0 76 4
+cmd awaken ascent pilot rec bell_wisp_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec bell_wisp_death 50 4
+cmd awaken ascent pilot rec bell_wisp_death 50 2
 wait 54
 # crypt_keeper (The Pallbearer)
 cmd kill @e[tag=p]
@@ -130,19 +130,19 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:crypt_keeper 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec crypt_keeper_idle 30 4
+cmd awaken ascent pilot rec crypt_keeper_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec crypt_keeper_fight 110 4
+cmd awaken ascent pilot rec crypt_keeper_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec crypt_keeper_m0 76 4
+cmd awaken ascent pilot rec crypt_keeper_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec crypt_keeper_m1 76 4
+cmd awaken ascent pilot rec crypt_keeper_m1 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec crypt_keeper_death 50 4
+cmd awaken ascent pilot rec crypt_keeper_death 50 2
 wait 54
 # the_sexton (The Sexton)
 cmd kill @e[tag=p]
@@ -157,22 +157,22 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:the_sexton 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec the_sexton_idle 30 4
+cmd awaken ascent pilot rec the_sexton_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec the_sexton_fight 110 4
+cmd awaken ascent pilot rec the_sexton_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec the_sexton_m0 76 4
+cmd awaken ascent pilot rec the_sexton_m0 76 2
 wait 80
 cmd awaken admin monster act 1
-cmd awaken ascent pilot rec the_sexton_m1 76 4
+cmd awaken ascent pilot rec the_sexton_m1 76 2
 wait 80
 cmd awaken admin monster act 2
-cmd awaken ascent pilot rec the_sexton_m2 76 4
+cmd awaken ascent pilot rec the_sexton_m2 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec the_sexton_death 50 4
+cmd awaken ascent pilot rec the_sexton_death 50 2
 wait 54
 # drone_bee (The Stinger)
 cmd kill @e[tag=p]
@@ -187,16 +187,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:drone_bee 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec drone_bee_idle 30 4
+cmd awaken ascent pilot rec drone_bee_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec drone_bee_fight 110 4
+cmd awaken ascent pilot rec drone_bee_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec drone_bee_m0 76 4
+cmd awaken ascent pilot rec drone_bee_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec drone_bee_death 50 4
+cmd awaken ascent pilot rec drone_bee_death 50 2
 wait 54
 # hive_larva (The Grub)
 cmd kill @e[tag=p]
@@ -211,16 +211,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:hive_larva 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec hive_larva_idle 30 4
+cmd awaken ascent pilot rec hive_larva_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec hive_larva_fight 110 4
+cmd awaken ascent pilot rec hive_larva_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec hive_larva_m0 76 4
+cmd awaken ascent pilot rec hive_larva_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec hive_larva_death 50 4
+cmd awaken ascent pilot rec hive_larva_death 50 2
 wait 54
 # honey_slime (The Honeypot)
 cmd kill @e[tag=p]
@@ -235,16 +235,16 @@ wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:honey_slime 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
-cmd awaken ascent pilot rec honey_slime_idle 30 4
+cmd awaken ascent pilot rec honey_slime_idle 30 2
 wait 34
 cmd awaken admin monster target
-cmd awaken ascent pilot rec honey_slime_fight 110 4
+cmd awaken ascent pilot rec honey_slime_fight 110 2
 wait 114
 cmd awaken admin monster act 0
-cmd awaken ascent pilot rec honey_slime_m0 76 4
+cmd awaken ascent pilot rec honey_slime_m0 76 2
 wait 80
 cmd kill @e[tag=p]
-cmd awaken ascent pilot rec honey_slime_death 50 4
+cmd awaken ascent pilot rec honey_slime_death 50 2
 wait 54
 cmd kill @e[tag=p]
 cmd kill @e[tag=d]

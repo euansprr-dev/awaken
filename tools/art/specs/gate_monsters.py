@@ -732,11 +732,12 @@ wait 20
 """
 
 
-def film(per=8, shrink=4, only=None):
+def film(per=8, shrink=2, only=None, name="pick"):
     """Writes tools/autopilot/monsters-film-<n>.txt, `per` monsters to a reel, and removes reels left from an earlier
     cast. The camera stands side-on at a distance set by the body's size, so each fills about a third of the frame's
-    height; a flier is given more room above it. `shrink`: the recorder's downscale (4: 854x480 on CI).
-    only: monster ids; then just those are filmed, as one reel, monsters-film-pick.txt (the numbered reels are left)."""
+    height; a flier is given more room above it. `shrink`: the recorder's downscale of the 1708x960 frame (2: 854x480;
+    4: 427x240, which is too small to judge a pose by; it only takes divisors of both sides, so 8 falls back to 4).
+    only: monster ids; then just those are filmed, as one reel, monsters-film-<name>.txt (the numbered reels are left)."""
     import glob
     ms = monsters()
     defs = bestiary()
@@ -746,10 +747,10 @@ def film(per=8, shrink=4, only=None):
         missing = [i for i in only if i not in by]
         if missing:
             raise SystemExit("no such monster: " + ", ".join(missing))
-        reels = {"pick": [by[i] for i in only]}
+        reels = {name: [by[i] for i in only]}
     else:
-        for old in glob.glob(os.path.join(folder, "monsters-film-*.txt")) + glob.glob(os.path.join(folder, "monsters-motion-*.txt")):
-            os.remove(old)
+        for old in glob.glob(os.path.join(folder, "monsters-film-[0-9]*.txt")) + glob.glob(os.path.join(folder, "monsters-motion-*.txt")):
+            os.remove(old)      # (the numbered reels of an earlier cast; a named reel is left alone)
         reels = {str(k + 1): ms[i:i + per] for k, i in enumerate(range(0, len(ms), per))}
     for n, reel in reels.items():
         out = [FILM_HEAD.format(n=n, of=len(reels), names=", ".join(m.id for m in reel)).rstrip("\n")]
@@ -776,14 +777,18 @@ def film(per=8, shrink=4, only=None):
         out += ["cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 10", "cmd gamemode creative", "info", "quit"]
         with open(os.path.join(folder, f"monsters-film-{n}.txt"), "w") as f:
             f.write("\n".join(out) + "\n")
-    print("tools/autopilot/monsters-film-pick.txt" if only else
+    print(f"tools/autopilot/monsters-film-{name}.txt" if only else
           f"{len(reels)} reels of up to {per}: tools/autopilot/monsters-film-1.txt .. monsters-film-{len(reels)}.txt")
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if args and args[0] == "film":
-        film(only=args[1:] or None)
+    if args and args[0] == "film":      # film [--as name] [id ...]
+        rest = args[1:]
+        as_ = "pick"
+        if rest[:1] == ["--as"]:
+            as_, rest = rest[1], rest[2:]
+        film(only=rest or None, name=as_)
         sys.exit(0)
     if args and args[0] == "check":
         ps = check(monsters(args[1:] or None))

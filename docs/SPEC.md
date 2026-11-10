@@ -21954,8 +21954,11 @@ with ordinary monsters are harder than they were between 25 Oct and this fix.
 
 **Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
 blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
-for `STRING_GAP` (5) ticks, steps in (0.42 b/t toward a target out of reach) and tells the next, with its own closing
-circle. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+for `STRING_GAP` (5) ticks, walking after a target its blow knocked back, and as it tells the next blow (with its own
+closing circle) it lunges across what is left of the gap (at most about 2.2 blocks). The first film showed why: the
+Bramble Hound's first bite knocked the dummy out of reach and its second bit air. The goal also holds through its
+rest (the 20-tick attack cooldown), so the rhythm is the monster's own, tell and rest; before, the selector stopped
+the goal after every blow and began it again at once, and creatures swung every 13 to 22 ticks instead of 28 to 40. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
 `blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
 own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
 did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
@@ -21985,7 +21988,10 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
 where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
-its fallen body goes at the end of its fall (no white death puff). Wherever a monster has matter the borrowed vanilla
+its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
+fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
+(`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
 puff, blast, portal sparkle or ink is not drawn.
 
 **Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
@@ -22032,6 +22038,7 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
 - A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
   death that ends more than 12 px over the floor.
 - **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
-  monsters a reel, ten reels): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  monsters a reel, ten reels; `film --as <name> <id>...` writes one named reel for those monsters; frames 854x480,
+  since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
   striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
   a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.

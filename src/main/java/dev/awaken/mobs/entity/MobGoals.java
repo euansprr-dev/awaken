@@ -104,12 +104,14 @@ final class MobGoals {
         /**
          * It stands still to wind up, and standing still is not the chase ending: vanilla's goal gives up when its
          * path is done, which our own stop for the tell made true two ticks into every wind-up, so in play no plain blow
-         * ever landed (the test drove the goal by hand and never met the selector). While it tells a blow, or follows
-         * one through into the next of a string, it goes on as long as its target lives.
+         * ever landed (the test drove the goal by hand and never met the selector). While it tells a blow, follows one
+         * through into the next of a string, or rests after one (the attack cooldown), it goes on as long as its target
+         * lives: so its rhythm is its own, tell and rest, and never the selector's stop and restart (which threw the
+         * rest away and began the next blow at once).
          */
         @Override
         public boolean canContinueToUse() {
-            if (tellLeft > 0 || gapLeft > 0) {
+            if (tellLeft > 0 || gapLeft > 0 || getTicksUntilNextAttack() > 0) {
                 LivingEntity t = mob.getTarget();
                 return t != null && t.isAlive();
             }
@@ -147,12 +149,16 @@ final class MobGoals {
                     return;
                 }
                 mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
-                mob.getNavigation().stop();
+                // its last blow knocked its target back: it follows, and as it tells the next it lunges across what
+                // is left of the gap (a lunge carries about 2.2 times its first tick; at most STRING_REACH)
+                if (mob.isWithinMeleeAttackRange(t)) mob.getNavigation().stop();
+                else mob.getNavigation().moveTo(t, speed * 1.2);
                 if (--gapLeft == 0) {
                     if (!mob.isWithinMeleeAttackRange(t)) {
                         Vec3 to = t.position().subtract(mob.position()).multiply(1, 0, 1);
-                        if (to.lengthSqr() > 1.0E-4) {
-                            to = to.normalize().scale(0.42);
+                        double need = to.length() - Math.sqrt(reachSqr(t)) + 0.6;
+                        if (need > 0 && to.lengthSqr() > 1.0E-4) {
+                            to = to.normalize().scale(Math.min(1.0, need * 0.46));
                             mob.setDeltaMovement(to.x, mob.getDeltaMovement().y, to.z);
                         }
                     }
