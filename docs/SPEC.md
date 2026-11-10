@@ -8074,8 +8074,9 @@ recommended).
     degrees over and 15 forward; the first value, back past the hip, hid the blade and laid a forearm across the frame).
     It lowers and rises over 6 ticks on the hands' own clock from wherever it is (`SwingWeight.lowered`, `ArmsHands.hip`:
     the rest pose itself moves, so the strike that draws it is carried out by the blend, and nothing that starts or
-    breaks the rest moves the hand in one frame), with a soft click on the way down. A rested Katana coming to hand is
-    drawn straight up to this rest, one motion. The drawn cut has its own sound over the swish (a rasp and a ring) and a
+    breaks the rest moves the hand in one frame), with a soft click on the way down. A change of weapon is the one place
+    it is set outright, and only unseen: the weapon going away keeps its pose while it sinks, and the one coming up
+    takes its own rest on its first frame, still under the frame, so a rested Katana rises straight to this rest. The drawn cut has its own sound over the swish (a rasp and a ring) and a
     ribbon half again as bright. No scabbard (decision 6).
 - **Stage 5, the world answers** (built 2026-11-10; `arms.ArmsWalls`, one set of rules for the server's sweep and the
   client's prediction; tests `arms_walls`, `arms_cut_grass`).

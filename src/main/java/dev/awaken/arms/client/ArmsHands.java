@@ -127,6 +127,7 @@ final class ArmsHands {
             double now = handsNow();
             if (drawPending) {
                 drawPending = false;
+                drawFresh = true;
                 drawAt = now;
             }
             float t = (float) (now - drawAt);
@@ -505,7 +506,7 @@ final class ArmsHands {
     // the draw: the weapon in hand changed (seen each tick, so a change made in third person is known too)
     private static net.minecraft.world.item.@Nullable Item drawItem;
     private static int drawSlot = -1, drawSoundAt = -1000;
-    private static boolean drawKnown, drawPending;
+    private static boolean drawKnown, drawPending, drawFresh;
     private static double drawAt = -1000;
     private static float drawTicks = 8F;
 
@@ -535,6 +536,7 @@ final class ArmsHands {
     static void hurryDraw() {
         if (drawPending) { // not drawn once yet: it comes up with the strike
             drawPending = false;
+            drawFresh = true;
             drawAt = handsNow();
             drawTicks = SwingWeight.DRAW_HURRY;
             return;
@@ -552,8 +554,8 @@ final class ArmsHands {
     // value hid the blade under the eye and showed a forearm across the frame (the proof tour, 10 Nov)
     private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.10F, 0.15F, 0F);
     private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(70F * Mth.DEG_TO_RAD).rotateX(-15F * Mth.DEG_TO_RAD);
-    /** How much brighter the drawn cut's ribbon burns, and the draw's sink above which the weapon is still under the frame. */
-    private static final float DRAWN_LIGHT = 1.5F, UNSEEN = 0.9F;
+    /** How much brighter the drawn cut's ribbon burns. */
+    private static final float DRAWN_LIGHT = 1.5F;
     private static boolean hipDown;
     private static double hipAt = -1000;
     private static float hipFrom, hipK;
@@ -561,27 +563,35 @@ final class ArmsHands {
     /**
      * How far the weapon in hand is lowered to its rest (0..1): a style with a drawn cut, rested as long as the cut asks,
      * by the same count the server grants the cut on. It moves there and back on the hands' own clock from wherever it is
-     * (SwingWeight.lowered), so nothing that starts or stops the rest can jump the hand; a weapon still under the frame in
-     * its draw comes up straight to where it rests, one motion and not two.
+     * (SwingWeight.lowered), so nothing that starts or stops the rest can jump the hand. A change of weapon is the one
+     * place it is set outright, and only where it can't be seen: the weapon going away keeps the pose it has while it
+     * sinks, and the one coming up takes its own rest on its first frame, still under the frame's edge, so a rested
+     * Katana rises straight to where it rests in one motion.
      */
     private static float hip(LocalPlayer p, Archetypes.@Nullable Loaded inHand) {
+        if (drawPending) return hipK;
         int idle = inHand == null || !ArmsComfort.weaponDraw() ? 0 : inHand.def().traits().drawIdle();
         boolean down = idle > 0 && ArmsPredict.restedTicks() >= idle;
-        boolean unseen = drawPending || equip >= UNSEEN;
         double now = handsNow();
+        if (drawFresh) {
+            drawFresh = false;
+            hipDown = down;
+            hipFrom = hipK = down ? 1F : 0F;
+            hipAt = now - SwingWeight.LOWER_TICKS;
+            return hipK;
+        }
         if (down != hipDown) {
             hipDown = down;
             hipFrom = hipK;
             hipAt = now;
-            if (down && !unseen) ArmsAudio.sheath(p);
+            if (down) ArmsAudio.sheath(p);
         }
-        if (unseen) hipAt = now - SwingWeight.LOWER_TICKS;
         return hipK = SwingWeight.lowered((float) (now - hipAt), hipFrom, down);
     }
 
     /** A world left: nothing is carried into the next. */
     static void reset() {
-        drawKnown = drawPending = hipDown = guardWas = false;
+        drawKnown = drawPending = drawFresh = hipDown = guardWas = false;
         hipFrom = hipK = 0F;
         hipAt = -1000;
         drawItem = null;
