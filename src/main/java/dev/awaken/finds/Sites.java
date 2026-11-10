@@ -35,7 +35,7 @@ public final class Sites {
     /** The chance a cell holds something where the land is at its usual liveliness. */
     // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
     // stay in the code as furnishing and for their tests; their layers are off.
-    static final double[] BASE = {0, 0, 0.6};
+    static final double[] BASE = {0, 0, 1.0};
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 48;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -138,8 +138,17 @@ public final class Sites {
         boolean home = dx * dx + dz * dz < (long) HOME * HOME;
         for (int i = 0; i < w.length; i++) {
             Kind k = kinds.get(i);
-            if (k.rank() > rank || !k.fits(group)) continue;
-            double v = k.weight() * Math.pow(0.45, rank - k.rank());
+            if (!k.fits(group)) continue;
+            double v;
+            if (layer == 2) {
+                // a place may stand in any country of its land: its own rank is likeliest, the grand ones are rare near home
+                // and the plain ones thin out far away, but none is ruled out (by rank alone no swamp place could ever
+                // be chosen within 10,000 blocks of the spawn: the first census)
+                v = k.weight() * Math.pow(k.rank() > rank ? 0.42 : 0.62, Math.abs(rank - k.rank()));
+            } else {
+                if (k.rank() > rank) continue;
+                v = k.weight() * Math.pow(0.45, rank - k.rank());
+            }
             if (home && k.number() == 1) v *= 4; // the plainest of each set is the one you meet first
             w[i] = v;
         }
@@ -204,7 +213,12 @@ public final class Sites {
             // a place keeps clear of villages and the city by its own width and more (the first tours had the quarry
             // against Carillon's wall and the temple in a village's garden)
             boolean place = k.size() == Kind.Size.PLACE;
-            if (at != null && !a.terrain.structureNear(at[0], at[2], place ? (k.reach() + 72) >> 4 : 1) && !(place && cityNear(a, at[0], at[2], k.reach() + 56))) {
+            if (at == null) LOST[0]++;
+            else if (a.terrain.structureNear(at[0], at[2], place ? 2 : 1)) LOST[1]++;
+            else if (place && a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) LOST[2]++;
+            else if (place && cityNear(a, at[0], at[2], k.reach() + 56)) LOST[3]++;
+            if (at != null && !a.terrain.structureNear(at[0], at[2], place ? 2 : 1)
+                    && !(place && (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4) || cityNear(a, at[0], at[2], k.reach() + 56)))) {
                 RegionMap.Region r = a.map.regionAt(at[0], at[2]);
                 return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], a.map.landOf(r).group(),
                         Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
@@ -214,6 +228,9 @@ public final class Sites {
         }
         return NONE;
     }
+
+    /** Why deals failed since the last census: no ground, a structure, a settlement, the city. A check's counters, nothing reads them in play. */
+    private static final int[] LOST = new int[4];
 
     private static boolean cityNear(Ask a, int x, int z, int r) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -380,6 +397,8 @@ public final class Sites {
         StringBuilder land = new StringBuilder("lands of " + cells + " cells:");
         for (RegionMap.Group g : RegionMap.Group.values()) land.append(' ').append(g).append(' ').append(lands[g.ordinal()]);
         out.add(land.toString());
+        out.add("lost since the last count: no ground " + LOST[0] + ", a structure " + LOST[1] + ", a settlement " + LOST[2] + ", the city " + LOST[3]);
+        java.util.Arrays.fill(LOST, 0);
         out.add("ranks: E " + ranks[0] + " D " + ranks[1] + " C " + ranks[2] + " B " + ranks[3] + " A " + ranks[4] + " S " + ranks[5] + "; cells that chose " + any + ", of those with no ground " + none);
         for (int k = 0; k < kinds.size(); k++)
             out.add(String.format("%-22s rank %d chose %3d stands %3d nearest %s", kinds.get(k).id(), kinds.get(k).rank(), chose[k], stand[k],
@@ -389,6 +408,7 @@ public final class Sites {
 
     /** A site made by hand (the gallery, tests): the kind at a place, on a level pad. Layer 2 marks it as made by hand. */
     public static Site forced(Kind k, int x, int y, int z, int rot, long seed) {
-        return new Site(k, HAND, x, y, z, seed, rot, RegionMap.Group.PLAINS, k.rank());
+        // a place stood by hand is in the first of its own lands, so what it plants round itself is what would grow there
+        return new Site(k, HAND, x, y, z, seed, rot, k.lands().isEmpty() ? RegionMap.Group.PLAINS : k.lands().iterator().next(), k.rank());
     }
 }

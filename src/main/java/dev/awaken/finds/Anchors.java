@@ -44,13 +44,13 @@ final class Anchors {
 
     /**
      * Ground a place can level: seventeen points (the middle and two rings) all dry and within the kind's slope of each
-     * other. The site's height is their median, so levelling cuts about as much as it fills. Nine tries round the point.
+     * other. The site's height is their median, so levelling cuts about as much as it fills. Twenty-five tries: the point, a ring round it and a wider ring.
      */
     private static int @Nullable [] field(Kind k, Terrain t, int x, int z, long h) {
         int r = Math.max(8, k.reach() * 4 / 5), sea = t.seaLevel();
         int[] f = new int[17];
-        for (int i = 0; i < 9; i++) {
-            int cx = x + OFF[i][0] * 22, cz = z + OFF[i][1] * 22;
+        for (int i = 0; i < 25; i++) {               // the point itself, then a ring of eight, then a wider ring of sixteen
+            int cx = x + (i < 9 ? OFF[i][0] * 22 : (int) Math.round(Math.cos((i - 9) * Math.PI / 8) * 46)), cz = z + (i < 9 ? OFF[i][1] * 22 : (int) Math.round(Math.sin((i - 9) * Math.PI / 8) * 46));
             f[0] = t.floor(cx, cz);
             boolean dry = f[0] > sea;
             for (int j = 0; j < 16 && dry; j++) {

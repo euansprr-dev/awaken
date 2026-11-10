@@ -34,9 +34,9 @@ final class PlacesWood {
         return st(Blocks.CAMPFIRE).setValue(CampfireBlock.LIT, lit).setValue(CampfireBlock.SIGNAL_FIRE, tall);
     }
 
-    /** An earth-covered charcoal kiln: a mound four high with a mouth to the south. */
-    private static void kiln(Scene s, int x, int z) {
-        blob(s, x, 1, z, 3.5, 4.0, 3.5, h -> h < 90 ? st(Blocks.COARSE_DIRT) : h < 170 ? st(Blocks.ROOTED_DIRT) : h < 215 ? st(Blocks.MUD) : st(Blocks.MOSS_BLOCK));
+    /** An earth-covered charcoal kiln: a turfed mound as wide as {@code r}. */
+    private static void kiln(Scene s, int x, int z, double r) {
+        blob(s, x, 1, z, r, r * 1.05, r, h -> h < 90 ? st(Blocks.COARSE_DIRT) : h < 170 ? st(Blocks.ROOTED_DIRT) : h < 215 ? st(Blocks.MUD) : st(Blocks.MOSS_BLOCK));
     }
 
     static void init() {
@@ -44,61 +44,86 @@ final class PlacesWood {
                 .anchor(Anchor.FIELD).slope(6).made(Made.BUILT)
                 .see("A clearing with three earth kilns in it, one of them smoking, and stone people who were still working when they stopped.")
                 .learned("You lit the cold kiln for them and opened the one that was done. The charcoal was still good.")
-                .reach(27).icon(() -> Items.CHARCOAL)
+                .reach(31).icon(() -> Items.CHARCOAL)
                 .air(Air.of(0x8C857A, 52).mote(() -> ParticleTypes.CAMPFIRE_COSY_SMOKE, 0.12F, 5, 0.03F).loop(() -> SoundEvents.CAMPFIRE_CRACKLE, 50, 0.7F, 1F))
                 .scene(s -> {
-                    s.level(19, 8).clear(22);
-                    ground(s, 0, 0, 18, h -> h < 95 ? st(Blocks.COARSE_DIRT) : h < 160 ? st(Blocks.PODZOL) : h < 185 ? st(Blocks.GRAVEL) : null);
-                    path(s, 0, 25, 0, 12, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
-                    // west: the cold kiln, half built: a stack of upright logs turfed on its north side only
-                    for (int x = -10; x <= -6; x++)
-                        for (int z = -6; z <= -2; z++)
-                            if ((x + 8) * (x + 8) + (z + 4) * (z + 4) <= 5) for (int y = 1; y <= 3; y++) s.put(x, y, z, st(Blocks.DARK_OAK_LOG));
-                    blob(s, -8, 1, -7, 3.2, 3.0, 1.6, h -> h < 120 ? st(Blocks.COARSE_DIRT) : st(Blocks.ROOTED_DIRT));
-                    s.put(-8, 1, -1, fire(false, false));
-                    s.part("kiln", -8, 1, -1);
-                    stilled(s, -6, 1, 0, 1, Direction.WEST);
-                    // east: the burning one, whole, with smoke standing over it
-                    kiln(s, 8, -4);
-                    s.put(8, 5, -4, st(Blocks.HAY_BLOCK));
-                    s.put(8, 6, -4, fire(true, true));
-                    s.put(8, 1, 0, st(Blocks.MAGMA_BLOCK));
-                    s.put(8, 2, 0, top(st(Blocks.MUD_BRICK_SLAB)));
+                    s.level(23, 8).clear(26);
+                    BlockState ash = st(Blocks.CONCRETE_POWDER.pick(DyeColor.LIGHT_GRAY)), dlog = st(Blocks.DARK_OAK_LOG), slog = st(Blocks.SPRUCE_LOG);
+                    ground(s, 0, 0, 21, h -> h < 80 ? st(Blocks.COARSE_DIRT) : h < 135 ? st(Blocks.PODZOL) : h < 160 ? st(Blocks.ROOTED_DIRT) : h < 178 ? st(Blocks.GRAVEL) : null);
+                    path(s, 0, 30, 0, 14, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
+                    // west: the cold kiln, half built: a round stack of upright logs, turfed on its north side only
+                    for (int x = -15; x <= -5; x++)
+                        for (int z = -9; z <= 1; z++) {
+                            double d = Math.sqrt((x + 10) * (x + 10) + (z + 4) * (z + 4));
+                            if (d <= 3.3) for (int y = 1; y <= (d < 1.6 ? 5 : d < 2.6 ? 4 : 3); y++) s.put(x, y, z, (x + z & 1) == 0 ? dlog : slog);
+                        }
+                    blob(s, -10, 1, -8, 4.4, 4.2, 2.2, h -> h < 110 ? st(Blocks.COARSE_DIRT) : h < 190 ? st(Blocks.ROOTED_DIRT) : st(Blocks.MOSS_BLOCK));
+                    s.put(-10, 1, 0, fire(false, false));
+                    s.part("kiln", -10, 1, 0);
+                    stilled(s, -8, 1, 1, 1, Direction.WEST);
+                    for (int y = 1; y <= 4; y++) s.put(-6, y, -2, ladder(Direction.EAST));
+                    for (int y = 1; y <= 4; y++) s.put(-7, y, -2, dlog);
+                    // east: the burning one, whole, smoke standing over it and ash round its foot
+                    kiln(s, 10, -5, 5.0);
+                    ground(s, 10, -5, 8, h -> h < 120 ? ash : h < 150 ? st(Blocks.COARSE_DIRT) : null);
+                    s.put(10, 6, -5, st(Blocks.HAY_BLOCK));
+                    s.put(10, 7, -5, fire(true, true));
+                    s.put(10, 1, 1, st(Blocks.MAGMA_BLOCK));
+                    s.put(10, 2, 1, top(st(Blocks.MUD_BRICK_SLAB)));
+                    for (int x = 9; x <= 11; x += 2) s.put(x, 1, 1, st(Blocks.MUD_BRICKS));
+                    stilled(s, 12, 1, 3, 0, Direction.NORTH);
                     // south: the drawn one, cut open, charcoal inside behind a door of mud brick
-                    kiln(s, 0, 8);
-                    fill(s, -1, 1, 7, 1, 2, 9, st(Blocks.COAL_BLOCK));
-                    air(s, 0, 1, 10, 0, 2, 10);
+                    kiln(s, 0, 7, 4.4);
+                    fill(s, -2, 1, 5, 2, 3, 8, st(Blocks.COAL_BLOCK));
+                    air(s, 0, 1, 9, 0, 2, 11);
+                    for (int x = -1; x <= 1; x += 2) for (int y = 1; y <= 3; y++) s.put(x, y, 11, st(Blocks.MUD_BRICKS));
+                    s.put(0, 3, 11, st(Blocks.MUD_BRICK_SLAB));
                     s.put(0, 1, 11, st(Blocks.MUD_BRICKS));
                     s.put(0, 2, 11, st(Blocks.MUD_BRICKS));
                     s.part("door", 0, 1, 11);
                     s.part("door", 0, 2, 11);
                     s.part("cache", 0, 1, 12);
-                    s.put(2, 1, 12, Props.BUNDLE.get().of(0));
-                    s.put(-2, 1, 12, Props.BUNDLE.get().of(1));
-                    s.put(-3, 1, 11, Props.BASKET.get().of(0));
-                    // north-west: the turf hut
-                    house(s, -16, 6, -11, 10, 0, 2, Pal.COBBLE.roof(Blocks.MOSSY_COBBLESTONE_STAIRS, Blocks.MOSSY_COBBLESTONE_SLAB), 1, 0);
-                    s.put(-15, 1, 9, st(Blocks.HAY_BLOCK));
-                    s.put(-14, 1, 9, st(Blocks.HAY_BLOCK));
-                    moss(s, -17, 3, 5, -10, 6, 11, 60);
-                    lamp(s, -9, 1, 7, 2, st(Blocks.SPRUCE_FENCE), false);
-                    stilled(s, -10, 1, 9, 3, Direction.EAST);
-                    // east edge: the cut wood
-                    logPile(s, 14, -11, 1, 4, false, st(Blocks.SPRUCE_LOG));
-                    logPile(s, 14, -3, 1, 5, false, st(Blocks.SPRUCE_LOG));
-                    logPile(s, 13, 6, 1, 4, false, st(Blocks.DARK_OAK_LOG));
-                    s.put(11, 1, 3, st(Blocks.SPRUCE_LOG));
-                    stilled(s, 10, 1, 2, 2, Direction.EAST);
-                    s.put(4, 1, 3, Props.CART_WHEEL.get().of(1));
-                    for (int i = 0; i < 12; i++) {
-                        double a = i * Math.PI / 6 + 0.2;
-                        int x = (int) Math.round(Math.cos(a) * 18), z = (int) Math.round(Math.sin(a) * 18);
-                        if (Math.abs(x) < 3 && z > 0) continue;
-                        s.put(x, 1, z, st(i % 3 == 0 ? Blocks.SPRUCE_LOG : Blocks.OAK_LOG));
+                    s.put(2, 1, 13, Props.BUNDLE.get().of(0));
+                    s.put(-2, 1, 13, Props.BUNDLE.get().of(1));
+                    s.put(-3, 1, 12, Props.BASKET.get().of(0));
+                    fill(s, 4, 1, 12, 5, 1, 14, st(Blocks.COAL_BLOCK));
+                    s.put(4, 2, 13, st(Blocks.COAL_BLOCK));
+                    cart(s, 7, 1, 15, false);
+                    // north-west: the burners' bothy, turf on its roof, and the lean-to where the cordwood dries
+                    house(s, -19, 5, -12, 11, 0, 3, Pal.COBBLE.roof(Blocks.MOSSY_COBBLESTONE_STAIRS, Blocks.MOSSY_COBBLESTONE_SLAB), 1, 0);
+                    s.put(-18, 1, 10, st(Blocks.HAY_BLOCK));
+                    s.put(-17, 1, 10, st(Blocks.HAY_BLOCK));
+                    s.put(-18, 1, 6, st(Blocks.BARREL));
+                    table(s, -15, 1, 6, 2, true, Pal.TIMBER);
+                    moss(s, -20, 3, 4, -11, 8, 12, 70);
+                    for (int y = 1; y <= 7; y++) s.put(-18, y, 4, y < 7 ? st(Blocks.COBBLESTONE) : st(Blocks.COBBLESTONE_WALL));
+                    lamp(s, -10, 1, 8, 3, st(Blocks.SPRUCE_FENCE), false);
+                    stilled(s, -10, 1, 10, 3, Direction.EAST);
+                    for (int x = -8; x <= 0; x += 4) for (int z = -17; z <= -13; z += 4) for (int y = 1; y <= 3; y++) s.put(x, y, z, st(Blocks.SPRUCE_FENCE));
+                    for (int x = -9; x <= 1; x++) for (int z = -18; z <= -12; z++) s.put(x, 4, z, z < -15 ? st(Blocks.SPRUCE_SLAB) : top(st(Blocks.SPRUCE_SLAB)));
+                    logPile(s, -7, -16, 1, 3, true, slog);
+                    logPile(s, -3, -16, 1, 3, true, dlog);
+                    // east edge: the cut wood, stacked in long ricks, and the sawing horse
+                    logPile(s, 17, -12, 1, 5, false, slog);
+                    logPile(s, 17, -5, 1, 6, false, slog);
+                    logPile(s, 16, 4, 1, 5, false, dlog);
+                    logPile(s, 12, 11, 1, 4, true, st(Blocks.OAK_LOG));
+                    s.put(14, 1, 8, st(Blocks.SPRUCE_FENCE));
+                    s.put(16, 1, 8, st(Blocks.SPRUCE_FENCE));
+                    for (int x = 13; x <= 17; x++) s.put(x, 2, 8, axis(st(Blocks.STRIPPED_SPRUCE_LOG), Direction.Axis.X));
+                    stilled(s, 14, 1, 9, 2, Direction.NORTH);
+                    s.put(5, 1, 3, Props.CART_WHEEL.get().of(1));
+                    // the stumps of what they felled, round the edge
+                    for (int i = 0; i < 26; i++) {
+                        double a = i * Math.PI / 13 + 0.2, d = 17 + (h(s, i, 2, 9) % 5);
+                        int x = (int) Math.round(Math.cos(a) * d), z = (int) Math.round(Math.sin(a) * d);
+                        if ((Math.abs(x) < 3 && z > 0) || !open(s, x, z, 0)) continue;
+                        s.put(x, 1, z, st(i % 3 == 0 ? Blocks.SPRUCE_LOG : i % 3 == 1 ? Blocks.OAK_LOG : Blocks.DARK_OAK_LOG));
                         if (i % 2 == 0) s.put(x, 2, z, st(i % 4 == 0 ? Blocks.MOSS_CARPET : Blocks.BROWN_MUSHROOM));
                     }
-                    s.spawn(EntityTypes.FOX, -12, -12, 0, "fox");
-                    s.cam(0, 16, 40, 180, 16).cam(15, 20, 17, 135, 42).cam(0, 2, 17, 180, 4).cam(1, 2, 3, -125, 2);
+                    wild(s, 21, 30, 12);
+                    s.spawn(EntityTypes.FOX, -14, -14, 0, "fox");
+                    s.cam(0, 14, 40, 180, 12).cam(18, 22, 20, 135, 40).cam(0, 2, 20, 180, 0).cam(3, 2, 2, -120, 0);
                 })
                 .script(() -> Steps.of(Light.all("kiln"), Prize.at("door").then((c, i) -> fillPart(c, "door"))))
                 .play(t -> t.hold(Items.FLINT_AND_STEEL).use("kiln", 0).use("door", 0))
@@ -108,10 +133,10 @@ final class PlacesWood {
                 .anchor(Anchor.FIELD).slope(5).made(Made.BUILT)
                 .see("A water mill on a pond, its wheel one paddle short and its sluice shut. The miller is stone at his hopper.")
                 .learned("With the paddle back and the sluice pulled the stones turned over once, and the bin let go of what it held.")
-                .reach(30).persists().icon(() -> Items.WHEAT)
+                .reach(34).persists().icon(() -> Items.WHEAT)
                 .air(Air.of(0xBFD6D2, 90).mote(() -> ParticleTypes.FALLING_WATER, 0.25F, 4, -0.05F).loop(() -> SoundEvents.WATER_AMBIENT, 30, 0.8F, 1F))
                 .scene(s -> {
-                    s.level(22, 8).clear(24);
+                    s.level(26, 8).clear(29);
                     BlockState cob = st(Blocks.COBBLESTONE), gravel = st(Blocks.GRAVEL), clay = st(Blocks.CLAY);
                     pool(s, -11, -2, 8.5, 8.5, 0, 3, clay, gravel);
                     for (int x = -3; x <= 2; x++) {                       // the race, walled in stone
@@ -176,10 +201,32 @@ final class PlacesWood {
                     s.put(-3, 1, 1, Props.OLD_ROD.get().of(0));
                     // outside: a cart, sacks, a plank over the race, lilies
                     for (int x = 0; x <= 1; x++) s.put(x, 1, -2, top(st(Blocks.SPRUCE_SLAB)));
-                    fill(s, 8, 1, 5, 9, 1, 6, top(st(Blocks.OAK_SLAB)));
-                    s.put(7, 1, 5, Props.CART_WHEEL.get().of(0));
-                    s.put(10, 1, 6, Props.CART_WHEEL.get().of(1));
-                    s.put(8, 2, 5, Props.BUNDLE.get().of(0));
+                    cart(s, 17, 1, 3, true);
+                    s.put(15, 1, 1, Props.BUNDLE.get().of(0));
+                    s.put(15, 1, 0, Props.BUNDLE.get().of(1));
+                    // the hoist over the loft door, a chimney, a bench by the door
+                    for (int z = 3; z <= 4; z++) s.put(9, 8, z, axis(st(Blocks.DARK_OAK_LOG), Direction.Axis.Z));
+                    s.put(9, 7, 4, st(Blocks.IRON_CHAIN));
+                    s.put(9, 6, 4, st(Blocks.HAY_BLOCK));
+                    for (int y = 1; y <= 12; y++) s.put(13, y, -8, y < 11 ? cob : st(Blocks.COBBLESTONE_WALL));
+                    s.put(7, 1, 3, stair(st(Blocks.SPRUCE_STAIRS), Direction.NORTH));
+                    s.put(11, 1, 3, st(Blocks.BARREL));
+                    // the barn across the yard, the miller's field behind a fence, a bridge over the tail race
+                    house(s, 14, 8, 20, 15, 0, 4, Pal.TIMBER, 3, 0);
+                    stack(s, 15, 1, 14, 6, true);
+                    s.put(19, 1, 9, st(Blocks.HAY_BLOCK));
+                    s.put(19, 2, 9, st(Blocks.HAY_BLOCK));
+                    s.put(19, 1, 10, st(Blocks.HAY_BLOCK));
+                    crops(s, -12, 12, -2, 21, Blocks.WHEAT);
+                    for (int x = -13; x <= -1; x++) for (int z = 11; z <= 22; z += 11) if (x != -7) s.put(x, 1, z, st(Blocks.SPRUCE_FENCE));
+                    for (int z = 11; z <= 22; z++) for (int x = -13; x <= -1; x += 12) s.put(x, 1, z, st(Blocks.SPRUCE_FENCE));
+                    s.put(-9, 1, 16, st(Blocks.SPRUCE_FENCE));                 // the scarecrow
+                    s.put(-9, 2, 16, st(Blocks.HAY_BLOCK));
+                    s.put(-9, 3, 16, st(Blocks.CARVED_PUMPKIN));
+                    for (int x = 1; x <= 5; x++) { s.put(x, 1, 6, top(st(Blocks.STONE_BRICK_SLAB))); if (x == 1 || x == 5) for (int z = 5; z <= 7; z += 2) s.put(x, 1, z, st(Blocks.COBBLESTONE_WALL)); }
+                    tree(s, -20, 6, 1, 7, st(Blocks.OAK_LOG), leaf(Blocks.OAK_LEAVES), 2.8);
+                    tree(s, -17, -13, 1, 6, st(Blocks.BIRCH_LOG), leaf(Blocks.BIRCH_LEAVES), 2.2);
+                    tree(s, 2, -15, 1, 7, st(Blocks.OAK_LOG), leaf(Blocks.OAK_LEAVES), 2.8);
                     for (int i = 0; i < 9; i++) {
                         int x = -11 + (h(s, i, 4, 1) % 11) - 5, z = -2 + (h(s, i, 4, 2) % 11) - 5;
                         if (s.get(x, 0, z) == WATER && !s.taken(x, 1, z)) s.put(x, 1, z, st(Blocks.LILY_PAD));
@@ -189,9 +236,10 @@ final class PlacesWood {
                         int x = -11 + (int) Math.round(Math.cos(a) * 9.6), z = -2 + (int) Math.round(Math.sin(a) * 9.6);
                         if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 1, z, st(i % 3 == 0 ? Blocks.FERN : Blocks.SHORT_GRASS));
                     }
-                    path(s, 9, 24, 9, 4, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
+                    path(s, 9, 33, 9, 4, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
+                    wild(s, 24, 33, 10);
                     s.spawn(EntityTypes.FROG, -4, 6, 0, "frog").spawnUp(EntityTypes.COD, -11, -2, -2, 0, "fish").spawnUp(EntityTypes.COD, -9, 0, -2, 0, "fish");
-                    s.cam(-4, 14, 40, 170, 14).cam(-8, 22, 16, -145, 42).cam(9, 2, 9, 180, 0).cam(10, 2, 0, 135, 5);
+                    s.cam(-2, 13, 44, 175, 10).cam(-14, 26, 24, -140, 40).cam(9, 2, 13, 180, -8).cam(10, 2, 0, 135, 5);
                 })
                 .script(() -> Steps.of(Sockets.need("paddle", st -> st.is(Items.SPRUCE_SLAB) || st.is(net.minecraft.tags.ItemTags.PLANKS), i -> st(Blocks.SPRUCE_PLANKS)).carry("loose"),
                         Prize.at("lever").then((c, i) -> c.sound(c.pos("lever", 0), SoundEvents.GRINDSTONE_USE, 2.0F, 0.6F))))
@@ -272,6 +320,7 @@ final class PlacesWood {
                     }
                     ring(s, -8, 8, 1.5, 1, st(Blocks.COBBLESTONE_SLAB));
                     s.put(-8, 1, 8, fire(false, false));
+                    wild(s, 11, 22, 7);
                     s.cam(0, 18, 38, 180, -4).cam(13, 36, 13, 135, 52).cam(1, 2, 10, 175, -8).cam(0, 12, 1, 150, 10);
                 })
                 .script(() -> Steps.of(Quiet.near("sleeper", "prize", 5).voice(SoundEvents.PARROT_AMBIENT), Prize.at("chest")))
@@ -426,53 +475,81 @@ final class PlacesWood {
                 .reach(38).loot("honey").icon(() -> Items.HONEYCOMB)
                 .air(Air.of(0xD8C47A, 80).mote(() -> ParticleTypes.FALLING_NECTAR, 0.35F, 5, -0.01F).loop(() -> SoundEvents.BEE_LOOP, 70, 0.5F, 1F))
                 .scene(s -> {
-                    Pal p = Pal.COBBLE;
-                    BlockState hay = st(Blocks.HAY_BLOCK), thatch = st(Blocks.WOOL_SLAB.pick(DyeColor.YELLOW));
-                    // four terraces stepping up to the north, each two higher and six deep
-                    for (int t = 0; t < 5; t++) s.level(0, 16 - t * 7, 15, t == 0 ? 7 : 2, t * 2);
-                    s.clear(24);
+                    Pal p = Pal.COBBLE.roof(Blocks.BAMBOO_MOSAIC_STAIRS, Blocks.BAMBOO_MOSAIC_SLAB);
+                    BlockState hay = st(Blocks.HAY_BLOCK), thatch = st(Blocks.BAMBOO_MOSAIC_SLAB);
+                    // a hill with its south face cut into four straight steps, two high and seven deep; the sides and the back
+                    // fall away as grass
+                    s.level(30, 8).clear(33);
+                    for (int x = -29; x <= 29; x++)
+                        for (int z = -29; z <= 29; z++) {
+                            if (x * x + z * z > 29 * 29) continue;
+                            int step = z > 14 ? 0 : z > 7 ? 2 : z > 0 ? 4 : z > -7 ? 6 : 8;
+                            double fx = Math.abs(x) <= 15 ? 1 : Math.max(0, 1 - (Math.abs(x) - 15) / 11.0), fz = z >= -18 ? 1 : Math.max(0, 1 - (-18 - z) / 10.0);
+                            fx = fx * fx * (3 - 2 * fx);
+                            fz = fz * fz * (3 - 2 * fz);
+                            int dy = (int) Math.round(step * fx * fz);
+                            if (dy > 0) s.ground(x, z, dy);
+                        }
                     net.minecraft.world.level.block.Block[] flower = {Blocks.POPPY, Blocks.CORNFLOWER, Blocks.OXEYE_DAISY, Blocks.ALLIUM};
                     for (int t = 1; t <= 4; t++) {
-                        int zf = 20 - t * 7, y = t * 2;                    // the terrace's front wall stands at zf
-                        for (int x = -13; x <= 13; x++) {
-                            boolean gap = x == (t % 2 == 0 ? -10 : 10) || x == (t % 2 == 0 ? -11 : 11);
-                            for (int k = y - 1; k <= y; k++) s.put(x, k, zf, gap ? AIR : h(s, x, k, zf) < 70 ? st(Blocks.MOSSY_COBBLESTONE) : h(s, x, k, zf) < 130 ? st(Blocks.ANDESITE) : st(Blocks.COBBLESTONE));
-                            if (!gap && h(s, x, 9, zf) < 60) s.put(x, y + 1, zf, st(Blocks.COBBLESTONE_WALL));
-                            if (gap) { s.put(x, y - 1, zf, stair(st(Blocks.COBBLESTONE_STAIRS), Direction.NORTH)); s.put(x, y, zf - 1, stair(st(Blocks.COBBLESTONE_STAIRS), Direction.NORTH)); s.put(x, y - 1, zf - 1, st(Blocks.COBBLESTONE)); }
+                        int zf = 21 - t * 7, y = t * 2;                    // this step's dry-stone face stands at zf, its top at y
+                        for (int x = -15; x <= 15; x++) {
+                            for (int k = y - 1; k <= y; k++) s.put(x, k, zf, h(s, x, k, zf) < 70 ? st(Blocks.MOSSY_COBBLESTONE) : h(s, x, k, zf) < 130 ? st(Blocks.ANDESITE) : st(Blocks.COBBLESTONE));
+                            if (Math.abs(x) > 2 && h(s, x, 9, zf) < 70) s.put(x, y + 1, zf, st(h(s, x, 8, zf) < 128 ? Blocks.COBBLESTONE_WALL : Blocks.MOSSY_COBBLESTONE_WALL));
+                        }
+                        for (int x = -1; x <= 1; x++) {                    // the stair up the middle
+                            s.put(x, y - 1, zf + 2, stair(st(Blocks.COBBLESTONE_STAIRS), Direction.NORTH));
+                            s.put(x, y - 1, zf + 1, st(Blocks.COBBLESTONE));
+                            s.put(x, y, zf + 1, stair(st(Blocks.COBBLESTONE_STAIRS), Direction.NORTH));
                         }
                         if (t == 4) break;
-                        for (int x = -8; x <= 8; x += 4) {                 // skeps and beds
-                            s.put(x, y + 1, zf - 3, hay);
-                            s.put(x, y + 2, zf - 3, thatch);
-                            for (int bx = x + 1; bx <= x + 2; bx++) for (int bz = zf - 4; bz <= zf - 2; bz++) if (!s.taken(bx, y + 1, bz)) s.put(bx, y + 1, bz, st(flower[t - 1]));
+                        for (int x = -12; x <= 12; x += 4) {               // a row of hives, and flowers thick before and behind them
+                            if (x == 0) continue;
+                            if ((x + t * 4) % 12 == 0) { s.put(x, y + 1, zf - 4, st(Blocks.SPRUCE_FENCE)); s.put(x, y + 2, zf - 4, st(Blocks.BEEHIVE)); }
+                            else { s.put(x, y + 1, zf - 4, hay); s.put(x, y + 2, zf - 4, thatch); }
                         }
+                        for (int x = -14; x <= 14; x++)
+                            for (int z = zf - 6; z <= zf - 1; z++) {
+                                if (Math.abs(x) <= 2 || z == zf - 4 || s.taken(x, y + 1, z)) continue;
+                                int hh = h(s, x, 3, z);
+                                if (hh < (z == zf - 3 || z == zf - 5 ? 60 : 165)) s.put(x, y + 1, z, st(flower[(t - 1 + (hh & 1) * (z & 1)) % 4]));
+                            }
                     }
-                    s.put(0, 7, -4, hay);
-                    s.put(0, 8, -4, hay);
-                    s.put(0, 9, -4, thatch);
-                    s.part("skep", 0, 8, -4);
-                    // the honey house on the top terrace
-                    house(s, -4, -15, 4, -10, 8, 3, Pal.COBBLE.roof(Blocks.WOOL_STAIRS.pick(DyeColor.YELLOW), Blocks.WOOL_SLAB.pick(DyeColor.YELLOW)), 2, 0);
-                    s.put(-3, 9, -14, st(Blocks.CAULDRON));
-                    s.part("extractor", -3, 9, -14);
-                    s.put(-2, 9, -14, st(Blocks.BARREL));
-                    s.part("cache", -2, 10, -14);
-                    for (int x = 1; x <= 3; x++) { s.put(x, 9, -14, st(Blocks.HONEY_BLOCK)); s.put(x, 10, -14, st(Blocks.HONEYCOMB_BLOCK)); }
-                    s.put(3, 9, -11, st(Blocks.SMOKER));
-                    s.put(2, 9, -11, Props.FIRE_BASKET.get().of(0));
-                    s.part("loose", 2, 9, -11);
-                    stilled(s, 2, 7, -3, 1, Direction.WEST);
-                    // the foot: a wall round it all, a gate, a well
-                    for (int x = -15; x <= 15; x++) if (Math.abs(x) > 1) { s.put(x, 1, 22, st(h(s, x, 1, 22) < 80 ? Blocks.MOSSY_COBBLESTONE_WALL : Blocks.COBBLESTONE_WALL)); }
-                    for (int z = -16; z <= 22; z++) for (int x = -15; x <= 15; x += 30) s.put(x, s.g(x, z) + 1, z, st(h(s, x, 2, z) < 80 ? Blocks.MOSSY_COBBLESTONE_WALL : Blocks.COBBLESTONE_WALL));
-                    ring(s, 8, 18, 1.5, 1, st(Blocks.COBBLESTONE));
-                    s.put(8, 0, 18, WATER);
-                    s.put(8, -1, 18, st(Blocks.COBBLESTONE));
-                    for (int x = 7; x <= 9; x += 2) for (int y = 2; y <= 3; y++) s.put(x, y, 18, st(Blocks.OAK_FENCE));
-                    fill(s, 7, 4, 18, 9, 4, 18, st(Blocks.OAK_SLAB));
-                    path(s, 0, 24, 0, 15, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
+                    // the big hive under its own little roof, and the keeper beside it
+                    s.put(6, 7, -3, hay);
+                    s.put(6, 8, -3, hay);
+                    s.put(6, 9, -3, thatch);
+                    s.part("skep", 6, 8, -3);
+                    for (int x = 4; x <= 8; x += 4) for (int k = 7; k <= 9; k++) s.put(x, k, -3, st(Blocks.SPRUCE_FENCE));
+                    for (int x = 4; x <= 8; x++) for (int z = -4; z <= -2; z++) s.put(x, 10, z, thatch);
+                    stilled(s, 4, 7, -1, 1, Direction.NORTH);
+                    // the honey house on the top step, thatched, with its chimney
+                    house(s, -6, -18, 6, -11, 8, 4, p, 2, 0);
+                    for (int k = 9; k <= 17; k++) s.put(5, k, -17, k < 16 ? st(Blocks.COBBLESTONE) : st(Blocks.COBBLESTONE_WALL));
+                    s.put(-4, 9, -17, st(Blocks.CAULDRON));
+                    s.part("extractor", -4, 9, -17);
+                    s.put(-3, 9, -17, st(Blocks.BARREL));
+                    s.part("cache", -3, 10, -17);
+                    for (int x = -1; x <= 3; x++) { s.put(x, 9, -17, st(Blocks.HONEY_BLOCK)); if (x != 1) s.put(x, 10, -17, st(Blocks.HONEYCOMB_BLOCK)); }
+                    s.put(5, 9, -13, st(Blocks.SMOKER));
+                    s.put(4, 9, -12, Props.FIRE_BASKET.get().of(0));
+                    s.part("loose", 4, 9, -12);
+                    table(s, -5, 9, -14, 3, false, p);
+                    s.put(-5, 11, -14, st(Blocks.CANDLE));
+                    stack(s, -8, 9, -12, 4, false);
+                    for (int x = -9; x <= 9; x += 18) { s.put(x, 9, -9, hay); s.put(x, 10, -9, thatch); }
+                    // the foot: a walled yard with a gate, a well, a store and a cart
+                    run(s, -16, 23, 16, 23, st(Blocks.COBBLESTONE_WALL), 15);
+                    for (int x = -16; x <= 16; x += 32) run(s, x, 22, x, -8, st(h(s, x, 0, 0) < 128 ? Blocks.MOSSY_COBBLESTONE_WALL : Blocks.COBBLESTONE_WALL), -1);
+                    for (int x = -2; x <= 2; x += 4) { s.put(x, 2, 23, st(Blocks.COBBLESTONE_WALL)); s.put(x, 3, 23, lantern(false, false)); }
+                    well(s, 9, 18, Pal.COBBLE);
+                    house(s, -14, 16, -9, 21, 0, 3, Pal.TIMBER, 1, 0);
+                    stack(s, -8, 1, 21, 5, true);
+                    cart(s, 5, 1, 20, true);
+                    path(s, 0, 30, 0, 16, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
+                    wild(s, 19, 36, 9);
                     s.spawnUp(EntityTypes.BEE, 0, -4, 10, 0, "bee").spawnUp(EntityTypes.BEE, -8, 3, 6, 0, "bee").spawnUp(EntityTypes.BEE, 8, 10, 4, 0, "bee");
-                    s.cam(0, 14, 42, 180, 8).cam(16, 26, 12, 125, 40).cam(0, 2, 26, 180, -6).cam(0, 10, -11, 180, 5);
+                    s.cam(0, 14, 44, 180, 6).cam(22, 30, 26, 140, 38).cam(0, 2, 27, 180, -10).cam(0, 10, -12, 180, 4);
                 })
                 .script(() -> Steps.of(Sockets.need("skep", st -> st.is(Props.FIRE_BASKET.get().asItem()) || Hands.flame(st), i -> st(Blocks.HAY_BLOCK)).carry("loose").keep(),
                         Prize.at("extractor")))

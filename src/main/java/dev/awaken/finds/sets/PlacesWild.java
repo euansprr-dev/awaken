@@ -108,6 +108,7 @@ final class PlacesWild {
                     for (int i = 0; i < 22; i++) { int x = s.rnd.nextInt(35) - 17, z = s.rnd.nextInt(35) - 17; if (s.get(x, 0, z) == WATER && !s.taken(x, 1, z)) s.put(x, 1, z, st(Blocks.LILY_PAD)); }
                     for (int i = 0; i < 14; i++) { double a = i * Math.PI / 7 + 0.2; int x = (int) Math.round(Math.cos(a) * 20), z = (int) Math.round(Math.sin(a) * 20); if (!s.taken(x, 1, z) && Math.abs(x) > 3) s.put(x, 1, z, st(i % 3 == 0 ? Blocks.MANGROVE_ROOTS : i % 3 == 1 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawn(EntityTypes.FROG, 15, 16, 0, "frog").spawn(EntityTypes.FROG, -16, -15, 0, "frog").spawnUp(EntityTypes.CAT, 0, 0, 13, Scene.Spawn.STAY, "cat");
+                    wild(s, 22, 33, 7);
                     s.cam(0, 12, 46, 180, 8).cam(18, 24, 18, 135, 40).cam(-1, 4, 15, 180, 4).cam(1, 4, 2, 160, 2);
                 })
                 .script(() -> Steps.of(Sockets.need("socket", st -> st.is(Props.BASKET.get().asItem()), i -> Props.BASKET.get().of(1)).carry("loose"),
@@ -178,6 +179,7 @@ final class PlacesWild {
                     s.put(16, 15, -10, AIR);
                     for (int i = 0; i < 16; i++) { int x = s.rnd.nextInt(41) - 20, z = s.rnd.nextInt(41) - 20; if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 1, z, st(i % 4 == 0 ? Blocks.MELON : i % 4 == 1 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawnUp(EntityTypes.PARROT, -6, 0, 16, 0, "parrot").spawnUp(EntityTypes.PARROT, 6, 2, 16, 0, "parrot").spawn(EntityTypes.OCELOT, 4, 16, 0, "ocelot");
+                    wild(s, 20, 31, 7);
                     s.cam(0, 16, 48, 180, -4).cam(22, 40, 22, 135, 42).cam(-10, 2, 18, 180, -32).cam(0, 15, 1, -135, -2);
                 })
                 .script(() -> Steps.of(Haul.on("rope", "load").trail(Props.ROPE_LENGTH.get().of(0)), Sockets.need("drum", st -> st.is(Props.BUNDLE.get().asItem()), i -> st(Blocks.NOTE_BLOCK)).carry("loose")))
@@ -253,6 +255,7 @@ final class PlacesWild {
                     vines(s, -17, 2, -17, 17, 16, 17, 9);
                     moss(s, -16, 1, -16, 16, 16, 16, 18);
                     s.spawn(EntityTypes.FROG, 20, 20, 0, "frog").spawnUp(EntityTypes.PARROT, -6, 6, 12, 0, "parrot");
+                    wild(s, 24, 35, 9);
                     s.cam(0, 16, 52, 180, 6).cam(25, 34, 25, 135, 40).cam(0, 10, 8, 180, 0).cam(0, 8, -1, 180, -8);
                 })
                 .script(() -> Steps.of(Turn.dials("mirror"), Prize.at("dais")))
@@ -263,14 +266,43 @@ final class PlacesWild {
                 .anchor(Anchor.FIELD).slope(5).made(Made.BUILT)
                 .see("Steam standing over a snowed-in bathhouse and three pools, warm light in its windows, and stone bathers up to their shoulders in the long one.")
                 .learned("Wood in the stove, the brass valve turned, and ten slow breaths in the long bath. You left warm and mended.")
-                .reach(30).tell(Kind.Tell.STEAM).icon(() -> Items.BUCKET)
+                .reach(34).tell(Kind.Tell.STEAM).icon(() -> Items.BUCKET)
                 .air(Air.of(0xE3E6E2, 34).mote(() -> ParticleTypes.CLOUD, 0.5F, 4, 0.03F).loop(() -> SoundEvents.BUBBLE_COLUMN_UPWARDS_AMBIENT, 60, 0.5F, 1F))
                 .scene(s -> {
-                    s.level(22, 8).clear(24);
+                    s.level(26, 8).clear(29);
                     Pal p = Pal.TIMBER;
                     BlockState stone = st(Blocks.SMOOTH_STONE), calcite = st(Blocks.CALCITE), deck = st(Blocks.SPRUCE_PLANKS);
-                    ground(s, 0, 6, 15, h -> h < 150 ? deck : h < 190 ? stone : null);
-                    pool(s, -9, 6, 2.6, 2.6, 0, 2, st(Blocks.SMOOTH_BASALT), st(Blocks.MAGMA_BLOCK));
+                    ground(s, 0, 6, 17, h -> h < 105 ? stone : h < 150 ? st(Blocks.ANDESITE) : h < 180 ? calcite : null);
+                    fill(s, -9, 0, -2, 9, 0, 1, deck);                      // the boarded walk from the door to the water
+                    for (int z = 0; z <= 1; z++) for (int x = -3; x <= 3; x += 6) { for (int y = 1; y <= 3; y++) s.put(x, y, z - 1 + z, st(Blocks.SPRUCE_FENCE)); }
+                    fill(s, -4, 4, -2, 4, 4, 1, st(Blocks.SPRUCE_SLAB));
+                    pool(s, -9, 6, 3.4, 3.4, 0, 2, st(Blocks.SMOOTH_BASALT), st(Blocks.MAGMA_BLOCK));
+                    // where the water comes up: white stone basins stepping down a mound, each spilling into the next
+                    for (int k = 3; k >= 0; k--) {
+                        int bx = -19 + k * 3, bz = -3 + k * 3, top = 5 - k;
+                        double r = 2.6 + k * 0.5;
+                        for (int x = -4; x <= 4; x++)
+                            for (int z = -4; z <= 4; z++) {
+                                double d = Math.sqrt(x * x + z * z);
+                                if (d > r + 0.4) continue;
+                                for (int y = 1; y <= top; y++) s.put(bx + x, y, bz + z, y == top && d < r - 0.8 ? WATER : h(s, bx + x, y, bz + z) < 60 ? st(Blocks.DIORITE) : calcite);
+                            }
+                    }
+                    boulder(s, -22, -8, 3.0, st(Blocks.STONE), st(Blocks.ANDESITE), calcite);
+                    boulder(s, -8, 12, 1.8, st(Blocks.STONE), st(Blocks.ANDESITE), st(Blocks.MOSSY_COBBLESTONE));
+                    boulder(s, 8, 9, 1.6, st(Blocks.STONE), st(Blocks.ANDESITE), st(Blocks.MOSSY_COBBLESTONE));
+                    // the tea house across the yard, and the chimney that smokes over it all
+                    house(s, 12, -10, 19, -3, 0, 3, p, 3, 0);
+                    s.put(17, 1, -8, top(st(Blocks.SPRUCE_SLAB)));
+                    s.put(17, 2, -8, st(Blocks.POTTED_AZURE_BLUET));
+                    s.put(16, 1, -8, st(Blocks.CARPET.pick(DyeColor.RED)));
+                    s.put(18, 1, -6, st(Blocks.CARPET.pick(DyeColor.WHITE)));
+                    stilled(s, 16, 1, -6, 2, Direction.EAST);
+                    for (int y = 1; y <= 9; y++) s.put(7, y, -10, st(y % 3 == 0 ? Blocks.COBBLESTONE : Blocks.STONE_BRICKS));
+                    s.put(7, 10, -10, st(Blocks.CAMPFIRE).setValue(net.minecraft.world.level.block.CampfireBlock.SIGNAL_FIRE, true));
+                    for (int x = 10; x <= 16; x += 3) for (int z = 2; z <= 5; z += 3) { s.put(x, 1, z, st(Blocks.SPRUCE_FENCE)); s.put(x, 2, z, st(Blocks.SPRUCE_FENCE)); }
+                    fill(s, 9, 3, 1, 17, 3, 6, st(Blocks.SPRUCE_SLAB));   // the roofed bench by the cold plunge
+                    for (int x = 11; x <= 15; x++) s.put(x, 1, 2, stair(st(Blocks.SPRUCE_STAIRS), Direction.NORTH));
                     for (int x = -4; x <= 6; x++) for (int z = 3; z <= 7; z++) { s.put(x, 0, z, WATER); s.put(x, -1, z, WATER); s.put(x, -2, z, h(s, x, -2, z) < 128 ? calcite : stone); }
                     for (int x = -5; x <= 7; x++) for (int z = 2; z <= 8; z++) if (x == -5 || x == 7 || z == 2 || z == 8) s.put(x, 0, z, (x + z) % 3 == 0 ? calcite : stone);
                     pool(s, 11, 12, 2.4, 2.4, 0, 2, st(Blocks.STONE), st(Blocks.GRAVEL));
@@ -300,11 +332,12 @@ final class PlacesWild {
                     s.part("cache", 5, 1, -5);
                     stilled(s, 0, 1, 1, 1, Direction.SOUTH);
                     logPile(s, -14, -6, 1, 4, false, st(Blocks.SPRUCE_LOG));
-                    for (int[] k : new int[][] {{-11, 2}, {9, 1}, {-7, 13}, {8, 15}}) lamp(s, k[0], 1, k[1], 2, st(Blocks.SPRUCE_FENCE), false);
-                    path(s, 0, 24, 0, 17, 1, st(Blocks.SPRUCE_PLANKS), st(Blocks.GRAVEL));
+                    for (int[] k : new int[][] {{-11, 1}, {9, -1}, {-7, 14}, {8, 15}, {-3, 19}, {3, 19}}) lamp(s, k[0], 1, k[1], 2, st(Blocks.COBBLESTONE_WALL), false);
+                    path(s, 0, 33, 0, 17, 1, st(Blocks.SPRUCE_PLANKS), st(Blocks.GRAVEL));
                     s.tell(-9, 6, 2);
                     s.spawn(EntityTypes.FOX, 14, -8, 0, "fox");
-                    s.cam(0, 12, 40, 180, 10).cam(16, 20, 19, 140, 40).cam(0, 2, 14, 180, 4).cam(0, 2, -5, 0, 6);
+                    wild(s, 20, 33, 12);
+                    s.cam(0, 12, 42, 180, 10).cam(20, 24, 24, 140, 38).cam(0, 2, 21, 180, 0).cam(0, 2, -5, 0, 6);
                 })
                 .script(() -> Steps.of(Sockets.need("stove", st -> st.is(net.minecraft.tags.ItemTags.LOGS) || st.is(net.minecraft.tags.ItemTags.PLANKS),
                                 i -> st(Blocks.FURNACE).setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true)).carry("loose"),
@@ -356,6 +389,7 @@ final class PlacesWild {
                     fill(s, 6, 1, 12, 8, 1, 12, st(Blocks.SPRUCE_SLAB));
                     s.put(6, 1, 13, st(Blocks.SPRUCE_FENCE));
                     s.put(8, 1, 13, st(Blocks.SPRUCE_FENCE));
+                    wild(s, 20, 31, 7);
                     s.cam(0, 14, 44, 180, 10).cam(19, 24, 19, 135, 40).cam(-21, 2, 0, -90, 0).cam(-9, 2, 0, -90, 0);
                 })
                 .script(() -> Steps.of(Seal.opens("seal", 4, Hands::flame), Light.all("hearth"), Prize.at("prize")))
@@ -427,6 +461,7 @@ final class PlacesWild {
                     s.put(-2, 2, 4, st(Blocks.RAW_COPPER_BLOCK));
                     rubble(s, -10, -2, 5, 12, p);
                     path(s, 1, 24, 1, 17, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
+                    wild(s, 20, 31, 7);
                     s.cam(0, 14, 44, 180, 10).cam(19, 24, 19, 135, 40).cam(1, 2, 21, 180, 0).cam(1, 2, 2, -100, 16);
                 })
                 .script(() -> Steps.of(Sockets.need("furnace", st -> st.is(Items.COAL) || st.is(Items.CHARCOAL) || st.is(Items.COAL_BLOCK),

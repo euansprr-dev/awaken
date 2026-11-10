@@ -44,77 +44,108 @@ final class PlacesPlain {
                 .reach(29).icon(() -> Items.PINK_PETALS)
                 .air(Air.of(0xE9E2D0, 90).mote(() -> ParticleTypes.CHERRY_LEAVES, 0.7F, 9, -0.03F).loop(() -> SoundEvents.NOTE_BLOCK_HARP.value(), 90, 0.25F, 0.8F))
                 .scene(s -> {
-                    s.level(21, 8).clear(23);
+                    s.level(22, 7).clear(25);
                     Pal p = Pal.COBBLE;
-                    BlockState fence = st(Blocks.OAK_FENCE), azalea = leaf(Blocks.FLOWERING_AZALEA_LEAVES);
-                    for (int i = 0; i < 90; i++) {
-                        int x = s.rnd.nextInt(39) - 19, z = s.rnd.nextInt(39) - 19;
-                        if (x * x + z * z < 380 && !s.taken(x, 1, z)) s.put(x, 1, z, st(i % 5 == 0 ? Blocks.OXEYE_DAISY : Blocks.PINK_PETALS));
-                    }
-                    // the arch, and the three under it
-                    for (int x = -2; x <= 2; x += 4) { for (int y = 1; y <= 3; y++) s.put(x, y, -14, fence); s.put(x, 4, -14, azalea); s.put(x, 3, -15, azalea); }
-                    for (int x = -2; x <= 2; x++) { s.put(x, 5, -14, azalea); if (x != 0) s.put(x, 4, -15, azalea); }
-                    s.put(-1, 4, -14, azalea);
-                    s.put(1, 4, -14, azalea);
-                    stilled(s, -1, 1, -13, 0, Direction.EAST);
-                    stilled(s, 1, 1, -13, 2, Direction.WEST);
-                    stilled(s, 0, 1, -15, 1, Direction.SOUTH);
-                    s.put(2, 1, -12, fence);
-                    s.part("stand", 2, 2, -12);
-                    s.put(5, 1, -9, st(Blocks.CARPET.pick(DyeColor.PINK)));
-                    s.part("loose", 5, 1, -9);
-                    s.put(-3, 1, -12, fence);
-                    s.put(-3, 2, -12, st(Blocks.BELL));
-                    s.part("bell", -3, 2, -12);
-                    // two long tables, most places taken
-                    for (int side = -1; side <= 1; side += 2) {
-                        int tx = side * 9;
-                        table(s, tx, 1, -6, 12, false, p);
+                    BlockState fence = st(Blocks.OAK_FENCE), azalea = leaf(Blocks.FLOWERING_AZALEA_LEAVES), blossom = leaf(Blocks.CHERRY_LEAVES), birch = st(Blocks.BIRCH_PLANKS),
+                            post = st(Blocks.STRIPPED_BIRCH_LOG);
+                    // the green: a flowering hedge round it, open to the south under a gate of two posts and a beam
+                    for (int x = -21; x <= 21; x++)
+                        for (int z = -21; z <= 21; z++) {
+                            double d = Math.sqrt(x * x + z * z);
+                            if (d <= 19.4 || d > 20.7 || (Math.abs(x) <= 3 && z > 0)) continue;
+                            s.put(x, 1, z, h(s, x, 1, z) < 150 ? azalea : leaf(Blocks.AZALEA_LEAVES));
+                            if (h(s, x, 2, z) < 110) s.put(x, 2, z, azalea);
+                        }
+                    for (int x = -3; x <= 3; x += 6) for (int y = 1; y <= 5; y++) s.put(x, y, 20, post);
+                    for (int x = -3; x <= 3; x++) s.put(x, 6, 20, Math.abs(x) == 3 ? azalea : blossom);
+                    for (int x = -2; x <= 2; x += 4) s.put(x, 5, 20, blossom);
+                    s.put(0, 5, 20, lantern(true, false));
+                    // six cherry trees in blossom: the pink that shows over the hill
+                    int[][] cherry = {{-8, -16}, {8, -16}, {17, -5}, {14, 12}, {-15, 11}, {-17, -5}};
+                    for (int[] c : cherry) tree(s, c[0], c[1], 1, 6 + (h(s, c[0], 3, c[1]) & 1), st(Blocks.CHERRY_LOG), blossom, 3.0);
+                    // the dais and the arch, and the three under it
+                    fill(s, -4, 1, -17, 4, 1, -12, birch);
+                    for (int x = -4; x <= 4; x++) s.put(x, 1, -11, stair(st(Blocks.BIRCH_STAIRS), Direction.NORTH));
+                    for (int x = -3; x <= 3; x += 6) for (int y = 2; y <= 6; y++) s.put(x, y, -15, post);
+                    for (int x = -3; x <= 3; x++) { s.put(x, 7, -15, (x & 1) == 0 ? azalea : blossom); s.put(x, 7, -16, blossom); }
+                    for (int x = -2; x <= 2; x += 4) { s.put(x, 6, -15, azalea); s.put(x, 5, -15, blossom); s.put(x, 6, -16, azalea); }
+                    s.put(0, 6, -15, lantern(true, false));
+                    stilled(s, -1, 2, -14, 0, Direction.EAST);
+                    stilled(s, 1, 2, -14, 2, Direction.WEST);
+                    stilled(s, 0, 2, -16, 1, Direction.SOUTH);
+                    s.put(2, 2, -13, fence);
+                    s.part("stand", 2, 3, -13);
+                    s.put(3, 1, -9, st(Blocks.CARPET.pick(DyeColor.PINK)));
+                    s.part("loose", 3, 1, -9);
+                    s.put(-2, 2, -13, fence);
+                    s.put(-2, 3, -13, st(Blocks.BELL));
+                    s.part("bell", -2, 3, -13);
+                    // the aisle: a white runner from the gate to the steps between lamp posts
+                    for (int z = -10; z <= 19; z++) s.put(0, 1, z, st(Blocks.CARPET.pick(DyeColor.WHITE)));
+                    for (int z = -8; z <= 17; z += 5)
+                        for (int x = -2; x <= 2; x += 4) {
+                            for (int y = 1; y <= 3; y++) s.put(x, y, z, fence);
+                            s.put(x, 4, z, (z / 5 & 1) == 0 ? Props.PAPER_LANTERN.get().of(1) : lantern(false, false));
+                        }
+                    // the feast, west of the aisle: two long tables under a striped marquee, most places taken
+                    awning(s, -16, -8, -5, 8, 1, 4, fence, DyeColor.WHITE, DyeColor.PINK);
+                    for (int z = -8; z <= 8; z += 16) for (int y = 1; y <= 4; y++) s.put(-10, y, z, fence);
+                    for (int x = -16; x <= -5; x += 11) { for (int y = 1; y <= 4; y++) s.put(x, y, 0, fence); s.put(x, 6, -8, Props.FLAG.get().of(1)); s.put(x, 6, 8, Props.FLAG.get().of(2)); }
+                    for (int x = -13; x <= -7; x += 6) s.put(x, 4, 0, lantern(true, false));
+                    for (int tx = -13; tx <= -8; tx += 5) {
+                        table(s, tx, 1, -6, 13, false, p);
                         s.put(tx, 2, -3, st(Blocks.CAKE));
                         s.put(tx, 2, 2, st(Blocks.POTTED_POPPY));
                         s.put(tx, 2, -5, st(Blocks.POTTED_CORNFLOWER));
-                        for (int z = -6; z <= 5; z++)
+                        s.put(tx, 2, 5, st(Blocks.POTTED_AZURE_BLUET));
+                        for (int z = -6; z <= 6; z++)
                             for (int k = -1; k <= 1; k += 2) {
-                                if ((z + k + side) % 3 == 0) s.put(tx + k, 1, z, stair(st(Blocks.OAK_STAIRS), k < 0 ? Direction.WEST : Direction.EAST));
+                                if ((z + k + tx) % 3 == 0) s.put(tx + k, 1, z, stair(st(Blocks.OAK_STAIRS), k < 0 ? Direction.WEST : Direction.EAST));
                                 else stilled(s, tx + k, 1, z, (z + k) & 3, k < 0 ? Direction.EAST : Direction.WEST);
                             }
                     }
-                    // the dance, and the players on their little stage
+                    // the dance, east of the aisle: a boarded floor, a ring of dancers, a lamp at each corner
+                    disc(s, 11, 2, 5.3, 0, birch);
+                    ring(s, 11, 2, 5.6, 0, st(Blocks.STRIPPED_BIRCH_WOOD));
                     for (int i = 0; i < 8; i++) {
                         double a = i * Math.PI / 4;
-                        int x = (int) Math.round(Math.cos(a) * 4), z = 4 + (int) Math.round(Math.sin(a) * 4);
-                        stilled(s, x, 1, z, i & 3, toward(-x, 4 - z));
+                        int x = 11 + (int) Math.round(Math.cos(a) * 3.4), z = 2 + (int) Math.round(Math.sin(a) * 3.4);
+                        stilled(s, x, 1, z, i & 3, toward(11 - x, 2 - z));
                     }
-                    fill(s, -2, 1, 11, 2, 1, 13, st(Blocks.OAK_SLAB));
-                    stilled(s, -1, 2, 12, 2, Direction.NORTH);
-                    stilled(s, 1, 2, 12, 3, Direction.NORTH);
-                    s.put(0, 2, 13, st(Blocks.NOTE_BLOCK));
-                    // the spit, the barrels, the cart of gifts
-                    s.put(-15, 1, 8, fire(false));
-                    s.part("hearth", -15, 1, 8);
-                    for (int z = 7; z <= 9; z += 2) { s.put(-15, 1, z, fence); s.put(-15, 2, z, fence); }
-                    s.put(-15, 3, 7, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
-                    s.put(-15, 3, 8, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
-                    s.put(-15, 3, 9, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
-                    fill(s, 14, 1, 7, 14, 1, 9, top(st(Blocks.OAK_SLAB)));
-                    fill(s, 14, 2, 7, 14, 2, 9, st(Blocks.BARREL));
-                    s.put(14, 3, 8, st(Blocks.BARREL));
-                    fill(s, 12, 1, -11, 13, 1, -9, top(st(Blocks.OAK_SLAB)));
-                    s.put(11, 1, -11, Props.CART_WHEEL.get().of(0));
-                    s.put(14, 1, -9, Props.CART_WHEEL.get().of(0));
-                    s.put(12, 2, -10, Props.BUNDLE.get().of(0));
-                    s.put(13, 2, -11, Props.BUNDLE.get().of(2));
-                    s.put(13, 2, -9, Props.BASKET.get().of(1));
-                    s.part("cache", 12, 2, -11);
-                    for (int i = 0; i < 6; i++) {                          // flag posts round the green, a paper lantern on every other
-                        double a = i * Math.PI / 3 + 0.5;
-                        int x = (int) Math.round(Math.cos(a) * 18), z = (int) Math.round(Math.sin(a) * 18);
-                        for (int y = 1; y <= 5; y++) s.put(x, y, z, fence);
-                        s.put(x, 6, z, i % 2 == 0 ? Props.FLAG.get().of(i & 3) : Props.PAPER_LANTERN.get().of(1));
+                    for (int cx = 6; cx <= 16; cx += 10) for (int cz = -3; cz <= 7; cz += 10) lamp(s, cx, 1, cz, 4, fence, false);
+                    // the players on their stand, under a little cloth roof
+                    fill(s, 8, 1, -13, 14, 1, -10, birch);
+                    for (int x = 8; x <= 14; x++) s.put(x, 1, -9, stair(st(Blocks.BIRCH_STAIRS), Direction.NORTH));
+                    awning(s, 8, -13, 14, -10, 2, 3, fence, DyeColor.WHITE, DyeColor.YELLOW);
+                    stilled(s, 10, 2, -12, 2, Direction.SOUTH);
+                    stilled(s, 12, 2, -12, 3, Direction.SOUTH);
+                    stilled(s, 11, 2, -11, 0, Direction.SOUTH);
+                    s.put(11, 2, -13, st(Blocks.NOTE_BLOCK));
+                    s.put(13, 2, -13, st(Blocks.JUKEBOX));
+                    // the spit, the barrels, the cart of gifts by the gate
+                    s.put(-12, 1, 13, fire(false));
+                    s.part("hearth", -12, 1, 13);
+                    for (int z = 12; z <= 14; z += 2) { s.put(-12, 1, z, fence); s.put(-12, 2, z, fence); }
+                    for (int z = 12; z <= 14; z++) s.put(-12, 3, z, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
+                    stilled(s, -10, 1, 13, 1, Direction.WEST);
+                    stack(s, -8, 1, 15, 7, true);
+                    fill(s, 8, 1, 13, 9, 1, 15, top(st(Blocks.OAK_SLAB)));
+                    s.put(7, 1, 13, Props.CART_WHEEL.get().of(0));
+                    s.put(10, 1, 15, Props.CART_WHEEL.get().of(0));
+                    s.put(8, 2, 14, Props.BUNDLE.get().of(0));
+                    s.put(9, 2, 13, Props.BUNDLE.get().of(2));
+                    s.put(9, 2, 15, Props.BASKET.get().of(1));
+                    s.part("cache", 8, 2, 13);
+                    // petals over everything, thickest under the trees
+                    for (int i = 0; i < 260; i++) {
+                        int[] c = cherry[i % 6];
+                        int x = i % 3 == 0 ? s.rnd.nextInt(37) - 18 : c[0] + s.rnd.nextInt(9) - 4, z = i % 3 == 0 ? s.rnd.nextInt(37) - 18 : c[1] + s.rnd.nextInt(9) - 4;
+                        if (x * x + z * z < 360 && !s.taken(x, 1, z) && !s.taken(x, 0, z)) s.put(x, 1, z, st(i % 9 == 0 ? Blocks.OXEYE_DAISY : Blocks.PINK_PETALS));
                     }
-                    path(s, 0, 24, 0, 16, 1, st(Blocks.DIRT_PATH), st(Blocks.GRASS_BLOCK));
-                    s.spawn(EntityTypes.WOLF, -8, 7, Scene.Spawn.NO_AI | Scene.Spawn.QUIET, "dog");
-                    s.cam(0, 14, 42, 180, 14).cam(16, 22, 15, 135, 42).cam(0, 2, 19, 180, 2).cam(0, 2, -7, 180, 0);
+                    path(s, 0, 27, 0, 21, 1, st(Blocks.DIRT_PATH), st(Blocks.GRASS_BLOCK));
+                    wild(s, 23, 28, 7);
+                    s.spawn(EntityTypes.WOLF, -10, 10, Scene.Spawn.NO_AI | Scene.Spawn.QUIET, "dog");
+                    s.cam(0, 13, 40, 180, 12).cam(20, 24, 20, 135, 40).cam(0, 2, 24, 180, -2).cam(0, 2, -3, 180, -6);
                 })
                 .script(() -> Steps.of(Light.all("hearth"), Sockets.need("stand", st -> st.is(net.minecraft.tags.ItemTags.WOOL_CARPETS), i -> st(Blocks.CARPET.pick(DyeColor.PINK))).carry("loose"),
                         Prize.at("bell").then((c, i) -> c.sound(c.pos("bell", 0), SoundEvents.BELL_BLOCK, 2.0F, 1.2F))))
@@ -170,6 +201,7 @@ final class PlacesPlain {
                         int x = (int) Math.round(Math.cos(a + 1.3) * r), z = (int) Math.round(Math.sin(a + 1.3) * r);
                         if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 0, z, h(s, x, 0, z) < 150 ? st(Blocks.DIRT_PATH) : st(Blocks.COARSE_DIRT));
                     }
+                    wild(s, 23, 34, 9);
                     s.cam(0, 16, 48, 180, 14).cam(21, 28, 21, 135, 42).cam(0, 2, 11, 180, 2).cam(0, 1, -2, 180, 8);
                 })
                 .script(() -> Steps.of(Read.all("stone"), Light.all("candle"), Prize.at("slab")))
@@ -236,6 +268,7 @@ final class PlacesPlain {
                     s.put(-9, 1, 9, Props.SUNDIAL.get().of(0));
                     for (int x = -13; x <= -7; x++) for (int z = -13; z <= -9; z++) for (int y = 1; y <= 4; y++) { double d = Math.sqrt((x + 10) * (x + 10) + (z + 9) * (z + 9) + (y - 1) * (y - 1)); if (d >= 2.6 && d < 4.1) s.put(x, y, z, green); }
                     path(s, 0, 18, 0, 14, 1, st(Blocks.POLISHED_ANDESITE), st(Blocks.GRAVEL));
+                    wild(s, 12, 22, 7);
                     s.cam(0, 12, 34, 180, 2).cam(14, 28, 14, 135, 46).cam(0, 2, 13, 180, -8).cam(3, 2, 4, 140, -18);
                 })
                 .script(() -> Steps.of(Turn.dials("ring").between(13000, 23000), Read.all("chart")))
@@ -292,6 +325,7 @@ final class PlacesPlain {
                     s.put(-2, 1, 20, st(Blocks.DECORATED_POT));
                     s.put(2, 1, 20, st(Blocks.CARVED_PUMPKIN));
                     path(s, 12, 24, 10, 11, 1, st(Blocks.SMOOTH_SANDSTONE), st(Blocks.SAND));
+                    wild(s, 20, 31, 7);
                     s.cam(0, 16, 46, 180, 14).cam(0, 32, -26, 0, 42).cam(0, 3, 10, 180, -12).cam(0, 12, -17, 0, 24);
                 })
                 .script(() -> Notes.of("stone", 4))
@@ -447,6 +481,7 @@ final class PlacesPlain {
                     moss(s, -10, 1, -16, 5, 9, 11, 30);
                     s.put(0, 3, 0, light(5));
                     s.spawn(EntityTypes.FROG, 12, 20, 0, "frog").spawn(EntityTypes.FROG, -14, 18, 0, "frog");
+                    wild(s, 22, 33, 7);
                     s.cam(0, 12, 46, 180, 8).cam(17, 24, 17, 135, 40).cam(0, 1, 17, 180, -4).cam(1, 2, -11, 0, 6);
                 })
                 .script(() -> Steps.of(Light.all("candle"), Prize.at("rope").then((c, i) -> c.sound(c.pos("rope", 0), SoundEvents.BELL_BLOCK, 3.0F, 0.6F)), Prize.at("door").then((c, i) -> PlacesWood.fillPart(c, "door"))))

@@ -109,6 +109,7 @@ final class PlacesFar {
                     s.part("loose", 4, 1, ledge + 5);
                     for (int i = 0; i < 12; i++) { int x = s.rnd.nextInt(41) - 20, z = 12 + s.rnd.nextInt(10); if (!s.taken(x, 1, z)) s.put(x, 1, z, st(i % 3 == 0 ? Blocks.DEAD_BUSH : i % 3 == 1 ? Blocks.CACTUS : Blocks.DECORATED_POT)); }
                     path(s, 0, 30, 0, ledge + 3, 1, st(Blocks.RED_SAND), st(Blocks.COARSE_DIRT));
+                    wild(s, 20, 31, 7);
                     s.cam(0, 14, 46, 180, -2).cam(21, 36, 19, 135, 40).cam(0, 2, ledge + 8, 180, -28).cam(-3, 10, ledge - 1, -90, 4);
                 })
                 .script(() -> Steps.of(Sockets.need("store", st -> st.is(Props.BASKET.get().asItem()), i -> Props.BASKET.get().of(1)).carry("loose"), Light.all("fire")))
@@ -123,15 +124,15 @@ final class PlacesFar {
                 .air(Air.of(0xCDBFE3, 70).mote(() -> ParticleTypes.END_ROD, 0.25F, 10, 0.0F).loop(() -> SoundEvents.AMETHYST_BLOCK_CHIME, 60, 0.35F, 1.4F))
                 .scene(s -> {
                     s.level(28, 8);
-                    for (int x = -25; x <= 25; x++) for (int z = -25; z <= 25; z++) { double d = Math.sqrt(x * x + z * z); if (d <= 25) s.ground(x, z, -(int) Math.round(5 * (1 - d * d / 625.0))); }
+                    for (int x = -25; x <= 25; x++) for (int z = -25; z <= 25; z++) { double d = Math.sqrt(x * x + z * z); if (d <= 25) s.ground(x, z, -(int) Math.round(5 * (1 - d * d / 625.0))); else if (d <= 28) s.ground(x, z, d > 25.8 && d < 27.6 ? 2 : 1); } // the bowl, and the lip thrown up round it
                     ground(s, 0, 0, 27, h -> h < 60 ? st(Blocks.SMOOTH_BASALT) : h < 100 ? st(Blocks.BLACKSTONE) : h < 170 ? st(Blocks.SAND) : st(Blocks.RED_SAND));
                     DyeColor[] tint = {DyeColor.WHITE, DyeColor.LIGHT_BLUE, DyeColor.PURPLE, DyeColor.MAGENTA, DyeColor.WHITE};
                     int spires = 0;
-                    for (int i = 0; i < 400 && spires < 40; i++) {
+                    for (int i = 0; i < 800 && spires < 64; i++) {
                         int x = s.rnd.nextInt(45) - 22, z = s.rnd.nextInt(45) - 22;
                         double d = Math.sqrt(x * x + z * z);
                         if (d > 22 || d < 6 || Math.abs(x) < 2 && z > 0 || s.taken(x, s.g(x, z) + 1, z) || s.taken(x + 1, s.g(x + 1, z) + 1, z) || s.taken(x, s.g(x, z + 1) + 1, z + 1)) continue;
-                        int g = s.g(x, z), hgt = 3 + (int) ((1 - d / 23) * 13 * (0.5 + s.rnd.nextDouble() * 0.5));
+                        int g = s.g(x, z), hgt = 3 + (int) ((1 - d / 23) * 19 * (0.45 + s.rnd.nextDouble() * 0.55));
                         BlockState glass = st(Blocks.STAINED_GLASS.pick(tint[s.rnd.nextInt(5)]));
                         if (spires % 7 == 3) {                              // one in seven has fallen
                             for (int k = 0; k < Math.min(hgt, 6); k++) if (!s.taken(x + k, s.g(x + k, z) + 1, z)) s.put(x + k, s.g(x + k, z) + 1, z, glass);
@@ -164,6 +165,7 @@ final class PlacesFar {
                     s.part("cache", 1, -4, -2);
                     stilled(s, 4, -4, 5, 3, Direction.WEST);
                     for (int z = 26; z >= 8; z--) for (int x = -1; x <= 1; x++) if (h(s, x, 3, z) < 200 && !s.taken(x, s.g(x, z) + 1, z)) s.put(x, s.g(x, z), z, st(Blocks.SMOOTH_SANDSTONE));
+                    wild(s, 24, 35, 9);
                     s.cam(0, 14, 50, 180, 18).cam(21, 22, 21, 135, 44).cam(0, 2, 28, 180, 12).cam(4, -4, 10, 150, -8);
                 })
                 .script(() -> Steps.of(Notes.of("stone", 5), Prize.at("prize")))
@@ -350,6 +352,7 @@ final class PlacesFar {
                     moss(s, -8, 6, -10, 8, 12, 4, 26);
                     vines(s, -9, 2, -10, 9, 9, 4, 8);
                     s.spawn(EntityTypes.CHICKEN, 10, 2, 0, "hen").spawn(EntityTypes.CHICKEN, 12, 3, 0, "hen").spawn(EntityTypes.CAT, 3, 7, Scene.Spawn.STAY, "cat");
+                    wild(s, 14, 25, 7);
                     s.cam(0, 10, 36, 180, 8).cam(14, 18, 15, 135, 42).cam(0, 2, 11, 180, 0).cam(1, 2, -1, 110, 0);
                 })
                 .script(() -> Steps.of(Read.all("bed"), Sockets.need("stove", st -> st.is(net.minecraft.tags.ItemTags.LOGS),
@@ -385,6 +388,7 @@ final class PlacesFar {
                     stilled(s, 2, 1, -17, 3, Direction.NORTH);
                     for (int i = 0; i < 70; i++) { int x = s.rnd.nextInt(53) - 26, z = s.rnd.nextInt(53) - 26; if (!s.taken(x, 1, z) && x * x + z * z < 700 && Math.abs(x) > 1) s.put(x, 1, z, st(i % 6 == 0 ? Blocks.RED_MUSHROOM : i % 6 == 1 ? Blocks.BROWN_MUSHROOM : i % 6 == 2 ? Blocks.CARPET.pick(DyeColor.PURPLE) : i % 6 == 3 ? Blocks.CARPET.pick(DyeColor.MAGENTA) : i % 6 == 4 ? Blocks.AMETHYST_CLUSTER : Blocks.FERN)); }
                     s.spawn(EntityTypes.MOOSHROOM, 12, 14, 0, "cow").spawn(EntityTypes.MOOSHROOM, -13, 2, 0, "cow");
+                    wild(s, 24, 35, 9);
                     s.cam(0, 16, 54, 180, 2).cam(23, 42, 21, 135, 42).cam(0, 2, 25, 180, -10).cam(0, 2, 3, 180, -14);
                 })
                 .script(() -> Steps.of(Light.all("lamp"), Prize.at("prize")))

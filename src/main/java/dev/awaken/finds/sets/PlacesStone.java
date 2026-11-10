@@ -90,6 +90,7 @@ final class PlacesStone {
                     for (int[] k : new int[][] {{-10, 1, 10}, {-1, 9, 10}, {1, 9, 5}, {-10, 17, 8}, {-2, 25, 6}, {7, 25, 0}, {-7, 25, -12}}) { for (int y = 0; y <= 3; y++) s.put(k[0], k[1] + y, k[2], st(Blocks.DARK_OAK_FENCE)); s.put(k[0], k[1] + 4, k[2], Props.FLAG.get().of((k[0] + k[2]) & 3)); if (k[1] > 1) for (int y = 1; y < k[1]; y++) if (s.get(k[0], y, k[2]) == null) s.put(k[0], y, k[2], ROCK); }
                     path(s, -11, 30, -10, 10, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
                     s.spawnUp(EntityTypes.GOAT, 10, -6, 16, 0, "goat").spawnUp(EntityTypes.GOAT, -12, -4, 14, 0, "goat");
+                    wild(s, 22, 33, 7);
                     s.cam(0, 18, 50, 180, -4).cam(22, 40, 18, 140, 34).cam(-13, 2, 16, -150, -22).cam(5, 25, 0, 150, 4);
                 })
                 .script(() -> Steps.of(Read.all("wheel"), When.only(When.DAWN.or(When.DUSK), Prize.at("gong").then((c, i) -> c.sound(c.pos("gong", 0), SoundEvents.BELL_RESONATE, 4.0F, 0.5F)))))
@@ -113,6 +114,22 @@ final class PlacesStone {
                         }
                     for (int x = -19; x <= 19; x++) for (int z = -15; z <= 15; z++) if (Math.abs(x) == 19 || Math.abs(z) == 15) for (int y = -2; y <= 0; y++) s.put(x, y, z, cut.apply(h(s, x, y, z)));
                     for (int i = 0; i < 3; i++) for (int x = -1; x <= 1; x++) { s.put(x, -i, 17 - i, stair(st(Blocks.STONE_STAIRS), Direction.SOUTH)); for (int y = -i + 1; y <= 2; y++) s.put(x, y, 17 - i, AIR); s.put(x, -i - 1, 17 - i, ROCK); }
+                    // the hill they were cutting into: a bluff over the north-west rim, its face left in three raw benches,
+                    // a scaffold still against it
+                    for (int x = -30; x <= 12; x++)
+                        for (int z = -33; z <= -16; z++) {
+                            if (x * x + z * z > 33 * 33) continue;
+                            int bench = z > -19 ? 3 : z > -22 ? 6 : 9;
+                            double fx = x < -22 ? Math.max(0, 1 - (-22 - x) / 8.0) : x > 3 ? Math.max(0, 1 - (x - 3) / 5.0) : 1, fz = z >= -25 ? 1 : Math.max(0, 1 - (-25 - z) / 8.0);
+                            int dy = (int) Math.round(bench * fx * fx * (3 - 2 * fx) * fz * fz * (3 - 2 * fz));
+                            if (dy <= 0) continue;
+                            s.ground(x, z, dy);
+                            if (z >= -26 && x >= -24 && x <= 5) for (int y = Math.max(1, dy - 3); y <= dy; y++) s.put(x, y, z, cut.apply(h(s, x, y, z)));
+                        }
+                    for (int x = -12; x <= -6; x += 3) for (int y = 1; y <= 3; y++) s.put(x, y, -15, st(Blocks.SPRUCE_FENCE));
+                    for (int x = -13; x <= -5; x++) s.put(x, 4, -15, top(st(Blocks.SPRUCE_SLAB)));
+                    for (int y = 1; y <= 3; y++) s.put(-13, y, -15, ladder(Direction.SOUTH));
+                    for (int[] k : new int[][] {{-18, -17}, {-3, -20}, {-10, -23}}) { s.put(k[0], s.g(k[0], k[1]) + 1, k[1], st(Blocks.CHISELED_STONE_BRICKS)); s.put(k[0] + 1, s.g(k[0] + 1, k[1]) + 1, k[1], st(Blocks.STONE_BRICKS)); }
                     // the crane on the north rim, its block still in the sling
                     for (int y = 1; y <= 9; y++) s.put(11, y, -17, st(Blocks.SPRUCE_LOG));
                     limb(s, 11, 9, -17, 11, 9, -9, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
@@ -128,8 +145,11 @@ final class PlacesStone {
                     stilled(s, -16, -2, 2, 1, Direction.SOUTH);
                     // the rim: cut blocks, the shed, a cart
                     for (int[] k : new int[][] {{-22, -6}, {-22, 2}, {21, 8}, {6, 19}}) { fill(s, k[0], 1, k[1], k[0] + 1, 2, k[1] + 1, st(Blocks.STONE_BRICKS)); s.put(k[0], 3, k[1], st(Blocks.CHISELED_STONE_BRICKS)); s.put(k[0] + 1, 3, k[1] + 1, st(Blocks.STONE_BRICK_SLAB)); }
-                    house(s, 12, 18, 17, 22, 0, 2, Pal.COBBLE, 3, 0);
-                    s.put(15, 1, 20, st(Blocks.BARREL));
+                    house(s, 11, 17, 19, 23, 0, 3, Pal.COBBLE, 3, 0);
+                    s.put(17, 1, 21, st(Blocks.BARREL));
+                    s.put(17, 1, 19, st(Blocks.STONECUTTER));
+                    stack(s, 12, 1, 24, 5, true);
+                    for (int x = -20; x <= -14; x += 3) logPile(s, x, 19, 1, 3, false, st(Blocks.SPRUCE_LOG));
                     fill(s, -8, 1, 19, -7, 1, 20, top(st(Blocks.SPRUCE_SLAB)));
                     s.put(-9, 1, 19, Props.CART_WHEEL.get().of(0));
                     s.put(-6, 1, 20, Props.CART_WHEEL.get().of(0));
@@ -147,6 +167,7 @@ final class PlacesStone {
                     s.put(5, -10, 0, AIR);
                     s.spawnUp(EntityTypes.COD, 6, 5, -8, 0, "fish").spawnUp(EntityTypes.COD, -6, -4, -9, 0, "fish").spawnUp(EntityTypes.SALMON, 0, 6, -10, 0, "fish");
                     path(s, 0, 30, 0, 18, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
+                    wild(s, 22, 33, 7);
                     s.cam(0, 14, 48, 180, 16).cam(22, 22, 21, 135, 44).cam(0, 2, 22, 180, 12).cam(-16, -2, -5, -100, 14);
                 })
                 .script(() -> Steps.of(Seal.opens("wedge", 3, Hands::pick), Prize.at("crane").then((c, i) -> { c.set("load", 0, AIR); c.sound(c.pos("crane", 0), SoundEvents.CHAIN_STEP, 2.0F, 0.6F); }), Prize.at("prize")))
@@ -209,6 +230,7 @@ final class PlacesStone {
                     s.spawnUp(EntityTypes.MINECART, -8, -4, 0, 0, "cart").spawnUp(EntityTypes.BAT, -8, -18, 1, 0, "bat");
                     s.part("cache", 6, 1, 3);
                     path(s, 0, 30, 2, 5, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
+                    wild(s, 20, 31, 7);
                     s.cam(0, 16, 46, 180, 6).cam(21, 26, 19, 135, 40).cam(-8, 2, -4, 180, 0).cam(-8, 2, -13, 180, 0);
                 })
                 .script(() -> Steps.of(Prize.at("cart").then((c, i) -> { c.set("cart", 0, st(Blocks.BARREL)); c.sound(c.pos("cart", 0), SoundEvents.WOOD_PLACE, 1.5F, 0.7F); }),
@@ -240,11 +262,37 @@ final class PlacesStone {
                     s.put(-17, 0, -12, dyke);
                     s.put(17, 0, -12, dyke);
                     for (int i = 0; i < 3; i++) { s.put(-8 + i * 8, 1, -11, Props.RING_POST.get().of(0)); s.part("sluice", -8 + i * 8, 1, -11); }
-                    for (int x = -1; x <= 1; x++) for (int z = -17; z <= -15; z++) for (int y = 1; y <= 6; y++) if (x != 0 || z != -16) s.put(x, y, z, y == 1 ? st(Blocks.SMOOTH_SANDSTONE) : h(s, x, y, z) < 60 ? st(Blocks.CUT_SANDSTONE) : st(Blocks.SANDSTONE));
-                    fill(s, -1, 7, -17, 1, 7, -15, st(Blocks.SPRUCE_SLAB));
-                    s.put(0, 6, -14, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
-                    for (int d = 0; d < 4; d++) { int ax = d % 2 == 0 ? (d == 0 ? 1 : -1) : 0, ay = d % 2 == 1 ? (d == 1 ? 1 : -1) : 0; for (int j = 1; j <= 4; j++) { s.put(ax * j, 6 + ay * j, -13, st(Blocks.SPRUCE_FENCE)); if (j >= 2) s.put(ax * j + (ay != 0 ? 1 : 0), 6 + ay * j + (ax != 0 ? 1 : 0), -13, st(Blocks.WOOL.pick(DyeColor.WHITE))); } }
-                    s.put(0, 6, -13, st(Blocks.SPRUCE_PLANKS));
+                    // the wind pump: a round tower with four cloth sails turning over the feeder
+                    tower(s, 0, -19, 3, 0, 11, 6, Pal.SAND, st(Blocks.SPRUCE_PLANKS), st(Blocks.SPRUCE_SLAB));
+                    s.put(0, 1, -16, AIR);
+                    s.put(0, 2, -16, AIR);
+                    for (int z = -15; z <= -14; z++) s.put(0, 9, z, axis(st(Blocks.SPRUCE_LOG), Direction.Axis.Z));
+                    for (int j = 1; j <= 5; j++) {
+                        s.put(j, 9, -14, st(Blocks.SPRUCE_FENCE));
+                        s.put(-j, 9, -14, st(Blocks.SPRUCE_FENCE));
+                        s.put(0, 9 + j, -14, st(Blocks.SPRUCE_FENCE));
+                        s.put(0, 9 - j, -14, st(Blocks.SPRUCE_FENCE));
+                        if (j < 2) continue;
+                        s.put(j, 10, -14, st(Blocks.WOOL.pick(DyeColor.WHITE)));
+                        s.put(-j, 8, -14, st(Blocks.WOOL.pick(DyeColor.WHITE)));
+                        s.put(-1, 9 + j, -14, st(Blocks.WOOL.pick(DyeColor.WHITE)));
+                        s.put(1, 9 - j, -14, st(Blocks.WOOL.pick(DyeColor.WHITE)));
+                    }
+                    // the outer dyke stands a block proud of the pans, open where the track comes in
+                    for (int x = -16; x <= 16; x++) for (int z = -10; z <= 14; z++) if ((Math.abs(x) == 16 || z == -10 || z == 14) && !(z == 14 && Math.abs(x) <= 1) && h(s, x, 1, z) < 215) s.put(x, 1, z, h(s, x, 2, z) < 60 ? st(Blocks.CUT_SANDSTONE) : dyke);
+                    // the boiling house with its stack, the drying floor under cloth, the white heaps waiting for the sledges
+                    house(s, -28, -6, -20, 2, 0, 4, p, 1, 0);
+                    for (int y = 1; y <= 11; y++) s.put(-27, y, -5, st(y % 4 == 0 ? Blocks.CUT_SANDSTONE : Blocks.SMOOTH_SANDSTONE));
+                    s.put(-27, 12, -5, st(Blocks.CAMPFIRE).setValue(net.minecraft.world.level.block.CampfireBlock.SIGNAL_FIRE, true));
+                    s.put(-25, 1, -4, st(Blocks.CAULDRON));
+                    s.put(-24, 1, -4, st(Blocks.CAULDRON));
+                    s.put(-23, 1, -4, st(Blocks.FURNACE));
+                    stilled(s, -24, 1, -2, 2, Direction.NORTH);
+                    awning(s, -27, 6, -20, 13, 1, 4, st(Blocks.ACACIA_FENCE), DyeColor.WHITE, DyeColor.LIGHT_GRAY);
+                    for (int x = -25; x <= -22; x += 3) for (int z = 8; z <= 11; z += 3) { s.put(x, 1, z, salt); s.put(x, 2, z, st(Blocks.QUARTZ_SLAB)); }
+                    cone(s, 23, 13, 3, 1, salt, st(Blocks.QUARTZ_SLAB));
+                    cone(s, 28, 9, 2, 1, salt, st(Blocks.QUARTZ_SLAB));
+                    cone(s, 18, 17, 2, 1, salt, st(Blocks.QUARTZ_SLAB));
                     // the foreman's house, his scale, a sledge of blocks
                     house(s, 20, -4, 26, 2, 0, 3, p, 3, 0);
                     s.put(19, 1, 0, st(Blocks.SMOOTH_SANDSTONE));
@@ -259,6 +307,7 @@ final class PlacesStone {
                     for (int[] k : new int[][] {{-12, -6}, {4, 2}, {-4, 10}}) { stilled(s, k[0], 0, k[1], k[0] & 3, Direction.SOUTH); s.put(k[0] + 1, 0, k[1], Props.OLD_ROD.get().of(0)); }
                     s.spawn(EntityTypes.LLAMA, 24, 8, 0, "llama");
                     path(s, 0, 36, 0, 16, 1, dyke, st(Blocks.SAND));
+                    wild(s, 26, 37, 9);
                     s.cam(0, 14, 52, 180, 12).cam(23, 26, 25, 135, 44).cam(0, 2, 19, 180, 8).cam(0, 2, 2, 135, 10);
                 })
                 .script(() -> Steps.of(Read.all("sluice").inOrder(), Sockets.need("scale", st -> st.is(Items.CALCITE) || st.is(Items.QUARTZ_BLOCK), i -> st(Blocks.CALCITE)).carry("loose")))
@@ -334,6 +383,7 @@ final class PlacesStone {
                     for (int[] k : new int[][] {{-4, -6}, {-6, -4}, {-8, -7}, {4, -6}, {7, -7}, {1, 6}}) stilled(s, k[0], 1, k[1], k[0] & 3, k[0] < 0 ? Direction.EAST : Direction.WEST);
                     s.spawn(EntityTypes.LLAMA, -15, -8, Scene.Spawn.STAY, "llama").spawn(EntityTypes.CAT, 12, 10, Scene.Spawn.STAY, "cat");
                     path(s, 0, 32, 0, 19, 1, st(Blocks.SMOOTH_SANDSTONE), st(Blocks.SAND));
+                    wild(s, 22, 33, 7);
                     s.cam(0, 16, 50, 180, 12).cam(23, 28, 23, 135, 44).cam(0, 2, 25, 180, -4).cam(5, 2, 9, 150, 0);
                 })
                 .script(() -> Steps.of(Prize.at("well").then((c, i) -> c.sound(c.pos("well", 0), SoundEvents.BUCKET_FILL, 1.5F, 1F)), Light.all("lamp"),
@@ -407,6 +457,7 @@ final class PlacesStone {
                         s.put(x, 1, z, i % 5 == 0 ? Props.GREAT_RIB.get().of(i & 3) : i % 5 == 1 ? st(Blocks.QUARTZ_SLAB) : i % 5 == 2 ? Props.LOOSE_STONE.get().of(i & 3) : st(Blocks.DEAD_BUSH));
                     }
                     path(s, 30, 0, 27, 0, 1, st(Blocks.RED_SAND), st(Blocks.COARSE_DIRT));
+                    wild(s, 26, 37, 9);
                     s.cam(0, 16, 54, 180, 8).cam(26, 28, 24, 130, 40).cam(29, 2, 0, 90, 0).cam(-4, 2, 0, -90, -18);
                 })
                 .script(() -> Steps.of(Sockets.need("jaw", st -> st.is(Props.GREAT_RIB.get().asItem()), i -> Props.GREAT_RIB.get().of(0)).carry("loose"), Light.all("hearth"), Read.all("wall")))

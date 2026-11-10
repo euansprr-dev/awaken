@@ -532,4 +532,209 @@ public final class B {
     public static void stilled(Scene s, int x, int y, int z, int pose, Direction facing) {
         s.put(x, y, z, Props.STILLED.get().front(pose, facing));
     }
+
+    // ---- the land round a place ---------------------------------------------------------------------------------------
+
+    /** Whether nothing is built on, in or over the ground within {@code r} of a column: a tree may stand there. */
+    public static boolean open(Scene s, int x, int z, int r) {
+        for (int ox = -r; ox <= r; ox++)
+            for (int oz = -r; oz <= r; oz++) {
+                int g = s.g(x + ox, z + oz);
+                for (int k = g; k <= g + 7; k++) if (s.taken(x + ox, k, z + oz)) return false;
+            }
+        return true;
+    }
+
+    /** A spruce: a straight trunk under skirts of needles that widen downward. */
+    public static void pine(Scene s, int x, int z, int y, int h) {
+        BlockState log = st(Blocks.SPRUCE_LOG), leaf = leaf(Blocks.SPRUCE_LEAVES);
+        for (int i = 0; i < h; i++) s.put(x, y + i, z, log);
+        s.put(x, y + h, z, leaf);
+        s.put(x, y + h + 1, z, leaf);
+        for (int k = h - 1, step = 0; k >= 2; k--, step++) {
+            int r = step % 2 == 0 ? Math.min(3, 1 + step / 3) : Math.min(3, 2 + step / 4);
+            for (int ox = -r; ox <= r; ox++)
+                for (int oz = -r; oz <= r; oz++)
+                    if ((ox != 0 || oz != 0) && Math.abs(ox) + Math.abs(oz) <= r + (r > 1 ? 1 : 0) && Math.max(Math.abs(ox), Math.abs(oz)) <= r && !s.taken(x + ox, y + k, z + oz))
+                        s.put(x + ox, y + k, z + oz, leaf);
+        }
+    }
+
+    /** A bush: a stub of trunk in a little ball of leaves. */
+    public static void bush(Scene s, int x, int z, BlockState log, BlockState leaf) {
+        int g = s.g(x, z) + 1;
+        s.put(x, g, z, log);
+        s.put(x, g + 1, z, leaf);
+        for (int d = 0; d < 4; d++) if (!s.taken(x + DX[d], g, z + DZ[d]) && h(s, x + DX[d], g, z + DZ[d]) < 200) s.put(x + DX[d], g, z + DZ[d], leaf);
+    }
+
+    /** A boulder half sunk in the ground. */
+    public static void boulder(Scene s, int x, int z, double r, BlockState a, BlockState b, BlockState c) {
+        blob(s, x, s.g(x, z) + (int) (r * 0.3), z, r, r * 0.8, r * 0.9, hh -> hh < 90 ? b : hh < 120 ? c : a);
+    }
+
+    /**
+     * Trees, bushes, stones, grass and flowers in the ring between two distances from the heart, wherever nothing is
+     * built: a place stands in its land, not on a bare disc (SPEC §59.5). What grows follows the land the site is in.
+     */
+    public static void wild(Scene s, int r0, int r1, int trees) {
+        var land = s.site.group();
+        for (int i = 0, tries = 0; i < trees && tries < trees * 14; tries++) {
+            double a = s.rnd.nextDouble() * Math.PI * 2, d = r0 + s.rnd.nextDouble() * (r1 - r0);
+            int x = (int) Math.round(Math.cos(a) * d), z = (int) Math.round(Math.sin(a) * d);
+            if (!open(s, x, z, 2)) continue;
+            int y = s.g(x, z) + 1, k = s.rnd.nextInt(100);
+            switch (land) {
+                case FOREST -> {
+                    if (k < 28) tree(s, x, z, y, 6 + k % 3, st(Blocks.BIRCH_LOG), leaf(Blocks.BIRCH_LEAVES), 2.0);
+                    else if (k < 88) tree(s, x, z, y, 5 + k % 3, st(Blocks.OAK_LOG), leaf(Blocks.OAK_LEAVES), 2.3);
+                    else bush(s, x, z, st(Blocks.OAK_LOG), leaf(Blocks.OAK_LEAVES));
+                }
+                case PLAINS -> {
+                    if (k < 50) tree(s, x, z, y, 5 + k % 2, st(Blocks.OAK_LOG), leaf(Blocks.OAK_LEAVES), 2.4);
+                    else bush(s, x, z, st(Blocks.OAK_LOG), leaf(k < 75 ? Blocks.OAK_LEAVES : Blocks.AZALEA_LEAVES));
+                }
+                case SNOW -> pine(s, x, z, y, 7 + k % 5);
+                case MOUNTAIN -> {
+                    if (k < 60) pine(s, x, z, y, 6 + k % 5);
+                    else boulder(s, x, z, 1.6 + k % 3 * 0.5, st(Blocks.STONE), st(Blocks.COBBLESTONE), st(Blocks.MOSSY_COBBLESTONE));
+                }
+                case DARK -> tree(s, x, z, y, 6 + k % 3, st(Blocks.DARK_OAK_LOG), leaf(Blocks.DARK_OAK_LEAVES), 2.9);
+                case JUNGLE -> {
+                    if (k < 70) tree(s, x, z, y, 8 + k % 6, st(Blocks.JUNGLE_LOG), leaf(Blocks.JUNGLE_LEAVES), 2.8);
+                    else bush(s, x, z, st(Blocks.JUNGLE_LOG), leaf(Blocks.JUNGLE_LEAVES));
+                }
+                case SWAMP -> {
+                    if (k < 75) tree(s, x, z, y, 5 + k % 3, st(Blocks.MANGROVE_LOG), leaf(Blocks.MANGROVE_LEAVES), 2.7);
+                    else bush(s, x, z, st(Blocks.MANGROVE_LOG), leaf(Blocks.MANGROVE_LEAVES));
+                }
+                case DESERT -> {
+                    if (k < 45) for (int c = 0; c < 1 + k % 3; c++) s.put(x, y + c, z, st(Blocks.CACTUS));
+                    else boulder(s, x, z, 1.4 + k % 3 * 0.5, st(Blocks.SANDSTONE), st(Blocks.SMOOTH_SANDSTONE), st(Blocks.CUT_SANDSTONE));
+                }
+                case BADLANDS -> boulder(s, x, z, 1.5 + k % 3 * 0.6, st(Blocks.TERRACOTTA), st(Blocks.DYED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.ORANGE)),
+                        st(Blocks.DYED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.BROWN)));
+                default -> { }
+            }
+            i++;
+        }
+        for (int x = -r1; x <= r1; x++)
+            for (int z = -r1; z <= r1; z++) {
+                double d = Math.sqrt(x * x + z * z);
+                if (d < r0 - 5 || d > r1) continue;
+                int y = s.g(x, z);
+                if (s.taken(x, y, z) || s.taken(x, y + 1, z)) continue;
+                int hh = h(s, x, 41, z);
+                boolean drift = n(s, x + 7, z - 3, 7.0) > 0.62;
+                net.minecraft.world.level.block.Block p = switch (land) {
+                    case FOREST -> hh < 22 ? Blocks.FERN : hh < 58 ? Blocks.SHORT_GRASS : drift && hh < 100 ? (hh % 3 == 0 ? Blocks.OXEYE_DAISY : hh % 3 == 1 ? Blocks.DANDELION : Blocks.CORNFLOWER) : hh > 249 ? Blocks.BUSH : null;
+                    case PLAINS -> hh < 56 ? Blocks.SHORT_GRASS : drift && hh < 130 ? (hh % 4 == 0 ? Blocks.POPPY : hh % 4 == 1 ? Blocks.CORNFLOWER : hh % 4 == 2 ? Blocks.AZURE_BLUET : Blocks.DANDELION) : hh > 250 ? Blocks.BUSH : null;
+                    case DARK -> hh < 30 ? Blocks.FERN : hh < 48 ? Blocks.SHORT_GRASS : null;
+                    case JUNGLE -> hh < 40 ? Blocks.FERN : hh < 76 ? Blocks.SHORT_GRASS : hh > 248 ? Blocks.BUSH : null;
+                    case SWAMP -> hh < 36 ? Blocks.SHORT_GRASS : hh < 52 ? Blocks.FERN : drift && hh < 84 ? Blocks.BLUE_ORCHID : null;
+                    case DESERT, BADLANDS -> hh < 7 ? Blocks.DEAD_BUSH : hh < 20 ? Blocks.SHORT_DRY_GRASS : null;
+                    default -> null;
+                };
+                if (p != null) s.put(x, y + 1, z, st(p));
+            }
+    }
+
+    // ---- what people leave about ----------------------------------------------------------------------------------------
+
+    /** A straight run of fence or low wall on the ground between two points on one axis; {@code gap} blocks from the start it is open for two. */
+    public static void run(Scene s, int x0, int z0, int x1, int z1, BlockState st, int gap) {
+        int n = Math.max(Math.abs(x1 - x0), Math.abs(z1 - z0)), sx = Integer.signum(x1 - x0), sz = Integer.signum(z1 - z0);
+        for (int i = 0; i <= n; i++) {
+            if (gap >= 0 && (i == gap || i == gap + 1)) continue;
+            int x = x0 + sx * i, z = z0 + sz * i, g = s.g(x, z);
+            if (!s.taken(x, g + 1, z)) s.put(x, g + 1, z, st);
+        }
+    }
+
+    /** A striped cloth roof on four posts: a stall, a marquee. The cloth lies at {@code y + h}. */
+    public static void awning(Scene s, int x0, int z0, int x1, int z1, int y, int h, BlockState post, net.minecraft.world.item.DyeColor a, net.minecraft.world.item.DyeColor b) {
+        for (int cx = x0; cx <= x1; cx += Math.max(1, x1 - x0)) for (int cz = z0; cz <= z1; cz += Math.max(1, z1 - z0)) for (int k = 0; k < h; k++) s.put(cx, y + k, cz, post);
+        boolean alongX = x1 - x0 >= z1 - z0;
+        for (int x = x0; x <= x1; x++)
+            for (int z = z0; z <= z1; z++)
+                s.put(x, y + h, z, st(Blocks.WOOL_SLAB.pick(((alongX ? x - x0 : z - z0) & 1) == 0 ? a : b)));
+    }
+
+    /** A well: a ring of stone round water, two posts and a little roof with a bucket chain. */
+    public static void well(Scene s, int x, int z, Pal p) {
+        int g = s.g(x, z);
+        for (int ox = -1; ox <= 1; ox++)
+            for (int oz = -1; oz <= 1; oz++) {
+                if (ox == 0 && oz == 0) { s.put(x, g, z, WATER); s.put(x, g - 1, z, p.base()); continue; }
+                s.put(x + ox, g, z + oz, p.base());
+                s.put(x + ox, g + 1, z + oz, (ox != 0 && oz != 0) ? p.wall() : p.slab());
+            }
+        for (int ox = -1; ox <= 1; ox += 2) for (int k = 2; k <= 3; k++) s.put(x + ox, g + k, z - 1, p.fence());
+        for (int ox = -1; ox <= 1; ox += 2) for (int k = 2; k <= 3; k++) s.put(x + ox, g + k, z + 1, p.fence());
+        for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++) s.put(x + ox, g + 4, z + oz, p.pslab());
+        s.put(x, g + 3, z, st(Blocks.IRON_CHAIN));
+    }
+
+    /** Barrels, a crate and a sack stacked against something: {@code n} pieces, two high at most. */
+    public static void stack(Scene s, int x, int y, int z, int n, boolean alongX) {
+        BlockState[] what = {st(Blocks.BARREL), st(Blocks.SPRUCE_PLANKS), st(Blocks.BARREL), st(Blocks.HAY_BLOCK), st(Blocks.COMPOSTER)};
+        for (int i = 0; i < n; i++) {
+            int px = alongX ? x + i / 2 : x, pz = alongX ? z : z + i / 2, py = y + (i % 2);
+            if (i % 2 == 1 && h(s, px, y, pz) < 110) continue; // not every pile is two high
+            s.put(px, py, pz, what[h(s, px, py, pz) % (py == y ? 5 : 3)]);
+        }
+    }
+
+    /** A two-wheeled cart resting on its shafts. It is three long, along x or z. */
+    public static void cart(Scene s, int x, int y, int z, boolean alongX) {
+        for (int i = -1; i <= 1; i++) {
+            int px = alongX ? x + i : x, pz = alongX ? z : z + i;
+            s.put(px, y, pz, i == 0 ? st(Blocks.SPRUCE_PLANKS) : top(st(Blocks.SPRUCE_SLAB)));
+            if (i != 0) s.put(px, y + 1, pz, i < 0 ? st(Blocks.HAY_BLOCK) : st(Blocks.BARREL));
+        }
+        s.put(alongX ? x : x - 1, y, alongX ? z - 1 : z, st(Blocks.DARK_OAK_TRAPDOOR));
+        s.put(alongX ? x : x + 1, y, alongX ? z + 1 : z, st(Blocks.DARK_OAK_TRAPDOOR));
+        s.put(alongX ? x + 2 : x, y, alongX ? z : z + 2, st(Blocks.SPRUCE_FENCE));
+    }
+
+    /**
+     * A water wheel: a rim of planks on four spokes round a hub, standing in the plane across its axle. The hub is at
+     * (cx, cy, cz); with {@code alongX} the wheel lies in the x-y plane (its axle runs north-south).
+     */
+    public static void wheel(Scene s, int cx, int cy, int cz, int r, boolean alongX, Pal p) {
+        for (int a = -r; a <= r; a++)
+            for (int b = -r; b <= r; b++) {
+                double d = Math.sqrt(a * a + b * b);
+                boolean rim = d > r - 0.9 && d <= r + 0.4, spoke = (a == 0 || b == 0) && d < r;
+                if (!rim && !spoke) continue;
+                int x = alongX ? cx + a : cx, z = alongX ? cz : cz + a;
+                s.put(x, cy + b, z, a == 0 && b == 0 ? axis(p.log(), alongX ? Direction.Axis.Z : Direction.Axis.X) : rim ? p.plank() : p.fence());
+            }
+    }
+
+    /** Rows of a crop on tilled earth with a furrow of water down the middle (so it stays tilled). */
+    public static void crops(Scene s, int x0, int z0, int x1, int z1, net.minecraft.world.level.block.Block crop) {
+        boolean alongX = x1 - x0 >= z1 - z0;
+        int mid = alongX ? (z0 + z1) / 2 : (x0 + x1) / 2;
+        BlockState soil = Blocks.FARMLAND.defaultBlockState().setValue(net.minecraft.world.level.block.FarmlandBlock.MOISTURE, 7);
+        BlockState grown = crop.defaultBlockState();
+        if (grown.hasProperty(net.minecraft.world.level.block.CropBlock.AGE)) grown = grown.setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        for (int x = x0; x <= x1; x++)
+            for (int z = z0; z <= z1; z++) {
+                int g = s.g(x, z);
+                if ((alongX ? z : x) == mid) { s.put(x, g, z, WATER); s.put(x, g - 1, z, st(Blocks.DIRT)); continue; }
+                s.put(x, g, z, soil);
+                if (h(s, x, 5, z) < 225) s.put(x, g + 1, z, h(s, x, 6, z) < 36 ? grown.hasProperty(net.minecraft.world.level.block.CropBlock.AGE) ? grown.setValue(net.minecraft.world.level.block.CropBlock.AGE, 4) : grown : grown);
+            }
+    }
+
+    /** A round tower: walls with slits, a floor every {@code storey} blocks, a cone of a roof. */
+    public static void tower(Scene s, int cx, int cz, int r, int y0, int h, int storey, Pal p, BlockState roof, BlockState roofSlab) {
+        cyl(s, cx, cz, r, y0, y0 + h, p, 0);
+        for (int k = y0; k <= y0 + h; k += storey) disc(s, cx, cz, r - 0.6, k, k == y0 ? p.floor() : p.plank());
+        for (int k = y0 + 1; k <= y0 + h; k++) if ((k - y0) % storey != 0) { for (int x = -r + 1; x <= r - 1; x++) for (int z = -r + 1; z <= r - 1; z++) if (x * x + z * z < (r - 0.6) * (r - 0.6)) s.put(cx + x, k, cz + z, AIR); }
+        for (int k = y0 + 2; k < y0 + h; k += storey) for (int d = 0; d < 4; d++) s.put(cx + DX[d] * r, k, cz + DZ[d] * r, along(st(Blocks.IRON_BARS), DX[d] == 0));
+        ring(s, cx, cz, r + 1, y0 + h, p.trim());
+        cone(s, cx, cz, r, y0 + h + 1, roof, roofSlab);
+    }
 }
