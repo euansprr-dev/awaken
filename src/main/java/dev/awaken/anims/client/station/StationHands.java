@@ -345,7 +345,7 @@ final class StationHands {
         }
         // before a furnace the hands are the scene's even while neither shows: the game's own hand and what it holds
         // would sit in the corner of the lowered view
-        if (upright && !posed && w > 0.01F) {
+        if (upright && w > 0.01F) {
             rig.noHands = true;
             return true;
         }

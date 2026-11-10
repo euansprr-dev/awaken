@@ -21776,7 +21776,8 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
   (`StationClient.unsettled`). The arm is a world arm (§63.2) with a fist 0.165 across, lying back and down toward a
   point under the inventory strip's corner on the hand's own side. A hand shows only while it carries or makes a pass
   (fuel by a key or a shift-click is the off hand's): resting before a furnace it would be a corner of arm in the frame.
-  Between reaches the hands are still the scene's (`Rig.noHands`): the game's own hand and what it holds are not drawn.
+  The hands are the scene's the whole time (`Rig.noHands`: `WorldBody.armShown` answers for both sides), so the game's
+  own hand steps aside and what it holds sinks away as for any world arm.
 - **The fire answers** (`StationFire`, drawn for you while its screen is open): fuel landing on the coals throws 14
   embers of our own (small bright squares that rise, drift and go out in 0.45 to 0.95 s; not the game's particles) and a
   flare that lasts 0.9 s; a glow stands over the coal bed as high as the fuel that is left (0.06 to 0.30) with a small

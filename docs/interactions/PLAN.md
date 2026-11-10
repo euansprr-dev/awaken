@@ -437,5 +437,7 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
   lay across the frame; an empty main hand waited under the strip's glass as a dark shape. It could not show the lid
   in your hands (the script held a block; the lift needs both hands free) and its film is a frame every ten ticks,
   too slow to judge a five-tick glide or a seven-tick reach.
-- `tools/autopilot/hands-at-work-b.txt` films those three scenes again.
+  It also showed the game's own hand still in the corner before a furnace: the first fix set a flag nothing read on
+  each side (`WorldBody.armShown`). Fixed.
+- `tools/autopilot/hands-at-work-b.txt` films those scenes again (chest, brewing stand, furnace, table at rest).
 

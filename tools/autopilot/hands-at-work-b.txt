@@ -1,6 +1,6 @@
-# Hands at Work, the three scenes the second look run (42883680457) could not settle: a chest opened with empty hands
-# (the lid in your hands; what lies in it), the brewing stand (your hand under the stack you carry), and the crafting
-# table at rest (both hands off their corners). Shots h2_*. Screens are shut with Esc, as a player shuts them.
+# Hands at Work, the scenes the second look run (42883680457) could not settle: a chest opened with empty hands
+# (the lid in your hands; what lies in it), the brewing stand (your hand under the stack you carry), the furnace (no
+# hand of the game's own in the corner) and the crafting table at rest (both hands off their corners). Shots h2_*. Screens are shut with Esc, as a player shuts them.
 # Run on CI: tools/tour-ci.sh tools/autopilot/hands-at-work-b.txt 1500
 # ci knobs: PACK=feel
 world hands_at_work_b survival 4312
@@ -102,6 +102,26 @@ shotnow h2_brewing_carry_wart
 cmd awaken ascent pilot station 3 0
 wait 30
 shotnow h2_brewing_brewing
+screenkey esc
+wait 30
+
+# ---- the furnace with beef in the hand you hold it in: the game's own hand must not sit in the corner ----
+cmd setblock 12 200 3 minecraft:furnace[facing=north]
+cmd clear @s
+cmd give @s minecraft:beef 4
+cmd tp @s 12.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot use
+wait 40
+shotnow h2_furnace_rest
+cmd awaken ascent pilot station 30 0
+wait 6
+cmd awaken ascent pilot hover 0
+wait 10
+shotnow h2_furnace_carry
+cmd awaken ascent pilot station 0 0
+wait 30
+shotnow h2_furnace_laid
 screenkey esc
 wait 30
 

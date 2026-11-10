@@ -446,7 +446,8 @@ final class WorldBody {
 
     /** This frame's world body shows that arm (the right, or the left). */
     static boolean armShown(boolean right) {
-        return armsThisFrame && RIG.weight[(right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM).ordinal()] > 0.01F;
+        // (a source that holds the hands and draws none has both sides: vanilla's hand and what it holds step aside)
+        return armsThisFrame && (RIG.noHands || RIG.weight[(right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM).ordinal()] > 0.01F);
     }
 
     static void reset() {
