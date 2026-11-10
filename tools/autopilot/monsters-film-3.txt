@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # cinder_miner (The Pickhead)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.2 200.15 2.6 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec cinder_miner_death 50 2
 wait 54
 # slag_cube (The Slag Pot)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 199.88 2.6 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec slag_cube_death 50 2
 wait 54
 # ember_imp (The Bellows)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.9 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -118,12 +112,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec ember_imp_death 50 2
 wait 54
 # scorch_crawler (The Coal Tick)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.3 199.63 2.6 -90 4
 look -90 4
 wait 6
@@ -142,12 +134,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec scorch_crawler_death 50 2
 wait 54
 # slag_boar (The Slag Boar)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.6 200.09 2.6 -90 4
 look -90 4
 wait 6
@@ -169,12 +159,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec slag_boar_death 50 2
 wait 54
 # the_overseer (The Overseer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.6 201.03 2.6 -90 4
 look -90 4
 wait 6
@@ -199,12 +187,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_overseer_death 50 2
 wait 54
 # vine_creaker (The Creaker)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.9 200.42 2.6 -90 4
 look -90 4
 wait 6
@@ -223,12 +209,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec vine_creaker_death 50 2
 wait 54
 # thorn_archer (The Thorn Bud)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.9 200.42 4.5 -90 4
 look -90 4
 wait 6
@@ -246,8 +230,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec thorn_archer_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

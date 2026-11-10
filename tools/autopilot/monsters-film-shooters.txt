@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # rivet_gunner (The Riveter)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.1 200.09 4.5 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec rivet_gunner_death 50 2
 wait 54
 # crypt_archer (The Mourner)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.5 200.62 4.5 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec crypt_archer_death 50 2
 wait 54
 # hollow_tender (The Tender)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.7 200.70 4.5 -90 4
 look -90 4
 wait 6
@@ -124,12 +118,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hollow_tender_death 50 2
 wait 54
 # thorn_archer (The Thorn Bud)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.9 200.42 4.5 -90 4
 look -90 4
 wait 6
@@ -148,12 +140,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec thorn_archer_death 50 2
 wait 54
 # security_unit (The Security Unit)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.7 199.93 2.6 -90 4
 look -90 4
 wait 6
@@ -172,12 +162,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec security_unit_death 50 2
 wait 54
 # abyss_watcher (The Watcher)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.8 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -195,8 +183,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec abyss_watcher_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

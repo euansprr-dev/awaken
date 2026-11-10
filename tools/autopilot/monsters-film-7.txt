@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # rime_acolyte (The Frozen Monk)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.7 199.93 2.6 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec rime_acolyte_death 50 2
 wait 54
 # hail_stray (The Hail Slinger)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.8 199.98 4.5 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hail_stray_death 50 2
 wait 54
 # frost_wisp (The Snow Star)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.5 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -121,12 +115,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec frost_wisp_death 50 2
 wait 54
 # ice_hound (The Ice Hound)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 200.04 2.6 -90 4
 look -90 4
 wait 6
@@ -145,12 +137,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec ice_hound_death 50 2
 wait 54
 # chant_master (The Long Horn)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.7 200.31 4.5 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec chant_master_death 50 2
 wait 54
 # the_yeti (The Yeti)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.4 200.59 2.6 -90 4
 look -90 4
 wait 6
@@ -205,12 +193,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_yeti_death 50 2
 wait 54
 # silver_knight (The Empty Suit)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.9 200.42 2.6 -90 4
 look -90 4
 wait 6
@@ -229,12 +215,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec silver_knight_death 50 2
 wait 54
 # glint_mite (The Glint)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.5 199.88 2.6 -90 4
 look -90 4
 wait 6
@@ -252,8 +236,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec glint_mite_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info
