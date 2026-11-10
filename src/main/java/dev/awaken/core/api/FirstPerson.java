@@ -335,6 +335,13 @@ public final class FirstPerson {
     /** The holo wrist installs this (SPEC §40.7): whatever draws its own arms in the hand pass sinks by it. */
     public static volatile HandsAway handsAway = (equip, partialTick) -> 0F;
 
+    /**
+     * How far and how quickly the hands trail the view's turn, against the body's own (1, 1). Whatever is held sets them
+     * each frame (Arms: a weapon's weight, SPEC §25 "Weight in the Hand": daggers tight, a Maul further and slower) and
+     * puts them back to 1 when it lets go.
+     */
+    public static volatile float lagReach = 1F, lagRate = 1F;
+
     /** The comfort setting (the body's reduced motion): halves the procedural layer (look-lag) when true. */
     public static volatile java.util.function.BooleanSupplier reducedMotion = () -> false;
 

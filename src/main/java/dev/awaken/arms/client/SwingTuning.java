@@ -55,6 +55,10 @@ final class SwingTuning {
                                                 .executes(c -> on(StringArgumentType.getString(c, "path")))))
                                 .then(Commands.literal("off").executes(c -> off())))
                         .then(Commands.literal("ab").executes(c -> ab()))
+                        // Weight in the Hand's layers, all at once: the quick A/B against the picture before the pass
+                        .then(Commands.literal("weight")
+                                .then(Commands.literal("on").executes(c -> weight(true)))
+                                .then(Commands.literal("off").executes(c -> weight(false))))
                         .then(Commands.literal("blind").executes(c -> blind()))
                         .then(Commands.literal("note").then(Commands.argument("words", StringArgumentType.greedyString())
                                 .executes(c -> note(StringArgumentType.getString(c, "words")))))
@@ -152,6 +156,12 @@ final class SwingTuning {
         } catch (IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
+    }
+
+    /** Every layer of the polish pass on or off (the shake, the settle, the living hold, the draw, the guard's ease). */
+    private static int weight(boolean on) {
+        ArmsComfort.layers(on);
+        return say(on ? "Weight in the Hand: the layers are on" : "Weight in the Hand: the layers are off (the swings as before the pass)");
     }
 
     private static int ab() {

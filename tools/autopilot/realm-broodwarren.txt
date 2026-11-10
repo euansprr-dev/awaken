@@ -1,0 +1,87 @@
+# The Broodwarren (SPEC 50.9, gate 14): the first short crawl, room by room down to the brood chamber, with its packs standing where they wait. Difficulty is normal; the camera is in creative, so nothing wakes and the larder's ambush stays shut.
+world autopilot_realm_broodwarren creative 20261113
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:broodwarren
+need realm
+hud off
+wait 30
+wait 300
+look 0 -8
+cmd awaken gate realm_at MOUTH 0 0 0 2
+look 0 12
+wait 80
+shot brood_mouth
+cmd awaken gate realm_at DEN 0 0 0 -10
+look 0 4
+wait 80
+shot brood_ante
+cmd awaken gate realm_at DEN 0 0 0 13
+look 0 14
+wait 80
+shot brood_gallery
+cmd awaken gate realm_at MOUTH 0 1 -13 93
+look 20 40
+wait 80
+shot brood_nursery_top
+cmd awaken gate realm_at MOUTH 0 8 -15 96
+look 8 28
+wait 80
+shot brood_nursery_ledge
+cmd awaken gate realm_at MOUTH 0 0 -38 102
+look 0 -72
+wait 80
+shot brood_nursery_up
+cmd awaken gate realm_at DEN 1 -10 0 -3
+look -72 0
+wait 80
+shot brood_larder
+cmd awaken gate realm_at DEN 1 26 0 14
+look -45 6
+wait 80
+shot brood_jelly
+cmd awaken gate realm_at DEN 1 4 9 -32
+look 178 -14
+wait 80
+shot brood_crawl
+cmd awaken gate realm_at WARDEN 0 10 3 -4
+look 68 16
+wait 80
+shot brood_ring
+cmd awaken gate realm_at WARDEN 0 -11 0 2
+look 72 14
+wait 80
+shot brood_descent
+cmd awaken gate realm_at LORD 0 17 6 3
+look 100 18
+wait 80
+shot brood_chamber
+cmd awaken gate realm_at LORD 0 0 1 8
+look 180 -42
+wait 80
+shot brood_chamber_up
+# the last two are played, not looked at: walking into the jelly cell pays, and walking into the larder springs it
+cmd gamemode survival
+cmd awaken gate realm_at DEN 1 27 0 15
+look -45 10
+wait 50
+shot brood_jelly_found
+cmd awaken gate realm_at DEN 1 0 0 -5
+look 0 -5
+wait 45
+shot brood_ambush
+cmd gamemode creative
+wait 20
+quit

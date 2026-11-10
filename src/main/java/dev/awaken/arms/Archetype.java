@@ -108,14 +108,22 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
      * plane (degrees, + toward the off hand) and optionally the tip's tilt forward (degrees: a chop, a thrust). The
      * hand travels between poses on an arc about the shoulder.
      */
-    public record Swing(List<Float> from, List<Float> to, float lunge, String form) {
+    public record Swing(List<Float> from, List<Float> to, float lunge, String form, List<Float> blow) {
         static final Codec<Swing> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.FLOAT.listOf(3, 4).fieldOf("from").forGetter(Swing::from),
                 Codec.FLOAT.listOf(3, 4).fieldOf("to").forGetter(Swing::to),
                 Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge),
                 // the move's shape (slash, chop, stab, rise...): the blow pins or lifts by it (SPEC §25 "Fight Feel")
-                Codec.STRING.optionalFieldOf("form", "").forGetter(Swing::form)
+                Codec.STRING.optionalFieldOf("form", "").forGetter(Swing::form),
+                // a cut's real travel on the screen at its hit [x right, y up], from the baked blade (tools/arms/blows.py;
+                // SPEC §25 "Weight in the Hand"): the kick, the knockback's side, the recoil and a kill's fall follow it
+                Codec.FLOAT.listOf(2, 2).optionalFieldOf("blow", List.of()).forGetter(Swing::blow)
         ).apply(i, Swing::new));
+
+        /** Whether the bake gave this move its travel across the screen (a cut; a thrust has none). */
+        public boolean hasBlow() {
+            return blow.size() == 2;
+        }
     }
 
     /** An Art's wave: its reach grows this many blocks a tick through the active ticks, out to {@code range}. */

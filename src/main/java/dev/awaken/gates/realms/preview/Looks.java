@@ -121,6 +121,8 @@ final class Looks {
                 l.boxes = boxes;
             }
         }
+        // a cluster of candles collides as one block but is drawn as thin sticks: show the sticks, or it reads as a white crate
+        if (l.kind == BOX && id[1].endsWith("_candles")) l.boxes = sticks(m);
         boolean leafy = id[1].contains("leaves") || id[1].contains("vine");
         for (int f = 0; f < 6; f++) l.faces[f] = composite(m, modelDir(f, rx, ry), leafy ? foliage : grass);
     }
@@ -143,6 +145,22 @@ final class Looks {
             out[i] = box;
         }
         return out;
+    }
+
+    private static double[][] sticks(Model m) {
+        List<double[]> out = new ArrayList<>();
+        for (JsonElement je : m.elements()) {
+            JsonArray a = je.getAsJsonObject().getAsJsonArray("from"), b = je.getAsJsonObject().getAsJsonArray("to");
+            double[] box = new double[6];
+            boolean thick = true;
+            for (int k = 0; k < 3; k++) {
+                thick &= b.get(k).getAsDouble() - a.get(k).getAsDouble() >= 1.5;
+                box[k] = a.get(k).getAsDouble() / 16;
+                box[k + 3] = b.get(k).getAsDouble() / 16;
+            }
+            if (thick) out.add(box);
+        }
+        return out.toArray(new double[0][]);
     }
 
     /** A world direction back through the variant's rotation: y undone first, then x. */

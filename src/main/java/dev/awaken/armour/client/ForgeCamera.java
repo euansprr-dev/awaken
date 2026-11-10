@@ -128,7 +128,8 @@ final class ForgeCamera {
 
     static void player(RenderPlayerEvent.Pre<?> e) {
         Minecraft mc = Minecraft.getInstance();
-        if (active() && mc.player != null && e.getRenderState().id == mc.player.getId()) e.setCanceled(true);
+        // Admire films you: there your own body is the subject, not in the way
+        if (active() && !ArmourAdmire.on() && mc.player != null && e.getRenderState().id == mc.player.getId()) e.setCanceled(true);
     }
 
     // ---- shots ---------------------------------------------------------------------------------------------------------

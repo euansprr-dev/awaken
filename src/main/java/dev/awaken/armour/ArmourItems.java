@@ -86,7 +86,8 @@ public final class ArmourItems {
         Map<ArmorType, Integer> defense = new EnumMap<>(ArmorType.class);
         for (ArmorType type : ForgeSong.PIECES) defense.put(type, n.defense(type));
         // the rank's Hunter look stands in where a set's meshes are missing (SPEC §44, failure and recovery)
-        return new ArmorMaterial(t.armour.durability(), defense, t.armour.enchantability(), t.armour.sound(), n.toughness(), n.knockback(),
+        // a piece goes on with the sound of what its set is made of, not its rank's vanilla metal (SPEC §44.12)
+        return new ArmorMaterial(t.armour.durability(), defense, t.armour.enchantability(), ArmourSounds.equip(set), n.toughness(), n.knockback(),
                 t.repairTag(Piece.HELMET), t.asset());
     }
 

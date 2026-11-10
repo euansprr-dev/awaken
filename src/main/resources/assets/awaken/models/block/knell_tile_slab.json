@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "awaken:block/knell_tile",
+    "top": "awaken:block/knell_tile",
+    "side": "awaken:block/knell_tile"
+  }
+}

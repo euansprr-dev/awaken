@@ -990,5 +990,203 @@
         "attenuation_distance": 20
       }
     ]
+  },
+  "fight.strong": {
+    "subtitle": "subtitles.awaken.arms.hit_flesh",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.strong",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.crit": {
+    "subtitle": "subtitles.awaken.arms.hit_flesh_heavy",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.crit",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.knock": {
+    "subtitle": "subtitles.awaken.arms.hit_flesh_heavy",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.knockback",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.sweep": {
+    "subtitle": "subtitles.awaken.arms.cleave",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.mace": {
+    "subtitle": "subtitles.awaken.arms.hit_blunt",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_air",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.mace_heavy": {
+    "subtitle": "subtitles.awaken.arms.execution",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground_heavy",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.golem": {
+    "subtitle": "subtitles.awaken.arms.hit_armor",
+    "sounds": [
+      {
+        "name": "minecraft:entity.iron_golem.hurt",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.breeze_hurt": {
+    "subtitle": "subtitles.awaken.arms.hit_spirit",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.hurt",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.breeze_deflect": {
+    "subtitle": "subtitles.awaken.arms.glance",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.deflect",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.anvil": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.crossbow_draw": {
+    "subtitle": "subtitles.awaken.arms.charge",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_middle",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.crossbow_lock": {
+    "subtitle": "subtitles.awaken.arms.glint",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.flap": {
+    "subtitle": "subtitles.awaken.arms.perfect_dodge",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.dull": {
+    "subtitle": "subtitles.awaken.fight.dull",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.nodamage",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.stone": {
+    "subtitle": "subtitles.awaken.arms.hit_stone",
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.wood": {
+    "subtitle": "subtitles.awaken.arms.hit_wood",
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.draw_blade": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.draw_haft": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:item.axe.strip",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.draw_chain": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.draw_gauntlets": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.draw_precursor": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:block.conduit.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.rasp": {
+    "subtitle": "subtitles.awaken.fight.draw",
+    "sounds": [
+      {
+        "name": "minecraft:block.grindstone.use",
+        "type": "event"
+      }
+    ]
   }
 }

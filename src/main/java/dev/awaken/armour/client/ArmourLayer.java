@@ -25,7 +25,8 @@ import net.minecraft.world.item.equipment.ArmorType;
  * model is posed, through the armour shader. On players (both arm widths), mannequins, armour stands and humanoid mobs.
  * The cape hangs from its yoke in three links that swing with the player's cape motion (vanilla's lean and flap, each
  * link a little further); the cloth over the legs is pushed by the stride (the front by the leg swung forward, the back
- * by the leg swung back). Nothing per frame but the vertices.
+ * by the leg swung back). A set's living parts (a halo, a marker, a plume, wings: SPEC §44.10) are drawn apart from
+ * their bone's still mesh, each moved by the frame's own state. Nothing per frame but the vertices.
  */
 final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends RenderLayer<S, M> {
     private static final ArmorType[] SLOTS = {ArmorType.HELMET, ArmorType.CHESTPLATE, ArmorType.LEGGINGS, ArmorType.BOOTS};
@@ -39,11 +40,20 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         ItemStack[] worn = state.getRenderData(ArmourClient.WORN);
         if (state.isInvisible || worn == null) return;
         ArmourGlow.Glow glow = state.getRenderData(ArmourClient.GLOW);
-        int energy = ArmourGlow.energy(glow), flash = ArmourGlow.flash(glow);
+        int energy = ArmourGlow.energy(glow);
+        if (state.getRenderData(ArmourClient.ADMIRED) != null) {
+            // Admire's hero light (SPEC §44.13): never darker than a lit room, and what glows glows as if half charged
+            light = net.minecraft.util.LightCoordsUtil.max(light, HERO_LIGHT);
+            energy = Math.max(energy, 110);
+        }
         boolean low = state.getRenderData(ArmourClient.LOW) != null;
+        ArmourLive.Wake wake = state.getRenderData(ArmourClient.WAKE);
+        boolean motion = ArmourClientConfig.motion();
+        float wind = motion ? ArmourLive.wind(state) : 0F, kick = motion ? ArmourGlow.kick(glow) : 0F;
         ArmourSet aura = null;
         int mastered = 0;
-        for (ArmorType slot : SLOTS) {
+        for (int si = 0; si < SLOTS.length; si++) {
+            ArmorType slot = SLOTS[si];
             ItemStack stack = worn[slot.ordinal()];
             if (stack == null) continue;
             ArmourLooks.Look look = ArmourLooks.drawn(stack);
@@ -55,15 +65,33 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             Forged forged = stack.get(ArmourContent.FORGED.get());
             int mastery = forged == null ? 0 : forged.masteryStep();
             int accent = forged == null ? 0 : forged.accent();
+            int flash = ArmourGlow.flash(glow, slot); // a release's flare, or the wake climbing the body (SPEC §44.11)
+            int lit = Math.max(energy, flash * 3 / 4);  // and with it what glows on the piece brightens: the seams light
+            int marks = marks(forged, look.set());
             // mastery IV: the set's awakened parts grow over the piece's own
             ArmourMesh[] awake = mastery >= AWAKENED ? ArmourMeshes.awakened(look.set(), slot) : null;
+            float grown = awake == null || wake == null ? 1F : wake.grown(si);
+            // the set's living parts (SPEC §44.10): their bones drawn without them, and each where it is now
+            ArmourLive.Part[] live = motion ? ArmourMeshes.live(look.set(), slot) : null;
+            ArmourMesh[] still = live == null ? null : ArmourMeshes.still(look.set(), slot);
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
-                if (mesh == null && extra == null) continue;
+                boolean lives = still != null && ArmourLive.on(live, b);
+                ArmourMesh mesh = lives ? still[b.ordinal()] : bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null && !lives) continue;
                 ps.pushPose();
                 if (place(ps, getParentModel(), b, state)) {
-                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
-                    if (extra != null) draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
+                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
+                    if (lives) for (ArmourLive.Part p : live) {
+                        if (p.bone() != b) continue;
+                        ps.pushPose();
+                        ArmourLive.pose(ps, p, state.ageInTicks, state.walkAnimationSpeed, state.walkAnimationPos, wind, kick);
+                        draw(out, ps, p.mesh(), look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
+                        ps.popPose();
+                    }
+                    if (extra != null) {
+                        if (grown < 1F) ArmourLive.grow(ps, extra, grown);
+                        draw(out, ps, extra, look.set(), light, foil, lit, flash, -1, mastery, low, accent, script, marks);
+                    }
                 }
                 ps.popPose();
             }
@@ -76,6 +104,8 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         if (mastered == 4) ArmourAura.draw(out, ps, aura, state.ageInTicks);
         if (glow != null && glow.runes > 0) runes(ps, out, worn[ArmorType.CHESTPLATE.ordinal()], glow, state.ageInTicks);
     }
+
+    private static final int HERO_LIGHT = net.minecraft.util.LightCoordsUtil.pack(11, 0);
 
     /** Mastery steps (0-based) at which the awakened parts grow (IV) and the aura comes (V). */
     static final int AWAKENED = 3, AURA = 4;
@@ -204,10 +234,31 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
     /** And the enchantment light on it now (SPEC §45.11: {@code EnchantApi.glowBits}, 0 none), in bits 8-14 of the first half. */
     static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
                      int mastery, boolean low, int accentColour, int glow) {
+        draw(out, ps, mesh, set, light, foil, energy, flash, heat, mastery, low, accentColour, glow, 0);
+    }
+
+    /** What the forge left on a piece (SPEC §44.11): its scale flaw, the fold's ripples in its steel, its maker's mark. */
+    static final int FLAW = 1, WELD = 2, MAKER = 4;
+
+    /**
+     * A piece's forge marks: a scale flaw shows as scale; a set that is folded in the making (A and S) shows the fold's
+     * ripples when the piece came out Masterwork or better; a Flawless piece carries its maker's mark.
+     */
+    static int marks(@org.jspecify.annotations.Nullable Forged f, ArmourSet set) {
+        if (f == null) return 0;
+        int q = f.quality();
+        return (f.flaw() ? FLAW : 0) | (q >= dev.awaken.armour.ForgeSong.Quality.MASTERWORK.ordinal() && dev.awaken.armour.ForgeSong.folds(set) ? WELD : 0)
+                | (q >= dev.awaken.armour.ForgeSong.Quality.FLAWLESS.ordinal() ? MAKER : 0);
+    }
+
+    /** And its forge marks ({@link #marks}): the flaw in the first half's top bit, the weld and the maker's mark in the second's top two. */
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
+                     int mastery, boolean low, int accentColour, int glow, int marks) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
-        int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | (mastery & 7) << 10 | (low ? 8192 : 0) | Math.min(255, Math.max(0, flash));
-        int u = (heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy))) | (glow & 127) << 8;
+        int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | (mastery & 7) << 10 | (low ? 8192 : 0) | Math.min(255, Math.max(0, flash))
+                | ((marks & WELD) != 0 ? 16384 : 0) | ((marks & MAKER) != 0 ? 32768 : 0);
+        int u = (heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy))) | (glow & 127) << 8 | ((marks & FLAW) != 0 ? 32768 : 0);
         int packed = ours ? v << 16 | u : OverlayTexture.NO_OVERLAY;
         int accent = !ours ? 0xFFFFFF : accentColour != 0 ? accentColour & 0xFFFFFF : mesh.accent();
         out.submitCustomGeometry(ps, ours ? ArmourPipelines.armour(texture) : ArmourPipelines.fallback(texture),

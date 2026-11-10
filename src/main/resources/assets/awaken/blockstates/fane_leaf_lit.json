@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/fane_leaf_lit"
+      },
+      {
+        "model": "awaken:block/fane_leaf_lit",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/fane_leaf_lit",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/fane_leaf_lit",
+        "y": 270
+      }
+    ]
+  }
+}

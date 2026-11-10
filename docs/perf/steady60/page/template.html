@@ -1,0 +1,337 @@
+<title>Steady Light</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* layout: one reading column for the argument, wide rows only for same-spot shots and charts */
+:root {
+  --bg: #f5f6fb; --surface: #ffffff; --ink: #161b30; --muted: #586080; --line: #dde2ef;
+  --accent: #3355d4; --sun: #b96a10; --good: #17805a; --warn: #a9710f; --bad: #bf3b2c;
+  --tint: #eaeefc; --s1: #9fb0e8; --s2: #17805a; --s3: #d9952a; --s4: #bf3b2c;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: Inter, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1120; --surface: #161a2d; --ink: #e7eaf7; --muted: #9aa3c4; --line: #2a3050;
+  --accent: #8ea4ff; --sun: #f0b25c; --good: #5fd0a1; --warn: #e8b55e; --bad: #ff8d7c;
+  --tint: #1c2240; --s1: #5b6cae; --s2: #45b98a; --s3: #e0a544; --s4: #ff8d7c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1120; --surface: #161a2d; --ink: #e7eaf7; --muted: #9aa3c4; --line: #2a3050;
+  --accent: #8ea4ff; --sun: #f0b25c; --good: #5fd0a1; --warn: #e8b55e; --bad: #ff8d7c;
+  --tint: #1c2240; --s1: #5b6cae; --s2: #45b98a; --s3: #e0a544; --s4: #ff8d7c; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wide { max-width: 1240px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; font-weight: 600; margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.1rem; font-weight: 600; margin-top: 28px; }
+p { margin: 12px 0; max-width: 68ch; }
+.kicker { font: 600 0.78rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--sun); margin-bottom: 14px; }
+.lede { font-size: 1.15rem; color: var(--ink); max-width: 64ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+a { color: var(--accent); }
+strong { font-weight: 600; }
+code, .num { font-family: var(--mono); font-size: 0.92em; font-variant-numeric: tabular-nums; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 22px; font-size: 0.9rem; }
+nav.toc a { text-decoration: none; border-bottom: 1px solid var(--line); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 26px 0 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.tile b { display: block; font: 600 1.7rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.tile span { display: block; color: var(--muted); font-size: 0.86rem; margin-top: 6px; }
+.tile.bad b { color: var(--bad); } .tile.good b { color: var(--good); }
+.call { background: var(--tint); border-radius: 10px; padding: 16px 18px; margin: 22px 0; }
+.call p { margin: 6px 0; }
+.tablebox { overflow-x: auto; margin: 16px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 0.74rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 16px; }
+td.hot { color: var(--bad); font-weight: 600; } td.ok { color: var(--good); font-weight: 600; }
+figure { margin: 22px 0; }
+figcaption { color: var(--muted); font-size: 0.88rem; margin-top: 8px; max-width: 72ch; }
+.shotrow { margin: 30px 0; }
+.shotrow figcaption { margin: 0 0 10px; color: var(--ink); font-size: 0.95rem; max-width: 80ch; }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.shots.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.shot { margin: 0; min-width: 0; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); }
+.shot .lab { display: flex; justify-content: space-between; gap: 8px; font: 600 0.76rem/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; margin: 8px 2px 0; }
+.shot .lab i { font-style: normal; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+@media (max-width: 760px) { .shots, .shots.two { grid-template-columns: 1fr; } }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 8px; overflow-x: auto; }
+.chart svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.ct { font: 600 12px var(--body); fill: var(--ink); }
+.ca { font: 10px var(--mono); fill: var(--muted); }
+.cb { font: 12px var(--body); fill: var(--ink); }
+.cg { stroke: var(--line); stroke-width: 1; }
+.cl60 { stroke: var(--bad); stroke-width: 1; stroke-dasharray: 4 3; }
+.cp { fill: none; stroke: var(--accent); stroke-width: 1; }
+.cd { fill: var(--bad); }
+.s1 { fill: var(--s1); } .s2 { fill: var(--s2); } .s3 { fill: var(--s3); } .s4 { fill: var(--s4); }
+.bg1 { fill: var(--muted); } .bg2 { fill: var(--accent); } .bg3 { fill: var(--sun); } .bg4 { fill: var(--bad); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.84rem; color: var(--muted); margin: 10px 2px 2px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+dl.qa { margin: 8px 0; }
+dl.qa dt { font: 600 1.02rem/1.35 var(--display); margin-top: 22px; }
+dl.qa dd { margin: 6px 0 0; max-width: 68ch; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin: 18px 0; }
+.opt { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.opt.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.opt h3 { margin-top: 0; }
+.opt .tag { font: 600 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+.opt.pick .tag { color: var(--accent); }
+.opt p { font-size: 0.93rem; margin: 8px 0; }
+.opt .cost { font: 0.82rem var(--mono); color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 10px; }
+ol.stages { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 10px; }
+ol.stages li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 14px; }
+ol.stages .no { font: 600 0.78rem/1.5 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sun); }
+ol.stages h3 { margin: 0; }
+ol.stages p { margin: 6px 0 0; font-size: 0.94rem; grid-column: 2; }
+ol.stages .gate { color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 560px) { ol.stages li { grid-template-columns: 1fr; } ol.stages p { grid-column: 1; } }
+ol.decide { padding-left: 0; list-style: none; counter-reset: d; display: grid; gap: 10px; margin: 18px 0; }
+ol.decide li { counter-increment: d; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 14px 54px; position: relative; }
+ol.decide li::before { content: counter(d); position: absolute; left: 16px; top: 13px; font: 700 1.2rem var(--display); color: var(--accent); }
+ol.decide b { display: block; font-family: var(--display); font-size: 1.02rem; }
+ol.decide span { display: block; font-size: 0.93rem; margin-top: 4px; }
+ol.decide em { font-style: normal; color: var(--good); font-weight: 600; }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 18px 0; }
+.flow > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.flow h3 { margin-top: 0; font-size: 1rem; }
+.flow ol { margin: 10px 0 0; padding-left: 20px; font-size: 0.93rem; }
+.flow li { margin: 5px 0; }
+.flow .cost { font-family: var(--mono); color: var(--muted); font-size: 0.82rem; }
+ul.tight { padding-left: 20px; max-width: 68ch; } ul.tight li { margin: 6px 0; }
+footer { margin-top: 60px; color: var(--muted); font-size: 0.86rem; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="wrap">
+  <div class="kicker">AWAKEN · plan for approval · 10 Nov 2026</div>
+  <h1>Steady Light</h1>
+  <p class="lede">How to get ImmersiveVFX's look at a frame rate that doesn't move, on your M4 and the 4K Dell. Nothing here is built yet. It ends with five decisions for you.</p>
+
+  <div class="call">
+    <p><strong>The short version.</strong> I ran the game fullscreen on your Dell with your settings, in a copy of your world. ImmersiveVFX can't hold 60 there: flying with an open view it needs about <span class="num">17 ms</span> of GPU time a frame, and a 60 fps frame has <span class="num">16.7 ms</span> for everything. Its shadows are most of that. Lens Cinematic needs about <span class="num">9 ms</span> on the same route and almost never misses a frame.</p>
+    <p>So Lens already has the frame rate. What it lacks is the look, and most of that look turns out to be cheap: the far blue fog, the sky, the clouds and sunlight that reads. <strong>My recommendation: give Lens that look inside a fixed frame budget, in stages, and then add real shadows that are redrawn a few times a second instead of every frame.</strong></p>
+  </div>
+
+  <div class="tiles">
+    <div class="tile bad"><b>{{T_VFX_FLY}}</b><span>frames on time, ImmersiveVFX, flying, as you play it</span></div>
+    <div class="tile good"><b>{{T_CINE_FLY}}</b><span>frames on time, Lens Cinematic, same flight</span></div>
+    <div class="tile"><b>{{T_SHADOW}}</b><span>of GPU time a frame for ImmersiveVFX's shadows when flying</span></div>
+    <div class="tile"><b>{{T_AIR}}</b><span>for its fog, sky and clouds on top of Swift: the cheap part</span></div>
+  </div>
+  <nav class="toc" aria-label="On this page">
+    <a href="#measured">What I measured</a><a href="#looks">Same spots, three looks</a><a href="#answers">Your questions</a><a href="#causes">Causes</a><a href="#options">Options</a><a href="#plan">The plan</a><a href="#stages">Stages</a><a href="#decisions">Decisions</a>
+  </nav>
+
+  <h2 id="contract">What you asked for, made checkable</h2>
+  <ul class="tight">
+    <li><strong>The look:</strong> nearly ImmersiveVFX's. Its far blue fog, its shadows, its sun rays and its atmosphere, with soft 3D clouds that still look vanilla. A little under is fine.</li>
+    <li><strong>Steady 60:</strong> on your screen a frame is on time when it stays up for two refreshes (16.7 ms). The target is 99% of frames on time standing, turning and in the city, 98% flying over land you've already seen, and never three late frames in a row.</li>
+    <li><strong>Nearly on par:</strong> your eye, on same-spot, same-moment pairs at five moments (morning, noon, dusk, night, the open view). The bar is that you can't call ImmersiveVFX clearly better in four of the five.</li>
+    <li><strong>Kept:</strong> Vulkan, your render distance and resolution, every gate look and story scene, and the rule that nothing in ImmersiveVFX's code is read or copied (it is All Rights Reserved).</li>
+  </ul>
+
+  <h2 id="measured">What I measured at your setup</h2>
+  <p>Three tours on the Dell: fullscreen at 3840×2160 and 120 Hz, render distance 16, the world drawn at 2880×1620, your ImmersiveVFX settings, your "New Beginnings" world (a copy; your play folder was only read). Each window recorded every frame. Builds by other sessions waited outside each tour; the load on the Mac is logged with each number.</p>
+
+  <h3>Frames on time, as you play it (vsync on, 60 cap)</h3>
+  <figure>
+    <div class="chart">{{SLOTS_CHART}}</div>
+    <div class="legend"><span><i style="background:var(--s2)"></i>on time (16.7 ms)</span><span><i style="background:var(--s1)"></i>came early (8.3 ms)</span><span><i style="background:var(--s3)"></i>late: held for 25 ms, reads as 40 fps</span><span><i style="background:var(--s4)"></i>held for 33 ms or more: 30 fps and under</span></div>
+    <figcaption>Each bar is one 12 to 20 second window. The number is the share on time. The first two ImmersiveVFX bars ran in the first minute after joining, while the Mac was at a load of about 22 (the world loading and Awaken's own road planner); the rest ran at 4 to 9.</figcaption>
+  </figure>
+
+  <h3>Two flights over the same land, frame by frame</h3>
+  <figure>
+    <div class="chart">{{STRIP_VFX}}</div>
+    <div class="chart" style="margin-top:10px">{{STRIP_CINE}}</div>
+    <figcaption>Milliseconds per frame over 20 seconds, uncapped, 16 blocks a second and 45 blocks up. The dashed line is 16.7 ms. Red dots are frames over 20 ms. ImmersiveVFX's whole trace sits on the line, so with vsync on, any wobble becomes a 25 or 33 ms frame.</figcaption>
+  </figure>
+
+  <h3>What each Look costs the GPU</h3>
+  <figure>
+    <div class="chart">{{BARS}}</div>
+    <figcaption>Median GPU time for the world, in milliseconds, at your resolution. A frame is this plus about 1.6 ms, so the dashed line at 15 ms is where 60 fps ends. Flying, ImmersiveVFX is past it; with its shadows off it is at 8.</figcaption>
+  </figure>
+
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Look</th><th class="n">clearing</th><th class="n">flying</th><th class="n">city (Roost)</th><th>how it holds up</th></tr></thead>
+    <tbody>{{TABLE_ROWS}}</tbody>
+  </table>
+  </div>
+  <p class="small muted">Uncapped frames per second, quiet windows. "Clearing" is where your world opens. "City" is Carillon from the Runners' Roost.</p>
+
+  <h3>What else the tours showed</h3>
+  <ul class="tight">
+    <li><strong>The 8 Nov "40 to 55 on Cinematic" was Far Sight.</strong> With Far Sight on (near reach) Cinematic costs <span class="num">13.6 ms</span> of GPU time here and runs <span class="num">65 fps</span> uncapped: 1.4 ms from the edge. With Far Sight off it runs <span class="num">90</span>. Your settings now have Far Sight off. I didn't re-run Far Sight at full reach or that day's background builds.</li>
+    <li><strong>On a quiet Mac, standing still, ImmersiveVFX does hold 60.</strong> In a later window with nothing else running it kept {{VFX_QUIET}} of frames on time standing and turning in your clearing. Its trouble is open views and busy moments: the first minutes after joining, new land arriving, a fight.</li>
+    <li><strong>A miss shows as 40 or 30, never 55.</strong> With vsync on a 120 Hz screen, a frame that takes 17 ms waits for the next refresh and stays up 25 ms. That is why a Look sitting just over the line feels like it drops by 20 or 30.</li>
+    <li><strong>ImmersiveVFX's particles run on the render thread.</strong> At your "maximum" setting, 38% of that thread's CPU samples were inside its particle code. {{PARTICLE_NOTE}}</li>
+    <li><strong>Lens had no clouds for you at all.</strong> Clouds are off in your video settings in the pack's game folder (they're on in your other one), and Lens only draws its clouds where the game would draw its own. So every time you switched back to Cinematic to compare, you saw an empty sky.</li>
+    <li><strong>A storm cell was over your spot.</strong> Lens takes the sun away under a Rolling Storm and draws the cell as a dark blob, so my first Cinematic shots there had no shadows and a smudge in the sky. Both are in the plan.</li>
+    <li><strong>ImmersiveVFX asleep costs {{ASLEEP_NOTE}}</strong></li>
+    <li><strong>Garbage collection isn't a cause.</strong> It paused 4.75 ms in total across the first eleven-minute tour.</li>
+  </ul>
+</div>
+
+<div class="wide" id="looks">
+  <div class="wrap" style="padding-block:0"><h2>Same spots, three looks</h2>
+  <p>Left: ImmersiveVFX with your settings. Middle: Lens Cinematic today. Right: a proof of concept I wrote in an afternoon to test the plan's main claim. It is Lens Cinematic with four changes in two shaders: a far blue fog, a deeper sky with dusk colours, sunlight twice as strong against the shade, and shadows snapped to the block textures' pixels. It keeps the game's own clouds. It adds no pass and no texture. It sits behind a debug switch and is not for merging.</p></div>
+  {{SHOT_ROWS}}
+  <div class="wrap" style="padding-block:0">
+  <p><strong>What the proof shows:</strong> the fog, the sky and the light carry most of the mood, and Lens can do them for {{PROOF_COST}}. <strong>What it doesn't have yet:</strong> ImmersiveVFX's crisp shadows from small things (flowers, slabs, your hand, mobs), its soft clouds, and its fireflies. Those are stages 1b and 3 below. The proof is a first pass at the colours; the real pass is tuned against these pairs until you're happy.</p></div>
+</div>
+
+<div class="wrap" style="padding-top:0">
+  <h2 id="answers">Your questions</h2>
+  <dl class="qa">
+    <dt>Is Lens a mod?</dt>
+    <dd>It's part of AWAKEN itself, not a separate mod and not a shader pack. It is a set of shaders that run on the finished picture through Minecraft's own post-effect system, plus two small renderer hooks. It also carries about a hundred looks of ours: every gate theme, every land, the caves, the powers and the story scenes.</dd>
+    <dt>Why was it built that way?</dt>
+    <dd>On 24 October Vulkan measured 15 to 33% faster than OpenGL on your M4 and became the pack's renderer. Shader packs need Iris, and Iris only runs on OpenGL, isn't supported on Apple Silicon, and its required Sodium version crashed on our NeoForge. So no shader pack could run at all. Post effects were the one thing 26.3 gives a mod on both renderers, and the rule then was to stay out of the renderer's insides.</dd>
+    <dt>ImmersiveVFX is a mod, not a shader. Is there something in that?</dt>
+    <dd>Yes. It works inside the world's drawing instead of after it. Before the main picture it draws the world a second time from the sun to make real shadows, it changes the terrain's own shader, and it has its own sky, clouds and particles. That is why its shadows are exact, and it is also exactly why it can't hold 60 for you: that second drawing happens every frame and grows with how much land you can see. Lens works only from the finished picture and a height map of the land, so its shadows are cheap and approximate.</dd>
+    <dd>What I'd take from it: the look of its sky, fog and clouds; shadows drawn on the texture's pixel grid; and real shadow maps, but made our way (below), so the cost doesn't land on every frame.</dd>
+    <dt>Would making Lens its own mod be better?</dt>
+    <dd>Not for the look or the frame rate. The same code in a second jar draws the same frame at the same cost. A separate mod only matters if you want to publish Lens for other packs, which could be a nice thing later. What changes the picture is where the code hooks in, and the plan takes that step where it pays: shadow maps of our own.</dd>
+    <dt>Can ImmersiveVFX itself be made steady?</dt>
+    <dd>Only by switching its shadows off: then it runs 96 to 98 fps everywhere I flew. Its lighter shadow mode with reflections off still runs 63 fps flying. Shorter shadow distance, the fog modes and the mists made no real difference. We can't change its code. A newer version exists (1.9.2, it needs a newer Sodium beta); its notes list shadow fixes and no speed gains.</dd>
+    <dt>Do we still need Far Sight?</dt>
+    <dd>Not by default on this look. You said you prefer the fog, it costs 4.2 ms at near reach, and the fog now reaches the edge of the world. I'd keep it as a choice on the Look page for vistas.</dd>
+  </dl>
+
+  <h2 id="causes">Why each thing happens</h2>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>What you see</th><th>Cause</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>VFX falls to 40 and 30 in open views</td><td>Its GPU cost passes 16.7 ms there. The shadow pass is about 9 ms of it.</td><td>Flying: 16.7 ms with shadows, 7.9 without.</td></tr>
+      <tr><td>VFX stutters standing still</td><td>The shadow pass has slow frames of its own, and its particles run on the render thread.</td><td>Standing, the GPU's slowest 1% of frames took about 20 ms in nine of fifteen windows with shadows on, and in neither window with them off. Flying: 20 to 25 ms with shadows, 8 to 12 without. 38% of CPU samples in particles.</td></tr>
+      <tr><td>Drops are 20 or 30 fps deep</td><td>Vsync on a 120 Hz screen: a late frame waits a whole refresh.</td><td>As-played frames sit at 16.7, 25 and 33 ms and nowhere between.</td></tr>
+      <tr><td>Cinematic ran 40 to 55 on 8 Nov</td><td>Far Sight's 4.2 ms on top of Cinematic's 9.4.</td><td>13.6 ms and 65 fps today with it on. Shown in part.</td></tr>
+      <tr><td>Lens looks flat beside VFX</td><td>Its settings: fog that reaches 17% at most, the vanilla sky, shade 20% dark, soft shadows at a third of the screen's size. On your settings also no clouds, and the storm blob.</td><td>The shader's own numbers, and the shots.</td></tr>
+      <tr><td>Late frames while flying, on any Look</td><td>New chunks arriving: meshing and world generation run beside the render thread.</td><td>Cinematic flying: 96% on time, worst frame 69 ms. Not yet split by cause.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="options">The options</h2>
+  <div class="opts">
+    <div class="opt"><span class="tag">A · targeted</span><h3>Keep ImmersiveVFX, tune it</h3>
+      <p>A "VFX steady" setting with its shadows off, fewer particles.</p>
+      <p>It works today. But the shadows are what you like most, we can't fix its shadow pass or its particles, Lens's hundred-odd looks stay off under it, and it can't go in a public pack as licensed.</p>
+      <div class="cost">about an hour · no shadows</div></div>
+    <div class="opt"><span class="tag">A2 · hybrid</span><h3>Its sky, fog and clouds under Lens's light</h3>
+      <p>A fifth Look: the mod draws the air, Lens draws shadows and light.</p>
+      <p>{{HYBRID_NOTE}} Two renderers stacked that don't know about each other, and the same licence problem.</p>
+      <div class="cost">about half a day · no gain measured</div></div>
+    <div class="opt pick"><span class="tag">B · recommended</span><h3>Steady Light: Lens takes the look</h3>
+      <p>The air, strong sunlight and soft vanilla-shaped clouds in Lens, inside a frame budget with a governor that protects the 60. Then real shadows from a map that is redrawn a few times a second.</p>
+      <p>Ours end to end: every gate and story look keeps working, it can ship, and we can fix what you find.</p>
+      <div class="cost">stages 0 to 2: about a day and a half of builder time · stage 3: about two more</div></div>
+    <div class="opt"><span class="tag">C · most ambitious</span><h3>Lens inside the renderer</h3>
+      <p>Mixins into Sodium to draw its chunks from the sun every frame and to light and fog inside the terrain shader, as ImmersiveVFX does.</p>
+      <p>The most exact shadows. It also pays the per-frame cost that sinks ImmersiveVFX here, and every Sodium update can break it. I keep one piece of it as a fallback for stage 3.</p>
+      <div class="cost">a week or more · fragile</div></div>
+  </div>
+  <p>What would change my mind: if you look at stage 1 and the shadows are the only thing missing, stage 3 moves up. If ImmersiveVFX fixes its own pace, the VFX Look simply gets better and nothing here is wasted. If our own shadow meshes can't keep up in flight, stage 3 switches to the Sodium path, with your separate yes.</p>
+
+  <h2 id="plan">How Steady Light works</h2>
+  <p>Three rules. Each one comes from a number above.</p>
+  <div class="flow">
+    <div><h3>1. Spread what moves slowly</h3>
+      <p class="small">The sun crosses a third of a degree a second, and shadows drawn on the texture's pixel grid can only move a pixel at a time. So a shadow map a quarter of a second old looks the same as a fresh one. Shadows, the sky and the clouds are refreshed over several frames; each frame only looks them up.</p>
+      <p class="cost">ImmersiveVFX redraws its shadows every frame: its 9 ms. Budget here: 0.8 ms.</p></div>
+    <div><h3>2. One pass at full size</h3>
+      <p class="small">On Apple's GPU a full-size pass costs by the memory it moves. When Lens's passes were timed one by one on 26 October, its one full-size pass was most of its cost. Everything heavy runs small; one pass touches every pixel, and it writes straight into the upscaler.</p>
+      <p class="cost">Target: Cinematic from 9.4 to 8.5 ms in the clearing, new look included.</p></div>
+    <div><h3>3. A governor holds the 16.7</h3>
+      <p class="small">It reads the GPU's time for the last frames and, when a view gets heavy, trades what you can't see first: how often shadows and clouds refresh, then the light's working size. It steps back up when there's room, and the Look page shows which step it is on.</p>
+      <p class="cost">Target: 14.5 ms. Awaken's own background workers also pause while frames run late.</p></div>
+  </div>
+
+  <h3>A frame, now and after</h3>
+  <div class="flow">
+    <div><h3>ImmersiveVFX today</h3>
+      <ol><li>Draw the world from the sun <span class="cost">(3 to 9 ms, every frame)</span></li><li>Draw the world, lit and fogged in the terrain shader</li><li>Its sky, clouds, particles, reflections, bloom</li></ol>
+      <p class="cost">11 to 17 ms of GPU · Lens off, so no gate or story looks</p></div>
+    <div><h3>Lens Cinematic today</h3>
+      <ol><li>Draw the world</li><li>Small passes: sun map, light and shadow from the height map, clouds marched, bloom</li><li>One full-size pass: light, a light haze, the grade</li><li>A full-size copy, then the upscale</li></ol>
+      <p class="cost">7 to 9.4 ms of GPU</p></div>
+    <div><h3>Steady Light</h3>
+      <ol><li>A strip of the shadow map <span class="cost">(our own meshes; a full map every 8 frames)</span></li><li>Draw the world</li><li>Small passes: light and shadow by one look-up, bloom</li><li>One full-size pass into the upscaler: light, the far fog, the sky, the grade</li><li>Soft clouds as a mesh</li></ol>
+      <p class="cost">target 8.5 ms in the clearing, governed under 13</p></div>
+  </div>
+
+  <h3>The look, piece by piece</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Piece</th><th>What changes</th><th>Cost</th><th>How we'll know</th></tr></thead>
+    <tbody>
+      <tr><td>Far blue fog</td><td>The land fades into the sky's own horizon colour, blue by day, rose and violet at dusk. Every Lens tier, Swift included. Gates and underwater keep their own fog.</td><td>none</td><td>The pairs; no line at the world's end from any height.</td></tr>
+      <tr><td>Sky</td><td>A deeper zenith and a dusk gradient. Stars untouched.</td><td>none</td><td>The dusk and night pairs.</td></tr>
+      <tr><td>Sunlight</td><td>A brighter, warmer key and a shade about twice as deep, so a shadow is a shape and not a tint.</td><td>none</td><td>The morning and noon pairs. Caves and held torches must not get darker (existing tests).</td></tr>
+      <tr><td>Clouds</td><td>The volumetric march goes. First the game's own clouds, lit and fogged by Lens and drawn even with Clouds off. Then Lens's own soft clouds: the vanilla pattern in stacked translucent layers, lit on top, as a plain mesh.</td><td>saves about 0.65 ms, then to be measured</td><td>Beside ImmersiveVFX's clouds, at noon and dusk.</td></tr>
+      <tr><td>Shadows, stage 1</td><td>Today's height-map shadows, snapped to the textures' pixel grid.</td><td>none</td><td>The proof shows them soft still: a hint, not the finish.</td></tr>
+      <tr><td>Shadows, stage 3</td><td>Real shadow maps of our own simplified meshes of the land, redrawn in strips. Light through doors, arches and under trees becomes exact.</td><td>0.8 ms budget</td><td>A door, an arch and a forest floor beside ImmersiveVFX.</td></tr>
+      <tr><td>Storms and small life</td><td>Storm cells take the new cloud's look. Fireflies at dusk, pollen by day.</td><td>small</td><td>Shots.</td></tr>
+      <tr><td>Far Sight</td><td>Off by default on Cinematic and Ultra. Still on the Look page.</td><td>saves 4.2 ms</td><td>Your call (decision 3).</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>When something goes wrong</h3>
+  <ul class="tight">
+    <li>A shader or pipeline that doesn't compile: that piece falls back to today's path and logs one line.</li>
+    <li>The shadow map over budget for a second, or its meshes behind in fast flight: the height-map shadows take over until it catches up. You'd see softer shadows, never a missing frame.</li>
+    <li>The governor can't find room: it says so on the Look page; it never drops below its lowest step silently.</li>
+    <li>Each piece has its own setting, and with all of them off the frame is today's Cinematic exactly.</li>
+  </ul>
+
+  <h2 id="stages">Stages</h2>
+  <ol class="stages">
+    <li><span class="no">Stage 0</span><h3>A frame record you can trust</h3>
+      <p>The Look page's last-60-seconds line also counts frames on time, and a command writes the last minute to the log when you see a dip. The Dell tours become the before-and-after test for every stage.</p>
+      <p class="gate">Gate: its numbers agree with the tour's within 1%. About two hours.</p></li>
+    <li><span class="no">Stage 1</span><h3>The Air</h3>
+      <p>The fog, the sky, the sunlight, pixel-grid shadows, clouds (the game's own first, then the soft ones), storms, fireflies. Far Sight off by default.</p>
+      <p class="gate">Gate: your eye on the five pairs, and Cinematic no slower than today. About a day, with a second round on the colours likely. You look before anything else starts.</p></li>
+    <li><span class="no">Stage 2</span><h3>The Budget</h3>
+      <p>The trims, the governor, and Awaken's own background workers giving way while frames run late.</p>
+      <p class="gate">Gate: 99% on time standing, turning and in the city, 98% flying over seen land, at your setup. About half a day.</p></li>
+    <li><span class="no">Stage 3</span><h3>The Sun Pass</h3>
+      <p>Real shadows from the cached map. Its first step is a test: can our own shadow meshes be made fast enough in flight? If not, it stops and asks you about the Sodium path.</p>
+      <p class="gate">Gate: the door, arch and forest pairs, at or under 0.8 ms, with stage 2's gate still passing. About two days.</p></li>
+    <li><span class="no">Later</span><h3>On their own evidence</h3>
+      <p>Mob and hand shadows from a small map, water, and a render-scale step in the governor.</p></li>
+  </ol>
+  <p>Every stage can be switched off on its own, and each merges only after its gate. I'd run stages 0 and 1 first, show you, then 2 and 3.</p>
+
+  <h3>Risks</h3>
+  <ul class="tight">
+    <li>The look is taste. The proof is a first pass and stage 1 may take two rounds with you.</li>
+    <li>The soft clouds are layers of see-through polygons, which cost by how much of the screen they cover. I'll measure before promising a number.</li>
+    <li>A governor that changes its mind too often would be worse than none. It moves one step at a time with a delay, and it is the first thing to switch off if you ever see the picture shift.</li>
+    <li>Flying over brand-new land has late frames on every Look, from the world being generated. Stage 2 makes Awaken's own workers give way; vanilla's generation is outside this plan.</li>
+  </ul>
+
+  <h2 id="decisions">Decisions for you</h2>
+  <ol class="decide">
+    <li><b>Build Steady Light, stages 0 to 2?</b><span>The frame record, the Air, the Budget. You look at stage 1 before stage 2 starts. <em>I recommend yes.</em></span></li>
+    <li><b>Real shadows (stage 3): approve now, or after you've seen stage 1?</b><span>They are what you praised most in ImmersiveVFX and the proof doesn't have them. <em>I recommend approving now</em>, to start once you've seen stage 1.</span></li>
+    <li><b>Far Sight off by default on Cinematic and Ultra?</b><span>The fog reaches the world's edge and you get 4.2 ms back. It stays a choice on the Look page. <em>I recommend yes.</em></span></li>
+    <li><b>Clouds: retire the volumetric ones on both tiers, and draw Lens's clouds even when the game's Clouds setting is off?</b><span>Soft, vanilla-shaped, lit by the sun. <em>I recommend yes to both.</em></span></li>
+    <li><b>ImmersiveVFX: leave the VFX Look as it is?</b><span>No more work on it from us, and it stays out of any public pack until its licence changes. If you'd like the stopgap meanwhile (A or A2), say which. Its author might want these numbers: I can draft a short note, and it would be yours to send. <em>I recommend leaving it as it is.</em></span></li>
+  </ol>
+
+  <footer>
+    <p>Method and every window: <code>docs/perf/steady60/MEASURING.md</code> and <code>PLAN.md</code> on branch <code>claude/look-steady-60-plan-889268</code>. Tours ran 13:09 to {{END_TIME}} on 10 Nov with other sessions' builds held outside each one. Cached shadow maps are an established technique (Insomniac's scrolling cascades, 2012; Cyberpunk 2077's distant shadows, 2021; Unity's and CryEngine's cached shadows). ImmersiveVFX facts are from its CurseForge page and changelogs, its settings file, its own log lines and timings of it running; none of its code was read.</p>
+  </footer>
+</div>

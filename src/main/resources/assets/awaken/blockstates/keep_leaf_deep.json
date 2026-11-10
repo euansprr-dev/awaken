@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/keep_leaf_deep"
+      },
+      {
+        "model": "awaken:block/keep_leaf_deep",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/keep_leaf_deep",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/keep_leaf_deep",
+        "y": 270
+      }
+    ]
+  }
+}

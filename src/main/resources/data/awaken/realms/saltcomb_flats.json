@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "name": "Saltcomb Flats",
+  "line": "Out here the salt sets hard in the cool wind and goes soft again when the sun comes back.",
+  "form": "desert_ruin",
+  "theme": "hive",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:saltcomb_flats",
+    "water": 63
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/salt_flats",
+      "awaken:realm/salt_court"
+    ],
+    "lens": "saltcomb_flats",
+    "air": [
+      "sand",
+      "wind",
+      "dust",
+      "steam",
+      "moths",
+      "shaft_dust"
+    ]
+  },
+  "life": {
+    "herds": [
+      "dune_ray"
+    ],
+    "predators": [
+      "wisp_hound"
+    ],
+    "ambient": [
+      "glass_scarab",
+      "chime_cricket"
+    ]
+  },
+  "folk": {
+    "kit": "salt_rakers",
+    "villages": 1
+  },
+  "law": {
+    "kind": "salt",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 15
+  },
+  "heart": {
+    "lord": "hive_regent",
+    "seat": "sinking_court"
+  },
+  "moods": [
+    "high_noon"
+  ]
+}

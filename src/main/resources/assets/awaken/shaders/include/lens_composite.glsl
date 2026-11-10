@@ -14,6 +14,7 @@ uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): 
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
+uniform sampler2D CloudBlocksSampler; // the Air's near clouds at the frame's size (lens_cloud_blocks.fsh), the same
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -37,6 +38,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
 #include <awaken:lens_storm_frame.glsl>
+#include <awaken:lens_air.glsl>
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
@@ -72,9 +74,9 @@ float farDistance(float depth, float zNear, float zFar, int flags, bool deviceZe
 #ifdef LENS_LIGHT
 // the light buffer (a its one-byte distance) at this pixel: of its 2x2 texels with bilinear weights, those that saw
 // this surface's distance (so a near silhouette doesn't bleed onto the far side), else the closest match
-vec3 upsample(sampler2D buf, float want) {
+vec3 upsampleAt(sampler2D buf, vec2 uv, float want, out float got) {
     vec2 size = vec2(textureSize(buf, 0));
-    vec2 lp = texCoord * size - 0.5;
+    vec2 lp = uv * size - 0.5;
     ivec2 b = ivec2(floor(lp));
     vec2 fr = lp - vec2(b);
     float bestDiff = 2.0, wsum = 0.0;
@@ -91,7 +93,13 @@ vec3 upsample(sampler2D buf, float want) {
             best = L.rgb;
         }
     }
+    got = wsum;
     return wsum > 1.0e-3 ? acc / wsum : best;
+}
+
+vec3 upsample(sampler2D buf, float want) {
+    float got;
+    return upsampleAt(buf, texCoord, want, got);
 }
 
 // the light's colour: the sun's (warm by the sunrise colour's strength), or the moon's
@@ -173,6 +181,8 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
 // fetched twice)
 vec3 lrKept;
 bool lrHave = false;
+// how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
+float lensOpen = 1.0;
 
 vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
     dbg = vec4(0.0);
@@ -183,17 +193,35 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     float dist = length(p);
     float near = smoothstep(1.25, 1.45, dist);
     if (near <= 0.0) return c;
-    // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface
-    vec3 lr = upsample(LightSampler, packDistance8(dist));
-    lrKept = lr;
-    lrHave = true;
     vec3 m = vec3(1.0);
     float rich = 0.0;
     float sun = f14.w * l17.r;
-    bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0);
+    float air = airOn();
+    bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0) || air > 0.0;
     // the screen-derivative normal where this pixel's 2x2 quad lies on one surface; the careful four taps across an edge
     vec3 n = quickNormal;
     if (needNormal && n == vec3(0.0)) n = normalAt(clamp(ivec2(texCoord * OutSize), ivec2(0), ivec2(OutSize) - 1), p, depth, inv, z01, OutSize);
+    // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface.
+    // The Air: on a block face it is read where the centre of this pixel's 1/16-block texel lies on screen, so every
+    // screen pixel of a texel takes one light and a shadow's edge is the texture's own pixel edge at any buffer size
+    // (stretched from a smaller buffer it was a soft band, and the shadow had no weight)
+    float want = packDistance8(dist), got = 0.0;
+    vec3 lr = vec3(1.0, 1.0, 0.0);
+    bool snapped = false;
+    if (air > 0.0 && dist < 72.0) {
+        vec3 an = abs(n);
+        if (max(an.x, max(an.y, an.z)) > 0.99) {
+            vec3 w = p + f12.xyz;
+            vec3 q = project(frameMat(4), mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - f12.xyz, z01);
+            if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
+                lr = upsampleAt(LightSampler, q.xy, want, got);
+                snapped = got > 1.0e-3;
+            }
+        }
+    }
+    if (!snapped) lr = upsampleAt(LightSampler, texCoord, want, got);
+    lrKept = lr;
+    lrHave = true;
     if (sun > 0.0) {
         // solid blocks above this point in its own column: under a ledge it's shade, deep under a roof it's left alone
         float cover = 0.0;
@@ -210,10 +238,19 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
             }
         }
         float open = 1.0 - smoothstep(1.0, 7.0, cover);
+        lensOpen = open;
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
         // game's own face shading and only cast shadows show; by golden hour every face is lit or shaded by its turn
         float lowSun = 1.0 - smoothstep(0.5, 0.92, f14.y);
-        float direct = lr.r * mix(1.0, smoothstep(-0.08, 0.3, dot(n, f14.xyz)), lowSun);
+        // the Sun Pass (frame texel 17 z: the block map's reach): inside the map a face turned from the sun is shaded by
+        // the block it belongs to, exactly, so the turn of the face decides nothing there. (Deciding by the face lit the
+        // one-pixel sides of path plates and block lips while the ground beside them lay in shade: bright rims round
+        // every small edge at dusk, Euan 10 Nov.)
+        float inMap = F(17).z > 0.0 ? 1.0 - smoothstep(F(17).z - 6.0, F(17).z - 1.0, max(abs(p.x), abs(p.z))) : 0.0;
+        float direct = lr.r * mix(1.0, smoothstep(-0.08, 0.3, dot(n, f14.xyz)), lowSun * (1.0 - inMap));
+        // the Air: a low sun gives the ground little. Its light fades into the shade as it sinks, so dusk is one soft
+        // light and not a floor of long streaks (each a gap between two far trees, stretched thirty blocks)
+        direct *= mix(1.0, smoothstep(0.05, 0.55, f14.y), airOn() * (1.0 - f16.y));
         // golden hour: the key warms and the shade deepens as the sun lowers (by its height, or the sunrise colour's
         // strength, texel 1 a, whichever is more), never by moonlight
         float golden = max(p1.a, 1.0 - smoothstep(0.1, 0.5, f14.y)) * (1.0 - f16.y);
@@ -224,8 +261,22 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float depthOfShade = l17.g * (1.0 + 0.3 * golden) * (1.0 + 0.35 * smoothstep(24.0, 160.0, dist));
         vec3 shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade));
         // a glow is light, not a lit surface: it keeps its brightness in the shade
-        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
-        m = mix(vec3(1.0), mix(shade, key, direct), k);
+        // the Air (Steady Light): sunlight that reads. A brighter, warmer key and a shade about twice as deep, so a
+        // cast shadow is a shape on the ground and not a tint; by moonlight the shade deepens less
+        if (air > 0.0) {
+            key = mix(key, mix(vec3(1.24, 1.17, 0.98), key * vec3(1.14, 1.07, 0.99), max(golden, f16.y)), air);
+            // (a shadow with weight: deep and cool by day, less so by moonlight)
+            // (deepest under a high sun; as the sun sinks its key fades into the shade, and a shade that stayed this
+            // deep left a morning forest black under a bright sky)
+            float deep = mix(1.5, 2.5, smoothstep(0.10, 0.50, f14.y) * (1.0 - f16.y));
+            shade *= mix(1.0, (1.0 - min(0.9, depthOfShade * deep)) / max(1.0 - min(0.85, depthOfShade), 0.15), air);
+        }
+        // the Sun Pass (frame texel 17 z: the block map's reach): under cover the heightfield had no sun to give, so the
+        // model stood back and left the game's light. The map knows where the sun does come in (a doorway, a window,
+        // under an arch): there the key shows as a patch of sunlight; the rest of the room stays the game's
+        float kOpen = max(open, direct * inMap);
+        float k = kOpen * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
+        m = mix(vec3(1.0), mix(mix(vec3(1.0), shade, open), key, direct), k);
         // golden light is rich light: sunlit colour gains a little saturation as the sun lowers
         rich = golden * k * direct * 0.16;
         dbg = vec4(n * 0.5 + 0.5, direct);
@@ -376,6 +427,53 @@ void main() {
     }
     if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
+    // the Air (Steady Light): Lens's own sky, and a far fog of the sky's own horizon colour that takes the land into it,
+    // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
+    // over its own sky colour); Lens's larger stars join them by night. Places under cover keep the game's air
+    float airK = airOn();
+    if (airK > 0.0) {
+        vec3 dirA = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+        vec4 f22 = F(22), f23 = F(23);
+        float rainA = F(16).z;
+        if (sky) {
+            vec3 was = mix(fogColor.rgb, f23.rgb, smoothstep(-0.02, 0.30, dirA.y));
+            vec3 extra = max(c - was - 0.05, 0.0);
+            float keep = smoothstep(0.04, 0.22, luma(extra));
+            vec3 s = airSky(dirA, f22.xyz, rainA);
+            // the night's own: stars, the galaxy, a shooting star (they come out as the sun goes under); then the high
+            // wisps over all of it
+            float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rainA);
+            if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark;
+            s += extra * keep;
+            vec4 wisp = airWisps(dirA, F(18).zw, F(12).y, f22.xyz, rainA, F(17).x);
+            s = mix(s, wisp.rgb, wisp.a);
+            c = mix(c, s, airK);
+        } else if (!farTerrain && !plate) {
+            // by distance over the render distance (a far renderer's land carries on past it, so the fog thins out
+            // over its reach instead), a little thinner on land well above the eye so peaks stand out of it
+            float reach = rdEnd * (p0.b > 0.5 ? 5.0 : 1.0);
+            float t = d / reach;
+            float wy = pRel.y + F(12).y;
+            float thin = mix(1.0, exp(-max(wy - F(12).y - 40.0, 0.0) / 220.0), 0.5);
+            // and the air between here and there: a haze that starts a few blocks out, thin by day, thicker at dusk and
+            // dawn and by night, lying low (full at and under the eye's height, thinner above it), so each line of
+            // trees stands a little paler than the one before it and the far fog has something leading into it
+            vec3 hrA = airHour(f22.y);
+            // (thinner only well above the eye, and slowly: a tree is one thing at one distance, and a haze that thinned
+            // over its own height left every far tree a dark crown on a vanished trunk, Euan 10 Nov)
+            float lying = mix(0.62, 1.0, exp(-max(wy - F(12).y - 16.0, 0.0) / 130.0));
+            float near = (1.0 - exp(-max(d - 4.0, 0.0) / mix(280.0, 150.0, clamp(max(hrA.y, hrA.z * 0.85) + 0.5 * rainA, 0.0, 1.0)))) * lying;
+            // The fog is the air along the view, so what is over the far point doesn't matter: only a camera that is
+            // itself under cover, looking at something under cover, is in a cave's air (parameter texel 21 r). (Leaving
+            // out every covered point left the ground under each ledge and the mouth of each cave as a dark hole in
+            // the haze.)
+            float inside = P(21).r * (1.0 - lensOpen);
+            float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - inside) * airK;
+            vec3 fc = airFog(dirA, f22.xyz, rainA);
+            c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
+            c = mix(c, fc, fog);
+        }
+    }
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
     // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
     // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
@@ -392,9 +490,10 @@ void main() {
             vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
             float camY = F(12).y, dist = farTerrain ? d : length(pRel);
             if (cp.x > 0.0) {
-                float base = cp.x - 6.0, enter = 1.0e9;
-                if (camY >= base && camY <= base + 84.0) enter = 0.0;
-                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+                // (the Air's blocks: a thinner layer, lens_clouds.glsl)
+                float base = cp.x - (airK > 0.0 ? 2.0 : 6.0), thick = airK > 0.0 ? 21.0 : 84.0, enter = 1.0e9;
+                if (camY >= base && camY <= base + thick) enter = 0.0;
+                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + thick - camY) / cv.y;
                 behind = enter >= 0.0 && dist > enter;
             }
             for (int k = 0; k < 2; k++) {
@@ -403,6 +502,10 @@ void main() {
             }
         }
         if (behind) c = c * cl.a + cl.rgb;
+        // the Air's near clouds over all of it: walked at this size against this pixel's own depth, so they need no
+        // such test, and a tree in front of one keeps its own edge
+        vec4 cb = texture(CloudBlocksSampler, texCoord);
+        c = c * cb.a + cb.rgb;
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
@@ -413,6 +516,10 @@ void main() {
     // none proven yet (a depth that reads as one value everywhere) distance is the far renderer's own fog: hazing only
     // the near terrain would draw a ring where it ends. A depth that proves itself eases the haze in (trust g).
     if (p0.b > 0.5) haze *= farTrust.g;
+#ifdef LENS_LIGHT
+    // the Air's fog has already taken the distance
+    haze *= 1.0 - airOn();
+#endif
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
 #ifdef LENS_LIGHT
@@ -478,7 +585,8 @@ void main() {
         if (!classic) {
 #endif
             float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
-            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
+            // (the Air: the sunlit mist is stronger, so beams stand in the air between the trees)
+            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 3.4, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * mix(0.35, 0.95, airOn()));
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

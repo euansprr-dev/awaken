@@ -96,6 +96,10 @@ public final class ArmsPredict {
     // the hit at once (SPEC §47.1): the blows this client played before the server's word, the running move's press,
     // the creature the press meant and the sweep's focus (as the server keeps them), and the client's own freeze rule
     static final dev.awaken.arms.HitLedger LEDGER = new dev.awaken.arms.HitLedger();
+
+    static {
+        if (ArmsBlackBox.on()) LEDGER.ghosts = ArmsGhosts::ghost; // development: each ghost gets its cause (SPEC §25 "Weight in the Hand")
+    }
     static int moveSeq = -1, aimedId = -1, focusId = -1, focusSeenAt;
     private static int bodies, lastFreezeAt = -1000, freezeSeq = -1, freezeFrom, freezeBase;
 
@@ -299,6 +303,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
         perfectHeavy = perfect;
+        drawnCut = ArmsComfort.weaponDraw() && ArmsRules.drawn(st.def().traits(), m, restedTicks());
         boolean waits = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
         if (waits) {
             Archetype.MoveDef was = move == null || style == null ? null : style.move(move);
@@ -333,6 +338,7 @@ public final class ArmsPredict {
             swing(p, st, m, cad);
             ArmsFx.move(p, st, m, cad, perfect);
             ArmsBodies.move(p, st, m);
+            shownNow(p);
         }
         if (m == Archetype.Move.ART) ArmsFeel.art();
     }
@@ -347,6 +353,12 @@ public final class ArmsPredict {
             ArmsAudio.swing(p, st, m, cad);
             ArmsFilm.event("swish");
         } else swishAt = at;
+    }
+
+    /** A move shows itself now: a weapon still coming up comes up with it, and the Katana's drawn cut has its own sound. */
+    private static void shownNow(LocalPlayer p) {
+        ArmsHands.hurryDraw();
+        if (drawnCut) ArmsAudio.drawnCut(p);
     }
 
     /** When the running move's swish is due (ticks of its clock), -1 when played or none. */
@@ -367,6 +379,7 @@ public final class ArmsPredict {
             drawBegins(mc.player);
             landPending(mc.player);
             predictHits(mc, mc.player);
+            glance(mc, mc.player);
         }
         if (swishAt < 0) return;
         LocalPlayer p = mc.player;
@@ -510,6 +523,12 @@ public final class ArmsPredict {
         boolean guard = p.isUsingItem() && Arms.guards(p.getUseItem());
         if (guard && !guardUp) ArmsAudio.raise(p);
         guardUp = guard;
+        ArmsHands.tick(p);
+        dev.awaken.arms.ArmsSounds.recorded = ArmsComfort.recordedSounds();
+        // rest is counted as the server counts it for the drawn cut (from the last move's end): a press, a hold not yet a
+        // move and a dodge leave it be, so the hands show the cut exactly when the server will grant it, and a press from
+        // the lowered rest changes nothing on the screen until its move begins
+        if (move != null || plunging) restFrom = ticks;
         ArmsChop.tick(mc, p);
         if (plunging) {
             Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
@@ -561,6 +580,7 @@ public final class ArmsPredict {
         swing(p, style, move, cadence);
         ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) / launchRate());
         ArmsBodies.move(p, style, move);
+        shownNow(p);
     }
 
     /**
@@ -646,6 +666,14 @@ public final class ArmsPredict {
 
     /** The running heavy was released on its glint (its arc burns gold). */
     static boolean perfectHeavy;
+    /** The tick the hands last did anything, and whether the running strike is the Katana's drawn cut (its ribbon burns brighter). */
+    private static int restFrom;
+    static boolean drawnCut;
+
+    /** Ticks the hands have rested: since the last move ended (the Katana lowers on it, ArmsHands.hip). */
+    static int restedTicks() {
+        return ticks - restFrom;
+    }
     /** A Plunge armed in a fall (the blade held high until it lands), and its press. */
     static boolean plunging;
     /** The guard was up last tick (its raise plays once). */
@@ -761,15 +789,73 @@ public final class ArmsPredict {
         double meantReach = reach + ((move == Archetype.Move.HEAVY || (move.strike() && step == 0)) ? dev.awaken.core.api.Aim.stepIn(style.id()) : 0F);
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot() + focusTurn(p);
+        boolean walls = ArmsConfig.wallsStopBlows();
         net.minecraft.world.phys.AABB box = p.getBoundingBox().inflate(meantReach + 1, Math.max(1.5, meantReach), meantReach + 1);
         for (net.minecraft.world.entity.LivingEntity e : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, box,
                 e -> e != p && e.isAlive() && !(e instanceof net.minecraft.world.entity.player.Player))) {
-            if (LEDGER.has(moveSeq, e.getId())) continue;
+            if (LEDGER.struck(moveSeq, e.getId(), move.ordinal(), ticks)) continue;
             boolean aimed = e.getId() == aimedId;
             if (!aimed && !foe(p, e)) continue;
             if (!ArmsRules.predicts(eye, p.getY(), e.getBoundingBox(), yaw, def.arc(), aimed ? meantReach : reach, aimed, aimed)) continue;
+            if (walls && !dev.awaken.arms.ArmsWalls.sees(mc.level, eye, e.getBoundingBox())) continue; // never through a wall, as the server judges it
+            ArmsGhosts.shown(moveSeq, e, move, eye, aimed ? meantReach : reach);
             played(p, def, e);
         }
+    }
+
+    // ---- the world's answer (SPEC §25 "Weight in the Hand", stage 5) --------------------------------------------------
+
+    /** The move that has already glanced (one a move), and how far past its hit a strike that struck nothing looks for a block (ticks). */
+    private static int glancedSeq = -1;
+    private static final float GLANCE_AFTER = 0.35F;
+    /** A glance's freeze on the hands (ms, off stone and metal only) and its kick against the blow (degrees). */
+    private static final int GLANCE_HOLD = 30;
+    private static final float GLANCE_KICK = 1F;
+    /** Chips of the block a glance knocks loose. */
+    private static final int GLANCE_CHIPS = 3;
+
+    /**
+     * A strike that has struck no body by a third of a tick past its hit, and whose blade meets a block inside its reach,
+     * glances off it: the block's own sound (a ring over stone and metal), its chips, sparks, the blade knocked back for two
+     * ticks and the view kicked a degree against the cut. Leaves and wool only rustle. The chain goes on and the block isn't
+     * harmed; those near hear it from the server.
+     */
+    private static void glance(Minecraft mc, LocalPlayer p) {
+        if (move == null || style == null || waitHit || charging || mc.level == null || glancedSeq == moveSeq || bodies > 0) return;
+        Archetype.MoveDef def = style.move(move);
+        if (def == null || !fights(p)) return;
+        float t = moveTime();
+        if (t < landsAt(def) + GLANCE_AFTER || t >= def.activeEnd()) return;
+        glancedSeq = moveSeq;
+        if (!ArmsComfort.glance()) return;
+        Vec3 eye = p.getEyePosition();
+        net.minecraft.world.phys.BlockHitResult hit = dev.awaken.arms.ArmsWalls.glance(mc.level, eye, p.getYRot(), p.getXRot(), def.reach(), ArmsRules.lift(def) < 0);
+        if (hit == null) return;
+        net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(hit.getBlockPos());
+        int kind = dev.awaken.arms.ArmsWalls.kind(state);
+        Vec3 at = hit.getLocation();
+        ArmsFilm.event("glance " + kind + " at " + hit.getBlockPos().toShortString());
+        ArmsAudio.glance(at.x, at.y, at.z, state.getSoundType(mc.level, hit.getBlockPos(), p), kind);
+        for (int i = 0; i < GLANCE_CHIPS; i++) mc.level.addBreakingBlockEffects(hit.getBlockPos(), hit.getDirection(), false);
+        // the way the blade was going across the screen (a thrust: straight in), right-handed
+        boolean thrust = ArmsRules.thrusts(def);
+        float bx = thrust ? 0F : ArmsRules.blowX(def), by = thrust ? 0F : ArmsRules.blowY(def);
+        float n = (float) Math.sqrt(bx * bx + by * by);
+        float inv = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1F : 1F;
+        // and in the world: the sparks leave the face along it (thrown into the wall they were never seen)
+        float look = p.getYRot() * Mth.DEG_TO_RAD;
+        Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look)), up = right.cross(p.getViewVector(1F));
+        Vec3 travel = n < 1e-3F ? Vec3.ZERO : right.scale(inv * bx / n).add(up.scale(by / n));
+        ArmsFx.glance(at, hit.getDirection().getUnitVec3(), travel, kind);
+        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_SOFT) return;
+        if (n < 1e-3F) { // a thrust meets the wall point first: it is knocked straight back
+            bx = 0F;
+            by = -1F;
+            n = 1F;
+        }
+        ArmsHands.bounce(bx / n, by / n);
+        CombatFeedback.kick(-inv * bx / n * GLANCE_KICK, by / n * GLANCE_KICK, 0F, 5);
+        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) CombatFeedback.hold(GLANCE_HOLD);
     }
 
     /**
@@ -842,7 +928,9 @@ public final class ArmsPredict {
         ArmsRules.push(ax, az, side, PUSH);
         boolean strong = def.finisher() || perfectHeavy || move == Archetype.Move.EXECUTION;
         Blow b = new Blow(move.ordinal(), false, false, strong, bodies, ArmsRules.lift(def), Blow.yawByte(PUSH[0], PUSH[1]), Math.round(side * 7));
-        LEDGER.played(moveSeq, e.getId(), ticks, System.nanoTime(), ms);
+        LEDGER.played(moveSeq, e.getId(), move.ordinal(), ticks, System.nanoTime(), ms);
+        // the hands' word for the server: a body it showed a little out of date may have moved on (SPEC §25 "Weight in the Hand")
+        ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(moveSeq, ArmsPayloads.PRESS_HIT, p.getYRot(), p.getXRot(), e.getId(), move.ordinal()));
         fightAt = ticks;
         focusId = e.getId();
         focusSeenAt = ticks;
@@ -855,20 +943,34 @@ public final class ArmsPredict {
     // word back inside the windup): its impact waits for the blade, never more than a tick (§47.1), a cleave's bodies
     // together. Only the look waits; the server already struck.
     private static final int[] PEND_TARGET = new int[8], PEND_BLOW = new int[8], PEND_MS = new int[8];
-    private static int pending, pendingSeq = -1;
+    private static int pending, pendingMove = -1;
     private static int pendingBreak = -1;
     private static long pendingBy;
+    /** The longest a HIT waits for a strike that is still queued behind the one on the hands (ticks). */
+    private static final float QUEUE_WAIT = 8F;
 
-    /** Whether a HIT is held for the blade (the running move's own, its clock short of the hit). */
-    private static boolean early(int s, int target, Blow b, int blow, int ms) {
-        if (s != moveSeq || move == null || style == null || b.move() != move.ordinal()) return false;
-        if (!shortOfBlade() || pending == PEND_TARGET.length) return false;
-        waitForBlade();
+    /**
+     * Whether a HIT is held for the blade: it is the blow of the strike on the hands, still short of its hit, or of the
+     * strike queued behind it (the server's clock ran ahead of the hands'). Told by the move, not the press: the two sides
+     * can file one strike under two presses (SPEC §25 "Weight in the Hand"), and held under the wrong one its impact played
+     * before the blade and then again on it.
+     */
+    private static boolean early(int target, Blow b, int blow, int ms) {
+        if (pending == PEND_TARGET.length) return false;
+        boolean running = move != null && style != null && b.move() == move.ordinal() && shortOfBlade();
+        boolean queued = !running && queuedIs(b.move());
+        if (!running && !queued) return false;
+        waitForBlade(b.move(), queued);
         PEND_TARGET[pending] = target;
         PEND_BLOW[pending] = blow;
         PEND_MS[pending] = ms;
         pending++;
         return true;
+    }
+
+    /** Whether the strike queued behind the one on the hands is this move. */
+    private static boolean queuedIs(int moveOrdinal) {
+        return buffered != null && buffered.move().ordinal() == moveOrdinal;
     }
 
     /** Whether the running move's blade is still short of its hit. */
@@ -877,18 +979,26 @@ public final class ArmsPredict {
         return def != null && moveTime() < landsAt(def);
     }
 
-    /** The one tick's wait starts with the first thing held for the blade. */
-    private static void waitForBlade() {
+    /**
+     * The wait starts with the first thing held for the blade: a tick for the strike on the hands, and for one still
+     * queued the ticks until it begins and its blade crosses, never more than {@link #QUEUE_WAIT}.
+     */
+    private static void waitForBlade(int moveOrdinal, boolean queued) {
         if (pending > 0 || pendingBreak >= 0) return;
-        pendingSeq = moveSeq;
-        pendingBy = System.nanoTime() + (long) nanosPerTick();
+        pendingMove = moveOrdinal;
+        float wait = 1F;
+        if (queued && buffered != null && style != null) {
+            Archetype.MoveDef def = style.move(buffered.move());
+            wait = Math.min(QUEUE_WAIT, Math.max(0, buffered.startAt() - ticks) + (def == null ? 0 : def.windup()) + 1F);
+        }
+        pendingBy = System.nanoTime() + (long) (nanosPerTick() * wait);
     }
 
-    /** Each frame: the held HITs land once the blade reaches the hit, a tick has gone, or another move began. */
+    /** Each frame: the held HITs land once the blade reaches the hit, the wait has gone, or the hands are on another move. */
     private static void landPending(LocalPlayer p) {
         if (pending == 0 && pendingBreak < 0) return;
-        Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
-        if (def != null && moveSeq == pendingSeq && moveTime() < landsAt(def) && System.nanoTime() < pendingBy) return;
+        boolean onIt = move != null && move.ordinal() == pendingMove && shortOfBlade();
+        if (System.nanoTime() < pendingBy && (onIt || queuedIs(pendingMove))) return;
         int n = pending, broken = pendingBreak;
         pending = 0;
         pendingBreak = -1;
@@ -922,13 +1032,13 @@ public final class ArmsPredict {
      * The server's word on a blow already played: nothing again but what only it knew. A kill holds the freeze for the
      * kill's beat (what's left of it), drops the body, and plays the kill's sound and flare; a cleave's ring.
      */
-    private static void confirmed(LocalPlayer p, int seq, int target, Blow b, int ms) {
+    private static void confirmed(LocalPlayer p, int target, Blow b, int ms) {
         Minecraft mc = Minecraft.getInstance();
         Entity struck = mc.level == null ? null : mc.level.getEntity(target);
         if (struck != null && b.cleave() >= 2) ArmsAudio.cleave(struck, b.cleave());
         if (!b.kill() || !ArmsComfort.killMoment() || struck == null) return;
-        long at = LEDGER.freezeAt(seq, target);
-        int played = LEDGER.freezeMs(seq, target);
+        long at = LEDGER.matchedFreezeAt();
+        int played = LEDGER.matchedFreezeMs();
         int left = ArmsRules.killHitstop(Math.max(ms, played)) - (int) ((System.nanoTime() - at) / 1_000_000L);
         if (played > 0 && left > 0) {
             CombatFeedback.hitstop(target, left);
@@ -977,12 +1087,21 @@ public final class ArmsPredict {
                 focusId = r.entity();
                 focusSeenAt = ticks;
                 Blow b = Blow.unpack(r.aux2());
-                if (LEDGER.confirm(r.seq(), r.entity(), ticks)) {
-                    confirmed(p, r.seq(), r.entity(), b, r.aux());
+                if (LEDGER.confirm(r.seq(), r.entity(), b.move(), ticks)) {
+                    ArmsFilm.event("confirmed seq " + r.seq() + " body " + r.entity());
+                    confirmed(p, r.entity(), b, r.aux());
                     return;
                 }
-                if (early(r.seq(), r.entity(), b, r.aux2(), r.aux())) return;
+                if (early(r.entity(), b, r.aux2(), r.aux())) return;
                 landed(p, r.entity(), b, r.aux());
+            }
+            case ArmsPayloads.DULL -> {
+                // the server struck it and nothing took: a blow the hands showed is answered with a dull knock, not left a ghost
+                if (LEDGER.confirm(r.seq(), r.entity(), r.aux2(), ticks)) {
+                    Entity e = mc.level == null ? null : mc.level.getEntity(r.entity());
+                    if (e != null) ArmsAudio.dull(e);
+                    ArmsFilm.event("dull seq " + r.seq() + " body " + r.entity());
+                }
             }
             case ArmsPayloads.DEFLECT -> {
                 deflectAt = ticks;
@@ -993,7 +1112,7 @@ public final class ArmsPredict {
                 ArmsFeel.deflected();
                 ArmsAudio.deflect(p);
                 int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
-                ArmsHands.jolt(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD), 1F);
+                ArmsHands.parry(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD));
                 ArmsBodies.jolt(p);
                 ArmsFx.guardSpark(p, yaw, true);
             }
@@ -1042,8 +1161,8 @@ public final class ArmsPredict {
             case ArmsPayloads.BREAK -> {
                 BROKEN.put(r.entity(), ticks + r.aux());
                 // sent as the damage lands, so before the HIT of the blow that broke it: its freeze waits for the same blade
-                if (shortOfBlade()) {
-                    waitForBlade();
+                if (shortOfBlade() && move != null) {
+                    waitForBlade(move.ordinal(), false);
                     pendingBreak = r.entity();
                 } else {
                     postureBroke(r.entity());
@@ -1078,18 +1197,25 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style == null || m == null ? null : style.move(m);
         if (m == Archetype.Move.EXECUTION) ArmsFeel.executed();
         if (def != null) {
-            java.util.List<Float> from = def.swing().from(), to = def.swing().to();
-            // along the blow's travel on screen (y up there, pitch down here); a kill kicks harder, and
-            // each extra body of a cleave a fifth more
-            float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+            // along the blow's travel on screen (y up there, pitch down here), read from the baked blade (ArmsRules.blowX:
+            // the row's old poses kicked 28 cuts off their blade); a kill kicks harder, and each extra body of a cleave a
+            // fifth more. A thrust drives into the screen: it nods the view in a touch and turns it nowhere
+            float dx = ArmsRules.blowX(def), dy = ArmsRules.blowY(def);
             float n = Math.max(1e-3F, (float) Math.sqrt(dx * dx + dy * dy));
             float yaw = dx / n, pitch = -dy / n;
-            // a hand-keyed move kicks along the blade its keys draw, not the row (a stab's row ran sideways)
+            if (ArmsRules.thrusts(def)) {
+                yaw = 0F;
+                pitch = THRUST_NOD;
+            }
+            // a hand-keyed move's own bake has the last word (a pair cutting out both ways nods like a stab)
             float[] along = style == null ? null : FpSwings.kick(FpSwings.style(style.id()), m);
             if (along != null) {
                 yaw = along[0];
                 pitch = along[1];
             }
+            // the weapon shudders along the same line through the freeze this blow began (SwingWeight)
+            if (m == move && style != null) ArmsHands.shake(style, m, ArmsRules.thrusts(def) ? 0F : yaw, ArmsRules.thrusts(def) ? 0F : -pitch);
+            if (p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT) yaw = -yaw; // a left-handed fighter's screen is mirrored
             float k = Math.min(2.4F, rawMs / 40F) * (killMoment ? KILL_KICK : 1F)
                     * (1 + CLEAVE_KICK * Mth.clamp(b.cleave() - 1, 0, ArmsRules.CLEAVE_EXTRA_MAX));
             CombatFeedback.kick(yaw * k, pitch * k, yaw * k * 0.4F, 6);
@@ -1111,6 +1237,8 @@ public final class ArmsPredict {
     /** The world yaw a blow on us last came from, and the tick it landed (the HUD's shard). */
     static int hurtYaw, hurtAt = -1000;
 
+    /** A thrust's kick: the view nodded in, no turn (tools/art/arms_keys.py NOD, as the hand-keyed stabs kick). */
+    static final float THRUST_NOD = 0.6F;
     /** A kill's view kick, against a hit's; each extra body of a cleave adds this share to it (SPEC §25 "Fight Feel"). */
     static final float KILL_KICK = 1.3F, CLEAVE_KICK = 0.2F;
 
@@ -1183,17 +1311,18 @@ public final class ArmsPredict {
 
     static void reset() {
         if (LEDGER.predicted > 0) {
-            com.mojang.logging.LogUtils.getLogger().info("[arms] blows played at once {}, confirmed by the server {}, shown without damage {}",
-                    LEDGER.predicted, LEDGER.confirmed, LEDGER.unconfirmed);
+            com.mojang.logging.LogUtils.getLogger().info("[arms] blows played at once {}, confirmed by the server {} ({} of them under another press), shown without damage {}",
+                    LEDGER.predicted, LEDGER.confirmed, LEDGER.reconciled, LEDGER.unconfirmed);
         }
         if (PLAYED.length() > 0) {
             com.mojang.logging.LogUtils.getLogger().info("[arms] strikes played: {}", PLAYED);
             PLAYED.setLength(0);
         }
+        ArmsGhosts.summary();
         ArmsBlackBox.dump();
         LEDGER.clear();
-        LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;
-        moveSeq = aimedId = focusId = pendingSeq = -1;
+        LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = LEDGER.reconciled = 0;
+        moveSeq = aimedId = focusId = pendingMove = glancedSeq = -1;
         pending = 0;
         pendingBreak = -1;
         move = null;
@@ -1209,6 +1338,9 @@ public final class ArmsPredict {
         BROKEN.clear();
         attackHeld = mineHeld = false;
         BladeTrail.reset();
+        ArmsHands.reset();
+        drawnCut = false;
+        restFrom = ticks;
         ArmsTells.reset();
         ArmsFeel.reset();
         ArmsFx.reset();

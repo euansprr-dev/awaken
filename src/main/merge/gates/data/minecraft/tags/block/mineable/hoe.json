@@ -13,6 +13,19 @@
     "awaken:amber_leaf",
     "awaken:amber_petal_deep",
     "awaken:amber_petal_tip",
-    "awaken:amber_leaf_gold"
+    "awaken:amber_leaf_gold",
+    "awaken:knell_moss",
+    "awaken:fane_moss",
+    "awaken:fane_leaf",
+    "awaken:fane_leaf_lit",
+    "awaken:fane_leaf_deep",
+    "awaken:keep_moss",
+    "awaken:keep_leaf",
+    "awaken:keep_leaf_lit",
+    "awaken:keep_leaf_deep",
+    "awaken:keep_banner",
+    "awaken:keep_vines",
+    "awaken:salt_moss",
+    "awaken:salt_banner"
   ]
 }

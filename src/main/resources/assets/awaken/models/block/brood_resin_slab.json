@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "awaken:block/brood_resin",
+    "top": "awaken:block/brood_resin",
+    "side": "awaken:block/brood_resin"
+  }
+}
