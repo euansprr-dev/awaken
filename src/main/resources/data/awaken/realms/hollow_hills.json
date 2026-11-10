@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "name": "The Hollow Hills",
+  "line": "Somebody dug these passages under the mounds by hand a very long time ago, and what lives in them now hunts by sound.",
+  "form": "dungeon",
+  "theme": "bell_crypt",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:hollow_hills",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/barrow_ship"
+    ],
+    "lens": "hollow_hills",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "smoke",
+      "dust",
+      "drips",
+      "bats",
+      "rats"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "bell_warden",
+    "seat": "under_the_hills"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}
