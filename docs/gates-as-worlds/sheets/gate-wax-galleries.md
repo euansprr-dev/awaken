@@ -9,7 +9,7 @@ away. Its rule, blocks and data are kept (see "What to bring over").
 
 ## What it is, in one breath
 
-You come out of a dark rock tunnel onto a ledge, and the whole hollow is in front of you: a round hall as big as a cathedral, five
+You come out of a dark rock tunnel at the head of a broad flight of steps, and the whole hollow is below and in front of you: a round hall as big as a cathedral, five
 tiers of arcades all the way round, every arch full of candles and hung with a thousand years of drips, and from the roof five
 combs the size of towers, glowing gold, each letting one thin thread of wax fall into a lake that never sets. Pale floes of cold
 wax make the paths across it.
@@ -18,7 +18,10 @@ wax make the paths across it.
 
 `src/main/resources/data/awaken/realm_blockouts/wax_galleries.json` is done and checked against the painting. Don't move a mass.
 Your land is `land/WaxGalleries.java`, a `SheetLand<M>` on that blockout (kit sheet C). It is `indoors()`. You arrive in
-`mouth_tunnel` at (0, 52, -100) facing +z; the hall's middle is (0, 0); the lake's surface is y 40; the gallery floors are y 44, 54,
+`mouth_tunnel` at (0, 65, -90) facing +z, 25 above the lake. `mouth_flight` is one flight of steps, 23 down, widening from 18 to
+49 across inside a cave mouth that splays open (`mouth_void_1` to `_4`), and lands on the shore. That splayed mouth is the dark
+arch that frames the painting, so keep its walls and roof bare dark rock. The hall's middle is (0, 0); the lake's surface is y 40;
+the five combs hang over the near half of the lake, the middle one over the `isle` at (0, -30); the gallery floors are y 44, 54,
 64, 74 and 84 (each `galleryN` is a ring corridor 6 wide behind a wall 2 thick, radius 60 to 62); the Lord's `seat` is north at
 (0, 128), reached from gallery 2 through `bridgehead` and over `seat_bridge`.
 
@@ -52,8 +55,10 @@ to see what exists. Use roles, not colours. Add to it what is missing from this 
 ## Passes, in this order
 
 1. **Rock.** Everything `rock` in the blockout that isn't drawn otherwise is the Amber family's dark stone (`deep` with `stoneA`
-   strata every 5 to 8 in y). The tunnel and the ledge are bare rock with two `wax_candle_bank` and long drips at the mouth of the
-   tunnel, so the hall is framed by a dark arch the way the painting is.
+   strata every 5 to 8 in y). The tunnel and the splayed mouth are bare rock, so the hall is framed by a dark arch the way the
+   painting is. Step the mouth's side walls and roof in and out by one or two cells so they read as rock, not as boxes. The flight
+   is `stoneStairs` worn pale down the middle, with a stream of set wax (`wax_cold` slabs) spilling down its east side, a
+   `wax_candle_bank` on every fourth step at both edges, and long drips from the roof's steps.
 2. **The hall wall, tier by tier.** Sixty bays round the circle (6 degrees each). In each bay of each gallery: a pier two cells
    wide, then an opening four wide and six high through the 2-thick wall into the corridor, its two top corners closed with
    `wax_arch`; a parapet of `wax_cold` slab across the foot of the opening with a gap in every fourth bay; the floor edge of every
@@ -71,9 +76,9 @@ to see what exists. Use roles, not colours. Add to it what is missing from this 
    three out on the surface below it. A hidden light of 14 one cell under each tip.
 7. **The lake.** `WarmWaxBlock` two deep where the blockout's `lake` is. Floes of `wax_cold` on a hex grid from `kit/N` (cell size
    5): a cell is a floe when its noise is over 0.55, and always along these lines so no one has to wade: south shore (0, -54) to
-   the isle (0, 6) to the north shore (0, 54), and the isle to the east shore (54, 0) and to the west shore (-54, 0). Floe tops are
+   the isle (0, -30) to the north shore (0, 54), and the isle to the east shore (54, 0) and to the west shore (-54, 0). Floe tops are
    level with the shore, their edges one slab lower. The shore ring is `wax_cold` over stone.
-8. **Ways between tiers.** Three steps up from the shore into gallery 0 at six places. Inside the ring corridor, stairs from each
+8. **Ways between tiers.** Three steps up from the shore into gallery 0 at six places, none within 30 degrees of the flight. Inside the ring corridor, stairs from each
    tier to the next at 30, 150, 210 and 330 degrees: `wax_cold` stairs rising 10 over 14 cells of arc, hugging the outer wall.
 9. **The village cove.** `village_cove` on the west shore: four domed wax houses (`kit/piece/Hut` with these mats if it fits, else
    your own: round, radius 3, a door, a lit window) and two `kit/piece/Stall`. Folk kit `wax_folk`.
@@ -86,8 +91,8 @@ to see what exists. Use roles, not colours. Add to it what is missing from this 
     y 112: links of full `wax_cold` blocks, each link 3 by 5 with a hole, alternate links turned a quarter. `seat_comb` above:
     skinned like the pendants, with forty thin strings of `wax_drip` beads hanging 10 to 30 below it. `seat_glow` is honey glow
     (the family's `glow`), with light.
-12. **Sites.** The blockout gives Mouth, Portal, Lord, three Wardens and the village. Add: Waystones on the ledge (6, -54) "the
-    ledge", on the isle "under the drip", in gallery 2 at (0, 65) north "the bridgehead"; DENs in six gallery corridors spread round
+12. **Sites.** The blockout gives Mouth, Portal, Lord, three Wardens and the village. Add: Waystones at the foot of the flight (8, -56) "the
+    foot of the steps", on the isle "under the drip", in gallery 2 at (0, 65) north "the bridgehead"; DENs in six gallery corridors spread round
     tiers 0 to 3; 14 FINDs in corridor bays and on far floes. Then `clearSites()`.
 
 ## Light, air

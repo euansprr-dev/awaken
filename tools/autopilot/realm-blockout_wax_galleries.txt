@@ -1,0 +1,42 @@
+# Blockout of wax_galleries from its own cameras, for tools/preview/preview.sh (the orchestrator's composition check).
+world autopilot_blockout_wax_galleries creative 20261120
+waitworld
+cmd awaken gate realm E awaken:blockout_wax_galleries
+
+cmd awaken gate realm_at MOUTH 0 0 0 5
+look 0 14
+shot bo_painting
+cmd awaken gate realm_at MOUTH 0 0 -23 34
+look 0 -10
+shot bo_foot
+cmd awaken gate realm_at MOUTH 0 30 -24 40
+look 37 -20
+shot bo_shore
+cmd awaken gate realm_at MOUTH 0 6 -24 53
+look -45 -70
+shot bo_up
+cmd awaken gate realm_at MOUTH 0 65 -11 80
+look 90 4
+shot bo_gallery
+cmd awaken gate realm_at MOUTH 0 -56 -24 90
+look -90 -12
+shot bo_across
+cmd awaken gate realm_at MOUTH 0 0 -24 51
+look 0 -35
+shot bo_isle
+cmd awaken gate realm_at MOUTH 0 -52 -24 96
+look 96 -4
+shot bo_village
+cmd awaken gate realm_at MOUTH 0 70 -11 90
+look -90 0
+shot bo_chandlery
+cmd awaken gate realm_at MOUTH 0 0 -1 180
+look 0 6
+shot bo_bridge
+cmd awaken gate realm_at MOUTH 0 -26 17 190
+look -43 28
+shot bo_seat_painting
+cmd awaken gate realm_at MOUTH 0 0 -1 202
+look 0 -8
+shot bo_seat_floor
+quit

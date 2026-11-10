@@ -4,63 +4,58 @@
   "mouthYaw": 0,
   "masses": [
     {"name": "rock", "op": "add", "shape": "box", "from": [-130, 0, -130], "to": [130, 150, 180], "role": "wall"},
-
     {"name": "hall", "op": "cut", "shape": "cylinder", "at": [0, 39, 0], "r": 60, "h": 57},
     {"name": "hall_dome", "op": "cut", "shape": "dome", "at": [0, 95, 0], "r": 60, "h": 30},
-
     {"name": "lake_bed", "op": "add", "shape": "cylinder", "at": [0, 36, 0], "r": 60, "h": 3, "role": "floor"},
     {"name": "lake", "op": "add", "shape": "cylinder", "at": [0, 39, 0], "r": 54, "h": 2, "role": "water"},
     {"name": "shore", "op": "add", "shape": "cylinder", "at": [0, 39, 0], "r": 60, "inner": 54, "h": 2, "role": "floor"},
-    {"name": "isle", "op": "add", "shape": "cylinder", "at": [0, 39, 6], "r": 7, "h": 2, "role": "floor"},
-
     {"name": "gallery0", "op": "cut", "shape": "cylinder", "at": [0, 44, 0], "r": 68, "inner": 62, "h": 7},
     {"name": "gallery1", "op": "cut", "shape": "cylinder", "at": [0, 54, 0], "r": 68, "inner": 62, "h": 7},
     {"name": "gallery2", "op": "cut", "shape": "cylinder", "at": [0, 64, 0], "r": 68, "inner": 62, "h": 7},
     {"name": "gallery3", "op": "cut", "shape": "cylinder", "at": [0, 74, 0], "r": 68, "inner": 62, "h": 7},
     {"name": "gallery4", "op": "cut", "shape": "cylinder", "at": [0, 84, 0], "r": 68, "inner": 62, "h": 7},
-
-    {"name": "pendant_mid", "op": "add", "shape": "cone", "at": [0, 54, 6], "r": 1, "r2": 12, "h": 71, "role": "great"},
-    {"name": "pendant_nw", "op": "add", "shape": "cone", "at": [-22, 60, 18], "r": 1, "r2": 11, "h": 64, "role": "great"},
-    {"name": "pendant_ne", "op": "add", "shape": "cone", "at": [22, 60, 18], "r": 1, "r2": 11, "h": 64, "role": "great"},
-    {"name": "pendant_w", "op": "add", "shape": "cone", "at": [-38, 66, -4], "r": 1, "r2": 10, "h": 55, "role": "great"},
-    {"name": "pendant_e", "op": "add", "shape": "cone", "at": [38, 66, -4], "r": 1, "r2": 10, "h": 55, "role": "great"},
-
-    {"name": "mouth_tunnel", "op": "cut", "shape": "box", "from": [-5, 52, -112], "to": [5, 60, -57]},
-    {"name": "mouth_ledge", "op": "add", "shape": "box", "from": [-9, 46, -60], "to": [9, 51, -50], "role": "floor"},
-    {"name": "stair_e", "op": "add", "shape": "wedge", "from": [10, 41, -57], "to": [27, 51, -51], "up": "-x", "role": "walk"},
-    {"name": "stair_w", "op": "add", "shape": "wedge", "from": [-27, 41, -57], "to": [-10, 51, -51], "up": "+x", "role": "walk"},
-
+    {"name": "isle", "op": "add", "shape": "cylinder", "at": [0, 39, -30], "r": 7, "h": 2, "role": "floor"},
+    {"name": "pendant_mid", "op": "add", "shape": "cone", "at": [0, 46, -30], "r": 1, "r2": 14, "h": 77, "role": "glow"},
+    {"name": "pendant_nw", "op": "add", "shape": "cone", "at": [-20, 50, -20], "r": 1, "r2": 13, "h": 73, "role": "glow"},
+    {"name": "pendant_ne", "op": "add", "shape": "cone", "at": [20, 50, -20], "r": 1, "r2": 13, "h": 73, "role": "glow"},
+    {"name": "pendant_w", "op": "add", "shape": "cone", "at": [-38, 54, -2], "r": 1, "r2": 12, "h": 66, "role": "glow"},
+    {"name": "pendant_e", "op": "add", "shape": "cone", "at": [38, 54, -2], "r": 1, "r2": 12, "h": 66, "role": "glow"},
+    {"name": "mouth_tunnel", "op": "cut", "shape": "box", "from": [-5, 65, -98], "to": [5, 72, -84]},
+    {"name": "mouth_void_1", "op": "cut", "shape": "box", "from": [-9, 58, -84], "to": [9, 76, -78]},
+    {"name": "mouth_void_2", "op": "cut", "shape": "box", "from": [-13, 53, -78], "to": [13, 76, -72]},
+    {"name": "mouth_void_3", "op": "cut", "shape": "box", "from": [-18, 48, -72], "to": [18, 75, -66]},
+    {"name": "mouth_void_4", "op": "cut", "shape": "box", "from": [-24, 41, -66], "to": [24, 72, -57]},
+    {"name": "mouth_flight", "op": "add", "shape": "wedge", "from": [-24, 41, -84], "to": [24, 64, -54], "up": "-z", "role": "walk"},
     {"name": "village_cove", "op": "cut", "shape": "cylinder", "at": [-70, 41, 0], "r": 20, "h": 12},
     {"name": "chandlery", "op": "cut", "shape": "box", "from": [66, 54, -14], "to": [96, 64, 14]},
     {"name": "bridgehead", "op": "cut", "shape": "box", "from": [-8, 64, 66], "to": [8, 72, 88]},
-
     {"name": "seat_shaft", "op": "cut", "shape": "cylinder", "at": [0, 20, 128], "r": 40, "h": 100},
     {"name": "seat_glow", "op": "add", "shape": "cylinder", "at": [0, 17, 128], "r": 40, "h": 3, "role": "glow"},
     {"name": "seat", "op": "add", "shape": "cylinder", "at": [0, 58, 128], "r": 22, "h": 6, "role": "great"},
     {"name": "seat_bridge", "op": "add", "shape": "box", "from": [-2, 62, 88], "to": [2, 63, 107], "role": "walk"},
-    {"name": "seat_comb", "op": "add", "shape": "cone", "at": [0, 84, 128], "r": 3, "r2": 20, "h": 36, "role": "great"}
+    {"name": "seat_comb", "op": "add", "shape": "cone", "at": [0, 84, 128], "r": 3, "r2": 20, "h": 36, "role": "glow"}
   ],
   "sites": [
-    {"kind": "MOUTH", "at": [0, 52, -100], "radius": 6, "what": ""},
-    {"kind": "PORTAL", "at": [0, 52, -108], "radius": 2, "what": ""},
+    {"kind": "MOUTH", "at": [0, 65, -90], "radius": 6, "what": ""},
+    {"kind": "PORTAL", "at": [0, 65, -96], "radius": 2, "what": ""},
     {"kind": "LORD", "at": [0, 64, 128], "radius": 24, "what": "lord"},
     {"kind": "WARDEN", "at": [80, 54, 0], "radius": 14, "what": "chandlery"},
-    {"kind": "WARDEN", "at": [0, 41, 6], "radius": 8, "what": "the drip"},
+    {"kind": "WARDEN", "at": [0, 41, -30], "radius": 8, "what": "the drip"},
     {"kind": "WARDEN", "at": [0, 64, 78], "radius": 9, "what": "bridgehead"},
     {"kind": "VILLAGE", "at": [-72, 41, 0], "radius": 18, "what": ""}
   ],
   "cameras": {
-    "painting": [0.5, 54.6, -72.5, 0, 4],
-    "ledge": [0.5, 53.6, -52.5, 0, 10],
-    "shore": [0.5, 42.6, -56.5, 0, -24],
-    "up": [0.5, 42.6, -20.5, 0, -62],
-    "gallery": [64.5, 55.6, -20.5, 60, 6],
-    "across": [-56.5, 42.6, 0.5, -90, -14],
-    "isle": [0.5, 42.6, -6.5, 0, -40],
-    "village": [-52.5, 43, 6.5, 96, -4],
+    "painting": [0.5, 66.62, -84.5, 0, 14],
+    "foot": [0.5, 43.62, -55.5, 0, -10],
+    "shore": [30.5, 42.62, -49.5, 37, -20],
+    "up": [6.5, 42.62, -36.5, -45, -70],
+    "gallery": [65.5, 55.62, -9.5, 90, 4],
+    "across": [-55.5, 42.62, 0.5, -90, -12],
+    "isle": [0.5, 42.62, -38.5, 0, -35],
+    "village": [-51.5, 43, 6.5, 96, -4],
     "chandlery": [70.5, 56, 0.5, -90, 0],
-    "bridge": [0.5, 65.6, 90.5, 0, 6],
-    "seat_painting": [-20.5, 78, 100.5, -36, 24],
-    "seat_floor": [0.5, 65.6, 112.5, 0, -8]
+    "bridge": [0.5, 65.62, 90.5, 0, 6],
+    "seat_painting": [-25.5, 84, 100.5, -43, 28],
+    "seat_floor": [0.5, 65.62, 112.5, 0, -8]
   }
 }
