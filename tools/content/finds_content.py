@@ -409,6 +409,10 @@ def java():
               "        }));",
               "    }", "",
               "    public static void init(IEventBus modBus) {", "        SET.init(modBus);", "    }", "",
+              "    /** Whether a prop used as a cache stands open in its state 1 (a drawer, a lid, a bundle). */",
+              "    public static boolean opens(net.minecraft.world.level.block.Block b) {",
+              "        return b == FOOTING.get() || b == CAP_STONE.get() || b == BUNDLE.get() || b == PLUG.get();",
+              "    }", "",
               "    /** Every prop's id, for the ledger. */",
               "    public static String[] ids() {", "        return IDS.toArray(String[]::new);", "    }", "}", ""]
     os.makedirs(os.path.dirname(JAVA), exist_ok=True)

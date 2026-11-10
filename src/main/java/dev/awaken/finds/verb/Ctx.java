@@ -84,6 +84,11 @@ public final class Ctx {
         heart.touch();
     }
 
+    /** A state as a kind writes it (the kind facing south), turned the way this site is turned. */
+    public BlockState turned(BlockState s) {
+        return s.rotate(net.minecraft.world.level.block.Rotation.values()[site.rot() & 3]);
+    }
+
     /** Every part back to what the world made. */
     public void restoreAll() {
         for (var e : scene.parts().entrySet())
@@ -121,8 +126,12 @@ public final class Ctx {
         heart.clock(slot, t);
     }
 
+    /** Tests only: ticks added to the clock, and an hour of day to pretend it is (-1: the real one). */
+    public static long testTicks;
+    public static long testHour = -1;
+
     public long now() {
-        return level.getGameTime();
+        return level.getGameTime() + testTicks;
     }
 
     public long seed() {
@@ -174,13 +183,13 @@ public final class Ctx {
     }
 
     public boolean night() {
-        long t = level.getOverworldClockTime() % 24000;
+        long t = hour();
         return t >= 13000 && t < 23000;
     }
 
     /** The hour of the game day, 0..23999 (0 is sunrise). */
     public long hour() {
-        return level.getOverworldClockTime() % 24000;
+        return testHour >= 0 ? testHour : Math.floorMod(level.getOverworldClockTime(), 24000L);
     }
 
     public boolean raining() {

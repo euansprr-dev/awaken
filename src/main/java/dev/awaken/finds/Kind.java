@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public record Kind(String id, String name, FSet set, int number, Verb verb, Size size, int rank, Set<RegionMap.Group> lands,
                    Anchor anchor, Made made, String see, String learned, int reach, int slope, int length, Maker maker,
                    Supplier<Script> script, String loot, boolean persists, Tell tell, Supplier<ItemStack> icon, boolean needsMove,
-                   boolean lead, int weight) {
+                   boolean lead, int weight, java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after, @org.jspecify.annotations.Nullable Play play) {
 
     /** The eighteen things your hands do. A kind is built on one; many borrow a second. */
     public enum Verb { STACK, CARRY, LIGHT, RING, TURN, OFFER, FOLLOW, DIG, PULL, POUR, SHOOT, RUN, REACH, WAIT, MEND, READ, BREAK, SNEAK }
@@ -50,6 +50,12 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         FSet(String display) {
             this.display = display;
         }
+    }
+
+    /** How a kind is finished, step by step, as a scripted player does it in the tests. It doubles as the kind's walkthrough. */
+    @FunctionalInterface
+    public interface Play {
+        void run(Trial t);
     }
 
     /** Builds the kind's scene at a site. */
@@ -87,6 +93,8 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         private boolean persists, needsMove, lead;
         private Tell tell = Tell.NONE;
         private Supplier<ItemStack> icon = () -> ItemStack.EMPTY;
+        private java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after = c -> {};
+        private Play play;
 
         private Builder(FSet set, int number, String id, String name) {
             this.set = set;
@@ -125,14 +133,17 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         /** Finishing it gives a direction to a rarer find further out. */
         public Builder lead() { lead = true; return this; }
         public Builder tell(Tell t) { tell = t; return this; }
-        public Builder icon(ItemLike i) { icon = () -> new ItemStack(i); return this; }
         public Builder icon(Supplier<? extends ItemLike> i) { icon = () -> new ItemStack(i.get()); return this; }
+        /** What the world does the moment the find is finished, before anyone is paid (birds come, a door opens). */
+        public Builder after(java.util.function.Consumer<dev.awaken.finds.verb.Ctx> a) { after = a; return this; }
+        /** The walkthrough the tests run. */
+        public Builder play(Play p) { play = p; return this; }
         /** How often it's dealt against its neighbours (10 is usual). */
         public Builder weight(int w) { weight = w; return this; }
 
         public Kind add() {
             Kind k = new Kind(id, name, set, number, verb, size, rank, lands.isEmpty() ? Set.of() : EnumSet.copyOf(lands), anchor, made, see, learned,
-                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight);
+                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight, after, play);
             Kinds.register(k);
             return k;
         }

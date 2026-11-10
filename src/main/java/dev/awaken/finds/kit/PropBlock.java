@@ -38,6 +38,11 @@ public final class PropBlock extends Block {
         return defaultBlockState().setValue(STATE, state & 3).setValue(FACING, facing);
     }
 
+    /** This prop in a state with its front turned a way (a model's own front is north). */
+    public BlockState front(int state, Direction front) {
+        return of(state, front.getOpposite());
+    }
+
     public BlockState of(int state) {
         return defaultBlockState().setValue(STATE, state & 3);
     }

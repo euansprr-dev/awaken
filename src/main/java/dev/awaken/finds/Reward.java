@@ -43,6 +43,8 @@ public final class Reward {
             who.add(0, by);
         }
         BlockPos from = c.has("cache") ? c.pos("cache", 0) : by != null ? by.blockPosition() : c.site.ground().above();
+        c.kind().after().accept(c);
+        open(c);
         boolean any = false;
         for (ServerPlayer p : who) {
             if (c.heart.claimed(p.getUUID())) continue;
@@ -54,6 +56,14 @@ public final class Reward {
             c.sound(from, SoundEvents.AMETHYST_BLOCK_CHIME, 0.9F, 0.8F);
             c.puff(from.above(), ParticleTypes.WAX_OFF, 10, 0.35, 0.02);
         }
+    }
+
+    /** A cache that has a way of standing open (a drawer, a lid, a bundle) opens. */
+    private static void open(Ctx c) {
+        if (!c.has("cache")) return;
+        var s = c.at("cache", 0);
+        if (s.getBlock() instanceof dev.awaken.finds.kit.PropBlock && dev.awaken.finds.kit.Props.opens(s.getBlock()) && s.getValue(dev.awaken.finds.kit.PropBlock.STATE) == 0)
+            c.set("cache", 0, s.setValue(dev.awaken.finds.kit.PropBlock.STATE, 1));
     }
 
     /** A player who comes to a find someone else already finished takes their own share from its cache. */

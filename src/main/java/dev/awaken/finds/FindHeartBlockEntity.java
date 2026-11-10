@@ -136,10 +136,11 @@ public final class FindHeartBlockEntity extends BlockEntity {
     // ---- running ----------------------------------------------------------------------------------------------------
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FindHeartBlockEntity be) {
-        if ((level.getGameTime() + pos.asLong()) % 5 != 0 || !(level instanceof ServerLevel sl)) return;
+        if (!(level instanceof ServerLevel sl)) return;
         Site s = be.site();
-        if (s == null) return;
+        if (s == null || be.script == null) return;
         long now = level.getGameTime();
+        if ((now + (pos.asLong() & 3)) % be.script.every() != 0) return;
         if (!level.hasNearbyAlivePlayer(s.x() + 0.5, s.y() + 1, s.z() + 0.5, NEAR)) {
             if (be.touched && !s.kind().persists() && now - be.lastNear > (be.done() ? REDO : FORGET)) be.forget(sl);
             return;

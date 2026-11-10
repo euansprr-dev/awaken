@@ -51,6 +51,11 @@ public interface Script {
     /** The site goes back to how the world made it. Parts are restored by the heart; this is for anything else. */
     default void reset(Ctx c) {}
 
+    /** How often {@link #tick} runs, in ticks. Five is plenty for most; something that moves asks for one. */
+    default int every() {
+        return 5;
+    }
+
     /** How many links this script is. One, unless it's {@link Steps}. */
     default int length() {
         return 1;
