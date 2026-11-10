@@ -26,7 +26,8 @@ public final class LandPrograms {
             Map.entry("awaken:root_cellars", dev.awaken.gates.realms.land.RootCellar::new),
             Map.entry("awaken:tallow_runs", dev.awaken.gates.realms.land.TallowRun::new),
             Map.entry("awaken:sporewells", dev.awaken.gates.realms.land.Sporewell::new),
-            Map.entry("awaken:cinder_workings", dev.awaken.gates.realms.land.CinderWorkings::new));
+            Map.entry("awaken:cinder_workings", dev.awaken.gates.realms.land.CinderWorkings::new),
+            Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new));
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);
