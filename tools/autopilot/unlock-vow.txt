@@ -22,14 +22,18 @@ screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd effect give @s minecraft:resistance 100000 4 true
 cmd tick sprint 6200
-wait 240
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
 cmd gamerule advance_time false
 cmd time set 5500
 cmd awaken ascent grant none
 camera back
 hud on
 cmd awaken ascent vow goto
-wait 40
+# the move waits for the vault's chunks, then the stir is read once a second
+wait 200
 shotnow vow_01_stir
 wait 40
 shotnow vow_02_stir_words
@@ -37,7 +41,8 @@ wait 60
 shotnow vow_03_stir_after
 wait 120
 cmd awaken admin rankup
-wait 80
+# let the rank-up's own messages finish first, so only the vault's are on screen
+wait 500
 key dismiss
 wait 10
 screen close

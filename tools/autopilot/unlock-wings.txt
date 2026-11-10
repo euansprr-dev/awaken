@@ -36,7 +36,10 @@ wait 60
 key dismiss
 screen close
 cmd tick sprint 6200
-wait 240
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
 cmd time set 5500
 cmd awaken ascent grant tether
 cmd awaken ascent sky goto

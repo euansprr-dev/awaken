@@ -27,35 +27,41 @@ wait 10
 screen close
 # the director holds paced lines for a world's first five minutes: run them through
 cmd tick sprint 6200
-wait 240
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
 cmd gamerule advance_time false
 cmd time set 6000
 hud on
 camera first
 shot tether_00_before
+cmd gamemode creative
 cmd awaken admin trial D
 # the bell, the Great Fault, the hall readied, the wake inside the door
 wait 500
 shotnow tether_01_wake
 # onto the chancel: it drops into the light
 cmd tp @s ~ ~1.2 ~-30 180 0
-wait 120
+wait 100
 shotnow tether_02_ringer
 cmd kill @e[type=awaken:proving_ringer]
-look 180 40
-wait 34
+look 180 45
+# the outro (server ticks): what it left at 30, its chain at 50, the Tenor at 90, home at 300
+wait 36
 shotnow tether_03_fallen
-wait 20
+wait 22
 shotnow tether_04_chain
-wait 20
+wait 24
 shotnow tether_05_chain_after
 look 180 0
-wait 40
+wait 30
 shotnow tether_06_tenor
 wait 100
 shotnow tether_07_waiting
 # home with the rank at 15 s
-wait 120
+wait 110
+cmd gamemode survival
 shotnow tether_08_home
 wait 60
 shotnow tether_09_home
