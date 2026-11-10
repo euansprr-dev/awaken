@@ -33,5 +33,145 @@
   "stride": 0.65,
   "wind": 0.0,
   "kick": 1.0
+ },
+ {
+  "piece": "chestplate",
+  "bone": "body",
+  "mesh": "chestplate_body_live0",
+  "kind": "glitch",
+  "pivot": [
+   0.0,
+   0.3125,
+   -0.0
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 31,
+  "amount": 0.0,
+  "reach": 0.0625,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 3,
+  "stride": 0.65,
+  "wind": 0.0,
+  "kick": 1.0
+ },
+ {
+  "piece": "chestplate",
+  "bone": "cape1",
+  "mesh": "chestplate_cape1_live0",
+  "kind": "glitch",
+  "pivot": [
+   0.0,
+   0.25,
+   -0.0
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 43,
+  "amount": 0.0,
+  "reach": 0.0625,
+  "bob": 0.0,
+  "phase": 1.7,
+  "idle": 3,
+  "stride": 0.65,
+  "wind": 0.0,
+  "kick": 1.0
+ },
+ {
+  "piece": "leggings",
+  "bone": "front_cloth",
+  "mesh": "leggings_front_cloth_live0",
+  "kind": "glitch",
+  "pivot": [
+   0.0,
+   0.3125,
+   -0.0
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 37,
+  "amount": 0.0,
+  "reach": 0.0625,
+  "bob": 0.0,
+  "phase": 3.1,
+  "idle": 2,
+  "stride": 0.65,
+  "wind": 0.0,
+  "kick": 1.0
+ },
+ {
+  "piece": "leggings",
+  "bone": "back_cloth",
+  "mesh": "leggings_back_cloth_live0",
+  "kind": "glitch",
+  "pivot": [
+   0.0,
+   0.3125,
+   -0.0
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 53,
+  "amount": 0.0,
+  "reach": 0.0625,
+  "bob": 0.0,
+  "phase": 4.9,
+  "idle": 3,
+  "stride": 0.65,
+  "wind": 0.0,
+  "kick": 1.0
  }
 ]
