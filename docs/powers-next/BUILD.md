@@ -98,3 +98,31 @@ ladder steps, a Core source, its first step through `core.api.Goals`, its Readin
 
 Compile; GameTests on CI; rerun `tools/autopilot/powers-next-before.txt` as the after film; rebuild the listening page from the
 real scores; SPEC §32 and §50 updated with what was built; hand-over.
+
+### What the close found (10 Nov 2026)
+
+Tests. One test a mechanism, `power_next_*` (eleven: scores and subtitles, takes, a way's shape, Icebreaker, a Break finisher, each
+earned power, how one is given and shown on Tasks). The first full run on CI (160f73bf3) failed five: a sentinel that overflowed so
+the first blow never loosed a lance; the Updraft not lifting its caster; Haymaker's gather missing its release tick; takes expected
+of a held gather; and the audio test wanting every `voice.*` layer registered and subtitled (it now holds a layer to naming
+Minecraft's recordings and `voice.say.<power>` to its subtitle). The second (8b7ab2c47) failed one, the Updraft, which was a
+column whose foot was found a block above its caster. All eleven pass locally on 88ca4d898; the full suite on that tip is run
+42841941739.
+
+Films (CI, `PACK=feel`, macOS runners; stills in `run-autopilot/screenshots-ci/`, gitignored):
+- `powers-next-before.txt`, the same 17 casts: before 42788742556; after 42824337477 (the arm with an elbow), 42831914646 (the
+  vanilla arm).
+- `powers-next-new.txt`, the five earned powers and a Brand + sword combo: 42824336832, 42830503858, and later runs.
+
+What the films changed:
+- **The arm.** The elbow and the separate upper-arm piece read as a broken arm (Euan: "the arm is completely broken ... keep the
+  arms closer to vanilla style"). It is one straight vanilla box again (SPEC §32.N). Poses, left-hand casts and light kept.
+- The Updraft's column and Barrier's plate were invisible to their own caster: the effect renderer hides every glow within a block
+  and a half of the eye. What a caster must see near themselves is drawn with `FxPool.NEAR`, small.
+- Backdraft threw dirt (the shared cone recipe) and brown smoke: it has its own kind (`FxKind.BREATH`) and flame drawn over the
+  world. Thornwake's roots read as lightning: they are little blocks of real wood now (`FxDebris`).
+- Haymaker's cocked fist sat off the left edge on a 16:10 screen; the on-screen rule in `fp_casts2.py` is strict enough to catch it.
+- Shadow Step left its own grey shape in the caster's face.
+
+Still to be judged by eye and ear, by Euan: everything. Nothing here has been played, and no sound has been heard in game.
+
