@@ -49,11 +49,13 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     private static final int FOLDED_TICKS = 80;
 
     /**
-     * For your own eyes the wings are drawn from the body but set a little ahead of the eye and above it, so the outer
-     * feathers sit at the frame's sides (the body is not drawn in first person, and wings level with the eye would be
-     * behind it). Blocks; and how solid they are this close.
+     * For your own eyes the wings are drawn from the body but set a little ahead of the eye and a little under it, so
+     * the outer feathers sit at the frame's lower sides and are seen from above (the body is not drawn in first person:
+     * where the wings really are, nothing of them is in view; level with the eye they are thin lines seen edge-on, and
+     * higher they fill the view in a dive: an offline render of this code decided the numbers, docs/movement/PLAN.md).
+     * Blocks; and how solid they are this close.
      */
-    static float fpAhead = 0.9F, fpUp = 0.3F, fpAlpha = 0.8F;
+    static float fpAhead = 0.8F, fpUp = -0.12F, fpAlpha = 0.8F;
 
     /** One view of a slot's wings this frame (the renderers run after every submit, so each view keeps its own). */
     private static final class View {
