@@ -37,10 +37,10 @@ shot stopped_works_ambush
 cmd awaken gate realm_leg WARDEN 0 9 3
 wait 80
 shot stopped_works_warden
-cmd awaken gate realm_leg LORD 0 15 4
+cmd awaken gate realm_leg LORD 0 9 4
 wait 80
 shot stopped_works_lord
-cmd awaken gate realm_leg LORD 0 -12 5
+cmd awaken gate realm_leg LORD 0 -9 5
 wait 80
 shot stopped_works_lord_back
 cmd awaken gate realm_leg MOVEMENT 0 0 2
