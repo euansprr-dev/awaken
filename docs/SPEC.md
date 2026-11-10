@@ -22848,8 +22848,12 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   tours and a careful climber who stops to aim would fail too: without the leap and with no gate opened yet,
   `AscentTrials.openLeaper(p, near)` opens the Gauntlet 9 out from the crown's column at the plaza's height, toward where
   the climber stands. Either way in (a crown, or Tether mastery 4 as before) the gate's id and place go on the road; if
-  its record is gone when the player is within 96 blocks it is opened again there. *Differs:* the row's needle is the
-  nearest Tether Spire only (hero trees are not in the locator; their crowns still open the gate).
+  its record is gone when the player is within 96 blocks it is opened again there. The crown also watches its rim for
+  this alone (`SpireCrownBlockEntity.RIM`, 3.9 blocks, standing: the deck is five blocks square and its corners are 3.5
+  from the crown, outside the 2.6 its record watches), so a climb that ends on the rim opens the gate without two more
+  steps; `crownReached` asks `ArrivalHooks.byLine` itself, last. The crown's record, time and mastery stay the deck's.
+  *Differs:* the row's needle is the nearest Tether Spire only (hero trees are not in the locator; their crowns still
+  open the gate).
 - **Wings.** After the core's gift `WayUp.firstFlight` sends the pier's end (the core + `SkyRig.PIER` along x and z) and
   the way off it. Once the gift's scene ends the client begins the first flight's Lesson: the cap 3 past the pier's end,
   four rings of light a second sinking along the line, the gold figure running off the end. Its words are "Run off the
@@ -22878,10 +22882,34 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   tells a scene the card is up, and the Vow's and the gifts' titles are then drawn at 0.60 of the screen's height. *Differs:* the gold figure is the Gauntlet's ghost
   (`gates.entity.GauntletGhost`, the gates' own entity type, used from the client only) moved along a computed path (a
   swing's sag to the mast, two hops along the look, a run off the pier), not a recorded route; none with reduced motion.
+  Its tint is the Lesson's own gold (`Lesson.GOLD`, a little over half there): with the Gauntlet's pale tint the skin's
+  colours stay as they are, and the first clear picture of it (11 Nov, on open ground) read as another player standing
+  in your way.
+- **The six moves of §62** (11 Nov, after Rope and Wings was merged). Six more kinds, each begun where the move's own
+  code already offered its written tip (`AscentMoves`: `Lesson.offerMove` first, the tip only when the Lesson can no
+  longer teach), plus two moments of the Lesson's own (`Lesson.offerOwn`):
+  | Move | Earned (§62, unchanged) | Its moment | The prompt |
+  |---|---|---|---|
+  | Sling | with the rope | on foot, where a rope held now would sling (nothing to swing from, a top ahead: `AscentMoves.slingFromGround`, the marker's own two looks twice a second while the lesson can still teach, because the marker itself only looks in the air or with the key held); and wherever the marker shows a sling. Not within half a minute of the rope's own first lesson | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
+  | Spring | Tether mastery 3 | a pull is carrying you up onto a top, forward not held | Hold + forward: "Spring off the top" (stays 3.5 s: the pull is over before it is read) |
+  | Rope strike | Tether mastery 5 | on the rope or in its carry, a creature out of reach under the crosshair | the attack key, pinned on the creature as it moves: "Your rope pulls you into it" |
+  | Flare | with wings | gliding down with the ground within 14 blocks; and after a hard landing on wings | no key: "Level out just before you land" |
+  | Skim | Wings mastery 3 | gliding fast within 9.5 blocks of the ground and not yet skimming | no key: "Drop lower and skim the ground" |
+  | Takeoff | with flight | at home: standing still outdoors in the overworld with flight and Aether to spare, no fight (a rank fight is in its own dimension, so this is after the way home); and whenever you look up from the ground | Hold + sneak, "then", jump: "while you look up", pinned on a ring in the sky up ahead (before you look up it is held under the screen's top band with its arrow); at home the gold figure stands a second and rises 14 blocks, six ahead |
+  A prompt held at the screen's edge (its target is off the screen: the takeoff's ring before you look up) carries its
+  arrow on the plate itself, in the title's white; out on the sky beside the plate it could not be read (first look tour).
+  A move's prompt shows while its moment lasts (15 s at most), at most four times a session and a minute apart (the
+  takeoff's for standing about three minutes apart), never over another lesson, a card, a scene or a screen, and never
+  again once the move has been made. The first time a move is made its card shows for four seconds (its name and how: "The sling ·
+  Hold [key] at a top ahead"). Made-once is the count §62 already keeps (`Progression` counters `ascent_slung`, …):
+  nothing new is saved; `WayUp.moves` packs the six into the `ascent_way` message's last byte and `AscentServer.made`
+  sends it at once. The earn rules are §62's and are the server's (`AscentServer.allowed`, `onEvent`, `onStrike`): The
+  Way Up changes only when the rungs themselves arrive, so a D-rank hunter before a vault has no sling, and so on up.
 - **K, Powers** (`body.client.AscentSection`): a row a rung held with its keys in the player's bindings in brackets and a
   mastery bar; "You haven't used it yet." in amber until its lesson is done; the next rung as "◆ Next" with a Lead; the
-  rest dark diamonds. *Differs:* text and a bar, not caps and ten pips (a band section draws text and bars), and no mark
-  on the pip that gives a move until §62's moves are merged.
+  rest dark diamonds. Under a rung's keys, a line for each of §62's moves its mastery has opened (the sling, the flare
+  and the takeoff come with their rung), and for the next one not yet opened only "◆ Another move at mastery 3." (never
+  what it is). *Differs:* text and a bar, not caps and ten pips (a band section draws text and bars).
 - **Words:** every `awaken.ascent.vow.*`, `gift.*`, `edge.*` and `core.*` line in plain speech; with The Way Up on a gift
   shows its sentence only (the clipped second line is gone: the Lesson or the card says how). The trail steps "Reach the
   vault's beacon mast by rope." and "Take flight."; the level road's 58 and 73.
@@ -22897,17 +22925,39 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   **Not clearly seen:** the gold figure (hidden by the tours' cameras), the gate's own panel (its tour's shots came a few
   seconds before the gate), a first glide carried by a windway, and the Tasks row for the gate (covered by
   `way_up_road`). The pilot's spire climb ends on the crown's rim or beyond: in four tours it never came within the 2.6
-  blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing.
+  blocks the crown watches, so the gate's tour steps to the crown's middle by command after climbing (the rim's own
+  watch came after those tours, and no tour has run since). The six moves: tour `way-up-moves.txt`, on a stone floor
+  built in the open sky with flight by a dev grant (see "Seen, the moves" below).
+- **Seen, the moves** (CI look tours `way-up-moves.txt`, runs 42911204798, 42914634952, 42917835393, 42920044734 and
+  42922158444; "[ascent] the way up: the X lesson shows" in latest.log names each lesson as it begins): the takeoff's
+  prompt held under the top band with its arrow while standing, begun a quarter second after flight was held; the same
+  prompt on its ring in the sky once the look goes up; the takeoff made and its card; the flare's words from the moment
+  the wings open near the ground until three seconds after a hard landing; the sling's key pinned on a block's top on
+  foot, the pull over it and its card; the K rows with the sling's line and "◆ Another move at mastery 3."; the gold
+  figure standing six blocks ahead and rising. **The figure does not read as gold light:** it is your own skin drawn
+  solid with a shadow under it (its tint's see-through does not show in the pictures; why was not traced), plain in the fourth
+  tour and amber-brown with `Lesson.GOLD` in the fifth. It shows the move, but a figure of light needs a renderer of
+  its own (flat gold, lit, no shadow): not built. What the tours changed: the edge arrow moved onto the
+  plate; the flare's words were shortened; the sling gained its on-foot look (it had begun only as the key went down);
+  the takeoff's figure was slowed and moved further off; the figure's tint; and, after the last tour and so
+  unpictured, a words-only prompt sits over the crosshair on a screen under 340 tall (on a 240-tall one a tip already
+  up was drawn through the flare's words: the tips' box and the story line's slot fill the strip under the crosshair
+  there). **Not pictured:** the spring, the rope
+  strike and the skim (they need mastery a tour does not have), a real flare (the pilot lands hard), and the gate
+  opening from a crown's rim. A tour lesson: the message director holds for a world's first five minutes of game time
+  (`Herald.SETTLE`), so the standing lesson never shows in a short tour without a second sprint.
 - **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
   (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
   (a mock player starts outside the test's ground). Fixed to spawn them as `ascent_sovereign` does and to read the
   field by the slowness it lays (III on a zombie, I on a boss): a monster can't be made to target a test's mock player,
   so "a boss keeps its target" is read in the code, not asserted. All four pass (local run of `-Ptests=way_`, 11 Nov). Changed for the new
   rule: `ascent_tether_vow` runs with the option off (the door rule is the old rule), the sky trial's test gives its taker
-  wings first, the Ringer's Proving test expects the cold chain. *Not written:* `way_up_places` (a test world has one
-  seed; the distances in the audit come from the placement maths).
-- **Not built:** the six new moves' Lessons and the takeoff's at home (they wait for §62 to be merged: each is one more
-  `Lesson.Kind` and its trigger); the platform's brighter rings; a needle to hero trees.
+  wings first, the Ringer's Proving test expects the cold chain. `way_up_moves` (11 Nov): a D-rank hunter before a vault
+  can't hold the sling's state; without its rung no move a client claims is counted; the sling counts with the rope, the
+  spring only from Tether mastery 3, the strike's rule from 5, the flare with wings, the skim only from Wings mastery 3,
+  the takeoff only with flight; and the count is what the client is told. *Not written:* `way_up_places` (a test world
+  has one seed; the distances in the audit come from the placement maths).
+- **Not built:** the platform's brighter rings; a needle to hero trees.
 
 ## 64. The Long World: sixty monuments in twelve families (plan docs/places/PLAN.md, page https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1; Euan, 10 Nov 2026: "Go with the full plan", and the same hour: "everything actually looks naturally placed... make sure it's at actual AAA level for each. And focus on coding more than checking over and over")
 

@@ -151,7 +151,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
 <div class="wrap">
 
 <section>
-  <span class="status ok">Approved on 10 November ("Go with all recommendations"). Built on 11 November on its own branch; not merged, not yet played.</span>
+  <span class="status ok">Approved on 10 November ("Go with all recommendations"). Built on 11 November and merged into the build. Not yet played.</span>
   <h1>The Way Up</h1>
   <p class="muted">How a player earns each move, from the first wall-run to the Sovereign's form. An audit of the road as it is today, and one road to replace it. 10 November 2026.</p>
   <blockquote>"the progression system for all of the movement and how that gets unlocked. We need to make sure that it's actually like natural to get to that point, and that it feels like easy to, well, not easy, like it should still be difficult to get to like the final point, but like it should be kind of a natural progression, and you shouldn't have to like, basically it shouldn't be impossible to unlock the future movement. Like maybe we make it unlock more with like maybe some of the rank assessments. I think that would be pretty interesting, where it's like based on rank assessments, and then that unlocks somewhere that you discovered that you can go and unlock that item, and then it actually shows you how to use it and stuff with like kind of AAA tooltips, visuals, like similar to some others we have maybe. And yeah, just make sure that that whole progression is actually clear inside of the K menu. Or that it's clear. Actually, it doesn't have to be clear in the K menu, actually. It's more so it's like it has to be clear the moment that you unlock it, or it has to have a moment that's natural progression where you unlock it."<footer>Euan, 10 November 2026</footer></blockquote>
@@ -221,12 +221,11 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
 
 <section>
   <h2>Built on 11 November</h2>
-  <p>All twelve decisions are coded on the branch <code>claude/movement-unlocks-b62e18</code>, behind one world option, <code>wayUp</code>, which is on. Switch it off and every old rule is back exactly. It is not merged and you have not played it.</p>
+  <p>All twelve decisions are coded on the branch <code>claude/movement-unlocks-b62e18</code>, behind one world option, <code>wayUp</code>, which is on. Switch it off and every old rule is back exactly. It is merged into the build. You have not played it.</p>
   <div class="kit">
     <div class="side">
       <span class="eyebrow">Different from the plan</span>
       <ol class="find">
-        <li><b>The six new Rope and Wings moves have no lesson yet.</b> Their triggers live on that branch. Each is a few lines once the two are merged.</li>
         <li><b>The lit place is a thin beam,</b> not brighter rings on the platform.</li>
         <li><b>The gold figure follows a path worked out on the spot</b> (a swing to the mast, two hops, a run off the pier), not a recorded run.</li>
         <li><b>The K rows are text and a bar,</b> not key caps and ten pips. That page can only draw text and bars.</li>
@@ -246,8 +245,25 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
 </section>
 
 <section>
+  <h2>Added on 11 November: a lesson for each of the six new moves</h2>
+  <p>Rope and Wings added six moves. Each one now has the same kind of lesson, shown where the move can be done. A prompt shows at most four times in a session, at least a minute apart, and never again once you have made the move. The first time you make a move, its name and keys show once.</p>
+  <div class="tw"><table>
+    <tr><th>Move</th><th>You have it</th><th>Its lesson shows</th><th>What it says</th></tr>
+    <tr><td><b>Sling</b></td><td>With the rope</td><td>On foot or in the air, where nothing is tall enough to swing from and there is a top ahead. Your key sits on that top.</td><td>Hold, rope key: "It throws you up and over"</td></tr>
+    <tr><td><b>Spring</b></td><td>Rope mastery 3</td><td>While the rope is pulling you up onto a top.</td><td>Hold, forward: "Spring off the top"</td></tr>
+    <tr><td><b>Rope strike</b></td><td>Rope mastery 5</td><td>On the rope or just off it, looking at a creature out of reach. Your key sits on the creature.</td><td>Attack key: "Your rope pulls you into it"</td></tr>
+    <tr><td><b>Flare</b></td><td>With wings</td><td>Gliding down with the ground close, and after a hard landing on wings.</td><td>"Level out just before you land"</td></tr>
+    <tr><td><b>Skim</b></td><td>Wings mastery 3</td><td>Gliding fast, a little too high to skim.</td><td>"Drop lower and skim the ground"</td></tr>
+    <tr><td><b>Takeoff</b></td><td>With flight</td><td>The first time you stand outdoors after the Sky Warden, which is at home. Also whenever you look up from the ground.</td><td>Hold, sneak, then jump: "while you look up"</td></tr>
+  </table></div>
+  <div class="strip"><figure><img src="shots/moves_takeoff_stand.jpg" alt="The takeoff, standing outdoors with flight. The keys wait near the top with an arrow. A figure of you stands ahead for a second, then rises. It is not the figure of gold light the plan describes: it draws as your own skin, solid, with an amber cast." loading="lazy"><figcaption><b>The takeoff, standing outdoors with flight.</b> The keys wait near the top with an arrow. A figure of you stands ahead for a second, then rises. It is not the figure of gold light the plan describes: it draws as your own skin, solid, with an amber cast.</figcaption></figure><figure><img src="shots/moves_takeoff_up.jpg" alt="Look up, and the keys sit on a ring in the sky." loading="lazy"><figcaption><b>Look up,</b> and the keys sit on a ring in the sky.</figcaption></figure><figure><img src="shots/moves_takeoff_card.jpg" alt="The takeoff made. Its name and keys show once, for four seconds." loading="lazy"><figcaption><b>The takeoff made.</b> Its name and keys show once, for four seconds.</figcaption></figure><figure><img src="shots/moves_flare.jpg" alt="The flare. Gliding down with the ground close: no key, only how. On a short screen like this one the line now sits just above the crosshair, clear of the tips. That last change is not pictured." loading="lazy"><figcaption><b>The flare.</b> Gliding down with the ground close: no key, only how. On a short screen like this one the line now sits just above the crosshair, clear of the tips. That last change is not pictured.</figcaption></figure><figure><img src="shots/moves_sling.jpg" alt="The sling, on foot. Your key sits on the top the rope would bite." loading="lazy"><figcaption><b>The sling, on foot.</b> Your key sits on the top the rope would bite.</figcaption></figure><figure><img src="shots/moves_sling_card.jpg" alt="The sling made. Thrown up and over the block, and its card." loading="lazy"><figcaption><b>The sling made.</b> Thrown up and over the block, and its card.</figcaption></figure></div>
+  <p class="small muted">The pictures are from a tour that built a stone floor in the sky and was given flight by command. The spring, the rope strike and the skim need mastery the tour does not have. They are coded and their rule is tested, but they are not pictured. Also fixed: a climb that stops on a spire's rim now opens the gate.</p>
+  <p><b>One part is not at the bar yet: the gold figure.</b> These tours were the first to photograph it clearly. It shows the move, but it draws as a solid copy of your own skin with a shadow, tinted amber, not as a figure of light. To look like light it needs its own drawing code. That is not built. It is the same figure at the vault, the chasm and the pier.</p>
+</section>
+
+<section>
   <h2>Rung by rung: before, and as built</h2>
-  <p class="muted">Every picture is the real game, taken by tours on GitHub's machines. On the left, before this plan. On the right, the same moment as built, on the branch that waits to be merged.</p>
+  <p class="muted">Every picture is the real game, taken by tours on GitHub's machines. On the left, before this plan. On the right, the same moment as built.</p>
 
   <div class="rung" id="rope">
     <header><span class="chip d">D-RANK</span><h3>The rope</h3><span class="when">3.4 hours in</span></header>

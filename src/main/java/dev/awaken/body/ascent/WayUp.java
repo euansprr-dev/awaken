@@ -78,6 +78,42 @@ public final class WayUp {
         }
     }
 
+    /**
+     * The six moves Rope and Wings added (SPEC §62), each with its own lesson (§63.8): the sling comes with the rope, the
+     * spring at Tether mastery 3, the rope strike at 5, the flare with wings, the skim at Wings mastery 3, the takeoff
+     * with flight. Whether one has been made is the count Rope and Wings already keeps; nothing new is saved.
+     */
+    public enum Move {
+        SLING(Rung.ROPE, AscentGoals.SLUNG), SPRING(Rung.ROPE, AscentGoals.SPRUNG), STRIKE(Rung.ROPE, AscentGoals.STRUCK),
+        FLARE(Rung.WINGS, AscentGoals.FLARED), SKIM(Rung.WINGS, AscentGoals.SKIMMED), TAKEOFF(Rung.SKY, AscentGoals.TOOK_OFF);
+
+        public static final Move[] VALUES = values();
+        public final Rung rung;
+        final String counter;
+
+        Move(Rung rung, String counter) {
+            this.rung = rung;
+            this.counter = counter;
+        }
+
+        public int bit() {
+            return 1 << ordinal();
+        }
+    }
+
+    /** The moves this player has made at least once, a bit each ({@link Move#bit}). */
+    static int moves(ServerPlayer p) {
+        var profile = Progression.profile(p);
+        int bits = 0;
+        for (Move m : Move.VALUES) if (profile.counter(m.counter) > 0) bits |= m.bit();
+        return bits;
+    }
+
+    /** One of the six moves was made and counted (AscentServer.made): the client hears at once, so its lesson ends for good. */
+    static void moveMade(ServerPlayer p) {
+        if (BodyConfig.wayUp()) sync(p, memory(p), -1);
+    }
+
     /** Saved with the player and kept through death (registered with the Ascent's own attachments). */
     public static final Supplier<AttachmentType<WayMemory>> MEMORY = AscentContent.ATTACHMENTS.register("way_up",
             () -> AttachmentType.builder(() -> WayMemory.EMPTY).serialize(WayMemory.MAP_CODEC, m -> !m.isEmpty()).copyOnDeath().build());
@@ -98,7 +134,7 @@ public final class WayUp {
     static final String THREAD = "rank.way_up", NOW = "ascent:way/";
 
     /** What the server last told each client, when each rung's place woke (not saved), and soft falls. */
-    private record Sent(int told, int done, int owed, List<Long> places, long gateAt) {}
+    private record Sent(int told, int done, int owed, List<Long> places, long gateAt, int moves) {}
 
     private static final Map<UUID, Sent> SENT = new HashMap<>();
     private static final Map<UUID, long[]> WOKE_AT = new HashMap<>();
@@ -251,7 +287,8 @@ public final class WayUp {
     }
 
     private static void sync(ServerPlayer p, WayMemory m, int woke) {
-        Sent now = new Sent(m.told(), m.done(), m.owed(), m.places(), m.leapAt());
+        int moves = moves(p);
+        Sent now = new Sent(m.told(), m.done(), m.owed(), m.places(), m.leapAt(), moves);
         if (woke < 0 && now.equals(SENT.get(p.getUUID()))) return;
         SENT.put(p.getUUID(), now);
         long[] places = new long[Rung.VALUES.length];
@@ -259,7 +296,7 @@ public final class WayUp {
             BlockPos at = m.place(r);
             places[r.ordinal()] = at == null ? WayMemory.NONE : at.asLong();
         }
-        AwakenNet.send(p, new WayPayloads.Way(m.told(), m.done(), m.owed(), places, m.leapAt(), woke));
+        AwakenNet.send(p, new WayPayloads.Way(m.told(), m.done(), m.owed(), places, m.leapAt(), woke, moves));
     }
 
     // ---- places -----------------------------------------------------------------------------------------------------
@@ -330,6 +367,9 @@ public final class WayUp {
         if (!on(p) || Ascent.has(p, Ascent.Tier.LEAPER) || !Ascent.has(p, Ascent.Tier.TETHER)) return;
         AscentMemory a = p.getData(AscentContent.MEMORY);
         if ((a.flags() & AscentMemory.LEAPER_TRIAL) != 0 || memory(p).leapGate() >= 0) return;
+        // the crown answers only the line (SPEC §17.29): asked here, last, so the rim's watch (every other tick while
+        // someone stands on it) costs a hunter with the leap, or with the gate already open, nothing
+        if (!dev.awaken.core.api.ArrivalHooks.byLine(p)) return;
         // out on the plaza (a spire's is 11 wide), toward where the player stands on the crown
         double dx = p.getX() - (crown.getX() + 0.5), dz = p.getZ() - (crown.getZ() + 0.5), len = Math.sqrt(dx * dx + dz * dz);
         if (len < 0.3) {

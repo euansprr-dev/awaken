@@ -369,7 +369,8 @@ public final class AscentMoves {
                 // looking up from the ground with flight to spare: the takeoff's tip
                 if (!runner && !sneak && p.onGround() && pitch <= -AirRules.TAKEOFF_LOOK - 15 && has(AscentPayloads.Tier.SKYBORN)
                         && aether >= Math.max(AirRules.TAKEOFF_AETHER, AscentRules.AETHER_START)) {
-                    dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.TAKEOFF);
+                    // The Way Up's lesson first (SPEC §63.8): the keys on the sky; the written tip when that can no longer teach
+                    if (!Lesson.offerMove(Lesson.Kind.TAKEOFF, null, -1)) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.TAKEOFF);
                 }
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
@@ -971,6 +972,26 @@ public final class AscentMoves {
         return false;
     }
 
+    private static final AscentSwing.Pick LESSON_PICK = new AscentSwing.Pick();
+
+    /**
+     * The Way Up's sling lesson on foot (SPEC §63.8; the marker below never looks from the ground with the key up):
+     * where a rope held now would bite to sling you, or null (something swings, nothing is ahead, or the guide is off).
+     * The same two looks as the marker's, into a pick of its own; called twice a second at most, only while the lesson
+     * can still teach.
+     */
+    static @org.jspecify.annotations.Nullable Vec3 slingFromGround(LocalPlayer p) {
+        if (!FeelConfig.ropeAssist() || !AscentSwing.guide || state != AscentState.NONE || !p.onGround() || !has(AscentPayloads.Tier.TETHER)
+                || dev.awaken.body.client.RunnerMoves.busy()) return null;
+        boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+        float yaw = view ? VIEW[0] : p.getYRot();
+        SPACE.at(p.level(), p);
+        hand(p);
+        if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, LESSON_PICK)) return null;
+        if (!AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, LESSON_PICK)) return null;
+        return new Vec3(LESSON_PICK.x, LESSON_PICK.y, LESSON_PICK.z);
+    }
+
     /** The marker: where a press now would throw, every other tick while airborne off the rope (or the key held). */
     private static void marker(LocalPlayer p, boolean assist, boolean tether) {
         boolean free = state == AscentState.NONE || state == AscentState.CARRY || state == AscentState.GLIDE || state == AscentState.SOAR;
@@ -991,7 +1012,10 @@ public final class AscentMoves {
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
         markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
         // where only a sling answers, its tip (SPEC §62): the rope works here too
-        if (markerOn && MARKER.sling) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.SLING);
+        // (The Way Up's lesson first, SPEC §63.8: your key on the top the rope would bite; else the written tip)
+        if (markerOn && MARKER.sling && !(Lesson.wants(Lesson.Kind.SLING) && Lesson.offerMove(Lesson.Kind.SLING, new Vec3(MARKER.x, MARKER.y, MARKER.z), -1))) {
+            dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.SLING);
+        }
     }
 
     /**
@@ -1000,18 +1024,22 @@ public final class AscentMoves {
      */
     private static void moveTips(LocalPlayer p, float yaw, float pitch) {
         var tips = dev.awaken.core.api.TipHooks.client();
+        // each move's Lesson first (The Way Up, SPEC §63.8: the key where the move is), its written tip when that can no
+        // longer teach
         if (state == AscentState.ZIP && !slinging && strikeTarget < 0 && !keyFwd && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= AirRules.SPRING_LEVEL) {
-            tips.offer(dev.awaken.body.ascent.AscentTips.SPRING);
+            if (!Lesson.offerMove(Lesson.Kind.SPRING, null, -1)) tips.offer(dev.awaken.body.ascent.AscentTips.SPRING);
         }
         if (state == AscentState.GLIDE && !skimming && lv(dev.awaken.body.ascent.AscentMemory.Track.WINGS) >= AirRules.SKIM_LEVEL
-                && K.speed() >= AirRules.SKIM_SPEED && ticks % 10 == 0 && tips.wants(dev.awaken.body.ascent.AscentTips.SKIM)
+                && K.speed() >= AirRules.SKIM_SPEED && ticks % 10 == 0
+                && (Lesson.wants(Lesson.Kind.SKIM) || tips.wants(dev.awaken.body.ascent.AscentTips.SKIM))
                 && p.getY() - AscentAnchors.floorUnder(p.level(), p, p.getX(), p.getY() + 0.5, p.getZ(), 10) < 9.5) {
-            tips.offer(dev.awaken.body.ascent.AscentTips.SKIM);
+            if (!Lesson.offerMove(Lesson.Kind.SKIM, null, -1)) tips.offer(dev.awaken.body.ascent.AscentTips.SKIM);
         }
         if ((state == AscentState.TETHER || state == AscentState.CARRY) && ticks % 10 == 0 && has(AscentPayloads.Tier.TETHER)
-                && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= AirRules.STRIKE_LEVEL && tips.wants(dev.awaken.body.ascent.AscentTips.STRIKE)
-                && strikePick(p, yaw, pitch) != null) {
-            tips.offer(dev.awaken.body.ascent.AscentTips.STRIKE);
+                && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= AirRules.STRIKE_LEVEL
+                && (Lesson.wants(Lesson.Kind.STRIKE) || tips.wants(dev.awaken.body.ascent.AscentTips.STRIKE))) {
+            net.minecraft.world.entity.LivingEntity t = strikePick(p, yaw, pitch);
+            if (t != null && !Lesson.offerMove(Lesson.Kind.STRIKE, null, t.getId())) tips.offer(dev.awaken.body.ascent.AscentTips.STRIKE);
         }
     }
 
@@ -2210,7 +2238,9 @@ public final class AscentMoves {
         }
         if (landSpeed > 0.75 && !flared) dev.awaken.body.client.ClientMoves.ascentRoll(p);
         // a hard landing off the wings: the flare's tip
-        if (wings && !flared && landSpeed > 0.75) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.FLARE);
+        if (wings && !flared && landSpeed > 0.75 && !Lesson.offerMove(Lesson.Kind.FLARE, null, -1)) {
+            dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.FLARE);
+        }
     }
 
     private static void toCarry(LocalPlayer p, String why) {
@@ -2267,6 +2297,8 @@ public final class AscentMoves {
 
     private static void event(int what, float speed) {
         ClientPacketDistributor.sendToServer(new AscentPayloads.Event(what, speed));
+        // a move made: its Lesson leaves, and the first time ever its keys show once (The Way Up, SPEC §63.8)
+        Lesson.moved(what);
     }
 
     /** The server refused the state we're in: let go (a rope's speed carries on; the server never yanks you back). */
