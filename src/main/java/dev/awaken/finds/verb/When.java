@@ -18,8 +18,8 @@ import java.util.function.Predicate;
 public final class When implements Script {
     public static final Predicate<Ctx> NIGHT = Ctx::night, DAY = c -> !c.night(), RAIN = Ctx::raining, STORM = Ctx::storm,
             DAWN = c -> c.hour() >= 22300 || c.hour() <= 600, DUSK = c -> c.hour() >= 11600 && c.hour() <= 13200,
-            MIDNIGHT = c -> c.hour() >= 17000 && c.hour() <= 19500, CLEAR_NIGHT = c -> c.night() && !c.level.isRaining(),
-            SNOWING = c -> c.level.isRaining() && c.level.getBiome(c.site.ground()).value().coldEnoughToSnow(c.site.ground(), c.level.getSeaLevel());
+            MIDNIGHT = c -> c.hour() >= 17000 && c.hour() <= 19500, CLEAR_NIGHT = c -> c.night() && !c.raining(),
+            SNOWING = c -> c.raining() && (Ctx.testWeather != 0 || c.level.getBiome(c.site.ground()).value().coldEnoughToSnow(c.site.ground(), c.level.getSeaLevel()));
 
     private final Predicate<Ctx> cond;
     private final @Nullable Script inner;

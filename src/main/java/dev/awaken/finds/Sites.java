@@ -31,7 +31,7 @@ public final class Sites {
 
     static final int[] CELL = {96, 256}, EDGE = {18, 44}, RINGS = {4, 5};
     /** The chance a cell holds something where the land is at its usual liveliness. */
-    static final double[] BASE = {0.50, 0.44};
+    static final double[] BASE = {0.62, 0.50};
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 48;
     /** Below this the land is quiet. About three parts in ten of the world. */

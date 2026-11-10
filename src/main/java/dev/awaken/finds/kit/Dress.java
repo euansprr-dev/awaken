@@ -96,7 +96,8 @@ public final class Dress {
             for (int z = -r; z <= r; z++)
                 for (int y = -1; y <= r; y++) {
                     int d = Math.abs(x) + Math.abs(z) + Math.abs(y) * (y < 0 ? 2 : 1);
-                    if (d == 0 || d > r || (d == r && s.rnd.nextBoolean())) continue;
+                    // the middle is always there: the four arms hang together through it, and it sits on the trunk
+                    if (d > r || (d == r && d > 0 && s.rnd.nextBoolean())) continue;
                     int dy = s.g(cx, cz) + 1 + k + y;
                     if (!s.taken(cx + x, dy, cz + z)) s.put(cx + x, dy, cz + z, leaf);
                 }

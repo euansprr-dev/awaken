@@ -94,6 +94,12 @@ public final class Trial {
         return this;
     }
 
+    /** 1 clear, 2 rain, 3 a storm. */
+    public Trial weather(int w) {
+        Ctx.testWeather = w;
+        return this;
+    }
+
     public int count(String part) {
         return c().count(part);
     }

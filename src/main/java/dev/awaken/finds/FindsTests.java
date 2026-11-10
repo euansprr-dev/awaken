@@ -35,6 +35,13 @@ final class FindsTests {
         AwakenTests.register("finds_quiet_land_is_quiet", 20, FindsTests::quiet);
     }
 
+    /** Earth, living rock, sand, ice and water: the land itself, where a kind shapes a bank, a cliff face or a frozen fall. */
+    private static boolean land(BlockState b) {
+        return b.is(net.minecraft.tags.BlockTags.DIRT) || b.is(net.minecraft.tags.BlockTags.ICE) || b.is(net.minecraft.tags.BlockTags.SAND)
+                || b.is(Blocks.GRASS_BLOCK) || b.is(Blocks.MUD) || b.is(Blocks.MOSS_BLOCK) || b.is(Blocks.PODZOL)
+                || b.is(Blocks.STONE) || b.is(Blocks.TERRACOTTA) || b.is(Blocks.GRAVEL) || b.is(Blocks.SNOW_BLOCK) || !b.getFluidState().isEmpty();
+    }
+
     /** Every set has its kinds numbered from 1 with no gaps, every kind has its words, a walkthrough and a loot table name. */
     private static void whole(GameTestHelper h) {
         Map<Kind.FSet, Set<Integer>> seen = new EnumMap<>(Kind.FSet.class);
@@ -97,8 +104,9 @@ final class FindsTests {
                     int x = BlockPos.getX(key), y = BlockPos.getY(key), z = BlockPos.getZ(key);
                     if (Math.abs(x) > k.reach() || Math.abs(z) > k.reach()) why = "builds past its reach at " + x + "," + z;
                     BlockState b = e.getValue();
-                    // what grew (leaves, trunks) is neither plain masonry nor shaped stone: it isn't counted either way
-                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS)) continue;
+                    // what grew (leaves, trunks) and what the land is (earth, living rock, ice) is neither plain masonry nor
+                    // shaped stone: it isn't counted either way
+                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS) || land(b)) continue;
                     above++;
                     if (!b.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) shaped++;
                 }
@@ -125,6 +133,7 @@ final class FindsTests {
         AwakenTests.onEnd(h, () -> {
             Ctx.testTicks = 0;
             Ctx.testHour = -1;
+            Ctx.testWeather = 0;
         });
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         int n = 0;
@@ -133,6 +142,7 @@ final class FindsTests {
             if (k.play() == null) continue;
             Ctx.testTicks = 0;
             Ctx.testHour = 6000;
+            Ctx.testWeather = 1;
             Site s = FindsFeature.stamp(level, k, at, n & 3, 4242L + n);
             String why = "";
             if (!(level.getBlockEntity(s.heart()) instanceof FindHeartBlockEntity be)) why = "has no heart";

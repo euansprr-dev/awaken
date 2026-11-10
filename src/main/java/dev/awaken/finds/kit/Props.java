@@ -104,11 +104,13 @@ public final class Props {
     /** Great Rib. */
     public static final DeferredBlock<PropBlock> GREAT_RIB = prop("find_great_rib", 5.0F, 0.0F, 5.0F, 11.0F, 16.0F, 11.0F, true, 9, 0);
     /** Painted Gourd. */
-    public static final DeferredBlock<PropBlock> GOURD = prop("find_gourd", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> GOURD = prop("find_gourd", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, true, 9, 0);
     /** Marker Flag. */
     public static final DeferredBlock<PropBlock> FLAG = prop("find_flag", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
     /** Ring on a Pole. */
-    public static final DeferredBlock<PropBlock> RING_TARGET = prop("find_ring_target", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> RING_TARGET = prop("find_ring_target", 4.0F, 0.0F, 6.5F, 12.0F, 16.0F, 9.5F, true, 9, 0);
+    /** Taut Rope. */
+    public static final DeferredBlock<PropBlock> TAUT_ROPE = prop("find_taut_rope", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
     /** Start Stone. */
     public static final DeferredBlock<PropBlock> START_STONE = prop("find_start_stone", 2.0F, 0.0F, 2.0F, 14.0F, 4.0F, 14.0F, true, 2, 7);
     /** Floor Tile. */
@@ -135,6 +137,24 @@ public final class Props {
     public static final DeferredBlock<PropBlock> MILL_WHEEL = prop("find_mill_wheel", 4.0F, 0.0F, 0.0F, 12.0F, 16.0F, 16.0F, true, 9, 0);
     /** Surface Root. */
     public static final DeferredBlock<PropBlock> ROOT_LOOP = prop("find_root_loop", 5.0F, 0.0F, 0.0F, 11.0F, 6.0F, 16.0F, false, 9, 0);
+    /** Glass Pipe. */
+    public static final DeferredBlock<PropBlock> GLASS_PIPE = prop("find_glass_pipe", 5.0F, 0.0F, 5.0F, 11.0F, 16.0F, 11.0F, true, 9, 0);
+    /** Lump of Gold. */
+    public static final DeferredBlock<PropBlock> GOLD_LUMP = prop("find_gold_lump", 5.0F, 5.0F, 0.0F, 11.0F, 10.0F, 6.0F, true, 9, 0);
+    /** Iron Knocker. */
+    public static final DeferredBlock<PropBlock> KNOCKER = prop("find_knocker", 5.0F, 4.0F, 0.0F, 11.0F, 12.0F, 3.0F, true, 9, 0);
+    /** Chalk Mark. */
+    public static final DeferredBlock<PropBlock> CHALK_MARK = prop("find_chalk_mark", 3.0F, 4.0F, 0.0F, 13.0F, 12.0F, 1.0F, false, 9, 0);
+    /** Warm Crack. */
+    public static final DeferredBlock<PropBlock> VENT = prop("find_vent", 2.0F, 0.0F, 3.0F, 14.0F, 1.0F, 10.0F, false, 9, 0);
+    /** Wind Harp. */
+    public static final DeferredBlock<PropBlock> WIND_HARP = prop("find_wind_harp", 1.0F, 0.0F, 7.0F, 15.0F, 16.0F, 9.0F, true, 9, 0);
+    /** White Stone. */
+    public static final DeferredBlock<PropBlock> WHITE_STONE = prop("find_white_stone", 4.0F, 0.0F, 4.0F, 12.0F, 7.0F, 12.0F, true, 9, 0);
+    /** Bronze Bolt. */
+    public static final DeferredBlock<PropBlock> BOLT = prop("find_bolt", 5.0F, 0.0F, 5.0F, 11.0F, 8.0F, 11.0F, true, 9, 0);
+    /** Star Iron. */
+    public static final DeferredBlock<PropBlock> STAR_IRON = prop("find_star_iron", 5.0F, 0.0F, 5.0F, 11.0F, 7.0F, 11.0F, true, 9, 4);
     /** Small Hoard. */
     public static final DeferredBlock<PropBlock> HOARD = prop("find_hoard", 4.0F, 0.0F, 4.0F, 12.0F, 4.0F, 12.0F, false, 9, 0);
 

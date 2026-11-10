@@ -129,6 +129,8 @@ public final class Ctx {
     /** Tests only: ticks added to the clock, and an hour of day to pretend it is (-1: the real one). */
     public static long testTicks;
     public static long testHour = -1;
+    /** Tests only: 0 the real weather, 1 clear, 2 rain, 3 a storm. */
+    public static int testWeather;
 
     public long now() {
         return level.getGameTime() + testTicks;
@@ -193,10 +195,10 @@ public final class Ctx {
     }
 
     public boolean raining() {
-        return level.isRainingAt(site.ground().above(2)) || level.isRaining();
+        return testWeather != 0 ? testWeather >= 2 : level.isRainingAt(site.ground().above(2)) || level.isRaining();
     }
 
     public boolean storm() {
-        return level.isThundering();
+        return testWeather != 0 ? testWeather == 3 : level.isThundering();
     }
 }

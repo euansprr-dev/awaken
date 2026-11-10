@@ -290,14 +290,15 @@ prop("great_rib", "Great Rib", [
      (5, 0, 5, 11, 16, 11))
 prop("gourd", "Painted Gourd", [
     [b(7.7, 11, 7.7, 8.3, 16, 8.3, "rope"), b(5, 3, 5, 11, 11, 11, t), b(6, 2, 6, 10, 3, 10, t), b(6.5, 11, 6.5, 9.5, 12, 9.5, "wood")] for t in ("gourd", "red", "blue", "white")],
-     (5, 2, 5, 11, 16, 11), solid=False)
+     (5, 2, 5, 11, 16, 11))
 prop("flag", "Marker Flag", [
     [b(7.4, 0, 7.4, 8.6, 24, 8.6, "strip"), b(8.6, 15, 7.7, 18, 23, 8.3, t)] for t in ("red", "white", "blue", "gold")],
      (6.5, 0, 6.5, 9.5, 16, 9.5), solid=False)
 prop("ring_target", "Ring on a Pole", [
     [b(7.4, 0, 7.4, 8.6, 14, 8.6, "strip"), b(3, 14, 7.5, 13, 15.5, 8.5, "iron"), b(3, 22.5, 7.5, 13, 24, 8.5, "iron"), b(3, 15.5, 7.5, 4.5, 22.5, 8.5, "iron"), b(11.5, 15.5, 7.5, 13, 22.5, 8.5, "iron")],
     [b(7.4, 0, 7.4, 8.6, 14, 8.6, "strip"), b(3, 14, 7.5, 13, 15.5, 8.5, "gold"), b(3, 22.5, 7.5, 13, 24, 8.5, "gold"), b(3, 15.5, 7.5, 4.5, 22.5, 8.5, "gold"), b(11.5, 15.5, 7.5, 13, 22.5, 8.5, "gold")]] * 2,
-     (6.5, 0, 6.5, 9.5, 16, 9.5), solid=False)
+     (4, 0, 6.5, 12, 16, 9.5))
+prop("taut_rope", "Taut Rope", [[b(7, 0, 7, 9, 16, 9, "rope")]] * 4, (6, 0, 6, 10, 16, 10))
 prop("start_stone", "Start Stone", [
     [b(2, 0, 2, 14, 3, 14, "smooth"), b(5, 3, 5, 11, 4, 11, c)] for c in ("dark", "gold", "flame", "verdigris")],
      (2, 0, 2, 14, 4, 14), lit=2, light=7)
@@ -343,6 +344,27 @@ prop("root_loop", "Surface Root", [
     [b(6, 0, 0, 10, 3, 6, "strip"), b(6, 3, 4, 10, 6, 10, "strip", ("y", 22.5, (8, 3, 7))), b(4, 0, 9, 9, 3, 16, "strip")],
     [b(6, 0, 0, 10, 5, 16, "strip"), b(10, 0, 5, 16, 3, 9, "strip")]],
      (5, 0, 0, 11, 6, 16), solid=False)
+prop("glass_pipe", "Glass Pipe", [[b(5, 0, 5, 11, 16, 11, "pale"), b(6.5, 15.9, 6.5, 9.5, 16.05, 9.5, "coal")]] * 4, (5, 0, 5, 11, 16, 11))
+prop("gold_lump", "Lump of Gold", [[b(5, 5, 0, 11, 10, 4, "gold"), b(6, 6, 4, 10, 9, 6, "gold")]] * 4, (5, 5, 0, 11, 10, 6))
+prop("knocker", "Iron Knocker", [[b(5, 4, 0, 11, 12, 1, "iron"), b(6, 5, 1, 10, 6.5, 2.5, "iron"), b(6, 5, 1, 7.5, 10, 2.5, "iron"),
+                                  b(8.5, 5, 1, 10, 10, 2.5, "iron"), b(6, 9.5, 1, 10, 11, 2.5, "iron")]] * 4, (5, 4, 0, 11, 12, 3))
+prop("chalk_mark", "Chalk Mark", [
+    [b(3, 4, 0, 13, 5.5, 0.3, "white"), b(5, 7, 0, 11, 8.5, 0.3, "white"), b(7, 10, 0, 9, 11.5, 0.3, "white")],
+    [b(3, 4, 0, 13, 5.5, 0.3, "glow"), b(5, 7, 0, 11, 8.5, 0.3, "glow"), b(7, 10, 0, 9, 11.5, 0.3, "glow")]] * 2,
+     (3, 4, 0, 13, 12, 1), solid=False)
+prop("vent", "Warm Crack", [[b(2, 0, 6, 14, 0.6, 10, "coal"), b(5, 0, 3, 8, 0.4, 7, "coal", ("y", 22.5, (6, 0, 5)))]] * 4, (2, 0, 3, 14, 1, 10), solid=False)
+prop("wind_harp", "Wind Harp", [[b(1, 0, 7, 3, 16, 9, "wood"), b(13, 0, 7, 15, 16, 9, "wood"), b(1, 14, 7, 15, 16, 9, "wood"),
+                                 b(4.5, 0, 7.8, 5, 14, 8.2, "pale"), b(7.7, 0, 7.8, 8.2, 14, 8.2, "pale"), b(11, 0, 7.8, 11.5, 14, 8.2, "pale")]] * 4,
+     (1, 0, 7, 15, 16, 9))
+prop("white_stone", "White Stone", [
+    [b(4, 0, 4, 12, 5, 12, "pale"), b(5, 5, 5, 11, 7, 11, "pale")],
+    [b(4, 0, 4, 12, 5, 12, "shell"), b(5, 5, 5, 11, 7, 11, "glow")]] * 2,
+     (4, 0, 4, 12, 7, 12))
+prop("bolt", "Bronze Bolt", [
+    [b(6, 0, 6, 10, 5, 10, "bronze"), b(5, 5, 5, 11, 8, 11, "bronze")],
+    [b(6, 0, 6, 10, 2, 10, "bronze")]] * 2,
+     (5, 0, 5, 11, 8, 11))
+prop("star_iron", "Star Iron", [[b(5, 0, 5, 11, 4, 11, "coal"), b(6, 4, 6, 10, 6, 10, "iron"), b(7, 6, 7, 9, 7, 9, "glow")]] * 4, (5, 0, 5, 11, 7, 11), light=4)
 prop("hoard", "Small Hoard", [
     [b(4, 0, 4, 12, 2, 12, "straw"), b(5, 2, 5, 8, 4, 8, "gold"), b(8, 2, 8, 11, 3.5, 11, "blue"), b(6, 2, 9, 8, 3, 11, "brass")],
     [b(4, 0, 4, 12, 2, 12, "straw")]] * 2,
@@ -398,6 +420,28 @@ def entry(item, weight, lo, hi):
     if hi > 1:
         e["functions"] = [{"function": mc("set_count"), "count": {"type": mc("uniform"), "min": lo, "max": hi}}]
     return e
+
+
+# A find's own table: what it always gives (item, least, most), then one roll of a tier's common things.
+OWN = {
+    "pages": ([("minecraft:book", 1, 2), ("minecraft:paper", 2, 5), ("minecraft:feather", 1, 2)], "e_small"),
+    "seeds": ([("minecraft:torchflower_seeds", 1, 2), ("minecraft:pitcher_pod", 1, 1), ("minecraft:glow_berries", 2, 4)], "d_small"),
+    "honey": ([("minecraft:honey_bottle", 3, 5), ("minecraft:honeycomb", 2, 4), ("minecraft:bone", 2, 5)], "c_big"),
+    "fireflies": ([("minecraft:glow_ink_sac", 1, 3), ("minecraft:glowstone_dust", 2, 5)], "e_small"),
+    "star_iron": ([("awaken:find_star_iron", 1, 1), ("minecraft:iron_ingot", 2, 4)], "b_big"),
+    "geode": ([("minecraft:amethyst_shard", 3, 6), ("minecraft:amethyst_cluster", 1, 1)], "d_small"),
+    "old_sword": ([("minecraft:honey_bottle", 2, 3), ("minecraft:bone", 3, 6), ("minecraft:iron_sword", 1, 1)], "d_big"),
+    "cloth": ([("minecraft:white_wool", 3, 6), ("minecraft:string", 3, 6), ("minecraft:field_masoned_banner_pattern", 1, 1)], "b_big"),
+    "antler": ([("minecraft:bone", 2, 4), ("minecraft:leather", 1, 3)], "c_small"),
+    "pellets": ([("minecraft:gold_nugget", 5, 12), ("minecraft:bone_meal", 2, 5), ("minecraft:feather", 2, 4)], "c_small"),
+}
+
+
+def loot_own():
+    for name, (always, tier) in OWN.items():
+        pools = [{"rolls": 1, "entries": [entry(item, 1, lo, hi)]} for item, lo, hi in always]
+        pools.append({"rolls": 1, "entries": [entry(*c) for c in TIERS[tier][1]]})
+        write(f"{DATA}/loot_table/finds/{name}.json", {"type": mc("chest"), "random_sequence": aw("finds/" + name), "pools": pools})
 
 
 def loot_tiers():
@@ -465,6 +509,7 @@ def main():
     write(f"{DATA}/tags/item/finds/heavy.json", {"values": heavy})
     write(f"{MERGE}/assets/awaken/lang/en_us.json", lang)
     loot_tiers()
+    loot_own()
     java()
     print("finds_content: wrote", len(PROPS), "props,", len(TIERS), "loot tiers")
 

@@ -21,6 +21,7 @@ public final class Quiet implements Script {
     private final String sleeper, prize;
     private final double radius;
     private final Map<UUID, Vec3> last = new HashMap<>();
+    private net.minecraft.sounds.SoundEvent voice = SoundEvents.POLAR_BEAR_WARNING;
 
     private Quiet(String sleeper, String prize, double radius) {
         this.sleeper = sleeper;
@@ -30,6 +31,12 @@ public final class Quiet implements Script {
 
     public static Quiet near(String sleeper, String prize, double radius) {
         return new Quiet(sleeper, prize, radius);
+    }
+
+    /** What it sounds like when it stirs. */
+    public Quiet voice(net.minecraft.sounds.SoundEvent e) {
+        voice = e;
+        return this;
     }
 
     @Override
@@ -55,7 +62,7 @@ public final class Quiet implements Script {
         }
         if (!anyone || c.now() % 4 == 0) noise = Math.max(0, noise - 1);
         if (noise >= 100) {
-            c.sound(s, SoundEvents.POLAR_BEAR_WARNING, 1.0F, 0.6F);
+            c.sound(s, voice, 1.0F, 0.6F);
             c.puff(s.above(), ParticleTypes.ANGRY_VILLAGER, 3, 0.4, 0);
             for (ServerPlayer p : c.players(c.kind().reach() + 6)) {
                 Vec3 away = p.position().subtract(mid);
@@ -66,7 +73,7 @@ public final class Quiet implements Script {
             }
             noise = 0;
         } else if (noise > 55 && c.now() % 20 == 0) {
-            c.sound(s, SoundEvents.POLAR_BEAR_WARNING, 0.25F, 0.5F);
+            c.sound(s, voice, 0.25F, 0.5F);
             c.puff(s.above(), ParticleTypes.SMOKE, 2, 0.3, 0.01);
         } else if (c.now() % 60 == 0) c.puff(s.above(), ParticleTypes.POOF, 1, 0.2, 0.005); // breathing
         c.v(0, noise);
