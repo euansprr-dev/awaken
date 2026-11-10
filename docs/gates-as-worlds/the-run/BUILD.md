@@ -158,6 +158,22 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
     Lens's tiled passes on the CI runner, not the world. Passed to the manager; nothing here touches Lens.
   - A kind whose seed rolls one fight or no trap repeats a shot in its tour (The Cinder Workings on 383). Harmless.
 
+- 11 Nov, about 05:15 local. **Beams and floor mist as sprites: tried three ways, all taken out** (`302155533`).
+  1. Faint wisps: nothing drew. Minecraft's particle shader throws away anything under a tenth opaque. (It also took a
+     round to find that the client stops at 260 sprites and takes a land's list in order, so what is late in the list of
+     a kind full of fireflies is never reached. Shaft dust is first in every list now.)
+  2. Upright bars and wisps just over a tenth, 16 pixel sprites: sheets of glass with stepped edges, a veil when one
+     stood on you (run 42904471985).
+  3. Fine-grained 64 pixel sprites: patches of static (run 42909997245).
+  What stays: unseen lights down each well, so the pool reaches the floor; shaft dust's fairer share; the rolled kinds'
+  tours wait ten seconds before each shot so the air has filled. A real beam is Lens marching the shafts it is already
+  sent, or a renderer of the gates' own with its own pipeline: Euan's call, on the page.
+- The same morning, all seventeen kinds were read on the final geometry (tag w4, runs 42896117252 to 42896313750, 187
+  shots, no tour errors): no broken builds. Dimmest: the crossings of The Hollow Hills, The Green Dark and The Unlit
+  Stair. Camera faults, not world faults: the ambush shots of The Green Dark and The Hollow Hills and the Warden shot of
+  The Tallow Runs stand with a rock or pillar in their face.
+- The results page is version 9; its second half is built from `page/` (see `page/README.md`).
+
 ## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,
