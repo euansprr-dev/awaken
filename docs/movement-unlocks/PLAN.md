@@ -90,7 +90,12 @@ Hours are the pacing sim's balanced player; a careful player takes about a third
    gained. *Verified.*
 10. **The moment can be buried.** `VowScene` holds nothing back (the gifts' `AscentScene` does hold tips and notices).
     In the vault's tour the rope's words, "The line is yours." and its key line, were drawn underneath the vault's own
-    DISCOVERY card, and neither could be read. *Seen: run 42851970427, `vow_06`.*
+    DISCOVERY card, and neither could be read. *Verified in code. Seen in run 42851970427, `vow_06`, where the tour forced
+    the two together: the player was moved there by command while the server was still fast-forwarding.*
+11. **The Tasks page asks for something that can't be done.** The trail "The Line" opens with the rope and its first
+    step is "Keep the Tether Vow." (`trail/the_line.json`, counter `awaken:ascent_vow_kept`). The vow only starts for
+    someone without the rope, so the card never clears and the trail can never be finished. *Verified in data and code;
+    seen on the Tasks page in run 42850633106, `tether_13_tasks`.*
 
 ### 2.3 Root causes
 
@@ -111,6 +116,12 @@ each).
   up onto the top"); "Reach the beacon mast." showed with its ring on the mast. Its words were drawn under the vault's
   DISCOVERY card (finding 10). The tour's first two shots, meant for the E-rank stir, are of Carillon: the command had
   not moved the player yet, so the stir is not pictured. Then a Tether Spire from its plaza.
+- **`unlock-tether.txt`, run 42850633106 (passed, 17 shots; its fight's timing is not to be trusted).** A real D
+  Reassessment (the log: "Reassessment for D-rank started"). The script's `tick sprint 6200` was still running when the
+  Ringer fell, so the outro's 300 server ticks passed in about a second and the shots meant for the chain show the trip
+  home. What stands: the fight's own picture, D-rank and the rope held after it, the rival's line at home, and the K
+  stage's Tasks and Powers places (finding 11). All four scripts now wait for the sprint to end (`wait 2400`, `tick
+  sprint stop`) and were run again.
 
 ## 3. Approaches
 
