@@ -1,0 +1,50 @@
+# Diagnostic (Steady Light): the bright rims on thin plates and block edges at dusk (Euan, 10 Nov). The same view with
+# the light buffer shown, the light alone, and each new part off in turn.
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 11800
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+camera first
+hud off
+lookswitch cinematic
+wait 500
+shot e1_dusk
+lensdebug 5
+wait 20
+shot e2_lightbuffer
+lensdebug 7
+wait 20
+shot e3_light_alone
+lensdebug 0
+lens sunpass off
+wait 80
+shot e4_no_sunpass
+lens sunpass setting
+lens air off
+wait 80
+shot e5_no_air
+lens air setting
+cmd time set 3000
+wait 160
+shot e6_morning
+look -90 -8
+wait 30
+shot e7_morning_sunward
+cmd time set 11800
+look 90 -4
+wait 160
+shot e8_dusk_sunward
+cmd time set 23200
+look -90 -4
+wait 160
+shot e9_dawn_sunward
+quit

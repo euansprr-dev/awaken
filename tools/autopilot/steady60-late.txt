@@ -1,0 +1,88 @@
+# Steady Light on the Dell: where the late frames' time goes (SPEC §22; LateFrames). As Euan plays (vsync, 60 cap):
+# standing, then the same flight back and forth over loaded land with the render thread's stacks taken whenever a tick,
+# a render or a wait runs long; the same with the Air off; and a flight out over land not seen before.
+# tools/steady60-tour.sh tools/autopilot/steady60-late.txt late-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch cinematic
+wait 900
+opt vsync 1
+opt maxFps 60
+late on
+wait 300
+late report still
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+look -90 12
+wait 30
+glide 0.8 0 0 400
+wait 410
+look 90 12
+wait 30
+glide -0.8 0 0 400
+wait 410
+late on
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf late_cal 20
+late calibrate
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf late_air_1 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf late_air_2 20
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf late_air_3 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf late_air_4 20
+late report fly_air
+lens air off
+wait 40
+look 90 12
+wait 30
+glide -0.8 0 0 400
+perf late_cine_1 20
+look -90 12
+wait 30
+glide 0.8 0 0 400
+perf late_cine_2 20
+late report fly_cine
+lens air setting
+wait 40
+look -90 12
+wait 30
+glide 0.8 0 0 1200
+wait 420
+late on
+perf late_newland 38
+late report fly_newland
+late off
+quit
