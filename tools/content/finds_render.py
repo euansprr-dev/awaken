@@ -18,7 +18,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEX = pathlib.Path("/Volumes/MEDIA/Awaken/.ref/assets/assets/minecraft/textures/block")
 MODELS = ROOT / "src/main/resources/assets/awaken/models/block"
 STATES = ROOT / "src/main/resources/assets/awaken/blockstates"
-NAMES = {p.stem for p in TEX.glob("*.png")}
+OWN = ROOT / "src/main/resources/assets/awaken/textures/block"
+NAMES = {p.stem for p in TEX.glob("*.png")} | {p.stem for p in OWN.glob("olden_*.png")}
 
 # ---- what a block looks like ---------------------------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@ CROSS = re.compile(r"(^|_)(sapling|tulip|orchid|allium|bluet|daisy|poppy|dandeli
 FLAT = re.compile(r"(_carpet$|^snow$|_pressure_plate$|^lily_pad$|rail$|^leaf_litter$|^glow_lichen$|^sculk_vein$|^vine$|^frogspawn$|petals$|^resin_clump$)")
 POST = re.compile(r"(_fence$|_wall$|^iron_bars$|_bars$|_pane$|^glass_pane$|chain$|^end_rod$|lightning_rod$|^bamboo$)")
 LIT = re.compile(r"(lantern|torch|glowstone|shroomlight|froglight|sea_lantern|campfire|^fire|soul_fire|lava|magma|candle|glow_lichen|"
-                 r"amethyst_cluster|jack_o_lantern|redstone_lamp|copper_bulb|end_rod|beacon|conduit|cave_vines|sea_pickle|crying_obsidian|^light$)")
+                 r"amethyst_cluster|jack_o_lantern|redstone_lamp|copper_bulb|end_rod|beacon|conduit|cave_vines|sea_pickle|crying_obsidian|^light$|olden_lamp_lit|olden_seal|olden_lichen)")
 GRASSY = re.compile(r"(^short_grass$|^tall_grass$|^fern$|^large_fern$|^vine$|^lily_pad$|^sugar_cane$|^bush$|^leaf_litter$)")
 LEAF_TINT = {"birch_leaves": (0.50, 0.65, 0.33), "spruce_leaves": (0.38, 0.60, 0.38)}
 FOLIAGE, GRASS, WATER = (0.33, 0.62, 0.20), (0.49, 0.76, 0.34), (52, 102, 205)
@@ -69,7 +70,7 @@ def image(tex):
     """A texture's first frame, RGBA 16x16, or None."""
     if tex not in NAMES:
         return None
-    im = Image.open(TEX / (tex + ".png")).convert("RGBA")
+    im = Image.open((OWN if tex.startswith("olden_") else TEX) / (tex + ".png")).convert("RGBA")
     return im.crop((0, 0, 16, 16)) if im.size != (16, 16) else im
 
 
@@ -161,8 +162,8 @@ def opaque(b):
 def kind_of(n, full):
     if n in NOTHING:
         return "none"
-    if full.startswith("awaken:"):
-        return "model"
+    if full.startswith("awaken:") and not n.startswith("olden_"):
+        return "model"                                        # a prop: drawn from its own model. Olden stone is plain masonry.
     if n == "water":
         return "water"
     if n.endswith("_slab"):
@@ -398,6 +399,8 @@ class Pen:
         p = dict(props)
         n = plain(full)
         kind = kind_of(n, full)
+        if n == "olden_lamp" and p.get("lit") == "true":
+            n = "olden_lamp_lit"
         im = None
         if kind == "cube":
             side, top = textures(n)
@@ -611,7 +614,7 @@ def render(vox, a, view=0, keep=None, lights=False):
         px = ox + (X - Z) * pen.a - 2 * pen.a
         py = oy + int((X + Z) * pen.a / 2) - (y + 1) * pen.h - pen.oy
         img.alpha_composite(s[0], (px + s[1], py + s[2]))
-        if lights and LIT.search(plain(b[0])):
+        if lights and LIT.search("olden_lamp_lit" if plain(b[0]) == "olden_lamp" and dict(b[1]).get("lit") == "true" else plain(b[0])) and plain(b[0]) != "olden_lamp" or lights and plain(b[0]) == "olden_lamp" and dict(b[1]).get("lit") == "true":
             glow.append((px + 2 * pen.a, py + pen.oy + pen.h // 2))
     if lights:  # the same picture at night: dark, with a pool of light round everything that burns
         night = Image.eval(img.convert("RGB"), lambda v: int(v * 0.30))
