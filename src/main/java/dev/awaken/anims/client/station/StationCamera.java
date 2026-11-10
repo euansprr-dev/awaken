@@ -15,14 +15,18 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
-/** An unregistered client camera entity, like the existing cinematic camera; the real player never moves. */
+/**
+ * An unregistered client camera entity, like the existing cinematic camera; the real player never moves. It carries the
+ * view to a station's own place: a furnace's mouth, a table's bench view (SPEC §24, §63.1).
+ */
 final class StationCamera extends Entity {
     private final EntityDimensions dimensions;
     private static StationCamera camera;
     private static Vec3 lowered;
+    private static @org.jspecify.annotations.Nullable Vec3 start;
     private static final double[] EYE = new double[3];
 
-    /** The lock's owner and failsafe (SPEC §27.6): you stand still while the view is down at the furnace. */
+    /** The lock's owner and failsafe (SPEC §27.6): you stand still while the view is at the station. */
     private static final Object HOLD = "station camera";
     private static final int HOLD_MAX = 20 * 600;
 
@@ -33,17 +37,21 @@ final class StationCamera extends Entity {
         refreshDimensions();
     }
 
-    static boolean begin(LocalPlayer player, StationView.Station station) {
+    /**
+     * The view leaves your eyes for a place of the station's own (a furnace's mouth, a table's bench view, SPEC §63.1),
+     * when the way there is clear. {@code from}: where the view is now when it isn't at your eyes (a third-person
+     * camera), else null; the view glides from there and goes back there.
+     */
+    static boolean begin(LocalPlayer player, Vec3 target, @org.jspecify.annotations.Nullable Vec3 from) {
         Minecraft mc = Minecraft.getInstance();
         if (active()) end();
         if (mc.getCameraEntity() != player || mc.level == null) return false;
         Vec3 eye = player.getEyePosition(1);
-        if (!StationView.furnaceEye(station, eye.x, eye.y, eye.z, EYE)) return false;
-        Vec3 target = new Vec3(EYE[0], EYE[1], EYE[2]);
         if (!StationView.clearEyePath(mc.level, player, eye, target)) return false;
         camera = new StationCamera(mc.level, player.getEyeHeight());
         lowered = target;
-        camera.place(eye, player.getYRot(), player.getXRot());
+        start = from;
+        camera.place(from != null ? from : eye, player.getYRot(), player.getXRot());
         mc.setCameraEntity(camera);
         dev.awaken.core.client.InputLock.hold(HOLD, HOLD_MAX);
         return true;
@@ -53,11 +61,16 @@ final class StationCamera extends Entity {
     static boolean active() { return camera != null && Minecraft.getInstance().getCameraEntity() == camera; }
     static boolean lost() { return camera != null && (!active() || camera.level() != Minecraft.getInstance().level); }
 
-    static void place(float weight, float partial, float yaw, float pitch) {
+    /**
+     * Where the view is, {@code weight} of the way to the station's place. {@code dip}: how far under the straight line
+     * it passes (blocks; a body bending its knees, SPEC §63.6).
+     */
+    static void place(float weight, float partial, float yaw, float pitch, double dip) {
         Minecraft mc = Minecraft.getInstance();
         if (!active() || mc.player == null || lowered == null) return;
-        Vec3 real = mc.player.getEyePosition(partial);
-        camera.place(real.lerp(lowered, weight), yaw, pitch);
+        Vec3 real = start != null ? start : mc.player.getEyePosition(partial);
+        Vec3 at = real.lerp(lowered, weight);
+        camera.place(dip == 0 ? at : at.add(0, -dip, 0), yaw, pitch);
     }
 
     /** A block now between your eyes and the lowered view (checked each tick, not each frame: eight ray casts). */
@@ -72,6 +85,7 @@ final class StationCamera extends Entity {
         if (camera != null && mc.getCameraEntity() == camera && mc.player != null) mc.setCameraEntity(mc.player);
         camera = null;
         lowered = null;
+        start = null;
     }
 
     private void place(Vec3 eye, float yaw, float pitch) {

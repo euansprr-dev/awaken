@@ -21633,13 +21633,72 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
 - Nine vanilla workstations and four of ours start a touch and a screen in the same tick; only a chest's screen waits (4 ticks).
 - No sound and no count for anything laid on a station.
 
-What the plan proposes, in the order it would be built (PLAN §4, §6): a view that belongs to the station (the bench
-view), the carrying hand (the stack exactly on the pointer, one straight arm lying back across the station, a ghost of
-anything under the sleeve, the table's result on its right border), items with weight, piles and counts, sounds from
-Minecraft's recordings, presence and beats so others see a body at work and what lies on a table or in an open chest,
-a real crouch at the furnace, lids in the hands and living slots for boxes, six more workstation scenes, glass for seven
-screens, and a hand, a sound and a body for every quick touch. The click path (`StationScreen`, vanilla's own menu) does
-not change.
+### 63.1 The bench view (`anims.station.StationView`, `anims.client.station.StationCamera`, `StationClient`)
+- **A table's view is its own.** Using a crafting table (not sneaking) sends the view to a place fixed to the table: over
+  its near edge on the side you came from (the way in snapped to an axis, as before), 0.81 back from its middle and 1.12
+  over its top, looking down on the grid at 54 degrees (`StationView.benchEye`, view 0). It is the same from one block or
+  four and a half, from a corner or straight on, so the grid is the same size in the same place on screen every time.
+  From there the view is framed as before (`StationView.frame`: every slot inside the room above the hint and strip).
+- **The glide** is `StationView.glideTicks` long: 5 ticks from beside the table to 9 from 4.5 blocks (4.2 + 1.1 a block),
+  4 if you were at a station in the last 12 seconds; out in the same time. `StationCamera` (the furnace's camera entity,
+  now general) carries it; your body and your own look never move, and movement is held while the view is away (the
+  furnace's lock). No breath in a station's own view: you are aiming.
+- **When the place is taken:** view 1 (0.66 back, 0.90 up), then view 2 (0.55, 0.72), each tried with the furnace's eight
+  rays from your eyes to the place; with none clear the view is framed from your own eyes as §24 describes (the old
+  behaviour, 12 ticks in and 10 out, with its breath). A block set into the way while you work gives the view back to
+  your eyes at once and the screen stays open.
+- **Third person:** a scene is seen from the station's view whatever view you play in. Coming from third person the view
+  glides from where your camera was, the game is put in first person for the scene (as the Inscribing Table does), and
+  your own view comes back once the view is home. On the way in and out (under 0.85 of the way) your own body is drawn;
+  from the station's view it is hidden.
+- **Setting** `stationBenchView` (feel, on): off, a table is framed from your eyes as before. `stationScenes` off and
+  sneak + use are unchanged.
+- The crafting **result lies on the table's right border** (vanilla's own side of the grid; `StationView.RESULT_SIDE`
+  0.39 from the middle, level with the middle row), where a reaching arm never crosses it. It lay on the near border.
+- Tests: `stations_bench_view` (twenty standing places on each side make one station; view 0 looks down 50 to 58
+  degrees from past the near edge; at seven window sizes, with and without side panels, in all three views every slot is
+  inside the room and a click on its middle picks it; the glide's lengths).
+
+### 63.2 The carrying hand (`anims.client.station.StationHands`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
+- **While a stack is on your pointer and the pointer is over the station** (above the inventory strip, and its line of
+  sight meets the table's level within 0.35 of the table's sides and far edge), your main hand holds it. The stack is
+  drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as it will lie, its
+  far edge tipped 18 degrees up toward you, rolling up to 14 degrees with the pointer's speed. It has no lag, so what
+  you click is what it is over. The screen draws no icon on the pointer then; anywhere else it is vanilla's icon.
+- **The arm** is one straight vanilla arm (`Rig.worldArms`): the fist's middle sits `HAND_BACK` 0.11 short of the stack
+  and the arm lies back toward a point 0.45 past the table's near edge and 0.30 over its top, 0.10 to the hand's own
+  side (`StationView.carry`), kept inside what the strip covers (`acrossMost`). It is drawn at the table's scale: a fist
+  0.8 of a grid square across (`handDistance`: the hand pass's distance that gives that size), and up to 1.8 times its
+  model's length (`Rig.armStretch`, a scale along the limb about its joint) so its far end passes under the strip, which
+  the game draws over it. No elbow, no second piece, no sleeve end in view.
+- **Timing:** the hand comes in under a picked-up stack and goes back out on a 45 ms ease; set down, it dips 0.045 and
+  comes back over 150 ms; picked up, the stack rises 0.03 over 140 ms. Empty, the main hand waits just off the near edge
+  under the pointer's column and the other hand off its own corner. A slot you change without carrying (a shift-click, a
+  number key) gets one 190 ms pass from the nearer hand. Every move is an ease toward a target from wherever the hand is
+  (50 ms): a new target never sends it back to rest first.
+- **One side decides.** The pointer and your own clicks drive all of it (`StationClient.tick` reads slot changes within
+  6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes what lies on a square,
+  as on any container screen, and never a hand. Clocks are whole nanoseconds and differences of them.
+- **Nothing hidden:** a square whose middle is under the sleeve (`StationView.sleeveOver`) shows its stack on a small
+  plate of glass where it lies, drawn by the screen over the arm. Only squares nearer to you than the one the stack is
+  over can be under it.
+- Tests: `stations_hand_never_hides` (every slot, seven window sizes, with and without side panels, either main hand:
+  the stretch is within 1 to 1.8, the arm's far end is under the strip or off the frame, the arm never lies over the
+  result, only nearer squares are under the sleeve, never more than two). The hands' motion itself is client code and
+  is checked on film.
+
+### 63.3 Things with weight (`StationClient.onSubmit`, `StationScreen.extractStation`)
+- A stack **lies as a small pile**: 1 item, 2 for a count of 2 to 5, 3 up to 32, 4 above (`StationClient.pile`), each a
+  little up and across from the last, on the table and in the hand.
+- Its **count** is on a small tag of glass at the square's near right corner (and by the stack in your hand), for any
+  count over 1. A square showed one item whatever lay on it.
+- Set down by your click, a stack **drops the last 0.06 and settles** over 110 ms. The **result comes together** over
+  200 ms (it grows from 0.55 of its size and sinks 0.035 onto the border), then turns slowly as before.
+
+**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; presence and beats so others see a body at work and
+what lies on a table or in an open chest; a real crouch at the furnace; lids in the hands and living slots for boxes; six
+more workstation scenes; glass for seven screens; a hand, a sound and a body for every quick touch. The click path
+(`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts
 the mouse over a slot of the open station scene so a tour can film a carried stack over the grid. Autopilot runs only.

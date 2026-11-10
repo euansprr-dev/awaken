@@ -39,9 +39,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Station scenes (Hands P5; SPEC §24). At a crafting table the view leans in over the table top, the 3×3 grid IS the
- * table top (each ingredient lies on its square in the world, the result on the near border), and your hands lay
- * every ingredient on its square and take the result. At a furnace, smoker or blast furnace the view crouches to its
+ * Station scenes (Hands P5, SPEC §24; Hands at Work, SPEC §63). At a crafting table the view goes to the table's own
+ * place over its near edge (the bench view: the same from wherever you stand), the 3×3 grid IS the table top (each
+ * ingredient lies on its square in the world, the result on the right border), and your own hand carries the stack on
+ * your pointer over the grid and sets it down ({@link StationHands}). At a furnace, smoker or blast furnace the view crouches to its
  * mouth (StationCamera): what cooks sits on the left inside the recessed mouth, the finished result on the right, the
  * fuel on the coals below, and the cooking and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
  * moves by the menu's own clicks and the server checks them; only the station's slots are drawn in the world instead of
@@ -66,8 +67,19 @@ public final class StationClient {
     private static int openedAt = -1000, closedAt = -1000, ticks, usedAt = -100, clickedAt = -100;
     private static @Nullable BlockPos used;
     private static boolean open;
+    /** This visit's glide in and out (ticks), and whether the view is the station's own place (a camera of ours). */
+    private static int inTicks = 12, outTicks = 10;
+    private static boolean bench;
+    /** The view you had before a scene that needed first person (third person: restored when the view is home). */
+    private static net.minecraft.client.@Nullable CameraType before;
     private static final ItemStack[] SEEN = new ItemStack[10];
     private static final ItemStackRenderState[] ITEMS = new ItemStackRenderState[10];
+    private static final ItemStackRenderState CARRIED = new ItemStackRenderState();
+    /** When a stack was set down on each slot by your click, and when the result came together (nanoseconds; 0 never). */
+    private static final long[] LAID_AT = new long[10];
+    private static long resultAt;
+    private static final long SETTLE_NS = 110_000_000L, RESULT_NS = 200_000_000L;
+    private static final double[] HELD = new double[3];
     /** A hand's tap toward a spot (world), per hand (0 right, 1 left). */
     private static final double[] TAP = new double[6];
     private static final int[] TAP_AT = {-100, -100};
@@ -99,13 +111,25 @@ public final class StationClient {
         // came between it and your eyes (a second player can place one while you work)
         if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null
                 || !Minecraft.getInstance().player.isAlive() || StationCamera.blocked())) {
-            StationCamera.end(); open = false; table = null;
-            if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> && Minecraft.getInstance().player != null) Minecraft.getInstance().player.closeContainer();
+            boolean wasTable = kind == Kind.TABLE && open;
+            StationCamera.end();
+            bench = false;
+            if (wasTable && on() && Minecraft.getInstance().player != null && Minecraft.getInstance().player.isAlive()) {
+                // a table's view was cut off (a block set down in its way): back to your own eyes, the screen stays open
+                framed = false;
+            } else {
+                open = false; table = null;
+                if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> && Minecraft.getInstance().player != null) Minecraft.getInstance().player.closeContainer();
+            }
         }
         if (StationCamera.active() && weight(0) <= 0) StationCamera.end();
-        if (!open || !(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s)) return;
+        if (!open || !(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s)) {
+            if (!open && before != null && weight(0) <= 0) restoreView();
+            return;
+        }
         reframe(s);
-        // what changed on the station: a hand lays it there (or takes the result), but only after your own click
+        // what changed on the station after your own click: the hand that carries it dips as it is set down, a stack
+        // picked up rises into it, and a change made without carrying (a shift-click, a key) gets one short pass
         AbstractContainerMenu menu = s.getMenu();
         boolean yours = ticks - clickedAt <= 6, tapped = false;
         int res = kind.result;
@@ -113,14 +137,30 @@ public final class StationClient {
             int i = (res + k) % kind.slots; // the result first: taking it empties the grid too, but the hand went to it
             ItemStack now = menu.getSlot(i).getItem();
             if (ItemStack.matches(now, SEEN[i])) continue;
-            boolean taken = i == res && now.isEmpty() && !SEEN[i].isEmpty();
+            ItemStack was = SEEN[i];
+            boolean taken = i == res && now.isEmpty() && !was.isEmpty();
+            boolean more = !now.isEmpty() && (was.isEmpty() || !ItemStack.isSameItemSameComponents(now, was) || now.getCount() > was.getCount());
             SEEN[i] = now.copy();
-            if (!yours || tapped || (i == res && !taken)) continue; // a result appearing is the recipe, not a hand
+            if (i == res && !now.isEmpty() && was.isEmpty()) resultAt = System.nanoTime(); // the result comes together
+            if (!yours) continue;
+            if (kind == Kind.TABLE) {
+                if (i != res && more) {
+                    LAID_AT[i] = System.nanoTime();
+                    if (StationHands.carrying() || !menu.getCarried().isEmpty()) StationHands.laid(i);
+                    else if (!tapped) { StationHands.pass(i); tapped = true; }
+                } else if (taken || (!more && !menu.getCarried().isEmpty())) {
+                    StationHands.lifted();
+                } else if (!tapped && i != res) { StationHands.pass(i); tapped = true; }
+                continue;
+            }
+            if (tapped || (i == res && !taken)) continue; // a result appearing is the recipe, not a hand
             int hand = handFor(i);
             spot(i, TAP, hand * 3);
             TAP_AT[hand] = ticks;
             tapped = i == res;
         }
+        // the view is home again: the view you had before comes back
+        if (!open && before != null && weight(0) <= 0) restoreView();
     }
 
     /** The hand that works a slot (0 right, 1 left): a table's left column the left, its right the right, the middle
@@ -173,7 +213,13 @@ public final class StationClient {
     }
 
     private static boolean on() {
-        return FirstPerson.stationsOn.getAsBoolean() && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        Minecraft mc = Minecraft.getInstance();
+        return FirstPerson.stationsOn.getAsBoolean() && (mc.options.getCameraType().isFirstPerson() || before != null || mc.player != null && !mc.player.isSpectator());
+    }
+
+    private static void restoreView() {
+        if (before != null) Minecraft.getInstance().options.setCameraType(before);
+        before = null;
     }
 
     // ---- opening and closing ----------------------------------------------------------------------------------------
@@ -201,41 +247,83 @@ public final class StationClient {
     }
 
     private static boolean begin(LocalPlayer p, BlockPos pos, Kind k) {
-        if (k != Kind.FURNACE) StationCamera.end();
-        table = pos;
-        kind = k;
+        Minecraft mc = Minecraft.getInstance();
+        StationCamera.end();
+        bench = false;
         double dx = pos.getX() + 0.5 - p.getX(), dz = pos.getZ() + 0.5 - p.getZ();
         BlockState st = p.level().getBlockState(pos);
+        double wx, wz;
         if (k == Kind.FURNACE && st.hasProperty(AbstractFurnaceBlock.FACING)) {
             // a furnace is worked from its front, the way in against the way it faces
             Direction d = st.getValue(AbstractFurnaceBlock.FACING);
-            fx = -d.getStepX();
-            fz = -d.getStepZ();
+            wx = -d.getStepX();
+            wz = -d.getStepZ();
         } else if (Math.abs(dx) >= Math.abs(dz)) {
             // the grid lines up with the block: the way in snapped to the nearest axis
-            fx = Math.signum(dx);
-            fz = 0;
+            wx = Math.signum(dx);
+            wz = 0;
         } else {
-            fx = 0;
-            fz = Math.signum(dz);
+            wx = 0;
+            wz = Math.signum(dz);
         }
+        Station made = new Station(pos, k, wx, wz);
+        // the view's own place: a furnace's mouth (or no scene), a table's bench view (or, with none clear, your own eyes)
+        Vec3 eye = p.getEyePosition(1);
+        boolean third = !mc.options.getCameraType().isFirstPerson();
+        Vec3 from = third ? mc.gameRenderer.mainCamera().position() : null;
+        Vec3 target = null;
+        double[] e = new double[3];
+        if (k == Kind.FURNACE) {
+            if (!StationView.furnaceEye(made, eye.x, eye.y, eye.z, e)) return false;
+            target = new Vec3(e[0], e[1], e[2]);
+            if (!StationCamera.begin(p, target, from)) return false;
+        } else if (FirstPerson.stationBench.getAsBoolean()) {
+            for (int i = 0; i < StationView.BENCHES && target == null; i++) {
+                StationView.benchEye(made, i, e);
+                Vec3 t = new Vec3(e[0], e[1], e[2]);
+                if (StationCamera.begin(p, t, from)) target = t;
+            }
+        }
+        bench = StationCamera.active();
+        table = pos;
+        kind = k;
+        fx = wx;
+        fz = wz;
         rx = -fz;
         rz = fx;
-        station = new Station(pos, k, fx, fz);
-        if (k == Kind.FURNACE && !StationCamera.begin(p, station)) { table = null; station = null; return false; }
+        station = made;
+        if (third) {
+            // the scene is seen from the station's own view: third person comes back when the view is home
+            before = mc.options.getCameraType();
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+        }
         framed = false;
         boolean quick = ticks - closedAt < 240;
-        openedAt = ticks - (quick ? 6 : 0);
+        if (bench && k == Kind.TABLE) {
+            inTicks = quick ? 4 : StationView.glideTicks(Math.sqrt((from != null ? from : eye).distanceToSqr(target)));
+            outTicks = inTicks;
+            openedAt = ticks;
+        } else {
+            inTicks = 12;
+            outTicks = 10;
+            openedAt = ticks - (quick ? 6 : 0);
+        }
         open = true;
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
+        java.util.Arrays.fill(LAID_AT, 0L);
+        resultAt = 0;
         TAP_AT[0] = TAP_AT[1] = -100;
+        StationHands.reset();
         return true;
     }
 
     public static boolean ownsCamera() { return StationCamera.active(); }
 
     private static void onPlayer(net.neoforged.neoforge.client.event.RenderPlayerEvent.Pre<?> e) {
-        if (ownsCamera() && Minecraft.getInstance().player != null && e.getRenderState().id == Minecraft.getInstance().player.getId()) e.setCanceled(true);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || e.getRenderState().id != mc.player.getId()) return;
+        // from the station's view your own body is hidden; coming from third person you see it on the way in and out
+        if (ownsCamera() && !(before != null && weight(0) < 0.85F)) e.setCanceled(true);
     }
 
     static void closed() {
@@ -244,12 +332,12 @@ public final class StationClient {
         closedAt = ticks;
     }
 
-    /** How far in the scene is (0 out, 1 in): eased in over 12 ticks, out over 10. */
+    /** How far in the scene is (0 out, 1 in): eased in over this visit's glide, and out. */
     static float weight(float pt) {
         float t = ticks + pt;
-        float in = Ease.at(Ease.OUT_CUBIC, (t - openedAt) / 12F);
+        float in = Ease.at(Ease.OUT_CUBIC, (t - openedAt) / (float) inTicks);
         if (open) return in;
-        return Math.min(in, 1 - Ease.at(Ease.IN_OUT_SINE, (t - closedAt) / 10F));
+        return Math.min(in, 1 - Ease.at(Ease.IN_OUT_SINE, (t - closedAt) / (float) outTicks));
     }
 
     // ---- the slots on the station -----------------------------------------------------------------------------------
@@ -282,7 +370,7 @@ public final class StationClient {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (station == null || p == null || s.layout == null) return;
-        Vec3 eye = kind == Kind.FURNACE ? StationCamera.eye(p) : p.getEyePosition(1F);
+        Vec3 eye = bench || kind == Kind.FURNACE ? StationCamera.eye(p) : p.getEyePosition(1F);
         float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
         float most = Math.min(StationView.MAX_FOV, mc.options.fov().get() * 1.5F);
         StationView.frame(station, eye.x, eye.y, eye.z, s.layout, s.width, s.height, aspect, most, FRAME);
@@ -308,23 +396,24 @@ public final class StationClient {
         }
         LocalPlayer player = Minecraft.getInstance().player;
         // The camera entity already carries last frame's turn. Always ease from the player's untouched look.
-        float fromYaw = kind == Kind.FURNACE && player != null ? player.getViewYRot(e.getPartialTick()) : e.getYaw();
-        float fromPitch = kind == Kind.FURNACE && player != null ? player.getViewXRot(e.getPartialTick()) : e.getPitch();
+        boolean own = StationCamera.active();
+        float fromYaw = own && player != null ? player.getViewYRot(e.getPartialTick()) : e.getYaw();
+        float fromPitch = own && player != null ? player.getViewXRot(e.getPartialTick()) : e.getPitch();
         e.setYaw(fromYaw + Mth.wrapDegrees(yaw - fromYaw) * w);
         e.setPitch(Mth.lerp(w, fromPitch, pitch));
-        // the slightest breath while you work
-        if (kind != Kind.FURNACE) e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
-        if (kind == Kind.FURNACE) StationCamera.place(w, e.getPartialTick(), e.getYaw(), e.getPitch());
+        // from your own eyes, the slightest breath while you work; a station's own view holds still (you are aiming)
+        if (!own) e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
+        if (own) StationCamera.place(w, e.getPartialTick(), e.getYaw(), e.getPitch(), 0);
     }
 
     private static void onFovModifier(ComputeFovModifierEvent e) {
         float w = weight(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         // the field of view the frame asks for, whatever the speed or the setting would make it
-        if (kind == Kind.TABLE && table != null && w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
+        if (kind == Kind.TABLE && !bench && table != null && w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
     }
 
     private static void onFov(ViewportEvent.ComputeFov e) {
-        if (kind != Kind.FURNACE || !StationCamera.active() || !framed || table == null) return;
+        if (!StationCamera.active() || !framed || table == null) return;
         // A non-player camera does not run ComputeFovModifierEvent; use the supported final FOV hook.
         float w = weight(e.getPartialTick());
         if (w > 0) e.setFOV(Mth.lerp(w, e.getFOV(), FRAME[2]));
@@ -333,6 +422,13 @@ public final class StationClient {
     // ---- the world: the items on the station, the hovered slot --------------------------------------------------------
 
     private static final double[] P = new double[3];
+    private static final org.joml.Quaternionf TILT = new org.joml.Quaternionf();
+
+    /** How many of a stack are drawn lying on a square or in the hand: 1, then 2 up to 5, 3 up to 32, 4 above. */
+    static int pile(int count) {
+        return count > 32 ? 4 : count > 5 ? 3 : count > 1 ? 2 : 1;
+    }
+
     /** A table square's outline: the square between its lines (StationView.CELL). */
     private static final VoxelShape CELL = Shapes.box(-0.084, 0, -0.084, 0.084, 0.02, 0.084);
     /** A furnace slot's outline: a thin square flat to the front (facing along z, or along x). */
@@ -350,6 +446,7 @@ public final class StationClient {
         float t = ticks + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float yaw = (float) (Mth.atan2(-fx, fz) * Mth.RAD_TO_DEG);
         ItemStack carried = s.getMenu().getCarried();
+        long now = System.nanoTime();
         for (int i = 0; !furnace && i < kind.slots; i++) {
             ItemStack st = s.getMenu().getSlot(i).getItem();
             // a square a drag has passed over shows what it will get
@@ -358,22 +455,63 @@ public final class StationClient {
             spot(i, P, 0);
             ItemStackRenderState r = ITEMS[i];
             mc.getItemModelResolver().updateForTopItem(r, st, ItemDisplayContext.FIXED, mc.level, null, i);
-            ps.pushPose();
-            ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
-            if (i == kind.result) {
-                // the table's result lies flat on the near border, turning slowly where it lies
-                ps.rotateDegrees(Axis.YP, t * 1.5F);
-                ps.rotateDegrees(Axis.XP, 90F);
-                ps.scale(0.17F, 0.17F, 0.17F);
-            } else {
-                // an ingredient lies flat on its square, square to the table (a flat item a little over the square
-                // between the lines, a block half that)
-                ps.rotateDegrees(Axis.YP, 180F - yaw);
-                ps.rotateDegrees(Axis.XP, 90F);
-                ps.scale(0.16F, 0.16F, 0.16F);
+            boolean result = i == kind.result;
+            // set down, a stack drops the last of the way and settles; the result comes together on its border
+            double lift = 0;
+            float grow = 1F;
+            if (result) {
+                double u = resultAt == 0 ? 1 : (now - resultAt) / (double) RESULT_NS;
+                if (u < 1) {
+                    float k = Ease.at(Ease.OUT_CUBIC, (float) u);
+                    grow = 0.55F + 0.45F * k;
+                    lift = 0.035 * (1 - k);
+                }
+            } else if (LAID_AT[i] != 0) {
+                double u = (now - LAID_AT[i]) / (double) SETTLE_NS;
+                if (u < 1) lift = StationView.HOVER * 0.85 * (1 - Ease.at(Ease.OUT_CUBIC, (float) u));
+                else LAID_AT[i] = 0;
             }
-            r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
-            ps.popPose();
+            // a stack lies as a small pile (as dropped stacks do)
+            int n = pile(st.getCount());
+            for (int k = 0; k < n; k++) {
+                ps.pushPose();
+                ps.translate(P[0] + (rx * 0.012 - fx * 0.012) * k - cam.x, P[1] + lift + 0.006 * k - cam.y, P[2] + (rz * 0.012 - fz * 0.012) * k - cam.z);
+                if (result) {
+                    // the table's result lies flat on the right border, turning slowly where it lies
+                    ps.rotateDegrees(Axis.YP, t * 1.5F);
+                    ps.rotateDegrees(Axis.XP, 90F);
+                    ps.scale(0.17F * grow, 0.17F * grow, 0.17F * grow);
+                } else {
+                    // an ingredient lies flat on its square, square to the table (a flat item a little over the square
+                    // between the lines, a block half that)
+                    ps.rotateDegrees(Axis.YP, 180F - yaw);
+                    ps.rotateDegrees(Axis.XP, 90F);
+                    ps.scale(0.16F, 0.16F, 0.16F);
+                }
+                r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
+                ps.popPose();
+            }
+        }
+        // the stack in your hand: exactly on the pointer's own line, flat as it will lie, its far edge tipped up to you,
+        // rolling a little with the pointer's speed
+        if (!furnace && !carried.isEmpty() && StationHands.hit(HELD)) {
+            ItemStack shown = s.carriedShown(carried);
+            if (!shown.isEmpty()) {
+                mc.getItemModelResolver().updateForTopItem(CARRIED, shown, ItemDisplayContext.FIXED, mc.level, null, 99);
+                float roll = Mth.clamp((float) StationHands.speedX() * 9F, -14F, 14F);
+                int n = pile(shown.getCount());
+                for (int k = 0; k < n; k++) {
+                    ps.pushPose();
+                    ps.translate(HELD[0] + (rx * 0.012 - fx * 0.012) * k - cam.x, HELD[1] + 0.007 * k - cam.y, HELD[2] + (rz * 0.012 - fz * 0.012) * k - cam.z);
+                    ps.rotate(TILT.rotationAxis(18F * Mth.DEG_TO_RAD, (float) rx, 0F, (float) rz));
+                    ps.rotate(TILT.rotationAxis(-roll * Mth.DEG_TO_RAD, (float) fx, 0F, (float) fz));
+                    ps.rotateDegrees(Axis.YP, 180F - yaw);
+                    ps.rotateDegrees(Axis.XP, 90F);
+                    ps.scale(0.16F, 0.16F, 0.16F);
+                    CARRIED.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
+                    ps.popPose();
+                }
+            }
         }
         // the hovered slot's outline: every slot now lies on the station (the table's result on its border, the
         // furnace's result inside its mouth)
@@ -395,6 +533,7 @@ public final class StationClient {
         Minecraft mc = Minecraft.getInstance();
         float w = weight(pt);
         if (w <= 0.01F || table == null || mc.player == null) return false;
+        if (kind == Kind.TABLE) return StationHands.pose(w, rig, open && mc.gui.screen() instanceof StationScreen<?> sc ? sc : null);
         Vec3 eye = mc.gameRenderer.mainCamera().position(), c = top();
         rig.fx = fx;
         rig.fz = fz;

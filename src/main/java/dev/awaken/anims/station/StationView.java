@@ -48,13 +48,14 @@ public final class StationView {
      */
     public static final double CELL = 3 / 16.0, GRID_HALF = 1.5 * CELL;
     /**
-     * Where the table's result lies: flat on the top's near border, in from the middle toward you, inside the table's
-     * own block so it can never go into a wall; flat, it never hides a square (floating, it hid the far ones).
+     * Where the table's result lies: flat on the top's right border (vanilla's own side of the grid), out from the middle
+     * to your right, inside the table's own block so it can never go into a wall. A hand reaching over the grid lies
+     * back toward you, so it never crosses the right border (on the near border it did; SPEC §63.2).
      */
-    public static final double RESULT_IN = 0.41, RESULT_HALF = 0.085;
+    public static final double RESULT_SIDE = 0.39, RESULT_HALF = 0.085;
 
     /**
-     * Where a slot lies on the station. A table: 0 the result, on the near border; 1..9 the grid, row 0 the far
+     * Where a slot lies on the station. A table: 0 the result, on the right border; 1..9 the grid, row 0 the far
      * one. A furnace: what cooks on the left of its mouth, the finished result on the right, the fuel on the coals below.
      */
     public static void spot(Station s, int slot, double[] out, int at) {
@@ -71,9 +72,9 @@ public final class StationView {
         }
         double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
         if (slot == 0) {
-            out[at] = cx - fx * RESULT_IN;
+            out[at] = cx + rx * RESULT_SIDE;
             out[at + 1] = cy + 0.012;
-            out[at + 2] = cz - fz * RESULT_IN;
+            out[at + 2] = cz + rz * RESULT_SIDE;
             return;
         }
         int row = (slot - 1) / 3, col = (slot - 1) % 3;
@@ -114,6 +115,155 @@ public final class StationView {
                     net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, player));
             if (hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
         }
+        return true;
+    }
+
+    // ---- the bench view (SPEC §63.1) --------------------------------------------------------------------------------
+
+    /**
+     * A table's own views, best first: how far back from its middle along the way in, how far over its top. The first
+     * looks down on the grid at 54 degrees; the others are lower and nearer, for a low roof or a wall behind you.
+     */
+    private static final double[][] BENCH = {{0.81, 1.12}, {0.66, 0.90}, {0.55, 0.72}};
+    public static final int BENCHES = BENCH.length;
+
+    /** A table's bench view {@code i}: where the eye is. The same from wherever you clicked the table. */
+    public static void benchEye(Station s, int i, double[] out) {
+        BlockPos b = s.pos();
+        out[0] = b.getX() + 0.5 - s.fx() * BENCH[i][0];
+        out[1] = b.getY() + 1.0 + BENCH[i][1];
+        out[2] = b.getZ() + 0.5 - s.fz() * BENCH[i][0];
+    }
+
+    /** How long the view takes to reach a station's own place from {@code d} blocks away (ticks): 5 beside it to 9. */
+    public static int glideTicks(double d) {
+        return (int) Math.round(Mth.clamp(4.2 + d * 1.1, 5, 9));
+    }
+
+    // ---- the carrying hand (SPEC §63.2) -----------------------------------------------------------------------------
+
+    /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */
+    public static final double HOVER = 0.07, HAND_BACK = 0.11;
+    /** The arm lies back toward a point this far past the table's near edge, this far over its top, leaning to its side. */
+    public static final double ARM_BEYOND = 0.45, ARM_RISE = 0.30, ARM_LEAN = 0.10;
+    /** A fist is this much of a grid square across on screen, and an arm may be drawn this much longer than its model. */
+    public static final double FIST_SQUARES = 0.8, STRETCH_MOST = 1.8;
+    /** The arm's model: a fist 4 texels across; from the fist's middle back to the arm's far end, in blocks. */
+    public static final double FIST = 0.25, ARM_BACK = 0.685;
+
+    /**
+     * How far from the eye a station's arms are drawn so a fist reads {@link #FIST_SQUARES} of a square across, for a
+     * hand {@code dw} blocks from the eye in the world ({@code lens}: the hand pass's field of view against the
+     * world's, 1 when they are the same).
+     */
+    public static double handDistance(double dw, double lens) {
+        return FIST * dw / (FIST_SQUARES * CELL * Math.max(0.05, lens));
+    }
+
+    /**
+     * The carrying arm for a stack held at {@code (px, py, pz)} over a table: the fist's middle into {@code out[0..2]},
+     * a unit vector along the arm from the fist back toward you into {@code out[3..5]}. {@code side}: 1 a right hand,
+     * -1 a left. {@code most}: how far to either side of the table's middle the arm's far end may lie and still be under
+     * the inventory strip ({@link #acrossMost}).
+     */
+    public static void carry(Station s, double px, double py, double pz, int side, double most, double[] out) {
+        BlockPos b = s.pos();
+        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5;
+        double u = (px - cx) * s.rx() + (pz - cz) * s.rz();
+        double across = Mth.clamp(u + side * ARM_LEAN, -most, most), back = 0.5 + ARM_BEYOND;
+        double ax = cx + s.rx() * across - s.fx() * back - px, ay = b.getY() + 1.0 + ARM_RISE - py, az = cz + s.rz() * across - s.fz() * back - pz;
+        double al = Math.sqrt(ax * ax + ay * ay + az * az);
+        if (al < 1e-6) {
+            ax = -s.fx();
+            ay = 0;
+            az = -s.fz();
+            al = 1;
+        }
+        out[3] = ax / al;
+        out[4] = ay / al;
+        out[5] = az / al;
+        out[0] = px + out[3] * HAND_BACK;
+        out[1] = py + out[4] * HAND_BACK;
+        out[2] = pz + out[5] * HAND_BACK;
+    }
+
+    /**
+     * How far to either side of a table's middle an arm's far end may lie and still pass under the inventory strip: the
+     * strip's top corners, seen through the view, on the level the arm's far end is at, less the arm's own half width.
+     */
+    public static double acrossMost(Station s, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, int guiW, int guiH,
+                                    double[] p) {
+        BlockPos b = s.pos();
+        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5, y = b.getY() + 1.0 + ARM_RISE * 0.75, most = 0.36;
+        for (int k = 0; k < 2; k++) {
+            if (!onPlane(ex, ey, ez, rot, fov, aspect, k == 0 ? l.px0() + 3 : l.px1() - 3, l.py0() + 3, guiW, guiH, y, p)) continue;
+            most = Math.min(most, Math.abs((p[0] - cx) * s.rx() + (p[2] - cz) * s.rz()) - 0.1);
+        }
+        return Math.max(0.04, most);
+    }
+
+    /**
+     * How much longer than its model the arm must be drawn for its far end to pass under the inventory strip (or off
+     * the frame), so no sleeve end is ever in view: {@code 1} to {@link #STRETCH_MOST}. {@code arm}: {@link #carry}'s six
+     * numbers; {@code scale}: world blocks to the hand's own (hand distance over the fist's distance from the eye).
+     */
+    public static float stretch(double[] arm, double scale, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect,
+                                int guiW, int guiH, double[] q) {
+        double model = ARM_BACK / scale;
+        for (double k = 1; k <= STRETCH_MOST + 1e-6; k += 0.05) {
+            double len = model * k;
+            if (!project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return (float) k;
+            if (hidden(l, q[0], q[1], guiW, guiH)) return (float) k;
+        }
+        return (float) STRETCH_MOST;
+    }
+
+    /** A point of the screen the arm's far end may be at: under the strip, or off the frame. */
+    public static boolean hidden(Layout l, double x, double y, int guiW, int guiH) {
+        return y >= guiH + 2 || x < -2 || x > guiW + 2 || (y >= l.py0() + 2 && x >= l.px0() + 2 && x <= l.px1() - 2);
+    }
+
+    /**
+     * Whether the arm lies over a slot's middle on screen (what lies there is then shown through the sleeve): the
+     * slot's middle within the arm's half width of the line from the fist to the arm's far end. {@code len}: the arm's
+     * drawn length back from the fist's middle, in world blocks; {@code half}: half its width, in world blocks.
+     */
+    public static boolean sleeveOver(Station s, int slot, double[] arm, double len, double half, double ex, double ey, double ez, Quaternionfc rot,
+                                     float fov, float aspect, int guiW, int guiH, double[] p, double[] q) {
+        spot(s, slot, p, 0);
+        if (!project(p[0], p[1], p[2], ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double sx = q[0], sy = q[1];
+        // the fist's forward end (it covers a little ahead of its middle), and the far end
+        double fwd = half;
+        if (!project(arm[0] - arm[3] * fwd, arm[1] - arm[4] * fwd, arm[2] - arm[5] * fwd, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double ax = q[0], ay = q[1];
+        if (!project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double bx = q[0], by = q[1];
+        // the arm's half width on screen, at the fist
+        if (!project(arm[0] + s.rx() * half, arm[1], arm[2] + s.rz() * half, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double wx = q[0], wy = q[1];
+        if (!project(arm[0], arm[1], arm[2], ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double hw = Math.hypot(wx - q[0], wy - q[1]);
+        double dx = bx - ax, dy = by - ay, ll = dx * dx + dy * dy;
+        if (ll < 1e-6) return false;
+        double t = Mth.clamp(((sx - ax) * dx + (sy - ay) * dy) / ll, 0, 1);
+        return Math.hypot(sx - (ax + dx * t), sy - (ay + dy * t)) < hw;
+    }
+
+    /**
+     * Where the line of sight through a point of the screen (gui pixels) meets the level plane at height {@code y}
+     * (into {@code out}); false when it never does.
+     */
+    public static boolean onPlane(double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my, int guiW, int guiH,
+                                  double y, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        if (Math.abs(d.y) < 1e-5) return false;
+        double t = (y - ey) / d.y;
+        if (t <= 0) return false;
+        out[0] = ex + d.x * t;
+        out[1] = y;
+        out[2] = ez + d.z * t;
         return true;
     }
 
@@ -270,8 +420,8 @@ public final class StationView {
         if (t <= 0) return -1;
         double hx = ex + d.x * t - (b.getX() + 0.5), hz = ez + d.z * t - (b.getZ() + 0.5);
         double u = hx * s.rx() + hz * s.rz(), v = hx * s.fx() + hz * s.fz();
-        // the result on the near border
-        if (Math.abs(u) <= RESULT_HALF + 0.02 && Math.abs(v + RESULT_IN) <= RESULT_HALF + 0.02) return 0;
+        // the result on the right border
+        if (Math.abs(u - RESULT_SIDE) <= RESULT_HALF + 0.02 && Math.abs(v) <= RESULT_HALF + 0.02) return 0;
         if (Math.abs(u) > GRID_HALF || Math.abs(v) > GRID_HALF) return -1;
         int col = Mth.clamp((int) Math.floor((u + GRID_HALF) / CELL), 0, 2), row = Mth.clamp((int) Math.floor((GRID_HALF - v) / CELL), 0, 2);
         return 1 + row * 3 + col;

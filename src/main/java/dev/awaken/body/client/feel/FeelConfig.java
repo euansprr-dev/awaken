@@ -52,6 +52,10 @@ public final class FeelConfig {
             .comment("Station scenes: at a crafting table the view leans in and your hands lay each ingredient on its square of the table",
                     "(sneak + use for the plain screen).")
             .define("stationScenes", true);
+    public static final ModConfigSpec.BooleanValue STATION_BENCH = B
+            .comment("Station scenes: the view goes to the station's own place (over a table's near edge), the same from wherever you",
+                    "stand (SPEC §63.1). Off: the view turns and zooms from your own eyes, as it did before.")
+            .define("stationBenchView", true);
     public static final ModConfigSpec.BooleanValue ROPE_ASSIST = B
             .comment("The assisted rope swing: the rope picks a good anchor along your heading, fits its length, swings you round what's",
                     "in the way and lets go at the top (SPEC §17.31). Off: the rope bites where you look and swings as it always did.")
@@ -139,6 +143,15 @@ public final class FeelConfig {
     public static boolean stations() {
         try {
             return !SPEC.isLoaded() || STATIONS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Station scenes: the view goes to the station's own place (SPEC §63.1). */
+    public static boolean stationBench() {
+        try {
+            return !SPEC.isLoaded() || STATION_BENCH.get();
         } catch (RuntimeException e) {
             return true;
         }

@@ -30,6 +30,8 @@ public final class StationTests {
         AwakenTests.register("anims_station_right_drag", 20, StationTests::rightDrag);
         AwakenTests.register("anims_station_left_drag", 20, StationTests::leftDrag);
         AwakenTests.register("anims_station_shift_result", 20, StationTests::shiftResult);
+        AwakenTests.register("stations_bench_view", 20, StationTests::benchView);
+        AwakenTests.register("stations_hand_never_hides", 20, StationTests::handNeverHides);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -46,7 +48,7 @@ public final class StationTests {
 
     /**
      * Each ingredient sits centred on its drawn square of the table top, whichever way you face the table: the squares'
-     * middles are pixels 5, 8 and 11 of the top's 16, row 0 the far one; the result lies on the near border, everything
+     * middles are pixels 5, 8 and 11 of the top's 16, row 0 the far one; the result lies on the right border, everything
      * inside the table's own block (nothing can reach into a wall), and a ray down onto each picks it.
      */
     static void cells(GameTestHelper h) {
@@ -64,9 +66,11 @@ public final class StationTests {
                 h.assertTrue(px - reach >= 0 && px + reach <= 16 && pz - reach >= 0 && pz + reach <= 16 && p[1] > TABLE.getY() + 1,
                         "slot " + i + " stays on the table's own top " + facing);
                 if (i == 0) {
-                    // toward you: the way in runs from you to the table
-                    double toward = -((p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz());
-                    h.assertTrue(toward > StationView.GRID_HALF, "the result lies on the near border, past the grid " + facing);
+                    // to your right as you face the table (vanilla's own side of the grid), level with the middle row
+                    double across = (p[0] - TABLE.getX() - 0.5) * s.rx() + (p[2] - TABLE.getZ() - 0.5) * s.rz();
+                    double far = (p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz();
+                    h.assertTrue(across > StationView.GRID_HALF + StationView.RESULT_HALF && Math.abs(far) < 1e-6,
+                            "the result lies on the right border, past the grid " + facing);
                 } else {
                     int cx = (int) Math.round(px), cz = (int) Math.round(pz);
                     h.assertTrue(Math.abs(px - cx) < 1e-6 && Math.abs(pz - cz) < 1e-6 && (cx == 5 || cx == 8 || cx == 11) && (cz == 5 || cz == 8 || cz == 11),
@@ -129,6 +133,116 @@ public final class StationTests {
                 }
             }
         }
+        h.succeed();
+    }
+
+    /**
+     * The bench view (SPEC §63.1): a table's own view is the same from wherever you stand on one side of it, it looks
+     * down on the grid from over the near edge, every slot lies inside the room at seven window sizes with and without
+     * side panels, and a click on a slot's middle picks it.
+     */
+    static void benchView(GameTestHelper h) {
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], eye2 = new double[3];
+        Quaternionf rot = new Quaternionf();
+        int[][] ways = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] way : ways) {
+            // twenty standing places on this side, one to four and a half blocks back and to either hand: one station, one view
+            StationView.Station first = null;
+            for (double d : new double[]{1.0, 1.6, 2.4, 3.3, 4.5}) {
+                for (double side : new double[]{-0.9, -0.3, 0.3, 0.9}) {
+                    if (Math.abs(side) >= d) continue;
+                    StationView.Station s = station(TABLE.getX() + 0.5 - way[0] * d - way[1] * side, TABLE.getZ() + 0.5 - way[1] * d + way[0] * side);
+                    if (first == null) first = s;
+                    h.assertTrue(s.equals(first), "every place on one side works the table the same way (" + d + ", " + side + ")");
+                }
+            }
+            StationView.benchEye(first, 0, eye);
+            double back = -((eye[0] - TABLE.getX() - 0.5) * first.fx() + (eye[2] - TABLE.getZ() - 0.5) * first.fz()), up = eye[1] - TABLE.getY() - 1;
+            double angle = Math.toDegrees(Math.atan2(up, back));
+            h.assertTrue(back > 0.5 && angle > 50 && angle < 58, "the first view is over the near edge, looking down about 54 degrees (" + angle + ")");
+            for (int b = 1; b < StationView.BENCHES; b++) {
+                StationView.benchEye(first, b, eye2);
+                h.assertTrue(eye2[1] < eye[1] + 1e-9 && eye2[1] > TABLE.getY() + 1.5, "view " + b + " is lower, and still over the top");
+            }
+            for (int[] scr : SCREENS) {
+                int w = scr[0], gh = scr[1];
+                float aspect = (float) w / gh;
+                for (boolean sides : new boolean[]{true, false}) {
+                    StationView.Layout l = StationView.layout(w, gh, 2, sides);
+                    for (int b = 0; b < StationView.BENCHES; b++) {
+                        StationView.benchEye(first, b, eye);
+                        StationView.frame(first, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
+                        String at = "view " + b + " at " + w + "x" + gh + (sides ? " with JEI" : "");
+                        h.assertTrue(view[2] < StationView.MAX_FOV - 0.01F, "the bench view frames the table without opening past the most, " + at);
+                        StationView.rotation(view[0], view[1], rot);
+                        for (int i = 0; i < 10; i++) {
+                            StationView.spot(first, i, p, 0);
+                            double ma = StationView.reach(first, i, 0) - 0.005, mi = StationView.reach(first, i, 2) - 0.005;
+                            for (int c = 0; c < 4; c++) {
+                                double a = (c & 1) == 0 ? -ma : ma, in = (c & 2) == 0 ? -mi : mi;
+                                boolean seen = StationView.project(p[0] + first.rx() * a + first.fx() * in, p[1], p[2] + first.rz() * a + first.fz() * in,
+                                        eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                                h.assertTrue(seen && l.inRoom(q[0], q[1]), "slot " + i + " lies inside the room, " + at);
+                            }
+                            StationView.project(p[0], p[1], p[2], eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                            int got = StationView.pick(first, l, eye[0], eye[1], eye[2], rot, view[2], aspect, q[0], q[1], w, gh);
+                            h.assertTrue(got == i, "a click on slot " + i + " picks it, " + at + " (got " + got + ")");
+                        }
+                    }
+                }
+            }
+        }
+        h.assertTrue(StationView.glideTicks(0.5) == 5 && StationView.glideTicks(4.5) == 9, "the view takes 5 ticks from beside the table to 9 from 4.5 blocks");
+        h.succeed();
+    }
+
+    /**
+     * The carrying hand (SPEC §63.2): with a stack held over any slot, at seven window sizes and for either main hand,
+     * the arm's far end is under the inventory strip or off the frame (no sleeve end in view), the arm never lies over
+     * the result, and the only squares under the sleeve are nearer to you than the one the stack is over (they are then
+     * shown through it).
+     */
+    static void handNeverHides(GameTestHelper h) {
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], arm = new double[6], tmp = new double[3];
+        Quaternionf rot = new Quaternionf();
+        double scale = StationView.FIST / (StationView.FIST_SQUARES * StationView.CELL), half = StationView.FIST / 2 / scale;
+        StationView.Station s = new StationView.Station(TABLE, StationView.Kind.TABLE, 0, 1);
+        StationView.benchEye(s, 0, eye);
+        int most = 0;
+        for (int[] scr : SCREENS) {
+            int w = scr[0], gh = scr[1];
+            float aspect = (float) w / gh;
+            for (boolean sides : new boolean[]{true, false}) {
+                StationView.Layout l = StationView.layout(w, gh, 1, sides);
+                StationView.frame(s, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
+                StationView.rotation(view[0], view[1], rot);
+                double mostAcross = StationView.acrossMost(s, l, eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, tmp);
+                for (int side = -1; side <= 1; side += 2) {
+                    for (int i = 0; i < 10; i++) {
+                        String at = "slot " + i + " at " + w + "x" + gh + (sides ? " with JEI" : "") + (side > 0 ? ", right hand" : ", left hand");
+                        StationView.spot(s, i, p, 0);
+                        StationView.carry(s, p[0], p[1] + StationView.HOVER, p[2], side, mostAcross, arm);
+                        float stretch = StationView.stretch(arm, scale, l, eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                        double len = StationView.ARM_BACK * stretch / scale;
+                        h.assertTrue(stretch >= 1 && stretch <= StationView.STRETCH_MOST + 1e-4, "the arm is drawn at most " + StationView.STRETCH_MOST + " times its length, " + at);
+                        boolean seen = StationView.project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                        h.assertTrue(!seen || StationView.hidden(l, q[0], q[1], w, gh), "the arm's far end is under the strip or off the frame, " + at
+                                + " (at " + Math.round(q[0]) + "," + Math.round(q[1]) + ", strip from " + l.py0() + ")");
+                        int row = i == 0 ? 1 : (i - 1) / 3, under = 0;
+                        for (int o = 0; o < 10; o++) {
+                            if (o == i || !StationView.sleeveOver(s, o, arm, len, half, eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, tmp, q)) continue;
+                            h.assertTrue(o != 0, "the arm never lies over the result, " + at);
+                            h.assertTrue((o - 1) / 3 > row, "only squares nearer to you than the stack are under the sleeve (" + o + "), " + at);
+                            under++;
+                        }
+                        most = Math.max(most, under);
+                    }
+                }
+            }
+        }
+        h.assertTrue(most <= 2, "at most two squares are ever under the sleeve (" + most + ")");
         h.succeed();
     }
 
