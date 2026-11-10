@@ -54,6 +54,7 @@ final class ArmourTests {
         AwakenTests.register("armour_numbers", 20, ArmourTests::numbers);
         AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
         AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
+        AwakenTests.register("armour_whole_wakes", 40, ArmourTests::wholeWakes);
         AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
         AwakenTests.register("armour_forge_tune_inlay", 40, ArmourTests::tuneInlay);
         AwakenTests.register("armour_looks_accents", 20, ArmourTests::looksAccents);
@@ -274,10 +275,15 @@ final class ArmourTests {
         m.patterns.add("halo_choir");
         m.forged.add("wildhide");
         m.masterwork.add(ArmouryMemory.key(ArmourSet.WILDHIDE, ArmorType.BOOTS));
+        m.worn.add("bellguard");
         var codec = ArmouryMemory.CODEC.codec();
         ArmouryMemory mb = codec.encodeStart(ops, m).flatMap(t -> codec.parse(ops, t)).getOrThrow();
         h.assertTrue(mb.patterns.equals(m.patterns) && mb.forged.equals(m.forged) && mb.fromMemory(ArmourSet.WILDHIDE, ArmorType.BOOTS)
                 && mb.forgedWhole(ArmourSet.WILDHIDE), "the Armoury's memory round-trips");
+        h.assertTrue(mb.wornWhole(ArmourSet.BELLGUARD) && !mb.wornWhole(ArmourSet.WILDHIDE), "schema 3's sets worn whole too");
+        var older = new net.minecraft.nbt.CompoundTag();
+        older.putInt("schemaVersion", 2);
+        h.assertTrue(codec.parse(ops, older).getOrThrow().worn.isEmpty(), "a schema 2 memory reads with no set worn whole");
         h.succeed();
     }
 
@@ -852,6 +858,37 @@ final class ArmourTests {
     }
 
     /** Puts the first n pieces of a set on (helm, cuirass, greaves, boots) and the rest off, and counts them. */
+    /**
+     * The moment a set becomes whole (SPEC §44.11): not for what you logged in wearing, once when the last piece goes on,
+     * remembered so the System speaks the first time only, and not again while pieces are swapped in and out.
+     */
+    private static void wholeWakes(GameTestHelper h) {
+        ServerPlayer p = survivor(h);
+        ArmourAbilities.State s = ArmourAbilities.state(p);
+        s.counted = false; // as at login, whatever ticked before
+        long never = s.wholeAt;
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.full() == ArmourSet.BELLGUARD && s.wholeAt == never && !ArmouryMemory.of(p).wornWhole(ArmourSet.BELLGUARD),
+                "what you arrive wearing does not wake");
+        wear(p, ArmourSet.BELLGUARD, 3);
+        wear(p, ArmourSet.BELLGUARD, 4);
+        long woke = s.wholeAt;
+        h.assertTrue(woke == h.getLevel().getGameTime() && ArmouryMemory.of(p).wornWhole(ArmourSet.BELLGUARD), "the last piece on: it wakes, and is remembered");
+        wear(p, ArmourSet.BELLGUARD, 3);
+        s.wholeAt = woke - 1; // a tick later, still inside the quiet time
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.wholeAt == woke - 1, "a piece swapped out and in again stays quiet");
+        s.wholeAt = woke - ArmourAbilities.WHOLE_COOLDOWN;
+        wear(p, ArmourSet.BELLGUARD, 3);
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.wholeAt == h.getLevel().getGameTime(), "after the quiet time it wakes again");
+        h.assertTrue(ArmourAbilities.wholeLine(ArmourSet.BELLGUARD).startsWith("Bellguard is whole on you. Ring:"), "the System's line names the set and its twist");
+        h.assertTrue("Bellguard, whole. Mastery I".equals(ArmourBonus.statusLine(p)), "the status line, got " + ArmourBonus.statusLine(p));
+        wear(p, ArmourSet.BELLGUARD, 3);
+        h.assertTrue("Bellguard, 3 of 4".equals(ArmourBonus.statusLine(p)), "three pieces, got " + ArmourBonus.statusLine(p));
+        h.succeed();
+    }
+
     private static void wear(ServerPlayer p, ArmourSet set, int n) {
         for (int i = 0; i < 4; i++) {
             ArmorType type = ForgeSong.PIECES[i];

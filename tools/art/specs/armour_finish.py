@@ -532,6 +532,51 @@ def live_json(design):
     return out
 
 
+# ---- the maker's mark (SPEC §44.11) ---------------------------------------------------------------------------------
+# A Flawless piece carries its maker's mark: a small hollow diamond struck into the plate, on the side its wearer sees
+# most. The kit only leaves room for it: four texels that glow nothing but carry a flow of 1, which the armour shader
+# cuts dark and lights in the set's own colour when the piece is Flawless, and draws as plain plate otherwise.
+# piece: (bone, the face's normal, where on it (x, y, z in the bone's design space; the axis along the normal ignored))
+MARK_AT = {"helmet": ("head", (0, 0, -1), (0.0, 2.5, 0.0)),            # the back of the helm, low
+           "chestplate": ("right_arm", (-1, 0, 0), (0.0, -4.5, 0.0)),  # the outside of the right forearm: your own eyes see it
+           "leggings": ("right_leg", (-1, 0, 0), (0.0, -3.0, 0.0)),    # the outside of the right thigh
+           "boots": ("right_leg", (-1, 0, 0), (0.0, -10.0, 0.0))}      # the outside of the right boot
+MARK_REACH = 3.6  # texels: no flat place this near, and the piece carries no mark
+
+
+def maker_marks(faces, painted):
+    """Strikes each piece's mark into its painted faces (in place). Returns the pieces marked."""
+    for _, m in painted:
+        m[m[:, 2] == 0, 3] = 0  # flow means nothing where nothing glows: keep it free for the mark
+    if not ON:
+        return []
+    done = []
+    for piece, (bone, normal, at) in MARK_AT.items():
+        nrm, at = np.asarray(normal, dtype=float), np.asarray(at, dtype=float)
+        keep = 1.0 - np.abs(nrm)  # the two axes that lie in the face
+        best = None
+        for f, (a, m) in zip(faces, painted):
+            p, b = f.group
+            if p != piece or b not in (bone, bone + "@still") or float(f.n @ nrm) < 0.95:
+                continue
+            where = {(int(i), int(j)): k for k, (i, j) in enumerate(zip(f.i, f.j))}
+            for (i, j), k in where.items():
+                cross = [where.get(c) for c in ((i, j), (i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1))]
+                if any(c is None for c in cross) or m[cross, 2].any():
+                    continue
+                d = float(np.linalg.norm((f.P[k] - at) * keep))
+                if d > MARK_REACH:
+                    continue
+                rough = float(a[cross, :3].astype(float).std(axis=0).sum())  # plain plate first, then the nearest
+                score = d + rough * 0.15
+                if best is None or score < best[0]:
+                    best = (score, m, cross[1:])
+        if best is not None:
+            best[1][best[2], 3] = 255
+            done.append(piece)
+    return done
+
+
 def _lean(a):
     """The two directions a tilt leans in: square to its axis and to each other."""
     u = np.cross(a, (0, 1, 0) if abs(a[1]) < 0.9 else (1, 0, 0))

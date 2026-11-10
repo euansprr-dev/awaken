@@ -3397,10 +3397,11 @@ def make(design, width=128):
     material = np.zeros((height, width, 4), dtype=np.uint8)
     filled = np.zeros((height, width), dtype=bool)
     acc = {g: ([], [], [], []) for g in groups}
-    for f in faces:
+    painted = [painter(design["mats"], bone_y(f.group[1]))(f) for f in faces]
+    design["marked"] = FIN.maker_marks(faces, painted)  # where a Flawless piece's maker's mark is struck (SPEC §44.11)
+    for f, (a, m) in zip(faces, painted):
         piece, bone = f.group
         oy = bone_y(bone)
-        a, m = painter(design["mats"], oy)(f)
         tx, ty = f.x + f.i - f.i0, f.y + f.j - f.j0
         albedo[ty, tx] = a
         material[ty, tx] = m
@@ -3475,8 +3476,11 @@ OWN_ITEMS = {"bellguard": ("E", False), "rootwarden": ("E", False), "amberwing":
 RANK_COLOUR = {"E": "#f4f6fb", "D": "#5fd08f", "C": "#6fb3ff", "B": "#b48cff", "A": "#f2a541", "S": "#ff5a6a"}
 ICON_SKIP = ("cape0", "cape1", "cape2", "back_cloth")  # behind the piece: they would only shrink its icon
 # each piece's turn in its icon (yaw, pitch): a helm and a chest a little from above, the legs level, boots side on
-ICON_VIEW = {"helmet": (-24, 10), "chestplate": (-20, 8), "leggings": (-18, 2), "boots": (-34, 14)}
-ICON_SPREAD = {"leggings": 1.0, "boots": 2.5}  # the legs drawn apart (texels each way), so a pair reads as two
+ICON_VIEW = {"helmet": (-24, 10), "chestplate": (-20, 8), "leggings": (-8, 4), "boots": (-28, 22)}
+# the legs drawn apart (texels each way), so a pair reads as two: boots far enough that the background shows between
+ICON_SPREAD = {"leggings": 0.6, "boots": 3.6}
+ICON_SPLAY = {"leggings": 7.0}                 # the Armour Finish (SPEC §44.11): greaves stand like an A
+ICON_BEHIND = {}                               # a piece whose far leg stands off from the near one (none today)
 ITEM_DIR = os.path.join(RES, "assets/awaken")
 
 
@@ -3484,12 +3488,21 @@ def piece_model(design, piece, meshes):
     """One piece's meshes placed on the figure at rest, in item units (the render's space)."""
     pos, nrm, uv, al = [], [], [], []
     spread = ICON_SPREAD.get(piece, 0.0)
+    splay = ICON_SPLAY.get(piece, 0.0)
     for (p, bone), b in meshes.items():
         if p != piece or bone in ICON_SKIP or "@" in bone:
             continue
         P, N = rest(bone, b.pos, b.nrm)
         if bone.endswith("_leg"):
-            P = P + np.array([spread if bone.startswith("left") else -spread, 0.0, 0.0])
+            left = bone.startswith("left")
+            if splay:  # each leg turned out from the hip, so a pair of greaves stands like an A and reads as legs
+                a = math.radians(splay if left else -splay)
+                R = np.array([[math.cos(a), -math.sin(a), 0], [math.sin(a), math.cos(a), 0], [0, 0, 1]])
+                piv = np.array(PIVOT[bone], dtype=float)
+                P, N = piv + (P - piv) @ R.T, N @ R.T
+            P = P + np.array([spread if left else -spread, 0.0, 0.0])
+            if left and piece in ICON_BEHIND:  # the far boot stands back and a little up: a pair, one behind the other
+                P = P + np.array(ICON_BEHIND[piece], dtype=float)
         pos.append(P)
         nrm.append(N)
         uv.append(b.uv)
@@ -3588,9 +3601,33 @@ def pattern_icon(helm, rank, lord, size=32):
     return out
 
 
-def _item_json(iid):
+# How a piece sits in a hand, on the ground, in a frame and on a shelf when it is drawn as its real mesh (the piece
+# fills about a block; these are a block's own transforms, a little larger in a frame where it is the whole show)
+HELD_DISPLAY = {
+    "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.4, 0.4, 0.4]},
+    "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
+    "on_shelf": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
+    "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
+}
+
+
+def _item_json(iid, held=None):
+    """An item's files: its flat icon; with held (set, piece), the icon in the inventory only and the real piece, drawn
+    by awaken:armour_piece (ArmourPieceRenderer), everywhere it is seen in the world (SPEC §44.11)."""
+    flat = {"type": "minecraft:model", "model": "awaken:item/%s" % iid}
+    model = flat
+    if held:
+        model = {"type": "minecraft:select", "property": "minecraft:display_context", "cases": [{"when": ["gui"], "model": flat}],
+                 "fallback": {"type": "minecraft:special", "base": "awaken:item/%s_held" % iid,
+                              "model": {"type": "awaken:armour_piece", "set": held[0], "piece": held[1]}}}
+        with open(os.path.join(ITEM_DIR, "models/item", iid + "_held.json"), "w") as f:
+            json.dump({"parent": "awaken:item/armour_piece_held", "textures": {"particle": "awaken:item/armour/%s" % iid}}, f, indent=2)
+            f.write("\n")
     with open(os.path.join(ITEM_DIR, "items", iid + ".json"), "w") as f:
-        f.write('{\n  "model": {\n    "type": "minecraft:model",\n    "model": "awaken:item/%s"\n  }\n}\n' % iid)
+        json.dump({"model": model}, f, indent=2)
+        f.write("\n")
     with open(os.path.join(ITEM_DIR, "models/item", iid + ".json"), "w") as f:
         f.write('{\n  "parent": "minecraft:item/generated",\n  "textures": {\n    "layer0": "awaken:item/armour/%s"\n  }\n}\n' % iid)
 
@@ -3610,8 +3647,11 @@ def items(design, meshes, albedo, material):
         yaw, pitch = ICON_VIEW[piece]
         Image.fromarray(icon_of(piece_model(design, piece, meshes), tex, yaw=yaw, pitch=pitch), "RGBA").save(
             os.path.join(tex_dir, iid + ".png"))
-        _item_json(iid)
+        _item_json(iid, held=(sid, piece))
         made.append(iid)
+    with open(os.path.join(ITEM_DIR, "models/item", "armour_piece_held.json"), "w") as f:
+        json.dump({"parent": "minecraft:block/block", "display": HELD_DISPLAY}, f, indent=2)
+        f.write("\n")
     if rank != "E":
         helm = icon_of(piece_model(design, "helmet", meshes), tex, size=19, yaw=0, pitch=0, outline=False)
         iid = sid + "_pattern"

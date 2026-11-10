@@ -18114,6 +18114,37 @@ that fidgets would be wrong).
 - **Fallback.** No `live.json`, a mesh missing or a name the game does not know: the set is drawn whole and rigid, and
   the log says so once.
 
+**44.11 Moments and marks (the Finish, stage 6).** Getting a set and how it was made both show on the body.
+- **The wake.** When the last piece goes on and the four are one set (`ArmourAbilities.whole`), the server tells the
+  wearer and everyone within 80 blocks (`ArmourPayloads.Whole`: entity, set, first). The armour lights feet to crown:
+  each piece flares 130 ms after the one below it, a 90 ms rise and a 620 ms fade (`ArmourGlow.flash(glow, piece)`,
+  the shader's own flash, so the seams and what glows carry it), on the body, on your own first-person arms and legs
+  and on the Status figure. It sounds the set's three notes (§44.12). Not for what you log in wearing, and at most
+  once in ten seconds (`WHOLE_COOLDOWN`), so swapping a piece in and out stays quiet.
+- **The first time** a player wears a set whole, the System says one line in the set's rank colour: "Bellguard is
+  whole on you. Ring: deflect a blow and your armour rings like a bell, staggering everyone close to you." (the set's
+  own twist, else its archetype's ability). Remembered in `awaken:armoury` (`ArmouryMemory.worn`, schema 3; a schema
+  2 save reads it empty). No window, no toast.
+- **Forge marks.** A forged piece shows how it was made, as weapons do (§46.7), in the armour shader, a texel at a
+  time, on its steel only (`ArmourLayer.marks`, three spare bits of the overlay: bit 15 of x, bits 14 and 15 of y):
+  a **scale flaw** (`Forged.flaw`) leaves patches of dull blue-grey scale; on a set that is folded in the making (A and
+  S, `ForgeSong.folds`) a piece that came out **Masterwork or better** shows the fold's ripples in its steel; a
+  **Flawless** piece carries its **maker's mark**, a small hollow diamond cut dark with the set's own light breathing in
+  it. The kit leaves room for the mark (`armour_finish.maker_marks`: four texels that glow nothing but carry a flow of
+  1, on the plainest place near the back of the helm, the outside of the right forearm where your own eyes see it, the
+  right thigh and the right boot); a piece with no plain place carries none. Worn, on the Fitting Stand, in first
+  person and held.
+- **A piece in the world is the piece.** The 23 sets with items of their own draw a piece as its real meshes in a hand,
+  on the ground, in an item frame and on a shelf (`ArmourPieceRenderer`, special model `awaken:armour_piece` {set,
+  piece}; each bone at rest as on the stand's form; base `awaken:item/<id>_held` on `armour_piece_held`, a block's own
+  display transforms). The inventory keeps the flat icon. It carries its mastery, accent, enchantment light and marks.
+  The six Hunter sets' items are the gear module's and keep their icons.
+- **Icons.** Greaves stand like an A (each leg turned 7 degrees out from the hip, seen nearly straight on) and read as
+  legs; boots stand apart with the background between them and read as a pair (`ICON_VIEW`, `ICON_SPREAD`,
+  `ICON_SPLAY`).
+- **The Status line** is offered, not built: `ArmourBonus.statusLine(entity)` gives "Lordscale, whole. Mastery III" or
+  "Lordscale, 3 of 4" (null with nothing of ours on) for the K menu's owner to place under the name.
+
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
 Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the

@@ -52,12 +52,17 @@ public final class ArmourClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("armour_meshes"),
                 (ResourceManagerReloadListener) ArmourMeshes::reload));
         modBus.addListener(RegisterRenderPipelinesEvent.class, ArmourPipelines::onRegister);
+        // a piece in a hand, on the ground, in a frame: the piece itself, not its icon (SPEC §44.11)
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent.class,
+                e -> e.register(ArmourPieceRenderer.TYPE, ArmourPieceRenderer.Unbaked.MAP_CODEC));
         modBus.addListener(ArmourClient::onAddLayers);
         modBus.addListener((RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, ArmourClient::readWorn));
         NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, ArmourClient::onArm);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(ArmourPayloads.Charge.TYPE,
                 (msg, ctx) -> Minecraft.getInstance().execute(() -> ArmourGlow.on(msg))));
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(ArmourPayloads.Whole.TYPE,
+                (msg, ctx) -> Minecraft.getInstance().execute(() -> ArmourGlow.whole(msg))));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ArmourGlow.clear();
             ArmourLive.clear();
@@ -224,8 +229,9 @@ public final class ArmourClient {
         // your own set's charge and flare show on your own arm, as everyone else sees them on you
         ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
         boolean low = player.getHealth() < player.getMaxHealth() * LOW_HEALTH;
-        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow), -1,
-                f == null ? 0 : f.masteryStep(), low, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(chest));
+        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow, ArmorType.CHESTPLATE), -1,
+                f == null ? 0 : f.masteryStep(), low, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(chest),
+                ArmourLayer.marks(f, look.set()));
         return true;
     }
 
@@ -245,8 +251,9 @@ public final class ArmourClient {
             if (mesh == null) continue;
             Forged f = stack.get(ArmourContent.FORGED.get());
             ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
-            ArmourLayer.draw(out, ps, mesh, look.set(), light, stack.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow), -1,
-                    f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(stack));
+            ArmourLayer.draw(out, ps, mesh, look.set(), light, stack.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow, slot), -1,
+                    f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(stack),
+                    ArmourLayer.marks(f, look.set()));
             drew = true;
         }
         return drew;

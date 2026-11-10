@@ -23,6 +23,7 @@ layout(location = 7) flat in vec4 state;
 layout(location = 8) flat in vec2 mastery;
 layout(location = 9) flat in vec2 script;
 layout(location = 10) flat in float skyLight;
+layout(location = 11) flat in float marks;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -38,6 +39,16 @@ const float TAU = 6.2831853;
 const vec3 SCRIPT[13] = vec3[](vec3(0.0), vec3(1.0, 0.54, 0.30), vec3(0.56, 0.85, 1.0), vec3(1.0, 0.85, 0.29),
         vec3(0.73, 0.58, 1.0), vec3(0.31, 0.88, 0.76), vec3(0.73, 0.76, 0.82), vec3(0.62, 0.88, 0.48),
         vec3(1.0, 0.37, 0.39), vec3(0.95, 0.77, 0.35), vec3(0.31, 0.71, 0.92), vec3(0.95, 0.92, 0.84), vec3(0.55, 0.42, 1.0));
+
+float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
 
 // the studio a metal reflects: a cool sky over a warm dark floor, a soft-box strip above
 vec3 studio(vec3 r) {
@@ -84,6 +95,28 @@ void main() {
     col += (alb.rgb * 1.3 + SKY * 0.04) * min(rim, 0.6) * up * (0.06 + 0.18 * gloss) * (1.0 - 0.6 * emit);
     col += alb.rgb * rim * 0.25 * (1.0 - metal) * (1.0 - gloss);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
+
+    // what the forge left on the piece (SPEC §44.11), as the weapons show theirs: set in the pixel art, a texel at a
+    // time, on its steel only, and lit like the plate it is in
+    int forged = int(marks + 0.5);
+    if (forged != 0 && state.w < 0.5) {
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float steel = smoothstep(0.35, 0.6, metal) * (1.0 - step(0.002, emit));
+        if ((forged & 1) != 0) {
+            // a scale flaw: the bar came out of the fire late, and patches of dull blue-grey scale never left the plate
+            float patch = smoothstep(0.52, 0.66, vnoise(px / 5.0 + 17.0));
+            col = mix(col, col * vec3(0.40, 0.38, 0.47) + vec3(0.012, 0.012, 0.02), patch * step(0.45, hash21(px)) * steel * 0.85);
+        }
+        if ((forged & 2) != 0) {
+            // the fold: light and dark bands a texel wide, waving across the steel (the weapons' twist: SPEC §46.9)
+            float w = (px.x + px.y) * 0.42 + 1.8 * sin(px.y * 0.31 + px.x * 0.17) + 1.4 * vnoise(px / 3.0);
+            col *= mix(1.0, mix(0.86, 1.10, smoothstep(0.35, 0.65, abs(fract(w * 0.5) * 2.0 - 1.0))), steel);
+        }
+        // the maker's mark, struck where the kit left room for it (flow with nothing glowing): cut dark, the set's own
+        // light breathing in the cut
+        if ((forged & 4) != 0 && emit < 0.002 && flow > 0.9)
+            col = col * 0.42 + accent * (0.30 + 0.12 * sin(GameTime * 240.0 * TAU * 0.25));
+    }
 
     // the world's light (sky and blocks) on everything but what glows of itself
     vec3 world = lightMapColor.rgb;

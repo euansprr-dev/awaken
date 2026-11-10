@@ -184,6 +184,10 @@ public final class ArmourAbilities {
         boolean moving;
         int xp;
         int sentCharge = -1, sentRunes = -1;
+        /** Counted at least once since login (the first count is what you logged in wearing: no wake for that). */
+        boolean counted;
+        /** When the wearer's set last woke (game time): it wakes at most once in {@link #WHOLE_COOLDOWN}. */
+        long wholeAt = -100_000;
 
         public int charge() {
             return charge;
@@ -259,7 +263,34 @@ public final class ArmourAbilities {
             s.runes = 0;
             s.beats = 0;
         }
+        if (s.counted && s.full != null && s.full != was) whole(p, s, s.full);
+        s.counted = true;
         s.dirty = false;
+    }
+
+    /** A set wakes on its wearer at most once in this many ticks (swapping pieces in and out stays quiet). */
+    static final int WHOLE_COOLDOWN = 200;
+
+    /**
+     * The last piece went on (SPEC §44.11): everyone near sees the set wake feet to crown and hears its three notes; the
+     * first time this player wears this set whole, the System says what it does, in one line.
+     */
+    private static void whole(ServerPlayer p, State s, ArmourSet set) {
+        long now = p.level().getGameTime();
+        if (now - s.wholeAt < WHOLE_COOLDOWN) return;
+        s.wholeAt = now;
+        boolean first = ArmouryMemory.of(p).worn.add(set.id);
+        ArmourPayloads.Whole msg = new ArmourPayloads.Whole(p.getId(), set.ordinal(), first);
+        for (ServerPlayer o : ((ServerLevel) p.level()).players())
+            if (o == p || o.distanceToSqr(p) < SYNC_RANGE * SYNC_RANGE) AwakenNet.send(o, msg);
+        if (first) p.sendSystemMessage(net.minecraft.network.chat.Component.literal(wholeLine(set)).withColor(set.rank.colour), false);
+    }
+
+    /** "Bellguard is whole on you. Ring: deflect a blow and ..." (the set's own twist, else its archetype's ability). */
+    static String wholeLine(ArmourSet set) {
+        String does = ArmourBonus.twist(set);
+        if (does == null || does.isEmpty()) does = ArmourBonus.ability(set.archetype);
+        return set.setName + " is whole on you." + (does == null || does.isEmpty() ? "" : " " + does + ".");
     }
 
     /** The archetype ability a whole set gives (a Hunter set its archetype's too), or null: the Lord-forged have their own move. */

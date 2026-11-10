@@ -19,6 +19,17 @@ final class ArmourGlow {
         long flashAt;
         /** When each rune joined the circle, so a new one grows in rather than popping. */
         final long[] runeAt = new long[4];
+        /** When the set became whole on them (0: not lately): it wakes feet to crown (SPEC §44.11). */
+        long wakeAt;
+    }
+
+    /** The wake: each piece lights this long after the one below it, rises this fast and fades this slowly. */
+    private static final long WAKE_STEP_MS = 130, WAKE_RISE_MS = 90, WAKE_FADE_MS = 620;
+    private static final long WAKE_MS = 3 * WAKE_STEP_MS + WAKE_RISE_MS + WAKE_FADE_MS;
+
+    /** A set became whole on someone in view: their armour wakes. */
+    static void whole(ArmourPayloads.Whole w) {
+        BY_ENTITY.computeIfAbsent(w.entity(), k -> new Glow()).wakeAt = Util.getMillis();
     }
 
     private static final Int2ObjectOpenHashMap<Glow> BY_ENTITY = new Int2ObjectOpenHashMap<>();
@@ -28,7 +39,8 @@ final class ArmourGlow {
     static void on(ArmourPayloads.Charge c) {
         if (c.charge() <= 0 && c.runes() <= 0 && c.flash() <= 0) {
             Glow g = BY_ENTITY.get(c.entity());
-            if (g != null && Util.getMillis() - g.flashAt > FLARE_MS) BY_ENTITY.remove(c.entity());
+            long now = Util.getMillis();
+            if (g != null && now - g.flashAt > FLARE_MS && now - g.wakeAt > WAKE_MS) BY_ENTITY.remove(c.entity());
             else if (g != null) g.charge = g.runes = 0;
             return;
         }
@@ -57,6 +69,25 @@ final class ArmourGlow {
         if (g.charge < 100) return g.charge * 170 / 100;
         float t = (Util.getMillis() % 1400L) / 1400F;
         return (int) (205 + 50 * Mth.sin(t * Mth.TWO_PI));
+    }
+
+    /**
+     * A piece's flash, 0-255: a release's flare, or the wake rising through it (the boots first, then the greaves, the
+     * cuirass, the helm: each a quick rise and a slow fade, so the light climbs the body).
+     */
+    static int flash(@Nullable Glow g, net.minecraft.world.item.equipment.ArmorType piece) {
+        int flare = flash(g);
+        if (g == null || g.wakeAt == 0) return flare;
+        int up = switch (piece) {
+            case BOOTS -> 0;
+            case LEGGINGS -> 1;
+            case CHESTPLATE -> 2;
+            default -> 3;
+        };
+        long t = Util.getMillis() - g.wakeAt - up * WAKE_STEP_MS;
+        if (t < 0 || t > WAKE_RISE_MS + WAKE_FADE_MS) return flare;
+        float k = t < WAKE_RISE_MS ? t / (float) WAKE_RISE_MS : 1F - (t - WAKE_RISE_MS) / (float) WAKE_FADE_MS;
+        return Math.max(flare, (int) (255 * k * k));
     }
 
     /** The shader's flash, 0-255: a release's flare fading out. */
