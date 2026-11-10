@@ -55,6 +55,16 @@ public final class GateMonsterTests {
                 for (String kind : new String[] {"ambient", "hurt", "death", "wind", "blow"}) {
                     h.assertTrue(MobSounds.monster(d.id, kind) != null, d.id + ": no " + kind + " voice");
                 }
+                // its loops have no seam (SPEC §60.9): every looping track carries a key before its start and one after its
+                // end, so the game's curve has a slope to take where the loop comes round
+                for (HeroRig.Clip c : rig.clips.values()) {
+                    if (!c.loop()) continue;
+                    for (HeroRig.Track t : c.tracks()) {
+                        if (t.keys().size() < 5) continue;
+                        float first = t.keys().get(0).t(), last = t.keys().get(t.keys().size() - 1).t();
+                        h.assertTrue(first < -1.0E-4F && last > c.length() + 1.0E-4F, d.id + "/" + c.name() + "/" + t.bone() + ": a loop with a seam (keys " + first + " to " + last + ")");
+                    }
+                }
                 // its fight is its own (SPEC §60.8): its blows throw its own matter; a body that strings its blows has
                 // its other swing; and its rhythm is weighed so a string does per second what one plain swing did
                 h.assertTrue(d.matter != null, d.id + ": its blows throw nothing of its own");
