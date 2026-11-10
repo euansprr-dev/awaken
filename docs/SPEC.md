@@ -20809,8 +20809,9 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 (spark, ember, flake, wisp, puff, drop, sliver) in its own colour: bronze sparks off the Toller, paper off the Fan
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
-where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam. Wherever
-a monster has matter the borrowed vanilla puff, blast, portal sparkle or ink is not drawn.
+where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
+its fallen body goes at the end of its fall (no white death puff). Wherever a monster has matter the borrowed vanilla
+puff, blast, portal sparkle or ink is not drawn.
 
 **Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
 Minecraft's own recordings by name, re-pitched; what the body is made of, moving; no high ring at the blow). `wind`

@@ -369,6 +369,14 @@ public class GateMonster extends AwakenMob implements RigBody {
             deathHold++;
             return;
         }
+        if (deathTime >= 19 && def().matter != null && level() instanceof ServerLevel sl && !isRemoved()) {
+            // it goes as what it was made of, where it lies: never in the game's white puff (SPEC §60.8)
+            deathTime++;
+            double half = Math.max(0.3, getBbWidth() * 0.45);
+            Abilities.shed(sl, this, position().add(0, 0.35, 0), 18 + (int) (getBbWidth() * 12), half, 0.3, half, 0.06);
+            remove(RemovalReason.KILLED);
+            return;
+        }
         super.tickDeath();
     }
 
