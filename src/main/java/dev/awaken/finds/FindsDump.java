@@ -110,6 +110,82 @@ final class FindsDump {
         Awaken.LOG.info("[finds] dump: {} standing monuments written to {}", n, dir.toAbsolutePath());
     }
 
+    /**
+     * The same monuments as the world really made them (SPEC §62.9): the chunks each stands in are generated and every
+     * block open to the air is written, trees, snow and all, so the drawing is the game's own with no client. It also
+     * says what is wrong where one stands: ground its terrace asked for that is not there.
+     */
+    static void world(net.minecraft.server.level.ServerLevel level, Path dir, java.util.List<Site> sites) {
+        Terrain t = Terrain.of(level);
+        try {
+            Files.createDirectories(dir);
+        } catch (IOException e) {
+            return;
+        }
+        BlockPos spawn = level.getRespawnData().pos();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(), q = new BlockPos.MutableBlockPos();
+        int n = 0;
+        for (Site s : sites) {
+            Kind k = s.kind();
+            int r = k.reach() + 20;
+            long t0 = System.currentTimeMillis();
+            for (int cx = (s.x() - r) >> 4; cx <= (s.x() + r) >> 4; cx++)
+                for (int cz = (s.z() - r) >> 4; cz <= (s.z() + r) >> 4; cz++) level.getChunk(cx, cz);
+            Scene sc = Sites.scene(level, s);
+            String file = String.format("world%02d_%s", n, k.id());
+            StringBuilder b = new StringBuilder(1 << 22);
+            b.append("K ").append(file).append(' ').append(500 + n).append(' ').append(k.reach()).append(' ').append(k.name()).append(", ")
+                    .append((int) Math.hypot(s.x() - spawn.getX(), s.z() - spawn.getZ())).append(" from the start, ").append(s.group()).append(" rank ").append(s.rank())
+                    .append(", at ").append(s.x()).append(' ').append(s.y()).append(' ').append(s.z()).append(", as the world made it\n");
+            b.append("L ").append(s.group()).append('\n').append("W ").append(r).append('\n');
+            int holes = 0, bare = 0;
+            StringBuilder said = new StringBuilder();
+            for (int x = -r; x <= r; x++)
+                for (int z = -r; z <= r; z++) {
+                    int wx = s.x() + x, wz = s.z() + z;
+                    int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, wx, wz) - 1;
+                    int want = s.y() + sc.groundAt(x, z);
+                    int low = Math.max(s.y() - 70, Math.min(t.floor(wx, wz), want) - 3);
+                    b.append("G ").append(x).append(' ').append(z).append(' ').append(low - s.y()).append('\n');
+                    for (int y = top; y > low; y--) {
+                        var st = level.getBlockState(m.set(wx, y, wz));
+                        if (st.isAir()) continue;
+                        boolean open = !st.canOcclude();
+                        for (var d : net.minecraft.core.Direction.values()) {
+                            if (open) break;
+                            open = !level.getBlockState(q.setWithOffset(m, d)).canOcclude();
+                        }
+                        if (!open) continue;
+                        String name = st.toString();
+                        b.append("B ").append(x).append(' ').append(y - s.y()).append(' ').append(z).append(' ').append(name, 6, name.length()).append('\n');
+                    }
+                    // a column the terrace shaped and built nothing on: its ground should be there, in the land's own skin
+                    if (!sc.shaped.contains(BlockPos.asLong(x, 0, z)) || sc.blocks().containsKey(BlockPos.asLong(x, want - s.y(), z))
+                            || sc.blocks().containsKey(BlockPos.asLong(x, want + 1 - s.y(), z))) continue;
+                    var at = level.getBlockState(m.set(wx, want, wz));
+                    if (at.isAir() || at.canBeReplaced()) {
+                        if (holes++ < 10) {
+                            said.append("\n    hole at ").append(x).append(' ').append(want - s.y()).append(' ').append(z).append(" (the land stood at ").append(t.floor(wx, wz) - s.y()).append("):");
+                            for (int y = want + 2; y >= want - 4; y--) said.append(' ').append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(m.set(wx, y, wz)).getBlock()).getPath());
+                        }
+                    } else if (at.is(net.minecraft.world.level.block.Blocks.DIRT) && level.getBlockState(m.set(wx, want + 1, wz)).isAir()) bare++;
+                }
+            try {
+                Files.writeString(dir.resolve(file + ".txt"), b);
+            } catch (IOException e) {
+                Awaken.LOG.error("[finds] dump: {} not written", file, e);
+            }
+            double town = Double.MAX_VALUE, thing = Double.MAX_VALUE;
+            for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, true)) town = Math.min(town, Math.hypot(p[0] - s.x(), p[1] - s.z()));
+            for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, false)) thing = Math.min(thing, Math.hypot(p[0] - s.x(), p[1] - s.z()));
+            Awaken.LOG.info("[finds] census as made: {} at {} {} {} ({}, reach {}), {} s: {} holes in its ground, {} bare earth; nearest settlement {}, nearest other landmark {}{}",
+                    k.id(), s.x(), s.y(), s.z(), s.group(), k.reach(), (System.currentTimeMillis() - t0) / 1000, holes, bare,
+                    town > 1e9 ? "none in 600" : String.valueOf((int) town), thing > 1e9 ? "none in 600" : String.valueOf((int) thing), said);
+            n++;
+        }
+        Awaken.LOG.info("[finds] dump: {} monuments written as the world made them to {}", n, dir.toAbsolutePath());
+    }
+
     private static void write(Path dir, String file, Kind k, int number, String name, Scene sc) {
         write(dir, file, k, number, name, sc, null);
     }

@@ -740,6 +740,10 @@ of `AwakenConfig.Client`.
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.finds.api.Monuments` (§62.3) — `near(ServerLevel, x, z, margin)`: whether a column lies on a monument's
+  ground (everything within its reach) or within a margin of it. Pure from the seed, any thread, no land made; the
+  first ask of a stretch of country runs the search for its monuments' spots, so a planner asks from its own thread.
+  For whatever is laid across the land (a road, a yard) to keep off a monument; nothing calls it yet.
 - `dev.awaken.village.api.Troubles` (§28.7, W4) — who a player brought home from a trouble: `rescued(ServerPlayer)` →
   `List<Rescued>` oldest first, `record Rescued(village, villageName, rec, name, trade, age, day, trouble, settled)` (`rec`
   is the person's record in that settlement's roster; `trade` a `Roster.JOBS` name; `trouble` "taken" or "missing";
@@ -22480,10 +22484,20 @@ its floor (a lake held above the sea), and the next best tried if there is any. 
 the way up its terrace's columns, so it is built up more than it is cut in. Spots and turns share the lattice, so
 about a thousand columns of the generator's noise answer for all of it (`Terrain.memo`, shared by a cell's two cards).
 
-Then: the land it belongs to under its middle and at least three of four points half way out; no structure within two
-chunks, counted only where one can really start (the set's own start chunk, in a biome one of its structures stands
-in: `Terrain.near`); no village within its own width and 72, not the city; and no monument with first say within 300,
-or within both their widths and 24, so two never share ground or crowd each other.
+**Clear of what else stands there** (`Sites.stand`, `Anchors.Clear`). The spots are asked this too, from the best
+down, so a monument steps aside from a village or a spire the way it steps off rough ground, and is lost only where
+its whole cell is taken (asked once, of the one best spot, 27 first cards were lost to settlements that a step of fifty
+blocks would have cleared). A spot is clear when: the land it belongs to lies under its middle and at least three of
+four points half way out; nothing else that stands on the land starts within its reach and `Sites.APART` (40), which is
+every sparse structure set with a biome of its own there, ours and Minecraft's (a spire, a monolith, a temple, a delve's
+mouth: `Terrain.starts`, each set asked one square of its spacing at a time); no settlement starts within its reach
+and 150, ours first (`awaken:settlement_grid`; a walled village is some 80 across from its anchor, which the land may
+move 32), then outposts and mansions, and not the city; and no monument with first say stands within 300, or within
+both their widths and 24, so two never share ground or crowd each other. Found by the first worlds made without a
+client (§62.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
+was asked, which our villages' pack empties; and a Tether Spire stood in a Water Clock's lawn, because only two chunks
+from the monument's middle were asked. The margin from other landmarks is forty and not more because this world has
+something standing within 150 blocks of nearly every spot: at eighty, 167 monuments stood where 263 do.
 
 What a monument plants round itself (`B.wild`) is never in water nor at its edge, and the feature never swaps water
 for something that grows: a monument may stand by a river now, and the river is left whole.
@@ -22499,6 +22513,28 @@ pieces stand on each column's own ground. Roads need no terrace at all. A kind's
 skirt. Where a monument stands over a ravine or a cave's mouth, the feature looks 48 down for the real floor and fills
 from it with rock: nothing is bridged and nothing hangs. Everything that grew inside the reach is cleared, and the
 kind plants its own trees and grass back on the regraded ring (`B.wild`), so it stands in a glade of its own land.
+
+**Writing it into the land** (`FindsFeature.write`, a chunk at a time). Under every column the terrace shaped, the
+real ground is found from the land's real top down (the heightmap; not from twenty over the floor, which began inside
+any hillside higher than that, took its earth for the land's skin and left the hill above hanging). Everything over
+the floor goes, ground or not, and the search carries on to the floor and under it: a tree's branch or a village's
+eave over a column is not its ground. A half step of the soft land (§31.2) is the land's skin half a block up: it
+goes, and the block it stood for is what the column is made of. The column is finished with the land's own top block,
+whatever this land is made of (grass, sand, snow, terracotta, our lands' own grounds), three of what lies under it
+and rock below; under a tree and under a soft step the top is bare earth, so it takes the skin it had or its
+neighbours' (`skinNear`), and the earth under every tree the clearing fells is skinned the same way. Before these
+rules a lawn had a pit one block wide wherever a branch hung over it (two each at two of the first six made; none in
+the 23 made since), a square of dirt for every tree and every step (98 and 256 at two of them; since, none at 21 of
+23), and earth or stone where a deep cut was floored.
+
+**Snow** comes back wherever the sky sees, over everything the clearing touched (it reaches seven blocks into the
+chunks beside the one being written, and takes snow with what grows): by the world's own rule on the ground and on
+what the place planted, and in drifts on what was built (a noise of the site's own, about half of it, some six blocks
+across), never on a part, a prop or a lamp. Laid a chunk at a time and wherever the scene had written no air, it lay
+in squares on green and in the outlines of rooms.
+
+**Read from many threads.** A scene is read by every worldgen thread that writes a chunk of it and by the server; its
+two maps of ground heights fill as they are asked, so they are only touched under their lock (`Scene.ask`).
 
 **The site's heart** is two under the ground at the site's middle and is solid though unseen. A generator that digs (a
 pit, a pool, a cleft) sets its hole off from the middle so the heart lies under masonry or ground.
@@ -22588,25 +22624,43 @@ painted one of each family on a hillside (`Terrain.hill`), and `tools/content/fi
 
 **The count** (`/awaken finds census`; without a client `tools/content/finds_census.sh`: a dedicated dev server with
 `AWAKEN_FINDS_CENSUS=<rings>` in its environment counts into its log and stops, `FindsEvents.countAndStop`). It asks only
-the generator's noise, so 17 km square is counted in about three minutes. With `AWAKEN_FINDS_REAL` it also writes a fair
-sample of what stands (the four nearest the start, the eight on the roughest ground, the nearest painted one of every
-family) on the generator's own ground with twenty blocks of land round each and the water on it (`FindsDump.real`),
-and the renderer draws them: how monuments meet real land, in minutes, where a look tour waits hours for a runner.
+the generator's noise, so 17 km square is counted in about three minutes. It takes a fair sample of what stands (the
+four nearest the start, the eight on the roughest ground, the nearest painted one of every family; or with
+`AWAKEN_FINDS_ONLY=<kind ids>` the nearest of each of those kinds) and writes it one of two ways for the renderer:
 
-The count of 11 Nov 2026 (seed 4242, 2,025 cells, 17 km square, 42% of it sea):
+- `AWAKEN_FINDS_REAL=1` (`REAL=1` to the script; `FindsDump.real`): each scene on the generator's own ground with twenty
+  blocks of land round it and the water on it. No land is made; trees and what else stands there are not in it.
+- `AWAKEN_FINDS_REAL=world` (`WORLD=1`; `FindsDump.world`): **the world as made.** The chunks each one stands in are
+  generated and every block open to the air is written, trees, snow, villages and all, so the drawing is the game's own
+  without a client. It also says what is wrong where each stands: holes (a column the terrace shaped whose ground is
+  not there, with what is in it), bare earth, and how near the next settlement and the next other landmark start. Ten
+  minutes for twenty-three, where a look tour waits hours for a runner; this is what found the mast in a village and
+  the spire in a lawn (§62.3). The script throws away the land an earlier run made, or a changed feature would be read
+  back as it was. The renderer draws our own blocks from their models and the soft land's slabs as slabs
+  (`FINDS_VIEWS=se,nw` for only those views, `FINDS_JOBS` for how many at once: a world as made is large).
+
+The first game pictures of monuments where a world put them (tours `placed-a..d`, 39 pictures, 11 Nov) found five
+things wrong in how any monument is written into the land, all in §62.3 now: snow in squares and in the outlines of
+rooms, pits in lawns, squares of bare earth and stone, a mast in one of our villages, a spire in a lawn.
+
+The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42% of it sea):
 
 | | |
 |---|---|
-| Monuments standing | 272, of 49 kinds (544 cells drew a card; 75 stand on their second) |
-| By the land's rank | E 84, D 57, C 82, B 34, A 9, S 6 |
-| From the start | the nearest 264 away; 4 within 1,000; 9 within 2,000 |
-| To the next monument | least 301, middle 472, most 1,567 |
-| To the next of the same kind | least 2,561, middle 4,270 |
-| From any spot (sea included) | half the land within 508 of one, nine tenths within 980 |
-| First cards lost | no ground 106, a twin standing near 104, a structure 48, wrong land 33, too close 29, a village 2 |
+| Monuments standing | 263, of 51 kinds (545 cells drew a card; 77 stand on their second) |
+| By the land's rank | E 78, D 58, C 82, B 29, A 11, S 5 |
+| From the start | the nearest 264 away; 3 within 1,000; 8 within 2,000 |
+| To the next monument | least 303, middle 478, most 2,293 |
+| To the next of the same kind | least 2,471, middle 4,174 |
+| From any spot (sea included) | half the land within 530 of one, nine tenths within 1,001 |
+| First cards lost (the best spot's reason) | no ground 119, a twin standing near 98, another landmark 78, a settlement 27, wrong land 22, a monument too close 10 |
+| As made, the sample of 23 | no holes; bare earth at 2 (1 and 21 squares); the nearest settlement 200 off, the nearest other landmark 80 |
 
-That is the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.91 a
-square kilometre over land and sea, about 1.6 over land; `Sites.BASE[2]` 0.85 holds it there). The eleven kinds that
+(Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
+With `Sites.APART` at 80 instead of 40: 167.)
+
+That is the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.88 a
+square kilometre over land and sea, about 1.5 over land; `Sites.BASE[2]` 0.85 holds it there). The nine kinds that
 did not stand in this square are fourth and fifth tiers, which belong to ranks A and S: this square holds only the
 corners of those bands. Before the rules of this section the same square stood 12 (level ground only), then 122 (the
 first spot that fits, one card, blocks of twelve, discs), then 252 (the best spot, two cards, blocks of eight, discs:

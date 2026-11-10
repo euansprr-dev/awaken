@@ -55,6 +55,45 @@ public record FindsFeature() implements Feature {
                 || b.is(Blocks.MUD) || b.is(Blocks.MOSS_BLOCK) || b.is(BlockTags.TERRACOTTA) || b.is(Blocks.GRAVEL);
     }
 
+    private static final net.minecraft.tags.TagKey<Block> SOFT_SLABS = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("ground/soft_slabs"));
+    private static final java.util.Set<Block> STONE_STEPS = java.util.Set.of(Blocks.STONE_SLAB, Blocks.ANDESITE_SLAB, Blocks.GRANITE_SLAB, Blocks.DIORITE_SLAB, Blocks.TUFF_SLAB,
+            Blocks.SANDSTONE_SLAB, Blocks.RED_SANDSTONE_SLAB);
+
+    /** The full block a half step of the soft land stands for (SPEC §31.2: turf on grass, a sand slab on sand, a stone slab on stone), or null where this isn't one. */
+    private static @org.jspecify.annotations.Nullable BlockState stepOf(BlockState b) {
+        if (!(b.getBlock() instanceof net.minecraft.world.level.block.SlabBlock) || b.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) != net.minecraft.world.level.block.state.properties.SlabType.BOTTOM
+                || !(b.is(SOFT_SLABS) || STONE_STEPS.contains(b.getBlock()))) return null;
+        String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b.getBlock()).getPath();
+        if (path.equals("turf_slab")) return Blocks.GRASS_BLOCK.defaultBlockState();
+        Block full = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(path.substring(0, path.length() - 5)));
+        return full == Blocks.AIR ? null : full.defaultBlockState();
+    }
+
+    /** One of the land's own blocks, whole: what the ground of this country is made of, never something built. */
+    private static boolean own(LevelAccessor level, BlockPos at, BlockState b) {
+        return (skin(b) || b.is(BlockTags.DIRT) || b.is(BlockTags.BASE_STONE_OVERWORLD) || b.is(LANDS_GROUND) || b.is(Blocks.SANDSTONE) || b.is(Blocks.RED_SANDSTONE)
+                || b.is(Blocks.CALCITE) || b.is(Blocks.PACKED_ICE) || b.is(Blocks.CLAY)) && b.isCollisionShapeFullBlock(level, at);
+    }
+
+    /** The grounds of our own lands (hoarfrost, mirepeat, riven shale and the rest): the terrain module lists them here. */
+    private static final net.minecraft.tags.TagKey<Block> LANDS_GROUND = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
+            net.minecraft.resources.Identifier.withDefaultNamespace("overworld_carver_replaceables"));
+
+    /** The skin of the land beside a column of bare earth: the first of its eight neighbours whose top, within a block of this one's, is skin. */
+    private static @org.jspecify.annotations.Nullable BlockState skinNear(LevelAccessor level, int x, int y, int z) {
+        BlockPos.MutableBlockPos n = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < 8; i++) {
+            int ox = i < 4 ? (i == 0 ? 1 : i == 1 ? -1 : 0) : (i % 2 == 0 ? 1 : -1), oz = i < 4 ? (i == 2 ? 1 : i == 3 ? -1 : 0) : (i < 6 ? 1 : -1);
+            for (int oy = 1; oy >= -1; oy--) {
+                BlockState b = level.getBlockState(n.set(x + ox, y + oy, z + oz));
+                if (skin(b)) return b;
+                BlockState of = stepOf(b);
+                if (of != null && skin(of)) return of;
+            }
+        }
+        return null;
+    }
+
     private static boolean soft(BlockState b) {
         return b.is(BlockTags.LEAVES) || b.is(BlockTags.LOGS) || b.canBeReplaced() || b.is(Blocks.SNOW) || b.is(BlockTags.FLOWERS) || b.is(Blocks.BAMBOO) || b.is(Blocks.MUSHROOM_STEM)
                 || b.is(Blocks.BROWN_MUSHROOM_BLOCK) || b.is(Blocks.RED_MUSHROOM_BLOCK);
@@ -88,12 +127,25 @@ public record FindsFeature() implements Feature {
                 // was cleared, then loses its trunk to its own chunk's clearing, and the leaves were left in the air
                 if (x < cx0 || x > cx1 || z < cz0 || z > cz1 || dx * dx + dz * dz > cr * cr) continue;
                 // only what grows goes here; the ground is left as it is
+                int foot = Integer.MIN_VALUE;
                 for (int y = s.y() + sc.groundAt(dx, dz) + 46; y > s.y() + sc.groundAt(dx, dz); y--) {
                     m.set(x, y, z);
                     BlockState b = level.getBlockState(m);
                     // never what the place itself planted: past this chunk's edge the neighbour has already written its share
-                    if (!b.isAir() && b.getFluidState().isEmpty() && soft(b) && !blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz)))
+                    if (!b.isAir() && b.getFluidState().isEmpty() && soft(b) && !blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz))) {
                         level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        if (b.is(BlockTags.LOGS)) foot = y;
+                    }
+                }
+                // a tree stands on bare earth: felled, it left a square of dirt in the grass (four under every great
+                // tree, some 160 in the glade of one monument in a pale wood). The earth takes its neighbours' skin.
+                if (foot != Integer.MIN_VALUE && level.getBlockState(m.set(x, foot - 1, z)).is(Blocks.DIRT) && !blocks.containsKey(BlockPos.asLong(dx, foot - 1 - s.y(), dz))) {
+                    BlockState skin = skinNear(level, x, foot - 1, z);
+                    if (skin != null) {
+                        if (skin.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY))
+                            skin = skin.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY, false);
+                        level.setBlock(m, skin, Block.UPDATE_CLIENTS);
+                    }
                 }
             }
         // a tree felled at the clearing's edge leaves its crown hanging past it: leaves in a ring outside the clearing go
@@ -116,17 +168,30 @@ public record FindsFeature() implements Feature {
                                 if (ex * ex + ez * ez <= cr * cr) continue; // inside the clearing every trunk has gone
                                 for (int oy = -6; oy <= 1 && !trunk; oy++) trunk = level.getBlockState(n.set(x + ox, y + oy, z + oz)).is(BlockTags.LOGS);
                             }
-                        if (!trunk) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        if (!trunk) {
+                            level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                            if (level.getBlockState(n.set(x, y + 1, z)).is(Blocks.SNOW)) level.setBlock(n, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);   // the snow that lay on it
+                        }
                     }
                 }
         }
+        BlockState lastSkin = null;
         for (long c : cols) {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             int want = s.y() + sc.groundAt(dx, dz);
-            // find the real ground: the first block from above that isn't air, water or something that grew
-            // (down to 48 under it: a ravine or a cave's mouth under a monument is filled from its own floor, never bridged)
-            int real = want + 20;
-            BlockState top = Blocks.DIRT.defaultBlockState();
+            // Find the real ground, from above. Everything over the floor goes on the way down, ground or not, and the
+            // search carries on to the floor and under it: taken as "the first thing that isn't air or a plant", a
+            // tree's side branch or a nest over a column was its ground, the column was cut to the floor and nothing
+            // was looked for beneath, so a pit one block wide was left down to wherever the land really was (the
+            // first worlds made without a client found two in most lawns, SPEC §62.9). Down to 48 under the floor: a
+            // ravine or a cave's mouth under a monument is filled from its own floor, never bridged.
+            // (from the land's real top, not from twenty over the floor: where a hillside stood higher than that the
+            // search began inside the hill, took its earth or rock for the land's skin and floored the terrace with
+            // it, 160 squares of bare earth round one monument, and left the hillside above hanging)
+            int real = Math.min(want + 72, Math.max(want + 20, level.getHeight(level instanceof ServerLevel
+                    ? net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE : net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, x, z)));
+            BlockState ground = null, land = null, stepped = null;
+            boolean cut = false;
             for (; real > want - 48; real--) {
                 m.set(x, real, z);
                 BlockState b = level.getBlockState(m);
@@ -135,26 +200,49 @@ public record FindsFeature() implements Feature {
                     level.setBlock(m, b.getFluidState().createLegacyBlock(), Block.UPDATE_CLIENTS);
                     continue;
                 }
-                top = b;
+                // a half step of the soft land (SPEC §31.2) is the land's skin half a block up, not its ground: it goes,
+                // and the skin it stood for is what this column is made of
+                BlockState of = stepOf(b);
+                if (of != null) {
+                    if (stepped == null) stepped = of;
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    continue;
+                }
+                if (land == null && own(level, m, b)) land = b;         // the first of the land's own blocks met is its skin
+                if (real > want) {
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    cut = true;
+                    continue;
+                }
+                ground = b;
                 break;
             }
-            if (real > want) {
-                for (int y = real; y > want; y--) {
-                    m.set(x, y, z);
-                    level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-                }
-                // the cut face takes the land's own skin (grass, sand, snow), not bare rock
-                m.set(x, want, z);
-                if (skin(top) && !level.getBlockState(m).isAir()) level.setBlock(m, top, Block.UPDATE_CLIENTS);
-            } else if (real < want) {
-                // made ground is the land's own: its skin on top, three of what lies under that skin, and rock below
+            // What the column is finished with: the land's own top. Under a soft step and under a tree that top is bare
+            // earth, and taken as it lies it left a square of dirt in the lawn for every tree felled and every step
+            // lifted, and a square of stone wherever such a column was filled (the first game pictures of monuments
+            // where a world put them): it takes the skin it had, or its neighbours'.
+            BlockState top = land != null ? land : Blocks.DIRT.defaultBlockState();
+            boolean bare = top.is(Blocks.DIRT);
+            if (bare) {
+                BlockState skin = stepped != null && !stepped.is(Blocks.DIRT) ? stepped : skinNear(level, x, Math.max(real, want), z);
+                if (skin == null) skin = lastSkin;                  // deep in a cut no neighbour shows its skin yet: the last column's
+                if (skin != null) top = skin;
+            } else if (skin(top)) lastSkin = top;
+            if (top.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY))
+                top = top.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY, false);   // (the snow that comes back sets it)
+            m.set(x, want, z);
+            if (real == want) {
+                // cut to the floor, or bare earth at it: the face takes the land's top, not what lay under it (never over something built)
+                if ((cut || bare) && own(level, m, ground) && !ground.is(top.getBlock())) level.setBlock(m, top, Block.UPDATE_CLIENTS);
+            } else {
+                // made ground is the land's own: its top block on top, three of what lies under that, and rock below
                 BlockState under = top.is(Blocks.RED_SAND) ? Blocks.RED_SANDSTONE.defaultBlockState() : top.is(BlockTags.SAND) ? Blocks.SANDSTONE.defaultBlockState()
-                        : top.is(Blocks.SNOW_BLOCK) || skin(top) ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState();
+                        : top.is(Blocks.SNOW_BLOCK) || skin(top) ? Blocks.DIRT.defaultBlockState() : top;
                 for (int y = real + 1; y <= want; y++) {
                     m.set(x, y, z);
-                    level.setBlock(m, y == want ? (skin(top) ? top : under) : y >= want - 3 ? under : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlock(m, y == want ? top : y >= want - 3 ? under : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
-                if (top.is(Blocks.GRASS_BLOCK)) {
+                if (ground != null && (ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.PODZOL) || ground.is(Blocks.MYCELIUM))) {
                     m.set(x, real, z);
                     level.setBlock(m, Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
@@ -194,32 +282,58 @@ public record FindsFeature() implements Feature {
             level.setBlock(heart, FindsContent.HEART.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             any = true;
         }
-        // In snow country the snow comes back: on the ground the clearing bared and on top of what was built, so a find
-        // isn't a bare patch in a white wood. Never where the scene keeps a place for something (a part, a cut).
+        // In snow country the snow comes back wherever the sky sees (SPEC §62.3): by the world's own rule on the ground
+        // the clearing bared and on the land the terrace made, and in drifts on what was built, so a find is neither a
+        // bare patch in a white wood nor a sheet of white. The drifts are a noise of the site's own: the first game
+        // pictures had snow lying in the outlines of rooms and cuts, wherever the scene had not written air.
+        // Never on a part (a carving, a seal, a gate), a prop or a lamp.
+        // The clearing reaches a few blocks into the chunks beside this one, and snow is among what it takes: so the
+        // snow is laid back over all it touched, not this chunk's share alone (laid by the chunk only, each chunk kept
+        // its snow just where no later neighbour's clearing reached, and a monument stood in squares of white on green).
         for (int dx = -cr; dx <= cr; dx++)
             for (int dz = -cr; dz <= cr; dz++)
                 if (dx * dx + dz * dz <= cr * cr) cols.add(BlockPos.asLong(dx, 0, dz));
         int sea = level.getSeaLevel();
         BlockState snow = Blocks.SNOW.defaultBlockState();
         // (not for one stood by hand: a test pad in the sky is above the snow line whatever the land below is)
-        if (s.layer() != Sites.HAND) for (long c : cols) {
-            int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
-            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
-            int base = s.y() + sc.groundAt(dx, dz);
-            for (int y = base + 36; y > base - 6; y--) {
-                m.set(x, y, z);
-                BlockState b = level.getBlockState(m);
-                if (b.isAir()) continue;
-                BlockPos above = m.above();
-                if (b.getBlock() instanceof dev.awaken.finds.kit.PropBlock || blocks.containsKey(BlockPos.asLong(dx, y + 1 - s.y(), dz))) break;
-                if (!level.getBiome(above).value().coldEnoughToSnow(above, sea) || !snow.canSurvive(level, above)) break;
-                level.setBlock(above, snow, Block.UPDATE_CLIENTS);
-                if (b.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY))
-                    level.setBlock(m, b.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY, true), Block.UPDATE_CLIENTS);
-                break;
+        if (s.layer() != Sites.HAND) {
+            int roof = Math.max(sc.box()[4], 8) + 2;
+            LongOpenHashSet kept = null;
+            for (long c : cols) {
+                int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
+                if (x < cx0 || x > cx1 || z < cz0 || z > cz1) continue;
+                int base = sc.groundAt(dx, dz), from = Math.max(roof, base + 36);
+                // it is colder the higher: where it is too warm for snow at the top it is too warm all the way down
+                m.set(x, s.y() + from, z);
+                if (!level.getBiome(m).value().coldEnoughToSnow(m, sea)) continue;
+                if (kept == null) {
+                    kept = new LongOpenHashSet();
+                    for (List<BlockPos> l : sc.parts().values()) for (BlockPos p : l) kept.add(p.asLong());
+                }
+                for (int dy = from; dy > base - 6; dy--) {
+                    m.set(x, s.y() + dy, z);
+                    BlockState b = level.getBlockState(m);
+                    if (b.isAir()) continue;
+                    BlockPos above = m.above();
+                    if (b.getBlock() instanceof dev.awaken.finds.kit.PropBlock || b.getLightEmission() > 0 || kept.contains(BlockPos.asLong(dx, dy, dz))
+                            || kept.contains(BlockPos.asLong(dx, dy + 1, dz))) break;
+                    if (!level.getBiome(above).value().coldEnoughToSnow(above, sea) || !snow.canSurvive(level, above)) break;
+                    BlockState built = blocks.get(BlockPos.asLong(dx, dy, dz));
+                    // (what the place planted is the land's, not masonry: its trees take snow as the wood's own do)
+                    if (built != null && !built.isAir() && !built.is(BlockTags.LEAVES) && !built.is(BlockTags.LOGS) && !drift(sc, dx, dz)) break;
+                    level.setBlock(above, snow, Block.UPDATE_CLIENTS);
+                    if (b.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY))
+                        level.setBlock(m, b.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.SNOWY, true), Block.UPDATE_CLIENTS);
+                    break;
+                }
             }
         }
         return any;
+    }
+
+    /** Where snow lies on what was built: about half of it, in drifts some six blocks across with ragged edges. */
+    private static boolean drift(Scene sc, int dx, int dz) {
+        return dev.awaken.finds.kit.B.n(sc, dx + 40.5, dz - 17.5, 6.0) * 0.7 + dev.awaken.finds.kit.B.n(sc, dx - 9.5, dz + 23.5, 2.6) * 0.3 > 0.5;
     }
 
     /**

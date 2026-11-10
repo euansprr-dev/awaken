@@ -82,23 +82,31 @@ public final class Scene {
     /** The ground block's height at a column, relative to the heart's (0 at the heart). Solid ground: under water it's the bed. */
     public int g(int lx, int lz) {
         int dx = wx(lx, lz), dz = wz(lx, lz);
-        long k = BlockPos.asLong(dx, 0, dz);
-        int v = ground.get(k);
-        if (v == Integer.MIN_VALUE) {
-            v = terrain.floor(site.x() + dx, site.z() + dz) - site.y();
-            ground.put(k, v);
-        }
-        return v;
+        return ask(ground, BlockPos.asLong(dx, 0, dz), dx, dz);
     }
 
     /** The land's own ground at a column, whatever the scene has shaped there since (relative to the heart's). */
     public int nat(int lx, int lz) {
         int dx = wx(lx, lz), dz = wz(lx, lz);
-        long k = BlockPos.asLong(dx, 0, dz);
-        int v = natural.get(k);
-        if (v == Integer.MIN_VALUE) {
-            v = terrain.floor(site.x() + dx, site.z() + dz) - site.y();
-            natural.put(k, v);
+        return ask(natural, BlockPos.asLong(dx, 0, dz), dx, dz);
+    }
+
+    /**
+     * A column's height from one of the two maps, which fill as they are asked. A scene is read by every worldgen
+     * thread that writes a chunk of it and by the server, so the maps are only touched under their lock: read bare,
+     * a column's ground came back wrong now and then while another thread grew the map, and the feature dug or left
+     * a one-block pit in a lawn (the first worlds made without a client, SPEC §62.9). The land is asked outside it.
+     */
+    private int ask(Long2IntOpenHashMap map, long k, int dx, int dz) {
+        int v;
+        synchronized (map) {
+            v = map.get(k);
+        }
+        if (v != Integer.MIN_VALUE) return v;
+        int land = terrain.floor(site.x() + dx, site.z() + dz) - site.y();
+        synchronized (map) {
+            v = map.get(k);
+            if (v == Integer.MIN_VALUE) map.put(k, v = land);
         }
         return v;
     }
@@ -116,19 +124,15 @@ public final class Scene {
 
     /** The ground at an already turned offset, for the feature. */
     public int groundAt(int dx, int dz) {
-        long k = BlockPos.asLong(dx, 0, dz);
-        int v = ground.get(k);
-        if (v == Integer.MIN_VALUE) {
-            v = terrain.floor(site.x() + dx, site.z() + dz) - site.y();
-            ground.put(k, v);
-        }
-        return v;
+        return ask(ground, BlockPos.asLong(dx, 0, dz), dx, dz);
     }
 
     /** Sets a column's ground: the land there is filled or cut to this height (relative to the heart's ground). */
     public Scene ground(int lx, int lz, int dy) {
         long k = BlockPos.asLong(wx(lx, lz), 0, wz(lx, lz));
-        ground.put(k, dy);
+        synchronized (ground) {
+            ground.put(k, dy);
+        }
         shaped.add(k);
         return this;
     }
@@ -295,7 +299,7 @@ public final class Scene {
 
     public record PartRef(String name, int index) {}
 
-    private int[] box;
+    private volatile int[] box;
 
     /** The box round everything the scene builds: {minX, minY, minZ, maxX, maxY, maxZ}, in scene offsets. */
     public int[] box() {

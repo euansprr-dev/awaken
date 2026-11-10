@@ -11,7 +11,7 @@ no air, no light, no real land round it. A tour is still the last word.
 It reads the game's own textures from the reference folder on this machine and copies none of them into the repository;
 the pictures stay out of it too.
 """
-import sys, re, json, pathlib, math, functools, multiprocessing
+import os, sys, re, json, pathlib, math, functools, multiprocessing
 from PIL import Image, ImageDraw
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -19,7 +19,8 @@ TEX = pathlib.Path("/Volumes/MEDIA/Awaken/.ref/assets/assets/minecraft/textures/
 MODELS = ROOT / "src/main/resources/assets/awaken/models/block"
 STATES = ROOT / "src/main/resources/assets/awaken/blockstates"
 OWN = ROOT / "src/main/resources/assets/awaken/textures/block"
-NAMES = {p.stem for p in TEX.glob("*.png")} | {p.stem for p in OWN.glob("olden_*.png")}
+OWNED = {str(p.relative_to(OWN))[:-4] for p in OWN.rglob("*.png")}   # (with their folders: wild/heather_0)
+NAMES = {p.stem for p in TEX.glob("*.png")} | {n for n in OWNED if n.startswith("olden_")}
 
 # ---- what a block looks like ---------------------------------------------------------------------------------------------
 
@@ -68,9 +69,9 @@ def plain(name):
 @functools.lru_cache(None)
 def image(tex):
     """A texture's first frame, RGBA 16x16, or None."""
-    if tex not in NAMES:
+    if tex not in NAMES and tex not in OWNED:
         return None
-    im = Image.open((OWN if tex.startswith("olden_") else TEX) / (tex + ".png")).convert("RGBA")
+    im = Image.open((OWN if tex in OWNED else TEX) / (tex + ".png")).convert("RGBA")
     return im.crop((0, 0, 16, 16)) if im.size != (16, 16) else im
 
 
@@ -122,7 +123,7 @@ def textures(n):
 
 
 def tint_of(n, tex):
-    if n == "grass_block" and tex == "grass_block_top":
+    if n in ("grass_block", "turf_slab") and tex == "grass_block_top":
         return GRASS
     if n.endswith("_leaves") and n not in ("azalea_leaves", "flowering_azalea_leaves", "cherry_leaves", "pale_oak_leaves"):
         return LEAF_TINT.get(n, FOLIAGE)
@@ -148,6 +149,9 @@ def mean(tex, tint=None):
     return tuple(int(v) for v in c)
 
 
+GREEN = re.compile(r"bracken|clover|parsley|leaves|grass|fern|moss|sedge|reed|turf|heather")
+SOFT = {"turf_slab", "dirt_slab", "coarse_dirt_slab", "podzol_slab", "mud_slab", "gravel_slab", "sand_slab", "red_sand_slab"}
+ALIAS["turf"] = "grass_block_side"
 UNKNOWN = set()
 
 
@@ -162,6 +166,10 @@ def opaque(b):
 def kind_of(n, full):
     if n in NOTHING:
         return "none"
+    if full.startswith("awaken:") and n in SOFT:
+        return "slab"                                         # the soft land's half steps (a world as made): slabs of the land's own blocks
+    if full.startswith("awaken:") and not n.startswith("olden_") and not (STATES / (n + ".json")).exists() and CROSS.search(n):
+        return "cross"
     if full.startswith("awaken:") and not n.startswith("olden_"):
         return "model"                                        # a prop: drawn from its own model. Olden stone is plain masonry.
     if n == "water":
@@ -290,34 +298,40 @@ def model_boxes(full, form, facing):
     st = STATES / (name + ".json")
     if st.exists():
         try:
-            variants = json.loads(st.read_text()).get("variants", {})
+            state = json.loads(st.read_text())
+            variants = state.get("variants", {})
+            if not variants and state.get("multipart"):           # a multipart block: its first part stands for it
+                variants = {"": state["multipart"][0].get("apply")}
             best, score = None, -1
             for key, v in variants.items():
                 kv = dict(x.split("=") for x in key.split(",") if "=" in x)
                 s = (kv.get("form") == form) * 2 + (kv.get("facing") == facing) + (not kv)
                 if (("form" not in kv) or kv["form"] == form) and (("facing" not in kv) or kv["facing"] == facing) and s > score:
                     best, score = v, s
+            if best is None and variants:                         # none keyed the way it was asked: any of them, for its colour
+                best = next(iter(variants.values()))
             if isinstance(best, list):
                 best = best[0]
             if best:
-                model = best["model"].split("/")[-1]
+                model = best["model"].split("block/", 1)[-1]      # (with its folder: our plants live in block/wild)
                 rot = int(best.get("y", 0)) // 90 % 4
         except (ValueError, KeyError):
             pass
     out = []
     seen = set()
+    tex = {}
     while model and model not in seen:
         seen.add(model)
         f = MODELS / (model + ".json")
         if not f.exists():
             break
         m = json.loads(f.read_text())
-        tex = m.get("textures", {})
+        tex = {**m.get("textures", {}), **tex}                    # a child names the textures its parent's boxes wear
 
         def colour(ref):
             while ref and ref.startswith("#"):
                 ref = tex.get(ref[1:])
-            return mean(ref.split("/")[-1]) if ref else (150, 150, 150)
+            return mean(ref.split("block/", 1)[-1]) if ref else (150, 150, 150)
         for e in m.get("elements", []):
             a, b = e["from"], e["to"]
             box = [a[0] / 16, a[1] / 16, a[2] / 16, b[0] / 16, b[1] / 16, b[2] / 16]
@@ -326,10 +340,24 @@ def model_boxes(full, form, facing):
             faces = e.get("faces", {})
             side = next((faces[k]["texture"] for k in ("south", "east", "north", "west") if k in faces), None)
             top = faces.get("up", {}).get("texture", side)
-            out.append((tuple(box), colour(top), colour(side or top)))
+            ct, cs = colour(top), colour(side or top)
+            if GREEN.search(model) and max(ct[:3]) - min(ct[:3]) < 24:   # a grey plant texture is tinted in the game
+                ct, cs = (tuple(int(v * g) for v, g in zip(c[:3], GRASS)) for c in (ct, cs))
+            out.append((tuple(box), ct, cs))
         if out:
             break
-        model = m.get("parent", "").split("/")[-1] if "awaken:" in m.get("parent", "") else None
+        parent = m.get("parent", "")
+        if "awaken:" not in parent and tex:
+            # a plain model of the game's (a cube, a cross, a slab's): one box in its texture's colour (a world as made
+            # holds our villages and our plants, which had all been magenta)
+            ref = next((tex[k] for k in ("all", "top", "side", "cross", "texture", "particle") if k in tex), next(iter(tex.values())))
+            c = colour(ref)
+            if GREEN.search(model) and max(c[:3]) - min(c[:3]) < 24:   # a grey plant texture is tinted in the game
+                c = tuple(int(v * g) for v, g in zip(c[:3], GRASS))
+            small = any(w in parent for w in ("cross", "crop", "flower", "carpet", "torch", "lantern", "tinted_cross"))
+            out.append(((0.2, 0, 0.2, 0.8, 0.75, 0.8) if small else (0, 0, 0, 1, 0.5 if "slab" in parent else 1, 1), c, tuple(int(v * 0.82) for v in c[:3])))
+            break
+        model = parent.split("block/", 1)[-1] if "awaken:" in parent else None
     return out or [((0.2, 0, 0.2, 0.8, 0.9, 0.8), (200, 60, 200), (160, 40, 160))]
 
 
@@ -688,21 +716,25 @@ def one(args):
     R = d["slab"]
     a = max(6, min(14, 1560 // (4 * R)))
     inside = d["cams"][3] if len(d["cams"]) > 3 else (0, 2, 0, 0, 0)
-    views = {
-        "se": render(vox, a, 0),
-        "sw": render(vox, a, 1),
-        "nw": render(vox, a, 2),
+    makers = {
+        "se": lambda: render(vox, a, 0),
+        "sw": lambda: render(vox, a, 1),
+        "nw": lambda: render(vox, a, 2),
         # cut open through where the tour's inside camera stands: the far half of the place, seen from the south and from the east
-        "cutz": render(vox, a, 0, keep=lambda X, y, Z, c=inside[2]: Z <= c),
-        "cutx": render(vox, a, 0, keep=lambda X, y, Z, c=inside[0]: X <= c),
+        "cutz": lambda: render(vox, a, 0, keep=lambda X, y, Z, c=inside[2]: Z <= c),
+        "cutx": lambda: render(vox, a, 0, keep=lambda X, y, Z, c=inside[0]: X <= c),
         # the roof off: everything above the inside camera's head gone
-        "open": render(vox, a, 0, keep=lambda X, y, Z, c=inside[1] + 2: y <= c),
-        "night": render(vox, a, 0, lights=True),
-        "plan": plan(d, vox, lo),
+        "open": lambda: render(vox, a, 0, keep=lambda X, y, Z, c=inside[1] + 2: y <= c),
+        "night": lambda: render(vox, a, 0, lights=True),
+        "plan": lambda: plan(d, vox, lo),
     }
+    only = [v for v in os.environ.get("FINDS_VIEWS", "").split(",") if v in makers]   # FINDS_VIEWS=se,nw: a world as made is big
+    views = {k: make() for k, make in makers.items() if not only or k in only}
     stem = f"p{d['n']:02d}_{d['id']}"
     for k, im in views.items():
         im.save(out / f"{stem}_{k}.png")
+    if only:
+        return stem, len(d["blocks"]), sorted(UNKNOWN)
     cw, ch = 1040, 760
     order = ["se", "sw", "cutz", "open", "night", "plan"]
     sheet = Image.new("RGB", (cw * 3, ch * 2), (24, 26, 30))
@@ -737,7 +769,7 @@ def main():
     want = set(sys.argv[3:])
     files = [p for p in sorted(src.glob("*.txt")) if not want or p.stem in want]
     unknown = set()
-    with multiprocessing.Pool(min(8, max(1, len(files)))) as pool:
+    with multiprocessing.Pool(min(int(os.environ.get("FINDS_JOBS", "8")), max(1, len(files)))) as pool:
         for stem, n, unk in pool.imap_unordered(one, [(p, out) for p in files]):
             print(stem, n, "blocks")
             unknown.update(unk)

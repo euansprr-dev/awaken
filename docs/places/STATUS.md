@@ -1,5 +1,20 @@
 # Places: where they stand (10 Nov 2026)
 
+> **After the first game pictures, 11 Nov (SPEC §62.3 "Clear of what else stands there", "Writing it into the land",
+> "Snow"; §62.9).** Three of the four placement tours came back (39 pictures; the fourth lost its GPU on the runner).
+> Most monuments sat well; five things were wrong in how any monument is written into the land, all fixed: snow lay in
+> squares and in the outlines of rooms; one-block pits in lawns (a branch over a column was taken for its ground);
+> squares of bare earth and stone (felled trees, lifted soft steps, deep cuts); a mast in the middle of one of our own
+> villages (only Minecraft's set of villages was asked); a Tether Spire in a Water Clock's lawn (only two chunks from
+> the middle were asked). A monument's spots are now asked what else stands there, best first, so it steps aside.
+> A new check without a client, `WORLD=1 tools/content/finds_census.sh`, makes the real land under a sample and draws
+> it: 23 made, no holes, the nearest settlement 200 off. The count after it: 263 standing of 51 kinds. A scene's ground
+> maps are now locked (they were read bare from several worldgen threads). `finds.api.Monuments.near` is there for the
+> roads to ask; nothing calls it yet. No GameTests were run on this (sessions no longer run them): it compiles and made
+> 23 monuments' land with no error. Game pictures of the new placement: tours `placed-a..d` queued again.
+> **Euan's to decide:** other landmarks may stand 40 blocks from a monument's edge (a spire 80 from the Small Ear); at
+> 80 only 167 monuments stand, because this world has something within 150 of nearly every spot.
+
 > **Placement finalised, 11 Nov (SPEC §62.2, §62.3, §62.9).** Euan on the built sixty: "these are fantastic... make sure
 > they're placed in the right ways... tied into the world generation... never glitchy, like vanilla villages... very rarely
 > see two of the same... finalize it all." Done: a monument is tried as the shape it is (its own terrace, the ring round

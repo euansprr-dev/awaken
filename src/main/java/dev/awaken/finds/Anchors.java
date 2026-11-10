@@ -16,6 +16,39 @@ final class Anchors {
 
     private static final int[][] OFF = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
 
+    /**
+     * What a monument's spot is asked besides its ground (SPEC §62.3): 0 where it may stand, else why not, in the
+     * caller's own numbers (a settlement near, another monument, the wrong land).
+     */
+    @FunctionalInterface
+    interface Clear {
+        int why(int x, int z);
+    }
+
+    /**
+     * As {@link #find(Kind, Terrain, int, int, long)} for a monument, whose spots are also asked {@code clear}: the best
+     * spot that is clear is taken, so a monument steps aside from a village or a spire the way it steps off rough
+     * ground, and is lost only where its whole cell is taken. {@code why[0]} is left as the best spot's reason where
+     * none was clear (untouched where the ground itself offered nothing).
+     */
+    static int @Nullable [] find(Kind k, Terrain t, int x, int z, long h, Clear clear, int[] why) {
+        return switch (k.anchor()) {
+            case TERRACE -> terrace(k, t, x, z, h, false, clear, why);
+            case HIGH -> terrace(k, t, x, z, h, true, clear, why);
+            default -> {
+                int[] at = find(k, t, x, z, h);
+                if (at != null) {
+                    int w = clear.why(at[0], at[2]);
+                    if (w != 0) {
+                        why[0] = w;
+                        at = null;
+                    }
+                }
+                yield at;
+            }
+        };
+    }
+
     static int @Nullable [] find(Kind k, Terrain t, int x, int z, long h) {
         return switch (k.anchor()) {
             case FLAT -> flat(k, t, x, z, h);
@@ -23,8 +56,8 @@ final class Anchors {
             case PEAK -> hilltop(k, t, x, z, h, 58);
             case LINE -> line(k, t, x, z, h);
             case FIELD -> field(k, t, x, z, h);
-            case TERRACE -> terrace(k, t, x, z, h, false);
-            case HIGH -> terrace(k, t, x, z, h, true);
+            case TERRACE -> terrace(k, t, x, z, h, false, null, null);
+            case HIGH -> terrace(k, t, x, z, h, true, null, null);
             case SHORE -> shore(k, t, x, z, h);
             case CLIFF -> cliff(k, t, x, z, h);
             case SLOPE -> slope(k, t, x, z, h);
@@ -178,7 +211,7 @@ final class Anchors {
      * {@code seed} is the site's own, so the footprint tried is the one that will be built. {@code t} should remember
      * its columns ({@link Terrain#memo}): spots and turns share a lattice, so a thousand columns answer for everything.
      */
-    private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long seed, boolean highest) {
+    private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long seed, boolean highest, @Nullable Clear clear, int @Nullable [] why) {
         Foot f = foot(k, seed);
         if (f == null) return null;
         int sea = t.seaLevel(), slope = Math.max(4, k.slope()) + 2, own = (int) ((seed >>> 7) & 3);
@@ -227,9 +260,22 @@ final class Anchors {
             }
         }
         fit.sort(java.util.Comparator.comparingDouble(c -> c[0]));   // (a stable sort: among equals, the spot nearest the cell's own)
+        boolean told = false;
+        long refused = Long.MIN_VALUE;                              // the last spot that was not clear: its other turns need no asking
         candidates:
         for (double[] c : fit) {
             int cx = (int) c[1], cz = (int) c[3], rot = (int) c[4];
+            if (clear != null) {
+                long at = ((long) cx << 32) ^ (cz & 0xFFFFFFFFL);
+                if (at == refused) continue;
+                int w = clear.why(cx, cz);
+                if (w != 0) {
+                    if (!told && why != null) why[0] = w;
+                    told = true;
+                    refused = at;
+                    continue;
+                }
+            }
             for (int[] part : f.terraced ? new int[][] {f.terrace, f.edge, f.built} : new int[][] {f.terrace, f.built})
                 for (int i = 0; i < part.length; i += 2) {
                     int px = cx + tx(part[i], part[i + 1], rot), pz = cz + tz(part[i], part[i + 1], rot);

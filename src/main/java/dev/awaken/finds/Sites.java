@@ -37,6 +37,8 @@ public final class Sites {
     // stay in the code as furnishing and for their tests; their layers are off.
     // Layer 1 is the remains (SPEC §62.6): small, and only where a monument stands near.
     static final double[] BASE = {0, 0.8, 0.85};
+    /** How far past its own reach a monument keeps from anything else that stands on the land (a spire, a temple, a ruin). */
+    static final int APART = 40;
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 72;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -309,28 +311,38 @@ public final class Sites {
                     return null;
                 }
             }
-        int[] at = Anchors.find(k, land, x, z, mix(h, 0x41));       // (the site's own seed: the footprint tried is the one built)
-        if (at == null) {
-            why[0] = 0;
-            return null;
-        }
-        // the land it belongs to, under most of it: the middle and four points half way out
-        int fits = k.fits(landAt(a, at[0], at[2])) ? 1 : 0, half = k.reach() / 2;
-        for (int q = 0; q < 4 && fits > 0; q++) if (k.fits(landAt(a, at[0] + RX[q] * half, at[2] + RZ[q] * half))) fits++;
-        if (fits < 4) { why[0] = 5; return null; }
-        if (a.terrain.structureNear(at[0], at[2], 2)) { why[0] = 1; return null; }
-        if (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) { why[0] = 2; return null; }
-        if (cityNear(a, at[0], at[2], k.reach() + 56)) { why[0] = 3; return null; }
-        // two monuments never share ground, nor stand in each other's lap: the one with first say stands
+        // What a spot must be clear of, asked of each in turn from the best down, so a monument steps aside before it is
+        // lost. The land it belongs to under most of it (the middle and four points half way out). Nothing else that
+        // stands on the land within forty of its reach: the first worlds made without a client had a Tether Spire in a
+        // Water Clock's lawn, where only two chunks from its middle had been asked. (Forty, not more: this world has
+        // something standing within 150 of nearly every spot, and at eighty 167 monuments stood where 263 do.)
+        // No settlement's start within 150 of
+        // its reach (a walled village is some 80 across from its anchor, which the land may move 32), not the city. And
+        // no monument with first say within 300, or within both their widths and 24, so two never share ground.
+        int span = 96 + k.reach();                                  // (spots lie within 80 of the cell's own point)
+        List<int[]> things = a.terrain.starts(x - span - APART, z - span - APART, x + span + APART, z + span + APART, false);
+        List<int[]> towns = a.terrain.starts(x - span - 150, z - span - 150, x + span + 150, z + span + 150, true);
+        List<Site> firsts = new ArrayList<>(2);
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++) {
                 if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
                 Site o = cell(a, 2, cx + i, cz + j);
-                if (o != null && Math.hypot(o.x() - at[0], o.z() - at[2]) < Math.max(300, o.kind().reach() + k.reach() + 24)) {
-                    why[0] = 6;
-                    return null;
-                }
+                if (o != null) firsts.add(o);
             }
+        int half = k.reach() / 2;
+        Anchors.Clear clear = (px, pz) -> {
+            int fits = k.fits(landAt(a, px, pz)) ? 1 : 0;
+            for (int q = 0; q < 4 && fits > 0; q++) if (k.fits(landAt(a, px + RX[q] * half, pz + RZ[q] * half))) fits++;
+            if (fits < 4) return 5;
+            for (int[] s : things) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + APART) return 1;
+            for (int[] s : towns) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + 150) return 2;
+            if (cityNear(a, px, pz, k.reach() + 56)) return 3;
+            for (Site o : firsts) if (Math.hypot(o.x() - px, o.z() - pz) < Math.max(300, o.kind().reach() + k.reach() + 24)) return 6;
+            return 0;
+        };
+        why[0] = 0;
+        int[] at = Anchors.find(k, land, x, z, mix(h, 0x41), clear, why);   // (the site's own seed: the footprint tried is the one built)
+        if (at == null) return null;
         return new Site(k, 2, at[0], at[1], at[2], mix(h, 0x41), at[3], landAt(a, at[0], at[2]), Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
     }
 
@@ -464,6 +476,19 @@ public final class Sites {
     public static @Nullable Site monumentFrom(ServerLevel level, int x, int z, int max) {
         Ask a = ask(level);
         return a == null ? null : nearestMonument(a, x, z, max, false);
+    }
+
+    /** Whether a monument's ground (everything within its reach) comes within {@code margin} of (x, z): {@link dev.awaken.finds.api.Monuments}. */
+    public static boolean monumentNear(ServerLevel level, int x, int z, int margin) {
+        Ask a = ask(level);
+        if (a == null) return false;
+        int c = CELL[2], pad = MAX_REACH + margin + 24;
+        for (int cx = Math.floorDiv(x - pad, c); cx <= Math.floorDiv(x + pad, c); cx++)
+            for (int cz = Math.floorDiv(z - pad, c); cz <= Math.floorDiv(z + pad, c); cz++) {
+                Site s = cell(a, 2, cx, cz);
+                if (s != null && Math.hypot(s.x() - x, s.z() - z) <= s.kind().reach() + margin) return true;
+            }
+        return false;
     }
 
     // ---- asking -----------------------------------------------------------------------------------------------------

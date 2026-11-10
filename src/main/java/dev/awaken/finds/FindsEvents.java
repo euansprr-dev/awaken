@@ -90,7 +90,15 @@ final class FindsEvents {
             int[] spread = rough.values().stream().mapToInt(Integer::intValue).sorted().toArray();
             if (spread.length > 0) dev.awaken.Awaken.LOG.info("[finds] census the land's fall across a monument's whole reach: middle {}, nine tenths within {}, most {}",
                     spread[spread.length / 2], spread[spread.length * 9 / 10], spread[spread.length - 1]);
-            FindsDump.real(level, java.nio.file.Path.of("finds-real"), new java.util.ArrayList<>(pick));
+            // AWAKEN_FINDS_ONLY=<kind ids, commas>: the nearest standing one of each of those instead of the sample
+            String only = System.getenv("AWAKEN_FINDS_ONLY");
+            if (only != null && !only.isBlank()) {
+                pick.clear();
+                for (String id : only.split(",")) for (Site s : all) if (s.kind().id().equals(id.trim())) { pick.add(s); break; }
+            }
+            // AWAKEN_FINDS_REAL=world: the land is made under each and written as the game has it, trees and snow and all
+            if ("world".equals(System.getenv("AWAKEN_FINDS_REAL"))) FindsDump.world(level, java.nio.file.Path.of("finds-world"), new java.util.ArrayList<>(pick));
+            else FindsDump.real(level, java.nio.file.Path.of("finds-real"), new java.util.ArrayList<>(pick));
         }
         server.halt(false);
     }
