@@ -23,7 +23,11 @@ cmd gamerule advance_time false
 hud off
 cmd time set 6000
 cmd awaken finds view hot_spring_bathhouse 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view hot_spring_bathhouse 0
+wait 60
 shot p16_hot_spring_bathhouse_0_afar
 cmd awaken finds view hot_spring_bathhouse 1
 wait 50
@@ -40,7 +44,11 @@ wait 50
 shot p16_hot_spring_bathhouse_4_dusk
 cmd time set 6000
 cmd awaken finds view ice_hall 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view ice_hall 0
+wait 60
 shot p17_ice_hall_0_afar
 cmd awaken finds view ice_hall 1
 wait 50
@@ -57,7 +65,11 @@ wait 50
 shot p17_ice_hall_4_dusk
 cmd time set 6000
 cmd awaken finds view bell_foundry 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view bell_foundry 0
+wait 60
 shot p18_bell_foundry_0_afar
 cmd awaken finds view bell_foundry 1
 wait 50
@@ -74,7 +86,11 @@ wait 50
 shot p18_bell_foundry_4_dusk
 cmd time set 6000
 cmd awaken finds view stair_monastery 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view stair_monastery 0
+wait 60
 shot p19_stair_monastery_0_afar
 cmd awaken finds view stair_monastery 1
 wait 50
@@ -91,7 +107,11 @@ wait 50
 shot p19_stair_monastery_4_dusk
 cmd time set 6000
 cmd awaken finds view flooded_quarry 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view flooded_quarry 0
+wait 60
 shot p20_flooded_quarry_0_afar
 cmd awaken finds view flooded_quarry 1
 wait 50

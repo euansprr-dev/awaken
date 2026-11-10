@@ -34,7 +34,9 @@ for part in range(6):
     for n, pid, name in places[part * 5:part * 5 + 5]:
         out += ["cmd time set 6000"]
         for v, label in enumerate(VIEWS):
-            out += [f"cmd awaken finds view {pid} {v}", "wait 140" if v == 0 else "wait 50", f"shot p{n:02d}_{pid}_{v}_{label}"]
+            if v == 0:  # the first move waits for its land (a passage); the second view is then at once, in case the first came late
+                out += [f"cmd awaken finds view {pid} 0", "wait 100", "waitpassage", "wait 60"]
+            out += [f"cmd awaken finds view {pid} {v}", "wait 60" if v == 0 else "wait 50", f"shot p{n:02d}_{pid}_{v}_{label}"]
         out += ["cmd time set 13000", f"cmd awaken finds view {pid} 2", "wait 50", f"shot p{n:02d}_{pid}_4_dusk"]
     out += ["info", "quit"]
     (ROOT / f"tools/autopilot/places-{'abcdef'[part]}.txt").write_text("\n".join(out) + "\n")

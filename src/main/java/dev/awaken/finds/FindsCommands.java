@@ -88,32 +88,29 @@ final class FindsCommands {
         ServerLevel level = (ServerLevel) p.level();
         String id = StringArgumentType.getString(c, "kind");
         int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "n");
+        Kind kind = Kinds.byId(id);
         Site s = VIEWED.get(id);
-        if (s == null) {
+        if (s == null && kind != null) {
             BlockPos from = level.getRespawnData().pos();
-            for (int r = 3000; r <= 21000 && s == null; r += 6000) {
-                double best = Double.MAX_VALUE;
-                for (Site o : Sites.near(level, from.getX() - r, from.getZ() - r, from.getX() + r, from.getZ() + r, 0)) {
-                    double d = o.heart().distSqr(from);
-                    if (o.kind().id().equals(id) && d < best) {
-                        best = d;
-                        s = o;
-                    }
-                }
-            }
-            if (s == null) {
-                Awaken.LOG.info("[finds] view {}: none within 21000 of the spawn", id);
-                c.getSource().sendFailure(Component.literal("No " + id + " within 21,000 blocks of the spawn."));
-                return 0;
-            }
-            VIEWED.put(id, s);
+            s = Sites.nearestOf(level, kind, from.getX(), from.getZ(), 48);
+            if (s != null) VIEWED.put(id, s);
+        }
+        if (s == null) {
+            Awaken.LOG.info("[finds] view {}: none within 21000 of the spawn", id);
+            c.getSource().sendFailure(Component.literal("No " + id + " within 21,000 blocks of the spawn."));
+            return 0;
         }
         var cams = Sites.scene(level, s).cams();
         int[] cam = cams.isEmpty() ? new int[] {0, 14, -(s.kind().reach() + 6), 0, 25} : cams.get(Math.min(n, cams.size() - 1));
-        BlockPos stand = new BlockPos(s.x() + cam[0], s.y() + cam[1], s.z() + cam[2]);
-        level.getChunk(stand); // the land has to be there before the unseen block is set under the camera
-        if (level.getBlockState(stand.below()).isAir()) level.setBlock(stand.below(), net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState(), 3);
-        p.teleportTo(level, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, java.util.Set.of(), (float) cam[3], (float) cam[4], false);
+        double x = s.x() + cam[0] + 0.5, y = s.y() + cam[1], z = s.z() + cam[2] + 0.5;
+        // through Awaken's own arrival: a teleport into land not made yet would hold the whole server while it generates
+        dev.awaken.core.api.Passage.go(p, level, x, z, () -> {
+            // held in the air where the camera is (creative flight, no falling)
+            p.getAbilities().mayfly = true;
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+            p.teleportTo(level, x, y, z, java.util.Set.of(), (float) cam[3], (float) cam[4], false);
+        });
         Site at = s;
         Awaken.LOG.info("[finds] view {} {}: at {} {} {} ({}, rank {})", id, n, at.x(), at.y(), at.z(), at.group(), at.rank());
         c.getSource().sendSuccess(() -> Component.literal(at.kind().name() + " at " + at.x() + " " + at.y() + " " + at.z()), false);

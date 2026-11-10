@@ -302,6 +302,34 @@ public final class Sites {
         return null;
     }
 
+    /**
+     * The nearest place of one kind to a point, looking out {@code rings} cells. Only cells that would hold that kind
+     * are asked for their ground, so it is quick: the ground is the slow part.
+     */
+    public static @Nullable Site nearestOf(ServerLevel level, Kind kind, int x, int z, int rings) {
+        Ask a = ask(level);
+        if (a == null) return null;
+        int c = CELL[2], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c), want = Kinds.layer(2).indexOf(kind);
+        if (want < 0) return null;
+        Site best = null;
+        double bestD = Double.MAX_VALUE;
+        for (int ring = 0; ring <= rings; ring++) {
+            for (int i = -ring; i <= ring; i++)
+                for (int j = -ring; j <= ring; j++) {
+                    if (Math.max(Math.abs(i), Math.abs(j)) != ring || basePick(a, 2, cx0 + i, cz0 + j) != want) continue;
+                    Site s = cell(a, 2, cx0 + i, cz0 + j);
+                    if (s == null || s.kind() != kind) continue;
+                    double d = Math.hypot(s.x() - x, s.z() - z);
+                    if (d < bestD) {
+                        bestD = d;
+                        best = s;
+                    }
+                }
+            if (best != null && bestD < (ring - 1) * (double) c) break; // nothing in a further ring can be nearer
+        }
+        return best;
+    }
+
     /** A site made by hand (the gallery, tests): the kind at a place, on a level pad. Layer 2 marks it as made by hand. */
     public static Site forced(Kind k, int x, int y, int z, int rot, long seed) {
         return new Site(k, HAND, x, y, z, seed, rot, RegionMap.Group.PLAINS, k.rank());

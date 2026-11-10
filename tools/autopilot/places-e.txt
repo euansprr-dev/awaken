@@ -23,7 +23,11 @@ cmd gamerule advance_time false
 hud off
 cmd time set 6000
 cmd awaken finds view mine_head 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view mine_head 0
+wait 60
 shot p21_mine_head_0_afar
 cmd awaken finds view mine_head 1
 wait 50
@@ -40,7 +44,11 @@ wait 50
 shot p21_mine_head_4_dusk
 cmd time set 6000
 cmd awaken finds view salt_works 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view salt_works 0
+wait 60
 shot p22_salt_works_0_afar
 cmd awaken finds view salt_works 1
 wait 50
@@ -57,7 +65,11 @@ wait 50
 shot p22_salt_works_4_dusk
 cmd time set 6000
 cmd awaken finds view caravanserai 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view caravanserai 0
+wait 60
 shot p23_caravanserai_0_afar
 cmd awaken finds view caravanserai 1
 wait 50
@@ -74,7 +86,11 @@ wait 50
 shot p23_caravanserai_4_dusk
 cmd time set 6000
 cmd awaken finds view bone_yard 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view bone_yard 0
+wait 60
 shot p24_bone_yard_0_afar
 cmd awaken finds view bone_yard 1
 wait 50
@@ -91,7 +107,11 @@ wait 50
 shot p24_bone_yard_4_dusk
 cmd time set 6000
 cmd awaken finds view mesa_granary 0
-wait 140
+wait 100
+waitpassage
+wait 60
+cmd awaken finds view mesa_granary 0
+wait 60
 shot p25_mesa_granary_0_afar
 cmd awaken finds view mesa_granary 1
 wait 50
