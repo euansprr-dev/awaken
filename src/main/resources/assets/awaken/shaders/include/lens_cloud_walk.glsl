@@ -1,47 +1,20 @@
-#version 330
-#extension GL_ARB_separate_shader_objects : require
+// AWAKEN Lens (Cinematic and Ultra), the Air's block clouds near the camera (SPEC §22 "Steady Light"): one ray's walk of
+// the twelve-block grid as far as CLOUD_NEAR blocks, to the pixel and afresh every frame. It runs inside the composite
+// (and at half size in the bloom prefilter, for the glow and the rays' mask), where it was a frame-size pass of its own:
+// on a tile-based GPU a pass that size costs a third of a millisecond before it draws anything.
+// What keeps it cheap: ground and anything nearer than the layer is out at once, a ray crosses four or five cells on
+// average, a cell is one read, the clouds are solid so the walk ends at the first one, and their colours are worked out
+// only for a ray that met one.
+// Needs lens_frame.glsl, lens_air.glsl and lens_clouds.glsl before it. v the ray (unit), scene the distance to what
+// the pixel shows (1e9 for sky). Returns rgb the light the clouds send this way (premultiplied), a how much of what is
+// behind still shows.
+float cloudNearHg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
-// AWAKEN Lens (Cinematic and Ultra), the Air's block clouds near the camera (SPEC §22 "Steady Light"), at the frame's
-// own size. Every pixel walks the twelve-block grid along its ray every frame, as far as CLOUD_NEAR blocks: a cloud's
-// edge is where the ray truly meets the block, to the pixel, and it moves as smoothly as the frame rate. (The small
-// cloud buffer, stretched 3.6 times and refreshed a tile in four each frame, drew them soft, stair-stepped and
-// crawling: "they don't look like clouds", Euan 2026-11-10.) The far ones, small and going into the haze, stay in
-// lens_clouds.fsh's buffer; the composite lays these over those.
-// What keeps a whole frame of it cheap: ground and anything nearer than the layer is out after one depth read, a ray
-// crosses four or five cells on average, a cell is two noise reads, the clouds are solid so the walk ends at the first
-// one, and their colours are worked out only for a pixel that met one.
-// Out: rgb the light the clouds send this way (premultiplied), a how much of what's behind still shows.
-uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
-uniform sampler2D CloudNoiseSampler;
-uniform sampler2D FrameSampler;
-uniform sampler2D ParamsSampler;
-
-#include <awaken:lens_frame.glsl>
-#include <awaken:lens_air.glsl>
-#include <awaken:lens_clouds.glsl>
-
-layout(location = 0) in vec2 texCoord;
-
-layout(std140) uniform SamplerInfo {
-    vec2 OutSize;
-    vec2 InSize;
-};
-
-layout(location = 0) out vec4 fragColor;
-
-float hg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
-
-void main() {
-    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+vec4 cloudNear(vec3 v, float scene) {
     vec4 cp = cloudParams(), f12 = F(12), f14 = F(14), f16 = F(16);
-    if (!cloudBlocks() || cp.x <= 0.0 || f16.w <= 0.0) return;
-    bool z01 = f16.x > 0.5;
-    ivec2 px = clamp(ivec2(texCoord * InSize), ivec2(0), ivec2(InSize) - 1);
-    float depth = texelFetch(DepthSampler, px, 0).r;
-    bool sky = depth < 1.0e-7;
-    vec3 p = unproject(frameMat(0), (vec2(px) + 0.5) / InSize, sky ? 1.0e-5 : depth, z01);
-    vec3 v = normalize(p), l = f14.xyz;
-    float scene = sky ? 1.0e9 : length(p), camY = f12.y;
+    if (!cloudBlocks() || cp.x <= 0.0 || f16.w <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+    vec3 l = f14.xyz;
+    float camY = f12.y;
     // the layer on this ray, as far as the near walk goes
     float oy = camY - (cp.x - cloudUnder()), thick = cloudThick(), t0 = 0.0, t1 = 0.0;
     if (abs(v.y) > 1.0e-4) {
@@ -52,7 +25,7 @@ void main() {
         t1 = CLOUD_NEAR;
     }
     t1 = min(min(t1, scene), CLOUD_NEAR);
-    if (t1 <= t0) return;
+    if (t1 <= t0) return vec4(0.0, 0.0, 0.0, 1.0);
 
     // the walk (lens_clouds.fsh's blockPiece, with the light kept as two sums until a cloud is met)
     const float sigma = 0.95;
@@ -123,7 +96,7 @@ void main() {
         }
         t = tExit;
     }
-    if (T > 0.998) return;
+    if (T > 0.998) return vec4(0.0, 0.0, 0.0, 1.0);
 
     // their colours, for a pixel that met one (as lens_clouds.fsh has them for the far ones)
     vec4 f22 = F(22);
@@ -132,12 +105,12 @@ void main() {
     vec3 ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.52 * hr.x) * (0.80 + 0.14 * hr.x + 0.25 * hr.y) + vec3(0.020, 0.028, 0.050) * hr.z;
     vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
     vec3 sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.10 : lit * (0.40 + 0.3 * hr.y)) * f14.w;
-    float phase = 0.85 + 0.9 * hg(dot(v, l), 0.6);
+    float phase = 0.85 + 0.9 * cloudNearHg(dot(v, l), 0.6);
     vec3 L = sunCol * (phase * sunSum) + ambient * skySum;
     // into the haze with distance, as the far ones go
     float at = tHit > 0.0 ? tHit : t0;
     float far = smoothstep(260.0, 1500.0, at), gone = smoothstep(520.0, 1500.0, at) * 0.6;
     L = mix(L, airFog(v, f22.xyz, f16.z) * (1.0 - T), far * 0.9) * (1.0 - gone);
     T = 1.0 - (1.0 - T) * (1.0 - gone);
-    fragColor = clamp(vec4(L, T) + (ign(gl_FragCoord.xy, f12.w) - 0.5) / 255.0, 0.0, 1.0);
+    return vec4(L, T);
 }

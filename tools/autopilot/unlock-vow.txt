@@ -1,0 +1,85 @@
+# Movement unlocks, the audit (docs/movement-unlocks/PLAN.md): the Tether Vow (SPEC §17.7), which no new world reaches any
+# more (D-rank now always comes with the rope). Here it is forced: E-rank without the rope at the spawn vault (it stirs:
+# "Its line waits for a D-rank hunter"), then D-rank with its door opened: the call, the line that pulls you up the
+# pylon, "Reach the beacon mast". Then a Tether Spire from its plaza, looking up.
+# Run on CI: tools/tour-ci.sh tools/autopilot/unlock-vow.txt 1500
+world autopilot_unlock_vow survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tick sprint 6200
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken ascent grant none
+camera back
+hud on
+cmd awaken ascent vow goto
+# the move waits for the vault's chunks, then the stir is read once a second
+wait 200
+shotnow vow_01_stir
+wait 40
+shotnow vow_02_stir_words
+wait 60
+shotnow vow_03_stir_after
+wait 120
+cmd awaken admin rankup
+# let the rank-up's own messages finish first, so only the vault's are on screen
+wait 500
+key dismiss
+wait 10
+screen close
+cmd awaken ascent vow open
+wait 30
+shotnow vow_04
+wait 25
+shotnow vow_05
+wait 25
+shotnow vow_06
+wait 25
+shotnow vow_07
+wait 25
+shotnow vow_08
+wait 25
+shotnow vow_09
+wait 25
+shotnow vow_10
+wait 30
+shotnow vow_11
+wait 40
+shotnow vow_12
+wait 60
+shotnow vow_13
+wait 80
+shotnow vow_14
+# ---- a Tether Spire from its plaza ----
+cmd awaken ascent grant tether
+cmd awaken ascent spire goto
+wait 120
+camera first
+look 0 -55
+wait 20
+shot spire_01_up
+camera back
+look 0 -20
+wait 20
+shot spire_02_plaza
+info
+quit

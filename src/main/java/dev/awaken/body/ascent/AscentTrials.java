@@ -44,7 +44,11 @@ final class AscentTrials {
                 if (TrialHooks.LEAPER.equals(trial)) leaperDone(p, ticks, medal);
                 else if (TrialHooks.SKYBORN.equals(trial)) skybornDone(p);
                 else if (TrialHooks.SKY_WARDEN.equals(trial)) skybornDone(p); // SPEC §47.8
-                else if (TrialHooks.RINGER.equals(trial)) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §47.4
+                else if (TrialHooks.RINGER.equals(trial)) {
+                    // SPEC §63.2: the chain is cold iron until a vault wakes it (the Tether Vow); before The Way Up it was the rope
+                    if (!dev.awaken.body.BodyConfig.wayUp()) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §47.4
+                    else DirectorLog.log(p, "ascent", "the Ringer's chain is theirs: a vault will wake it");
+                }
             }
         });
     }
@@ -60,6 +64,8 @@ final class AscentTrials {
 
     /** Awake, rank A, on the ground in the overworld, holding Wings and not Skyborn, Wings mastery reached, not offered yet. */
     static boolean skybornDue(ServerPlayer p) {
+        // retired by The Way Up (SPEC §63.2): A-rank always comes with flight, so nobody could be offered it
+        if (dev.awaken.body.BodyConfig.wayUp()) return false;
         AscentMemory mem = p.getData(AscentContent.MEMORY);
         return p.level().dimension() == Level.OVERWORLD && p.onGround() && !p.isSpectator() && !p.isPassenger()
                 && Progression.profile(p).awakened() && dev.awaken.body.BodyConfig.ascent()
@@ -83,10 +89,31 @@ final class AscentTrials {
     /** At the open sky's edge: flight, given the first time with its moment. */
     private static boolean skyEdge(ServerPlayer p, String source) {
         if (Ascent.has(p, Ascent.Tier.SKYBORN)) return true;
+        // wings never earned come first, with their own beat, two seconds before the sky (SPEC §63.2): three gifts never
+        // land at once
+        if (dev.awaken.body.BodyConfig.wayUp() && !Ascent.has(p, Ascent.Tier.WINGS)) {
+            Ascent.grant(p, Ascent.Tier.WINGS, source + " (wings first)");
+            // a fight is no place to learn them: the first flight's lesson is owed (the fight's own glides may pay it)
+            WayUp.owe(p, WayUp.Rung.WINGS);
+            AwakenNet.send(p, new AscentPayloads.Remember(AscentPayloads.Tier.WINGS.bit(), AscentPayloads.WINGS_EDGE));
+            DirectorLog.log(p, "ascent", source + ": wings never earned are given first");
+            dev.awaken.core.Later.run(p.level().getServer(), WINGS_FIRST, () -> {
+                if (!p.hasDisconnected() && p.isAlive()) skyGive(p, source);
+            });
+            return true;
+        }
+        skyGive(p, source);
+        return true;
+    }
+
+    /** Ticks between wings given at the sky's edge and the sky itself. */
+    static final int WINGS_FIRST = 40;
+
+    private static void skyGive(ServerPlayer p, String source) {
+        if (Ascent.has(p, Ascent.Tier.SKYBORN)) return;
         Ascent.grant(p, Ascent.Tier.SKYBORN, source);
         AwakenNet.send(p, new AscentPayloads.Remember(AscentPayloads.Tier.SKYBORN.bit(), AscentPayloads.SKY_EDGE));
         DirectorLog.log(p, "ascent", source + ": at the open sky, the sky remembers them");
-        return true;
     }
 
     /** The Leviathan fallen: the sky is theirs (once: the scene, mastery, a fifth of a level). */
@@ -118,11 +145,34 @@ final class AscentTrials {
 
     /** Opens the Leaper's Gauntlet in front of the player. Returns the gate's id (-1: none could form). */
     static int openLeaper(ServerPlayer p) {
+        return openLeaper(p, null);
+    }
+
+    /**
+     * Opens the Leaper's Gauntlet on the ground at {@code near} (the foot of a crown just climbed, SPEC §63.2), or in
+     * front of the player when null. With The Way Up the gate goes on the player's road: a Tasks row with its place until
+     * it is run, opened again if it is ever gone. Returns the gate's id (-1: none could form).
+     */
+    static int openLeaper(ServerPlayer p, net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos near) {
         long seed = p.getUUID().getLeastSignificantBits() ^ p.level().getGameTime();
-        int id = dev.awaken.gates.Gates.openScripted(p, dev.awaken.gates.Gates.leaperTrialPlan(seed));
+        var plan = dev.awaken.gates.Gates.leaperTrialPlan(seed);
+        int id = near == null ? dev.awaken.gates.Gates.openScripted(p, plan) : dev.awaken.gates.Gates.openScripted(p, plan, near);
         if (id < 0) return -1;
         p.setData(AscentContent.MEMORY, p.getData(AscentContent.MEMORY).withFlag(AscentMemory.LEAPER_TRIAL));
-        Signal.toast(p, Component.translatable("awaken.ascent.trial.leaper.open"));
+        boolean way = dev.awaken.body.BodyConfig.wayUp();
+        if (way && p.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            net.minecraft.core.BlockPos at = near;
+            if (at == null) {
+                // where it stands: the scripted gate 16 to 24 ahead
+                at = p.blockPosition();
+                for (var g : dev.awaken.gates.Gates.near(level, p.blockPosition(), 48)) if (g.id() == id) at = g.pos();
+            }
+            WayUp.gateOpened(p, id, at);
+        }
+        // with The Way Up it answers the climber's own deed, so it is said at once (a paced line can be filed unseen)
+        if (way) WayUp.say(p, "A gate has opened for you", near != null ? "It stands at the foot of what you climbed. It is a course, not a fight."
+                : "It stands in front of you. It is a course, not a fight.");
+        else Signal.toast(p, Component.translatable("awaken.ascent.trial.leaper.open"));
         DirectorLog.log(p, "ascent", "the Leaper's Gauntlet opens (gate " + id + ")");
         return id;
     }

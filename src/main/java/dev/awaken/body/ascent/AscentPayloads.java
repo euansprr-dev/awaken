@@ -139,6 +139,8 @@ public final class AscentPayloads {
      * given when the Sky Leviathan falls, and the short moment at that trial's open sky.
      */
     public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3, GIFT_SKY = 4, SKY_EDGE = 5, GIFT_SOVEREIGN = 6;
+    /** Wings never earned, given at the sky's edge two seconds before flight (SPEC §63.2): a short moment, at once. */
+    public static final int WINGS_EDGE = 7;
 
     /**
      * Server → client: a scene of tiers given: "your body remembers" (an old world's first load, SPEC §17.6) or "wings
