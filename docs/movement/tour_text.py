@@ -22,3 +22,10 @@ TEXT = {
     "WING2_HEAD": "<b>A beat doesn't push down.</b> The flap turns the wing toward your head and back. Standing, that looks like a beat. Flying belly down, the wings scissor forward and never press on the air.",
     "WING2_EV": "Read in code. Press Flying in the model below with Today selected: it runs the game's own numbers.",
 }
+
+# The game as built. Until the tour of the built game is in, these are the game's own wing code drawn outside the game
+# (tools: the scratch renderer of WingFeathers): the shapes it draws, without the game's light.
+BUILT = [
+    ("built_offline_states", "OFFLINE", None, "<b>The game's own wing code, drawn outside the game.</b> Open, beating down, tucked for a dive, cupped to land. These are the boxes the game draws, without its light; pictures from the game itself follow when the tour finishes."),
+    ("built_offline_rungs", "OFFLINE", None, "<b>Folded on the back, then the rungs.</b> Skyborn's two pairs, and the Sovereign's six gold wings and halo, from behind and from above."),
+]

@@ -53,6 +53,8 @@ def load_text():
 
 def cut(tour, name, shot, crop):
     from PIL import Image
+    if shot == "OFFLINE":  # already in shots/: not one of a tour's pictures
+        return
     if shot.startswith("WOOD:"):
         if len(sys.argv) < 3:
             return
