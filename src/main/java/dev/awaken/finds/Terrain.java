@@ -32,6 +32,53 @@ public interface Terrain {
     }
 
     /**
+     * The same land, remembering every column it was asked for: for a search that asks the same columns over and over
+     * (a monument tried at forty-nine spots in four turns asks about a thousand columns ten thousand times). One
+     * search's own; never shared between threads.
+     */
+    static Terrain memo(Terrain t) {
+        return new Terrain() {
+            private final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap floors = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap(), tops = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+
+            {
+                floors.defaultReturnValue(Integer.MIN_VALUE);
+                tops.defaultReturnValue(Integer.MIN_VALUE);
+            }
+
+            @Override
+            public int floor(int x, int z) {
+                long k = ((long) x << 32) ^ (z & 0xFFFFFFFFL);
+                int v = floors.get(k);
+                if (v == Integer.MIN_VALUE) floors.put(k, v = t.floor(x, z));
+                return v;
+            }
+
+            @Override
+            public int surface(int x, int z) {
+                long k = ((long) x << 32) ^ (z & 0xFFFFFFFFL);
+                int v = tops.get(k);
+                if (v == Integer.MIN_VALUE) tops.put(k, v = t.surface(x, z));
+                return v;
+            }
+
+            @Override
+            public int seaLevel() {
+                return t.seaLevel();
+            }
+
+            @Override
+            public boolean structureNear(int x, int z, int chunks) {
+                return t.structureNear(x, z, chunks);
+            }
+
+            @Override
+            public boolean settlementNear(int x, int z, int chunks) {
+                return t.settlementNear(x, z, chunks);
+            }
+        };
+    }
+
+    /**
      * A hillside falling to the south with a roll in it, far above any sea: what the picture maker stands a monument on to
      * see how it meets land that is not level (SPEC §62.3). About sixteen blocks from top to bottom across a monument.
      */

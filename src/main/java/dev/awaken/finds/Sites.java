@@ -36,7 +36,7 @@ public final class Sites {
     // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
     // stay in the code as furnishing and for their tests; their layers are off.
     // Layer 1 is the remains (SPEC §62.6): small, and only where a monument stands near.
-    static final double[] BASE = {0, 0.8, 1.0};
+    static final double[] BASE = {0, 0.8, 0.85};
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 72;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -273,10 +273,11 @@ public final class Sites {
         if (CityHooks.inCity(a.level, new BlockPos(x, a.level.getSeaLevel(), z))) return NONE;
         int why = -1;
         int[] reason = new int[1];
+        Terrain land = Terrain.memo(a.terrain);                    // both cards ask the same columns
         for (int c = 0; c < 2; c++) {
             int card = d[c * n + at];
             if (card < 0) continue;
-            Site s = stand(a, Kinds.layer(2).get(card), card, cx, cz, h, x, z, reason);
+            Site s = stand(a, land, Kinds.layer(2).get(card), card, cx, cz, h, x, z, reason);
             if (s != null) {
                 if (c == 1) LOST[7]++;
                 return s;
@@ -295,7 +296,7 @@ public final class Sites {
     }
 
     /** One card tried at one cell: the site it makes, or null and the reason (an index into the count's losses). */
-    private static @Nullable Site stand(Ask a, Kind k, int card, int cx, int cz, long h, int x, int z, int[] why) {
+    private static @Nullable Site stand(Ask a, Terrain land, Kind k, int card, int cx, int cz, long h, int x, int z, int[] why) {
         // the same monument is never within six cells: a block deals each kind once, and across a block's edge the cell
         // with first say stands. Only a cell that holds this very card is asked what it built, so the asking stays small.
         int rings = RINGS[2];
@@ -308,7 +309,7 @@ public final class Sites {
                     return null;
                 }
             }
-        int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37 + card));
+        int[] at = Anchors.find(k, land, x, z, mix(h, 0x41));       // (the site's own seed: the footprint tried is the one built)
         if (at == null) {
             why[0] = 0;
             return null;
@@ -583,6 +584,9 @@ public final class Sites {
      * first chose it and the sites that stand; and how many cells fall in each land. Slow (it asks every cell for its
      * ground): a check command's, never the game's.
      */
+    /** What the last count stood, for {@link FindsDump#real}. */
+    static List<Site> counted = List.of();
+
     public static List<String> census(ServerLevel level, int rings) {
         Ask a = ask(level);
         if (a == null) return List.of("finds are off here");
@@ -614,6 +618,7 @@ public final class Sites {
                 sites.add(s);
                 nearest[k] = Math.min(nearest[k], (int) Math.hypot(s.x() - a.spawnX, s.z() - a.spawnZ));
             }
+        counted = sites;
         List<String> out = new ArrayList<>();
         StringBuilder land = new StringBuilder("lands of " + cells + " cells:");
         for (RegionMap.Group g : RegionMap.Group.values()) land.append(' ').append(g).append(' ').append(lands[g.ordinal()]);
@@ -648,12 +653,25 @@ public final class Sites {
         out.add("monuments " + sites.size() + ", of " + distinct + " kinds (" + twice + " stand more than once); nearest to the start " + (sites.isEmpty() ? "none" : first + "") + "; within 1000 of it " + home1 + ", within 2000 " + home2);
         if (!toNext.isEmpty()) out.add("to the next monument: least " + toNext.get(0) + ", middle " + toNext.get(toNext.size() / 2) + ", most " + toNext.get(toNext.size() - 1));
         out.add(toTwin.isEmpty() ? "no kind stands twice" : "to the next of the same kind: least " + toTwin.get(0) + ", middle " + toTwin.get(toTwin.size() / 2));
+        // the quiet between: from any spot in the counted land (every 192 blocks, a cell in from its edge), how far the nearest is
+        List<Integer> from = new ArrayList<>();
+        int half = (rings - 1) * c;
+        for (int px = a.spawnX - half; px <= a.spawnX + half; px += 192)
+            for (int pz = a.spawnZ - half; pz <= a.spawnZ + half; pz += 192) {
+                double near = 1e9;
+                for (Site s : sites) near = Math.min(near, Math.hypot(s.x() - px, s.z() - pz));
+                from.add((int) near);
+            }
+        java.util.Collections.sort(from);
+        double km2 = (2 * rings + 1) * (double) c * (2 * rings + 1) * c / 1e6;
+        if (!sites.isEmpty()) out.add(String.format("%.2f monuments a square kilometre; from any spot the nearest is: for half the land within %d, for nine tenths within %d, at most %d",
+                sites.size() / km2, from.get(from.size() / 2), from.get(from.size() * 9 / 10), from.get(from.size() - 1)));
         // the remains over the same ground
         int c1 = CELL[1], span = (2 * rings + 1) * c / c1 / 2, rx0 = Math.floorDiv(a.spawnX, c1), rz0 = Math.floorDiv(a.spawnZ, c1), remains = 0;
         for (int i = -span; i <= span; i++) for (int j = -span; j <= span; j++) if (cell(a, 1, rx0 + i, rz0 + j) != null) remains++;
         out.add("remains " + remains);
         for (int k = 0; k < kinds.size(); k++)
-            if (kinds.get(k).family() != null && chose[k] > 0)
+            if (kinds.get(k).family() != null && (chose[k] > 0 || stand[k] > 0))
                 out.add(String.format("%-22s rank %d chose %3d stands %3d nearest %s", kinds.get(k).id(), kinds.get(k).rank(), chose[k], stand[k], nearest[k] == Integer.MAX_VALUE ? "none" : nearest[k] + ""));
         return out;
     }

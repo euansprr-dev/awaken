@@ -44,6 +44,8 @@ public final class Scene {
     @Nullable BlockPos tell;
     /** Columns whose ground the scene set itself (turned offsets): the feature fills or cuts the land to them even where nothing is built. */
     public final it.unimi.dsi.fastutil.longs.LongOpenHashSet shaped = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+    /** Where steps leave a terrace, in the kind's own offsets: {x, z, step x, step z}. The first is the way in (SPEC §62.3). */
+    public final java.util.List<int[]> ways = new java.util.ArrayList<>();
     /** Where a camera stands to look at the place, for the tours: {x, y, z (turned offsets), yaw, pitch}. */
     final List<int[]> cams = new ArrayList<>();
     private final Rotation turn;

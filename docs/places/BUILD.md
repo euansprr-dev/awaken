@@ -50,10 +50,26 @@ pictures go in through `keep.json`, one list of checked shots per painted monume
 
 ## Finalising (Euan, 11 Nov: "tied into the world generation... never glitchy, like vanilla villages... very rarely see two of the same")
 
-- Deal: a deck per block of 12 by 12 cells, 4,608 blocks square (`Sites.deal`), a kind once a block; yields across block edges
-  within six cells. So nothing repeats within two kilometres of any point.
-- Spot: the whole footprint checked every eighth block (dry, within slope + 4), never above sea + 110, land agreed at 4 of 5
-  points, never within both widths + 24 of a monument with first say.
+- Deal: a deck per block of 8 by 8 cells, 3,072 blocks square (`Sites.deal`), a kind once a block; each cell that holds a
+  card gets a second for when the first cannot stand; across block edges a card yields where a first-say cell within six
+  cells really stands the same kind. Nothing repeats within 2,300 blocks. A kind may turn up one band early (0.3 weight).
+  Within 1,000 of the start a cell's chance is never under 0.35.
+- Spot: the best of the cell's 49, not the first (gentlest; highest for masts and orreries). The terrace (reach - 14)
+  checked every eighth block (dry, within slope + 4, no water over the floor), two dry rings round the eased ground,
+  never above sea + 110, land agreed at 4 of 5 points, never within 300 (or both widths + 24) of a monument with first
+  say. Structures count only where one can really start (own start chunk, a biome it stands in).
 - Ground: `G.SKIRT` 10 regrades the land to within `G.WALL` 6 / `G.CUT` 4 of the floor; reaches grew to hold it
   (`Sites.MAX_REACH` 72); the feature looks 48 down and fills hollows with rock.
-- Count: `/awaken finds census` now says how many stand, of how many kinds, how far to the next and to the next twin.
+- Spot, again: the land round the whole reach counts (a cliff's lip loses to calmer land; more than 28 under the floor or
+  24 over it on that ring is refused, 40 under for masts and orreries). The way in looks downhill only where that is a
+  walk; else along the hillside (`Anchors.front`).
+- Spot, by the monument's own footprint (`Anchors.foot`): it is built once on level land with the site's seed and its
+  terrace, the ring round it and what else meets the ground are read off; every spot is tried in all four turns on a
+  lattice of eight; the best spot and turn win (gentle ground, calm ring, a way in that is a walk). `Terrain.memo` keeps
+  the cost at about a thousand noise columns a cell. `B.wild` and the feature keep what grows out of water.
+- Lands: pits and chains also stand in snow and plains (chains in dark forest too); the three down families weigh 16 to 18.
+- Count: `/awaken finds census` says how many stand, of how many kinds, how far to the next and to the next twin, and how
+  far the nearest is from any spot. Without a client: `tools/content/finds_census.sh` (five minutes, headless server),
+  `REAL=1` adds drawings of real placements (`run/finds-real` → `finds_render.py`). Numbers: SPEC §62.9.
+- The CI tour queue was forty deep on 11 Nov; the headless count and the real-land drawings are what the placement was
+  tuned from. Tours `placed-a..d` (twelve monuments where the world put them) are the game's own pictures of it.

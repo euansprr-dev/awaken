@@ -81,69 +81,163 @@ final class Anchors {
     }
 
     /**
-     * Ground a monument can stand its terrace on (SPEC §62.3). Seventeen points (the middle and two rings), all dry and
-     * within the kind's slope of each other. The site's height is the eleventh of them from the bottom, so most of the
-     * terrace is built up and little is cut in; and the kind is turned so that its front looks down the fall of the land.
-     * The first census of monuments on level ground only (10 Nov) stood 12 of 616: this is what asks less of the land.
+     * A monument's own ground (SPEC §62.3), in its own unturned offsets on a lattice eight apart: the columns its
+     * terrace levels, the ring round them that the land is eased over, and what else it builds on the land's own ground
+     * (piers, a fallen piece). And where its steps leave the terrace: {x, z, step x, step z}.
      */
-    private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long h, boolean highest) {
-        // (the reach holds the terrace and the ground eased to it: the terrace itself is what has to fit)
-        int r = Math.max(8, k.reach() - 14), sea = t.seaLevel();
-        int[] f = new int[17], best = null;
-        for (int[] o : GRID) {
-            int cx = x + o[0] * 24, cz = z + o[1] * 24;
-            f[0] = t.floor(cx, cz);
-            boolean dry = f[0] > sea;
-            double gx = 0, gz = 0;
-            for (int j = 0; j < 16 && dry; j++) {
-                double a = j * Math.PI / 4 + (j >= 8 ? Math.PI / 8 : 0);
-                int rr = j >= 8 ? r : r / 2;
-                f[1 + j] = t.floor(cx + (int) Math.round(Math.cos(a) * rr), cz + (int) Math.round(Math.sin(a) * rr));
-                dry = f[1 + j] > sea;
-                if (j >= 8) {
-                    gx += f[1 + j] * Math.cos(a);
-                    gz += f[1 + j] * Math.sin(a);
-                }
-            }
-            if (!dry) continue;
-            int[] sorted = f.clone();
-            java.util.Arrays.sort(sorted);
-            if (sorted[16] - sorted[0] > Math.max(4, k.slope())) continue;
-            // (gx, gz) points uphill; the kind's south goes the other way, unless the land is as good as level
-            int rot = (int) (h & 3);
-            if (gx * gx + gz * gz > 9) {
-                double bestDot = -1e9;
-                for (int d = 0; d < 4; d++) {
-                    double dot = -(gx * DX[d] + gz * DZ[d]);
-                    if (dot > bestDot) {
-                        bestDot = dot;
-                        rot = d;
-                    }
-                }
-            }
-            // then the whole of it, every eighth block: a pond, a stream or a sudden drop between the seventeen points
-            // would put a wall in water or a terrace over a cliff (SPEC §62.3). And never so high that what stands on it
-            // nears the world's roof.
-            if (sorted[10] > sea + 110 || !sound(t, cx, cz, r, sea, sorted[0], sorted[16], Math.max(4, k.slope()) + 4)) continue;
-            int[] at = {cx, sorted[10], cz, rot};
-            if (!highest) return at;
-            if (best == null || at[1] > best[1]) best = at;
+    private record Foot(int[] terrace, int[] edge, int[] built, int[] way, boolean terraced) {}
+
+    /**
+     * What ground this very monument would shape: it is built once on level land with the site's own seed, and its
+     * shaped columns read off. So a hall is tried as the long box it is, a stair as the small terrace at its foot and a
+     * line of piers, a road as its piers alone. (Before this every monument was tried as a disc as wide as its reach, and
+     * in a counted world the Sleepers' Hall, a hundred long and twenty-eight wide, stood nowhere.)
+     */
+    private static @Nullable Foot foot(Kind k, long seed) {
+        Scene sc;
+        try {
+            sc = Sites.build(Sites.forced(k, 0, 64, 0, 0, seed), Terrain.flat(64));
+        } catch (RuntimeException e) {
+            return null;
         }
-        return best;
+        int R = k.reach(), n = 2 * R + 1;
+        boolean[] shaped = new boolean[n * n], built = new boolean[n * n];
+        for (long key : sc.shaped) {
+            int x = net.minecraft.core.BlockPos.getX(key), z = net.minecraft.core.BlockPos.getZ(key);
+            if (Math.abs(x) <= R && Math.abs(z) <= R) shaped[(x + R) * n + z + R] = true;
+        }
+        for (var e : sc.blocks().long2ObjectEntrySet()) {
+            var b = e.getValue();
+            if (!b.isSolid() || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS)) continue;   // what grows there is the land's
+            // only what meets the ground: a deck high over the land is not standing on it, so a road may cross a stream
+            int dy = net.minecraft.core.BlockPos.getY(e.getLongKey());
+            if (dy < -3 || dy > 2) continue;
+            int x = net.minecraft.core.BlockPos.getX(e.getLongKey()), z = net.minecraft.core.BlockPos.getZ(e.getLongKey());
+            if (Math.abs(x) <= R && Math.abs(z) <= R) built[(x + R) * n + z + R] = true;
+        }
+        it.unimi.dsi.fastutil.ints.IntArrayList te = new it.unimi.dsi.fastutil.ints.IntArrayList(), ed = new it.unimi.dsi.fastutil.ints.IntArrayList(), bu = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        int span = (R + 16 + 7) & ~7, south = Integer.MIN_VALUE, southX = 0, southN = 0, pads = 0;
+        for (int x = -span; x <= span; x += 8) for (int z = -span; z <= span; z += 8) if (near(shaped, n, R, x, z, 3)) pads++;
+        // (eight columns of the lattice make a terrace; a camp's little pad does not. Without one, a road say, the ground
+        // it stands on is under what it builds, and the ring round that is its edge)
+        if (pads < 8) for (int i = 0; i < shaped.length; i++) shaped[i] |= built[i];
+        for (int x = -span; x <= span; x += 8)
+            for (int z = -span; z <= span; z += 8) {
+                if (near(shaped, n, R, x, z, 3)) {
+                    te.add(x);
+                    te.add(z);
+                    if (z > south) { south = z; southX = 0; southN = 0; }
+                    if (z == south) { southX += x; southN++; }
+                } else if (near(shaped, n, R, x, z, 16)) {
+                    ed.add(x);
+                    ed.add(z);
+                } else if (near(built, n, R, x, z, 3)) {
+                    bu.add(x);
+                    bu.add(z);
+                }
+            }
+        int[] way = !sc.ways.isEmpty() ? sc.ways.get(0) : new int[] {southN == 0 ? 0 : southX / southN, south == Integer.MIN_VALUE ? 0 : south, 0, 1};
+        return new Foot(te.toIntArray(), ed.toIntArray(), bu.toIntArray(), way, pads >= 8);
     }
 
-    /** Whether a disc of ground is all dry and all within {@code spread} from its lowest to its highest, looked at every eighth block. */
-    private static boolean sound(Terrain t, int cx, int cz, int r, int sea, int lo, int hi, int spread) {
-        for (int x = -r; x <= r; x += 8)
-            for (int z = -r; z <= r; z += 8) {
-                if (x * x + z * z > r * r) continue;
-                int f = t.floor(cx + x, cz + z);
-                if (f <= sea) return false;
-                lo = Math.min(lo, f);
-                hi = Math.max(hi, f);
-                if (hi - lo > spread) return false;
+    /** Whether any marked column lies within {@code r} of (x, z). */
+    private static boolean near(boolean[] mask, int n, int R, int x, int z, int r) {
+        for (int i = Math.max(-R, x - r); i <= Math.min(R, x + r); i++)
+            for (int j = Math.max(-R, z - r); j <= Math.min(R, z + r); j++)
+                if (mask[(i + R) * n + j + R] && (i - x) * (i - x) + (j - z) * (j - z) <= r * r + r) return true;
+        return false;
+    }
+
+    /** A kind's own offset turned 0..3 quarter turns, the way {@link Scene} turns it. */
+    private static int tx(int lx, int lz, int rot) {
+        return switch (rot & 3) { case 1 -> -lz; case 2 -> -lx; case 3 -> lz; default -> lx; };
+    }
+
+    private static int tz(int lx, int lz, int rot) {
+        return switch (rot & 3) { case 1 -> lx; case 2 -> -lz; case 3 -> -lx; default -> lz; };
+    }
+
+    /**
+     * Ground a monument can stand on (SPEC §62.3), by its own footprint. A cell offers forty-nine spots, 24 apart, and at
+     * each the monument is tried in all four turns. A spot and a turn fit when:
+     * <ul>
+     * <li>every column the terrace levels is dry, and they lie within the kind's slope (and two) of each other. The
+     * site's height is six tenths of the way up them, so the terrace is built up more than it is cut in;</li>
+     * <li>the ring the land is eased over is dry, and nowhere more than 28 under the floor (40 for a mast or an orrery,
+     * which belong on crowns) or 24 over it: no wall and no eased bank makes more than that look meant;</li>
+     * <li>what stands on the land's own ground (piers, fallen pieces) is dry and neither buried (12 over) nor on
+     * stilts (40 under). A monument with no terrace (a road) is held to its slope across what it builds instead, and to
+     * the same ring round that, which is not eased and so may hold a river: a road may stand on a bank, never a crag.</li>
+     * </ul>
+     * Of all that fit, the best is taken, never the first: the gentlest ground (anything within six from low to high
+     * counts as gentle, so a monument still finds a fall to look down), calm land round it, and a way in that is a walk:
+     * the ground twelve past the head of its steps a little under the floor, not a climb and not a drop. For a mast or
+     * an orrery the highest spot, a rough crown counting against it. Last, the one taken is looked at for water standing
+     * over its floor (a lake held above the sea), and the next best tried if there is any.
+     * <p>
+     * {@code seed} is the site's own, so the footprint tried is the one that will be built. {@code t} should remember
+     * its columns ({@link Terrain#memo}): spots and turns share a lattice, so a thousand columns answer for everything.
+     */
+    private static int @Nullable [] terrace(Kind k, Terrain t, int x, int z, long seed, boolean highest) {
+        Foot f = foot(k, seed);
+        if (f == null) return null;
+        int sea = t.seaLevel(), slope = Math.max(4, k.slope()) + 2, own = (int) ((seed >>> 7) & 3);
+        int[] stand = f.terrace;
+        if (stand.length < 2) return null;
+        int[] hs = new int[stand.length / 2];
+        java.util.ArrayList<double[]> fit = new java.util.ArrayList<>();
+        int bx = x & ~7, bz = z & ~7;
+        for (int[] o : GRID) {
+            int cx = bx + o[0] * 24, cz = bz + o[1] * 24;
+            turns:
+            for (int rot = 0; rot < 4; rot++) {
+                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
+                for (int i = 0; i < hs.length; i++) {
+                    int v = t.floor(cx + tx(stand[2 * i], stand[2 * i + 1], rot), cz + tz(stand[2 * i], stand[2 * i + 1], rot));
+                    if (v <= sea) continue turns;
+                    hs[i] = v;
+                    lo = Math.min(lo, v);
+                    hi = Math.max(hi, v);
+                    if (hi - lo > slope) continue turns;
+                }
+                int[] sorted = hs.clone();
+                java.util.Arrays.sort(sorted);
+                int y = sorted[sorted.length * 6 / 10];
+                if (y > sea + 110) continue;                       // (never so high that what stands on it nears the world's roof)
+                int elo = lo, ehi = hi;
+                for (int i = 0; i < f.edge.length; i += 2) {
+                    int v = t.floor(cx + tx(f.edge[i], f.edge[i + 1], rot), cz + tz(f.edge[i], f.edge[i + 1], rot));
+                    // (round a terrace the ring is eased, so it must be dry; round piers it is left alone, and a river may run there)
+                    if (f.terraced ? v <= sea : false) continue turns;
+                    if (y - v > (highest ? 40 : 28) || v - y > 24) continue turns;
+                    elo = Math.min(elo, v);
+                    ehi = Math.max(ehi, v);
+                }
+                for (int i = 0; i < f.built.length; i += 2) {
+                    int v = t.floor(cx + tx(f.built[i], f.built[i + 1], rot), cz + tz(f.built[i], f.built[i + 1], rot));
+                    if (v <= sea || y - v > 40 || v - y > 12) continue turns;
+                }
+                // the way in: the ground twelve past the head of the steps, on the lattice
+                int wx = f.way[0] + f.way[2] * 12, wz = f.way[1] + f.way[3] * 12;
+                int drop = y - t.floor((cx + tx(wx, wz, rot) + 4) & ~7, (cz + tz(wx, wz, rot) + 4) & ~7);
+                double front = drop < -3 ? 12 : drop > 10 ? 8 + (drop - 10) / 4.0 : Math.abs(drop - 2) / 4.0;
+                int spread = hi - lo;
+                double score = (highest ? 2 * spread - y : Math.max(6, spread)) + (ehi - elo) / 2.0 + front + 0.01 * ((rot - own) & 3);
+                fit.add(new double[] {score, cx, y, cz, rot});
             }
-        return true;
+        }
+        fit.sort(java.util.Comparator.comparingDouble(c -> c[0]));   // (a stable sort: among equals, the spot nearest the cell's own)
+        candidates:
+        for (double[] c : fit) {
+            int cx = (int) c[1], cz = (int) c[3], rot = (int) c[4];
+            for (int[] part : f.terraced ? new int[][] {f.terrace, f.edge, f.built} : new int[][] {f.terrace, f.built})
+                for (int i = 0; i < part.length; i += 2) {
+                    int px = cx + tx(part[i], part[i + 1], rot), pz = cz + tz(part[i], part[i + 1], rot);
+                    if (t.surface(px, pz) > t.floor(px, pz)) continue candidates;   // water over the floor: a lake held above the sea
+                }
+            return new int[] {cx, (int) c[2], cz, rot};
+        }
+        return null;
     }
 
     private static int @Nullable [] flat(Kind k, Terrain t, int x, int z, long h) {

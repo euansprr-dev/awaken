@@ -21915,17 +21915,29 @@ way that makes it never glitchy, similar to vanilla villages... and how far out 
 variation, so you very rarely see two of the same unless you really explore a lot."
 
 **How far out.** A kind's rank is where its tier begins: tiers 1..5 are ranks 0..4, one further out for the down group
-(`Family.rankOf`). A cell never deals a kind whose rank is above the land's, so every band out holds monuments the last
-could not. At the land's rank and one under it a kind has full weight; older ones halve per rank.
+(`Family.rankOf`); they live in the fewest lands, so where they can stand they are drawn more often (weight 16 to 18
+against 10). A cell never deals a kind more than one rank above its land's, and one rank early a kind has three
+tenths of its weight: a foretaste of what the next band out holds, never the band after. At the land's rank and one
+under it a kind has full weight; older ones halve per rank. Within a kilometre of the start a monuments' cell holds
+something at least one time in three (`Sites.deal`), so the land near home is never empty; past that it follows the
+same rich and quiet stretches as everything else (`Sites.richness`).
 
-**Rarely the same twice.** Monuments are dealt like a hand from a shuffled deck, a block of twelve cells by twelve at a
-time (4,608 blocks square; `Sites.deal`). The block's cells that hold something take their turn in the order of their hashes,
-and each draws, by the weights of its own land and rank, from the kinds no cell of the block has drawn yet. So a kind
-stands at most once in a block, and where the land offers fewer kinds than the block has cells, the cells left over stay
-empty: that is the quiet between. A cell passes over the families its touching cells drew while anything else is left
-for it. Across the edge of two blocks, a cell yields to one with first say that drew the same kind within six cells
-(2,304 blocks). So from any point, everything within two kilometres is a different monument. Nothing is ever tried in a failed cell's place, so no kind turns up where its land or its ground did not
-ask for it. Lands by family are in each file's `lands(...)`: every land has at least three families at rank 0.
+**Rarely the same twice.** Monuments are dealt like a hand from a shuffled deck, a block of eight cells by eight at a
+time (3,072 blocks square; `Sites.deal`). The block's cells that hold something take their turn in the order of their
+hashes, and each draws, by the weights of its own land and rank, from the kinds no cell of the block has drawn yet. So a
+kind stands at most once in a block, and where the land offers fewer kinds than the block has cells, the cells left over
+stay empty: that is the quiet between. A cell passes over the families its touching cells drew while anything else is
+left for it. Then each cell that holds a card is dealt a second from what the block still has, for when its first finds
+no ground here or stands too near something: a card, not a fresh deal, so the block still holds each kind once and no
+kind turns up where its land did not ask for it. Across the edge of two blocks, a card yields where a cell with first
+say (the lower hash) within six cells stands the same kind; only cells that hold that very card are asked what they
+built. So from any monument the next of its kind is never nearer than 2,300 blocks, and in a counted world it is
+kilometres further (§62.9). Lands by family are in each file's `lands(...)`: every land has at least three families at
+rank 0.
+
+(The first deal, twelve cells by twelve with one card each and a yield to any cell that had only drawn the kind, was
+counted in a real world on 11 Nov: no twin nearer than 2,589, but nothing within a kilometre of the start, one cell in
+five lost to a twin that never stood and one in five to a structure that could not have been there.)
 
 ### 62.3 Meeting the ground
 
@@ -21933,15 +21945,41 @@ The first count of a real world with the three (10 Nov) stood 12 monuments in 61
 wide found no ground level to a few blocks. A monument no longer asks for level ground; it is placed where it can be
 made to belong, and then the land is made up to it the way it is to a village.
 
-**Choosing the spot** (`Anchors.terrace`, `Sites.monument`). Seventeen points within the kind's `slope` (10 to 18) of
-each other, all dry; then the whole footprint every eighth block, all dry and within four more (a pond, a stream or a
-sudden drop between the seventeen would put a wall in water or a terrace over a cliff); never higher than 110 over the
-sea. 49 spots are tried on a grid 24 apart, all inside the cell's edge. The site's height is the eleventh of the
-seventeen, so it is built up more than it is cut in, and the kind is turned so its front (south) looks down the fall of
-the land. `Anchor.HIGH`: the same, taking the highest spot that fits (masts, orreries). Then: the land it belongs to
-under its middle and at least three of four points half way out; no structure within two chunks, no village within its
-own width and 72, not the city; and no monument with first say within both their widths and 24, so two never share
-ground.
+**Choosing the spot** (`Anchors.terrace`, `Sites.stand`). A monument is tried as the shape it is, not as a disc as wide
+as its reach. Before a spot is looked for, this very monument (its kind, its site's own seed) is built once on level
+land and its ground read off (`Anchors.foot`), on a lattice eight apart: the columns its **terrace** levels; the
+**ring** sixteen round them that the land is eased over; and what else it **builds** on the land's own ground (piers,
+a fallen piece: only what meets the ground, so a deck high over the land does not count and a road may cross a
+stream). So a hall is tried as a box a hundred long and twenty-eight wide, a stair as the small terrace at its foot
+and a line of piers, a road as its piers alone. (Tried as discs, the Sleepers' Hall stood nowhere in a counted world
+and the roads and stairs rarely; and a disc is no truer for the round ones than their own round terrace.)
+
+A cell offers 49 spots on a grid 24 apart, all inside its edge, and at each the monument is tried in all four turns.
+A spot and a turn fit when: every terrace column is dry and they lie within the kind's `slope` (15 to 22) and two of
+each other; the site is no higher than 110 over the sea; the ring is dry and nowhere more than 28 under the floor (40
+for `Anchor.HIGH`, the masts and orreries, which belong on crowns) or 24 over it, because no wall and no eased bank
+makes more than that look meant; and what stands on the land's own ground is dry and neither buried (12 over) nor on
+stilts (40 under). A monument with no terrace is held to its slope across what it builds and to the same ring round
+that, which is not eased and so may hold a river: a road may stand on a bank, never on a crag.
+
+Of all that fit, the best is taken, never the first: the gentlest ground (anything within six from low to high counts
+as gentle, so a monument still finds a fall to look down), half the fall of the ring added, so the lip of a cliff
+loses to calmer land; and a way in that is a walk: the ground twelve past the head of its steps (`G.stairs` tells the
+scene where they are, `Scene.ways`) a little under the floor, three up to ten down, where a climb or a drop costs as
+much as rough ground does. For `Anchor.HIGH` the highest spot, a rough crown counting against it. So the turn is
+chosen with the spot: a hall lies along the contour, and steps never run out over a cliff. The slope a kind allows is
+only what it puts up with where the cell has nothing better. Last, the one taken is looked at for water standing over
+its floor (a lake held above the sea), and the next best tried if there is any. The site's height is six tenths of
+the way up its terrace's columns, so it is built up more than it is cut in. Spots and turns share the lattice, so
+about a thousand columns of the generator's noise answer for all of it (`Terrain.memo`, shared by a cell's two cards).
+
+Then: the land it belongs to under its middle and at least three of four points half way out; no structure within two
+chunks, counted only where one can really start (the set's own start chunk, in a biome one of its structures stands
+in: `Terrain.near`); no village within its own width and 72, not the city; and no monument with first say within 300,
+or within both their widths and 24, so two never share ground or crowd each other.
+
+What a monument plants round itself (`B.wild`) is never in water nor at its edge, and the feature never swaps water
+for something that grows: a monument may stand by a river now, and the river is left whole.
 
 **Making the ground** (`kit/G.platform(shape, top)`). Level inside the footprint. Round it, over `G.SKIRT` (10) blocks,
 the land is eased until it stands no more than `G.WALL` (6) below the floor or `G.CUT` (4) above it: a long gentle
@@ -22038,4 +22076,31 @@ Clock, the Deep Well the Door in the Sand (each was too like another family in s
 The `finds_` tests hold all sixty and the fifteen remains to what they held the three to (every scene stands, nothing
 floats, every walkthrough is finished by a scripted player). The dump writes every monument on a level pad and the
 painted one of each family on a hillside (`Terrain.hill`), and `tools/content/finds_render.py` draws them.
-`tools/content/finds_tour.py` writes a tour for the painted and the whole one of each family.
+`tools/content/finds_tour.py` writes a tour for the painted and the whole one of each family, and four tours
+(`placed-a..d`) that go to twelve monuments where the world put them, three pictures each, to see how they sit.
+
+**The count** (`/awaken finds census`; without a client `tools/content/finds_census.sh`: a dedicated dev server with
+`AWAKEN_FINDS_CENSUS=<rings>` in its environment counts into its log and stops, `FindsEvents.countAndStop`). It asks only
+the generator's noise, so 17 km square is counted in about three minutes. With `AWAKEN_FINDS_REAL` it also writes a fair
+sample of what stands (the four nearest the start, the eight on the roughest ground, the nearest painted one of every
+family) on the generator's own ground with twenty blocks of land round each and the water on it (`FindsDump.real`),
+and the renderer draws them: how monuments meet real land, in minutes, where a look tour waits hours for a runner.
+
+The count of 11 Nov 2026 (seed 4242, 2,025 cells, 17 km square, 42% of it sea):
+
+| | |
+|---|---|
+| Monuments standing | 272, of 49 kinds (544 cells drew a card; 75 stand on their second) |
+| By the land's rank | E 84, D 57, C 82, B 34, A 9, S 6 |
+| From the start | the nearest 264 away; 4 within 1,000; 9 within 2,000 |
+| To the next monument | least 301, middle 472, most 1,567 |
+| To the next of the same kind | least 2,561, middle 4,270 |
+| From any spot (sea included) | half the land within 508 of one, nine tenths within 980 |
+| First cards lost | no ground 106, a twin standing near 104, a structure 48, wrong land 33, too close 29, a village 2 |
+
+That is the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.91 a
+square kilometre over land and sea, about 1.6 over land; `Sites.BASE[2]` 0.85 holds it there). The eleven kinds that
+did not stand in this square are fourth and fifth tiers, which belong to ranks A and S: this square holds only the
+corners of those bands. Before the rules of this section the same square stood 12 (level ground only), then 122 (the
+first spot that fits, one card, blocks of twelve, discs), then 252 (the best spot, two cards, blocks of eight, discs:
+the Sleepers' Hall 0 of 8; by its own footprint 5 of 5).

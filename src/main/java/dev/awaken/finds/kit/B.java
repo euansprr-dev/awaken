@@ -583,6 +583,8 @@ public final class B {
             double a = s.rnd.nextDouble() * Math.PI * 2, d = r0 + s.rnd.nextDouble() * (r1 - r0);
             int x = (int) Math.round(Math.cos(a) * d), z = (int) Math.round(Math.sin(a) * d);
             if (!open(s, x, z, 2)) continue;
+            // never in water, nor at its very edge: a monument may stand by a river now, and what it plants is on the bank
+            if (s.depth(x, z) > 0 || s.depth(x + 2, z) > 0 || s.depth(x - 2, z) > 0 || s.depth(x, z + 2) > 0 || s.depth(x, z - 2) > 0) continue;
             int y = s.g(x, z) + 1, k = s.rnd.nextInt(100);
             switch (land) {
                 case FOREST -> {
@@ -623,7 +625,7 @@ public final class B {
                 double d = Math.sqrt(x * x + z * z);
                 if (d < r0 - 5 || d > r1) continue;
                 int y = s.g(x, z);
-                if (s.taken(x, y, z) || s.taken(x, y + 1, z)) continue;
+                if (s.taken(x, y, z) || s.taken(x, y + 1, z) || s.depth(x, z) > 0) continue;
                 int hh = h(s, x, 41, z);
                 boolean drift = n(s, x + 7, z - 3, 7.0) > 0.62;
                 net.minecraft.world.level.block.Block p = switch (land) {

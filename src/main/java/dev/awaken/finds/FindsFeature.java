@@ -168,6 +168,8 @@ public record FindsFeature() implements Feature {
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
             m.set(x, s.y() + BlockPos.getY(k), z);
             BlockState st = e.getValue();
+            // water is never swapped for something that grows: grass on a stream's bed would leave a hole in the water
+            if (soft(st) && st.getFluidState().isEmpty() && !level.getFluidState(m).isEmpty()) continue;
             level.setBlock(m, st, Block.UPDATE_CLIENTS);
             // fences, walls, panes, bars and stairs take their shape from their neighbours: in a new chunk the game does
             // that when the chunk is finished, on a pad stood by hand it is done here once everything is down

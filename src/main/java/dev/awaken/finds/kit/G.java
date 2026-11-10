@@ -105,6 +105,7 @@ public final class G {
      */
     public static int stairs(Scene s, int x, int z, Direction out, int half, int top) {
         int sx = out.getStepX(), sz = out.getStepZ(), px = -sz, pz = sx;
+        s.ways.add(new int[] {x, z, sx, sz});
         boolean down = s.g(x + sx * 2, z + sz * 2) <= top;
         int k = 0;
         for (; k < 30; k++) {
