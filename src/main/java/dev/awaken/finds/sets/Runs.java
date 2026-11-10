@@ -132,14 +132,22 @@ final class Runs {
                 .reach(12).needsMove().icon(Props.CHALK_MARK)
                 .scene(s -> {
                     Mats m = Mats.of(s.site.group());
+                    // a fin of banded rock, two thick, ragged along the top and stepped down at its ends: never a flat board
+                    BlockState[] band = {Blocks.TERRACOTTA.defaultBlockState(), Blocks.TERRACOTTA.defaultBlockState(),
+                            Blocks.DYED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.ORANGE).defaultBlockState(), Blocks.TERRACOTTA.defaultBlockState(),
+                            Blocks.DYED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.BROWN).defaultBlockState(), Blocks.TERRACOTTA.defaultBlockState(),
+                            Blocks.DYED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.WHITE).defaultBlockState()};
                     for (int x = -10; x <= 10; x++) {
-                        for (int dy = 1; dy <= 5; dy++) {
-                            s.put(x, dy, 2, Blocks.TERRACOTTA.defaultBlockState());
+                        int ax = Math.abs(x), top = ax == 10 ? 4 : 5 + s.rnd.nextInt(3), back = ax >= 9 ? 3 : top - 1 + s.rnd.nextInt(3);
+                        for (int dy = 1; dy <= Math.max(top, back); dy++) {
+                            if (dy <= top) s.put(x, dy, 2, band[(dy - 1) % band.length]);
+                            if (dy <= back) s.put(x, dy, 3, band[(dy - 1) % band.length]);
                             if (dy <= 4) {
                                 s.air(x, dy, 1);
                                 s.air(x, dy, 0);
                             }
                         }
+                        if (ax < 9 && s.rnd.nextInt(4) == 0) s.put(x, back + 1, 3, Blocks.DEAD_BUSH.defaultBlockState());
                     }
                     for (int x = -10; x <= 10; x += 20) {
                         s.put(x, 1, 1, Blocks.TERRACOTTA.defaultBlockState());

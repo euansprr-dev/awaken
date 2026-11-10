@@ -39,7 +39,7 @@ final class FindsTests {
     private static boolean land(BlockState b) {
         return b.is(net.minecraft.tags.BlockTags.DIRT) || b.is(net.minecraft.tags.BlockTags.ICE) || b.is(net.minecraft.tags.BlockTags.SAND)
                 || b.is(Blocks.GRASS_BLOCK) || b.is(Blocks.MUD) || b.is(Blocks.MOSS_BLOCK) || b.is(Blocks.PODZOL)
-                || b.is(Blocks.STONE) || b.is(Blocks.TERRACOTTA) || b.is(Blocks.GRAVEL) || b.is(Blocks.SNOW_BLOCK) || !b.getFluidState().isEmpty();
+                || b.is(Blocks.STONE) || b.is(net.minecraft.tags.BlockTags.TERRACOTTA) || b.is(Blocks.GRAVEL) || b.is(Blocks.SNOW_BLOCK) || !b.getFluidState().isEmpty();
     }
 
     /** Every set has its kinds numbered from 1 with no gaps, every kind has its words, a walkthrough and a loot table name. */
