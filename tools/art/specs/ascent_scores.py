@@ -221,11 +221,9 @@ button:hover{background:#2b3947}small{color:#93a3b3}</style>
 <table id="t"></table>
 <script>
 const ROWS = __ROWS__;
-const ctx = new (window.AudioContext || window.webkitAudioContext)(), cache = {};
-async function buf(src){ if(!cache[src]) cache[src] = fetch(src).then(r=>r.arrayBuffer()).then(b=>ctx.decodeAudioData(b)); return cache[src]; }
-async function play(layers){ await ctx.resume(); const at = ctx.currentTime + 0.05;
-  for (const l of layers){ const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = await buf(l.src); s.playbackRate.value = l.p; g.gain.value = l.v;
-    s.connect(g).connect(ctx.destination); s.start(at + l.t); } }
+// plain audio elements (no fetch), so the page works opened straight from the disk
+function play(layers){ for (const l of layers){ setTimeout(() => { const a = new Audio(l.src); a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false;
+    a.playbackRate = l.p; a.volume = Math.min(1, l.v); a.play(); }, l.t * 1000); } }
 const t = document.getElementById('t');
 for (const r of ROWS){ const tr = t.insertRow();
   tr.insertCell().textContent = r.name;
@@ -239,7 +237,7 @@ for (const r of ROWS){ const tr = t.insertRow();
 """.replace("__ROWS__", json.dumps(rows))
     with open(os.path.join(out_dir, "index.html"), "w") as fh:
         fh.write(page)
-    print("listen:", os.path.join(out_dir, "index.html"), "(serve the folder locally: python3 -m http.server --directory", out_dir + ")")
+    print("listen: open", os.path.join(out_dir, "index.html"))
 
 
 def main(argv):
