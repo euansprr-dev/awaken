@@ -339,6 +339,23 @@ public final class RealmTests {
             if (land.change("heart_open").isEmpty() || land.change("heart_shut").isEmpty()) h.fail("the iron round the Lord's floor doesn't move");
             h.succeed();
         });
+        // the bell's tongue is hung once, as displays, and a toll's first swing gives every one of them somewhere new to go
+        AwakenTests.register("realm_hour_clapper_swings", 200, h -> {
+            net.minecraft.server.level.ServerLevel level = h.getLevel();
+            net.minecraft.core.BlockPos at = h.absolutePos(new net.minecraft.core.BlockPos(1, 6, 1));
+            List<net.minecraft.world.entity.Display.BlockDisplay> parts = RealmClapper.hang(level, at);
+            if (parts.size() != RealmClapper.PARTS) h.fail("the clapper has " + parts.size() + " displays, not " + RealmClapper.PARTS);
+            if (!RealmClapper.hang(level, at).equals(parts)) h.fail("a second waking hung a second clapper");
+            List<String> rest = parts.stream().map(d -> RealmClapper.heading(level, d)).toList();
+            if (RealmClapper.target(0) == 0 || RealmClapper.target(1) != -RealmClapper.target(0) || RealmClapper.target(RealmToll.SHUT / RealmClapper.SWING - 1) != 0 || RealmClapper.target(-1) != 0)
+                h.fail("a toll's swings don't go out, back, and end straight");
+            RealmClapper.swing(level, parts, RealmClapper.target(0), RealmClapper.SWING);
+            for (int i = 0; i < parts.size(); i++) if (RealmClapper.heading(level, parts.get(i)).equals(rest.get(i))) h.fail("display " + i + " of the clapper has nowhere new to swing to");
+            RealmClapper.swing(level, parts, 0, 1);
+            for (int i = 0; i < parts.size(); i++) if (!RealmClapper.heading(level, parts.get(i)).equals(rest.get(i))) h.fail("display " + i + " of the clapper doesn't hang straight again");
+            parts.forEach(net.minecraft.world.entity.Entity::discard);
+            h.succeed();
+        });
         AwakenTests.register("realm_amber_all_reachable", 800, h -> {
             for (long seed : new long[]{1, 2}) {
                 Land land = amber(seed);

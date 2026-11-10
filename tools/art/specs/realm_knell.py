@@ -4,6 +4,7 @@ as its own cut stone, rust down the joints, a green bronze bell, candle gold and
     python3 tools/art/build_all.py realm_knell        textures
     python3 tools/art/specs/realm_knell.py content    blockstates, models, item definitions, loot, lang, tags
     python3 tools/art/specs/realm_knell.py sheet PATH every texture at 6x, named
+    python3 tools/art/specs/realm_knell.py java       the carved blocks' boxes, as ThemeBlocks.DEFS wants them
 
 Drawn by code, nothing copied. Same table as the Knell part of ThemeBlocks.DEFS and DepthBlocks.DEFS. The ramps keep Amber's names so its
 worked-stone drawing can be reused; the stone itself is drawn here, because the look is different.
@@ -79,6 +80,24 @@ BLOCKS = {
 CUTS = [("knell_stone", "Knell Stone", "pickaxe"), ("knell_stone_pale", "Dressed Knell Stone", "pickaxe"), ("knell_flagstone", "Wet Flagstone", "pickaxe"),
         ("knell_brick", "Niche Brick", "pickaxe"), ("knell_plaster", "Bone Wash", "pickaxe"), ("knell_tile", "Grave Slate", "pickaxe"),
         ("knell_tile_deep", "Verdigris Slate", "pickaxe"), ("knell_planks", "Black Oak Board", "axe")]
+
+# Knell's carved blocks (SPEC 50.8): name -> (English, tool, base texture, turn, boxes). Drawn facing north or
+# running north to south; the same boxes as the carved Defs in ThemeBlocks.DEFS (`realm_knell.py java` prints them for pasting).
+CARVED = {
+    # one top corner of an opening; it faces the opening. A quarter curve of radius 16 in 2-px steps, so two facing each other arch a gap
+    "knell_arch": ("Knell Arch Stone", "pickaxe", "knell_stone_pale", "facing",
+                   [(0, 6, 14, 16, 16, 16), (0, 10, 12, 16, 16, 14), (0, 12, 10, 16, 16, 12), (0, 14, 6, 16, 16, 10)]),
+    # a pier's face: three grooves 2 px wide and 2 px deep down the face it turns to the room
+    "knell_flute": ("Fluted Knell Stone", "pickaxe", "knell_stone_pale", "facing",
+                    [(0, 0, 2, 16, 16, 16), (0, 0, 0, 2, 16, 2), (4, 0, 0, 7, 16, 2), (9, 0, 0, 12, 16, 2), (14, 0, 0, 16, 16, 2)]),
+    # a vault rib hung from the top face: 6 px wide and 6 px deep, its lower corners stepped in 2 px
+    "knell_rib": ("Knell Vault Rib", "pickaxe", "knell_stone_pale", "axis", [(5, 12, 0, 11, 16, 16), (7, 10, 0, 9, 12, 16)]),
+    # a bracket under a ledge, 10 px wide: three steps out from the wall behind it, each 4 px deeper and 4 px higher
+    "knell_corbel": ("Knell Corbel", "pickaxe", "knell_stone", "facing", [(3, 12, 4, 13, 16, 16), (3, 8, 8, 13, 12, 16), (3, 4, 12, 13, 8, 16)]),
+    # one link of a great chain, hung from the top face: a ring 12 px tall, 8 px wide, 4 px thick, its bar 2 px
+    "knell_link": ("Great Chain Link", "pickaxe", "knell_iron", "axis",
+                   [(6, 14, 4, 10, 16, 12), (6, 4, 4, 10, 6, 12), (6, 6, 4, 10, 14, 6), (6, 6, 10, 10, 14, 12)]),
+}
 
 B = K.B
 
@@ -301,11 +320,14 @@ def content():
         vals = [f"awaken:{b}{kind}" for b, _, _ in CUTS]
         K.merge(os.path.join(K.MERGE, f"gates/data/minecraft/tags/block/{tag}.json"), {"values": vals})
         K.merge(os.path.join(K.MERGE, f"gates/data/minecraft/tags/item/{tag}.json"), {"values": vals})
+    K.carved("realm_knell_shapes", CARVED, folder="gates_knell_shapes")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "content":
         content()
+    elif len(sys.argv) > 1 and sys.argv[1] == "java":
+        K.carved_java(CARVED)
     elif len(sys.argv) > 1 and sys.argv[1] == "sheet":
         K.sheet(textures(), sys.argv[2] if len(sys.argv) > 2 else "/tmp/realm_knell.png")
     else:
