@@ -63,6 +63,13 @@ public final class Trial {
         return this;
     }
 
+    /** Puts a block at a part, as a player placing it would. */
+    public Trial set(String part, int i, net.minecraft.world.level.block.state.BlockState state) {
+        Ctx c = c();
+        c.level.setBlock(c.pos(part, i), state, Block.UPDATE_ALL);
+        return this;
+    }
+
     /** Stands the player at a part. */
     public Trial stand(String part, int i) {
         BlockPos p = c().pos(part, i);

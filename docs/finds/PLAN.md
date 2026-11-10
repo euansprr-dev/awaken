@@ -112,7 +112,7 @@ Nothing floats, every part is reachable, it can always be finished or restarted,
 2. [x] Kit: 54 props + generator, Mats, Dress.
 3. [x] Verb scripts (sixteen classes).
 4. [~] First eighteen kinds written (number 1 of each set), gallery command, tests written; not yet green.
-5. [ ] The other 126.
+5. [~] The other 126. Sets written in full so far: Cairns, The Stilled at Rest, Lamplighter's Road. The other fifteen have their number 1 only.
 6. [ ] Journal, Spotting, Atlas, leads, Promises.
 7. [ ] Full test run on CI, gallery tour, fix pass.
 8. [ ] SPEC §58, module doc, hand-over note.

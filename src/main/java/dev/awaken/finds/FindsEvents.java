@@ -35,6 +35,7 @@ final class FindsEvents {
         bus.addListener(FindsEvents::onPlace);
         bus.addListener(FindsEvents::onShot);
         bus.addListener(FindsEvents::onPlayerTick);
+        bus.addListener(FindsEvents::onSpawnCheck);
         bus.addListener(ServerStoppedEvent.class, e -> {
             Sites.reset();
             Hearts.reset();
@@ -125,6 +126,22 @@ final class FindsEvents {
         Scene.PartRef ref = c.scene.partAt(c.site.rel(hit.getBlockPos()));
         if (ref == null) return;
         s.shot(c, proj.getOwner() instanceof ServerPlayer sp ? sp : null, ref.name(), ref.index());
+    }
+
+    /** A find that wards its ground once it's finished (a road made safe) keeps hostile spawns off it. */
+    private static void onSpawnCheck(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck e) {
+        if (e.getEntityType().getCategory() != net.minecraft.world.entity.MobCategory.MONSTER) return;
+        ServerLevel level = e.getLevel().getLevel();
+        BlockPos p = e.getPos();
+        for (FindHeartBlockEntity be : Hearts.all(level)) {
+            Site s = be.site();
+            if (s == null || s.kind().ward() <= 0 || !be.done()) continue;
+            int r = s.kind().ward();
+            if (Math.abs(p.getX() - s.x()) <= r && Math.abs(p.getZ() - s.z()) <= r) {
+                e.setResult(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.Result.FAIL);
+                return;
+            }
+        }
     }
 
     /** Something heavy in the hand slows you: a stone sheep is not carried at a run. */
