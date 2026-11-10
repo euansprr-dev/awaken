@@ -19,7 +19,8 @@ import _gw_kit as K  # noqa: E402
 import gate_depth as D  # noqa: E402
 import realm_amber as A  # noqa: E402
 
-RAMPS = {
+# As the painting has them. Never drawn as they are: see RAMPS below.
+PAINTED = {
     "astone": ["#12141b", "#1b1e27", "#262a35", "#323744", "#414755", "#535b6b"],
     "aworn": ["#17130f", "#241e18", "#352b21", "#483a2b", "#5e4b36", "#755c43"],
     "adeep": ["#090a0e", "#101218", "#171a22", "#1f232c", "#282d37", "#323843"],
@@ -41,6 +42,14 @@ RAMPS = {
     "iron": ["#0b0c0f", "#131519", "#1c1f25", "#272b32", "#343941", "#454b54"],
     "rust": ["#2a140a", "#41200f", "#5a2e15", "#74401d", "#8f5427", "#a96a34"],
 }
+
+# The game shows texture x light, so stone painted as dark as the painting's shadows stays black under any lamp (SPEC 50.8). The
+# family is lifted by one exponent on brightness, hue kept, until tools/art/tone_check.py puts its median at 100; MORE lifts the
+# structural ramps that were still under 62. Windows and gilt already glow and stay as painted. The dark comes from the light now.
+TONE = 0.59
+MORE = {"adeep": 0.96, "atimb": 0.96}
+LEAVE = ("agilt", "honey")
+RAMPS = K.lift(PAINTED, TONE, leave=LEAVE, more=MORE)
 
 BLOCKS = {
     "knell_stone": ("Knell Stone", "pickaxe"),

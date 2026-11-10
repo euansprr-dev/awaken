@@ -167,7 +167,10 @@ public final class Preview {
         static final class Chunk {
             final int y0, y1;
             final short[] b;
+            /** Light is only stored where there is some: block light near a lamp, sky light under a roof. */
             byte[] block, sky;
+            /** Per column, the lowest cell the sky reaches straight down; everything from there up is sky light 15. */
+            short[] open;
 
             Chunk(int y0, int y1, short[] b) {
                 this.y0 = y0;
@@ -234,63 +237,98 @@ public final class Preview {
         int light(int x, int y, int z, boolean skyLight) {
             Chunk c = chunk(x >> 4, z >> 4);
             if (c == null || y < c.y0 || y > c.y1) return skyLight ? 15 : 0;
+            int col = (x & 15) << 4 | z & 15;
+            if (skyLight && c.open != null && y >= c.open[col]) return 15;
             byte[] l = skyLight ? c.sky : c.block;
-            return l == null ? 0 : l[((x & 15) << 4 | z & 15) * (c.y1 - c.y0 + 1) + y - c.y0];
+            return l == null ? 0 : l[col * (c.y1 - c.y0 + 1) + y - c.y0];
         }
 
-        /** Spreads a land's light through its air, block by block, for a land under a roof. */
+        /**
+         * Spreads a land's light through its air, block by block: out from every lamp, then down every open column and in
+         * under every roof. Only the cells at the edge of a shadow start the sky's spread, as in the game, so an open
+         * land a kilometre wide costs no more than its roofs.
+         */
         void flood(boolean[] opaque, int[] emit) {
             long[] q = new long[1 << 22];
-            int head = 0, tail = 0;
-            for (int skyPass = 0; skyPass < 2; skyPass++) {
-                boolean skyLight = skyPass == 1;
-                head = tail = 0;
-                for (int j = 0; j < n; j++) for (int i = 0; i < n; i++) {
-                    Chunk c = chunks[j * n + i];
-                    if (c == null) continue;
-                    int h = c.y1 - c.y0 + 1;
-                    byte[] l = new byte[256 * h];
-                    if (skyLight) c.sky = l;
-                    else c.block = l;
-                    int cx = i - half, cz = j - half;
-                    for (int col = 0; col < 256; col++) {
-                        int x = cx * 16 + (col >> 4), z = cz * 16 + (col & 15);
-                        if (skyLight) {
-                            for (int y = c.y1; y >= c.y0; y--) {
-                                int id = c.b[col * h + y - c.y0] & 0xFFFF;
-                                if (id != 0 && opaque[id]) break;
-                                l[col * h + y - c.y0] = 15;
-                                if (tail < q.length) q[tail++] = pack(x, y, z);
-                            }
-                        } else for (int y = c.y0; y <= c.y1; y++) {
-                            int id = c.b[col * h + y - c.y0] & 0xFFFF;
-                            if (id != 0 && emit[id] > 0) {
-                                l[col * h + y - c.y0] = (byte) emit[id];
-                                if (tail < q.length) q[tail++] = pack(x, y, z);
-                            }
-                        }
+            int tail = 0;
+            for (int j = 0; j < n; j++) for (int i = 0; i < n; i++) {
+                Chunk c = chunks[j * n + i];
+                if (c == null) continue;
+                int h = c.y1 - c.y0 + 1, cx = i - half, cz = j - half;
+                c.open = new short[256];
+                for (int col = 0; col < 256; col++) {
+                    int open = c.y1 + 1;
+                    for (int y = c.y1; y >= c.y0; y--) {
+                        int id = c.b[col * h + y - c.y0] & 0xFFFF;
+                        if (id != 0 && opaque[id]) break;
+                        open = y;
+                    }
+                    c.open[col] = (short) open;
+                    for (int y = c.y0; y <= c.y1; y++) {
+                        int id = c.b[col * h + y - c.y0] & 0xFFFF;
+                        if (id == 0 || emit[id] <= 0) continue;
+                        if (c.block == null) c.block = new byte[256 * h];
+                        c.block[col * h + y - c.y0] = (byte) emit[id];
+                        if (tail < q.length - 1) q[tail++] = pack(cx * 16 + (col >> 4), y, cz * 16 + (col & 15));
                     }
                 }
-                int[][] dirs = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-                while (head != tail) {
-                    long p = q[head];
-                    head = (head + 1) % q.length;
-                    int x = (int) (p >> 42) - (1 << 20), y = (int) (p >> 21 & 0x1FFFFF) - (1 << 20), z = (int) (p & 0x1FFFFF) - (1 << 20);
-                    int level = light(x, y, z, skyLight);
-                    if (level <= 1) continue;
-                    for (int[] d : dirs) {
-                        int ax = x + d[0], ay = y + d[1], az = z + d[2];
-                        Chunk c = chunk(ax >> 4, az >> 4);
-                        if (c == null || ay < c.y0 || ay > c.y1) continue;
-                        int k = ((ax & 15) << 4 | az & 15) * (c.y1 - c.y0 + 1) + ay - c.y0, id = c.b[k] & 0xFFFF;
-                        byte[] l = skyLight ? c.sky : c.block;
-                        if (id != 0 && opaque[id] || l[k] >= level - 1) continue;
-                        l[k] = (byte) (level - 1);
-                        int next = (tail + 1) % q.length;
-                        if (next != head) {
-                            q[tail] = pack(ax, ay, az);
-                            tail = next;
-                        }
+            }
+            spread(q, tail, opaque, false);
+            tail = 0;
+            for (int j = 0; j < n; j++) for (int i = 0; i < n; i++) {
+                Chunk c = chunks[j * n + i];
+                if (c == null) continue;
+                int h = c.y1 - c.y0 + 1, cx = i - half, cz = j - half;
+                for (int col = 0; col < 256; col++) {
+                    int x = cx * 16 + (col >> 4), z = cz * 16 + (col & 15);
+                    // a shadowed cell beside a column the sky reaches lower down takes 14 from it
+                    int from = Math.min(Math.min(openAt(x - 1, z), openAt(x + 1, z)), Math.min(openAt(x, z - 1), openAt(x, z + 1)));
+                    for (int y = Math.max(from, c.y0); y < c.open[col]; y++) {
+                        int id = c.b[col * h + y - c.y0] & 0xFFFF;
+                        if (id != 0 && opaque[id]) continue;
+                        if (y < openAt(x - 1, z) && y < openAt(x + 1, z) && y < openAt(x, z - 1) && y < openAt(x, z + 1)) continue;
+                        if (c.sky == null) c.sky = new byte[256 * h];
+                        c.sky[col * h + y - c.y0] = 14;
+                        if (tail < q.length - 1) q[tail++] = pack(x, y, z);
+                    }
+                }
+            }
+            spread(q, tail, opaque, true);
+        }
+
+        /** The lowest cell of a column the sky reaches; a column nobody kept is treated as never lit. */
+        private int openAt(int x, int z) {
+            Chunk c = chunk(x >> 4, z >> 4);
+            return c == null ? Integer.MAX_VALUE : c.open[(x & 15) << 4 | z & 15];
+        }
+
+        private void spread(long[] q, int tail, boolean[] opaque, boolean skyLight) {
+            int[][] dirs = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+            int head = 0;
+            while (head != tail) {
+                long p = q[head];
+                head = (head + 1) % q.length;
+                int x = (int) (p >> 42) - (1 << 20), y = (int) (p >> 21 & 0x1FFFFF) - (1 << 20), z = (int) (p & 0x1FFFFF) - (1 << 20);
+                int level = light(x, y, z, skyLight);
+                if (level <= 1) continue;
+                for (int[] d : dirs) {
+                    int ax = x + d[0], ay = y + d[1], az = z + d[2];
+                    Chunk c = chunk(ax >> 4, az >> 4);
+                    if (c == null || ay < c.y0 || ay > c.y1) continue;
+                    int col = (ax & 15) << 4 | az & 15, h = c.y1 - c.y0 + 1, k = col * h + ay - c.y0, id = c.b[k] & 0xFFFF;
+                    if (id != 0 && opaque[id] || skyLight && ay >= c.open[col]) continue;
+                    byte[] l = skyLight ? c.sky : c.block;
+                    if (l == null) {
+                        l = new byte[256 * h];
+                        if (skyLight) c.sky = l;
+                        else c.block = l;
+                    }
+                    if (l[k] >= level - 1) continue;
+                    l[k] = (byte) (level - 1);
+                    int next = (tail + 1) % q.length;
+                    if (next != head) {
+                        q[tail] = pack(ax, ay, az);
+                        tail = next;
                     }
                 }
             }
@@ -309,6 +347,8 @@ public final class Preview {
 
     /** Thresholds the first two gates set: see docs/gates-as-worlds/BAR.md. */
     private static final int FLAT_WALL = 25, MIN_RELIEF = 40, MIN_SHAPED = 4, MIN_BRIGHT_CONTRAST = 115;
+    /** A view too dark to play in: its median brightness under this, or more than this share of it nearly black. */
+    private static final int BLACK_LUM = 25, BLACK_DARK = 60;
     private static final java.util.regex.Pattern SHAPED = java.util.regex.Pattern.compile("_stairs|_slab|_wall$|_fence|_bars|chain|lantern|candle|_trapdoor|_door|_vines|fern|grass|_carpet|_drift|_crumbs|bones|_petals|_rope|_lily|_drip|_flower|_rail|_comb_|_shelf|reed|_cap");
 
     private static final class Hit {
@@ -328,6 +368,8 @@ public final class Preview {
         final int[] sky, fog;
         final double fogStart, fogEnd;
         final boolean indoors;
+        /** The game's light for every block and sky level, {@code block * 16 + sky}. */
+        final float[][] light;
 
         Camera(Land land, Blueprint bp, Volume vol, Path root, Path out) throws IOException {
             this.land = land;
@@ -346,15 +388,18 @@ public final class Preview {
             table = new Looks.Look[65536];
             for (int i = 0; i < vol.states.size(); i++) table[i + 1] = looks.of(vol.states.get(i));
             indoors = land.indoors();
-            if (indoors) {
-                boolean[] opaque = new boolean[65536];
-                int[] emit = new int[65536];
-                for (int i = 0; i < vol.states.size(); i++) {
-                    opaque[i + 1] = table[i + 1] != null && table[i + 1].solid;
-                    emit[i + 1] = vol.states.get(i).getLightEmission();
-                }
-                vol.flood(opaque, emit);
+            Path dim = root.resolve("src/main/resources/data/awaken/dimension_type/realms.json");
+            JsonObject realms = Files.exists(dim) ? JsonParser.parseString(Files.readString(dim)).getAsJsonObject().getAsJsonObject("attributes") : null;
+            light = TrueLight.table(TrueLight.env(at, realms));
+            boolean[] opaque = new boolean[65536];
+            int[] emit = new int[65536];
+            for (int i = 0; i < vol.states.size(); i++) {
+                opaque[i + 1] = table[i + 1] != null && table[i + 1].solid;
+                emit[i + 1] = vol.states.get(i).getLightEmission();
             }
+            long t0 = System.currentTimeMillis();
+            vol.flood(opaque, emit);
+            System.out.println("[preview] light spread in " + (System.currentTimeMillis() - t0) + " ms");
             String size = System.getenv("AWAKEN_PREVIEW_W");
             w = size == null || size.isBlank() ? 960 : Integer.parseInt(size);
             h = w * 9 / 16;
@@ -439,7 +484,8 @@ public final class Preview {
             if (depth[1] > FLAT_WALL) flags.append(" FLAT");
             if (depth[0] < MIN_RELIEF || shapedPct < MIN_SHAPED) flags.append(" PLAIN");
             if (depth[3] > 60 && depth[2] < MIN_BRIGHT_CONTRAST) flags.append(" WASHED");
-            flags.insert(0, String.format(Locale.ROOT, "  relief %d wall %d shaped %d contrast %d", depth[0], depth[1], shapedPct, depth[2]));
+            if (depth[3] < BLACK_LUM || depth[4] > BLACK_DARK) flags.append(" BLACK");
+            flags.insert(0, String.format(Locale.ROOT, "  relief %d wall %d shaped %d contrast %d  lum %d dark %d bright %d", depth[0], depth[1], shapedPct, depth[2], depth[3], depth[4], depth[5]));
             return String.format(Locale.ROOT, "%-26s near<5 %2d%%  sky %2d%%  top %s %d%%  vanilla %d%%%s", s.name, near[0] * 100 / total, skyN[0] * 100 / total, topId, top * 100 / hitN, vanilla * 100 / hitN, flags);
         }
 
@@ -453,6 +499,7 @@ public final class Preview {
          * How much the view actually steps in and out. relief: of every hundred neighbouring pixels, how many cross from one
          * plane to another. wall: the share of the view on the single biggest upright plane. contrast: the spread of brightness
          * across what isn't sky. A view of big flat walls in even light scores low on the first and third and high on the second.
+         * Then the light itself, over the same pixels: their median brightness (0 to 255), and the share under 20 and over 200.
          */
         private static int[] depth(int[] plane, int[] px, int w, int h) {
             long pairs = 0, steps = 0;
@@ -476,17 +523,19 @@ public final class Preview {
                     if (plane[(j + 1) * w + i] != a) steps++;
                 }
             }
-            if (hits == 0) return new int[]{100, 0, 255, 0};
+            if (hits == 0) return new int[]{100, 0, 255, 0, 0, 0};
             int big = 0;
             for (int n : upright.values()) big = Math.max(big, n);
-            int lo = -1, hi = 0, run = 0, median = -1;
+            int lo = -1, hi = 0, run = 0, median = -1, dark = 0, bright = 0;
             for (int l = 0; l < 256; l++) {
                 run += hist[l];
+                if (l < 20) dark += hist[l];
+                if (l > 200) bright += hist[l];
                 if (lo < 0 && run * 100L >= hits * 5L) lo = l;
                 if (median < 0 && run * 2L >= hits) median = l;
                 if (run * 100L <= hits * 95L) hi = l;
             }
-            return new int[]{(int) (steps * 1000 / Math.max(1, pairs)), big * 100 / hits, hi - lo, median};
+            return new int[]{(int) (steps * 1000 / Math.max(1, pairs)), big * 100 / hits, hi - lo, median, (int) (dark * 100L / hits), (int) (bright * 100L / hits)};
         }
 
         private int skyAt(double dy) {
@@ -506,39 +555,33 @@ public final class Preview {
             g += (tx.g - g) * m;
             b += (tx.b - b) * m;
 
-            double light;
-            if (tx.glow != null && tx.glow[p] || h.look.lamp) light = 1.15;
-            else {
-                double ao = h.face == 6 ? 1 : ao(h);
-                int[] n = h.face == 6 ? N[1] : N[h.face];
-                boolean lit = !trace(h.x + n[0] * 0.02, h.y + n[1] * 0.02, h.z + n[2] * 0.02, SUN[0], SUN[1], SUN[2], 110, scratch, true);
-                light = FACE[h.face] * (0.62 + (lit ? 0.38 : 0)) * (0.55 + 0.45 * ao);
-            }
             double haze = 0.8 * smooth(fogStart, fogEnd, h.t);
-            if (indoors && !(tx.glow != null && tx.glow[p] || h.look.lamp)) {
-                // candlelight is warm and skylight cool; what's left is the dark the game leaves you with
+            if (tx.glow != null && tx.glow[p] || h.look.lamp) {
+                r *= 1.15;
+                g *= 1.15;
+                b *= 1.15;
+            } else {
+                // what the game shows: texture x its lightmap x the face's shade, with the corners softened
                 int[] n = h.face == 6 ? N[1] : N[h.face];
                 int bx = h.ix + n[0], by = h.iy + n[1], bz = h.iz + n[2];
+                int block = vol.light(bx, by, bz, false), sky = vol.light(bx, by, bz, true);
+                if (!h.look.solid) {
+                    // a slab, a fence or a plant sits in its own lit cell
+                    block = Math.max(block, vol.light(h.ix, h.iy, h.iz, false));
+                    sky = Math.max(sky, vol.light(h.ix, h.iy, h.iz, true));
+                }
+                float[] l = light[block * 16 + sky];
                 double ao = h.face == 6 ? 1 : ao(h), f = FACE[h.face] * (0.55 + 0.45 * ao);
-                double candle = curve(vol.light(bx, by, bz, false)), moon = curve(vol.light(bx, by, bz, true));
-                double amb = 0.10;
-                r *= 1.3 * f * (amb + candle * 1.05 + moon * 0.2);
-                g *= 1.3 * f * (amb + candle * 0.74 + moon * 0.29);
-                b *= 1.3 * f * (amb * 1.3 + candle * 0.46 + moon * 0.52);
-                light = 1;
+                // the sun's own shadow isn't in the game's lightmap: kept out of doors, under open sky, to read a build by
+                if (!indoors && sky == 15 && trace(h.x + n[0] * 0.02, h.y + n[1] * 0.02, h.z + n[2] * 0.02, SUN[0], SUN[1], SUN[2], 110, scratch, true)) f *= 0.62;
+                r *= f * l[0];
+                g *= f * l[1];
+                b *= f * l[2];
             }
-            r = r * light;
-            g = g * light;
-            b = b * light;
             r += (fog[0] - r) * haze;
             g += (fog[1] - g) * haze;
             b += (fog[2] - b) * haze;
             return clamp(r) << 16 | clamp(g) << 8 | clamp(b);
-        }
-
-        /** The game's own way of turning a light level into brightness, more or less. */
-        private static double curve(int level) {
-            return level <= 0 ? 0 : Math.pow(0.8, 15 - level);
         }
 
         private static int clamp(double v) {
