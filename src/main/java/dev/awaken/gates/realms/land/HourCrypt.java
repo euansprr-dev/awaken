@@ -41,7 +41,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
      */
     public static final int CLAPPER_X = 0, CLAPPER_Y = F + 16, CLAPPER_Z = 0, CLAPPER_DROP = 44, CLAPPER_YOKE = 56;
     private static final BlockState PIT_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 13);
-    private static final BlockState POOL_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12);
+    private static final BlockState POOL_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 15);
 
     public static final class M extends Mats {
         final BlockState bronze = b("knell_bronze"), bronzeDark = b("knell_bronze_dark"), patina = b("knell_patina"), key = b("knell_bronze_key"), iron = b("knell_iron"),
@@ -364,9 +364,14 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
 
     // ---- what every wall is made of ----------------------------------------------------------------------------------------
 
+    /**
+     * A wall's stone is laid in courses, not scattered: one stone runs three cells along its course (two to four where a wall turns or curves), and
+     * every course starts its runs somewhere else, so the joints never line up. Mostly the plain stone, with worn, deep and dressed stones among it.
+     */
     static BlockState course(M m, int x, int y, int z) {
-        double n = rnd(x * 31 + z, y, 77);
-        return n < 0.46 ? m.stoneA : n < 0.72 ? m.worn : n < 0.9 ? m.deep : m.pale;
+        int off = (int) (rnd(y, 0, 78) * 3);
+        double n = rnd(Math.floorDiv(x + off, 3) * 31 + Math.floorDiv(z + off, 3), y, 77);
+        return n < 0.62 ? m.stoneA : n < 0.82 ? m.worn : n < 0.94 ? m.deep : m.pale;
     }
 
     /**
@@ -389,8 +394,9 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
             if (stepped && tier < tiers - 1 && pierSide && hh == TIER - 1) v.set(x, y, z, m.facing(m.corbel, out));
             else if (pierSide && rnd(bay + uu * 7, h, wall + 3) < 0.16) v.set(x, y, z, m.worn);
             else if (lit && hh == 0 && !pierSide && rnd(x, y * 3 + z, wall + 4) < 0.45) v.set(x, y, z, m.candles(rnd(x, z, wall + 5) < 0.5 ? 4 : 5));
-            // candles light a few blocks: one unseen light out from the middle of a lit bay's wall carries its pool into the room
-            else if (lit && tier == tiers / 2 && hh == 3 && uu == 2) v.set(x, y, z, POOL_GLOW);
+            // candles light a few blocks: two unseen lights a cell out from a lit bay carry its pool into the room, one at the foot of the wall
+            // and one at its middle tier. (The nave's floor climbs its wall, so it sets its own foot light: see Nave.column.)
+            else if (lit && uu == 2 && (tier == 0 && hh == 2 || tier == tiers / 2 && hh == 3)) v.set(x, y, z, POOL_GLOW);
             return;
         }
         int kind = (int) (rnd(bay, tier, wall) * 16);
@@ -525,7 +531,10 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                     else if (d <= 2) v.set(x, y, z, band == 0 || band == 6 ? m.pale : y % 12 == 0 ? m.band : d == 0 ? m.facing(m.flute, x > 0 ? Direction.WEST : Direction.EAST) : course(m, x, y, z));
                 } else {
                     if (d == -1) v.set(x, y, z, null);
-                    niche(v, m, 11, x, y, z, side >= head ? z : x, h, d, side >= head ? (x > 0 ? Direction.WEST : Direction.EAST) : Direction.SOUTH, side >= head ? Direction.SOUTH : Direction.EAST, TIERS, true);
+                    int u = side >= head ? z : x;
+                    niche(v, m, 11, x, y, z, u, h, d, side >= head ? (x > 0 ? Direction.WEST : Direction.EAST) : Direction.SOUTH, side >= head ? Direction.SOUTH : Direction.EAST, TIERS, true);
+                    // the foot of this wall is wherever the terraces have climbed to: a lit bay's low light stands two above them
+                    if (d == -1 && y == fl + 2 && Math.floorMod(Math.floorDiv(u, BAY), 3) == 0 && Math.floorMod(u, BAY) == 2 && v.get(x, y, z) == null) v.set(x, y, z, POOL_GLOW);
                 }
             }
             if (a < NAVE + 1 && z > HEAD_Z) dress(v, m, x, z, fl, stairs);
