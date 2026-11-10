@@ -140,8 +140,10 @@ public final class Hazards {
         }
         if (h.erupt == 2) {
             // the spike: a column of its matter thrown up out of the floor, gone as fast as it came
-            Abilities.shed(level, h.owner, h.pos.add(0, 0.55, 0), 14, 0.14, 0.5, 0.14, 0.09);
-            Abilities.shed(level, h.owner, h.pos.add(0, 0.1, 0), 5, 0.3, 0.04, 0.3, 0.05);
+            // (thick enough to read from across a room: on film a thinner one was lost at eight blocks)
+            Abilities.shed(level, h.owner, h.pos.add(0, 0.7, 0), 24, 0.16, 0.65, 0.16, 0.1);
+            Abilities.shed(level, h.owner, h.pos.add(0, 0.1, 0), 6, 0.32, 0.04, 0.32, 0.05);
+            level.sendParticles(h.bolt.trail(), h.pos.x, h.pos.y + 0.6, h.pos.z, 8, 0.14, 0.55, 0.14, 0.04);
             if (h.owner != null) {
                 net.minecraft.sounds.SoundEvent s = dev.awaken.mobs.MobSounds.monster(h.owner.def().id, "blow");
                 if (s != null) level.playSound(null, h.pos.x, h.pos.y, h.pos.z, s, h.owner.getSoundSource(), 0.3F, 1.25F + level.getRandom().nextFloat() * 0.2F);

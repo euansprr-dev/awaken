@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # toll_ghoul (The Toller)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.7 200.31 2.6 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec toll_ghoul_death 50 2
 wait 54
 # crypt_archer (The Mourner)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.5 200.62 4.5 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec crypt_archer_death 50 2
 wait 54
 # bell_wisp (The Chime)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.3 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -118,12 +112,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec bell_wisp_death 50 2
 wait 54
 # crypt_keeper (The Pallbearer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.4 200.59 2.6 -90 4
 look -90 4
 wait 6
@@ -145,12 +137,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec crypt_keeper_death 50 2
 wait 54
 # the_sexton (The Sexton)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.2 200.87 2.6 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_sexton_death 50 2
 wait 54
 # drone_bee (The Stinger)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.9 201.58 2.6 -90 -6
 look -90 -6
 wait 6
@@ -199,12 +187,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec drone_bee_death 50 2
 wait 54
 # hive_larva (The Grub)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.3 199.63 2.6 -90 4
 look -90 4
 wait 6
@@ -223,12 +209,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hive_larva_death 50 2
 wait 54
 # honey_slime (The Honeypot)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.7 199.88 2.6 -90 4
 look -90 4
 wait 6
@@ -246,8 +230,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec honey_slime_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

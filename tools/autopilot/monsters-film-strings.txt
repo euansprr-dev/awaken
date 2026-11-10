@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # thorn_hound (The Bramble Hound)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 200.04 2.6 -90 4
 look -90 4
 wait 6
@@ -70,12 +68,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec thorn_hound_death 50 2
 wait 54
 # cog_hound (The Cog Hound)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 200.04 2.6 -90 4
 look -90 4
 wait 6
@@ -94,12 +90,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec cog_hound_death 50 2
 wait 54
 # masked_duelist (The Fan Dancer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.1 200.48 2.6 -90 4
 look -90 4
 wait 6
@@ -121,12 +115,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec masked_duelist_death 50 2
 wait 54
 # glass_duelist (The Glass Duelist)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.1 200.48 2.6 -90 4
 look -90 4
 wait 6
@@ -148,12 +140,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec glass_duelist_death 50 2
 wait 54
 # drowned_scribe (The Scribe)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.9 200.42 4.5 -90 4
 look -90 4
 wait 6
@@ -178,12 +168,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec drowned_scribe_death 50 2
 wait 54
 # incense_priest (The Censer)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -7.7 200.31 4.5 -90 4
 look -90 4
 wait 6
@@ -208,12 +196,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec incense_priest_death 50 2
 wait 54
 # the_overgrowth (The Overgrowth)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -6.8 201.09 2.6 -90 4
 look -90 4
 wait 6
@@ -238,12 +224,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_overgrowth_death 50 2
 wait 54
 # the_regulator (The Regulator)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.9 200.42 2.6 -90 4
 look -90 4
 wait 6
@@ -267,8 +251,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_regulator_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info
