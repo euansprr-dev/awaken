@@ -22,113 +22,115 @@ public final class Props {
     private static final List<String> IDS = new ArrayList<>();
 
     /** Flat Stones. */
-    public static final DeferredBlock<PropBlock> FLAT_STONES = prop("flat_stones", 2.0F, 0.0F, 2.0F, 14.0F, 15.0F, 14.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> FLAT_STONES = prop("find_flat_stones", 2.0F, 0.0F, 2.0F, 14.0F, 15.0F, 14.0F, true, 9, 0);
     /** Cairn. */
-    public static final DeferredBlock<PropBlock> CAIRN = prop("cairn", 1.0F, 0.0F, 1.0F, 15.0F, 16.0F, 15.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> CAIRN = prop("find_cairn", 1.0F, 0.0F, 1.0F, 15.0F, 16.0F, 15.0F, true, 9, 0);
     /** Standing Stone. */
-    public static final DeferredBlock<PropBlock> STANDING_STONE = prop("standing_stone", 4.0F, 0.0F, 5.0F, 12.0F, 16.0F, 11.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STANDING_STONE = prop("find_standing_stone", 4.0F, 0.0F, 5.0F, 12.0F, 16.0F, 11.0F, true, 9, 0);
     /** Milestone. */
-    public static final DeferredBlock<PropBlock> MILESTONE = prop("milestone", 4.0F, 0.0F, 5.0F, 12.0F, 13.0F, 11.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> MILESTONE = prop("find_milestone", 4.0F, 0.0F, 5.0F, 12.0F, 13.0F, 11.0F, true, 9, 0);
     /** Footing Stone. */
-    public static final DeferredBlock<PropBlock> FOOTING = prop("footing", 1.0F, 0.0F, 1.0F, 15.0F, 9.0F, 15.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> FOOTING = prop("find_footing", 1.0F, 0.0F, 1.0F, 15.0F, 9.0F, 15.0F, true, 9, 0);
     /** Stone Bowl. */
-    public static final DeferredBlock<PropBlock> STONE_BOWL = prop("stone_bowl", 3.0F, 0.0F, 3.0F, 13.0F, 5.0F, 13.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STONE_BOWL = prop("find_stone_bowl", 3.0F, 0.0F, 3.0F, 13.0F, 5.0F, 13.0F, true, 9, 0);
     /** Stone Basin. */
-    public static final DeferredBlock<PropBlock> STONE_BASIN = prop("stone_basin", 0.0F, 0.0F, 0.0F, 16.0F, 9.0F, 16.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STONE_BASIN = prop("find_stone_basin", 0.0F, 0.0F, 0.0F, 16.0F, 9.0F, 16.0F, true, 9, 0);
     /** Capstone. */
-    public static final DeferredBlock<PropBlock> CAP_STONE = prop("cap_stone", 0.0F, 0.0F, 0.0F, 16.0F, 4.0F, 16.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> CAP_STONE = prop("find_cap_stone", 0.0F, 0.0F, 0.0F, 16.0F, 4.0F, 16.0F, true, 9, 0);
     /** Old Post. */
-    public static final DeferredBlock<PropBlock> POST = prop("post", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> POST = prop("find_post", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
     /** Iron Lamp. */
-    public static final DeferredBlock<PropBlock> IRON_LAMP = prop("iron_lamp", 5.0F, 0.0F, 5.0F, 11.0F, 10.0F, 11.0F, true, 1, 13);
+    public static final DeferredBlock<PropBlock> IRON_LAMP = prop("find_iron_lamp", 5.0F, 0.0F, 5.0F, 11.0F, 10.0F, 11.0F, true, 1, 13);
     /** Paper Lantern. */
-    public static final DeferredBlock<PropBlock> PAPER_LANTERN = prop("paper_lantern", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, false, 1, 12);
+    public static final DeferredBlock<PropBlock> PAPER_LANTERN = prop("find_paper_lantern", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, false, 1, 12);
     /** Fire Basket. */
-    public static final DeferredBlock<PropBlock> FIRE_BASKET = prop("fire_basket", 2.0F, 0.0F, 2.0F, 14.0F, 10.0F, 14.0F, true, 1, 15);
+    public static final DeferredBlock<PropBlock> FIRE_BASKET = prop("find_fire_basket", 2.0F, 0.0F, 2.0F, 14.0F, 10.0F, 14.0F, true, 1, 15);
     /** Rope Peg. */
-    public static final DeferredBlock<PropBlock> ROPE_PEG = prop("rope_peg", 6.0F, 0.0F, 6.0F, 10.0F, 7.0F, 10.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> ROPE_PEG = prop("find_rope_peg", 6.0F, 0.0F, 6.0F, 10.0F, 7.0F, 10.0F, false, 9, 0);
     /** Hanging Rope. */
-    public static final DeferredBlock<PropBlock> ROPE_LENGTH = prop("rope_length", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> ROPE_LENGTH = prop("find_rope_length", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
     /** Rope Coil. */
-    public static final DeferredBlock<PropBlock> ROPE_COIL = prop("rope_coil", 3.0F, 0.0F, 3.0F, 13.0F, 5.0F, 13.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> ROPE_COIL = prop("find_rope_coil", 3.0F, 0.0F, 3.0F, 13.0F, 5.0F, 13.0F, false, 9, 0);
     /** Wrapped Bundle. */
-    public static final DeferredBlock<PropBlock> BUNDLE = prop("bundle", 4.0F, 0.0F, 4.0F, 12.0F, 12.0F, 12.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> BUNDLE = prop("find_bundle", 4.0F, 0.0F, 4.0F, 12.0F, 12.0F, 12.0F, false, 9, 0);
     /** Woven Basket. */
-    public static final DeferredBlock<PropBlock> BASKET = prop("basket", 3.0F, 0.0F, 3.0F, 13.0F, 8.0F, 13.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> BASKET = prop("find_basket", 3.0F, 0.0F, 3.0F, 13.0F, 8.0F, 13.0F, true, 9, 0);
     /** Cart Wheel. */
-    public static final DeferredBlock<PropBlock> CART_WHEEL = prop("cart_wheel", 5.0F, 0.0F, 1.0F, 11.0F, 14.0F, 15.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> CART_WHEEL = prop("find_cart_wheel", 5.0F, 0.0F, 1.0F, 11.0F, 14.0F, 15.0F, false, 9, 0);
     /** Signpost. */
-    public static final DeferredBlock<PropBlock> SIGNPOST = prop("signpost", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> SIGNPOST = prop("find_signpost", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
     /** Signpost Arm. */
-    public static final DeferredBlock<PropBlock> SIGN_ARM = prop("sign_arm", 3.0F, 0.0F, 5.0F, 14.0F, 2.0F, 10.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> SIGN_ARM = prop("find_sign_arm", 3.0F, 0.0F, 5.0F, 14.0F, 2.0F, 10.0F, false, 9, 0);
     /** Scarecrow. */
-    public static final DeferredBlock<PropBlock> SCARECROW = prop("scarecrow", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> SCARECROW = prop("find_scarecrow", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
     /** Well Winch. */
-    public static final DeferredBlock<PropBlock> WINCH = prop("winch", 0.0F, 0.0F, 6.0F, 16.0F, 14.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> WINCH = prop("find_winch", 0.0F, 0.0F, 6.0F, 16.0F, 14.0F, 10.0F, true, 9, 0);
     /** Wind Chime. */
-    public static final DeferredBlock<PropBlock> WIND_CHIME = prop("wind_chime", 4.0F, 3.0F, 7.0F, 12.0F, 16.0F, 9.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> WIND_CHIME = prop("find_wind_chime", 4.0F, 3.0F, 7.0F, 12.0F, 16.0F, 9.0F, false, 9, 0);
     /** Rock Gong. */
-    public static final DeferredBlock<PropBlock> GONG = prop("gong", 0.0F, 0.0F, 6.0F, 16.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> GONG = prop("find_gong", 0.0F, 0.0F, 6.0F, 16.0F, 16.0F, 10.0F, true, 9, 0);
     /** Sundial. */
-    public static final DeferredBlock<PropBlock> SUNDIAL = prop("sundial", 1.0F, 0.0F, 1.0F, 15.0F, 10.0F, 15.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> SUNDIAL = prop("find_sundial", 1.0F, 0.0F, 1.0F, 15.0F, 10.0F, 15.0F, true, 9, 0);
     /** Weather Vane. */
-    public static final DeferredBlock<PropBlock> WEATHER_VANE = prop("weather_vane", 6.0F, 0.0F, 6.0F, 10.0F, 14.0F, 10.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> WEATHER_VANE = prop("find_weather_vane", 6.0F, 0.0F, 6.0F, 10.0F, 14.0F, 10.0F, false, 9, 0);
     /** Ring Post. */
-    public static final DeferredBlock<PropBlock> RING_POST = prop("ring_post", 2.0F, 0.0F, 2.0F, 14.0F, 12.0F, 14.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> RING_POST = prop("find_ring_post", 2.0F, 0.0F, 2.0F, 14.0F, 12.0F, 14.0F, true, 9, 0);
     /** Bronze Mirror. */
-    public static final DeferredBlock<PropBlock> MIRROR_DISC = prop("mirror_disc", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> MIRROR_DISC = prop("find_mirror_disc", 6.0F, 0.0F, 6.0F, 10.0F, 16.0F, 10.0F, true, 9, 0);
     /** Brass Ring. */
-    public static final DeferredBlock<PropBlock> BRASS_RING = prop("brass_ring", 2.0F, 0.0F, 2.0F, 14.0F, 12.0F, 14.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> BRASS_RING = prop("find_brass_ring", 2.0F, 0.0F, 2.0F, 14.0F, 12.0F, 14.0F, true, 9, 0);
     /** Picture Stone. */
-    public static final DeferredBlock<PropBlock> PICTURE_STONE = prop("picture_stone", 0.0F, 0.0F, 6.0F, 16.0F, 16.0F, 10.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> PICTURE_STONE = prop("find_picture_stone", 0.0F, 0.0F, 6.0F, 16.0F, 16.0F, 10.0F, true, 9, 0);
     /** Orrery. */
-    public static final DeferredBlock<PropBlock> ORRERY = prop("orrery", 4.0F, 0.0F, 4.0F, 12.0F, 16.0F, 12.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> ORRERY = prop("find_orrery", 4.0F, 0.0F, 4.0F, 12.0F, 16.0F, 12.0F, true, 9, 0);
     /** Orrery Arm. */
-    public static final DeferredBlock<PropBlock> ORRERY_ARM = prop("orrery_arm", 2.0F, 0.0F, 6.0F, 15.0F, 3.0F, 10.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> ORRERY_ARM = prop("find_orrery_arm", 2.0F, 0.0F, 6.0F, 15.0F, 3.0F, 10.0F, false, 9, 0);
     /** Stilled Figure. */
-    public static final DeferredBlock<PropBlock> STILLED = prop("stilled", 3.0F, 0.0F, 4.0F, 13.0F, 16.0F, 12.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STILLED = prop("find_stilled", 3.0F, 0.0F, 4.0F, 13.0F, 16.0F, 12.0F, true, 9, 0);
     /** Stilled Child. */
-    public static final DeferredBlock<PropBlock> STILLED_CHILD = prop("stilled_child", 4.0F, 0.0F, 5.0F, 12.0F, 16.0F, 11.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STILLED_CHILD = prop("find_stilled_child", 4.0F, 0.0F, 5.0F, 12.0F, 16.0F, 11.0F, true, 9, 0);
     /** Stone Sheep. */
-    public static final DeferredBlock<PropBlock> STONE_SHEEP = prop("stone_sheep", 3.0F, 0.0F, 1.0F, 13.0F, 12.0F, 13.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STONE_SHEEP = prop("find_stone_sheep", 3.0F, 0.0F, 1.0F, 13.0F, 12.0F, 13.0F, true, 9, 0);
     /** Stone Cards. */
-    public static final DeferredBlock<PropBlock> STONE_CARDS = prop("stone_cards", 2.0F, 0.0F, 4.0F, 14.0F, 1.0F, 12.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> STONE_CARDS = prop("find_stone_cards", 2.0F, 0.0F, 4.0F, 14.0F, 1.0F, 12.0F, false, 9, 0);
     /** Old Fishing Rod. */
-    public static final DeferredBlock<PropBlock> OLD_ROD = prop("old_rod", 1.0F, 0.0F, 5.0F, 15.0F, 2.0F, 11.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> OLD_ROD = prop("find_old_rod", 1.0F, 0.0F, 5.0F, 15.0F, 2.0F, 11.0F, false, 9, 0);
     /** Kite. */
-    public static final DeferredBlock<PropBlock> KITE = prop("kite", 3.0F, 0.0F, 3.0F, 13.0F, 13.0F, 13.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> KITE = prop("find_kite", 3.0F, 0.0F, 3.0F, 13.0F, 13.0F, 13.0F, false, 9, 0);
     /** Half-made Blade. */
-    public static final DeferredBlock<PropBlock> BLADE_BLANK = prop("blade_blank", 6.0F, 0.0F, 1.0F, 10.0F, 2.0F, 16.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> BLADE_BLANK = prop("find_blade_blank", 6.0F, 0.0F, 1.0F, 10.0F, 2.0F, 16.0F, false, 9, 0);
     /** Nest. */
-    public static final DeferredBlock<PropBlock> NEST = prop("nest", 2.0F, 0.0F, 2.0F, 14.0F, 5.0F, 14.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> NEST = prop("find_nest", 2.0F, 0.0F, 2.0F, 14.0F, 5.0F, 14.0F, true, 9, 0);
     /** Great Rib. */
-    public static final DeferredBlock<PropBlock> GREAT_RIB = prop("great_rib", 5.0F, 0.0F, 5.0F, 11.0F, 16.0F, 11.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> GREAT_RIB = prop("find_great_rib", 5.0F, 0.0F, 5.0F, 11.0F, 16.0F, 11.0F, true, 9, 0);
     /** Painted Gourd. */
-    public static final DeferredBlock<PropBlock> GOURD = prop("gourd", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> GOURD = prop("find_gourd", 5.0F, 2.0F, 5.0F, 11.0F, 16.0F, 11.0F, false, 9, 0);
     /** Marker Flag. */
-    public static final DeferredBlock<PropBlock> FLAG = prop("flag", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> FLAG = prop("find_flag", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
     /** Ring on a Pole. */
-    public static final DeferredBlock<PropBlock> RING_TARGET = prop("ring_target", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> RING_TARGET = prop("find_ring_target", 6.5F, 0.0F, 6.5F, 9.5F, 16.0F, 9.5F, false, 9, 0);
     /** Start Stone. */
-    public static final DeferredBlock<PropBlock> START_STONE = prop("start_stone", 2.0F, 0.0F, 2.0F, 14.0F, 4.0F, 14.0F, true, 2, 7);
+    public static final DeferredBlock<PropBlock> START_STONE = prop("find_start_stone", 2.0F, 0.0F, 2.0F, 14.0F, 4.0F, 14.0F, true, 2, 7);
     /** Floor Tile. */
-    public static final DeferredBlock<PropBlock> MAP_TILE = prop("map_tile", 0.0F, 0.0F, 0.0F, 16.0F, 1.0F, 16.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> MAP_TILE = prop("find_map_tile", 0.0F, 0.0F, 0.0F, 16.0F, 1.0F, 16.0F, false, 9, 0);
     /** Stone Horn. */
-    public static final DeferredBlock<PropBlock> STONE_HORN = prop("stone_horn", 3.0F, 0.0F, 0.0F, 13.0F, 12.0F, 16.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> STONE_HORN = prop("find_stone_horn", 3.0F, 0.0F, 0.0F, 13.0F, 12.0F, 16.0F, true, 9, 0);
     /** Bell Tongue. */
-    public static final DeferredBlock<PropBlock> BELL_TONGUE = prop("bell_tongue", 5.0F, 0.0F, 5.0F, 11.0F, 3.0F, 15.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> BELL_TONGUE = prop("find_bell_tongue", 5.0F, 0.0F, 5.0F, 11.0F, 3.0F, 15.0F, false, 9, 0);
     /** Lighthouse Lens. */
-    public static final DeferredBlock<PropBlock> LENS = prop("lens", 3.0F, 0.0F, 3.0F, 13.0F, 14.0F, 13.0F, true, 1, 15);
+    public static final DeferredBlock<PropBlock> LENS = prop("find_lens", 3.0F, 0.0F, 3.0F, 13.0F, 14.0F, 13.0F, true, 1, 15);
     /** Summit Stone. */
-    public static final DeferredBlock<PropBlock> SUMMIT_STONE = prop("summit_stone", 3.0F, 0.0F, 4.0F, 13.0F, 9.0F, 12.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> SUMMIT_STONE = prop("find_summit_stone", 3.0F, 0.0F, 4.0F, 13.0F, 9.0F, 12.0F, true, 9, 0);
     /** Loose Stone. */
-    public static final DeferredBlock<PropBlock> LOOSE_STONE = prop("loose_stone", 4.0F, 0.0F, 5.0F, 12.0F, 4.0F, 11.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> LOOSE_STONE = prop("find_loose_stone", 4.0F, 0.0F, 5.0F, 12.0F, 4.0F, 11.0F, false, 9, 0);
     /** Wedge Stone. */
-    public static final DeferredBlock<PropBlock> WEDGE = prop("wedge", 5.0F, 0.0F, 6.0F, 11.0F, 4.0F, 10.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> WEDGE = prop("find_wedge", 5.0F, 0.0F, 6.0F, 11.0F, 4.0F, 10.0F, false, 9, 0);
     /** Pond Plug. */
-    public static final DeferredBlock<PropBlock> PLUG = prop("plug", 4.0F, 0.0F, 4.0F, 12.0F, 9.0F, 12.0F, true, 9, 0);
+    public static final DeferredBlock<PropBlock> PLUG = prop("find_plug", 4.0F, 0.0F, 4.0F, 12.0F, 9.0F, 12.0F, true, 9, 0);
+    /** Round Boulder. */
+    public static final DeferredBlock<PropBlock> BOULDER = prop("find_boulder", 1.0F, 0.0F, 1.0F, 15.0F, 14.0F, 15.0F, true, 9, 0);
     /** Small Hoard. */
-    public static final DeferredBlock<PropBlock> HOARD = prop("hoard", 4.0F, 0.0F, 4.0F, 12.0F, 4.0F, 12.0F, false, 9, 0);
+    public static final DeferredBlock<PropBlock> HOARD = prop("find_hoard", 4.0F, 0.0F, 4.0F, 12.0F, 4.0F, 12.0F, false, 9, 0);
 
     private static DeferredBlock<PropBlock> prop(String id, float x0, float y0, float z0, float x1, float y1, float z1, boolean solid, int litFrom, int light) {
         IDS.add(id);

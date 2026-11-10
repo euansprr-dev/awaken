@@ -112,7 +112,8 @@ PROPS = {}
 
 
 def prop(name, display, states, shape, solid=True, lit=None, light=0, heavy=False):
-    PROPS[name] = (display, states, shape, solid, lit, light, heavy)
+    """Every prop's id starts with find_, so none can ever take a name another module's block already has."""
+    PROPS["find_" + name] = (display, states, shape, solid, lit, light, heavy)
 
 
 prop("flat_stones", "Flat Stones", [stack(1), stack(2), stack(3), stack(4)], (2, 0, 2, 14, 15, 14))
@@ -322,6 +323,10 @@ prop("plug", "Pond Plug", [
     [b(4, 0, 4, 12, 6, 12, "darkwood"), b(6, 6, 6, 10, 9, 10, "iron"), b(7.5, 9, 7.5, 8.5, 16, 8.5, "rope")],
     [b(2, 0, 4, 10, 6, 12, "darkwood", ("z", 22.5, (6, 0, 8))), b(10, 0, 7, 16, 1.2, 9, "rope")]] * 2,
      (4, 0, 4, 12, 9, 12))
+prop("boulder", "Round Boulder", [
+    [b(1, 0, 1, 15, 10, 15, tex), b(3, 10, 3, 13, 14, 13, tex), b(0, 2, 3, 16, 8, 13, tex), b(3, 2, 0, 13, 8, 16, tex)] + extra for tex, extra in (
+        ("stone", []), ("mossy", []), ("stone", [b(7.5, 0, 0.6, 8.5, 14.2, 1.2, "dark"), b(7.5, 14, 1, 8.5, 14.4, 9, "dark")]), ("cobble", []))],
+     (1, 0, 1, 15, 14, 15), heavy=True)
 prop("hoard", "Small Hoard", [
     [b(4, 0, 4, 12, 2, 12, "straw"), b(5, 2, 5, 8, 4, 8, "gold"), b(8, 2, 8, 11, 3.5, 11, "blue"), b(6, 2, 9, 8, 3, 11, "brass")],
     [b(4, 0, 4, 12, 2, 12, "straw")]] * 2,
@@ -398,7 +403,7 @@ def java():
     for name, (display, states, shape, solid, lit, light, heavy) in PROPS.items():
         args = ", ".join(str(float(v)) + "F" for v in shape)
         lines.append(f"    /** {display}. */")
-        lines.append(f"    public static final DeferredBlock<PropBlock> {name.upper()} = prop(\"{name}\", {args}, {'true' if solid else 'false'}, {lit if lit is not None else 9}, {light});")
+        lines.append(f"    public static final DeferredBlock<PropBlock> {name[5:].upper()} = prop(\"{name}\", {args}, {'true' if solid else 'false'}, {lit if lit is not None else 9}, {light});")
     lines += ["",
               "    private static DeferredBlock<PropBlock> prop(String id, float x0, float y0, float z0, float x1, float y1, float z1, boolean solid, int litFrom, int light) {",
               "        IDS.add(id);",
