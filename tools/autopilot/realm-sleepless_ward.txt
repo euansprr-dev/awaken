@@ -44,7 +44,7 @@ cmd awaken gate realm_at WARDEN 0 0 2 -10
 look 0 8
 wait 80
 shot ward_warden
-cmd awaken gate realm_at LORD 0 0 2 -16
+cmd awaken gate realm_at LORD 0 0 2 -8
 look 0 4
 wait 80
 shot ward_lord
@@ -52,4 +52,13 @@ cmd awaken gate realm_at LORD 0 0 1 6
 look 180 -40
 wait 80
 shot ward_lord_up
+# seed 1 is a great run: its chasm, from the first shelf and from beside the pillars
+cmd awaken gate realm_at MOUTH 0 -187 -71 192
+look 0 18
+wait 80
+shot sleepless_ward_chasm
+cmd awaken gate realm_at MOUTH 0 -183 -69 205
+look -150 30
+wait 80
+shot sleepless_ward_chasm_side
 quit
