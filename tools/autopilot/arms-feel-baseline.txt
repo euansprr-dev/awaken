@@ -1,0 +1,137 @@
+# The weapon feel plan's baseline (docs/weapon-feel; Euan 2026-11-10: "how can we push it to the maximum level"): the merged
+# 9 Nov weapon round filmed as the game draws it, before anything is polished. Disposable: a planning harness, no game code.
+# The Longsword (every vanilla sword fights as it) and the Maul (the heavy class), each against the studio's husk: the hold at
+# rest, the chain landing, a held heavy from the press to the blow, the guard coming up and going down, and a change of weapon.
+# The world at 2 ticks a second, as the Daggers' film; a picture every 0.25 ticks (0.5 for the guard and the swap) into
+# clips/<take>/, with every frame's numbers in track.tsv. Then the Longsword's chain from the side, as others see it.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfeelbase creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+camera first
+look 0 6
+wait 20
+shot long_rest_1p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film long_1p_combo 46 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 24
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film long_1p_heavy 48 0.25 2
+wait 3
+arms heavy 20
+wait 42
+arms rate 20
+wait 20
+arms rate 2
+wait 2
+arms film long_1p_guard 26 0.5 2
+wait 3
+arms guard on
+wait 10
+arms guard off
+wait 12
+arms rate 20
+wait 20
+arms rate 2
+wait 2
+arms film long_1p_swap 30 0.5 2
+wait 3
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 14
+arms rate 20
+wait 20
+camera front
+cmd awaken fx sidecam 90
+wait 10
+shot long_rest_side
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film long_side_combo 46 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 24
+arms rate 20
+wait 20
+cmd awaken fx sidecam 0
+camera first
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 30
+shot maul_rest_1p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film maul_1p_combo 62 0.25 2
+wait 3
+arms strike 2
+wait 11
+arms strike 2
+wait 12
+arms strike 2
+wait 32
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film maul_1p_heavy 54 0.25 2
+wait 3
+arms heavy 24
+wait 46
+arms rate 20
+wait 20
+arms rate 2
+wait 2
+arms film maul_1p_guard 26 0.5 2
+wait 3
+arms guard on
+wait 10
+arms guard off
+wait 12
+arms rate 20
+wait 20
+quit
