@@ -83,12 +83,35 @@ Nothing floats, every part is reachable, it can always be finished or restarted,
   completes, pays once and fills its slot; placement keeps quiet land quiet and twins apart; ledger.
 - One look tour of the gallery on GitHub's runners.
 
+## Builder's notes (how the code is laid out; read before writing a kind)
+
+- A kind is written in `finds/sets/<Set>.java` with `Kind.of(FSet.X, number, "id", "Name")...add()`. One file per set, eight
+  kinds each when done. `AllSets.init()` calls every set. Number 1 of a set is its plainest and is favoured near spawn.
+- A scene (`Kind.Maker`) writes in the kind's own coordinates, the kind facing south (+z); `Scene` turns it. `s.g(x,z)` is the
+  ground relative to the heart; `s.on(x,z,state)` stands a block on a column's ground, `s.up(x,z,k,state)` k above that,
+  `s.floor(x,z,state)` replaces the ground block, `s.put(x,dy,z,state)` is relative to the heart's ground (dy 0).
+  `s.partOn(name,x,z,k[,state])` names a part. `s.spawn(type,x,z,flags,role)` puts life there on first wake.
+  Never build at (0,-2,0): the heart is there. Everything must be connected to the ground (test `finds_every_scene_stands`),
+  inside `reach`, and at least a third of the blocks above ground must not be plain cubes.
+- Props: `Props.X.get().of(state)` or `.front(state, direction)` (a model's own front is north). They come from
+  `tools/content/finds_content.py`; add a prop there and run it (it rewrites `kit/Props.java`).
+- `Mats.of(s.site.group())` gives the land's stone and wood. `Dress.skirt/road/cairn/scatter/moss` dress the ground.
+- Scripts (`finds/verb/`): `Light`, `Notes`, `Sockets`, `Fit`, `Turn`, `Guide`, `Dig`, `Haul`, `Pour`, `Marks`, `Course`,
+  `Prize`, `When` (`stay` and `only`), `Seal`, `Quiet`, `Read`, chained with `Steps.of(...)` (four links at most). A kind may
+  write its own small `Script` in its set file (the Sundial does). A script that sets a facing block must use `c.turned(state)`.
+- A part named `cache` is where loot pops out; a prop cache that can stand open (FOOTING, CAP_STONE, BUNDLE, PLUG) opens.
+- Every kind has `.play(t -> ...)`: the walkthrough a scripted player runs in `finds_every_kind_plays` (`Trial`: `hold`,
+  `use`, `hit`, `shoot`, `dig`, `stand`, `ticks`, `pass`, `hour`). `.after(c -> ...)` runs at the moment of finishing.
+- Loot: tier tables `awaken:finds/<e|d|c|b|a>_<small|big>` from the content script; `.loot("name")` for a kind's own.
+- Not done on purpose in the first pass: hand clips per verb (vanilla swing only), own particles for tells (vanilla ones),
+  the Stilled's own renderer (the kit has simple stone figures), repeat gifts by game day, powers as blows on seals.
+
 ## Build order and state
 
-1. [ ] Engine core: Kind, Site, Scene, feature, heart, listeners, ward, player data, loot, commands.
-2. [ ] Kit: props table + generator, scene helpers.
-3. [ ] Verb scripts.
-4. [ ] First eighteen kinds (one per verb), gallery, tests green.
+1. [x] Engine core: Kind, Site, Scene, feature, heart, listeners, ward, player data, loot, commands. (written; compiling)
+2. [x] Kit: 54 props + generator, Mats, Dress.
+3. [x] Verb scripts (sixteen classes).
+4. [~] First eighteen kinds written (number 1 of each set), gallery command, tests written; not yet green.
 5. [ ] The other 126.
 6. [ ] Journal, Spotting, Atlas, leads, Promises.
 7. [ ] Full test run on CI, gallery tour, fix pass.
