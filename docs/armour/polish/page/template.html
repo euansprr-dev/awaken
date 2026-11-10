@@ -1,0 +1,388 @@
+<title>The Armour Finish</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column for the plan, wide bands for the pictures; forge-dark first, iron and ember (the armour plan's own page). */
+:root {
+  --bg: #15130f; --panel: #1e1b16; --line: #3a342a; --fg: #ece4d4; --muted: #a99f8c;
+  --ember: #ff7a2e; --brass: #d8b46a; --yes: #6fcf8e; --no: #ef6b5b;
+  --display: "Alegreya SC", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --brass: #8a6a24; --yes: #2f8a50; --no: #b23a2c; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --brass: #8a6a24; --yes: #2f8a50; --no: #b23a2c; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 28px 70px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 56px); letter-spacing: .01em; }
+h2 { font-size: 28px; margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); }
+h3 { font-size: 20px; margin-top: 28px; }
+p { margin: 10px 0 0; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+.lede { font-size: 20px; margin-top: 14px; }
+.muted { color: var(--muted); }
+figure { margin: 0; min-width: 0; }
+figure img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); background: #0c0b09; }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.quote { border-left: 3px solid var(--ember); padding: 4px 0 4px 16px; margin-top: 16px; font-style: italic; color: var(--muted); }
+ul.plain { margin: 10px 0 0; padding-left: 20px; }
+ul.plain li + li { margin-top: 6px; }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; margin-top: 22px;
+  border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.fact { padding: 14px 14px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.fact b { display: block; font: 700 34px/1 var(--display); color: var(--ember); font-variant-numeric: tabular-nums; }
+.fact span { display: block; font-size: 14px; color: var(--muted); margin-top: 6px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+.finding { margin-top: 30px; }
+.finding h3 { margin-top: 0; }
+.finding .where { font: 500 12px var(--mono); letter-spacing: .06em; color: var(--brass); margin-top: 6px; }
+.change { display: grid; grid-template-columns: 34px 1fr; gap: 12px; margin-top: 18px; }
+.change .n { font: 700 22px/1.2 var(--display); color: var(--ember); }
+.change h3 { margin: 0; }
+.tag { display: inline-block; font: 500 11px/1 var(--mono); letter-spacing: .06em; padding: 4px 6px; border-radius: 3px;
+  border: 1px solid var(--line); color: var(--brass); white-space: nowrap; }
+.tag.draft { color: var(--ember); border-color: var(--ember); }
+/* the set viewer */
+.viewer { margin-top: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 14px; }
+.ranks, .sets { display: flex; flex-wrap: wrap; gap: 6px; }
+.sets { margin-top: 10px; }
+.viewer button { font: 500 14px var(--mono); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; }
+.viewer button[aria-pressed="true"] { border-color: var(--ember); color: var(--ember); }
+.viewer button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.sethead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-top: 18px; }
+.sethead h3 { margin: 0; font-size: 26px; }
+.setnotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 10px; }
+.setnotes div { min-width: 0; }
+.setnotes b { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; }
+.views { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; margin-top: 16px; }
+.views figure { grid-column: span 6; }
+.views figure.wide { grid-column: span 12; }
+.views figure.narrow { grid-column: span 4; }
+@media (max-width: 760px) { .views figure, .views figure.narrow { grid-column: span 12; } }
+.stage { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.stage .k { font: 500 13px var(--mono); color: var(--brass); }
+.dec { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 14px 16px; margin-top: 12px; }
+.dec h3 { margin: 0; font-size: 19px; }
+.dec .rec { color: var(--yes); font-weight: 700; }
+.loop { max-width: 720px; }
+.builtsec { margin-top: 34px; padding-top: 6px; border-top: 2px solid var(--ember); }
+.builtsec h3 { margin-top: 28px; }
+.builtsec .views { margin-top: 12px; }
+.builtsec .dec { margin-top: 22px; }
+.builtsec ul { padding-left: 20px; display: grid; gap: 10px; }
+.builtsec code { font: 500 14px var(--mono); overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table.built { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+table.built th { text-align: left; font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+table.built td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.built td:first-child { white-space: nowrap; font-weight: 600; }
+.ans { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.ans button { font: 500 14px var(--mono); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; }
+.ans button[aria-pressed="true"] { border-color: var(--yes); color: var(--yes); }
+.ans button:disabled { opacity: .6; cursor: default; }
+.ans button:focus-visible, .ans textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ans textarea { flex: 1 1 100%; min-height: 44px; font: 15px/1.4 var(--body); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; resize: vertical; }
+.ans .saved { font: 500 12px var(--mono); color: var(--muted); }
+.ansnote { color: var(--muted); font-size: 15px; margin-top: 10px; }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="eyebrow">Armour polish plan · approved 10 November · built on its own branch · not merged</div>
+    <h1>The Armour Finish</h1>
+    <p class="lede">You asked how polished the armour sets really are, and what small pass would take them as far as they can go without scrapping anything. I checked all 29 in the real game. The shapes are good. What surrounds the shapes was never finished.</p>
+    <p class="quote">"I don't want to completely scrap everything. It's more so a way to really see what's the kind of small polish pass that we can do to massively bring it to the most extreme and awesome level."</p>
+    <p>This page shows what I found, the pass I'd recommend, and every set as it is today beside a working draft of the pass. The pictures are from the game itself, shot on GitHub's machines at your window size. You approved it on 10 November. What has been built since is in <a href="#built">Built since your yes</a>, just below, with one new decision for you.</p>
+  </div>
+  <figure style="margin-top:22px"><img src="img/cast_lordscale_cast_b.jpg" alt="Casting a beam in Lordscale in first person, today and in the draft"><figcaption>Casting in Lordscale, from your own eyes. Left, the game today: the armour is gone and your bare arms cast. Right, the draft.</figcaption></figure>
+
+  <!--BUILT-->
+
+  <div class="facts">
+    <div class="fact"><b>29</b><span>sets checked, each in the same views: worn, your own eyes, a stand, the K menu, near and far, day and night</span></div>
+    <div class="fact"><b>~20</b><span>name themselves by shape alone. The helms and silhouettes are the strong part</span></div>
+    <div class="fact"><b>0</b><span>sets stay on your arms when you cast. Our own first-person code draws bare skin</span></div>
+    <div class="fact"><b>16</b><span>sets (the ones built last) share one plate surface: a rimmed panel</span></div>
+    <div class="fact"><b>13</b><span>sets show no light at all from behind at night</span></div>
+    <div class="fact"><b>5</b><span>vanilla sounds cover putting on all 29 sets. None has a sound of its own</span></div>
+  </div>
+
+  <div class="col">
+    <h2>What I found</h2>
+    <p>All 29 sets were built on one day, 29 October. The six Hunter sets came first and had your eye on them. The other 23 followed straight after, and the time went into helms and silhouettes. That was the right place for it. It also means the same few things were left the same way on nearly every set.</p>
+  </div>
+
+  <div class="finding">
+    <div class="col">
+      <h3>1. Your armour comes off your arms when you cast</h3>
+      <p>In first person the armour only shows on an empty, idle hand. The moment our own code draws your arm, it draws bare skin. That covers every cast, the wrist band, two-handed moves, and your arms and legs when you climb, vault and slide. The call that dresses the arm was written in October and never connected. Your own set's charge never reaches your own arm either, so everyone can see your armour fill with light except you.</p>
+      <div class="where">Left of each picture: today. Right: the draft.</div>
+    </div>
+    <div class="two">
+      <figure><img src="img/cast_lordscale_rest.jpg" alt="First person at rest in Lordscale, today and in the draft" loading="lazy"><figcaption>At rest. Today the forearm is a box with a stripe. The draft ends the forearm at a gold cuff and gives the hand a glove and a plate.</figcaption></figure>
+      <figure><img src="img/cast_galewing_cast_b.jpg" alt="First person mid-cast in Galewing, today and in the draft" loading="lazy"><figcaption>The same cast in Galewing. Today both arms are your bare skin. In the draft they stay armoured.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="col">
+      <h3>2. Sixteen sets share one surface</h3>
+      <p>Lordscale's plates use twelve different surface treatments: scales, lames, gold hems, a molten seam. Every C to S set built after it uses three to five, and almost always the same three. Their plates are one panel with a rim. Up close and in your own view that reads as a framed box. Nine sets across the ranks also average out to the same blue-grey.</p>
+      <div class="where">Galewing, from your own eyes and worn. Left: today. Right: the draft.</div>
+    </div>
+    <div class="two">
+      <figure><img src="img/galewing_fp.jpg" alt="Galewing in first person, today and in the draft" loading="lazy"><figcaption>Today: a frame. Draft: a pale steel forearm, a feather cuff, a glove with a storm-lit plate.</figcaption></figure>
+      <figure><img src="img/leviathan_fp.jpg" alt="Leviathan in first person, today and in the draft" loading="lazy"><figcaption>Leviathan had the same frame. Draft: scales, a bone cuff, a deep-sea light on the hand.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="col">
+      <h3>3. At night most sets are a black shape</h3>
+      <p>The October rule was "glow is few and placed". It got applied to the one thing a stranger would name, too. Halo Choir's halo, Signal's Echo's marker, Galewing's wings and Sovereign Weave's crown all go dark after sunset. From behind, which is where a friend following you stands, thirteen sets show no light at all. There is also a fault: a pale band of sheen crosses every armoured figure in the dark every five seconds, because the shader adds it after the world's light.</p>
+      <div class="where">The A-rank row from behind at night. Left: today. Right: the draft.</div>
+    </div>
+    <figure style="margin-top:14px"><img src="img/far_A_back_night.jpg" alt="A-rank sets from behind at night, today and in the draft" loading="lazy"><figcaption>Dreamsteel, Halo Choir, Galewing, Leviathan, Lordscale. In the draft the halo, the wing edges and the fins carry, and metal turned to the sky catches the moon.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="col">
+      <h3>4. They are silent, and they stand still</h3>
+      <ul class="plain">
+        <li><b>Sound.</b> Putting on any of the 29 sets plays one of five vanilla clinks. A and S share one. Nothing sounds when you move. The ability and forge sounds that do exist were built on 29 October from impact samples and synth rings, the way you called "super synthetic" on 9 November when you heard the pick. Your ding checker flags 34 of the 57 files. Nobody has listened to them.</li>
+        <li><b>Getting it.</b> When the last piece goes on and the set becomes whole, the game knows, and does nothing. The ability switches on without a light, a sound or a word.</li>
+        <li><b>Making it.</b> A Flawless piece and a Plain one look the same on your body. Weapons show how they were forged. Armour carries the same facts and draws none of them.</li>
+        <li><b>Small things.</b> A helm in your hand, on the ground or in a frame is a flat picture, where a weapon is the real thing. The icons for greaves and boots read as blocks. Riftwalker shows your shirt through a gap at each shoulder, and five lighter sets show your skin's own colours on the arms.</li>
+        <li><b>Motion.</b> Capes and leg cloth move. Nothing else does. The halo, the marker, the lantern cages, the plumes and the wings are rigid. The October plan promised Galewing's wings would open when you fly and Dreamsteel's shards would drift. Neither was built.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>What is good and stays exactly as it is</h3>
+    <ul class="plain">
+      <li>Every helm and every silhouette. Your rule holds: first bold designs beat reworks, and no faces.</li>
+      <li>The way armour is drawn. It follows every animation and matches on players, stands, mobs, the Hall and the K menu.</li>
+      <li>The six sets you approved, the abilities, the Forge Song, mastery, Looks.</li>
+      <li>The texel size. The sets stay as chunky as the weapons, so the two stay one family. The look you called clunky in October came from stuck-on boxes, and my own first try at the hands made that mistake again (studs on the knuckles). I threw it out. The rule in this plan: nothing gets added that is a lone cube.</li>
+    </ul>
+
+    <h2>The pass I recommend</h2>
+    <p>Seven changes. Most are written once and land on all 29 sets at the same time, which is why the pass is small for what it does.</p>
+
+    <div class="change"><div class="n">1</div><div><h3>Every arm and leg you see wears your armour</h3><p>Casts, the wrist band, climbing, sliding. Your own gauntlet fills with light as your set charges and flares when it fires. <span class="tag draft">in the draft</span></p></div></div>
+    <div class="change"><div class="n">2</div><div><h3>A hand that is a hand</h3><p>The forearm ends at the wrist in a flared cuff of the set's own trim. Under it a slimmer glove with fingers, and a plate on the back of the hand that carries the set's light from C-rank up. The four sets with a molten line keep it running down the hand. Built from each set's own materials. <span class="tag draft">in the draft</span></p></div></div>
+    <div class="change"><div class="n">3</div><div><h3>Light</h3><p>Edges turned to the sky catch a little of it, so plates part from each other. Under an open night sky, metal still catches the moon. Whatever glows spills a little onto the metal beside it. From C-rank up, the thing a stranger would name stays lit at night. E and D stay dark, so rank reads by how much of a set is alight. The crawling band in the dark is fixed. <span class="tag draft">in the draft</span></p></div></div>
+    <div class="change"><div class="n">4</div><div><h3>A plate language for each set</h3><p>On the sixteen later sets the rimmed panel becomes the set's own: riveted vault plate, cut ice, shell segments, feather lames, scales, fluted porcelain, cut mirror. They get elbow and knee pieces where Lordscale has them. The plain backs get one feature each. The blue-grey crowd gets pulled apart. Helms untouched. <span class="tag draft">a first version is in the draft</span> The hand-finishing, set by set, is the real work here and is not.</p></div></div>
+    <div class="change"><div class="n">5</div><div><h3>Living parts</h3><p>One or two per set, never more. The halo tilts and breathes. The marker turns. Lantern cages and plumes sway with your step. Wings open when you fall or glide. Shards drift. The rift flickers. Mastery's new parts grow in over half a second. <span class="tag">not in the pictures</span></p></div></div>
+    <div class="change"><div class="n">6</div><div><h3>Sound</h3><p>From Minecraft's own recordings, named, never copied: an equip sound for each material (hide, cloth, mail, plate, heavy plate, crystal, bone, feather), three notes when a set becomes whole (the notes of the Forge Song you made it with), and a soft movement sound by weight that goes quiet when you sneak. The 25 old sounds get remade the same way. I can't hear, so you would get a listening page first, with a best guess and two alternatives per sound. <span class="tag">not in the pictures</span></p></div></div>
+    <div class="change"><div class="n">7</div><div><h3>Moments and marks</h3><p>When the last piece goes on, the seams light from feet to crown and the set's three notes play. The first time, the System says one line. A flaw shows on the plate, a fold shows as a weld pattern, a Flawless piece carries its maker's mark, the same way weapons do. A piece in your hand becomes the real piece, and greaves and boots get icons that read as legs and boots. <span class="tag">not in the pictures</span></p></div></div>
+
+    <h2>Every set, today and after</h2>
+    <p>Pick a rank and a set. Left half of each picture is the game today. Right half is the draft. The draft holds changes 1 to 3 and a first version of 4. It doesn't hold the hand-finishing, the motion or the sound, so each set also lists what would come later.</p>
+    <p>Where the draft shows most: from your own eyes, at night, and on the plates of the later sets up close. Worn and seen from ten blocks by day, a set changes little, and that is on purpose. The shapes stay.</p>
+  </div>
+
+  <div class="viewer" id="viewer">
+    <div class="ranks" id="ranks" role="group" aria-label="Rank"></div>
+    <div class="sets" id="sets" role="group" aria-label="Set"></div>
+    <div class="sethead"><h3 id="setname"></h3><span class="tag" id="setarch"></span></div>
+    <div class="setnotes"><div><b>Today</b><span id="settoday"></span></div><div><b>The finish gives it</b><span id="setgives"></span></div></div>
+    <div class="views" id="views"></div>
+  </div>
+
+  <div class="col">
+    <h2>What pictures can't show</h2>
+    <h3>Motion</h3>
+    <p>This loop is from the art kit's own renderer, not the game, and it is a sketch of change 5: Signal's Echo's marker, Sunward's rays, Halo Choir's halo and wings.</p>
+  </div>
+  <figure class="loop" style="margin-top:14px"><img src="img/living.webp" alt="A loop of three sets with living parts" loading="lazy"><figcaption>Offline render. Shows the idea and the speed. Not built.</figcaption></figure>
+
+  <div class="col">
+    <h3>Sound</h3>
+    <div class="tablewrap"><table>
+      <tr><th>Material</th><th>Sets (examples)</th><th>Starts from these Minecraft recordings</th></tr>
+      <tr><td>Hide and fur</td><td>Wildhide, Hornlord's mantle</td><td>leather armour, a saddle, wool underfoot</td></tr>
+      <tr><td>Cloth and robes</td><td>Veilwoven, Sunward, Signal's Echo</td><td>wool, a bundle, an elytra's rustle</td></tr>
+      <tr><td>Mail and lamellar</td><td>Beastbound, Cleftrunner</td><td>chain armour, a chain placed</td></tr>
+      <tr><td>Plate</td><td>Bladeward, Cloudrunner, Dreamsteel</td><td>iron and diamond armour, horse armour</td></tr>
+      <tr><td>Heavy plate</td><td>Bellguard, Vaultbreaker, Leviathan, Lordscale, Starfall</td><td>netherite armour, an anvil set down, a bell's body for Bellguard</td></tr>
+      <tr><td>Crystal and ice</td><td>Shardcrown, Frostwalker, Deepcarapace</td><td>amethyst steps and chimes, glass, packed ice</td></tr>
+      <tr><td>Bone and wood</td><td>Hollowheart, Rootwarden</td><td>bone block, bamboo wood, a skeleton's rattle</td></tr>
+      <tr><td>Feather</td><td>Galewing, Halo Choir</td><td>an elytra, a phantom's flap, a parrot's wing</td></tr>
+    </table></div>
+    <p class="muted">These are starting points to audition. A row only stands once you've heard it in the game.</p>
+
+    <h2>Bigger options</h2>
+    <p>None of these is in the recommendation. Each can be added to it.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Option</th><th>What you'd get</th><th>Cost at our pace</th></tr>
+      <tr><td><b>Admire</b></td><td>Hold a key and the camera circles you once in a hero light. The cheapest way to enjoy a set you made.</td><td class="num">half a day</td></tr>
+      <tr><td><b>Abilities that use the suit</b></td><td>Galewing's wings beat on Gust. The halo rings on Hymn. The rift opens on Riftstep. Starfall's seams blaze on Meteor. One for each of the 29.</td><td class="num">two days</td></tr>
+      <tr><td><b>Show your face</b></td><td>A switch in Looks: wear the helm, or only its crown and horns.</td><td class="num">half a day</td></tr>
+      <tr><td><b>Footprints and trails</b></td><td>Frost prints, embers, feathers. One for each set from A-rank up, with our own particles.</td><td class="num">a day</td></tr>
+      <tr><td><b>Many players</b></td><td>Lighter far-off versions of each set, and a measured run with 20 armoured figures on your Mac. It only matters for the server dream.</td><td class="num">a day</td></tr>
+    </table></div>
+    <p>Two things I looked at and would not do: new helms for the weaker sets (it breaks your own rule and risks the faces you rejected), and denser textures or smooth meshes (the road the clunky look went down, and it would split armour from the weapons).</p>
+
+    <h2>How it would be built</h2>
+    <div class="stage"><div class="k">Stage 0</div><div><b>Faults.</b> The bare arms, your own charge on your own arm, the band in the dark.</div></div>
+    <div class="stage"><div class="k">Stage 1</div><div><b>Light.</b> The shader, the spill, the night features.</div></div>
+    <div class="stage"><div class="k">Stage 2</div><div><b>Hands.</b> The gauntlets on all 29.</div></div>
+    <div class="stage"><div class="k">Stage 3</div><div><b>Plate languages.</b> The sixteen sets, rank by rank. A stop for your eye after C-rank.</div></div>
+    <div class="stage"><div class="k">Stage 4</div><div><b>Living parts.</b></div></div>
+    <div class="stage"><div class="k">Stage 5</div><div><b>Sound.</b> The listening page first.</div></div>
+    <div class="stage"><div class="k">Stage 6</div><div><b>Moments and marks.</b></div></div>
+    <p>About five days of one session. Stages 0 to 2 fit in the first. Each stage lands on its own with green tests and a set of game shots checked one by one for clipping, floating parts and scale, and each can be taken back out by itself. Item ids and saves never change. Before anything is built I merge the new K menu in, since it changes the Status page this plan touches.</p>
+    <p><b>What could go wrong.</b> The hand change touches every set you have seen, which is why all 29 are shown before and after below your eyes first. Sound is made without ears, so yours are the gate. Moving parts can swing through the body, so each one gets a sweep check. Three other plans work in the same first-person code. Notes are exchanged and the shared part goes in one neutral place.</p>
+    <p><b>Not measured.</b> What many armoured players cost in frames. The October plan's measuring pass never ran. One suit is cheap. Twenty in view is unknown.</p>
+
+    <h2>Where this meets the other three plans</h2>
+    <ul class="plain">
+      <li><b>Weapon models.</b> The Gauntlets weapon wins the hand and armour keeps the forearm. Armour takes the weapons' forge marks. A Lord's weapon and the same Lord's armour share metal and glow. If blades get a ground edge, armour trims take the same edge.</li>
+      <li><b>Weapon feel.</b> One film check of the grips with the new gauntlets. One family of sounds for blows that land on armour, theirs.</li>
+      <li><b>Powers.</b> Their plan lights the casting arm. On an armoured arm that light should drive the gauntlet's own glow. Their arm bends at the elbow and wrist, so the armour's arm is cut in three there to bend with it.</li>
+    </ul>
+
+    <h2>Your decisions</h2>
+    <div class="dec"><h3>1. Build the pass, stages 0 to 6?</h3><p><span class="rec">Recommended: yes.</span> If you only want the faults fixed, choose stage 0 only.</p>
+      <div class="ans" data-key="d1" hidden><button type="button" data-v="yes" aria-pressed="false">Yes, all of it</button><button type="button" data-v="stage0" aria-pressed="false">Stage 0 only</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d1" aria-label="A note on decision 1" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>2. The hands</h3><p>Every set gets a cuff, a slimmer glove and a hand plate, Lordscale and Sovereign Weave included (they keep their molten line). Look at the &ldquo;your own eyes&rdquo; picture on a few sets first. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d2" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No, keep the hands as they are</button><textarea id="note-d2" aria-label="A note on decision 2" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>3. The night rule</h3><p>From C-rank up the named feature stays lit. E and D stay dark. Halos, sun discs, crowns and wing edges glow by day too. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d3" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d3" aria-label="A note on decision 3" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>4. Movement sound</h3><p>A soft sound of your armour as you move, quiet when you sneak, with its own volume slider. <span class="rec">Recommended: on by default, low.</span></p>
+      <div class="ans" data-key="d4" hidden><button type="button" data-v="on" aria-pressed="false">On, low</button><button type="button" data-v="off" aria-pressed="false">Off until I turn it on</button><button type="button" data-v="none" aria-pressed="false">Don&rsquo;t build it</button><textarea id="note-d4" aria-label="A note on decision 4" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>5. Stage 3 changes plates on sixteen sets</h3><p>Limbs, belts and backs only. No helm changes. You see C-rank before the rest. <span class="rec">Recommended: yes.</span></p>
+      <div class="ans" data-key="d5" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d5" aria-label="A note on decision 5" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>6. Any bigger options?</h3><p><span class="rec">Recommended: Admire, and Abilities that use the suit, after the pass.</span> Pick any.</p>
+      <div class="ans" data-key="d6" data-multi hidden><button type="button" data-v="admire" aria-pressed="false">Admire</button><button type="button" data-v="abilities" aria-pressed="false">Abilities that use the suit</button><button type="button" data-v="face" aria-pressed="false">Show your face</button><button type="button" data-v="trails" aria-pressed="false">Footprints and trails</button><button type="button" data-v="many" aria-pressed="false">Many players</button><textarea id="note-d6" aria-label="A note on decision 6" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <div class="dec"><h3>7. A measuring run on your Mac at the end?</h3><p>It launches the game client there for a few minutes, with 20 armoured figures. <span class="rec">Recommended: yes, when the shaders session isn&rsquo;t measuring.</span></p>
+      <div class="ans" data-key="d7" hidden><button type="button" data-v="yes" aria-pressed="false">Yes</button><button type="button" data-v="no" aria-pressed="false">No</button><textarea id="note-d7" aria-label="A note on decision 7" placeholder="Anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>
+    <p class="ansnote" id="ansnote">You can also just answer in chat.</p>
+
+    <p class="muted" style="margin-top:28px">How this was checked: the armour code, shader and art kit read end to end. Every set rendered with the kit. 191 shots of the game today and 191 of the draft, same script, on GitHub's macOS runners with Lens on Cinematic. Draft branch <code>claude/armour-polish-plan-5e3628</code>, marked not for merge. Full record in <code>docs/armour/polish/PLAN.md</code>. The draft's light was only shot on Cinematic. Swift and the VFX look are unchecked.</p>
+  </div>
+</div>
+
+<script>
+const DATA = /*DATA*/;
+const VIEWS = [
+  ["front", "Worn, from the front", ""],
+  ["back", "Worn, from behind", ""],
+  ["fp", "Your own eyes", "The empty right hand in first person."],
+  ["status", "The K menu's Status figure", "narrow"],
+  ["stand", "An armour stand (left of each half) and a Fitting Stand (right)", "wide"],
+];
+const FAR = [
+  ["24", "The rank's row at 24 blocks"], ["48", "At 48 blocks"],
+  ["12_night", "At night, 12 blocks"], ["back_night", "At night, from behind"],
+];
+let rank = "A", set = "galewing";
+try { const h = location.hash.slice(1); if (DATA.sets[h]) { set = h; rank = Object.keys(DATA.ranks).find(r => DATA.ranks[r].includes(h)); } } catch (e) {}
+const $ = id => document.getElementById(id);
+function button(label, pressed, onclick) {
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", pressed ? "true" : "false"); b.onclick = onclick;
+  return b;
+}
+function fig(src, cap, cls) {
+  const f = document.createElement("figure");
+  if (cls) f.className = cls;
+  const i = document.createElement("img");
+  i.src = src; i.alt = cap; i.loading = "lazy";
+  const c = document.createElement("figcaption");
+  c.textContent = cap;
+  f.append(i, c);
+  return f;
+}
+function draw() {
+  const ranks = $("ranks"), sets = $("sets"), views = $("views");
+  ranks.replaceChildren(...Object.keys(DATA.ranks).map(r => button(r + "-rank", r === rank, () => { rank = r; set = DATA.ranks[r][0]; draw(); })));
+  sets.replaceChildren(...DATA.ranks[rank].map(s => button(DATA.sets[s].name, s === set, () => { set = s; draw(); })));
+  const d = DATA.sets[set];
+  $("setname").textContent = d.name;
+  $("setarch").textContent = rank + "-rank · " + d.arch;
+  $("settoday").textContent = d.today;
+  $("setgives").textContent = d.gives;
+  const figs = VIEWS.map(([v, cap, cls]) => fig("img/" + set + "_" + v + ".jpg", cap, cls === "wide" || cls === "narrow" ? cls : ""));
+  // the Status figure is tall and narrow: it sits beside the first-person view's row as a third
+  const names = DATA.ranks[rank].map(s => DATA.sets[s].name).join(", ");
+  const back = DATA.ranks[rank].map(s => DATA.sets[s].name).reverse().join(", ");
+  FAR.forEach(([v, cap]) => figs.push(fig("img/far_" + rank + "_" + v + ".jpg", cap + " (" + (v === "back_night" ? back : names) + ")", "")));
+  views.replaceChildren(...figs);
+  try { history.replaceState(null, "", "#" + set); } catch (e) {}
+}
+draw();
+
+// Answers: saved to this page's own store when it is there (you can still answer in chat when it is not).
+(async () => {
+  let db = null;
+  try { db = await window.claude?.use?.("db"); } catch (e) {}
+  const note = $("ansnote");
+  if (!db) return;
+  const boxes = [...document.querySelectorAll(".ans")];
+  const state = {};
+  const show = (box) => {
+    const key = box.dataset.key, st = state[key] || {};
+    const picks = st.picks && st.picks.length ? st.picks : (st.choice ? [st.choice] : []);
+    box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", picks.includes(b.dataset.v) ? "true" : "false"));
+    const ta = box.querySelector("textarea");
+    if (document.activeElement !== ta && typeof st.note === "string") ta.value = st.note;
+  };
+  const save = async (box, next) => {
+    const key = box.dataset.key, said = box.querySelector(".saved");
+    box.querySelectorAll("button").forEach(b => b.disabled = true);
+    said.textContent = "Saving";
+    try {
+      await db.doc("answers/" + key).set({ ...next, at: new Date().toISOString() });
+      state[key] = next; said.textContent = "Saved";
+    } catch (e) {
+      said.textContent = e && e.code === "invalid_argument" ? "This view can't save answers. Answer in chat." : "Couldn't save. Try again, or answer in chat.";
+    }
+    box.querySelectorAll("button").forEach(b => b.disabled = false);
+    show(box);
+  };
+  boxes.forEach(box => {
+    box.hidden = false;
+    const key = box.dataset.key, multi = "multi" in box.dataset, ta = box.querySelector("textarea");
+    box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      const st = state[key] || {};
+      if (multi) {
+        const picks = new Set(st.picks || []);
+        picks.has(b.dataset.v) ? picks.delete(b.dataset.v) : picks.add(b.dataset.v);
+        save(box, { picks: [...picks], note: ta.value });
+      } else {
+        save(box, { choice: st.choice === b.dataset.v ? "" : b.dataset.v, note: ta.value });
+      }
+    }));
+    ta.addEventListener("change", () => { const st = state[key] || {}; if ((st.note || "") !== ta.value) save(box, { choice: st.choice || "", picks: st.picks || [], note: ta.value }); });
+  });
+  note.textContent = "Your answers save here as you click. You can also just answer in chat.";
+  const late = setTimeout(() => { note.textContent = "Saved answers can't be reached yet. You can still click, or answer in chat."; }, 10000);
+  db.collection("answers").onSnapshot(snap => {
+    clearTimeout(late);
+    snap.docs.forEach(d => { const v = d.data() || {}; state[d.id] = { choice: v.choice || "", picks: v.picks || [], note: v.note || "" }; });
+    boxes.forEach(show);
+  }, () => { clearTimeout(late); note.textContent = "Saved answers can't be reached. Answer in chat."; });
+})();
+</script>

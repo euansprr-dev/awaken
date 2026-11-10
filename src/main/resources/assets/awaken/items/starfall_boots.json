@@ -1,6 +1,26 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/starfall_boots"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": [
+          "gui"
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/starfall_boots"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "awaken:item/starfall_boots_held",
+      "model": {
+        "type": "awaken:armour_piece",
+        "set": "starfall",
+        "piece": "boots"
+      }
+    }
   }
 }

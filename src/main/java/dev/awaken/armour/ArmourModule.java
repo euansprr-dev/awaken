@@ -73,6 +73,7 @@ public final class ArmourModule {
         r.playToClient(ArmourPayloads.Offers.TYPE, ArmourPayloads.Offers.STREAM_CODEC);
         r.playToClient(ArmourPayloads.Done.TYPE, ArmourPayloads.Done.STREAM_CODEC);
         r.playToClient(ArmourPayloads.Charge.TYPE, ArmourPayloads.Charge.STREAM_CODEC);
+        r.playToClient(ArmourPayloads.Whole.TYPE, ArmourPayloads.Whole.STREAM_CODEC);
     }
 
     /** A Hunter piece made before the Forge Song gains its story, Plain, the first time it is worn (SPEC §44.7). */

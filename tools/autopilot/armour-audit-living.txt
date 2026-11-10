@@ -1,0 +1,301 @@
+# Armour polish audit (living parts: each set at four moments a second apart, then in a walk or a fall). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit5 creative 5155
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 150 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone
+cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+opt fov 40
+wait 20
+wait 260
+cmd item replace entity @s armor.head with awaken:signals_echo_helmet
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate
+cmd item replace entity @s armor.legs with awaken:signals_echo_leggings
+cmd item replace entity @s armor.feet with awaken:signals_echo_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_signals_echo_a
+wait 20
+shotnow l_signals_echo_b
+wait 20
+shotnow l_signals_echo_c
+wait 20
+shotnow l_signals_echo_d
+wait 20
+cmd item replace entity @s armor.head with awaken:sunward_helmet
+cmd item replace entity @s armor.chest with awaken:sunward_chestplate
+cmd item replace entity @s armor.legs with awaken:sunward_leggings
+cmd item replace entity @s armor.feet with awaken:sunward_boots
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 8
+wait 14
+shotnow l_sunward_a
+wait 20
+shotnow l_sunward_b
+wait 20
+shotnow l_sunward_c
+wait 20
+shotnow l_sunward_d
+wait 20
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
+cmd item replace entity @s armor.feet with awaken:halo_choir_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_halo_choir_a
+wait 20
+shotnow l_halo_choir_b
+wait 20
+shotnow l_halo_choir_c
+wait 20
+shotnow l_halo_choir_d
+wait 20
+cmd tp @s 0.5 150 9.5 180 0
+camera front
+look 180 6
+wait 10
+walk 40
+wait 12
+shotnow l_halo_choir_walk_a
+wait 5
+shotnow l_halo_choir_walk_b
+wait 5
+shotnow l_halo_choir_walk_c
+wait 30
+cmd item replace entity @s armor.head with awaken:lanternlight_helmet
+cmd item replace entity @s armor.chest with awaken:lanternlight_chestplate
+cmd item replace entity @s armor.legs with awaken:lanternlight_leggings
+cmd item replace entity @s armor.feet with awaken:lanternlight_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_lanternlight_a
+wait 20
+shotnow l_lanternlight_b
+wait 20
+shotnow l_lanternlight_c
+wait 20
+shotnow l_lanternlight_d
+wait 20
+cmd tp @s 0.5 150 9.5 180 0
+camera front
+look 180 6
+wait 10
+walk 40
+wait 12
+shotnow l_lanternlight_walk_a
+wait 5
+shotnow l_lanternlight_walk_b
+wait 5
+shotnow l_lanternlight_walk_c
+wait 30
+cmd item replace entity @s armor.head with awaken:bladeward_helmet
+cmd item replace entity @s armor.chest with awaken:bladeward_chestplate
+cmd item replace entity @s armor.legs with awaken:bladeward_leggings
+cmd item replace entity @s armor.feet with awaken:bladeward_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_bladeward_a
+wait 20
+shotnow l_bladeward_b
+wait 20
+shotnow l_bladeward_c
+wait 20
+shotnow l_bladeward_d
+wait 20
+cmd tp @s 0.5 196 7.5 180 0
+wait 10
+shotnow l_bladeward_fall_a
+wait 6
+shotnow l_bladeward_fall_b
+wait 6
+shotnow l_bladeward_fall_c
+wait 70
+cmd item replace entity @s armor.head with awaken:nightcourt_helmet
+cmd item replace entity @s armor.chest with awaken:nightcourt_chestplate
+cmd item replace entity @s armor.legs with awaken:nightcourt_leggings
+cmd item replace entity @s armor.feet with awaken:nightcourt_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_nightcourt_a
+wait 20
+shotnow l_nightcourt_b
+wait 20
+shotnow l_nightcourt_c
+wait 20
+shotnow l_nightcourt_d
+wait 20
+cmd tp @s 0.5 196 7.5 180 0
+wait 10
+shotnow l_nightcourt_fall_a
+wait 6
+shotnow l_nightcourt_fall_b
+wait 6
+shotnow l_nightcourt_fall_c
+wait 70
+cmd item replace entity @s armor.head with awaken:galewing_helmet
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate
+cmd item replace entity @s armor.legs with awaken:galewing_leggings
+cmd item replace entity @s armor.feet with awaken:galewing_boots
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 8
+wait 14
+shotnow l_galewing_a
+wait 20
+shotnow l_galewing_b
+wait 20
+shotnow l_galewing_c
+wait 20
+shotnow l_galewing_d
+wait 20
+cmd tp @s 0.5 196 5.5 0 0
+wait 10
+shotnow l_galewing_fall_a
+wait 6
+shotnow l_galewing_fall_b
+wait 6
+shotnow l_galewing_fall_c
+wait 70
+cmd item replace entity @s armor.head with awaken:dreamsteel_helmet
+cmd item replace entity @s armor.chest with awaken:dreamsteel_chestplate
+cmd item replace entity @s armor.legs with awaken:dreamsteel_leggings
+cmd item replace entity @s armor.feet with awaken:dreamsteel_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_dreamsteel_a
+wait 20
+shotnow l_dreamsteel_b
+wait 20
+shotnow l_dreamsteel_c
+wait 20
+shotnow l_dreamsteel_d
+wait 20
+cmd item replace entity @s armor.head with awaken:riftwalker_helmet
+cmd item replace entity @s armor.chest with awaken:riftwalker_chestplate
+cmd item replace entity @s armor.legs with awaken:riftwalker_leggings
+cmd item replace entity @s armor.feet with awaken:riftwalker_boots
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 8
+wait 14
+shotnow l_riftwalker_a
+wait 20
+shotnow l_riftwalker_b
+wait 20
+shotnow l_riftwalker_c
+wait 20
+shotnow l_riftwalker_d
+wait 20
+cmd item replace entity @s armor.head with awaken:hollowheart_helmet
+cmd item replace entity @s armor.chest with awaken:hollowheart_chestplate
+cmd item replace entity @s armor.legs with awaken:hollowheart_leggings
+cmd item replace entity @s armor.feet with awaken:hollowheart_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_hollowheart_a
+wait 20
+shotnow l_hollowheart_b
+wait 20
+shotnow l_hollowheart_c
+wait 20
+shotnow l_hollowheart_d
+wait 20
+cmd item replace entity @s armor.head with awaken:leviathan_helmet
+cmd item replace entity @s armor.chest with awaken:leviathan_chestplate
+cmd item replace entity @s armor.legs with awaken:leviathan_leggings
+cmd item replace entity @s armor.feet with awaken:leviathan_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_leviathan_a
+wait 20
+shotnow l_leviathan_b
+wait 20
+shotnow l_leviathan_c
+wait 20
+shotnow l_leviathan_d
+wait 20
+cmd item replace entity @s armor.head with awaken:veilwoven_helmet
+cmd item replace entity @s armor.chest with awaken:veilwoven_chestplate
+cmd item replace entity @s armor.legs with awaken:veilwoven_leggings
+cmd item replace entity @s armor.feet with awaken:veilwoven_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 14
+shotnow l_veilwoven_a
+wait 20
+shotnow l_veilwoven_b
+wait 20
+shotnow l_veilwoven_c
+wait 20
+shotnow l_veilwoven_d
+wait 20
+cmd tp @s 0.5 150 9.5 180 0
+camera front
+look 180 6
+wait 10
+walk 40
+wait 12
+shotnow l_veilwoven_walk_a
+wait 5
+shotnow l_veilwoven_walk_b
+wait 5
+shotnow l_veilwoven_walk_c
+wait 30
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
+cmd item replace entity @s armor.feet with awaken:halo_choir_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 20
+shotnow l_grow_before
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet[awaken:forged={set:"halo_choir",mastery:3000}]
+wait 3
+shotnow l_grow_a
+wait 3
+shotnow l_grow_b
+wait 4
+shotnow l_grow_c
+wait 12
+shotnow l_grow_d
+quit
