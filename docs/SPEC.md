@@ -22074,7 +22074,9 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
 where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
-its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+its fallen body goes at the end of its fall (no white death puff), and where a fused one goes off (`Blasts.fire`:
+vanilla's push, damage curve and sound, with the body's matter in place of the explosion's smoke; on film the Puffcap
+went off like a creeper). **No borrowed fangs:** a gate monster's FANGS and
 FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
 fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
 (`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
