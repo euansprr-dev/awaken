@@ -104,6 +104,9 @@ public final class Autopilot {
     private static double glideX, glideY, glideZ;
     private static int glideTicks;
     private static int walkTicks;
+    /** {@code hold <key> <ticks>}: a key of ours kept down that long while the script goes on (a charged power, filmed). */
+    private static KeyMapping heldKey;
+    private static int heldTicks;
     // "need realm": how long it has waited for the Realm, and whether the tour has failed (no more shots, then quit)
     private static int needTicks;
     private static boolean failed;
@@ -300,6 +303,10 @@ public final class Autopilot {
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
         // walk: forward held down for a while (proves the player can move, e.g. after a scene let go)
+        if (heldTicks > 0 && heldKey != null) {
+            heldKey.setDown(--heldTicks > 0);
+            if (heldTicks == 0) heldKey = null;
+        }
         if (walkTicks > 0) {
             mc.options.keyUp.setDown(--walkTicks > 0);
             if (walkTicks == 0 && mc.player != null) Awaken.LOG.info("[autopilot] walked to {}", mc.player.blockPosition().toShortString());
@@ -486,10 +493,21 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "key" -> {
-                KeyMapping k = KEYS.get(arg.trim());
+                KeyMapping k = keyOf(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
+            }
+            case "hold" -> { // hold <key> <ticks>: press it and keep it down that long; the script carries on meanwhile
+                String[] h = arg.trim().split("\\s+");
+                KeyMapping k = keyOf(h[0]);
+                if (k == null || h.length < 2) Awaken.LOG.warn("[autopilot] hold <key> <ticks>: {}", arg);
+                else {
+                    KeyMapping.click(k.getKey());
+                    k.setDown(true);
+                    heldKey = k;
+                    heldTicks = Integer.parseInt(h[1]);
+                }
             }
             case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, q, e, or shift+ one of them
                 String k = arg.trim();
@@ -821,6 +839,11 @@ public final class Autopilot {
         mc.gui.setScreen(null);
         if (action != null) action.open().run();
         else Awaken.LOG.warn("[autopilot] the Map page opens nothing");
+    }
+
+    /** A key by its script name; "attack" is the game's own attack key (a blow with what the hand holds, at what the crosshair is on). */
+    private static KeyMapping keyOf(String name) {
+        return name.equals("attack") ? Minecraft.getInstance().options.keyAttack : KEYS.get(name);
     }
 
     private static final Map<String, KeyMapping> KEYS = Map.ofEntries(

@@ -42,6 +42,7 @@ public final class Fx {
         Emit e = new Emit(c.level, FxEvent.of(kind, style, at), at);
         e.profiled = CastProfiles.byPower(c.type.path) != null;
         e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant).power(PowerRegistry.index(c.type) + 1);
+        e.b.flag(dev.awaken.powers.fx.Ways.flags(c.way, c.take)); // how the cast was made: every client plays the caster's own clips
         e.power = c.powerLevel;
         e.caster = c.player;
         CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
@@ -281,6 +282,13 @@ public final class Fx {
      * A power's sound as an FX event: every client in range plays it at {@code at} on the cast's release frame (the same frame as
      * the effect and the camera moment), not on the press tick, so sound, hands and light land together.
      */
+    /** A beat of the cast's voice at a place (Voice): every client plays its score, or the classic sound given here. */
+    public static void voice(Cast c, Vec3 at, dev.awaken.powers.fx.Voice.Beat beat, float intensity,
+                             net.minecraft.core.@Nullable Holder<net.minecraft.sounds.SoundEvent> classic, float volume, float pitch) {
+        int id = classic == null ? -1 : net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getId(classic.value());
+        at(c, FxKind.VOICE, at).noAnim().colour(id).scale(intensity).aux(pitch).dir(new Vec3(volume, 0, 0)).ticks(beat.ordinal()).send();
+    }
+
     public static void sound(Cast c, Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound, float volume, float pitch) {
         int id = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getId(sound.value());
         if (id < 0) return;

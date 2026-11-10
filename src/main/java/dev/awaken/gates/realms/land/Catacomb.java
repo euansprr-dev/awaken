@@ -174,4 +174,11 @@ public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x3a4a6a, 0.5F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): roads cut for the dead: long vaults, crossings, piers, and bridges the masons left. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIERS, Cave.Form.HALL), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.CROSS), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.LEDGES, Chasm.Kind.STEPS), true, 2.2, 4);
+    }
 }

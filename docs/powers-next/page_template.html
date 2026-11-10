@@ -1,0 +1,373 @@
+<title>Powers, the Next Level</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Pixelify+Sans:wght@500;600&display=swap">
+<style>
+/* layout: one reading column; pictures break out to the full column in rows that stack on a phone; "today" is grey, "proposed" is orange, everywhere */
+:root{
+  --bg:#f2f4f7; --surface:#ffffff; --ink:#161b24; --mute:#586170; --line:#d4dae3; --wash:#e8ecf2;
+  --today:#6c675f; --new:#b4541a; --on-new:#ffffff; --good:#1e7a4c; --bad:#b3261e; --focus:#1f6feb;
+  --display:"Space Grotesk","Inter",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --pixel:"Pixelify Sans","Space Grotesk",monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12151b; --surface:#1b2029; --ink:#e8ebf0; --mute:#9ea7b6; --line:#2f3643; --wash:#232936;
+  --today:#a39c90; --new:#e58a45; --on-new:#1a1208; --good:#5fc48f; --bad:#f08a80; --focus:#7fb0ff; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#12151b; --surface:#1b2029; --ink:#e8ebf0; --mute:#9ea7b6; --line:#2f3643; --wash:#232936;
+  --today:#a39c90; --new:#e58a45; --on-new:#1a1208; --good:#5fc48f; --bad:#f08a80; --focus:#7fb0ff; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-block:28px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-0.02em}
+h2{font-size:clamp(24px,3.4vw,32px);font-weight:700;letter-spacing:-0.01em}
+h3{font-size:19px;font-weight:600;margin-top:10px}
+p,ul,ol{margin:0;max-width:68ch}
+ul,ol{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+a{color:inherit}
+.eyebrow{font-family:var(--pixel);font-size:14px;letter-spacing:0.06em;text-transform:uppercase;color:var(--mute);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pix{display:inline-flex;gap:3px}.pix i{width:9px;height:9px;display:block}
+.lede{font-size:19px;line-height:1.55;max-width:62ch}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.fact b{font-family:var(--display);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{color:var(--mute);font-size:14px;line-height:1.4}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
+nav.toc a{text-decoration:none;color:var(--mute)}nav.toc a:hover{color:var(--ink);text-decoration:underline}
+.tag{display:inline-block;font-family:var(--pixel);font-size:13px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 8px;border-radius:3px;width:fit-content}
+.tag.today{background:var(--today);color:var(--bg)}.tag.new{background:var(--new);color:var(--on-new)}
+.shots{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:540px){.shots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:900px){.shots.c4{grid-template-columns:repeat(4,minmax(0,1fr))}.shots.c3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.shot{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.shot img{width:100%;height:auto;display:block;border-radius:4px;border:1px solid var(--line)}
+.shots.today .shot img{border-bottom:3px solid var(--today)}.shots.new .shot img{border-bottom:3px solid var(--new)}
+.shot figcaption{font-size:14px;line-height:1.45;color:var(--mute)}.shot figcaption b{color:var(--ink);font-weight:600}
+.block{display:flex;flex-direction:column;gap:10px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:560px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-family:var(--display);font-weight:600;font-size:14px;color:var(--mute)}tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.change{border-left:3px solid var(--new);padding:2px 0 2px 16px;display:flex;flex-direction:column;gap:8px}
+.kv{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:6px 16px;font-size:15px;max-width:820px}
+.kv dt{color:var(--mute)}.kv dd{margin:0}
+@media (max-width:540px){.kv{grid-template-columns:1fr}.kv dt{font-weight:600;color:var(--ink)}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{margin:0}.card .fam{font-family:var(--pixel);font-size:13px;letter-spacing:0.05em;text-transform:uppercase;color:var(--mute)}
+.card p{font-size:15px}.card .why{color:var(--mute)}
+.path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--wash);border:1px solid var(--line);border-radius:4px;padding:10px 12px;overflow-x:auto;white-space:nowrap;user-select:all}
+.rowbtn{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-weight:600;padding:8px 14px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}button.primary{background:var(--new);color:var(--on-new);border-color:var(--new)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+fieldset{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:16px;margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+legend{font-family:var(--display);font-weight:600;font-size:18px;padding:0 6px;display:flex;gap:10px;align-items:baseline}
+legend .num{font-family:var(--pixel);color:var(--new);font-size:16px}
+.recline{color:var(--ink)}.ifno,.ask{color:var(--mute);font-size:15px}
+.answer{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.answer label,.ear label,.pick{display:inline-flex;gap:6px;align-items:center;font-weight:600}
+input[type=text],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;min-width:0}
+.note{flex:1 1 220px}
+.picks{display:flex;gap:8px 18px;flex-wrap:wrap}
+.ears{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.ear{flex-direction:row;flex-wrap:wrap;gap:8px 14px;align-items:center}.ear legend{font-size:16px}.ear .note{flex:1 1 100%}
+textarea{width:100%;max-width:820px;min-height:90px}
+.savebar{position:sticky;bottom:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;font-size:15px}
+#save-state{color:var(--mute)}
+.muted{color:var(--mute)}.small{font-size:14px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<main>
+<header class="block">
+  <div class="eyebrow"><span class="pix" aria-hidden="true"><i style="background:#E08F1F"></i><i style="background:#FF4A3D"></i><i style="background:#A7CDE3"></i><i style="background:#7FC3FF"></i><i style="background:#8F6BFF"></i><i style="background:#D088C2"></i><i style="background:#D9BA80"></i><i style="background:#47C6B0"></i><i style="background:#86E0A0"></i></span>AWAKEN &middot; a plan for you to approve &middot; 10 November</div>
+  <h1>Powers, the Next Level</h1>
+  <p class="lede">You asked for better power animations, more variety, much better sounds, and a fresh look at which powers and combos exist. This morning I filmed seventeen casts in the game as it is, and measured every power sound. This page shows what I found and what I'd do about it. Nothing is built yet. Eleven answers at the bottom start it.</p>
+  <div class="facts">
+    <div class="fact"><b>30 of 159</b><span>first-person cast animations are an exact copy of another power's</span></div>
+    <div class="fact"><b>83 of 224</b><span>power sound files still have the high ring you called out</span></div>
+    <div class="fact"><b>72 of 76</b><span>sound recipes are pure synthesis, with nothing recorded in them</span></div>
+    <div class="fact"><b>4,961</b><span>real recordings ship inside Minecraft, and powers use almost none of them</span></div>
+  </div>
+  <nav class="toc" aria-label="On this page"><a href="#asked">What you asked</a><a href="#today">Today, on film</a><a href="#why">Why</a><a href="#ways">Three ways to go</a><a href="#hands">Hands</a><a href="#voice">Sound</a><a href="#variety">Variety</a><a href="#look">Look</a><a href="#combos">Combos and new powers</a><a href="#build">How it gets built</a><a href="#decisions">Your answers</a></nav>
+</header>
+
+<section id="asked">
+  <h2>What you asked for</h2>
+  <p>In your words: push the power animations to the next level, especially the variety, the animations themselves and the sounds, and get creative about new powers and combos. You also said you don't want to scrap everything.</p>
+  <p>So this is a polish plan with a creative layer on top. Yesterday's plan, Powers in Full Voice, stays as the map of what each power does. You said yes to all 43 parts of it and I'm not reopening them. This plan changes how every power is made from here on: what your hands do, what you hear, how two casts differ, and how powers meet your weapon and your movement.</p>
+  <h3>How you'll know it worked</h3>
+  <ul>
+    <li>Hide the HUD. From one second of your hands you can tell which power it is. The same from the sound with your eyes shut.</li>
+    <li>Cast one power three times. It doesn't look or sound the same three times.</li>
+    <li>With a sword out, a one-handed cast never hides the sword and never waves it about.</li>
+    <li>Nothing that matters happens below the bottom of the screen.</li>
+    <li>No sound makes you say "synthetic".</li>
+  </ul>
+  <h3>What doesn't change</h3>
+  <p>The Beam, Charged Shot's ball of lightning, Storm Call, the ground wave, how powers level, and the server deciding all damage. Every rule you've given stands: no timing layer, no dings, blocky fists with no fingers, nothing fights for you. This plan doesn't touch the K menu or rebalance damage.</p>
+</section>
+
+<section id="today">
+  <h2>What casting looks like today</h2>
+  <p>These are stills from the game, filmed this morning on a clean machine in slow motion, with the real keys pressed. Nobody had filmed yesterday's four rebuilt powers before. The red text in two pictures is the film's own set-up commands.</p>
+  <div class="block"><h3>The wind-up happens where you can't see it</h3><p>For the first half second of a Haymaker charge there is no hand on screen. Nova shows two fist tips at the bottom edge. Frost Nova shows nothing until its ring appears.</p>{{offscreen}}</div>
+  <div class="block"><h3>The arm is one big block</h3><p>The arm can only be a straight block from the bottom corner to one point. When that point is your brow, as in Dominate, the block lies across the middle of the screen and hides what you're aiming at.</p>{{arm}}</div>
+  <div class="block"><h3>Your weapon gets in the way</h3><p>A cast either hides what you hold in one frame and pops it back afterwards, or it's thrown with the weapon hand, so the weapon swings across your view.</p>{{weapon}}</div>
+  <div class="block"><h3>Four different ideas, one thin ring</h3><p>Thunderclap, Frost Nova, Telekinesis and Gravity Well each end as a ring on the grass, a flash and a number.</p>{{ring}}</div>
+  <div class="block"><h3>Some show nothing at all</h3><p>Barrier and Mend are on you, and in first person there's nothing to see. Dash throws plain white squares.</p>{{blank}}</div>
+  <div class="block"><h3>What's already good</h3><p>These are the bar for the rest.</p>{{good}}</div>
+  <h3>The same thing in numbers</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Part</th><th>Today</th></tr>
+    <tr><td>Hand animations</td><td>159. Most have three real poses a hand. 30 are exact copies of another power's. The six dash powers share one.</td></tr>
+    <tr><td>The arm</td><td>One straight block. No elbow and no turn of the wrist.</td></tr>
+    <tr><td>Screen kick and shake</td><td>8 kinds, shared by 54 powers.</td></tr>
+    <tr><td>Effects</td><td>30 kinds, recoloured by family.</td></tr>
+    <tr><td>Sounds</td><td>224 files, and 83 ring. 46 of the 63 powers only play sounds they share with other powers. 8 have sounds of their own.</td></tr>
+    <tr><td>How sounds were made</td><td>72 of 76 recipes are pure synthesis. Yesterday's four new packs put a few recordings under more synthesis.</td></tr>
+    <tr><td>Variety inside one power</td><td>One animation and two takes of each sound.</td></tr>
+    <tr><td>Combos with weapons</td><td>36 Weaves, which are 4 shapes in 9 colours. None belongs to one weapon or one power.</td></tr>
+  </table></div>
+</section>
+
+<section id="why">
+  <h2>Why it's like this</h2>
+  <ol>
+    <li><b>The arm can't act.</b> It's a rigid block, and the only thing an animation can say is where its end is. That's why a palm, a punch and a reach all look alike.</li>
+    <li><b>The animations were written from numbers and never watched.</b> The spec says so itself: "authored from the numbers, not yet seen". That's how wind-ups ended up off screen.</li>
+    <li><b>A cast and a weapon can't share the screen.</b> The system has two choices, hide the weapon or move the weapon hand.</li>
+    <li><b>The sounds are built, with almost nothing recorded to build from.</b> The whole library behind the power sounds is seven field recordings and two free packs. Yesterday took the ring out of four powers and kept the method. It's the same method as the first pick sounds, which you called "super synthetic". When those were remade from Minecraft's own recordings you said "WAYYYY better".</li>
+    <li><b>A power's identity is mostly its colour.</b> Thirty effects, forty shared sounds and eight screen kicks are spread across 63 powers.</li>
+    <li><b>Nothing changes between two casts.</b></li>
+    <li><b>Combos are tables.</b> A Weave is one of four shapes in your family's colour, whatever weapon you hold and whatever power you cast.</li>
+  </ol>
+  <p class="muted">Two things I haven't proved. I don't know that a blocky arm with an elbow will look right. And I can't hear, so I don't know that layered game recordings will sound right to you. The first stage exists to answer both.</p>
+</section>
+
+<section id="ways">
+  <h2>Three ways to go</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>What you'd get</th><th>What it leaves</th><th>Cost</th></tr>
+    <tr><td><b>A. Tidy up</b></td><td>Every animation redone on today's arm and brought into view. The 83 ringing sounds remade.</td><td>The arm stays a block, powers still share looks and sounds, and the weapon still pops away.</td><td class="n">about 15 hours</td></tr>
+    <tr><td><b>B. Change how powers are made</b><br><span class="muted">my recommendation</span></td><td>An arm that can act, the weapon staying in your hand, sounds from real recordings, casts that vary, a look for each power, and combos you can see.</td><td>It's more work, and the arm and the sounds need a proof before I'd trust them.</td><td class="n">about 95 hours on top of yesterday's plan</td></tr>
+    <tr><td><b>C. New hands and a bought sound library</b></td><td>Modelled hands with fingers, like a big shooter.</td><td>It goes against your "clean fists" ruling and stops feeling like Minecraft.</td><td class="n">far more</td></tr>
+  </table></div>
+  <p>I'd build B, one power at a time, in the same pass as yesterday's reworks, so each power is opened once. If the proof shows the elbow looks like loose bricks, I'd drop back to A's arm and keep the rest of B. If the listening page tells you game recordings are the wrong source, the scores stay and the sources change.</p>
+</section>
+
+<section id="hands">
+  <h2>Hands</h2>
+  <div class="change">
+    <h3>The left hand casts and your weapon stays</h3>
+    <p>One-handed casts move to your left hand. Your weapon drops into a low guard in your right and never leaves the screen, so you can swing, cast and swing again. Two-handed casts lower the weapon properly and bring it back, using the same motion the game already uses when you climb. This is the same Spirit Palm, today and proposed.</p>
+    {{tag_today}}{{palm_today}}
+    {{tag_new}}{{palm_new}}
+  </div>
+  <div class="change">
+    <h3>An elbow and a wrist</h3>
+    <p>The arm stays blocky, with no fingers, as you ruled. What changes is that the forearm can point anywhere and the wrist can turn. It can lie across your chest, stand straight up or drive forward. Every animation made so far keeps working unchanged.</p>
+    {{tag_today}}{{nova_today}}
+    {{tag_new}}{{nova_new}}
+  </div>
+  <div class="change">
+    <h3>Your arm shows the power</h3>
+    <p>Light runs from your elbow to your fist while you wind up, leaves through your hand on the release and fades as the arm comes home. Each family has its own pattern, drawn in pixels on the skin's own grid so it looks like it belongs to the arm. Barrier, Mend and the other powers that sit on you show here, so you can finally see them in first person.</p>
+    {{tag_new}}{{arms}}
+  </div>
+  <div class="change">
+    <h3>Rules every animation has to pass</h3>
+    <ul>
+      <li>Every pose you're meant to see is on screen, above the hotbar.</li>
+      <li>No hand sits over the middle of the view for more than a blink.</li>
+      <li>A big strike pulls back first, goes past where it stops, and settles.</li>
+      <li>Two hands never start on the same tick. One leads.</li>
+      <li>No two powers share an animation.</li>
+      <li>You can cut the recovery short with your next action.</li>
+      <li>Each power has its own screen kick, in place of the eight shared ones.</li>
+    </ul>
+    <p>The first five are checked by the build on every animation, so they can't slip back. And nothing is called finished until its film has been looked at frame by frame.</p>
+  </div>
+  <dl class="kv">
+    <dt>What it keeps</dt><dd>Blocky fists, your skin, left-handed play, the comfort settings, and what other players see: every first-person animation gets its third-person twin in the same step.</dd>
+    <dt>The trade-off</dt><dd>The hands are shared with weapons. The weapon session and I have to agree the arm's new fields before either of us builds. A two-handed weapon needs its left hand to let go for a moment.</dd>
+    <dt>How we test it</dt><dd>The same seventeen casts filmed again, shot for shot against today's. Then you, with the HUD off.</dd>
+  </dl>
+</section>
+
+<section id="voice">
+  <h2>Sound</h2>
+  <div class="change">
+    <h3>A score for every power, from Minecraft's own recordings</h3>
+    <p>Each power gets a score. A cast has beats: the gather, the peak, the release, the hit and what's left afterwards. Each beat is a few layers, and each layer is one of the game's own recordings at a pitch and a volume. A Haymaker's charge becomes a crossbow being drawn slowly, leather tightening, and the Warden's heartbeat getting faster. The game already has these files, so nothing of Mojang's goes into our project, and the sound belongs in Minecraft because it is Minecraft.</p>
+    <ul>
+      <li><b>The world joins in.</b> The hit adds the sound of whatever you hit: stone, grass, a zombie.</li>
+      <li><b>Never the same twice.</b> Most recordings come in several takes. Each cast picks different ones and shifts the pitch a little.</li>
+      <li><b>Nothing that sings.</b> Amethyst, note blocks, bells, the beacon and the level-up sound are off the list. The ring checker still runs on every score.</li>
+      <li><b>Where the game has nothing,</b> a real recording of the real thing. No synthesis.</li>
+    </ul>
+  </div>
+  <div class="change">
+    <h3>How you hear it</h3>
+    <p><b>Now, on your Mac.</b> I've made a listening page with six powers: Haymaker, Gravity Well, Spirit Palm, Nova, Frost Nova and Shadow Step. Each has what the game plays today beside two new versions, once and three times in a row. It has to stay on your Mac because it plays Mojang's audio. Open this file in a browser:</p>
+    <div class="path" id="listen-path">{{listen_path}}</div>
+    <div class="rowbtn"><button type="button" id="copy-path">Copy the path</button><span class="muted small" id="copy-state"></span></div>
+    <p><b>Then, in the game.</b> The proof adds a setting, Power sounds: Classic or New. You flip it in the middle of a fight and hear the difference where it counts.</p>
+    <p class="muted">I chose the recordings by what each one is a recording of, and by measuring its length, loudness and brightness. I can't hear them. Treat both new versions as guesses and tell me which way to go.</p>
+  </div>
+  <h3>After you've listened</h3>
+  <div class="ears">{{ears}}</div>
+  <dl class="kv">
+    <dt>What it keeps</dt><dd>Subtitles, the volume sliders, and the sounds you've already said yes to elsewhere in the game.</dd>
+    <dt>The trade-off</dt><dd>A resource pack that changes Minecraft's sounds will change the powers too. And if a future Minecraft renames a recording, the build will say which score needs a new one.</dd>
+    <dt>How we test it</dt><dd>You do. A pass or a redo on each power, on the listening page first and with the switch in game after.</dd>
+  </dl>
+</section>
+
+<section id="variety">
+  <h2>Variety</h2>
+  <div class="change">
+    <h3>Takes</h3>
+    <p>Every cast gets two or three takes: the same move with a slightly different path and timing. You never see the same one twice running. Everyone watching you sees the take you see.</p>
+  </div>
+  <div class="change">
+    <h3>Ways</h3>
+    <p>About twenty of the physical powers read what your body is doing when you press. Standing, sprinting and in the air each get their own animation and change the shape of the power. They don't change its damage and there's nothing to time. It's the situation, which is how you asked powers to reward you.</p>
+    {{tag_new}}{{ways}}
+    <p>First to get ways: Shockwave, Ground Slam, Haymaker, Spirit Palm, Nova, Frost Nova, Thunderclap, Terrain Rip, Beam and Charged Shot.</p>
+  </div>
+</section>
+
+<section id="look">
+  <h2>A look of its own for every power</h2>
+  <p>One rule: no power may end as only a ring, a flash and a number. Each gets one effect that only it has, made of its own material and tied to your hands or the ground. Yesterday's plan already describes many of these, such as real frost crawling over ground and water for Frost Nova, the air breaking in a wedge for Thunderclap, and loose things flying into the Well. This plan makes it a rule for all 63 and adds three smaller ones: powers that sit on you show on your arms, the plain squares go, and burning gets our own fire in place of the game's.</p>
+</section>
+
+<section id="combos">
+  <h2>Combos, new powers and other ideas</h2>
+  <div class="change">
+    <h3>With your weapon</h3>
+    <p>Today a Weave is a ring or an echo in your family's colour. I'd have the weapon perform it: when a cast lands in a Weave's moment, your blade carries the power through a swing of its own.</p>
+    <p>On top of that, twelve <b>Arms Duets</b>. Each pairs one power with one weapon. You find them by trying things, and they're counted with yesterday's Duets in the Journal.</p>
+    <div class="tablewrap"><table>
+      <tr><th>Name</th><th>Power and weapon</th><th>What happens</th></tr>
+      <tr><td>Recall</td><td>Telekinesis, any weapon</td><td>Hold it with nothing in your sights and your weapon leaves your hand and hangs in the air. Let go to throw it. Press again and it flies back through whatever is in the way.</td></tr>
+      <tr><td>Thunder Javelin</td><td>Charged Shot, Spear</td><td>The ball of lightning goes onto the spearhead. Throw the spear and it carries the bolt.</td></tr>
+      <tr><td>Still Cut</td><td>Flow, Katana</td><td>Cuts you make in slowed time hang in the air and all land when time comes back.</td></tr>
+      <tr><td>Mirror Guard</td><td>Barrier, Shieldblade</td><td>The plate sits on your shield. A clean block throws back everything it has stored.</td></tr>
+      <tr><td>Both Barrels</td><td>Haymaker, Gauntlets</td><td>The charge fills both fists, and the let-go is a one-two.</td></tr>
+      <tr><td>Chain Step</td><td>Shadow Step, Daggers</td><td>A stab that staggers or kills makes your next Step free for two seconds.</td></tr>
+      <tr><td>Icebreaker</td><td>Frost Nova, Maul</td><td>A heavy blow on frozen ground sends the ice out as a row of spikes.</td></tr>
+      <tr><td>Reap</td><td>Gravity Well, Scythe</td><td>A sweep through your Well drags everything in it along the blade.</td></tr>
+      <tr><td>Edge of Light</td><td>Beam, Greatblade</td><td>Hold the Beam with the blade raised and it runs up the blade. Your next heavy throws it as a crescent.</td></tr>
+      <tr><td>Batter Up</td><td>Terrain Rip, Maul or War-staff</td><td>Hit the chunk you're holding and it goes twice as far.</td></tr>
+      <tr><td>Crossing</td><td>Lightning Step, Twin Blades</td><td>Step through something with both blades out and it's cut on the way in and on the way out.</td></tr>
+      <tr><td>Long Reach</td><td>Spirit Palm, War-staff</td><td>The palm travels down the staff, so the echo lands a staff's length further away.</td></tr>
+    </table></div>
+  </div>
+  <div class="change">
+    <h3>With your movement and with each other</h3>
+    <p>Ways are the movement combos. Yesterday's plan already makes casts count in the Ascent's chain, and its 24 Duets stand. The one thing I'd add is that each Duet gets its own animation, effect and score, so finding one is something you see and hear.</p>
+  </div>
+  <div class="change">
+    <h3>Break finishers</h3>
+    <p>When you break a boss's stance and cast into it, the power plays a short finisher in first person, one for each family. A Kinetic punch goes right through and the boss folds over your arm. With Velocity you're past it and back before it falls. With Shadow, your shadow finishes it a beat after you do. You get a couple of seconds to do it, so it rewards the moment and needs no timing.</p>
+  </div>
+  <div class="change">
+    <h3>New powers</h3>
+    <p>I looked for gaps before ideas. Heat has one power, and it's a dash. Frost has one. Yet your weapons can be attuned to both, and yesterday's Burning and Chilled States have almost nothing to cause them. Nothing in powers answers the forge, and Flight has no power that helps you move. These five each fill one of those. Yesterday's eight new powers aren't built yet either, so these would queue behind them.</p>
+    <div class="cards">
+      <div class="card"><span class="fam">Heat &middot; from the War Anvil</span><h3>Brand</h3><p>Press your palm on a creature or a block. It holds the heat and glows from inside. Your next weapon blow on it sets it off. A branded wall bursts outward, and a branded creature that dies spreads fire to what's near.</p><p class="why"><b>In your hands:</b> a flat left palm, ember cracks running down your arm into the thing, and a glowing handprint left behind. <b>You'd hear:</b> a flame catching, lava popping, iron cooling. <b>Why it earns a place:</b> it makes your weapon the trigger, and it comes from forging.</p></div>
+      <div class="card"><span class="fam">Frost &middot; from a frost gate's Lord</span><h3>Hoarfrost Lances</h3><p>Hold the key and up to five lances of ice grow over your shoulders. You see their tips at the top corners of your view. Every swing of your weapon looses one at what you hit. Press again to loose the rest together.</p><p class="why"><b>You'd hear:</b> the game's own freezing sound, a Creaking locking still, a trident thrown. <b>Why it earns a place:</b> it works through your weapon and leaves things Chilled for the Duets.</p></div>
+      <div class="card"><span class="fam">Flight &middot; from one long glide</span><h3>Updraft</h3><p>Plant a column of rising air. Ride it up, glide off the top or dive out of it. Creatures, arrows and loose things caught in it go up too.</p><p class="why"><b>You'd hear:</b> a Breeze, the elytra's rush, a wind charge. <b>Why it earns a place:</b> it's ground you make for your own movement, and the first Flight power that meets the Ascent.</p></div>
+      <div class="card"><span class="fam">Heat &middot; from an ember gate</span><h3>Backdraft</h3><p>Breathe in. Every fire near you goes out, every burning creature stops burning, and all of it comes into your chest. Breathe out and it leaves as one cone. The more you took in, the bigger it is.</p><p class="why"><b>Why it earns a place:</b> it feeds on what your other powers set alight, and it puts out a fire at home.</p></div>
+      <div class="card"><span class="fam">Spirit &middot; from the Wild Lands</span><h3>Thornwake</h3><p>Point at the ground and the plants that are really there answer. In a meadow, grass snares their feet. In a forest, roots come up and hold. On bare stone you only get a stumble.</p><p class="why"><b>Why it earns a place:</b> it ties powers to the wild, and it gives the Held State a source.</p></div>
+    </div>
+    <p>Each one would show its first step on the Tasks page and keep its Reading in the Journal, like yesterday's.</p>
+  </div>
+  <p class="muted">One for later, if the rest lands well: your beam meeting a boss's beam and pushing against it.</p>
+</section>
+
+<section id="build">
+  <h2>How it gets built</h2>
+  <p>One builder, no helpers. A proof first, then a stop.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Stage</th><th>What</th><th>Building time</th><th>Then</th></tr>
+    <tr><td>The proof</td><td>The new arm and its light, left-hand casting, sound scores with the Classic and New switch, and takes. Four powers rebuilt to this bar: Spirit Palm, Nova, Shockwave with its three ways, and Frost Nova. Haymaker's charge brought into view with its new sound.</td><td class="n">about 14 hours</td><td><b>You play and listen. Everything else waits for your word.</b></td></tr>
+    <tr><td>The starters</td><td>The six powers a new player chooses from, and what they meet first.</td><td class="n">about 12 hours</td><td>A film and a listening page</td></tr>
+    <tr><td>Nine families</td><td>One family at a time. Each power is opened once: yesterday's rework, its hands, its sound, its look, its takes and ways.</td><td class="n">10 to 14 hours each</td><td>A film and a listening page each. You play when you like.</td></tr>
+    <tr><td>Weapon combos</td><td>Weaves by the weapon, the twelve Arms Duets and the Break finishers, with the weapon session.</td><td class="n">about 20 hours</td><td>You play</td></tr>
+    <tr><td>New powers</td><td>The ones you pick, two at a time.</td><td class="n">about 4 hours each</td><td>You play each pair</td></tr>
+  </table></div>
+  <p>Yesterday's plan was 130 hours. This adds about 95, and it could be anywhere from 70 to 130. The proof is the only part I'm asking you to start.</p>
+  <h3>What could go wrong</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Risk</th><th>What I'd do</th></tr>
+    <tr><td>The elbow looks like loose bricks</td><td>The proof shows it on four powers. If it does, I go back to today's arm and keep everything else.</td></tr>
+    <tr><td>Game recordings sound wrong to you</td><td>The listening page tells us before anything is built. The scores stay and the sources change.</td></tr>
+    <tr><td>Two sessions change the hands at once</td><td>One owner for the arm's new fields, agreed with the weapon and armour sessions before the proof. I've left them a note.</td></tr>
+    <tr><td>Ways make a power stronger</td><td>A way changes the shape and never the damage. It sits under the same caps as everything else.</td></tr>
+    <tr><td>It costs frames</td><td>The arm's light is one extra draw, and a cast plays at most twelve sounds. The proof is measured against today.</td></tr>
+  </table></div>
+  <p class="muted small">Everything can be switched off: the arm's new fields default to today's, and the light and the new sounds each sit behind a setting. The full plan with the technical detail is in <code>docs/powers-next/PLAN.md</code> on the branch <code>claude/powers-next-plan-557510</code>.</p>
+</section>
+
+<section id="decisions">
+  <h2>Your answers</h2>
+  <p>Eleven decisions. Yes or no on each, with room for a line. They save as you go.</p>
+  {{decisions}}
+  <fieldset><legend>Anything else</legend><textarea id="general" placeholder="Anything I've missed, or a power you'd like to see first" aria-label="Anything else"></textarea></fieldset>
+  <div class="savebar"><span id="answered">0 of 11 answered</span><button class="primary" id="yes-all" type="button">Yes to everything unanswered</button><span id="save-state">Loading your answers&hellip;</span></div>
+</section>
+</main>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var recIds={{rec_ids}};
+  $('#copy-path').addEventListener('click',function(){
+    var t=$('#listen-path').textContent,s=$('#copy-state');
+    function pick(){var r=document.createRange();r.selectNodeContents($('#listen-path'));var sel=getSelection();sel.removeAllRanges();sel.addRange(r);s.textContent='Selected. Press Cmd+C.';}
+    try{navigator.clipboard.writeText(t).then(function(){s.textContent='Copied.';},pick);}catch(e){pick();}
+  });
+  var docs={},queues={},db=null,canWrite=true,ready=false;
+  function say(t,bad){var s=$('#save-state');s.textContent=t;s.style.color=bad?'var(--bad)':'';}
+  function refresh(){
+    $$('fieldset[data-doc]').forEach(function(f){var d=docs[f.dataset.doc]||{};$$('input[type=radio]',f).forEach(function(r){r.checked=(d.answer===r.value);});});
+    $$('[data-note]').forEach(function(i){if(document.activeElement!==i){i.value=(docs[i.dataset.note]||{}).note||'';}});
+    var picks=(docs.newpowers||{}).picks||{};$$('[data-pick]').forEach(function(c){c.checked=!!picks[c.dataset.pick];});
+    var g=$('#general');if(document.activeElement!==g)g.value=(docs.general||{}).note||'';
+    var n=0;recIds.forEach(function(id){if((docs[id]||{}).answer)n++;});
+    $('#answered').textContent=n+' of '+recIds.length+' answered';
+  }
+  function put(id,patch){
+    docs[id]=Object.assign({},docs[id]||{},patch);refresh();
+    if(!db||!canWrite)return;
+    queues[id]=(queues[id]||Promise.resolve()).then(function(){say('Saving\u2026');return db.doc('answers/'+id).set(Object.assign({},docs[id],{at:Date.now()}));}).then(function(){say('Saved.');},function(e){say('That one did not save: '+((e&&e.message)||'unknown error'),true);});
+  }
+  var timers={};function later(id,fn){clearTimeout(timers[id]);timers[id]=setTimeout(fn,700);}
+  $$('fieldset[data-doc]').forEach(function(f){$$('input[type=radio]',f).forEach(function(r){r.addEventListener('change',function(){if(r.checked)put(f.dataset.doc,{answer:r.value});});});});
+  $$('[data-note]').forEach(function(i){i.addEventListener('input',function(){later(i.id,function(){put(i.dataset.note,{note:i.value});});});});
+  $$('[data-pick]').forEach(function(c){c.addEventListener('change',function(){var p=Object.assign({},(docs.newpowers||{}).picks||{});p[c.dataset.pick]=c.checked;put('newpowers',{picks:p});});});
+  var gen=$('#general');gen.addEventListener('input',function(){later('general',function(){put('general',{note:gen.value});});});
+  $('#yes-all').addEventListener('click',function(){recIds.forEach(function(id){if(!(docs[id]||{}).answer){var patch={answer:'yes'};if(id==='newpowers'&&!(docs.newpowers||{}).picks)patch.picks={brand:true,hoarfrost:true,updraft:true};put(id,patch);}});});
+  function noSave(){say('Answers can\u2019t be saved in this view. Open the page in Claude to answer, or just tell me in chat.',true);}
+  (async function(){
+    var t=setTimeout(function(){if(!ready)noSave();},10000);
+    try{
+      if(!window.claude||!window.claude.use){clearTimeout(t);noSave();return;}
+      db=await window.claude.use('db');
+      var user=await window.claude.use('user');
+      if(!db){clearTimeout(t);noSave();return;}
+      if(user){var c=await user.can('data.write');if(c===false){canWrite=false;say('You can read this plan, but only Euan can answer it.');}}
+      db.collection('answers').onSnapshot(function(snap){
+        ready=true;clearTimeout(t);var next={};snap.docs.forEach(function(d){next[d.id]=d.data();});docs=next;refresh();
+        if(canWrite&&$('#save-state').textContent.indexOf('Loading')===0)say(snap.empty?'Ready. Nothing answered yet.':'Your earlier answers are loaded.');
+      },function(e){clearTimeout(t);say('Could not load answers: '+((e&&e.message)||'unknown error'),true);});
+    }catch(e){clearTimeout(t);noSave();}
+  })();
+  refresh();
+})();
+</script>

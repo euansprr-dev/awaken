@@ -97,6 +97,15 @@ final class PalCasts {
         return play(LAYER, entityId, clip, fadeIn);
     }
 
+    /** Whether the library has this clip (a way's or a take's version may not exist: the caller falls back to the base). */
+    static boolean has(String clip) {
+        try {
+            return PlayerAnimResources.hasAnimation(Awaken.id(clip));
+        } catch (RuntimeException | LinkageError ex) {
+            return false;
+        }
+    }
+
     private static boolean play(Identifier layer, int entityId, String clip, int fadeIn) {
         try {
             Layer l = layer(layer, entityId);

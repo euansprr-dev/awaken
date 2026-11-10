@@ -381,7 +381,7 @@ public final class RealmTests {
             if (wide != null) try {
                 perKind = Math.max(2, Math.min(40, Integer.parseInt(wide.trim())));
             } catch (NumberFormatException ignored) {}
-            Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
+            Set<String> sizes = new HashSet<>(), shapes = new HashSet<>(), cuts = new java.util.TreeSet<>();
             List<String> bad = new java.util.ArrayList<>();
             for (int k = 0; k < CRAWLS.length; k++) for (int i = 0; i < perKind; i++) {
                 String program = CRAWLS[k];
@@ -401,13 +401,24 @@ public final class RealmTests {
                 var rolled = (dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?>) land;
                 sizes.add(rolled.size().name());
                 shapes.add(rolled.shape().name());
+                cuts.addAll(rolled.used());
+                // what each run is, so whoever writes a tour can pick the seed that shows a kind's own shapes
+                if (perKind >= 8) dev.awaken.Awaken.LOG.info("[realms] run {} seed {}: {} {}, {}", program, seed, rolled.size(), rolled.shape(), rolled.used());
             }
             // every fault is listed in the log, so one run says everything that is wrong
             for (String line : bad) dev.awaken.Awaken.LOG.error("[realms] rolled crawl: {}", line);
             if (!bad.isEmpty()) h.fail(bad.size() + " rolled crawls are wrong, the first: " + bad.get(0));
             // so many seeds must not all be the same run: on the wide sweep every size and every shape turns up
             if (sizes.size() < (perKind >= 8 ? 3 : 2) || shapes.size() < (perKind >= 8 ? 4 : 2)) h.fail("the seeds rolled only " + sizes + " and " + shapes);
-            dev.awaken.Awaken.LOG.info("[realms] rolled crawls: {} kinds on {} seeds each, sizes {}, shapes {}", CRAWLS.length, perKind, sizes, shapes);
+            dev.awaken.Awaken.LOG.info("[realms] rolled crawls: {} kinds on {} seeds each, sizes {}, shapes {}, cut as {}", CRAWLS.length, perKind, sizes, shapes, cuts);
+            // and no two legs need be cut alike: on the wide sweep every room form, hall plan and crossing has turned up somewhere
+            if (perKind >= 8) {
+                List<String> missing = new java.util.ArrayList<>();
+                for (var f : dev.awaken.gates.realms.kit.crawl.CrawlLand.Cave.Form.values()) if (!cuts.contains("room " + f)) missing.add("room " + f);
+                for (var f : dev.awaken.gates.realms.kit.crawl.CrawlLand.Arena.Plan.values()) if (!cuts.contains("lord " + f)) missing.add("lord " + f);
+                for (var f : dev.awaken.gates.realms.kit.crawl.CrawlLand.Chasm.Kind.values()) if (!cuts.contains("crossing " + f)) missing.add("crossing " + f);
+                if (!missing.isEmpty()) h.fail("the wide sweep never rolled " + missing);
+            }
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)
