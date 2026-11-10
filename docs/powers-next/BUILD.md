@@ -164,3 +164,8 @@ Films of the light on armour: `powers-next-armour.txt` (four casts in three C-ra
 all 29 sets, then Frost Nova and a held Haymaker in six, one a family of material). The pale box in the corner of the earlier
 stills was Ilse's Letters, the opening's gift, held in the main hand; both scripts put it down now.
 
+Film of all 29 (run 42882243878, on e191e6bea, 43 stills in `run-autopilot/screenshots-ci/powers-next-armour-all-42882243878/`):
+every set keeps its own colours and wears the light on its own lines; nothing floats or shows through. Two stills missed their arm
+(Galewing, Halo Choir: a rift opened in the tour's world and turned the camera). One flaw, fixed after it: a line that is a wide
+plate went pure white as the pulse passed. That fix is not filmed.
+
