@@ -55,7 +55,7 @@ final class Monuments {
     }
 
     private static void stairThatStops(Scene s) {
-        s.level(-40, 2, 18, 4, 0).clear(36);
+        s.level(-40, 2, 18, 4, 0).clear(62);
         // -- the gatehouse: a podium two courses high, walls to 15, a roof two courses thick whose top is where the stair begins
         M.mass(s, -53, 1, -10, -31, 2, 10);
         M.mass(s, -51, 1, 11, -46, 2, 12);                     // under the west giant
@@ -195,8 +195,10 @@ final class Monuments {
         M.heap(s, 46, -10, 3.0);
         M.heap(s, -24, -13, 2.6);
         path(s, -42, 30, -42, 14, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
-        wild(s, 26, 60, 22);
-        s.cam(-58, 5, 34, -135, -16).cam(8, 84, 62, 180, 38).cam(-42, 3, 24, 180, -10).cam(-42, 3, 5, 180, -4);
+        // the forecourt and the way the stair is first seen from stay open: nothing is planted across them
+        for (int x = -60; x <= -22; x++) for (int z = 13; z <= 46; z++) if (!s.taken(x, 1, z) && x * x + z * z < 61 * 61) s.put(x, 1, z, AIR);
+        wild(s, 30, 61, 26);
+        s.cam(-56, 4, 38, -128, -20).cam(8, 84, 62, 180, 38).cam(-42, 3, 24, 180, -10).cam(-42, 3, 5, 180, -4);
     }
 
     // ---- B. The Listening Dish --------------------------------------------------------------------------------------
@@ -214,7 +216,7 @@ final class Monuments {
     }
 
     private static void listeningDish(Scene s) {
-        s.level(36, 6).clear(40);
+        s.level(36, 6).clear(46);
         // -- the dish: a skin three thick, bronze rings, a lip; solid where it rests on the ground
         for (int x = -31; x <= 31; x++)
             for (int z = -31; z <= 31; z++) {
@@ -320,14 +322,15 @@ final class Monuments {
             s.part("loose", k[0], 1, k[1]);
         }
         path(s, 0, 42, -12, 31, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
-        wild(s, 33, 42, 12);
-        s.cam(-42, 7, 42, -135, -6).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(22, 2, -8, 170, -12);
+        for (int x = -40; x <= -8; x++) for (int z = 22; z <= 42; z++) if (!s.taken(x, 1, z) && x * x + z * z < 45 * 45 && x * x + z * z > 31 * 31) s.put(x, 1, z, AIR);
+        wild(s, 33, 45, 14);
+        s.cam(-30, 5, 33, -138, -8).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(22, 2, -8, 170, -12);
     }
 
     // ---- C. The Sleepers' Hall --------------------------------------------------------------------------------------
 
     private static void sleepersHall(Scene s) {
-        s.level(40, 4).clear(42);
+        s.level(40, 4).clear(44);
         BlockState root = st(Blocks.DARK_OAK_WOOD);
         // -- the hall under the ground: floor at -10, aisles ceiled at -4, the nave open to -2 under one course of vault
         M.mass(s, -31, -11, -11, 31, -1, 11);

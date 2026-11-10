@@ -153,25 +153,30 @@ public final class M {
         for (int w = -2; w <= 2; w++)
             for (int d = 0; d <= 1; d++) {
                 int bx = x + (ns ? w : -fx * d), bz = z + (ns ? -fz * d : w);
+                boolean arm = Math.abs(w) == 2, gone = lost == 2 && w == 2;
                 s.put(bx, y, bz, block());                      // the plinth, five by two
-                if (Math.abs(w) <= 1) {
-                    for (int k = 1; k <= h - 5; k++) s.put(bx, y + k, bz, k % 4 == 0 ? block() : stone());   // the robe
-                    s.put(bx, y + h - 4, bz, block());
+                if (!arm) {
+                    for (int k = 1; k <= h - 6; k++) s.put(bx, y + k, bz, k % 4 == 0 ? block() : stone());   // the robe
+                    s.put(bx, y + h - 5, bz, block());          // the shoulders' middle
+                    for (int k = h - 4; k <= h - 2; k++) s.put(bx, y + k, bz, w == 0 && d == 0 && k == h - 3 ? panel() : block());   // the head, a mask for a face
+                    s.put(bx, y + h - 1, bz, w == 0 ? block() : blockSlab());   // the crown
+                } else if (d == 0 && !gone) {
+                    s.put(bx, y + h - 5, bz, block());          // a shoulder, and the arm hanging from it
+                    for (int k = h - 8; k <= h - 6; k++) s.put(bx, y + k, bz, stone());
+                    s.put(bx, y + h - 4, bz, blockSlab());
+                } else if (d == 0) {
+                    s.put(bx, y + h - 5, bz, slab());           // where the arm broke off
                 }
-                if (d == 0 && Math.abs(w) == 2 && !(lost == 2 && w == 2)) {
-                    s.put(bx, y + h - 4, bz, stairT(blockStairs(), ns ? (w > 0 ? Direction.WEST : Direction.EAST) : (w > 0 ? Direction.NORTH : Direction.SOUTH)));
-                    s.put(bx, y + h - 3, bz, block());          // the shoulder
-                }
-                if (Math.abs(w) <= 1) s.put(bx, y + h - 3, bz, block());
             }
-        s.put(x + fx, y + h - 6, z + fz, stairT(blockStairs(), facing.getOpposite()));   // the folded hands
-        if (lost != 1) {
-            s.put(x, y + h - 2, z, block());
-            s.put(x, y + h - 1, z, stone());
-            s.put(x, y + h, z, blockSlab());
-            s.put(x - (ns ? 0 : fx), y + h - 1, z - (ns ? fz : 0), stair(blockStairs(), facing));          // the hood
-        } else {
-            s.put(x, y + h - 2, z, slab());
+        s.put(x + fx, y + h - 7, z + fz, stairT(blockStairs(), facing.getOpposite()));   // the folded hands
+        if (lost == 1) {                                        // the head gone: a stump of neck
+            for (int w = -1; w <= 1; w++)
+                for (int d = 0; d <= 1; d++)
+                    for (int k = h - 4; k <= h - 1; k++) {
+                        BlockPos p = s.rel(x + (ns ? w : -fx * d), y + k, z + (ns ? -fz * d : w));
+                        s.blocks().remove(BlockPos.asLong(p.getX(), p.getY(), p.getZ()));
+                    }
+            s.put(x, y + h - 4, z, slab());
         }
     }
 
