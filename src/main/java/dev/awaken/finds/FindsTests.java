@@ -97,8 +97,8 @@ final class FindsTests {
                     int x = BlockPos.getX(key), y = BlockPos.getY(key), z = BlockPos.getZ(key);
                     if (Math.abs(x) > k.reach() || Math.abs(z) > k.reach()) why = "builds past its reach at " + x + "," + z;
                     BlockState b = e.getValue();
-                    // what grows (leaves) is neither a plain cube nor shaped stone: it isn't counted either way
-                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES)) continue;
+                    // what grew (leaves, trunks) is neither plain masonry nor shaped stone: it isn't counted either way
+                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(net.minecraft.tags.BlockTags.LOGS)) continue;
                     above++;
                     if (!b.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) shaped++;
                 }

@@ -259,9 +259,9 @@ final class Ringing {
                     Mats m = Mats.of(s.site.group());
                     s.clear(5);
                     for (int x = -3; x <= 3; x++) {
-                        s.up(x, 0, 5, x % 2 == 0 ? m.stone() : m.mossy());
+                        s.up(x, 0, 5, Math.abs(x) == 3 ? m.stone() : m.slab());
                         s.up(x, -1, 5, m.slab());
-                        if (Math.abs(x) == 3) s.column(x, 0, 0, 4, m.stone());
+                        if (Math.abs(x) == 3) s.column(x, 0, 0, 4, m.wall());
                     }
                     for (int i = 0; i < 5; i++) {
                         int x = -2 + i, len = i + 1;
