@@ -146,6 +146,18 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   - The bench's "settled: N in the open" line is the kit tidying away a few hanging things whose roof block is not one it
     counts as holding (a lamp, a glass). It is not a fault and was there before this pass.
 
+- 11 Nov, about 03:25 local. The first two walks with wells in them (The Root Cellars 42882402964, The Lower Combs
+  42882379885) showed a lit slot in each roof and nothing under it. Two causes, both fixed in `868404dfc`:
+  - A light at the roof of a tall room never reaches its floor. A well now has unseen lights down its middle.
+  - **Nothing in Lens reads Gate Air in this build.** A land's shafts, mist layers and lights reach the client and only its
+    small life uses them (motes, moths, wisps over water). SPEC 38.3 says Lens marches them; no code does. So a beam is now
+    glowing wisps (`beams`) and room mist is wisps on the floor (`floor_mist`), both new small-life kinds in
+    `gates/client/WorldAir`. If the shader work wants real beams in gates, the data is already sent.
+  - The Sporewells' room walls had too many lit brackets once rooms had lumps and piers; halved (`ee482d836`).
+  - One shot of seventy (The Sunken Stacks' gallery, run 42875164141) has four blank squares on a 400 pixel screen grid:
+    Lens's tiled passes on the CI runner, not the world. Passed to the manager; nothing here touches Lens.
+  - A kind whose seed rolls one fight or no trap repeats a shot in its tour (The Cinder Workings on 383). Harmless.
+
 ## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,
