@@ -201,6 +201,31 @@ def extras():
     return L + ["quit"]
 
 
+# stage 3's B, A and S sets (SPEC 44.1): the twelve whose limbs and backs changed
+PLATED = ["deepcarapace", "cloudrunner", "tidebreaker", "hollowheart", "leviathan", "galewing", "halo_choir", "dreamsteel",
+          "starfall", "riftwalker", "nightcourt", "signals_echo"]
+
+
+def plates():
+    L = head("armouraudit8", 5158, "stage 3's B, A and S plates: each set on three stands (back three-quarter, back, side)")
+    x1 = 8 * len(PLATED) + 8
+    L += ["cmd tp @s 0.5 150 0.5 0 0", f"cmd forceload add -16 -16 {x1} 16", "wait 300",
+          f"cmd fill -8 149 0 {x1} 149 12 minecraft:smooth_stone", f"cmd fill -8 150 11 {x1} 158 11 minecraft:light_gray_concrete", "wait 20"]
+    for i, s in enumerate(PLATED):
+        x = 8 * i
+        # yaw 0 looks south, away from the camera (its back to you); 40 shows the back and its right arm; 270 its left side
+        L += [stand(s, x - 1.8, 7.5, 40), stand(s, x + 0.5, 7.5, 0), stand(s, x + 2.8, 7.5, 270)]
+    L += ["hud off", "camera first", "opt fov 40"] + SETTLE
+    for i, s in enumerate(PLATED):
+        L += [f"cmd tp @s {8 * i + 0.5} 150 2.4 0 2", "wait 14", f"shot p_{s}"]
+    # Signal's Echo's slices glitching: its ability fired (the demo command), which makes them tear every two ticks
+    L += wear("signals_echo")
+    L += ["opt fov 50", "cmd tp @s -4.5 150 5.5 0 0", "camera back", "look 0 10", "wait 20", "shotnow p_glitch_rest", "cmd awaken armour kick"]
+    for k in "abcd":
+        L += ["wait 2", f"shotnow p_glitch_{k}"]
+    return L + ["quit"]
+
+
 def write(name, lines):
     with open(os.path.join(OUT, name + ".txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -215,3 +240,4 @@ if __name__ == "__main__":
     write("armour-audit-living", living())
     write("armour-audit-moments", moments())
     write("armour-audit-extras", extras())
+    write("armour-audit-plates", plates())
