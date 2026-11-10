@@ -708,15 +708,15 @@ final class TasksPlace implements BandPlaces.Place {
         StepRow f = focused(v);
         if (f == null) return false;
         int k = event.key();
-        if (k == InputConstants.KEY_T) {
+        if (k == dev.awaken.holo.ui.StageKeys.TRACK) {
             track(f);
             return true;
         }
-        if (k == InputConstants.KEY_X && later < 0 && canSetAside(v, f)) {
+        if (k == dev.awaken.holo.ui.StageKeys.SET_ASIDE && later < 0 && canSetAside(v, f)) {
             setAside(f);
             return true;
         }
-        if (k == InputConstants.KEY_Z && !TaskCache.undoTitle().isEmpty()) {
+        if (k == dev.awaken.holo.ui.StageKeys.UNDO && !TaskCache.undoTitle().isEmpty()) {
             putBack();
             return true;
         }

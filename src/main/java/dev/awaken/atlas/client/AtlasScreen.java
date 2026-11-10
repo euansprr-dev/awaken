@@ -1158,13 +1158,13 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             dev.awaken.progression.client.ProgressionClient.openBand(page);
             return true;
         }
-        if (e.key() == InputConstants.KEY_TAB && !gateRows.isEmpty()) { // the next gate, nearest first
+        if (e.key() == dev.awaken.holo.ui.StageKeys.NEXT && !gateRows.isEmpty()) { // the next gate, nearest first
             int at = -1;
             for (int i = 0; i < gateRows.size(); i++) if (gateRows.get(i).pos().equals(chosen)) at = i;
             choose(gateRows.get((at + (e.hasShiftDown() ? gateRows.size() - 1 : 1)) % gateRows.size()));
             return true;
         }
-        if (e.key() == InputConstants.KEY_T && chosen != null) {
+        if (e.key() == dev.awaken.holo.ui.StageKeys.TRACK && chosen != null) {
             pointAtChosen();
             return true;
         }

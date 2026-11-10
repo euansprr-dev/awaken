@@ -291,7 +291,7 @@ public final class BandStage extends Screen implements QuietScreen {
             return true;
         }
         Place p = place(tab);
-        if (event.key() == InputConstants.KEY_ESCAPE) {
+        if (event.key() == dev.awaken.holo.ui.StageKeys.BACK) {
             if (!p.back()) onClose();
             return true;
         }
@@ -302,13 +302,13 @@ public final class BandStage extends Screen implements QuietScreen {
             return true;
         }
         Tab[] tabs = Tab.values();
-        if (event.key() == InputConstants.KEY_TAB) {
+        if (event.key() == dev.awaken.holo.ui.StageKeys.NEXT) {
             p.next(event.hasShiftDown() ? -1 : 1);
             return true;
         }
-        if (event.key() == InputConstants.KEY_Q || event.key() == InputConstants.KEY_E) {
+        if (event.key() == dev.awaken.holo.ui.StageKeys.BESIDE_BACK || event.key() == dev.awaken.holo.ui.StageKeys.BESIDE_ON) {
             // the place beside this one; the Map has its own key and its own screen
-            int n = tab.ordinal(), step = event.key() == InputConstants.KEY_Q ? tabs.length - 1 : 1;
+            int n = tab.ordinal(), step = event.key() == dev.awaken.holo.ui.StageKeys.BESIDE_BACK ? tabs.length - 1 : 1;
             do n = (n + step) % tabs.length;
             while (StatusSections.action(tabs[n]) != null && n != tab.ordinal());
             select(tabs[n]);

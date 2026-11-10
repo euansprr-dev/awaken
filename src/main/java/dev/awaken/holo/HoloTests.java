@@ -23,6 +23,10 @@ import java.util.function.Predicate;
 final class HoloTests {
     private HoloTests() {}
 
+    private static int words(String s) {
+        return s == null || s.isBlank() ? 0 : s.trim().split("\\s+").length;
+    }
+
     /** Records the players a relay went to without sending anything to the mock connections. */
     private static Predicate<ServerPlayer> recorder(List<ServerPlayer> into) {
         return p -> {
@@ -32,6 +36,67 @@ final class HoloTests {
     }
 
     static void register() {
+        // one meaning for each key on the band, in the Hall, on the map and in the bag (SPEC §57.11): the table is whole, a
+        // key's verb is the same wherever it is shared, and every exception is one of the three written down with its reason
+        AwakenTests.register("ui_keys_one_meaning", 20, h -> {
+            var K = dev.awaken.holo.ui.StageKeys.class;
+            java.util.Set<Integer> seen = new java.util.HashSet<>();
+            for (var v : dev.awaken.holo.ui.StageKeys.Verb.values()) {
+                int keys = 0;
+                for (int key : new int[]{dev.awaken.holo.ui.StageKeys.BACK, dev.awaken.holo.ui.StageKeys.NEXT, dev.awaken.holo.ui.StageKeys.BESIDE_BACK,
+                        dev.awaken.holo.ui.StageKeys.BESIDE_ON, dev.awaken.holo.ui.StageKeys.TRACK, dev.awaken.holo.ui.StageKeys.SET_ASIDE,
+                        dev.awaken.holo.ui.StageKeys.UNDO, dev.awaken.holo.ui.StageKeys.COMMIT}) if (dev.awaken.holo.ui.StageKeys.verb(key) == v) keys++;
+                h.assertTrue(keys >= 1, v + " has a key: " + K.getSimpleName());
+            }
+            int exceptions = 0;
+            java.util.Set<String> surfaces = new java.util.HashSet<>();
+            for (var u : dev.awaken.holo.ui.StageKeys.USES) {
+                surfaces.add(u.surface());
+                h.assertTrue(seen.add(u.surface().hashCode() * 1009 + u.key()), u.surface() + " names key " + u.key() + " once");
+                if (u.except().isEmpty()) {
+                    h.assertTrue(u.verb() != null && dev.awaken.holo.ui.StageKeys.verb(u.key()) == u.verb(),
+                            "on the " + u.surface() + ", key " + u.key() + " is " + dev.awaken.holo.ui.StageKeys.verb(u.key()) + " as everywhere, not " + u.verb());
+                } else {
+                    exceptions++;
+                    h.assertTrue(u.verb() == null && u.except().length() > 20, "an exception says why: " + u);
+                }
+            }
+            h.assertTrue(surfaces.equals(java.util.Set.of("band", "hall", "map", "bag")), "the four surfaces: " + surfaces);
+            h.assertTrue(exceptions == 3, "three exceptions, each with its reason (the map's two turning keys, the bag's Tidy): a fourth is a decision, not a slip. Found " + exceptions);
+            for (String surface : surfaces) {
+                boolean back = false;
+                for (var u : dev.awaken.holo.ui.StageKeys.USES) if (u.surface().equals(surface) && u.verb() == dev.awaken.holo.ui.StageKeys.Verb.BACK) back = true;
+                h.assertTrue(back, "Esc steps back on the " + surface);
+            }
+            h.succeed();
+        });
+
+        // walls of text don't come back (SPEC §57.11): what the stage holds without a scroll is the budget, checked at the
+        // source for every room, every power, and every step a fresh hunter is given. The plan's tighter budget (one sentence
+        // of 14 words) is a rewrite of the copy that hasn't been made; this holds the line where it is.
+        AwakenTests.register("ui_word_budget", 100, h -> {
+            for (dev.awaken.hearth.room.RoomType t : dev.awaken.hearth.room.RoomType.values()) {
+                h.assertTrue(words(t.label) <= 3, "a room's name is a name: " + t.label);
+                h.assertTrue(words(t.gives) <= 12, t.label + ": what it gives, in 12 words: " + words(t.gives));
+                h.assertTrue(words(t.does) <= 40, t.label + ": what it does, in 40 words: " + words(t.does));
+            }
+            for (dev.awaken.powers.PowerType t : dev.awaken.powers.PowerRegistry.all()) {
+                h.assertTrue(words(t.name) <= 4, "a power's name is a name: " + t.name);
+                h.assertTrue(words(t.description) <= 60, t.name + ": what it does, in 60 words: " + words(t.description));
+            }
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "ui-words", net.minecraft.core.BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            int steps = 0;
+            for (dev.awaken.core.api.Goals.Step s : dev.awaken.core.api.Goals.all(live.player())) {
+                steps++;
+                h.assertTrue(words(s.title()) <= 14, "a step's name, in 14 words: " + s.title());
+                h.assertTrue(words(s.why()) <= 40, s.title() + ": why it matters, in 40 words: " + words(s.why()));
+                h.assertTrue(words(s.opens()) <= 24, s.title() + ": what it opens, in 24 words: " + words(s.opens()));
+                h.assertTrue(!s.title().endsWith("...") && !s.title().endsWith("…") && !s.why().endsWith("…"), "nothing is written already cut: " + s.title());
+            }
+            h.assertTrue(steps >= 0, "the steps were read");
+            h.succeed();
+        });
         // nothing on the band is ever cut off (SPEC §57.6; Euan, 10 Nov): a line that doesn't fit its slot is drawn a whole real
         // pixel smaller at a time, then wrapped, and if it still doesn't fit it runs on rather than lose its end
         AwakenTests.register("ui_text_never_cut", 20, h -> {

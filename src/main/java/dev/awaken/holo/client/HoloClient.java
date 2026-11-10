@@ -93,6 +93,13 @@ public final class HoloClient {
         // push last, pop first: nothing after us can cancel the layer and strand the translate
         bus.addListener(EventPriority.LOWEST, RenderGuiLayerEvent.Pre.class, HudMotion::pre);
         // the K menu is worked with the cursor; the crosshair would only sit on the panel's edge
+        // the shared key table is plain numbers so the tests can read it: they must be the game's own (SPEC §57.11)
+        if (!dev.awaken.holo.ui.StageKeys.matches(com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE, com.mojang.blaze3d.platform.InputConstants.KEY_TAB,
+                com.mojang.blaze3d.platform.InputConstants.KEY_Q, com.mojang.blaze3d.platform.InputConstants.KEY_E, com.mojang.blaze3d.platform.InputConstants.KEY_T,
+                com.mojang.blaze3d.platform.InputConstants.KEY_X, com.mojang.blaze3d.platform.InputConstants.KEY_Z, com.mojang.blaze3d.platform.InputConstants.KEY_RETURN,
+                com.mojang.blaze3d.platform.InputConstants.KEY_SPACE)) {
+            throw new IllegalStateException("holo.ui.StageKeys is out of step with the game's key codes");
+        }
         // an item's name and lines in the band's glass, wherever the band's look is on (SPEC §57.9): the game's own tooltip,
         // on the two sprites of the style awaken:glass. A stack that brings its own style keeps it.
         bus.addListener(net.neoforged.neoforge.client.event.RenderTooltipEvent.Texture.class, e -> {

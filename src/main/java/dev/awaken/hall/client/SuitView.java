@@ -294,7 +294,7 @@ final class SuitView extends CloseView {
             boolean on = choosing.chosen(set);
             subs.add(0, new Panel.Act(on ? "Your choice" : "Choose this one", CHOOSE, false, !on, InputConstants.KEY_RETURN));
         } else if (!hidden && state != SuitState.MADE) {
-            subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? UNTRACK : TRACK, false, true, InputConstants.KEY_T));
+            subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? UNTRACK : TRACK, false, true, dev.awaken.holo.ui.StageKeys.TRACK));
         }
         why = line.isEmpty() ? List.of() : s.wrap(line, TEXT_W, 3F);
     }
@@ -537,7 +537,7 @@ final class SuitView extends CloseView {
         float x = X;
         for (int i = 0; i < subs.size() && i < subX0.length; i++) {
             Panel.Act a = subs.get(i);
-            String cap = a.key() == InputConstants.KEY_T ? "T" : "";
+            String cap = a.key() == dev.awaken.holo.ui.StageKeys.TRACK ? "T" : "";
             float capW = cap.isEmpty() ? 0F : 38F;
             float w = s.width(a.label(), 3F) + 24F + capW;
             subX0[i] = x;
@@ -651,7 +651,7 @@ final class SuitView extends CloseView {
     }
 
     @Override boolean key(int key) {
-        if (key == InputConstants.KEY_TAB) {
+        if (key == dev.awaken.holo.ui.StageKeys.NEXT) {
             pick(slot + 1);
             return true;
         }

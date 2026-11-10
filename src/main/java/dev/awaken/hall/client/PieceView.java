@@ -394,7 +394,7 @@ final class PieceView extends CloseView {
                     line = "You have made this. It's yours to carry.";
                     whyColour = Stage.GOOD;
                 }
-                subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, com.mojang.blaze3d.platform.InputConstants.KEY_T));
+                subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, dev.awaken.holo.ui.StageKeys.TRACK));
             }
         }
         why = line.isEmpty() ? List.of() : s.wrap(sentence(line), TEXT_W, 3F);
@@ -483,7 +483,7 @@ final class PieceView extends CloseView {
         float x = X;
         for (int i = 0; i < subs.size() && i < subX0.length; i++) {
             Panel.Act a = subs.get(i);
-            String cap = a.key() == com.mojang.blaze3d.platform.InputConstants.KEY_T ? "T" : "";
+            String cap = a.key() == dev.awaken.holo.ui.StageKeys.TRACK ? "T" : "";
             float capW = cap.isEmpty() ? 0F : 38F;
             float w = s.width(a.label(), 3F) + 24F + capW;
             subX0[i] = x;

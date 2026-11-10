@@ -680,7 +680,7 @@ final class HearthPlace implements BandPlaces.Place {
     @Override
     public boolean key(KeyEvent e) {
         int k = e.key();
-        if (k == InputConstants.KEY_T && !trackable().isEmpty()) {
+        if (k == dev.awaken.holo.ui.StageKeys.TRACK && !trackable().isEmpty()) {
             KinStrip.track(trackable());
             StatusSections.cue(StatusSections.Cue.PAGE);
             return true;
