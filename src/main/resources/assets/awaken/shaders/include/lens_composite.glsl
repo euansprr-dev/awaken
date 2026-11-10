@@ -14,6 +14,7 @@ uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): 
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
+uniform sampler2D CloudBlocksSampler; // the Air's near clouds at the frame's size (lens_cloud_blocks.fsh), the same
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -501,6 +502,10 @@ void main() {
             }
         }
         if (behind) c = c * cl.a + cl.rgb;
+        // the Air's near clouds over all of it: walked at this size against this pixel's own depth, so they need no
+        // such test, and a tree in front of one keeps its own edge
+        vec4 cb = texture(CloudBlocksSampler, texCoord);
+        c = c * cb.a + cb.rgb;
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;

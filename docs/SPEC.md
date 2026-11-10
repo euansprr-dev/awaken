@@ -6136,15 +6136,23 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
   - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
     middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. Walked cell by
-    cell in the cloud pass (`blockPiece`: exact entry and exit, up to 72 cells and 860 blocks), sigma 0.95 a block
+    cell (exact entry and exit), sigma 0.95 a block
     (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
     2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
     little by the face the ray came in by (0.75 to 1; a joined block keeps the first face), the sky's light 86% on an
     underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
     white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
-    a tenth. No history blend for a walked pixel (a camera that sways at rest blurred the
-    edges). They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
-    Cinematic's cloud buffer is 800x450. Storm cells are still marched as before.
+    a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
+      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+      depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
+      the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
+      The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
+      Cinematic; `blockPiece` from 640 blocks on for up to 600 more, 800 on Ultra), walked every frame with nothing
+      carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
+      the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
+      like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
+    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
   - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
@@ -6171,8 +6179,10 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
   and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 960x540. Before it walks, the
   light pass asks the lit air (below) at the point, half a block off its face: three slices, each smoothed over four
-  cells, all under 0.004 is shade and all over 0.996 is sun, for three texture reads; only the rest (a shadow's edge,
-  leaves, the volume's rim) walks the map.
+  cells, all over 0.996 is a walk that would meet nothing, so it is skipped and the heightfield carries on from where
+  the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
+  never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
+  beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
 - **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
   - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
     R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
@@ -6181,12 +6191,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
     a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
     what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is
-    dappled in whole blocks), a section not read yet 1. Beyond the window the land casts in from the sunward edge by
-    the heightfield's CPU mirror (up to 400 blocks). A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
+    dappled in whole blocks), a section not read yet 1. Beyond the window the air is lit: the volume holds only what
+    its own blocks do, and the land out there is the light pass's to judge. A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
     20 ticks at rest and every 5 once the camera is 5 blocks off the volume's middle; none where the light leaves the
     x-y plane or sits under sin 0.02. The light pass's mist march spends its first 60 blocks in it (12 steps, 18 on
-    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side) and
-    the rest in the sun map as before (5 steps, 10 on Ultra).
+    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side), each
+    step times the sun map's answer at the point where the sun's ray leaves the volume (the same far shade the ground
+    gets), and the rest in the sun map as before (5 steps, 10 on Ultra).
   - **Rays on the screen** (`lens_shafts.fsh` under the Air): the light is the sky round the sun itself
     (`exp(-14 d²)` of screen heights), gathered in 40 jittered steps along each pixel's line to the sun, so a cloud, a
     crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from

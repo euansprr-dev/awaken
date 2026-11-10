@@ -350,7 +350,7 @@ public final class LensClient {
         if (rays) {
             var at = mc.gameRenderer.mainCamera().blockPosition();
             long t0 = System.nanoTime();
-            litAir.tick(blocks, heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y, moonLight ? -sunDir.z : sunDir.z,
+            litAir.tick(blocks, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y, moonLight ? -sunDir.z : sunDir.z,
                     at.getX(), at.getZ());
             cost(2, System.nanoTime() - t0);
         } else if (litAir != null) {
@@ -550,7 +550,9 @@ public final class LensClient {
         float weather = Math.max(0f, rain - dev.awaken.living.client.StormSky.localRain());
         float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + weather * 0.4f) : 0f;
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
-        lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
+        // (the drift by the frame's own share of the tick: stepped twenty times a second, clouds drawn exactly showed it)
+        double drift = ((ticks % 768_000L) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) * 0.04;
+        lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, drift, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,

@@ -360,6 +360,20 @@ void main() {
         // (the Air's blocks are small: the march keeps to the near thousand blocks, where they can be told apart)
         if (cloudBlocks()) t1 = min(t1, max(t0, 0.0) + (ultra ? 1000.0 : 860.0));
     }
+    // the Air's near blocks have a pass of their own at the frame's size (lens_cloud_blocks.fsh): this one keeps the far
+    // ones, walks them every frame, and with no storm about has nothing to carry from the frame before (a tile in four
+    // and last frame's clouds carried along made them crawl)
+    if (cloudBlocks()) {
+        t0 = max(t0, CLOUD_NEAR);
+        t1 = min(t1, t0 + (ultra ? 800.0 : 600.0));
+        if (nStorm == 0) {
+            if (t1 <= t0) {
+                fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                return;
+            }
+            interleave = false;
+        }
+    }
     if (interleave) {
         ivec2 tile = ivec2(gl_FragCoord.xy) >> 3;
         int phase = int(mod(f12.w, 4.0)), mine = (tile.x & 1) + 2 * (tile.y & 1);

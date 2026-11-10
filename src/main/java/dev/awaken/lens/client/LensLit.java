@@ -21,8 +21,8 @@ import java.util.concurrent.Executors;
  * <p>Nothing of it is worked out on the GPU. The sun travels in the world's x-y plane, so every z-slice of the block map
  * (LensBlocks) is its own flat problem: a worker thread sweeps each slice once from the sun's side, every cell taking
  * its light from the two cells the ray came through, cut by what the cell holds (a block stops it, leaves pass a part,
- * some leaf blocks more than others so a canopy's shade is dappled). The land beyond the map casts in from the edge by
- * the heightfield. A whole volume is two million cells and takes a few milliseconds, about once a second and sooner
+ * some leaf blocks more than others so a canopy's shade is dappled). The land beyond the map is the light pass's to
+ * judge, from the volume's edge on. A whole volume is two million cells and takes a few milliseconds, about once a second and sooner
  * while you move; a frame pays only its texture reads, the same in a forest as on a plain.
  *
  * <p>The texture is one byte a cell: 128 slices of 128 x 128 (x across, y up), sixteen slices across and eight down.
@@ -51,7 +51,7 @@ final class LensLit {
     private long uploadNanos;
     private int sweeps;
     // the volume the texture holds now, and the one being worked
-    private int originX, originY, originZ, jobX, jobY, jobZ, jobTop;
+    private int originX, originY, originZ, jobX, jobY, jobZ;
     private float jobLx, jobLy;
     private boolean valid;
     private int since = EVERY;
@@ -88,7 +88,7 @@ final class LensLit {
      * Once a client tick, after the block map's own: takes up a finished volume, and starts the next when it is due.
      * {@code lx, ly, lz} point toward the light (the sun, or the moon by night).
      */
-    void tick(LensBlocks blocks, LensHeightfield height, float lx, float ly, float lz, int camX, int camZ) {
+    void tick(LensBlocks blocks, float lx, float ly, float lz, int camX, int camZ) {
         if (state == READY) {
             long t0 = System.nanoTime();
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), pixels, 0, 0, 0, 0, WIDTH, HEIGHT);
@@ -115,18 +115,17 @@ final class LensLit {
         jobX = blocks.originX();
         jobY = blocks.minY();
         jobZ = blocks.originZ();
-        jobTop = height.maxTop();
         jobLx = lx / flat;
         jobLy = ly / flat;
         state = WORKING;
-        worker.execute(() -> work(height));
+        worker.execute(this::work);
     }
 
-    private void work(LensHeightfield height) {
+    private void work() {
         try {
             long t0 = System.nanoTime();
             passes();
-            sweep(height);
+            sweep();
             lastNanos = System.nanoTime() - t0;
             state = READY;
         } catch (RuntimeException e) {
@@ -167,20 +166,13 @@ final class LensLit {
         return (h >>> 16) & 255;
     }
 
-    private void sweep(LensHeightfield height) {
+    private void sweep() {
         float lx = jobLx, ly = jobLy, ax = Math.abs(lx);
         int sx = lx >= 0f ? 1 : -1;
-        // beyond the map, on the sun's side: the height under which the land out there shades each slice's edge
-        float rise = ly / Math.max(ax, 1.0e-4f);
-        int xb = sx > 0 ? jobX + SIZE : jobX - 1, far = (int) Math.min(400f, (jobTop - jobY) / Math.max(rise, 1.0e-3f) + 1f);
-        for (int z = 0; z < SIZE; z++) {
-            float s = -4096f;
-            for (int k = 0; k <= far; k++) {
-                float h = height.solidAt(xb + sx * k, jobZ + z);
-                if (h > LensHeightfield.NONE + 1f) s = Math.max(s, h - k * rise);
-            }
-            edge[z] = s - jobY;
-        }
+        // beyond the map the air is lit: the volume holds only what its own blocks do. The land out there is the light
+        // pass's to judge, by the same sun map that shades the ground (a far ridge's shade kept here and not there lay
+        // on open grass as a patchwork under a low sun)
+        java.util.Arrays.fill(edge, -4096f);
         long base = MemoryUtil.memAddress(pixels);
         boolean low = ax >= ly;
         float f = low ? ly / Math.max(ax, 1.0e-4f) : ax / ly;

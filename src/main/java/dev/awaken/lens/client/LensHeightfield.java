@@ -91,11 +91,6 @@ final class LensHeightfield {
         return maxTop;
     }
 
-    /** The top of what stops the sun in a column (leaves aside) by the CPU mirror; NONE where nothing is known. */
-    float solidAt(int x, int z) {
-        return Float.float16ToFloat(mirror[0].getShort((((z & (SIZE - 1)) * SIZE) + (x & (SIZE - 1))) * 4 + 2));
-    }
-
     /**
      * Whether a point near the camera is in sunlight by the CPU mirror (Lens 2's dust only shows in sunlit air): a short
      * march toward the light over level 0, leaves counting as shade.

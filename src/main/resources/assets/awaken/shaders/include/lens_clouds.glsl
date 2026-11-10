@@ -25,6 +25,9 @@ vec4 cloudParams() { return F(18); }
 // twelve across, in one to three tiers of seven that step in as they rise, so a group mounds up toward its middle;
 // lit and shaded through their volume like any cloud here, and thin enough that the sky shows through their edges.
 const float CLOUD_CELL = 12.0, CLOUD_TIER = 7.0;
+// the Air's blocks nearer than this are drawn at the frame's own size, every frame (lens_cloud_blocks.fsh); the far
+// ones, small and going into the haze, keep to the small cloud buffer
+const float CLOUD_NEAR = 640.0;
 
 bool cloudBlocks() { return F(22).w > 0.0; }
 // under the layer's base by this much, and this thick

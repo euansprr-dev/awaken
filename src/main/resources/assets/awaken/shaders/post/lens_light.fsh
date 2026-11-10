@@ -120,9 +120,8 @@ vec2 litNear(vec3 w, vec4 lc, float dz) {
     return vec2(texture(LitSampler, uv).r, trust);
 }
 
-// what the lit air already knows of a surface point (camera-relative, a little off its face): 0 deep in shade, 1 in
-// full sun, -1 where it can't say and the block map must be walked (near any shadow's edge, under leaves, outside the
-// volume). Three slices, each smoothed across its four cells, must agree: the volume is a block coarse and a second
+// what the lit air already knows of a surface point (camera-relative, a little off its face): 1 in full sun, -1 where
+// it can't say and the block map must be walked (in shade, near any shadow's edge, under leaves, outside the volume). Three slices, each smoothed across its four cells, must agree: the volume is a block coarse and a second
 // old, so it only answers where nothing near the point differs
 float litSure(vec3 a) {
     vec4 lc = litCam();
@@ -136,11 +135,24 @@ float litSure(vec3 a) {
         lo = min(lo, v);
         hi = max(hi, v);
     }
-    return hi < 0.004 ? 0.0 : (lo > 0.996 ? 1.0 : -1.0);
+    return lo > 0.996 ? 1.0 : -1.0;
 }
 
 // the heightfield, from o (a point in the world's ring) toward the light: 0 under solid blocks, dimmed through leaves
 float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof);
+
+// where the block map's walk would stop for a ray that meets nothing: the edge of the map's trusted box round the
+// camera, or 72 blocks' worth of cells, as a distance along l (o in the world's ring). The lit air's sure pixels go on
+// from the same place the walked ones do, so the two can never differ
+float walkEnd(vec3 o, vec3 l) {
+    vec4 f12 = F(12);
+    float reach = F(17).z, yMin = F(17).w;
+    vec3 e = vec3(1.0e9);
+    if (abs(l.x) > 1.0e-4) e.x = (f12.x + (l.x > 0.0 ? reach : -reach) - o.x) / l.x;
+    if (abs(l.y) > 1.0e-4) e.y = ((l.y > 0.0 ? yMin + 128.0 : yMin) - o.y) / l.y;
+    if (abs(l.z) > 1.0e-4) e.z = (f12.z + (l.z > 0.0 ? reach : -reach) - o.z) / l.z;
+    return max(min(min(e.x, min(e.y, e.z)), 72.0 / (abs(l.x) + abs(l.y) + abs(l.z))), 0.0);
+}
 
 // how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
 // reaches, the map's (the heightfield can only say "something stands between"; the map knows what and where)
@@ -153,8 +165,12 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     if (max(abs(o.x - f12.x), abs(o.z - f12.z)) > F(17).z - 1.0) return vis;
     // (most of a forest's pixels come this far; the lit air settles the ones well inside the sun or the shade for
     // three texture reads, and the walk is left for the edges, where its exactness shows)
-    float sure = litSure(p + n * 0.55);
-    if (sure >= 0.0) return sure;
+    // (sure of the sun: the walk would have found nothing, so only the walk is saved, and the land beyond the map has
+    // its say from where the walk would have stopped. The lit air never shades a surface itself. It reaches farther
+    // than the walk does, so where it called a block dark and the walk beside it found the sun, the difference lay on
+    // open grass as a patchwork under a low sun, Euan 2026-11-10; a pixel in shade walks, and meets what shades it
+    // within a few blocks anyway)
+    if (litSure(p + n * 0.55) == 1.0) return heightRay(o + l * walkEnd(o, l), l, noise, ultra, false);
     int status;
     float tOut;
     float through = blockRay(o, l, status, tOut);
@@ -299,7 +315,17 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
         for (int i = 0; i < (ultra ? 18 : 12); i++) {
             vec3 w = v * ((float(i) + jitter) * dn);
             vec2 ln = litNear(w, lc, fract(jitter * 7.31 + float(i) * 0.618) - 0.5);
-            float lit = ln.y >= 1.0 ? ln.x : mix(litAt(w, f12, cell), ln.x, ln.y);
+            float lit = litAt(w, f12, cell);
+            if (ln.y > 0.0) {
+                // (the volume knows its own blocks; the land beyond it is the sun map's, asked where the sun's ray
+                // leaves the volume, so far shade in the air is the same far shade the ground gets)
+                vec3 q = w + lc.xyz, e = vec3(1.0e9);
+                if (abs(l.x) > 1.0e-4) e.x = ((l.x > 0.0 ? 128.0 : 0.0) - q.x) / l.x;
+                if (abs(l.y) > 1.0e-4) e.y = ((l.y > 0.0 ? 128.0 : 0.0) - q.y) / l.y;
+                if (abs(l.z) > 1.0e-4) e.z = ((l.z > 0.0 ? 128.0 : 0.0) - q.z) / l.z;
+                float known = ln.x * litAt(w + l * max(min(e.x, min(e.y, e.z)), 0.0), f12, cell);
+                lit = mix(lit, known, ln.y);
+            }
             got += lit * exp(-max(w.y + f12.y - floorY, 0.0) / (scaleH * 1.5));
         }
         // (into the sun it weighs as the far mist does: more there, with the screen's own rays on top, whitened the

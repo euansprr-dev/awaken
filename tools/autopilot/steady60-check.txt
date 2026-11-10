@@ -1,0 +1,108 @@
+# One launch for both checks: the floor under a low sun, then the sky tour's clouds, dusk and night.
+# The floor under a low sun (the patchwork check): the same view with each part off in turn, at three sun heights.
+# The Air's look tour (SPEC §22 "Steady Light"): Lens Cinematic with the Air at the moments ImmersiveVFX was shot at
+# (docs/perf/steady60/page/shots), in a copy of Euan's world, with his settings (the game's Clouds setting off: the
+# Air's clouds must draw anyway). Shots only: FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-check.txt check-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+lookswitch cinematic
+wait 400
+shot a1_morning
+cmd time set 11300
+look 90 -6
+wait 200
+shot f1_low
+lens rays off
+wait 80
+shot f1_low_norays
+lens rays setting
+lens sunpass off
+wait 80
+shot f1_low_nosunpass
+lens sunpass setting
+wait 60
+look 90 -28
+wait 60
+shot f1_low_down
+look -90 -20
+wait 60
+shot f1_low_away
+cmd time set 10800
+look 90 -6
+wait 160
+shot f2_lowish
+cmd time set 11600
+wait 160
+shot f3_lower
+cmd time set 600
+look -90 -6
+wait 160
+shot f4_morning_sunward
+look 90 -20
+wait 60
+shot f4_morning_away
+# ---- the day sky: toward the sun, straight up
+cmd time set 3000
+look -90 -30
+wait 140
+shot b1_morning_sunward
+look 0 -70
+wait 20
+shot b1_morning_up
+cmd time set 11800
+look 90 -12
+wait 140
+shot b2_dusk_sunward
+cmd time set 12700
+look 90 -6
+wait 140
+shot b3_sunset_low
+# ---- the night sky
+cmd time set 14200
+look 90 -25
+wait 140
+shot b4_nightfall
+cmd time set 18000
+look 0 -40
+wait 140
+shot b5_night_sky
+look 0 -78
+wait 20
+shot b5_night_up
+look 180 -25
+wait 20
+shot b5_night_north
+look -90 -30
+wait 20
+shot b5_night_east
+shot a5_night_ground
+# ---- the open view from 45 up
+cmd time set 3000
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 200
+shot c1_open_morning
+cmd time set 18000
+look -90 -8
+wait 160
+shot c5_open_night
+cmd time set 22600
+look -90 -6
+wait 160
+shot c6_open_first_light
+quit
