@@ -56,6 +56,9 @@ Since 11 Nov every rolled room also has **depth and air**:
 - Each kind has its own fog, its own things drifting in the air, its own colour of light, its own ambient sound and music
   (Minecraft's own recordings), and its own Lens look. The Unlit Stair has no sound at all.
 - In a gulf there is still water and a low mist; over every fight a soft light colours the mist.
+- Light comes down into every room through a slot in its roof (two in a Lord's hall): a pool of real light on the floor
+  and a beam in the air. The biggest rooms have mist on their floors.
+- The long walls of gulfs and stairwells are cut into bays between piers (built places) or scooped out (dug ones).
 
 Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a

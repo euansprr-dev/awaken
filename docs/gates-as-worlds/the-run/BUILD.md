@@ -135,6 +135,17 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 
+- 11 Nov, about 02:10 local. The first real-game walk with depth, air and the gate monsters in it (The Stopped Works, run
+  42875088993) read like this: rooms and monsters good, but the fog too far out to see indoors, nothing in a room's air, and
+  the long walls of the gulf and the stairwell dead flat. Fixed in three commits: every kind's fog nearer and its haze
+  thicker (`kinds_air.py`); a well of light in every room with a beam down it, and mist on the biggest floors
+  (`GeneratedCrawl.wells`, `airOf`); bays or scoops cut one cell back into gulf and stairwell walls (`Chasm.walls`,
+  `Shaft.walls`), never beside anything to stand on. The offline bench on five kinds: nothing floats, every site reached.
+  All seventeen kinds walked again on that tip (tag w2).
+  - The bench's picture maker has flat light, so bays barely show in its pictures; judge them in the real game's.
+  - The bench's "settled: N in the open" line is the kit tidying away a few hanging things whose roof block is not one it
+    counts as holding (a lamp, a glass). It is not a fault and was there before this pass.
+
 ## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,
