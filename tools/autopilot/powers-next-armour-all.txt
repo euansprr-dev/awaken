@@ -2,6 +2,7 @@
 # (it raises the forearm in front of your eyes and its light stays), a still as it settles; then Frost Nova and a held
 # Haymaker in six sets, one a family of material. Stills s<rank>_<set>, and f_<set>, h_<set>.
 # Watch: each set takes the type its own way, on its own lines; nothing floats, nothing shows through, the piece still reads.
+# A long tour: the world goes on (a rift opened in run 42882243878 and turned the camera for two stills). Rerun if a still misses its arm.
 # Look tour: tools/tour-ci.sh tools/autopilot/powers-next-armour-all.txt 2400 PACK=feel
 world powersnext survival 4261
 waitworld
