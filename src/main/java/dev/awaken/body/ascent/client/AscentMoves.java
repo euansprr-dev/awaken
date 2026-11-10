@@ -397,9 +397,11 @@ public final class AscentMoves {
                     fold(p);
                 } else {
                     if (jumpPressed && fwd <= 0 && stateAge > 4) flap(p);
-                    else if (fwd <= 0 && K.hspeed() < 0.45 && stateAge > 10 && ticks - flapAt >= 18) {
-                        // hovering: a slow beat to hold the air (no lift of its own: the hover holds you)
-                        flapAt = ticks;
+                    else if (fwd <= 0 && K.hspeed() < 0.45 && stateAge > 10
+                            && (FeelConfig.wingsFeathers() ? WingLayer.downstroke(p.getId()) : ticks - flapAt >= 18)) {
+                        // hovering: a slow beat to hold the air (no lift of its own: the hover holds you); feathered
+                        // wings beat on their own clock, and the sound follows the wing
+                        if (!FeelConfig.wingsFeathers()) flapAt = ticks;
                         AscentSounds.local(p, AscentContent.FLAP.get(), 0.45F, 0.85F + p.getRandom().nextFloat() * 0.1F);
                     }
                     if (sidePressed != 0) sideTap(p, sidePressed);

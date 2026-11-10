@@ -30,6 +30,8 @@ public final class AscentClient {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> e.register(SovereignClient.ASCEND));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        // the feathered wings' own pipelines (SPEC §62)
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, WingPipelines::onRegister);
         // on a rope the body hangs, never crouches (sneak is the rope's own key there: reeling in, the rappel)
         modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity,
@@ -78,6 +80,7 @@ public final class AscentClient {
             AscentPilot.stop();
             AscentRoutes.stop();
             AscentAnims.reset();
+            WingLayer.reset();
             FeelDirector.reset();
         });
     }

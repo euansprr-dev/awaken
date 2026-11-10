@@ -49,6 +49,11 @@ final class AscentRender {
     private static final Quaternionf QW = new Quaternionf();
     private static final Quaternionf Q = new Quaternionf();
     private static boolean broken;
+
+    /** The camera's turn this frame (its right, up and back are this applied to x, y and z). */
+    static org.joml.Quaternionfc eye() {
+        return Q;
+    }
     /** Set while drawing ropes: ribbons thin and fade near the camera. */
     private static boolean nearFade;
 
@@ -164,7 +169,11 @@ final class AscentRender {
         out.order(3).submitCustomGeometry(ps, starType, STARS);
         // your own wings in first person: off until they have a look of their own (drawn whole they fill the frame's
         // lower corners; Phase 1 gives them light at the edges instead)
-        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && AscentMoves.state().wings) firstPersonWings(ps, out, mc);
+        // feathered wings (SPEC §62) also show their flare and their fold after the state has ended
+        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && (AscentMoves.state().wings
+                || dev.awaken.body.client.feel.FeelConfig.wingsFeathers() && WingLayer.mode(mc.player.getId()) != WingLayer.FOLDED)) {
+            firstPersonWings(ps, out, mc);
+        }
     }
 
     // ---- gathering ------------------------------------------------------------------------------------------------------
@@ -696,7 +705,10 @@ final class AscentRender {
         float yaw = bodyRot * Mth.DEG_TO_RAD;
         double x = Mth.lerp(pt, p.xo, p.getX()), y = Mth.lerp(pt, p.yo, p.getY()), z = Mth.lerp(pt, p.zo, p.getZ());
         ps.pushPose();
-        ps.translate((float) (x - cx), (float) (y - cy), (float) (z - cz));
+        // feathered wings sit a little ahead of the eye and above it (WingLayer.fpAhead): the outer feathers at the frame's sides
+        float ahead = dev.awaken.body.client.feel.FeelConfig.wingsFeathers() ? WingLayer.fpAhead : 0;
+        float lift = dev.awaken.body.client.feel.FeelConfig.wingsFeathers() ? WingLayer.fpUp : 0;
+        ps.translate((float) (x - cx) - bx * ahead + ux * lift, (float) (y - cy) - by * ahead + uy * lift, (float) (z - cz) - bz * ahead + uz * lift);
         // the same turn the figure gets (AscentAnims.onPre), about the body's centre
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         MA.set((float) -fz, 0, (float) fx, 0, 1, 0, (float) fx, 0, (float) fz);

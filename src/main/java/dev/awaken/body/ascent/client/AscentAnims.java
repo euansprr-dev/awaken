@@ -437,7 +437,8 @@ public final class AscentAnims {
         pushed++;
         // a rappel stands off the rock on its legs
         if (rappelOffset(ent, st, NRM)) ps.translate((float) NRM[0], 0, (float) NRM[1]);
-        ps.translate(0, pivot, 0);
+        // the figure rides its wings: a beat lifts it a texel and lets it sink (SPEC §62)
+        ps.translate(0, pivot + (st.wings ? WingLayer.bob(s.id, pt) / 16F : 0), 0);
         ps.rotate(Q);
         if (flip != 0) ps.rotate(Q2.rotationAxis(flip * Mth.DEG_TO_RAD, Mth.cos(yaw), 0, Mth.sin(yaw)));
         ps.translate(0, -pivot, 0);
