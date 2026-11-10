@@ -762,11 +762,17 @@ def film(per=8, shrink=2, only=None, name="pick"):
             # a flier hangs two to five blocks over its target between dives: the camera stands back, higher, and looks up a little
             eye = 203.2 if flies else 201.0 + h * 0.55
             pitch = -6 if flies else 4
+            # a shooter that keeps its range backs away from anything nearer than five blocks (and out of the frame):
+            # its dummy stands eight off, and the camera further back to hold them both
+            ranged = "RANGED" in defs[m.id]["line"] and not flies
+            far = 8.5 if ranged else 4.8
+            if ranged:
+                dist += 3.0
             moves_n = len(defs[m.id]["abilities"])
             out += [f"# {m.id} ({m.name})", "cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 4", "cmd kill @e[type=item]",
                     "cmd kill @e[type=awaken:gel_sample]", "cmd kill @e[type=minecraft:experience_orb]",
-                    f"cmd tp @s {-dist + 0.5:.1f} {eye - 1.62:.2f} 2.6 -90 {pitch}", f"look -90 {pitch}", "wait 6",
-                    'cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,'
+                    f"cmd tp @s {-dist + 0.5:.1f} {eye - 1.62:.2f} {(0.5 + far) / 2:.1f} -90 {pitch}", f"look -90 {pitch}", "wait 6",
+                    f'cmd summon minecraft:husk 0.5 201 {far} {{NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,'
                     'attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}',
                     f'cmd summon awaken:{m.id} 0.5 201.0 0.5 {{PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}}', "wait 12",
                     f"cmd awaken ascent pilot rec {m.id}_idle 30 {shrink}", "wait 34", "cmd awaken admin monster target",

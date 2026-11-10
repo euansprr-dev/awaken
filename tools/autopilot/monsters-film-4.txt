@@ -76,10 +76,10 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -4.7 200.31 2.6 -90 4
+cmd tp @s -7.7 200.31 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:incense_priest 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
 cmd awaken ascent pilot rec incense_priest_idle 30 2
@@ -208,10 +208,10 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -3.9 199.93 2.6 -90 4
+cmd tp @s -6.9 199.93 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:salt_stray 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
 cmd awaken ascent pilot rec salt_stray_idle 30 2
@@ -232,10 +232,10 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -4.9 200.42 2.6 -90 4
+cmd tp @s -7.9 200.42 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:drowned_scribe 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
 cmd awaken ascent pilot rec drowned_scribe_idle 30 2

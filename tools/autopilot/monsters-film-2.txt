@@ -202,10 +202,10 @@ wait 4
 cmd kill @e[type=item]
 cmd kill @e[type=awaken:gel_sample]
 cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -5.7 200.70 2.6 -90 4
+cmd tp @s -8.7 200.70 4.5 -90 4
 look -90 4
 wait 6
-cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
+cmd summon minecraft:husk 0.5 201 8.5 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
 cmd summon awaken:hollow_tender 0.5 201.0 0.5 {PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}
 wait 12
 cmd awaken ascent pilot rec hollow_tender_idle 30 2
