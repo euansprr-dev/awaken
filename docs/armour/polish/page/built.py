@@ -66,8 +66,10 @@ def main():
     before = newest(["before"], "worn-1")
     worn = newest(["after5", "after6"], "worn-1")
     living = newest(["after5", "after6"], "living")
-    moments = newest(["after5", "after6"], "moments")
-    extras = newest(["after6", "after7"], "extras")
+    # the first moments run (after5) was shot through the world's own first light, with the HUD hiding the hand and the
+    # marked arm turned away: only the run after those fixes counts
+    moments = newest(["after7"], "moments")
+    extras = newest(["after7"], "extras")
     # C-rank: the three sets whose plates changed in stage 3, from behind (and Shardcrown's forearm from your own eyes)
     strip("built_c_gatewrought.jpg", [(before, "w_gatewrought_back", FIG, "TODAY"), (worn, "w_gatewrought_back", FIG, "BUILT")], (400, 500))
     strip("built_c_vaultbreaker.jpg", [(before, "w_vaultbreaker_back", FIG, "TODAY"), (worn, "w_vaultbreaker_back", FIG, "BUILT")], (400, 500))
@@ -108,8 +110,10 @@ def fig(name, alt, caption, wide=True):
 
 def group(title, lead, figures):
     figures = [f for f in figures if f]
-    body = '<div class="views">' + "".join(figures) + "</div>" if figures else '<p class="muted">The pictures for this part are still being shot on GitHub. They land here when they are.</p>'
-    return f"<h3>{title}</h3><p>{lead}</p>{body}"
+    if not figures:
+        return f'<div class="col"><h3>{title}</h3><p>{lead}</p><p class="muted">The pictures for this part are still being shot on GitHub. They land here when they are.</p></div>'
+    # the words in the reading column, the pictures at the page's full width
+    return f'<div class="col"><h3>{title}</h3><p>{lead}</p></div><div class="views">' + "".join(figures) + "</div>"
 
 
 def section():
@@ -127,9 +131,9 @@ def section():
     table = ('<div class="tablewrap"><table class="built"><thead><tr><th>Stage</th><th>What it does</th><th>Where it stands</th></tr></thead><tbody>'
              + "".join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in rows) + "</tbody></table></div>")
     parts = [
-        '<h2 id="built">Built since your yes</h2>',
-        "<p>You said: go with the full plan and all recommendations. This is what is built, what the real game has shown of it on GitHub&rsquo;s machines, and the three things only you can do. It all sits on its own branch. Nothing is merged.</p>",
-        table,
+        '<div class="col"><h2 id="built">Built since your yes</h2>'
+        "<p>You said: go with the full plan and all recommendations. This is what is built, what the real game has shown of it on GitHub&rsquo;s machines, and the three things only you can do. It all sits on its own branch. Nothing is merged.</p>"
+        + table + "</div>",
         group("C-rank, for your eye", "You asked to see C-rank before the rest. Three sets changed shape, on limbs and backs only. No helm was touched.", [
             fig("built_c_gatewrought.jpg", "Gatewrought from behind, today and built", "Gatewrought. Today the back is a blank slab. Built: the gate&rsquo;s two pillars and lintel, with a lit door between them.", False),
             fig("built_c_vaultbreaker.jpg", "Vaultbreaker from behind, today and built", "Vaultbreaker. Built: a riveted vault door on the back with its diamond lock, and darker steel so the set stops being grey on grey.", False),
@@ -138,8 +142,8 @@ def section():
             fig("built_c_front.jpg", "The five C-rank sets from the front, as built", "All five C-rank sets as they stand now, front."),
             fig("built_c_back.jpg", "The five C-rank sets from behind, as built", "And from behind."),
         ]),
-        '<div class="dec"><h3>8. C-rank: go on to B, A and S the same way?</h3><p>The same kind of change on the eleven sets left: limbs, belts and backs, one feature each where a back is plain, no helm touched. <span class="rec">Recommended: yes.</span></p>'
-        '<div class="ans" data-key="d8" hidden><button type="button" data-v="yes" aria-pressed="false">Yes, go on</button><button type="button" data-v="change" aria-pressed="false">Change something first</button><button type="button" data-v="stop" aria-pressed="false">Stop at C</button><textarea id="note-d8" aria-label="A note on decision 8" placeholder="What to change, or anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div>',
+        '<div class="col"><div class="dec"><h3>8. C-rank: go on to B, A and S the same way?</h3><p>The same kind of change on the eleven sets left: limbs, belts and backs, one feature each where a back is plain, no helm touched. <span class="rec">Recommended: yes.</span></p>'
+        '<div class="ans" data-key="d8" hidden><button type="button" data-v="yes" aria-pressed="false">Yes, go on</button><button type="button" data-v="change" aria-pressed="false">Change something first</button><button type="button" data-v="stop" aria-pressed="false">Stop at C</button><textarea id="note-d8" aria-label="A note on decision 8" placeholder="What to change, or anything to add"></textarea><span class="saved" aria-live="polite"></span></div></div></div>',
         group("Parts that move", "Each strip is one set a second apart, or standing beside moving. They move from the game&rsquo;s own state, so everyone sees the same and nothing is sent or saved.", [
             fig("built_live_marker.jpg", "Signal's Echo's marker at four moments", "Signal&rsquo;s Echo: the System&rsquo;s marker turns and rides over the hood."),
             fig("built_live_halo.jpg", "Halo Choir's halo at four moments", "Halo Choir: the halo leans round and the small wings breathe."),
@@ -165,13 +169,13 @@ def section():
             fig("built_admire.jpg", "Admire circling Lordscale", "Admire: hold O and the camera leaves your eyes and circles you once."),
             fig("built_admire_night.jpg", "Admire at night in Sunward", "The same at night. The set is drawn in a light that shows it whatever the hour."),
         ]),
-        "<h3>The three things only you can do</h3>",
+        '<div class="col"><h3>The three things only you can do</h3>'
         '<ul><li><strong>Your eye on C-rank</strong>: decision 8, above.</li>'
         '<li><strong>Your ear on the sounds.</strong> A listening page runs on your Mac only (it plays Minecraft&rsquo;s recordings from your own copy of the game, so it is never hosted). In the armour worktree run <code>python3 tools/art/armour_sounds.py listen</code>, then open <code>http://127.0.0.1:8767</code>. Each of the 45 sounds has three picks; press <em>Use this</em> on one. Pick 1 is in the game until you choose.</li>'
         '<li><strong>The measuring run on your Mac</strong> (many armoured players at once). You said yes to it; I will still ask before I launch the game.</li></ul>',
-        '<p class="muted">Not checked anywhere yet: slim-arm skins, the VFX Look, the grips with the weapon-feel session, and how any of it sounds.</p>',
+        '<p class="muted">Not checked anywhere yet: slim-arm skins, the VFX Look, the grips with the weapon-feel session, and how any of it sounds.</p></div>',
     ]
-    return '<div class="col builtsec">' + "".join(parts) + "</div>"
+    return '<div class="builtsec">' + "".join(parts) + "</div>"
 
 
 def page():
