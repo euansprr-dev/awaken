@@ -104,7 +104,11 @@ public final class FightMindTests {
         };
     }
 
-    /** A real drink is seen only after the reaction time; a new target starts the read again. */
+    /**
+     * A real drink is seen only after the reaction time; a new target starts the read again. Timed from the first tick
+     * the mind reads each target, not from when the test set it: the boss's own target goal can put it back on the
+     * nearer player for a tick before the mind looks (1 copy in 25), and a read of the old target then isn't the new one's.
+     */
     private static void reaction(GameTestHelper h) {
         Scene s = scene(h, "hive_regent");
         ServerLevel level = h.getLevel();
@@ -116,27 +120,28 @@ public final class FightMindTests {
         }
         s.run.idleFor(level, 100);
         s.mind.sure = true;
-        long started = level.getGameTime();
-        long[] switched = {-1};
+        long[] since = {-1};
         boolean[] saw = {false, false};
         int[] tick = {0};
         h.onEachTick(() -> {
             tick[0]++;
             long now = level.getGameTime();
-            s.boss.setTarget(switched[0] >= 0 ? q : p);
-            boolean sees = s.mind.seen(FightScripts.Fact.DRINK, 0, now) >= 0;
-            if (switched[0] < 0) {
-                if (sees) {
-                    h.assertTrue(now - started >= s.mind.react, "seen after " + (now - started) + " ticks, sooner than its " + s.mind.react);
-                    saw[0] = true;
-                    switched[0] = now + 1; // from next tick its target is someone else, who has been drinking all along
+            ServerPlayer who = saw[0] ? q : p;
+            // the boss ticks before the test: what it read this tick was for the target set last tick
+            if (s.mind.reading() != who.getId()) since[0] = -1;
+            else if (since[0] < 0) since[0] = now;
+            if (since[0] >= 0 && s.mind.seen(FightScripts.Fact.DRINK, 0, now) >= 0) {
+                h.assertTrue(now - since[0] >= s.mind.react, (saw[0] ? "a new target" : "a drink") + " read after " + (now - since[0]) + " ticks, sooner than its " + s.mind.react);
+                if (saw[0]) {
+                    saw[1] = true;
+                    s.boss.discard();
+                    h.succeed();
+                    return;
                 }
-            } else if (now > switched[0] && sees) {
-                h.assertTrue(now - switched[0] >= s.mind.react - 1, "a new target read after " + (now - switched[0]) + " ticks");
-                saw[1] = true;
-                s.boss.discard();
-                h.succeed();
+                saw[0] = true; // from next tick its target is someone else, who has been drinking all along
+                since[0] = -1;
             }
+            s.boss.setTarget(saw[0] ? q : p);
             h.assertTrue(tick[0] < 100, "never saw the drink: " + saw[0] + ", then " + saw[1]);
         });
     }
