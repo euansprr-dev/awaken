@@ -13,7 +13,7 @@ public final class Kinds {
     private Kinds() {}
 
     private static final Map<String, Kind> BY_ID = new LinkedHashMap<>();
-    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of(), places = List.of();
+    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of(), places = List.of(), monuments = List.of();
 
     static void register(Kind k) {
         if (BY_ID.put(k.id(), k) != null) throw new IllegalStateException("two finds are called " + k.id());
@@ -27,6 +27,7 @@ public final class Kinds {
         curios = a.stream().filter(k -> k.size() == Kind.Size.CURIO).toList();
         finds = a.stream().filter(k -> k.size() == Kind.Size.FIND).toList();
         places = a.stream().filter(k -> k.size() == Kind.Size.PLACE).toList();
+        monuments = places.stream().filter(k -> k.set() == Kind.FSet.MONUMENTS).toList();
     }
 
     public static List<Kind> all() {
@@ -40,6 +41,11 @@ public final class Kinds {
 
     public static List<Kind> places() {
         return places;
+    }
+
+    /** The monuments of the old world (SPEC §61): the only places the world still deals, and the only ones the Journal lists. */
+    public static List<Kind> monuments() {
+        return monuments;
     }
 
     public static @Nullable Kind byId(String id) {

@@ -28,5 +28,6 @@ public final class AllSets {
         PlacesWild.init();
         PlacesStone.init();
         PlacesFar.init();
+        Monuments.init();
     }
 }

@@ -86,7 +86,7 @@ public final class Reward {
         dev.awaken.core.api.Promises.kept(p, "find/" + c.site.key());
         Progression.count(p, "awaken:finds_done");
         if (!Finds.counts(p)) return;
-        if (k.size() == Kind.Size.PLACE) table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
+        if (k.size() == Kind.Size.PLACE && !k.loot().startsWith("relic_")) table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
                 .withParameter(LootContextParams.THIS_ENTITY, p).create(LootContextParamSets.CHEST), stack -> c.pop(from, stack)); // a place pays twice over
         boolean fresh = Progression.discover(p, k.key(), (k.size() == Kind.Size.CURIO ? 0.06 : k.size() == Kind.Size.FIND ? 0.12 : 0.3) + 0.02 * k.rank());
         if (fresh) {

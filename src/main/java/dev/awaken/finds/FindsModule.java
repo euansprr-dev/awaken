@@ -32,6 +32,8 @@ public final class FindsModule {
     public static void init(IEventBus modBus) {
         FindsContent.init(modBus);
         Props.init(modBus);
+        dev.awaken.finds.kit.Olden.init(modBus);
+        Relics.init(modBus);
         AllSets.init();
         Kinds.seal();
         FindsEvents.init(NeoForge.EVENT_BUS);
@@ -41,5 +43,7 @@ public final class FindsModule {
         FindsTests.init();
         Sources.declare("found at a find out in the world (finds.Reward), or picked up there", Props.ids());
         Sources.neverHeld("the world places it under a find; it has no item", "find_heart");
+        Sources.declare("the masonry of the old world's monuments: mined from one (finds.kit.Olden)", dev.awaken.finds.kit.Olden.ids());
+        Sources.declare("the relic of a monument, taken from its plinth (finds.Relics)", Relics.ids());
     }
 }

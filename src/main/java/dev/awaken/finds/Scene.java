@@ -86,7 +86,7 @@ public final class Scene {
     }
 
     /** The ground at an already turned offset, for the feature. */
-    int groundAt(int dx, int dz) {
+    public int groundAt(int dx, int dz) {
         long k = BlockPos.asLong(dx, 0, dz);
         int v = ground.get(k);
         if (v == Integer.MIN_VALUE) {

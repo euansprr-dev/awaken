@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/olden_moss_top",
+    "bottom": "awaken:block/olden_stone",
+    "side": "awaken:block/olden_stone_mossy"
+  }
+}

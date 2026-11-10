@@ -104,11 +104,11 @@ public final class FindsClient {
         var mc = Minecraft.getInstance();
         FindsData d = mc.player == null ? FindsData.EMPTY : mc.player.getData(FindsContent.FINDS);
         // the Journal's Places are places: the small kinds are furnishing and are not listed
-        List<Catalogue.Slot> out = new ArrayList<>(Kinds.places().size());
-        for (Kind k : Kinds.places()) {
+        List<Catalogue.Slot> out = new ArrayList<>(Kinds.monuments().size());
+        for (Kind k : Kinds.monuments()) {
             int n = d.count(k.id());
             ItemStack icon = k.icon().get();
-            String where = "Place " + k.number() + " of " + Kinds.places().size() + ".";
+            String where = "Monument " + k.number() + " of " + Kinds.monuments().size() + ".";
             if (n > 0) out.add(new Catalogue.Slot(k.name(), true, k.learned() + "\n\n" + where + " Found " + (n == 1 ? "once." : n + " times."), icon));
             else if (d.seen().contains(k.id())) out.add(new Catalogue.Slot(k.name(), true, k.see() + "\n\n" + where + " You have been here. There is something still to do.", icon));
             else out.add(Catalogue.Slot.unknown());

@@ -46,7 +46,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         CAIRNS("Cairns"), STILLED("The Stilled at Rest"), LAMPS("Lamplighter's Road"), RINGING("Ringing Stones"),
         MACHINES("Old Machines"), GODS("Small Gods"), WISPS("Wisps"), BURIED("Buried Things"), HUNG("Hung Things"),
         DRY("Dry Things"), MARKS("Marks"), RUNS("Runs"), HIGH("High Things"), WEATHER("Night and Weather"),
-        MENDED("Mended Things"), SURVEY("Surveyor's Stones"), SEALED("Sealed Things"), BEASTS("Beast Works"), PLACES("Places");
+        MENDED("Mended Things"), SURVEY("Surveyor's Stones"), SEALED("Sealed Things"), BEASTS("Beast Works"), PLACES("Places"), MONUMENTS("Monuments");
 
         public final String display;
 

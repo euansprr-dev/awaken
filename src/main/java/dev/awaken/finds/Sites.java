@@ -37,7 +37,7 @@ public final class Sites {
     // stay in the code as furnishing and for their tests; their layers are off.
     static final double[] BASE = {0, 0, 1.0};
     /** The furthest any scene reaches from its heart. */
-    public static final int MAX_REACH = 48;
+    public static final int MAX_REACH = 64;
     /** Below this the land is quiet. About three parts in ten of the world. */
     static final double QUIET = 0.42;
     /** Round spawn nothing is quiet, so the first hour meets each verb. */
@@ -141,6 +141,7 @@ public final class Sites {
         for (int i = 0; i < w.length; i++) {
             Kind k = kinds.get(i);
             if (!k.fits(group)) continue;
+            if (layer == 2 && k.set() != Kind.FSet.MONUMENTS) continue; // the thirty everyday places are not dealt (rejected, SPEC §61.1)
             double v;
             if (layer == 2) {
                 // a place may stand in any country of its land: its own rank is likeliest, the grand ones are rare near home

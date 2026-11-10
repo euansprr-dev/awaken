@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/olden_pillar",
+    "end": "awaken:block/olden_pillar_end"
+  }
+}
