@@ -36,7 +36,8 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   composite draws into the texture Pixels upscales, the chain's last copy skipped; `lens straight` switches it), the
   near clouds walked inside the composite, a small sky buffer for wisps and galaxy, the sun map swept on a worker,
   the wide glow in one pass, Lens's tick work standing back after a late frame. 16 passes became 14, three
-  frame-size passes became two (one with straight out). **Frame times not measured yet**: that needs a quiet Mac
+  frame-size passes became two (one with straight out; it works through Pixels' Steady pass since 394bc166f, the
+  first CI check having shown it never engaging with Steady on). **Frame times not measured yet**: that needs a quiet Mac
   (`tools/steady60-tour.sh tools/autopilot/steady60-dell-5.txt`). Pictures checked on CI
   (`steady60-trim-ci.txt`, `steady60-still-ci.txt`).
 - **Grades** (10 Nov, his three pictures of a vibrant look; SPEC §22 "Grades"): a colour and atmosphere choice over

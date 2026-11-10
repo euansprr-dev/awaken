@@ -6346,7 +6346,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     ours or a resource pack's, is a file and no code. "awaken" is built in and always first.
   - **The setting** is `lensGrade` (a grade's id; an id no file has reads as the look as built). The Look page has a
     **COLOUR GRADE** row under LOOK that steps through the grades on offer, and the world behind the page changes as
-    it does. Autopilot: `lens grade <id>|setting`.
+    it does. (The page's LENS OVER FRAMES row is left out while the Air is on: the Air always spreads its work over
+    frames, so the row did nothing, and the page keeps its height.) Autopilot: `lens grade <id>|setting`.
   - **What a grade may change.** `colour`: its own step at the end of Lens's colour stage (`lensGrade` in
     lens_composite.glsl, after the place's exposure, tints, contrast and saturation, before the cave and held-item
     floors), on all three tiers, skipped when every number is zero. Eight numbers, each 0..1: `vibrance` (the less

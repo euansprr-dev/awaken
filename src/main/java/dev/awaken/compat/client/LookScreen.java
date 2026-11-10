@@ -181,7 +181,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         int noteRoom = room.isEmpty() ? 0 : 3 + Math.min(3, font.split(Component.literal(room), innerW).size()) * LINE;
         // the presets with their heading, a rule, the settings, a rule, a line per row, the note
         int presetsH = LINE + 1 + pch + 3;
-        int bodyH = 5 + SETTINGS * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
+        // (LENS OVER FRAMES does nothing while the Air is on, which always spreads its work over frames: the row stays
+        // away then, and the page keeps the height it had before COLOUR GRADE joined it)
+        boolean framesRow = !AwakenConfig.Client.LENS_AIR.get();
+        int bodyH = 5 + (SETTINGS - (framesRow ? 0 : 1)) * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
         int ph = TOP + ch + 5 + presetsH + bodyH + FOOT;
         int py = Math.max(6, (height - ph) / 2);
         cardsY = py + TOP;
@@ -209,6 +212,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         int y = presetsY + pch + 3;
         y = rule(g, innerX, innerW, y);
         for (int i = 0; i < SETTINGS; i++) {
+            if (i == S_TEMPORAL && !framesRow) {
+                settingY[i] = -1;
+                continue;
+            }
             settingY[i] = y;
             setting(g, innerX, innerW, y, i);
             y += LINE;
