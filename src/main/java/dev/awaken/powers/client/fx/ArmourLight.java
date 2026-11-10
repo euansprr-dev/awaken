@@ -584,7 +584,9 @@ final class ArmourLight {
                     } else {
                         // the lines are crisp; cloth and plate are tinted, never painted out
                         colour = mix(style.mid, style.core, Mth.clamp((i - 0.55f) * 2.2f + flash, 0f, 1f));
-                        alpha = fade * Mth.clamp(c.role[k] >= TRIM ? 0.25f + 0.75f * i : 0.1f + 0.55f * i, 0f, 1f);
+                        // (the second film: lines at 0.25 + 0.75 of their light painted the wide cuff plates out, and a floor
+                        // of 0.1 under every cloth and plate cell hazed the whole arm; the piece must keep its own colours)
+                        alpha = fade * Mth.clamp(c.role[k] >= TRIM ? 0.18f + 0.55f * i : 0.62f * i, 0f, 1f);
                     }
                     int argb = (colour & 0xFFFFFF) | (Math.round(alpha * 255) << 24);
                     for (int v = 0; v < 12; v += 3) vc.addVertex(pose, p[at + v] + lx, p[at + v + 1] + ly, p[at + v + 2] + lz).setColor(argb);

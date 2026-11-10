@@ -184,7 +184,9 @@ final class ArmLight implements ArmLayers.Layer {
     @Override
     public void prepare(ArmLayers.Arm arm) {
         if (!PowerFxConfig.animations() || !lit(arm, FxWorld.ticks + arm.partialTick)) return;
-        FirstPersonDress.glow(litStyle.mid, Math.min(1.6f, litHeat) * (0.55f + 0.45f * litCharge));
+        // a small steady amount, so the piece's own edge light takes the type's colour; the piece only flares at a release
+        // (the second film: a flare all through a cast, and all through a Barrier, washed the whole arm in the type's colour)
+        FirstPersonDress.glow(litStyle.mid, 0.12f * Math.min(1f, litHeat) + 1.2f * Math.max(0f, Math.min(1.6f, litHeat) - 0.9f));
     }
 
     @Override

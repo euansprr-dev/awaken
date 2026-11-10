@@ -11955,8 +11955,12 @@ What follows replaces that. Nothing here changes what a power does to a number u
     or what **glows of itself** (material blue over 0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
     own face.
   The light is drawn cell by cell on the faces themselves, 0.003 off them (faces turned from the eye left out), with a soft additive
-  spill round the lit lines only (when every lit cell spilt, the spills added up to a pale wash over the whole arm). Lines are crisp (cover 0.25 + 0.75 of their light); cloth and plate are tinted, never painted out
-  (0.1 + 0.55), and take the light by their own painting (times 0.5 + 0.65 of the texel's brightness), so the piece still reads. Rule for every type: **the set's lines carry the type, and the type's motif lies on the rest one
+  spill round the lit lines only (when every lit cell spilt, the spills added up to a pale wash over the whole arm). Lines cover 0.18 + 0.55 of their light; cloth and plate are tinted, never painted out (0.62 of
+  theirs, no floor), and take the light by their own painting (times 0.5 + 0.65 of the texel's brightness, or of its darkness for a
+  set whose grain is -1), so the piece keeps its own colours. The armour's own answer is small while the light is on (0.12 of the
+  heat: its edge light takes the type's colour) and flares only at a release (1.2 for each point of heat over 0.9). Two films
+  taught this: in the first every lit cell spilt glow and the arm washed pale; in the second the armour flared all through a cast
+  and wide cuff plates, being lines, were painted out. Rule for every type: **the set's lines carry the type, and the type's motif lies on the rest one
   face at a time**, moving the way it moves on bare skin (to the fist, or back from the hand). Kinetic: the lines pulse, a seam
   wanders down each face. Heat: the hand's end burns, the lines glow hot, embers in the rest. Velocity: streaks down every line and
   one lane a face. Flight: motes, the lines pale. Gravity: falling bands, ink at the wrist with the lines lit over it. Energy and
