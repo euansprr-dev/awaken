@@ -115,6 +115,9 @@ final class GateCommands {
                         if (made != null) made.anyGround = true;
                         return gid;
                     }))));
+            // tours: straight into a Realm at its Mouth, with no gate forming in the overworld first (SPEC §50.8); seed 1 unless given
+            gate.then(Commands.literal("realm_enter").requires(AwakenCommands.admin())
+                    .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(GateCommands::realmEnter))));
             // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
             gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
                     .then(Commands.argument("theme", StringArgumentType.word()).then(Commands.argument("ms", IntegerArgumentType.integer(0)).executes(c -> {
@@ -231,6 +234,65 @@ final class GateCommands {
             dev.awaken.Awaken.LOG.info("[gates] frame gate {} ({}) from {} {} {} at {} m, lift {}", g.id, g.pos.toShortString(), x, (int) y, z, dist, lift);
         });
         return 1;
+    }
+
+    /**
+     * Tours ({@code gate realm_enter <rank> <id> [seed]}): a gate's record with its Realm and no build, then the same way in
+     * as walking through (Runs.enter), so the walk starts inside from wherever it's asked. Nothing stands in the overworld;
+     * leaving puts you at the world's spawn. A failure says why, in words the autopilot's "need realm" reads.
+     */
+    private static int realmEnter(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        MinecraftServer server = c.getSource().getServer();
+        String[] w = StringArgumentType.getString(c, "id").trim().split("\\s+");
+        String id = w[0], why = null;
+        Rank rank = null;
+        long seed = 1;
+        try {
+            rank = Rank.valueOf(StringArgumentType.getString(c, "rank").toUpperCase(java.util.Locale.ROOT));
+            if (w.length > 1) seed = Long.parseLong(w[1]);
+        } catch (NumberFormatException e) {
+            why = "the seed must be a whole number";
+        } catch (IllegalArgumentException e) {
+            why = "the rank must be one of E D C B A S SOVEREIGN";
+        }
+        var bp = dev.awaken.gates.realms.Blueprints.get(id);
+        Theme theme = bp.map(b -> Theme.parse(b.theme())).orElse(null);
+        GateRegistry reg = GateRegistry.get(server);
+        if (why == null) {
+            if (bp.isEmpty()) why = "no Realm is called " + id;
+            else if (theme == null) why = "its theme, " + bp.get().theme() + ", isn't a gate theme";
+            else if (dev.awaken.gates.realms.Realms.level(server) == null && GateService.testLevel == null) why = "this world has no Realms dimension"; // tests stand one level in for all of them
+            else if (GateService.gateLevel(server) == null || !dev.awaken.core.AwakenConfig.GATES.get()) why = "gates are off in this world";
+            else if (Runs.run(p).active()) why = "you're still inside a gate (awaken gate leave first)";
+            else if (!reg.hasFreeCell()) why = "every gate cell is in use";
+        }
+        GateRecord g = null;
+        if (why == null) {
+            GatePlan plan = new GatePlan(seed, GatePlan.CONTENT_VERSION, rank, theme, Layout.values()[0], List.of(), Twist.NONE, 3, theme.bossId(),
+                    theme == Theme.HIVE ? Theme.BELL_CRYPT : Theme.HIVE, 0);
+            int cell = reg.allocateCell();
+            long day = PlayDays.current(server);
+            // READY with no structure: nothing to build, nothing to take down, and it never breaks while a tour walks it
+            g = new GateRecord(reg.nextId(), plan, p.blockPosition(), 0, cell, day, day + 100000, GateState.READY, java.util.Optional.of(p.getUUID()));
+            g.interiorReady = true; // a Realm's land is drawn as you walk it
+            g.trace.add("made by gate realm_enter: no gate stands in the overworld");
+            dev.awaken.gates.realms.Realms.attach(server, g, id);
+            reg.put(g);
+            dev.awaken.gates.world.GateCells.put(cell, plan);
+            GateService.lastOpened = g.id;
+            if (!Runs.enter(p, g)) {
+                why = "the way in refused you";
+                GateService.release(server, g);
+            }
+        }
+        if (why != null) {
+            c.getSource().sendFailure(Component.literal("Couldn't enter " + id + ", so you're not in a Realm: " + why + "."));
+            return 0;
+        }
+        GateRecord made = g;
+        c.getSource().sendSuccess(() -> Component.literal("In " + bp.get().name() + " (gate " + made.id + ", seed " + made.plan.seed() + ")."), true);
+        return g.id;
     }
 
     private static int open(CommandContext<CommandSourceStack> c, String themeId, boolean rig) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

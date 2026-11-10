@@ -1,4 +1,4 @@
-# The Hour Crypt (SPEC 50.8), walked as a player does. Shots beside its two paintings.
+# The Hour Crypt (SPEC 50.8), walked as a player does from the Mouth (entered with gate realm_enter). Shots beside its two paintings.
 world autopilot_realm_hour creative 20261113
 waitworld
 gui 0
@@ -12,16 +12,12 @@ wait 20
 screen close
 cmd difficulty peaceful
 cmd gamerule send_command_feedback false
-hud off
 
-cmd tp @s 6000 200 6000
-wait 600
-cmd awaken gate hop
-wait 400
-cmd awaken gate realm E awaken:hour_crypt
-wait 400
-cmd awaken gate interior enter
-wait 40
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:hour_crypt
+need realm
+hud off
+wait 30
 shotnow hour_crossing
 wait 300
 look 0 -8
@@ -83,3 +79,4 @@ cmd awaken gate realm_at LORD 0 0 66 48
 look 180 30
 wait 200
 shot hour_balcony
+quit
