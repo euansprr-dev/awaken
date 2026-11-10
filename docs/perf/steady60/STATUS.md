@@ -37,13 +37,15 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   near clouds walked inside the composite, a small sky buffer for wisps and galaxy, the sun map swept on a worker,
   the wide glow in one pass, Lens's tick work standing back after a late frame. 16 passes became 14, three
   frame-size passes became two (one with straight out. It had never engaged before 3913eb455: it was left out with
-  Steady on, and it counted a list of effects that always holds the game's own "end_of_frame" slot). **Frame times not measured yet**: that needs a quiet Mac
+  Steady on, and it counted a list of effects that always holds the game's own "end_of_frame" slot. First seen
+  engaging in run 42865863453: the picture matches with it on and off, with Steady on and off). **Frame times not measured yet**: that needs a quiet Mac
   (`tools/steady60-tour.sh tools/autopilot/steady60-dell-5.txt`). Pictures checked on CI
   (`steady60-trim-ci.txt`, `steady60-still-ci.txt`).
 - **Grades** (10 Nov, his three pictures of a vibrant look; SPEC §22 "Grades"): a colour and atmosphere choice over
   every look. A grade is a file (`assets/awaken/lens_grade/<id>.json`), the setting is `lensGrade`, the Look page
   has a COLOUR GRADE row, autopilot `lens grade <id>`. Ships Awaken (the look as built, the default) and Vivid.
-  Compared on CI with `steady60-grade-ci.txt`. Not seen by him in game yet.
+  Compared on CI with `steady60-grade-ci.txt` (final run 42865865221 on the merged tip 00547a97b). He has seen the
+  first build's pictures, not the game.
 - **Tick work evened out** (autopilot `lens cost`): a 0.5 ms limit a tick for the heightfield and the block map, near
   re-reads in turn.
 - Euan's notes, 10 Nov, three rounds, all acted on: bright rims at dusk; dark un-fogged patches; "the atmosphere
