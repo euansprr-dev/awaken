@@ -13,7 +13,7 @@ public final class Kinds {
     private Kinds() {}
 
     private static final Map<String, Kind> BY_ID = new LinkedHashMap<>();
-    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of();
+    private static List<Kind> all = List.of(), curios = List.of(), finds = List.of(), places = List.of();
 
     static void register(Kind k) {
         if (BY_ID.put(k.id(), k) != null) throw new IllegalStateException("two finds are called " + k.id());
@@ -26,15 +26,20 @@ public final class Kinds {
         all = Collections.unmodifiableList(a);
         curios = a.stream().filter(k -> k.size() == Kind.Size.CURIO).toList();
         finds = a.stream().filter(k -> k.size() == Kind.Size.FIND).toList();
+        places = a.stream().filter(k -> k.size() == Kind.Size.PLACE).toList();
     }
 
     public static List<Kind> all() {
         return all;
     }
 
-    /** The kinds dealt on a layer: 0 curios, 1 finds. */
+    /** The kinds of a layer: 0 curios, 1 finds, 2 places. */
     public static List<Kind> layer(int layer) {
-        return layer == 0 ? curios : finds;
+        return layer == 0 ? curios : layer == 1 ? finds : places;
+    }
+
+    public static List<Kind> places() {
+        return places;
     }
 
     public static @Nullable Kind byId(String id) {

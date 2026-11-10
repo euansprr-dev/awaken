@@ -14,12 +14,15 @@ final class Anchors {
     /** South, west, north, east: where a kind's own south points after 0..3 quarter turns. */
     private static final int[] DX = {0, -1, 0, 1}, DZ = {1, 0, -1, 0};
 
+    private static final int[][] OFF = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+
     static int @Nullable [] find(Kind k, Terrain t, int x, int z, long h) {
         return switch (k.anchor()) {
             case FLAT -> flat(k, t, x, z, h);
             case HILLTOP -> hilltop(k, t, x, z, h, 0);
             case PEAK -> hilltop(k, t, x, z, h, 58);
             case LINE -> line(k, t, x, z, h);
+            case FIELD -> field(k, t, x, z, h);
             case SHORE -> shore(k, t, x, z, h);
             case CLIFF -> cliff(k, t, x, z, h);
             case SLOPE -> slope(k, t, x, z, h);
@@ -37,6 +40,31 @@ final class Anchors {
             hi = Math.max(hi, f);
         }
         return hi - lo;
+    }
+
+    /**
+     * Ground a place can level: seventeen points (the middle and two rings) all dry and within the kind's slope of each
+     * other. The site's height is their median, so levelling cuts about as much as it fills. Nine tries round the point.
+     */
+    private static int @Nullable [] field(Kind k, Terrain t, int x, int z, long h) {
+        int r = Math.max(8, k.reach() * 4 / 5), sea = t.seaLevel();
+        int[] f = new int[17];
+        for (int i = 0; i < 9; i++) {
+            int cx = x + OFF[i][0] * 22, cz = z + OFF[i][1] * 22;
+            f[0] = t.floor(cx, cz);
+            boolean dry = f[0] > sea;
+            for (int j = 0; j < 16 && dry; j++) {
+                double a = j * Math.PI / 4 + (j >= 8 ? Math.PI / 8 : 0);
+                int rr = j >= 8 ? r : r / 2;
+                f[1 + j] = t.floor(cx + (int) Math.round(Math.cos(a) * rr), cz + (int) Math.round(Math.sin(a) * rr));
+                dry = f[1 + j] > sea;
+            }
+            if (!dry) continue;
+            int[] sorted = f.clone();
+            java.util.Arrays.sort(sorted);
+            if (sorted[16] - sorted[0] <= Math.max(3, k.slope())) return new int[] {cx, sorted[8], cz, (int) (h & 3)};
+        }
+        return null;
     }
 
     private static int @Nullable [] flat(Kind k, Terrain t, int x, int z, long h) {

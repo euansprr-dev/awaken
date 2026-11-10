@@ -17,13 +17,16 @@ import java.util.function.Supplier;
 public record Kind(String id, String name, FSet set, int number, Verb verb, Size size, int rank, Set<RegionMap.Group> lands,
                    Anchor anchor, Made made, String see, String learned, int reach, int slope, int length, Maker maker,
                    Supplier<Script> script, String loot, boolean persists, Tell tell, Supplier<ItemStack> icon, boolean needsMove,
-                   boolean lead, int weight, java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after, @org.jspecify.annotations.Nullable Play play, int ward, String move) {
+                   boolean lead, int weight, java.util.function.Consumer<dev.awaken.finds.verb.Ctx> after, @org.jspecify.annotations.Nullable Play play, int ward, String move, @org.jspecify.annotations.Nullable Air air) {
 
     /** The eighteen things your hands do. A kind is built on one; many borrow a second. */
     public enum Verb { STACK, CARRY, LIGHT, RING, TURN, OFFER, FOLLOW, DIG, PULL, POUR, SHOOT, RUN, REACH, WAIT, MEND, READ, BREAK, SNEAK }
 
-    /** A curio is a few blocks and under a minute; a find is a small scene and a few minutes. */
-    public enum Size { CURIO, FIND }
+    /**
+     * A place is somewhere you walk into, tens of blocks across, with its own air: the only size the world deals now
+     * (SPEC §59). A curio is a few blocks; a find is a small scene. Those two are furnishing, not discoveries.
+     */
+    public enum Size { CURIO, FIND, PLACE }
 
     public enum Made { BUILT, STILLED, BEAST, NATURAL, ALIVE, FALLEN, STRANGE }
 
@@ -33,7 +36,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
      * {@code SHORE}: dry land beside open water, facing it. {@code CLIFF}: the foot of a steep rise, facing it.
      * {@code SLOPE}: a hillside, facing downhill. {@code PEAK}: a hilltop high above the sea.
      */
-    public enum Anchor { FLAT, HILLTOP, LINE, SHORE, CLIFF, SLOPE, PEAK }
+    public enum Anchor { FLAT, HILLTOP, LINE, SHORE, CLIFF, SLOPE, PEAK, /** Dry ground that can be levelled: no more than {@link Kind#slope} between any two of seventeen points across the footprint. */ FIELD }
 
     /** What gives a find away from a distance. Drawn by the client near the heart; small on purpose. */
     public enum Tell { NONE, GLINT, SMOKE, MOTHS, CHIME, HUM, DRIP, FIREFLIES, STEAM }
@@ -43,7 +46,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         CAIRNS("Cairns"), STILLED("The Stilled at Rest"), LAMPS("Lamplighter's Road"), RINGING("Ringing Stones"),
         MACHINES("Old Machines"), GODS("Small Gods"), WISPS("Wisps"), BURIED("Buried Things"), HUNG("Hung Things"),
         DRY("Dry Things"), MARKS("Marks"), RUNS("Runs"), HIGH("High Things"), WEATHER("Night and Weather"),
-        MENDED("Mended Things"), SURVEY("Surveyor's Stones"), SEALED("Sealed Things"), BEASTS("Beast Works");
+        MENDED("Mended Things"), SURVEY("Surveyor's Stones"), SEALED("Sealed Things"), BEASTS("Beast Works"), PLACES("Places");
 
         public final String display;
 
@@ -97,6 +100,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         private Play play;
         private int ward;
         private String move = "";
+        private Air air;
 
         private Builder(FSet set, int number, String id, String name) {
             this.set = set;
@@ -108,6 +112,9 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
         public Builder verb(Verb v) { verb = v; return this; }
         public Builder curio() { size = Size.CURIO; return this; }
         public Builder find() { size = Size.FIND; return this; }
+        public Builder place() { size = Size.PLACE; return this; }
+        /** The place's own air: fog, motes, sound. */
+        public Builder air(Air a) { air = a; return this; }
         /** 0 is E (near home), 4 is A. */
         public Builder rank(int r) { rank = r; return this; }
         /** The land groups it stands in; none means any land. */
@@ -149,7 +156,7 @@ public record Kind(String id, String name, FSet set, int number, Verb verb, Size
 
         public Kind add() {
             Kind k = new Kind(id, name, set, number, verb, size, rank, lands.isEmpty() ? Set.of() : EnumSet.copyOf(lands), anchor, made, see, learned,
-                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight, after, play, ward, move);
+                    reach, slope, length, maker, script, loot, persists, tell, icon, needsMove, lead, weight, after, play, ward, move, air);
             Kinds.register(k);
             return k;
         }

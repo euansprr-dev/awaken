@@ -3,6 +3,8 @@ package dev.awaken.finds;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
@@ -38,6 +40,18 @@ public record FindsFeature() implements Feature {
         return any;
     }
 
+    private static boolean joins(BlockState b) {
+        Block k = b.getBlock();
+        return k instanceof net.minecraft.world.level.block.CrossCollisionBlock || k instanceof net.minecraft.world.level.block.WallBlock
+                || k instanceof net.minecraft.world.level.block.StairBlock;
+    }
+
+    /** The land's own top: what a cut or filled column is finished with. */
+    private static boolean skin(BlockState b) {
+        return b.is(Blocks.GRASS_BLOCK) || b.is(Blocks.PODZOL) || b.is(Blocks.MYCELIUM) || b.is(BlockTags.SAND) || b.is(Blocks.SNOW_BLOCK) || b.is(Blocks.COARSE_DIRT)
+                || b.is(Blocks.MUD) || b.is(Blocks.MOSS_BLOCK) || b.is(BlockTags.TERRACOTTA) || b.is(Blocks.GRAVEL);
+    }
+
     private static boolean soft(BlockState b) {
         return b.is(BlockTags.LEAVES) || b.is(BlockTags.LOGS) || b.canBeReplaced() || b.is(Blocks.SNOW) || b.is(BlockTags.FLOWERS) || b.is(Blocks.BAMBOO) || b.is(Blocks.MUSHROOM_STEM)
                 || b.is(Blocks.BROWN_MUSHROOM_BLOCK) || b.is(Blocks.RED_MUSHROOM_BLOCK);
@@ -57,6 +71,10 @@ public record FindsFeature() implements Feature {
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
             cols.add(BlockPos.asLong(BlockPos.getX(k), 0, BlockPos.getZ(k)));
         }
+        for (long k : sc.shaped) {
+            int x = s.x() + BlockPos.getX(k), z = s.z() + BlockPos.getZ(k);
+            if (x >= x0 && x <= x1 && z >= z0 && z <= z1) cols.add(k);
+        }
         int cr = sc.clear;
         for (int dx = -cr; dx <= cr; dx++)
             for (int dz = -cr; dz <= cr; dz++) {
@@ -73,9 +91,9 @@ public record FindsFeature() implements Feature {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             int want = s.y() + sc.groundAt(dx, dz);
             // find the real ground: the first block from above that isn't air, water or something that grew
-            int real = want + 12;
+            int real = want + 20;
             BlockState top = Blocks.DIRT.defaultBlockState();
-            for (; real > want - 8; real--) {
+            for (; real > want - 20; real--) {
                 m.set(x, real, z);
                 BlockState b = level.getBlockState(m);
                 if (b.isAir() || !b.getFluidState().isEmpty()) continue;
@@ -91,8 +109,9 @@ public record FindsFeature() implements Feature {
                     m.set(x, y, z);
                     level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
+                // the cut face takes the land's own skin (grass, sand, snow), not bare rock
                 m.set(x, want, z);
-                if (level.getBlockState(m).is(Blocks.DIRT)) level.setBlock(m, top.is(Blocks.GRASS_BLOCK) ? top : level.getBlockState(m), Block.UPDATE_CLIENTS);
+                if (skin(top) && !level.getBlockState(m).isAir()) level.setBlock(m, top, Block.UPDATE_CLIENTS);
             } else if (real < want) {
                 for (int y = real + 1; y <= want; y++) {
                     m.set(x, y, z);
@@ -105,13 +124,25 @@ public record FindsFeature() implements Feature {
             }
         }
         boolean any = false;
+        List<BlockPos> joins = level instanceof ServerLevel ? new ArrayList<>() : null;
         for (var e : blocks.long2ObjectEntrySet()) {
             long k = e.getLongKey();
             int x = s.x() + BlockPos.getX(k), z = s.z() + BlockPos.getZ(k);
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
             m.set(x, s.y() + BlockPos.getY(k), z);
-            level.setBlock(m, e.getValue(), Block.UPDATE_CLIENTS);
+            BlockState st = e.getValue();
+            level.setBlock(m, st, Block.UPDATE_CLIENTS);
+            // fences, walls, panes, bars and stairs take their shape from their neighbours: in a new chunk the game does
+            // that when the chunk is finished, on a pad stood by hand it is done here once everything is down
+            if (joins(st)) {
+                if (joins != null) joins.add(m.immutable());
+                else level.getChunk(m).markPosForPostProcessing(m);
+            }
             any = true;
+        }
+        if (joins != null) for (BlockPos p : joins) {
+            BlockState was = level.getBlockState(p), now = Block.updateFromNeighbourShapes(was, level, p);
+            if (now != was) level.setBlock(p, now, Block.UPDATE_CLIENTS);
         }
         BlockPos heart = s.heart();
         if (heart.getX() >= x0 && heart.getX() <= x1 && heart.getZ() >= z0 && heart.getZ() <= z1) {
@@ -126,7 +157,7 @@ public record FindsFeature() implements Feature {
         int sea = level.getSeaLevel();
         BlockState snow = Blocks.SNOW.defaultBlockState();
         // (not for one stood by hand: a test pad in the sky is above the snow line whatever the land below is)
-        if (s.layer() != 2) for (long c : cols) {
+        if (s.layer() != Sites.HAND) for (long c : cols) {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
             int base = s.y() + sc.groundAt(dx, dz);

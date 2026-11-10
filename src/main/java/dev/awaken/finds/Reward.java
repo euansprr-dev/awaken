@@ -37,7 +37,7 @@ public final class Reward {
     }
 
     public static void pay(Ctx c, @Nullable ServerPlayer by) {
-        List<ServerPlayer> who = new ArrayList<>(c.players(20));
+        List<ServerPlayer> who = new ArrayList<>(c.players(Math.max(20, c.kind().reach() + 8)));
         if (by != null) {
             who.remove(by);
             who.add(0, by);
@@ -86,7 +86,9 @@ public final class Reward {
         dev.awaken.core.api.Promises.kept(p, "find/" + c.site.key());
         Progression.count(p, "awaken:finds_done");
         if (!Finds.counts(p)) return;
-        boolean fresh = Progression.discover(p, k.key(), (k.size() == Kind.Size.CURIO ? 0.06 : 0.12) + 0.02 * k.rank());
+        if (k.size() == Kind.Size.PLACE) table.getRandomItems(new LootParams.Builder(c.level).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(from))
+                .withParameter(LootContextParams.THIS_ENTITY, p).create(LootContextParamSets.CHEST), stack -> c.pop(from, stack)); // a place pays twice over
+        boolean fresh = Progression.discover(p, k.key(), (k.size() == Kind.Size.CURIO ? 0.06 : k.size() == Kind.Size.FIND ? 0.12 : 0.3) + 0.02 * k.rank());
         if (fresh) {
             Progression.markNewThing(p, k.name());
             Finds.tell(p, Finds.Find.of("find", "New find · " + k.name(), k.name(), k.learned(), 0xE8C36A, true));

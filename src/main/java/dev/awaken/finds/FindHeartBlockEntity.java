@@ -76,7 +76,7 @@ public final class FindHeartBlockEntity extends BlockEntity {
             resolved = true;
             if (!forcedKind.isEmpty()) {
                 Kind k = Kinds.byId(forcedKind);
-                site = k == null ? null : new Site(k, 2, worldPosition.getX(), worldPosition.getY() + 2, worldPosition.getZ(), forcedSeed, forcedRot,
+                site = k == null ? null : new Site(k, Sites.HAND, worldPosition.getX(), worldPosition.getY() + 2, worldPosition.getZ(), forcedSeed, forcedRot,
                         dev.awaken.living.region.RegionMap.Group.PLAINS, k.rank());
             } else site = Sites.ofHeart(sl, worldPosition);
             script = site == null ? null : site.kind().script().get();
@@ -142,7 +142,7 @@ public final class FindHeartBlockEntity extends BlockEntity {
         long now = level.getGameTime();
         // on the beat, not staggered: a script that counts in seconds (now % 20) has to land on them
         if (now % be.script.every() != 0) return;
-        if (!level.hasNearbyAlivePlayer(s.x() + 0.5, s.y() + 1, s.z() + 0.5, NEAR)) {
+        if (!level.hasNearbyAlivePlayer(s.x() + 0.5, s.y() + 1, s.z() + 0.5, Math.max(NEAR, s.kind().reach() + 24))) {
             if (be.touched && !s.kind().persists() && now - be.lastNear > (be.done() ? REDO : FORGET)) be.forget(sl);
             return;
         }
@@ -157,6 +157,15 @@ public final class FindHeartBlockEntity extends BlockEntity {
             be.setChanged();
         }
         be.script.tick(c);
+        // walking into a place is the discovery (SPEC §59.6): it goes in the Journal with its name, told once per kind
+        if (s.kind().size() == Kind.Size.PLACE && now % 20 == 0)
+            for (var p : c.players(s.kind().reach() - 2)) {
+                FindsData d = p.getData(FindsContent.FINDS);
+                if (d.count(s.kind().id()) > 0 || d.seen().contains(s.kind().id())) continue;
+                p.setData(FindsContent.FINDS, d.withSeen(s.kind().id()));
+                if (dev.awaken.signal.Finds.counts(p) && dev.awaken.progression.Progression.discover(p, "place/" + s.kind().id(), 0.1 + 0.03 * s.kind().rank()))
+                    dev.awaken.signal.Finds.tell(p, dev.awaken.signal.Finds.Find.of("find", "Found \u00b7 " + s.kind().name(), s.kind().name(), s.kind().see(), 0xE8C36A, true));
+            }
         // a find that wants a move you may not have yet is kept for you as a promise (SPEC §58.7), asked every two seconds
         if (!s.kind().move().isEmpty() && now % 40 == 0 && !be.done())
             for (var p : c.players(20))
@@ -221,8 +230,20 @@ public final class FindHeartBlockEntity extends BlockEntity {
 
     public static TellDrawer drawer = (l, p, t, d) -> {};
     private boolean clientDone;
+    private String airKind = "";
+
+    /** Installed by the client: told every tick about each loaded heart whose kind has an air, so it can fade that air in. */
+    public interface AirHook {
+        void near(BlockPos heart, Kind kind);
+    }
+
+    public static AirHook airHook = (p, k) -> {};
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FindHeartBlockEntity be) {
+        if (!be.airKind.isEmpty()) {
+            Kind k = Kinds.byId(be.airKind);
+            if (k != null && k.air() != null) airHook.near(pos, k);
+        }
         if (be.tell <= 0 || be.tell >= Kind.Tell.values().length) return;
         drawer.draw(level, BlockPos.of(be.tellPos), Kind.Tell.values()[be.tell], be.clientDone);
     }
@@ -245,6 +266,8 @@ public final class FindHeartBlockEntity extends BlockEntity {
             out.putInt("rot", forcedRot);
             out.putLong("seed", forcedSeed);
         }
+        Site here = site();
+        if (here != null) out.putString("air", here.kind().id());
         out.putInt("tell", tell);
         out.putLong("tellPos", tellPos);
         out.putBoolean("done", done());
@@ -271,6 +294,7 @@ public final class FindHeartBlockEntity extends BlockEntity {
         forcedKind = in.getStringOr("kind", "");
         forcedRot = in.getIntOr("rot", 0);
         forcedSeed = in.getLongOr("seed", 0);
+        airKind = in.getStringOr("air", "");
         tell = in.getIntOr("tell", 0);
         tellPos = in.getLongOr("tellPos", 0);
         clientDone = in.getBooleanOr("done", false);

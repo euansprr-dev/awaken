@@ -31,6 +31,9 @@ final class FindsCommands {
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Kind.FSet.values()).map(s -> s.name().toLowerCase(java.util.Locale.ROOT)), b))
                             .executes(c -> gallery(c, StringArgumentType.getString(c, "set")))));
             f.then(Commands.literal("near").executes(FindsCommands::near));
+            f.then(Commands.literal("view").then(Commands.argument("kind", StringArgumentType.word())
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.places().stream().map(Kind::id), b))
+                    .then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 9)).executes(FindsCommands::view))));
             f.then(Commands.literal("grant").then(Commands.argument("kind", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Kinds.all().stream().map(Kind::id), b)).executes(FindsCommands::grant)));
             f.then(Commands.literal("visit").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 99)).executes(FindsCommands::visit)));
@@ -72,6 +75,49 @@ final class FindsCommands {
         int count = n, end = x;
         c.getSource().sendSuccess(() -> Component.literal(count + " finds stood east of you, as far as x " + end), false);
         return n;
+    }
+
+    private static final java.util.Map<String, Site> VIEWED = new java.util.HashMap<>();
+
+    /**
+     * Takes you to the nearest place of a kind that the world itself made and stands you at one of its cameras (0 is from
+     * afar; a place has four). Looks out to 12,000 blocks from the spawn. For checking places in their own land.
+     */
+    private static int view(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        ServerLevel level = (ServerLevel) p.level();
+        String id = StringArgumentType.getString(c, "kind");
+        int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "n");
+        Site s = VIEWED.get(id);
+        if (s == null) {
+            BlockPos from = level.getRespawnData().pos();
+            for (int r = 3000; r <= 12000 && s == null; r += 3000) {
+                double best = Double.MAX_VALUE;
+                for (Site o : Sites.near(level, from.getX() - r, from.getZ() - r, from.getX() + r, from.getZ() + r, 0)) {
+                    double d = o.heart().distSqr(from);
+                    if (o.kind().id().equals(id) && d < best) {
+                        best = d;
+                        s = o;
+                    }
+                }
+            }
+            if (s == null) {
+                Awaken.LOG.info("[finds] view {}: none within 12000 of the spawn", id);
+                c.getSource().sendFailure(Component.literal("No " + id + " within 12,000 blocks of the spawn."));
+                return 0;
+            }
+            VIEWED.put(id, s);
+        }
+        var cams = Sites.scene(level, s).cams();
+        int[] cam = cams.isEmpty() ? new int[] {0, 14, -(s.kind().reach() + 6), 0, 25} : cams.get(Math.min(n, cams.size() - 1));
+        BlockPos stand = new BlockPos(s.x() + cam[0], s.y() + cam[1], s.z() + cam[2]);
+        level.getChunk(stand); // the land has to be there before the unseen block is set under the camera
+        if (level.getBlockState(stand.below()).isAir()) level.setBlock(stand.below(), net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState(), 3);
+        p.teleportTo(level, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, java.util.Set.of(), (float) cam[3], (float) cam[4], false);
+        Site at = s;
+        Awaken.LOG.info("[finds] view {} {}: at {} {} {} ({}, rank {})", id, n, at.x(), at.y(), at.z(), at.group(), at.rank());
+        c.getSource().sendSuccess(() -> Component.literal(at.kind().name() + " at " + at.x() + " " + at.y() + " " + at.z()), false);
+        return 1;
     }
 
     /** Files a kind in your Journal as done, for checking the Journal's pages: a kind's id, a set's name, or "all". */

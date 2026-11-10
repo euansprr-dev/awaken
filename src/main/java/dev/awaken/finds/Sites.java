@@ -29,9 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Sites {
     private Sites() {}
 
-    static final int[] CELL = {96, 256}, EDGE = {18, 44}, RINGS = {4, 5};
+    static final int[] CELL = {96, 256, 448}, EDGE = {18, 44, 80}, RINGS = {4, 5, 3};
+    /** The layer number of a site stood by hand (the gallery, a test): it stands on a level pad, not on the world's ground. */
+    public static final int HAND = 3;
     /** The chance a cell holds something where the land is at its usual liveliness. */
-    static final double[] BASE = {0.62, 0.50};
+    // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
+    // stay in the code as furnishing and for their tests; their layers are off.
+    static final double[] BASE = {0, 0, 0.6};
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 48;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -220,7 +224,8 @@ public final class Sites {
         Ask a = ask(level);
         if (a == null) return List.of();
         List<Site> out = new ArrayList<>(2);
-        for (int layer = 0; layer < 2; layer++) {
+        for (int layer = 0; layer < CELL.length; layer++) {
+            if (BASE[layer] <= 0) continue;
             int c = CELL[layer], pad = MAX_REACH + margin + 24; // an anchor may move a site a little out of its cell
             for (int cx = Math.floorDiv(x0 - pad, c); cx <= Math.floorDiv(x1 + pad, c); cx++)
                 for (int cz = Math.floorDiv(z0 - pad, c); cz <= Math.floorDiv(z1 + pad, c); cz++) {
@@ -259,7 +264,7 @@ public final class Sites {
     public static Scene scene(ServerLevel level, Site s) {
         Scene sc = SCENES.get(s.key());
         if (sc != null) return sc;
-        sc = build(s, s.layer() == 2 ? Terrain.flat(s.y()) : Terrain.of(level));
+        sc = build(s, s.layer() == HAND ? Terrain.flat(s.y()) : Terrain.of(level));
         SCENES.put(s.key(), sc);
         return sc;
     }
@@ -277,21 +282,21 @@ public final class Sites {
     public static @Nullable Site lead(ServerLevel level, int x, int z, int spawnX, int spawnZ, java.util.function.Predicate<Kind> want) {
         Ask a = ask(level);
         if (a == null) return null;
-        int c = CELL[1], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c);
+        int c = CELL[2], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c);
         long here = (long) (x - spawnX) * (x - spawnX) + (long) (z - spawnZ) * (z - spawnZ);
-        List<Kind> kinds = Kinds.layer(1);
+        List<Kind> kinds = Kinds.layer(2);
         int checked = 0;
-        for (int ring = 2; ring <= 12 && checked < 6; ring++)
+        for (int ring = 1; ring <= 8 && checked < 6; ring++)
             for (int i = -ring; i <= ring && checked < 6; i++)
                 for (int j = -ring; j <= ring && checked < 6; j++) {
                     if (Math.max(Math.abs(i), Math.abs(j)) != ring) continue;
                     int cx = cx0 + i, cz = cz0 + j;
                     long mx = (long) cx * c + c / 2 - spawnX, mz = (long) cz * c + c / 2 - spawnZ;
                     if (mx * mx + mz * mz <= here) continue;
-                    int base = basePick(a, 1, cx, cz);
+                    int base = basePick(a, 2, cx, cz);
                     if (base < 0 || !want.test(kinds.get(base))) continue;
                     checked++;
-                    Site s = cell(a, 1, cx, cz);
+                    Site s = cell(a, 2, cx, cz);
                     if (s != null && want.test(s.kind())) return s;
                 }
         return null;
@@ -299,6 +304,6 @@ public final class Sites {
 
     /** A site made by hand (the gallery, tests): the kind at a place, on a level pad. Layer 2 marks it as made by hand. */
     public static Site forced(Kind k, int x, int y, int z, int rot, long seed) {
-        return new Site(k, 2, x, y, z, seed, rot, RegionMap.Group.PLAINS, k.rank());
+        return new Site(k, HAND, x, y, z, seed, rot, RegionMap.Group.PLAINS, k.rank());
     }
 }

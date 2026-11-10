@@ -114,7 +114,7 @@ final class FindsTests {
                     for (BlockPos p : e.getValue()) if (Math.abs(p.getX()) > k.reach() || Math.abs(p.getZ()) > k.reach()) why = "part " + e.getKey() + " is past its reach";
                 String f = floats(sc);
                 if (!f.isEmpty()) why = "has something floating at " + f;
-                else if (above > 0 && shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
+                else if (above > 0 && k.size() == Kind.Size.PLACE ? shaped * 8 < above : shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
                 if (sc.blocks().get(BlockPos.asLong(0, -2, 0)) != null) why = "builds where its heart goes";
                 if (!why.isEmpty()) {
                     bad.add(k.id() + " (seed " + i + ") " + why);

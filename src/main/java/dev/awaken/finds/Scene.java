@@ -39,6 +39,10 @@ public final class Scene {
     private final Long2IntOpenHashMap ground = new Long2IntOpenHashMap();
     int clear;
     @Nullable BlockPos tell;
+    /** Columns whose ground the scene set itself (turned offsets): the feature fills or cuts the land to them even where nothing is built. */
+    final it.unimi.dsi.fastutil.longs.LongOpenHashSet shaped = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+    /** Where a camera stands to look at the place, for the tours: {x, y, z (turned offsets), yaw, pitch}. */
+    final List<int[]> cams = new ArrayList<>();
     private final Rotation turn;
 
     Scene(Site site, Terrain terrain) {
@@ -90,6 +94,50 @@ public final class Scene {
             ground.put(k, v);
         }
         return v;
+    }
+
+    /** Sets a column's ground: the land there is filled or cut to this height (relative to the heart's ground). */
+    public Scene ground(int lx, int lz, int dy) {
+        long k = BlockPos.asLong(wx(lx, lz), 0, wz(lx, lz));
+        ground.put(k, dy);
+        shaped.add(k);
+        return this;
+    }
+
+    /**
+     * Levels a disc to the heart's ground and blends its edge back into the land over {@code blend} blocks (SPEC §59.3):
+     * what a place stands on. Call it first; after it {@code g} is 0 across the disc.
+     */
+    public Scene level(int radius, int blend) {
+        return level(0, 0, radius, blend, 0);
+    }
+
+    /** The same round another point and to another height. */
+    public Scene level(int cx, int cz, int radius, int blend, int dy) {
+        int r = radius + blend;
+        for (int x = -r; x <= r; x++)
+            for (int z = -r; z <= r; z++) {
+                double d = Math.sqrt(x * x + z * z);
+                if (d > r) continue;
+                if (d <= radius) ground(cx + x, cz + z, dy);
+                else {
+                    int nat = g(cx + x, cz + z);
+                    double t = (d - radius) / blend;
+                    t = t * t * (3 - 2 * t);
+                    ground(cx + x, cz + z, (int) Math.round(dy + (nat - dy) * t));
+                }
+            }
+        return this;
+    }
+
+    /** A place for a tour's camera, in the kind's own coordinates: yaw 0 looks south (+z), 90 west, 180 north, -90 east. */
+    public Scene cam(int lx, int dy, int lz, int yaw, int pitch) {
+        cams.add(new int[] {wx(lx, lz), dy, wz(lx, lz), yaw + 90 * (site.rot() & 3), pitch});
+        return this;
+    }
+
+    public List<int[]> cams() {
+        return cams;
     }
 
     /** Whether a column is under water, and how deep. 0 is dry. */

@@ -29,18 +29,87 @@ public final class FindsClient {
     public static void init(IEventBus modBus) {
         Catalogue.fixed(StatusSections.Shelf.PLACES, FindsClient::slots);
         FindHeartBlockEntity.drawer = FindsClient::tell;
+        FindHeartBlockEntity.airHook = FindsClient::near;
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onTick);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFogColour);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(FindsClient::onFog);
+    }
+
+    // ---- a place's air (SPEC §59.4) -----------------------------------------------------------------------------------
+
+    private static dev.awaken.finds.Air want, air;
+    private static float wantS, shown;
+
+    /** A heart with an air is loaded: how strongly should it be felt from where the camera is? The strongest this tick wins. */
+    private static void near(BlockPos heart, Kind k) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        var cam = mc.gameRenderer.mainCamera().position();
+        double dx = cam.x - (heart.getX() + 0.5), dz = cam.z - (heart.getZ() + 0.5), d = Math.sqrt(dx * dx + dz * dz);
+        float s = (float) Math.max(0, Math.min(1, (k.reach() + 14 - d) / 14.0));
+        // a cave's air stays in the cave: only below the place's ground (the heart is two under it)
+        if (k.air().below) s *= (float) Math.max(0, Math.min(1, (heart.getY() + 2 - cam.y) / 4.0));
+        if (s > wantS) {
+            wantS = s;
+            want = k.air();
+        }
+    }
+
+    private static void onTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post e) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.isPaused()) return;
+        if (wantS > 0 && (air == null || shown < 0.02F)) air = want;
+        float to = want == air ? wantS : 0;
+        shown += (to - shown) * 0.06F;
+        if (Math.abs(to - shown) < 0.004F) shown = to;
+        wantS = 0;
+        if (air == null || shown <= 0.05F) return;
+        var cam = mc.gameRenderer.mainCamera().position();
+        var r = mc.level.getRandom();
+        var mote = air.mote.get();
+        if (mote != null) {
+            float n = air.motes * shown;
+            for (int i = 0; i < (int) n + (r.nextFloat() < n - (int) n ? 1 : 0); i++)
+                mc.level.addParticle(mote, cam.x + (r.nextDouble() - 0.5) * 28, cam.y - 2 + r.nextDouble() * air.band, cam.z + (r.nextDouble() - 0.5) * 28,
+                        (r.nextDouble() - 0.5) * 0.02, air.drift, (r.nextDouble() - 0.5) * 0.02);
+        }
+        long t = mc.level.getGameTime();
+        for (int i = 0; i < air.loops.size(); i++) {
+            var loop = air.loops.get(i);
+            if ((t + i * 37L) % loop.every() != 0 || shown < 0.3F) continue;
+            mc.level.playLocalSound(cam.x + (r.nextDouble() - 0.5) * 12, cam.y + r.nextDouble() * 3, cam.z + (r.nextDouble() - 0.5) * 12, loop.sound().get(),
+                    net.minecraft.sounds.SoundSource.AMBIENT, loop.volume() * shown, loop.pitch() * (0.94F + r.nextFloat() * 0.12F), false);
+        }
+    }
+
+    private static void onFogColour(net.neoforged.neoforge.client.event.ViewportEvent.ComputeFogColor e) {
+        if (air == null || shown <= 0) return;
+        float s = shown * 0.88F, fr = (air.fog >> 16 & 255) / 255F, fg = (air.fog >> 8 & 255) / 255F, fb = (air.fog & 255) / 255F;
+        // keep some of the hour: the place's colour scaled by how bright the sky's own fog is now, so night stays night
+        float lum = Math.max(0.18F, Math.min(1, (e.getRed() * 0.3F + e.getGreen() * 0.59F + e.getBlue() * 0.11F) * 1.6F));
+        e.setRed(e.getRed() + (fr * lum - e.getRed()) * s);
+        e.setGreen(e.getGreen() + (fg * lum - e.getGreen()) * s);
+        e.setBlue(e.getBlue() + (fb * lum - e.getBlue()) * s);
+    }
+
+    private static void onFog(net.neoforged.neoforge.client.event.ViewportEvent.RenderFog e) {
+        if (air == null || shown <= 0) return;
+        float far = e.getFarPlaneDistance(), to = Math.min(far, air.far);
+        e.setFarPlaneDistance(far + (to - far) * shown);
+        e.setNearPlaneDistance(e.getNearPlaneDistance() * (1 - 0.8F * shown));
     }
 
     private static List<Catalogue.Slot> slots() {
         var mc = Minecraft.getInstance();
         FindsData d = mc.player == null ? FindsData.EMPTY : mc.player.getData(FindsContent.FINDS);
-        List<Catalogue.Slot> out = new ArrayList<>(Kinds.all().size());
-        for (Kind k : Kinds.all()) {
+        // the Journal's Places are places: the small kinds are furnishing and are not listed
+        List<Catalogue.Slot> out = new ArrayList<>(Kinds.places().size());
+        for (Kind k : Kinds.places()) {
             int n = d.count(k.id());
             ItemStack icon = k.icon().get();
-            String where = k.set().display + ", " + k.number() + " of 8.";
+            String where = "Place " + k.number() + " of " + Kinds.places().size() + ".";
             if (n > 0) out.add(new Catalogue.Slot(k.name(), true, k.learned() + "\n\n" + where + " Found " + (n == 1 ? "once." : n + " times."), icon));
-            else if (d.seen().contains(k.id())) out.add(new Catalogue.Slot(k.name(), true, k.see() + "\n\n" + where + " Seen from a distance. You haven't been there yet.", icon));
+            else if (d.seen().contains(k.id())) out.add(new Catalogue.Slot(k.name(), true, k.see() + "\n\n" + where + " You have been here. There is something still to do.", icon));
             else out.add(Catalogue.Slot.unknown());
         }
         return out;
