@@ -133,7 +133,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             int level = surf(w[0], w[1]);
             flats.add(new Flat((x, z) -> Math.hypot(x - w[0], z - w[1]) - 5, level, false, false));
         }
-        flats.add(new Flat((x, z) -> Math.hypot(x, z + 205) - PAD, PATH_Y, false, false));
+        flats.add(new Flat((x, z) -> Math.hypot(x, z + 205) - PAD, PATH_Y, false, false, 3));
         flats.add(new Flat((x, z) -> box(x, z, -3, -212, 3, -210), PATH_Y, false, false)); // under the arch home
         flats.add(new Flat((x, z) -> pathDist(x, z) - 2.5, PATH_Y, false, false, 3)); // the path lies in the heather, not in a cutting
         flats.add(new Flat((x, z) -> box(x, z, -42, -150, -32, -141), PATH_Y, false, false));
@@ -183,6 +183,15 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t));
         }
         return best;
+    }
+
+    /**
+     * The first look at the place (look round 1, item 9): six blocks round the Mouth, and the cone you face on arriving, 30 degrees wide along +z
+     * for 40 blocks. Nothing that stands as high as your eye grows or is raised in it.
+     */
+    static boolean arrivalView(int x, int z) {
+        double dx = x, dz = z + 205, d = Math.hypot(dx, dz);
+        return d <= 6 || d <= 40 && dz > 0 && Math.abs(Math.atan2(dx, dz)) <= Math.toRadians(15);
     }
 
     static boolean onStair(int x, int z) {
@@ -700,6 +709,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
             }
             if (n9.get(x / 9.0, z / 9.0) + (roll(x, z, 0x7B) - 0.5) * 0.3 < -0.33) continue;
             double kind = n31.get(x / 31.0, z / 31.0) + (roll(x, z, 0x7C) - 0.5) * 0.2;
+            if ((kind > 0.36 || kind < -0.44) && arrivalView(x, z)) continue; // bent and dry heather stand tall in the arriving eye: only low heather there
             v.set(x, top + 1, z, kind > 0.36 ? m.bent : kind < -0.44 ? m.heatherPale : m.heather);
         }
     }
@@ -707,6 +717,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     // ---- standing stones --------------------------------------------------------------------------------------------------------
 
     private boolean stoneCanStand(int x, int z) {
+        // none in the arriving view, and for the first 40 blocks none within 6 of the path's centre line (7 here: a tall one has a foot two wide)
+        if (Math.hypot(x, z + 205) <= 41 && (pathDist(x, z) <= 7 || arrivalView(x, z) || arrivalView(x + 1, z + 1))) return false;
         if (pathDist(x, z) < 4.5 || Math.hypot(x, z + 205) < PAD + 1 || x >= -44 && x <= -30 && z >= -152 && z <= -58) return false;
         if (x >= -100 && x <= 22 && z >= -62 && z <= -38 || Math.hypot(x, z - 150) < 30 || Math.hypot(x - 150, z + 40) < 30) return false;
         if (box(x, z, longBarrow.x0 - 3, longBarrow.z0 - 3, longBarrow.x1 + 6, longBarrow.z1 + 3) <= 0) return false;
