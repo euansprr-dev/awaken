@@ -228,4 +228,11 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x4a8a90, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0x80e0d8, 18, 0.8F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): wells grown through: round hollows, a well you walk round, caps to cross on. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.RING, Cave.Form.PIT, Cave.Form.RIFT), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.ROTUNDA, Arena.Plan.RING), List.of(Chasm.Kind.PILLARS, Chasm.Kind.HANGERS, Chasm.Kind.FORD, Chasm.Kind.STEPS), false, 2.3, 4);
+    }
 }

@@ -240,4 +240,11 @@ public final class RimeHollow extends GeneratedCrawl<RimeHollow.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0xb8d8f0, 0.5F).light(lord.cx, lord.feet + 5, lord.cz, 0xa8e0ff, 22, 0.8F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): ice caves: round hollows, crevasses, a pit of blue ice, and thin ice over the drops. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.RIFT, Cave.Form.PIT, Cave.Form.RING), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.ROTUNDA, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.FALLING, Chasm.Kind.FORD, Chasm.Kind.STEPS, Chasm.Kind.LEDGES), false, 2.4, 5);
+    }
 }

@@ -209,4 +209,11 @@ public final class GlassWarren extends GeneratedCrawl<GlassWarren.M> {
         if (lord != null) air.mist(lord.feet + 1, 4, 0xe0a850, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0xffc870, 18, 0.9F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): burrows: low round rooms, long cracks, a shelf of glass along one side, and glass that will not take your weight. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.OVAL, Cave.Form.RIFT, Cave.Form.TERRACE, Cave.Form.RING), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.RING, Arena.Plan.CROSS, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.LEDGES, Chasm.Kind.STEPS, Chasm.Kind.FALLING), false, 2.2, 4);
+    }
 }

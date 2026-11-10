@@ -150,6 +150,34 @@ public abstract class Land {
         return null;
     }
 
+    /**
+     * Where a tour stands to look at the n-th leg of a kind, and the way it faces (x, y, z, yaw). A rolled run puts its
+     * legs somewhere else on every seed and cuts every room differently, so a tour can't name a place or a camera; it
+     * names "the first crossing". With {@code back} 0 it stands at the leg, turned toward the leg it leads on to (the way
+     * you would cross a gulf). With {@code back} over 0 it stands that far toward the leg you came from, turned to the leg
+     * (the way you would walk into a room); under 0, that far beyond it, looking back. Null when the run has no such leg.
+     */
+    public final double[] legView(LegKind kind, int index, int back) {
+        int n = 0;
+        for (Leg l : route()) {
+            if (l.kind() != kind || n++ != index) continue;
+            Leg on = null, before = null;
+            for (String to : l.exits()) if (on == null && leg(to) != null && (leg(to).x() != l.x() || leg(to).z() != l.z())) on = leg(to);
+            for (Leg p : route()) if (before == null && p.exits().contains(l.id()) && (p.x() != l.x() || p.z() != l.z())) before = p;
+            if (back == 0 || before == null) {
+                Leg toward = on != null ? on : before;
+                double yaw = toward == null ? 0 : Math.toDegrees(Math.atan2(-(toward.x() - l.x()), toward.z() - l.z()));
+                return new double[]{l.x(), l.y(), l.z(), on != null || before == null ? yaw : yaw + 180};
+            }
+            double dx = before.x() - l.x(), dz = before.z() - l.z(), far = Math.max(1, Math.hypot(dx, dz));
+            double x = l.x() + dx / far * back, z = l.z() + dz / far * back;
+            // facing the leg from wherever that put us
+            double yaw = Math.toDegrees(Math.atan2(-(l.x() - x), l.z() - z));
+            return new double[]{x, l.y(), z, yaw};
+        }
+        return null;
+    }
+
     /** The leg a den's monsters belong to (a fight or an ambush), or null. */
     public final Leg legOfDen(int index) {
         for (Leg l : route()) if ((l.kind() == LegKind.FIGHT || l.kind() == LegKind.AMBUSH) && l.site() == index) return l;
