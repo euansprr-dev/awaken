@@ -20,186 +20,187 @@ wait 20
 cmd time set 6000
 cmd gamerule awaken:fauna_spawning false
 hud off
+opt fov 45
 cmd tp @s 1000 240 0
 wait 60
-cmd tp @s 1000 212 -13 0 40
+cmd tp @s 1000 208 -9 0 24
 wait 12
 cmd execute positioned 1000 200 0 rotated 0 0 run awaken finds place wanderers_cairn
-cmd setblock 1000 209 -13 minecraft:barrier
-cmd tp @s 1000 210 -13 0 40
+cmd setblock 1000 205 -9 minecraft:barrier
+cmd tp @s 1000 206 -9 0 24
 wait 30
 shot f01_1_wanderers_cairn
-cmd tp @s 1130 213 -16 0 37
+cmd tp @s 1130 209 -12 0 23
 wait 12
 cmd execute positioned 1130 200 0 rotated 0 0 run awaken finds place twin_cairns
-cmd setblock 1130 210 -16 minecraft:barrier
-cmd tp @s 1130 211 -16 0 37
+cmd setblock 1130 206 -12 minecraft:barrier
+cmd tp @s 1130 207 -12 0 23
 wait 30
 shot f01_2_twin_cairns
-cmd tp @s 1260 215 -20 0 35
+cmd tp @s 1260 211 -16 0 24
 wait 12
 cmd execute positioned 1260 200 0 rotated 0 0 run awaken finds place counting_cairns
-cmd setblock 1260 212 -20 minecraft:barrier
-cmd tp @s 1260 213 -20 0 35
+cmd setblock 1260 208 -16 minecraft:barrier
+cmd tp @s 1260 209 -16 0 24
 wait 30
 shot f01_3_counting_cairns
-cmd setblock 1278 213 0 minecraft:barrier
-cmd tp @s 1278 214 0 90 40
+cmd setblock 1284 210 0 minecraft:barrier
+cmd tp @s 1284 211 0 90 21
 wait 15
 shot f01_3_counting_cairns_side
-cmd tp @s 1390 212 -13 0 40
+cmd tp @s 1390 208 -9 0 24
 wait 12
 cmd execute positioned 1390 200 0 rotated 0 0 run awaken finds place leaning_stack
-cmd setblock 1390 209 -13 minecraft:barrier
-cmd tp @s 1390 210 -13 0 40
+cmd setblock 1390 205 -9 minecraft:barrier
+cmd tp @s 1390 206 -9 0 24
 wait 30
 shot f01_4_leaning_stack
-cmd tp @s 1520 211 -12 0 39
+cmd tp @s 1520 208 -8 0 27
 wait 12
 cmd execute positioned 1520 200 0 rotated 0 0 run awaken finds place humming_cairn
-cmd setblock 1520 208 -12 minecraft:barrier
-cmd tp @s 1520 209 -12 0 39
+cmd setblock 1520 205 -8 minecraft:barrier
+cmd tp @s 1520 206 -8 0 27
 wait 30
 shot f01_5_humming_cairn
-cmd tp @s 1650 215 -20 0 35
+cmd tp @s 1650 211 -16 0 24
 wait 12
 cmd execute positioned 1650 200 0 rotated 0 0 run awaken finds place marble_run
-cmd setblock 1650 212 -20 minecraft:barrier
-cmd tp @s 1650 213 -20 0 35
+cmd setblock 1650 208 -16 minecraft:barrier
+cmd tp @s 1650 209 -16 0 24
 wait 30
 shot f01_6_marble_run
-cmd tp @s 1780 211 -12 0 39
+cmd tp @s 1780 208 -8 0 27
 wait 12
 cmd execute positioned 1780 200 0 rotated 0 0 run awaken finds place balanced_rock
-cmd setblock 1780 208 -12 minecraft:barrier
-cmd tp @s 1780 209 -12 0 39
+cmd setblock 1780 205 -8 minecraft:barrier
+cmd tp @s 1780 206 -8 0 27
 wait 30
 shot f01_7_balanced_rock
-cmd tp @s 1910 211 -12 0 39
+cmd tp @s 1910 208 -8 0 27
 wait 12
 cmd execute positioned 1910 200 0 rotated 0 0 run awaken finds place summit_stones
-cmd setblock 1910 208 -12 minecraft:barrier
-cmd tp @s 1910 209 -12 0 39
+cmd setblock 1910 205 -8 minecraft:barrier
+cmd tp @s 1910 206 -8 0 27
 wait 30
 shot f01_8_summit_stones
-cmd tp @s 2040 212 -14 0 38
+cmd tp @s 2040 208 -10 0 22
 wait 12
 cmd execute positioned 2040 200 0 rotated 0 0 run awaken finds place stilled_fisher
-cmd setblock 2040 209 -14 minecraft:barrier
-cmd tp @s 2040 210 -14 0 38
+cmd setblock 2040 205 -10 minecraft:barrier
+cmd tp @s 2040 206 -10 0 22
 wait 30
 shot f02_1_stilled_fisher
-cmd tp @s 2170 211 -12 0 39
+cmd tp @s 2170 208 -8 0 27
 wait 12
 cmd execute positioned 2170 200 0 rotated 0 0 run awaken finds place card_game
-cmd setblock 2170 208 -12 minecraft:barrier
-cmd tp @s 2170 209 -12 0 39
+cmd setblock 2170 205 -8 minecraft:barrier
+cmd tp @s 2170 206 -8 0 27
 wait 30
 shot f02_2_card_game
-cmd tp @s 2300 213 -16 0 37
+cmd tp @s 2300 209 -12 0 23
 wait 12
 cmd execute positioned 2300 200 0 rotated 0 0 run awaken finds place stilled_shepherd
-cmd setblock 2300 210 -16 minecraft:barrier
-cmd tp @s 2300 211 -16 0 37
+cmd setblock 2300 206 -12 minecraft:barrier
+cmd tp @s 2300 207 -12 0 23
 wait 30
 shot f02_3_stilled_shepherd
-cmd tp @s 2430 212 -15 0 36
+cmd tp @s 2430 209 -11 0 24
 wait 12
 cmd execute positioned 2430 200 0 rotated 0 0 run awaken finds place stilled_dancers
-cmd setblock 2430 209 -15 minecraft:barrier
-cmd tp @s 2430 210 -15 0 36
+cmd setblock 2430 206 -11 minecraft:barrier
+cmd tp @s 2430 207 -11 0 24
 wait 30
 shot f02_4_stilled_dancers
-cmd tp @s 2560 214 -17 0 37
+cmd tp @s 2560 210 -13 0 25
 wait 12
 cmd execute positioned 2560 200 0 rotated 0 0 run awaken finds place the_kite
-cmd setblock 2560 211 -17 minecraft:barrier
-cmd tp @s 2560 212 -17 0 37
+cmd setblock 2560 207 -13 minecraft:barrier
+cmd tp @s 2560 208 -13 0 25
 wait 30
 shot f02_5_the_kite
-cmd tp @s 2690 212 -13 0 40
+cmd tp @s 2690 208 -9 0 24
 wait 12
 cmd execute positioned 2690 200 0 rotated 0 0 run awaken finds place stilled_smith
-cmd setblock 2690 209 -13 minecraft:barrier
-cmd tp @s 2690 210 -13 0 40
+cmd setblock 2690 205 -9 minecraft:barrier
+cmd tp @s 2690 206 -9 0 24
 wait 30
 shot f02_6_stilled_smith
-cmd tp @s 2820 212 -13 0 40
+cmd tp @s 2820 208 -9 0 24
 wait 12
 cmd execute positioned 2820 200 0 rotated 0 0 run awaken finds place two_on_the_bank
-cmd setblock 2820 209 -13 minecraft:barrier
-cmd tp @s 2820 210 -13 0 40
+cmd setblock 2820 205 -9 minecraft:barrier
+cmd tp @s 2820 206 -9 0 24
 wait 30
 shot f02_7_two_on_the_bank
-cmd tp @s 2950 212 -14 0 38
+cmd tp @s 2950 208 -10 0 22
 wait 12
 cmd execute positioned 2950 200 0 rotated 0 0 run awaken finds place long_table
-cmd setblock 2950 209 -14 minecraft:barrier
-cmd tp @s 2950 210 -14 0 38
+cmd setblock 2950 205 -10 minecraft:barrier
+cmd tp @s 2950 206 -10 0 22
 wait 30
 shot f02_8_long_table
-cmd tp @s 3080 215 -20 0 35
+cmd tp @s 3080 211 -16 0 24
 wait 12
 cmd execute positioned 3080 200 0 rotated 0 0 run awaken finds place cold_lamps
-cmd setblock 3080 212 -20 minecraft:barrier
-cmd tp @s 3080 213 -20 0 35
+cmd setblock 3080 208 -16 minecraft:barrier
+cmd tp @s 3080 209 -16 0 24
 wait 30
 shot f03_1_cold_lamps
-cmd setblock 3104 217 0 minecraft:barrier
-cmd tp @s 3104 218 0 90 39
+cmd setblock 3116 215 0 minecraft:barrier
+cmd tp @s 3116 216 0 90 21
 wait 15
 shot f03_1_cold_lamps_side
-cmd tp @s 3210 211 -12 0 39
+cmd tp @s 3210 208 -8 0 27
 wait 12
 cmd execute positioned 3210 200 0 rotated 0 0 run awaken finds place moth_lantern
-cmd setblock 3210 208 -12 minecraft:barrier
-cmd tp @s 3210 209 -12 0 39
+cmd setblock 3210 205 -8 minecraft:barrier
+cmd tp @s 3210 206 -8 0 27
 wait 30
 shot f03_2_moth_lantern
-cmd tp @s 3340 212 -13 0 40
+cmd tp @s 3340 208 -9 0 24
 wait 12
 cmd execute positioned 3340 200 0 rotated 0 0 run awaken finds place signal_fire
-cmd setblock 3340 209 -13 minecraft:barrier
-cmd tp @s 3340 210 -13 0 40
+cmd setblock 3340 205 -9 minecraft:barrier
+cmd tp @s 3340 206 -9 0 24
 wait 30
 shot f03_3_signal_fire
-cmd tp @s 3470 211 -12 0 39
+cmd tp @s 3470 208 -8 0 27
 wait 12
 cmd execute positioned 3470 200 0 rotated 0 0 run awaken finds place candle_hollow
-cmd setblock 3470 208 -12 minecraft:barrier
-cmd tp @s 3470 209 -12 0 39
+cmd setblock 3470 205 -8 minecraft:barrier
+cmd tp @s 3470 206 -8 0 27
 wait 30
 shot f03_4_candle_hollow
-cmd tp @s 3600 212 -15 0 36
+cmd tp @s 3600 209 -11 0 24
 wait 12
 cmd execute positioned 3600 200 0 rotated 0 0 run awaken finds place lighthouse_stub
-cmd setblock 3600 209 -15 minecraft:barrier
-cmd tp @s 3600 210 -15 0 36
+cmd setblock 3600 206 -11 minecraft:barrier
+cmd tp @s 3600 207 -11 0 24
 wait 30
 shot f03_5_lighthouse_stub
-cmd tp @s 3730 210 -11 0 38
+cmd tp @s 3730 207 -7 0 23
 wait 12
 cmd execute positioned 3730 200 0 rotated 0 0 run awaken finds place frozen_lamp
-cmd setblock 3730 207 -11 minecraft:barrier
-cmd tp @s 3730 208 -11 0 38
+cmd setblock 3730 204 -7 minecraft:barrier
+cmd tp @s 3730 205 -7 0 23
 wait 30
 shot f03_6_frozen_lamp
-cmd tp @s 3860 214 -19 0 34
+cmd tp @s 3860 211 -15 0 25
 wait 12
 cmd execute positioned 3860 200 0 rotated 0 0 run awaken finds place deep_lamps
-cmd setblock 3860 211 -19 minecraft:barrier
-cmd tp @s 3860 212 -19 0 34
+cmd setblock 3860 208 -15 minecraft:barrier
+cmd tp @s 3860 209 -15 0 25
 wait 30
 shot f03_7_deep_lamps
-cmd tp @s 3990 215 -20 0 35
+cmd tp @s 3990 211 -16 0 24
 wait 12
 cmd execute positioned 3990 200 0 rotated 0 0 run awaken finds place night_road
-cmd setblock 3990 212 -20 minecraft:barrier
-cmd tp @s 3990 213 -20 0 35
+cmd setblock 3990 208 -16 minecraft:barrier
+cmd tp @s 3990 209 -16 0 24
 wait 30
 shot f03_8_night_road
-cmd setblock 4024 226 0 minecraft:barrier
-cmd tp @s 4024 227 0 90 40
+cmd setblock 4047 225 0 minecraft:barrier
+cmd tp @s 4047 226 0 90 23
 wait 15
 shot f03_8_night_road_side
 info

@@ -20,174 +20,175 @@ wait 20
 cmd time set 6000
 cmd gamerule awaken:fauna_spawning false
 hud off
+opt fov 45
 cmd tp @s 1000 240 0
 wait 60
-cmd tp @s 16600 210 -11 0 38
+cmd tp @s 16600 207 -7 0 23
 wait 12
 cmd execute positioned 16600 200 0 rotated 0 0 run awaken finds place surveyors_stone
-cmd setblock 16600 207 -11 minecraft:barrier
-cmd tp @s 16600 208 -11 0 38
+cmd setblock 16600 204 -7 minecraft:barrier
+cmd tp @s 16600 205 -7 0 23
 wait 30
 shot f16_1_surveyors_stone
-cmd tp @s 16730 210 -11 0 38
+cmd tp @s 16730 207 -7 0 23
 wait 12
 cmd execute positioned 16730 200 0 rotated 0 0 run awaken finds place boundary_stone
-cmd setblock 16730 207 -11 minecraft:barrier
-cmd tp @s 16730 208 -11 0 38
+cmd setblock 16730 204 -7 minecraft:barrier
+cmd tp @s 16730 205 -7 0 23
 wait 30
 shot f16_2_boundary_stone
-cmd tp @s 16860 211 -12 0 39
+cmd tp @s 16860 208 -8 0 27
 wait 12
 cmd execute positioned 16860 200 0 rotated 0 0 run awaken finds place name_wall
-cmd setblock 16860 208 -12 minecraft:barrier
-cmd tp @s 16860 209 -12 0 39
+cmd setblock 16860 205 -8 minecraft:barrier
+cmd tp @s 16860 206 -8 0 27
 wait 30
 shot f16_3_name_wall
-cmd tp @s 16990 211 -12 0 39
+cmd tp @s 16990 208 -8 0 27
 wait 12
 cmd execute positioned 16990 200 0 rotated 0 0 run awaken finds place picture_posts
-cmd setblock 16990 208 -12 minecraft:barrier
-cmd tp @s 16990 209 -12 0 39
+cmd setblock 16990 205 -8 minecraft:barrier
+cmd tp @s 16990 206 -8 0 27
 wait 30
 shot f16_4_picture_posts
-cmd tp @s 17120 211 -12 0 39
+cmd tp @s 17120 208 -8 0 27
 wait 12
 cmd execute positioned 17120 200 0 rotated 0 0 run awaken finds place wet_wall
-cmd setblock 17120 208 -12 minecraft:barrier
-cmd tp @s 17120 209 -12 0 39
+cmd setblock 17120 205 -8 minecraft:barrier
+cmd tp @s 17120 206 -8 0 27
 wait 30
 shot f16_5_wet_wall
-cmd tp @s 17250 212 -13 0 40
+cmd tp @s 17250 208 -9 0 24
 wait 12
 cmd execute positioned 17250 200 0 rotated 0 0 run awaken finds place map_floor
-cmd setblock 17250 209 -13 minecraft:barrier
-cmd tp @s 17250 210 -13 0 40
+cmd setblock 17250 205 -9 minecraft:barrier
+cmd tp @s 17250 206 -9 0 24
 wait 30
 shot f16_6_map_floor
-cmd tp @s 17380 211 -12 0 39
+cmd tp @s 17380 208 -8 0 27
 wait 12
 cmd execute positioned 17380 200 0 rotated 0 0 run awaken finds place tally_tree
-cmd setblock 17380 208 -12 minecraft:barrier
-cmd tp @s 17380 209 -12 0 39
+cmd setblock 17380 205 -8 minecraft:barrier
+cmd tp @s 17380 206 -8 0 27
 wait 30
 shot f16_7_tally_tree
-cmd tp @s 17510 210 -11 0 38
+cmd tp @s 17510 207 -7 0 23
 wait 12
 cmd execute positioned 17510 200 0 rotated 0 0 run awaken finds place sky_slab
-cmd setblock 17510 207 -11 minecraft:barrier
-cmd tp @s 17510 208 -11 0 38
+cmd setblock 17510 204 -7 minecraft:barrier
+cmd tp @s 17510 205 -7 0 23
 wait 30
 shot f16_8_sky_slab
-cmd tp @s 17640 210 -11 0 38
+cmd tp @s 17640 207 -7 0 23
 wait 12
 cmd execute positioned 17640 200 0 rotated 0 0 run awaken finds place cracked_boulder
-cmd setblock 17640 207 -11 minecraft:barrier
-cmd tp @s 17640 208 -11 0 38
+cmd setblock 17640 204 -7 minecraft:barrier
+cmd tp @s 17640 205 -7 0 23
 wait 30
 shot f17_1_cracked_boulder
-cmd tp @s 17770 211 -12 0 39
+cmd tp @s 17770 208 -8 0 27
 wait 12
 cmd execute positioned 17770 200 0 rotated 0 0 run awaken finds place thorn_door
-cmd setblock 17770 208 -12 minecraft:barrier
-cmd tp @s 17770 209 -12 0 39
+cmd setblock 17770 205 -8 minecraft:barrier
+cmd tp @s 17770 206 -8 0 27
 wait 30
 shot f17_2_thorn_door
-cmd tp @s 17900 211 -12 0 39
+cmd tp @s 17900 208 -8 0 27
 wait 12
 cmd execute positioned 17900 200 0 rotated 0 0 run awaken finds place ice_plug
-cmd setblock 17900 208 -12 minecraft:barrier
-cmd tp @s 17900 209 -12 0 39
+cmd setblock 17900 205 -8 minecraft:barrier
+cmd tp @s 17900 206 -8 0 27
 wait 30
 shot f17_3_ice_plug
-cmd tp @s 18030 211 -12 0 39
+cmd tp @s 18030 208 -8 0 27
 wait 12
 cmd execute positioned 18030 200 0 rotated 0 0 run awaken finds place web_sack
-cmd setblock 18030 208 -12 minecraft:barrier
-cmd tp @s 18030 209 -12 0 39
+cmd setblock 18030 205 -8 minecraft:barrier
+cmd tp @s 18030 206 -8 0 27
 wait 30
 shot f17_4_web_sack
-cmd tp @s 18160 211 -12 0 39
+cmd tp @s 18160 208 -8 0 27
 wait 12
 cmd execute positioned 18160 200 0 rotated 0 0 run awaken finds place rusted_grate
-cmd setblock 18160 208 -12 minecraft:barrier
-cmd tp @s 18160 209 -12 0 39
+cmd setblock 18160 205 -8 minecraft:barrier
+cmd tp @s 18160 206 -8 0 27
 wait 30
 shot f17_5_rusted_grate
-cmd tp @s 18290 211 -12 0 39
+cmd tp @s 18290 208 -8 0 27
 wait 12
 cmd execute positioned 18290 200 0 rotated 0 0 run awaken finds place glass_seed
-cmd setblock 18290 208 -12 minecraft:barrier
-cmd tp @s 18290 209 -12 0 39
+cmd setblock 18290 205 -8 minecraft:barrier
+cmd tp @s 18290 206 -8 0 27
 wait 30
 shot f17_6_glass_seed
-cmd tp @s 18420 211 -12 0 39
+cmd tp @s 18420 208 -8 0 27
 wait 12
 cmd execute positioned 18420 200 0 rotated 0 0 run awaken finds place stone_egg
-cmd setblock 18420 208 -12 minecraft:barrier
-cmd tp @s 18420 209 -12 0 39
+cmd setblock 18420 205 -8 minecraft:barrier
+cmd tp @s 18420 206 -8 0 27
 wait 30
 shot f17_7_stone_egg
-cmd tp @s 18550 211 -12 0 39
+cmd tp @s 18550 208 -8 0 27
 wait 12
 cmd execute positioned 18550 200 0 rotated 0 0 run awaken finds place sky_seal
-cmd setblock 18550 208 -12 minecraft:barrier
-cmd tp @s 18550 209 -12 0 39
+cmd setblock 18550 205 -8 minecraft:barrier
+cmd tp @s 18550 206 -8 0 27
 wait 30
 shot f17_8_sky_seal
-cmd tp @s 18680 211 -12 0 39
+cmd tp @s 18680 208 -8 0 27
 wait 12
 cmd execute positioned 18680 200 0 rotated 0 0 run awaken finds place magpie_bower
-cmd setblock 18680 208 -12 minecraft:barrier
-cmd tp @s 18680 209 -12 0 39
+cmd setblock 18680 205 -8 minecraft:barrier
+cmd tp @s 18680 206 -8 0 27
 wait 30
 shot f18_1_magpie_bower
-cmd tp @s 18810 212 -15 0 36
+cmd tp @s 18810 209 -11 0 24
 wait 12
 cmd execute positioned 18810 200 0 rotated 0 0 run awaken finds place marmot_town
-cmd setblock 18810 209 -15 minecraft:barrier
-cmd tp @s 18810 210 -15 0 36
+cmd setblock 18810 206 -11 minecraft:barrier
+cmd tp @s 18810 207 -11 0 24
 wait 30
 shot f18_2_marmot_town
-cmd tp @s 18940 212 -14 0 38
+cmd tp @s 18940 208 -10 0 22
 wait 12
 cmd execute positioned 18940 200 0 rotated 0 0 run awaken finds place bears_larder
-cmd setblock 18940 209 -14 minecraft:barrier
-cmd tp @s 18940 210 -14 0 38
+cmd setblock 18940 205 -10 minecraft:barrier
+cmd tp @s 18940 206 -10 0 22
 wait 30
 shot f18_3_bears_larder
-cmd tp @s 19070 211 -12 0 39
+cmd tp @s 19070 208 -8 0 27
 wait 12
 cmd execute positioned 19070 200 0 rotated 0 0 run awaken finds place owl_roost
-cmd setblock 19070 208 -12 minecraft:barrier
-cmd tp @s 19070 209 -12 0 39
+cmd setblock 19070 205 -8 minecraft:barrier
+cmd tp @s 19070 206 -8 0 27
 wait 30
 shot f18_4_owl_roost
-cmd tp @s 19200 212 -14 0 38
+cmd tp @s 19200 208 -10 0 22
 wait 12
 cmd execute positioned 19200 200 0 rotated 0 0 run awaken finds place stags_clearing
-cmd setblock 19200 209 -14 minecraft:barrier
-cmd tp @s 19200 210 -14 0 38
+cmd setblock 19200 205 -10 minecraft:barrier
+cmd tp @s 19200 206 -10 0 22
 wait 30
 shot f18_5_stags_clearing
-cmd tp @s 19330 212 -14 0 38
+cmd tp @s 19330 208 -10 0 22
 wait 12
 cmd execute positioned 19330 200 0 rotated 0 0 run awaken finds place great_skep
-cmd setblock 19330 209 -14 minecraft:barrier
-cmd tp @s 19330 210 -14 0 38
+cmd setblock 19330 205 -10 minecraft:barrier
+cmd tp @s 19330 206 -10 0 22
 wait 30
 shot f18_6_great_skep
-cmd tp @s 19460 212 -13 0 40
+cmd tp @s 19460 208 -9 0 24
 wait 12
 cmd execute positioned 19460 200 0 rotated 0 0 run awaken finds place boar_wallow
-cmd setblock 19460 209 -13 minecraft:barrier
-cmd tp @s 19460 210 -13 0 40
+cmd setblock 19460 205 -9 minecraft:barrier
+cmd tp @s 19460 206 -9 0 24
 wait 30
 shot f18_7_boar_wallow
-cmd tp @s 19590 214 -17 0 37
+cmd tp @s 19590 210 -13 0 25
 wait 12
 cmd execute positioned 19590 200 0 rotated 0 0 run awaken finds place sleeping_hill
-cmd setblock 19590 211 -17 minecraft:barrier
-cmd tp @s 19590 212 -17 0 37
+cmd setblock 19590 207 -13 minecraft:barrier
+cmd tp @s 19590 208 -13 0 25
 wait 30
 shot f18_8_sleeping_hill
 info
