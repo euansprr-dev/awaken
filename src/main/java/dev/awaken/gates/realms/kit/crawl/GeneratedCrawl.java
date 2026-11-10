@@ -113,13 +113,29 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             } else if (p instanceof Chasm g) {
                 int pool = g.top - g.depth + g.water, mx = g.ax + g.dx * g.length / 2, mz = g.az + g.dz * g.length / 2;
                 if (air.waters() < 12) air.water(pool, g.x0, g.z0, g.x1, g.z1);
-                if (air.mists() < 5) air.mist(pool, 4, tint, 0.55F);
+                if (air.mists() < 3) air.mist(pool, 4, tint, 0.55F);
                 if (air.lights() < 90) air.light(mx, g.top + 3, mz, tint, 18, 0.45F);
             } else if (p instanceof Shaft sh) {
                 if (air.waters() < 12) air.water(sh.bottom + sh.water, sh.x0, sh.z0, sh.x1, sh.z1);
-                if (air.shafts() < 22) air.shaft(sh.cx, sh.top + 10, sh.cz, sh.cx, sh.bottom + sh.water, sh.cz, 4, tint, 0.5F);
-                if (air.mists() < 5) air.mist(sh.bottom + sh.water, 5, tint, 0.5F);
+                if (air.shafts() < 10) air.shaft(sh.cx, sh.top + 10, sh.cz, sh.cx, sh.bottom + sh.water, sh.cz, 4, tint, 0.5F);
+                if (air.mists() < 3) air.mist(sh.bottom + sh.water, 5, tint, 0.5F);
             }
+        }
+        // light down every well: the day's colour if the way in has one, the kind's own otherwise; it leans a little, as light through a slot does
+        int day = air.firstShaft(tint);
+        for (Well w : wells) {
+            if (air.shafts() >= 23) break;
+            air.shaft(w.x, w.top, w.z, w.x + w.lz * 2, w.floor, w.z + w.lx * 2, 2.4F, day, 0.6F);
+            if (air.lights() < 94) air.light(w.x + w.lz * 2, w.floor + 2, w.z + w.lx * 2, day, 7, 0.45F);
+        }
+        // mist on the floors of the biggest rooms: the Lord's (a skin lays its own), then the Wardens', then the dens, widest first
+        int fog = air.firstMist(tint >> 1 & 0x7f7f7f);
+        List<Cave> rooms = new ArrayList<>();
+        for (Part p : parts) if (p instanceof Cave c && !p.name.equals("root") && !p.name.equals("side")) rooms.add(c);
+        rooms.sort((a, b) -> Double.compare((b instanceof Arena ? 4 : 1) * b.rx * b.rz, (a instanceof Arena ? 4 : 1) * a.rx * a.rz));
+        for (Cave c : rooms) {
+            if (air.mists() >= 6) break;
+            if (!air.mistNear(c.feet + 1, 3)) air.mist(c.feet + 1, 3, fog, 0.4F);
         }
         return air.build();
     }
@@ -144,6 +160,11 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     private int[] heartDoor;
     private Cave root;
     private Arena lordHall;
+    /** Where light comes down (SPEC §50.9 "Air"): a slot in a room's roof, three cells by one, going up to a light nobody sees the source of. */
+    private record Well(Cave room, int x, int z, int lx, int lz, int top, int floor) {}
+
+    private final List<Well> wells = new ArrayList<>();
+    private static final BlockState WELL_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 15);
     /** Every form, plan and crossing this run rolled: for whoever checks that all of them turn up. */
     private final java.util.Set<String> used = new java.util.TreeSet<>();
 
@@ -192,6 +213,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
 
     /** What goes with a gulf: where a long fall puts you back, and the trap of whatever in it gives way. */
     private void rig(String id, Chasm pit, M m) {
+        pit.walls = wild() < 0.5 ? 1 : 2;
         int bx = pit.ax + pit.dx * pit.length, bz = pit.az + pit.dz * pit.length;
         List<int[]> ledges = new ArrayList<>();
         for (int i = -1; i <= pit.pillars(); i++) {
@@ -624,6 +646,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     Shaft sh = up ? part(new Shaft(id, quarter, ix, top, iz, 11, 3.2, 16, 26, top - 28, 3, s++))
                             : part(new Shaft(id, quarter, ix, top, iz, 11, 3.2, 16, 26, top - 28, 3, s++, 0.25, 0.75, 1.25));
                     if (style.squareShafts()) sh.squared();
+                    sh.walls = style.squareShafts() ? 1 : 2;
                     used.add(style.squareShafts() ? "shaft SQUARE" : "shaft ROUND");
                     taken.add(box(mx - 12, top - 32, mz - 12, mx + 12, top + 16, mz + 12, 4));
                     // thin floor on the far side of the first turn and the near side of the second
@@ -724,6 +747,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 break branch;
             }
         }
+        wells(new Random(seed * 31 + 0x77E11L));
         done();
         for (int[] f : finds) site(SiteKind.FIND, f[0], f[1], f[2], 2, "");
         clearSites();
@@ -783,6 +807,11 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         for (int[] f : finds) v.set(f[0], f[1], f[2], m.cache);
         // a crack in the roof over the way in lets the day down just ahead of where you stand
         for (int x = -3; x <= 3; x++) for (int y = root.roof(x, 4); y <= rockTop(); y++) v.set(x, y, 4, null);
+        for (Well w : wells) for (int i = -1; i <= 1; i++) {
+            int x = w.x + i * w.lx, z = w.z + i * w.lz;
+            if (!v.in(x, 1, z)) continue;
+            for (int y = w.room.roof(x, z); y <= w.top; y++) v.set(x, y, z, null);
+        }
         skinSpecial(v, m);
     }
 
@@ -812,8 +841,60 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 for (int[] l : c.lights()) v.add(l[0], l[1], l[2], CLIMB_LIGHT);
             }
         }
+        for (Well w : wells) for (int i = -1; i <= 1; i++) {
+            int x = w.x + i * w.lx, z = w.z + i * w.lz;
+            if (!v.in(x, 1, z)) continue;
+            v.set(x, w.top, z, WELL_LIGHT);
+            v.set(x, w.top - 2, z, WELL_LIGHT);
+            if (i == 0) v.set(x, w.room.roof(x, z), z, WELL_LIGHT);
+        }
         Trim trim = trim(m);
         if (trim != null) for (Part p : parts) if (p.near(v) && (p instanceof Cave || p instanceof Tunnel)) detail(v, trim, p);
+    }
+
+    /**
+     * A well of light for every room that has the roof for it, two for the Lord's: a slot three cells by one over open
+     * floor, off the middle, six cells up into the rock, with nothing else of the run within two cells of it.
+     */
+    private void wells(Random r) {
+        for (Part p : new ArrayList<>(parts)) {
+            if (!(p instanceof Cave room) || p.name.equals("root") || p.name.equals("side")) continue;
+            int want = room == lordHall ? 2 : 1;
+            double turn = r.nextDouble() * Math.PI * 2;
+            for (int go = 0; go < 10 && want > 0; go++) {
+                double a = turn + go * 2.4, far = (0.22 + 0.06 * (go % 4)) * Math.min(room.rx, room.rz);
+                int x = (int) Math.round(room.cx + Math.sin(a) * far), z = (int) Math.round(room.cz + Math.cos(a) * far), lx = go % 2, lz = 1 - lx;
+                int top = Integer.MIN_VALUE, low = Integer.MAX_VALUE, floor = 0;
+                boolean ok = true;
+                for (int i = -1; i <= 1 && ok; i++) {
+                    int f = room.feet2(x + i * lx, z + i * lz);
+                    if (f == NONE) {
+                        ok = false;
+                        break;
+                    }
+                    int y = Part.airFrom(f), roof = room.roof(x + i * lx, z + i * lz);
+                    ok = roof - y >= 5 && room.open(x + i * lx, y, z + i * lz) && room.open(x + i * lx, roof - 1, z + i * lz);
+                    top = Math.max(top, roof);
+                    low = Math.min(low, roof);
+                    if (i == 0) floor = y;
+                }
+                if (!ok) continue;
+                top += 6;
+                for (Well w : wells) if (w.room == room && Math.abs(w.x - x) + Math.abs(w.z - z) < 8) ok = false;
+                clear:
+                for (Part q : parts) {
+                    if (q == room || !ok) continue;
+                    if (x + 3 < q.x0 || x - 3 > q.x1 || z + 3 < q.z0 || z - 3 > q.z1) continue;
+                    for (int ox = -3; ox <= 3; ox++) for (int oz = -3; oz <= 3; oz++) for (int y = low - 2; y <= top + 3; y++) if (q.open(x + ox, y, z + oz)) {
+                        ok = false;
+                        break clear;
+                    }
+                }
+                if (!ok) continue;
+                wells.add(new Well(room, x, z, lx, lz, top, floor));
+                want--;
+            }
+        }
     }
 
     private static final int[][] SIDES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};

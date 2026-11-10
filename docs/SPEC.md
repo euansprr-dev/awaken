@@ -21653,13 +21653,21 @@ stairs, drifts and bits); the rolled dungeons had none of it. They take that sec
   theme (its §38.14 depth blocks and its plants), a few of Minecraft's where a theme has none (cobwebs, hanging roots, moss
   carpet, fern). Nothing with a body but the stairs. Nothing where a door shuts, in the narrow ways or in a hall of traps.
   The Lower Combs and The Tallow Runs have no stairs yet: their rock has no cut shapes.
+- **The long walls** (`Chasm.walls`, `Shaft.walls`). The first walk in the real game with depth in it showed where none
+  had reached: the two long walls of every gulf and the four of every stairwell, dead flat for thirty blocks. They are cut
+  back one cell, never built out, so nothing can stand in the way of a jump. What was built: bays four wide between piers
+  two wide. What was dug: scoops in patches. A gulf's are under the level of its shelves, from two over the water, and
+  never beside anything there is to stand on (the ramp back up included). A stairwell's are between the passes of its
+  ledge: the wall is whole from five under the ledge to five over the feet of whoever is on it, so there is never a hole
+  beside the climb, and the bays step down the wall with the stair.
 
 **Air.** The same message: "Same with like the atmosphere in the air... Same when it comes to sounds and everything, and
 music." The kinds had been sharing borrowed biomes and one copied list of small life (a foundry with bats). Now each kind
 has its own, written from one table (`tools/realms/kinds_air.py`):
 
 - **Its own biome** (`awaken:realm/<kind>`, a copy of its theme's gate biome so nothing spawns): its fog colour and how
-  near the fog stands (from 4 to 14 blocks out, gone by 56 to 140), what drifts in the air (ash, spores, snow, motes,
+  near the fog stands (from 3 to 12 blocks out, gone by 42 to 110: the first numbers, 56 to 140, stood too far out to be
+  seen inside a room), what drifts in the air (ash, spores, snow, motes,
   fireflies, sparks), the colour of its block light and of its dark, an ambient loop, a mood sound, an occasional sound and
   its music. Every sound is one of Minecraft's own recordings by name. The Silvered Halls has no loop; The Unlit Stair has
   no sound at all, which is its theme's one line.
@@ -21670,6 +21678,14 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
 - **Gate Air from the kit** (`GeneratedCrawl.airOf`, on top of what the skin asks for, inside §38.9's limits): a soft light
   in the kind's colour over the middle of every room something is fought in, so its mist is lit; still water and a low
   mist in every gulf and at the foot of every shaft; a shaft of light down every shaft.
+- **Light comes down** (`GeneratedCrawl.wells`). Every room with the roof for it has a well of light, the Lord's hall two:
+  a slot in the roof three cells by one, off the middle, over open floor, going six cells up into the rock to a light
+  nobody sees the source of. It is real light (a pool on the floor under it, so what grows and lies there can be seen) and
+  Gate Air draws a beam down it that leans a little, in the colour of the day at the way in. A well is only cut where
+  nothing else of the run comes within three cells of it. The side cell and the way in have none (the way in has its own
+  crack to the sky).
+- **Mist on the floor** of the biggest rooms: the Lord's (a skin lays its own), then the Wardens', then the dens, widest
+  first, three blocks deep, until the six layers §38.9 allows are used. Gulfs and shafts take three of the six at most.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

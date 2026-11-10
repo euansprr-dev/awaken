@@ -577,6 +577,42 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return this;
         }
 
+        /**
+         * What the wall is cut like (SPEC §50.9 "Depth"): 0 leaves it plain; 1 cuts bays one cell deep between piers two wide
+         * (a built stairwell); 2 scoops it out in patches (a dug shaft). Either way the wall is whole from four under the
+         * ledge to four over the head of whoever is on it, so there is never a hole beside the climb, only above and below it.
+         */
+        public int walls;
+
+        /** Twice the ledge's height where it passes this bearing the k-th time, whether or not it is broken there. */
+        private int pass(int x, int z, int k) {
+            double turns = round(x, z) + k;
+            if (turns < -0.09) return NONE;
+            double fall = Math.max(0, turns) * perTurn;
+            return fall > drop ? NONE : 2 * top - (int) Math.round(2 * fall);
+        }
+
+        /** Whether a cell of the wall's face is cut back. */
+        private boolean recess(int x, int y, int z) {
+            if (walls == 0 || y < bottom + water + 3 || y > top + 5 || in(x, z)) return false;
+            int ox = x - cx, oz = z - cz;
+            if (Math.abs(ox) == Math.abs(oz)) return false;
+            boolean alongZ = Math.abs(ox) > Math.abs(oz);
+            int ix = alongZ ? x - Integer.signum(ox) : x, iz = alongZ ? z : z - Integer.signum(oz);
+            if (!in(ix, iz)) return false;
+            int t = alongZ ? oz : ox;
+            if (walls == 1) {
+                if (Math.abs(t) > r - 3 || Math.floorMod(t + 2, 6) >= 4) return false;
+            } else if (n.get((x + z * 0.7) / 4.0 + 31, y / 4.0 + 7) < 0.12) return false;
+            for (int k = -1; k * perTurn <= drop + perTurn; k++) {
+                int f = pass(ix, iz, k);
+                if (f == NONE) continue;
+                int base = Math.floorDiv(f, 2);
+                if (y >= base - 5 && y <= base + 5) return false;
+            }
+            return true;
+        }
+
         private double far(int x, int z) {
             return square ? Math.max(Math.abs(x - cx), Math.abs(z - cz)) : Math.hypot(x - cx, z - cz);
         }
@@ -627,7 +663,9 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         /** The shaft is air but for its ledge: two cells thick under your feet, and the half step where it has one. */
         @Override
         public boolean open(int x, int y, int z) {
-            if (x < x0 || x > x1 || z < z0 || z > z1 || !in(x, z) || y < bottom || y >= dome(x, z)) return false;
+            if (x < x0 || x > x1 || z < z0 || z > z1) return false;
+            if (!in(x, z)) return recess(x, y, z);
+            if (y < bottom || y >= dome(x, z)) return false;
             for (int k = -1; k * perTurn <= drop; k++) {
                 int f = ledge2(x, z, k);
                 if (f == NONE) continue;
@@ -640,7 +678,10 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         @Override
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
-                if (!in(x, z)) continue;
+                if (!in(x, z)) {
+                    if (walls != 0) for (int y = bottom + water + 3; y <= top + 5; y++) if (recess(x, y, z)) v.set(x, y, z, null);
+                    continue;
+                }
                 for (int y = bottom, roof = dome(x, z); y < roof; y++) v.set(x, y, z, y < bottom + water ? WATER : null);
             }
         }
@@ -862,6 +903,42 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return new int[]{ax + dx * a - dz * c, feet, az + dz * a + dx * c};
         }
 
+        /**
+         * What the two long walls are cut like under the level of the shelves (SPEC §50.9 "Depth"): 0 leaves them plain; 1 cuts
+         * bays one cell deep and four wide between piers two wide; 2 scoops them out in patches. Never beside anything
+         * there is to stand on, the ramp back up included, and never low enough to climb into out of the water.
+         */
+        public int walls;
+
+        /** Whether a cell of a long wall's face is cut back. */
+        private boolean recess(int x, int y, int z) {
+            if (walls == 0 || y < top - depth + water + 2 || y > top - 2) return false;
+            int a = along(x, z), c = across(x, z);
+            if (Math.abs(c) != half + 1 || a < 7 || a > exitFrom - 4) return false;
+            if (walls == 1) {
+                if (Math.floorMod(a, 6) >= 4) return false;
+            } else if (dev.awaken.gates.realms.kit.N.rnd(Math.floorDiv(a + (y >> 2), 3), Math.floorDiv(y, 3), 4107 + ax * 31L + az) > 0.5) return false;
+            int side = Integer.signum(c), bed = 2 * (top - depth);
+            for (int i = 0; i < 2; i++) {
+                int cc = side * (half - i);
+                int[] at = at(a, cc, 0);
+                if (feet2(at[0], at[2]) != bed) return false;
+                for (int[] s : stands) if (s[5] != 0 && a >= s[0] - 1 && a <= s[1] + 1 && cc >= s[2] && cc <= s[3]) return false;
+            }
+            return true;
+        }
+
+        @Override
+        void carve(V v) {
+            super.carve(v);
+            if (walls == 0) return;
+            for (int a = 7; a <= exitFrom - 4; a++) for (int side = -1; side <= 1; side += 2) {
+                int[] at = at(a, side * (half + 1), 0);
+                if (!v.in(at[0], 1, at[2])) continue;
+                for (int y = top - depth + water + 2; y <= top - 2; y++) if (recess(at[0], y, at[2])) v.set(at[0], y, at[2], null);
+            }
+        }
+
         /** How many stands the way across has. */
         public int pillars() {
             return way.size();
@@ -942,7 +1019,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         public boolean open(int x, int y, int z) {
             if (x < x0 || x > x1 || z < z0 || z > z1) return false;
             int f = feet2(x, z);
-            if (f == NONE || y < airFrom(f) || y >= roof(x, z)) return false;
+            if (f == NONE) return recess(x, y, z);
+            if (y < airFrom(f) || y >= roof(x, z)) return false;
             int a = along(x, z), c = across(x, z);
             for (int[] s : stands) {
                 if (s[5] == 0 || a < s[0] || a > s[1] || c < s[2] || c > s[3]) continue;
