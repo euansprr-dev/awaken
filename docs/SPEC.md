@@ -11939,7 +11939,8 @@ What follows replaces that. Nothing here changes what a power does to a number u
   space (x from `x0/16` to `x1/16`, y `-2/16` at the shoulder end to `10/16` at the hand, z `±2/16`). `ArmLayers.add(Layer)`;
   `Layer.draw(Arm, PoseStack, SubmitNodeCollector)`; `Arm` says which arm, whether it holds something, and the light keyed on it.
   The arm's armour (§44.1, `core.client.FirstPersonDress`) is drawn first, stretched with the arm, and `Arm.dressed` says it was:
-  what a layer puts on the skin may be under a plate.
+  what a layer puts on the skin may be under a plate. The light then draws itself 0.16 nearer your eye along the line of sight (the
+  same place on the screen, on the plate in place of the skin), leaving out the faces turned away.
 - **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style
   (15), drawn on the skin's own pixel grid (4 x 12 a face, 3 wide on slim arms) 0.004 above it, running toward the fist as the charge
   climbs, with a soft halo. A cast with no light track gets one from its age against its release tick. Powers that sit on you (Barrier,

@@ -104,14 +104,16 @@ final class ArmLight implements ArmLayers.Layer {
     /** One arm's light, kept from the submit to the draw (the collector draws later): a small ring, nothing allocated a frame. */
     private static final class Draw implements SubmitNodeCollector.CustomGeometryRenderer {
         FxStyle style;
-        boolean awake, halo;
+        boolean awake, halo, dressed;
         int seed;
         float charge, heat, time, x0, x1;
 
         @Override
         public void render(PoseStack.Pose pose, VertexConsumer vc) {
+            pull = dressed ? OVER_PLATE : 0f;
             if (halo) halo(this, pose, vc);
             else cells(this, pose, vc);
+            pull = 0f;
         }
     }
 
@@ -179,11 +181,20 @@ final class ArmLight implements ArmLayers.Layer {
         d.time = now;
         d.x0 = arm.x0;
         d.x1 = arm.x1;
+        d.dressed = arm.dressed;
         d.halo = halo;
         out.submitCustomGeometry(ps, halo ? RenderTypes.lightning() : RenderTypes.debugQuads(), d);
     }
 
     private static final float PX = 1f / 16f, LIFT = 0.004f;
+    /**
+     * An arm that wears something (the armour's sleeve or plate, drawn over the skin): its light is drawn this much nearer
+     * your eye, along the line of sight, so it lies on the plate where it lay on the skin. Along the line of sight nothing
+     * moves on the screen; a plate thicker than this covers it, and anything further in front (the other arm, a weapon) too.
+     */
+    private static final float OVER_PLATE = 0.16f;
+    private static float pull;
+    private static final org.joml.Vector3f V = new org.joml.Vector3f(), W = new org.joml.Vector3f();
     private static final int ROWS = 12;
     /** Faces of the arm's cube: toward the body's front and back, its two sides, and the hand's end. */
     private static final int FRONT = 0, BACK = 1, OUTER = 2, INNER = 3, CAP = 4;
@@ -193,6 +204,7 @@ final class ArmLight implements ArmLayers.Layer {
         int across = Math.round(d.x1 - d.x0);
         float fade = Mth.clamp(d.heat, 0f, 1f), flash = Mth.clamp(d.heat - 1f, 0f, 1f);
         for (int face = FRONT; face <= CAP; face++) {
+            if (pull > 0f && !faces(pose, d, face)) continue;
             int cols = face == OUTER || face == INNER ? 4 : across, rows = face == CAP ? 4 : ROWS;
             for (int v = 0; v < rows; v++) {
                 // the hand's end takes the last row's light, so the fist itself glows when the arm is full
@@ -234,12 +246,42 @@ final class ArmLight implements ArmLayers.Layer {
         }
     }
 
+    /**
+     * Whether a face of the arm's cube is turned to your eye. On bare skin the arm's own depth hides the far faces; a light
+     * drawn nearer the eye than the arm (over a plate) has to leave them out itself. The hand's space has your eye at its
+     * origin, so a face shows when its outward side points back at the origin.
+     */
+    private static boolean faces(PoseStack.Pose pose, Draw d, int face) {
+        float cx = (d.x0 + d.x1) * 0.5f * PX, cy = 4 * PX, cz = 0, nx = 0, ny = 0, nz = 0;
+        switch (face) {
+            case FRONT -> { cz = -2 * PX; nz = -1; }
+            case BACK -> { cz = 2 * PX; nz = 1; }
+            case OUTER -> { cx = d.x0 * PX; nx = -1; }
+            case INNER -> { cx = d.x1 * PX; nx = 1; }
+            default -> { cy = 10 * PX; ny = 1; }
+        }
+        pose.pose().transformPosition(cx, cy, cz, V);
+        pose.pose().transformPosition(cx + nx, cy + ny, cz + nz, W);
+        return V.x * (W.x - V.x) + V.y * (W.y - V.y) + V.z * (W.z - V.z) < 0f;
+    }
+
     private static void quad(PoseStack.Pose pose, VertexConsumer vc, float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2,
                              float z2, float x3, float y3, float z3, int argb) {
-        vc.addVertex(pose, x0, y0, z0).setColor(argb);
-        vc.addVertex(pose, x1, y1, z1).setColor(argb);
-        vc.addVertex(pose, x2, y2, z2).setColor(argb);
-        vc.addVertex(pose, x3, y3, z3).setColor(argb);
+        vertex(pose, vc, x0, y0, z0, argb);
+        vertex(pose, vc, x1, y1, z1, argb);
+        vertex(pose, vc, x2, y2, z2, argb);
+        vertex(pose, vc, x3, y3, z3, argb);
+    }
+
+    private static void vertex(PoseStack.Pose pose, VertexConsumer vc, float x, float y, float z, int argb) {
+        if (pull == 0f) {
+            vc.addVertex(pose, x, y, z).setColor(argb);
+            return;
+        }
+        // toward the eye along its own line of sight: the same place on the screen, nearer
+        pose.pose().transformPosition(x, y, z, V);
+        float len = V.length(), k = len > pull * 2f ? 1f - pull / len : 0.5f;
+        vc.addVertex(V.x * k, V.y * k, V.z * k).setColor(argb);
     }
 
     /** The glow round the lit length of the arm: its faces pushed out a little, in additive light (both windings: no cull is assumed). */
