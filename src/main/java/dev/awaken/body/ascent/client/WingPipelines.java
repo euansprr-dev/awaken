@@ -108,6 +108,26 @@ final class WingPipelines {
         return ok == 1;
     }
 
+    private static RenderType pad, padLean;
+
+    /**
+     * A probe's own type, in the feathers' vertex format: geometry of no size sent ahead of the wings, to learn whether a
+     * machine's graphics draw wrongly what lies far into a frame's shared vertex buffer (/awaken wings set probe_pad).
+     */
+    static RenderType pad() {
+        if (lean && ok() && leanOk()) {
+            if (padLean == null) {
+                padLean = RenderType.create("awaken_ascent_wing_pad_lean", RenderSetup.builder(FEATHER_LEAN).setOitPipelines(FEATHER_LEAN_OIT).createRenderSetup());
+            }
+            return padLean;
+        }
+        if (pad == null) {
+            pad = ok() ? RenderType.create("awaken_ascent_wing_pad",
+                    RenderSetup.builder(FEATHER).withTexture("Sampler0", WHITE).setOitPipelines(FEATHER_OIT).createRenderSetup()) : RenderTypes.entityTranslucent(WHITE);
+        }
+        return pad;
+    }
+
     private static int leanOk = -1;
 
     private static boolean leanOk() {

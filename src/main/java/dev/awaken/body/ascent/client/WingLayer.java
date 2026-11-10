@@ -292,6 +292,15 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
      */
     private static int probeLod = -1, probePairs = 0;
     private static boolean probeRing = true, probeHalos = true;
+    /** A probe: this many vertices of no size sent ahead of the wings (or after them), in the feathers' own format. */
+    private static int probePad;
+    private static boolean probePadAfter;
+    private static final SubmitNodeCollector.CustomGeometryRenderer PAD = (pose, vc) -> {
+        for (int i = 0; i < probePad; i++) {
+            vc.addVertex(pose, 0, 0.4F, 0.2F).setColor(0x00FFFFFF).setUv(0.5F, 0.5F).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                    .setLight(net.minecraft.util.LightCoordsUtil.FULL_BRIGHT).setNormal(pose, 0, 1, 0);
+        }
+    };
 
     /** A number of the wings' look set by name while the game runs (/awaken wings set); false for a name it doesn't know. */
     static boolean tune(String key, float value) {
@@ -305,6 +314,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             case "probe_halos" -> probeHalos = value != 0;
             case "probe_lean" -> WingPipelines.lean = value != 0;
             case "probe_plain" -> WingPipelines.plain = value != 0;
+            case "probe_pad" -> probePad = Math.max(0, (int) value) / 4 * 4;
+            case "probe_pad_after" -> probePadAfter = value != 0;
             default -> {
                 return false;
             }
@@ -609,6 +620,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             int lod = WingForm.lod(state.distanceToCameraSq);
             poseStack.pushPose();
             getParentModel().body.translateAndRotate(poseStack);
+            if (probePad > 0 && !probePadAfter) out.submitCustomGeometry(poseStack, WingPipelines.pad(), PAD);
             if (mark && lod < 2) {
                 markPulse = 1 + 0.25F * Mth.sin((AscentMoves.ticks % 50 + pt) / 50F * Mth.TWO_PI);
                 out.submitCustomGeometry(poseStack, WingPipelines.feather(0), MARK);
@@ -617,6 +629,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 for (int i = 0; i < w.third.pairs.length; i++) out.submitCustomGeometry(poseStack, WingPipelines.feather(i), w.third.feathers[i]);
                 if (lod < 2) out.order(1).submitCustomGeometry(poseStack, WingPipelines.halo(), w.third.lights);
             }
+            if (probePad > 0 && probePadAfter) out.submitCustomGeometry(poseStack, WingPipelines.pad(), PAD);
             poseStack.popPose();
             return;
         }
