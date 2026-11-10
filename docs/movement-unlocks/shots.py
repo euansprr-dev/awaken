@@ -8,24 +8,33 @@ TOURS = {
     "movement": M + "movement-now-42840884113",
     "vow": "run-autopilot/screenshots-ci/unlock-vow-42851970427",
     "tether": "run-autopilot/screenshots-ci/unlock-tether-42850633106",
+    "tether2": "run-autopilot/screenshots-ci/unlock-tether-42860766756",
+    "leap": "run-autopilot/screenshots-ci/leaper-trial-42850633738",
+    "wings": "run-autopilot/screenshots-ci/unlock-wings-42860879977",
+    "sky": "run-autopilot/screenshots-ci/unlock-sky-42860942691",
 }
 # page picture -> (tour, shot, crop as fractions (x0, y0, x1, y1) or None)
 CUTS = {
-    "tether_now": ("tether", "tether_02_ringer", None),
+    "tether_now": ("tether2", "tether_04_chain", None),
+    "leap_now": ("leap", "trial_03_across", None),
+    "leap_place": ("leap", "trial_02_course", None),
+    "wings_k": ("wings", "wings_20_powers", (0.25, 0.52, 0.66, 0.99)),
     "tasks_vow": ("tether", "tether_13_tasks", (0.63, 0.12, 0.99, 0.62)),
-    "sky_now": ("cathedral", "cath_09_open", None),
+    "sky_now": ("sky", "sky_04_edge", None),
+    "sky_gift": ("sky", "sky_11_gift", None),
     "sov_now": ("movement", "g_sovereign_back_02", None),
-    "wings_now": ("movement", "d_glide_back_04", None),
+    "wings_now": ("wings", "wings_12", None),
+    "wings_after": ("wings", "wings_16", None),
     "vow_a": ("vow", "vow_06", None),
     "vow_b": ("vow", "vow_12", None),
     "spire": ("vow", "spire_01_up", None),
 }
 # @@FIG:key@@ -> (picture, caption)
 FIGS = {
-    "tether_now": ("tether_now", "<b>The D rank fight, the Ringer, in a real rank assessment.</b> When it falls you get the rope, a toast and a text tip."),
-    "leap_now": ("leap_now", ""),
-    "wings_now": ("wings_now", "<b>Wings today.</b> The picture of the core's gift is in a tour still waiting for a machine."),
-    "sky_now": ("sky_now", "<b>The A rank fight once the roof has lifted.</b> Flight is given here, while the Sky Warden is still fighting."),
+    "tether_now": ("tether_now", "<b>2.9 seconds after the Ringer falls, in a real D rank assessment.</b> The dark links on the floor ahead are its chain: this is the moment the rope is given. The only message on screen is Minecraft's own recipe toast."),
+    "leap_now": ("leap_now", "<b>The chasm's edge in the Leaper's Gauntlet.</b> \"Your legs remember the air.\" and one line, drawn over the course's clock and another notice."),
+    "wings_now": ("wings_now", "<b>A sky core gives wings.</b> A title and one line. Then nothing says how to get down."),
+    "sky_now": ("sky_now", "<b>Flight given in a real A rank fight.</b> A title and a line while the Sky Warden winds up its next blow."),
     "sov_now": ("sov_now", "<b>The Sovereign's form.</b> Given five seconds after an ending."),
 }
 # @@FIG:key@@ -> [(picture, caption), ...] as a row of three
@@ -35,10 +44,14 @@ STRIPS = {
         ("vow_b", "<b>Then it makes you use it.</b> \"Reach the beacon mast\", with a ring of light on the mast at the left."),
         ("tasks_vow", "<b>Today's Tasks page at D-rank, rope in hand.</b> The card at the bottom right, \"Keep the Tether Vow\", can never be done in a new world: the vow only starts for someone without the rope."),
     ],
+    "wings_strip": [
+        ("wings_after", "<b>Four seconds later.</b> The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened."),
+        ("wings_k", "<b>The K menu at C-rank with wings.</b> The next row still says the sky \"calls you to a trial\". That trial can no longer be reached."),
+        ("sky_gift", "<b>The Sky Warden falls.</b> \"The sky is yours.\" and four moves in one line of text."),
+    ],
     "leap_strip": [
         ("spire", "<b>A Tether Spire, from its plaza.</b> There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope."),
     ],
-    "wings_strip": [],
 }
 # @@IMG:key@@ -> the picture behind a mock-up
 IMGS = {
