@@ -101,7 +101,12 @@ public enum FxKind {
     /** A shot swallowed by a well at pos. */
     SHOT_EATEN,
     /** A Railgun's tunnel closes from pos + d back to pos over ticks. */
-    BORE_SEAL;
+    BORE_SEAL,
+    /**
+     * A beat of a power's voice (powers.fx.Voice): ticks = the beat's ordinal, scale = intensity (a charge's share), and the
+     * power's classic sound for players who chose it: colour = its registry id (-1 none), d.x = its volume, aux = its pitch.
+     */
+    VOICE;
 
     private static final FxKind[] VALUES = values();
 

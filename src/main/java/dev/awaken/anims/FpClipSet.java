@@ -20,6 +20,14 @@ import java.util.Map;
  * left main arm. A clip with "fists" keys where each empty hand is instead (x, y, z in view space; vanilla's resting
  * fist is FirstPerson.View.REST_FIST): its arm is drawn rising to it. Pure data: both sides read it (a GameTest holds the
  * names to the file).
+ * <p>
+ * Schema 2 (SPEC §32, "The arm"; a file of either schema loads): a fists clip marked {@code "arm"} uses a fist key's three
+ * spare values as the forearm's pitch and yaw (degrees in view space: 0, 0 points straight ahead, yaw + to the right, pitch +
+ * up) and the wrist's roll, so the forearm can lie across the view, stand up or drive forward; without it the arm rises to the
+ * fist from under the frame's corner as before. {@code "mainMoves"} / {@code "offMoves"} make that track offsets (it moves
+ * what the hand holds) while the other stays fists: a cast from the off hand with the weapon lowered in the main one.
+ * {@code "ease"} beside {@code "stow"} puts the held thing away over a few ticks instead of at once. {@code "light"} keys the
+ * arms' light: {@code [tick, chargeMain, heatMain, chargeOff, heatOff, ease]} (FirstPerson.View lightMain/lightOff).
  * <pre>
  * {"schemaVersion": 1, "clips": {"fp_pipe_kick": {"length": 10, "loop": false, "both": true, "fists": false,
  *    "main": [[0, x, y, z, pitch, yaw, roll, "linear"], [3, ..., "easeoutcubic"]], "off": [...], "events": [[2, "push"]]}}}
@@ -28,7 +36,7 @@ import java.util.Map;
 public final class FpClipSet {
     private FpClipSet() {}
 
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
     /** The files read, in order (a later file's clip replaces an earlier one's of the same name). */
     public static final String[] FILES = {"assets/awaken/fp_clips/fp_moves.json", "assets/awaken/fp_clips/fp_casts.json"};
 
@@ -47,6 +55,14 @@ public final class FpClipSet {
         public boolean stow;
         /** A climb's clip (fp_moves.py "climb": a catch, a mantle): the hands grip the world, what they hold is put away. */
         public boolean climb;
+        /** Schema 2: the fist keys carry the forearm's pitch, yaw and the wrist's roll (see the class note). */
+        public boolean arm;
+        /** Schema 2: that track is offsets even in a fists clip (the hand that keeps the weapon while the other casts). */
+        public boolean mainMoves, offMoves;
+        /** Schema 2: a stow that eases what the hands hold away and back instead of hiding it at once. */
+        public boolean ease;
+        /** Schema 2: the arms' light, or empty (each key: chargeMain, heatMain, chargeOff, heatOff). */
+        Key[] light = new Key[0];
         final Key[] main, off;
         public final float[] eventAt;
         public final String[] events;
@@ -70,6 +86,19 @@ public final class FpClipSet {
         public boolean hasOff() {
             return off.length > 0;
         }
+
+        public boolean hasLight() {
+            return light.length > 0;
+        }
+
+        /** The light at tick t into a 4-wide array: chargeMain, heatMain, chargeOff, heatOff. */
+        public void light(float t, float[] out) {
+            if (loop && length > 0) t = ((t % length) + length) % length;
+            at(light, t, SCRATCH);
+            System.arraycopy(SCRATCH, 0, out, 0, 4);
+        }
+
+        private static final float[] SCRATCH = new float[6];
 
         /** Both hands' moves at tick t (wrapped for a loop, held at the ends otherwise) into two 6-wide arrays. */
         public void sample(float t, float[] mainOut, float[] offOut) {
@@ -119,7 +148,7 @@ public final class FpClipSet {
     public static Map<String, Clip> parse(Reader r) {
         JsonObject root = JsonParser.parseReader(r).getAsJsonObject();
         int schema = root.get("schemaVersion").getAsInt();
-        if (schema != SCHEMA) throw new IllegalArgumentException("schemaVersion " + schema + ", expected " + SCHEMA);
+        if (schema < 1 || schema > SCHEMA) throw new IllegalArgumentException("schemaVersion " + schema + ", expected 1 to " + SCHEMA);
         Map<String, Clip> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("clips").entrySet()) {
             JsonObject c = e.getValue().getAsJsonObject();
@@ -137,6 +166,28 @@ public final class FpClipSet {
             out.get(e.getKey()).toStance = c.has("toStance") && c.get("toStance").getAsBoolean();
             out.get(e.getKey()).stow = c.has("stow") && c.get("stow").getAsBoolean();
             out.get(e.getKey()).climb = c.has("climb") && c.get("climb").getAsBoolean();
+            Clip made = out.get(e.getKey());
+            made.arm = flag(c, "arm");
+            made.mainMoves = flag(c, "mainMoves");
+            made.offMoves = flag(c, "offMoves");
+            made.ease = flag(c, "ease");
+            if (c.has("light")) made.light = lightKeys(c.getAsJsonArray("light"));
+        }
+        return out;
+    }
+
+    private static boolean flag(JsonObject c, String name) {
+        return c.has(name) && c.get(name).getAsBoolean();
+    }
+
+    /** Light keys: [tick, chargeMain, heatMain, chargeOff, heatOff, ease]. */
+    private static Key[] lightKeys(JsonArray a) {
+        Key[] out = new Key[a.size()];
+        for (int i = 0; i < a.size(); i++) {
+            JsonArray k = a.get(i).getAsJsonArray();
+            float[] v = new float[6];
+            for (int j = 0; j < 4; j++) v[j] = k.get(1 + j).getAsFloat();
+            out[i] = new Key(k.get(0).getAsFloat(), v, k.size() > 5 ? Ease.byName(k.get(5).getAsString()) : Ease.LINEAR);
         }
         return out;
     }

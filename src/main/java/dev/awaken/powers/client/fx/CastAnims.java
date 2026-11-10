@@ -61,6 +61,35 @@ final class CastAnims {
         boolean holdStarted;
         /** The profile's screen moment has played (once, on the release tick). */
         boolean momentPlayed;
+        /** How the cast was made and which take (powers.fx.Ways): they pick the clips' versions. */
+        int way, take;
+        /** The first-person clip that was started for this cast (a way's or a take's version, or the base), to stop it by name. */
+        @Nullable String begin1p;
+    }
+
+    /**
+     * Starts the first version of a first-person clip that exists: this way and take, the way alone, the take alone, the base.
+     * Returns the name that plays (the base when none did).
+     */
+    static String play1p(String base, int way, int take) {
+        String a = dev.awaken.powers.fx.Ways.clip(base, way, take);
+        if (dev.awaken.core.api.FirstPerson.play(a)) return a;
+        String b = dev.awaken.powers.fx.Ways.clip(base, way, 0);
+        if (!b.equals(a) && dev.awaken.core.api.FirstPerson.play(b)) return b;
+        String c = dev.awaken.powers.fx.Ways.clip(base, 0, take);
+        if (!c.equals(a) && dev.awaken.core.api.FirstPerson.play(c)) return c;
+        dev.awaken.core.api.FirstPerson.play(base);
+        return base;
+    }
+
+    /** The third-person version of a clip that exists for a way and a take (the base when neither does). */
+    private static String pick3p(String base, int way, int take) {
+        String a = dev.awaken.powers.fx.Ways.clip(base, way, take);
+        if (PalCasts.has(a)) return a;
+        String b = dev.awaken.powers.fx.Ways.clip(base, way, 0);
+        if (PalCasts.has(b)) return b;
+        String c = dev.awaken.powers.fx.Ways.clip(base, 0, take);
+        return PalCasts.has(c) ? c : base;
     }
 
     /** The Player Animation Library is installed (and took our layer): casts get full-body clips in third person. */
@@ -98,10 +127,32 @@ final class CastAnims {
 
     /** Starts a power's cast profile: its own clips (third person), the vanilla pose {@code fallback} without the library. */
     static void playProfile(int entityId, CastProfiles.Profile profile, @Nullable Family family) {
-        start(entityId, profile.fallback(), 0, family, profile);
+        playProfile(entityId, profile, family, 0, 0);
+    }
+
+    /** As above, made a way (standing, at a run, in the air) and with a take: the clips' versions for them play where they exist. */
+    static void playProfile(int entityId, CastProfiles.Profile profile, @Nullable Family family, int way, int take) {
+        start(entityId, profile.fallback(), 0, family, profile, way, take);
+    }
+
+    /** Your own first-person clip for the cast an entity is in, started in its way and take. A held cast always begins on its base clip. */
+    static void begin1p(int entityId) {
+        Anim a = find(entityId);
+        if (a == null || a.profile == null) return;
+        if (a.profile.channel()) {
+            dev.awaken.core.api.FirstPerson.play(a.profile.begin1p());
+            a.begin1p = a.profile.begin1p();
+        } else {
+            a.begin1p = play1p(a.profile.begin1p(), a.way, a.take);
+        }
     }
 
     private static void start(int entityId, CastAnim kind, int ticks, @Nullable Family family, CastProfiles.@Nullable Profile profile) {
+        start(entityId, kind, ticks, family, profile, 0, 0);
+    }
+
+    private static void start(int entityId, CastAnim kind, int ticks, @Nullable Family family, CastProfiles.@Nullable Profile profile, int way,
+                              int take) {
         if (kind == CastAnim.NONE || entityId < 0) return;
         Anim a = find(entityId);
         boolean afterHold = profile == null && a != null && a.held && a.pal && !kind.held;
@@ -125,8 +176,11 @@ final class CastAnims {
         a.profile = profile;
         a.holdStarted = false;
         a.momentPlayed = false;
+        a.way = way;
+        a.take = take;
+        a.begin1p = null;
         if (pal && PowerFxConfig.animations()) {
-            String clip = profile != null ? profile.begin3p() : CastClips.clip(a.family, kind, afterHold);
+            String clip = profile != null ? pick3p(profile.begin3p(), way, take) : CastClips.clip(a.family, kind, afterHold);
             a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));
         }
         if (wasPal && !a.pal) PalCasts.stop(entityId);
@@ -195,7 +249,7 @@ final class CastAnims {
                 if (a.profile.end1p() != null && entityId == mcPlayerId() && PowerFxConfig.animations()) {
                     dev.awaken.core.api.FirstPerson.stop(a.profile.begin1p());
                     if (a.profile.hold1p() != null) dev.awaken.core.api.FirstPerson.stop(a.profile.hold1p());
-                    dev.awaken.core.api.FirstPerson.play(a.profile.end1p());
+                    play1p(a.profile.end1p(), a.way, a.take); // the let-go has its own versions (a punch thrown in the air)
                 }
             }
         }
@@ -249,7 +303,7 @@ final class CastAnims {
             }
             if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= (a.profile != null ? 0 : 2))) {
                 a.palLetGo = true;
-                String clip = a.profile != null ? a.profile.end3p() : CastClips.letGo(a.family, a.kind);
+                String clip = a.profile != null ? (a.profile.end3p() == null ? null : pick3p(a.profile.end3p(), a.way, a.take)) : CastClips.letGo(a.family, a.kind);
                 if (clip == null || !PalCasts.play(a.entity, clip, 2)) PalCasts.stop(a.entity);
             }
             if (done && a.pal && a.palFrozen) PalCasts.freeze(a.entity, false);

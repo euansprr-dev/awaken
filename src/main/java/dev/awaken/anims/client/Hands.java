@@ -35,6 +35,9 @@ final class Hands implements FirstPerson.Player {
 
     private static final FirstPerson.View VIEW = new FirstPerson.View();
     private static final float[] M = new float[6], O = new float[6], CLIP_MAIN = new float[4], CLIP_OFF = new float[4];
+    /** Schema 2: how the clips' fists' arms lie, their light, and what the clips moved a hand that holds something by. */
+    private static final float[] CLIP_ARM_MAIN = new float[4], CLIP_ARM_OFF = new float[4], L = new float[4];
+    private static final float[] CLIP_MOVE_MAIN = new float[6], CLIP_MOVE_OFF = new float[6];
     private static Map<String, FpClipSet.Clip> clips;
 
     /** Clips playing: their clip, start (ticks), speed, events fired so far, a fade out (ticks, or 0). */
@@ -205,6 +208,10 @@ final class Hands implements FirstPerson.Player {
         lookLag(pt);
         java.util.Arrays.fill(CLIP_MAIN, 0F);
         java.util.Arrays.fill(CLIP_OFF, 0F);
+        java.util.Arrays.fill(CLIP_ARM_MAIN, 0F);
+        java.util.Arrays.fill(CLIP_ARM_OFF, 0F);
+        java.util.Arrays.fill(CLIP_MOVE_MAIN, 0F);
+        java.util.Arrays.fill(CLIP_MOVE_OFF, 0F);
         List<FirstPerson.ViewPose> stances = FirstPerson.viewSources();
         for (int i = 0; i < stances.size(); i++) stances.get(i).pose(pt, VIEW);
         for (Playing p : PLAYING) {
@@ -214,26 +221,83 @@ final class Hands implements FirstPerson.Player {
             float k = p.stopAt < 0 ? 1 : Math.max(0, 1 - (ticks + pt - p.stopAt) / FADE);
             if (leftMain) mirror(M, O);
             if (p.clip.climb) VIEW.climb = true;
+            if (p.clip.hasLight()) {
+                p.clip.light(age, L);
+                FirstPerson.View.light(VIEW.lightMain, k, L[0], L[1]);
+                FirstPerson.View.light(VIEW.lightOff, k, L[2], L[3]);
+            }
             if (p.clip.fists) {
-                // a clip's fists take the hand from any stance's (a ledge jump over the hang's fists)
-                if (p.clip.hasMain()) FirstPerson.View.fist(CLIP_MAIN, k, M[0], M[1], M[2]);
-                if (p.clip.hasOff()) FirstPerson.View.fist(CLIP_OFF, k, O[0], O[1], O[2]);
-                if (p.clip.stow) VIEW.stow = true;
+                // a clip's fists take the hand from any stance's (a ledge jump over the hang's fists); a track marked as
+                // moves shifts what that hand holds instead (the weapon lowered while the other hand casts)
+                if (p.clip.hasMain()) {
+                    if (p.clip.mainMoves) {
+                        FirstPerson.View.add(VIEW.main, k, M[0], M[1], M[2], M[3], M[4], M[5]);
+                        FirstPerson.View.add(CLIP_MOVE_MAIN, k, M[0], M[1], M[2], M[3], M[4], M[5]);
+                    } else {
+                        FirstPerson.View.fist(CLIP_MAIN, k, M[0], M[1], M[2]);
+                        if (p.clip.arm) FirstPerson.View.arm(CLIP_ARM_MAIN, k, M[3], M[4], M[5]);
+                    }
+                }
+                if (p.clip.hasOff()) {
+                    if (p.clip.offMoves) {
+                        FirstPerson.View.add(VIEW.off, k, O[0], O[1], O[2], O[3], O[4], O[5]);
+                        FirstPerson.View.add(CLIP_MOVE_OFF, k, O[0], O[1], O[2], O[3], O[4], O[5]);
+                    } else {
+                        FirstPerson.View.fist(CLIP_OFF, k, O[0], O[1], O[2]);
+                        if (p.clip.arm) FirstPerson.View.arm(CLIP_ARM_OFF, k, O[3], O[4], O[5]);
+                    }
+                }
+                if (p.clip.stow) {
+                    VIEW.stow = true;
+                    if (p.clip.ease) VIEW.stowEase = true;
+                }
                 continue;
             }
             FirstPerson.View.add(VIEW.main, k, M[0], M[1], M[2], M[3], M[4], M[5]);
             FirstPerson.View.add(VIEW.off, k, O[0], O[1], O[2], O[3], O[4], O[5]);
             if (p.clip.both) VIEW.drawOff = true;
         }
-        if (CLIP_MAIN[3] > 0) System.arraycopy(CLIP_MAIN, 0, VIEW.fistMain, 0, 4);
-        if (CLIP_OFF[3] > 0) System.arraycopy(CLIP_OFF, 0, VIEW.fistOff, 0, 4);
+        if (CLIP_MAIN[3] > 0) {
+            System.arraycopy(CLIP_MAIN, 0, VIEW.fistMain, 0, 4);
+            System.arraycopy(CLIP_ARM_MAIN, 0, VIEW.armMain, 0, 4);
+        }
+        if (CLIP_OFF[3] > 0) {
+            System.arraycopy(CLIP_OFF, 0, VIEW.fistOff, 0, 4);
+            System.arraycopy(CLIP_ARM_OFF, 0, VIEW.armOff, 0, 4);
+        }
+        // a hand that was moved while it holds something takes its grip along (the arm stays on the weapon)
+        follow(VIEW.gripMain, CLIP_MOVE_MAIN);
+        follow(VIEW.gripOff, CLIP_MOVE_OFF);
         publishFists();
+    }
+
+    /** A grip moved as its hand was: {@code t + R * grip} for the move's translation and its turns about x, y, z in that order. */
+    private static void follow(float[] grip, float[] move) {
+        if (grip[3] <= 0) return;
+        boolean any = false;
+        for (int i = 0; i < 6; i++) any |= move[i] != 0;
+        if (!any) return;
+        float w = grip[3];
+        double x = grip[0] / w, y = grip[1] / w, z = grip[2] / w;
+        double rz = Math.toRadians(move[5]), ry = Math.toRadians(move[4]), rx = Math.toRadians(move[3]);
+        double c = Math.cos(rz), sn = Math.sin(rz), x1 = x * c - y * sn, y1 = x * sn + y * c;
+        c = Math.cos(ry);
+        sn = Math.sin(ry);
+        double x2 = x1 * c + z * sn, z2 = -x1 * sn + z * c;
+        c = Math.cos(rx);
+        sn = Math.sin(rx);
+        double y3 = y1 * c - z2 * sn, z3 = y1 * sn + z2 * c;
+        grip[0] = (float) ((x2 + move[0]) * w);
+        grip[1] = (float) ((y3 + move[1]) * w);
+        grip[2] = (float) ((z3 + move[2]) * w);
     }
 
     /** The fists this frame's clips keyed, for effects that start at a hand (FirstPerson.LAST_FIST_*). */
     private static void publishFists() {
         System.arraycopy(VIEW.fistMain, 0, FirstPerson.LAST_FIST_MAIN, 0, 4);
         System.arraycopy(VIEW.fistOff, 0, FirstPerson.LAST_FIST_OFF, 0, 4);
+        System.arraycopy(VIEW.armMain, 0, FirstPerson.LAST_ARM_MAIN, 0, 4);
+        System.arraycopy(VIEW.armOff, 0, FirstPerson.LAST_ARM_OFF, 0, 4);
         FirstPerson.lastFistNanos = System.nanoTime();
     }
 
@@ -302,7 +366,7 @@ final class Hands implements FirstPerson.Player {
             // what the hands hold is put away while a cast or a climb asks (a climb's sinks as the fists come up)
             boolean ask = VIEW.stow || VIEW.climb;
             STOW_ASKED[0] = STOW_ASKED[1] = ask;
-            stepStow(ticks + e.getPartialTick(), VIEW.stow);
+            stepStow(ticks + e.getPartialTick(), VIEW.stow && !VIEW.stowEase);
             sinks(holdsMain, holdsOff);
             if (!VIEW.moved() && sinkMain == 0 && sinkOff == 0) return;
             if (away >= 1F) return; // only the arm with the band is on screen: no fist, no grip, whatever the hands are at
@@ -313,16 +377,16 @@ final class Hands implements FirstPerson.Player {
             boolean mainFist = VIEW.fistMain[3] > 0 && (!holdsMain || ask);
             if (mainFist) {
                 if (holdsMain) keep(STOW_FIST_MAIN, VIEW.fistMain);
-                fist(e, !leftMain, VIEW.fistMain, holdsMain ? upMain : 0);
+                fist(e, !leftMain, VIEW.fistMain, holdsMain ? upMain : 0, VIEW.armMain, VIEW.lightMain, true, false);
             } else if (holdsMain && !ask && STOW_FIST_MAIN[3] > 0 && sinkMain > 0) {
-                fist(e, !leftMain, STOW_FIST_MAIN, upMain);
+                fist(e, !leftMain, STOW_FIST_MAIN, upMain, null, VIEW.lightMain, true, false);
             }
             boolean offFist = VIEW.fistOff[3] > 0 && (!holdsOff || ask);
             if (offFist) {
                 if (holdsOff) keep(STOW_FIST_OFF, VIEW.fistOff);
-                fist(e, leftMain, VIEW.fistOff, holdsOff ? upOff : 0);
+                fist(e, leftMain, VIEW.fistOff, holdsOff ? upOff : 0, VIEW.armOff, VIEW.lightOff, false, false);
             } else if (holdsOff && !ask && STOW_FIST_OFF[3] > 0 && sinkOff > 0) {
-                fist(e, leftMain, STOW_FIST_OFF, upOff);
+                fist(e, leftMain, STOW_FIST_OFF, upOff, null, VIEW.lightOff, false, false);
             }
             // vanilla's hand steps aside for an empty hand's fist, and for a held thing once it's out of view
             if (mainFist && !holdsMain || holdsMain && STOW[0] >= 1) VIEW.hideMain = true;
@@ -330,8 +394,8 @@ final class Hands implements FirstPerson.Player {
             apply(ps, VIEW.both); // stays on the stack for the off hand too
             // grips: a held thing swung far from its resting place is held by an arm rising to its grip (it still draws,
             // and sinks with it while it's put away)
-            if (VIEW.gripMain[3] > 0 && !VIEW.hideMain) fist(e, !leftMain, VIEW.gripMain, -sinkMain);
-            if (VIEW.gripOff[3] > 0 && !VIEW.hideOff) fist(e, leftMain, VIEW.gripOff, -sinkOff);
+            if (VIEW.gripMain[3] > 0 && !VIEW.hideMain) fist(e, !leftMain, VIEW.gripMain, -sinkMain, null, VIEW.lightMain, true, true);
+            if (VIEW.gripOff[3] > 0 && !VIEW.hideOff) fist(e, leftMain, VIEW.gripOff, -sinkOff, null, VIEW.lightOff, false, true);
             if (VIEW.drawOff && !offFist && avatar != null && (!holdsOff || STOW[1] >= 1)) drawArm(e, avatar, !leftMain);
             if (VIEW.hideMain) {
                 e.setCanceled(true);
@@ -370,9 +434,9 @@ final class Hands implements FirstPerson.Player {
     }
 
     /** A fist (or a grip) at its weighted place, moved dy up the view (down when negative). */
-    private static void fist(RenderHandEvent e, boolean right, float[] f, float dy) {
+    private static void fist(RenderHandEvent e, boolean right, float[] f, float dy, float[] arm, float[] light, boolean mainHand, boolean grip) {
         float w = f[3];
-        WorldBody.drawFist(e, right, f[0] / w, f[1] / w + dy - FIST_DROP * away, f[2] / w, VIEW.tint, VIEW.glow);
+        WorldBody.drawFist(e, right, f[0] / w, f[1] / w + dy - FIST_DROP * away, f[2] / w, VIEW.tint, VIEW.glow, arm, light, mainHand, grip);
     }
 
     private static void apply(PoseStack ps, float[] m) {

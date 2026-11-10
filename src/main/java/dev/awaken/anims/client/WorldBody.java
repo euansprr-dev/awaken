@@ -285,6 +285,24 @@ final class WorldBody {
      * the hand pass sees it. Drawn in the main hand's event (the off hand's may not come when it holds nothing).
      */
     static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint, float glow) {
+        drawFist(e, right, x, y, z, tint, glow, null, null, true, false);
+    }
+
+    /** How long a keyed forearm is from its elbow to the middle of its fist, and where the upper arm comes from under the frame. */
+    static final double FOREARM = 0.6, UPPER_X = 0.52, UPPER_Y = -1.30, UPPER_Z = -0.30;
+    /** An elbow lower than this in the view is under the frame: no upper arm is drawn for it. */
+    static final double ELBOW_SEEN = -0.95;
+    private static final ArmLayers.Arm ARM = new ArmLayers.Arm();
+    private static ArmLayers.Arm layered;
+
+    /**
+     * As above, for a schema 2 clip (SPEC §32, "The arm"): {@code arm} is how the forearm lies (pitch, yaw, roll, weight
+     * summed; null or weight 0 for the old arm from the corner), {@code light} the clip's light for this hand (charge, heat,
+     * weight; null for none). The forearm runs from its elbow to the fist along the keyed direction, its front turned by
+     * the roll; an upper arm comes up to the elbow from under the frame when the elbow is in view. Then the arm layers.
+     */
+    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint, float glow,
+                         float[] arm, float[] light, boolean mainHand, boolean grip) {
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -297,17 +315,81 @@ final class WorldBody {
             RenderType type = RenderTypes.entityTranslucent(mc.player.getSkin().body().texturePath());
             FirstPerson.Limb l = right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM;
             double side = right ? 1 : -1;
-            rgb = tint == 0 ? 0xFFFFFF : tint;
+            int base = tint == 0 ? 0xFFFFFF : tint;
+            rgb = base;
             // lit from within: the block light raised toward full by the glow
-            int light = e.getPackedLight();
-            if (glow > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(15 * Math.min(1F, glow))));
-            viewArm(e.getPoseStack(), e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, light, x, y, z,
-                    side * FIST_ANCHOR_X, FIST_ANCHOR_Y, FIST_ANCHOR_Z, FIST_REACH, 1F);
+            int packed = e.getPackedLight();
+            if (glow > 0) packed = LightCoordsUtil.withBlock(packed, Math.max(LightCoordsUtil.block(packed), Math.round(15 * Math.min(1F, glow))));
+            if (ArmLayers.any()) {
+                ARM.right = right;
+                ARM.main = mainHand;
+                ARM.grip = grip;
+                ARM.x0 = right ? (slimSkin ? -2 : -3) : -1;
+                ARM.x1 = right ? 1 : (slimSkin ? 2 : 3);
+                ARM.keyed = light != null && light[2] > 0;
+                ARM.charge = ARM.keyed ? light[0] / light[2] : 0;
+                ARM.heat = ARM.keyed ? light[1] / light[2] : 0;
+                ARM.packedLight = packed;
+                ARM.partialTick = e.getPartialTick();
+                layered = ARM;
+            }
+            PoseStack ps = e.getPoseStack();
+            if (arm == null || arm[3] <= 0) {
+                viewArm(ps, e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, packed, x, y, z,
+                        side * FIST_ANCHOR_X, FIST_ANCHOR_Y, FIST_ANCHOR_Z, FIST_REACH, 1F);
+            } else {
+                double pitch = Math.toRadians(arm[0] / arm[3]), yaw = Math.toRadians(arm[1] / arm[3]), roll = Math.toRadians(arm[2] / arm[3]);
+                double cp = Math.cos(pitch), dx = Math.sin(yaw) * cp, dy = Math.sin(pitch), dz = -Math.cos(yaw) * cp;
+                // the front: up, squared to the arm; an arm standing straight up or down shows its front to you instead
+                double fx = -dx * dy, fy = 1 - dy * dy, fz = -dz * dy, fl = Math.sqrt(fx * fx + fy * fy + fz * fz);
+                if (fl < 0.3) {
+                    double k = (0.3 - fl) / 0.3, bx = -dx * dz, by = -dy * dz, bz = 1 - dz * dz;
+                    fx += bx * k;
+                    fy += by * k;
+                    fz += bz * k;
+                    fl = Math.sqrt(fx * fx + fy * fy + fz * fz);
+                }
+                if (fl < 1e-4) {
+                    fx = 0;
+                    fy = 0;
+                    fz = 1;
+                    fl = 1;
+                }
+                fx /= fl;
+                fy /= fl;
+                fz /= fl;
+                if (roll != 0) { // the wrist: the front turned about the arm
+                    double cx = dy * fz - dz * fy, cy = dz * fx - dx * fz, cz = dx * fy - dy * fx, c = Math.cos(roll), sn = Math.sin(roll);
+                    fx = fx * c + cx * sn;
+                    fy = fy * c + cy * sn;
+                    fz = fz * c + cz * sn;
+                }
+                double rx = x - dx * FOREARM, ry = y - dy * FOREARM, rz = z - dz * FOREARM;
+                // the upper arm first (it carries no layer), a shade darker, ending inside the forearm's elbow end
+                double ex = rx - dx * 0.06, ey = ry - dy * 0.06, ez = rz - dz * 0.06;
+                if (ey > ELBOW_SEEN) {
+                    ArmLayers.Arm keep = layered;
+                    layered = null;
+                    rgb = shade(base, 0.86F);
+                    viewArm(ps, e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, packed, ex, ey, ez,
+                            side * UPPER_X, UPPER_Y, UPPER_Z, FIST_REACH, 1F);
+                    rgb = base;
+                    layered = keep;
+                }
+                limb(ps, e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, packed, rx, ry, rz, x, y, z, fx, fy, fz, 0, -1, 1F);
+            }
+            layered = null;
             rgb = 0xFFFFFF;
         } catch (RuntimeException ex) {
             broken = true;
+            layered = null;
             Awaken.LOG.error("First-person fists failed and are off for this session", ex);
         }
+    }
+
+    private static int shade(int colour, float k) {
+        int r = (int) (((colour >> 16) & 255) * k), g = (int) (((colour >> 8) & 255) * k), b = (int) ((colour & 255) * k);
+        return (r << 16) | (g << 8) | b;
     }
 
     /**
@@ -362,6 +444,15 @@ final class WorldBody {
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
         int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
+        if (layered != null) {
+            // the arm's layers (a cast's light), in the cube's own space: where the model's part puts it
+            ArmLayers.Arm arm = layered;
+            layered = null;
+            ps.pushPose();
+            ps.translate(part.x / 16F, part.y / 16F, part.z / 16F);
+            ArmLayers.draw(arm, ps, out);
+            ps.popPose();
+        }
         if (!Float.isNaN(tipAcross)) {
             // where the fingers are, in the space this is drawn in (an item held there is drawn at it)
             ps.last().pose().transformPosition((part.x + tipAcross) / 16F, (part.y + 10.5F) / 16F, (part.z - 1F) / 16F, TIP);

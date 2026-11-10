@@ -1458,5 +1458,1677 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "voice.basalt": {
+    "sounds": [
+      {
+        "name": "minecraft:block/basalt/break1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/basalt/break2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/basalt/break3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/basalt/break4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/basalt/break5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.beacon_off": {
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.beacon_on": {
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.bee": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/bee/loop1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/bee/loop2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/bee/loop3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/bee/loop4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/bee/loop5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.blast": {
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/blast1",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "voice.blast_far": {
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/blast_far1",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "voice.blaze": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/blaze/breathe2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/blaze/breathe3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/blaze/breathe4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.blink": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.bow": {
+    "sounds": [
+      {
+        "name": "minecraft:random/bow",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breath": {
+    "sounds": [
+      {
+        "name": "minecraft:random/breath",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_air": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/idle_air1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/idle_air2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/idle_air3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/idle_air4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_burst": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/wind_burst1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/breeze/wind_burst3",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.breeze_charge": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/charge1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/charge2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/charge3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_deflect": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/deflect1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/deflect2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/deflect3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_inhale": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/inhale1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/inhale2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_jump": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/jump1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/jump2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_land": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/land1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/land2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.breeze_shoot": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/shoot",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.breeze_slide": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/breeze/slide1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/slide2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/slide3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/breeze/slide4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.brush": {
+    "sounds": [
+      {
+        "name": "minecraft:item/brush/brushing_generic1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/brush/brushing_generic2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/brush/brushing_generic3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/brush/brushing_generic4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.bubble": {
+    "sounds": [
+      {
+        "name": "minecraft:block/bubble_column/bubble1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/bubble_column/bubble2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/bubble_column/bubble3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.bullet_hit": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/shulker_bullet/hit1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker_bullet/hit2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker_bullet/hit3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker_bullet/hit4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.click": {
+    "sounds": [
+      {
+        "name": "minecraft:random/click",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.cloth": {
+    "sounds": [
+      {
+        "name": "minecraft:dig/cloth1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/cloth2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/cloth3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/cloth4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.conduit_hum": {
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.conduit_off": {
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/deactivate",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.conduit_on": {
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/activate",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crackle": {
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/twinkle1",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.creak_freeze": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/creaking/creaking_freeze1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_freeze2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_freeze3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_freeze4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.creak_sway": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/creaking/creaking_sway2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_sway3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_sway4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.creak_unfreeze": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/creaking/creaking_unfreeze1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_unfreeze2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/creaking/creaking_unfreeze3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crit": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/crit1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/crit2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/crit3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crossbow_end": {
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/loading_end",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crossbow_middle": {
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/loading_middle1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/crossbow/loading_middle2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/crossbow/loading_middle3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/crossbow/loading_middle4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crossbow_shoot": {
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/shoot1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/crossbow/shoot2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/crossbow/shoot3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.crossbow_start": {
+    "sounds": [
+      {
+        "name": "minecraft:item/crossbow/loading_start",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.deepslate": {
+    "sounds": [
+      {
+        "name": "minecraft:block/deepslate/break1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/deepslate/break2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/deepslate/break3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/deepslate/break4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.door_close": {
+    "sounds": [
+      {
+        "name": "minecraft:random/door_close",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.door_open": {
+    "sounds": [
+      {
+        "name": "minecraft:random/door_open",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.dripstone": {
+    "sounds": [
+      {
+        "name": "minecraft:block/dripstone/break1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/dripstone/break2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/dripstone/break3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/dripstone/break4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/dripstone/break5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.elytra": {
+    "sounds": [
+      {
+        "name": "minecraft:item/elytra/elytra_loop",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.evoker_cast": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/evocation_illager/cast1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/evocation_illager/cast2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.explode": {
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:random/explode3",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:random/explode4",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "voice.fangs": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/evocation_illager/fangs",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.fire": {
+    "sounds": [
+      {
+        "name": "minecraft:fire/fire",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.fireball": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/ghast/fireball4",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.fizz": {
+    "sounds": [
+      {
+        "name": "minecraft:random/fizz",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.flap": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/phantom/flap1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/phantom/flap2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/phantom/flap3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/phantom/flap4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/phantom/flap5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/phantom/flap6",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.freeze": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/hurt/freeze_hurt1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/hurt/freeze_hurt2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/hurt/freeze_hurt3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/hurt/freeze_hurt4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/hurt/freeze_hurt5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.glass": {
+    "sounds": [
+      {
+        "name": "minecraft:random/glass3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.golem_damage": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/damage1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/irongolem/damage2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.golem_hit": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/hit1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.golem_throw": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/throw",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.golem_walk": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/walk1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/irongolem/walk2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/irongolem/walk3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/irongolem/walk4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.gravel": {
+    "sounds": [
+      {
+        "name": "minecraft:dig/gravel1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/gravel2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/gravel3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/gravel4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.heartbeat": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/heartbeat_1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.horse_jump": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/horse/jump",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.horse_land": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/horse/land",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.ignite": {
+    "sounds": [
+      {
+        "name": "minecraft:fire/ignite",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.iron_door_close": {
+    "sounds": [
+      {
+        "name": "minecraft:block/iron_door/close1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/close2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/close3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/close4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.iron_door_open": {
+    "sounds": [
+      {
+        "name": "minecraft:block/iron_door/open1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/open2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/open3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/iron_door/open4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.knockback": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/knockback1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/knockback2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/knockback3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/knockback4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.large_blast": {
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/largeblast1",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "voice.large_blast_far": {
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/largeblast_far1",
+        "attenuation_distance": 56
+      }
+    ]
+  },
+  "voice.lava_pop": {
+    "sounds": [
+      {
+        "name": "minecraft:liquid/lavapop",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.leash": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/leashknot/leash1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/leashknot/leash2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/leashknot/leash3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.leather": {
+    "sounds": [
+      {
+        "name": "minecraft:item/armor/equip_leather1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/armor/equip_leather2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/armor/equip_leather3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/armor/equip_leather4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/armor/equip_leather5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/armor/equip_leather6",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.mace_ground": {
+    "sounds": [
+      {
+        "name": "minecraft:item/mace/smash_ground2",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "voice.mirror": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/illusion_illager/mirror_move1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/illusion_illager/mirror_move2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.page": {
+    "sounds": [
+      {
+        "name": "minecraft:item/book/open_flip1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/book/open_flip2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/book/open_flip3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.piston_in": {
+    "sounds": [
+      {
+        "name": "minecraft:tile/piston/in",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.piston_out": {
+    "sounds": [
+      {
+        "name": "minecraft:tile/piston/out",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.portal_trigger": {
+    "sounds": [
+      {
+        "name": "minecraft:portal/trigger",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.rain": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient/weather/rain1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain6",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain7",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/weather/rain8",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.ravager_bite": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/ravager/bite1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/ravager/bite2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/ravager/bite3",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.ravager_roar": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/ravager/roar1",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "minecraft:mob/ravager/roar2",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "minecraft:mob/ravager/roar3",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "minecraft:mob/ravager/roar4",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "voice.ravager_step": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/ravager/step1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/ravager/step2",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/ravager/step3",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/ravager/step4",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/ravager/step5",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.ravager_stun": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/ravager/stun1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/ravager/stun2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/ravager/stun3",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.sculk_charge": {
+    "sounds": [
+      {
+        "name": "minecraft:block/sculk/charge1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/charge2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/charge3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/charge4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/charge5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.sculk_click": {
+    "sounds": [
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk_sensor/sculk_clicking6",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.sculk_spread": {
+    "sounds": [
+      {
+        "name": "minecraft:block/sculk/spread1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/spread2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/spread3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/spread4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:block/sculk/spread5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.shield": {
+    "sounds": [
+      {
+        "name": "minecraft:item/shield/block1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/shield/block2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/shield/block3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/shield/block4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/shield/block5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.shulker_close": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/shulker/close1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/close2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/close3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/close4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/close5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.shulker_open": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/shulker/open1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/open2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/open3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/open4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/shulker/open5",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.silverfish": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/silverfish/step1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/silverfish/step2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/silverfish/step3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/silverfish/step4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.slap": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/slime/attack1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/slime/attack2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.slime_big": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/slime/big1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/slime/big2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/slime/big3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/slime/big4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.spyglass": {
+    "sounds": [
+      {
+        "name": "minecraft:item/spyglass/use",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.stone": {
+    "sounds": [
+      {
+        "name": "minecraft:dig/stone1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/stone2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/stone3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:dig/stone4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.strong": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/strong1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/strong6",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.sweep": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/sweep1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep6",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/sweep7",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.tendril": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_4",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_5",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/warden/tendril_clicks_6",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.thunder": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient/weather/thunder1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "minecraft:ambient/weather/thunder2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "minecraft:ambient/weather/thunder3",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "voice.trident_ground": {
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/ground_impact1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/trident/ground_impact2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/trident/ground_impact3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:item/trident/ground_impact4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.trident_throw": {
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/throw2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.under_enter": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient/underwater/enter1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/underwater/enter2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/underwater/enter3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.under_exit": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient/underwater/exit1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/underwater/exit2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:ambient/underwater/exit3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.warden_boom": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/sonic_boom1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_boom2",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_boom3",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "voice.warden_charge": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/sonic_charge2",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_charge3",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/warden/sonic_charge4",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.warden_dig": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/dig",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.warden_emerge": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/emerge",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "voice.warden_hit": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/attack_impact_1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:mob/warden/attack_impact_2",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.warden_step": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/step_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/warden/step_2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/warden/step_3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/warden/step_4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.weak": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/player/attack/weak1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/weak2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/weak3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:entity/player/attack/weak4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.whirlpool": {
+    "sounds": [
+      {
+        "name": "minecraft:block/bubble_column/whirlpool_inside",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "voice.wind_burst": {
+    "sounds": [
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst2",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst3",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "voice.wings": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/enderdragon/wings1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/enderdragon/wings2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/enderdragon/wings3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/enderdragon/wings4",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/enderdragon/wings5",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/enderdragon/wings6",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.wood_break": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/zombie/woodbreak",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "voice.wood_hit": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/zombie/wood1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/zombie/wood2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/zombie/wood3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:mob/zombie/wood4",
+        "attenuation_distance": 32
+      }
+    ]
   }
 }

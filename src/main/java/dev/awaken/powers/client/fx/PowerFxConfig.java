@@ -26,6 +26,9 @@ public final class PowerFxConfig {
     public static final ModConfigSpec.BooleanValue SCREEN_FLASHES = B
             .comment("Brief flashes and impact frames on big hits and ultimates (off also under MINIMAL).")
             .define("screenFlashes", true);
+    public static final ModConfigSpec.BooleanValue NEW_VOICE = B
+            .comment("Power sounds: true plays each power's score of layered recordings (SPEC 50.7); false plays the classic sounds.")
+            .define("newPowerVoice", true);
     public static final ModConfigSpec SPEC = B.build();
 
     static void register() {
@@ -47,6 +50,18 @@ public final class PowerFxConfig {
     static boolean animations() {
         try {
             return !SPEC.isLoaded() || CAST_ANIMATIONS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Flipped in play by /awaken fx voice (kept for the session; the file keeps the default). */
+    static Boolean voiceOverride;
+
+    static boolean newVoice() {
+        if (voiceOverride != null) return voiceOverride;
+        try {
+            return !SPEC.isLoaded() || NEW_VOICE.get();
         } catch (RuntimeException e) {
             return true;
         }

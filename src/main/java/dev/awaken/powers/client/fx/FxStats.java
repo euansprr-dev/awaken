@@ -90,6 +90,12 @@ final class FxStats {
         }
     }
 
+    private static int voice(net.minecraft.commands.CommandSourceStack src, boolean fresh) {
+        PowerFxConfig.voiceOverride = fresh;
+        src.sendSuccess(() -> net.minecraft.network.chat.Component.literal(fresh ? "Power sounds: New" : "Power sounds: Classic"), false);
+        return 1;
+    }
+
     static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal("awaken").then(Commands.literal("fx")
                 // tours: third person seen from the side (degrees round the player, 0 back to normal)
@@ -97,6 +103,10 @@ final class FxStats {
                     FxScreen.sideCam = IntegerArgumentType.getInteger(c, "degrees");
                     return 1;
                 })))
+                // Power sounds in play: each power's score of recordings, or the classic sounds (SPEC 50.7). For this session.
+                .then(Commands.literal("voice")
+                        .then(Commands.literal("new").executes(c -> voice(c.getSource(), true)))
+                        .then(Commands.literal("classic").executes(c -> voice(c.getSource(), false))))
                 .then(Commands.literal("stats").executes(c -> {
                     report("stats");
                     reset();

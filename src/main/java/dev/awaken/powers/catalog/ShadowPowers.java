@@ -2,6 +2,7 @@ package dev.awaken.powers.catalog;
 
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.CoreApi;
@@ -110,8 +111,8 @@ public final class ShadowPowers {
         // vanish in ink, reappear behind them with a slash of shadow; the mark shows the backstab is ready
         Fx.at(c, FxKind.BLINK, from).to(to).send();
         if (t != null) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.MARK.ordinal()).ticks(60).noAnim().send();
-        c.sound(from, PowerSounds.SHADOW, 0.9f, 1f);
-        c.sound(to, PowerSounds.SHADOW, 0.9f, 1.3f);
+        c.voice(from, Beat.RELEASE, PowerSounds.SHADOW, 0.9f, 1f);
+        c.voice(to, Beat.IMPACT, PowerSounds.SHADOW, 0.9f, 1.3f);
         if (c.step(5)) {
             // Night Cut: the crescent lands the backstab by itself; tendrils from the pool hold the foes round you
             if (t != null) {
@@ -136,7 +137,7 @@ public final class ShadowPowers {
                 Vec3 now = c.player.position();
                 Moves.teleport(c.player, pool);
                 Fx.at(c, FxKind.BLINK, now).to(pool).plain().send();
-                c.sound(pool, PowerSounds.SHADOW, 0.9f, 0.8f);
+                c.voice(pool, Beat.EXTRA_A, PowerSounds.SHADOW, 0.9f, 0.8f);
             });
         }
         return Result.OK;
@@ -152,7 +153,7 @@ public final class ShadowPowers {
         Moves.postOn(c.player, Moves.FX_CLOAK);
         Fx.at(c, FxKind.SMOKE, c.pos()).scale(1.4).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.CLOAK.ordinal()).ticks(ticks).noAnim().send();
-        c.sound(PowerSounds.CLOAK, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.CLOAK, 1f, 1f);
         Running r = Casting.start(c, ticks);
         // Nightfall (5): a dome of dusk round you where foes lose your allies too
         double dusk = c.num(5, "dusk", 0f);
@@ -244,8 +245,8 @@ public final class ShadowPowers {
         other.teleportTo(mine.x, mine.y, mine.z);
         Moves.teleport(c.player, theirs);
         Fx.at(c, FxKind.BLINK, mine).to(theirs).send();
-        c.sound(mine, PowerSounds.SHADOW, 0.8f, 0.8f);
-        c.sound(theirs, PowerSounds.SHADOW, 1f, 1.2f);
+        c.voice(mine, Beat.RELEASE, PowerSounds.SHADOW, 0.8f, 0.8f);
+        c.voice(theirs, Beat.IMPACT, PowerSounds.SHADOW, 1f, 1.2f);
         if (!c.is(2)) {
             Fx.at(c, FxKind.RING, theirs).scale(3.5).ticks(10).flag(dev.awaken.powers.fx.FxEvent.REACH).noAnim().send();
             for (LivingEntity e : Combat.foesAround(c.player, theirs.add(0, 1, 0), 3.5)) {
@@ -280,7 +281,7 @@ public final class ShadowPowers {
         other.teleportTo(mine.x, mine.y, mine.z);
         Moves.teleport(c.player, theirs);
         Fx.at(c, FxKind.BLINK, mine).to(theirs).noAnim().send();
-        c.sound(theirs, PowerSounds.SHADOW, 0.9f, 1.4f);
+        c.voice(theirs, Beat.EXTRA_A, PowerSounds.SHADOW, 0.9f, 1.4f);
     }
 
     static Result legion(Cast c) {
@@ -345,7 +346,7 @@ public final class ShadowPowers {
             }
         }
         if (spawned == 0) return Result.fail("blocked");
-        c.sound(PowerSounds.SUMMON, 1.3f, 0.7f);
+        c.voice(Beat.RELEASE, PowerSounds.SUMMON, 1.3f, 0.7f);
         // Ink Death (4) reads the risen through this (soldierFell); Charge (3) sends them in with a lunge
         if (c.step(3) || c.step(4)) Casting.start(c, life).data = risen;
         if (c.step(3)) {

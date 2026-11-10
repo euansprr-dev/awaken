@@ -48,6 +48,8 @@ public final class FxClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class,
                 e -> e.register(FxPayloads.Fx.TYPE, (msg, ctx) -> onEvent(msg.e())));
         modBus.addListener(RegisterGuiLayersEvent.class, FxScreen::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent.class, e -> e.addListener(dev.awaken.Awaken.id("power_voices"),
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> PowerVoice.reload()));
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::modify));
         modBus.addListener(EventPriority.LOWEST, RegisterRenderStateModifiersEvent.class,
@@ -65,6 +67,9 @@ public final class FxClient {
         FirstPerson.world("powers_stomp", 350, CastLegs::pose);
         FirstPerson.view(CastLegs::glow);
         FirstPerson.listen(FxClient::onFirstPerson);
+        // the arm shows the power (SPEC §32, "The arm")
+        dev.awaken.anims.client.ArmLayers.add(ArmLight.INSTANCE);
+        FirstPerson.view(ArmLight::rest);
 
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> {
@@ -100,6 +105,7 @@ public final class FxClient {
             holdZoom(mc.player);
             FxScreen.tick();
             CastLens.tick();
+            PowerVoice.tick();
             drainDeferred();
         } catch (RuntimeException ex) {
             // effects must never take the game down: drop them all and carry on
@@ -130,8 +136,10 @@ public final class FxClient {
         FxWorld.reset();
         LadderFx.reset();
         HANDS.reset();
+        ArmLight.reset();
         CastAnims.reset();
         TravellingSound.reset();
+        PowerVoice.reset();
         FxScreen.reset();
         CastLens.reset();
     }
@@ -173,23 +181,33 @@ public final class FxClient {
             case CastProfiles.BEGIN -> {
                 // your own key press already started both views; a cast that began on the server alone (a command) starts them here
                 if (!(own && CastAnims.recentlyProfile(e.caster(), prof.id(), 8))) {
-                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e));
-                    if (own && animations()) FirstPerson.play(prof.begin1p());
+                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e), e.way(), e.take());
+                    if (own && animations()) CastAnims.begin1p(e.caster());
+                    if (own) lightOwn(e, prof);
                 }
             }
             case CastProfiles.RELEASE -> {
                 // a power with no wind-up has only this event: it starts the pose too (the caster's own press did already)
                 if (CastAnims.profileOf(e.caster()) != prof.id()) {
-                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e));
-                    if (own && animations()) FirstPerson.play(prof.begin1p());
+                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e), e.way(), e.take());
+                    if (own && animations()) CastAnims.begin1p(e.caster());
+                    if (own) lightOwn(e, prof);
                 }
             }
             case CastProfiles.END -> {
-                if (own) HANDS.ended(prof);
+                if (own) {
+                    HANDS.ended(prof);
+                    ArmLight.letGo();
+                }
             }
             default -> {
             }
         }
+    }
+
+    private static void lightOwn(FxEvent e, CastProfiles.Profile prof) {
+        PowerType type = dev.awaken.powers.PowerRegistry.get("awaken:" + prof.power());
+        if (type != null) ArmLight.cast(type, dev.awaken.powers.Fx.levelOf(e), prof);
     }
 
     /** Your hands' hold poses, each with the cast it belongs to. */
@@ -238,6 +256,7 @@ public final class FxClient {
      */
     private static boolean defer(FxEvent e) {
         if (e.caster() < 0 || immediate(e.kind())) return false;
+        if (e.kind() == FxKind.VOICE && dev.awaken.powers.fx.Voice.beat(e.ticks()).early()) return false; // a charge is heard from the press
         CastProfiles.Profile prof = CastProfiles.byId(CastAnims.profileOf(e.caster()));
         if (prof == null || prof.release() <= 0) return false;
         float age = CastAnims.profileAge(e.caster(), prof.id(), 1f);
@@ -272,6 +291,11 @@ public final class FxClient {
 
     /** The local player pressed a power key and the cast was sent: pose and wind up at once. */
     public static void predictCast(LocalPlayer p, PowerType type, int level) {
+        predictCast(p, type, level, 0, 0);
+    }
+
+    /** As above, made a way (powers.fx.Ways) and with a take of its gesture: the clips' versions for them play. */
+    public static void predictCast(LocalPlayer p, PowerType type, int level, int way, int take) {
         PowerFxDefs.Def def = PowerFxDefs.get(type.path);
         if (def == null) return;
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
@@ -279,8 +303,9 @@ public final class FxClient {
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
         if (prof != null) {
             // the profile runs even with cast animations off (its fallback pose, its held sound), as it does for everyone watching
-            CastAnims.playProfile(p.getId(), prof, type.family);
-            if (animations()) FirstPerson.play(prof.begin1p());
+            CastAnims.playProfile(p.getId(), prof, type.family, way, take);
+            if (animations()) CastAnims.begin1p(p.getId());
+            ArmLight.cast(type, level, prof);
         } else if (anim != CastAnim.NONE) {
             CastAnims.play(p.getId(), anim, 0, type.family);
         }
@@ -421,6 +446,8 @@ public final class FxClient {
     public static void predictRelease(LocalPlayer p, int slot) {
         CastProfiles.Profile cast = HANDS.release(slot);
         CastAnims.release(p.getId(), cast == null ? 0 : cast.id()); // that key's cast, not whatever was cast last
+        ArmLight.letGo();
+        PowerVoice.letGo(p.getId());
     }
 
     /** A channelled power key went down. */

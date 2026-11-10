@@ -3,6 +3,7 @@ package dev.awaken.powers.catalog;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 import dev.awaken.powers.fx.FxStyle;
 
 import dev.awaken.core.Forces;
@@ -96,7 +97,7 @@ final class FlightPowers {
     static Result hover(Cast c) {
         // Updraft (3): you drift faster while you hang there
         Moves.startFlight(c.player, "hover", 0.02f * (1 + c.num(3, "drift", 0f)));
-        c.sound(PowerSounds.HOVER, 1f, 1.2f);
+        c.voice(Beat.RELEASE, PowerSounds.HOVER, 1f, 1.2f);
         int hoverTicks = c.ticks(100);
         // a gust ring under the feet, then wind rings and curls while you hang there
         Fx.at(c, FxKind.RING, c.pos()).scale(2.2).ticks(10).send();
@@ -117,7 +118,7 @@ final class FlightPowers {
             Moves.noFall(c, 100);
             st.clearBuff(PowerState.Buffs.HOVER_CALM);
             if (c.is(2)) Moves.effect(c.player, MobEffects.SLOW_FALLING, 140, 0);
-            c.sound(PowerSounds.HOVER, 0.7f, 0.8f);
+            c.voice(Beat.END, PowerSounds.HOVER, 0.7f, 0.8f);
         });
         return Result.OK;
     }
@@ -126,7 +127,7 @@ final class FlightPowers {
         // Sonic Wake (3): faster at the top
         float speed = (float) (0.05 * (c.is(1) ? 1.4 : c.is(2) ? 0.85 : 1.0) * (1 + 0.04 * (c.powerLevel - 1)) * (1 + c.num(3, "speed", 0f)));
         Moves.startFlight(c.player, "flight", speed);
-        c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
+        c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1f, 0.6f);
         Fx.at(c, FxKind.RING, c.pos()).scale(3).ticks(12).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLIGHT.ordinal()).ticks(120).noAnim().send();
         Running r = Casting.channel(c, -1);
@@ -153,7 +154,7 @@ final class FlightPowers {
                     Moves.setFlightSpeed(c.player, speed * 1.7f);
                     Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getLookAngle()).ticks(9).plain().send();
                     Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLIGHT.ordinal()).ticks(120).noAnim().send();
-                    c.sound(PowerSounds.WHOOSH, 1.2f, 0.8f);
+                    c.voice(Beat.END, PowerSounds.WHOOSH, 1.2f, 0.8f);
                 }
                 if (rr.age == jet[1]) Moves.setFlightSpeed(c.player, speed);
                 jet[0] = sprint ? 1 : 0;
@@ -191,7 +192,7 @@ final class FlightPowers {
         double pull = (c.is(1) ? 0.16 : 0.09) * (1 + c.num(2, "pull", 0f));
         float dmg = c.dmg();
         float debris = dmg * c.num(3, "debris", 0f);
-        c.sound(centre, PowerSounds.WELL_OPEN, 1.2f, 1f);
+        c.voice(centre, Beat.RELEASE, PowerSounds.WELL_OPEN, 1.2f, 1f);
         int wellTicks = c.ticks(80);
         // a void core with a violet rim, rings contracting into it, real loose things drawn in; the throb is the client's for its whole life
         Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(wellTicks).flag(FxEvent.REPULSE, repulse).flag(FxEvent.REACH).send();
@@ -239,10 +240,10 @@ final class FlightPowers {
             if (c.is(1) || star > 0) {
                 Moves.blast(c, centre, radius + 1, (c.is(1) ? c.dmg(8) : 0) + star, Forces.Force.GRAVITY, 1.2, 0.5);
                 Fx.at(c, FxKind.NOVA, centre).scale(radius + 1).flag(FxEvent.REPULSE).noAnim().send();
-                c.sound(centre, PowerSounds.WELL_L5, 1.3f, 1f);
+                c.voice(centre, Beat.END, PowerSounds.WELL_L5, 1.3f, 1f);
                 Fx.quake(c.level, centre, 16, 3f);
             } else {
-                c.sound(centre, PowerSounds.WELL_TAIL, 1.2f, 1f);
+                c.voice(centre, Beat.END, PowerSounds.WELL_TAIL, 1.2f, 1f);
             }
         });
         return Result.OK;
@@ -266,7 +267,7 @@ final class FlightPowers {
             boolean boss = p.getOwner() instanceof LivingEntity shooter && Combat.isBoss(shooter);
             if (!repulse && d < swallow && !boss) {
                 Fx.at(c, FxKind.SHOT_EATEN, p.position()).noAnim().send();
-                c.sound(p.position(), PowerSounds.WELL_EAT, 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.25f);
+                c.voice(p.position(), Beat.EXTRA_A, PowerSounds.WELL_EAT, 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.25f);
                 p.discard();
                 continue;
             }
@@ -344,7 +345,7 @@ final class FlightPowers {
         if (Combat.isHeavy(t)) return Result.fail("too_heavy");
         // Grip (2): held longer
         int max = c.ticks(c.is(2) ? 30 : c.type.maxDuration);
-        c.sound(t.position(), PowerSounds.GRAVITY, 1f, 1.4f);
+        c.voice(t.position(), Beat.RELEASE, PowerSounds.GRAVITY, 1f, 1.4f);
         // Pair (3): a second foe near the first is lifted with it
         List<LivingEntity> held = new ArrayList<>();
         held.add(t);
@@ -405,7 +406,7 @@ final class FlightPowers {
                 Combat.push(e, v);
                 throwWatch(c, e);
             }
-            c.sound(PowerSounds.THROW, 1f, 1f);
+            c.voice(Beat.END, PowerSounds.THROW, 1f, 1f);
         });
         return Result.OK;
     }
@@ -448,7 +449,7 @@ final class FlightPowers {
                 }
                 Fx.at(c, FxKind.SLAM, at).scale(2.4).noAnim().send();
                 Fx.at(c, FxKind.IMPACT, at.add(0, 0.5, 0)).scale(1.6).noAnim().send();
-                c.sound(at, PowerSounds.IMPACT, 1.1f, 0.9f);
+                c.voice(at, Beat.IMPACT, PowerSounds.IMPACT, 1.1f, 0.9f);
                 c.feel(t, 50, 2.5f);
                 rr.stop();
             }
@@ -473,7 +474,7 @@ final class FlightPowers {
         }
         Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.PUSH2).send();
         Fx.at(c, FxKind.RING, Vec3.atCenterOf(start)).dir(dir).scale(3).ticks(8).noAnim().send();
-        c.sound(Vec3.atCenterOf(start), PowerSounds.THROW, 1.3f, 0.6f);
+        c.voice(Vec3.atCenterOf(start), Beat.EXTRA_A, PowerSounds.THROW, 1.3f, 0.6f);
         Fx.quake(c.level, c.pos(), 10, 2f);
         ForceInteractions.count(c.player, ForceInteractions.Reaction.WALL_THROW);
         return Result.OK;
@@ -483,7 +484,7 @@ final class FlightPowers {
         boolean grounded = !Combat.airborne(c.player);
         if (grounded) Moves.launch(c.player, new Vec3(0, 1.5, 0));
         Moves.noFall(c, 160);
-        c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+        c.voice(Beat.GATHER, PowerSounds.WHOOSH, 1f, 0.5f);
         Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(24).send();
         Running r = Casting.start(c, 140);
         r.value = c.player.getY();
@@ -501,7 +502,7 @@ final class FlightPowers {
                 // Burning Entry (2): a faster dive
                 Moves.launch(c.player, new Vec3(f.x, -2.6 * (1 + c.num(2, "speed", 0f)), f.z));
                 rr.count = 2;
-                c.sound(PowerSounds.WHOOSH, 1.2f, 0.4f);
+                c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1.2f, 0.4f);
                 // the comet: a burning (or violet) trail and glow until it hits
                 var comet = Fx.at(c, FxKind.METEOR, c.pos()).ticks(60).anim(CastAnim.SLAM_WIND);
                 if (c.is(1)) comet.style(FxStyle.HEAT);
@@ -535,7 +536,7 @@ final class FlightPowers {
         if (c.is(1)) slam.style(FxStyle.HEAT);
         slam.send();
         if (first != null) Fx.at(c, FxKind.IMPACT, first.getBoundingBox().getCenter()).scale(1.6).noAnim().send();
-        c.sound(PowerSounds.SLAM, 1.5f, 0.6f);
+        c.voice(Beat.IMPACT, PowerSounds.SLAM, 1.5f, 0.6f);
         Fx.quake(c.level, at, 24, 5f);
         c.feel(first, first != null ? 80 : 0, 5f);
         // Crater Rim (3): the rim burns
@@ -564,7 +565,7 @@ final class FlightPowers {
         if (rock == null) return;
         rock.gravity(0.02);
         Fx.trailOn(c, rock, 20);
-        c.sound(from, PowerSounds.WHOOSH, 0.8f, 0.5f);
+        c.voice(from, Beat.EXTRA_A, PowerSounds.WHOOSH, 0.8f, 0.5f);
     }
 
     static Result gravityFlip(Cast c) {
@@ -577,7 +578,7 @@ final class FlightPowers {
         Moves.effect(c.player, MobEffects.SLOW_FALLING, 80, 0);
         Moves.effect(c.player, MobEffects.JUMP_BOOST, 80, 2);
         Moves.noFall(c, 120 + period * (drops - 1));
-        c.sound(PowerSounds.GRAVITY, 1.3f, 1.5f);
+        c.voice(Beat.RELEASE, PowerSounds.GRAVITY, 1.3f, 1.5f);
         Fx.at(c, FxKind.RING, c.pos()).scale(c.radius(10)).ticks(14).flag(FxEvent.REACH).send();
         float dmg = c.dmg();
         float collide = dmg * c.num(3, "collide", 0f);
@@ -587,7 +588,7 @@ final class FlightPowers {
             if (cycle >= drops) return;
             if (cycle > 0 && at == 0) {
                 lift(c, foes, hang, false);
-                c.sound(PowerSounds.GRAVITY, 1.0f, 1.7f);
+                c.voice(Beat.EXTRA_A, PowerSounds.GRAVITY, 1.0f, 1.7f);
             }
             if (at == hang) {
                 Vec3 mid = middle(foes);
@@ -620,7 +621,7 @@ final class FlightPowers {
                         }
                     }
                 }
-                c.sound(PowerSounds.SLAM, 1.2f, 0.8f);
+                c.voice(Beat.IMPACT, PowerSounds.SLAM, 1.2f, 0.8f);
             }
         });
         return Result.OK;

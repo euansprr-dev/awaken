@@ -46,6 +46,10 @@ final class FxRecipes {
             sound(e, level);
             return;
         }
+        if (e.kind() == FxKind.VOICE) {
+            PowerVoice.play(e, level);
+            return;
+        }
         if (!FxWorld.begin(e.x(), e.y(), e.z(), e.seed())) return;
         FxStyle st = e.style();
         Entity caster = e.caster() >= 0 ? level.getEntity(e.caster()) : null;
@@ -1225,7 +1229,9 @@ final class FxRecipes {
         boolean out = e.has(FxEvent.REPULSE);
         // the throb is felt for the well's whole life; only Gravity Well has one (a rider's little vortex doesn't)
         var prof = dev.awaken.powers.fx.CastProfiles.byId(e.profile());
-        if (prof != null && prof.power().equals("gravity_well")) TravellingSound.hold(dev.awaken.powers.PowerSounds.WELL_LOOP.value(), x, y, z, life, 1.25f);
+        // the classic voice holds a loop for the Well's life; its score (Power sounds: New) carries those seconds itself
+        if (prof != null && prof.power().equals("gravity_well") && !(PowerFxConfig.newVoice() && PowerVoice.has("gravity_well", dev.awaken.powers.fx.Voice.Beat.RELEASE)))
+            TravellingSound.hold(dev.awaken.powers.PowerSounds.WELL_LOOP.value(), x, y, z, life, 1.25f);
         Shape halo = disc(x, y, z, HALO, 1.0f, 2.8f * big, life, alpha(st.mid, 0.9f), alpha(st.mid, 0.9f));
         if (halo != null) {
             halo.flags |= Shape.PULSE;

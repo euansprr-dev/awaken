@@ -3,6 +3,7 @@ package dev.awaken.powers.catalog;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
@@ -131,7 +132,7 @@ public final class VelocityPowers {
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
             Fx.at(c, FxKind.BLINK, from).to(to).anim(CastAnim.DASH).send();
-            c.sound(PowerSounds.WHOOSH, 1f, 1.6f);
+            c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1f, 1.6f);
             dashSteps(c, st, chained, from.add(0, 0.9, 0), to.add(0, 0.9, 0), 0);
             return Result.OK;
         }
@@ -141,7 +142,7 @@ public final class VelocityPowers {
         // sonic ring, speed lines, red afterimages and a wind ribbon
         Vec3 dir = motion == null ? c.flatLook() : motion;
         Fx.at(c, FxKind.DASH, c.pos()).dir(dir).ticks(9).send();
-        c.sound(PowerSounds.WHOOSH, 0.9f, 1.2f + c.player.getRandom().nextFloat() * 0.2f);
+        c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 0.9f, 1.2f + c.player.getRandom().nextFloat() * 0.2f);
         Running r = Casting.start(c, 7);
         float dmg = c.dmg();
         // Sonic Ring (2): foes you pass through are shoved aside, off the line you run
@@ -184,7 +185,7 @@ public final class VelocityPowers {
         Moves.addMod(c.player, Attributes.MOVEMENT_SPEED, "flow_speed", 0.35, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         Moves.addMod(c.player, Attributes.ATTACK_SPEED, "flow_attack", 0.4, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         Moves.postOn(c.player, Moves.FX_FLOW);
-        c.sound(PowerSounds.FLOW_START, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.FLOW_START, 1f, 1f);
         // a ripple of slowed time, then trailing afterimages for as long as it lasts
         Fx.at(c, FxKind.RING, c.pos()).scale(5).ticks(14).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLOW.ordinal()).ticks(ticks).noAnim().send();
@@ -197,7 +198,7 @@ public final class VelocityPowers {
             Moves.removeMod(c.player, Attributes.MOVEMENT_SPEED, "flow_speed");
             Moves.removeMod(c.player, Attributes.ATTACK_SPEED, "flow_attack");
             Moves.postOff(c.player, Moves.FX_FLOW);
-            c.sound(PowerSounds.FLOW_END, 0.9f, 1f);
+            c.voice(Beat.END, PowerSounds.FLOW_END, 0.9f, 1f);
             if (why == Running.Why.CANCELLED || !c.player.isAlive()) return;
             // started a tick later: a Running can't start another from inside its own end
             if (c.step(4)) Scheduler.after(1, () -> tempo(c));
@@ -245,7 +246,7 @@ public final class VelocityPowers {
             Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).scale(1.2).plain().send();
             struck++;
         }
-        if (struck > 0) c.sound(PowerSounds.IMPACT, 1.2f, 0.7f);
+        if (struck > 0) c.voice(Beat.EXTRA_A, PowerSounds.IMPACT, 1.2f, 0.7f);
     }
 
     private static double flowPerk(Cast c) {
@@ -274,8 +275,8 @@ public final class VelocityPowers {
         }
         Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(50).noAnim().send();
         Moves.effect(c.player, MobEffects.SPEED, 50, 1);
-        c.sound(PowerSounds.WHOOSH, 1f, 0.7f);
-        c.sound(PowerSounds.SHADOW, 0.6f, 1.4f);
+        c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1f, 0.7f);
+        c.voice(Beat.EXTRA_B, PowerSounds.SHADOW, 0.6f, 1.4f);
         // Mimic (3) and Snare (4) answer through the damage hooks while the copies stand (StepHooks)
         if (c.step(3) && !made.isEmpty()) Casting.start(c, ticks).data = made;
         // Phantom Rush (5): press again to swap places with it
@@ -293,8 +294,8 @@ public final class VelocityPowers {
         m.teleportTo(me.x, me.y, me.z);
         Fx.at(c, FxKind.BLINK, me.add(0, 0.9, 0)).to(it.add(0, 0.9, 0)).aux(0.6).plain().send();
         Fx.at(c, FxKind.AFTERIMAGE, me).ticks(14).noAnim().send();
-        c.sound(PowerSounds.WHOOSH, 1f, 1.5f);
-        c.sound(PowerSounds.SHADOW, 0.7f, 1.8f);
+        c.voice(Beat.EXTRA_A, PowerSounds.WHOOSH, 1f, 1.5f);
+        c.voice(Beat.EXTRA_B, PowerSounds.SHADOW, 0.7f, 1.8f);
     }
 
     static Result lightningStep(Cast c) {
@@ -333,8 +334,8 @@ public final class VelocityPowers {
         Fx.at(c, FxKind.LIGHTNING, from.add(0, 1, 0)).to(to.add(0, 1, 0)).ticks(8).scale(1.4).noAnim().send();
         dev.awaken.powers.ForceInteractions.chargeSummons(c.player, to, 3);
         Fx.at(c, FxKind.IMPACT, to.add(0, 1, 0)).dir(to.subtract(from)).scale(1.4).noAnim().send();
-        c.sound(from, PowerSounds.ZAP, 1.1f, 1.5f);
-        c.sound(to, PowerSounds.THUNDER, 0.8f, 1.6f);
+        c.voice(from, Beat.RELEASE, PowerSounds.ZAP, 1.1f, 1.5f);
+        c.voice(to, Beat.IMPACT, PowerSounds.THUNDER, 0.8f, 1.6f);
         if (c.is(1)) {
             Vec3 origin = last != null ? last.position().add(0, 1, 0) : to.add(0, 1, 0);
             int forks = 0;
