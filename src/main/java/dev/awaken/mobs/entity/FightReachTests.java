@@ -318,44 +318,45 @@ public final class FightReachTests {
 
     /** How far a held guard is pushed by one light blow: the push (0.42) walked out on the ground. */
     private static final double GUARD_PUSH = 0.92;
-    private static final double STAND_STEP = 0.05, STAND_SLACK = 0.1;
+    /** The stand search's step; the stand is the middle of a run of at least this many steps that all serve. */
+    private static final double STAND_STEP = 0.05;
+    private static final int STAND_RUN = 3;
 
     /**
      * Where to stand, on the +z side of the body, for a string of two blows to meet a held guard twice (SPEC §47.15). At its
      * lock a blow takes the cheapest correction that lands it, and from some places that is a step back; that step and the
-     * guard's push carry you out of the next blow's reach, and the string ends after one (at an edge of 1.02 the Regent's
-     * cut steps back, at 1.00 it only turns). So: the nearest place to the middle of the first blow's range from which it
-     * lands without a step back, and the second still lands a push further off, each a little either way too. Fails the
-     * test when there is none. Asks the runner, which remembers nothing; the player ends where it started looking.
+     * guard's push can carry you out of the next blow's reach, and the string ends after one (at an edge of 1.02 the
+     * Regent's cut steps back 0.6 and cut_b can't follow, at 1.00 it only turns). Which places serve depends on how high
+     * the body hovers once it has emerged (0.95 to 1.0 over you, by the run's dice): at 0.95 only 0.6 to 0.85 do. It holds
+     * that height and place from here to the lock (probed). So: every place from the edge it makes room at to the furthest
+     * the second blow could follow, where the first lands and the second still lands from where the first one's step and
+     * the push leave you; the middle of the longest unbroken run of them. Fails the test when no run is three steps long.
+     * Asks the runner, which remembers nothing; the player ends where it started looking.
      */
     private static Vec3 stringStand(GameTestHelper h, AwakenBoss boss, ServerPlayer p, KitMoves.Move first, KitMoves.Move second) {
         FightRunner run = boss.fight();
         Vec3 was = p.position();
-        double low = first.minRange() + STAND_SLACK, high = Math.min(first.maxRange(), second.maxRange() - GUARD_PUSH) - STAND_SLACK;
-        double mid = Math.min(Math.max((first.minRange() + first.maxRange()) * 0.5, low), high);
-        for (double off = 0; off <= high - low; off += STAND_STEP) {
-            for (double edge : new double[]{mid - off, mid + off}) {
-                if (edge < low || edge > high) continue;
-                boolean ok = true;
-                for (double e = edge - STAND_SLACK; e <= edge + STAND_SLACK + 1.0E-6 && ok; e += STAND_SLACK) {
-                    p.setPos(standAt(boss, p, e));
-                    float step = run.landingStep(first, p);
-                    ok = !Float.isNaN(step) && step >= 0;
-                    // the second blow begins from where the first step and the push leave you
-                    if (ok) {
-                        p.setPos(standAt(boss, p, e - step + GUARD_PUSH));
-                        ok = run.couldLand(second, p);
-                    }
-                }
-                if (ok) {
-                    p.setPos(was);
-                    return standAt(boss, p, edge);
-                }
+        double low = Math.max(first.minRange(), FightRunner.TOO_CLOSE), high = Math.min(first.maxRange(), second.maxRange() - GUARD_PUSH);
+        int end = -1, longest = 0, at = 0;
+        for (int i = 0; low + i * STAND_STEP <= high + 1.0E-6; i++) {
+            double e = low + i * STAND_STEP;
+            p.setPos(standAt(boss, p, e));
+            float step = run.landingStep(first, p);
+            boolean ok = !Float.isNaN(step);
+            if (ok) { // the second blow begins from where the first one's step and the push leave you
+                p.setPos(standAt(boss, p, e - step + GUARD_PUSH));
+                ok = run.couldLand(second, p);
+            }
+            at = ok ? at + 1 : 0;
+            if (at > longest) {
+                longest = at;
+                end = i;
             }
         }
         p.setPos(was);
-        h.assertTrue(false, first.id() + " then " + second.id() + " can't both meet a guard from anywhere in reach");
-        return was;
+        h.assertTrue(longest >= STAND_RUN, first.id() + " then " + second.id() + " can't both meet a guard from anywhere in reach (the longest run of places "
+                + String.format("%.2f", longest * STAND_STEP) + " wide, the body " + String.format("%.2f", boss.getY() - p.getY()) + " over you)");
+        return standAt(boss, p, low + (end - (longest - 1) * 0.5) * STAND_STEP);
     }
 
     /** The player this far from the body's edge, on its +z side, on the floor it stands on. */

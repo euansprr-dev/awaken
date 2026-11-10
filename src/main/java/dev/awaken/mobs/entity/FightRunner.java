@@ -681,8 +681,9 @@ final class FightRunner {
         return target.getBoundingBox().minY - boss.getY() <= high + reach && target.getBoundingBox().maxY - boss.getY() >= low - reach;
     }
 
-    /** Closer than this its swings pass over you; it backs off this far a tick. */
-    private static final double TOO_CLOSE = 0.35, STEP_BACK = 0.16;
+    /** Closer than this its swings pass over you (tests stand you no closer); it backs off this far a tick. */
+    static final double TOO_CLOSE = 0.35;
+    private static final double STEP_BACK = 0.16;
 
     /** How far past its sweep a lean carries a blow, in height. */
     private static final double BAND_SLACK = 1.2;
