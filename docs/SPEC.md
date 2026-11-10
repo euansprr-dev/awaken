@@ -6105,6 +6105,57 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     it. The rest is the full-size passes; time them per pass next.
   - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
+**Steady Light** (Euan, 2026-11-10: "nearly on par with immersive VFX ... a stable 60 but extremely high quality"; plan
+docs/perf/steady60/PLAN.md, page https://claude.ai/artifact/4UjwicVDJEoS9vceUanMyQ, state docs/perf/steady60/STATUS.md).
+ImmersiveVFX's look, made in Lens inside a frame budget. Measured on his Dell (4K at 120 Hz, the world at 2880x1620,
+RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass redrawn every frame; Cinematic 8.7.
+- **The Air** (Cinematic and Ultra under an overworld sky; client `lensAir`, default on; autopilot `lens air`).
+  `include/lens_air.glsl`, frame texels 22 (toward the sun, under the horizon by night; w the Air's strength) and 23
+  (the game's sky colour, its star brightness).
+  - **Sky**: Lens's own, in the composite for sky pixels: a violet-blue gradient by day (zenith (0.33, 0.41, 0.86), mid
+    (0.53, 0.61, 0.95), horizon (0.83, 0.86, 0.98)), rose and gold toward the sun and violet away from it at dusk and
+    dawn (from sin 0.50 of sun height down to -0.32), near-black blue by night, a glow round the sun, greyed by rain.
+    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour; Lens's larger
+    twinkling stars join them by night.
+  - **Fog**: land fades into the sky that stands behind it (`airFog`: the sky's colour in the pixel's own direction,
+    the horizon's from above). Far: `1 - exp(-3.2 t²)` over the render distance (five times that while a far renderer
+    draws), a little thinner 40 blocks and more above the eye. Near: `1 - exp(-(d - 4) / L)`, L 280 blocks by day to 150
+    at dusk, dawn, night and in rain, so each line of trees is paler than the one before; thinner only well above
+    the eye (130-block scale: a haze that thinned over a tree's height left dark crowns on vanished trunks). It is the
+    air along the view: only a camera under cover (parameter texel 21) looking at a covered point is left out. Gates
+    and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
+  - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
+    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. Walked cell by
+    cell in the cloud pass (`blockPiece`: exact entry and exit, up to 72 cells and 860 blocks), sigma 0.16 a block, lit
+    by three steps toward the sun and by the face the ray came in by (a joined block keeps the first face), the sky's
+    light by height, 54% under the base. No history blend for a walked pixel (a camera that sways at rest blurred the
+    edges). They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
+    Cinematic's cloud buffer is 800x450. Storm cells are still marched as before.
+  - **Sunlight**: key (1.24, 1.17, 0.98) by day, the shade about 1.9 times as deep; the sun's light fades into the shade
+    as it sinks (sin 0.55 to 0.05), and its disc widens, so dusk is one soft light and not long streaks. With the Air on
+    the clouds and light are always spread over frames (`lensTemporal` as if on).
+  - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
+    through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
+    the sunlit dust. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
+  across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
+  block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
+  half (a slab); all ones is a section not read yet. Up to 14 sections read a tick nearest first, 6 looked at again,
+  the 3x3x3 round the camera every 10 ticks, 6 chunks uploaded a tick; frame texel 17 z the trusted reach (46 blocks),
+  w the lowest y. Where the heightfield says shade and the point is inside the map, the light pass walks the map
+  toward the light (`blockRay`, up to 72 blocks, never the block it starts in): a block stops it, three texels in ten
+  of a leaf face pass it, a lower half stops it under half height; out of the map in the open, the heightfield
+  carries on from there. Inside the map every face is asked and the turn of a face decides nothing (deciding by the
+  face lit the one-pixel sides of path plates and block lips while the ground lay in shade: bright rims at dusk, Euan
+  2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
+  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 1440x810.
+- **Measured** (the Dell, his settings, a copy of his world, 10 Nov): the game alone 2.8 ms of GPU time, Cinematic
+  before 8.9, with all of the above 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays
+  (vsync, 60 cap) 98.6% of frames on time standing, 98.9% turning, 95.2% flying. The ImmersiveVFX pairs:
+  https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`, `tools/steady60-tour.sh`.
+- **Not built yet**: the frame record and the governor (the flying target is 98%), Far Sight off by default on these
+  tiers, the Air on Swift (it has no view direction there), ground mist and beams under a canopy, the Look page rows.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
