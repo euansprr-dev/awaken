@@ -171,17 +171,13 @@ final class WayTests {
             h.assertFalse(Ascent.has(p, Ascent.Tier.SOVEREIGN), "the rank alone is not yet the form");
             WayUp.read(p, AscentServer.now(p));
             h.assertTrue(Ascent.has(p, Ascent.Tier.SOVEREIGN) && Ascent.has(p, Ascent.Tier.WINGS), "the last rank fight pays the last rung");
-            BlockPos at = p.blockPosition();
-            Zombie plain = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
-            Zombie boss = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
-            h.assertTrue(plain != null && boss != null, "two zombies made");
-            plain.snapTo(at.getX() + 3.5, at.getY(), at.getZ() + 0.5, 0, 0);
-            boss.snapTo(at.getX() - 3.5, at.getY(), at.getZ() + 0.5, 0, 0);
+            // in the test's own loaded ground (a mock player starts elsewhere): two zombies, the player between them
+            Zombie plain = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 2, 1));
+            Zombie boss = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(5, 2, 1));
             plain.setNoAi(true);
             boss.setNoAi(true);
             boss.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new MobRole(MobRole.Role.BOSS, 100, "", Optional.empty(), ""));
-            h.getLevel().addFreshEntity(plain);
-            h.getLevel().addFreshEntity(boss);
+            p.teleportTo(plain.getX() + 2, plain.getY(), plain.getZ());
             plain.setTarget(p);
             boss.setTarget(p);
             Sovereign.field(p);

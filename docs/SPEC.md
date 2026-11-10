@@ -21691,7 +21691,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
 - **Told:** one toast ("A vault has lit up for the chain you're carrying. It's 310 blocks east of here."; "A sky platform
   has lit up for you. It's … You climb its rings by rope."), `NowHooks` for ten minutes with its needle (priority 60), and
   a thin beam of the rope's own light on the place, in the rank's colour, drawn from 24 to 1,400 blocks
-  (`WayClient.onSubmit`). *Differs:* the platform's rings are not made brighter; the beam is the light.
+  (`WayClient.onSubmit`). Fog takes everything past the view distance, so a beam further off than 0.55 of it is drawn
+  nearer on the same line of sight, the whole of it scaled about the eye: it looks as it would from there, and may show
+  over a hill that would hide it. *Differs:* the platform's rings are not made brighter; the beam is the light.
 - **Tasks** (`WayUp.steps`, thread `rank.way_up`, Lead, `.covers("ascent:way/")`): "Take the Ringer's chain to the vault
   that lit up"; "Climb a Tether Spire with your rope" (or "Get to know your rope" with no spire in reach); "Run the gate
   that opened where you climbed"; "Climb the sky platform that lit up"; "Jump from somewhere high and open your wings"
@@ -21705,8 +21707,9 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   nearest Tether Spire only (hero trees are not in the locator; their crowns still open the gate).
 - **Wings.** After the core's gift `WayUp.firstFlight` sends the pier's end (the core + `SkyRig.PIER` along x and z) and
   the way off it. Once the gift's scene ends the client begins the first flight's Lesson: the cap 3 past the pier's end,
-  five rings of light a second sinking along the line, the gold figure running off the end. A fall is a soft landing for
-  60 s after the gift. *Differs:* soft anywhere, not only inside the platform's ward (a first glide leaves it).
+  four rings of light a second sinking along the line, the gold figure running off the end. Its words are "Run off the
+  end, then press twice": with the leap held (a core always hands it down) the first press in the air is the double jump
+  and the second opens the wings. A fall is a soft landing for 60 s after the gift. *Differs:* soft anywhere, not only inside the platform's ward (a first glide leaves it).
 - **The open sky.** `AscentTrials.skyEdge`: wings never earned are given first (`WINGS_EDGE`, a short moment) and flight
   40 ticks later; both the leap and those wings are owed their lessons. With The Way Up on, `SKY_EDGE` draws no title:
   the Lesson's strip of three keys at the top of the screen, until flight begins or 10 s. `skybornDue` is false (the
@@ -21723,7 +21726,10 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   crosshair (the form's low, over the gold line). The prompt leaves when the key is pressed (the rope's key held two
   ticks; jump pressed in the air; wings open; the Ascend key with the line full). The card: the rung's name and its keys
   (`Kit.hintLine`), four seconds, over the hotbar. While a prompt or card shows, `TipHooks` and `Notices` are held; the
-  Vow now holds them too and claims the director at its call. *Differs:* the gold figure is the Gauntlet's ghost
+  Vow now holds them too and claims the director at its call. A hold stops what is still to come, not the director's big
+  card already on screen (arriving at a vault for the first time is also a discovery, and the built tour showed "It's a
+  rope now." under "Sealed Vault"): `Notices.Client.showing()` (new, a default method; `Herald` answers with its moment)
+  tells a scene the card is up, and the Vow's and the gifts' titles are then drawn at 0.60 of the screen's height. *Differs:* the gold figure is the Gauntlet's ghost
   (`gates.entity.GauntletGhost`, the gates' own entity type, used from the client only) moved along a computed path (a
   swing's sag to the mast, two hops along the look, a run off the pier), not a recorded route; none with reduced motion.
 - **K, Powers** (`body.client.AscentSection`): a row a rung held with its keys in the player's bindings in brackets and a
@@ -21737,7 +21743,11 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   door rule, the Leviathan's trial is offered, the scenes keep both lines, no row, no beam, no Lesson.
 - **Dev:** `/awaken ascent way` (the road read now, and said), `/awaken ascent scene <wings|leap|leap_edge|sky|sky_edge|
   sovereign|wings_edge>`, `/awaken ascent pier`. Tour `tools/autopilot/way-up.txt`.
-- **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. Changed for the new
+- **Seen:** CI look tours `way-up.txt`, runs 42864057722 and the one after it (the vault's cap and card, the leap's
+  prompt and card, the ring line off the pier, the sky's strip, the form's prompt, the Tasks rows and the K rows).
+- **Tests:** `way_up_road`, `way_up_handed_down`, `way_up_form_and_field`, `way_up_words_and_record`. The suite on CI
+  (run 42862845872, on a0e449b4b) failed only `way_up_form_and_field`, whose zombies stood where no chunk was loaded
+  (a mock player starts outside the test's ground); fixed to spawn them as `ascent_sovereign` does. Changed for the new
   rule: `ascent_tether_vow` runs with the option off (the door rule is the old rule), the sky trial's test gives its taker
   wings first, the Ringer's Proving test expects the cold chain. *Not written:* `way_up_places` (a test world has one
   seed; the distances in the audit come from the placement maths).
