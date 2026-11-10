@@ -154,8 +154,11 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
     glowing wisps (`beams`) and room mist is wisps on the floor (`floor_mist`), both new small-life kinds in
     `gates/client/WorldAir`. If the shader work wants real beams in gates, the data is already sent.
   - The Sporewells' room walls had too many lit brackets once rooms had lumps and piers; halved (`ee482d836`).
-  - One shot of seventy (The Sunken Stacks' gallery, run 42875164141) has four blank squares on a 400 pixel screen grid:
-    Lens's tiled passes on the CI runner, not the world. Passed to the manager; nothing here touches Lens.
+  - A gallery's shot can have flat pale squares in it (The Sunken Stacks, run 42875164141; The Bone Roads, run
+    42912016753). I first took them for Lens's tiled passes. They are the spitters' own spray: `RealmTraps` sends
+    Minecraft's llama-spit particle, whose first frames are a plain square, and the tour's camera stands in the line of
+    fire, so a few of them fill a corner of the view. Lens is not at fault. The spray wants a sprite of its own (a
+    follow-up, not done here).
   - A kind whose seed rolls one fight or no trap repeats a shot in its tour (The Cinder Workings on 383). Harmless.
 
 - 11 Nov, about 05:15 local. **Beams and floor mist as sprites: tried three ways, all taken out** (`302155533`).
