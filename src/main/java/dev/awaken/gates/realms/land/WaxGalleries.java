@@ -28,7 +28,7 @@ import static dev.awaken.gates.realms.kit.N.rnd;
 
 /**
  * The Wax Galleries (SPEC §50.8, gate 11): out of a dark rock tunnel at the head of a broad flight of steps, and the whole
- * hollow is below you. A round hall, five tiers of arcades all the way round, every third arch full of candles, five combs
+ * hollow is below you. A round hall, five tiers of arcades all the way round, every second arch full of candles, five combs
  * the size of towers hung from the dome, each letting one thread of wax fall into a lake that never sets. Pale floes of
  * cold wax are the ways across; warm wax drags at you. The Lord's seat is a disc hung on four chains over a drop.
  *
@@ -45,6 +45,8 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
     /** Of a bay's six degrees: how much is pier, and how much of an opening's head each arch block closes. */
     static final double PIER = 0.31, ARCH = 0.165, MID = 0.655;
     static final int SEAT_Z = 128, SEAT_TOP = 63;
+    /** Where the seat's four chains leave its rim: the diagonals turned twenty degrees, which keeps one out of the painting's eye. */
+    static final int[] CHAINS = {65, 155, 245, 335};
     /** The bays where three steps climb from the shore into the first gallery, none near the flight or the cove. */
     static final int[] ENTRY = {2, 10, 20, 26, 37, 53};
     /** Where a thick fall of set wax runs from the dome to the shore. */
@@ -87,7 +89,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
         final BlockState cold = b("wax_cold"), old = b("wax_old"), run = b("wax_run"), combWall = b("wax_comb"), cellLit = b("wax_cell"), deck = b("wax_deck"),
                 bead = b("wax_bead_drip"), warm = b("wax_warm"), coldSlab = b("wax_cold_slab"), coldStairs = b("wax_cold_stairs"), arch = b("wax_arch"),
                 dripBlock = b("wax_drip"), bank = b("wax_candle_bank"), cell = b("wax_comb_cell"), cellGlow = b("wax_comb_cell_lit"), fall = b("wax_fall");
-        final BlockState tipLight = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 14);
+        final BlockState tipLight = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 14), combLight = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13);
 
         M() {
             super("amber", new Accents(b("hive_comb"), b("hive_comb_capped"), b("hive_honey_glow"), b("hive_drip"), lit(b("hive_candle")), b("hive_wax_crumbs"), b("hive_drum"),
@@ -152,7 +154,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
         // the chandlery's six great vats
         for (int x = 76; x <= 92; x += 8) for (int z = -8; z <= 8; z += 16) must(place(new Vat(x, z)));
         // the seat's four chains
-        for (int a = 45; a < 360; a += 90) pieces.add(new Chain(a));
+        for (int a : CHAINS) pieces.add(new Chain(a));
 
         waystone(8, -56, "the foot of the steps");
         waystone(-2, -32, "under the drip");
@@ -364,7 +366,18 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
     }
 
     private static boolean held(int x, int z) {
-        return Math.abs(Math.abs(x) - Math.abs(z - SEAT_Z)) <= 2 || Math.abs(x) <= 2 && z < SEAT_Z;
+        if (Math.abs(x) <= 2 && z < SEAT_Z) return true;
+        for (int a : CHAINS) {
+            double c = Math.cos(Math.toRadians(a)), s = Math.sin(Math.toRadians(a)), dz = z - SEAT_Z;
+            if (x * c + dz * s > 0 && Math.abs(dz * c - x * s) <= 2) return true;
+        }
+        return false;
+    }
+
+    /** Whether a chain's first link stands on this cell of the rim. */
+    private static boolean chainFoot(int x, int z) {
+        for (int a : CHAINS) if (Math.hypot(x - 21 * Math.cos(Math.toRadians(a)), z - SEAT_Z - 21 * Math.sin(Math.toRadians(a))) <= 2.3) return true;
+        return false;
     }
 
     // ---- drawing ------------------------------------------------------------------------------------------------------
@@ -417,7 +430,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
             if (r == 0) continue;
             BlockState s;
             if (r == WALLR) s = y == 0 ? m.bedrock : rock(m, y, warp);
-            else if (r == FLOORR) s = y < SHORE ? m.stoneA : rnd(x, z, 21) < 0.12 ? m.old : m.cold;
+            else if (r == FLOORR) s = y < SHORE ? m.stoneA : m.cold; // the shore and the isle: the palest thing in the hall
             else if (r == WALKR) s = z < 0 ? rock(m, y, warp) : y == SEAT_TOP && Math.abs(x) <= 1 ? m.deck : m.cold;
             else if (r == WATERR) s = underFlight ? m.stoneA : lakeCell(m, x, y, z);
             else if (r == GLOWR) s = y <= 19 ? m.glow : comb(m, x, y, z);
@@ -441,7 +454,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
 
     private BlockState lakeCell(M m, int x, int y, int z) {
         int level = Math.abs(x) < G && Math.abs(z) < G ? floe[gi(x, z)] : 0;
-        if (y == SHORE) return level == 4 ? rnd(x, z, 22) < 0.1 ? m.old : m.cold : level == 3 ? m.coldSlab : m.warm;
+        if (y == SHORE) return level == 4 ? m.cold : level == 3 ? m.coldSlab : m.warm;
         return level >= 2 ? m.cold : level == 1 ? m.coldSlab : m.warm;
     }
 
@@ -451,11 +464,26 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
             if (!p.contains(x, y, z)) continue;
             int roof = p == seatComb ? 119 : ceil(x, z);
             if (y >= roof || p.edge(x, y, z) >= 1.3) return m.cold;
-            boolean drift = y <= p.y0 + 3 || fbm(n3, x + y * 0.6, z - y * 0.4, 1 / 10.0, 2) > 0.06;
+            // three cells in four hold honey with the light in it, in drifts that run down the comb (the noise is four times as long in y)
+            boolean drift = y <= p.y0 + 3 || fbm(n3, x + z * 0.71, y / 4.0, 1 / 5.0, 2) > -0.2;
             if (((x + y + z) & 1) == 0) return drift ? m.cellGlow : m.cell;
-            return drift && r3(x, y, z, 5) < 0.3 ? m.cellLit : m.combWall;
+            return drift ? m.cellLit : m.combWall;
         }
         return m.cold;
+    }
+
+    /**
+     * A comb glows as a whole: every six blocks up its axis a hidden light. The axis itself is deep in cold wax, where a
+     * light would be shut in, so each stands just off the skin, one on each of the comb's four sides.
+     */
+    private void combLights(V v, M m, Blockout.Mass p, int x, int z, int roof) {
+        int cx = (int) p.cx, cz = (int) p.cz;
+        if (x != cx && z != cz) return;
+        int off = Math.abs(x - cx) + Math.abs(z - cz);
+        for (int y = p.y0 + 5; y < roof; y += 6) {
+            double r = p.r + (p.r2 - p.r) * (y - p.y0) / (double) p.h;
+            if (off == (int) Math.round(r + 1.5) && v.empty(x, y, z)) v.set(x, y, z, m.combLight);
+        }
     }
 
     // ---- the mouth: tunnel, splay and the flight of steps ---------------------------------------------------------------
@@ -535,10 +563,8 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
             int y = TIER0 - 1 + 10 * t;
             if (t == 0 && (atCove || steps) || !v.empty(x, y, z)) continue;
             v.set(x, y, z, under(m.coldStairs, way(a)));
-            if (rnd(x, z, 30 + t) < 0.5) {
-                double mid = Math.max(0, 1 - Math.abs(f - MID) / 0.35);
-                strand(v, m, x, y - 1, z, t == 0 ? 1 : 1 + (int) (mid * 2.99 * rnd(x, z, 40 + t)), 1 + (int) (rnd(x, z, 50 + t) * 3));
-            }
+            double mid = Math.max(0, 1 - Math.abs(f - MID) / 0.35);
+            strand(v, m, x, y - 1, z, t == 0 ? 1 : 1 + (int) (mid * 2.99 * rnd(x, z, 40 + t)), 1 + (int) (rnd(x, z, 50 + t) * 3));
         }
 
         // each comb lets one thread fall, with a light hidden under its tip
@@ -546,6 +572,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
             v.set(x, p.y0 - 1, z, m.tipLight);
             for (int y = SHORE + 1; y <= p.y0 - 2; y++) if (v.empty(x, y, z)) v.set(x, y, z, m.fall);
         }
+        for (Blockout.Mass p : pendants) if (Math.abs(x - p.cx) <= 17 && Math.abs(z - p.cz) <= 17) combLights(v, m, p, x, z, ceil);
         for (int[] b : isleBanks) if (b[0] == x && b[1] == z && v.empty(x, SHORE + 1, z)) v.set(x, SHORE + 1, z, m.bank);
 
         // the dome: ribs every twelve degrees standing a cell proud, curtains of long drips between them
@@ -572,26 +599,26 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
                 if (role(col, lo, hi, y) == 0 || atMouth && y <= 72) continue;
                 int t = y < TIER0 ? -1 : (y - TIER0) / 10, ly = y - TIER0 - 10 * t;
                 if (t < 0 || t >= TIERS || ly > 6) {
-                    // the wall's face between the tiers: wax over stone, a yellowed band at each floor
-                    if (inner) v.set(x, y, z, ly == 9 || y == TIER0 - 1 ? m.old : face(m, x, y, z));
+                    // the wall's face between the tiers: cold wax, stone only in the lowest course and through a few patches
+                    if (inner) v.set(x, y, z, y == SHORE + 1 ? m.stoneA : face(m, x, y, z));
                     continue;
                 }
                 if (f < PIER) {
-                    v.set(x, y, z, ly == 0 ? m.stoneA : fbm(n2, x + y * 0.7, z - y * 0.5, 1 / 5.0, 2) > 0.42 ? m.worn : m.cold);
+                    v.set(x, y, z, face(m, x, y, z));
                     continue;
                 }
                 if (ly == 6) {
-                    v.set(x, y, z, r3(x, y, z, 7) < 0.4 ? m.run : m.cold);
+                    v.set(x, y, z, m.cold);
                     continue;
                 }
                 // a lit bay's candles stand on a block of wax in the middle of its parapet
-                boolean plinth = inner && bay % 3 == 0 && Math.abs(f - MID) < 0.11 && !(t == 0 && entry(bay));
+                boolean plinth = inner && bay % 2 == 0 && Math.abs(f - MID) < 0.11 && !(t == 0 && entry(bay));
                 v.set(x, y, z, plinth && ly == 0 ? m.cold : plinth && ly == 1 ? m.bank : null);
                 if (ly == 5) {
                     double tangent = a + 90;
                     if (f < PIER + ARCH) v.set(x, y, z, m.arch.setValue(dev.awaken.gates.block.WorldBlocks.Facing.FACING, way(tangent + 180)));
                     else if (f > 1 - ARCH) v.set(x, y, z, m.arch.setValue(dev.awaken.gates.block.WorldBlocks.Facing.FACING, way(tangent)));
-                    else if (inner && rnd(x, z, 70 + t) < 0.5) v.set(x, y, z, m.drip(Math.abs(f - MID) < 0.12 ? 3 : 1 + (int) (rnd(x, z, 80 + t) * 2)));
+                    else if (inner) v.set(x, y, z, m.drip(Math.abs(f - MID) < 0.12 ? 3 : 1 + (int) (rnd(x, z, 80 + t) * 2)));
                 } else if (ly == 0 && inner && !plinth && !(t == 0 && entry(bay)) && bay % 4 != 3) v.set(x, y, z, m.coldSlab);
             }
             return;
@@ -616,12 +643,12 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
                 continue;
             }
             // a flight from the tier below comes up through this floor along the back wall: don't lay the floor back over it
-            if (!(stairT == t - 1 && d > 66.5 && stairI >= 8)) v.set(x, base, z, fbm(n2, x, z, 1 / 6.0, 2) > 0.3 ? m.cold : m.deck);
+            if (!(stairT == t - 1 && d > 66.5 && stairI >= 8)) v.set(x, base, z, m.cold); // a plain pale flag of wax, no pattern
             boolean open = t == 1 && x >= 66 && Math.abs(z) <= 14 || t == 2 && Math.abs(x) <= 8 && z >= 66;
             boolean onStair = stairT == t || stairT == t - 1;
             if (!open && !onStair && v.empty(x, base + 1, z)) {
-                // every third bay is lit, and the two between are dark: pools of gold with dark between
-                if (bay % 3 == 0) {
+                // every second bay is lit, and the one between is dark: pools of gold with dark between
+                if (bay % 2 == 0) {
                     if (d > 67.5 && f >= 0.4 && f <= 0.9 || d > 66.5 && d <= 67.5 && Math.abs(f - MID) < 0.11) v.set(x, base + 1, z, m.candle);
                 } else if (d > 67.5 && Math.abs(f - MID) < 0.08 && rnd(bay, t, 9) < 0.5) v.set(x, base + 1, z, m.crumbs);
             }
@@ -635,9 +662,9 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
         }
     }
 
+    /** The arcade's facing: cold wax, the stone under it showing only where the noise (0 to 1) is over 0.82. */
     private BlockState face(M m, int x, int y, int z) {
-        if (fbm(n2, x + y * 0.7, z - y * 0.5, 1 / 5.0, 2) > 0.42) return m.stoneA;
-        return r3(x, y, z, 8) < 0.5 ? m.run : m.cold;
+        return 0.5 + 0.75 * fbm(n2, x + y * 0.7, z - y * 0.5, 1 / 5.0, 2) > 0.82 ? m.stoneA : m.cold;
     }
 
     // ---- the Wardens' places ----------------------------------------------------------------------------------------------
@@ -680,13 +707,14 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
         if (ds > 22.5) return null;
         if (y == SEAT_TOP + 1) {
             boolean ringA = ds > 19.5 && ds <= 20.5, ringB = ds > 21.5;
-            boolean foot = Math.abs(Math.abs(x) - 15) <= 1 && Math.abs(Math.abs(dz) - 15) <= 1, way = Math.abs(x) <= 3 && dz < -15;
-            return (ringA || ringB) && ((x + z) & 1) == 0 && !foot && !way ? m.bank : null;
+            boolean way = Math.abs(x) <= 3 && dz < -15;
+            return (ringA || ringB) && !way && !chainFoot(x, z) ? m.bank : null;
         }
         if (y == SEAT_TOP) {
             if (ds < 0.5) return m.cellLit;
             if (ds < 1.6 || Math.abs(ds - 4) < 0.5 || Math.abs(ds - 8) < 0.5 || Math.abs(ds - 21) < 0.5) return m.gold;
-            return N.hex(x, dz, 4).edge() > 0.88 ? m.cold : m.hexstone;
+            // cream wax cut as hexes about five across, the joints run with gold
+            return N.hex(x, dz, 3).edge() > 0.8 ? m.gold : m.cold;
         }
         if (y >= 58) return ds > 21.3 ? m.run : rnd(x, z, 14) < 0.12 ? m.old : m.cold;
         int length = 3 + (int) (rnd(x, z, 77) * 8), k = 57 - y;
@@ -702,6 +730,7 @@ public final class WaxGalleries extends SheetLand<WaxGalleries.M> {
         }
         if (Math.abs(x) <= 2 && z <= 105 && rnd(x, z, 15) < 0.5 && v.solid(x, 62, z)) strand(v, m, x, 61, z, 1 + (int) (rnd(x, z, 16) * 2), 1 + (int) (rnd(x, z, 17) * 3));
         if (x == 0 && z == SEAT_Z) v.set(x, seatComb.y0 - 1, z, m.tipLight);
+        if (ds <= 23) combLights(v, m, seatComb, x, z, 119);
         // the shaft is lit by what glows in it, not by its candles alone: the honey far below, and the comb overhead
         if (ds <= 40.5 && Math.floorMod(x, 7) == 0 && Math.floorMod(z, 7) == 0 && v.empty(x, 21, z)) v.set(x, 21, z, m.light);
         // strings of wax beads under the great comb

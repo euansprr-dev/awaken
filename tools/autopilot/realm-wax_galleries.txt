@@ -23,7 +23,7 @@ cmd awaken gate realm_at MOUTH 0 0 0 5
 look 0 14
 wait 200
 shot wax_galleries_painting
-cmd awaken gate realm_at MOUTH 0 0 -23 34
+cmd awaken gate realm_at MOUTH 0 0 -21 34
 look 0 -10
 wait 200
 shot wax_galleries_foot
