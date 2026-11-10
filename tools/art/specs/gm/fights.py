@@ -1,8 +1,10 @@
 """How each gate monster's fight sounds (SPEC §60.8): two voices for every body, beside the four its theme file gives
 it. `wind` plays as it gathers a blow or a move (quietly, under the tell's own sound, which is the same on every
 creature so it can be learned); `blow` plays as it lets go. Each is one or two of Minecraft's own recordings by name,
-re-pitched (name, volume, pitch): what the body is made of, moving. Nothing here is a creature's roar borrowed whole,
-and nothing is a high ring at the moment of the blow.
+re-pitched (name, volume, pitch): mostly what the body is made of, moving. Where the nearest thing is an animal's own
+sound (a hoglin under the Slag Boar, a polar bear under the Yeti, a breeze under the Puffer) it is that animal re-pitched,
+as the body's ambient voice already is; none is the stock sound every monster's move used to share. Nothing is a high
+ring at the moment of the blow.
 
 Kept apart from the theme files so the whole cast's fight can be read, and balanced, in one place."""
 
