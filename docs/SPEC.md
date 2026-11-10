@@ -11964,13 +11964,29 @@ What follows replaces that. Nothing here changes what a power does to a number u
   lines lit in it. Mind and Soul: rings round the wrist across all they cross. Architect: the lines inked in, a rule every third row.
   Tech: the lines lit and a scan row sweeping. Spirit: tongues from the hand, taller on the lines. Frost: rime on the lines first,
   then crystals across the rest.
-  **A set's record** (`ArmourLight.SETS`) says how its materials take it: a gain for cloth, plate, lines and glowing parts; `lead`,
-  how many rows its lines run ahead of the rest (metal conducts); `soak`, how much its cloth holds a glow where the light has been
-  (hide and cloth); `shimmer`, how much what glows of itself flickers (crystal). Records exist for the sets whose arms are finished,
-  the armour's C rank on 10 Nov 2026: Gatewrought (a leather sleeve under a plated glove: lead 1.5, soak 0.12), Vaultbreaker (steel:
-  lead 2.5), Frostwalker (hide: lead 0.5, soak 0.2), Sunward (cloth under gold bands and a stone: lead 1.5, soak 0.14, shimmer 0.5),
-  Shardcrown (crystal: shimmer 1, glowing parts 1.3). Every other set takes the default (lead 1) until its arm is finished and it
-  gets its own. `tools/art/arm_light_preview.py` draws the same cells and rules off line, a sheet a set; its `light` and
+  **A set's record** (`ArmourLight.SETS`, one for each of the 29 since every arm was finished on 11 Nov 2026) says how its
+  materials take the light. Four gains, for cloth, plate, lines and glowing parts, and seven ways:
+  `lead`, how many rows its lines run ahead of the rest (metal conducts); `soak`, how much its cloth holds a glow where the light has
+  been (hide and cloth); `shimmer`, how much what glows of itself flickers (crystal, a signal); `grain`, +1 its bright texels take
+  more light, -1 its dark ones (the light sits in bark's cracks and bone's hollows); `tips`, how much the parts that stand off the
+  arm light late and bright (a cell more than four texels from the arm's middle is a fin, a feather or a spur: the light has to run
+  out along it, 0.8 of a row a texel, and it burns up to 0.35 brighter); `ripple`, how much a wave of shade runs down its plate and
+  cloth (rows of scales and feathers); `glitter`, how often an unlit texel where the light has been catches it for a moment (mail's
+  links, rivets, star metal). The records, by what each arm is made of:
+  E: Wildhide (hide: soak 0.22, lead 0.5), Bellguard (bell bronze, rim after rim: lead 2), Rootwarden (bark: grain -1, resin 1.3),
+  Amberwing (a jerkin: soak 0.14). D: Beastbound (bone: grain -1, tips 0.7), Cleftrunner (cloth under strips: soak 0.16),
+  Lanternlight (a robe over mail: glitter 0.6, glass 1.3), Bladeward (rivets: glitter 0.35, lead 2), Hornlord (horn: grain -0.6,
+  lead 2). C: Gatewrought (lead 1.5, soak 0.12), Vaultbreaker (steel: lead 2.5), Frostwalker (hide: soak 0.2, shimmer 0.6), Sunward
+  (cloth under gold: soak 0.14, shimmer 0.5), Shardcrown (crystal: shimmer 1, glow 1.3). B: Veilwoven (a veil of threads: lead 2,
+  lines held to 0.65 so they don't flood), Deepcarapace (shell: grain -1, tips 0.8), Cloudrunner (feathers: tips 1, ripple 0.6),
+  Tidebreaker (wet mail and fins: tips 0.8, ripple 0.4, glitter 0.5), Hollowheart (bone: grain -1, tips 0.7). A: Lordscale (scales:
+  ripple 0.6, lead 2, seams 1.3), Leviathan (fins: tips 0.9, ripple 0.4), Galewing (feathers: tips 1, ripple 0.6), Halo Choir (ivory
+  and gold: lead 2, shimmer 0.5, glitter 0.3), Dreamsteel (shimmer 0.8, tips 0.6). S: Sovereign Weave (its threads carry it: lead
+  2.5, ripple 0.3), Starfall (star metal: glitter 0.8, lead 2), Riftwalker (plates off the sleeve: tips 0.8, glitter 0.4),
+  Nightcourt (court leather and a half-cloak that hangs: soak 0.18, tips 0), Signal's Echo (the Signal runs through it already:
+  its glow at 1.0 and shimmer 0.7, so the light flickers and never doubles). Living parts on an arm (Lanternlight's lanterns,
+  Veilwoven's ribbons) are lit where the arm's own mesh has them at rest, which is how first person draws them.
+  `tools/art/arm_light_preview.py` draws the same cells and rules off line, a sheet a set; its `light` and
   `ArmourLight.light` are kept line for line. A dresser that gives no shape gets the stopgap: the skin's light drawn 0.16 nearer the
   eye along the line of sight.
 - **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style

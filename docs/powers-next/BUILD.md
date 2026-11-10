@@ -155,8 +155,12 @@ do the rest when the armour session is done.
 |---|---|
 | The hooks: `FirstPersonDress.glow` and `surface`; the armour's side in `ArmourClient` | Built (6a033c097). The armour's shader answers the light with the type's colour; the worn arm mesh, its texture and accent are handed over. |
 | `ArmourLight`: the arm piece cut into cells, each given its part (cloth, plate, a line, what glows), the type drawn on the faces | Built for every set that has an arm mesh (all 29 fit the cutter). SPEC §32.N. |
-| A set's own record (gains, lead, soak, shimmer) | The C-rank five: Gatewrought, Vaultbreaker, Frostwalker, Sunward, Shardcrown. The other 24 take the default until their arms are finished. |
+| A set's own record (four gains; lead, soak, shimmer, grain, tips, ripple, glitter) | All 29, each from how its own arm is made (every arm was finished on 11 Nov, build e44ec7d02). The table is in SPEC §32.N; `ArmourLight.SETS` and the preview's `SETS` agree row for row. |
 | Off line: `tools/art/arm_light_preview.py` | Built; its rules and the game's are kept line for line. |
 | Seen in the game | Film 42866590182 (the first version, three sets): the light lies on the plates, cuff rings and crystals themselves, nothing floats or shows through. It also washed the whole arm pale (every lit cell spilt glow) and covered cloth and plate too heavily. Fixed since: cloth and plate take a tint that follows their own painting, only the lines spill, ink is thinner, a set's accent colour counts as a line. The film of that version was still queued on CI when this was written. |
-| Not done | Records for the E, D, B, A and S sets (waiting for their arms). No light on a set's awakened or living arm parts. Third person. Legs. |
+| Not done | No light on a set's awakened arm parts (mastery IV). Third person. Legs. Slim-arm skins unseen. |
+
+Films of the light on armour: `powers-next-armour.txt` (four casts in three C-rank sets) and `powers-next-armour-all.txt` (Barrier in
+all 29 sets, then Frost Nova and a held Haymaker in six, one a family of material). The pale box in the corner of the earlier
+stills was Ilse's Letters, the opening's gift, held in the main hand; both scripts put it down now.
 

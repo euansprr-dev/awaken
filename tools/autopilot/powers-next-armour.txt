@@ -39,6 +39,8 @@ wait 60
 camera first
 look 0 4
 wait 20
+# the opening leaves Ilse's Letters in the main hand: put them down, or they sit in the corner of every still
+cmd item replace entity @s weapon.mainhand with minecraft:air
 cmd item replace entity @s armor.chest with awaken:vaultbreaker_chestplate
 wait 10
 shotnow na1_rest
