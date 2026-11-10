@@ -297,6 +297,45 @@ public final class Scene {
         return null;
     }
 
+    /**
+     * The scene's trees become the land's (SPEC §64.3): every leaf within six of one of the scene's own logs, counted
+     * through leaves the way the game counts, is a living leaf with its distance set, not a kept one. A road or a
+     * village that crosses a monument's ground fells the land's trees in its way and sweeps what that leaves hanging,
+     * but it spares kept leaves as somebody's hedge: laid over one of our planted trees it took the trunk and left
+     * the whole crown in the air (the Mooring Mast and the Sealed Shaft, in the first worlds checked block by block).
+     * Leaves no log reaches stay kept (a hedge, a bush), since living ones would wither.
+     */
+    void liveLeaves() {
+        Long2IntOpenHashMap dist = new Long2IntOpenHashMap();
+        dist.defaultReturnValue(99);
+        it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue q = new it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue();
+        for (var e : blocks.long2ObjectEntrySet())
+            if (e.getValue().is(net.minecraft.tags.BlockTags.LOGS)) {
+                dist.put(e.getLongKey(), 0);
+                q.enqueue(e.getLongKey());
+            }
+        while (!q.isEmpty()) {
+            long k = q.dequeueLong();
+            int d = dist.get(k);
+            if (d >= 6) continue;
+            int x = BlockPos.getX(k), y = BlockPos.getY(k), z = BlockPos.getZ(k);
+            for (Direction dir : Direction.values()) {
+                long n = BlockPos.asLong(x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
+                BlockState b = blocks.get(n);
+                if (b == null || !(b.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock) || dist.get(n) <= d + 1) continue;
+                dist.put(n, d + 1);
+                q.enqueue(n);
+            }
+        }
+        for (var e : dist.long2IntEntrySet()) {
+            int d = e.getIntValue();
+            if (d == 0) continue;
+            BlockState b = blocks.get(e.getLongKey());
+            if (b.hasProperty(net.minecraft.world.level.block.LeavesBlock.PERSISTENT) && b.hasProperty(net.minecraft.world.level.block.LeavesBlock.DISTANCE))
+                blocks.put(e.getLongKey(), b.setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, false).setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE, d));
+        }
+    }
+
     public record PartRef(String name, int index) {}
 
     private volatile int[] box;

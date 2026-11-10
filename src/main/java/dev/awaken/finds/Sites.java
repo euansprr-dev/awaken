@@ -551,6 +551,7 @@ public final class Sites {
     static Scene build(Site s, Terrain t) {
         Scene sc = new Scene(s, t);
         s.kind().maker().build(sc);
+        sc.liveLeaves();
         return sc;
     }
 

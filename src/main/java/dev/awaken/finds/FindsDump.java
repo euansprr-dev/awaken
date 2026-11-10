@@ -192,6 +192,24 @@ final class FindsDump {
                 if (pit && dips++ < 6) said.append("\n    dip at ").append(x).append(' ').append(mine - s.y()).append(' ').append(z).append(" under a floor at ").append(want - s.y()).append(": ")
                         .append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(m.set(s.x() + x, mine + 1, s.z() + z)).getBlock()).getPath());
             }
+            // What the scene built that the world does not hold: each of its blocks against the block standing there,
+            // counted by what was meant and what is there instead. (Something written after the scene, a road cutting
+            // across its ground, shows here and nowhere else.)
+            java.util.Map<String, Integer> lost = new java.util.TreeMap<>();
+            int gone = 0;
+            for (var en : sc.blocks().long2ObjectEntrySet()) {
+                var meant = en.getValue();
+                if (meant.isAir() || !meant.getFluidState().isEmpty()) continue;
+                long key = en.getLongKey();
+                var is = level.getBlockState(m.set(s.x() + BlockPos.getX(key), s.y() + BlockPos.getY(key), s.z() + BlockPos.getZ(key)));
+                if (is.getBlock() == meant.getBlock()) continue;
+                gone++;
+                lost.merge(BuiltInRegistries.BLOCK.getKey(meant.getBlock()).getPath() + " is " + BuiltInRegistries.BLOCK.getKey(is.getBlock()).getPath(), 1, Integer::sum);
+            }
+            if (gone > 0) {
+                said.append("\n    of its ").append(sc.blocks().size()).append(" blocks ").append(gone).append(" are not as built:");
+                lost.entrySet().stream().sorted((a, c) -> c.getValue() - a.getValue()).limit(10).forEach(x -> said.append(' ').append(x.getValue()).append(' ').append(x.getKey()).append(';'));
+            }
             double town = Double.MAX_VALUE, thing = Double.MAX_VALUE;
             for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, true)) town = Math.min(town, Math.hypot(p[0] - s.x(), p[1] - s.z()));
             for (int[] p : t.starts(s.x() - 600, s.z() - 600, s.x() + 600, s.z() + 600, false)) thing = Math.min(thing, Math.hypot(p[0] - s.x(), p[1] - s.z()));

@@ -23024,6 +23024,23 @@ Archive). Before these rules a lawn had a pit one block wide wherever a branch h
 first six made; none in the 23 made since), a square of dirt for every tree and every step (98 and 256 at two of
 them; since, none at 21 of 23), and earth or stone where a deep cut was floored.
 
+**Felling a tree whole** (`FindsFeature.sweep`). A trunk goes where the terrace, a pier or the clearing takes its
+column; its crown hangs on past them, over the next chunk, beyond the clearing's edge. Where a call took a trunk, every
+group of the land's leaves and logs within ten of that chunk that stands on nothing goes with it, as the roads and the
+villages do for their own felling (`city.SettlementPaint.sweep`): a group stays if a log of it stands on the ground,
+if it is a low bush on the ground, if it runs past what the call can see, if it is the scene's own tree, or a hero
+tree's (`terrain.api.HeroTrees`). What the place itself planted is told by what stands there, not by where: a tree of
+the next chunk that grew its leaves over a tuft the place had planted was spared for standing in the tuft's spot.
+Counted on the 23 made: 123 hanging clusters before, 16 after, and most of those far from anything a monument built
+(the world leaves a few by itself).
+
+**The scene's trees are the land's** (`Scene.liveLeaves`, after every build). A road or a village that crosses a
+monument's ground fells the land's trees in its way and sweeps what hangs, but spares kept leaves as somebody's hedge
+(`CityWriter.vegetation`). Laid over one of our planted trees it took every log and left the whole crown in the air
+(the Mooring Mast, the Sealed Shaft: 25 and 21 logs gone, some 180 leaves hanging each). So every leaf of a scene
+within six of one of its own logs, counted through leaves as the game counts, is written as a living leaf with its
+distance set; a road now fells such a tree whole. Leaves no log reaches stay kept (a hedge, a drift, a bush).
+
 **Nothing of the scene's in the ground.** The last pass of every monument lays mats of moss on low open tops
 (`M.age`). Masonry one under the turf has nothing in the scene over it, so it read as an open top, and a mat laid
 there took the turf's place when the scene was written: the Sleepers' Hall, whose vault lies one under its lawn, had
@@ -23146,7 +23163,11 @@ things wrong in how any monument is written into the land, all in §64.3 now: sn
 rooms, pits in lawns, squares of bare earth and stone, a mast in one of our villages, a spire in a lawn. The second
 (48 pictures, the same day, on those fixes) found two more: some fifty pits in the Sleepers' Hall's lawn, and leaves
 left in the air over a clearing. The pits were first taken for plants standing at the floor; the third pictures
-showed them still there, and they were the scene's own moss mats in the ground. The dump now also counts **dips**
+showed them still there, and they were the scene's own moss mats in the ground. The fourth (42 pictures) showed the Hall's lawn whole and leaves still in the air by the Archive, which is what
+"Felling a tree whole" in §64.3 is for. The dump now also says **what of each scene the world does not hold** (every
+block it built against the block standing there, counted by what was meant and what is there instead: that is what
+showed a road taking a planted tree's logs), and `tools/content/finds_hanging.py` counts the hanging clusters of
+living leaves in each dump. The dump now also counts **dips**
 (a shaped column whose top whole block lies under its floor and under all four neighbours', whoever put it there),
 which finds what the count of holes passes over, and its holes take anything at the floor that is not a whole block.
 `/awaken finds view` looks for the nearest standing one of a kind off the server's own thread and goes there when it
@@ -23164,7 +23185,7 @@ The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42%
 | To the next of the same kind | least 2,471, middle 4,174 |
 | From any spot (sea included) | half the land within 530 of one, nine tenths within 1,001 |
 | First cards lost (the best spot's reason) | no ground 119, a twin standing near 98, another landmark 78, a settlement 27, wrong land 22, a monument too close 10 |
-| As made, the sample of 23 | no holes; 11 dips, all the scenes' own (a worn step, a well, a basin); bare earth at 1 (7 squares); the nearest settlement 200 off, the nearest other landmark 80 |
+| As made, the sample of 23 | no holes; 11 dips, all the scenes' own (a worn step, a well, a basin); bare earth at 1 (11 squares); 16 hanging clusters of leaves in all, at 3 of the 23; a road crosses the ground of 3 (it fells a planted tree at each); the nearest settlement 200 off, the nearest other landmark 80 |
 
 (Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
 With `Sites.APART` at 80 instead of 40: 167.)

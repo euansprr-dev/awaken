@@ -69,6 +69,78 @@ public record FindsFeature() implements Feature {
         return full == Blocks.AIR ? null : full.defaultBlockState();
     }
 
+    /** How far past the chunk being written the sweep looks for what felling left hanging: as far as a great crown reaches. */
+    private static final int SWEEP = 10;
+
+    /**
+     * What the felling left in the air (SPEC §64.3). A trunk goes where the terrace, a pier or the clearing takes its
+     * column; its crown hangs on past them, over the next chunk, under a road's deck. Every group of the land's leaves
+     * and logs within {@link #SWEEP} of this chunk that stands on nothing is taken with it, as the roads and the villages
+     * do for their own felling. A group stays if any log of it stands on the ground, if it is a low bush lying on the
+     * ground, if it runs past where this call can see, if any of it is the scene's own, or if it is a hero tree's.
+     * (Only where this call took a trunk: the chunk that holds a trunk is the one that fells it, and a crown lies
+     * within ten of its trunk's chunk.)
+     */
+    private static void sweep(LevelAccessor level, Site s, Scene sc, int x0, int z0, int x1, int z1) {
+        var blocks = sc.blocks();
+        int ax = x0 - SWEEP, az = z0 - SWEEP, bx = x1 + SWEEP, bz = z1 + SWEEP;
+        it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap cells = new it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap();   // 1 a log, 2 a leaf, +4 on the ground, +8 the scene's
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = ax; x <= bx; x++)
+            for (int z = az; z <= bz; z++) {
+                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                long above = Long.MIN_VALUE;                        // the cell just over the block being looked at, if it is one
+                for (int y = top; y > top - 64; y--) {
+                    BlockState b = level.getBlockState(m.set(x, y, z));
+                    boolean log = b.is(BlockTags.LOGS), leaf = b.is(BlockTags.LEAVES);
+                    if (log || leaf) {
+                        long k = BlockPos.asLong(x, y, z);
+                        BlockState own = blocks.get(BlockPos.asLong(x - s.x(), y - s.y(), z - s.z()));   // the scene's own tree: the same block where it built one
+                        cells.put(k, (byte) ((log ? 1 : 2) | (own != null && own.getBlock() == b.getBlock() ? 8 : 0)));
+                        above = k;
+                        continue;
+                    }
+                    if (b.isAir()) {
+                        above = Long.MIN_VALUE;
+                        continue;
+                    }
+                    if (!b.isCollisionShapeFullBlock(level, m)) continue;    // a plant, a slab, snow: looked through
+                    if (above != Long.MIN_VALUE) cells.put(above, (byte) (cells.get(above) | 4));
+                    break;                                          // the ground
+                }
+            }
+        if (cells.isEmpty()) return;
+        dev.awaken.terrain.api.HeroTrees.Cells hero = level instanceof net.minecraft.server.level.WorldGenRegion region
+                ? dev.awaken.terrain.api.HeroTrees.near(region.getLevel().structureManager().forWorldGenRegion(region), region.getCenter()) : null;
+        LongOpenHashSet seen = new LongOpenHashSet();
+        it.unimi.dsi.fastutil.longs.LongArrayList group = new it.unimi.dsi.fastutil.longs.LongArrayList();
+        for (long start : cells.keySet().toLongArray()) {
+            if (!seen.add(start)) continue;
+            group.clear();
+            group.add(start);
+            boolean held = false, low = false;
+            for (int i = 0; i < group.size(); i++) {
+                long k = group.getLong(i);
+                int x = BlockPos.getX(k), y = BlockPos.getY(k), z = BlockPos.getZ(k);
+                byte c = cells.get(k);
+                held |= (c & 8) != 0 || ((c & 5) == 5) || x == ax || x == bx || z == az || z == bz || (hero != null && hero.at(x, y, z));
+                low |= (c & 6) == 6;
+                for (int ox = -1; ox <= 1; ox++)
+                    for (int oy = -1; oy <= 1; oy++)
+                        for (int oz = -1; oz <= 1; oz++) {
+                            long n = BlockPos.asLong(x + ox, y + oy, z + oz);
+                            if (cells.containsKey(n) && seen.add(n)) group.add(n);
+                        }
+            }
+            if (held || (low && group.size() <= 12)) continue;
+            for (int i = 0; i < group.size(); i++) {
+                long k = group.getLong(i);
+                level.setBlock(m.set(BlockPos.getX(k), BlockPos.getY(k), BlockPos.getZ(k)), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                if (level.getBlockState(m.move(0, 1, 0)).is(Blocks.SNOW)) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+    }
+
     /**
      * The highest block to look at over a column: the land's real top with whatever stands on it (the heightmap the game
      * keeps current while features are placed), never less than 46 over the floor nor more than 96.
@@ -116,6 +188,7 @@ public record FindsFeature() implements Feature {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         LongOpenHashSet cols = new LongOpenHashSet();
         var blocks = sc.blocks();
+        boolean felled = false;                                     // this call took a trunk of the land's: its crown is looked for after
         for (long k : blocks.keySet()) {
             int x = s.x() + BlockPos.getX(k), z = s.z() + BlockPos.getZ(k);
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
@@ -141,10 +214,18 @@ public record FindsFeature() implements Feature {
                 for (int y = top(level, x, z, floor); y > floor; y--) {
                     m.set(x, y, z);
                     BlockState b = level.getBlockState(m);
-                    // never what the place itself planted: past this chunk's edge the neighbour has already written its share
-                    if (!b.isAir() && b.getFluidState().isEmpty() && soft(b) && !blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz))) {
-                        level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-                        if (b.is(BlockTags.LOGS)) foot = y;
+                    // never what the place itself planted: past this chunk's edge the neighbour has already written its share.
+                    // (Told by what stands there, not by where: a tree of the next chunk that grew its leaves over a tuft
+                    // the place had planted was spared for standing in the tuft's spot, and hung there when its trunk went.)
+                    if (b.isAir() || !b.getFluidState().isEmpty() || !soft(b)) continue;
+                    BlockState own = blocks.get(BlockPos.asLong(dx, y - s.y(), dz));
+                    if (own != null && own.getBlock() == b.getBlock()) continue;
+                    {
+                        level.setBlock(m, own != null && soft(own) && own.getFluidState().isEmpty() ? own : Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        if (b.is(BlockTags.LOGS)) {
+                            foot = y;
+                            felled = true;
+                        }
                     }
                 }
                 // a tree stands on bare earth: felled, it left a square of dirt in the grass (four under every great
@@ -170,7 +251,8 @@ public record FindsFeature() implements Feature {
                     int g = s.y() + sc.groundAt(dx, dz);
                     for (int y = top(level, x, z, g); y > g; y--) {
                         m.set(x, y, z);
-                        if (!level.getBlockState(m).is(BlockTags.LEAVES) || blocks.containsKey(BlockPos.asLong(dx, y - s.y(), dz))) continue;
+                        BlockState leafHere = level.getBlockState(m), ownHere = blocks.get(BlockPos.asLong(dx, y - s.y(), dz));
+                        if (!leafHere.is(BlockTags.LEAVES) || (ownHere != null && ownHere.getBlock() == leafHere.getBlock())) continue;
                         boolean trunk = false;
                         for (int ox = -2; ox <= 2 && !trunk; ox++)
                             for (int oz = -2; oz <= 2 && !trunk; oz++) {
@@ -207,6 +289,7 @@ public record FindsFeature() implements Feature {
                 if (b.isAir() || !b.getFluidState().isEmpty()) continue;
                 if (soft(b)) {
                     level.setBlock(m, b.getFluidState().createLegacyBlock(), Block.UPDATE_CLIENTS);
+                    felled |= b.is(BlockTags.LOGS);
                     continue;
                 }
                 // a half step of the soft land (SPEC §31.2) is the land's skin half a block up, not its ground: it goes,
@@ -265,6 +348,7 @@ public record FindsFeature() implements Feature {
                 }
             }
         }
+        if (felled && x0 != Integer.MIN_VALUE) sweep(level, s, sc, x0, z0, x1, z1);
         boolean any = false;
         List<BlockPos> joins = level instanceof ServerLevel ? new ArrayList<>() : null;
         for (var e : blocks.long2ObjectEntrySet()) {
