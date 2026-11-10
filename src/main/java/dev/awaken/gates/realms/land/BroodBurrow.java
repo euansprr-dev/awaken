@@ -94,7 +94,7 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
     @Override
     protected BlockState rock(Broodwarren.M m, int x, int y, int z) {
         double r = rnd(x * 73L + y, z, 811);
-        double mouth = Math.sqrt(x * x + (y - 152) * (y - 152) + z * z);
+        double mouth = Math.sqrt(x * x + (y - mouthFeet() - 2) * (y - mouthFeet() - 2) + z * z);
         if (mouth < 20 && mouth < 15 + 4 * grain.get(x / 6.0 + 50, z / 6.0)) return r < 0.18 ? m.paperDark : m.earth;
         int band = Math.floorMod((int) Math.floor(y + 2.6 * grain.get(x / 11.0, z / 11.0)), 7);
         if (band == 0) return r < 0.85 ? m.paperPale : m.paper;
@@ -210,7 +210,7 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xffe2b0, 0.8F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffe2b0, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x7a2a12, 0.45F).light(lord.cx, lord.feet + 4, lord.cz, 0xffa040, 18, 0.8F);
         for (Shaft s : shafts) air.light(s.cx, s.top - 8, s.cz, 0xff6a2a, 14, 0.9F);
         if (ambush != null) air.light(ambush.cx, ambush.feet + 4, ambush.cz, 0xff5a20, 12, 0.7F);

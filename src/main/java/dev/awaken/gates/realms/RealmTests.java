@@ -370,7 +370,8 @@ public final class RealmTests {
         });
         // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
-            for (String program : CRAWLS) for (long seed = 1; seed <= 6; seed++) {
+            Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
+            for (String program : CRAWLS) for (long seed = 1; seed <= 10; seed++) {
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
@@ -383,7 +384,12 @@ public final class RealmTests {
                 FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
                 if (!r.clean()) h.fail(at + r.summary());
                 if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) h.fail(at + "the Lord's door or a fight's doors are missing");
+                var rolled = (dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?>) land;
+                sizes.add(rolled.size().name());
+                shapes.add(rolled.shape().name());
             }
+            // ten seeds of anything must not all be the same run: every size and at least three of the four shapes turn up
+            if (sizes.size() < 3 || shapes.size() < 3) h.fail("ten seeds rolled only " + sizes + " and " + shapes);
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)

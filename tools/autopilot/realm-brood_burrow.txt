@@ -52,4 +52,13 @@ cmd awaken gate realm_at LORD 0 0 1 6
 look 180 -40
 wait 80
 shot brood_burrow_lord_up
+# seed 1 is a great run: its chasm, from the first shelf and from beside the pillars
+cmd awaken gate realm_at MOUTH 0 -187 -71 192
+look 0 18
+wait 80
+shot brood_burrow_chasm
+cmd awaken gate realm_at MOUTH 0 -183 -69 205
+look -150 30
+wait 80
+shot brood_burrow_chasm_side
 quit

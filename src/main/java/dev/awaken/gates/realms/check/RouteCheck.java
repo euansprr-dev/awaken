@@ -74,7 +74,8 @@ public final class RouteCheck {
         if (firstFight > FIRST_FIGHT) bad.add("the first fight is " + (firstFight == Double.MAX_VALUE ? "nowhere" : (int) firstFight + " blocks from the Mouth") + ", more than " + FIRST_FIGHT);
         if (!shortcut && !loops(route, byId)) bad.add("there is no way round: no loop and no shortcut");
         if (land.indoors() && highest - lowest < CRAWL_HEIGHT) bad.add("a place under a roof that only rises or falls " + (highest - lowest) + " blocks (wants " + CRAWL_HEIGHT + ")");
-        String head = "route: " + route.size() + " legs (" + mix + "), " + (highest - lowest) + " blocks of height";
+        String rolled = land instanceof dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?> g ? ", rolled " + g.size().name().toLowerCase(java.util.Locale.ROOT) + " " + g.shape().name().toLowerCase(java.util.Locale.ROOT) : "";
+        String head = "route: " + route.size() + " legs (" + mix + "), " + (highest - lowest) + " blocks of height" + rolled;
         return new Report(bad.isEmpty() ? head : head + ", " + bad.size() + " wrong", bad);
     }
 

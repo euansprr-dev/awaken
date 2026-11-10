@@ -192,7 +192,7 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0xa8b8d8, 0.6F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xa8b8d8, 0.6F);
         if (lord != null) air.mist(lord.feet + 1, 4, 0x5a6a60, 0.45F);
         return air.build();
     }

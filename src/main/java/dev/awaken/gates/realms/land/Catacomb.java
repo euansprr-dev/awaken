@@ -170,7 +170,7 @@ public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
 
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, 150, 4, 3, 0x9fb8e8, 0.75F);
+        AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0x9fb8e8, 0.75F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x3a4a6a, 0.5F);
         return air.build();
     }
