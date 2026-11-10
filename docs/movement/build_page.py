@@ -3,7 +3,8 @@ models (src/wings.js, src/swing.js) inlined and the tour's pictures cut down int
 
     python3 docs/movement/build_page.py [run-autopilot/screenshots-ci/movement-now-<run> [.../movement-wood-<run> [.../movement-built-<run>]]]
 
-Without a tour folder the pictures already in shots/ are used. Publish page.html with shots/ as its files."""
+Without a tour folder the pictures already in shots/ are used; a picture listed as RUN:<run folder>:<shot> is cut from
+that run's folder under run-autopilot/screenshots-ci/ whenever it is there. Publish page.html with shots/ as its files."""
 import html
 import os
 import sys
@@ -55,6 +56,13 @@ def cut(tour, name, shot, crop):
     from PIL import Image
     if shot == "OFFLINE":  # already in shots/: not one of a tour's pictures
         return
+    if shot.startswith("RUN:"):  # a named tour run's picture: cut whenever that run's folder is on this machine
+        _, run, shot = shot.split(":", 2)
+        tour = os.path.join(HERE, "..", "..", "run-autopilot", "screenshots-ci", run)
+        if not os.path.isdir(tour):
+            return
+    elif tour is None:
+        return
     if shot.startswith("WOOD:"):
         if len(sys.argv) < 3:
             return
@@ -92,9 +100,8 @@ def figures(rows):
 
 def main():
     load_text()
-    if len(sys.argv) > 1:
-        for name, shot, crop, _ in ROPE + WING + BUILT:
-            cut(sys.argv[1], name, shot, crop)
+    for name, shot, crop, _ in ROPE + WING + BUILT:
+        cut(sys.argv[1] if len(sys.argv) > 1 else None, name, shot, crop)
     s = open(os.path.join(HERE, "page.src.html")).read()
     s = s.replace("@@ROPE_SHOTS@@", figures(ROPE)).replace("@@WING_SHOTS@@", figures(WING)).replace("@@BUILT_SHOTS@@", figures(BUILT))
     for k, v in TEXT.items():

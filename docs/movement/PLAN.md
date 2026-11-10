@@ -19,6 +19,11 @@ code does, with its numbers and where it differs from this plan, is SPEC §62 "B
 - The first tour of the built game found the held rope never threw again from the ground: the game read a speed that is
   always nothing inside the input step. Fixed, and the bench gained a bot that only holds forward and the rope (the
   audit's "holding" bot also tapped jump on every landing): lane 261, city 247, oak wood 152 from the ground.
+- The second tour (42872444094) showed the fix in the game: with only forward and the rope held, the lane is swung from
+  the ground (218 blocks in 8.4 s) and a real forest is slung from treetop to treetop. The real forest is slower than
+  the bench's oak wood: 104 blocks in the first 15 s against 152, because the sling needs a top above the hand and on
+  the highest crown there is none (the body crosses the crown, walks off, falls and slings again from the ground).
+  Letting the rope skip to a crown at or under the hand is not in the plan and not built: Euan's call.
 - The takeoff is "look up, sneak a moment, jump" (holding jump can't be told from the game's own hop).
 - The two rappel loops keep their old sound.
 - First-person wing placement is two numbers set from a tour, live-tunable with `/awaken wings set`.

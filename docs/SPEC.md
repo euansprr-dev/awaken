@@ -22205,6 +22205,15 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   rope, one flying free in the lane and one in the hills of 40 runs each. Hills stop it in 7 runs of 40: a face two
   blocks high with nothing over it wants a jump or a climb. The gates in `ascent_swing_bench` are a little under these
   for both bots, and the single-tree count above.
+- **In the game (tour 42872444094: forward and the rope held, jump never pressed).** The lane of giant trees: seven
+  ropes thrown from the ground and the air, 218 blocks in 8.4 s, to 2.6 b/t. The street: nine ropes, 193 blocks in
+  8.8 s. **A real forest is slower than the bench says: 104 blocks in the first 15 s** (a pull onto a top, then five
+  slings), where the bench's oak wood gives 152. The time goes on the crowns. The sling needs a top ahead and above the
+  hand (the plan's rule), so on the highest crown about the rope finds nothing; the body crosses the crown (the runner
+  vaults, hangs on and climbs a leaf step there, a second and more), walks off its edge, falls ten blocks and slings
+  again from the ground: three and four seconds between slings, twice. The bench has no crown to cross. Not built,
+  **Euan's call**: let the held rope also take the next crown ahead at or a little under the hand (a skip from crown to
+  crown, told from bare ground by what stands under it), which would keep the chain in the canopy.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
