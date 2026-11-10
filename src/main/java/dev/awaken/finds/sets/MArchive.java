@@ -213,7 +213,7 @@ final class MArchive {
                         "Everything we learned is here. We made three copies. If you can read this, the other two are gone.",
                         "The order of the shelves, cut over the door. First what is true. Then what is useful. Then what is beautiful. Last, on the highest shelf, what we were afraid of.",
                         "It says: the highest shelf is empty. They took those tablets with them when they went. All three ways took some."},
-                {4, "archive_buried", "The Buried Archive", new Arc(15, 2, -12, 3, 0, false, -22), 46,
+                {4, "archive_buried", "The Buried Archive", new Arc(15, 2, -12, 3, 0, false, -22), 54,
                         "A stone dome rising straight out of the ground with old trees planted close round it. Low on one side somebody has broken a way in, and a ladder goes down into the dark.",
                         "You climbed down into it and put the five tablets back in their order. The wheel turned in the dark, and the bars about its foot let go.",
                         "It says they buried this one on purpose, to keep it. They planted the trees themselves.",

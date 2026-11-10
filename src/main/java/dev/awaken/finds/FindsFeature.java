@@ -124,9 +124,10 @@ public record FindsFeature() implements Feature {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             int want = s.y() + sc.groundAt(dx, dz);
             // find the real ground: the first block from above that isn't air, water or something that grew
+            // (down to 48 under it: a ravine or a cave's mouth under a monument is filled from its own floor, never bridged)
             int real = want + 20;
             BlockState top = Blocks.DIRT.defaultBlockState();
-            for (; real > want - 20; real--) {
+            for (; real > want - 48; real--) {
                 m.set(x, real, z);
                 BlockState b = level.getBlockState(m);
                 if (b.isAir() || !b.getFluidState().isEmpty()) continue;
@@ -146,9 +147,12 @@ public record FindsFeature() implements Feature {
                 m.set(x, want, z);
                 if (skin(top) && !level.getBlockState(m).isAir()) level.setBlock(m, top, Block.UPDATE_CLIENTS);
             } else if (real < want) {
+                // made ground is the land's own: its skin on top, three of what lies under that skin, and rock below
+                BlockState under = top.is(Blocks.RED_SAND) ? Blocks.RED_SANDSTONE.defaultBlockState() : top.is(BlockTags.SAND) ? Blocks.SANDSTONE.defaultBlockState()
+                        : top.is(Blocks.SNOW_BLOCK) || skin(top) ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState();
                 for (int y = real + 1; y <= want; y++) {
                     m.set(x, y, z);
-                    level.setBlock(m, y == want ? top : Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlock(m, y == want ? (skin(top) ? top : under) : y >= want - 3 ? under : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
                 if (top.is(Blocks.GRASS_BLOCK)) {
                     m.set(x, real, z);

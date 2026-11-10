@@ -142,7 +142,7 @@ final class MClock {
         int B = main.B();
         int x0 = Math.min(main.ox(), twin == null ? main.ox() : twin.ox()) - B - 4 - (main.stair() < 0 ? main.H() - (B - main.half(main.n() - 1)) + 2 : 0);
         int x1 = Math.max(main.ox(), twin == null ? main.ox() : twin.ox()) + B + 4 + (main.stair() > 0 ? main.H() - (B - main.half(main.n() - 1)) + 2 : 0);
-        G.platform(s, G.box(Math.max(-reach + 4, x0), Math.max(-reach + 4, -B - (main.state() == 2 ? 12 : 4)), Math.min(reach - 4, x1), Math.min(reach - 4, B + 16)), 0, reach);
+        G.platform(s, G.box(Math.max(-reach + 13, x0), Math.max(-reach + 13, -B - (main.state() == 2 ? 12 : 4)), Math.min(reach - 13, x1), Math.min(reach - 13, B + 16)), 0, reach);
         s.clear(reach);
         mount(s, main);
         if (twin != null) {
@@ -173,7 +173,7 @@ final class MClock {
             int hk = main.half(k), x = main.ox() + (k % 4 == 1 ? -hk + 1 : hk - 1), z = -hk / 2 + k;
             if (!s.taken(x, main.top(k) + 1, z) && s.taken(x, main.top(k), z)) tree(s, x, z, main.top(k) + 1, 5 + k % 3, st(Blocks.JUNGLE_LOG), leaf(Blocks.JUNGLE_LEAVES), 2.2);
         }
-        int steps = G.stairs(s, main.ox(), Math.min(reach - 4, B + 16) + 1, Direction.SOUTH, 2, 0);
+        int steps = G.stairs(s, main.ox(), Math.min(reach - 13, B + 16) + 1, Direction.SOUTH, 2, 0);
         Mon.camp(s, main.ox() - 14, Math.min(reach - 6, B + 10));
         wild(s, Math.min(reach - 6, B + 14), reach - 1, 14);
         s.cam(main.ox() - B - 6, 8, B + 16, -140, -22).cam(main.ox() + B, main.H() + 22, B + 18, 140, 42).cam(main.ox() + 8, 3, B + 14, 170, -14).cam(main.ox() + 2, main.H() + 3, main.half(main.n() - 1) + 3, 180, 30);
@@ -181,31 +181,31 @@ final class MClock {
 
     static void init() {
         Object[][] five = {
-                {1, "clock_small", "The Small Count", new Mount(0, 3, 11, 3, true, 1, 0), null, 28,
+                {1, "clock_small", "The Small Count", new Mount(0, 3, 11, 3, true, 1, 0), null, 40,
                         "A stepped stone mount three tiers high with a stair up one side and a dry groove down the middle of each face. At its foot a bronze wheel stands in an empty basin.",
                         "You opened the three sluices from the top down. Water ran tier to tier into the basin, the wheel's light came on, and the vault at the foot let go.",
                         "It says: open the gates from the top down. Never the other way, or it floods the works.",
                         "It says this one counts a single year. They built it to prove the idea before they trusted it with more.",
                         "Scratched under the cistern: it ran dry in the first summer. We made the next one bigger."},
-                {2, "clock_fallen", "The Fallen Count", new Mount(0, 5, 20, 4, true, -1, 1), null, 40,
+                {2, "clock_fallen", "The Fallen Count", new Mount(0, 5, 20, 4, true, -1, 1), null, 50,
                         "A stepped mount with one whole side slid away, so that you can see it was hollow all along. Its south face still stands, grooved from top to bottom, over a basin and a bronze wheel.",
                         "You opened the five sluices from the top down. Water came down the standing face into the basin, and the vault at its foot let go.",
                         "It says: open the gates from the top down, and it will begin to count again.",
                         "It says the mount slid in a wet spring and the count was lost. Nobody alive knew what number it had reached.",
                         "It says: we started it again from one. It seemed better than nothing. We do not know how wrong it is."},
-                {3, "clock", "The Water Clock", new Mount(0, 7, 26, 4, true, 1, 0), null, 46,
+                {3, "clock", "The Water Clock", new Mount(0, 7, 26, 4, true, 1, 0), null, 56,
                         "A stepped stone mount seven tiers high rising out of the trees, a cistern on its top and a dry groove down the middle of every face. A great stair stands out from its east side. At its foot, a bronze wheel in a basin.",
                         "You climbed the stair and opened the seven sluices from the top down. Water ran tier to tier down the south face into the basin. The wheel's light came on, and the vault at the foot let go.",
                         "It says: open the gates from the top down, and it will begin to count again.",
                         "It will wake us when the count is done. If the water stops, start it again. Please.",
                         "A row of marks, one for every hundred years. Nine are filled with bronze. The tenth is empty."},
-                {4, "clock_twin", "The Twin Counts", new Mount(-20, 4, 14, 4, true, -1, 0), new Mount(20, 4, 14, 4, false, 0, 0), 48,
+                {4, "clock_twin", "The Twin Counts", new Mount(-20, 4, 14, 4, true, -1, 0), new Mount(20, 4, 14, 4, false, 0, 0), 60,
                         "Two stepped mounts stand side by side, joined at the top by a channel on arches with its middle gone. One has a basin and a bronze wheel at its foot. The other is dry.",
                         "You opened the four sluices of the western mount from the top down. Its face ran, its wheel lit, and the vault at its foot let go. The other mount stayed dry.",
                         "It says: open the gates from the top down, and it will begin to count again.",
                         "It says one of these counts for the sleepers and one for the world. When the two agree, it is time to wake. They have never agreed.",
                         "It says: the dry one is the world's. It stopped first."},
-                {5, "clock_whole", "The Clock That Still Counts", new Mount(0, 8, 29, 4, true, 1, 2), null, 50,
+                {5, "clock_whole", "The Clock That Still Counts", new Mount(0, 8, 29, 4, true, 1, 2), null, 60,
                         "A stepped mount eight tiers high, whole, a lamp at every corner of its top. Water is running down its north face into a basin. The south face is dry, and its sluices are shut.",
                         "You opened the eight south sluices from the top down. Now two faces run. The wheel's light came on, and the vault at the foot let go.",
                         "It says: one face runs. Open the other from the top down and the count is whole.",

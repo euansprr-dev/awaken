@@ -21910,25 +21910,50 @@ that group's account.
 
 ### 62.2 Bands, and the deal
 
-A kind's rank is where its tier begins: tiers 1..5 are ranks 0..4, one further out for the down group
-(`Family.rankOf`). A cell never deals a kind whose rank is above the land's (`Sites.weights`), so every band out holds
-monuments the last could not. At the land's rank and one under it a kind has full weight; older ones halve per rank. No
-kind twice within two cells (768 blocks); no family twice in cells that touch. Lands by family are in each file's
-`lands(...)`: every land has at least three families at rank 0.
+Euan, 11 Nov 2026, on the built sixty: "make sure they're placed in the right ways... tied into the world generation in a
+way that makes it never glitchy, similar to vanilla villages... and how far out you can find them, and a ton of
+variation, so you very rarely see two of the same unless you really explore a lot."
+
+**How far out.** A kind's rank is where its tier begins: tiers 1..5 are ranks 0..4, one further out for the down group
+(`Family.rankOf`). A cell never deals a kind whose rank is above the land's, so every band out holds monuments the last
+could not. At the land's rank and one under it a kind has full weight; older ones halve per rank.
+
+**Rarely the same twice.** Monuments are dealt like a hand from a shuffled deck, a block of twelve cells by twelve at a
+time (4,608 blocks square; `Sites.deal`). The block's cells that hold something take their turn in the order of their hashes,
+and each draws, by the weights of its own land and rank, from the kinds no cell of the block has drawn yet. So a kind
+stands at most once in a block, and where the land offers fewer kinds than the block has cells, the cells left over stay
+empty: that is the quiet between. A cell passes over the families its touching cells drew while anything else is left
+for it. Across the edge of two blocks, a cell yields to one with first say that drew the same kind within six cells
+(2,304 blocks). So from any point, everything within two kilometres is a different monument. Nothing is ever tried in a failed cell's place, so no kind turns up where its land or its ground did not
+ask for it. Lands by family are in each file's `lands(...)`: every land has at least three families at rank 0.
 
 ### 62.3 Meeting the ground
 
 The first count of a real world with the three (10 Nov) stood 12 monuments in 616 choosing cells: a footprint a hundred
-wide found no ground level to a few blocks. A monument no longer asks. `Anchor.TERRACE`: seventeen points within the
-kind's `slope` (10 to 18) of each other, all dry; the site's height is the eleventh of them; 49 tries on a grid 24 apart
-(all inside the cell's edge); and the kind is turned so its front (south) looks down the fall of the land.
-`Anchor.HIGH`: the same, taking the highest spot that fits (masts, orreries). `kit/G.platform(shape, top)` then builds
-the terrace: level inside; where the land falls away a battered retaining wall that stands on each column's own ground,
-with a parapet where it is tall and buttresses where it is taller; where the land rises, the cut faced and coped; where
-it is level, a kerb flush with the grass. Never a dirt ramp. `G.stairs` runs steps from the terrace down (or up) to
-whatever ground is there, between cheek walls. `G.foot` fills masonry under anything built over a curved or tilted
-floor (the Dish's spike stood a block clear of its bowl). Piers (`M.pier`), stairs and fallen pieces stand on each
-column's own ground. Roads need no terrace at all.
+wide found no ground level to a few blocks. A monument no longer asks for level ground; it is placed where it can be
+made to belong, and then the land is made up to it the way it is to a village.
+
+**Choosing the spot** (`Anchors.terrace`, `Sites.monument`). Seventeen points within the kind's `slope` (10 to 18) of
+each other, all dry; then the whole footprint every eighth block, all dry and within four more (a pond, a stream or a
+sudden drop between the seventeen would put a wall in water or a terrace over a cliff); never higher than 110 over the
+sea. 49 spots are tried on a grid 24 apart, all inside the cell's edge. The site's height is the eleventh of the
+seventeen, so it is built up more than it is cut in, and the kind is turned so its front (south) looks down the fall of
+the land. `Anchor.HIGH`: the same, taking the highest spot that fits (masts, orreries). Then: the land it belongs to
+under its middle and at least three of four points half way out; no structure within two chunks, no village within its
+own width and 72, not the city; and no monument with first say within both their widths and 24, so two never share
+ground.
+
+**Making the ground** (`kit/G.platform(shape, top)`). Level inside the footprint. Round it, over `G.SKIRT` (10) blocks,
+the land is eased until it stands no more than `G.WALL` (6) below the floor or `G.CUT` (4) above it: a long gentle
+regrade in the land's own skin, grass or sand or snow, with three of what lies under that skin and rock below. What is
+left the masonry takes: a battered retaining wall that stands on each column's own ground, with a parapet where it is
+tall; the cut faced and coped where the land rises; a kerb flush with the grass where it is level. `G.stairs` runs
+steps from the terrace down (or up) to the ground as the regrade left it. `G.foot` fills masonry under anything built
+over a curved or tilted floor (the Dish's spike stood a block clear of its bowl). Piers (`M.pier`), stairs and fallen
+pieces stand on each column's own ground. Roads need no terrace at all. A kind's `reach` holds its terrace and the
+skirt. Where a monument stands over a ravine or a cave's mouth, the feature looks 48 down for the real floor and fills
+from it with rock: nothing is bridged and nothing hangs. Everything that grew inside the reach is cleared, and the
+kind plants its own trees and grass back on the regraded ring (`B.wild`), so it stands in a glade of its own land.
 
 **The site's heart** is two under the ground at the site's middle and is solid though unseen. A generator that digs (a
 pit, a pool, a cleft) sets its hole off from the middle so the heart lies under masonry or ground.

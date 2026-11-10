@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Sites {
     private Sites() {}
 
-    static final int[] CELL = {96, 256, 384}, EDGE = {18, 44, 80}, RINGS = {4, 4, 2};
+    static final int[] CELL = {96, 256, 384}, EDGE = {18, 44, 80}, RINGS = {4, 4, 6};
     /** The layer number of a site stood by hand (the gallery, a test): it stands on a level pad, not on the world's ground. */
     public static final int HAND = 3;
     /** The chance a cell holds something where the land is at its usual liveliness. */
@@ -38,7 +38,7 @@ public final class Sites {
     // Layer 1 is the remains (SPEC §62.6): small, and only where a monument stands near.
     static final double[] BASE = {0, 0.8, 1.0};
     /** The furthest any scene reaches from its heart. */
-    public static final int MAX_REACH = 64;
+    public static final int MAX_REACH = 72;
     /** Below this the land is quiet. About three parts in ten of the world. */
     static final double QUIET = 0.42;
     /** Round spawn nothing is quiet, so the first hour meets each verb. */
@@ -57,6 +57,7 @@ public final class Sites {
     public static void reset() {
         SITES.clear();
         PICKS.clear();
+        DEALS.clear();
         SCENES.clear();
     }
 
@@ -166,8 +167,70 @@ public final class Sites {
         return -1;
     }
 
+    /**
+     * Monuments are dealt a block of cells at a time: twelve by twelve, 4,608 blocks on a side. Six by six was tried first on
+     * paper: with sixty kinds and bands by distance, a kind then came round again about every two kilometres, which is "the same
+     * one twice" for anyone who walks an afternoon. At twelve, everything within two kilometres of any point is different.
+     */
+    private static final int SUPER = 12;
+    private static final ConcurrentHashMap<Long, int[]> DEALS = new ConcurrentHashMap<>();
+
+    /**
+     * The deal of one block of cells (SPEC §62.2): like a hand from a shuffled deck. The block's cells that hold
+     * something take their turn in the order of their hashes; each draws, by the weights of its own land and rank, from
+     * the kinds no cell of the block has drawn yet. So a kind stands at most once in 4,608 blocks square, and where the
+     * land offers few kinds the cells left over stay empty, which is the quiet between. A cell also passes over the
+     * families its touching cells have drawn, while anything else is left for it.
+     */
+    private static int[] deal(Ask a, int scx, int scz) {
+        long key = ((long) scx << 32) ^ (scz & 0xFFFFFFFFL);
+        int[] d = DEALS.get(key);
+        if (d != null) return d;
+        int n = SUPER * SUPER;
+        d = new int[n];
+        java.util.Arrays.fill(d, -1);
+        long[] hs = new long[n];
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            hs[i] = cellHash(a.seed, 2, scx * SUPER + i % SUPER, scz * SUPER + i / SUPER);
+            order[i] = i;
+        }
+        java.util.Arrays.sort(order, (p, q) -> Long.compareUnsigned(hs[p], hs[q]));
+        List<Kind> kinds = Kinds.layer(2);
+        java.util.BitSet used = new java.util.BitSet();
+        for (int i : order) {
+            int cx = scx * SUPER + i % SUPER, cz = scz * SUPER + i / SUPER;
+            long h = hs[i];
+            int x = cellX(h, 2, cx), z = cellZ(h, 2, cz);
+            double chance = BASE[2] * richness(a.seed, x, z, 2, a.spawnX, a.spawnZ);
+            if (((h >>> 44) & 0xFFFF) / 65536.0 >= chance) continue;
+            double[] w = weights(a, 2, x, z);
+            for (int k = used.nextSetBit(0); k >= 0; k = used.nextSetBit(k + 1)) if (k < w.length) w[k] = 0;
+            java.util.EnumSet<Family> touching = java.util.EnumSet.noneOf(Family.class);
+            for (int oi = -1; oi <= 1; oi++)
+                for (int oj = -1; oj <= 1; oj++) {
+                    int li = i % SUPER + oi, lj = i / SUPER + oj;
+                    if ((oi == 0 && oj == 0) || li < 0 || lj < 0 || li >= SUPER || lj >= SUPER || d[li + lj * SUPER] < 0) continue;
+                    Family f = kinds.get(d[li + lj * SUPER]).family();
+                    if (f != null) touching.add(f);
+                }
+            double[] apart = w.clone();
+            boolean any = false;
+            for (int k = 0; k < apart.length; k++) {
+                if (apart[k] > 0 && kinds.get(k).family() != null && touching.contains(kinds.get(k).family())) apart[k] = 0;
+                any |= apart[k] > 0;
+            }
+            int choice = pick(any ? apart : w, mix(h, 0x11));
+            d[i] = choice;
+            if (choice >= 0) used.set(choice);
+        }
+        int[] old = DEALS.putIfAbsent(key, d);
+        return old != null ? old : d;
+    }
+
     /** What a cell would hold before it looks at its neighbours or the ground: a kind's index on its layer, or -1. */
     private static int basePick(Ask a, int layer, int cx, int cz) {
+        if (layer == 2) return deal(a, Math.floorDiv(cx, SUPER), Math.floorDiv(cz, SUPER))[Math.floorMod(cx, SUPER) + Math.floorMod(cz, SUPER) * SUPER];
         return PICKS.computeIfAbsent(cellKey(layer, cx, cz), key -> {
             long h = cellHash(a.seed, layer, cx, cz);
             int x = cellX(h, layer, cx), z = cellZ(h, layer, cz);
@@ -177,7 +240,59 @@ public final class Sites {
         });
     }
 
+    /**
+     * A monument's cell (SPEC §62.2, §62.3). Its kind is the deal's. It yields to a cell with first say (the lower hash)
+     * that drew the same kind within six cells, in another block; it needs ground it can stand a terrace on, in a land
+     * it belongs to across its footprint and not only at its middle; it keeps clear of villages and the city; and it
+     * never stands within its own width and its neighbour's of a monument that has first say. Whatever fails, the cell
+     * is empty: nothing else is tried in its place, so no kind turns up where its land or its ground did not ask for it.
+     */
+    private static Site monument(Ask a, int cx, int cz) {
+        int base = basePick(a, 2, cx, cz);
+        if (base < 0) return NONE;
+        long h = cellHash(a.seed, 2, cx, cz);
+        int x = cellX(h, 2, cx), z = cellZ(h, 2, cz);
+        long sx = x - a.spawnX, sz = z - a.spawnZ;
+        if (sx * sx + sz * sz < 40 * 40) return NONE;
+        if (CityHooks.inCity(a.level, new BlockPos(x, a.level.getSeaLevel(), z))) return NONE;
+        int rings = RINGS[2];
+        for (int i = -rings; i <= rings; i++)
+            for (int j = -rings; j <= rings; j++) {
+                if (i == 0 && j == 0) continue;
+                if (basePick(a, 2, cx + i, cz + j) == base && Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) < 0) {
+                    LOST[4]++;
+                    return NONE;
+                }
+            }
+        Kind k = Kinds.layer(2).get(base);
+        int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37));
+        if (at == null) {
+            LOST[0]++;
+            return NONE;
+        }
+        // the land it belongs to, under most of it: the middle and four points half way out
+        int fits = k.fits(landAt(a, at[0], at[2])) ? 1 : 0, half = k.reach() / 2;
+        if (fits == 0) { LOST[5]++; return NONE; }
+        for (int q = 0; q < 4; q++) if (k.fits(landAt(a, at[0] + RX[q] * half, at[2] + RZ[q] * half))) fits++;
+        if (fits < 4) { LOST[5]++; return NONE; }
+        if (a.terrain.structureNear(at[0], at[2], 2)) { LOST[1]++; return NONE; }
+        if (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) { LOST[2]++; return NONE; }
+        if (cityNear(a, at[0], at[2], k.reach() + 56)) { LOST[3]++; return NONE; }
+        // two monuments never share ground: the one with first say stands, the other's cell is empty
+        for (int i = -1; i <= 1; i++)
+            for (int j = -1; j <= 1; j++) {
+                if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
+                Site o = cell(a, 2, cx + i, cz + j);
+                if (o != null && Math.max(Math.abs(o.x() - at[0]), Math.abs(o.z() - at[2])) < o.kind().reach() + k.reach() + 24) {
+                    LOST[6]++;
+                    return NONE;
+                }
+            }
+        return new Site(k, 2, at[0], at[1], at[2], mix(h, 0x41), at[3], landAt(a, at[0], at[2]), Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
+    }
+
     private static Site make(Ask a, int layer, int cx, int cz) {
+        if (layer == 2) return monument(a, cx, cz);
         int base = basePick(a, layer, cx, cz);
         if (base < 0) return NONE;
         long h = cellHash(a.seed, layer, cx, cz);
@@ -185,12 +300,9 @@ public final class Sites {
         long sx = x - a.spawnX, sz = z - a.spawnZ;
         if (sx * sx + sz * sz < 40 * 40) return NONE; // never on the spawn point itself
         if (CityHooks.inCity(a.level, new BlockPos(x, a.level.getSeaLevel(), z))) return NONE;
-        // kinds a nearer cell with first say would pick: not here
-        // and if this cell has to choose again, it takes nothing any cell round it would pick, whoever has first say:
-        // the neighbour that keeps its first choice mustn't find it here too
+        // kinds a nearer cell with first say would pick: not here; and if this cell has to choose again, it takes nothing
+        // any cell round it would pick, whoever has first say
         java.util.BitSet taken = new java.util.BitSet(), around = new java.util.BitSet();
-        // and no family twice in cells that touch (SPEC §62.2): two cells on is something that is not a dish at all
-        java.util.EnumSet<Family> famTaken = java.util.EnumSet.noneOf(Family.class), famAround = java.util.EnumSet.noneOf(Family.class);
         List<Kind> kinds = Kinds.layer(layer);
         int rings = RINGS[layer];
         for (int i = -rings; i <= rings; i++)
@@ -199,35 +311,19 @@ public final class Sites {
                 int other = basePick(a, layer, cx + i, cz + j);
                 if (other < 0) continue;
                 around.set(other);
-                boolean first = Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0;
-                if (first) taken.set(other);
-                Family f = kinds.get(other).family();
-                if (f != null && Math.abs(i) <= 1 && Math.abs(j) <= 1) {
-                    famAround.add(f);
-                    if (first) famTaken.add(f);
-                }
+                if (Long.compareUnsigned(cellHash(a.seed, layer, cx + i, cz + j), h) < 0) taken.set(other);
             }
         double[] w = weights(a, layer, x, z);
-        int choice = taken.get(base) || (kinds.get(base).family() != null && famTaken.contains(kinds.get(base).family())) ? -1 : base;
+        int choice = taken.get(base) ? -1 : base;
         for (int attempt = 0; attempt < 4; attempt++) {
             if (choice < 0) {
                 for (int i = around.nextSetBit(0); i >= 0; i = around.nextSetBit(i + 1)) if (i < w.length) w[i] = 0;
-                for (int i = 0; i < w.length; i++) if (kinds.get(i).family() != null && famAround.contains(kinds.get(i).family())) w[i] = 0;
                 choice = pick(w, mix(h, 0x23 + attempt));
                 if (choice < 0) return NONE;
             }
             Kind k = kinds.get(choice);
             int[] at = Anchors.find(k, a.terrain, x, z, mix(h, 0x37));
-            // a place keeps clear of villages and the city by its own width and more (the first tours had the quarry
-            // against Carillon's wall and the temple in a village's garden)
-            boolean place = k.size() == Kind.Size.PLACE;
-            if (at != null && place && !k.fits(landAt(a, at[0], at[2]))) at = null;   // the ground it found is in another country
-            if (at == null) LOST[0]++;
-            else if (a.terrain.structureNear(at[0], at[2], place ? 2 : 1)) LOST[1]++;
-            else if (place && a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4)) LOST[2]++;
-            else if (place && cityNear(a, at[0], at[2], k.reach() + 56)) LOST[3]++;
-            if (at != null && !a.terrain.structureNear(at[0], at[2], place ? 2 : 1)
-                    && !(place && (a.terrain.settlementNear(at[0], at[2], (k.reach() + 72) >> 4) || cityNear(a, at[0], at[2], k.reach() + 56)))) {
+            if (at != null && !a.terrain.structureNear(at[0], at[2], 1)) {
                 RegionMap.Region r = a.map.regionAt(at[0], at[2]);
                 if (k.set() == Kind.FSet.REMAINS) {
                     // a remain is the edge of something big: it stands only where a monument does, and faces it
@@ -242,8 +338,7 @@ public final class Sites {
                         }
                     }
                 }
-                return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], place ? landAt(a, at[0], at[2]) : a.map.landOf(r).group(),
-                        Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
+                return new Site(k, layer, at[0], at[1], at[2], mix(h, 0x41), at[3], a.map.landOf(r).group(), Math.min(5, RegionMap.rankOf(a.map.levelAt(at[0], at[2]))));
             }
             taken.set(choice); // the ground doesn't suit it: deal again
             choice = -1;
@@ -252,7 +347,7 @@ public final class Sites {
     }
 
     /** Why deals failed since the last census: no ground, a structure, a settlement, the city. A check's counters, nothing reads them in play. */
-    private static final int[] LOST = new int[4];
+    private static final int[] LOST = new int[7];
 
     /** The country at a spot, from the biome there (the same naming the regions use for their hearts). */
     private static RegionMap.Group landAt(Ask a, int x, int z) {
@@ -452,8 +547,9 @@ public final class Sites {
         List<Kind> kinds = Kinds.layer(2);
         int[] chose = new int[kinds.size()], stand = new int[kinds.size()], nearest = new int[kinds.size()];
         java.util.Arrays.fill(nearest, Integer.MAX_VALUE);
-        int[] lands = new int[RegionMap.Group.values().length], ranks = new int[6];
+        int[] lands = new int[RegionMap.Group.values().length], ranks = new int[6], standRank = new int[6];
         int c = CELL[2], cx0 = Math.floorDiv(a.spawnX, c), cz0 = Math.floorDiv(a.spawnZ, c), cells = 0, any = 0, none = 0;
+        List<Site> sites = new ArrayList<>();
         for (int i = -rings; i <= rings; i++)
             for (int j = -rings; j <= rings; j++) {
                 cells++;
@@ -472,18 +568,51 @@ public final class Sites {
                 }
                 int k = kinds.indexOf(s.kind());
                 stand[k]++;
+                standRank[Math.min(5, s.rank())]++;
+                sites.add(s);
                 nearest[k] = Math.min(nearest[k], (int) Math.hypot(s.x() - a.spawnX, s.z() - a.spawnZ));
             }
         List<String> out = new ArrayList<>();
         StringBuilder land = new StringBuilder("lands of " + cells + " cells:");
         for (RegionMap.Group g : RegionMap.Group.values()) land.append(' ').append(g).append(' ').append(lands[g.ordinal()]);
         out.add(land.toString());
-        out.add("lost since the last count: no ground " + LOST[0] + ", a structure " + LOST[1] + ", a settlement " + LOST[2] + ", the city " + LOST[3]);
+        out.add("lost since the last count: no ground " + LOST[0] + ", a structure " + LOST[1] + ", a settlement " + LOST[2] + ", the city " + LOST[3] + ", a twin near " + LOST[4] + ", the wrong land " + LOST[5] + ", a monument too close " + LOST[6]);
         java.util.Arrays.fill(LOST, 0);
-        out.add("ranks: E " + ranks[0] + " D " + ranks[1] + " C " + ranks[2] + " B " + ranks[3] + " A " + ranks[4] + " S " + ranks[5] + "; cells that chose " + any + ", of those with no ground " + none);
+        out.add("ranks: E " + ranks[0] + " D " + ranks[1] + " C " + ranks[2] + " B " + ranks[3] + " A " + ranks[4] + " S " + ranks[5] + "; cells that chose " + any + ", of those that stand " + sites.size());
+        out.add("stand by rank: E " + standRank[0] + " D " + standRank[1] + " C " + standRank[2] + " B " + standRank[3] + " A " + standRank[4] + " S " + standRank[5]);
+        // how far apart: any two monuments, and two of the same kind
+        List<Integer> toNext = new ArrayList<>(), toTwin = new ArrayList<>();
+        int distinct = 0, twice = 0, home1 = 0, home2 = 0, first = Integer.MAX_VALUE;
+        for (int k = 0; k < kinds.size(); k++) {
+            if (stand[k] > 0) distinct++;
+            if (stand[k] > 1) twice++;
+        }
+        for (Site s : sites) {
+            double near = 1e9, twin = 1e9, home = Math.hypot(s.x() - a.spawnX, s.z() - a.spawnZ);
+            for (Site o : sites) {
+                if (o == s) continue;
+                double d = Math.hypot(o.x() - s.x(), o.z() - s.z());
+                near = Math.min(near, d);
+                if (o.kind() == s.kind()) twin = Math.min(twin, d);
+            }
+            if (near < 1e9) toNext.add((int) near);
+            if (twin < 1e9) toTwin.add((int) twin);
+            if (home < 1000) home1++;
+            if (home < 2000) home2++;
+            first = Math.min(first, (int) home);
+        }
+        java.util.Collections.sort(toNext);
+        java.util.Collections.sort(toTwin);
+        out.add("monuments " + sites.size() + ", of " + distinct + " kinds (" + twice + " stand more than once); nearest to the start " + (sites.isEmpty() ? "none" : first + "") + "; within 1000 of it " + home1 + ", within 2000 " + home2);
+        if (!toNext.isEmpty()) out.add("to the next monument: least " + toNext.get(0) + ", middle " + toNext.get(toNext.size() / 2) + ", most " + toNext.get(toNext.size() - 1));
+        out.add(toTwin.isEmpty() ? "no kind stands twice" : "to the next of the same kind: least " + toTwin.get(0) + ", middle " + toTwin.get(toTwin.size() / 2));
+        // the remains over the same ground
+        int c1 = CELL[1], span = (2 * rings + 1) * c / c1 / 2, rx0 = Math.floorDiv(a.spawnX, c1), rz0 = Math.floorDiv(a.spawnZ, c1), remains = 0;
+        for (int i = -span; i <= span; i++) for (int j = -span; j <= span; j++) if (cell(a, 1, rx0 + i, rz0 + j) != null) remains++;
+        out.add("remains " + remains);
         for (int k = 0; k < kinds.size(); k++)
-            out.add(String.format("%-22s rank %d chose %3d stands %3d nearest %s", kinds.get(k).id(), kinds.get(k).rank(), chose[k], stand[k],
-                    nearest[k] == Integer.MAX_VALUE ? "none" : nearest[k] + ""));
+            if (kinds.get(k).family() != null && chose[k] > 0)
+                out.add(String.format("%-22s rank %d chose %3d stands %3d nearest %s", kinds.get(k).id(), kinds.get(k).rank(), chose[k], stand[k], nearest[k] == Integer.MAX_VALUE ? "none" : nearest[k] + ""));
         return out;
     }
 

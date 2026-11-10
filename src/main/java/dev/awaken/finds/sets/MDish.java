@@ -216,22 +216,22 @@ final class MDish {
 
     private static void small(Scene s) {
         int turn = Mon.pick(s, 21, 3) * 40;
-        site(s, new Dish(18, 0.8, 5, 20, 150 + turn, 215 + turn, 0, 0, NE, false, true), null, 34);
+        site(s, new Dish(18, 0.8, 5, 20, 150 + turn, 215 + turn, 0, 0, NE, false, true), null, 36);
     }
 
     private static void fallen(Scene s) {
         int turn = Mon.pick(s, 22, 4) * 25;
-        site(s, new Dish(26, 0.12, 8, 14, 10 + turn, 150 + turn, 0, 0, NE, false, true), null, 42);
+        site(s, new Dish(26, 0.12, 8, 14, 10 + turn, 150 + turn, 0, 0, NE, false, true), null, 44);
     }
 
     private static void listening(Scene s) {
         int turn = Mon.pick(s, 23, 3) * 20 - 20;
-        site(s, new Dish(30, 0.4, 9, 34, -170 + turn, -100 + turn, 0, 0, NE, false, true), null, 46);
+        site(s, new Dish(30, 0.4, 9, 34, -170 + turn, -100 + turn, 0, 0, NE, false, true), null, 48);
     }
 
     private static void twin(Scene s) {
         // two that face each other: each is tipped up at its far side
-        site(s, new Dish(17, 0.7, 5, 18, 0, 0, -21, 0, Math.PI, false, true), new Dish(17, 0.7, 5, 18, 95, 150, 21, 0, 0, false, false), 52);
+        site(s, new Dish(17, 0.7, 5, 18, 0, 0, -21, 0, Math.PI, false, true), new Dish(17, 0.7, 5, 18, 95, 150, 21, 0, 0, false, false), 56);
     }
 
     private static void whole(Scene s) {
@@ -244,25 +244,25 @@ final class MDish {
 
     static void init() {
         Object[][] five = {
-                {1, "dish_small", "The Small Ear", (dev.awaken.finds.Kind.Maker) MDish::small, 34,
+                {1, "dish_small", "The Small Ear", (dev.awaken.finds.Kind.Maker) MDish::small, 36,
                         "A small stone dish on tall fins, tipped hard at the sky, with a stub of a spike in its middle. A bite is gone from its rim.",
                         "Three banded stones had fallen from the rim. With them back it hummed, thin and high, and the little door in the spike let go.",
                         "A builder's mark, and a line under it. It says: the first one we made. It was too small to hear anything, and we were proud of it anyway.",
                         "Someone's height is scratched here, year after year. Seven marks, each a little higher than the last.",
                         "It says: point it at the ground, not at the sky. That was the thing we got wrong for the longest time."},
-                {2, "dish_fallen", "The Fallen Ear", (dev.awaken.finds.Kind.Maker) MDish::fallen, 42,
+                {2, "dish_fallen", "The Fallen Ear", (dev.awaken.finds.Kind.Maker) MDish::fallen, 44,
                         "A wide dish lying almost flat in the grass, half its rim gone and the rest sunk level with the field. You could walk across it before you knew what it was.",
                         "You set three stones back in what is left of the rim. The ground hummed under your feet, and the stub in the middle opened.",
                         "It says the ground shook the night this one came down. Nobody was hurt. They never raised it again.",
                         "A tally of what the dish heard, one stroke a day. The strokes stop, and after them someone has cut: nothing for a year. Then: nothing for ten.",
                         "It says: we argued about what the sound was. Some of us said a voice. Some said only weight, settling. We did not agree."},
-                {3, "listening_dish", "The Listening Dish", (dev.awaken.finds.Kind.Maker) MDish::listening, 46,
+                {3, "listening_dish", "The Listening Dish", (dev.awaken.finds.Kind.Maker) MDish::listening, 48,
                         "A stone dish as wide as a village, tipped to the sky and half sunk in the field, its bronze rings green with age. A broken spike stands from its middle with a light still in it.",
                         "Three stones had fallen from its rim. With them back the dish hummed under your feet, and the door in the spike let go.",
                         "This says what the dish was for. They built ears to hear the layers under the world. There were once more than a hundred.",
                         "A day is marked here with a ring cut round it. It says: today something below answered.",
                         "The last line is cut by another hand. It says: leave it on. Someone should keep listening."},
-                {4, "dish_twin", "The Twin Ears", (dev.awaken.finds.Kind.Maker) MDish::twin, 52,
+                {4, "dish_twin", "The Twin Ears", (dev.awaken.finds.Kind.Maker) MDish::twin, 56,
                         "Two dishes face each other across a paved way, each tipped up at its far side like a pair of cupped hands. One has lost part of its rim.",
                         "You mended the rim of the whole one. Both of them hummed, a beat apart, and the door in the nearer spike let go.",
                         "It says they built two so that one could check the other. When both heard the same thing, they believed it.",

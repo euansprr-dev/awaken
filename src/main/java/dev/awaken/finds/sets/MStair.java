@@ -188,8 +188,8 @@ final class MStair {
     // ---- the five -----------------------------------------------------------------------------------------------------
 
     private static void first(Scene s) {
-        s.clear(46);
-        ground(s, 20, 46);
+        s.clear(50);
+        ground(s, 20, 50);
         hall(s, 20, 1);
         flight(s, -11, 16, 1, 30, 2, 99, 99, false, true);
         release(s, -11, 16, 1, 30, 2);
@@ -200,13 +200,13 @@ final class MStair {
         }
         M.heap(s, 30, 8, 3.6);
         M.heap(s, 40, -7, 3.0);
-        finish(s, 46, 20, 4, 24);
+        finish(s, 50, 20, 4, 24);
         s.cam(-30, 5, 36, -150, -14).cam(10, 52, 44, 180, 36).cam(-22, 3, 24, 180, -10).cam(-22, 3, 5, 180, -4);
     }
 
     private static void fallen(Scene s) {
-        s.clear(60);
-        ground(s, 0, 60);
+        s.clear(70);
+        ground(s, 0, 70);
         hall(s, 0, 1);
         // every pier is a stump, and the stair lies beside them where it came down: its arches read lying on the ground
         for (int k = 0; k < 7; k++) {
@@ -232,13 +232,13 @@ final class MStair {
         M.heap(s, 21, 4, 4.2);
         M.heap(s, 56, 4, 3.6);
         M.heap(s, 2, -8, 3.0);
-        finish(s, 60, 0, -16, 32);
+        finish(s, 70, 0, -16, 32);
         s.cam(-52, 8, 40, -125, -4).cam(8, 46, 58, 180, 40).cam(-42, 3, 24, 180, -10).cam(20, 4, 24, 180, 8);
     }
 
     private static void stops(Scene s) {
-        s.clear(62);
-        ground(s, 0, 62);
+        s.clear(70);
+        ground(s, 0, 70);
         hall(s, 0, 0);
         flight(s, -31, 16, 1, 86, 7, 50, 53, true, true);
         release(s, -31, 16, 1, 86, 7);
@@ -247,14 +247,14 @@ final class MStair {
         M.heap(s, 56, 6, 4.2);
         M.heap(s, 46, -10, 3.0);
         M.heap(s, -24, -13, 2.6);
-        finish(s, 62, 0, -16, 22);
+        finish(s, 70, 0, -16, 22);
         s.cam(-46, 6, 32, -128, -22).cam(8, 84, 62, 180, 38).cam(-42, 3, 24, 180, -10).cam(-42, 3, 5, 180, -4);
     }
 
     private static void twin(Scene s) {
         // two stairs that were to meet in the air and never did; the hall stands between their feet
-        s.clear(62);
-        ground(s, 42, 62);
+        s.clear(64);
+        ground(s, 42, 64);
         hall(s, 42, 0);
         for (int dir = -1; dir <= 1; dir += 2) {
             int x0 = -dir * 58;
@@ -270,13 +270,13 @@ final class MStair {
         M.heap(s, 0, 9, 5.0);
         M.heap(s, -6, -10, 3.6);
         M.heap(s, 7, -8, 3.2);
-        finish(s, 62, 42, 28, 22);
+        finish(s, 64, 42, 28, 22);
         s.cam(-30, 6, 50, -160, -24).cam(0, 70, 62, 180, 40).cam(0, 3, 24, 180, -10).cam(0, 3, 5, 180, -4);
     }
 
     private static void whole(Scene s) {
-        s.clear(62);
-        ground(s, 0, 62);
+        s.clear(70);
+        ground(s, 0, 70);
         hall(s, 0, 2);
         int top = flight(s, -31, 16, 1, 82, 7, 99, 99, false, false);
         // where they stepped off: a round landing on the last pier, four columns and a lamp
@@ -290,37 +290,37 @@ final class MStair {
         for (int z = -2; z <= 2; z++) s.put(50, top + 1, z, AIR);
         release(s, -31, 16, 1, 80, 7);
         for (int k = 0; k < 7; k++) M.lampPost(s, -31 + pierAt(k), 16 + rise(pierAt(k)) + 1, -2, 2, true);
-        finish(s, 62, 0, -16, 22);
+        finish(s, 70, 0, -16, 22);
         s.cam(-46, 6, 32, -128, -24).cam(8, 96, 62, 180, 40).cam(-42, 3, 24, 180, -10).cam(52, top + 2, 0, 90, 20);
     }
 
     static void init() {
         Object[][] five = {
-                {1, "stair_first", "The First Flight", (dev.awaken.finds.Kind.Maker) MStair::first, 46,
+                {1, "stair_first", "The First Flight", (dev.awaken.finds.Kind.Maker) MStair::first, 50,
                         "A roofless hall with bronze doors, and a stair on two arches climbing out of it to nothing. Beyond it stand piers that were never joined.",
                         "You climbed to the last landing and let the counterweight go. The doors of the hall came open.",
                         "It says: this is where we tried it first, to see whether stone could be made to climb. It could. We went and built the others.",
                         "A mason's sum, cut and cut again. So many stones a day, so many days. At the bottom: not in my lifetime. Build it anyway.",
                         "It says the ones who began this never saw one finished. They knew that when they started."},
-                {2, "stair_fallen", "The Fallen Stair", (dev.awaken.finds.Kind.Maker) MStair::fallen, 60,
+                {2, "stair_fallen", "The Fallen Stair", (dev.awaken.finds.Kind.Maker) MStair::fallen, 70,
                         "A row of broken piers marching away from a ruined hall, and beside them, in the grass, the whole stair lying where it fell: arch after arch, flat on the ground.",
                         "The winch lay at the far end with the last landing. You let it go where it lay, and back at the hall the doors came open.",
                         "It says nobody pulled this one down. It was left, and a hundred winters did the rest.",
                         "Names, in two columns. The left is headed: went up. The right is headed: stayed. The right column is much the longer.",
                         "It says: we who stayed came here on the day each year, and looked up, for as long as there were any of us who remembered which day."},
-                {3, "stair_that_stops", "The Stair That Stops", (dev.awaken.finds.Kind.Maker) MStair::stops, 62,
+                {3, "stair_that_stops", "The Stair That Stops", (dev.awaken.finds.Kind.Maker) MStair::stops, 70,
                         "A stair on stone arches that climbs out of the trees into the sky and stops in mid-air, chains hanging from the last step. At its foot, a hall with bronze doors shut tight between two worn giants.",
                         "You climbed to the last span and let the counterweight go. The doors came open, and what the leavers could not carry was still on its plinth.",
                         "They cut this where the ones staying behind would see it. It says: we built the stair to come back down. We did not finish it.",
                         "A list of what they could not carry up. Beds. Looms. The names of rivers. It goes on round the corner and stops in the middle of a word.",
                         "This one is cut deeper than the rest. It says: if you can read this, the way up is closed. Go and find the others. Some went down. Some went to sleep."},
-                {4, "stair_twin", "The Stairs That Never Met", (dev.awaken.finds.Kind.Maker) MStair::twin, 62,
+                {4, "stair_twin", "The Stairs That Never Met", (dev.awaken.finds.Kind.Maker) MStair::twin, 64,
                         "Two stairs rise toward each other from either end of a field and stop a short jump apart, high over a hall with bronze doors. From below they look like one arch with its crown knocked out.",
                         "You climbed the western stair to where it ends and let its counterweight go. Down below, the hall's doors came open.",
                         "It says two towns built this, one from each side, to go up together. They quarrelled over who would set the last stone.",
                         "It says: the gap is nine stones. We measured it every year. Nobody would set them.",
                         "Cut small, low down, where a child could reach. It says: I jumped it once. Do not tell them."},
-                {5, "stair_whole", "The Stair That Goes On", (dev.awaken.finds.Kind.Maker) MStair::whole, 62,
+                {5, "stair_whole", "The Stair That Goes On", (dev.awaken.finds.Kind.Maker) MStair::whole, 70,
                         "A stair on seven arches, whole, with a lamp burning on every landing and a round porch of columns at the very top. Nothing is broken. Nobody is on it.",
                         "You climbed all of it. At the top there was only the porch, the wind and the winch. You let the counterweight go, and far below the doors opened.",
                         "It says: this is the one we finished. Everyone who was going went up it in a single day. It took from dawn until the lamps were lit.",

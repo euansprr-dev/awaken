@@ -47,3 +47,13 @@ run/plan-page/render [ids]`. First clean compile of the whole build: commit 9d5f
 
 Page of the sixty: https://claude.ai/artifact/NNj4yph5Drm23jkcbmZi9z (built by `run/plan-page/build_page.py` into `run/plan-page/site2/`; game
 pictures go in through `keep.json`, one list of checked shots per painted monument).
+
+## Finalising (Euan, 11 Nov: "tied into the world generation... never glitchy, like vanilla villages... very rarely see two of the same")
+
+- Deal: a deck per block of 12 by 12 cells, 4,608 blocks square (`Sites.deal`), a kind once a block; yields across block edges
+  within six cells. So nothing repeats within two kilometres of any point.
+- Spot: the whole footprint checked every eighth block (dry, within slope + 4), never above sea + 110, land agreed at 4 of 5
+  points, never within both widths + 24 of a monument with first say.
+- Ground: `G.SKIRT` 10 regrades the land to within `G.WALL` 6 / `G.CUT` 4 of the floor; reaches grew to hold it
+  (`Sites.MAX_REACH` 72); the feature looks 48 down and fills hollows with rock.
+- Count: `/awaken finds census` now says how many stand, of how many kinds, how far to the next and to the next twin.

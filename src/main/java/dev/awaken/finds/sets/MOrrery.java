@@ -49,7 +49,7 @@ final class MOrrery {
      * great ring, whose globe stands on a mast at its middle.
      */
     static void orrery(Scene s, int T, int top, Ring[] rings, int g, int wheels, boolean lit, boolean great, int reach) {
-        G.Shape foot = great ? G.either(G.disc(0, 0, T), G.box(-reach + 4, -7, reach - 4, 7)) : G.disc(0, 0, T);
+        G.Shape foot = great ? G.either(G.disc(0, 0, T), G.box(-reach + 13, -7, reach - 13, 7)) : G.disc(0, 0, T);
         G.platform(s, foot, top, reach);
         s.clear(reach);
         int biggest = 0;
@@ -148,31 +148,31 @@ final class MOrrery {
 
     static void init() {
         Object[][] five = {
-                {1, "orrery_small", "The Small Rings", new Object[] {14, 2, new Ring[] {Ring.up(10, 20, 0), Ring.down(7, 5, 5)}, 2, 2, false, false}, 22,
+                {1, "orrery_small", "The Small Rings", new Object[] {14, 2, new Ring[] {Ring.up(10, 20, 0), Ring.down(7, 5, 5)}, 2, 2, false, false}, 27,
                         "A bronze ring twice the height of a house stands on edge on a little stone terrace, round a stone ball on a post. A second ring lies flat beside it.",
                         "You gave each wheel as many turns as its post has studs. The ring's markers lit, and the vault under the ball let go.",
                         "It says: turn each wheel once for every stud on the post that faces it. That is all the art there is in it. The rest is waiting for a clear night.",
                         "It says this one is a toy beside the others. They built it to teach children how the big ones worked.",
                         "Cut by a small hand, deep and uneven: I made the rings agree. I am nine."},
-                {2, "orrery_fallen", "The Fallen Rings", new Object[] {22, 2, new Ring[] {Ring.down(18, -1, 1), Ring.down(13, 5, -4), Ring.down(9, -6, -7)}, 0, 3, false, false}, 30,
+                {2, "orrery_fallen", "The Fallen Rings", new Object[] {22, 2, new Ring[] {Ring.down(18, -1, 1), Ring.down(13, 5, -4), Ring.down(9, -6, -7)}, 0, 3, false, false}, 35,
                         "Three great bronze rings lie flat on a round terrace, one over another like dropped hoops. The stone ball they turned round has rolled to the edge.",
                         "You turned each wheel by the studs on its post. Under your feet something still answered: the markers lit, and the vault in the empty plinth let go.",
                         "It says: turn each wheel once for every stud on the post that faces it. The rings will not move now, but the works under the floor still count.",
                         "It says the rings came down the winter after the last of the keepers went up. Nobody was left to oil them.",
                         "It says: I was the keeper's boy. I was too young to go. I have watched the sky from here every clear night since, without the rings. You can still do it."},
-                {3, "orrery", "The Orrery", new Object[] {30, 3, new Ring[] {Ring.up(26, 20, 16), Ring.up(21, 125, -22), Ring.up(16, 78, 9), Ring.down(11, 16, 15)}, 4, 3, false, false}, 38,
+                {3, "orrery", "The Orrery", new Object[] {30, 3, new Ring[] {Ring.up(26, 20, 16), Ring.up(21, 125, -22), Ring.up(16, 78, 9), Ring.down(11, 16, 15)}, 4, 3, false, false}, 43,
                         "Three bronze rings as wide as a field lean at different angles round a stone globe on a hilltop terrace, and a fourth lies broken across the paving. Stone wheel-houses stand at the terrace's edge.",
                         "You gave each wheel as many turns as its post has studs. The rings agreed, their markers lit one after another, and the vault under the globe let go.",
                         "It says: turn each wheel once for every stud on the post that faces it. When the three rings agree, you are looking at the way up.",
                         "The way up opens when the three rings agree. We have had it wrong twice.",
                         "It says: the first time we had it wrong, forty people stepped off the top of the stair into nothing. We do not speak of the second time."},
-                {4, "orrery_great", "The Great Ring", new Object[] {16, 3, new Ring[] {Ring.up(30, 90, 0)}, 3, 2, false, true}, 38,
+                {4, "orrery_great", "The Great Ring", new Object[] {16, 3, new Ring[] {Ring.up(30, 90, 0)}, 3, 2, false, true}, 48,
                         "One bronze ring stands on edge across a ridge, sixty blocks from foot to crown, with nothing inside it but sky and a stone ball on a mast at its exact middle.",
                         "You turned the two wheels by the studs on their posts. All the way round the ring the markers lit, and the vault under the mast let go.",
                         "It says: turn each wheel once for every stud on the post that faces it. This ring has only one thing to say, and it says it at dusk on the right day.",
                         "It says they built this one last and largest because the small ones kept being wrong.",
                         "It says: stand at the south wheel on the evening of the longest day and look through. That is where they went. It is further than it looks."},
-                {5, "orrery_whole", "The Rings That Still Turn", new Object[] {32, 4, new Ring[] {Ring.up(28, 15, 14), Ring.up(23, 110, -20), Ring.up(18, 70, 24), Ring.up(13, 160, -8)}, 5, 4, true, false}, 40,
+                {5, "orrery_whole", "The Rings That Still Turn", new Object[] {32, 4, new Ring[] {Ring.up(28, 15, 14), Ring.up(23, 110, -20), Ring.up(18, 70, 24), Ring.up(13, 160, -8)}, 5, 4, true, false}, 45,
                         "Four bronze rings stand whole round a great globe, every marker on them burning, lamps lit all round the terrace. Now and then one of the rings moves, a hand's width, with a sound like a door.",
                         "You set the four wheels by their studs. The rings came round together and stopped. Every marker burned white, and the vault under the globe let go.",
                         "It says: turn each wheel once for every stud on the post that faces it. It is right now. We checked it for a hundred years. Do not let anyone tell you the way up was a guess.",

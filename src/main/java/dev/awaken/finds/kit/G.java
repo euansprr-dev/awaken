@@ -45,38 +45,53 @@ public final class G {
         return Math.abs(gx) >= Math.abs(gz) ? (gx > 0 ? Direction.WEST : Direction.EAST) : (gz > 0 ? Direction.NORTH : Direction.SOUTH);
     }
 
+    /** How much of a fall the terrace's wall takes, and how much of a rise its faced cut; the land is eased to meet the rest. */
+    public static final int WALL = 6, CUT = 4;
+    /** How far out from a terrace's wall the land is regraded to meet it. A kind's reach has to hold its terrace and this. */
+    public static final int SKIRT = 10;
+
+    /** Where the ground stands at a terrace's wall once the land has been eased toward it: the land's own height, held within what the wall and the cut take. */
+    private static int foot(Scene s, int x, int z, int top) {
+        return Math.max(top - WALL, Math.min(top + CUT, s.nat(x, z)));
+    }
+
     /**
-     * The terrace. Inside the footprint the ground is set to {@code top}; the first course outside it is the wall, the
-     * second its batter (two thirds as high, with a sloped top), and where the wall is tall a third course of buttresses
-     * every seven or so. {@code reach} bounds the columns looked at.
+     * The terrace (SPEC §62.3). Inside the footprint the ground is set to {@code top}. Round it the land is eased over
+     * {@link #SKIRT} blocks until it stands no more than {@link #WALL} below the floor or {@link #CUT} above it, the way
+     * ground is made up to a village: a long gentle regrade in the land's own skin. What is left the masonry takes: the
+     * first course outside the footprint is the wall, the second its batter (two thirds as high, with a sloped top).
+     * Where the land is level there is only a kerb flush with the grass. {@code reach} bounds the columns looked at.
      */
     public static void platform(Scene s, Shape f, int top, int reach) {
         for (int x = -reach; x <= reach; x++)
             for (int z = -reach; z <= reach; z++) {
                 double d = f.out(x, z);
-                if (d > 3.3) continue;
+                if (d > 2.2 + SKIRT) continue;
                 if (d <= 0) {
                     s.ground(x, z, top);
                     continue;
                 }
-                int nat = s.nat(x, z), low = top - nat;
+                int nat = s.nat(x, z), foot = foot(s, x, z, top), low = top - foot;
+                if (d > 2.2) {                                    // the skirt: the land comes to meet the wall's foot
+                    if (foot == nat) continue;
+                    double t = (d - 2.2) / SKIRT;
+                    t = t * t * (3 - 2 * t);
+                    int g = (int) Math.round(foot + (nat - foot) * t);
+                    if (g != nat) s.ground(x, z, g);
+                    continue;
+                }
+                if (foot != nat) s.ground(x, z, foot);
                 if (d <= 1.2) {
                     if (low >= 1) {                              // the land falls away: a wall from under it to the floor
-                        for (int y = nat - 1; y <= top; y++) s.put(x, y, z, y == top ? M.block() : low >= 6 && y == top - 3 ? M.band() : M.course(y));
+                        for (int y = foot - 1; y <= top; y++) s.put(x, y, z, y == top ? M.block() : low >= 5 && y == top - 2 ? M.band() : M.course(y));
                         if (low >= 3 && n(s, x * 1.3 + 5, z * 1.3 - 3, 4.0) > 0.36) s.put(x, top + 1, z, M.wall());
                     } else if (low <= -1) {                      // the land rises: the cut is faced, coped at the land's own height
                         s.put(x, top, z, M.block());
-                        for (int y = top + 1; y <= nat; y++) s.put(x, y, z, y == nat ? M.block() : M.course(y));
+                        for (int y = top + 1; y <= foot; y++) s.put(x, y, z, y == foot ? M.block() : M.course(y));
                     } else s.put(x, top, z, M.flag());           // level: a kerb flush with the grass
-                } else if (d <= 2.2) {
-                    if (low >= 4) {
-                        int up = nat + low * 2 / 3;
-                        for (int y = nat - 1; y <= up; y++) s.put(x, y, z, M.course(y));
-                        s.put(x, up + 1, z, stair(M.blockStairs(), inward(f, x, z)));
-                    }
-                } else if (low >= 7 && Math.floorMod(x * 3 + z * 5, 7) == 0) {
-                    int up = nat + low / 3;
-                    for (int y = nat - 1; y <= up; y++) s.put(x, y, z, M.block());
+                } else if (low >= 4) {
+                    int up = foot + low * 2 / 3;
+                    for (int y = foot - 1; y <= up; y++) s.put(x, y, z, M.course(y));
                     s.put(x, up + 1, z, stair(M.blockStairs(), inward(f, x, z)));
                 }
             }
@@ -90,13 +105,13 @@ public final class G {
      */
     public static int stairs(Scene s, int x, int z, Direction out, int half, int top) {
         int sx = out.getStepX(), sz = out.getStepZ(), px = -sz, pz = sx;
-        boolean down = s.nat(x + sx * 2, z + sz * 2) <= top;
+        boolean down = s.g(x + sx * 2, z + sz * 2) <= top;
         int k = 0;
         for (; k < 30; k++) {
-            int cx = x + sx * k, cz = z + sz * k, y = down ? top - k : top + 1 + k, g = s.nat(cx, cz);
+            int cx = x + sx * k, cz = z + sz * k, y = down ? top - k : top + 1 + k, g = s.g(cx, cz);
             if (down ? y <= g : y > g) break;
             for (int w = -half - 1; w <= half + 1; w++) {
-                int wx = cx + px * w, wz = cz + pz * w, gw = s.nat(wx, wz);
+                int wx = cx + px * w, wz = cz + pz * w, gw = s.g(wx, wz);
                 boolean cheek = Math.abs(w) == half + 1;
                 if (down) {
                     for (int yy = Math.min(gw, y) - 1; yy < y; yy++) s.put(wx, yy, wz, M.course(yy));

@@ -200,9 +200,9 @@ final class MMast {
     }
 
     private static void twin(Scene s) {
-        s.clear(34);
+        s.clear(40);
         // two masts, and a hull slung level between them like a hammock
-        G.platform(s, G.either(G.disc(-17, 0, R + 6), G.either(G.disc(17, 0, R + 6), G.box(-17, -5, 17, 5))), 0, 34);
+        G.platform(s, G.either(G.disc(-17, 0, R + 6), G.either(G.disc(17, 0, R + 6), G.box(-17, -5, 17, 5))), 0, 40);
         for (int x = -24; x <= 24; x++) for (int z = -8; z <= 8; z++) if (!s.taken(x, 1, z) && (Math.abs(z) <= 4 || Math.hypot(Math.abs(x) - 17, z) < R + 5.5)) s.put(x, 0, z, Math.floorMod(x + z, 5) == 0 ? M.block() : M.flag());
         tower(s, -17, 0, 50, false);
         tower(s, 17, 0, 44, false);
@@ -219,7 +219,7 @@ final class MMast {
         path(s, 0, 6 + steps + 8, 0, 6 + steps, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
         M.finish(s, 5, 48);
         Mon.camp(s, 0, -16);
-        wild(s, 28, 33, 8);
+        wild(s, 30, 39, 8);
         s.cam(-20, 4, 30, -160, -36).cam(0, 60, 34, 180, 36).cam(0, 3, 12, 180, -30).cam(-10, 42, 3, -90, 10);
     }
 
@@ -273,7 +273,7 @@ final class MMast {
                         "Last ship. We waited four days for the ones from the valley. We cannot wait any longer.",
                         "It says: a ship takes two hundred. There were nine ships and six thousand of us. We drew lots, and then some who had won gave their place away.",
                         "It says: this one was for the people from the valley. They never came. We left it tied on in case."},
-                {4, "mast_twin", "The Twin Masts", (dev.awaken.finds.Kind.Maker) MMast::twin, 34,
+                {4, "mast_twin", "The Twin Masts", (dev.awaken.finds.Kind.Maker) MMast::twin, 40,
                         "Two stone towers stand a short way apart, and between them, high up, a bronze hull hangs level on chains like a boat on a slip.",
                         "You climbed the western tower, went out along its arm and knocked out the pin. The hull dropped between the towers and broke its back.",
                         "It says this was the yard. Ships were hung here to be finished, between the two masts, where the wind could not turn them.",

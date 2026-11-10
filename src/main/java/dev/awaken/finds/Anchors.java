@@ -120,11 +120,29 @@ final class Anchors {
                     }
                 }
             }
+            // then the whole of it, every eighth block: a pond, a stream or a sudden drop between the seventeen points
+            // would put a wall in water or a terrace over a cliff (SPEC §62.3). And never so high that what stands on it
+            // nears the world's roof.
+            if (sorted[10] > sea + 110 || !sound(t, cx, cz, r, sea, sorted[0], sorted[16], Math.max(4, k.slope()) + 4)) continue;
             int[] at = {cx, sorted[10], cz, rot};
             if (!highest) return at;
             if (best == null || at[1] > best[1]) best = at;
         }
         return best;
+    }
+
+    /** Whether a disc of ground is all dry and all within {@code spread} from its lowest to its highest, looked at every eighth block. */
+    private static boolean sound(Terrain t, int cx, int cz, int r, int sea, int lo, int hi, int spread) {
+        for (int x = -r; x <= r; x += 8)
+            for (int z = -r; z <= r; z += 8) {
+                if (x * x + z * z > r * r) continue;
+                int f = t.floor(cx + x, cz + z);
+                if (f <= sea) return false;
+                lo = Math.min(lo, f);
+                hi = Math.max(hi, f);
+                if (hi - lo > spread) return false;
+            }
+        return true;
     }
 
     private static int @Nullable [] flat(Kind k, Terrain t, int x, int z, long h) {
