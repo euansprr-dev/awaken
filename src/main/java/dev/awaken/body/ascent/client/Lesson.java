@@ -300,14 +300,22 @@ final class Lesson {
         return p.getEyePosition(pt).add(look.normalize().scale(10)).add(0, 12, 0);
     }
 
-    /** A crouch and a rise straight up, three blocks ahead: the takeoff, shown. */
+    /**
+     * A second stood still and then a rise straight up, six blocks ahead: the takeoff, shown. Slower than the move
+     * itself and far enough off that a level look still holds most of the rise (three blocks ahead, at the move's own
+     * pace, it had left the view before a second was out: the third look tour).
+     */
     private static Vec3[] risePath(LocalPlayer p) {
         Vec3 look = p.getLookAngle().multiply(1, 0, 1);
         if (look.lengthSqr() < 1e-4) look = new Vec3(0, 0, 1);
-        Vec3 o = p.position().add(look.normalize().scale(3));
-        int n = 12;
+        Vec3 o = p.position().add(look.normalize().scale(6));
+        int still = 7, n = still + 16;
         Vec3[] out = new Vec3[n];
-        for (int i = 0; i < n; i++) out[i] = i < 4 ? o : o.add(0, (i - 3) / (double) (n - 4) * dev.awaken.body.ascent.AirRules.TAKEOFF_RISE, 0);
+        for (int i = 0; i < n; i++) {
+            double t = Math.max(0, i - still + 1) / (double) (n - still);
+            // off the ground fast, easing at the top, as the wings do
+            out[i] = o.add(0, (1 - (1 - t) * (1 - t)) * dev.awaken.body.ascent.AirRules.TAKEOFF_RISE, 0);
+        }
         return out;
     }
 
@@ -632,10 +640,11 @@ final class Lesson {
             py = Math.round(sy);
         }
         int x0 = Mth.clamp(px - total / 2, 6, Math.max(6, w - total - 6));
-        int y0 = target == null ? py : Mth.clamp(py - 34, 8, h - 60);
-        int rim = Glass.a(Glass.EDGE, 0.85F * a);
         // held at the edge: which way to turn, on the plate itself (out on the sky it could not be read)
         String arrow = target == null || pinned && !off ? null : sx < w * 0.25F ? "<" : sx > w * 0.75F ? ">" : sy < h * 0.5F ? "^" : "v";
+        // held at the top it sits under the band where the System's cards and the heading live, not among them
+        int y0 = target == null ? py : Mth.clamp(py - 34, "^".equals(arrow) ? 52 : 8, h - 60);
+        int rim = Glass.a(Glass.EDGE, 0.85F * a);
         boolean arrowLeft = arrow != null && sx < w * 0.25F;
         int room = arrow == null ? 0 : font.width(arrow) + 7;
         if (arrow != null) x0 = Mth.clamp(x0, 6 + (arrowLeft ? room : 0), Math.max(6, w - total - 6 - (arrowLeft ? 0 : room)));

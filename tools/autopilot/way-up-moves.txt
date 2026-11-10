@@ -42,36 +42,37 @@ cmd fill -294 250 -20 -270 250 110 minecraft:smooth_stone
 cmd tp @s -282.5 251 -16.5 0 0
 wait 60
 # ---- the takeoff, standing outdoors with flight ----
-cmd awaken ascent grant skyborn
 cmd awaken ascent aether full
 cmd awaken ascent pilot aether 1
-# the road is told within five seconds; then standing still brings the lesson, and the gold figure rises ahead in
-# its first three seconds: a shot every half second until it must have been
-wait 16
+wait 20
+# the lesson begins within a quarter second of flight being held (the road is already told), and its gold figure
+# stands a second and rises for two and a half, six blocks ahead: a shot every third of a second from the grant
+cmd awaken ascent grant skyborn
+wait 4
 shotnow moves_00a_standing
-wait 10
+wait 4
 shotnow moves_00b_standing
-wait 10
+wait 4
 shotnow moves_00c_standing
-wait 10
+wait 4
 shotnow moves_00d_standing
-wait 10
+wait 4
 shotnow moves_00e_standing
-wait 10
+wait 4
 shotnow moves_00f_standing
-wait 10
+wait 4
 shotnow moves_00g_standing
-wait 10
+wait 4
 shotnow moves_00h_standing
-wait 10
+wait 4
 shotnow moves_00i_standing
-wait 10
+wait 4
 shotnow moves_00j_standing
-wait 10
+wait 4
 shotnow moves_00k_standing
-wait 10
+wait 4
 shotnow moves_00l_standing
-wait 30
+wait 60
 shotnow moves_01_takeoff_standing
 cmd tp @s ~ ~ ~ ~ -50
 wait 14
