@@ -18169,13 +18169,43 @@ blocks through stone, no marks, no danger sense).
     shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
     and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
     step brighter, to part the two.
-  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+  - **Stage 3, set by set** (limbs, belts and backs only; no helm is touched). Euan saw C-rank in his play copy
+    and said, on 11 Nov 2026: "with all B, A, and S plates... This is already great work so far. Let's fully update
+    this and finish it." C-rank:
     **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
     blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
     under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
     a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
     forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
     own (cut-ice plates, fluted gold) and nothing more.
+  - **B, A and S** (`armour_finish.PLATES`, parts named `p_*`, run before the language, night and gauntlet passes so
+    a new plate takes its set's surface and light like any other). Each set gets what its own idea was missing on
+    limbs and back, an elbow where Lordscale has one and it did not, and a sleeve where the wearer's own skin showed
+    under a pauldron (Deepcarapace, Tidebreaker, Hollowheart, Leviathan, Starfall, Riftwalker). Every box is whole
+    texels in size and joined to the suit; only Dreamsteel's and Riftwalker's plates stand a texel off, as they
+    already did. The three Hunter sets of these ranks (Veilwoven, Lordscale, Sovereign Weave) are not touched.
+    - **Deepcarapace**: a knuckled elbow with a spur swept back from it, another spur at the calf, a keel on the knee
+      like the breast's.
+    - **Cloudrunner**: the helm's and heel's feathered fins again at the forearm, swept back from a plated elbow; a
+      feather-tipped plate on each thigh.
+    - **Tidebreaker**: the crest's webbed fin and amethyst spines down the back of the forearm; a spine on the knee
+      (the spines hold their light at night, as the crest's do).
+    - **Hollowheart**: its spine: three vertebrae with their wings down the cape, where a back would be; a bone spur
+      at the elbow.
+    - **Leviathan**: the back's sail again on forearm and calf, a fin cut in three steps with a bone ray along its
+      top (lit at night with the other fins); a tooth on the knee.
+    - **Galewing**: a wing feather swept back from a steel elbow; two flight feathers laid over each thigh.
+    - **Halo Choir**: a choir's organ on the back: five pipes rising to the middle, a gold lip on each and a lit
+      mouth; a gilt elbow.
+    - **Dreamsteel**: the mirror on its back broken in three, each piece at its own depth, light in the cracks; a
+      plate on the upper arm and the thigh; a shard at the elbow.
+    - **Starfall**: the star again on the back as it fell, its tail burning up toward the shoulder; a pointed elbow.
+    - **Riftwalker**: the rift's light in the gap under the forearm's and the thigh's standing plates; the shoulder,
+      where the wearer's shirt showed, closed.
+    - **Nightcourt**: a duelist's half-cloak over the left shoulder to the elbow, in a lighter night blue with a
+      silver hem, the sword arm left free; a silver half-belt with two buttons across the back of the coat.
+    - **Signal's Echo**: the System's light down the back, three dashes that light in turn; a scanline plate on each
+      thigh; and its displaced slices of robe now really glitch (§44.10).
   - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
     one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
     kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
@@ -18532,15 +18562,19 @@ that fidgets would be wrong).
   those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
   and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
   (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
-- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+- **Six motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
   **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
   axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
-  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+  three slow sines), **pulse** (swells on a double beat) and **glitch** (jumps a texel along its axis and back for two
+  or three ticks, in about a third of its slots of 31 to 53 ticks; which slots and which way come from a hash of the
+  slot number, so every client shows the same jump with nothing sent; with the set's ability fired it tears back and
+  forth every two ticks). Any of the first five may bob up and down.
 - **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
   1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
   (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
   same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
-- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+- **The sets.** Signal's Echo: the marker turns and bobs, and the four slices of robe that sit out of line (on the
+  body, the cape and both skirts) glitch, each on its own clock, so one jumps somewhere every couple of seconds. Sunward: the rays turn slowly behind the disc. Halo Choir: the
   halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
   stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
   a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
