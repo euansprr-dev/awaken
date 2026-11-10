@@ -254,33 +254,34 @@ def gel_sample():
     r.shadow = 1.0
     body = r.bone("body", (0, 22, 0))
     body.cube("gel", -5, -9, -5, 10, 9, 10)
-    body.cube("plinthG", -6, 0, -6, 12, 2, 12)
+    # its glass and its plinth hang from bones named jar*: a half that came out of a broken one is drawn without them
+    body.bone("jar_base", (0, 0, 0)).cube("plinthG", -6, 0, -6, 12, 2, 12)
     body.bone("core", (0, -4, 0)).cube("nucleus", -2, -2, -2, 4, 4, 4)
     for k, (x, z, turn) in enumerate(WALLS):
-        w = body.bone(f"wall{k}", (x, 0, z), (0, turn, 0))
+        w = body.bone(f"jar_wall{k}", (x, 0, z), (0, turn, 0))
         w.cube(f"shardG{k}", -5, -7 - 2 * (k % 2), -0.5, 6 + 2 * (k % 3), 7 + 2 * (k % 2), 1)
-    lid = body.bone("cap", (2, -9.5, 1), (0, 20, 14))
+    lid = body.bone("jar_cap", (2, -9.5, 1), (0, 20, 14))
     lid.cube("lidG", -5, -1, -5, 10, 1, 10)
     lid.cube("valveG", -1.5, -3, -1.5, 3, 2, 3)
     r.pack()
 
     def shell(a, k=1.0):
         """The glass leaned out from the gel (a degrees), the gel squashed to k of its height."""
-        q = {f"wall{i}": (-a, 0, 0) for i in range(4)}
+        q = {f"jar_wall{i}": (-a, 0, 0) for i in range(4)}
         q["body"] = {"scale": (1 + (1 - k) * 0.6, k, 1 + (1 - k) * 0.6)}
         return q
     beat = lambda k: {"core": {"scale": (k, k, k)}}  # noqa: E731
     K.moves(r, breach="Containment Breach")
-    K.act(r, "breach", K.plus(shell(-4, 0.7), beat(1.3), {"cap": (0, 0, 10)}), K.plus(shell(30, 1.25), beat(1.6), {"body": {"pos": (0, 3, -2), "rot": (-10, 0, 0)}, "cap": {"pos": (0, 3, 0), "rot": (0, 0, -30)}}),
-          w=0.9, length=0.5, t_hit=0.09, open_pose=K.plus(shell(44, 0.55), beat(0.7), {"cap": {"pos": (2, 1, 0), "rot": (0, 0, 30)}}))
+    K.act(r, "breach", K.plus(shell(-4, 0.7), beat(1.3), {"jar_cap": (0, 0, 10)}), K.plus(shell(30, 1.25), beat(1.6), {"body": {"pos": (0, 3, -2), "rot": (-10, 0, 0)}, "jar_cap": {"pos": (0, 3, 0), "rot": (0, 0, -30)}}),
+          w=0.9, length=0.5, t_hit=0.09, open_pose=K.plus(shell(44, 0.55), beat(0.7), {"jar_cap": {"pos": (2, 1, 0), "rot": (0, 0, 30)}}))
     K.plain(r, K.plus(shell(-3, 0.85), {"body": {"rot": (-10, 0, 0)}}), K.plus(shell(14, 1.1), {"body": {"rot": (16, 0, 0), "pos": (0, 0.5, -2)}}))
-    K.loop(r, "idle", 3.0, lambda p: K.plus(shell(2 * s(p), 1 + 0.03 * s(p * 2)), beat(1 + 0.12 * s(p * 2)), {"cap": (0, 0, 2 * s(p))}))
-    K.loop(r, "walk", 0.5, lambda p: K.plus(shell(4 + 6 * max(0, s(p)), 1 + 0.12 * s(p)), {"cap": {"pos": (0, 0.8 * max(0, s(p, 0.1)), 0)}}))
+    K.loop(r, "idle", 3.0, lambda p: K.plus(shell(2 * s(p), 1 + 0.03 * s(p * 2)), beat(1 + 0.12 * s(p * 2)), {"jar_cap": (0, 0, 2 * s(p))}))
+    K.loop(r, "walk", 0.5, lambda p: K.plus(shell(4 + 6 * max(0, s(p)), 1 + 0.12 * s(p)), {"jar_cap": {"pos": (0, 0.8 * max(0, s(p, 0.1)), 0)}}))
     K.loop(r, "angry", 0.8, lambda p: K.plus(shell(10 + 6 * s(p * 2), 1.05), beat(1.4 + 0.2 * s(p * 4)), {"body": (0, 0, 4 * s(p))}))
-    K.flinch(r, K.plus(shell(18, 0.88), beat(0.7), {"body": {"rot": (-8, 0, 10)}, "cap": {"pos": (0, 1.5, 0)}}))
-    burst = {f"wall{i}": {"rot": (-86, 0, 0), "pos": (2.5 * math.sin(math.radians(WALLS[i][2])), 0, -2.5 * math.cos(math.radians(WALLS[i][2])))} for i in range(4)}
-    K.keyed(r, "death", 0.9, [(0, {}), (0.12, K.plus(shell(-5, 0.8), beat(1.8))), (0.4, K.plus(burst, beat(0.5), {"body": {"scale": (1.25, 0.45, 1.25)}, "cap": {"pos": (4, -4, 2), "rot": (0, 0, 60)}})),
-                              (0.9, K.plus(burst, beat(0.02), {"body": {"scale": (1.4, 0.16, 1.4)}, "cap": {"pos": (5, -7, 3), "rot": (0, 0, 80), "scale": (1 / 1.4, 6, 1 / 1.4)}}))])
+    K.flinch(r, K.plus(shell(18, 0.88), beat(0.7), {"body": {"rot": (-8, 0, 10)}, "jar_cap": {"pos": (0, 1.5, 0)}}))
+    burst = {f"jar_wall{i}": {"rot": (-86, 0, 0), "pos": (2.5 * math.sin(math.radians(WALLS[i][2])), 0, -2.5 * math.cos(math.radians(WALLS[i][2])))} for i in range(4)}
+    K.keyed(r, "death", 0.9, [(0, {}), (0.12, K.plus(shell(-5, 0.8), beat(1.8))), (0.4, K.plus(burst, beat(0.5), {"body": {"scale": (1.25, 0.45, 1.25)}, "jar_cap": {"pos": (4, -4, 2), "rot": (0, 0, 60)}})),
+                              (0.9, K.plus(burst, beat(0.02), {"body": {"scale": (1.4, 0.16, 1.4)}, "jar_cap": {"pos": (5, -7, 3), "rot": (0, 0, 80), "scale": (1 / 1.4, 6, 1 / 1.4)}}))])
     return r
 
 

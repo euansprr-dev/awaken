@@ -21687,8 +21687,10 @@ for every death that uses it).
 
 ### 60.6 Known gaps
 
-- The Gel Sample's two halves keep their glass; the Mirage's "only the real one casts a shadow" and the Sheet's "moves
-  only when you blink" lean on rules the bestiary already had (DECOY, HAUNTED) and were not re-tuned.
+- The Mirage's "only the real one casts a shadow" and the Sheet's "moves only when you blink" lean on rules the
+  bestiary already had (DECOY, HAUNTED) and were not re-tuned.
+- The Gel Sample's two halves come out bare: bones named `jar*` (its glass walls, cap and plinth) are not drawn on a
+  split child (`WildModel`, `AwakenMob.F_SPLIT_CHILD`).
 - The shared carriers (the wave, the lobbed globe, the ground line, the pull) are the fight language of §47.2 and are
   drawn the same for every creature on purpose; a monster's own look is its body, its shot (§60.7), its matter and its
   two fight voices (§60.8).
@@ -21798,6 +21800,8 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   arrives, with its own tell. Its body used to play the strike on arrival, six ticks before the cut landed. It now
   arrives poised (the move's wind-up held at its last frame) and strikes as the cut's tell ends; if the cut never
   comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
+- From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
+  body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.

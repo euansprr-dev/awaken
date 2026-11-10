@@ -27,7 +27,8 @@ import java.util.Map;
  * water and the caves need: in water the swim loop ({@code fly}) replaces the walk and runs faster the faster it
  * swims; held poses play their own clips ({@code hang}, {@code chirp}, {@code ripen}, {@code listen}, {@code deflate},
  * {@code carry}, {@code rest}, {@code beached}, {@code ridden}); bones named {@code bridle*} show only on a bridled
- * mount. Graph weights ease in and out, the fall crossfades from the live pose, and the life layer (SPEC §23) goes on
+ * mount, and bones named {@code jar*} (what a body breaks out of when it splits: the Gel Sample's glass) are not drawn
+ * on a split child. Graph weights ease in and out, the fall crossfades from the live pose, and the life layer (SPEC §23) goes on
  * top, as on {@link HeroModel}.
  */
 public final class WildModel extends EntityModel<WildRenderState> {
@@ -42,6 +43,7 @@ public final class WildModel extends EntityModel<WildRenderState> {
     private final ModelPart[] lookParts;
     private final float[] lookYaw, lookPitch;
     private final ModelPart[] bridle;
+    private final ModelPart[] jar;
     private final int[] holds = new int[HOLD_BITS.length];
     private final int idle, walk, run, fly, death, hurt, bite, angry, sleep, beat;
     private final LifeRig life;
@@ -71,6 +73,13 @@ public final class WildModel extends EntityModel<WildRenderState> {
             if (p != null) straps.add(p);
         }
         bridle = straps.toArray(new ModelPart[0]);
+        List<ModelPart> glass = new ArrayList<>();
+        for (HeroRig.Bone b : rig.bones) {
+            if (!b.name().startsWith("jar")) continue;
+            ModelPart p = lookup.apply(b.name());
+            if (p != null) glass.add(p);
+        }
+        jar = glass.toArray(new ModelPart[0]);
         for (int i = 0; i < HOLD_CLIPS.length; i++) holds[i] = clip(HOLD_CLIPS[i]);
         idle = clip("idle");
         walk = clip("walk");
@@ -143,6 +152,7 @@ public final class WildModel extends EntityModel<WildRenderState> {
         super.setupAnim(s);
         boolean bridled = (s.wild & WildPose.S_BRIDLED) != 0;
         for (ModelPart p : bridle) p.visible = bridled;
+        for (ModelPart p : jar) p.visible = !s.bare;
         Life l = Life.from(s);
         float live = 1.0F;
         if (s.dying >= 0 && death >= 0) {

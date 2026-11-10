@@ -46,6 +46,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private static final float STRIKE_LEAD = 0.08F;
     /** Seconds a body stands poised after a step if nothing says how long its cut is told (AbilityRunner.BLINK_CUT). */
     private static final float POISED = 0.4F;
+    /** Seconds a gate monster's body takes to cross from one cue's pose into the next cue's. */
+    private static final float CROSS = 0.1F;
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
             | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP | WildPose.S_GRAZE;
@@ -157,6 +159,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         s.wild = mob instanceof WildPose w ? w.wildState() : mob instanceof FaunaMob g && (g.pose() & FaunaMob.P_GRAZE) != 0 ? WildPose.S_GRAZE : 0;
         s.beat = mob instanceof WildPose w ? w.beatTime(partialTicks) : -1;
         s.pitch = (s.wild & WildPose.S_SWIM) != 0 ? Mth.clamp(mob.getXRot(partialTicks), -60.0F, 60.0F) : 0.0F;
+        s.bare = mob.flag(AwakenMob.F_SPLIT_CHILD);
         if (!(mob instanceof RigBody f)) return;
         s.gait = f.gait(partialTicks);
         s.speed = f.gaitSpeed();
@@ -182,6 +185,23 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
                 s.cueClip = clip;
                 s.cueTime = time;
             }
+        } else if (lead > 0 && was != FaunaMob.CUE_NONE && FaunaMob.cueStage(f.cue()) != FaunaMob.CUE_NONE && !follows(f)) {
+            // from one cue straight into another (the next blow of a string told while the last one settles, a miss
+            // while it struck): the body crosses from the pose it was in over a tenth of a second, never in one frame
+            float fade = (now - f.cueStart()) / 20.0F;
+            if (fade < CROSS) {
+                int clip = s.cueClip;
+                float time = s.cueTime, weight = s.cueWeight;
+                boolean struck = was == FaunaMob.CUE_STRIKE || was == RigBody.CUE_OPEN;
+                resolve(f.prevCue(), (f.prevCueEnd() - f.prevCueStart()) / 20.0F + (struck ? lead : 0), s, true, f.prevCueTell());
+                float u = fade / CROSS;
+                s.prevClip = s.cueClip;
+                s.prevTime = s.cueTime;
+                s.prevWeight = s.cueWeight * (1.0F - u);
+                s.cueClip = clip;
+                s.cueTime = time;
+                s.cueWeight = weight * u;
+            }
         }
         int melee = mob.tickCount - f.meleeStart();
         s.melee = melee >= 0 && melee < 40 ? (now - f.meleeStart()) / 20.0F : -1;
@@ -195,6 +215,13 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
             s.hasRedOverlay = false;
         }
         live(mob, s, l, f);
+    }
+
+    /** Whether the current cue carries straight on from the one before it: a strike after its own wind-up (see begun). */
+    private static boolean follows(RigBody f) {
+        int stage = FaunaMob.cueStage(f.cue()), was = FaunaMob.cueStage(f.prevCue());
+        return (stage == FaunaMob.CUE_STRIKE || stage == RigBody.CUE_OPEN) && (was == FaunaMob.CUE_WINDUP || was == RigBody.CUE_POISED)
+                && FaunaMob.cueSlot(f.cue()) == FaunaMob.cueSlot(f.prevCue());
     }
 
     /**
