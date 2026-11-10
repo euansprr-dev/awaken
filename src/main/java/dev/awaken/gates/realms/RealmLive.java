@@ -185,7 +185,9 @@ public final class RealmLive {
                     Land.Leg leg = land.legOfDen(s.index());
                     if (leg != null && leg.kind() == Land.LegKind.AMBUSH) continue; // an ambush isn't standing there to be seen: RealmRun springs it
                     if (d2 >= WAKE * WAKE || !level.isLoaded(at) || !st.woken.add("den" + s.index())) continue;
-                    RealmPacks.den(level, g, f, at, s.index(), leg == null ? List.of() : leg.pack(), null);
+                    // a den nobody designed still gets a herd of its own: the theme's, gone round den by den
+                    List<String> pack = leg == null || leg.pack().isEmpty() ? dev.awaken.gates.run.Herds.of(g.plan.theme().id, s.index(), g.plan.seed(), land.indoors()) : leg.pack();
+                    RealmPacks.den(level, g, f, at, s.index(), pack, null);
                     data.setDirty();
                 }
                 case WARDEN -> {

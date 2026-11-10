@@ -20629,3 +20629,9 @@ names are spawned through it: any creature by its id, in the role its own tier g
 Lord), scaled to the gate's content level and counted and paid as a monster of the gate. `spawnCreature` stays what it was (a
 Realm's peaceful life, no gate role), which is why a pack could not use it. A name nothing answers to gets one of the theme's
 own instead, so a typo never empties a room. Test `realm_packs_spawn_by_name`.
+
+**Herds for a den nobody designed** (`gates/run/Herds`). A land whose run is only read off its sites (Amber Reach, The Vine
+Seat, Kingsroot Keep, Saltcomb Flats, The Quiet Barrow, The Wax Galleries, until each gets its own) takes its dens' packs from
+its theme's herds, four each for the Hive, the Bell Crypt and the Overgrown Temple, gone round den by den from a start the
+seed picks, so two camps in one land are not the same fight. Under a roof a fifth herd joins the round: Drip Lurkers or
+Hushlings with one of the theme's own. A theme with no herds rolls from its roster as before.
