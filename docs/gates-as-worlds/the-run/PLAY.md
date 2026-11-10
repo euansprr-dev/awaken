@@ -75,10 +75,9 @@ creative player, and packs do not notice one.
   in `../round-two/STATUS.md`). This work was about play, not those looks.
 - The rolled dungeons are plainer than a gate built by hand from a painting. They are meant to be the short gates in the mix.
 - Every rolled kind is checked by test on eight seeds, 104 different layouts in all (each can be walked end to end, nothing
-  floats, every fight has room). The first fourteen kinds have been seen in the real game; The Rime Hollows, The Green Dark
-  and The Unlit Stair only on the checker so far.
+  floats, every fight has room). All seventeen kinds have been seen in the real game.
 - The Sporewells' walls were a clutter of five blocks on its first walk; it was rewritten and its second walk reads as a
-  fungus cave, still the busiest kind. The Glass Warrens glowed over half its walls; that is turned down, and nobody has
-  seen the calmer version in the game yet.
+  fungus cave, still the busiest kind. The Glass Warrens glowed over half its walls; that is turned down, and its second
+  walk is calmer. The Unlit Stair is the darkest kind and The Rime Hollows the brightest.
 - A great run's chasm was too dark in the real game. Every shaft and chasm is lit by the generator now, and that was seen
   working in The Lower Combs, The Silvered Halls and The Sealed Wing.

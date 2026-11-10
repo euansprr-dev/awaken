@@ -22,7 +22,7 @@ import java.util.Random;
  * who lives there and what its traps are made of. A new skin is a new kind of dungeon; the layouts come free.
  */
 public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
-    private static final BlockState CLIMB_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12);
+    private static final BlockState CLIMB_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 14);
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final double[] AXES = {0, Math.PI / 2, Math.PI, Math.PI * 1.5};
 

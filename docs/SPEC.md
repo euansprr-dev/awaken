@@ -20852,7 +20852,7 @@ the fittings, never from salting lit blocks through the rock. A great run's cros
 a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
 
 **A climb is never dark.** Skins light rooms, and two of them lit no shaft at all. So the generator itself sets an unseen light
-(level 12) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
+(level 14) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
 skin has dressed the place. A skin still dresses a climb's walls; it no longer has to make the jumps visible.
 
 Three more kinds: **The Silvered Halls** (`awaken:silvered_halls`, Mirror Palace, ranks C and B: bays of tall mirror between dark
