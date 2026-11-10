@@ -33,6 +33,7 @@ public final class StationTests {
         AwakenTests.register("stations_bench_view", 20, StationTests::benchView);
         AwakenTests.register("stations_hand_never_hides", 20, StationTests::handNeverHides);
         AwakenTests.register("stations_presence", 40, StationTests::presence);
+        AwakenTests.register("stations_living_slots", 20, StationTests::livingSlots);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -297,6 +298,44 @@ public final class StationTests {
         for (int i = 1; i < seen.size(); i++) h.assertTrue(seen.get(i).getCount() <= seen.get(i - 1).getCount(), "in order of size");
         h.assertTrue(StationPresence.changedSlot(first, first) == -1 && StationPresence.changedSlot(first, StationPresence.shown(StationPresence.BENCH, m)) == 2,
                 "the first slot that differs is the one that changed");
+        h.succeed();
+    }
+
+    /**
+     * Living slots (SPEC §63.7): a stack sent from one slot to another without carrying it is one move with its count; a
+     * stack split across two slots is two; a change the pointer made is none; a tick that changed more than six slots is
+     * none (a Tidy shows its own).
+     */
+    static void livingSlots(GameTestHelper h) {
+        ItemStack[] was = new ItemStack[12], now = new ItemStack[12];
+        java.util.Arrays.fill(was, ItemStack.EMPTY);
+        java.util.Arrays.fill(now, ItemStack.EMPTY);
+        int[] out = new int[24];
+        was[2] = new ItemStack(Items.OAK_PLANKS, 16);
+        now[7] = new ItemStack(Items.OAK_PLANKS, 16);
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 1 && out[0] == 2 && out[1] == 7 && out[2] == 16, "a shift-click is one move, from its slot to where it landed");
+        h.assertTrue(SlotMoves.read(was, now, true, out) == 0, "a stack the pointer carried is no move");
+        h.assertTrue(SlotMoves.read(was, was, false, out) == 0, "nothing changed, nothing moves");
+        // it topped up one stack and the rest went to an empty slot
+        was[7] = new ItemStack(Items.OAK_PLANKS, 60);
+        now[7] = new ItemStack(Items.OAK_PLANKS, 64);
+        now[8] = new ItemStack(Items.OAK_PLANKS, 12);
+        int n = SlotMoves.read(was, now, false, out);
+        h.assertTrue(n == 2 && out[2] + out[5] == 16, "a stack that filled one slot and spilled into the next is two moves (" + n + ")");
+        // a number key swaps two different stacks
+        java.util.Arrays.fill(was, ItemStack.EMPTY);
+        java.util.Arrays.fill(now, ItemStack.EMPTY);
+        was[0] = new ItemStack(Items.STICK, 4);
+        was[9] = new ItemStack(Items.COAL, 2);
+        now[0] = new ItemStack(Items.COAL, 2);
+        now[9] = new ItemStack(Items.STICK, 4);
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 2, "a swap is two moves, one each way");
+        // a Tidy: more than six slots at once
+        for (int i = 0; i < 8; i++) {
+            was[i] = new ItemStack(Items.COBBLESTONE, i + 1);
+            now[i] = new ItemStack(Items.COBBLESTONE, 8 - i);
+        }
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 0, "more than six slots changed in a tick: left to whoever made it");
         h.succeed();
     }
 

@@ -50,6 +50,7 @@ import net.minecraft.world.level.block.StonecutterBlock;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -63,7 +64,7 @@ import org.jspecify.annotations.Nullable;
  * so every module's blocks get them by what they are. The hand goes to the thing and does it there ({@link Reaches}): a
  * palm flat on a door where you clicked it, pushing on through (vanilla's door is open by then), fingers closed on a lever's handle pulling it through, a finger on a button,
  * finger and thumb on a stem and the flower coming away in the hand, a hand stroking a creature's flank, both hands on
- * a chest's lid (its screen waits {@link #LID_WAIT} ticks for them), a palm pressed to a stone (lit by it), the Forge
+ * a chest's lid, going up with it and letting it down again as you leave, a palm pressed to a stone (lit by it), the Forge
  * hammered, food laid on a campfire, a grindstone cranked, a page turned, a notice torn off. The action itself never
  * waits: the hands animate what already happened. A swing cuts them. With the main hand full the off hand does it; with
  * both full, nothing.
@@ -75,14 +76,21 @@ final class Touches {
     /** Awaken's stones a palm is pressed to (by id: each is another module's block). */
     private static final java.util.Set<String> PALM_STONES = java.util.Set.of("waystone", "conduit", "ascent_stone", "hearth_anchor",
             "rest_shrine", "stillpoint_shrine", "gate_entrance", "gate_seal", "gate_rune");
-    /** Ticks a chest's screen waits for the hands to reach its lid. */
-    static final int LID_WAIT = 4;
-
     private static int lastAt = -100;
     private static int ticks;
     private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
-    private static @Nullable Screen held;
-    private static int heldUntil, lidAt = -100;
+    /**
+     * The box whose lid you lifted and whose screen is open (SPEC §63.7): the view looks in while it is, and the hands
+     * let the lid down when it shuts. Its screen opens at once (it used to wait four ticks for the hands): no click waits.
+     */
+    private static @Nullable BlockPos box;
+    private static int lidAt = -100;
+    private static boolean boxOpen;
+    private static long boxOpenedAt;
+    private static final long RISE_NS = 240_000_000L;
+    private static final double[] RISE = new double[2];
+    /** How far the view has tipped toward the open box (0..1), this tick and last. */
+    private static float look, lookBefore;
 
     // ---- the touches (s across to your right, u up, n out toward you; blocks from where the hand meets the thing) -----
 
@@ -115,8 +123,15 @@ final class Touches {
     /** A creature: the hand on its flank, stroking it twice. */
     static final Touch PET = t(AnimsClips.PET, rest(0), at(4, 0, 0, 0.03F), at(7, 0.15F, 0.02F, 0.03F), at(10, -0.1F, 0, 0.03F),
             at(13, 0.12F, 0.02F, 0.03F), rest(17));
-    /** A chest, barrel or cache: both hands under the lid's edge, lifting. */
-    static final Touch LID = t(AnimsClips.LID, 0.3F, -1, -1, -1, -1, rest(0), at(3, 0, -0.03F, 0.04F), at(5, 0, 0.1F, 0.02F), rest(9));
+    /**
+     * A chest, ender chest, shulker box or cache: both hands under the lid's front edge, going up with it as it really
+     * opens (the anchor is the lid's own edge, frame by frame), letting go as it stands.
+     */
+    static final Touch LID = t(AnimsClips.LID, 0.3F, -1, -1, -1, -1, rest(0), at(2, 0, -0.02F, 0.05F), at(7, 0, 0, 0.04F), at(9, 0, 0.03F, 0.1F), rest(13));
+    /** The same lid let down again as you leave: the hands take its raised edge and bring it down. */
+    static final Touch LID_DOWN = t(AnimsClips.LID, 0.3F, -1, -1, -1, -1, rest(0), at(2, 0, 0.02F, 0.08F), at(8, 0, -0.01F, 0.04F), rest(11));
+    /** A barrel: one hand to the hatch in its face, drawing it open. */
+    static final Touch HATCH = t(AnimsClips.LID, rest(0), at(3, 0, 0, 0.03F), at(6, 0.06F, 0, 0.12F), rest(10));
     /** A stone: the palm pressed flat and held while the light answers (the hand lit by it). */
     static final Touch PALM = t(AnimsClips.PALM, 0, -1, -1, 5, 17, rest(0), at(3, 0, 0, 0.06F), at(5, 0, 0, -0.01F),
             at(12, 0, 0, -0.02F), rest(17));
@@ -158,14 +173,11 @@ final class Touches {
         ticks++;
         Reaches.tick();
         Minecraft mc = Minecraft.getInstance();
-        if (held != null && ticks >= heldUntil) {
-            Screen s = held;
-            held = null;
-            // the lid is up: the chest's screen, unless it was closed or another took its place meanwhile
-            if (mc.player != null && mc.gui.screen() == null && s instanceof AbstractContainerScreen<?> cs && mc.player.containerMenu == cs.getMenu()) {
-                mc.gui.setScreen(s);
-            }
-        }
+        // the box's screen is gone some other way than by its own closing (a death, a new level): the box is shut
+        if (boxOpen && !(mc.gui.screen() instanceof AbstractContainerScreen<?>)) boxOpen = false;
+        lookBefore = look;
+        look += ((boxOpen ? 1F : 0F) - look) * 0.3F;
+        if (look < 0.003F) look = 0;
     }
 
     private static boolean on(LocalPlayer p) {
@@ -218,9 +230,10 @@ final class Touches {
         if (p.isShiftKeyDown() && !p.getMainHandItem().isEmpty()) return; // a sneak-use places or uses the item
         Touch t = forUse(s);
         if (t == null) return;
-        if (t == LID) {
+        if (t == LID || t == HATCH) {
             lidAt = ticks;
-            play(p, t, lid(level, pos));
+            box = pos;
+            play(p, t, t == HATCH ? fixed(hit.x, hit.y, hit.z) : lid(level, pos));
         } else {
             play(p, t, fixed(hit.x, hit.y, hit.z));
         }
@@ -238,7 +251,8 @@ final class Touches {
         if (b instanceof DoorBlock || b instanceof TrapDoorBlock || b instanceof FenceGateBlock) return PUSH;
         if (b instanceof LeverBlock) return s.getValue(LeverBlock.POWERED) ? LEVER_UP : LEVER_DOWN;
         if (b instanceof ButtonBlock) return BUTTON;
-        if (b instanceof ChestBlock || b instanceof BarrelBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return LID;
+        if (b instanceof BarrelBlock) return HATCH;
+        if (b instanceof ChestBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return LID;
         if (b instanceof SweetBerryBushBlock || b instanceof CaveVinesBlock) return PLUCK;
         if (s.is(Blocks.LODESTONE) || b instanceof RespawnAnchorBlock || b instanceof BeaconBlock) return PALM;
         if (b instanceof GrindstoneBlock) return CRANK;
@@ -292,19 +306,17 @@ final class Touches {
     }
 
     /**
-     * A chest's screen just after its lid was touched waits a few ticks for the hands to reach the lid (the menu is
-     * open already: the server's answer is never held). A book opening (a written book, a book and quill, the Dream
-     * Journal): a page turned as it opens.
+     * A box's screen opening just after its lid was touched: it opens at once (nothing waits for the hands), and the box
+     * is open until that screen shuts. A book opening (a written book, a book and quill, the Dream Journal): a page
+     * turned as it opens.
      */
     static void screenOpening(ScreenEvent.Opening e) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
         Screen s = e.getNewScreen();
-        if (s instanceof AbstractContainerScreen<?> && held == null && ticks - lidAt <= 2 && LID.name().equals(Reaches.playing())) {
-            held = s;
-            heldUntil = lidAt + LID_WAIT;
-            e.setCanceled(true);
-            return;
+        if (s instanceof AbstractContainerScreen<?> && box != null && ticks - lidAt <= 4) {
+            boxOpen = true;
+            boxOpenedAt = System.nanoTime();
         }
         if (!on(p)) return;
         if (s instanceof BookViewScreen || s instanceof BookEditScreen || s.getClass().getSimpleName().contains("Journal")) {
@@ -332,11 +344,27 @@ final class Touches {
         return shape.isEmpty() ? new AABB(pos) : shape.bounds().move(pos);
     }
 
-    /** A lid's front edge: the face toward you, just under the top. */
+    /**
+     * A lid's front edge, where the hands hold it: for a chest or an ender chest the lip of the lid as it really stands
+     * this frame (the lid turns about a hinge a texel in from the back, nine up; its lip is fourteen out from the hinge);
+     * for a shulker box the shell's rim as it rises; for anything else the face toward you, just under the top.
+     */
     private static Reaches.Anchor lid(Level level, BlockPos pos) {
         return out -> {
             BlockState s = level.getBlockState(pos);
             if (s.isAir()) return false;
+            float pt = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            var be = level.getBlockEntity(pos);
+            if (be instanceof net.minecraft.world.level.block.entity.LidBlockEntity lidded && s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+                var front = s.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+                // vanilla eases the lid: 1 - (1 - open)^3 of a quarter turn
+                float open = lidded.getOpenNess(pt), k = 1 - (1 - open) * (1 - open) * (1 - open);
+                double turn = k * Math.PI / 2, along = Math.cos(turn) * 0.875 - 0.4375, up = Math.sin(turn) * 0.875;
+                out[0] = pos.getX() + 0.5 + front.getStepX() * along;
+                out[1] = pos.getY() + 0.5625 + up;
+                out[2] = pos.getZ() + 0.5 + front.getStepZ() * along;
+                return true;
+            }
             AABB b = shapeBox(s.getShape(level, pos), pos);
             Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
             double cx = b.getCenter().x, cz = b.getCenter().z, dx = eye.x - cx, dz = eye.z - cz;
@@ -348,8 +376,74 @@ final class Touches {
                 out[2] = dz > 0 ? b.maxZ : b.minZ;
             }
             out[1] = b.maxY - 0.06;
+            if (be instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity shell) out[1] = pos.getY() + 1 - 0.06 + shell.getProgress(pt) * 0.5;
             return true;
         };
+    }
+
+    /** The box's screen is shutting: the hands take the lid and let it down (both free), and the view comes back. */
+    static void screenClosing(ScreenEvent.Closing e) {
+        if (!boxOpen || !(e.getScreen() instanceof AbstractContainerScreen<?>)) return;
+        boxOpen = false;
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        BlockPos at = box;
+        if (p == null || at == null || mc.level == null || !on(p)) return;
+        BlockState s = mc.level.getBlockState(at);
+        if (forUse(s) != LID) return;
+        lastAt = -100;
+        play(p, LID_DOWN, lid(mc.level, at));
+    }
+
+    /**
+     * The glass rises out of the box (SPEC §63.7): for a quarter of a second after a box's screen opens, two thin lines
+     * of light run from the box's mouth, where the world shows it, to the foot of the screen's panel. The slots are in
+     * their places and clickable from the first frame; only the light moves.
+     */
+    static void glassRise(ScreenEvent.Render.Foreground e) {
+        BlockPos at = box;
+        if (!boxOpen || at == null || !(e.getScreen() instanceof AbstractContainerScreen<?> scr) || FirstPerson.reducedMotion.getAsBoolean()) return;
+        float u = (System.nanoTime() - boxOpenedAt) / (float) RISE_NS;
+        if (u < 0 || u >= 1) return;
+        Minecraft mc = Minecraft.getInstance();
+        var cam = mc.gameRenderer.mainCamera();
+        Vec3 o = cam.position();
+        float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+        if (!dev.awaken.anims.station.StationView.project(at.getX() + 0.5, at.getY() + 0.9, at.getZ() + 0.5, o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect,
+                scr.width, scr.height, RISE)) return;
+        int x0 = scr.getLeftPos(), x1 = x0 + scr.getImageWidth(), y1 = scr.getTopPos() + scr.getImageHeight();
+        int alpha = Math.round(200 * (1 - u) * Math.min(1F, u * 5));
+        for (int side = 0; side < 2; side++) {
+            double fx = RISE[0] + (side == 0 ? -6 : 6), fy = RISE[1], tx = side == 0 ? x0 : x1, ty = y1;
+            // the light runs out from the box: a short stroke that travels the line
+            for (int k = 0; k < 14; k++) {
+                double t = Math.min(1, u * 1.4) - k * 0.02;
+                if (t <= 0) break;
+                int x = (int) Math.round(fx + (tx - fx) * t), y = (int) Math.round(fy + (ty - fy) * t);
+                e.getGuiGraphics().fill(x, y, x + 1, y + 1, (Math.max(0, alpha - k * 12) << 24) | 0x7FC3FF);
+            }
+        }
+    }
+
+    /** How far the view tips toward the open box now (0..1). */
+    static float look(float pt) {
+        return Mth.lerp(pt, lookBefore, look);
+    }
+
+    /**
+     * Looking in (SPEC §63.7): while a box's screen is open the view tips toward the box, up to four degrees, and
+     * narrows a touch. Your own look is not moved, and with reduced motion nothing happens.
+     */
+    static void lookIn(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles e) {
+        float w = look((float) e.getPartialTick());
+        BlockPos at = box;
+        if (w <= 0 || at == null || FirstPerson.reducedMotion.getAsBoolean() || dev.awaken.anims.client.station.StationClient.ownsCamera()) return;
+        Vec3 o = e.getCamera().position();
+        double dx = at.getX() + 0.5 - o.x, dy = at.getY() + 0.8 - o.y, dz = at.getZ() + 0.5 - o.z;
+        float pitch = (float) (-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG), yaw = (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
+        float k = w * w * (3 - 2 * w);
+        e.setPitch(e.getPitch() + Mth.clamp(pitch - e.getPitch(), -4F, 4F) * k);
+        e.setYaw(e.getYaw() + Mth.clamp(Mth.wrapDegrees(yaw - e.getYaw()), -2F, 2F) * k);
     }
 
     /** A creature's flank: the side of its body toward you, two thirds up, followed as it moves. */
@@ -381,7 +475,9 @@ final class Touches {
     }
 
     static void reset() {
-        held = null;
+        box = null;
+        boxOpen = false;
+        look = lookBefore = 0;
         Reaches.reset();
     }
 }

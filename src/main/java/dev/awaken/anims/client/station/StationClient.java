@@ -161,6 +161,20 @@ public final class StationClient {
         clickedAt = ticks;
     }
 
+    /** Where a container screen draws its slots from (a station scene reports a wider area to other mods). */
+    public static int slotLeft(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> s) {
+        return s instanceof StationScreen<?> st ? st.slotLeft() : s.getLeftPos();
+    }
+
+    public static int slotTop(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> s) {
+        return s instanceof StationScreen<?> st ? st.slotTop() : s.getTopPos();
+    }
+
+    /** The hand holds the pointer's stack in the world this frame (so no icon is drawn on the pointer). */
+    public static boolean handCarries() {
+        return StationHands.carrying();
+    }
+
     /** Dev (the pilot's "station <slot> <button>"): a click on a slot of the open table scene, as a player's. */
     public static void devClick(int slot, int button) {
         if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) s.devClick(slot, button);

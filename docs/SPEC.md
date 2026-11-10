@@ -6840,8 +6840,8 @@ of the plan). No mixins.
   smoothstepped; drawn at 0.75 (both hands 0.85). A door's palm meets it where you clicked (vanilla's door is open by
   then) and pushes on through. The player never moves (Euan, 2026-10-25: walking you to the thing
   would take control): past 2.5 blocks the hand only gets an arm's length (1.3) toward the thing, and while a hand is out
-  the view narrows ×0.95 (a lean; off with reduced motion). A chest's screen waits 4 ticks for both hands to reach its
-  lid (the menu is already open; the server is never held). The fist clips below stay for books (no world thing).
+  the view narrows ×0.95 (a lean; off with reduced motion). A chest's screen waited 4 ticks for both hands to reach its
+  lid until §63.7 (it now opens at once and the hands go up with the lid). The fist clips below stay for books (no world thing).
 - **Touches** (P4, `anims.client.Touches`, `anims.AnimsClips`): quick hand moments from the game's own interaction
   events (client side), so every module's blocks get them by what they are: a door, trapdoor or gate (`DoorBlock`,
   `TrapDoorBlock`, `FenceGateBlock`) pushed with a palm (`fp_push`), a lever thrown (`fp_lever`), a button pressed
@@ -21748,8 +21748,36 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   change; a changed square is a beat with its number though the result changed too; a second change inside 3 ticks is
   seen with no beat; the menu shut ends it; a box's six largest stacks merged and in order).
 
-**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; lids in the hands and living slots for boxes; six
-more workstation scenes; glass for seven screens; a hand, a sound and a body for every quick touch. The click path
+### 63.7 Boxes (`anims.client.Touches`, `anims.client.LivingSlots`, `anims.station.SlotMoves`)
+The glass screen stays (§56): nothing is faster for twenty-seven slots. What is round it changes.
+- **The lid is in your hands.** A chest, ender chest, shulker box or cache: both hands under the lid's front edge, and
+  the edge they hold is the lid's own as it stands each tick (`Touches.lid`: the lid turns about a hinge a texel in
+  from the back and nine up, by vanilla's eased `getOpenNess`; a shulker's rim rises with `getProgress`), so they go up
+  with it and let go as it stands (`LID`, 13 ticks). A barrel is one hand drawing the hatch in its face (`HATCH`).
+- **Nothing waits.** A box's screen opens at once: it was held four ticks for the hands (`LID_WAIT`, gone). The glass
+  fades in over the lid moment as before (§56).
+- **Let down again.** When that screen shuts the hands take the lid's raised edge and bring it down with it (`LID_DOWN`,
+  11 ticks; both hands free, as for the lift).
+- **Looking in.** While the screen is open the view tips toward the box by up to 4 degrees in pitch and 2 in yaw and the
+  field of view narrows 4%, eased in and out at 0.3 a tick (`Touches.lookIn`); your own look is not moved. Not with
+  reduced motion, and not while a station's view is away.
+- **The glass rises out of the box:** for 240 ms after the screen opens two thin strokes of light run from the box's
+  mouth, where the world shows it, to the foot of the panel (`Touches.glassRise`). Slots are in place and clickable
+  from the first frame.
+- **What is inside** lies in an open chest for everyone near (§63.5).
+- **Living slots** (`LivingSlots`, on the game's own container screens and ours, never the creative screen): a stack you
+  send without carrying it (a shift-click, a number key) travels from its slot to where it landed in 120 ms on a small
+  arc, a "+n" lifts off the slot it reached, and the stack on your pointer has a soft shadow that drops away as you pick
+  it up. Drawn over the screen from what the slots already hold: the move is vanilla's and has happened, so no click
+  waits. `SlotMoves.read` pairs a tick's losses with its gains; a stack the pointer carried is no move, and a tick that
+  changed more than six slots (a Tidy, §56) is left to whoever made it. At most eight stacks in flight.
+  The pointer's stack tips with its speed only where we draw it ourselves (a station scene, §63.2): vanilla's own icon
+  on other screens cannot be turned.
+- Tests: `stations_living_slots` (a shift-click is one move with its count; a spill into a second slot is two; a swap
+  is two; the pointer's is none; more than six slots is none). The lid, the look and the light are client code.
+
+**Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; six more workstation scenes; glass for seven
+screens; a hand, a sound and a body for every quick touch. The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts
