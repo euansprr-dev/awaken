@@ -88,7 +88,7 @@ final class PowersPlace implements BandPlaces.Place {
         }
         // every power you own
         List<PowerType> list = PowersSection.owned(l);
-        float gy = ky + KEY + 62;
+        float gy = ky + KEY + 72;
         s.caps("Your powers · " + list.size(), X0, gy - 24, Glass.a(s.label, 1F));
         for (int i = 0; i < list.size(); i++) {
             PowerType t = list.get(i);
@@ -224,6 +224,7 @@ final class PowersPlace implements BandPlaces.Place {
             out.add(Kit.Hint.of("Next power", "Tab"));
             out.add(Kit.Hint.of("Pick it", "Enter"));
         }
+        if (host.more() || panelTall > BandPlaces.Y1 - Y0) out.add(Kit.Hint.of("More", "Scroll"));
     }
 
     @Override

@@ -564,7 +564,7 @@ final class TasksPlace implements BandPlaces.Place {
     /** How tall a step's tile must be for every line of its name. */
     private static float tileHeight(Sheet s, StepRow r) {
         ChoiceRow pick = became(r);
-        return Math.max(98F, 46 + s.tall(KeyText.resolve(pick != null ? pick.title() : r.title()), TILE_W - 18, Sheet.LABEL) + 8);
+        return Math.max(92F, 42 + s.tall(KeyText.resolve(pick != null ? pick.title() : r.title()), TILE_W - 18, Sheet.LABEL) + 6);
     }
 
     /** Every goal's lane from y0 down: its rows as tiles, three across, each as tall as its longest name. Returns the y under the last. */
@@ -574,19 +574,19 @@ final class TasksPlace implements BandPlaces.Place {
             List<StepRow> rows = lane(v, g), wait = waiting(v, g);
             if (rows.isEmpty() && wait.isEmpty()) continue;
             if (y > y0) s.fill(LANES_X0, y, BandPlaces.X1, y + 1, Glass.a(Glass.EDGE, .14F));
-            float cx = LANES_X0 + 48, ly = y + 8;
-            s.item(emblem(g.ordinal()), cx - 20, y + 14, 40);
+            float cx = LANES_X0 + 48, ly = y + 6;
+            s.item(emblem(g.ordinal()), cx - 20, y + 12, 40);
             String name = laneName(g.ordinal()).toUpperCase(java.util.Locale.ROOT);
-            s.text(name, cx - s.width(name, Sheet.LABEL) / 2F, y + 60, Sheet.LABEL, Glass.a(s.label, 1F));
+            s.text(name, cx - s.width(name, Sheet.LABEL) / 2F, y + 57, Sheet.LABEL, Glass.a(s.label, 1F));
             if (!wait.isEmpty()) {
                 // what waits behind this lane's rows: a way to its list, under the lane's name
                 String more = "+" + wait.size() + " later";
                 float mw = s.width(more, Sheet.LABEL), mx0 = cx - mw / 2F;
-                boolean over = Sheet.in(mx, my, mx0 - 8, y + 78, mx0 + mw + 8, y + 104), open = later == g.ordinal();
-                if (over || open) s.fill(mx0 - 8, y + 78, mx0 + mw + 8, y + 104, Glass.a(Glass.EDGE, open ? .22F : .12F));
-                s.text(more, mx0, y + 84, Sheet.LABEL, Glass.a(over || open ? Glass.TITLE : Glass.EDGE, 1F));
+                boolean over = Sheet.in(mx, my, mx0 - 8, y + 75, mx0 + mw + 8, y + 99), open = later == g.ordinal();
+                if (over || open) s.fill(mx0 - 8, y + 75, mx0 + mw + 8, y + 99, Glass.a(Glass.EDGE, open ? .22F : .12F));
+                s.text(more, mx0, y + 80, Sheet.LABEL, Glass.a(over || open ? Glass.TITLE : Glass.EDGE, 1F));
                 int lane = g.ordinal();
-                hot.add(mx0 - 8, y + 78, mx0 + mw + 8, y + 104, () -> {
+                hot.add(mx0 - 8, y + 75, mx0 + mw + 8, y + 99, () -> {
                     later = later == lane ? -1 : lane;
                     StatusSections.cue(StatusSections.Cue.PAGE);
                 });
@@ -598,9 +598,10 @@ final class TasksPlace implements BandPlaces.Place {
                     StepRow r = rows.get(j);
                     tile(s, hot, v, r, r == f && later < 0, LANES_X0 + LABEL_W + (j - i) * (TILE_W + TILE_GAP), ly, rowH, mx, my);
                 }
-                ly += rowH + 8;
+                ly += rowH + 6;
             }
-            y = Math.max(ly, y + 112) + 4;
+            // six lanes and the line under them fit the stage when no name runs past three lines; past that the lanes scroll
+            y = Math.max(ly, y + 104) + 4;
         }
         String foot = v.footer(f.goal());
         if (foot.isEmpty()) foot = v.footer(Goal.HEARTH.ordinal());
@@ -614,11 +615,11 @@ final class TasksPlace implements BandPlaces.Place {
         boolean over = Sheet.in(mx, my, x, y, x + TILE_W, y + h), top = r.key().equals(v.top());
         Kit.well(s, x, y, x + TILE_W, y + h, on ? Kit.Lit.FOCUS : top ? Kit.Lit.WAITS : Kit.Lit.KNOWN, over);
         List<ItemStack> pics = pictures(r);
-        for (int i = 0; i < pics.size(); i++) s.item(pics.get(i), x + 9 + i * 34, y + 8, 32);
+        for (int i = 0; i < pics.size(); i++) s.item(pics.get(i), x + 9 + i * 34, y + 6, 32);
         ChoiceRow pick = became(r);
         List<NeedRow> needs = pick != null ? pick.needs() : r.needs();
-        if (!needs.isEmpty() && needs.size() <= 6 && pics.size() < 4) Kit.pips(s, x + TILE_W - 8 - needs.size() * 11, y + 10, met(needs), needs.size());
-        s.lines(KeyText.resolve(pick != null ? pick.title() : r.title()), x + 9, y + 46, TILE_W - 18, Sheet.LABEL, Glass.a(Glass.TITLE, 1F));
+        if (!needs.isEmpty() && needs.size() <= 6 && pics.size() < 4) Kit.pips(s, x + TILE_W - 8 - needs.size() * 11, y + 8, met(needs), needs.size());
+        s.lines(KeyText.resolve(pick != null ? pick.title() : r.title()), x + 9, y + 42, TILE_W - 18, Sheet.LABEL, Glass.a(Glass.TITLE, 1F));
         if (r.fresh()) Kit.glint(s, x + TILE_W - 2, y + 2, Glass.AMBER);
         if (r.key().equals(v.pinned())) s.text("◆", x + TILE_W - 18, y + h - 20, Sheet.LABEL, Glass.a(Glass.AMBER, 1F));
         hot.add(x, y, x + TILE_W, y + h, () -> focus(r.key()));

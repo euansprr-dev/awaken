@@ -20621,9 +20621,14 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
   (`SignalText.fitBox`): as written if it fits; else a whole real pixel smaller per font pixel at a time, never under half size or two
   real pixels, wrapped onto the lines the slot then holds (two lines at half size fill the same height as one); and if even that
   doesn't fit, every line at the smallest, running on below. `textAtMost` wraps in full. The Hearth's room tiles, the Journal's
-  cards and names, the Crafts' perks and the gate-world cards all go through these.
-- Not yet under the rule: the Hall of Arms, the anvil and the line-up (the workshops' own `Stage.fit`, Stage 4 of the plan), and the
-  HUD's cards and toasts, which page long lines by design.
+  cards and names, the Crafts' perks and the gate-world cards all go through these. A section that draws with the graphics
+  itself uses the static `Ui.fitted` (the Journal's chains, the Almanac's names, who can ride with you, the Now row); a row's
+  `button`, `chip`, `item` and `text` fit a label wider than the row the same way.
+- Not yet under the rule, each still shortening by hand (found by grep, 10 Nov): the workshops and their screens (the Hall of
+  Arms, the anvil and the line-up through `hall.client.Stage.fit`; the Fitting Stand's and the Armoury's old screens; the
+  Inscribing Table; the Ledger), the map's lists, the Tab glance, name plates, the JEI pages, the Look screen, and the classic
+  band's own Status sheet. They join in the plan's later stages (the workshops in Stage 4, the glance in Stage 3). The HUD's
+  cards, toasts and tracker lines page or shorten long lines by design: they are glanced at, not read.
 - Test `ui_text_never_cut`: for many lines, slots and pixel sizes, every word is still there, the size is on whole real pixels and
   never under half, and each line is inside its slot.
 

@@ -229,7 +229,7 @@ public final class StatusPlace implements BandPlaces.Place {
         boolean open = dev.awaken.progression.Progression.truthsOpen(p);
         s.caps("Truths · " + mine + " of " + total, x, y, Glass.a(s.label, 1F));
         if (!open) {
-            s.text("Truths open at level 5. Anything you've done by then counts.", x, y + 26, Sheet.BODY, Glass.a(s.label, 1F));
+            s.lines("Truths open at level 5. Anything you've done by then counts.", x, y + 26, PANEL - 24 - x, Sheet.BODY, Glass.a(s.label, 1F));
             return;
         }
         int close = near.ids().size(), per = 16;
