@@ -439,5 +439,11 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
   too slow to judge a five-tick glide or a seven-tick reach.
   It also showed the game's own hand still in the corner before a furnace: the first fix set a flag nothing read on
   each side (`WorldBody.armShown`). Fixed.
-- `tools/autopilot/hands-at-work-b.txt` films those scenes again (chest, brewing stand, furnace, table at rest).
+- `tools/autopilot/hands-at-work-b.txt` films those scenes again (chest, brewing stand, furnace, table at rest). Its
+  first two runs were void (the script built on ground that was not loaded, then used a seed whose teleport landed
+  late). Run 42901587111 confirmed three: at the brewing stand the hand carries the bottle and the wart and nothing
+  rests in the frame; before a furnace the game's own hand is gone; at the table both empty hands rest off their
+  corners. It showed one more fault, fixed: the carried stack was drawn a frame behind the hand that holds it (seen on
+  a machine that draws two frames a second). **The chest was not filmed** in it (the script looked at the floor): the
+  lid in your hands and what lies in an open chest are still unseen.
 

@@ -49,7 +49,7 @@ camera first
 wait 20
 
 # ---- a chest, empty-handed: the lid moment a few ticks at a time, then looking down into it past the screen's foot ----
-cmd tp @s 9.5 200 1.9 0 55
+cmd tp @s 9.5 200 1.6 0 30
 wait 20
 cmd awaken ascent pilot use
 wait 3

@@ -22211,7 +22211,8 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   sight meets the table's level within 0.35 of the table's sides and far edge), your main hand holds it. The stack is
   drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as it will lie, its
   far edge tipped 18 degrees up toward you, rolling up to 14 degrees with the pointer's speed. It has no lag, so what
-  you click is what it is over. The screen draws no icon on the pointer then; anywhere else it is vanilla's icon.
+  you click is what it is over (it is drawn after the hands are posed, from the same frame's pointer). The screen draws
+  no icon on the pointer then; anywhere else it is vanilla's icon.
 - **The arm** is one straight vanilla arm (`Rig.worldArms`): the fist's middle sits `HAND_BACK` 0.11 short of the stack
   and the arm lies back toward a point 0.45 past the table's near edge and 0.30 over its top, 0.10 to the hand's own
   side (`StationView.carry`), kept inside what the strip covers (`acrossMost`). It is drawn at the table's scale: a fist

@@ -102,7 +102,9 @@ public final class StationClient {
         bus.addListener(EventPriority.LOW, ViewportEvent.ComputeCameraAngles.class, StationClient::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, StationClient::onFovModifier);
         bus.addListener(ViewportEvent.ComputeFov.class, StationClient::onFov);
-        bus.addListener(SubmitCustomGeometryEvent.class, StationClient::onSubmit);
+        // after the hands are posed (WorldBody, default priority): the stack you carry is drawn where this frame's pointer
+        // is. Drawn before it, it stood where the last frame's was (a frame behind the hand that holds it)
+        bus.addListener(EventPriority.LOW, SubmitCustomGeometryEvent.class, StationClient::onSubmit);
         // the game's "name of what you now hold" line sits where a scene's strip is: not while a station is worked
         bus.addListener(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, e -> {
             if (e.getName().equals(net.neoforged.neoforge.client.gui.VanillaGuiLayers.SELECTED_ITEM_NAME)
