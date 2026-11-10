@@ -4,9 +4,9 @@
 > tiny obstacles... they wouldn't feel natural in this world at all. I more so meant things that you discover, like caves, or
 > special buildings... actual places, not just single small things in the world that don't make any sense... a really cool
 > swamp thing with an awesome atmosphere, unique places that actually stand out when you discover them." The stone people
-> were "decent, I guess". So the 144 kinds below are the wrong scale as things to discover and as Journal entries. Do not
-> merge this branch as content. What still stands is the engine (placement with quiet land, hearts and scripts, per-player
-> pay, leads, the tests and tours); the small kinds may serve as furnishing inside real places. Next plan: places.
+> were "decent, I guess". So the 144 kinds below are the wrong scale as things to discover and as Journal entries.
+> The same day he said "Build them all" to thirty real places: briefs in `docs/places/BRIEFS.md`, SPEC §59, code in
+> `finds/sets/Places*.java`. The world now deals places only; the 144 below are kept as furnishing and are not placed.
 
 Approval page: https://claude.ai/artifact/G9fPfsJmTjj8xbaRnrScSw. Euan approved the full plan and every recommendation on
 10 Nov 2026, with one condition: "make sure it doesn't feel like a fairground... you should still have stretches where you

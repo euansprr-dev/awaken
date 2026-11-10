@@ -20628,3 +20628,73 @@ blows on seals. A few kinds stand in for what the catalogue describes with somet
 the Flag Line is five rings with five arrows, the Stopped Cart doesn't roll, the Sprung Boat gives a boat and no island, the
 Cloud Shelf is a spire you reach from above, the Chimney goes down from a hilltop, the Hundred Posts are thirteen and don't
 sink, the Otters' Slide is a timed run through three pools. Placement in generated land is exercised only by the gallery tour's last twelve shots.
+
+## 59. Places (what the world gives you to discover; briefs in docs/places/BRIEFS.md)
+
+Euan, 10 Nov 2026, on seeing the 144 small finds of §58: "this is not at all what I was asking... I meant things that you
+discover, like caves, or special buildings... actual places... a really cool swamp thing with an awesome atmosphere, unique
+places that actually stand out when you discover them." Then: "Build them all. Code all first, then tour multiple at a time...
+build yourself full briefs for every single structure beforehand." So: thirty places, briefs first, on the engine of §58.
+
+### 59.1 What changed from §58
+
+- The world deals places only (`Sites.BASE = {0, 0, 0.6}`). The 144 small kinds are no longer placed or listed; they stay in
+  the code as furnishing and for their tests. §58.3's densities, §58.7's 144 slots and §58.9's gallery tours no longer hold.
+- `Kind.Size.PLACE`, set `PLACES`, thirty kinds in `finds/sets/Places*.java`. Everything in §58.5 and §58.6 (the heart, parts,
+  scripts, the ward, pay, leads) holds for a place as it did for a find.
+
+### 59.2 Where they are
+
+One place at most in a cell 448 blocks on a side, set anywhere inside it but its outer 80. Chance 0.6 where the land is at its
+usual liveliness, by the same slow field as §58.3 (a third of the land quiet: there, about one cell in fourteen). Never two of a
+kind within three cells. Rank and land as in §58.3. Anchor `FIELD`: seventeen points across the footprint (the middle and two
+rings) all dry and within the kind's `slope` of each other; the site's height is their median. Two places stand on `SHORE`.
+
+### 59.3 Ground
+
+A place levels its own ground: `Scene.level(radius, blend)` sets every column of a disc to the heart's height and blends the
+edge back into the land over `blend` blocks; `Scene.ground` sets one column (a crater, a terrace). The feature fills or cuts
+the land to those heights even where nothing is built, and finishes a cut or a fill with the land's own top (grass, sand,
+snow). A place's `reach` is its levelled radius plus its blend: nothing of it, built or shaped, lies past that, and
+`Scene.put` drops what would. The heart's own cell is never written.
+
+### 59.4 A place's air
+
+`Air` (common): one fog colour and how close it comes, one mote (how many a tick, how high, how it drifts), up to two
+recordings on a loop, and `below()` for a cave whose air stays underground. The heart sends its kind to the client; the
+client fades the air in over the last fourteen blocks to the place's reach, takes the strongest of the hearts near, and holds
+it inside (`FindsClient`: `ViewportEvent.ComputeFogColor` and `RenderFog`, particles round the camera, `playLocalSound`). The
+fog colour is scaled by the hour's own brightness, so night stays night.
+
+### 59.5 The kit
+
+`finds/kit/B` and `Pal`. A `Pal` is a place's materials by job (wall, second stone, foot course, trim, floor, roof stair and
+slab, timber). `B` builds: `wall`/`walls` (foot course, two stones, a ragged top when ruined), `gable` (eave beside the top
+course, every row on the last, gable ends walled under each stair, a ridge beam; a fallen roof keeps eaves, ends and beam),
+`cyl`, `ring`, `disc`, `dome`, `cone`, `arch`, `steps`, `house`, `blob` (one piece: only what joins its middle), `carve`
+(a hollow lined below ground), `pool`, `ground`, `path`, `limb` (a line where every block touches the last by a face),
+`leaves`, `tree`, `giant`, `palm`, `vines`, `moss`, `rubble`. Chance is a hash of the site's seed and the position, so every
+chunk writes the same place. Fences, walls, panes, bars and stairs are joined to their neighbours after writing
+(`markPosForPostProcessing` in a new chunk).
+
+### 59.6 Arriving and finishing
+
+Walking into a place (within its reach) files it in the Journal with its name and what you see, once per kind, with a tenth
+of a level and the game's find card. Finishing its two or three steps pays its loot twice over and three tenths of a level
+(plus rank), and marks it done. The Journal's Places shelf lists the thirty places and nothing else.
+
+### 59.7 Checks
+
+- `finds_every_scene_stands` holds a place to: it builds, nothing floats (unseen light excepted), nothing built or shaped past
+  its reach. The "third not plain cubes" rule is for the small kinds only: a place is judged by eye.
+- `finds_every_kind_plays`: a scripted player does each place's own steps on a level pad; it finishes and pays once.
+- `/awaken finds view <kind> <0..3>`: stands you at one of the place's four cameras (afar, above, door, inside) at the nearest
+  one the world made, looking out to 21,000 blocks from the spawn.
+- Tours for GitHub's runners (`tools/content/finds_tour.py`): `places-a` to `-f`, five places each, five pictures a place
+  (the four cameras and the door at dusk), and `places-journal`.
+
+### 59.8 Not done
+
+No hand clips. Motes and recordings are vanilla's by name. The Stilled are the kit's simple figures. A place has no map of
+its own, no second storey of story (books, notes), and nothing that changes after it is done except what its steps change.
+Nothing has been played by a person.
