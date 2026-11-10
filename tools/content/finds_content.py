@@ -403,7 +403,7 @@ def java():
               "    private static DeferredBlock<PropBlock> prop(String id, float x0, float y0, float z0, float x1, float y1, float z1, boolean solid, int litFrom, int light) {",
               "        IDS.add(id);",
               "        return SET.withItem(SET.blocks.registerBlock(id, p -> new PropBlock(p, x0, y0, z0, x1, y1, z1, solid), p -> {",
-              "            BlockBehaviour.Properties q = p.mapColor(MapColor.STONE).strength(0.6F).sound(SoundType.STONE).noOcclusion().pushReaction(PushReaction.DESTROY)",
+              "            BlockBehaviour.Properties q = p.mapColor(MapColor.STONE).strength(0.6F).sound(SoundType.STONE).noOcclusion().pushReaction(PushReaction.POPPED)",
               "                    .lightLevel(s -> s.getValue(PropBlock.STATE) >= litFrom && (litFrom != 1 || (s.getValue(PropBlock.STATE) & 1) == 1) ? light : 0);",
               "            return solid ? q : q.noCollision();",
               "        }));",

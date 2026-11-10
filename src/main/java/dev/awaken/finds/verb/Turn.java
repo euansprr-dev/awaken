@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class Turn implements Script {
     private final String part;
     private long from = -1, to = -1;
+    private boolean byFacing;
 
     private Turn(String part) {
         this.part = part;
@@ -23,6 +24,12 @@ public final class Turn implements Script {
 
     public static Turn dials(String part) {
         return new Turn(part);
+    }
+
+    /** The dials turn bodily (their facing goes round), for a prop whose states mean something else. */
+    public Turn byFacing() {
+        byFacing = true;
+        return this;
     }
 
     /** Only right between these hours of the game day (0..23999, sunrise 0); {@code from} may be later than {@code to} to span midnight. */
@@ -55,7 +62,8 @@ public final class Turn implements Script {
         int[] t = targets(c.seed(), c.count(part));
         for (int i = 0; i < t.length; i++) {
             BlockState s = c.at(part, i);
-            if (!(s.getBlock() instanceof PropBlock) || s.getValue(PropBlock.STATE) != t[i]) return false;
+            if (!(s.getBlock() instanceof PropBlock)) return false;
+            if (byFacing ? ((s.getValue(PropBlock.FACING).get2DDataValue() - c.site.rot()) & 3) != t[i] : s.getValue(PropBlock.STATE) != t[i]) return false;
         }
         return true;
     }
@@ -65,7 +73,7 @@ public final class Turn implements Script {
         if (!name.equals(part)) return false;
         BlockState s = c.at(part, i);
         if (!(s.getBlock() instanceof PropBlock)) return false;
-        c.set(part, i, s.setValue(PropBlock.STATE, (s.getValue(PropBlock.STATE) + 1) & 3));
+        c.set(part, i, byFacing ? s.setValue(PropBlock.FACING, s.getValue(PropBlock.FACING).getClockWise()) : s.setValue(PropBlock.STATE, (s.getValue(PropBlock.STATE) + 1) & 3));
         c.sound(c.pos(part, i), SoundEvents.GRINDSTONE_USE, 0.5F, 1.3F);
         if (right(c) && inHours(c)) {
             c.puff(c.pos(part, i).above(), ParticleTypes.WAX_ON, 8, 0.3, 0.02);

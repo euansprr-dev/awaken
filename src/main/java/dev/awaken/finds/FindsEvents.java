@@ -59,7 +59,7 @@ final class FindsEvents {
         if (handled) {
             e.setCanceled(true);
             e.setCancellationResult(InteractionResult.SUCCESS_SERVER);
-            p.swing(InteractionHand.MAIN_HAND, true);
+            p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
             resync(p, e.getPos());
         }
     }

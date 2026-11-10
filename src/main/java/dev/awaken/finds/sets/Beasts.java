@@ -44,12 +44,12 @@ final class Beasts {
                     s.partOn("cache", 0, 0, 0);
                     s.partOn("socket", 0, 1, 0);
                     s.on(-1, 2, Blocks.CORNFLOWER.defaultBlockState());
-                    s.on(1, 1, Blocks.BLUE_CARPET.defaultBlockState());
+                    s.on(1, 1, Blocks.CARPET.pick(net.minecraft.world.item.DyeColor.BLUE).defaultBlockState());
                     s.on(2, 2, Dress.twigs(s));
-                    s.spawn(EntityType.PARROT, 0, -2, 0, "bird");
+                    s.spawn(net.minecraft.world.entity.EntityTypes.PARROT, 0, -2, 0, "bird");
                     Dress.skirt(s, 5, m);
                 })
-                .script(() -> Sockets.need("socket", Beasts::blue, i -> Blocks.BLUE_CARPET.defaultBlockState()))
+                .script(() -> Sockets.need("socket", Beasts::blue, i -> Blocks.CARPET.pick(net.minecraft.world.item.DyeColor.BLUE).defaultBlockState()))
                 .play(t -> t.hold(net.minecraft.world.item.Items.LAPIS_LAZULI).use("socket", 0))
                 .add();
     }

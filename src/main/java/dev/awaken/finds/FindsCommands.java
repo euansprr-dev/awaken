@@ -44,7 +44,7 @@ final class FindsCommands {
             return 0;
         }
         ServerLevel level = (ServerLevel) p.level();
-        Site s = FindsFeature.stamp(level, k, p.blockPosition().below(), p.getDirection().get2DDataValue(), level.random.nextLong());
+        Site s = FindsFeature.stamp(level, k, p.blockPosition().below(), p.getDirection().get2DDataValue(), level.getRandom().nextLong());
         c.getSource().sendSuccess(() -> Component.literal(k.name() + " at " + s.x() + " " + s.y() + " " + s.z()), false);
         return 1;
     }

@@ -26,7 +26,7 @@ public final class FindsContent {
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Awaken.MODID);
 
     public static final DeferredBlock<FindHeartBlock> HEART = BLOCKS.registerBlock("find_heart", FindHeartBlock::new,
-            p -> p.mapColor(MapColor.NONE).strength(-1.0F, 3600000.0F).noLootTable().noOcclusion().pushReaction(PushReaction.BLOCK));
+            p -> p.mapColor(MapColor.NONE).strength(-1.0F, 3600000.0F).noLootTable().noOcclusion().pushReaction(PushReaction.IMMOVEABLE));
 
     public static final Supplier<BlockEntityType<FindHeartBlockEntity>> HEART_BE = BLOCK_ENTITIES.register("find_heart",
             () -> new BlockEntityType<>(FindHeartBlockEntity::new, HEART.get()));

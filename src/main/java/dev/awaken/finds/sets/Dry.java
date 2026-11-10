@@ -28,10 +28,10 @@ final class Dry {
     /** A few birds come down, the way they do to water. */
     static void birds(Ctx c, int n) {
         for (int i = 0; i < n; i++) {
-            var e = EntityType.PARROT.create(c.level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
+            var e = net.minecraft.world.entity.EntityTypes.PARROT.create(c.level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
             if (e == null) continue;
             var at = c.site.ground();
-            e.snapTo(at.getX() + 0.5 + c.level.random.nextInt(5) - 2, at.getY() + 4 + i, at.getZ() + 0.5 + c.level.random.nextInt(5) - 2, c.level.random.nextFloat() * 360, 0);
+            e.snapTo(at.getX() + 0.5 + c.level.getRandom().nextInt(5) - 2, at.getY() + 4 + i, at.getZ() + 0.5 + c.level.getRandom().nextInt(5) - 2, c.level.getRandom().nextFloat() * 360, 0);
             c.level.addFreshEntity(e);
         }
     }

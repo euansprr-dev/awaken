@@ -62,7 +62,7 @@ public final class Quiet implements Script {
                 if (away.lengthSqr() > radius * radius) continue;
                 away = away.horizontalDistanceSqr() < 0.01 ? new Vec3(1, 0, 0) : away.multiply(1, 0, 1).normalize();
                 p.push(away.x * 1.4, 0.45, away.z * 1.4);
-                p.hurtMarked = true;
+                p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p));
             }
             noise = 0;
         } else if (noise > 55 && c.now() % 20 == 0) {

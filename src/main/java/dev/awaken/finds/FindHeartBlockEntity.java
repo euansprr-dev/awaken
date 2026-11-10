@@ -181,7 +181,7 @@ public final class FindHeartBlockEntity extends BlockEntity {
             Entity e = sp.type().create(sl, EntitySpawnReason.STRUCTURE);
             if (e == null) continue;
             BlockPos at = s.world(sp.rel());
-            e.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, sl.random.nextFloat() * 360, 0);
+            e.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, sl.getRandom().nextFloat() * 360, 0);
             e.addTag(tagOf(s));
             e.addTag("find_role:" + sp.role());
             if (e instanceof Mob m) {

@@ -177,7 +177,7 @@ public final class Ctx {
     public void pop(BlockPos from, ItemStack stack) {
         if (stack.isEmpty()) return;
         ItemEntity e = new ItemEntity(level, from.getX() + 0.5, from.getY() + 0.6, from.getZ() + 0.5, stack);
-        e.setDeltaMovement((level.random.nextDouble() - 0.5) * 0.12, 0.26, (level.random.nextDouble() - 0.5) * 0.12);
+        e.setDeltaMovement((level.getRandom().nextDouble() - 0.5) * 0.12, 0.26, (level.getRandom().nextDouble() - 0.5) * 0.12);
         e.setPickUpDelay(12);
         level.addFreshEntity(e);
     }

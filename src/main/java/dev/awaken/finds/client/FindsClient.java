@@ -52,7 +52,7 @@ public final class FindsClient {
         if (mc.player == null || done) return;
         double d = mc.player.distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         if (d > 48 * 48) return;
-        var r = level.random;
+        var r = level.getRandom();
         double x = at.getX() + 0.5, y = at.getY() + 0.5, z = at.getZ() + 0.5;
         long t = level.getGameTime();
         boolean night = level.getOverworldClockTime() % 24000 > 12500;

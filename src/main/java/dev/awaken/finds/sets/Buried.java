@@ -41,7 +41,7 @@ final class Buried {
                     s.floor(-1, 1, Blocks.ROOTED_DIRT.defaultBlockState());
                     s.on(1, 0, Dress.pebbles(s));
                     s.on(-1, 1, Dress.twigs(s));
-                    s.spawn(EntityType.FOX, 1, 1, 0, "fox");
+                    s.spawn(net.minecraft.world.entity.EntityTypes.FOX, 1, 1, 0, "fox");
                     Dress.skirt(s, 4, m);
                 })
                 .script(() -> Dig.at("spot"))

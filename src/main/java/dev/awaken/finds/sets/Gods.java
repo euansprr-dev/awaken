@@ -40,7 +40,7 @@ final class Gods {
                     int cats = 5 + s.rnd.nextInt(5);
                     for (int i = 0; i < cats; i++) {
                         double a = i * 6.283 / cats + s.rnd.nextDouble() * 0.5, r = 2.2 + s.rnd.nextDouble() * 2.2;
-                        s.spawn(EntityType.CAT, (int) Math.round(Math.cos(a) * r), (int) Math.round(Math.sin(a) * r), Scene.Spawn.LIE | Scene.Spawn.NO_AI, "cat");
+                        s.spawn(net.minecraft.world.entity.EntityTypes.CAT, (int) Math.round(Math.cos(a) * r), (int) Math.round(Math.sin(a) * r), Scene.Spawn.LIE | Scene.Spawn.NO_AI, "cat");
                     }
                     s.on(-2, -2, Blocks.DANDELION.defaultBlockState());
                     s.on(2, -1, Blocks.POPPY.defaultBlockState());
