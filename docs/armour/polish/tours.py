@@ -89,6 +89,40 @@ def far():
     return L + ["quit"]
 
 
+# the sets with living parts (SPEC 44.10): which side shows them, and what to do beside standing
+LIVING = [("signals_echo", "front", ""), ("sunward", "back", ""), ("halo_choir", "front", "walk"), ("lanternlight", "front", "walk"),
+          ("bladeward", "front", "fall"), ("nightcourt", "front", "fall"), ("galewing", "back", "fall"), ("dreamsteel", "front", ""),
+          ("riftwalker", "back", ""), ("hollowheart", "front", ""), ("leviathan", "front", ""), ("veilwoven", "front", "walk")]
+
+
+def living():
+    L = head("armouraudit5", 5155, "living parts: each set at four moments a second apart, then in a walk or a fall")
+    L += ["cmd tp @s 0.5 150 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
+          "cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone", "cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete",
+          "cmd item replace entity @s weapon.mainhand with minecraft:air", "hud off", "opt fov 40", "wait 20"]
+    for s, side, move in LIVING:
+        L += wear(s)
+        if side == "front":
+            L += ["cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 6"]
+        else:
+            L += ["cmd tp @s 0.5 150 5.5 0 0", "camera back", "look 0 8"]
+        L += ["wait 14"]
+        for k in "abcd":
+            L += [f"shotnow l_{s}_{k}", "wait 20"]
+        if move == "walk":  # the stride: lanterns and ribbons swing
+            L += ["cmd tp @s 0.5 150 9.5 180 0", "camera front", "look 180 6", "wait 10", "walk 40", "wait 12", f"shotnow l_{s}_walk_a",
+                  "wait 5", f"shotnow l_{s}_walk_b", "wait 5", f"shotnow l_{s}_walk_c", "wait 30"]
+        if move == "fall":  # the wind: plumes stream, wings open
+            L += ["cmd tp @s 0.5 196 5.5 0 0" if side == "back" else "cmd tp @s 0.5 196 7.5 180 0", "wait 10", f"shotnow l_{s}_fall_a",
+                  "wait 6", f"shotnow l_{s}_fall_b", "wait 6", f"shotnow l_{s}_fall_c", "wait 70"]
+    # mastery IV's parts growing in: Halo Choir's helm at mastery IV, shot through its first half second
+    L += wear("halo_choir")
+    L += ["cmd tp @s 0.5 150 7.5 180 0", "camera front", "look 180 6", "wait 20", "shotnow l_grow_before",
+          'cmd item replace entity @s armor.head with awaken:halo_choir_helmet[awaken:forged={set:"halo_choir",mastery:3000}]',
+          "wait 3", "shotnow l_grow_a", "wait 3", "shotnow l_grow_b", "wait 4", "shotnow l_grow_c", "wait 12", "shotnow l_grow_d"]
+    return L + ["quit"]
+
+
 def write(name, lines):
     with open(os.path.join(OUT, name + ".txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -100,3 +134,4 @@ if __name__ == "__main__":
     write("armour-audit-worn-2", worn("armouraudit2", 5152, RANKS["B"] + RANKS["A"] + RANKS["S"]))
     write("armour-audit-stands", stands())
     write("armour-audit-far", far())
+    write("armour-audit-living", living())

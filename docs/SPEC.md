@@ -18068,7 +18068,8 @@ an inlay gives its Force's colour; one dye you carry colours the whole worn suit
 up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
 
 **44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
-settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour camera cinematic|first`):
+settings screen; also `/awaken armour sculpted on|near|off`, `/awaken armour camera cinematic|first` and
+`/awaken armour motion true|false`):
 - **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
   painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
   view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
@@ -18080,6 +18081,38 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+- **Armour motion** on (default) / off: whether a set's living parts move (§44.10). Off: every part is rigid on its
+  bone, exactly as before the Finish.
+
+**44.10 Living parts (the Finish, stage 4).** One or two things on a set that should never stand still move: a halo, a
+marker, a plume, lanterns, wings. Twelve sets have them; the rest stand still on purpose (a Bellguard or a Beastbound
+that fidgets would be wrong).
+- **How it is made.** A living part is some of a bone's own boxes, named in the kit (`tools/art/specs/armour_finish.py`,
+  `LIVE`: the piece, the bone, the part names, the motion, a pivot and an axis in the design's own texels). The kit writes
+  those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
+  and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
+  (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
+- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+  **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
+  axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
+  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+- **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
+  1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
+  (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
+  same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
+- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+  halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
+  stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
+  a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
+  even apart. Riftwalker: the rift's tear and glow shiver. Hollowheart: the caged heart beats, about once a second.
+  Leviathan: the frills breathe. Veilwoven: the arm ribbons swing.
+- **A check the kit runs** (`sweep`): every living part is moved through its whole range (age, stride, wind) and may not
+  pass through the rest of its set, except where it is joined to a part or allowed through one by name (the plume
+  through its own ridge, the rays behind their disc).
+- **Mastery IV grows in.** A piece's awakened parts no longer pop: they grow from their own middle over half a second
+  the first time they show on a wearer (`ArmourLive.Wake`, client only, per entity id, forgotten when you leave).
+- **Fallback.** No `live.json`, a mesh missing or a name the game does not know: the set is drawn whole and rigid, and
+  the log says so once.
 
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 

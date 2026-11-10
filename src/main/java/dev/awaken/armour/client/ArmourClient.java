@@ -58,7 +58,10 @@ public final class ArmourClient {
         NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, ArmourClient::onArm);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(ArmourPayloads.Charge.TYPE,
                 (msg, ctx) -> Minecraft.getInstance().execute(() -> ArmourGlow.on(msg))));
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmourGlow.clear());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            ArmourGlow.clear();
+            ArmourLive.clear();
+        });
         // every first-person limb our own code draws (casts, the off arm, the wrist, the world body) wears the armour too
         dev.awaken.core.client.FirstPersonDress.register(ArmourClient::dressLimb);
         ForgeClient.init(modBus);
@@ -70,6 +73,8 @@ public final class ArmourClient {
     /** The wearer's set ability glow ({@link ArmourGlow}), and whether they are low (mastery III's heartbeat). */
     static final ContextKey<ArmourGlow.Glow> GLOW = new ContextKey<>(Awaken.id("armour_glow"));
     static final ContextKey<Boolean> LOW = new ContextKey<>(Awaken.id("armour_low"));
+    /** When the wearer's awakened parts (mastery IV) first showed, so they grow in ({@link ArmourLive.Wake}). */
+    static final ContextKey<ArmourLive.Wake> WAKE = new ContextKey<>(Awaken.id("armour_wake"));
     /** Below this share of health a mastered set beats with your heart. */
     private static final float LOW_HEALTH = 0.35F;
 
@@ -98,6 +103,7 @@ public final class ArmourClient {
         }
         if (worn == null) return;
         state.setRenderData(WORN, worn);
+        wake(entity, state, worn);
         ArmourGlow.Glow glow = ArmourGlow.of(entity.getId());
         if (glow != null) state.setRenderData(GLOW, glow);
         if (entity.getHealth() < entity.getMaxHealth() * LOW_HEALTH) state.setRenderData(LOW, Boolean.TRUE);
@@ -119,6 +125,23 @@ public final class ArmourClient {
             if (a != null) a.showLeftPants = a.showRightPants = false;
         }
         if (worn[ArmorType.BOOTS.ordinal()] != null) h.feetEquipment = ItemStack.EMPTY;
+    }
+
+    /** Notes when each slot's awakened parts first show on this wearer (and when they go), for their grow-in. */
+    private static void wake(LivingEntity entity, LivingEntityRenderState state, ItemStack[] worn) {
+        ArmourLive.Wake w = ArmourLive.woken(entity.getId());
+        for (int i = 0; i < SLOTS.length; i++) {
+            ItemStack stack = worn[SLOTS[i].ordinal()];
+            Forged f = stack == null ? null : stack.get(ArmourContent.FORGED.get());
+            boolean awake = f != null && f.masteryStep() >= ArmourLayer.AWAKENED;
+            if (!awake) {
+                if (w != null) w.since[i] = 0;
+                continue;
+            }
+            if (w == null) w = ArmourLive.wake(entity.getId());
+            if (w.since[i] == 0) w.since[i] = net.minecraft.util.Util.getMillis();
+        }
+        if (w != null) state.setRenderData(WAKE, w);
     }
 
     /**

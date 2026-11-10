@@ -11,8 +11,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Client settings for the armour (SPEC §44.9), in their own file ({@code config/awaken-armour-client.toml}, listed in the
- * mod's settings screen): how far the sculpted look is drawn, and whether the Forge Song is filmed or seen through your
- * own eyes.
+ * mod's settings screen): how far the sculpted look is drawn, whether the Forge Song is filmed or seen through your own
+ * eyes, and whether a set's living parts move.
  */
 public final class ArmourClientConfig {
     private ArmourClientConfig() {}
@@ -36,11 +36,16 @@ public final class ArmourClientConfig {
             .comment("The Forge Song's camera: CINEMATIC films the heat, the strikes, the quench and the fit from close shots;",
                     "FIRST_PERSON stays at your own eyes and turns to look at the work.")
             .defineEnum("forge_camera", ForgeView.CINEMATIC);
+    public static final ModConfigSpec.BooleanValue MOTION = B
+            .comment("Armour motion: the parts of a set that should not stand still (a halo, a marker, a plume, lanterns, wings)",
+                    "move. false: every part is rigid on its bone.")
+            .define("armour_motion", true);
     public static final ModConfigSpec SPEC = B.build();
 
     // read on every armoured figure each frame: cached, updated when the file loads or changes
     private static volatile Sculpted sculpted = Sculpted.ON;
     private static volatile ForgeView view = ForgeView.CINEMATIC;
+    private static volatile boolean motion = true;
 
     static void register(IEventBus modBus) {
         try {
@@ -57,10 +62,25 @@ public final class ArmourClientConfig {
         try {
             sculpted = SCULPTED.get();
             view = FORGE_VIEW.get();
+            motion = MOTION.get();
         } catch (RuntimeException e) {
             sculpted = Sculpted.ON;
             view = ForgeView.CINEMATIC;
+            motion = true;
         }
+    }
+
+    /** Sets and saves armour motion (the command; tours). */
+    static void motion(boolean on) {
+        motion = on;
+        if (!SPEC.isLoaded()) return;
+        MOTION.set(on);
+        SPEC.save();
+    }
+
+    /** Whether a set's living parts move (SPEC §44.10). */
+    public static boolean motion() {
+        return motion;
     }
 
     /** Sets and saves (the commands; tours). */

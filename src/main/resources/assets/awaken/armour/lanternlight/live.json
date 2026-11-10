@@ -1,0 +1,104 @@
+[
+ {
+  "piece": "helmet",
+  "bone": "head",
+  "mesh": "helmet_head_live0",
+  "kind": "sway",
+  "pivot": [
+   0.0,
+   -0.4375,
+   -0.375
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.07,
+  "amount": 9.0,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 0.3,
+  "stride": 0.7,
+  "wind": 0.0
+ },
+ {
+  "piece": "chestplate",
+  "bone": "right_arm",
+  "mesh": "chestplate_right_arm_live0",
+  "kind": "sway",
+  "pivot": [
+   -0.1875,
+   -0.25,
+   -0.0
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "u": [
+   -1.0,
+   -0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.06,
+  "amount": 3.5,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 0.25,
+  "stride": 0.75,
+  "wind": 0.0
+ },
+ {
+  "piece": "chestplate",
+  "bone": "left_arm",
+  "mesh": "chestplate_left_arm_live0",
+  "kind": "sway",
+  "pivot": [
+   0.1875,
+   -0.25,
+   -0.0
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   1.0
+  ],
+  "u": [
+   1.0,
+   0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "speed": 0.06,
+  "amount": 3.5,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 0.25,
+  "stride": 0.75,
+  "wind": 0.0
+ }
+]

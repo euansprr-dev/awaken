@@ -23,6 +23,7 @@ own meshes, and above E its pattern's (a vellum sheet with the helm in ink and a
     assets/awaken/items/<id>.json, assets/awaken/models/item/<id>.json
 Deterministic: nothing is random.
 """
+import json
 import math
 import os
 import sys
@@ -3363,7 +3364,23 @@ def make(design, width=128):
     groups, faces = [], []
     VX.WARNINGS.clear()
     warns = []
-    parts = [(p, b, boxes) for p, bones in design["pieces"].items() for b, boxes in bones.items()]
+    parts = []
+    lives = FIN.live_specs(design)  # (piece, bone) -> its living parts (SPEC §44.10)
+    for p, bones in design["pieces"].items():
+        for b, boxes in bones.items():
+            specs = lives.get((p, b))
+            if not specs:
+                parts.append((p, b, boxes))
+                continue
+            still = list(boxes)
+            for k, spec in enumerate(specs):
+                moving = FIN.split(still, spec)
+                if not moving:
+                    raise ValueError(f"{design['id']}: no part of {p}/{b} is named {spec['parts']}")
+                still = [x for x in still if x not in moving]
+                parts.append((p, f"{b}@live{k}", moving))
+            if still:
+                parts.append((p, b + "@still", still))
     if design.get("rune"):
         parts.append(("rune", "rune", design["rune"]))
     # mastery IV's awakened parts: drawn over the piece's own on the same bone (bone@awake, <piece>_<bone>_awakened.mesh)
@@ -3407,6 +3424,13 @@ def make(design, width=128):
     for g, (P, N, UV, A) in acc.items():
         if P:
             meshes[g] = Built(to_part(np.array(P)), to_part(np.array(N), True), np.array(UV), np.array(A))
+    # a bone with living parts: the whole piece at rest is its still mesh and its living ones together (what every
+    # drawer that knows nothing of living parts goes on drawing)
+    for (piece, bone) in lives:
+        got = [m for (pp, bb), m in meshes.items() if pp == piece and bb.split("@")[0] == bone and ("@still" in bb or "@live" in bb)]
+        if got:
+            meshes[(piece, bone)] = Built(np.concatenate([m.pos for m in got]), np.concatenate([m.nrm for m in got]),
+                                          np.concatenate([m.uv for m in got]), np.concatenate([m.along for m in got]))
     return meshes, albedo, material, warns
 
 
@@ -3420,8 +3444,16 @@ def write(design):
             os.remove(os.path.join(mesh_dir, old))
     accent = AW.hex_rgb(design["accent"])
     for (piece, bone), b in meshes.items():
-        name = "rune" if piece == "rune" else f"{piece}_{bone.replace('@awake', '_awakened')}"
+        name = "rune" if piece == "rune" else f"{piece}_{bone.replace('@awake', '_awakened').replace('@', '_')}"
         MS.write(os.path.join(mesh_dir, name + ".mesh"), b, accent)
+    live = FIN.live_json(design)
+    live_file = os.path.join(mesh_dir, "live.json")
+    if live:
+        with open(live_file, "w") as f:
+            json.dump(live, f, indent=1)
+            f.write("\n")
+    elif os.path.exists(live_file):
+        os.remove(live_file)
     tex_dir = os.path.join(RES, "assets/awaken/textures/entity/armour")
     os.makedirs(tex_dir, exist_ok=True)
     Image.fromarray(np.concatenate([albedo, material], axis=1), "RGBA").save(os.path.join(tex_dir, sid + ".png"))
@@ -3626,7 +3658,7 @@ def figure(design, skin=True, awake=False):
     tex = np.concatenate([albedo, material], axis=1)
     pos, nrm, uv, al = [], [], [], []
     for (piece, bone), b in meshes.items():
-        if "@" in bone and not awake:
+        if "@" in bone and not (awake and bone.endswith("@awake")):
             continue
         P, N = rest(bone, b.pos, b.nrm)
         pos.append(P)
@@ -3751,18 +3783,19 @@ def check():
     for sid, fn in SETS.items():
         design = fn()
         meshes, albedo, material, warns = make(design)
-        n = sum(len(b.pos) for b in meshes.values())
+        n = sum(len(b.pos) for (_, bn), b in meshes.items() if "@still" not in bn and "@live" not in bn)
         if n > BUDGET:
             bad.append(f"{sid}: {n} corners (at most {BUDGET})")
         bad += [f"{sid}: {w}" for w in warns]
         bad += [f"{sid}: {w}" for w in FIN.overlaps(design)]
+        bad += [f"{sid}: {w}" for w in FIN.sweep(design)]
         if albedo.shape[0] > 512:
             bad.append(f"{sid}: atlas {albedo.shape[0]} tall")
         for piece, bones in BONES.items():
             for bone in list(design["pieces"].get(piece, {})) + list(design.get("awake", {}).get(piece, {})):
                 if bone not in bones:
                     bad.append(f"{sid}: {piece} on a bone the game doesn't draw it on ({bone})")
-        per = {p: sum(len(b.pos) for (pp, _), b in meshes.items() if pp == p) // 3 for p in BONES}
+        per = {p: sum(len(b.pos) for (pp, bn), b in meshes.items() if pp == p and "@still" not in bn and "@live" not in bn) // 3 for p in BONES}
         print(f"  {sid:14s} {n // 3:5d} triangles {per}  atlas {albedo.shape[1]}x{albedo.shape[0]}")
     return bad
 

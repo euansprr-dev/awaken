@@ -25,7 +25,8 @@ import net.minecraft.world.item.equipment.ArmorType;
  * model is posed, through the armour shader. On players (both arm widths), mannequins, armour stands and humanoid mobs.
  * The cape hangs from its yoke in three links that swing with the player's cape motion (vanilla's lean and flap, each
  * link a little further); the cloth over the legs is pushed by the stride (the front by the leg swung forward, the back
- * by the leg swung back). Nothing per frame but the vertices.
+ * by the leg swung back). A set's living parts (a halo, a marker, a plume, wings: SPEC §44.10) are drawn apart from
+ * their bone's still mesh, each moved by the frame's own state. Nothing per frame but the vertices.
  */
 final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends RenderLayer<S, M> {
     private static final ArmorType[] SLOTS = {ArmorType.HELMET, ArmorType.CHESTPLATE, ArmorType.LEGGINGS, ArmorType.BOOTS};
@@ -41,9 +42,13 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         ArmourGlow.Glow glow = state.getRenderData(ArmourClient.GLOW);
         int energy = ArmourGlow.energy(glow), flash = ArmourGlow.flash(glow);
         boolean low = state.getRenderData(ArmourClient.LOW) != null;
+        ArmourLive.Wake wake = state.getRenderData(ArmourClient.WAKE);
+        boolean motion = ArmourClientConfig.motion();
+        float wind = motion ? ArmourLive.wind(state) : 0F;
         ArmourSet aura = null;
         int mastered = 0;
-        for (ArmorType slot : SLOTS) {
+        for (int si = 0; si < SLOTS.length; si++) {
+            ArmorType slot = SLOTS[si];
             ItemStack stack = worn[slot.ordinal()];
             if (stack == null) continue;
             ArmourLooks.Look look = ArmourLooks.drawn(stack);
@@ -57,13 +62,28 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             int accent = forged == null ? 0 : forged.accent();
             // mastery IV: the set's awakened parts grow over the piece's own
             ArmourMesh[] awake = mastery >= AWAKENED ? ArmourMeshes.awakened(look.set(), slot) : null;
+            float grown = awake == null || wake == null ? 1F : wake.grown(si);
+            // the set's living parts (SPEC §44.10): their bones drawn without them, and each where it is now
+            ArmourLive.Part[] live = motion ? ArmourMeshes.live(look.set(), slot) : null;
+            ArmourMesh[] still = live == null ? null : ArmourMeshes.still(look.set(), slot);
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
-                if (mesh == null && extra == null) continue;
+                boolean lives = still != null && ArmourLive.on(live, b);
+                ArmourMesh mesh = lives ? still[b.ordinal()] : bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null && !lives) continue;
                 ps.pushPose();
                 if (place(ps, getParentModel(), b, state)) {
                     if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
-                    if (extra != null) draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
+                    if (lives) for (ArmourLive.Part p : live) {
+                        if (p.bone() != b) continue;
+                        ps.pushPose();
+                        ArmourLive.pose(ps, p, state.ageInTicks, state.walkAnimationSpeed, state.walkAnimationPos, wind);
+                        draw(out, ps, p.mesh(), look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
+                        ps.popPose();
+                    }
+                    if (extra != null) {
+                        if (grown < 1F) ArmourLive.grow(ps, extra, grown);
+                        draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
+                    }
                 }
                 ps.popPose();
             }

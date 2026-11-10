@@ -1,0 +1,70 @@
+[
+ {
+  "piece": "chestplate",
+  "bone": "cape1",
+  "mesh": "chestplate_cape1_live0",
+  "kind": "sway",
+  "pivot": [
+   0.0,
+   -0.0,
+   0.03125
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   1.0
+  ],
+  "u": [
+   1.0,
+   0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "speed": 0.04,
+  "amount": 1.5,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 1.0,
+  "stride": 0.0,
+  "wind": 20.0
+ },
+ {
+  "piece": "chestplate",
+  "bone": "cape1",
+  "mesh": "chestplate_cape1_live1",
+  "kind": "sway",
+  "pivot": [
+   -0.0,
+   -0.0,
+   0.03125
+  ],
+  "axis": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "u": [
+   -1.0,
+   -0.0,
+   -0.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.04,
+  "amount": 1.5,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 1.0,
+  "stride": 0.0,
+  "wind": 20.0
+ }
+]

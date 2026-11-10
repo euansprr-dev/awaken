@@ -147,12 +147,23 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
             ArmourMesh[] bones = ArmourMeshes.piece(set, ForgeSong.PIECES[slot]);
             if (bones == null) continue;
             ArmourMesh[] awake = s.mastery[slot] >= ArmourLayer.AWAKENED ? ArmourMeshes.awakened(set, ForgeSong.PIECES[slot]) : null;
+            // a suit on its form lives too (SPEC §44.10): time alone moves it, there is no stride and no wind
+            ArmourLive.Part[] live = ArmourClientConfig.motion() ? ArmourMeshes.live(set, ForgeSong.PIECES[slot]) : null;
+            ArmourMesh[] still = live == null ? null : ArmourMeshes.still(set, ForgeSong.PIECES[slot]);
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
-                if (mesh == null && extra == null) continue;
+                boolean lives = still != null && ArmourLive.on(live, b);
+                ArmourMesh mesh = lives ? still[b.ordinal()] : bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null && !lives) continue;
                 ps.pushPose();
                 rest(ps, b);
                 if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
+                if (lives) for (ArmourLive.Part p : live) {
+                    if (p.bone() != b) continue;
+                    ps.pushPose();
+                    ArmourLive.pose(ps, p, s.age, 0F, 0F, 0F);
+                    ArmourLayer.draw(out, ps, p.mesh(), set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
+                    ps.popPose();
+                }
                 if (extra != null) ArmourLayer.draw(out, ps, extra, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
                 ps.popPose();
             }

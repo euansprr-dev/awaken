@@ -1,0 +1,36 @@
+[
+ {
+  "piece": "chestplate",
+  "bone": "body",
+  "mesh": "chestplate_body_live0",
+  "kind": "pulse",
+  "pivot": [
+   0.0,
+   0.25,
+   -0.28125
+  ],
+  "axis": [
+   0.0,
+   -1.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   1.0
+  ],
+  "v": [
+   -1.0,
+   -0.0,
+   -0.0
+  ],
+  "speed": 0.058823529411764705,
+  "amount": 0.09,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 0.35,
+  "stride": 0.65,
+  "wind": 0.0
+ }
+]

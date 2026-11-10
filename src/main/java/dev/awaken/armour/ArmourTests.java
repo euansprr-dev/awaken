@@ -131,8 +131,43 @@ final class ArmourTests {
             for (String[] pb : new String[][]{{"chestplate", "right_arm"}, {"chestplate", "left_arm"}, {"boots", "left_leg"}}) {
                 h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + pb[0] + "_" + pb[1] + ".mesh"), s.id + " dresses " + pb[1]);
             }
+            living(h, s);
         }
         h.succeed();
+    }
+
+    private static final java.util.Set<String> LIVE_BONES = java.util.Set.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg",
+            "cape0", "cape1", "cape2", "front_cloth", "back_cloth");
+    private static final java.util.Set<String> LIVE_KINDS = java.util.Set.of("turn", "tilt", "sway", "drift", "pulse");
+
+    /**
+     * A set's living parts (SPEC §44.10), where it has any: every entry of live.json names a real piece, bone and motion,
+     * ships its own mesh, and carries every number the client reads (one missing and the whole set would stand still).
+     */
+    private static void living(GameTestHelper h, ArmourSet s) {
+        String file = "/assets/awaken/armour/" + s.id + "/live.json";
+        if (!exists(file)) return;
+        com.google.gson.JsonArray parts;
+        try (InputStream in = ArmourTests.class.getResourceAsStream(file)) {
+            parts = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+        } catch (IOException | RuntimeException e) {
+            throw h.assertionException(file + " does not read: " + e);
+        }
+        h.assertTrue(!parts.isEmpty(), file + " names a part");
+        for (var el : parts) {
+            var o = el.getAsJsonObject();
+            String piece = o.get("piece").getAsString(), bone = o.get("bone").getAsString();
+            boolean real = false;
+            for (ArmorType type : ForgeSong.PIECES) real |= type.getName().equals(piece);
+            h.assertTrue(real, file + ": " + piece + " is a piece");
+            h.assertTrue(LIVE_BONES.contains(bone), file + ": " + bone + " is a bone");
+            h.assertTrue(LIVE_KINDS.contains(o.get("kind").getAsString()), file + ": " + o.get("kind") + " is a motion");
+            h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + o.get("mesh").getAsString() + ".mesh"), file + " ships " + o.get("mesh"));
+            for (String v : new String[]{"pivot", "axis", "u", "v"})
+                h.assertTrue(o.has(v) && o.getAsJsonArray(v).size() == 3, file + ": " + v + " has three numbers");
+            for (String n : new String[]{"speed", "amount", "reach", "bob", "phase", "idle", "stride", "wind"})
+                h.assertTrue(o.has(n) && o.get(n).getAsJsonPrimitive().isNumber(), file + ": " + n + " is a number");
+        }
     }
 
     private static boolean exists(String path) {

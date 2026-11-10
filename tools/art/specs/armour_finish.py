@@ -413,3 +413,224 @@ def overlaps(design):
                             if abs(pa - pb) < 1e-6:
                                 bad.append(f"{piece}/{bone}: {a.part} and {b.part} share a face (axis {'xyz'[ax]} at {pa:g})")
     return sorted(set(bad))
+
+
+# ---- living parts (SPEC §44.10) -------------------------------------------------------------------------------------
+# One or two things per set that should not stand still: a halo, a marker, a plume, wings. A living part is some of a
+# bone's own boxes, written as a mesh of their own beside the bone's still one, with what moves it: a pivot and an axis
+# in the bone's design space (x your left, y up, z forward; texels), and a kind:
+#   turn   round the axis, speed degrees a tick
+#   tilt   leans amount degrees round and round (a halo), speed radians a tick
+#   sway   swings amount degrees about the axis: a share from idling (speed radians a tick), a share from the stride, a
+#          share from the wind of falling, gliding and running (wings open, a plume streams)
+#   drift  wanders amount texels on its own slow paths (shards, a tear)
+#   pulse  swells by amount on a double beat, speed beats a tick (a heart)
+# bob lifts it up and down besides (texels). A set with nothing here stands still, and some should (Bellguard, Beastbound).
+
+def _live(piece, bone, parts, kind, pivot, axis=(0, 1, 0), speed=0.05, amount=0.0, bob=0.0, phase=0.0, idle=0.35, stride=0.65,
+          wind=0.0, side=0, through=()):
+    """through: parts it may pass into as it moves (rays turning behind their disc, a plume over the ridge it rises
+    from); the sweep check refuses every other."""
+    return dict(piece=piece, bone=bone, parts=tuple(parts), kind=kind, pivot=tuple(float(v) for v in pivot),
+                axis=tuple(float(v) for v in axis), speed=speed, amount=amount, bob=bob, phase=phase, idle=idle, stride=stride,
+                wind=wind, side=side, through=tuple(through))
+
+
+def _both_sides(piece, bone, parts, kind, pivot, axis, **kw):
+    """One bone's left and right (a head's two wings, a back's): the right-hand one (x < 0) mirrors the left."""
+    px, py, pz = pivot
+    ax, ay, az = axis
+    return [_live(piece, bone, parts, kind, (px, py, pz), (ax, ay, az), side=1, **kw),
+            _live(piece, bone, parts, kind, (-px, py, pz), (ax, -ay, -az), side=-1, **kw)]
+
+
+def _both_arms(piece, parts, kind, pivot, axis, **kw):
+    """The same part on each arm: given for the right arm (its outer side is -x), mirrored for the left."""
+    px, py, pz = pivot
+    ax, ay, az = axis
+    return [_live(piece, "right_arm", parts, kind, (px, py, pz), (ax, ay, az), **kw),
+            _live(piece, "left_arm", parts, kind, (-px, py, pz), (ax, -ay, -az), **kw)]
+
+
+LIVE = {
+    # the System's marker turns over the hood and rides up and down
+    "signals_echo": [_live("helmet", "head", ("marker", "marker_core"), "turn", (0, 14.5, 0), (0, 1, 0), speed=3.0, bob=0.6)],
+    # the sun's rays turn slowly behind the head
+    "sunward": [_live("helmet", "head", ("ray",), "turn", (0, 5, -8), (0, 0, 1), speed=0.6, through=("disc",))],
+    # the halo leans round and round and rides; the wings at the temples breathe
+    "halo_choir": [_live("helmet", "head", ("halo",), "tilt", (0, 7, -7), (0, 0, 1), speed=0.045, amount=6.0, bob=0.4)]
+                  + _both_sides("helmet", "head", ("hwing",), "sway", (4.5, 6.0, -7.0), (0, 0, 1), speed=0.045, amount=5.0, idle=1.0, stride=0.0),
+    # the little lamp at the brow swings on its chain as you walk; the shoulder lanterns rock on their feet
+    "lanternlight": [_live("helmet", "head", ("lamp", "lamp_glass"), "sway", (0, 7, 6), (1, 0, 0), speed=0.07, amount=9.0, idle=0.3, stride=0.7)]
+                    + _both_arms("chestplate", ("lantern", "lantern_glass"), "sway", (-3, 4, 0), (0, 0, 1), speed=0.06, amount=3.5, idle=0.25, stride=0.75),
+    # a plume that nods with your step and streams when you run or fall
+    "bladeward": [_live("helmet", "head", ("plume",), "sway", (0, 10, -2), (1, 0, 0), speed=0.06, amount=7.0, idle=0.3, stride=0.5, wind=1.6,
+                        through=("ridge",))],
+    "nightcourt": [_live("helmet", "head", ("plume",), "sway", (4.5, 10.5, 1.5), (1, 0, 0), speed=0.05, amount=6.0, idle=0.35, stride=0.5, wind=1.6)],
+    # the wings that hang down the back (the cape's primaries) breathe, and fan open when you fall, glide or run
+    "galewing": _both_sides("chestplate", "cape1", ("prim",), "sway", (0.0, 0.0, -0.5), (0, 0, -1), speed=0.04, amount=1.5, idle=1.0,
+                            stride=0.0, wind=20.0),
+    # the broken crown drifts over the head, half of it against the other half
+    "dreamsteel": [_live("helmet", "head", ("crown0", "crown2", "crown4"), "drift", (0, 12, 0), speed=0.035, amount=0.5),
+                   _live("helmet", "head", ("crown1", "crown3", "crown5"), "drift", (0, 12, 0), speed=0.035, amount=0.5, phase=2.1)],
+    # the tear behind you never quite holds still
+    "riftwalker": [_live("chestplate", "body", ("tear", "glow"), "drift", (0, 0, -8), speed=0.09, amount=0.3)],
+    # the caged heart beats
+    "hollowheart": [_live("chestplate", "body", ("heart", "heart_tip", "heart_core"), "pulse", (0, -4, 4.5), speed=1 / 17.0, amount=0.09)],
+    # the frills at the ears open and close like gills
+    "leviathan": _both_sides("helmet", "head", ("frill",), "sway", (5.0, 6.0, -2.0), (0, 1, 0), speed=0.035, amount=5.0, idle=1.0, stride=0.0),
+    # the ribbons at the wrists swing
+    "veilwoven": _both_arms("chestplate", ("ribbon",), "sway", (-4.5, -9.0, -0.5), (1, 0, 0), speed=0.06, amount=10.0, idle=0.3, stride=0.7),
+}
+
+
+def is_part(box, names):
+    """A box belongs to a living part by its part's name, numbered or not (ray, ray3, hwing0t)."""
+    base = box.part.rstrip("0123456789-")
+    return box.part in names or base in names or base.rstrip("t").rstrip("0123456789-") in names
+
+
+def _mine(box, spec):
+    if not is_part(box, spec["parts"]):
+        return False
+    return spec["side"] == 0 or (box.c[0] > 0) == (spec["side"] > 0)
+
+
+def live_specs(design):
+    """(piece, bone) -> its living parts, in order."""
+    out = {}
+    if not ON:
+        return out
+    for spec in LIVE.get(design["id"], ()):
+        out.setdefault((spec["piece"], spec["bone"]), []).append(spec)
+    return out
+
+
+# armour_sets.make() asks is_part(box, spec["parts"]); a sided part needs the whole spec
+def split(boxes, spec):
+    return [b for b in boxes if _mine(b, spec)]
+
+
+def live_json(design):
+    """What the game reads beside the meshes (assets/awaken/armour/<set>/live.json): each living part's mesh and what
+    moves it, in the bone's part space (blocks; y down, z back: design space turned half round x)."""
+    out = []
+    for (piece, bone), specs in live_specs(design).items():
+        for k, s in enumerate(specs):
+            px, py, pz = s["pivot"]
+            a = np.asarray(s["axis"], dtype=float)
+            a = a / max(np.linalg.norm(a), 1e-9)
+            u, v = _lean(a)
+            flip = np.array([1.0, -1.0, -1.0])  # design space to part space
+            drift = s["kind"] == "drift"
+            out.append({"piece": piece, "bone": bone, "mesh": f"{piece}_{bone}_live{k}", "kind": s["kind"],
+                        "pivot": [round(px / 16.0, 5), round(-py / 16.0, 5), round(-pz / 16.0, 5)],
+                        "axis": [round(float(x), 5) for x in a * flip], "u": [round(float(x), 5) for x in u * flip],
+                        "v": [round(float(x), 5) for x in v * flip], "speed": s["speed"], "amount": 0.0 if drift else s["amount"],
+                        "reach": round(s["amount"] / 16.0, 5) if drift else 0.0, "bob": round(s["bob"] / 16.0, 5),
+                        "phase": s["phase"], "idle": s["idle"], "stride": s["stride"], "wind": s["wind"]})
+    return out
+
+
+def _lean(a):
+    """The two directions a tilt leans in: square to its axis and to each other."""
+    u = np.cross(a, (0, 1, 0) if abs(a[1]) < 0.9 else (1, 0, 0))
+    u = u / max(np.linalg.norm(u), 1e-9)
+    v = np.cross(a, u)
+    return u, v / max(np.linalg.norm(v), 1e-9)
+
+
+def _rot(axis, deg):
+    a = np.asarray(axis, dtype=float)
+    a = a / max(np.linalg.norm(a), 1e-9)
+    t = np.radians(deg)
+    K = np.array([[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]])
+    return np.eye(3) + np.sin(t) * K + (1 - np.cos(t)) * (K @ K)
+
+
+def beat(x):
+    f = x % 1.0
+    return np.exp(-((f - 0.1) * 9.0) ** 2) + 0.6 * np.exp(-((f - 0.32) * 9.0) ** 2)
+
+
+def pose(spec, age, stride=0.0, walk=0.0, wind=0.0):
+    """(R, t): a living part's boxes at this moment are R (p - pivot) + pivot + t, in design space (the game does the same
+    in part space, ArmourLive.pose)."""
+    k, sp, am, ph = spec["kind"], spec["speed"], spec["amount"], spec["phase"]
+    R, t = np.eye(3), np.zeros(3)
+    if k == "turn":
+        R = _rot(spec["axis"], sp * age)
+    elif k == "tilt":
+        a = np.asarray(spec["axis"], dtype=float)
+        u, v = _lean(a / max(np.linalg.norm(a), 1e-9))
+        R = _rot(u, am * np.sin(sp * age + ph)) @ _rot(v, am * np.cos(sp * age + ph))
+    elif k == "sway":
+        R = _rot(spec["axis"], am * (spec["idle"] * np.sin(sp * age + ph) + spec["stride"] * stride * np.sin(walk * 0.6662 + ph)
+                                     + spec["wind"] * wind))
+    elif k == "drift":
+        t = am * np.array([np.sin(sp * age + ph), np.sin(0.7 * sp * age + 2 * ph), np.sin(1.3 * sp * age + 3 * ph)])
+    elif k == "pulse":
+        R = np.eye(3) * (1 + am * beat(sp * age + ph))
+    t = t + np.array([0.0, spec["bob"] * np.sin(0.05 * age + ph), 0.0])
+    return R, t
+
+
+def posed(design, age, stride=0.0, walk=0.0, wind=0.0):
+    """The design with its living parts where they are at this moment (for a preview, a loop, the sweep check)."""
+    for (piece, bone), specs in live_specs(design).items():
+        boxes = design["pieces"][piece][bone]
+        out = list(boxes)
+        for spec in specs:
+            R, t = pose(spec, age, stride, walk, wind)
+            piv = np.asarray(spec["pivot"])
+            for b in split(boxes, spec):
+                if abs(np.linalg.det(R) - 1) > 1e-6:   # a pulse: a preview shows it as a nudge outward, not a scale
+                    moved = VX.Box(piv + R @ (b.c - piv) + t, b.h, b.mat, b.part, b.R, b.name, **b.data)
+                else:
+                    moved = VX.Box(piv + R @ (b.c - piv) + t, b.h, b.mat, b.part, R @ b.R, b.name, **b.data)
+                out[out.index(b)] = moved
+        design["pieces"][piece][bone] = out
+    return design
+
+
+def sweep(design):
+    """A living part must not swing into the body or the rest of its piece: at the ends of its motion no corner of it
+    may be inside a still box of its bone (or the limb under it) that it was clear of at rest. Returns messages."""
+    bad = []
+    for (piece, bone), specs in live_specs(design).items():
+        boxes = design["pieces"][piece][bone]
+        skin = A.SKIN.get(bone, [])
+        for spec in specs:
+            mine = split(boxes, spec)
+            others = [b for b in boxes if not any(_mine(b, s) for s in specs)] + list(skin)
+            piv = np.asarray(spec["pivot"])
+
+            def corners(b, R, t):
+                pts = np.array([[sx, sy, sz] for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)], dtype=float) * (b.h - 0.3)
+                P = b.c + pts @ b.R.T
+                return piv + (P - piv) @ R.T + t
+            rest = [corners(b, np.eye(3), np.zeros(3)) for b in mine]
+
+            def joined(b, o):
+                # a part that grows out of a box (a plume from its ridge, a ray from its disc) may turn in it
+                pts = np.array([[sx, sy, sz] for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)], dtype=float) * (b.h + 0.51)
+                return bool(o.inside(b.c + pts @ b.R.T).any()) or bool(b.inside(o.c).any())
+            free = {(id(b), id(o)) for b in mine for o in others if not joined(b, o) and not is_part(o, spec["through"])}
+            ages = range(0, 4000, 37)
+            worst = set()
+            for age in ages:
+                for stride, wind in ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)):
+                    R, t = pose(spec, age, stride, age * 0.9, wind)
+                    for b, r0 in zip(mine, rest):
+                        P = corners(b, R, t)
+                        for o in others:
+                            if (id(b), id(o)) not in free:
+                                continue
+                            hit = o.inside(P) & ~o.inside(r0)
+                            if hit.any():
+                                worst.add((b.part, o.part))
+                if spec["kind"] in ("drift", "pulse") and age > 600:
+                    break
+            for a, o in sorted(worst):
+                bad.append(f"{piece}/{bone}: living part {a} swings into {o}")
+    return bad

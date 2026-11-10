@@ -1,0 +1,36 @@
+[
+ {
+  "piece": "helmet",
+  "bone": "head",
+  "mesh": "helmet_head_live0",
+  "kind": "sway",
+  "pivot": [
+   0.0,
+   -0.625,
+   0.125
+  ],
+  "axis": [
+   1.0,
+   -0.0,
+   -0.0
+  ],
+  "u": [
+   0.0,
+   -0.0,
+   -1.0
+  ],
+  "v": [
+   0.0,
+   1.0,
+   -0.0
+  ],
+  "speed": 0.06,
+  "amount": 7.0,
+  "reach": 0.0,
+  "bob": 0.0,
+  "phase": 0.0,
+  "idle": 0.3,
+  "stride": 0.5,
+  "wind": 1.6
+ }
+]
