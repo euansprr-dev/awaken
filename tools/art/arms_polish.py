@@ -479,6 +479,91 @@ def curve(x, y, links, part, side=-1, back=None, edge=1, keep="back", flat=1.0, 
     return loft(st, mats[0], edge_mat, part=part, kind="single", flat=flat, edge=edge, apex=(apex[0], apex[1]), seg_mat=mats, **data)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# VOXEL ONLY (Euan 2026-11-10, of the ground blades above: "it doesn't feel like MC at all anymore... it has to stay that
+# voxel style. Just extremely well polished voxel style"). Nothing below makes a slanted face: boxes at whole-texel
+# sizes, and the whole-angle turned boxes the weapons already have. The fat is taken out inside that language: the
+# square post down a blade becomes the Rapier's cut (a thin slab with a one-texel ridge), points are longer and step a
+# texel a side, curved blades get a thin flat and a back.
+
+def point_stages(W, y_end, L, tail):
+    """A stepped point for a blade W wide ending at y_end: (y0, y1, width) stages W-2, W-4 .. 1, the last (1 wide) the
+    longest step, the whole at least as long as today's (tail) and at most about a third of the blade (L)."""
+    widths = list(range(W - 2, 0, -2))
+    P = int(max(tail, min(round(1.6 * W), int(0.35 * L)), len(widths)))
+    last = max(1, min(P - (len(widths) - 1), round(P * 0.36))) if len(widths) > 1 else P
+    rest = P - last
+    n = len(widths) - 1
+    lens = [rest // n + (1 if k >= n - rest % n else 0) for k in range(n)] + [last] if n else [last]
+    out, y = [], y_end - P
+    for w, ln in zip(widths, lens):
+        out.append((y, y + ln, w))
+        y += ln
+    return y_end - P, out
+
+
+SPLIT = False  # (tried 2026-11-10: hardly shows in the hand, so left off) paint a blade's flat a step lighter on the side toward the painted light (left of its ridge)
+
+
+def _split(t):
+    """A blade's two flats told apart in paint, as pixel art does it: the one toward the painted light a step lighter.
+    Only what doesn't glow, and never a texel already at its ramp's top."""
+    if not t.flat or "cx" not in t.data:
+        return
+    left = (t.x < t.data["cx"] - 0.5) & (t.emit <= 0)
+    t.tone[left] = np.minimum(t.tone[left] + 1, t.top())
+
+
+def split_mat(name):
+    """A material with the split added (made once, beside the game's own)."""
+    if not SPLIT:
+        return name
+    key = name + "~split"
+    if key not in AW.MATS:
+        m = AW.MATS[name]
+        AW.MATS[key] = AW.Mat(m.ramp, m.base, m.metal, m.gloss, m.emit, details=tuple(m.details) + (_split,), contact=m.contact, bevel=m.bevel)
+    return key
+
+
+def vblade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, ridge=None, ridge_d=3, repoint=True,
+           flat_mat=None, **data):
+    """arms_weapons.blade's voxel stand-in: the same segments, the core no longer a post. A slab one texel thick the
+    blade's full width (its outer texel a side the edge's material), a ridge one texel wide (three on a blade 9 or
+    wider) standing a texel proud each side, and a point restaged in finer, longer steps that ends one texel square."""
+    segs = sorted(segs)
+    W = max(s[2] for s in segs)
+    if W <= 3:
+        return ORIG["blade"](segs, core, edge, core_d=core_d, edge_d=edge_d, part=part, shift=shift, x=x, **data)
+    rw = (1 if W <= 7 else 3) if ridge is None else ridge
+    wide = [s for s in segs if s[2] == W]
+    y_first, y_end = segs[0][0], segs[-1][1]
+    body = [s[:3] for s in segs if s[0] <= wide[-1][0]]
+    tail = y_end - wide[-1][1]
+    if repoint and tail > 0:
+        y_pt, stages = point_stages(W, y_end, y_end - y_first, tail)
+        if y_pt >= wide[-1][0] + 2:
+            body[-1] = (body[-1][0], y_pt, W)
+        else:
+            stages = [s[:3] for s in segs if s[0] > wide[-1][0]]
+    else:
+        stages = [s[:3] for s in segs if s[0] > wide[-1][0]]
+    out = []
+    allsegs = body + stages
+    for k, (y0, y1, w) in enumerate(allsegs):
+        cx = x + shift(y0)
+        tip = w == 1
+        if tip:
+            out.append(VX.slab(cx - 0.5, cx + 0.5, y0, y1, 1, edge if edge in EDGE_SPEC and edge != "slate_flat" else core, part, **data))
+            continue
+        if w >= 3 and edge != "slate_flat":
+            out.append(VX.slab(cx - (w - 2) / 2, cx + (w - 2) / 2, y0, y1, 1, split_mat(core), part, cx=cx, **data))
+        out.append(VX.slab(cx - w / 2, cx + w / 2, y0, y1, 1, split_mat(edge) if edge == "slate_flat" else edge, part, cx=cx, **data))
+        r = min(rw, w - 2)
+        if r >= 1 and ridge_d > 1:
+            out.append(VX.slab(cx - r / 2, cx + r / 2, y0, y1, ridge_d, flat_mat or core, part, **data))
+    return out
+
+
 ORIG = {n: getattr(AW, n) for n in ("blade", "bit", "chain", "spin", "turned", "moved", "KATANA_LINKS")}
 ORIG_MIRROR = VX.mirror
 BLADE_PARTS = ("blade", "hook", "sickle", "fin")
@@ -795,9 +880,176 @@ def _sting():
 AFTER["hive_regent_daggers"] = _sting
 
 
+# ---- the voxel stand-ins for curved blades and axe bits, and the designs re-cut by hand, all boxes ---------------------
+
+SPINE = {"flint_kat": "flint", "tusk_kat": "horn", "slate_kat": "slate", "veil_kat": "obsidian", "lord_kat": "lord_dark",
+         "ivory_kat": "ivory_tip", "scythe_b": "obsidian", "scythe_s": "ivory_tip", "l_dream_kat": "obsidian"}
+THIN = {5: 3, 4: 3, 3: 2, 2: 1, 1: 1}
+
+
+def vchain(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
+    """arms_weapons.chain, but a blade's links are cut thinner, still whole boxes turned whole angles. A single-edged
+    curve (Katana, Glaive, Scythe) becomes a flat one texel thick with a back a texel wide and three deep along its
+    spine, its narrowing links kept to the back so the edge steps up to the point; a tusk or talon loses a texel of
+    depth. Returns the flats first, in link order (designs hang things off them), then the backs."""
+    mat = links[0][4]
+    if part not in BLADE_PARTS or not (mat in KAT or mat in TUSK_EDGE or mat in LORD_BLADES):
+        return ORIG["chain"](x, y, links, part, side, back, stagger, cycle, **data)
+    boxes = ORIG["chain"](x, y, links, part, side, back, stagger, cycle, **data)
+    if mat in TUSK_EDGE:
+        return [VX.Box(b.c, [b.h[0], b.h[1], THIN[int(round(2 * b.h[2]))] / 2], b.mat, b.part, b.R, b.name, **b.data) for b in boxes]
+    edge = -1 if data.get("flip") else 1          # which local side the edge is on
+    w0 = links[0][2]
+    narrow = w0 <= 3                               # a Katana: KAT_CUT says how its section is cut
+    keep = narrow and not data.get("flip")         # only the Katana narrows to its back; the broad curves about their middle, as today
+    flats, backs = [], []
+    for b, (deg, length, width, depth, m) in zip(boxes, links):
+        off = -edge * (w0 - width) / 2 if keep else 0.0
+        c = b.c + b.R[:, 0] * off
+        flat_d = (KAT_CUT[0] if depth >= 2 else 1) if narrow else 1
+        flats.append(VX.Box(c, [width / 2, length / 2, flat_d / 2], m, b.part, b.R, b.name, **b.data))
+        rib_d = KAT_CUT[1] if narrow else depth
+        if width >= 3 and rib_d > flat_d:
+            spine = SPINE.get(m, m)
+            backs.append(VX.Box(c - b.R[:, 0] * edge * (width / 2 - 0.5), [0.5, length / 2, rib_d / 2], spine, b.part, b.R, b.name + ":back"))
+    return flats + backs
+
+
+def vbit(x0, cols, core, edge, edge_w=1, core_d=3, edge_d=1, side=-1, part="bit", **data):
+    """arms_weapons.bit, its cheek left thick by the eye and the outer half of its steps a texel thin up to the edge."""
+    B = []
+    x = x0
+    n = len(cols)
+    for k, (w, y0, y1) in enumerate(cols):
+        xa, xb = sorted((x, x + side * w))
+        B.append(VX.slab(xa, xb, y0, y1, core_d if k < (n + 1) // 2 else 1, core, part, **data))
+        x += side * w
+    y0, y1 = cols[-1][1] - 1, cols[-1][2] + 1
+    xa, xb = sorted((x, x + side * edge_w))
+    B.append(VX.slab(xa, xb, y0, y1, edge_d, edge, part, **data))
+    return B
+
+
+# the Katana's curve in voxels: the same six links and the same length along the blade, the bend spread evenly (today it
+# runs straight and hooks at the tip), the last two links narrowing to the back
+V_KATANA_LINKS = ((1, 5, 3, 2), (3, 5, 3, 2), (5, 4, 3, 2), (7, 4, 3, 2), (9, 3, 2, 2), (11, 3, 1, 1))
+
+KAT_CUT = (1, 0)  # the Katana's section: (the flat's depth, its back's depth; 0: no separate back): one texel thick, like every vanilla blade
+
+AFTER_V = {}
+
+
+def _thin_part(b, parts, d=1):
+    if is_solid(b) or b.part not in parts or 2 * b.h[2] <= d + 1e-6:
+        return b
+    return VX.Box(b.c, [b.h[0], b.h[1], d / 2], b.mat, b.part, b.R, b.name, **b.data)
+
+
+def _recut(design, fix, add=lambda: []):
+    def build():
+        B, anchors, look = design()
+        return [fix(b) for b in B] + add(), anchors, look
+    return build
+
+
+# the Beastbound Longsword: the tusk a texel thick under its bronze back (the back is its spine)
+AFTER_V[("longsword", "D")] = _recut(AW.beastbound, lambda b: _depth(_thin_part(b, ("blade",)), "back", 3))
+
+
+def _v_flint_cleaver():
+    B, anchors, look = AW.wildhide_greatblade()
+    out = [_thin_part(b, ("blade",)) for b in B]
+    out.append(VX.slab(-1.5, 1.5, 8, 30, 3, "flint", "blade"))  # the slab's spine: three wide, a texel proud
+    return out, anchors, look
+
+
+AFTER_V[("greatblade", "E")] = _v_flint_cleaver
+AFTER_V[("greatblade", "D")] = _recut(AW.beastbound_greatblade, lambda b: _depth(_thin_part(b, ("blade",)), "back", 3),
+                                      lambda: [VX.slab(-4.5, -2.5, 8, 29, 3, "tusk", "blade", groove=-2)])
+
+
+def _v_gate_window():
+    B, anchors, look = AW.gatewrought_greatblade()
+    out = []
+    for b in B:
+        wide = not is_solid(b) and b.part == "blade" and 2 * b.h[0] >= 3 - 1e-6  # the solid steel under and over the window, the point
+        out.append(_thin_part(b, ("blade",)) if wide else b)
+    out += [VX.slab(-0.5, 0.5, 8, 15, 3, "slate_rib", "blade", span=(8, 15), column=0),
+            VX.slab(-0.5, 0.5, 27, 31, 3, "slate_rib", "blade", span=(27, 31), column=0)]
+    return out, anchors, look
+
+
+AFTER_V[("greatblade", "C")] = _v_gate_window
+AFTER_V[("greatblade", "B")] = _recut(AW.veilwoven_greatblade, lambda b: _thin_part(b, ("blade",)) if (not is_solid(b) and b.mat == "veil" and 2 * b.h[0] >= 5 - 1e-6) else b,
+                                      lambda: [VX.slab(-0.5, 0.5, 8, 30, 3, "veil", "blade")])
+AFTER_V[("greatblade", "A")] = _recut(AW.lordscale_greatblade, _thin_tines)
+AFTER_V[("daggers", "E")] = _recut(AW.wildhide_daggers, lambda b: _thin_part(b, ("blade",)),
+                                   lambda: [VX.slab(-2.5, -1.5, 3, 12, 3, "flint", "blade")])
+
+
+def vsword(t):
+    """The Shieldblade's sword in voxels: the Longsword's width (5, was 6), a thin slab, its lit fuller the ridge."""
+    k = AW.KIT[t]
+    fuller = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}.get(t)
+    B = [AW.grip(-4, 3, k["wrap"]), AW.ring(-5, -4, k["metal"], part="pommel")]
+    B += vblade([(5, 25, 5, 3), (25, 28, 3, 1), (28, 31, 1, 1)], k["core"], k["edge"], flat_mat=fuller, span=(5, 31), column=0)
+    B += [VX.slab(-6.5, 6.5, 3, 5, 3, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 3, k["metal"], "guard_top")]
+    stone = (0.0, 4.0, 0.0)
+    B.append(AW.stone_at(t, stone, 2, 5))
+    if t == "E":
+        for sx in (-1, 1):
+            B.append(VX.rbox((sx * 7.5, 6.0, 0), (2, 5, 3), -sx * 25, "antler", f"quillon{sx}"))
+    elif t == "D":
+        for sx in (-1, 1):
+            for y in (8.0, 14.0, 20.0):
+                B.append(VX.rbox((sx * 2.9, y, 0), (1, 3, 1), sx * 20, "tooth", f"tooth{sx}{y}"))
+    elif t == "A":
+        B += AW.both(AW.fan(-6.0, 5.0, [(35, 4, 2, 2, "gold"), (65, 3, 1, 1, "feather")], "guard_wing"))
+    elif t == "S":
+        for sx in (-1, 1):
+            B.append(VX.rbox((sx * 7.0, 5.0, 0), (2, 2, 3), 45, "gold", f"crown{sx}"))
+    line = [(0.0, y, 1.0) for y in (10.0, 18.0, 25.0)] if t in "BAS" else []
+    return B, [(stone, 1.4, AW.GLOW[t], 1)], AW.look_of(t, (-4, 3), (0, 15), line, stone)
+
+
+def vshieldblade(t):
+    sb, sa, sl = vsword(t)
+    hb, ha, _ = AW.shieldblade_shield(t)
+    B, anchors = AW.shield_over_sword(sb, hb, sa, ha)
+    return B, anchors, sl
+
+
+for _t in "EDCBAS":
+    AFTER_V[("shieldblade", _t)] = (lambda tt=_t: vshieldblade(tt))
+
+
+class Voxel:
+    """While open, arms_weapons' designs build the voxel re-cut."""
+
+    def __enter__(self):
+        AW.blade, AW.chain, AW.bit = vblade, vchain, vbit
+        AW.KATANA_LINKS = V_KATANA_LINKS
+        return self
+
+    def __exit__(self, *a):
+        for n, v in ORIG.items():
+            setattr(AW, n, v)
+
+
+MODE = "voxel"  # "ground" builds the first proposal (rejected 2026-11-10: slanted faces are not Minecraft)
+
+
+def Proposed():
+    return Voxel() if MODE == "voxel" else Ground()
+
+
 def after_design(row):
-    """A row's proposed design (to be called inside Ground)."""
+    """A row's proposed design (to be called inside Proposed())."""
     wid, tier, style = row[0], row[2], row[8]
+    if MODE == "voxel":
+        if wid not in AW.LORD_COLOUR and (style, tier) in AFTER_V:
+            return AFTER_V[(style, tier)]
+        return AW.design_of(row)
     if wid in AFTER:
         return AFTER[wid]
     if wid not in AW.LORD_COLOUR and (style, tier) in AFTER:
@@ -814,7 +1066,7 @@ def before(row):
 
 
 def after(row):
-    with Ground():
+    with Proposed():
         return make2(row, after_design(row))
 
 
@@ -1046,7 +1298,7 @@ def pair(row):
     """(today, proposed): each (built, look, built for the icon)."""
     b0, l0 = AW.make(row)
     c0, _ = AW.make(row, clean=True)
-    with Ground():
+    with Proposed():
         d = after_design(row)
         b1, l1 = make2(row, d)
         c1, _ = make2(row, d, clean=True)
@@ -1060,8 +1312,8 @@ def hand_pair(row):
         return t[:2], p[:2]
     tier = row[2]
     b0 = build2(*_design(AW.shieldblade_blade(tier)))
-    with Ground():
-        b1 = build2(*_design(AFTER_SWORD(tier)))
+    with Proposed():
+        b1 = build2(*_design(vsword(tier) if MODE == "voxel" else AFTER_SWORD(tier)))
     look = AW.shieldblade_blade(tier)[2]
     return (b0, look), (b1, look)
 
@@ -1197,10 +1449,36 @@ def measure(ids=None):
 
 
 UNCHANGED = ("maul", "warstaff", "precursor", "gauntlets")
+CHANGED_FILE = os.path.join(AW.ROOT, "docs/weapon-polish/changed.json")
+
+
+def find_changed():
+    """Which weapons the proposal really changes (their built corners differ), with each one's ends checked against
+    today's; written to docs/weapon-polish/changed.json."""
+    up = np.array([-math.sin(math.radians(AW.ANGLE)), math.cos(math.radians(AW.ANGLE))])
+    out, moved = [], []
+    for row in AW.CATALOG:
+        if row[8] in UNCHANGED:
+            continue
+        b0, _ = AW.make(row)
+        with Proposed():
+            b1, _ = make2(row, after_design(row))
+        assert np.isfinite(b1.pos).all() and len(b1.pos) <= AW.BUDGET and b1.albedo.shape[0] <= 256, row[0]
+        same = b0.pos.shape == b1.pos.shape and np.allclose(np.sort(b0.pos, axis=0), np.sort(b1.pos, axis=0))
+        if same:
+            continue
+        out.append(row[0])
+        y0, y1 = (b0.pos[:, :2] - np.asarray(AW.HAND[:2])) @ up, (b1.pos[:, :2] - np.asarray(AW.HAND[:2])) @ up
+        if abs(y1.max() - y0.max()) > 0.55 or abs(y1.min() - y0.min()) > 0.55:
+            moved.append((row[0], round(float(y0.max()), 1), round(float(y1.max()), 1)))
+    import json
+    json.dump(out, open(CHANGED_FILE, "w"), indent=0)
+    return out, moved
 
 
 def changed(row):
-    return row[8] not in UNCHANGED and row[0] != "beastbound_rapier"
+    import json
+    return row[0] in set(json.load(open(CHANGED_FILE)))
 
 
 def _streams(built, look):
@@ -1219,13 +1497,13 @@ def draft_write():
         if not changed(row):
             continue
         wid = row[0]
-        with Ground():
+        with Proposed():
             d = after_design(row)
             built, look = make2(row, d)
             clean, _ = make2(row, d, clean=True)
             parts = {}
             if row[8] == "shieldblade":
-                boxes, anchors, plook = AW.mirror_knight_blade() if wid in AW.LORD_COLOUR else sword2(row[2])
+                boxes, anchors, plook = AW.mirror_knight_blade() if wid in AW.LORD_COLOUR else (vsword(row[2]) if MODE == "voxel" else sword2(row[2]))
                 item_anchors = [(tuple(AW.to_item(np.array([c]))[0]), r * AW.SCALE, AW.hex_rgb(rgb), kind) for c, r, rgb, kind in anchors]
                 parts["_blade"] = (_streams(build2(boxes, painter2(False), AW.to_item, anchors=item_anchors), plook), plook)
         _streams(built, look)
@@ -1240,6 +1518,77 @@ def draft_write():
     print(n, "weapons written (draft)")
 
 
+def voxel_directions(out, wid="gatewrought_longsword"):
+    """One weapon as it is and in the voxel cuts tried, first person and upright (face, edge)."""
+    row = ROWS[wid]
+    base = AW.design_of(row)
+
+    def variant(blade_fn):
+        def design():
+            saved = AW.blade
+            AW.blade = blade_fn
+            try:
+                return base()
+            finally:
+                AW.blade = saved
+        return design
+
+    def thin(segs, core, edge, **kw):
+        kw.pop("core_d", None)
+        return ORIG["blade"](segs, core, edge, core_d=2, **kw)
+
+    global SPLIT
+    SPLIT = False
+    plain = make2(row, variant(vblade))
+    SPLIT = True
+    shots = [("today", AW.make(row)), ("thin", make2(row, variant(thin))), ("ridge, no split", plain),
+             ("ridge", make2(row, variant(vblade))),
+             ("ridge_oldtip", make2(row, variant(lambda *a, **k: vblade(*a, repoint=False, **k)))),
+             ("flat", make2(row, variant(lambda *a, **k: vblade(*a, ridge_d=1, **k))))]
+    fulls = [fp_full(row, bl, lk) for _, (bl, lk) in shots]
+    hit = np.any([h for _, h in fulls], axis=0)
+    ys, xs = np.nonzero(hit)
+    H, W = hit.shape
+    w = 460
+    x0 = int(min(max((xs.min() + xs.max()) / 2 - w / 2, 0), W - w))
+    sheet = Image.new("RGB", (w * len(shots), 720 + 330), (17, 17, 23))
+    d = ImageDraw.Draw(sheet)
+    for i, ((name, (bl, lk)), (im, _)) in enumerate(zip(shots, fulls)):
+        sheet.paste(im.crop((x0, 0, x0 + w, H)), (i * w, 0))
+        sheet.paste(hall_shot(bl, lk, (230, 330)), (i * w, 720))
+        sheet.paste(hall_shot(bl, lk, (230, 330), yaw=84, pitch=6), (i * w + 230, 720))
+        d.text((i * w + 8, 6), f"{name}  {len(bl.pos) // 3} tris", fill=(255, 255, 120), font=_font(15))
+    sheet.save(out)
+    return out
+
+
+def katana_cuts(out, wid="gatewrought_katana"):
+    """The Katana as it is and in three voxel cuts, first person and upright."""
+    global KAT_CUT
+    row = ROWS[wid]
+    shots = [("today", AW.make(row))]
+    for name, cut in (("even curve, 3x2 as today", (2, 0)), ("flat 1 + back 2", (1, 2)), ("flat 1, no back", (1, 0))):
+        KAT_CUT = cut
+        with Voxel():
+            shots.append((name, make2(row, AW.design_of(row))))
+    KAT_CUT = (1, 0)
+    fulls = [fp_full(row, bl, lk) for _, (bl, lk) in shots]
+    hit = np.any([h for _, h in fulls], axis=0)
+    ys, xs = np.nonzero(hit)
+    H, W = hit.shape
+    w = 460
+    x0 = int(min(max((xs.min() + xs.max()) / 2 - w / 2, 0), W - w))
+    sheet = Image.new("RGB", (w * len(shots), 720 + 330), (17, 17, 23))
+    d = ImageDraw.Draw(sheet)
+    for i, ((name, (bl, lk)), (im, _)) in enumerate(zip(shots, fulls)):
+        sheet.paste(im.crop((x0, 0, x0 + w, H)), (i * w, 0))
+        sheet.paste(hall_shot(bl, lk, (230, 330)), (i * w, 720))
+        sheet.paste(hall_shot(bl, lk, (230, 330), yaw=84, pitch=6), (i * w + 230, 720))
+        d.text((i * w + 8, 6), name, fill=(255, 255, 120), font=_font(15))
+    sheet.save(out)
+    return out
+
+
 def main(argv):
     cmd = argv[0] if argv else ""
     if cmd == "review":
@@ -1249,6 +1598,16 @@ def main(argv):
         if "draft" not in os.popen("git -C " + AW.ROOT + " branch --show-current").read():
             raise SystemExit("draft-write only on the throwaway draft branch")
         draft_write()
+        return 0
+    if cmd == "katana-cuts":
+        print(katana_cuts(argv[1], *(argv[2:3])))
+        return 0
+    if cmd == "voxel-directions":
+        print(voxel_directions(argv[1], *(argv[2:3])))
+        return 0
+    if cmd == "changed":
+        out, moved = find_changed()
+        print(len(out), "weapons change;", "ends moved more than half a texel:", moved or "none")
         return 0
     if cmd == "measure":
         measure(argv[1:] or None)
