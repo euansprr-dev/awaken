@@ -1,0 +1,55 @@
+# The Tallow Runs (SPEC 50.9): the wax runs rolled from the seed, room by room. Difficulty is normal; the camera is in creative, so nothing wakes.
+world autopilot_realm_tallow_runs creative 20261113
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:tallow_runs
+need realm
+hud off
+wait 30
+wait 300
+look 0 -8
+cmd awaken gate realm_at MOUTH 0 0 0 3
+look 0 10
+wait 80
+shot tallow_mouth
+cmd awaken gate realm_at DEN 0 0 1 -8
+look 0 6
+wait 80
+shot tallow_first_fight
+cmd awaken gate realm_at DEN 0 6 2 6
+look -140 10
+wait 80
+shot tallow_first_fight_back
+cmd awaken gate realm_at DEN 1 0 1 -7
+look 0 4
+wait 80
+shot tallow_second_den
+cmd awaken gate realm_at DEN 1 5 2 5
+look -150 8
+wait 80
+shot tallow_second_den_back
+cmd awaken gate realm_at WARDEN 0 0 2 -10
+look 0 8
+wait 80
+shot tallow_warden
+cmd awaken gate realm_at LORD 0 0 2 -16
+look 0 4
+wait 80
+shot tallow_lord
+cmd awaken gate realm_at LORD 0 0 1 6
+look 180 -40
+wait 80
+shot tallow_lord_up
+quit
