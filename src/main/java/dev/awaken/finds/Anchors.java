@@ -50,7 +50,7 @@ final class Anchors {
         int r = Math.max(8, k.reach() * 4 / 5), sea = t.seaLevel();
         int[] f = new int[17];
         for (int i = 0; i < 25; i++) {               // the point itself, then a ring of eight, then a wider ring of sixteen
-            int cx = x + (i < 9 ? OFF[i][0] * 22 : (int) Math.round(Math.cos((i - 9) * Math.PI / 8) * 46)), cz = z + (i < 9 ? OFF[i][1] * 22 : (int) Math.round(Math.sin((i - 9) * Math.PI / 8) * 46));
+            int cx = x + (i < 9 ? OFF[i][0] * 22 : (int) Math.round(Math.cos((i - 9) * Math.PI / 8) * 34)), cz = z + (i < 9 ? OFF[i][1] * 22 : (int) Math.round(Math.sin((i - 9) * Math.PI / 8) * 34));
             f[0] = t.floor(cx, cz);
             boolean dry = f[0] > sea;
             for (int j = 0; j < 16 && dry; j++) {
@@ -62,7 +62,8 @@ final class Anchors {
             if (!dry) continue;
             int[] sorted = f.clone();
             java.util.Arrays.sort(sorted);
-            if (sorted[16] - sorted[0] <= Math.max(3, k.slope())) return new int[] {cx, sorted[8], cz, (int) (h & 3)};
+            // two more than the kind's own slope: the levelling and its blend take that up (two cells in three found no ground: the second census)
+            if (sorted[16] - sorted[0] <= Math.max(3, k.slope()) + 2) return new int[] {cx, sorted[8], cz, (int) (h & 3)};
         }
         return null;
     }

@@ -40,7 +40,7 @@ final class PlacesStone {
     }
 
     static void init() {
-        Kind.of(FSet.PLACES, 19, "stair_monastery", "The Stair Monastery").verb(Verb.WAIT).place().rank(3).lands(Group.MOUNTAIN)
+        Kind.of(FSet.PLACES, 19, "stair_monastery", "The Stair Monastery").verb(Verb.WAIT).place().rank(3).lands(Group.MOUNTAIN, Group.SNOW)
                 .anchor(Anchor.FIELD).slope(7).made(Made.STILLED)
                 .see("White cells stepping up a crag beside a stair cut into the rock, flags on every landing, and one golden roof at the top.")
                 .learned("The wheels at the foot, the long stair, and the gong struck as the light changed. A monk sat in every cell and none of them minded.")
@@ -174,7 +174,7 @@ final class PlacesStone {
                 .play(t -> t.hold(Items.IRON_PICKAXE).hit("wedge", 0).hit("wedge", 0).hit("wedge", 0).use("crane", 0).use("prize", 0))
                 .add();
 
-        Kind.of(FSet.PLACES, 21, "mine_head", "The Mine Head").verb(Verb.PULL).place().rank(1).lands(Group.MOUNTAIN, Group.BADLANDS)
+        Kind.of(FSet.PLACES, 21, "mine_head", "The Mine Head").verb(Verb.PULL).place().rank(1).lands(Group.MOUNTAIN, Group.BADLANDS, Group.SNOW, Group.FOREST)
                 .anchor(Anchor.FIELD).slope(6).made(Made.FALLEN)
                 .see("A timber frame with a great wheel over a railed shaft, a spoil heap, and a track running into a hole in a rock bank. The lamps down the hole are still lit.")
                 .learned("The tipped cart went back on its rails, the wheel brought the cage up, and the pay box was in it.")
@@ -321,7 +321,7 @@ final class PlacesStone {
                 .play(t -> { for (int i = 0; i < 3; i++) t.use("sluice", i); t.use("loose", 0).hold(Items.CALCITE).use("scale", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 23, "caravanserai", "The Caravanserai").verb(Verb.LIGHT).place().rank(2).lands(Group.DESERT)
+        Kind.of(FSet.PLACES, 23, "caravanserai", "The Caravanserai").verb(Verb.LIGHT).place().rank(2).lands(Group.DESERT, Group.BADLANDS)
                 .anchor(Anchor.FIELD).slope(5).made(Made.STILLED)
                 .see("A square mud wall with one tall gate and palm tops showing over it. Inside, a caravan that knelt down for the night and is kneeling still.")
                 .learned("Water drawn, the three lamps lit under the arcade, and the ring from the gate room fitted the strongroom door.")
@@ -399,7 +399,7 @@ final class PlacesStone {
                 .play(t -> { t.use("well", 0).hold(Items.FLINT_AND_STEEL); for (int i = 0; i < 3; i++) t.use("lamp", i); t.use("loose", 0).hold(Props.BRASS_RING.get()).use("door", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 24, "bone_yard", "The Bone Yard").verb(Verb.MEND).place().rank(2).lands(Group.BADLANDS, Group.DESERT)
+        Kind.of(FSet.PLACES, 24, "bone_yard", "The Bone Yard").verb(Verb.MEND).place().rank(2).lands(Group.BADLANDS, Group.DESERT, Group.SNOW)
                 .anchor(Anchor.FIELD).slope(5).made(Made.BEAST)
                 .see("Ribs taller than trees arching out of red ground, a spine along the top of them, and a skull with its jaw open that somebody has been living in.")
                 .learned("The carved tooth went back in the jaw. You lit their hearth in the skull and read what they painted on the bone.")

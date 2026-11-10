@@ -46,7 +46,7 @@ final class PlacesWild {
     }
 
     static void init() {
-        Kind.of(FSet.PLACES, 13, "stilt_market", "The Stilt Market").verb(Verb.CARRY).place().rank(2).lands(Group.SWAMP)
+        Kind.of(FSet.PLACES, 13, "stilt_market", "The Stilt Market").verb(Verb.CARRY).place().rank(2).lands(Group.SWAMP, Group.JUNGLE, Group.FOREST)
                 .anchor(Anchor.FIELD).slope(5).made(Made.STILLED)
                 .see("Lit roofs on legs over a dark pool, joined by plank walks: a market, with every trader and buyer turned to stone in the middle of a bargain.")
                 .learned("Three baskets were still in the boats. Each went to the stall that sold what was in it, and then the market bell.")
@@ -116,7 +116,7 @@ final class PlacesWild {
                 .play(t -> { for (int i = 0; i < 3; i++) t.use("loose", i); for (int i = 0; i < 3; i++) t.hold(Props.BASKET.get()).use("socket", i); t.use("bell", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 14, "hanging_village", "The Hanging Village").verb(Verb.PULL).place().rank(2).lands(Group.JUNGLE)
+        Kind.of(FSet.PLACES, 14, "hanging_village", "The Hanging Village").verb(Verb.PULL).place().rank(2).lands(Group.JUNGLE, Group.DARK)
                 .anchor(Anchor.FIELD).slope(6).made(Made.STILLED)
                 .see("Four giant trees with a thatched ring round each, high up, and rope bridges between them. There are people up there, not moving.")
                 .learned("The basket lift still ran. The weaver had finished the drum skin and never carried it over; you did, and the drum spoke.")
@@ -187,7 +187,7 @@ final class PlacesWild {
                 .play(t -> { for (int i = 0; i < t.count("load") - 1; i++) t.use("rope", 0); t.use("loose", 0).hold(Props.BUNDLE.get()).use("drum", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 15, "sunken_temple", "The Sunken Temple").verb(Verb.TURN).place().rank(3).lands(Group.JUNGLE, Group.SWAMP)
+        Kind.of(FSet.PLACES, 15, "sunken_temple", "The Sunken Temple").verb(Verb.TURN).place().rank(3).lands(Group.JUNGLE, Group.SWAMP, Group.DARK)
                 .anchor(Anchor.FIELD).slope(6).made(Made.FALLEN)
                 .see("A stepped stone pyramid half swallowed by roots, one corner fallen into a flooded court, a tree growing out of its top.")
                 .learned("Inside, one shaft of light and four mirrors. Turned right, the light reached the disc, and the dais opened.")

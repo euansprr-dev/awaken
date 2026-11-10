@@ -401,7 +401,7 @@ final class PlacesPlain {
                 .play(t -> t.use("gate", 0))
                 .add();
 
-        Kind.of(FSet.PLACES, 12, "drowned_chapel", "The Drowned Chapel").verb(Verb.LIGHT).place().rank(1).lands(Group.SWAMP)
+        Kind.of(FSet.PLACES, 12, "drowned_chapel", "The Drowned Chapel").verb(Verb.LIGHT).place().rank(1).lands(Group.SWAMP, Group.DARK, Group.FOREST)
                 .anchor(Anchor.FIELD).slope(5).made(Made.FALLEN)
                 .see("A roofless stone chapel and its leaning tower standing in black water, green at the windows. There are still people in the pews.")
                 .learned("Candles on the altar, the bell rung from its rope, and the bars over the crypt stair let go. Three tombs, and one of them not empty.")

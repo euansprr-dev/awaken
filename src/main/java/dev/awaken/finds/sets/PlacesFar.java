@@ -57,7 +57,7 @@ final class PlacesFar {
     }
 
     static void init() {
-        Kind.of(FSet.PLACES, 25, "mesa_granary", "The Mesa Granary").verb(Verb.CARRY).place().rank(3).lands(Group.BADLANDS)
+        Kind.of(FSet.PLACES, 25, "mesa_granary", "The Mesa Granary").verb(Verb.CARRY).place().rank(3).lands(Group.BADLANDS, Group.DESERT)
                 .anchor(Anchor.FIELD).slope(6).made(Made.STILLED)
                 .see("A lone flat-topped butte with a row of doorways halfway up its face, ladders to them, and stone people grinding corn on the ledge.")
                 .learned("The grain basket went up to the one empty store, and you lit the fire on top. It can be seen from a long way off.")
@@ -116,7 +116,7 @@ final class PlacesFar {
                 .play(t -> t.use("loose", 0).hold(Props.BASKET.get()).use("store", 0).hold(Items.FLINT_AND_STEEL).use("fire", 0))
                 .add();
 
-        Kind.of(FSet.PLACES, 26, "glass_garden", "The Glass Garden").verb(Verb.RING).place().rank(4).lands(Group.DESERT)
+        Kind.of(FSet.PLACES, 26, "glass_garden", "The Glass Garden").verb(Verb.RING).place().rank(4).lands(Group.DESERT, Group.BADLANDS)
                 .anchor(Anchor.FIELD).slope(5).made(Made.STRANGE)
                 .see("A wide shallow crater full of glass spires taller than houses, white and blue and violet, round a small green pool. Something black sits in the middle.")
                 .learned("Five of the spires sing. Struck in their order, the black stone gave up the iron that fell with it.")
@@ -360,7 +360,7 @@ final class PlacesFar {
                 .play(t -> { for (int i = 0; i < 6; i++) t.use("bed", i); t.use("loose", 0).hold(Items.SPRUCE_LOG).use("stove", 0).use("book", 0); })
                 .add();
 
-        Kind.of(FSet.PLACES, 30, "spore_cathedral", "The Spore Cathedral").verb(Verb.LIGHT).place().rank(4).lands(Group.MUSHROOM, Group.DARK, Group.SWAMP)
+        Kind.of(FSet.PLACES, 30, "spore_cathedral", "The Spore Cathedral").verb(Verb.LIGHT).place().rank(4).lands(Group.MUSHROOM, Group.DARK, Group.SWAMP, Group.JUNGLE)
                 .anchor(Anchor.FIELD).slope(6).made(Made.ALIVE)
                 .see("Two rows of mushrooms as tall as towers, their caps meeting overhead and glowing underneath, and one far bigger than the rest at the end of them.")
                 .learned("Six lamps down the nave, then the climb inside the great stem. Under its cap it keeps one clear stone.")

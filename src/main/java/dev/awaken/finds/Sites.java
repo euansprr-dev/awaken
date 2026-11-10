@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Sites {
     private Sites() {}
 
-    static final int[] CELL = {96, 256, 448}, EDGE = {18, 44, 80}, RINGS = {4, 5, 3};
+    static final int[] CELL = {96, 256, 384}, EDGE = {18, 44, 80}, RINGS = {4, 5, 3};
     /** The layer number of a site stood by hand (the gallery, a test): it stands on a level pad, not on the world's ground. */
     public static final int HAND = 3;
     /** The chance a cell holds something where the land is at its usual liveliness. */
