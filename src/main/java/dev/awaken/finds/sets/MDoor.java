@@ -104,6 +104,10 @@ final class MDoor {
         // the body behind it: lower, stepping back, with the hall in it
         M.mass(s, -W + 3, y0, -hallLen - 6, W - 3, y0 + H - 8, -4);
         M.mass(s, -W + 7, y0 + H - 7, -hallLen - 2, W - 7, y0 + H - 4, -4);
+        M.face(s, Direction.WEST, -hallLen - 6, -4, -W + 3, y0, y0 + H - 8, 6);
+        M.face(s, Direction.EAST, -hallLen - 6, -4, W - 3, y0, y0 + H - 8, 6);
+        M.face(s, Direction.NORTH, -W + 3, W - 3, -hallLen - 6, y0, y0 + H - 8, 6);
+        for (int x = -W + 3; x <= W - 3; x++) for (int z = -hallLen - 6; z <= -4; z++) if (x == -W + 3 || x == W - 3 || z == -hallLen - 6) s.put(x, y0 + H - 7, z, Math.floorMod(x + z, 3) == 0 ? M.block() : M.wall());
         hall(s, -4, hallLen, y0, whole);
         door(s, 0, y0, 7, whole);
         // the giants: seated, their backs to the wall
@@ -135,7 +139,9 @@ final class MDoor {
                 if (Math.abs(x) == 3 && z >= 3 && z % 2 == 1) for (int y = y0; y <= y0 + bury; y++) { BlockState b = s.get(x, y, z); if (b == null || b.isAir() || b.is(Blocks.SAND) || b.is(Blocks.RED_SAND)) s.put(x, y, z, st(Blocks.SPRUCE_FENCE)); }
             }
             plug(s, 1, Math.min(4, bury) + top, 2);
-            int ay = y0 + Math.max(1, bury - 3);
+            // the diggers' awning stands on the dune: the sand under it is brought level first, so no post hangs
+            int ay = Mon.restAt(s, 8, 11, y0 + bury + 6);
+            for (int x = 6; x <= 10; x++) for (int z = 9; z <= 13; z++) for (int y = Mon.restAt(s, x, z, ay + 4); y < ay; y++) s.put(x, y, z, sand(s));
             awning(s, 6, 9, 10, 13, ay, 3, st(Blocks.SPRUCE_FENCE), DyeColor.ORANGE, DyeColor.WHITE);
             s.put(7, ay, 10, Props.BASKET.get().of(1));
             s.put(8, ay, 12, Props.BUNDLE.get().of(0));

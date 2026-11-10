@@ -29,6 +29,14 @@ final class FindsDump {
             write(dir, k.id(), k, k.number(), k.name(), sc);
             n++;
         }
+        for (Kind k : Kinds.remains()) {
+            try {
+                write(dir, k.id(), k, 300 + k.number(), k.name(), Sites.build(Sites.forced(k, 0, 64, 0, 0, 7L), Terrain.flat(64)));
+                n++;
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[finds] dump: {} doesn't build", k.id(), e);
+            }
+        }
         // the painted one of each family again, on a hillside: how each meets land that is not level (SPEC §62.3)
         for (Kind k : Kinds.monuments()) {
             if (k.tier() != 3) continue;

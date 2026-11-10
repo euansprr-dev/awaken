@@ -59,6 +59,12 @@ final class Mon {
         s.put(x + front.getStepX(), y, z + front.getStepZ(), stair(M.blockStairs(), front.getOpposite()));
     }
 
+    /** The first free height in a column, looking down from {@code from}: where something set down on a heap or a dune comes to rest. */
+    static int restAt(Scene s, int x, int z, int from) {
+        for (int y = from; y > s.g(x, z); y--) { BlockState b = s.get(x, y, z); if (b != null && !b.isAir()) return y + 1; }
+        return s.g(x, z) + 1;
+    }
+
     /** Every part of a name gives way (a door of the old world lets go). */
     static void open(Ctx c, String part, SoundEvent sound) {
         for (int i = 0; i < c.count(part); i++) c.set(part, i, AIR);

@@ -51,7 +51,7 @@ final class FindsTests {
             h.assertTrue(names.add(k.name()), "two finds are named " + k.name());
             h.assertTrue(!k.see().isBlank() && !k.learned().isBlank(), k.id() + " has its words");
             h.assertTrue(k.play() != null, k.id() + " has a walkthrough");
-            h.assertTrue(k.rank() >= 0 && k.rank() <= 4 && k.reach() <= Sites.MAX_REACH, k.id() + ": rank and reach in range");
+            h.assertTrue(k.rank() >= 0 && k.rank() <= 5 && k.reach() <= Sites.MAX_REACH, k.id() + ": rank and reach in range");
         }
         for (var e : seen.entrySet())
             for (int n = 1; n <= e.getValue().size(); n++) h.assertTrue(e.getValue().contains(n), e.getKey() + " has no number " + n);
@@ -117,7 +117,8 @@ final class FindsTests {
                 for (long c : sc.shaped) if (Math.abs(BlockPos.getX(c)) > k.reach() || Math.abs(BlockPos.getZ(c)) > k.reach()) why = "levels ground past its reach at " + BlockPos.getX(c) + "," + BlockPos.getZ(c);
                 String f = floats(sc);
                 if (!f.isEmpty()) why = "has something floating at " + f;
-                else if (above > 0 && k.size() != Kind.Size.PLACE && shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
+                // (a remain is a piece of a monument and is held to a monument's bar, olden stone and its ageing, not to the small finds')
+                else if (above > 0 && k.size() != Kind.Size.PLACE && k.set() != Kind.FSet.REMAINS && shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
                 if (sc.blocks().get(BlockPos.asLong(0, -2, 0)) != null) why = "builds where its heart goes";
                 if (!why.isEmpty()) {
                     bad.add(k.id() + " (seed " + i + ") " + why);

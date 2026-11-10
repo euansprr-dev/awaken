@@ -105,8 +105,8 @@ final class Remains {
 
     private static void linkPiece(Scene s) {
         int g = s.g(0, 0);
-        MChains.link(0, g + 2.5, 0, 0, 0, 1, 4.6, 2.2, false, (x, y, z, st) -> { if (y > s.g(x, z) - 1) s.put(x, y, z, st); });
-        MChains.link(1, g + 1.6, 7, 0.4, 0, 1, 4.6, 2.2, true, (x, y, z, st) -> { if (y > s.g(x, z) - 1 && !s.taken(x, y, z)) s.put(x, y, z, st); });
+        MChains.link(0, g + 2.5, 0, 0, 0, 1, 5.6, 3.2, false, (x, y, z, st) -> { if (y > s.g(x, z) - 1) s.put(x, y, z, st); });
+        MChains.link(2, g + 1.6, 6, 0.9, 0, 0.5, 5.6, 3.2, true, (x, y, z, st) -> { if (y > s.g(x, z) - 1 && !s.taken(x, y, z)) s.put(x, y, z, st); });
         carve(s, -4, 2);
         M.finish(s, 2, 40);
     }
@@ -199,7 +199,7 @@ final class Remains {
         reg("remain_column", "A Fallen Column", 10, Remains::column, "A fluted stone column lying in the grass in three pieces, its head pointing away.", "It says only who paid for it. It fell the way it was meant to face.");
         reg("remain_steps", "The Steps to Nothing", 9, Remains::steps, "Seven stone steps climbing to a landing in the air, and stopping.", "It says: mind the last step.");
         reg("remain_ring", "A Piece of a Ring", 10, Remains::ringPiece, "The top of a great bronze ring standing out of the ground like the handle of a buried jar.", "A row of marks along the bronze, for measuring something overhead.");
-        reg("remain_link", "A Link", 9, Remains::linkPiece, "A bronze chain link as long as a cart, standing on edge in the dirt, with another lying beside it.", "It says: one of nine hundred. Do not move.");
+        reg("remain_link", "A Link", 13, Remains::linkPiece, "A bronze chain link as long as a cart, standing on edge in the dirt, with another lying beside it.", "It says: one of nine hundred. Do not move.");
         reg("remain_lamp", "A Lamp Still Lit", 7, Remains::lamp, "A stone lamp on a post, by itself, burning.", "It says: keep it filled. Someone may come this way.");
         reg("remain_bed", "A Bed in the Open", 7, Remains::bed, "A stone bed under the sky, with what is left of a canopy over it. Nobody is on it.", "It says: I woke, and walked away from here. I went that way.");
         reg("remain_trough", "A Stone Trough", 8, Remains::trough, "A stone trough with water still in it, and the stub of a channel leading away.", "It says: this is the overflow. The count is kept that way.");

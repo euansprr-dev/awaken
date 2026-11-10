@@ -231,7 +231,7 @@ final class MDish {
 
     private static void twin(Scene s) {
         // two that face each other: each is tipped up at its far side
-        site(s, new Dish(17, 0.7, 5, 18, 0, 0, -21, 0, Math.PI, false, true), new Dish(17, 0.7, 5, 18, -60, 20, 21, 0, 0, false, false), 52);
+        site(s, new Dish(17, 0.7, 5, 18, 0, 0, -21, 0, Math.PI, false, true), new Dish(17, 0.7, 5, 18, 95, 150, 21, 0, 0, false, false), 52);
     }
 
     private static void whole(Scene s) {

@@ -262,7 +262,7 @@ public final class M {
             }
             // growth: a mat of moss on low open tops, where it is wet
             if (topOpen && low && hh > 205 && b.isCollisionShapeFullBlock(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
-                    && !m.containsKey(BlockPos.asLong(x, y + 1, z))) m.put(BlockPos.asLong(x, y + 1, z), Blocks.MOSS_CARPET.defaultBlockState());
+                    && !m.containsKey(BlockPos.asLong(x, y + 1, z)) && !(x == 0 && z == 0 && y + 1 == -2)) m.put(BlockPos.asLong(x, y + 1, z), Blocks.MOSS_CARPET.defaultBlockState());
         }
         settle(s);
     }
@@ -536,8 +536,8 @@ public final class M {
             int x = BlockPos.getX(k), y = BlockPos.getY(k), z = BlockPos.getZ(k);
             if (y < 2 || h(s, x, y + 17, z) * 100 >= pct * 256) continue;
             for (int d = 0; d < 4; d++) {
-                int ax = x + DX[d], az = z + DZ[d];
-                if (m.containsKey(BlockPos.asLong(ax, y, az))) continue;
+                int ax = x + DX[d], az = z + DZ[d], reach = s.site.kind().reach();
+                if (Math.abs(ax) > reach || Math.abs(az) > reach || m.containsKey(BlockPos.asLong(ax, y, az))) continue;
                 // the vine hangs in the air beside the stone, fixed to the face it grows on
                 BlockState vine = Blocks.VINE.defaultBlockState().setValue(net.minecraft.world.level.block.VineBlock.getPropertyForFace(DIR[d].getOpposite()), true);
                 int len = 1 + (h(s, x, y + 50, z) & 3);
@@ -558,8 +558,8 @@ public final class M {
             int x = BlockPos.getX(k), y = BlockPos.getY(k), z = BlockPos.getZ(k);
             if (y != s.groundAt(x, z) + 1) continue;               // the bottom course only
             for (int d = 0; d < 4; d++) {
-                int ax = x + DX[d], az = z + DZ[d], g = s.groundAt(ax, az);
-                if (m.containsKey(BlockPos.asLong(ax, g + 1, az)) || g < y - 2) continue;
+                int ax = x + DX[d], az = z + DZ[d], g = s.groundAt(ax, az), reach = s.site.kind().reach();
+                if (Math.abs(ax) >= reach || Math.abs(az) >= reach || m.containsKey(BlockPos.asLong(ax, g + 1, az)) || g < y - 2) continue;
                 int deep = (d == wind ? 2 : 0) + (n(s, ax * 1.4, az * 1.4, 5.0) > 0.5 ? 1 : 0);
                 for (int j = 1; j <= deep; j++) {
                     if (m.containsKey(BlockPos.asLong(ax, g + j, az))) break;
@@ -567,7 +567,7 @@ public final class M {
                 }
                 if (deep >= 2) {                                   // a drift tails off a block further out
                     int bx = ax + DX[d], bz = az + DZ[d], g2 = s.groundAt(bx, bz);
-                    if (!m.containsKey(BlockPos.asLong(bx, g2 + 1, bz)) && g2 >= g - 1) m.put(BlockPos.asLong(bx, g2 + 1, bz), sand);
+                    if (Math.abs(bx) <= reach && Math.abs(bz) <= reach && !m.containsKey(BlockPos.asLong(bx, g2 + 1, bz)) && g2 >= g - 1) m.put(BlockPos.asLong(bx, g2 + 1, bz), sand);
                 }
             }
         }

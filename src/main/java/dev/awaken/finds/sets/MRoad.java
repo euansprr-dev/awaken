@@ -151,7 +151,7 @@ final class MRoad {
     private static void finish(Scene s, int reach, int campX) {
         M.finish(s, 8, 44);
         Mon.camp(s, campX, 16);
-        wild(s, 12, reach - 1, 22);
+        wild(s, 18, reach - 1, 9);
     }
 
     // ---- the five -----------------------------------------------------------------------------------------------------

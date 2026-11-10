@@ -56,7 +56,7 @@ final class MChains {
      * and handed to {@code gap} instead (the loose one at the lip), or -1.
      */
     static void chain(Scene s, double[][] pts, double a, double b, int only, int skip, Put gap) {
-        double step = 2 * a - 1.6;
+        double step = 2 * a - 2.8;                                  // each link passes through the last by the thickness of its bar
         int n = 0;
         double carry = a;
         for (int i = 0; i + 1 < pts.length; i++) {
@@ -159,15 +159,15 @@ final class MChains {
             double x = at[i];
             double[][] run = {{x, 6, z1 + 5}, {x, 2.5, z1 + 14}, {x, 2, zc - 7}, {x, -depth + 4, zc + 3}};
             boolean parted = (snapped >> i & 1) != 0, tightens = !parted && i == chains / 2;
-            chain(s, run, 4.6, 2.2, parted ? 2 : 99, tightens ? 3 : -1, slack(s, "taut"));
+            chain(s, run, 5.6, 3.2, parted ? 2 : 99, tightens ? 3 : -1, slack(s, "taut"));
             if (parted) {                                           // what it dropped: links lying where they fell, at all angles
                 for (int k = 0; k < 4; k++) {
                     double a = h(s, i * 7 + k, 12, 5) / 255.0 * Math.PI, lx = x + (k % 2 == 0 ? -4 : 5), lz = z1 + 16 + k * 5;
-                    link(lx, s.g((int) lx, (int) lz) + 1.6, lz, Math.cos(a), 0, Math.sin(a), 4.6, 2.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz) && py > s.g(px, pz) - 1) s.put(px, py, pz, st); });
+                    link(lx, s.g((int) lx, (int) lz) + 1.6, lz, Math.cos(a), 0, Math.sin(a), 5.6, 3.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz) && py > s.g(px, pz) - 1) s.put(px, py, pz, st); });
                 }
             }
             if (tightens) {                                         // the loose link by the lip: it is what will be drawn tight
-                link(x + 7, s.g((int) x + 7, zc - 12) + 1.6, zc - 12, 0.3, 0, 1, 4.6, 2.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz)) { s.put(px, py, pz, st); s.part("slack", px, py, pz); } });
+                link(x + 7, s.g((int) x + 7, zc - 12) + 1.6, zc - 12, 0.3, 0, 1, 5.6, 3.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz)) { s.put(px, py, pz, st); s.part("slack", px, py, pz); } });
             }
         }
         Mon.carving(s, half - 2, 1, z1 + 2);                        // by the face, where anyone arriving reads it first
@@ -221,11 +221,11 @@ final class MChains {
             }
         }
         double[][] run = {{o - 17, 15, 0}, {o - 9, 10.5, 0}, {o, 9, 0}, {o + 9, 10.5, 0}, {o + 17, 15, 0}};
-        chain(s, run, 4.6, 2.2, 99, 2, slack(s, "taut"));
+        chain(s, run, 5.6, 3.2, 99, 2, slack(s, "taut"));
         for (int y = -8; y <= 6; y++) s.put(o, y, 0, st(Blocks.IRON_CHAIN));          // and what hangs from its middle
         for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) for (int y = -14; y <= -9; y++) { boolean edge = Math.abs(x) == 2 || Math.abs(z) == 2 || y == -14 || y == -9; if (edge) s.put(o + x, y, z, (Math.abs(x) == 2 && Math.abs(z) == 2) || y == -14 || y == -9 ? M.bronzeBand() : M.bronze()); }
         s.put(o, -9, 0, M.seal());
-        link(o - 24, 14.6, 4, 1, 0, 0.2, 4.6, 2.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz)) { s.put(px, py, pz, st); s.part("slack", px, py, pz); } });
+        link(o - 24, 14.6, 4, 1, 0, 0.2, 5.6, 3.2, true, (px, py, pz, st) -> { if (!s.taken(px, py, pz)) { s.put(px, py, pz, st); s.part("slack", px, py, pz); } });
         climb(s, o - 32, -7, 7, 12);
         capstan(s, o - 26, 13, -2);
         vault(s, o - 27, 7);
@@ -246,7 +246,7 @@ final class MChains {
                         "It says: one turn of the capstan a year. No more. It is not there to be pulled up. It is there to be kept from going down.",
                         "It says this was the first anchor. They did not know yet how heavy the thing was. They learned.",
                         "Scratched by the ring: it hums if you put your ear to it. I do not put my ear to it any more."},
-                {2, "chains_fallen", "The Fallen Chains", (dev.awaken.finds.Kind.Maker) s -> works(s, 12, 12, 3, 5, 18, false, 44), 44,
+                {2, "chains_fallen", "The Fallen Chains", (dev.awaken.finds.Kind.Maker) s -> works(s, 16, 12, 3, 5, 18, false, 48), 48,
                         "A fortress of a block with three bronze rings in its face. Two of its chains have parted and lie about the ground in links as big as huts. The third still goes down the cleft.",
                         "You climbed to the capstan and pushed it round. The one chain that still holds drew tight, and the vault in the block let go.",
                         "It says: three chains hold. Two would hold. Check them every year. Do not let it get to one.",
@@ -264,7 +264,7 @@ final class MChains {
                         "It says the weight is a plumb. While it hangs straight, what is under us is still. They watched it every day for two hundred years.",
                         "It says: it swung once, in my grandmother's time. Everyone went down to help. That is where everyone went.",
                         "It says: I was left to watch the plumb. It is straight today. It was straight yesterday. I will cut a line here each day it is straight."},
-                {5, "chains_whole", "The Works That Still Hold", (dev.awaken.finds.Kind.Maker) s -> works(s, 19, 15, 5, 0, 24, true, 52), 52,
+                {5, "chains_whole", "The Works That Still Hold", (dev.awaken.finds.Kind.Maker) s -> works(s, 24, 15, 5, 0, 24, true, 56), 56,
                         "A long block of masonry with five bronze rings in its face and five chains, whole, drawn tight, running down into the cleft. Lamps burn along it. The capstan on the roof has its house still over it.",
                         "You pushed the capstan round. All five chains sang, the loose link drew tight, and the vault in the block let go.",
                         "It says: five chains hold. This is how it was meant to be. If you find it like this, somebody has been keeping it, and you owe them a turn of the capstan.",

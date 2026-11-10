@@ -148,11 +148,11 @@ final class MHall {
             for (int x = -L + 6; x <= L - 6; x += 12) {
                 boolean wholeRib = Mon.pick(s, 60 + x, 4) == 0;
                 for (int side = -1; side <= 1; side += 2) {
-                    for (int z = 6; z <= 7; z++) for (int y = 0; y <= 9; y++) s.put(x, y, side * z, y % 5 == 0 ? M.band() : M.block());
-                    s.put(x, 10, side * 7, M.blockSlab());
+                    for (int dx = -1; dx <= 1; dx++) for (int z = 6; z <= 7; z++) for (int y = 0; y <= 11; y++) s.put(x + dx, y, side * z, y % 5 == 0 ? M.band() : dx == 0 ? M.block() : M.course(y));
+                    for (int dx = -1; dx <= 1; dx++) s.put(x + dx, 12, side * 7, dx == 0 ? M.block() : M.blockSlab());
                     int reachIn = wholeRib ? 5 : 2 + Mon.pick(s, 70 + x + side, 3);
                     for (int k = 0; k <= reachIn; k++) {
-                        int z = side * (5 - k), y = 10 + (int) Math.round(Math.sqrt(Math.max(0, 36 - (5 - k) * (5 - k))) / 6 * 4);
+                        int z = side * (5 - k), y = 12 + (int) Math.round(Math.sqrt(Math.max(0, 36 - (5 - k) * (5 - k))) / 6 * 5);
                         s.put(x, y, z, M.block());
                         s.put(x, y - 1, z, M.stone());
                         if (k < reachIn) s.put(x, y - 2, z, stairT(M.blockStairs(), side > 0 ? Direction.SOUTH : Direction.NORTH));
@@ -180,17 +180,17 @@ final class MHall {
         M.finish(s, F + 7, 36);
         // -- growth: roots through the roof and down the columns, great trees over it, lichen in the walls, pilgrims' candles
         if (d.roof() > 0 || d.above() == 0)
-            for (int i = 0; i < Math.max(2, L / 5); i++) {
-                int rx = -L + 8 + i * (2 * L - 16) / Math.max(1, L / 5 - 1), side = i % 2 == 0 ? -1 : 1, rz = side * 2;
+            for (int i = 0; i < Math.max(2, L / 8); i++) {
+                int rx = -L + 12 + i * (2 * L - 24) / Math.max(1, L / 8 - 1), side = i % 2 == 0 ? -1 : 1, rz = side * 2;
                 if (d.roof() == 0) { rz = side * 13; }
                 if (d.roof() > 0) {
                     limb(s, rx, 1, rz, rx, -1, rz, root);
                     limb(s, rx, -1, rz, rx + 4, aisle, side * 4, root);
                     limb(s, rx + 4, aisle, side * 4, rx + 4 + side, F + 1 + d.flood(), side * 5, root);
                 }
-                int tz = side * (d.roof() == 2 ? 13 : 9);
-                if (!s.taken(rx, 1, tz) && !s.taken(rx, 3, tz)) giant(s, rx, tz, 1, 11 + i % 3 * 2, 1, st(Blocks.DARK_OAK_LOG), leaf(Blocks.DARK_OAK_LEAVES), 3.4);
-                if (d.roof() > 0) limb(s, rx, 1, rz, rx, 1, tz, root);
+                int tz = side * 13;                                 // outside the ribs: the trees frame the hall, they do not roof it
+                if (!s.taken(rx + 3, 1, tz) && !s.taken(rx + 3, 3, tz)) giant(s, rx + 3, tz, 1, 10 + i % 3 * 2, 1, st(Blocks.DARK_OAK_LOG), leaf(Blocks.DARK_OAK_LEAVES), 3.0);
+                if (d.roof() > 0) limb(s, rx, 1, rz, rx + 3, 1, tz - side, root);
             }
         for (int x = -L; x <= L; x++)
             for (int y = F + 1; y <= aisle; y++)
