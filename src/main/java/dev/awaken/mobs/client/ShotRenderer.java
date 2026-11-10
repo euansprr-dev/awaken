@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.mobs.MobSounds;
 import dev.awaken.mobs.def.BoltKind;
+import dev.awaken.mobs.def.ShotLook;
 import dev.awaken.mobs.entity.AwBolt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -11,12 +12,15 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.ThrownItemRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -42,6 +46,8 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
         float vx, vy, vz, age;
         boolean shard;
         BoltKind.Form form = BoltKind.Form.ROUND;
+        /** A gate monster's own shot (SPEC §60.7), or null. */
+        ShotLook look;
     }
 
     @Override
@@ -58,7 +64,9 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
     public void extractRenderState(AwBolt e, State s, float pt) {
         super.extractRenderState(e, s, pt);
         s.shard = e.kind() == BoltKind.DEEP;
-        s.form = e.kind().form;
+        s.look = e.look();
+        // a body's own shot is the thing itself with the glow round it: the glow keeps its round form, smaller
+        s.form = s.look != null ? BoltKind.Form.ROUND : e.kind().form;
         if (s.shard) items.updateForNonLiving(s.item, e.getItem(), ItemDisplayContext.GROUND, e);
         else s.item.clear();
         s.cls = e.shownClass().colour();
@@ -86,14 +94,88 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
         final float ex = (float) (s.x - camera.pos.x), ey = (float) (s.y - camera.pos.y), ez = (float) (s.z - camera.pos.z);
         final int cls = s.cls, theme = s.theme;
         final float vx = s.vx, vy = s.vy, vz = s.vz, age = s.age;
-        final boolean shard = s.shard;
+        final boolean shard = s.shard || s.look != null;
         final BoltKind.Form form = s.form;
+        final ShotLook look = s.look;
+        if (look != null) {
+            out.submitCustomGeometry(ps, sprite(look), (pose, vc) -> thing(pose, vc, look, rx, ry, rz, ux, uy, uz, vx, vy, vz, age));
+        }
         out.order(1).submitCustomGeometry(ps, CarrierPipelines.light(), (pose, vc) -> draw(pose, vc, rx, ry, rz, ux, uy, uz, ex, ey, ez, cls, theme,
                 vx, vy, vz, age, shard, form));
         super.submit(s, ps, out, camera);
     }
 
     private static final Vector3f RIGHT = new Vector3f(), UP = new Vector3f();
+    private static final RenderType[] SPRITES = new RenderType[ShotLook.values().length];
+
+    private static RenderType sprite(ShotLook look) {
+        RenderType t = SPRITES[look.ordinal()];
+        if (t == null) SPRITES[look.ordinal()] = t = RenderTypes.entityCutout(look.texture());
+        return t;
+    }
+
+    /**
+     * The thing a body throws (SPEC §60.7): its 16x8 sprite, tip first. A dart is two planes crossed along its flight
+     * (turning about it if it spins); anything else faces the eye, turning in the eye's plane.
+     */
+    private static void thing(PoseStack.Pose pose, VertexConsumer vc, ShotLook look, float rx, float ry, float rz, float ux, float uy, float uz,
+                              float vx, float vy, float vz, float age) {
+        float hl = look.length * 0.5F, hw = look.length * 0.25F;
+        float turn = look.spin * age;
+        float speed = Mth.sqrt(vx * vx + vy * vy + vz * vz);
+        if (look.along && speed > 1.0E-3F) {
+            float fx = vx / speed, fy = vy / speed, fz = vz / speed;
+            // two axes across the flight: one level (the flight crossed with up), one from the two
+            float ax = fz, ay = 0, az = -fx;
+            float an = Mth.sqrt(ax * ax + az * az);
+            if (an < 1.0E-4F) {
+                ax = 1;
+                az = 0;
+                an = 1;
+            }
+            ax /= an;
+            az /= an;
+            float bx = fy * az - fz * ay, by = fz * ax - fx * az, bz = fx * ay - fy * ax;
+            float c = Mth.cos(turn), s = Mth.sin(turn);
+            float px = ax * c + bx * s, py = ay * c + by * s, pz = az * c + bz * s;
+            float qx = bx * c - ax * s, qy = by * c - ay * s, qz = bz * c - az * s;
+            plane(pose, vc, fx * hl, fy * hl, fz * hl, px * hw, py * hw, pz * hw);
+            plane(pose, vc, fx * hl, fy * hl, fz * hl, qx * hw, qy * hw, qz * hw);
+            return;
+        }
+        float c = Mth.cos(turn), s = Mth.sin(turn);
+        // its tip leads: the sprite's long axis lies along the flight as the eye sees it, else along the eye's right
+        float lx = rx, ly = ry, lz = rz, wx = ux, wy = uy, wz = uz;
+        if (speed > 1.0E-3F && look.spin == 0) {
+            float dr = vx * rx + vy * ry + vz * rz, du = vx * ux + vy * uy + vz * uz;
+            float n = Mth.sqrt(dr * dr + du * du);
+            if (n > 1.0E-4F) {
+                dr /= n;
+                du /= n;
+                lx = rx * dr + ux * du;
+                ly = ry * dr + uy * du;
+                lz = rz * dr + uz * du;
+                wx = ux * dr - rx * du;
+                wy = uy * dr - ry * du;
+                wz = uz * dr - rz * du;
+            }
+        }
+        float px = lx * c + wx * s, py = ly * c + wy * s, pz = lz * c + wz * s;
+        float qx = wx * c - lx * s, qy = wy * c - ly * s, qz = wz * c - lz * s;
+        plane(pose, vc, px * hl, py * hl, pz * hl, qx * hw, qy * hw, qz * hw);
+    }
+
+    /** One plane of a sprite, centred on the shot: (lx, ly, lz) half its length (toward its tip), (wx, wy, wz) half its width. */
+    private static void plane(PoseStack.Pose pose, VertexConsumer vc, float lx, float ly, float lz, float wx, float wy, float wz) {
+        vertex(pose, vc, -lx - wx, -ly - wy, -lz - wz, 0, 1);
+        vertex(pose, vc, lx - wx, ly - wy, lz - wz, 1, 1);
+        vertex(pose, vc, lx + wx, ly + wy, lz + wz, 1, 0);
+        vertex(pose, vc, -lx + wx, -ly + wy, -lz + wz, 0, 0);
+    }
+
+    private static void vertex(PoseStack.Pose pose, VertexConsumer vc, float x, float y, float z, float u, float v) {
+        vc.addVertex(pose, x, y, z).setColor(-1).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(pose, 0, 1, 0);
+    }
 
     private static void draw(PoseStack.Pose pose, VertexConsumer vc, float rx, float ry, float rz, float ux, float uy, float uz,
                              float ex, float ey, float ez, int cls, int theme, float vx, float vy, float vz, float age, boolean shard, BoltKind.Form form) {

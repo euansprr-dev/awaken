@@ -437,7 +437,7 @@ public final class AbilityRunner {
             case CONE -> {
                 if (!locked) Telegraph.cone(level, feet, aim.subtract(feet), a.radius(), colour);
             }
-            case BOLT, ARROWS -> Telegraph.gather(level, mob.getEyePosition(), colour);
+            case BOLT, ARROWS -> Telegraph.gather(level, mob.def().shot != null ? Abilities.muzzle(mob) : mob.getEyePosition(), colour);
         }
     }
 
@@ -481,7 +481,11 @@ public final class AbilityRunner {
                 mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 0.6F, 1.4F);
             }
             case BOLT -> Abilities.bolts(level, mob, a, aim);
-            case ARROWS -> { if (t != null) Abilities.arrows(level, mob, a, t); }
+            case ARROWS -> {
+                // a body with shots of its own looses them (told and locked as every shot); a borrowed body its arrows
+                if (mob.def().shot != null) Abilities.volley(level, mob, a, aim.add(0, t != null ? t.getBbHeight() * 0.6 : 1.0, 0));
+                else if (t != null) Abilities.arrows(level, mob, a, t);
+            }
             case NOVA -> Abilities.nova(level, mob, a.count(), Abilities.bolt(mob, a), a.power(), Abilities.effect(mob, a));
             case RAIN -> {
                 // thrown now, falling where each of you stands now (never following), and the rest scattered near

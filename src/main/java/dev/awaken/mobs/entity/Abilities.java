@@ -162,8 +162,33 @@ final class Abilities {
         level.playSound(null, c.x, c.y, c.z, SoundEvents.MACE_SMASH_GROUND_HEAVY, mob.getSoundSource(), 1.2F, 0.8F);
     }
 
+    /**
+     * Where a body's shots leave it: its muzzle if its def names one (a gate monster's quills, its gun, the book it has
+     * for a head: SPEC §60.7), else just under its eyes.
+     */
+    static Vec3 muzzle(AwakenMob mob) {
+        dev.awaken.mobs.def.MobDef d = mob.def();
+        if (d.shot == null) return mob.getEyePosition().subtract(0, mob.getBbHeight() * 0.1, 0);
+        float yaw = mob.yBodyRot * Mth.DEG_TO_RAD;
+        return new Vec3(mob.getX() - Mth.sin(yaw) * d.muzzleOut, mob.getY() + d.muzzleUp, mob.getZ() + Mth.cos(yaw) * d.muzzleOut);
+    }
+
+    /**
+     * A volley of a body's own shots, where a borrowed body loosed arrows (SPEC §60.7): they fly as every shot does
+     * (told, locked, in their class's colour), fanned a little, at where the aim locked.
+     */
+    static void volley(ServerLevel level, AwakenMob mob, Ability a, Vec3 aim) {
+        Vec3 from = muzzle(mob);
+        Vec3 dir = aim.subtract(from);
+        int n = Math.max(1, a.count());
+        for (int i = 0; i < n; i++) {
+            AwBolt.shoot(level, mob, from, dir.yRot((i - (n - 1) / 2.0F) * 0.12F), bolt(mob, a), damage(mob, a) * 0.65F, effect(mob, a), shotSpeed());
+        }
+        mob.playLevelSound(MobSounds.SHOT_RELEASE.get(), 1.0F, 1.1F + mob.getRandom().nextFloat() * 0.2F);
+    }
+
     static void bolts(ServerLevel level, AwakenMob mob, Ability a, Vec3 aim) {
-        Vec3 from = mob.getEyePosition().subtract(0, mob.getBbHeight() * 0.1, 0);
+        Vec3 from = muzzle(mob);
         Vec3 dir = aim.subtract(from);
         int n = Math.max(1, a.count());
         float spread = n == 1 ? 0 : 0.14F;

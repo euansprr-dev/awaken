@@ -137,12 +137,41 @@ def bestiary():
         op, mi = re.search(r'\.open\((\d+)\)', line), re.search(r'\.miss\((\d+)\)', line)
         out[mo.group(1)] = {"spd": float(spd.group(1)) if spd else 0.25, "scale": float(sc.group(1)) if sc else 1.0, "tier": mo.group(2),
                             "rig": ".rig()" in line, "line": line, "abilities": re.findall(r'a\((\w+), "([^"]+)"\)', block),
-                            "open": int(op.group(1)) if op else 0, "miss": int(mi.group(1)) if mi else 0}
+                            "open": int(op.group(1)) if op else 0, "miss": int(mi.group(1)) if mi else 0,
+                            "shot": (re.search(r'\.shot\(ShotLook\.(\w+),', line) or [None, None])[1]}
     return out
 
 
 #: Ability kinds that never leave a body open (GateMonster.opens): a call or a guard, not a move it commits itself to.
 NO_OPENING = {"SUMMON", "HEAL", "GUARD", "DECOY", "FRENZY", "BLINK"}
+
+
+#: Ability kinds that throw shots (AwBolt): a body that has one says what its shots are (MobDef.shot, SPEC §60.7).
+SHOOTS = {"BOLT", "ARROWS", "NOVA"}
+
+
+def shots_named(ms, defs):
+    """Every monster that shoots has a shot of its own (never an arrow, never the plain glow), every shot named has its
+    sprite, and the sprites are the ones the game lists."""
+    import gm.shots as shots
+    out = []
+    names = shots.java_names()
+    if names != list(shots.SHOTS):
+        out.append(f"shots: ShotLook lists {names} and shots.py paints {list(shots.SHOTS)}: they must match, in order")
+    try:
+        shots.images()
+    except ValueError as e:
+        out.append(str(e))
+    for m in ms:
+        d = defs.get(m.id)
+        if d is None:
+            continue
+        shoots = any(k in SHOOTS for k, _ in d["abilities"])
+        if shoots and not d["shot"]:
+            out.append(f"{m.id}: it shoots and has no shot of its own (.shot(ShotLook.X, up, out) on its bestiary line)")
+        if d["shot"] and d["shot"].lower() not in shots.SHOTS:
+            out.append(f"{m.id}: its shot {d['shot']} has no sprite")
+    return out
 
 
 def moves_match(m, rig, d):
@@ -320,6 +349,7 @@ def check(ms, tiers=None):
         cad = cadence(m, defs)
         if cad is not None and not (0.6 <= cad <= 3.6):
             problems.append(f"{m.id}: {cad:.1f} strides a second at full chase (its run stride is {m.build()[1]['gait']['stride'][1]} blocks); a body reads between 0.6 and 3.6")
+    problems += shots_named(ms, defs)
     return problems
 
 
@@ -441,8 +471,10 @@ def build(out):
     write_life(ms)
     write_voices(ms)
     write_names(ms)
+    import gm.shots as shots
+    n = shots.write(os.path.join(ROOT, "src/main/resources/assets/awaken/textures/entity/monsters/shots"))
     size = os.path.getsize(JAVA_OUT)
-    print(f"gate monsters: {len(built)} rigs, {size // 1024} KB of rig data")
+    print(f"gate monsters: {len(built)} rigs, {size // 1024} KB of rig data, {n} shots")
 
 
 # ---------------------------------------------------------------------------------------------------------------------

@@ -99,6 +99,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
             windupSeconds[i] = (told + (k == 1 ? 6 : 0)) / 20.0F;
             windup[i] = k == 1 && m.clip("heavy_windup") >= 0 ? m.clip("heavy_windup") : m.clip("windup");
             strike[i] = k == 1 && m.clip("heavy_strike") >= 0 ? m.clip("heavy_strike") : m.clip("strike");
+            open[i] = m.clip("open"); // where its own blow leaves it open (MobDef.spent)
         }
         addLayer(new Glow(this, Awaken.id(dir + def.id + "_glow.png"), exists(Awaken.id(dir + def.id + "_glow_blink.png"))));
     }

@@ -73,6 +73,11 @@ public final class MobDef {
     public final boolean stopped, front, planted;
     /** Ticks its fall lasts (its death clip), at least vanilla's 20. */
     public final int fall;
+    /** What its shots are, and where they leave its body (blocks up from its feet, and out ahead of it); null: the plain glow. */
+    public final @Nullable ShotLook shot;
+    public final float muzzleUp, muzzleOut;
+    /** Ticks it stands open after its own plain blow (a body that leaves itself open when it swings). */
+    public final int spent;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -128,6 +133,10 @@ public final class MobDef {
         this.front = b.front;
         this.planted = b.planted;
         this.fall = Math.max(20, b.fall);
+        this.shot = b.shot;
+        this.muzzleUp = b.muzzleUp;
+        this.muzzleOut = b.muzzleOut;
+        this.spent = b.spent;
     }
 
     public boolean isFauna() {
@@ -201,7 +210,9 @@ public final class MobDef {
         boolean placed, grounded;
         boolean rig, stopped, front, planted;
         Model.Move moves;
-        int open, miss, fall;
+        int open, miss, fall, spent;
+        ShotLook shot;
+        float muzzleUp, muzzleOut;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -263,6 +274,20 @@ public final class MobDef {
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {
             return phase(1.0F, "", 0, abilities);
+        }
+
+        /** Its shots are this (SPEC §60.7), leaving its body {@code up} blocks over its feet and {@code out} ahead of it. */
+        public B shot(ShotLook look, float up, float out) {
+            this.shot = look;
+            this.muzzleUp = up;
+            this.muzzleOut = out;
+            return this;
+        }
+
+        /** Its own plain blow leaves it open for this many ticks. */
+        public B spent(int ticks) {
+            this.spent = ticks;
+            return this;
         }
 
         /** A boss phase starting when health drops below {@code below}. */

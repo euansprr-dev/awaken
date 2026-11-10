@@ -179,10 +179,10 @@ def fill_opens(rig):
         return
     held, lag = spent
     sway = scaled(held, 0.05)
-    for mv in dict.fromkeys(rig.moves.values()):
-        if mv + "_open" in rig.clips:
+    for mv in list(dict.fromkeys(rig.moves.values())) + [""]:   # ("": its plain blow, whose open clip is just "open")
+        if (mv + "_open" if mv else "open") in rig.clips:
             continue
-        keyed(rig, mv + "_open", 2.6, [(0, {}), (0.14, scaled(held, 0.45)), (0.32, held), (0.9, plus(held, sway)), (1.5, plus(held, scaled(sway, -1))),
+        keyed(rig, mv + "_open" if mv else "open", 2.6, [(0, {}), (0.14, scaled(held, 0.45)), (0.32, held), (0.9, plus(held, sway)), (1.5, plus(held, scaled(sway, -1))),
                                        (2.1, plus(held, scaled(sway, 0.6))), (2.6, held)], lag=lag)
 
 
@@ -212,8 +212,10 @@ def _plain(rig, prefix, wind, hit, **kw):
     act(rig, "_plain", wind, hit, **kw)
     rig.moves.clear()
     rig.moves.update(saved)
-    for stage in ("windup", "strike"):
-        clip = rig.clips.pop("_plain_" + stage)
+    for stage in ("windup", "strike", "open"):
+        clip = rig.clips.pop("_plain_" + stage, None)
+        if clip is None:
+            continue    # (a plain blow has an open clip only if it was given an open pose)
         clip.name = prefix + stage
         rig.clips[clip.name] = clip
 
@@ -234,8 +236,39 @@ def loop(rig, name, length, fn, n=12, plant=()):
     """A looping clip from fn(p) -> pose, p in 0..1, sampled at n even keys (the last equal to the first). plant: limbs
     whose feet stay on their spots under the body (a stance the clip owns, as an angry one that rears)."""
     f = (lambda q: planted(rig, q, plant)) if plant else (lambda q: q)
+    if not plant:
+        n = enough_keys(fn, length, n)
     keys = [(length * k / n, f(fn((k / n) % 1.0))) for k in range(n)] + [(length, f(fn(0.0)))]
     return keyed(rig, name, length, keys, loop=True)
+
+
+def enough_keys(fn, length, n, most=64):
+    """How many even keys a loop needs so that nothing in it is lost between them. A long idle sampled at twelve keys
+    has one every half second or more, and a glance or a twitch written into it (a bump a quarter of a second wide) falls
+    between two keys and never plays, or plays as a slow ghost of itself. The loop's function is read finely, and the
+    keys are doubled (evenly, so the game's curve through them stays well behaved) until a straight line between
+    neighbouring keys stays within 0.8 degrees, a tenth of a pixel and 1.5% of scale of it, or there are `most`."""
+    dense = 96 if length > 2.0 else 48
+    truth = [norm(fn(k / dense)) for k in range(dense)]
+
+    def worst(m):
+        ks = [norm(fn((k / m) % 1.0)) for k in range(m + 1)]
+        bad = 0.0
+        for i, t in enumerate(truth):
+            x = i / dense * m
+            a = min(m - 1, int(x))
+            u = x - a
+            for bone, tv in t.items():
+                ka, kb = ks[a].get(bone), ks[a + 1].get(bone)
+                for ch, tol, ident in (("rot", 0.8, 0.0), ("pos", 0.1, 0.0), ("scale", 0.015, 1.0)):
+                    for c_ in range(3):
+                        va = ka[ch][c_] if ka else ident
+                        vb = kb[ch][c_] if kb else ident
+                        bad = max(bad, abs(va + (vb - va) * u - tv[ch][c_]) / tol)
+        return bad
+    while n < most and worst(n) > 1.0:
+        n *= 2
+    return min(n, most)
 
 
 def spin_loop(rig, name, length, fn, bone, axis, turn, n=12):

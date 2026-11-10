@@ -55,6 +55,12 @@ public final class GateMonsterTests {
                 for (String kind : new String[] {"ambient", "hurt", "death"}) {
                     h.assertTrue(MobSounds.monster(d.id, kind) != null, d.id + ": no " + kind + " voice");
                 }
+                // what it throws is its own (SPEC §60.7): never an arrow, never the plain glow
+                boolean shoots = false;
+                for (MobDef.Phase p : d.phases) {
+                    for (Ability a : p.abilities()) shoots |= a.kind() == Ability.Kind.BOLT || a.kind() == Ability.Kind.ARROWS || a.kind() == Ability.Kind.NOVA;
+                }
+                h.assertTrue(!shoots || (d.shot != null && d.muzzleUp > 0), d.id + ": it shoots and has no shot of its own");
             }
             h.assertTrue(n == BODIES, BODIES + " gate monsters on bodies of their own, found " + n);
             h.assertTrue(!Bestiary.get("mirror_shade").rig, "the Mirror Shade keeps the player's face");
@@ -153,6 +159,41 @@ public final class GateMonsterTests {
                 }
                 h.assertTrue(FaunaMob.cueStage(m.cue()) == RigBody.CUE_STUCK && m.isOpen(), "it hit nobody: it is stuck where it landed, and open");
             });
+        });
+
+        AwakenTests.register("gate_monster_looses_its_own_shots", 240, h -> {
+            ServerLevel level = h.getLevel();
+            GateMonster m = spawn(h, "crypt_archer", 1.5, 0.5);
+            h.assertTrue(m.def().shot == dev.awaken.mobs.def.ShotLook.RIB, "the Mourner's shots are its ribs");
+            Zombie z = dummy(h, 1.5, 6.5);
+            face(m, 0.0F);
+            boolean[] did = new boolean[1];
+            AwakenTests.onEnd(h, () -> {
+                m.discard();
+                z.discard();
+                for (AwBolt b : level.getEntitiesOfClass(AwBolt.class, m.getBoundingBox().inflate(24))) b.discard();
+            });
+            h.succeedWhen(() -> {
+                if (!did[0]) did[0] = m.act(level, 0, z);
+                h.assertTrue(did[0], "its volley begins");
+                var shots = level.getEntitiesOfClass(AwBolt.class, m.getBoundingBox().inflate(24), b -> b.getOwner() == m);
+                h.assertTrue(!shots.isEmpty(), "it looses shots");
+                h.assertTrue(shots.get(0).look() == dev.awaken.mobs.def.ShotLook.RIB, "and they are ribs");
+                h.assertTrue(level.getEntitiesOfClass(net.minecraft.world.entity.projectile.arrow.AbstractArrow.class, m.getBoundingBox().inflate(24)).isEmpty(),
+                        "never an arrow");
+            });
+        });
+
+        AwakenTests.register("gate_monster_spent_after_its_blow", 60, h -> {
+            GateMonster m = spawn(h, "silver_knight", 1.5, 1.5);
+            h.assertTrue(m.def().spent > 0 && !m.isOpen(), "the Empty Suit's own swing leaves it open");
+            m.setNoAi(true);
+            m.setTell(8, dev.awaken.core.api.Strikes.Kind.LIGHT, false);
+            h.assertTrue(FaunaMob.cueStage(m.cue()) == FaunaMob.CUE_WINDUP, "its body winds its blow up");
+            m.swingForAttack(net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(m.isOpen() && FaunaMob.cueStage(m.cue()) == RigBody.CUE_OPEN, "it swung: it stands open");
+            m.discard();
+            h.succeed();
         });
 
         AwakenTests.register("gate_monster_planted_loses_its_aim", 200, h -> {

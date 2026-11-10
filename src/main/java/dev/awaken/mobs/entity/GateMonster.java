@@ -247,8 +247,26 @@ public class GateMonster extends AwakenMob implements RigBody {
         super.swingForAttack(hand);
         if (meleeTold && !level().isClientSide()) {
             meleeTold = false;
-            cue(FaunaMob.CUE_STRIKE, FaunaMob.cueSlot(cue()));
+            int slot = FaunaMob.cueSlot(cue());
+            if (def().spent > 0) {
+                // its own blow leaves it open: the strike, then its open pose, for as long as the def says
+                cue(CUE_OPEN, slot);
+                open(def().spent);
+            } else {
+                cue(FaunaMob.CUE_STRIKE, slot);
+            }
         }
+    }
+
+    /**
+     * Makes it act one of its moves now at {@code target} (the studio and the tours: {@code /awaken admin monster act}).
+     * False if it has no such move, is already winding one up, or its abilities aren't ready yet (its first tick).
+     */
+    public boolean act(ServerLevel level, int index, LivingEntity target) {
+        java.util.List<String> names = FaunaMob.moveNames(def());
+        if (abilities == null || index < 0 || index >= names.size()) return false;
+        setTarget(target);
+        return abilities.start(level, names.get(index));
     }
 
     // ---- being hit -------------------------------------------------------------------------------------------------
