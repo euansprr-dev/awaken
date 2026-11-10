@@ -44,14 +44,16 @@ final class AscentSwingTests {
                 h.assertTrue(held.medianDistance() >= today.medianDistance() * 0.98, place + ": shorter than the old rope " + held + " vs " + today);
                 free += held.hardFree();
             }
-            h.assertTrue(free <= 6, "hard hits flying free between ropes: " + free);
+            h.assertTrue(free <= 2, "hard hits flying free between ropes: " + free);
             String[] tall = {"lane", "city", "forest"};
-            double[] tallAtLeast = {240, 245, 240};
+            double[] tallAtLeast = {240, 250, 240};
             for (int i = 0; i < tall.length; i++) {
                 SwingBench.Row held = SwingBench.bench(tall[i], true, true);
                 h.assertTrue(held.medianDistance() >= tallAtLeast[i], tall[i] + ": a held rope goes " + held + ", wanted " + tallAtLeast[i]);
             }
-            double[] woodsAtLeast = {165, 150, 120, 170};
+            int jump = singleTrees(0.36), run = singleTrees(0.6), fast = singleTrees(1.0);
+            h.assertTrue(jump >= 80 && run >= 70 && fast >= 60, "one tree alone, of 100: slung from a sprint jump " + jump + ", at a run " + run + ", fast " + fast);
+            double[] woodsAtLeast = {185, 180, 175, 180};
             for (int i = 0; i < SwingBench.WOODS.length; i++) {
                 String place = SwingBench.WOODS[i];
                 SwingBench.Row held = SwingBench.bench(place, true, true);
@@ -76,6 +78,29 @@ final class AscentSwingTests {
             AscentSwing.guide = guide;
         }
         h.succeed();
+    }
+
+    /**
+     * One tree alone (SPEC §62): the first rope of a run, off a sprint jump, at a run, and fast. A hundred oaks, 8 to 26
+     * ahead, their tops 5 to 9 up, dead ahead and a block and a half aside. The first sling was swept and refused four in
+     * five of them from a sprint jump (its let-go could not lift the body over the crown it was pulled toward); a rope
+     * that works everywhere takes most.
+     */
+    static int singleTrees(double speed) {
+        int slung = 0;
+        AscentSwing.Work w = new AscentSwing.Work();
+        AscentSwing.Pick pick = new AscentSwing.Pick();
+        for (double ahead = 8; ahead <= 26; ahead += 2) {
+            for (int top = 5; top <= 9; top++) {
+                for (double aside = 0; aside <= 1.5; aside += 1.5) {
+                    double z = 4.5 + ahead + 2;
+                    SwingSpace.Boxes b = new SwingSpace.Boxes().add(8, 0, z, 9, top - 2, z + 1, false).add(6, top - 4, z - 2, 11, top, z + 3, true);
+                    AscentRules.Kin hand = new AscentRules.Kin().set(8.5 + aside, 1 + AscentRules.HAND_HEIGHT, 4.5, 0, 0.3, speed);
+                    if (!AscentSwing.find(b, hand, 0, AscentRules.TETHER_RANGE, w, pick) && AscentSwing.findSling(b, hand, 0, AscentRules.TETHER_RANGE, w, pick)) slung++;
+                }
+            }
+        }
+        return slung;
     }
 
     /**

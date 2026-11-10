@@ -67,6 +67,26 @@ MOVES = {
     # the rope's hum through the let-go window: the air's own loop, high (a looping layer, driven by the swing)
     "hum": [(0, "item.elytra.flying", 0.6, 1.0)],
 }
+# Two other takes on the sounds the plan named, for the listening page only (docs/movement/PLAN.md §4.5: "first picks,
+# each with two alternates"). To take one, copy its layers into SCORES above and build.
+ALTERNATES = {
+    "rope_fire": [[(0, "item.trident.throw", 0.8, 1.3), (0, "entity.fishing_bobber.throw", 0.6, 0.9)],
+                  [(0, "entity.snowball.throw", 0.8, 0.8), (0, "item.crossbow.shoot", 0.7, 1.1), (1, "entity.wind_charge.throw", 0.4, 1.2)]],
+    "rope_bite": [[(0, "block.chain.hit", 0.8, 0.8), (0, "item.trident.hit_ground", 0.5, 1.4)],
+                  [(0, "block.tripwire.attach", 0.9, 0.8), (0, "block.chain.place", 0.7, 1.2)]],
+    "rope_strain": [[(0, "item.crossbow.loading_end", 0.7, 0.7), (1, "block.ladder.step", 0.3, 0.6)],
+                    [(0, "item.lead.tied", 0.8, 0.6), (2, "item.crossbow.loading_middle", 0.4, 1.0)]],
+    "rope_release": [[(0, "block.tripwire.detach", 0.8, 1.0), (0, "entity.arrow.shoot", 0.4, 1.3)],
+                     [(0, "item.lead.untied", 0.7, 1.4), (0, "entity.breeze.jump", 0.4, 1.4)]],
+    "wings_open": [[(0, "entity.ender_dragon.flap", 0.9, 1.1), (1, "item.armor.equip_elytra", 0.6, 0.7)],
+                   [(0, "item.armor.equip_elytra", 0.9, 1.0), (1, "entity.bat.takeoff", 0.6, 0.7), (3, "entity.phantom.flap", 0.6, 0.8)]],
+    "flap": [[(0, "entity.phantom.flap", 0.9, 0.8), (0, "block.wool.hit", 0.3, 0.6)],
+             [(0, "entity.ender_dragon.flap", 0.8, 1.6), (0, "entity.parrot.fly", 0.4, 0.7)]],
+    "boom": [[(0, "entity.lightning_bolt.thunder", 0.9, 1.5), (0, "entity.wind_charge.wind_burst", 0.7, 0.6)],
+             [(0, "item.mace.smash_air", 0.9, 0.7), (0, "entity.warden.sonic_boom", 0.6, 1.3), (2, "entity.lightning_bolt.thunder", 0.5, 1.0)]],
+    "wind": [[(0, "item.elytra.flying", 1.0, 0.8)], [(0, "item.elytra.flying", 1.0, 1.25)]],
+}
+
 # What the subtitles say for the new moves' sounds (every layer of a score carries its score's line; the game shows one).
 SUBTITLES = {"sling": "A line slings someone on", "spring": "Someone springs off a ledge", "flare": "Wings cup the air", "skim": "Wings skim the ground",
              "takeoff": "Someone takes off", "strike": "A rope strike lands", "beat": "Wings beat", "hum": "A taut line sings"}
@@ -171,6 +191,18 @@ def listen(out_dir):
             if not os.path.exists(dst):
                 shutil.copyfile(fs[0], dst)
             new.append({"t": delay / 20.0, "src": "rec/" + event + ".ogg", "v": volume, "p": pitch, "event": event})
+        alts = []
+        for take in ALTERNATES.get(name, []):
+            row = []
+            for delay, event, volume, pitch in take:
+                fs = files(event)
+                if not fs:
+                    continue
+                dst = os.path.join(out_dir, "rec", event + ".ogg")
+                if not os.path.exists(dst):
+                    shutil.copyfile(fs[0], dst)
+                row.append({"t": delay / 20.0, "src": "rec/" + event + ".ogg", "v": volume, "p": pitch, "event": event})
+            alts.append(row)
         was = None
         if "ascent." + name in old:
             src = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds", old["ascent." + name]["sounds"][0]["name"].split(":")[1] + ".ogg")
@@ -178,7 +210,7 @@ def listen(out_dir):
                 dst = os.path.join(out_dir, "rec", "classic_" + name + ".ogg")
                 shutil.copyfile(src, dst)
                 was = "rec/classic_" + name + ".ogg"
-        rows.append({"name": name, "new": new, "classic": was})
+        rows.append({"name": name, "new": new, "classic": was, "alts": alts})
     page = """<!doctype html><meta charset="utf-8"><title>Movement sounds</title>
 <style>body{font:15px/1.5 system-ui;margin:24px;max-width:860px;background:#14181d;color:#e8edf2}
 h1{font-size:20px}table{border-collapse:collapse;width:100%}td{padding:8px 10px;border-bottom:1px solid #2a323c;vertical-align:top}
@@ -199,6 +231,8 @@ for (const r of ROWS){ const tr = t.insertRow();
   tr.insertCell().textContent = r.name;
   const a = tr.insertCell(); if (r.classic){ const b = document.createElement('button'); b.textContent = 'As it was'; b.onclick = () => play([{t:0,src:r.classic,v:1,p:1}]); a.append(b); }
   const n = tr.insertCell(); const b = document.createElement('button'); b.textContent = 'New'; b.onclick = () => play(r.new); n.append(b);
+  r.alts.forEach((alt, i) => { const c = document.createElement('button'); c.textContent = 'Other ' + (i + 1); c.style.marginLeft = '6px'; c.title = alt.map(l => l.event).join(' + ');
+    c.onclick = () => play(alt); n.append(c); });
   const d = tr.insertCell(); d.innerHTML = '<small>' + r.new.map(l => l.event + ' ×' + l.v + ' @' + l.p + (l.t ? ' +' + Math.round(l.t*20) + 't' : '')).join('<br>') + '</small>';
 }
 </script>

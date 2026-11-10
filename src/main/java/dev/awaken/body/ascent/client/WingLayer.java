@@ -377,6 +377,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (!st.wings) return;
         Wings w = slot(e);
         if (w == null) return;
+        // a scene's flourish only holds wings open that nothing else has: a body really flying keeps its own wings' state
+        if (flourish && w.open && !w.flourish) return;
         w.open = true;
         w.state = st;
         w.speed = speed;
@@ -473,7 +475,11 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         float amp = reduced ? 0.5F : 1F, tremble = reduced ? 0 : 1;
         switch (w.mode) {
             case UNFOLD -> WingForm.unfold(t, out);
-            case GLIDING -> WingForm.glide(t, Mth.lerp(pt, w.sweepO, w.sweep), tremble, out);
+            // the tips tremble more the faster the air goes by (the model's own tremble at a middling speed)
+            case GLIDING -> {
+                float sweep = Mth.lerp(pt, w.sweepO, w.sweep);
+                WingForm.glide(t, sweep, tremble * (0.6F + 0.8F * sweep), out);
+            }
             // the beats count whole ticks round their own cycle (never a float of time that grows)
             case FLYING -> WingForm.beat(WingForm.GLIDE, (Math.floorMod(age, WingForm.FLY_TICKS) + pt) / 20F - lag, WingForm.FLY_PERIOD, amp, 0, out);
             case DIVING -> WingForm.dive(t, tremble, out);

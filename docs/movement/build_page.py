@@ -1,7 +1,7 @@
 """Builds the Rope and Wings approval page: docs/movement/page.src.html -> docs/movement/page.html, with the two live
 models (src/wings.js, src/swing.js) inlined and the tour's pictures cut down into docs/movement/shots/.
 
-    python3 docs/movement/build_page.py [run-autopilot/screenshots-ci/movement-now-<run> [.../movement-wood-<run>]]
+    python3 docs/movement/build_page.py [run-autopilot/screenshots-ci/movement-now-<run> [.../movement-wood-<run> [.../movement-built-<run>]]]
 
 Without a tour folder the pictures already in shots/ are used. Publish page.html with shots/ as its files."""
 import html
@@ -25,6 +25,8 @@ WING = [
     ("wing_fp", "e_soar_fp_02", None, "<b>Through your own eyes.</b> The outer half of the sheet, faded."),
     ("wing_sovereign", "g_sovereign_back_02", None, "<b>The Sovereign.</b> The same wing, tinted gold."),
 ]
+# the game as built (the third tour, movement-built): filled in tour_text.py once its pictures are in
+BUILT = []
 # what the second tour showed, in the page's words (filled in by hand after reading its log and pictures)
 TEXT = {
     "WOOD_A": "",
@@ -44,7 +46,7 @@ def load_text():
         ns = {}
         exec(open(p).read(), ns)
         TEXT.update(ns.get("TEXT", {}))
-        for key in ("ROPE", "WING"):
+        for key in ("ROPE", "WING", "BUILT"):
             if key in ns:
                 globals()[key] = ns[key]
 
@@ -55,6 +57,10 @@ def cut(tour, name, shot, crop):
         if len(sys.argv) < 3:
             return
         tour, shot = sys.argv[2], shot[5:]
+    if shot.startswith("BUILT:"):
+        if len(sys.argv) < 4:
+            return
+        tour, shot = sys.argv[3], shot[6:]
     src = os.path.join(tour, shot + ".png")
     if not os.path.exists(src):
         print("missing", src)
@@ -85,10 +91,10 @@ def figures(rows):
 def main():
     load_text()
     if len(sys.argv) > 1:
-        for name, shot, crop, _ in ROPE + WING:
+        for name, shot, crop, _ in ROPE + WING + BUILT:
             cut(sys.argv[1], name, shot, crop)
     s = open(os.path.join(HERE, "page.src.html")).read()
-    s = s.replace("@@ROPE_SHOTS@@", figures(ROPE)).replace("@@WING_SHOTS@@", figures(WING))
+    s = s.replace("@@ROPE_SHOTS@@", figures(ROPE)).replace("@@WING_SHOTS@@", figures(WING)).replace("@@BUILT_SHOTS@@", figures(BUILT))
     for k, v in TEXT.items():
         s = s.replace("@@" + k + "@@", v)
     for tag, path in (("WING_TODAY_JS", "src/wing_today.js"), ("WINGS_JS", "src/wings.js"), ("SWING_JS", "src/swing.js")):

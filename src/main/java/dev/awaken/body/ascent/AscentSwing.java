@@ -71,6 +71,10 @@ public final class AscentSwing {
          */
         public final double slingPull, slingTop, slingOver, slingNear, slingSteep, slingFrom, slingReach;
         public final int slingTicks;
+        /** The most a sling's let-go throws upward (blocks a tick), and the share of gravity the rope carries through the pull. */
+        public final double slingLift, slingCarry;
+        /** A landing counts once this many ticks of free flight are behind the let-go (before, a thing met is a thing in the way). */
+        public final int slingLand;
         /** A pull up a wall in a swing's way is taken only this near (and only with a clear way to it). */
         public final double wallZip;
 
@@ -112,10 +116,13 @@ public final class AscentSwing {
             carryLook = (int) v(o, "carryLook", 12);
             holdOn = (int) v(o, "holdOn", 10);
             apexHeld = v(o, "apexHeld", 55);
-            slingPull = v(o, "slingPull", 0.13);
+            slingPull = v(o, "slingPull", 0.15);
             slingTop = v(o, "slingTop", 1.3);
-            slingOver = v(o, "slingOver", 2.4);
-            slingNear = v(o, "slingNear", 4.5);
+            slingOver = v(o, "slingOver", 3.3);
+            slingNear = v(o, "slingNear", 5.25);
+            slingLift = v(o, "slingLift", 1.3);
+            slingCarry = v(o, "slingCarry", 1.0);
+            slingLand = (int) v(o, "slingLand", -1);
             slingSteep = v(o, "slingSteep", 50);
             slingFrom = v(o, "slingFrom", 6);
             slingReach = v(o, "slingReach", 30);
@@ -455,11 +462,11 @@ public final class AscentSwing {
         double dx = x - k.x, dy = y - k.y, dz = z - k.z, h = Math.sqrt(dx * dx + dz * dz), d = Math.sqrt(h * h + dy * dy);
         if (h < t.slingNear || age > t.slingTicks || Math.atan2(dy, h) > t.slingSteep * D2R) {
             double hs = Math.max(0.3, k.hspeed()), tt = h / hs;
-            k.vy = Math.max(k.vy, Math.min(0.9, dy / Math.max(1, tt) + 0.5 * AscentRules.G * tt));
+            k.vy = Math.max(k.vy, Math.min(t.slingLift, dy / Math.max(1, tt) + 0.5 * AscentRules.G * tt));
             return true;
         }
         k.vx += dx / d * t.slingPull;
-        k.vy += dy / d * t.slingPull - AscentRules.G * 0.4;
+        k.vy += dy / d * t.slingPull - AscentRules.G * (1 - t.slingCarry);
         k.vz += dz / d * t.slingPull;
         k.capSpeed(t.slingTop);
         k.x += k.vx;
@@ -498,7 +505,7 @@ public final class AscentSwing {
             if (free) freeFor++;
             // room under the feet through the pull and while it rises over the top it was pulled toward
             if (swept(s, x0, y0, z0, k.x, k.y, k.z, SLING_SIDE, i > 1 && freeFor < 12 ? SLING_UNDER : 0, free ? 0 : SLING_OVER)) {
-                ok = free && i > 14 && landing(s, x0, y0, z0, k);
+                ok = free && (T.slingLand < 0 ? i > 14 : freeFor > T.slingLand) && landing(s, x0, y0, z0, k);
                 break;
             }
         }

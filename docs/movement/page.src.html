@@ -95,7 +95,7 @@ details.more[open] summary{margin-bottom:10px}
 <div class="wrap">
 
 <header>
-  <span class="eyebrow">Movement plan · approved 10 Nov 2026 · being built</span>
+  <span class="eyebrow">Movement plan · approved 10 Nov 2026 · built the same day</span>
   <h1>Rope and Wings</h1>
   <p class="lede">The rope works only where the world is tall, and even there it hangs on too long and stops at every landing. The wings are one flat sheet. Powers that move you do nothing in the air. This plan fixes those three things and adds six moves worth earning.</p>
   <div class="note"><b>Approved, 10 Nov.</b> “Yeah, this looks fantastic. Like, make this one-to-one. The only thing is for the flying animation for the wings, it needs to be better … it clips a bit and it just doesn't look professional. But everything else is amazing. Go ahead and build all of this one-to-one.” The flying beat has been remade: press Flying in the wing model below.</div>
@@ -104,6 +104,21 @@ details.more[open] summary{margin-bottom:10px}
     <footer>Euan, 10 Nov 2026</footer>
   </blockquote>
 </header>
+
+<section id="built">
+  <span class="eyebrow">Built</span>
+  <h2>All of it is in the game, and nobody has played it yet</h2>
+  <p>Everything below was built on 10 Nov, on the branch <code>claude/movement-plan-e38dfa</code>, and waits for your hands. These pictures are from the game itself, taken by the tour on GitHub. The wings match the model on this page box for box; their beat is the remade one.</p>
+  <div class="shots">@@BUILT_SHOTS@@</div>
+  <ul class="find">
+    <li><span class="k">Try 1</span><div><b>The rope in any wood.</b> Sprint, jump and hold the rope. It should throw you up and over the treetops one after another, and keep going when your feet touch down.</div><span class="ev">Measured: an oak wood crossed at 198 blocks in 15 seconds (103 before), with no hard hit. One tree alone is taken 87 times in 100 from a sprint jump.</span></li>
+    <li><span class="k">Try 2</span><div><b>The wings.</b> Type <code>/awaken wings show hover</code> to hold your wings open and walk round them in third person. Also <code>open</code>, <code>glide</code>, <code>fly</code>, <code>dive</code>, <code>land</code>, <code>folded</code>, and a rung after it: <code>skyborn</code> or <code>sovereign</code>. <code>/awaken wings show off</code> gives them back.</div><span class="ev">In first person the wings' place is two numbers I set without seeing them through your eyes. <code>/awaken wings set fp_ahead 0.9</code> and <code>fp_up 0.3</code> move them while the game runs.</span></li>
+    <li><span class="k">Try 3</span><div><b>A power in the air.</b> Dash or leap while gliding: the push should carry. Hold a power's key or the use key in flight: the flight keeps its line while you look around.</div><span class="ev">Checked by tests, not yet by anyone's hands.</span></li>
+    <li><span class="k">Try 4</span><div><b>The new moves.</b> Land slowly and level on your wings (the flare). On the ground, look up, hold sneak a moment and jump (the takeoff, once you can fly). On the rope, attack a creature that is out of reach (the rope strike, at rope mastery 5).</div><span class="ev">The Tasks page shows the next move and how far its mastery has come.</span></li>
+    <li><span class="k">Hear</span><div><b>The sounds.</b> Every movement sound is now layers of Minecraft's own recordings. Nobody has heard them in the game yet.</div><span class="ev">Old sounds: set <code>movementScores = false</code> in <code>awaken-feel-client.toml</code>. The same file turns the new wings and the guided rope off.</span></li>
+  </ul>
+  <p class="small">What differs from the plan below: the sling aims higher and throws harder than first written (the first numbers failed at a single tree); a pull up a wall is limited by a check of its path, not by 16 blocks; the two rope-paying-out loops keep their old sound.</p>
+</section>
 
 <section>
   <span class="eyebrow">The short version</span>

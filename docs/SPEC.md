@@ -21253,9 +21253,12 @@ without Minecraft, 40 runs of 15 s, median blocks):**
 *The rope (`AscentSwing`, `AscentMoves`; switch `ropeGuide` in `awaken-feel-client.toml`, off = §17.31 exactly).*
 - `AscentSwing.findSling`: rays 6 to 44 up and 0 to 30 degrees aside along the heading; a top is taken when it is 6 to
   30 ahead (`slingFrom`, `slingReach`), at least 1 over the hand and no steeper than 1.2 a block. The pull is toward a
-  point `slingOver` 2.4 over the top at `slingPull` 0.13 a tick² up to `slingTop` 1.3 b/t; it lets go within
-  `slingNear` 4.5 of the point, past `slingSteep` 50 degrees or after `slingTicks` 34, with the rise that clears the
-  top. `slingClear` plays the whole pull and the flight after it with the body's box (a quarter block spare) and takes
+  point `slingOver` 3.3 over the top at `slingPull` 0.15 a tick² up to `slingTop` 1.3 b/t, the rope carrying all of
+  gravity (`slingCarry` 1); it lets go within `slingNear` 5.25 of the point, past `slingSteep` 50 degrees or after
+  `slingTicks` 34, thrown upward by what clears the top, 1.3 b/t at most (`slingLift`). (The plan's 2.4 over, 0.13 and
+  a lift of 0.9 were measured only in a dense wood: from a sprint jump at ONE tree the swept sling was refused four
+  times in five, its let-go too weak to lift the body over the crown. With these numbers a hundred single oaks 8 to 26
+  ahead are slung 87 times from a sprint jump, 77 at a run, 71 fast; the bench test holds that.) `slingClear` plays the whole pull and the flight after it with the body's box (a quarter block spare) and takes
   the candidate only if nothing is met, or only a landing after the let-go. To the server and to watchers a sling is a
   ZIP; its let-go is `EV_SLING`.
 - Held, a swing lets go at `apexHeld` 55 degrees while it still rises and the flight after is clear (95 otherwise, as
@@ -21265,12 +21268,11 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   (0.6 b/t on, 0.46 up; `EV_SPRING`). A rope the server refuses is not thrown at that block for a second, and the
   server logs why. The marker is a ring for a swing, a chevron for a sling, a bracket for a pull; the rope's halo
   swells and whitens through the let-go window. The first-person fist sits at (0.46, -0.3, -0.8).
-- **Bench, holding bot, 40 runs of 15 s, median blocks:** lane 271, city 260, forest 260, cliff 122, plains 103, spire
-  109, oak wood 180, spruce wood 165, hills 138, stair roofs 192. No hard hit on a rope anywhere, no stopped run; a hard
-  hit in free flight in two places (lane 1, forest 1 of 40 runs), none in the new places. **The oak wood is 180, not
-  the trial's 203 or the plan's gate of 190:** the trial's sling was not swept with the body's box; swept, some crowns
-  are refused. The gates in `ascent_swing_bench` are the built numbers (oak 165, spruce 150, hills 120, roofs 170,
-  lane 240, city 245, forest 240, each a little under its median).
+- **Bench, holding bot, 40 runs of 15 s, median blocks:** lane 243, city 263, forest 249, cliff 122, plains 103, spire
+  109, oak wood 198, spruce wood 192, hills 192, stair roofs 194. No hard hit anywhere, on a rope or flying free, and no
+  stopped run. The plan's gates hold (oak 190, lane 240, city 250). The trial's oak 203 was a sling not swept with the
+  body's box; swept and with the numbers above it is 198. The gates in `ascent_swing_bench` are a little under these
+  (oak 185, spruce 180, hills 175, roofs 180, lane 240, city 250, forest 240) and the single-tree count above.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

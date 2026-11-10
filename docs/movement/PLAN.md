@@ -13,7 +13,8 @@ spring, the marker, the fist), the feathered wings one to one with the page's mo
 contract, the four new moves, the sounds as scores of the game's own recordings, tips, Tasks rows and tests. What the
 code does, with its numbers and where it differs from this plan, is SPEC §62 "Built". The differences, in short:
 
-- The oak wood's holding-bot median is 180, not the trial's 203: the built sling is swept with the body's box.
+- The sling aims 3.3 over the top (not 2.4), carries all of gravity and may throw 1.3 b/t upward: the plan's numbers,
+  swept with the body's box, refused four single trees in five from a sprint jump. Bench now: oak 198, lane 243, city 263.
 - A pull up a wall is limited by its sweep, not by 16 blocks (the limit cut off cliffs the old rope reached).
 - The takeoff is "look up, sneak a moment, jump" (holding jump can't be told from the game's own hop).
 - The two rappel loops keep their old sound.
