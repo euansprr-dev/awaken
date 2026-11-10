@@ -163,6 +163,7 @@ public final class RealmLive {
         RealmRoots.tick(level, g, plan, ref, st);
         RealmSalt.tick(level, g, plan, ref, st);
         RealmHush.tick(level, g, plan, ref, st);
+        RealmWax.tick(level, g, plan, ref, st);
         for (Land.Site s : land.sites()) {
             int dx = s.x() - lx, dz = s.z() - lz, d2 = dx * dx + dz * dz;
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());

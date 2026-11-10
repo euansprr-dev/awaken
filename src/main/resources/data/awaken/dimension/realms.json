@@ -15,7 +15,9 @@
         "awaken:realm/salt_court",
         "awaken:realm/fane_bowl",
         "awaken:realm/barrow_moor",
-        "awaken:realm/barrow_ship"
+        "awaken:realm/barrow_ship",
+        "awaken:realm/wax_hollow",
+        "awaken:realm/wax_seat"
       ]
     }
   }
