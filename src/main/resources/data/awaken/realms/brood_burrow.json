@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "The Lower Combs",
+  "line": "Nobody ever finds the same nest twice. This one goes further down than it should.",
+  "form": "dungeon",
+  "theme": "hive",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:brood_burrow",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/brood_warren"
+    ],
+    "lens": "brood_burrow",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "dust",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "hive_regent",
+    "seat": "brood_chamber"
+  },
+  "moods": [
+    "deep_quiet"
+  ]
+}

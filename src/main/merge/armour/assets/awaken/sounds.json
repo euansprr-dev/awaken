@@ -3,16 +3,10 @@
     "subtitle": "subtitles.awaken.forge.strike_hide",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_hide_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_strike_hide_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_strike_hide_2",
-        "attenuation_distance": 16
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.85
       }
     ]
   },
@@ -20,16 +14,10 @@
     "subtitle": "subtitles.awaken.forge.strike_copper",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_copper_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_strike_copper_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_strike_copper_2",
-        "attenuation_distance": 16
+        "name": "minecraft:block.copper.hit",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.9
       }
     ]
   },
@@ -37,16 +25,10 @@
     "subtitle": "subtitles.awaken.forge.strike_iron",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_iron_0",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_iron_1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_iron_2",
-        "attenuation_distance": 20
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 1.2
       }
     ]
   },
@@ -54,16 +36,10 @@
     "subtitle": "subtitles.awaken.forge.strike_diamond",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_diamond_0",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_diamond_1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_diamond_2",
-        "attenuation_distance": 20
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.45
       }
     ]
   },
@@ -71,16 +47,10 @@
     "subtitle": "subtitles.awaken.forge.strike_deepglass",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_deepglass_0",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_deepglass_1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:forge/forge_strike_deepglass_2",
-        "attenuation_distance": 20
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.45,
+        "pitch": 1.3
       }
     ]
   },
@@ -88,16 +58,10 @@
     "subtitle": "subtitles.awaken.forge.strike_netherite",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_netherite_0",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:forge/forge_strike_netherite_1",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:forge/forge_strike_netherite_2",
-        "attenuation_distance": 24
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.85
       }
     ]
   },
@@ -105,16 +69,10 @@
     "subtitle": "subtitles.awaken.forge.strike_starmetal",
     "sounds": [
       {
-        "name": "awaken:forge/forge_strike_starmetal_0",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:forge/forge_strike_starmetal_1",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:forge/forge_strike_starmetal_2",
-        "attenuation_distance": 24
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -122,12 +80,10 @@
     "subtitle": "subtitles.awaken.forge.bellows",
     "sounds": [
       {
-        "name": "awaken:forge/forge_bellows_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_bellows_1",
-        "attenuation_distance": 16
+        "name": "minecraft:block.fire.ambient",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
       }
     ]
   },
@@ -135,12 +91,10 @@
     "subtitle": "subtitles.awaken.forge.pull",
     "sounds": [
       {
-        "name": "awaken:forge/forge_pull_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:forge/forge_pull_1",
-        "attenuation_distance": 12
+        "name": "minecraft:item.bucket.fill_lava",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.2
       }
     ]
   },
@@ -148,12 +102,10 @@
     "subtitle": "subtitles.awaken.forge.quench",
     "sounds": [
       {
-        "name": "awaken:forge/forge_quench_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_quench_1",
-        "attenuation_distance": 16
+        "name": "minecraft:block.lava.extinguish",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
       }
     ]
   },
@@ -161,12 +113,10 @@
     "subtitle": "subtitles.awaken.forge.count",
     "sounds": [
       {
-        "name": "awaken:forge/forge_count_0",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:forge/forge_count_1",
-        "attenuation_distance": 10
+        "name": "minecraft:block.note_block.hat",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.0
       }
     ]
   },
@@ -174,8 +124,10 @@
     "subtitle": "subtitles.awaken.forge.note",
     "sounds": [
       {
-        "name": "awaken:forge/forge_note_0",
-        "attenuation_distance": 16
+        "name": "minecraft:block.note_block.iron_xylophone",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
       }
     ]
   },
@@ -183,12 +135,10 @@
     "subtitle": "subtitles.awaken.forge.cut",
     "sounds": [
       {
-        "name": "awaken:forge/forge_cut_0",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:forge/forge_cut_1",
-        "attenuation_distance": 10
+        "name": "minecraft:entity.sheep.shear",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
       }
     ]
   },
@@ -196,12 +146,10 @@
     "subtitle": "subtitles.awaken.forge.fit",
     "sounds": [
       {
-        "name": "awaken:forge/forge_fit_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:forge/forge_fit_1",
-        "attenuation_distance": 12
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.9
       }
     ]
   },
@@ -209,8 +157,10 @@
     "subtitle": "subtitles.awaken.forge.wake",
     "sounds": [
       {
-        "name": "awaken:forge/forge_wake_0",
-        "attenuation_distance": 32
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
       }
     ]
   },
@@ -218,12 +168,10 @@
     "subtitle": "subtitles.awaken.forge.miss",
     "sounds": [
       {
-        "name": "awaken:forge/forge_miss_0",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:forge/forge_miss_1",
-        "attenuation_distance": 10
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
       }
     ]
   },
@@ -231,12 +179,10 @@
     "subtitle": "subtitles.awaken.armour.charged",
     "sounds": [
       {
-        "name": "awaken:armour/armour_charged_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:armour/armour_charged_1",
-        "attenuation_distance": 12
+        "name": "minecraft:item.armor.equip_netherite",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.2
       }
     ]
   },
@@ -244,12 +190,10 @@
     "subtitle": "subtitles.awaken.armour.bastion",
     "sounds": [
       {
-        "name": "awaken:armour/armour_bastion_0",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:armour/armour_bastion_1",
-        "attenuation_distance": 24
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
       }
     ]
   },
@@ -257,12 +201,10 @@
     "subtitle": "subtitles.awaken.armour.flow",
     "sounds": [
       {
-        "name": "awaken:armour/armour_flow_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:armour/armour_flow_1",
-        "attenuation_distance": 12
+        "name": "minecraft:entity.phantom.swoop",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3
       }
     ]
   },
@@ -270,12 +212,10 @@
     "subtitle": "subtitles.awaken.armour.edge",
     "sounds": [
       {
-        "name": "awaken:armour/armour_edge_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:armour/armour_edge_1",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8
       }
     ]
   },
@@ -283,16 +223,10 @@
     "subtitle": "subtitles.awaken.armour.rune",
     "sounds": [
       {
-        "name": "awaken:armour/armour_rune_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:armour/armour_rune_1",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:armour/armour_rune_2",
-        "attenuation_distance": 12
+        "name": "minecraft:block.enchantment_table.use",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.3
       }
     ]
   },
@@ -300,12 +234,10 @@
     "subtitle": "subtitles.awaken.armour.overchannel",
     "sounds": [
       {
-        "name": "awaken:armour/armour_overchannel_0",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:armour/armour_overchannel_1",
-        "attenuation_distance": 24
+        "name": "minecraft:entity.evoker.cast_spell",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.1
       }
     ]
   },
@@ -313,12 +245,10 @@
     "subtitle": "subtitles.awaken.armour.ring",
     "sounds": [
       {
-        "name": "awaken:armour/armour_ring_0",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:armour/armour_ring_1",
-        "attenuation_distance": 32
+        "name": "minecraft:block.bell.use",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -326,12 +256,10 @@
     "subtitle": "subtitles.awaken.armour.rooted",
     "sounds": [
       {
-        "name": "awaken:armour/armour_rooted_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:armour/armour_rooted_1",
-        "attenuation_distance": 16
+        "name": "minecraft:block.rooted_dirt.place",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8
       }
     ]
   },
@@ -339,12 +267,230 @@
     "subtitle": "subtitles.awaken.armour.gore",
     "sounds": [
       {
-        "name": "awaken:armour/armour_gore_0",
-        "attenuation_distance": 20
-      },
+        "name": "minecraft:entity.goat.ram_impact",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "armour.equip_hide": {
+    "subtitle": "subtitles.awaken.armour.equip_hide",
+    "sounds": [
       {
-        "name": "awaken:armour/armour_gore_1",
-        "attenuation_distance": 20
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.85
+      }
+    ]
+  },
+  "armour.equip_cloth": {
+    "subtitle": "subtitles.awaken.armour.equip_cloth",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.place",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "armour.equip_mail": {
+    "subtitle": "subtitles.awaken.armour.equip_mail",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_chain",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "armour.equip_plate": {
+    "subtitle": "subtitles.awaken.armour.equip_plate",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "armour.equip_heavy": {
+    "subtitle": "subtitles.awaken.armour.equip_heavy",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_netherite",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.85
+      }
+    ]
+  },
+  "armour.equip_crystal": {
+    "subtitle": "subtitles.awaken.armour.equip_crystal",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_diamond",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "armour.equip_bone": {
+    "subtitle": "subtitles.awaken.armour.equip_bone",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_turtle",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "armour.equip_feather": {
+    "subtitle": "subtitles.awaken.armour.equip_feather",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_elytra",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.15
+      }
+    ]
+  },
+  "armour.move_hide": {
+    "subtitle": "subtitles.awaken.armour.move_hide",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 0.25,
+        "pitch": 1.4
+      }
+    ]
+  },
+  "armour.move_cloth": {
+    "subtitle": "subtitles.awaken.armour.move_cloth",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "armour.move_mail": {
+    "subtitle": "subtitles.awaken.armour.move_mail",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "armour.move_plate": {
+    "subtitle": "subtitles.awaken.armour.move_plate",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "volume": 0.22,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "armour.move_heavy": {
+    "subtitle": "subtitles.awaken.armour.move_heavy",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_netherite",
+        "type": "event",
+        "volume": 0.25,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "armour.move_crystal": {
+    "subtitle": "subtitles.awaken.armour.move_crystal",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.step",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "armour.move_bone": {
+    "subtitle": "subtitles.awaken.armour.move_bone",
+    "sounds": [
+      {
+        "name": "minecraft:entity.skeleton.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "armour.move_feather": {
+    "subtitle": "subtitles.awaken.armour.move_feather",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_elytra",
+        "type": "event",
+        "volume": 0.2,
+        "pitch": 1.6
+      }
+    ]
+  },
+  "armour.struck_soft": {
+    "subtitle": "subtitles.awaken.armour.struck_soft",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "armour.struck_plate": {
+    "subtitle": "subtitles.awaken.armour.struck_plate",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.25
+      }
+    ]
+  },
+  "armour.struck_crystal": {
+    "subtitle": "subtitles.awaken.armour.struck_crystal",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "armour.struck_bone": {
+    "subtitle": "subtitles.awaken.armour.struck_bone",
+    "sounds": [
+      {
+        "name": "minecraft:block.bone_block.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
       }
     ]
   }

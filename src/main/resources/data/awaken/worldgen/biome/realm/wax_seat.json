@@ -1,0 +1,78 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.8,
+  "downfall": 0.4,
+  "effects": {
+    "water_color": "#b0680c",
+    "grass_color": "#c8a050",
+    "foliage_color": "#a07830"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#4a3210",
+    "minecraft:visual/sky_color": "#1c1006",
+    "minecraft:visual/fog_start_distance": 14.0,
+    "minecraft:visual/fog_end_distance": 170.0,
+    "minecraft:visual/water_fog_color": "#6a3c08",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {
+          "ambient": [],
+          "axolotls": [],
+          "creature": [],
+          "misc": [],
+          "monster": [],
+          "underground_water_creature": [],
+          "water_ambient": [],
+          "water_creature": []
+        }
+      }
+    },
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:falling_honey"
+          },
+          "probability": 0.012
+        },
+        {
+          "particle": {
+            "type": "minecraft:small_flame"
+          },
+          "probability": 0.004
+        }
+      ]
+    },
+    "minecraft:visual/sun_angle": 60.0,
+    "minecraft:visual/sky_light_color": "#d09040",
+    "minecraft:visual/sunrise_sunset_color": "#a0602a10",
+    "minecraft:visual/sky_light_factor": 0.3,
+    "minecraft:audio/ambient_sounds": {
+      "loop": "minecraft:ambient.basalt_deltas.loop",
+      "mood": {
+        "sound": "minecraft:ambient.basalt_deltas.mood",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "minecraft:block.candle.ambient",
+        "tick_chance": 0.06
+      }
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "minecraft:music.nether.basalt_deltas",
+        "min_delay": 4800,
+        "max_delay": 14000
+      }
+    },
+    "minecraft:visual/block_light_tint": "#ffc070",
+    "minecraft:visual/ambient_light_color": "#261c10"
+  },
+  "carvers": [],
+  "features": []
+}

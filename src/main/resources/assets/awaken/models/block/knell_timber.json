@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/knell_timber",
+    "end": "awaken:block/knell_timber_end"
+  }
+}

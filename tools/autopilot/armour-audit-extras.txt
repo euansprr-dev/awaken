@@ -1,0 +1,197 @@
+# Armour polish audit (the bigger options: the suit answering its ability, and Admire). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit7 creative 5157
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 150 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone
+cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+opt fov 40
+wait 20
+wait 260
+cmd item replace entity @s armor.head with awaken:galewing_helmet
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate
+cmd item replace entity @s armor.legs with awaken:galewing_leggings
+cmd item replace entity @s armor.feet with awaken:galewing_boots
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 8
+wait 20
+shotnow k_galewing_rest
+cmd awaken armour kick
+wait 2
+shotnow k_galewing_a
+wait 3
+shotnow k_galewing_b
+wait 4
+shotnow k_galewing_c
+wait 8
+shotnow k_galewing_d
+wait 10
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
+cmd item replace entity @s armor.feet with awaken:halo_choir_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 20
+shotnow k_halo_choir_rest
+cmd awaken armour kick
+wait 2
+shotnow k_halo_choir_a
+wait 3
+shotnow k_halo_choir_b
+wait 4
+shotnow k_halo_choir_c
+wait 8
+shotnow k_halo_choir_d
+wait 10
+cmd item replace entity @s armor.head with awaken:riftwalker_helmet
+cmd item replace entity @s armor.chest with awaken:riftwalker_chestplate
+cmd item replace entity @s armor.legs with awaken:riftwalker_leggings
+cmd item replace entity @s armor.feet with awaken:riftwalker_boots
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 8
+wait 20
+shotnow k_riftwalker_rest
+cmd awaken armour kick
+wait 2
+shotnow k_riftwalker_a
+wait 3
+shotnow k_riftwalker_b
+wait 4
+shotnow k_riftwalker_c
+wait 8
+shotnow k_riftwalker_d
+wait 10
+cmd item replace entity @s armor.head with awaken:hollowheart_helmet
+cmd item replace entity @s armor.chest with awaken:hollowheart_chestplate
+cmd item replace entity @s armor.legs with awaken:hollowheart_leggings
+cmd item replace entity @s armor.feet with awaken:hollowheart_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 20
+shotnow k_hollowheart_rest
+cmd awaken armour kick
+wait 2
+shotnow k_hollowheart_a
+wait 3
+shotnow k_hollowheart_b
+wait 4
+shotnow k_hollowheart_c
+wait 8
+shotnow k_hollowheart_d
+wait 10
+cmd item replace entity @s armor.head with awaken:signals_echo_helmet
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate
+cmd item replace entity @s armor.legs with awaken:signals_echo_leggings
+cmd item replace entity @s armor.feet with awaken:signals_echo_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 20
+shotnow k_signals_echo_rest
+cmd awaken armour kick
+wait 2
+shotnow k_signals_echo_a
+wait 3
+shotnow k_signals_echo_b
+wait 4
+shotnow k_signals_echo_c
+wait 8
+shotnow k_signals_echo_d
+wait 10
+cmd item replace entity @s armor.head with awaken:leviathan_helmet
+cmd item replace entity @s armor.chest with awaken:leviathan_chestplate
+cmd item replace entity @s armor.legs with awaken:leviathan_leggings
+cmd item replace entity @s armor.feet with awaken:leviathan_boots
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 6
+wait 20
+shotnow k_leviathan_rest
+cmd awaken armour kick
+wait 2
+shotnow k_leviathan_a
+wait 3
+shotnow k_leviathan_b
+wait 4
+shotnow k_leviathan_c
+wait 8
+shotnow k_leviathan_d
+wait 10
+cmd item replace entity @s armor.head with awaken:lordscale_helmet
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+cmd item replace entity @s armor.legs with awaken:lordscale_leggings
+cmd item replace entity @s armor.feet with awaken:lordscale_boots
+cmd time set 6000
+camera first
+opt fov 70
+cmd tp @s 0.5 150 2.5 0 0
+look 0 0
+wait 40
+shot a_lordscale_before
+cmd awaken armour admire
+wait 14
+shotnow a_lordscale_a
+wait 20
+shotnow a_lordscale_b
+wait 20
+shotnow a_lordscale_c
+wait 20
+shotnow a_lordscale_d
+wait 20
+shotnow a_lordscale_e
+wait 20
+shotnow a_lordscale_f
+wait 40
+shot a_lordscale_after
+cmd item replace entity @s armor.head with awaken:sunward_helmet
+cmd item replace entity @s armor.chest with awaken:sunward_chestplate
+cmd item replace entity @s armor.legs with awaken:sunward_leggings
+cmd item replace entity @s armor.feet with awaken:sunward_boots
+cmd time set 18000
+camera first
+opt fov 70
+cmd tp @s 0.5 150 2.5 0 0
+look 0 0
+wait 40
+shot a_sunward_before
+cmd awaken armour admire
+wait 14
+shotnow a_sunward_a
+wait 20
+shotnow a_sunward_b
+wait 20
+shotnow a_sunward_c
+wait 20
+shotnow a_sunward_d
+wait 20
+shotnow a_sunward_e
+wait 20
+shotnow a_sunward_f
+wait 40
+shot a_sunward_after
+quit

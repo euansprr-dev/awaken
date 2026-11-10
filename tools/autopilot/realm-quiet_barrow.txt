@@ -1,0 +1,70 @@
+# The Quiet Barrow (SPEC 50.8, gate 6), walked from the Mouth: one shot per camera of its blockout, same names. Shots beside its two paintings.
+world autopilot_realm_quiet_barrow creative 20261121
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:quiet_barrow
+need realm
+hud off
+wait 300
+
+cmd awaken gate realm_at MOUTH 0 0 0 0
+look 0 4
+wait 200
+shot painting
+cmd awaken gate realm_at MOUTH 0 0 0 34
+look 17 -2
+wait 200
+shot path
+cmd awaken gate realm_at MOUTH 0 -37 0 58
+look 0 -20
+wait 200
+shot hill_foot
+cmd awaken gate realm_at MOUTH 0 20 14 94
+look 43 -16
+wait 200
+shot ship_side
+
+# the way aboard opens once the Wardens are down: the deck is shot as you'd find it then
+cmd awaken gate realm_heart
+wait 40
+cmd awaken gate realm_at MOUTH 0 0 40 155
+look 90 2
+wait 200
+shot deck
+cmd awaken gate realm_at MOUTH 0 -92 52 147
+look -81 14
+wait 200
+shot deck_painting
+cmd awaken gate realm_at MOUTH 0 -37 40 148
+look 180 12
+wait 200
+shot from_ship
+cmd awaken gate realm_at MOUTH 0 -79 1 310
+look 90 -4
+wait 200
+shot long_barrow
+cmd awaken gate realm_at MOUTH 0 84 2 305
+look -52 -4
+wait 200
+shot ring
+cmd awaken gate realm_at MOUTH 0 0 1 315
+look 0 -4
+wait 200
+shot tarn
+cmd awaken gate realm_at MOUTH 0 118 2 154
+look -73 -2
+wait 200
+shot village
+quit

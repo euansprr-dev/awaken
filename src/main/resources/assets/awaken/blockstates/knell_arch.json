@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/knell_arch"
+    },
+    "facing=east": {
+      "model": "awaken:block/knell_arch",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/knell_arch",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/knell_arch",
+      "y": 270
+    }
+  }
+}

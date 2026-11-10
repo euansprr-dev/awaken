@@ -8,6 +8,8 @@
 // making on a Forge's anvil (then x is its heat, 0..255 for cold..white: SPEC §44.4); bits 10-12 of y its mastery step
 // (0 I .. 4 V) and bit 13 whether its wearer is low (mastery III's heartbeat: SPEC §44.5); bits 8-14 of x the
 // enchantment light on it now (SPEC §45.11): a palette index in 8-11 (0 none), how brightly it shows (0..7) in 12-14.
+// What the forge left on the piece (SPEC §44.11): bit 15 of x a scale flaw, bit 14 of y the fold's ripples, bit 15 of y
+// its maker's mark.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
@@ -33,6 +35,8 @@ layout(location = 6) out vec3 viewNormal;
 layout(location = 7) flat out vec4 state;
 layout(location = 8) flat out vec2 mastery;
 layout(location = 9) flat out vec2 script;
+layout(location = 10) flat out float skyLight; // how open the sky is over this figure, 0..1 (the moonlit edge needs it)
+layout(location = 11) flat out float marks;    // 1 a scale flaw, 2 the fold's ripples, 4 the maker's mark
 
 void main() {
     vec4 view = ModelViewMat * vec4(Position, 1.0);
@@ -47,4 +51,6 @@ void main() {
     state = vec4(float(UV1.x & 255) / 255.0, float(UV1.y & 255) / 255.0, (UV1.y & 256) != 0 ? 1.0 : 0.0, (UV1.y & 512) != 0 ? 1.0 : 0.0);
     mastery = vec2(float((UV1.y >> 10) & 7), (UV1.y & 8192) != 0 ? 1.0 : 0.0);
     script = vec2(float((UV1.x >> 8) & 15), float((UV1.x >> 12) & 7) / 7.0);
+    skyLight = clamp(float(UV2.y) / 240.0, 0.0, 1.0);
+    marks = float(((UV1.x >> 15) & 1) | (((UV1.y >> 14) & 1) << 1) | (((UV1.y >> 15) & 1) << 2));
 }

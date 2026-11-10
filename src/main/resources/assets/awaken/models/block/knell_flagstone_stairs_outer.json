@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "awaken:block/knell_flagstone",
+    "top": "awaken:block/knell_flagstone",
+    "side": "awaken:block/knell_flagstone"
+  }
+}
