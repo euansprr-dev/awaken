@@ -44,6 +44,7 @@ final class ArmsTests {
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
         HitNowTests.register(); // SPEC §47.1: the client's sweep and the server's
+        WeightTests.register(); // SPEC §25 "Weight in the Hand": the blow's direction, the hands' word, the layers, walls, grass
         AwakenTests.register("arms_damage_stack", 60, ArmsTests::damageStack);
         AwakenTests.register("arms_deflect", 60, ArmsTests::deflect);
         AwakenTests.register("arms_deflect_latency", 80, ArmsTests::deflectLatency);

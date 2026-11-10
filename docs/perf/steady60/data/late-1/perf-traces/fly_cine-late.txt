@@ -1,0 +1,177 @@
+frames 2759, late (three refreshes or more) 109 = 4.0%; frames with two ticks or more 0
+usual: a tick 1.49 ms (in 925 of 2759 frames), the render 0.71, between 15.76
+the late frames' lost time: ticks 20%, render 13%, between 67%; worst part of each: tick 23, render 6, between 80; 74 of them had a tick
+GC pauses in the window: 6, 0 ms in all
+
+stacks of the render thread while a part ran long (samples: tick 48, render 10, wait 167)
+   10  wait   | util.TreeMap.put < arena.SizedTreeMap.addSized < arena.DefragmentingBufferArena.addFreeSegment < arena.BufferSegment.delete < data.SectionRenderDataStorage.removeData < region.RenderRegion.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents
+   10  wait   | util.TreeMap.getEntryUsingComparator < interval_tree.TreeNode.removeInterval < interval_tree.IntervalTree.remove < trigger.NormalList.removeGroupInterval < trigger.GFNITriggers.removeSectionFromList < trigger.SortTriggering.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents
+    7  wait   | util.TreeMap.getEntryUsingComparator < arena.SizedTreeMap.removeSized < arena.SharedBufferArena.removeOwner < arena.DefragmentingBufferArena.free < arena.BufferSegment.delete < data.SectionRenderDataStorage.removeData < region.RenderRegion.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk
+    7  wait   | longs.Long2ObjectOpenHashMap.clone < lighting.BlockLightSectionStorage$BlockDataLayerStorageMap.copy < lighting.LayerLightSectionStorage.swapSectionMap < lighting.LightEngine.runLightUpdates < lighting.LevelLightEngine.runLightUpdates < multiplayer.ClientLevel.update < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    6  wait   | lang.System.identityHashCode < chunk.RenderSectionManager.updateSectionInfo < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    6  wait   | longs.Long2ObjectOpenHashMap.clone < lighting.SkyLightSectionStorage$SkyDataLayerStorageMap.copy < lighting.LayerLightSectionStorage.swapSectionMap < lighting.LightEngine.runLightUpdates < lighting.LevelLightEngine.runLightUpdates < multiplayer.ClientLevel.update < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    5  wait   | util.TreeMap.getEntryUsingComparator < arena.SizedTreeMap.removeSized < arena.DefragmentingBufferArena.removeFreeSegment < arena.BufferSegment.delete < data.SectionRenderDataStorage.removeData < region.RenderRegion.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents
+    5  render | longs.LongOpenHashSet.clone < renderer.SectionOcclusionGraph.scheduleFullUpdate < renderer.LevelRenderer.render < renderer.GameRenderer.renderLevel < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    5  wait   | chunk.PalettedContainer$Data.copy < chunk.PalettedContainer.<init> < world.PalettedContainerROExtension.clone < cloned.ClonedChunkSection.<init> < cloned.ClonedChunkSectionCache.clone < world.LevelSlice.prepare < chunk.RenderSectionManager.createRebuildTask < render.SodiumWorldRenderer.setupTerrain < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain
+    4  wait   | trigger.SortTriggering.decrementSortTypeCounter < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    4  wait   | chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    4  wait   | chunk.RenderSectionManager.tickVisibleRenders < render.SodiumWorldRenderer.setupTerrain < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    4  tick   | client.DelveClient.lambda$init$19 < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    3  wait   | data.SectionRenderDataStorage.removeData < region.RenderRegion.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main
+    3  wait   | util.Collection.removeIf < trigger.GFNITriggers.removeSection < trigger.SortTriggering.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281
+    3  wait   | objects.Reference2ReferenceOpenHashMap$MapIterator.nextEntry < region.RenderRegion.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main
+    3  wait   | objects.Object2ReferenceOpenHashMap.shiftKeys < trigger.NormalList.removeGroupInterval < trigger.GFNITriggers.removeSectionFromList < trigger.SortTriggering.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract
+    2  wait   | objects.Object2ReferenceOpenHashMap.get < trigger.NormalList.removeGroupInterval < trigger.GFNITriggers.removeSectionFromList < trigger.SortTriggering.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract
+    2  wait   | particle.SingleQuadParticle.extractRotatedQuad < particle.QuadParticleGroup.extractRenderState < particle.ParticleEngine.extract < extract.LevelExtractor.extract < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    2  wait   | chunk.PalettedContainer.get < chunk.LevelChunkSection.getBlockState < chunk.LevelChunk.getBlockState < client.ColumnStore.sample < client.AtlasState.onChunkLoad < client.AtlasClient.lambda$init$9 < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle
+    2  tick   | client.AscentFx.sampleTrail < client.AscentClient.tick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    2  tick   | io.RandomAccessFile.writeBytes0 < rolling.RollingRandomAccessFileManager.writeToDestination < appender.OutputStreamManager.flushBuffer < rolling.RollingRandomAccessFileManager.flush < appender.AbstractOutputStreamAppender.directEncodeEvent < appender.RollingRandomAccessFileAppender.append < config.AppenderControl.tryCallAppender < config.LoggerConfig.callAppenders < config.AwaitCompletionReliabilityStrategy.log
+    2  tick   | objects.Reference2IntOpenHashMap.getInt < core.IdMapper.getId < block.Block.getId < client.LensBlocks.kind < client.LensClient.tick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main
+    2  wait   | chunk.LithiumHashPalette.create < chunk.Configuration$Simple.createPalette < chunk.PalettedContainer.createOrReuseData < chunk.LevelChunkSection.read < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket
+    2  wait   | chunk.PalettedContainer.get < chunk.LevelChunkSection.getBlockState < lighting.ChunkSkyLightSources.findLowestSourceY < chunk.ChunkAccess.initializeLightSources < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket
+    2  wait   | longs.Long2ReferenceOpenHashMap.remove < storage.QueuedSectionStorage.endSafeReadPhase < chunk.RenderSectionManager.consumeCullTaskResults < render.SodiumWorldRenderer.setupTerrain < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    2  wait   | ints.Int2ObjectOpenHashMap.get < bedrock.VarMap.get < molang.MolangParser$Read.eval < molang.MolangParser.lambda$equality$0 < molang.TestExpr.eval < molang.MolangParser.lambda$assignment$0 < molang.Env.run < bedrock.ClientEntity.runController < client.BedrockRuntime.frame
+    1  tick   | util.Map.computeIfAbsent < attribute.EnvironmentAttributeProbe.getValue < client.Minecraft.getMusicVolume < sounds.MusicManager.mixinextras$bridge$getMusicVolume$12 < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | lighting.ChunkSkyLightSources.<init> < chunk.ChunkAccess.<init> < chunk.LevelChunk.<init> < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket < game.ClientboundBundlePacket.handle < network.PacketProcessor$ListenerAndPacket.handle
+    1  wait   | entity.EntityRenderer.sodium$getBoundingBoxForCulling < render.SodiumWorldRenderer.isEntityVisible < entity.EntityRenderer.wrapMethod$bnj000$sodium$preShouldRender < entity.EntityRenderDispatcher.shouldRender < extract.LevelExtractor.isEntityVisible < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    1  tick   | util.LoggerNamePatternSelector.getFormatters < layout.PatternLayout$PatternSelectorSerializer.toSerializable < layout.PatternLayout.toText < appender.AbstractOutputStreamAppender.directEncodeEvent < config.AppenderControl.tryCallAppender < config.LoggerConfig.callAppenders < config.AwaitCompletionReliabilityStrategy.log < core.Logger.log < spi.AbstractLogger.tryLogMessage
+    1  wait   | longs.Long2ByteOpenHashMap.get < lighting.LayerLightSectionStorage.updateSectionStatus < lighting.LightEngine.updateSectionStatus < lighting.LevelLightEngine.updateSectionStatus < multiplayer.ClientPacketListener.lambda$queueLightRemoval$0 < multiplayer.ClientLevel.pollLightUpdates < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main
+    1  tick   | profile.ProfileTracker.tick < client.VfxClient.tick < client.VfxHooks.tick < neoforge.ImmersiveVFXNeoForge.onTick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | lang.Class.copyFields < condition.AmbientSelection.assignProperties < sound.AmbientSound.tick < region.AmbientRegion.tick < engine.AmbientEngine.tick < engine.AmbientTickHandler.onTick < creativecore.CreativeForgeLoader.lambda$registerClientTick$0 < client.ClientHooks.fireClientTickPre < client.Minecraft.tick
+    1  tick   | client.Sites.lambda$read$0 < client.Wildlife.tick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  tick   | chunk.PalettedContainer.get < chunk.LevelChunkSection.getBlockState < level.Level.getBlockState < multiplayer.ClientLevel.doAnimateTick < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  tick   | client.LensParticles.tick < client.LensClient.tick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | chunk.PalettedContainer.get < chunk.LevelChunkSection.getNoiseBiome < chunk.ChunkAccess.getNoiseBiome < client.ColumnStore.biome < client.AtlasState.onChunkLoad < client.AtlasClient.lambda$init$9 < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle
+    1  wait   | util.TreeMap.compare < arena.SizedTreeMap.removeFirstOfSizeAtLeast < arena.DefragmentingBufferArena.takeFree < arena.BufferArena.tryUpload < arena.RegionAllocatorHandle.upload < region.RenderRegionManager.uploadResults < chunk.RenderSectionManager.processChunkBuildResults < render.SodiumWorldRenderer.setupTerrain < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain
+    1  wait   | buffer.AbstractByteBuf.ensureAccessible < network.VarInt.read < network.FriendlyByteBuf.readVarInt < chunk.LithiumHashPalette.read < chunk.PalettedContainer.read < chunk.LevelChunkSection.read < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight
+    1  wait   | buffer.AbstractByteBuf.ensureAccessible < network.VarInt.read < network.FriendlyByteBuf.readVarInt < chunk.SingleValuePalette.read < chunk.PalettedContainer.read < chunk.LevelChunkSection.read < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight
+    1  render | system.JNI.callPJPV < vulkan.KHRPushDescriptor.nvkCmdPushDescriptorSetKHR < vulkan.VulkanRenderPass.pushDescriptors < frontend.FrontendRenderPass.drawIndexed < rendertype.PreparedRenderType.draw < feature.RenderTypeFeatureRenderer.executeGroup < feature.FeatureRenderDispatcher$PreparedGroup.execute < feature.FeatureRenderDispatcher$PreparedFrame.executePhase < renderer.LevelRenderer.localvar$bil000$immersivevfx$captureBeforeParticles
+    1  render | util.Objects.equals < renderer.DynamicGpuData$Transform.equals < renderer.DynamicGpuDataStorageMapped.writeData < renderer.DynamicGpuData.writeTransform < rendertype.RenderType.writeDynamicTransforms < feature.RenderTypeFeatureRenderer$Group.getOrAddDraw < feature.RenderTypeFeatureRenderer.getVertexBuilder < feature.CustomFeatureRenderer.buildGroup < feature.RenderTypeFeatureRenderer.prepareGroup
+    1  wait   | lighting.LayerLightSectionStorage.updateSectionStatus < lighting.LightEngine.updateSectionStatus < lighting.LevelLightEngine.updateSectionStatus < multiplayer.ClientPacketListener.lambda$queueLightRemoval$0 < multiplayer.ClientLevel.pollLightUpdates < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  tick   | util.ImmutableCollections$Set12.contains < client.LensClient.air < dev.Autopilot.run < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | client.VfxClient.extract < client.VfxHooks.extract < neoforge.ImmersiveVFXNeoForge.onExtract < extract.LevelExtractor.extract < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  tick   | client.Ambience.emphasis < client.AudioClient$1.emphasis < world.Conductor.natureGoal < world.WorldSound.lambda$init$1 < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | lang.System.identityHashCode < trigger.NormalList.removeGroupInterval < trigger.GFNITriggers.removeSectionFromList < trigger.SortTriggering.removeSection < chunk.RenderSectionManager.onSectionRemoved < map.ChunkTracker.forEachChunk < render.SodiumWorldRenderer.processChunkEvents < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract
+    1  tick   | multiplayer.ClientChunkCache.getChunk < level.Level.getChunk < client.FallingLeafParticle.land < particle.ParticleGroup.tickParticle < particle.ParticleEngine.lambda$tick$0 < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | lighting.ChunkSkyLightSources.fillFrom < chunk.ChunkAccess.initializeLightSources < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket < game.ClientboundBundlePacket.handle < network.PacketProcessor$ListenerAndPacket.handle
+    1  wait   | objects.Object2ObjectOpenHashMap$MapIterator.nextEntry < entityculling.EntityCullingModBase.prefetchBlockEntityData < loader.ModLoaderEventUtil$1.accept < client.ClientHooks.fireClientTickPre < client.Minecraft.tick < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | network.FriendlyByteBuf.readLong < chunk.PalettedContainer.read < chunk.LevelChunkSection.read < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket < game.ClientboundBundlePacket.handle
+    1  render | render.GuiRenderer.addElementToMesh < gui.GuiRenderState.lambda$forEachElement$0 < render.GuiRenderer.addElementsToMeshes < renderer.GameRenderer.render < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | bus.ConsumerEventHandler$WithPredicate.invoke < gui.GuiLayerManager.renderInner < gui.Hud.extractRenderState < gui.Gui.extractRenderState < renderer.GameRenderer.extract < client.Minecraft.renderFrame$mixinextras$wrapped$281 < main.Main.main < startup.Client.main < devlaunch.Main.main
+    1  wait   | molang.Expr.bool < molang.MolangParser.lambda$and$0 < molang.TestExpr.bool < molang.MolangParser.lambda$or$0 < molang.TestExpr.eval < molang.MolangParser.lambda$statement$0 < molang.Env.run < sky.SkyAnimations.controllerAnimations < sky.SkyScene.build
+    1  wait   | frustum.SimpleFrustum.testAab < viewport.Viewport.isBoxVisibleDirect < tree.TraversableTree.testLeafNode < tree.AbstractTraversableBiForest.traverse < occlusion.SectionTree.traverse < chunk.RenderSectionManager.readRenderListFromTree < render.SodiumWorldRenderer.setupTerrain < extract.LevelExtractor.handler$bmh000$sodium$cullTerrain < renderer.GameRenderer.extract
+    1  tick   | level.LevelReader.getNoiseBiome < biome.BiomeManager.getBiome < level.LevelReader.getBiome < client.VfxClient.tick < client.VfxHooks.tick < neoforge.ImmersiveVFXNeoForge.onTick < client.ClientHooks.fireClientTickPost < client.Minecraft.tick < main.Main.main
+    1  tick   | format.DateTimeFormatterBuilder.<init> < instant.InstantPatternDynamicFormatter$PatternSequence.<init> < instant.InstantPatternDynamicFormatter$DynamicPatternSequence.<init> < instant.InstantPatternDynamicFormatter.sequencePattern < instant.InstantPatternThreadLocalCachedFormatter.formatTo < pattern.DatePatternConverter.format < pattern.PatternFormatter.format < pattern.HighlightConverter.format < pattern.PatternFormatter.format
+    1  wait   | core.TypedInstance.is < lens.LensHeights.skipped < chunk.LithiumHashPalette.maybeHas < chunk.PalettedContainer.maybeHas < chunk.LevelChunkSection.maybeHas < lens.LensHeights.sections < client.LensClient.frame < client.ClientHooks.onSetupFog < fog.FogRenderer.setupFog
+    1  wait   | chunk.Configuration$Simple.createPalette < chunk.PalettedContainer.createOrReuseData < chunk.LevelChunkSection.read < chunk.LevelChunk.replaceWithPacketData < multiplayer.ClientChunkCache.replaceWithPacketData < multiplayer.ClientPacketListener.handleLevelChunkWithLight < game.ClientboundLevelChunkWithLightPacket.handle < multiplayer.ClientPacketListener.handleBundlePacket < game.ClientboundBundlePacket.handle
+
+late frames: index, gap, ticks, render, between (ms), ticks run
+330	26.67	0.00	1.56	25.11	0
+339	24.44	0.00	3.13	21.31	0
+393	21.59	0.00	0.82	20.77	0
+448	21.01	3.33	1.45	16.23	1
+450	23.18	0.00	0.90	22.28	0
+570	22.64	0.00	0.92	21.72	0
+598	21.68	3.27	0.85	17.55	1
+616	28.00	1.39	1.32	25.30	1
+628	21.51	2.72	0.99	17.80	1
+630	26.04	0.00	2.65	23.39	0
+634	21.46	2.92	1.46	17.08	1
+693	20.90	2.24	0.67	17.99	1
+705	21.66	3.01	0.77	17.88	1
+738	21.31	3.60	1.05	16.66	1
+759	22.18	3.60	1.13	17.45	1
+809	21.39	0.00	0.95	20.45	0
+812	22.09	0.00	0.99	21.10	0
+929	24.89	0.00	1.58	23.31	0
+933	46.52	3.71	12.40	30.41	1
+935	29.43	10.34	1.22	17.86	1
+946	21.79	3.56	0.79	17.44	1
+961	21.73	2.84	1.08	17.80	1
+967	24.44	2.05	3.78	18.60	1
+979	41.27	11.06	7.04	23.17	1
+987	32.92	2.32	1.33	29.27	1
+990	22.97	4.84	0.68	17.46	1
+996	20.87	2.48	0.78	17.61	1
+1011	22.25	2.32	2.87	17.07	1
+1044	24.09	5.10	0.76	18.23	1
+1047	28.20	2.74	3.68	21.78	1
+1107	22.74	2.65	0.84	19.26	1
+1166	26.20	0.00	2.47	23.72	0
+1226	25.27	0.00	2.16	23.11	0
+1286	27.44	0.00	3.21	24.22	0
+1340	21.19	0.00	1.32	19.87	0
+1346	28.61	0.00	3.18	25.44	0
+1350	21.69	1.60	1.24	18.86	1
+1406	28.46	0.00	1.61	26.85	0
+1419	21.07	2.55	0.84	17.68	1
+1464	21.14	3.91	0.81	16.42	1
+1466	27.10	0.00	1.67	25.43	0
+1470	22.89	2.10	1.32	19.47	1
+1476	28.69	9.83	1.65	17.21	1
+1478	23.01	0.00	2.04	20.97	0
+1586	30.32	4.77	1.08	24.46	1
+1589	23.83	2.39	0.75	20.70	1
+1645	25.95	0.00	0.81	25.14	0
+1705	23.09	0.00	0.57	22.52	0
+1708	23.25	0.00	0.93	22.32	0
+1763	23.40	5.52	1.25	16.63	1
+1765	21.27	0.00	0.73	20.54	0
+1790	20.86	2.06	1.73	17.06	1
+1796	21.38	2.97	0.87	17.54	1
+1825	21.08	0.00	0.69	20.40	0
+1885	26.23	3.05	1.43	21.75	1
+1888	26.21	2.86	1.68	21.67	1
+1945	27.86	2.23	0.88	24.74	1
+1948	21.06	2.05	0.83	18.19	1
+2005	24.99	2.64	0.75	21.60	1
+2008	21.02	2.20	0.85	17.97	1
+2011	21.94	2.88	1.32	17.74	1
+2026	22.25	2.09	0.78	19.38	1
+2064	23.62	0.00	1.46	22.17	0
+2112	21.00	0.00	0.80	20.19	0
+2124	25.12	0.00	0.92	24.20	0
+2185	22.70	2.99	1.46	18.24	1
+2188	22.45	2.96	1.26	18.23	1
+2190	21.36	0.00	0.88	20.47	0
+2239	21.11	2.25	2.12	16.74	1
+2242	21.70	2.40	2.37	16.92	1
+2244	28.54	0.00	2.29	26.26	0
+2245	23.30	3.80	1.84	17.66	1
+2253	23.71	3.50	1.18	19.04	1
+2256	22.58	2.03	1.01	19.55	1
+2265	21.10	3.06	1.88	16.16	1
+2303	23.85	0.00	1.01	22.84	0
+2307	20.93	1.89	0.70	18.33	1
+2363	24.10	0.00	1.17	22.93	0
+2364	23.11	4.39	1.15	17.57	1
+2373	20.99	1.46	0.64	18.89	1
+2391	24.46	0.00	8.65	15.81	0
+2422	26.79	0.00	1.17	25.62	0
+2431	24.51	2.03	1.08	21.40	1
+2437	22.01	1.61	4.14	16.27	1
+2457	22.71	0.00	2.65	20.06	0
+2481	23.76	2.85	0.96	19.95	1
+2487	21.84	2.02	0.58	19.23	1
+2490	20.85	2.15	1.19	17.51	1
+2493	23.14	4.14	0.64	18.35	1
+2496	21.88	1.84	0.64	19.40	1
+2508	22.34	3.22	1.40	17.72	1
+2523	21.02	3.91	1.27	15.85	1
+2540	31.10	0.00	0.97	30.13	0
+2544	20.98	3.54	1.33	16.11	1
+2547	20.93	3.26	1.21	16.46	1
+2550	21.10	2.53	1.11	17.46	1
+2561	45.42	13.31	4.24	27.87	1
+2564	21.13	2.66	1.15	17.33	1
+2599	53.14	12.88	5.10	35.16	1
+2603	30.38	2.19	0.67	27.53	1
+2606	21.78	4.79	1.61	15.38	1
+2609	22.52	3.49	1.40	17.63	1
+2641	21.57	3.34	0.83	17.41	1
+2655	21.00	0.00	1.09	19.91	0
+2656	23.80	2.85	0.88	20.07	1
+2659	21.61	2.79	0.71	18.11	1
+2682	21.21	3.51	0.62	17.08	1
+2700	21.05	1.44	0.79	18.82	1
+2714	23.24	0.00	0.71	22.53	0

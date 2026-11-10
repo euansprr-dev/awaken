@@ -1,0 +1,46 @@
+[20:18:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL: on DELL U2725QE, fullscreen
+[20:18:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL fullscreen
+[20:18:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=DELL_U2725QE fb=1708x960 window=854x480 rd=16 sd=10 heapMax=8192MB gc=ZGC Minor Cycles,ZGC Minor Pauses,ZGC Major Cycles,ZGC Major Pauses mods=entity_model_features,minecraft,entity_texture_features,ambientsounds,mousetweaks,jade,shouldersurfing,creativecore,lithostitched,lithium,apollib,trender,notenoughanimations,controlling,neoforge,awaken,searchables,dynamic_fps_common,entityculling,immersivevfx,midnightlib,immediatelyfast,architectury,appleskin,ferritecore,conditional_mixin,transition,dynamic_fps,sodium,moreculling,player_animation_library,cameraoverhaul,skinlayers3d,cloth_config,sound_physics_remastered,mezz_config,jei,bendable_cuboids,tectonic,smooth_steps
+[20:18:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on: gpu timing on
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [look] ImmersiveVFX asleep
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [look] CINEMATIC: Lens CINEMATIC, Distant Horizons not installed, Iris shaders not installed
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look CINEMATIC: applied
+[20:18:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lookswitch cinematic
+[20:19:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:19:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:20:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:20:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_cal 20
+[20:20:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_cal frames=1199 avg_fps=59.9 p50=16.50ms p95=19.98ms p99=22.35ms max=27.38ms tick_p95=10.54ms heap=6934/8192MB fb=3840x2160 load=7.4 occluded=false minimized=false
+[20:20:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:20:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_1 20
+[20:20:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_1 frames=1197 avg_fps=59.8 p50=16.51ms p95=20.29ms p99=24.06ms max=51.22ms tick_p95=15.86ms heap=3250/8192MB fb=3840x2160 load=7.3 occluded=false minimized=false
+[20:20:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:21:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_2 20
+[20:21:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_2 frames=1197 avg_fps=59.8 p50=16.42ms p95=20.30ms p99=23.33ms max=50.96ms tick_p95=10.57ms heap=3396/8192MB fb=3840x2160 load=7.4 occluded=false minimized=false
+[20:21:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:21:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_3 20
+[20:21:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off1_3 frames=1199 avg_fps=59.8 p50=16.31ms p95=20.04ms p99=24.00ms max=34.40ms tick_p95=15.87ms heap=2650/8192MB fb=3840x2160 load=6.4 occluded=false minimized=false
+[20:21:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:21:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_1 20
+[20:22:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_1 frames=1200 avg_fps=59.9 p50=16.27ms p95=19.94ms p99=22.11ms max=27.26ms tick_p95=23.95ms heap=7060/8192MB fb=3840x2160 load=5.0 occluded=false minimized=false
+[20:22:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:22:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_2 20
+[20:22:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_2 frames=1198 avg_fps=59.8 p50=16.31ms p95=19.91ms p99=22.03ms max=45.40ms tick_p95=13.45ms heap=5740/8192MB fb=3840x2160 load=4.1 occluded=false minimized=false
+[20:22:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:22:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_3 20
+[20:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on1_3 frames=1200 avg_fps=59.9 p50=16.27ms p95=20.06ms p99=22.79ms max=31.80ms tick_p95=11.80ms heap=4206/8192MB fb=3840x2160 load=3.6 occluded=false minimized=false
+[20:22:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:22:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_1 20
+[20:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_1 frames=1198 avg_fps=59.8 p50=16.40ms p95=20.07ms p99=23.59ms max=39.84ms tick_p95=15.73ms heap=2800/8192MB fb=3840x2160 load=3.7 occluded=false minimized=false
+[20:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:23:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_2 20
+[20:23:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_off2_2 frames=1200 avg_fps=59.9 p50=16.31ms p95=19.90ms p99=23.43ms max=32.20ms tick_p95=10.68ms heap=7020/8192MB fb=3840x2160 load=3.7 occluded=false minimized=false
+[20:23:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:23:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_1 20
+[20:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_1 frames=1183 avg_fps=59.0 p50=16.61ms p95=20.33ms p99=22.95ms max=35.41ms tick_p95=14.34ms heap=5388/8192MB fb=3840x2160 load=3.5 occluded=false minimized=false
+[20:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:23:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_2 20
+[20:24:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf pace_on2_2 frames=1181 avg_fps=59.0 p50=16.58ms p95=20.03ms p99=21.96ms max=38.09ms tick_p95=10.60ms heap=3686/8192MB fb=3840x2160 load=3.5 occluded=false minimized=false

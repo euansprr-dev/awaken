@@ -406,10 +406,25 @@ public final class ArmsRules {
      */
     public static float side(Archetype.MoveDef def, boolean leftHanded) {
         if (thrusts(def)) return 0;
-        java.util.List<Float> from = def.swing().from(), to = def.swing().to();
-        float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+        float dx = blowX(def), dy = blowY(def);
         float s = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
         return leftHanded ? -s : s;
+    }
+
+    /**
+     * The way a cut travels on the screen at its hit, to the right (and {@link #blowY} up; together not a unit): the baked
+     * blade's own ({@code swing.blow}, tools/arms/blows.py), else the row's old hand poses. The poses stopped matching the
+     * blade on 28 cuts (SPEC §25 "Weight in the Hand": the Maul's second strike threw a body against the cut), so
+     * everything that answers a blow reads this one direction.
+     */
+    public static float blowX(Archetype.MoveDef def) {
+        Archetype.Swing sw = def.swing();
+        return sw.hasBlow() ? sw.blow().get(0) : sw.to().get(0) - sw.from().get(0);
+    }
+
+    public static float blowY(Archetype.MoveDef def) {
+        Archetype.Swing sw = def.swing();
+        return sw.hasBlow() ? sw.blow().get(1) : sw.to().get(1) - sw.from().get(1);
     }
 
     /**
