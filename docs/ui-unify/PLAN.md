@@ -18,11 +18,13 @@ decisions taken as recommended. Two things he asked for with it:
   stage text cannot be shortened (what holds it grows, or scrolls), and the old sections fit their text smaller or wrap it;
   `ui_text_never_cut` checks the fit.
 
-**What is built** (SPEC §57, on this branch; seen on four CI tours, unplayed): Stage 0 (the sheet, the kit, the stage shell, Tasks,
-`classicBand`) and, from Stage 1, Status and Powers. Hearth and the Journal show their old sections inside the new shell. Still to
-build: Hearth and its second door, the Journal wall, the bag's tip, the Tab glance, the cards, the workshops (which still shorten
-text with their own `Stage.fit`), the clean-up; and the tests `ui_word_budget` and `ui_keys_one_meaning`. Decision 6 stands: Euan
-plays this before the later stages are built.
+**What is built** (SPEC §57, on this branch; unplayed): every stage but the last. Stage 0 (the sheet, the kit, the stage shell,
+Tasks, `classicBand`); Stage 1 (Status, Powers); Stage 2 (Hearth with the Anchor as its second door, the Journal wall); Stage 3 (the
+tooltip in glass, the shorter Tab glance, one key cap on cards, the bag and the Look screen); Stage 4 (the Hall's palette, fitted
+text, key caps and marks; the anvil's pips; the table's costs as items; boards, books and the map fitting their text); the tests
+`ui_word_budget` and `ui_keys_one_meaning`. **Not done:** Stage 5 (deleting the classic band waits, by this plan's own gate, for a
+build after Euan has played the stage); the 14-word rewrite of the copy (the budget test holds the copy where it is); chains and
+bounties moving from the Journal to Tasks; the timed run on Euan's Mac.
 
 What follows is the plan as approved. When it was written, no game code or data had changed. The branch holds this plan, two tour scripts, an isolated
 prototype (`docs/ui-unify/proto/`) and rendered frames (`docs/ui-unify/shots/`). The approval page is `docs/ui-unify/page.html`, published (private) at

@@ -98,6 +98,14 @@ cmd item replace entity @s armor.head with awaken:wildhide_helmet
 cmd item replace entity @s armor.legs with awaken:wildhide_leggings
 cmd item replace entity @s armor.feet with awaken:wildhide_boots
 wait 10
+# a few creatures seen, so the Journal's wall has someone standing on it
+cmd awaken admin counter "awaken:discovered/creature/bog_toad" 1
+cmd awaken admin counter "awaken:discovered/creature/briar_sow" 1
+cmd awaken admin counter "awaken:discovered/creature/old_antler" 1
+cmd awaken admin counter "awaken:discovered/creature/stonehorn" 1
+cmd awaken admin counter "awaken:discovered/creature/plumed_coil" 1
+cmd awaken admin counter "awaken:discovered/creature/empress_moth" 1
+wait 20
 screen band status
 wait 60
 shot b20_status
@@ -112,14 +120,36 @@ shot b20c_status_truth
 screenkey esc
 wait 5
 screen band hearth
-wait 40
+wait 80
 shot b21_hearth
+screenkey tab
+screenkey tab
+screenkey tab
+wait 20
+shot b21b_hearth_room
+screenkey esc
+wait 5
 screen band powers
 wait 40
 shot b22_powers
 screen band journal
-wait 40
+wait 80
 shot b23_journal
+screenkey tab
+wait 20
+shot b23b_journal_found
+screenkey down
+screenkey down
+screenkey down
+screenkey down
+wait 20
+shot b23c_journal_gates
+screen close
+wait 10
+# the fire is the Hearth's second door: the same place, where the tier is raised
+cmd awaken hearth guide
+wait 80
+shot b23d_hearth_fire_door
 screen close
 wait 20
 shot b24_closed_tracked
@@ -193,6 +223,49 @@ wait 5
 screen band status
 wait 40
 shot b37_status_all_powers
+screen close
+wait 10
+# ---- the Anchor door at C-rank, then the bag: the keys under it and a name in the band's glass ----
+cmd awaken hearth guide
+wait 80
+shot b38_hearth_anchor_door
+screenkey tab
+screenkey tab
+wait 20
+shot b39_hearth_anchor_room
+screen close
+wait 10
+cmd item replace entity @s inventory.0 with minecraft:iron_ingot 12
+cmd item replace entity @s inventory.1 with minecraft:copper_ingot 7
+cmd item replace entity @s inventory.2 with minecraft:oak_planks 40
+cmd item replace entity @s inventory.3 with minecraft:white_wool 3
+cmd item replace entity @s inventory.4 with minecraft:stick 16
+cmd item replace entity @s inventory.5 with minecraft:coal 9
+cmd item replace entity @s inventory.6 with minecraft:bread 5
+cmd item replace entity @s inventory.7 with minecraft:torch 32
+cmd item replace entity @s inventory.8 with minecraft:cobblestone 64
+cmd item replace entity @s inventory.9 with awaken:fitting_stand
+cmd item replace entity @s inventory.10 with awaken:war_anvil
+cmd item replace entity @s inventory.11 with minecraft:lantern 2
+cmd item replace entity @s inventory.12 with minecraft:book
+cmd item replace entity @s inventory.13 with minecraft:lapis_lazuli 6
+cmd item replace entity @s inventory.14 with minecraft:bone 4
+cmd item replace entity @s inventory.15 with minecraft:string 8
+cmd item replace entity @s inventory.16 with minecraft:flint 5
+cmd item replace entity @s inventory.17 with minecraft:leather 6
+cmd item replace entity @s inventory.18 with minecraft:iron_pickaxe
+cmd item replace entity @s inventory.19 with minecraft:water_bucket
+cmd item replace entity @s inventory.20 with minecraft:apple 3
+cmd item replace entity @s inventory.21 with minecraft:arrow 20
+cmd item replace entity @s inventory.22 with minecraft:bow
+cmd item replace entity @s inventory.23 with minecraft:shield
+cmd item replace entity @s inventory.24 with minecraft:campfire
+cmd item replace entity @s inventory.25 with minecraft:red_bed
+cmd item replace entity @s inventory.26 with minecraft:bell
+wait 10
+holo inv open
+wait 60
+shot b50_bag
 screen close
 wait 10
 # ---- the old band, one setting away ----

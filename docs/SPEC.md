@@ -20632,3 +20632,86 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - Test `ui_text_never_cut`: for many lines, slots and pixel sizes, every word is still there, the size is on whole real pixels and
   never under half, and each line is inside its slot.
 
+### 57.7 Hearth on the stage: one Hearth, two doors (`hearth.client.HearthPlace`)
+- **What shows:** the home's name, tier, Forge tier, Comfort as pips and Rested; every room kind as a tile with its own
+  signature piece (the last piece of its furniture), lit by state (yours: warm with a tick; started: amber with a pip for
+  each piece; open: plain; a kind whose rare piece you haven't met: a dark shape, no name); the rooms as the Hearth reads
+  them, each a chip with its grade; who lives here (your beasts and the kinds you know drawn as themselves, a kind you've
+  only heard of a dark shape, the people and those who could come as chips); and what the home asks for, a line each.
+- **The panel** reads what you point at, else what you clicked. A room kind: what it does, its pieces as real items with
+  have/need (the tip says where one comes from), its condition, the closed-room rule, why it isn't one yet and where the
+  ticked pieces stand (the server's reading), and the game's own recipe for the first missing piece; a built kind shows its
+  rooms' readings (grade, six readings as pips with the weakest in amber, the one thing that lifts it). A beast: itself,
+  what it's doing, how it feels, and its name (the naming window). A kind: where, its job, what it wants, your standing, a
+  rumour with Track (T). A neighbour: their role and what they wait for. With nothing in focus: the home in numbers
+  (radius, rest, Rested), where you wake, what adds a point of Comfort, the land, Oren's cottage while it's on offer, and
+  the next tier with its needs and its parts as items.
+- **Two doors.** K looks and tracks. Using the Anchor (or the first fire) opens this same place (`Guide.Show` with open;
+  `GuideClient`), and there the next tier is raised (hold Enter or the button, 0.6 s) and Oren's offer is taken; through K
+  the place says "Raise it at your Anchor" and the head carries "At your Anchor you can do more". The separate window
+  (`HearthScreen`) stays for the classic band and for a bare wrist. The place asks the server for its reading while it
+  shows (`Guide.Act.REFRESH` every two seconds) and says it has left.
+- Removed with it: the second copy of the Tasks card ("Next for your home"), "Everything for your home ›" (the Hearth lane
+  on Tasks), "Rooms and upgrades ›".
+- Keys: Tab walks the room kinds you know, T tracks, Enter held raises the tier at the Anchor, Esc lets go of the focus.
+- `kin.client.KinStrip` is the kin module's public reading of its page for this place (beasts, kinds, wants, a kind's body).
+
+### 57.8 The Journal on the stage: one wall (`progression.client.JournalPlace`)
+- The twelve category chips were a mode each. They are an index down the left (a picture, the name, how much you have, "n
+  new") that jumps one wall on which every shelf stands; Up and Down step shelf by shelf, Tab walks what you've found.
+- A shelf with a fixed set (creatures, beasts, cave regions, ores, enchantments) shows the things themselves: a found
+  creature or beast stands on its tile as itself (`Catalogue.Slot.creature`, `Kit.creature`), a found thing is its own item,
+  a find with no picture is its name. **Not found is a dark shape and nothing else**: no number, no name, no hint (the old
+  grid numbered them). Bosses, Lords and story finds are in none of these sets and stay sealed.
+- The shelves still written as sections stand on the same wall as they were (`SectionHost.flat`): the gate worlds'
+  paintings, the Bell Book (its ten by ten board already lights a bell in its rank's colour), lore, happenings, and Your
+  story (the log, recent messages, what waits, records, the chains you follow). An open-ended shelf with nothing yet says
+  what it keeps.
+- The panel reads the find you point at (or clicked): its shelf, its name, itself large on a lit floor, and what you've
+  learned; at rest it counts each fixed shelf.
+- `Kit.creature` keeps one body per kind for the world and draws it through the inventory's own figure code; a kind whose
+  renderer balks at a body that was never in the world falls back to its item (its egg), once, for the session. Only tiles
+  in view draw a body.
+- Not moved yet: chains and bounties still stand under Your story (the plan moves them to Tasks' Out there lane).
+
+### 57.9 The bag's tooltip, the Tab glance, cards
+- **Tooltips:** wherever the band's look is on (not Classic), an item's tooltip takes the band's glass: the style
+  `awaken:glass` set on `RenderTooltipEvent.Texture` (sprites `tooltip/glass_background`, `tooltip/glass_frame`, made by
+  `tools/art/tooltip_glass.py`). A stack that brings its own style keeps it.
+- **The Tab glance** (§40.7) is a third shorter with the same facts: the vitals stand two to a row, each the band's own
+  mark (a heart, a spark, an apple, a plate), a bar and its number, where each had a row and a word; a task's name and its
+  current step take the lines they need (they were cut with "…"); the "next step" row is gone (the count says how many are
+  left). `GlanceRules.rows(vitals, title, step, heading, hotbar, out)`; test `hud_glance_rows`.
+- **One key cap:** `Kit.cap` and `Kit.hintLine` are the stage's key caps in GUI pixels. Choice cards draw Y and N with
+  them (it was "[Y]"), the bag shows Tidy, Pin a slot and Undo under its panel, the Look screen's foot is a bar of keys.
+
+### 57.10 The workshops
+- **The Hall of Arms** (§52): its sheet's colours are the band's (`hall.client.Stage` reads `signal.client.Glass`; one
+  list of rank colours, `Sheet.RANK`); `Stage.fitted` replaces `Stage.fit` (smaller by half sizes, then wrapped, never
+  "..."); the foot of every view is the band's key caps (`Stage.hint`: Esc, Drag, Click), and Track shows its T.
+  "What makes it different" is marks with their numbers (`HallSpecial.Mark`: "From behind ×2", "Heavy reaches 5 blocks"),
+  the whole sentence by the pointer; it was a paragraph each, and paragraphs that didn't fit were dropped.
+- **The War Anvil:** "At most it can take Temper VI, which would make its damage 12." is six pips (what it has, what this
+  heat makes it, how far it goes) with "VI · Damage 12" at the end (`AnvilPayloads.Say.MOST`); the plate's lines are all
+  drawn, a size smaller when there are more than their room (it drew two and dropped the rest).
+- **The Inscribing Table:** a price is its things with counts (levels as a bottle o' enchanting, lapis as lapis); it read
+  "6 levels and 2 lapis". The line about how deep you can write here is fitted, never cut.
+- **Boards, books and the map:** the Ledger, the Precursor panels, the old forge, anvil and armoury screens, the map's
+  lists and its title, and the Look screen fit long text (`Ui.fitted`) where they cut it.
+- Still shortening by hand: an enchantment's name on the table's page (its width places the level arrows), creature and
+  boss name plates, the JEI pages, and the HUD's cards, toasts and tracker (glanced at, not read).
+
+### 57.11 The shared keys and the word budget, as tests
+- `holo.ui.StageKeys` is the whole table: Esc back, Tab the next thing, Q and E the view beside, T Track, X set aside, Z
+  undo, Enter held to commit; the band, the Hall and the map read its constants. Three exceptions are written in it with
+  their reasons: Q and E turn the map (it is a camera), and T in the bag is Tidy (the player's own binding; there is
+  nothing to track in a bag). The numbers are the game's key codes (SDL scancodes in 26.3); the client checks them against
+  `InputConstants` as it starts. Test `ui_keys_one_meaning`: a shared key has its one verb on every surface, every
+  exception says why, and there are exactly three.
+- Test `ui_word_budget`: every room (name 3 words, what it gives 12, what it does 40), every power (name 4, what it does
+  60) and every step a fresh hunter is given (name 14, why 40, what it opens 24) is within what the stage shows without a
+  scroll. **The plan's tighter budget (one sentence of 14 words up front, the rest a tip) has not been written**: it is a
+  rewrite of about 110 lines of copy across many modules, and wants its author's eye.
+- **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
+  the plan deletes them one build after the stage has been played, and it has not been played yet.
+
