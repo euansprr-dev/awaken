@@ -21,6 +21,56 @@ public final class FurnaceTests {
         AwakenTests.register("anims_furnace_camera_pick", 40, FurnaceTests::camera);
         AwakenTests.register("anims_furnace_contents", 60, FurnaceTests::contents);
         AwakenTests.register("anims_furnace_recess_geometry", 20, FurnaceTests::geometry);
+        AwakenTests.register("stations_mouth_view", 20, FurnaceTests::mouthView);
+    }
+
+    /**
+     * A furnace's own view (SPEC §63.6): straight out from the middle of its face at the height of what cooks, the same
+     * from wherever you stand before it; its three slots inside the room at four window sizes, each picking itself; a
+     * stack is held on an upright plane just out from the face; from the side or behind there is no scene.
+     */
+    private static void mouthView(GameTestHelper h) {
+        int[][] screens = {{320, 240}, {424, 238}, {640, 360}, {1280, 720}};
+        double[] eye = new double[3], point = new double[3], screen = new double[2], held = new double[3];
+        float[] angles = new float[3];
+        Quaternionf rotation = new Quaternionf();
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            var station = new StationView.Station(new BlockPos(0, 64, 0), StationView.Kind.FURNACE, -d.getStepX(), -d.getStepZ());
+            for (double distance : new double[]{0.7, 1.5, 3.5, 4.5}) for (double side : new double[]{-.5, 0, .5}) {
+                h.assertTrue(StationView.beforeFace(station, .5 + d.getStepX() * distance + station.rx() * side, .5 + d.getStepZ() * distance + station.rz() * side),
+                        "before the face at " + distance + " (" + side + ") the scene may open");
+            }
+            h.assertTrue(!StationView.beforeFace(station, .5 - d.getStepX() * 1.5, .5 - d.getStepZ() * 1.5), "from behind there is no scene");
+            h.assertTrue(!StationView.beforeFace(station, .5 + station.rx() * 1.5, .5 + station.rz() * 1.5), "from the side there is no scene");
+            double last = 9;
+            for (int v = 0; v < StationView.MOUTHS; v++) {
+                StationView.mouthEye(station, v, eye);
+                double out = (eye[0] - .5) * d.getStepX() + (eye[2] - .5) * d.getStepZ(), off = (eye[0] - .5) * station.rx() + (eye[2] - .5) * station.rz();
+                h.assertTrue(out > 0.5 && out < last && Math.abs(off) < 1e-9 && Math.abs(eye[1] - 64.57) < 1e-9, "view " + v + " is straight out from the face, each nearer than the last");
+                last = out;
+                for (int[] size : screens) {
+                    var layout = StationView.layout(size[0], size[1], 4, true);
+                    float aspect = (float) size[0] / size[1];
+                    StationView.frame(station, eye[0], eye[1], eye[2], layout, size[0], size[1], aspect, StationView.MAX_FOV, angles);
+                    StationView.rotation(angles[0], angles[1], rotation);
+                    for (int slot = 0; slot < 3; slot++) {
+                        StationView.spot(station, slot, point, 0);
+                        h.assertTrue(StationView.project(point[0], point[1], point[2], eye[0], eye[1], eye[2], rotation, angles[2], aspect, size[0], size[1], screen)
+                                && layout.inRoom(screen[0], screen[1]), "slot " + slot + " is inside the room from view " + v + " at " + size[0] + "x" + size[1]);
+                        h.assertTrue(StationView.pick(station, layout, eye[0], eye[1], eye[2], rotation, angles[2], aspect, screen[0], screen[1], size[0], size[1]) == slot,
+                                "slot " + slot + " picks itself from view " + v);
+                        // a stack held over the slot: on the pointer's own line, just out from the face
+                        h.assertTrue(StationView.onFace(station, eye[0], eye[1], eye[2], rotation, angles[2], aspect, screen[0], screen[1], size[0], size[1], held),
+                                "the pointer's line meets the plane a stack is held in");
+                        double outHeld = (held[0] - .5) * d.getStepX() + (held[2] - .5) * d.getStepZ();
+                        h.assertTrue(Math.abs(outHeld - (0.5 + StationView.FURNACE_HOLD)) < 1e-6, "a carried stack is held just out from the face (" + outHeld + ")");
+                        h.assertTrue(StationView.project(held[0], held[1], held[2], eye[0], eye[1], eye[2], rotation, angles[2], aspect, size[0], size[1], point)
+                                && Math.abs(point[0] - screen[0]) < 0.01 && Math.abs(point[1] - screen[1]) < 0.01, "and is drawn exactly on the pointer");
+                    }
+                }
+            }
+        }
+        h.succeed();
     }
 
     private static void camera(GameTestHelper h) {

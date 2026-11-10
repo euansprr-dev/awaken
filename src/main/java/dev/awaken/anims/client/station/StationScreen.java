@@ -163,7 +163,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     /** While your hand holds the stack over the station it is drawn there, in the world: no icon on the pointer. */
     @Override
     public void extractCarriedItem(GuiGraphicsExtractor g, int mouseX, int mouseY) {
-        if (kind == StationView.Kind.TABLE && StationHands.carrying()) return;
+        if (StationHands.carrying()) return;
         super.extractCarriedItem(g, mouseX, mouseY);
     }
 
@@ -183,8 +183,23 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
      * §63.2, §63.3).
      */
     private void extractStation(GuiGraphicsExtractor g) {
-        if (kind != StationView.Kind.TABLE || StationClient.station == null || StationClient.weight(0) < 0.9F) return;
+        if (StationClient.station == null || StationClient.weight(0) < 0.9F) return;
         StationView.Station st = StationClient.station;
+        if (kind == StationView.Kind.FURNACE) {
+            // a furnace's three slots: the count under each stack's near corner, the one in your hand beside it
+            for (int i = 0; i < n; i++) {
+                ItemStack stack = menu.getSlot(i).getItem();
+                StationView.spot(st, i, spot, 0);
+                if (stack.getCount() > 1 && project(spot[0] + st.rx() * 0.1 - st.fx() * 0.1, spot[1] - 0.1, spot[2] + st.rz() * 0.1 - st.fz() * 0.1, at)) {
+                    count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), stack.getCount());
+                }
+            }
+            ItemStack held = menu.getCarried();
+            if (StationHands.carrying() && held.getCount() > 1 && StationHands.hit(spot) && project(spot[0] + st.rx() * 0.1, spot[1] - 0.1, spot[2] + st.rz() * 0.1, at)) {
+                count(g, (int) Math.round(at[0]), (int) Math.round(at[1]), held.getCount());
+            }
+            return;
+        }
         for (int i = 0; i < n; i++) {
             ItemStack stack = menu.getSlot(i).getItem();
             if (stack.isEmpty()) continue;

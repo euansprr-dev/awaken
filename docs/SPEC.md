@@ -21695,9 +21695,36 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
 - Set down by your click, a stack **drops the last 0.06 and settles** over 110 ms. The **result comes together** over
   200 ms (it grows from 0.55 of its size and sinks 0.035 onto the border), then turns slowly as before.
 
+### 63.6 The furnace: a crouch (`StationView.mouthEye`, `StationClient.onAngles`, `StationHands`, `StationFire`, `FurnaceWorld`)
+- **Its own view:** straight out from the middle of the face at the height of what cooks (block y + 0.57), 1.05 out, then
+  0.80, then 0.60 when the first is taken (`StationView.mouthEye`); with none clear, the old view straight down where you
+  stand (§24); from the side or behind (`beforeFace`: at least 0.6 out from the block's middle and no further to the
+  side than out) the plain screen, as before. Smoker and blast furnace are the same scene.
+- **The view goes down the way a body does:** down first (one minus the fourth power of what is left of the glide's
+  time), then in (a sine ease), over 8 ticks (5 coming back within 12 s) and up and out over 7; the view nods forward up
+  to 5 degrees through the first 0.6 of it; arriving, it settles 0.03 over 5 ticks. With reduced motion there is no nod
+  and no settle.
+- **Your hand takes the food in.** A carried stack is held upright on the plane 0.08 out from the face
+  (`StationView.onFace`; inside the stone it could not be seen), exactly on the pointer, at 0.22. Set down, the hand
+  goes in toward the mouth and the stack travels in from where it was held to its slot over 110 ms
+  (`StationClient.unsettled`). The arm is a world arm (§63.2) with a fist 0.165 across, lying back and down toward a
+  point under the inventory strip's corner on the hand's own side. A hand shows only while it carries or makes a pass
+  (fuel by a key or a shift-click is the off hand's): resting before a furnace it would be a corner of arm in the frame.
+- **The fire answers** (`StationFire`, drawn for you while its screen is open): fuel landing on the coals throws 14
+  embers of our own (small bright squares that rise, drift and go out in 0.45 to 0.95 s; not the game's particles) and a
+  flare that lasts 0.9 s; a glow stands over the coal bed as high as the fuel that is left (0.06 to 0.30) with a small
+  flicker. A lit fire lights the skin of an arm that reaches toward it (`Rig.fireLight`: the arm's block light raised
+  toward 6 to 15).
+- **Cooking shows on the food:** through the last third of its cooking what cooks draws in by up to 7% and trembles
+  (0.004, 11 times a second). A stack in a slot sits as a few, one behind the next, with its count on glass. The two
+  thin lines over the strip stay.
+- Tests: `stations_mouth_view` (the three views are straight out from the face and each nearer than the last; before,
+  beside and behind; at four window sizes the three slots are inside the room and pick themselves; a held stack is on
+  the plane 0.08 out from the face and exactly on the pointer). The old `anims_furnace_*` tests stay.
+
 **Not built yet** (PLAN §4, §6): sounds from Minecraft's recordings; presence and beats so others see a body at work and
-what lies on a table or in an open chest; a real crouch at the furnace; lids in the hands and living slots for boxes; six
-more workstation scenes; glass for seven screens; a hand, a sound and a body for every quick touch. The click path
+what lies on a table or in an open chest; lids in the hands and living slots for boxes; six more workstation scenes;
+glass for seven screens; a hand, a sound and a body for every quick touch. The click path
 (`StationScreen`, vanilla's own menu) does not change.
 
 One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts

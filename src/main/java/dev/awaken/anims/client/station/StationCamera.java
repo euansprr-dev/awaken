@@ -62,15 +62,15 @@ final class StationCamera extends Entity {
     static boolean lost() { return camera != null && (!active() || camera.level() != Minecraft.getInstance().level); }
 
     /**
-     * Where the view is, {@code weight} of the way to the station's place. {@code dip}: how far under the straight line
-     * it passes (blocks; a body bending its knees, SPEC §63.6).
+     * Where the view is: {@code across} of the way to the station's place over the ground and {@code down} of the way
+     * in height (a body goes down first and then in: SPEC §63.6), less {@code dip} (blocks: the settle as it arrives).
      */
-    static void place(float weight, float partial, float yaw, float pitch, double dip) {
+    static void place(float across, float down, float partial, float yaw, float pitch, double dip) {
         Minecraft mc = Minecraft.getInstance();
         if (!active() || mc.player == null || lowered == null) return;
         Vec3 real = start != null ? start : mc.player.getEyePosition(partial);
-        Vec3 at = real.lerp(lowered, weight);
-        camera.place(dip == 0 ? at : at.add(0, -dip, 0), yaw, pitch);
+        camera.place(new Vec3(net.minecraft.util.Mth.lerp(across, real.x, lowered.x), net.minecraft.util.Mth.lerp(down, real.y, lowered.y) - dip,
+                net.minecraft.util.Mth.lerp(across, real.z, lowered.z)), yaw, pitch);
     }
 
     /** A block now between your eyes and the lowered view (checked each tick, not each frame: eight ray casts). */

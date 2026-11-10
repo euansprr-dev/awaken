@@ -149,7 +149,6 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     save(hands, 'p_table_hands', q=88)
     shot(S('a_furnace_lit'), 'p_furnace_lit', q=88)
     shot(P('p_chest_open'), 'p_chest_open', q=88)
-    shot(S('a_furnace_side'), 'today_plain')
     for n, o in (('p_anvil', 'b_anvil'), ('p_brewing_stand', 'b_brewing'), ('p_grindstone', 'b_grindstone')):
         shot(P(n), o, w=910, crop=(0.25, 0.08, 0.75, 0.72))
     # ours that are already at the bar: shots from their own tours (other worktrees), when they are on this machine
@@ -160,8 +159,7 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
         sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)
-        for n, o in (('v_anvil', 'v_anvil'), ('v_brewing_stand', 'v_brewing'), ('v_grindstone', 'v_grindstone'), ('v_chest', 'v_chest')):
-            shot(V(n), o, w=910)
+        shot(V('v_chest'), 'v_chest')
     build_html((488, 266))
 
 

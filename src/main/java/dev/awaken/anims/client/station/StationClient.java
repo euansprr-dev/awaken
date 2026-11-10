@@ -80,10 +80,6 @@ public final class StationClient {
     private static long resultAt;
     private static final long SETTLE_NS = 110_000_000L, RESULT_NS = 200_000_000L;
     private static final double[] HELD = new double[3];
-    /** A hand's tap toward a spot (world), per hand (0 right, 1 left). */
-    private static final double[] TAP = new double[6];
-    private static final int[] TAP_AT = {-100, -100};
-    static final int TAP_TICKS = 9;
 
     static {
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
@@ -143,32 +139,18 @@ public final class StationClient {
             SEEN[i] = now.copy();
             if (i == res && !now.isEmpty() && was.isEmpty()) resultAt = System.nanoTime(); // the result comes together
             if (!yours) continue;
-            if (kind == Kind.TABLE) {
-                if (i != res && more) {
-                    LAID_AT[i] = System.nanoTime();
-                    if (StationHands.carrying() || !menu.getCarried().isEmpty()) StationHands.laid(i);
-                    else if (!tapped) { StationHands.pass(i); tapped = true; }
-                } else if (taken || (!more && !menu.getCarried().isEmpty())) {
-                    StationHands.lifted();
-                } else if (!tapped && i != res) { StationHands.pass(i); tapped = true; }
-                continue;
-            }
-            if (tapped || (i == res && !taken)) continue; // a result appearing is the recipe, not a hand
-            int hand = handFor(i);
-            spot(i, TAP, hand * 3);
-            TAP_AT[hand] = ticks;
-            tapped = i == res;
+            if (i != res && more) {
+                LAID_AT[i] = System.nanoTime();
+                if (StationHands.carrying() || !menu.getCarried().isEmpty()) StationHands.laid(i);
+                else if (!tapped) { StationHands.pass(i); tapped = true; }
+                // fuel onto the coals: the fire answers (SPEC §63.6)
+                if (kind == Kind.FURNACE && i == AbstractFurnaceMenu.FUEL_SLOT) StationFire.flare(station);
+            } else if (taken || (!more && !menu.getCarried().isEmpty())) {
+                StationHands.lifted();
+            } else if (!tapped && i != res) { StationHands.pass(i); tapped = true; }
         }
         // the view is home again: the view you had before comes back
         if (!open && before != null && weight(0) <= 0) restoreView();
-    }
-
-    /** The hand that works a slot (0 right, 1 left): a table's left column the left, its right the right, the middle
-     *  the main; a furnace's fuel the off hand, the rest the main. */
-    private static int handFor(int slot) {
-        if (kind == Kind.FURNACE) return slot == AbstractFurnaceMenu.FUEL_SLOT ? 1 - mainSide() : mainSide();
-        int col = slot == 0 ? 1 : (slot - 1) % 3;
-        return col == 0 ? 1 : col == 2 ? 0 : mainSide();
     }
 
     /** Your own click on a slot (the screen's): the next change is your hand's. */
@@ -274,9 +256,18 @@ public final class StationClient {
         Vec3 target = null;
         double[] e = new double[3];
         if (k == Kind.FURNACE) {
-            if (!StationView.furnaceEye(made, eye.x, eye.y, eye.z, e)) return false;
-            target = new Vec3(e[0], e[1], e[2]);
-            if (!StationCamera.begin(p, target, from)) return false;
+            if (!StationView.beforeFace(made, p.getX(), p.getZ())) return false;
+            for (int i = 0; i < StationView.MOUTHS && target == null && FirstPerson.stationBench.getAsBoolean(); i++) {
+                StationView.mouthEye(made, i, e);
+                Vec3 t = new Vec3(e[0], e[1], e[2]);
+                if (StationCamera.begin(p, t, from)) target = t;
+            }
+            if (target == null) {
+                // no place before the mouth is clear: straight down where you stand, as it was (SPEC §24)
+                if (!StationView.furnaceEye(made, eye.x, eye.y, eye.z, e)) return false;
+                target = new Vec3(e[0], e[1], e[2]);
+                if (!StationCamera.begin(p, target, from)) return false;
+            }
         } else if (FirstPerson.stationBench.getAsBoolean()) {
             for (int i = 0; i < StationView.BENCHES && target == null; i++) {
                 StationView.benchEye(made, i, e);
@@ -303,6 +294,11 @@ public final class StationClient {
             inTicks = quick ? 4 : StationView.glideTicks(Math.sqrt((from != null ? from : eye).distanceToSqr(target)));
             outTicks = inTicks;
             openedAt = ticks;
+        } else if (k == Kind.FURNACE) {
+            // a crouch: down and in over 8 ticks (5 coming back to it), up and out over 7
+            inTicks = quick ? 5 : 8;
+            outTicks = 7;
+            openedAt = ticks;
         } else {
             inTicks = 12;
             outTicks = 10;
@@ -312,8 +308,8 @@ public final class StationClient {
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
         java.util.Arrays.fill(LAID_AT, 0L);
         resultAt = 0;
-        TAP_AT[0] = TAP_AT[1] = -100;
         StationHands.reset();
+        StationFire.reset();
         return true;
     }
 
@@ -338,6 +334,13 @@ public final class StationClient {
         float in = Ease.at(Ease.OUT_CUBIC, (t - openedAt) / (float) inTicks);
         if (open) return in;
         return Math.min(in, 1 - Ease.at(Ease.IN_OUT_SINE, (t - closedAt) / (float) outTicks));
+    }
+
+    /** How far through its glide the view is, uneased (0 out, 1 in). */
+    private static float progress(float pt) {
+        float t = ticks + pt;
+        float in = Mth.clamp((t - openedAt) / (float) inTicks, 0F, 1F);
+        return open ? in : Math.min(in, 1 - Mth.clamp((t - closedAt) / (float) outTicks, 0F, 1F));
     }
 
     // ---- the slots on the station -----------------------------------------------------------------------------------
@@ -403,7 +406,20 @@ public final class StationClient {
         e.setPitch(Mth.lerp(w, fromPitch, pitch));
         // from your own eyes, the slightest breath while you work; a station's own view holds still (you are aiming)
         if (!own) e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
-        if (own) StationCamera.place(w, e.getPartialTick(), e.getYaw(), e.getPitch(), 0);
+        if (!own) return;
+        if (kind != Kind.FURNACE) {
+            StationCamera.place(w, w, (float) e.getPartialTick(), e.getYaw(), e.getPitch(), 0);
+            return;
+        }
+        // a furnace: the view goes down the way a body does (SPEC §63.6). Down first, on the knees; then in to the
+        // mouth; a nod forward as the knees bend, and a small settle as it arrives.
+        float u = progress((float) e.getPartialTick());
+        float down = 1 - (1 - u) * (1 - u) * (1 - u) * (1 - u), across = Ease.at(Ease.IN_OUT_SINE, u);
+        boolean still = FirstPerson.reducedMotion.getAsBoolean();
+        if (!still) e.setPitch(e.getPitch() + 5F * Mth.sin(Mth.PI * Mth.clamp(u / 0.6F, 0F, 1F)) * (1 - u));
+        float since = ticks + (float) e.getPartialTick() - openedAt - inTicks * 0.8F;
+        double settle = open && !still && since > 0 && since < 5 ? 0.03 * Math.sin(Math.PI * since / 5.0) : 0;
+        StationCamera.place(across, down, (float) e.getPartialTick(), e.getYaw(), e.getPitch(), settle);
     }
 
     private static void onFovModifier(ComputeFovModifierEvent e) {
@@ -423,6 +439,13 @@ public final class StationClient {
 
     private static final double[] P = new double[3];
     private static final org.joml.Quaternionf TILT = new org.joml.Quaternionf();
+
+    /** How far a stack your click just set down still has to go to its slot (1 just let go, 0 there). */
+    static float unsettled(int slot) {
+        if (slot < 0 || slot >= LAID_AT.length || LAID_AT[slot] == 0) return 0F;
+        double u = (System.nanoTime() - LAID_AT[slot]) / (double) SETTLE_NS;
+        return u >= 1 ? 0F : 1 - Ease.at(Ease.OUT_CUBIC, (float) u);
+    }
 
     /** How many of a stack are drawn lying on a square or in the hand: 1, then 2 up to 5, 3 up to 32, 4 above. */
     static int pile(int count) {
@@ -445,7 +468,7 @@ public final class StationClient {
         int light = LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, above), mc.level.getBrightness(LightLayer.SKY, above));
         float t = ticks + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float yaw = (float) (Mth.atan2(-fx, fz) * Mth.RAD_TO_DEG);
-        ItemStack carried = s.getMenu().getCarried();
+        ItemStack carried = s.carriedShown(s.getMenu().getCarried());
         long now = System.nanoTime();
         for (int i = 0; !furnace && i < kind.slots; i++) {
             ItemStack st = s.getMenu().getSlot(i).getItem();
@@ -495,8 +518,8 @@ public final class StationClient {
         // the stack in your hand: exactly on the pointer's own line, flat as it will lie, its far edge tipped up to you,
         // rolling a little with the pointer's speed
         if (!furnace && !carried.isEmpty() && StationHands.hit(HELD)) {
-            ItemStack shown = s.carriedShown(carried);
-            if (!shown.isEmpty()) {
+            ItemStack shown = carried;
+            {
                 mc.getItemModelResolver().updateForTopItem(CARRIED, shown, ItemDisplayContext.FIXED, mc.level, null, 99);
                 float roll = Mth.clamp((float) StationHands.speedX() * 9F, -14F, 14F);
                 int n = pile(shown.getCount());
@@ -513,6 +536,23 @@ public final class StationClient {
                 }
             }
         }
+        // before a furnace the stack in your hand is held upright, just out from the face (inside the stone it could not
+        // be seen), facing you as it will sit in the mouth
+        if (furnace && !carried.isEmpty() && StationHands.hit(HELD)) {
+            mc.getItemModelResolver().updateForTopItem(CARRIED, carried, ItemDisplayContext.FIXED, mc.level, null, 99);
+            float roll = Mth.clamp((float) StationHands.speedX() * 9F, -14F, 14F);
+            int n = pile(carried.getCount());
+            for (int k = 0; k < n; k++) {
+                ps.pushPose();
+                ps.translate(HELD[0] + rx * 0.02 * k - fx * 0.012 * k - cam.x, HELD[1] + 0.012 * k - cam.y, HELD[2] + rz * 0.02 * k - fz * 0.012 * k - cam.z);
+                ps.rotate(TILT.rotationAxis(-roll * Mth.DEG_TO_RAD, (float) fx, 0F, (float) fz));
+                ps.rotateDegrees(Axis.YP, 180F - yaw);
+                ps.scale(0.22F, 0.22F, 0.22F);
+                CARRIED.submit(ps, e.getSubmitNodeCollector(), LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), 8)), OverlayTexture.NO_OVERLAY, 0);
+                ps.popPose();
+            }
+        }
+        if (furnace) StationFire.submit(e, s);
         // the hovered slot's outline: every slot now lies on the station (the table's result on its border, the
         // furnace's result inside its mouth)
         for (int i = 0; i < kind.slots; i++) {
@@ -527,50 +567,11 @@ public final class StationClient {
 
     // ---- the hands --------------------------------------------------------------------------------------------------
 
-    /** The world layer's source: both hands resting at the station (a table's near edge, low before a furnace), one
-     *  going to each slot it works. */
+    /** The world layer's source: your hands at the station ({@link StationHands}). */
     private static boolean pose(float pt, FirstPerson.Rig rig) {
         Minecraft mc = Minecraft.getInstance();
         float w = weight(pt);
         if (w <= 0.01F || table == null || mc.player == null) return false;
-        if (kind == Kind.TABLE) return StationHands.pose(w, rig, open && mc.gui.screen() instanceof StationScreen<?> sc ? sc : null);
-        Vec3 eye = mc.gameRenderer.mainCamera().position(), c = top();
-        rig.fx = fx;
-        rig.fz = fz;
-        rig.handDistance = 0.8;
-        float t = ticks + pt;
-        for (int h = 0; h < 2; h++) {
-            double side = h == 0 ? 1 : -1;
-            // resting: just off the near corners, below the edge (in frame at its foot, clear of the grid)
-            double restX, restY, restZ;
-            if (kind == Kind.FURNACE) {
-                // beside the lowered view, by the shoulder and clear of the floor (the eye is 0.57 over it): only a
-                // working hand comes into the frame, reaching in from the side
-                restX = eye.x + fx * 0.1 + rx * side * 0.4;
-                restY = eye.y - 0.35;
-                restZ = eye.z + fz * 0.1 + rz * side * 0.4;
-            } else {
-                restX = c.x - fx * 0.62 + rx * side * 0.42;
-                restY = c.y - 0.08;
-                restZ = c.z - fz * 0.62 + rz * side * 0.42;
-            }
-            double x = restX, y = restY, z = restZ;
-            float u = (t - TAP_AT[h]) / TAP_TICKS;
-            if (u >= 0 && u < 1) {
-                // out to the square and back (the hand lays the thing down at the middle of it), lifted on the way
-                float k = Mth.sin(u * Mth.PI);
-                x = Mth.lerp(k, restX, TAP[h * 3]);
-                y = Mth.lerp(k, restY, TAP[h * 3 + 1] + 0.04) + 0.08 * Mth.sin(u * Mth.TWO_PI) * Mth.sin(u * Mth.TWO_PI);
-                z = Mth.lerp(k, restZ, TAP[h * 3 + 2]);
-            }
-            // in and out of the scene: up from below the table's edge
-            y -= (1 - w) * 0.6;
-            double sx = eye.x + rx * side * 0.33 - fx * 0.1, sy = eye.y - 0.4, sz = eye.z + rz * side * 0.33 - fz * 0.1;
-            boolean tapping = u >= 0 && u < 1;
-            // at a furnace a hand shows only while it works (resting at your sides it would be a corner of arm)
-            float hw = kind == Kind.FURNACE ? (tapping ? Math.min(1F, 2.5F * Mth.sin(u * Mth.PI)) * w : 0) : w;
-            rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, hw);
-        }
-        return true;
+        return StationHands.pose(w, rig, open && mc.gui.screen() instanceof StationScreen<?> sc ? sc : null);
     }
 }

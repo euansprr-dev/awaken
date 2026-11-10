@@ -140,6 +140,61 @@ public final class StationView {
         return (int) Math.round(Mth.clamp(4.2 + d * 1.1, 5, 9));
     }
 
+    // ---- a furnace's own view (SPEC §63.6) --------------------------------------------------------------------------
+
+    /** A furnace's mouth views, best first: how far out from the middle of its face, at the height of what cooks. */
+    private static final double[] MOUTH = {1.05, 0.80, 0.60};
+    public static final int MOUTHS = MOUTH.length;
+
+    /** A furnace's mouth view {@code i}: where the eye is, the same from wherever you stand before it. */
+    public static void mouthEye(Station s, int i, double[] out) {
+        BlockPos b = s.pos();
+        out[0] = b.getX() + 0.5 - s.fx() * (0.5 + MOUTH[i]);
+        out[1] = b.getY() + 0.57;
+        out[2] = b.getZ() + 0.5 - s.fz() * (0.5 + MOUTH[i]);
+    }
+
+    /** Standing before a furnace's face (its scene may open): out from the face, and no further to the side than out. */
+    public static boolean beforeFace(Station s, double x, double z) {
+        double dx = x - s.pos().getX() - .5, dz = z - s.pos().getZ() - .5;
+        double front = -dx * s.fx() - dz * s.fz(), side = dx * s.rx() + dz * s.rz();
+        return front >= 0.6 && front <= 5.0 && Math.abs(side) <= front + 0.3;
+    }
+
+    /** A stack carried at a furnace is held this far out from its face (inside the stone it could not be seen). */
+    public static final double FURNACE_HOLD = 0.08;
+    /** A fist at a furnace reads this wide against the world (blocks): a little over half a slot. */
+    public static final double FURNACE_FIST = 0.165;
+
+    /**
+     * Where the line of sight through a point of the screen meets the upright plane a stack is held in before a furnace
+     * (into {@code out}); false when it never does.
+     */
+    public static boolean onFace(Station s, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my,
+                                 int guiW, int guiH, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        double along = d.x * s.fx() + d.z * s.fz();
+        if (along < 1e-4) return false;
+        double px = s.pos().getX() + 0.5 - s.fx() * (0.5 + FURNACE_HOLD), pz = s.pos().getZ() + 0.5 - s.fz() * (0.5 + FURNACE_HOLD);
+        double t = ((px - ex) * s.fx() + (pz - ez) * s.fz()) / along;
+        if (t <= 0) return false;
+        out[0] = ex + d.x * t;
+        out[1] = ey + d.y * t;
+        out[2] = ez + d.z * t;
+        return true;
+    }
+
+    /** The point {@code dist} along the line of sight through a point of the screen (into {@code out}). */
+    public static void along(double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my, int guiW, int guiH,
+                             double dist, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        out[0] = ex + d.x * dist;
+        out[1] = ey + d.y * dist;
+        out[2] = ez + d.z * dist;
+    }
+
     // ---- the carrying hand (SPEC §63.2) -----------------------------------------------------------------------------
 
     /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */

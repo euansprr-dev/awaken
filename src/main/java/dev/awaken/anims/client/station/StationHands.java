@@ -46,7 +46,7 @@ final class StationHands {
     private static boolean freeSet;
     /** This frame's arm (the carrying hand's): its fist, its line, how long it is drawn, for the squares it lies over. */
     private static final double[] SLEEVE = new double[6];
-    private static double sleeveLen;
+    private static double sleeveLen, sleeveHalf;
     private static boolean sleeveOn;
 
     static void reset() {
@@ -96,12 +96,14 @@ final class StationHands {
     /** A slot you changed without carrying (a shift-click, a number key): the nearer hand makes one short pass to it. */
     static void pass(int slot) {
         Station s = StationClient.station;
-        if (s == null || s.kind() != Kind.TABLE) return;
+        if (s == null) return;
         passSlot = slot;
         passAt = System.nanoTime();
         StationView.spot(s, slot, P, 0);
         double u = (P[0] - s.pos().getX() - 0.5) * s.rx() + (P[2] - s.pos().getZ() - 0.5) * s.rz();
-        passHand = Math.abs(u) < 0.05 ? mainSide() : u > 0 ? 1 : -1;
+        // a table's left column the left hand, its right the right, the middle the main; a furnace's fuel the off hand
+        passHand = s.kind() == Kind.FURNACE ? (slot == net.minecraft.world.inventory.AbstractFurnaceMenu.FUEL_SLOT ? -mainSide() : mainSide())
+                : Math.abs(u) < 0.05 ? mainSide() : u > 0 ? 1 : -1;
     }
 
     /** The carrying arm lies over this slot's middle this frame (what lies there is shown through the sleeve). */
@@ -112,7 +114,7 @@ final class StationHands {
         var cam = mc.gameRenderer.mainCamera();
         Vec3 o = cam.position();
         float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
-        return StationView.sleeveOver(s, slot, SLEEVE, sleeveLen, StationView.FIST / 2 / ARM_SCALE, o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect,
+        return StationView.sleeveOver(s, slot, SLEEVE, sleeveLen, sleeveHalf, o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect,
                 guiW, guiH, P, Q);
     }
 
@@ -129,13 +131,14 @@ final class StationHands {
     }
 
     /**
-     * The world layer's source for a table: both arms as world arms. {@code w}: how far the scene is in (0..1);
+     * The world layer's source: your arms at the station, as world arms. {@code w}: how far the scene is in (0..1);
      * {@code screen}: the open scene screen, or null while the view goes home.
      */
     static boolean pose(float w, FirstPerson.Rig rig, @org.jspecify.annotations.Nullable StationScreen<?> screen) {
         Minecraft mc = Minecraft.getInstance();
         Station s = StationClient.station;
         if (s == null || mc.player == null) return false;
+        boolean furnace = s.kind() == Kind.FURNACE;
         long now = System.nanoTime();
         double dt = last == 0 ? 0 : Math.min(0.1, (now - last) / 1e9);
         last = now;
@@ -158,39 +161,59 @@ final class StationHands {
         lastPx = px;
         lastPy = py;
 
-        // where the stack is held: the pointer's line onto the air over the top, a dip as it is set down, a rise as it is picked up
+        // where the stack is held: the pointer's own line onto the air over a table's top, or onto the upright plane just
+        // out from a furnace's face; a dip (down, or in to the mouth) as it is set down, a rise as it is picked up
         ItemStack carried = screen == null ? ItemStack.EMPTY : screen.getMenu().getCarried();
         double dipU = since(dipAt, now, DIP_NS), liftU = since(liftAt, now, LIFT_NS);
         double dip = dipU < 1 ? Math.sin(dipU * Math.PI) * DIP : 0, lift = liftU < 1 ? LIFT * (1 - smooth(liftU)) : 0;
         boolean above = screen != null && screen.layout != null && py < screen.layout.py0() && w > 0.6F;
-        hasHit = above && StationView.onPlane(eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, px, py, gw, gh, top + StationView.HOVER - dip - lift, HIT);
         double hu = 0, hv = 0;
-        if (hasHit) {
-            hu = (HIT[0] - cx) * s.rx() + (HIT[2] - cz) * s.rz();
-            hv = (HIT[0] - cx) * s.fx() + (HIT[2] - cz) * s.fz();
-            // past the table's sides or far side the hand does not follow (the stack is the pointer's icon there)
-            if (Math.abs(hu) > 0.5 + REACH_OUT || hv > 0.5 + REACH_OUT) hasHit = false;
+        if (furnace) {
+            hasHit = above && StationView.onFace(s, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, px, py, gw, gh, HIT);
+            if (hasHit) {
+                hu = (HIT[0] - cx) * s.rx() + (HIT[2] - cz) * s.rz();
+                if (Math.abs(hu) > 0.5 + REACH_OUT || HIT[1] < top - 1.2 || HIT[1] > top + 0.3) hasHit = false;
+                // set down, the hand goes in toward the mouth; picked up, the stack comes out to it
+                HIT[0] += s.fx() * (dip * 1.6 - lift);
+                HIT[2] += s.fz() * (dip * 1.6 - lift);
+            }
+        } else {
+            hasHit = above && StationView.onPlane(eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, px, py, gw, gh, top + StationView.HOVER - dip - lift, HIT);
+            if (hasHit) {
+                hu = (HIT[0] - cx) * s.rx() + (HIT[2] - cz) * s.rz();
+                hv = (HIT[0] - cx) * s.fx() + (HIT[2] - cz) * s.fz();
+                // past the table's sides or far side the hand does not follow (the stack is the pointer's icon there)
+                if (Math.abs(hu) > 0.5 + REACH_OUT || hv > 0.5 + REACH_OUT) hasHit = false;
+            }
         }
         carrying = hasHit && !carried.isEmpty();
         if (dt > 0) carry += ((carrying ? 1 : 0) - carry) * (1 - Math.exp(-dt / CARRY_TAU));
         if (carry < 0.002) carry = 0;
         if (carry > 0.998) carry = 1;
 
-        // each hand's free place: off the near edge (the main one under the pointer's column), or out on a pass to a slot
+        // each hand's free place: off a table's near edge (the main one under the pointer's column), low and out of the
+        // frame before a furnace; or out on a pass to a slot
         double passU = since(passAt, now, PASS_NS);
         for (int h = 0; h < 2; h++) {
             int side = h == 0 ? 1 : -1;
             boolean isMain = side == main;
-            double u = isMain ? (hasHit ? Mth.clamp(hu, -0.3, 0.3) : side * 0.2) : side * 0.34, v = isMain ? -0.56 : -0.6, y = top + (isMain ? 0.05 : 0.03);
-            T[0] = cx + s.rx() * u + s.fx() * v;
-            T[1] = y;
-            T[2] = cz + s.rz() * u + s.fz() * v;
+            if (furnace) {
+                T[0] = eye.x + s.rx() * side * 0.34 + s.fx() * 0.45;
+                T[1] = eye.y - 0.42;
+                T[2] = eye.z + s.rz() * side * 0.34 + s.fz() * 0.45;
+            } else {
+                double u = isMain ? (hasHit ? Mth.clamp(hu, -0.3, 0.3) : side * 0.2) : side * 0.34, v = isMain ? -0.56 : -0.6;
+                T[0] = cx + s.rx() * u + s.fx() * v;
+                T[1] = top + (isMain ? 0.05 : 0.03);
+                T[2] = cz + s.rz() * u + s.fz() * v;
+            }
             if (passSlot >= 0 && passU < 1 && passHand == side) {
                 StationView.spot(s, passSlot, P, 0);
                 double k = Math.sin(Math.min(1, passU) * Math.PI);
-                T[0] += (P[0] - T[0]) * k;
-                T[1] += (P[1] + StationView.HOVER - T[1]) * k + 0.03 * k;
-                T[2] += (P[2] - T[2]) * k;
+                double ox = furnace ? -s.fx() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD) : 0, oz = furnace ? -s.fz() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD) : 0;
+                T[0] += (P[0] + ox - T[0]) * k;
+                T[1] += (P[1] + (furnace ? 0 : StationView.HOVER) - T[1]) * k + (furnace ? 0 : 0.03 * k);
+                T[2] += (P[2] + oz - T[2]) * k;
             }
             int j = h * 3;
             if (!freeSet || dt <= 0) {
@@ -205,18 +228,21 @@ final class StationHands {
             }
         }
         freeSet = true;
+        boolean passing = passSlot >= 0 && passU < 1;
         if (passU >= 1) passSlot = -1;
 
-        // the arms: world arms at a table's own scale, each lying back toward you from its fist
+        // the arms: world arms at the station's own scale, each lying back toward you from its fist
         float hand = StationClient.ownsCamera() ? mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.hudFov : 70F;
         double lens = cam.getFov() <= 1F ? 1 : Math.tan(Math.toRadians(hand) / 2) / Math.tan(Math.toRadians(cam.getFov()) / 2);
+        double scale = furnace ? StationView.FIST / StationView.FURNACE_FIST : ARM_SCALE;
         rig.fx = s.fx();
         rig.fz = s.fz();
         rig.worldArms = true;
         sleeveOn = false;
-        double most = screen == null || screen.layout == null ? 0.3
+        double most = furnace || screen == null || screen.layout == null ? 0.3
                 : StationView.acrossMost(s, screen.layout, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P);
         double c = smooth(carry);
+        boolean posed = false;
         for (int h = 0; h < 2; h++) {
             int side = h == 0 ? 1 : -1, j = h * 3;
             boolean isMain = side == main;
@@ -227,27 +253,58 @@ final class StationHands {
                 y += (HIT[1] - y) * c;
                 z += (HIT[2] - z) * c;
             }
+            // how much of this hand shows: at a table always (it rests at the near edge); before a furnace only while it
+            // works (resting there it would be a corner of arm in the frame, SPEC §24)
+            float show = w;
+            if (furnace) show *= (float) Math.max(isMain ? c : 0, passing && passHand == side ? Math.sin(Math.min(1, passU) * Math.PI) : 0);
+            if (show <= 0.01F) continue;
             // in and out of the scene: up from under the near edge
-            y -= (1 - w) * 0.5;
-            // the arm leans against the pointer's speed (the far end trails; the fist does not)
-            StationView.carry(s, x - (isMain ? s.rx() * Mth.clamp(speedX * 0.12 * c, -0.08, 0.08) : 0), y, z - (isMain ? s.rz() * Mth.clamp(speedX * 0.12 * c, -0.08, 0.08) : 0), side, most, ARM);
+            if (!furnace) y -= (1 - w) * 0.5;
+            double lean = isMain ? Mth.clamp(speedX * 0.12 * c, -0.08, 0.08) : 0;
+            if (furnace) {
+                // back toward you and down: to a point under the inventory strip's corner on the hand's own side
+                double dw0 = Math.sqrt((x - eye.x) * (x - eye.x) + (y - eye.y) * (y - eye.y) + (z - eye.z) * (z - eye.z));
+                if (screen != null && screen.layout != null) {
+                    StationView.along(eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, side > 0 ? screen.layout.px1() - 16 : screen.layout.px0() + 16,
+                            screen.layout.py0() + 18, gw, gh, dw0 * 0.6, P);
+                } else {
+                    P[0] = eye.x + s.rx() * side * 0.3;
+                    P[1] = eye.y - 0.5;
+                    P[2] = eye.z + s.rz() * side * 0.3;
+                }
+                double ax = P[0] - s.rx() * lean - x, ay = P[1] - y, az = P[2] - s.rz() * lean - z, al = Math.sqrt(ax * ax + ay * ay + az * az);
+                if (al < 1e-5) continue;
+                ARM[3] = ax / al;
+                ARM[4] = ay / al;
+                ARM[5] = az / al;
+            } else {
+                // the arm leans against the pointer's speed (the far end trails; the fist does not)
+                StationView.carry(s, x - s.rx() * lean, y, z - s.rz() * lean, side, most, ARM);
+            }
             // the fist's middle sits just short of where the stack is held
-            double fxw = x + ARM[3] * StationView.HAND_BACK, fyw = y + ARM[4] * StationView.HAND_BACK, fzw = z + ARM[5] * StationView.HAND_BACK;
+            double back = furnace ? 0.13 : StationView.HAND_BACK;
+            double fxw = x + ARM[3] * back, fyw = y + ARM[4] * back, fzw = z + ARM[5] * back;
             ARM[0] = fxw;
             ARM[1] = fyw;
             ARM[2] = fzw;
             double dw = Math.sqrt((fxw - eye.x) * (fxw - eye.x) + (fyw - eye.y) * (fyw - eye.y) + (fzw - eye.z) * (fzw - eye.z));
-            if (isMain || rig.handDistance == 0) rig.handDistance = StationView.handDistance(dw, lens);
+            if (isMain || rig.handDistance == 0) rig.handDistance = StationView.FIST * dw / (StationView.FIST / scale * Math.max(0.05, lens));
             float stretch = screen == null || screen.layout == null ? 1F
-                    : StationView.stretch(ARM, ARM_SCALE, screen.layout, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, Q);
+                    : StationView.stretch(ARM, scale, screen.layout, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, Q);
             rig.armStretch[h] = stretch;
-            rig.limb(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, fxw + ARM[3], fyw + ARM[4], fzw + ARM[5], fxw, fyw, fzw, 0, 1, 0, w);
+            rig.limb(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, fxw + ARM[3], fyw + ARM[4], fzw + ARM[5], fxw, fyw, fzw, 0, 1, 0, show);
+            posed = true;
             if (isMain && c > 0.5) {
                 System.arraycopy(ARM, 0, SLEEVE, 0, 6);
-                sleeveLen = StationView.ARM_BACK * stretch / ARM_SCALE;
+                sleeveLen = StationView.ARM_BACK * stretch / scale;
+                sleeveHalf = StationView.FIST / 2 / scale;
                 sleeveOn = true;
             }
         }
-        return true;
+        // a lit fire lights the skin of an arm that reaches toward it (SPEC §63.6)
+        if (furnace && screen != null && screen.getMenu() instanceof net.minecraft.world.inventory.AbstractFurnaceMenu f) {
+            rig.fireLight = Math.min(1F, (f.isLit() ? 0.45F : 0F) + StationFire.level());
+        }
+        return posed;
     }
 }
