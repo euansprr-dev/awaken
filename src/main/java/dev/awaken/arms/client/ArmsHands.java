@@ -550,10 +550,12 @@ final class ArmsHands {
     }
 
     // the Katana's lowered rest: the hand just under the frame's edge, the blade laid low across the body with its point to
-    // the off side and its edge down, the guard showing (authored right-handed, from vanilla's resting hand). The first
-    // value hid the blade under the eye and showed a forearm across the frame (the proof tour, 10 Nov)
-    private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.10F, 0.15F, 0F);
-    private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(70F * Mth.DEG_TO_RAD).rotateX(-15F * Mth.DEG_TO_RAD);
+    // the off side, its edge down and its flat turned up to the eye, the guard showing (authored right-handed, from
+    // vanilla's resting hand). The first value hid the blade under the eye and showed a forearm across the frame; the
+    // second showed the re-cut blade, one texel thick, from its spine: a grey line (the proof tours, 10 Nov)
+    private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.15F, 0.04F, 0F);
+    private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(88F * Mth.DEG_TO_RAD).rotateX(-3F * Mth.DEG_TO_RAD)
+            .rotateY(80F * Mth.DEG_TO_RAD);
     /** How much brighter the drawn cut's ribbon burns. */
     private static final float DRAWN_LIGHT = 1.5F;
     private static boolean hipDown;
