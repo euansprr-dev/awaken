@@ -177,8 +177,8 @@ def main(argv):
         if fp:
             ingame = f'''<section>
   <span class="eyebrow">In the real game</span>
-  <h2>The same tour, today and with the voxel drafts</h2>
-  <p>I ran one look tour twice on GitHub's machines: once on the build as it stands, once on a throwaway branch with the voxel drafts written over the game's models. Same world, same camera, same script. The throwaway branch is never merged.</p>
+  <h2>The same tour, before and after</h2>
+  <p>One look tour run twice on GitHub's machines: on the build before this pass, and with the re-cut weapons in the game. Same world, same camera, same script. These are the weapons as built.</p>
   <h3>First person, at rest</h3>
 {fp}
   <h3>Third person, from the front</h3>
