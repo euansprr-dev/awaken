@@ -33,7 +33,7 @@ layout(location = 6) out vec3 viewNormal;
 layout(location = 7) flat out vec4 state;
 layout(location = 8) flat out vec2 mastery;
 layout(location = 9) flat out vec2 script;
-layout(location = 10) flat out float skyLight; // DRAFT (armour polish): how open the sky is over this figure, 0..1
+layout(location = 10) flat out float skyLight; // how open the sky is over this figure, 0..1 (the moonlit edge needs it)
 
 void main() {
     vec4 view = ModelViewMat * vec4(Position, 1.0);

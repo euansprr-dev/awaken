@@ -186,7 +186,7 @@ def painter(mats, oy):
         alb = np.concatenate([colours(t), np.ones((t.k, 1))], axis=1)
         mat = np.stack([t.metal, t.gloss, t.emit, t.flow], axis=1)
         alb, mat = (np.clip(alb, 0, 1) * 255).round().astype(np.uint8), (np.clip(mat, 0, 1) * 255).round().astype(np.uint8)
-        FIN.spill(t, alb, mat)  # DRAFT (armour_finish.py): the finishing pass, not approved
+        FIN.spill(t, alb, mat)  # the Armour Finish: what glows lights the texels beside it
         return alb, mat
     return paint
 
@@ -3318,7 +3318,7 @@ SETS = {"wildhide": wildhide, "beastbound": beastbound, "gatewrought": gatewroug
         "starfall": starfall, "riftwalker": riftwalker, "nightcourt": nightcourt, "signals_echo": signals_echo}
 SETS = {sid: _awakened(sid, fn) for sid, fn in SETS.items()}
 
-# DRAFT (docs/armour/polish/PLAN.md, not approved): the finishing pass on every set; ARMOUR_FINISH=0 leaves them as they were
+# the Armour Finish (armour_finish.py, SPEC §44.1): one pass over every set; ARMOUR_FINISH=0 leaves them as they were
 import armour_finish as FIN  # noqa: E402
 FIN.A = sys.modules[__name__]
 SETS = {sid: FIN.finished(sid, fn) for sid, fn in SETS.items()}
@@ -3700,7 +3700,7 @@ def _raster_into(img, depth, m, tex, screen, size, **kw):
         nvv = wts @ nv[t:t + 3]
         nvv /= np.maximum(np.linalg.norm(nvv, axis=1, keepdims=True), 1e-9)
         al = wts @ m["along"][t:t + 3]
-        col = (FIN.shade if FIN.ON else MR.shade)(alb[keep], mat[keep], nw[keep], nvv[keep], al[keep], accent, **kw)  # DRAFT
+        col = (FIN.shade if FIN.ON else MR.shade)(alb[keep], mat[keep], nw[keep], nvv[keep], al[keep], accent, **kw)
         ys_, xs_ = np.nonzero(ok)
         ys_, xs_ = ys_[keep], xs_[keep]
         reg[ys_, xs_] = z[ok][keep]

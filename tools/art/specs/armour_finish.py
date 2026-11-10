@@ -1,8 +1,12 @@
-"""DRAFT, NOT APPROVED (docs/armour/polish/PLAN.md): the finishing pass tried on every armour set, so the plan's page
-can show each set before and after in the real game. It changes no design's helm or silhouette. It adds, from each set's
-own materials: a gauntlet (cuff, hand plate, knuckles, finger plate: what first person shows), a plate language of the
-set's own where the later sets all used one rimmed panel, the light its named feature should keep at night, and a soft
-spill of light round whatever glows. ARMOUR_FINISH=0 builds the sets as they were.
+"""The Armour Finish (SPEC §44.1 "The finish"; plan docs/armour/polish/PLAN.md, approved in full 2026-11-10): one pass
+laid over every set's own design, so it is written once and lands on all 29. It changes no helm and no silhouette. From
+each set's own materials it gives: a gauntlet (the forearm's shell ends at the wrist in a flared cuff, a slimmer glove
+with grooved fingers, a plate on the back of the hand: what your own eyes see), a plate language of the set's own where
+the later sets all wore one rimmed panel, the light a set's named feature keeps at night, and a soft spill of light
+round whatever glows. Its one rule, learned twice: nothing is added that is a lone cube.
+
+ARMOUR_FINISH=0 builds the sets as they were before it (for a before picture). The shader's side of the pass is
+mirrored at the bottom, so the kit's previews show what the game would.
 
 armour_sets.py hands itself over as A (the painters and the box maker live there)."""
 import os
@@ -110,7 +114,7 @@ GAUNTLET = {
     "bellguard": ("bronze_plain", "hoop", None, ()),
     "rootwarden": ("bark_plate", "root_wrap", None, ALL),
     "amberwing": ("leather_st", "amber", None, ALL),
-    "beastbound": ("iron_riv", "tusk", None, ALL),
+    "beastbound": ("iron_riv", "iron", None, ALL, "tusk"),      # an iron cuff; the bone is only the plate's lip
     "cleftrunner": ("iron", "iron_hem", None, ()),
     "lanternlight": ("iron", "brass", "glass_small", ALL),
     "bladeward": ("steel", "steel_hem", None, ALL),
@@ -130,7 +134,7 @@ GAUNTLET = {
     "galewing": ("metal_plain", "feather", "slit", ALL),
     "halo_choir": ("porcelain_plain", "gold", "light", ALL),
     "dreamsteel": ("mirror", "shard", "slit", ("cuff",)),
-    "sovereign": ("lacquer_hem", "silver", "glow", ("cuff_sides", "hand_seam")),
+    "sovereign": ("lacquer_hem", "lacquer", "glow", ("cuff_sides", "hand_seam"), "silver"),  # a black cuff, a silver lip
     "starfall": ("star_plain", "silver", "fire_soft", ALL),
     "riftwalker": ("plate", "plate_plain", "rift_soft", ("cuff",)),
     "nightcourt": ("leather", "silver", None, ()),
@@ -212,8 +216,9 @@ def gauntlet(sid, d):
     """The hand of the cuirass's arm, which is what your own eyes see: the forearm's shell ends at the wrist in a
     flared cuff; under it a glove half a texel proud of the hand (slimmer than the forearm, so the wrist reads), its
     fingers grooved; a plate on the back of the hand with a lip of the set's trim and, from C, its light."""
-    plate, trim, glow, parts = GAUNTLET[sid]
+    plate, trim, glow, parts = GAUNTLET[sid][:4]
     mats = d["mats"]
+    lip = mats[GAUNTLET[sid][4]] if len(GAUNTLET[sid]) > 4 else mats[trim]
     arms = d["pieces"]["chestplate"]
     lang = LANGUAGE[sid]() if sid in LANGUAGE else (A.lames(1, -1),)
     gem = ()
@@ -227,7 +232,7 @@ def gauntlet(sid, d):
     left = _trim(arms["left_arm"], [plate])
     if "hand_seam" in parts and glow is not None:  # the forearm's molten line, run on down the back of the hand
         gem = (A.side_seam(mats[glow].ramp, max(0.8, mats[glow].emit)),)
-    mats["g_hand"] = copy(mats[plate], details=tuple(lang) + (A.hem(t.ramp, t.base, metal=t.metal, gloss=t.gloss),) + gem, emit=0.0)
+    mats["g_hand"] = copy(mats[plate], details=tuple(lang) + (A.hem(lip.ramp, lip.base, metal=lip.metal, gloss=lip.gloss),) + gem, emit=0.0)
     mats["g_trim"] = copy(t, details=(), emit=0.0)
     mats["g_glove"] = copy(mats[glove[0]], details=tuple(mats[glove[0]].details) + (fingers(),), emit=0.0)
     add = [B(-3.5, 1.5, -11, CUT, -2.5, 2.5, "g_glove", "g_glove")]
@@ -343,8 +348,8 @@ def spill(t, alb, mat):
         mat[got, 3] = np.maximum(mat[got, 3], flow[jj, ii][got].astype(np.uint8))
 
 
-# ---- the shader's draft, mirrored (assets/awaken/shaders/core/armour.fsh: form light, the moonlit edge, the sheen
-# under the world's light), so the kit's previews show what the game would
+# ---- the armour shader, mirrored (assets/awaken/shaders/core/armour.fsh: form light, the moonlit edge, the sheen under
+# the world's light), so the kit's previews show what the game would
 
 MOON = np.array([0.50, 0.62, 0.92])
 
@@ -364,7 +369,7 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     col = col + spec * (np.ones(3) * (1 - metal) + np.minimum(rgb * 1.7, 1.0) * metal) * 0.85
     rim = (1 - np.clip(n_view @ V, 0, 1))[:, None] ** 3
     up = MR.smoothstep(-0.5, 0.6, n_world[:, 1:2])
-    col = col + (rgb * 1.3 + MR.SKY[None] * 0.04) * rim * up * (0.10 + 0.30 * gloss) * (1.0 - 0.6 * emit)
+    col = col + (rgb * 1.3 + MR.SKY[None] * 0.04) * np.minimum(rim, 0.6) * up * (0.06 + 0.18 * gloss) * (1.0 - 0.6 * emit)
     col = col + rgb * rim * 0.25 * (1 - metal) * (1 - gloss)
     col = col + accent[None] * rim * (0.12 + 0.55 * energy * rim) * 0.6
     dark = 1.0 - min(1.0, light)

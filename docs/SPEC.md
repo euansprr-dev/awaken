@@ -17694,6 +17694,40 @@ blocks through stone, no marks, no danger sense).
   enchantment light, as everyone else sees them on you (they were drawn dark). A dresser that throws turns dressing off
   for the session, logged once. `ArmourClient.dressArm` and `dressLeg` stay public for a drawer with the player in hand.
 - Nothing new is sent: equipment already syncs to everyone who sees you.
+- **The finish** (the Armour Finish; plan `docs/armour/polish/PLAN.md`, page https://claude.ai/artifact/JtNLQPLzyWQBUjiUEfZnMy;
+  Euan approved all of it 2026-11-10: "Go with the full plan and all recommendations"). One pass laid over every set's
+  own design (`tools/art/specs/armour_finish.py`, applied by the kit after each design; `ARMOUR_FINISH=0` builds the
+  sets bare for a before picture). **No helm and no silhouette changes, ever.** Nothing is added that is a lone cube
+  (stud knuckles were tried and read as stuck on).
+  - **Light** (stage 1, `armour.fsh`): an edge turned up to the open sky takes a little of it in the plate's own
+    colour, bright metal most (never more than rim 0.6: a forearm seen edge-on from your own eyes would take all of
+    it, and the sky's white washed dark iron grey); cloth and hide take a soft fuzz instead. Under an open sky at
+    night what is turned up, and every edge, still catches the moon (scaled by the sky light in UV2 and by how dark
+    the world's light is: none underground or by a fire). Up is the sum of vanilla's two light directions, so a menu's
+    figure is lit the right way up. The sheen and mastery's trims are under the world's light (the sheen used to cross
+    a figure standing in the dark every five seconds).
+  - **Spill** (stage 1, the kit): what glows (emissive 0.5 or more) lights the texels beside it on its own face, a
+    quarter of its light and 30% of its colour one texel out, a tenth two out. A slit reads as a light.
+  - **The night rule** (stage 1): from C-rank up the thing a stranger would name stays lit after dark; E and D stay
+    dark, so rank reads by how much of a set is alight. Lit by the pass: Sunward's disc, boss and rays; Shardcrown's
+    crystals; Vaultbreaker's diamonds; Tidebreaker's spines; Cloudrunner's storm stone; Leviathan's fins; Halo Choir's
+    halo; Dreamsteel's shards; Sovereign Weave's crown; Signal's Echo's marker; Galewing's wing hems (storm light);
+    Amberwing's wings a little more (the one E set whose wings were lit already).
+  - **Gauntlets** (stage 2): on every set the forearm's shell ends at the wrist (y -7 of the arm's 2..-10) in a
+    flared cuff of the set's trim, a texel proud and open toward the body; under it a glove half a texel proud of the
+    hand (five wide where the shell is six, so the wrist reads) in the material the old cap under the hand was, its
+    fingers grooved; on the back of the hand a plate of the set's plate with a lip of its trim and, from C, two lit
+    texels of its glow. The four sets with a molten line down the forearm (Lordscale, Sovereign Weave, Hornlord,
+    Deepcarapace) keep the outer face clear and run the line on down a longer hand plate. A set that already wore a
+    flare or a feature there keeps it and takes the glove alone (Bellguard, Vaultbreaker, Veilwoven, Nightcourt,
+    Signal's Echo, Cleftrunner; Wildhide a rolled cuff and a glove of its own wrap; Dreamsteel and Riftwalker a cuff
+    under their floating plate). `GAUNTLET` in the kit is the table.
+  - **Plate languages** (a first version; stage 3 hand-finishes them): on the limb and belt plates of the later sets
+    the one rimmed panel is replaced by a painter of the set's own (`LANGUAGE`: rivets for Vaultbreaker and
+    Lanternlight, cut faces for Frostwalker, Shardcrown, Dreamsteel and Starfall, flutes for Sunward and Halo Choir,
+    shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
+    and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
+    step brighter, to part the two.
 - **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
   texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
   seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
