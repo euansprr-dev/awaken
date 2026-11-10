@@ -148,19 +148,19 @@ public final class GlassWarren extends GeneratedCrawl<GlassWarren.M> {
             int ax = x + wx, az = z + wz;
             BlockState at = v.get(ax, y, az);
             double heat = patch.get(ax / 5.0 + y / 6.0, az / 5.0 - y / 5.0);
-            if (m.rock(at) && heat > 0.38) {
+            if (m.rock(at) && heat > 0.46) { // (at 0.38 half of every wall glowed in the real game)
                 v.set(ax, y, az, m.hot);
                 if (up >= 1 && rnd(ax * 17L + y, az, 985) < 0.5) {
                     v.set(x, y, z, m.light);
                     return;
                 }
-            } else if (at == m.sandstone && heat > 0.14) v.set(ax, y, az, heat > 0.24 ? m.glass : m.burnt);
+            } else if (at == m.sandstone && heat > 0.2) v.set(ax, y, az, heat > 0.32 ? m.glass : m.burnt);
         }
         if (underRoof) {
             // the roof over you, the same, a little less of it
             BlockState over = v.get(x, y + 1, z);
             double heat = patch.get(x / 5.0 + 90, z / 5.0);
-            if (m.rock(over) && heat > 0.28) v.set(x, y + 1, z, heat > 0.46 ? m.hot : m.glass);
+            if (m.rock(over) && heat > 0.34) v.set(x, y + 1, z, heat > 0.52 ? m.hot : m.glass);
         }
         if (narrow || drop) return;
         // along the foot of a real wall (rock two cells high beside you): shards, and crystals that have grown out of the glass and glow

@@ -370,28 +370,36 @@ public final class RealmTests {
             }
             h.succeed();
         });
-        // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
+        // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does.
+        // A layout comes from the seed alone, whatever the kind, so every kind is tried on seeds 1 and 2 (a great run with a chasm and a
+        // short plunge, the two the play notes name) and on six seeds no other kind is tried on: fourteen kinds are 86 layouts, not 8.
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
             Set<String> sizes = new HashSet<>(), shapes = new HashSet<>();
-            for (String program : CRAWLS) for (long seed = 1; seed <= 8; seed++) {
+            List<String> bad = new java.util.ArrayList<>();
+            for (int k = 0; k < CRAWLS.length; k++) for (int i = 0; i < 8; i++) {
+                String program = CRAWLS[k];
+                long seed = i < 2 ? i + 1 : 100 + k * 6L + i;
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));
                 String at = program + " seed " + seed + ": ";
                 var walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
-                if (!walk.unreachable().isEmpty()) h.fail(at + "can't reach " + walk.unreachable());
+                if (!walk.unreachable().isEmpty()) bad.add(at + "can't reach " + walk.unreachable());
                 var route = dev.awaken.gates.realms.check.RouteCheck.check(land, walk);
-                if (!route.problems().isEmpty()) h.fail(at + route.summary() + ": " + route.problems());
+                if (!route.problems().isEmpty()) bad.add(at + route.summary() + ": " + route.problems());
                 int half = land.halfSize();
                 FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
-                if (!r.clean()) h.fail(at + r.summary());
-                if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) h.fail(at + "the Lord's door or a fight's doors are missing");
+                if (!r.clean()) bad.add(at + r.summary());
+                if (land.change("heart_open").isEmpty() || !land.seals("fight1") || !land.seals("warden")) bad.add(at + "the Lord's door or a fight's doors are missing");
                 var rolled = (dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?>) land;
                 sizes.add(rolled.size().name());
                 shapes.add(rolled.shape().name());
             }
-            // eight seeds of anything must not all be the same run: every size and at least three of the four shapes turn up
-            if (sizes.size() < 3 || shapes.size() < 3) h.fail("eight seeds rolled only " + sizes + " and " + shapes);
+            // every fault is listed in the log, so one run says everything that is wrong
+            for (String line : bad) dev.awaken.Awaken.LOG.error("[realms] rolled crawl: {}", line);
+            if (!bad.isEmpty()) h.fail(bad.size() + " rolled crawls are wrong, the first: " + bad.get(0));
+            // so many seeds must not all be the same run: every size and every shape turns up
+            if (sizes.size() < 3 || shapes.size() < 4) h.fail("the seeds rolled only " + sizes + " and " + shapes);
             h.succeed();
         });
         // a pack names its monsters: each has to come as itself, in its own tier's role, as a monster of the gate (a theme's own and the cave hunters alike)
