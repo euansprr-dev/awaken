@@ -282,3 +282,21 @@ options; (7) a measuring run on the Mac at the end.
 - Not in any picture: the hand-finishing of stage 3, living parts (one offline loop on the page), sound, the wake.
 - Only shot on Lens Cinematic. Swift and the VFX Look are unchecked.
 - A few first-person shots carry one of the game's own hint lines or "Saving world" in a corner; one has a bird.
+
+## 11. The build (after Euan's yes, 10 Nov 2026: "Go with the full plan and all recommendations")
+Built on this branch, on top of build's tip (merged at 464ecf45c), one commit a stage. SPEC §44.1 (the finish),
+§44.10 (living parts), §44.11 (moments and marks), §44.12 (sound).
+
+| Stage | Commit | What it is | Checked how | Not checked |
+|---|---|---|---|---|
+| 0 Faults | 13c52e5a7 | `core.client.FirstPersonDress`: every first-person limb our code draws wears the armour; your own charge shows on your arm; the sheen sits under the world's light | CI tour: Lordscale and Galewing arms dressed through a slowed cast (`after3`) | slim-arm skins; the wrist band and wall slide (same hook, not shot) |
+| 1 Light | 846d937ba | form light in the plate's own colour, spill from what glows, the night rule, the moon on edges | CI tours day and night, all 29 (`after3`); Lens Swift far tour (`swift`) | the VFX Look |
+| 2 Hands | 846d937ba | a glove, a cuff and a hand plate per set, cut at the wrist; a kit check for coplanar overlaps | CI first-person shot of all 29 (`after3`) | the grips, with weapon-feel |
+| 3 Plates, C-rank only | 5458c83bc | Gatewrought's back gate, Vaultbreaker's vault door and darker steel, Shardcrown's forearm crystal | kit pictures; CI worn tour (`after5`) | Euan's eye: B, A and S wait for it |
+| 4 Living parts | 582dc434b | twelve sets move (turn, tilt, sway, drift, pulse); mastery IV grows in; setting and command | kit sweep check; test of the files; CI tour (`after5`) | |
+| 6 Moments and marks | 7d031b821 | the wake feet to crown and the System's line; forge marks in the shader; a piece in the world drawn as itself; icons; the status line as an API | tests `armour_whole_wakes`; CI tour (`after5`) | |
+| 5 Sound | 25c34b5fb | 45 sounds from Minecraft's recordings by name; equip, stride and blow by what a set is made of; the three notes | every name checked against this game; test `armour_sounds_named` | **nobody has heard any of it**: the listening page is the gate |
+
+Left to do: stage 3's B, A and S sets (after his eye on C); the Status line placed by the K menu's owner; the Hunter
+sets' equip sound (the gear module's items); the old sound files deleted once the page is marked; Admire and the
+abilities that use the suit (the bigger options he chose, after the pass); the measuring run on his Mac (ask first).
