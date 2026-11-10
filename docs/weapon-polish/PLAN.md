@@ -1,7 +1,10 @@
 # Weapon polish (plan, 10 Nov 2026)
 
-Status: **waiting for Euan** on the second version of the page (https://claude.ai/artifact/EZkCwbGng9aNhA6rB4t6rC).
-Nothing in `src/` has changed.
+Status: **approved and built.** Euan, 10 Nov, of the second (voxel) version of the page
+(https://claude.ai/artifact/EZkCwbGng9aNhA6rB4t6rC): "This is great go ahead with the full plan". The re-cut is in
+`tools/art/specs/arms_weapons.py` (`blade`, `point`, `curved`, the Katana's links, six designs and the Shieldblade's
+sword), the assets regenerated, SPEC 25 and `docs/combat/weapon-style.md` updated. `docs/weapon-polish/fingerprint.py
+check` proves the spec builds all 111 weapons corner for corner as the drafts he saw. Not merged into build; unplayed.
 
 ## Revision 2: voxel only (this is the plan now)
 

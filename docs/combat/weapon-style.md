@@ -12,9 +12,14 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    designed in texels, with the grip's middle near the origin and the blade up +y. `to_item` turns the blade onto the
    item's diagonal and does not scale it.
 
-2. **Construction: bold designed parts, not cubes and not staircases.** Build from a few big boxes per part: a blade
-   is a thin full-width edge slab with a thick core over its middle, so the section really steps from edge to spine.
-   It narrows to its point in whole-texel steps. Guards, grips, pommels and caps are boxes. Anything diagonal is a box
+2. **Construction: bold designed parts, and only boxes.** Build from a few big boxes per part. A blade is a slab one
+   texel thick its full width (its outer texel a side the edge's material) with a ridge one texel wide standing a
+   texel proud each side (three wide on a blade 9 or wider): the Rapier's cut, `blade()`. Never a post: until the
+   weapon polish pass (2026-11-10) the core was 3 wide and 3 deep and every blade read fat in the hand. It narrows to
+   its point in whole-texel steps of two in width, over about a third of the blade at most, and ends one texel square
+   (`point()`). **Never a slanted face, a wedge, a loft or a smooth taper.** Euan turned ground blades down the same
+   day: "it doesn't feel like MC at all anymore... it has to stay that voxel style. Just extremely well polished
+   voxel style." Guards, grips, pommels and caps are boxes. Anything diagonal is a box
    turned a whole angle (`rbox`, `chain`, `fan`). Never draw a diagonal as a one-texel staircase: that reads as a voxel
    sprite. Stones sit in 45-degree frames (`frame`) and stand proud of what holds them. Two faces must never share a
    plane on different texel grids (rotated over axis-aligned, or offset by half a texel): `check()` fails on it,
@@ -27,8 +32,7 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    11 across (wings and crowns 14) and 2 tall; the guard's ornaments stand out to the sides and climb about 4
    texels up the blade, never beside its root; nothing on its hilt is deeper than 5 (a stone and its frame 6), since
    first person sees the blade from its edge and a deep hilt reads as a block beside a sliver of blade. Blades are 3
-   to 5 texels wide. The thin edge is 1 texel deep and the
-   core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
+   to 5 texels wide and one texel thick, their ridge 1 wide and 3 deep. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
    antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
    weapon is from its outline alone, and no two weapons may share one. The other lines:
    - **Axe:** about 34: a 3×3 haft about 28 long with the head a quarter of the height up its top, the bit flaring
@@ -44,16 +48,17 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    - **Rapier:** a 3-wide needle stepping to a 1-wide point, about 33 long, with a swept, cup or ring hilt.
    - **Daggers:** about 18 long, a wide-backed or curved blade about 11 long (the curved ones about 16, the curve
      carrying the length), and a knuckle guard.
-   - **Katana:** a curved blade of whole-angle turned links (`chain` with a stagger), a hamon line of the tier's
-     accent, a disc tsuba, and a 9-long tsuka in diamond wrap.
+   - **Katana:** a curved blade of whole-angle turned links (`curved`), one texel thick, the bend spread evenly from
+     collar to point (1, 3, 5, 7, 9, 11 degrees), its last two links narrowing to the back so the edge steps up to
+     the point; a hamon line of the tier's accent, a disc tsuba, and a 9-long tsuka in diamond wrap.
    - **Twinblades:** about 40 long, two blades of 15 from a central grip of 8 with one hub. The far blade is
      `spin`-turned half round so its edge faces the other way. Each blade's root has only a slim collar (at most 7
      across): long blades, not guards, keep it from reading as a staff.
 
-   - **Glaive:** a 3×3 pole about 30 and a 5-wide curved blade of turned links, edge on the outside of the curve,
-     with a fluke on its back.
+   - **Glaive:** a 3×3 pole about 30 and a 5-wide curved blade of turned links (`curved`: a flat one texel thick
+     with a back one wide and three deep along its spine), edge on the outside of the curve, with a fluke on its back.
    - **Scythe:** about 38: a 2×2 snath with a hand peg and a broad crescent blade at right angles off its top, 5
-     broad and 3 deep at the heel stepping to a point (`SCYTHE_SWEEP`, each tier its own), edge along the inside
+     broad at the heel (a flat one texel thick, its back three deep on the links 4 or wider) stepping to a point (`SCYTHE_SWEEP`, each tier its own), edge along the inside
      (`flip`), glowing on B, A and S because it cuts spirits.
    - **Gauntlets:** design +y is the punch and +z the back of the hand: a fist with three knuckle plates, curled
      fingers, the stone on the back and a cuff, and each tier's own outline standing 2 or more proud of it (spikes,

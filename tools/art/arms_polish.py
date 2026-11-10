@@ -1,4 +1,9 @@
-"""The weapon polish pass, as a DRAFT (plan: docs/weapon-polish/PLAN.md). Nothing here writes into src/: it builds
+"""HISTORY: the voxel re-cut drafted here was approved on 2026-11-10 and now lives in tools/art/specs/arms_weapons.py
+itself (blade, point, curved). This harness is kept for its views (review, strips, measure) and as the record of both
+proposals; its "proposed" builds patch the spec's helpers over again, so compare against a checkout from before the
+port if you need a true before and after.
+
+The weapon polish pass, as a DRAFT (plan: docs/weapon-polish/PLAN.md). Nothing here writes into src/: it builds
 each weapon in memory twice, as it is today (arms_weapons.py, untouched) and as the plan proposes, and renders both
 at the same views for the approval page.
 
