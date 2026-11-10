@@ -21,10 +21,18 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
  * How the feathered wings are drawn (SPEC §62). A wing is about 230 boxes that overlap one another, so its faces must
  * hide each other by depth: vanilla's emissive entity type writes no depth (its faces would draw in the order they
  * were sent, the far side of a feather over the near), and its lit type shades by the sun and the lightmap, which light
- * is not. So the feathers have their own pipeline on the game's entity shaders: unlit and unshaded (the eyes' defines;
- * each face's shade is in its vertex colour, as on the plan's model), alpha-blended for the fade into the mark, writing
- * depth, both sides. Their soft halos are additive quads on the lightning shaders, depth-tested, writing none.
- * Optional: if either fails to build, vanilla types draw them (never nothing).
+ * is not. So the feathers have their own pipeline: unlit and unshaded (each face's shade is in its vertex colour, as on
+ * the plan's model), alpha-blended for the fade into the mark, writing depth, both sides. Their soft halos are additive
+ * quads on the lightning shaders, depth-tested, writing none.
+ *
+ * <p>The feathers are sent as a position and a colour alone ({@link #FEATHER_LEAN}, the game's lightning shaders): 16
+ * bytes a vertex. The first build sent them in the entity format on the entity shaders ({@link #FEATHER}, 36 bytes: a
+ * texture coordinate into one white texel, an overlay, a light and a normal nothing read). Six wings were 1.2 MB a
+ * frame that way, and on the look tours' machine (a virtual GPU) a frame's shared vertex buffer draws wrongly past
+ * about that much: the Sovereign's six wings threw stray triangles in some frames, and any wings did once 20,000 more
+ * vertices were sent ahead of them (three probe tours, SPEC §62). Lean, six wings are 0.54 MB and stayed whole with
+ * 80,000 vertices ahead of them. The entity pipeline stays as the fallback if the lean one doesn't build, and vanilla's
+ * translucent entity type after that (never nothing).
  */
 final class WingPipelines {
     private WingPipelines() {}
@@ -48,7 +56,7 @@ final class WingPipelines {
             RenderPipeline.builder(RenderPipelines.OIT_ENTITY_SNIPPET, RenderPipelines.EYES_SNIPPET).withCull(false)).build();
 
     /**
-     * The same feathers on a position and a colour alone: 16 bytes a vertex where the entity format takes 36 (a feather
+     * The feathers on a position and a colour alone: 16 bytes a vertex where the entity format takes 36 (a feather
      * takes no light, its texture is one white texel and its shade is in its colour, so the rest was sent for nothing).
      * The game's lightning shaders, alpha-blended, writing depth, both sides; in fog they thin toward nothing where the
      * entity shader tints toward the fog's colour.
@@ -80,8 +88,8 @@ final class WingPipelines {
             RenderPipeline.builder(HALO_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
     private static final RenderType[] FEATHERS = new RenderType[3], LEAN = new RenderType[3];
-    /** Which of the two the feathers are drawn through (/awaken wings set probe_lean). */
-    static boolean lean;
+    /** Which of the two the feathers are drawn through: lean unless /awaken wings set probe_lean 0. */
+    static boolean lean = true;
     /** A probe: the feathers through the game's own translucent entity type (lit by the world; /awaken wings set probe_plain). */
     static boolean plain;
     private static RenderType halo;

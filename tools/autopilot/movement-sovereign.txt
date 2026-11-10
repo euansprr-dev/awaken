@@ -28,13 +28,13 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd forceload add 1968 -64 2047 63
 # a deck in the open sky: there, wait for its chunks, lay it (twice: the first fill can meet an unloaded chunk)
 cmd tp @s 2000.5 300 0.5 0 0
-wait 200
+wait 500
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 80
 cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
 cmd tp @s 2000.5 291 0.5 0 12
 wait 60
-cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
-cmd tp @s 2000.5 291 0.5 0 12
-wait 40
 screen close
 cmd awaken ascent grant sovereign
 
@@ -154,6 +154,52 @@ shotnow d_hover_front
 cmd awaken ascent pilot wings off
 wait 20
 
+# ---- the first rung's wings opening through your own eyes: they fade in as they spread ----
+cmd awaken living calm
+cmd awaken ascent grant wings
+# near the deck's edge: the run walks off it and opens the wings a few ticks into the fall
+cmd tp @s 2000.5 291 2.5 0 10
+camera first
+wait 30
+cmd awaken ascent pilot run glide
+wait 6
+wait 3
+shotnow fp_open_01
+wait 3
+shotnow fp_open_02
+wait 3
+shotnow fp_open_03
+wait 3
+shotnow fp_open_04
+wait 3
+shotnow fp_open_05
+wait 3
+shotnow fp_open_06
+wait 3
+shotnow fp_open_07
+wait 3
+shotnow fp_open_08
+wait 3
+shotnow fp_open_09
+wait 3
+shotnow fp_open_10
+wait 3
+shotnow fp_open_11
+wait 3
+shotnow fp_open_12
+wait 12
+shotnow fp_glide_01
+wait 12
+shotnow fp_glide_02
+wait 12
+shotnow fp_glide_03
+cmd awaken ascent pilot stop
+wait 20
+cmd tp @s 2000.5 291 -2.5 0 10
+wait 20
+cmd awaken ascent grant sovereign
+wait 10
+
 # ---- the real form by day: the lift, the hover, then flight forward ----
 cmd awaken living calm
 cmd tp @s 2000.5 291 -2.5 0 10
@@ -202,46 +248,15 @@ wait 8
 shotnow i_form_fly_front_02
 cmd awaken ascent pilot stop
 wait 20
-
-# ---- the first rung's wings opening through your own eyes: they fade in as they spread ----
-cmd awaken living calm
-cmd awaken ascent grant wings
-# near the deck's edge: the run walks off it and opens the wings a few ticks into the fall
-cmd tp @s 2000.5 291 2.5 0 10
+# the form through your own eyes
+cmd awaken ascent pilot hold forward 60
 camera first
-wait 30
-cmd awaken ascent pilot run glide
-wait 6
-wait 3
-shotnow fp_open_01
-wait 3
-shotnow fp_open_02
-wait 3
-shotnow fp_open_03
-wait 3
-shotnow fp_open_04
-wait 3
-shotnow fp_open_05
-wait 3
-shotnow fp_open_06
-wait 3
-shotnow fp_open_07
-wait 3
-shotnow fp_open_08
-wait 3
-shotnow fp_open_09
-wait 3
-shotnow fp_open_10
-wait 3
-shotnow fp_open_11
-wait 3
-shotnow fp_open_12
-wait 12
-shotnow fp_glide_01
-wait 12
-shotnow fp_glide_02
-wait 12
-shotnow fp_glide_03
+wait 10
+shotnow i_form_fp_01
+wait 10
+shotnow i_form_fp_02
+wait 10
+shotnow i_form_fp_03
 cmd awaken ascent pilot stop
 wait 20
 quit

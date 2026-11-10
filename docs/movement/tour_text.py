@@ -28,6 +28,7 @@ TEXT = {
 # from the tour of its own (movement-sovereign). In the second tour a rolling storm of the Living Wilds stood behind the
 # wings' studio, so its wing pictures are not used.
 R2 = "RUN:movement-built-42872444094:"
+R3 = "RUN:movement-sovereign-42881881936:"
 BUILT = [
     ("built_wood_sling", R2 + "a_wood_tp_06", None, "<b>The rope in a real forest.</b> Only forward and the rope are held. The line is a sling: it throws the runner up and over the next treetop."),
     ("built_wood_water", R2 + "a_wood_tp_14", None, "<b>The same run, twelve seconds on.</b> Still in the air, the chain unbroken through every landing."),
@@ -38,5 +39,6 @@ BUILT = [
     ("built_glide_front", "BUILT:d_glide_front_02", None, "<b>A real glide, from the front.</b> The body lies on the air and the wings carry it."),
     ("built_skyborn_open", "BUILT:s_skyborn_open_back", None, "<b>Skyborn's two pairs, from behind.</b>"),
     ("built_takeoff", R2 + "h_takeoff_03", None, "<b>The takeoff.</b> Look up, hold sneak, jump: the wings beat you off the ground."),
-    ("built_offline_rungs", "OFFLINE", None, "<b>The Sovereign's six gold wings and halo</b> (bottom row), drawn by the game's wing code outside the game: in the first tour they came out broken on the test machine's graphics, and the fix has not been pictured yet."),
+    ("built_sovereign_back", R3 + "s_open_back", None, "<b>The Sovereign's six gold wings and the ring, in the game.</b> Held open with <code>/awaken wings show open sovereign</code>, from behind."),
+    ("built_sovereign_front", R3 + "s_land_front", None, "<b>The same from the front,</b> cupped for a landing. @@SOV_NOTE@@"),
 ]
