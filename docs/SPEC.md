@@ -842,6 +842,11 @@ of `AwakenConfig.Client`.
   `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
   `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
   `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
+- `dev.awaken.core.client.FirstPersonDress` (client; §44.1, 2026-11-10) — what your own limbs wear in first person:
+  `register(Dresser)`, `limb(Limb, PoseStack, SubmitNodeCollector, light)` (the pose on the limb's bone) and
+  `hand(AvatarRenderer, HumanoidArm, PoseStack, SubmitNodeCollector, light)` (straight after vanilla's own hand
+  draw). Whoever draws a first-person limb asks; the armour answers. A power's light on the arm belongs here too
+  when it is built (the dresser's draw takes an energy and an accent already).
 - `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
@@ -17677,9 +17682,17 @@ blocks through stone, no marks, no danger sense).
 - The shader `awaken:core/armour` (the weapons' kind, its own copy): metal catches a studio reflection, a sheen climbs
   from feet to crown, emissive seams glow in the dark and pulse, enchanted pieces shimmer (the foil bit in the overlay
   channel). If the pipeline doesn't build, the same mesh draws through vanilla's entity cutout.
-- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). `ArmourClient.dressArm(player, side,
-  poseStack, collector, light)` is public for every other first-person arm drawer: the pose on the arm's bone, it draws
-  the worn cuirass's arm and returns whether it drew.
+- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). Every other limb of yours that our own
+  code draws wears it too, through `core.client.FirstPersonDress` (2026-11-10, the Armour Finish, stage 0; before it the
+  armour came off your arms in every cast, at the wrist, in two-handed moves and on the world body, because nothing
+  called the dresser): a drawer that has drawn a skin limb calls `FirstPersonDress.limb(limb, pose, collector, light)`
+  with the pose on the limb's bone, or `FirstPersonDress.hand(renderer, side, ...)` straight after
+  `renderRightHand`/`renderLeftHand`; the armour registers as the dresser (an arm: the cuirass's arm mesh; a leg: the
+  greaves' and the sabatons'). The cast arms (`CastAnims`), the hands' off arm (`Hands`), the wrist (`Wrist`, both
+  sites) and the world body's arms, fists and legs (`WorldBody`, once a limb's weight passes a half: armour can't fade
+  in) all ask. Your own arm and legs are drawn with your set's own charge, flare, low-health beat, mastery, accent and
+  enchantment light, as everyone else sees them on you (they were drawn dark). A dresser that throws turns dressing off
+  for the session, logged once. `ArmourClient.dressArm` and `dressLeg` stay public for a drawer with the player in hand.
 - Nothing new is sent: equipment already syncs to everyone who sees you.
 - **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
   texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
