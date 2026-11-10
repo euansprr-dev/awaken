@@ -1,0 +1,434 @@
+# Why the Sovereign's six wings break on the tour machine's graphics (run 42881881936: stray triangles and a white
+# wash in about half the frames; one and two pairs are whole). The same wings, open and flying, with one thing changed
+# at a time. Shots only. Look tour: tools/tour-ci.sh tools/autopilot/movement-sovereign-probe.txt 1200
+# ci knobs: LENS=cinematic
+world movement_sovereign_probe survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 12700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -64 2047 63
+cmd tp @s 2000.5 300 0.5 0 0
+wait 200
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 60
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 0.5 0 12
+wait 40
+screen close
+cmd awaken ascent grant sovereign
+
+# a: as built
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow a_base_open_back_1
+wait 5
+shotnow a_base_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow a_base_open_front_1
+wait 5
+shotnow a_base_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow a_base_fly_back_1
+wait 5
+shotnow a_base_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow a_base_fly_front_1
+wait 5
+shotnow a_base_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+# b: no halos (the additive discs)
+cmd awaken ascent pilot wingset probe_halos 0
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow b_nohalos_open_back_1
+wait 5
+shotnow b_nohalos_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow b_nohalos_open_front_1
+wait 5
+shotnow b_nohalos_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow b_nohalos_fly_back_1
+wait 5
+shotnow b_nohalos_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow b_nohalos_fly_front_1
+wait 5
+shotnow b_nohalos_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_halos 1
+# c: no ring
+cmd awaken ascent pilot wingset probe_ring 0
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow c_noring_open_back_1
+wait 5
+shotnow c_noring_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow c_noring_open_front_1
+wait 5
+shotnow c_noring_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow c_noring_fly_back_1
+wait 5
+shotnow c_noring_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow c_noring_fly_front_1
+wait 5
+shotnow c_noring_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_ring 1
+# d: two of the three pairs
+cmd awaken ascent pilot wingset probe_pairs 2
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow d_twopairs_open_back_1
+wait 5
+shotnow d_twopairs_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow d_twopairs_open_front_1
+wait 5
+shotnow d_twopairs_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow d_twopairs_fly_back_1
+wait 5
+shotnow d_twopairs_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow d_twopairs_fly_front_1
+wait 5
+shotnow d_twopairs_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_pairs 0
+# e: all three pairs at the middle detail (51 boxes a wing)
+cmd awaken ascent pilot wingset probe_lod 1
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow e_lod1_open_back_1
+wait 5
+shotnow e_lod1_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow e_lod1_open_front_1
+wait 5
+shotnow e_lod1_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow e_lod1_fly_back_1
+wait 5
+shotnow e_lod1_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow e_lod1_fly_front_1
+wait 5
+shotnow e_lod1_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+cmd awaken ascent pilot wingset probe_lod -1
+# f: Lens's tiles off
+lens tiles off
+wait 40
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow f_notiles_open_back_1
+wait 5
+shotnow f_notiles_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow f_notiles_open_front_1
+wait 5
+shotnow f_notiles_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow f_notiles_fly_back_1
+wait 5
+shotnow f_notiles_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow f_notiles_fly_front_1
+wait 5
+shotnow f_notiles_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+lens tiles on
+wait 40
+# g: Lens's temporal pass off
+lens temporal off
+wait 40
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow g_notemporal_open_back_1
+wait 5
+shotnow g_notemporal_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow g_notemporal_open_front_1
+wait 5
+shotnow g_notemporal_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow g_notemporal_fly_back_1
+wait 5
+shotnow g_notemporal_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow g_notemporal_fly_front_1
+wait 5
+shotnow g_notemporal_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+lens temporal on
+wait 40
+# h: Lens swift
+lens swift
+wait 60
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow h_swift_open_back_1
+wait 5
+shotnow h_swift_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow h_swift_open_front_1
+wait 5
+shotnow h_swift_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow h_swift_fly_back_1
+wait 5
+shotnow h_swift_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow h_swift_fly_front_1
+wait 5
+shotnow h_swift_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+# i: Lens off
+lens off
+wait 60
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow i_lensoff_open_back_1
+wait 5
+shotnow i_lensoff_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow i_lensoff_open_front_1
+wait 5
+shotnow i_lensoff_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow i_lensoff_fly_back_1
+wait 5
+shotnow i_lensoff_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow i_lensoff_fly_front_1
+wait 5
+shotnow i_lensoff_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+# j: as built again, at the end
+lens cinematic
+wait 80
+cmd awaken living calm
+cmd awaken ascent pilot wings open sovereign
+look 0 12
+camera back
+wait 26
+shotnow j_base_open_back_1
+wait 5
+shotnow j_base_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow j_base_open_front_1
+wait 5
+shotnow j_base_open_front_2
+cmd awaken ascent pilot wings fly sovereign
+look 0 12
+camera back
+wait 14
+shotnow j_base_fly_back_1
+wait 5
+shotnow j_base_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow j_base_fly_front_1
+wait 5
+shotnow j_base_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+# k: Skyborn's two pairs, the control that has always been whole
+cmd awaken living calm
+cmd awaken ascent pilot wings open skyborn
+look 0 12
+camera back
+wait 26
+shotnow k_skyborn_open_back_1
+wait 5
+shotnow k_skyborn_open_back_2
+look 0 -4
+camera front
+wait 6
+shotnow k_skyborn_open_front_1
+wait 5
+shotnow k_skyborn_open_front_2
+cmd awaken ascent pilot wings fly skyborn
+look 0 12
+camera back
+wait 14
+shotnow k_skyborn_fly_back_1
+wait 5
+shotnow k_skyborn_fly_back_2
+look 0 -4
+camera front
+wait 6
+shotnow k_skyborn_fly_front_1
+wait 5
+shotnow k_skyborn_fly_front_2
+cmd awaken ascent pilot wings off
+wait 10
+# l: the first rung's wings opening through your own eyes (they fade in as they spread), by day
+cmd awaken living calm
+cmd time set 5000
+cmd awaken ascent grant wings
+# near the deck's edge: the run walks off it and opens the wings a few ticks into the fall
+cmd tp @s 2000.5 291 2.5 0 10
+camera first
+wait 30
+cmd awaken ascent pilot run glide
+wait 6
+wait 3
+shotnow l_fp_open_01
+wait 3
+shotnow l_fp_open_02
+wait 3
+shotnow l_fp_open_03
+wait 3
+shotnow l_fp_open_04
+wait 3
+shotnow l_fp_open_05
+wait 3
+shotnow l_fp_open_06
+wait 3
+shotnow l_fp_open_07
+wait 3
+shotnow l_fp_open_08
+wait 3
+shotnow l_fp_open_09
+wait 3
+shotnow l_fp_open_10
+wait 3
+shotnow l_fp_open_11
+wait 3
+shotnow l_fp_open_12
+wait 12
+shotnow l_fp_glide_01
+wait 12
+shotnow l_fp_glide_02
+wait 12
+shotnow l_fp_glide_03
+cmd awaken ascent pilot stop
+wait 20
+quit

@@ -71,14 +71,16 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         final SubmitNodeCollector.CustomGeometryRenderer lights = this::lights;
 
         private void feathers(PoseStack.Pose pose, VertexConsumer vc, int i) {
-            if (i >= pairs.length) return;
+            if (i >= pairs.length || probePairs > 0 && i >= probePairs) return;
             WingFeathers.pair(pose, vc, this.pose[i], 0, pairs[i], i, pal, alpha, lod, first);
             if (i == 0 && ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
         }
 
         private void lights(PoseStack.Pose pose, VertexConsumer vc) {
+            if (!probeHalos) return;
             WingFeathers.faceEye(pose, AscentRender.eye());
-            for (int i = 0; i < pairs.length; i++) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
+            int n = probePairs > 0 ? Math.min(probePairs, pairs.length) : pairs.length;
+            for (int i = 0; i < n; i++) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
             if (ring && !first) WingFeathers.ringGlow(pose, vc, alpha);
         }
     }
@@ -283,12 +285,24 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         return true;
     }
 
+    /**
+     * Probes for a look tour or a slow machine (/awaken wings set probe_*): a level of detail forced on every wing (-1
+     * none), the most pairs drawn (0 all), the Sovereign's ring and the halos drawn or not. They change what is drawn,
+     * never the wings' state.
+     */
+    private static int probeLod = -1, probePairs = 0;
+    private static boolean probeRing = true, probeHalos = true;
+
     /** A number of the wings' look set by name while the game runs (/awaken wings set); false for a name it doesn't know. */
     static boolean tune(String key, float value) {
         switch (key) {
             case "fp_ahead" -> fpAhead = value;
             case "fp_up" -> fpUp = value;
             case "fp_alpha" -> fpAlpha = Mth.clamp(value, 0, 1);
+            case "probe_lod" -> probeLod = (int) value;
+            case "probe_pairs" -> probePairs = (int) value;
+            case "probe_ring" -> probeRing = value != 0;
+            case "probe_halos" -> probeHalos = value != 0;
             default -> {
                 return false;
             }
@@ -564,9 +578,9 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         // through your own eyes the opening comes in as it spreads: folded, the wings would pass across the middle of the view
         if (first && w.mode == UNFOLD) v.alpha *= WingForm.ease((AscentMoves.ticks - w.modeAt + pt - 3) / 9F);
         v.glow = GLOW_BY[w.mode];
-        v.lod = lod;
+        v.lod = probeLod >= 0 ? Math.min(2, probeLod) : lod;
         v.first = first;
-        v.ring = radiant;
+        v.ring = radiant && probeRing;
         // the halo turns half a radian a second: a whole turn in 251 ticks
         v.turn = (AscentMoves.ticks % 251 + pt) / 251F * Mth.TWO_PI;
         return true;
