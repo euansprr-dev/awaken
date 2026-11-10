@@ -44,6 +44,11 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:vine_seat", Rank.E, seed, 1));
     }
 
+    private static dev.awaken.gates.realms.land.WaxGalleries wax(long seed) {
+        return new dev.awaken.gates.realms.land.WaxGalleries(new Land.Ctx(new Blueprint(1, "t", "deep", "hive", List.of("E"), new Blueprint.LandSpec("awaken:wax_galleries", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:wax_galleries", Rank.E, seed, 1));
+    }
+
     private static Land amber(long seed) {
         return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
     }
@@ -277,6 +282,28 @@ public final class RealmTests {
         AwakenTests.register("realm_vine_nothing_floats", 2400, h -> {
             FloatCheck.Report r = FloatCheck.scan(vine(1), -416, -416, 416, 416);
             if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_wax_galleries_walks_to_everything", 2400, h -> {
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(wax(1));
+            if (!bad.isEmpty()) h.fail("can't reach: " + bad);
+            h.succeed();
+        });
+        AwakenTests.register("realm_wax_galleries_nothing_floats", 2400, h -> {
+            FloatCheck.Report r = FloatCheck.scan(wax(1), -192, -192, 192, 192);
+            if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_wax_warm_slows_and_cold_holds", 200, h -> {
+            if (WarmWaxBlock.KEEPS >= 0.7) h.fail("warm wax barely slows you: " + WarmWaxBlock.KEEPS);
+            net.minecraft.core.BlockPos at = h.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1));
+            var empty = net.minecraft.world.phys.shapes.CollisionContext.empty();
+            if (!WarmWaxBlock.BLOCK.get().defaultBlockState().getCollisionShape(h.getLevel(), at, empty).isEmpty()) h.fail("warm wax should have no floor to it");
+            var cold = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("wax_cold")).defaultBlockState();
+            if (cold.getCollisionShape(h.getLevel(), at, empty).isEmpty()) h.fail("cold wax should hold your weight");
+            dev.awaken.gates.realms.land.WaxGalleries land = wax(1);
+            if (land.coldPlatesOnTheWay() < 600) h.fail("too few cold plates on the way across: " + land.coldPlatesOnTheWay());
+            if (land.change("seat_melt_1").isEmpty() || land.change("seat_melt_2").size() <= land.change("seat_melt_1").size()) h.fail("the seat doesn't melt in two stages");
             h.succeed();
         });
         AwakenTests.register("realm_vine_curtains_part", 200, h -> {

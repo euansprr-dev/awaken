@@ -13,7 +13,8 @@
         "awaken:realm/keep_hall",
         "awaken:realm/salt_flats",
         "awaken:realm/salt_court",
-        "awaken:realm/fane_bowl"
+        "awaken:realm/fane_bowl",
+        "awaken:realm/wax_hollow", "awaken:realm/wax_seat"
       ]
     }
   }

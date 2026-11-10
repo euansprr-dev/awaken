@@ -709,6 +709,8 @@
       "fogGlow": 0.9,
       "skyGlow": 0.0
     },
+    "biome:awaken:realm/wax_hollow": {"_name": "The Wax Galleries: a hollow of pale wax lit by its own combs and candles, gold haze over a lake that never sets", "exposure": 1.05, "contrast": 1.18, "saturation": 1.16, "warmth": 0.2, "shadowTint": [0.36, 0.22, 0.14], "highlightTint": [1.0, 0.78, 0.36], "splitTone": 0.22, "vignette": 0.36, "bloom": 1.1, "bloomThreshold": 0.5, "skyBloom": 0.0, "shafts": 0.4, "haze": 0.5, "hazeStart": 0.12, "hazeTint": [0.9, 0.62, 0.2], "hazeTintMix": 0.6, "hazeDesaturate": 0.05, "sunsetWarmth": 0.0, "sunGlow": 0.0, "light": 0.0, "ao": 0.85, "filmic": 1.0, "mist": 0.0, "mistHeight": 48.0, "fogGlow": 1.0, "skyGlow": 0.0},
+    "biome:awaken:realm/wax_seat": {"_name": "The Wax Galleries' seat: a disc of wax on four chains over the glow, the dark close round it", "exposure": 1.12, "contrast": 1.18, "saturation": 1.16, "warmth": 0.2, "shadowTint": [0.36, 0.22, 0.14], "highlightTint": [1.0, 0.78, 0.36], "splitTone": 0.22, "vignette": 0.4, "bloom": 1.1, "bloomThreshold": 0.5, "skyBloom": 0.0, "shafts": 0.4, "haze": 0.5, "hazeStart": 0.12, "hazeTint": [0.9, 0.62, 0.2], "hazeTintMix": 0.6, "hazeDesaturate": 0.05, "sunsetWarmth": 0.0, "sunGlow": 0.0, "light": 0.0, "ao": 0.85, "filmic": 1.0, "mist": 0.0, "mistHeight": 48.0, "fogGlow": 1.0, "skyGlow": 0.0},
     "biome:awaken:realm/knell_crypt": {
       "_name": "The Hour Crypt: blue-black stone under a moon, every candle a pool of gold, shafts down through the roof",
       "exposure": 1.22,

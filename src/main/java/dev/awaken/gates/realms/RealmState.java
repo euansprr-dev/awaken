@@ -27,6 +27,7 @@ public final class RealmState {
     /** When the salt next turns, and which way it's gone; not saved, the crust is laid out hard and a restart only begins the count again. */
     public long saltAt;
     public boolean saltSoft, saltTold, saltHardTold;
+    public boolean waxTold;
     public long rootsAt;
     public long[] rootOpen;
     public boolean[] rootShown;

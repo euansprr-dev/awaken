@@ -155,6 +155,12 @@ public final class ThemeBlocks {
             Def.soft("salt_sand", C, MapColor.SAND, SoundType.SAND, 0),
             Def.soft("salt_sand_ripple", C, MapColor.SAND, SoundType.SAND, 0),
             Def.of("salt_comb", C, MapColor.SAND, SoundType.STONE, 0),
+            // The Wax family, the Hive's deep places (50.8): cold tallow over dark rock, comb lit from inside. Its shaped blocks are in WarmWaxBlock.
+            Def.soft("wax_cold", C, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 0), Def.soft("wax_old", C, MapColor.COLOR_YELLOW, SoundType.CANDLE, 0), Def.soft("wax_run", C, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 0),
+            Def.soft("wax_comb", C, MapColor.TERRACOTTA_WHITE, SoundType.CORAL_BLOCK, 0), Def.soft("wax_cell", C, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 13), Def.of("wax_deck", C, MapColor.TERRACOTTA_WHITE, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("wax_soot", C, MapColor.COLOR_BLACK, SoundType.TUFF, 0), Def.of("wax_soot_band", C, MapColor.COLOR_BROWN, SoundType.TUFF, 0), Def.soft("wax_bead_drip", H, MapColor.COLOR_YELLOW, SoundType.CANDLE, 8),
+            new Def("wax_candle_bank", PR, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 13, new double[]{1, 0, 1, 15, 9, 15}, true), new Def("wax_comb_cell", PR, MapColor.TERRACOTTA_WHITE, SoundType.CORAL_BLOCK, 0, new double[]{0, 0, 0, 16, 16, 16}, true),
+            new Def("wax_comb_cell_lit", PR, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 12, new double[]{0, 0, 0, 16, 16, 16}, true), Def.soft("wax_fall", F, MapColor.COLOR_ORANGE, SoundType.EMPTY, 10),
             // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak
             Def.of("knell_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
             Def.of("knell_stone_worn", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),
@@ -423,6 +429,7 @@ public final class ThemeBlocks {
     public static Map<String, DeferredBlock<? extends Block>> register(DeferredRegister.Blocks blocks) {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
         for (Def d : DEFS) out.put(d.name(), blocks.registerBlock(d.name(), factory(d), p -> props(d, p)));
+        dev.awaken.gates.realms.WarmWaxBlock.register(blocks, out);
         return out;
     }
 
