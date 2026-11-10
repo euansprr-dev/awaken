@@ -207,7 +207,7 @@ public final class UnlitStair extends GeneratedCrawl<UnlitStair.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xc8c0ff, 0.6F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x1a1630, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xd8d0ff, 18, 0.7F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a shrine cut downward: tall halls, crossings, a pit to look into, and steps down in the dark. */
@@ -215,5 +215,18 @@ public final class UnlitStair extends GeneratedCrawl<UnlitStair.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIT, Cave.Form.PIERS), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
                 List.of(Arena.Plan.TIERS, Arena.Plan.CROSS, Arena.Plan.NAVE), List.of(Chasm.Kind.STEPS, Chasm.Kind.BRIDGE, Chasm.Kind.LEDGES, Chasm.Kind.FALLING), true, 2.6, 6);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): black stone stepped at the foot of the walls and under the roof, stubs of wax, a few candles, and nothing else: emptiness is the look. */
+    @Override
+    protected Trim trim(UnlitStair.M m) {
+        return new Trim(named("shrine_stone_stairs"), named("shrine_stone_stairs"), null, named("abyss_wax_stubs"),
+                namedAll("abyss_candles"), namedAll("abyss_veil"), 0.3);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xd8d0ff;
     }
 }

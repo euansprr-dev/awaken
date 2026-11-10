@@ -32,6 +32,23 @@ public final class AirPlan {
         return this;
     }
 
+    /** How many of each there are so far: Gate Air takes 96 lights, 24 shafts, 6 mist layers and 12 waters (SPEC §38.9). */
+    public int lights() {
+        return lights.size();
+    }
+
+    public int shafts() {
+        return shafts.size();
+    }
+
+    public int mists() {
+        return mists.size();
+    }
+
+    public int waters() {
+        return waters.size();
+    }
+
     public FloorAir build() {
         return new FloorAir(lights, shafts, mists, waters);
     }

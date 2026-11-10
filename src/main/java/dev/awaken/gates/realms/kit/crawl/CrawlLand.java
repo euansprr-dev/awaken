@@ -101,6 +101,14 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         /** A rift's floor steps up as the room runs on, or (falls) down. */
         public boolean falls;
         private double sin, cos = 1, power = 6;
+        /**
+         * Depth (SPEC §50.9): how bold the ground is (0 a level floor, 1 the usual: the way through stays near level, and
+         * off it the ground stands a slab higher, rolls, and banks up toward the walls), and how much the roof swells, dips and
+         * comes down in lumps at the walls (0 for what was built plumb; then walls get pilasters and the roof gets beams).
+         */
+        public double ground, rough;
+        /** Where ways come into the room: x, z. The ground is worn level along the line from each to the middle. */
+        final List<int[]> doors = new ArrayList<>();
 
         public Cave(String name, int cx, int feet, int cz, double rx, double rz, int height, long seed) {
             this(name, cx, feet, cz, rx, rz, height, 0.16, seed);
@@ -146,6 +154,47 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
                 z1 = (int) Math.ceil(cz + bz * 1.2) + 2;
             }
             return this;
+        }
+
+        public Cave depth(double ground, double rough) {
+            this.ground = ground;
+            this.rough = rough;
+            return this;
+        }
+
+        /** A way comes in here: nothing rises on the line from it to the middle. */
+        public void door(int x, int z) {
+            doors.add(new int[]{x, z});
+        }
+
+        /** How far a column is off the way through the room: the lines from each doorway to the middle (round a ring's core, the middle of the walk). */
+        double offWay(int x, int z) {
+            if (form == Form.RING) return Math.abs(oval(x, z) - 0.65) * rx * 1.6;
+            double best = Math.hypot(x - cx, z - cz);
+            for (int[] d : doors) {
+                double vx = cx - d[0], vz = cz - d[1], t = Math.max(0, Math.min(1, ((x - d[0]) * vx + (z - d[1]) * vz) / Math.max(1, vx * vx + vz * vz)));
+                best = Math.min(best, Math.hypot(x - (d[0] + vx * t), z - (d[1] + vz * t)));
+            }
+            return best;
+        }
+
+        /**
+         * The ground over a level floor, in half blocks: nothing on the way, and off it a slab or two that rolls, banking
+         * up to two or three blocks at the walls. Smooth enough that a step is half a block nearly everywhere and never
+         * more than one.
+         */
+        int relief2(int x, int z) {
+            if (ground <= 0) return 0;
+            double wild = Math.max(0, Math.min(1, (offWay(x, z) - 2.5) / 4.5));
+            if (wild == 0) return 0;
+            double o = Math.min(1, out(x, z)), bank = Math.max(0, Math.min(1, (o - 0.5) / 0.45));
+            double roll = 0.5 + 0.5 * n.get(x / 8.0 + 70, z / 8.0 - 20), lump = 0.5 + 0.5 * n.get(x / 5.0 - 33, z / 5.0 + 9);
+            return (int) Math.round(Math.min(7, wild * ground * (0.7 + 1.5 * roll + 3.4 * bank * bank * (0.45 + 0.55 * lump))));
+        }
+
+        /** Whether a form's floor is all one level before any ground is laid on it. */
+        public static boolean level(Form form) {
+            return form != Form.TERRACE && form != Form.PIT && form != Form.RIFT;
         }
 
         /** Whether a form keeps the oval's plan. */
@@ -210,17 +259,39 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             if (form == Form.PIERS) {
                 // two rows of piers down the hall, one every six cells, each about three cells square
                 double u = u(x, z), w = Math.abs(w(x, z)) - rw * 0.5;
-                return Math.abs(w) <= 1 && Math.abs(u) <= rl - 3.5 && Math.abs(u - 6 * Math.round(u / 6)) <= 1;
+                if (Math.abs(w) <= 1 && Math.abs(u) <= rl - 3.5 && Math.abs(u - 6 * Math.round(u / 6)) <= 1) return true;
             }
-            return false;
+            return pilaster(x, z);
+        }
+
+        /**
+         * A wall that was built is not one flat face: a pilaster stands a block out of it every six cells along it. Only
+         * for forms with straight walls (the round ones keep their curve), and only where depth was asked for.
+         */
+        private boolean pilaster(int x, int z) {
+            if (ground <= 0 || rough > 0 || round(form)) return false;
+            double u = u(x, z), w = w(x, z), near = form == Form.CROSS ? Math.min(bar(u / rl, w / rw, power), bar(u / rw, w / rl, power)) : bar(u / rl, w / rw, power);
+            if (near < 1 - 1.6 / Math.min(rl, rw)) return false;
+            // along whichever wall is nearer: a long side runs along the axis, an end across it
+            double side = Math.abs(w) / rw, end = Math.abs(u) / rl;
+            if (form == Form.CROSS) {
+                side = Math.abs(u) <= rw ? Math.abs(w) / rl : Math.abs(w) / rw;
+                end = Math.abs(w) <= rw ? Math.abs(u) / rl : Math.abs(u) / rw;
+            }
+            long along = Math.round(side >= end ? u : w);
+            return Math.floorMod(along, 6) == 3;
         }
 
         private static int ramp(double t, int steps) {
             return (int) Math.max(0, Math.min(steps, Math.round(t + steps / 2.0)));
         }
 
-        /** How far a column's floor stands over {@code feet}, in half blocks. */
+        /** How far a column's floor stands over {@code feet}, in half blocks: the form's own levels, or the ground laid over a level form. */
         public int lift2(int x, int z) {
+            return level(form) ? relief2(x, z) : formLift(x, z);
+        }
+
+        private int formLift(int x, int z) {
             switch (form) {
                 case TERRACE -> {
                     // a terrace three up along one side, and two ramps of half steps onto it
@@ -256,6 +327,18 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             double d = Math.min(1, out(x, z));
             int dome = feet + Math.max(3, 2 + (int) Math.round((height - 2) * Math.pow(1 - d * d, 0.55) + 1.1 * Math.min(1, rim * 8) * n.get(x / 4.0 + 40, z / 4.0)));
             int lift = lift2(x, z);
+            if (ground > 0 && height >= 6) {
+                if (rough > 0) {
+                    // a dug roof swells and dips, and here and there comes down in a lump; never within four of the floor
+                    double swell = n.get(x / 6.0 + 200, z / 6.0 - 90), knot = n.get(x / 2.6 - 400, z / 2.6 + 150);
+                    dome += (int) Math.round(rough * (1.6 * swell * Math.pow(1 - d * d, 0.5) - (knot > 0.62 ? 2 * (1 - d) : 0)));
+                    // and near a wall it comes down in lumps, so the wall leans in over you and is not plumb from feet to head.
+                    // (Lumps cut into the wall itself could stand a cell clear of it and hang in the air; what comes down from
+                    // the roof is always joined to it.)
+                    if (d > 0.78) dome -= (int) Math.round(rough * 3 * Math.min(1, (d - 0.78) / 0.16) * Math.max(0, n.get(x / 4.0 + 300, z / 4.0 - 77)));
+                } else if (!round(form) && d < 0.97 && Math.floorMod(Math.round(u(x, z)), 5) == 0) dome -= 1; // a beam across a built hall every five cells
+                dome = Math.max(dome, feet + (d > 0.78 ? 3 : 4));
+            }
             // over a raised floor there is always room to stand, however low the dome has come by then
             return lift == 0 ? dome : Math.max(dome, feet + (lift + 1) / 2 + 4);
         }
@@ -355,12 +438,20 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return pillar(x, z);
         }
 
-        /** Tiers: the outer fifth of the floor is a step up, and the last tenth another. */
+        /** Tiers: the outer fifth of the floor is a step up, and the last tenth another. Any other plan keeps its floor level but for the ground banked up against the wall. */
         @Override
         public int lift2(int x, int z) {
-            if (plan != Plan.TIERS) return 0;
+            if (plan != Plan.TIERS) return relief2(x, z);
             double o = oval(x, z);
             return o > 0.9 ? 4 : o > 0.78 ? 2 : 0;
+        }
+
+        /** Something big is fought here: the floor stays level to five sixths of the way out, and only the last of it banks up. */
+        @Override
+        int relief2(int x, int z) {
+            if (ground <= 0) return 0;
+            double o = Math.min(1, out(x, z)), bank = Math.max(0, (o - 0.84) / 0.16);
+            return (int) Math.round(Math.min(5, ground * 5 * bank * (0.4 + 0.6 * (0.5 + 0.5 * n.get(x / 5.0 - 33, z / 5.0 + 9)))));
         }
     }
 
@@ -374,6 +465,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         /** How far its sides wander: about 0.4 for something dug, 0 for something built (then it is exactly as wide as it says). */
         final double wander;
         final SimplexNoise n;
+        /** Depth (SPEC §50.9): over 0, the way is worn down its middle, with half a step up along its sides (ragged where it was dug, a kerb where it was built). */
+        public double ground;
 
         public Tunnel(String name, int ax, int ay, int az, int bx, int by, int bz, double half, int height, long seed) {
             this(name, ax, ay, az, bx, by, bz, half, height, 0.4, seed);
@@ -410,8 +503,17 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
 
         @Override
         public int feet2(int x, int z) {
-            double t = along(x, z);
-            return off(x, z, t) <= half + wander * n.get(x / 5.0, z / 5.0) ? (int) Math.round(2 * (ay + (by - ay) * t)) : NONE;
+            double t = along(x, z), d = off(x, z, t);
+            if (d > half + wander * n.get(x / 5.0, z / 5.0)) return NONE;
+            int f = (int) Math.round(2 * (ay + (by - ay) * t));
+            // the worn middle stays as it was; the sides stand half a step higher, but not where the way meets what it joins
+            if (ground > 0 && half >= 2 && d > half * 0.5 && t * len > 3 && (1 - t) * len > 3 && (wander <= 0 || n.get(x / 4.0 + 9, z / 4.0 - 5) > -0.3)) f += 1;
+            return f;
+        }
+
+        /** How far a column is from the middle of the way. */
+        double offWay(int x, int z) {
+            return off(x, z, along(x, z));
         }
 
         @Override
@@ -888,6 +990,12 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     protected final void door(String leg, int x0, int y0, int z0, int x1, int y1, int z1) {
         doors.add(new int[]{Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1), Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1)});
         doorLegs.add(leg);
+    }
+
+    /** Whether a cell is where one of the doors shuts. What stands there is swept away the first time it does. */
+    protected final boolean inDoor(int x, int y, int z) {
+        for (int[] d : doors) if (x >= d[0] && x <= d[3] && y >= d[1] && y <= d[4] && z >= d[2] && z <= d[5]) return true;
+        return false;
     }
 
     /** Call when every part is placed: works out how far the rock has to reach. */

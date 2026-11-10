@@ -21441,6 +21441,49 @@ grows is cleared from over every stand; every stand has a light over it. A tour 
 names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
 leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
 
+**Depth.** Euan, 10 Nov, on the pictures of the new shapes: "the rooms and the setups and stuff is decent now, but the
+atmosphere itself is completely missing... a completely flat floor, completely flat walls... it's still all one block
+distances. There's no half blocks, there's no grass, there's no mushrooms... no variation in the depth of the floor or the
+walls." The old gates had been given exactly this (§38.14: gentle on the way, bold at the edges, with a theme's slabs,
+stairs, drifts and bits); the rolled dungeons had none of it. They take that section's blocks and its rule:
+
+- **Ground** (`Cave.depth`, `relief2`). Over every level room the ground rises and falls in half blocks. Nothing rises on
+  the way through (the lines from each doorway to the middle; round a ring's core, the middle of the walk), so the way reads
+  as a path worn into the floor. Off it the ground stands a slab or two higher and rolls, and banks up two or three blocks
+  against the walls. A step is half a block nearly everywhere and never more than one. A half step is the kind's own slab.
+  Rooms whose form already has levels (terrace, pit, rift) keep them and take no ground; a Warden's room and a Lord's hall
+  stay level to five sixths of the way out and only bank at the wall; the small cells (way in, side cell, hidden cell, vault)
+  stay level. A room is told of every way into it (`door`) before anything asks how high its floor is there.
+- **Ways** are worn down their middle with half a step up along their sides: ragged where the place was dug, a kerb where it
+  was built.
+- **Walls and roofs.** What was built: a pilaster stands a block out of every straight wall every six cells, and a beam
+  crosses a hall's roof every five. What was dug: the roof swells and dips, comes down in knots, and comes down in lumps at
+  the walls so a wall leans in over you. (Lumps cut into the wall itself were tried first and could hang a cell clear of it;
+  what comes down from the roof is always joined to it.)
+- **Small pieces** (`Trim`, one per kind, set last by `detail`): a stair at about half the wall feet off the way, its back
+  to the wall; a stair hung upside down where the roof steps; a drift one layer deep along the rest of the wall feet; plants
+  in clumps that thicken away from the way; bits underfoot; things hanging where the roof is high. All from the kind's own
+  theme (its §38.14 depth blocks and its plants), a few of Minecraft's where a theme has none (cobwebs, hanging roots, moss
+  carpet, fern). Nothing with a body but the stairs. Nothing where a door shuts, in the narrow ways or in a hall of traps.
+  The Lower Combs and The Tallow Runs have no stairs yet: their rock has no cut shapes.
+
+**Air.** The same message: "Same with like the atmosphere in the air... Same when it comes to sounds and everything, and
+music." The kinds had been sharing borrowed biomes and one copied list of small life (a foundry with bats). Now each kind
+has its own, written from one table (`tools/realms/kinds_air.py`):
+
+- **Its own biome** (`awaken:realm/<kind>`, a copy of its theme's gate biome so nothing spawns): its fog colour and how
+  near the fog stands (from 4 to 14 blocks out, gone by 56 to 140), what drifts in the air (ash, spores, snow, motes,
+  fireflies, sparks), the colour of its block light and of its dark, an ambient loop, a mood sound, an occasional sound and
+  its music. Every sound is one of Minecraft's own recordings by name. The Silvered Halls has no loop; The Unlit Stair has
+  no sound at all, which is its theme's one line.
+- **Its own Lens look** (`biome:awaken:realm/<kind>` in `looks_gates.json`): its theme's look with more haze, a mist, a
+  little more glow, and the haze tinted from its fog.
+- **Its own small life** (blueprint `sky.air`): only what belongs there (embers and steam in a foundry, snow and wind in ice,
+  fish and paper in a drowned library).
+- **Gate Air from the kit** (`GeneratedCrawl.airOf`, on top of what the skin asks for, inside §38.9's limits): a soft light
+  in the kind's colour over the middle of every room something is fought in, so its mist is lit; still water and a low
+  mist in every gulf and at the foot of every shaft; a shaft of light down every shaft.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The

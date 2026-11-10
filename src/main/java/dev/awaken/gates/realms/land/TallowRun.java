@@ -196,7 +196,7 @@ public final class TallowRun extends GeneratedCrawl<WaxGalleries.M> {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffd890, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0xd8a040, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xffc050, 18, 0.9F);
         if (ambush != null) air.light(ambush.cx, ambush.feet + 3, ambush.cz, 0xffc050, 12, 0.7F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): wax that ran and set: round runs, tall rifts, pits where it pooled. */
@@ -204,5 +204,18 @@ public final class TallowRun extends GeneratedCrawl<WaxGalleries.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.OVAL, Cave.Form.RIFT, Cave.Form.PIT, Cave.Form.OVAL), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
                 List.of(Arena.Plan.ROTUNDA, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.STEPS, Chasm.Kind.HANGERS, Chasm.Kind.FORD), false, 2.3, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): stubs of candle wherever wax pooled, crumbs of it underfoot, beads of it hanging. */
+    @Override
+    protected Trim trim(WaxGalleries.M m) {
+        return new Trim(null, null, null, named("hive_wax_crumbs"),
+                namedAll("hive_candle"), namedAll("wax_bead_drip"), 0.7);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffcf8a;
     }
 }

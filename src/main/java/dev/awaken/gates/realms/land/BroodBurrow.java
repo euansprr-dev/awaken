@@ -216,7 +216,7 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x7a2a12, 0.45F).light(lord.cx, lord.feet + 4, lord.cz, 0xffa040, 18, 0.8F);
         for (Shaft s : shafts) air.light(s.cx, s.top - 8, s.cz, 0xff6a2a, 14, 0.9F);
         if (ambush != null) air.light(ambush.cx, ambush.feet + 4, ambush.cz, 0xff5a20, 12, 0.7F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a nest: round cells, a larder you look down into, comb hung over the drops. */
@@ -224,5 +224,18 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.OVAL, Cave.Form.PIT, Cave.Form.RING, Cave.Form.OVAL, Cave.Form.RIFT), List.of(Arena.Plan.RING),
                 List.of(Arena.Plan.ROTUNDA, Arena.Plan.RING, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.HANGERS, Chasm.Kind.LEDGES, Chasm.Kind.STEPS), false, 2.1, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): nothing in a nest is cut: its depth is its ground and its walls, and more sacs. */
+    @Override
+    protected Trim trim(Broodwarren.M m) {
+        return new Trim(null, null, null, null,
+                List.of(), namedAll("brood_sac_drip"), 0.7);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffa868;
     }
 }

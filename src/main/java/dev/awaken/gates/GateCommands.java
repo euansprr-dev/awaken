@@ -113,6 +113,12 @@ final class GateCommands {
                                     return 0;
                                 }
                                 var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) Math.round(view[0]), (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) Math.round(view[2]));
+                                // a room's ground rises toward its walls and things hang from its roof: a camera that came out inside
+                                // something walks toward the leg until its head is in the air
+                                var leg = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) view[4], (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) view[5]);
+                                for (int i = 0; i < 16 && !(p.level().getBlockState(at).isAir() && p.level().getBlockState(at.above()).isAir()) && !at.equals(leg); i++) {
+                                    at = at.offset(Integer.signum(leg.getX() - at.getX()), 0, Integer.signum(leg.getZ() - at.getZ()));
+                                }
                                 p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), (float) view[3], back == 0 ? 18F : 10F, true);
                                 if (p.isCreative()) {
                                     p.getAbilities().flying = true;

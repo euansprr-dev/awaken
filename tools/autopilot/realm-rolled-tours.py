@@ -6,7 +6,7 @@ K = {  # id: (name, rank)
  'frozen_cells': ('The Frozen Cells', 'C'), 'glass_warrens': ('The Glass Warrens', 'D'), 'stopped_works': ('The Stopped Works', 'D'), 'silvered_halls': ('The Silvered Halls', 'C'),
  'sealed_wing': ('The Sealed Wing', 'C'), 'sleepless_ward': ('The Sleepless Ward', 'C'), 'unlit_stair': ('The Unlit Stair', 'A'), 'rime_hollows': ('The Rime Hollows', 'C'),
  'green_dark': ('The Green Dark', 'E')}
-SHOTS = [('first_fight', 'FIGHT 0 7 2'), ('second_fight', 'FIGHT 1 7 2'), ('ambush', 'AMBUSH 0 8 2'), ('warden', 'WARDEN 0 9 3'), ('lord', 'LORD 0 9 4'), ('lord_back', 'LORD 0 -9 5'),
+SHOTS = [('first_fight', 'FIGHT 0 6 3'), ('second_fight', 'FIGHT 1 6 3'), ('ambush', 'AMBUSH 0 6 3'), ('warden', 'WARDEN 0 7 3'), ('lord', 'LORD 0 9 4'), ('lord_back', 'LORD 0 -9 5'),
          ('move1', 'MOVEMENT 0 0 2'), ('move2', 'MOVEMENT 1 0 2'), ('move3', 'MOVEMENT 2 0 2'), ('trap', 'TRAP 0 8 2')]
 for arg in sys.argv[1:]:
     kind, seed = arg.split('=')

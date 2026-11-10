@@ -195,7 +195,7 @@ public final class RootCellar extends GeneratedCrawl<VineSeat.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xd8f0b0, 0.75F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x2f4a36, 0.5F).light(lord.cx, lord.feet + 5, lord.cz, 0xc8e070, 18, 0.6F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): an undercroft: pillared cellars, a raised walk, and roots where the floors have gone. */
@@ -203,5 +203,18 @@ public final class RootCellar extends GeneratedCrawl<VineSeat.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.PIERS, Cave.Form.HALL, Cave.Form.TERRACE, Cave.Form.CROSS), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
                 List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.BEAMS, Chasm.Kind.FORD, Chasm.Kind.LEDGES), true, 2.6, 5);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): ferns between the flags, moss drifted against the walls, leaves, vines from the roof. */
+    @Override
+    protected Trim trim(VineSeat.M m) {
+        return new Trim(named("fane_stone_stairs"), named("fane_stone_stairs"), named("temple_moss_drift"), named("temple_leaves"),
+                namedAll("temple_fern", "temple_fern", "minecraft:moss_carpet"), namedAll("temple_vines"), 1.0);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffe0a0;
     }
 }
