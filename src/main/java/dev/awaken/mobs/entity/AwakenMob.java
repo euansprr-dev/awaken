@@ -343,6 +343,12 @@ public class AwakenMob extends Monster {
         return staggerTicks > 0;
     }
 
+    /** Stands still and starts nothing for {@code ticks}, without ending what it is doing (a gate monster's opening, SPEC §60). */
+    protected void holdStill(int ticks) {
+        staggerTicks = Math.max(staggerTicks, ticks);
+        getNavigation().stop();
+    }
+
     /**
      * Brought down (SPEC §40): a normal or elite flier whose stance broke or whose dive was deflected drops out of the
      * air and stands open on the ground for {@code ticks}, then rises. A kit flier's fight script decides its own.
@@ -463,7 +469,7 @@ public class AwakenMob extends Monster {
         }
         if (d.has(Trait.WATCHED_FREEZE) && tickCount % 5 == 0) watched = isWatched(level);
         if (d.has(Trait.FUSE)) tickFuse(level);
-        if (d.model.move == Model.Move.HOP) tickHop();
+        if (d.move() == Model.Move.HOP) tickHop();
         if (flag(F_HAUNTED)) tickPhasing(level);
         if (guardTicks > 0 && --guardTicks == 0) setFlag(F_GUARDING, false);
         if (staggerTicks > 0) staggerTicks--;

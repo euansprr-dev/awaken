@@ -43,15 +43,15 @@ final class GateBestiary {
     }
 
     private static void bellCrypt(List<MobDef> out) {
-        out.add(m("toll_ghoul", "Toll Ghoul", Theme.BELL, Tier.NORMAL, Model.ZOMBIE, "Rings a hand-bell: a toll that slows everyone around it").hp(25.3).dmg(3).spd(0.23).hold(Items.BELL)
+        out.add(m("toll_ghoul", "The Toller", Theme.BELL, Tier.NORMAL, Model.ZOMBIE, "Its bell swings up before it tolls and slows everyone near: strike it then and the toll is lost").hp(25.3).dmg(3).spd(0.23).rig().size(0.8F, 1.7F).stopped().open(30).fall(26)
                 .ab(a(SLAM, "Bell Toll").radius(3.5F).power(0.6F).fx(MobEffects.SLOWNESS, 40, 1).cd(140)).build());
-        out.add(m("crypt_archer", "Crypt Archer", Theme.BELL, Tier.NORMAL, Model.SKELETON, "Mourning Volley: draws a long breath, then three arrows").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED)
+        out.add(m("crypt_archer", "The Mourner", Theme.BELL, Tier.NORMAL, Model.SKELETON, "It draws a long breath, its ribs open like wings and three of them fly; open, it cannot turn").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED).rig().size(0.7F, 2.25F).planted().open(24).fall(24)
                 .ab(a(ARROWS, "Mourning Volley").n(3).wind(22).cd(70)).build());
-        out.add(m("bell_wisp", "Bell Wisp", Theme.BELL, Tier.NORMAL, Model.VEX, "Grave Chime: chimes, then dives straight at you").hp(11.5).dmg(3).spd(0.5).traits(HAUNTED)
+        out.add(m("bell_wisp", "The Chime", Theme.BELL, Tier.NORMAL, Model.VEX, "It tips its mouth at you, then dives; a dive that misses leaves it ringing on the floor").hp(11.5).dmg(3).spd(0.5).traits(HAUNTED).rig().size(0.5F, 1.1F).miss(34)
                 .ab(a(CHARGE, "Grave Chime").power(1.2F).wind(16).cd(90).range(12)).build());
-        out.add(m("crypt_keeper", "Crypt Keeper", Theme.BELL, Tier.ELITE, Model.WITHER_SKELETON, "Bell Slam: lifts its blade over its head and brings the floor down").hp(27.6).dmg(5).spd(0.26).hold(Items.IRON_SWORD)
+        out.add(m("crypt_keeper", "The Pallbearer", Theme.BELL, Tier.ELITE, Model.WITHER_SKELETON, "Blows on its lid do nothing; it heaves itself up and drops on you, then lies with its open back to you").body(BodyMaterial.STONE).hp(27.6).dmg(5).spd(0.26).rig().size(1.0F, 2.2F).front().open(36).miss(30).fall(30)
                 .ab(a(SLAM, "Bell Slam").power(1.6F).heavy(), a(CHARGE, "Coffin Rush")).build());
-        out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "Hunts by the toll of your footsteps; its Knell tears at the spirit").hp(39.1).dmg(6).spd(0.28).traits(HUNTER)
+        out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "It hunts by sound; when it snuffs its lantern the room goes dark and its spade comes down where it last heard you").hp(39.1).dmg(6).spd(0.28).traits(HUNTER).rig().size(1.1F, 2.7F).open(28).fall(36)
                 .ab(a(BEAM, "Knell").bolt(BoltKind.SPIRIT).power(1.37F).wind(34).heavy(), a(SLAM, "Grave Stamp").power(1.3F).radius(4), a(DARKNESS, "Last Light").radius(14)).build());
         out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").body(BodyMaterial.ARMOR).hp(94.4).dmg(1.4).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
                 .intro("The bell above you is not a bell.")
@@ -62,16 +62,16 @@ final class GateBestiary {
     }
 
     private static void fungalHollow(List<MobDef> out) {
-        out.add(m("sporeling", "Sporeling", Theme.FUNGAL, Tier.NORMAL, Model.SLIME, "Hops at you and pops into a cloud of spores when it dies").hp(9.2).dmg(2).spd(0.3).scale(0.5F).traits(DEATH_CLOUD)
+        out.add(m("sporeling", "The Sporeling", Theme.FUNGAL, Tier.NORMAL, Model.SLIME, "A puffball that hops on three root-toes; it swells before it pounces and bursts into spores when it dies").hp(9.2).dmg(2).spd(0.3).traits(DEATH_CLOUD).rig().size(0.6F, 0.6F)
                 .ab(a(LEAP, "Pounce").power(0.8F).radius(1.5F).wind(10).cd(80).range(6)).build());
-        out.add(m("mycelid", "Mycelid Shambler", Theme.FUNGAL, Tier.NORMAL, Model.ZOMBIE, "Spore Cough: hunches, then a poison cone").hp(25.3).dmg(3).spd(0.22)
+        out.add(m("mycelid", "The Shelf", Theme.FUNGAL, Tier.NORMAL, Model.ZOMBIE, "A walking stack of bracket fungus; its shelves lift like gills before it coughs, and stay open a moment after").hp(25.3).dmg(3).spd(0.22).rig().size(0.8F, 2.0F).open(28).fall(24)
                 .ab(a(CONE, "Spore Cough").power(0.4F).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 60, 0).cd(130)).build());
-        out.add(m("capweaver", "Capweaver", Theme.FUNGAL, Tier.NORMAL, Model.CAVE_SPIDER, "Web Spit: a marked circle that roots you if you stay in it").hp(16.1).dmg(2.5).spd(0.32)
+        out.add(m("capweaver", "The Capweaver", Theme.FUNGAL, Tier.NORMAL, Model.CAVE_SPIDER, "A toadstool on eight thread legs that sits among the mushrooms; it lifts its rim to spit a web that roots you").hp(16.1).dmg(2.5).spd(0.32).traits(DORMANT).rig().size(0.9F, 0.55F).open(24)
                 .ab(a(ROOT, "Web Spit").radius(1.6F).wind(20).cd(140).range(12)).build());
-        out.add(m("puffcap", "Puffcap", Theme.FUNGAL, Tier.NORMAL, Model.CREEPER, "Swells and bursts into choking spores").hp(18.4).dmg(2).spd(0.24).traits(FUSE, DEATH_CLOUD).blast(1.6F).build());
-        out.add(m("hollow_tender", "Hollow Tender", Theme.FUNGAL, Tier.ELITE, Model.WITCH, "Tends the colony: heals every fungus near it, lobs spores").hp(27.6).dmg(3).spd(0.24).traits(RANGED)
+        out.add(m("puffcap", "The Puffcap", Theme.FUNGAL, Tier.NORMAL, Model.CREEPER, "A thin stalk under a cap that balloons as it comes; it bursts into choking spores").hp(18.4).dmg(2).spd(0.24).traits(FUSE, DEATH_CLOUD).blast(1.6F).rig().size(0.6F, 1.5F).build());
+        out.add(m("hollow_tender", "The Tender", Theme.FUNGAL, Tier.ELITE, Model.WITCH, "It roots itself under its parasol to heal every fungus near it, and cannot turn while it does").hp(27.6).dmg(3).spd(0.24).traits(RANGED).rig().size(0.8F, 2.4F).planted().open(26).fall(28)
                 .ab(a(HEAL, "Tend the Colony"), a(BOLT, "Spore Lob").bolt(BoltKind.SPORE), a(CLOUD, "Rot Bloom").fx(MobEffects.POISON, 80, 0)).build());
-        out.add(m("the_rot", "The Rot", Theme.FUNGAL, Tier.WARDEN, Model.RAVAGER, "Rot Charge: lowers its head, then a charge that leaves spores behind").hp(41.4).dmg(6).spd(0.3).traits(HUNTER)
+        out.add(m("the_rot", "The Rot", Theme.FUNGAL, Tier.WARDEN, Model.RAVAGER, "A fallen log that got up: it charges hollow end first and leaves spores behind; make it miss and it sticks").hp(41.4).dmg(6).spd(0.3).traits(HUNTER).rig().size(1.6F, 1.5F).open(26).miss(40).fall(32)
                 .ab(a(CHARGE, "Rot Charge").power(1.14F).heavy(), a(NOVA, "Spore Burst").n(12).bolt(BoltKind.SPORE), a(CLOUD, "Choking Field").radius(4).fx(MobEffects.POISON, 100, 0)).build());
         out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(66.1).dmg(1.06).spd(0.2).scale(0.75F).size(2.4F, 7.78F).bar(BossBarColor.PURPLE).arena(24)
                 .intro("Something above you breathes in.")
@@ -82,17 +82,17 @@ final class GateBestiary {
     }
 
     private static void emberMines(List<MobDef> out) {
-        out.add(m("cinder_miner", "Cinder Miner", Theme.EMBER, Tier.NORMAL, Model.HUSK, "Ember Swing: an overhead pick strike that sets you alight").hp(25.3).dmg(3.5).spd(0.23).hold(Items.IRON_PICKAXE).traits(IGNITE)
+        out.add(m("cinder_miner", "The Pickhead", Theme.EMBER, Tier.NORMAL, Model.HUSK, "A hunched beast with an iron pick for a head: it rears and pecks the floor alight, and the pick sticks").hp(25.3).dmg(3.5).spd(0.23).traits(IGNITE).rig().size(0.9F, 1.4F).open(34).fall(24)
                 .ab(a(SLAM, "Ember Swing").radius(2.5F).power(1.4F).bolt(BoltKind.FIRE).wind(24).heavy()).build());
-        out.add(m("slag_cube", "Slag Cube", Theme.EMBER, Tier.NORMAL, Model.MAGMA, "Molten Splash: lands in a ring of fire").hp(20.7).dmg(3).spd(0.28).traits(FIRE_IMMUNE, IGNITE)
+        out.add(m("slag_cube", "The Slag Pot", Theme.EMBER, Tier.NORMAL, Model.MAGMA, "An iron crucible that hops, slag slopping: it lands in a ring of fire and is empty and dark for a breath").hp(20.7).dmg(3).spd(0.28).traits(FIRE_IMMUNE, IGNITE).rig().size(0.9F, 0.9F).open(24)
                 .ab(a(LEAP, "Molten Splash").radius(2.5F).power(1.2F).bolt(BoltKind.FIRE)).build());
-        out.add(m("ember_imp", "Ember Imp", Theme.EMBER, Tier.NORMAL, Model.BLAZE, "Cinder Burst: three fire bolts after a crackle").hp(13.8).dmg(3).spd(0.3).scale(0.65F).traits(FIRE_IMMUNE, RANGED)
+        out.add(m("ember_imp", "The Bellows", Theme.EMBER, Tier.NORMAL, Model.BLAZE, "A forge bellows that flies nozzle first: it swells before each burst of cinders and hangs slack after").hp(13.8).dmg(3).spd(0.3).traits(FIRE_IMMUNE, RANGED).rig().size(0.6F, 0.6F).open(22)
                 .ab(a(BOLT, "Cinder Burst").n(3).bolt(BoltKind.FIRE)).build());
-        out.add(m("scorch_crawler", "Scorch Crawler", Theme.EMBER, Tier.NORMAL, Model.SILVERFISH, "Comes out of the coal seams biting, and the bites burn").hp(11.5).dmg(2.5).spd(0.33).scale(1.7F).traits(IGNITE, FIRE_IMMUNE)
+        out.add(m("scorch_crawler", "The Coal Tick", Theme.EMBER, Tier.NORMAL, Model.SILVERFISH, "A lump of coal in the seam until two embers open; its bites burn").hp(11.5).dmg(2.5).spd(0.33).traits(IGNITE, FIRE_IMMUNE, DORMANT).rig().size(0.6F, 0.45F)
                 .ab(a(LEAP, "Scorch Bite").radius(1.5F).power(0.9F).range(6).wind(10)).build());
-        out.add(m("slag_boar", "Slag Boar", Theme.EMBER, Tier.ELITE, Model.HOGLIN, "Slag Charge: paws the ground, then charges through fire").hp(29.9).dmg(5).spd(0.3).traits(FIRE_IMMUNE)
+        out.add(m("slag_boar", "The Slag Boar", Theme.EMBER, Tier.ELITE, Model.HOGLIN, "It paws the ground, then charges through fire; after a charge its furnace back vents and dims").hp(29.9).dmg(5).spd(0.3).traits(FIRE_IMMUNE).rig().size(1.3F, 1.3F).open(26).miss(36).fall(26)
                 .ab(a(CHARGE, "Slag Charge").bolt(BoltKind.FIRE).heavy(), a(GUST, "Tusk Toss").radius(3.5F).power(0.8F)).build());
-        out.add(m("the_overseer", "The Overseer", Theme.EMBER, Tier.WARDEN, Model.WITHER_SKELETON, "Walks through fire to reach you, ringed in embers").hp(39.1).dmg(6.5).spd(0.27).scale(1.35F).hold(Items.NETHERITE_AXE).traits(FIRE_IMMUNE, IGNITE, HUNTER)
+        out.add(m("the_overseer", "The Overseer", Theme.EMBER, Tier.WARDEN, Model.WITHER_SKELETON, "A brick chimney on iron legs that walks through fire to reach you; its furnace door swings open before the ring of embers").hp(39.1).dmg(6.5).spd(0.27).traits(FIRE_IMMUNE, IGNITE, HUNTER).rig().size(1.0F, 3.0F).open(30).miss(30).fall(36)
                 .ab(a(CHARGE, "Furnace Walk").power(1.06F), a(NOVA, "Ember Ring").n(10).bolt(BoltKind.FIRE), a(AURA, "Heat Haze").bolt(BoltKind.FIRE)).build());
         out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(181.7).dmg(1.11).spd(0.25).scale(3.0F).size(1.2F, 2.75F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
                 .intro("The mine was dug to keep something in.")
@@ -162,15 +162,15 @@ final class GateBestiary {
     }
 
     private static void hive(List<MobDef> out) {
-        out.add(m("drone_bee", "Hive Drone", Theme.HIVE, Tier.NORMAL, Model.BEE, "Stinger Dive: hovers, buzzes, dives, poisons").hp(11.5).dmg(2.5).spd(0.5).scale(1.3F).traits(POISON_TOUCH)
+        out.add(m("drone_bee", "The Stinger", Theme.HIVE, Tier.NORMAL, Model.BEE, "One long sting under four wings: it curls it under before it dives, and a dive that misses breaks it off").hp(11.5).dmg(2.5).spd(0.5).traits(POISON_TOUCH).rig().size(0.6F, 0.8F).miss(30)
                 .ab(a(CHARGE, "Stinger Dive").wind(14).cd(80).range(10)).build());
-        out.add(m("hive_larva", "Hive Larva", Theme.HIVE, Tier.NORMAL, Model.SILVERFISH, "Wriggles out of the comb in numbers").hp(6.9).dmg(2).spd(0.3).scale(1.4F).tint(0xFFE090)
+        out.add(m("hive_larva", "The Grub", Theme.HIVE, Tier.NORMAL, Model.SILVERFISH, "They hump out of the comb in a row and arch right up before they jump").hp(6.9).dmg(2).spd(0.3).rig().size(0.5F, 0.45F)
                 .ab(a(LEAP, "Wriggle").radius(1.2F).power(0.8F).range(5).wind(10).cd(60)).build());
-        out.add(m("honey_slime", "Honey Slime", Theme.HIVE, Tier.NORMAL, Model.SLIME, "Sticky: every touch slows you").hp(18.4).dmg(2.5).spd(0.27).scale(0.9F).traits(SLOW_TOUCH)
+        out.add(m("honey_slime", "The Honeypot", Theme.HIVE, Tier.NORMAL, Model.SLIME, "A small black ant under a belly of honey; it lands sticky and stands sloshing afterwards").hp(18.4).dmg(2.5).spd(0.27).traits(SLOW_TOUCH).rig().moves(Model.Move.GROUND).size(0.8F, 0.9F).open(26)
                 .ab(a(LEAP, "Sticky Landing").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 1)).build());
-        out.add(m("hive_guard", "Hive Guard", Theme.HIVE, Tier.ELITE, Model.SPIDER, "Mandible Crush, and a wax seal that roots you").hp(27.6).dmg(5).spd(0.3).scale(1.25F).tint(0x806020)
+        out.add(m("hive_guard", "The Door", Theme.HIVE, Tier.ELITE, Model.SPIDER, "Its flat face stops every blow from the front; it lunges from under it and is open while it is stretched out").hp(27.6).dmg(5).spd(0.3).rig().size(1.3F, 1.0F).front().open(30).fall(28)
                 .ab(a(LEAP, "Mandible Crush").heavy(), a(ROOT, "Wax Seal").fx(MobEffects.SLOWNESS, 60, 3)).build());
-        out.add(m("the_swarm_mind", "The Swarm Mind", Theme.HIVE, Tier.WARDEN, Model.PHANTOM, "Never alone: drones pour from it while honey falls").hp(34.5).dmg(5.5).spd(0.35).scale(2.2F).traits(HUNTER)
+        out.add(m("the_swarm_mind", "The Swarm Mind", Theme.HIVE, Tier.WARDEN, Model.PHANTOM, "A paper nest carried by a ring of drones, more pouring from its mouth; it swings like a flail under them").hp(34.5).dmg(5.5).spd(0.35).traits(HUNTER).rig().size(1.6F, 2.0F).open(30).miss(36).fall(36)
                 .ab(a(SUMMON, "Call the Swarm").summon("drone_bee").n(3), a(CHARGE, "Swarm Dive"), a(RAIN, "Honey Drop").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2)).build());
         out.add(m("hive_regent", "The Hive Regent", Theme.HIVE, Tier.LORD, Model.BEE, "Royal Dives and Honey Rain; at the end she feeds on royal jelly and frenzies").hp(48.4).dmg(0.67).spd(0.45).scale(2.0F).size(0.6F, 2.4F).bar(BossBarColor.YELLOW).arena(22)
                 .intro("A hum you feel in your teeth.")

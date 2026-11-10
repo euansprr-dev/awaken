@@ -13,6 +13,7 @@ import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.entity.FaunaMob;
 import dev.awaken.mobs.entity.NamedBeast;
+import dev.awaken.mobs.entity.RigBody;
 import dev.awaken.mobs.entity.WildPose;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -46,7 +47,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private final Identifier texture;
     /** The closed-eyes skin (tools/art: {@code <id>_blink.png}) a blink draws, or null if the creature has none. */
     private final @Nullable Identifier blink;
-    private final int[] windup, strike;
+    private final int[] windup, strike, open;
     private final float[] windupSeconds;
     private final int roar, warn;
     private final float deathLength;
@@ -55,13 +56,19 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
 
     public WildRenderer(EntityRendererProvider.Context ctx, MobDef def, HeroRig rig) {
         super(ctx, new WildModel(ctx.bakeLayer(HeroModel.layer(rig.id)), rig), rig.shadow);
-        this.texture = Awaken.id("textures/entity/mobs/" + def.id + ".png");
-        this.blink = exists(Awaken.id("textures/entity/mobs/" + def.id + "_blink.png"));
+        // a gate monster's own body keeps its textures apart from the skin its old body wears (the fallback, SPEC §60)
+        String dir = def.rig ? "textures/entity/monsters/" : "textures/entity/mobs/";
+        this.texture = Awaken.id(dir + def.id + ".png");
+        this.blink = exists(Awaken.id(dir + def.id + "_blink.png"));
         WildModel m = getModel();
         List<String> names = FaunaMob.moveNames(def);
-        windup = new int[names.size()];
-        strike = new int[names.size()];
-        windupSeconds = new float[names.size()];
+        // a gate monster's plain blow is two more moves after its abilities: the light swing and a big body's heavy one
+        int plain = def.rig ? 2 : 0;
+        windup = new int[names.size() + plain];
+        strike = new int[windup.length];
+        open = new int[windup.length];
+        windupSeconds = new float[windup.length];
+        java.util.Arrays.fill(open, -1);
         reach = def.model == dev.awaken.mobs.def.Model.SEEP_HEART ? 1.8F : 0.0F;
         roar = m.clip("roar");
         warn = m.clip("warn");
@@ -78,10 +85,22 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
             }
             windup[i] = mv != null ? m.clip(mv + "_windup") : -1;
             strike[i] = mv != null ? m.clip(mv + "_strike") : -1;
+            open[i] = mv != null ? m.clip(mv + "_open") : -1;
             if (windup[i] < 0) windup[i] = m.clip("windup");
             if (strike[i] < 0) strike[i] = m.clip("strike");
         }
-        addLayer(new Glow(this, Awaken.id("textures/entity/mobs/" + def.id + "_glow.png"), exists(Awaken.id("textures/entity/mobs/" + def.id + "_glow_blink.png"))));
+        for (int k = 0; k < plain; k++) {
+            int i = names.size() + k;
+            int told = switch (def.tier) { // MobGoals.ToldMelee.tellTicks
+                case ELITE -> 9;
+                case NORMAL -> 8;
+                default -> 10;
+            };
+            windupSeconds[i] = (told + (k == 1 ? 6 : 0)) / 20.0F;
+            windup[i] = k == 1 && m.clip("heavy_windup") >= 0 ? m.clip("heavy_windup") : m.clip("windup");
+            strike[i] = k == 1 && m.clip("heavy_strike") >= 0 ? m.clip("heavy_strike") : m.clip("strike");
+        }
+        addLayer(new Glow(this, Awaken.id(dir + def.id + "_glow.png"), exists(Awaken.id(dir + def.id + "_glow_blink.png"))));
     }
 
     static @Nullable Identifier exists(Identifier id) {
@@ -123,7 +142,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         s.wild = mob instanceof WildPose w ? w.wildState() : mob instanceof FaunaMob g && (g.pose() & FaunaMob.P_GRAZE) != 0 ? WildPose.S_GRAZE : 0;
         s.beat = mob instanceof WildPose w ? w.beatTime(partialTicks) : -1;
         s.pitch = (s.wild & WildPose.S_SWIM) != 0 ? Mth.clamp(mob.getXRot(partialTicks), -60.0F, 60.0F) : 0.0F;
-        if (!(mob instanceof FaunaMob f)) return;
+        if (!(mob instanceof RigBody f)) return;
         s.gait = f.gait(partialTicks);
         s.speed = f.gaitSpeed();
         s.walk = Mth.clamp(s.walkAnimationSpeed * 1.6F, 0.0F, 1.0F);
@@ -134,7 +153,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         resolve(f.cue(), (now - f.cueStart()) / 20.0F, s, false);
         s.prevClip = -1;
         s.prevWeight = 0;
-        if (FaunaMob.cueStage(f.cue()) == FaunaMob.CUE_NONE && FaunaMob.cueStage(f.prevCue()) == FaunaMob.CUE_WINDUP) {
+        int was = FaunaMob.cueStage(f.prevCue());
+        if (FaunaMob.cueStage(f.cue()) == FaunaMob.CUE_NONE && (was == FaunaMob.CUE_WINDUP || was == RigBody.CUE_OPEN || was == RigBody.CUE_STUCK)) {
             float fade = (now - f.prevCueEnd()) / 20.0F;
             if (fade < FADE) {
                 int clip = s.cueClip;
@@ -188,6 +208,26 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
                 s.cueClip = strike[slot];
                 letGo(s, since, m.length(s.cueClip));
             }
+            case RigBody.CUE_OPEN -> {
+                // the move has fired and left it open: its strike, then its open clip, held until the server lets it go
+                if (slot < 0 || slot >= strike.length) return;
+                float len = m.length(strike[slot]);
+                if (since < len || open[slot] < 0) {
+                    s.cueClip = strike[slot];
+                    s.cueTime = Math.min(since, len);
+                } else {
+                    s.cueClip = open[slot];
+                    s.cueTime = Math.min(since - len, m.length(open[slot]));
+                }
+                s.cueWeight = s.cueClip >= 0 ? 1.0F : 0.0F;
+            }
+            case RigBody.CUE_STUCK -> {
+                // a lunge that missed: into its open clip from wherever it stands
+                if (slot < 0 || slot >= open.length) return;
+                s.cueClip = open[slot] >= 0 ? open[slot] : strike[slot];
+                s.cueTime = Math.min(since, m.length(s.cueClip));
+                s.cueWeight = s.cueClip >= 0 ? Math.min(1.0F, since / 0.15F) : 0.0F;
+            }
             case FaunaMob.CUE_ROAR, FaunaMob.CUE_WARN -> {
                 s.cueClip = stage == FaunaMob.CUE_ROAR ? roar : warn;
                 letGo(s, since, m.length(s.cueClip));
@@ -203,7 +243,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     }
 
     /** The creature's life: made once, fed this frame's cue, blow and fall, stepped (it also turns the head the slow way). */
-    private void live(AwakenMob mob, WildRenderState s, AwLook l, FaunaMob f) {
+    private void live(AwakenMob mob, WildRenderState s, AwLook l, RigBody f) {
         WildModel m = getModel();
         Life life = Life.of(l.life, m.life(), mob.getId());
         l.life = life;
@@ -263,6 +303,11 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         if (isShaking(s)) bodyRot += (float) (Math.cos(Mth.floor(s.ageInTicks) * 3.25F) * Math.PI * 0.4F);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
         dev.awaken.mobs.client.ToppleView.roll(s, pose, entityScale); // a broken stance puts a big beast on its side
+        float swell = look(s).swell; // a fuse burning down (a gate monster that bursts): it swells and shivers
+        if (swell > 0.0F) {
+            float g = 1.0F + swell * 0.28F + Mth.sin(s.ageInTicks * 1.9F) * swell * 0.03F;
+            pose.scale(g, 1.0F + swell * 0.16F, g);
+        }
         // (the pose is already scaled by the entity's scale here, so heights are divided by it)
         if ((s.wild & WildPose.S_HANG) != 0) {
             pose.translate(0.0F, s.boundingBoxHeight / entityScale, 0.0F);

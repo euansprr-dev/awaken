@@ -60,6 +60,19 @@ public final class MobDef {
     public final boolean placed;
     /** Keeps to the ground although its model flies (a kit serpent that lies coiled on the floor, SPEC §35.11). */
     public final boolean grounded;
+    /**
+     * A gate monster on a body of its own (SPEC §60): its rig is {@code HeroRig.get(id)}, drawn in place of {@link #model},
+     * which stays as what is drawn if the rig is missing. {@link #moves} says how it gets about when the rig isn't its
+     * model's kind of body (a crawler where a slime hopped).
+     */
+    public final boolean rig;
+    public final Model.@Nullable Move moves;
+    /** Its rules (mobs.entity.GateMonster): ticks it stands open after a move; ticks a missed lunge leaves it stuck. */
+    public final int open, miss;
+    /** A blow stops its wind-up; blows from in front do nothing; it cannot turn while it winds up. */
+    public final boolean stopped, front, planted;
+    /** Ticks its fall lasts (its death clip), at least vanilla's 20. */
+    public final int fall;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -107,6 +120,14 @@ public final class MobDef {
         this.talent = b.talent;
         this.placed = b.placed;
         this.grounded = b.grounded;
+        this.rig = b.rig;
+        this.moves = b.moves;
+        this.open = b.open;
+        this.miss = b.miss;
+        this.stopped = b.stopped;
+        this.front = b.front;
+        this.planted = b.planted;
+        this.fall = Math.max(20, b.fall);
     }
 
     public boolean isFauna() {
@@ -138,7 +159,12 @@ public final class MobDef {
     }
 
     public boolean flies() {
-        return model.move == Model.Move.FLY && !grounded;
+        return move() == Model.Move.FLY && !grounded;
+    }
+
+    /** How it gets about: its own way if its rig says so, else its model's. */
+    public Model.Move move() {
+        return moves != null ? moves : model.move;
     }
 
     public String bossId() {
@@ -173,6 +199,9 @@ public final class MobDef {
         BodyMaterial body;
         FaunaTalent talent = FaunaTalent.NONE;
         boolean placed, grounded;
+        boolean rig, stopped, front, planted;
+        Model.Move moves;
+        int open, miss, fall;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -214,6 +243,22 @@ public final class MobDef {
         public B placed() { placed = true; return this; }
         /** Walks although its model flies (see {@link MobDef#grounded}). */
         public B grounded() { grounded = true; return this; }
+        /** A gate monster's own body (see {@link MobDef#rig}); {@code size} gives its box. */
+        public B rig() { rig = true; return this; }
+        /** The way its own body gets about, where that isn't its fallback model's way. */
+        public B moves(Model.Move m) { moves = m; return this; }
+        /** It stands open for this many ticks after a move fires. */
+        public B open(int ticks) { open = ticks; return this; }
+        /** A lunge that hits nobody leaves it stuck for this many ticks. */
+        public B miss(int ticks) { miss = ticks; return this; }
+        /** A direct blow while it winds a move up ends the move. */
+        public B stopped() { stopped = true; return this; }
+        /** Blows from in front do nothing unless it stands open. */
+        public B front() { front = true; return this; }
+        /** It cannot turn while it winds up. */
+        public B planted() { planted = true; return this; }
+        /** Its fall lasts this many ticks. */
+        public B fall(int ticks) { fall = ticks; return this; }
 
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {
