@@ -1,0 +1,291 @@
+/* AWAKEN · the band's stage (prototype). One 1708 x 960 sheet, the Hall of Arms' own, scaled to fit.
+   Tokens first: every colour is one of the game's existing Glass colours (signal.client.Glass). */
+.aw {
+  --glass: #0F1724; --glass-top: #16233A; --edge: #7FC3FF; --hot: #C4E6FF;
+  --title: #FFFFFF; --text: #D9E4F2; --label: #BCCDE3; --dim: #6F829C;
+  --amber: #FFCF7A; --warn: #FF8A7A; --good: #8FF0C0; --violet: #B48CFF; --lantern: #F2A541;
+  --rank-e: #F4F6FB; --rank-d: #5FD08F; --rank-c: #6FB3FF; --rank-b: #B48CFF; --rank-a: #F2A541; --rank-s: #FF5A6A; /* hall.client.Stage.RANK */
+  /* type: sheet pixels per font pixel (the game's font is 8 px to the em) */
+  --micro: 12px; --small: 12px; --body: 16px; --title-s: 24px; --display: 40px; --numeral: 48px;
+  --pix: "MCLocal", "Pixelify Sans", "Silkscreen", monospace;
+  --black: "Jacquard 24", "UnifrakturCook", serif;
+  position: relative; width: 1708px; height: 960px; overflow: hidden; transform-origin: 0 0;
+  font-family: var(--pix); font-size: var(--body); line-height: 1.25; color: var(--text);
+  -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; user-select: none;
+  background: #05080F;
+}
+.aw * { box-sizing: border-box; }
+.aw img { image-rendering: pixelated; display: block; max-width: none; }
+.aw img.soft { image-rendering: auto; }
+.aw button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.aw .bg { position: absolute; inset: 0; width: 1708px; height: 960px; object-fit: cover; image-rendering: auto; }
+.aw .veil { position: absolute; inset: 0; background:
+    linear-gradient(0deg, rgba(5,8,15,.86), rgba(5,8,15,0) 110px),
+    linear-gradient(90deg, rgba(5,8,15,.72), rgba(5,8,15,0) 190px),
+    radial-gradient(1200px 700px at 58% 46%, rgba(5,8,15,.38), rgba(5,8,15,.62)); }
+/* higher contrast, no transparency (the game's High Contrast option): a solid plate, brighter quiet text, no scan lines */
+.aw.hc .plate { background: #0F1724; box-shadow: 0 0 0 2px var(--hot); } .aw.hc { --label: #E6EEF8; --dim: #BCCDE3; }
+.aw.hc .tile, .aw.hc .room, .aw.hc .slot, .aw.hc .pw, .aw.hc .well { box-shadow: inset 0 0 0 1px rgba(196,230,255,.7); } .aw.hc .veil { background: rgba(5,8,15,.8); }
+
+/* ---- text roles ---- */
+.aw .caps { font-size: var(--micro); letter-spacing: 2px; text-transform: uppercase; color: var(--label); }
+.aw .lab { font-size: var(--small); color: var(--label); }
+.aw .t { color: var(--title); }
+.aw .h1 { font-size: var(--display); line-height: 1; color: var(--title); text-shadow: 0 0 14px rgba(127,195,255,.45); }
+.aw .h2 { font-size: var(--title-s); line-height: 1.1; color: var(--title); text-shadow: 0 0 10px rgba(127,195,255,.35); }
+.aw .num { font-size: var(--numeral); line-height: 1; color: var(--title); text-shadow: 0 0 14px rgba(127,195,255,.5); }
+.aw .amber { color: var(--amber); } .aw .good { color: var(--good); } .aw .warn { color: var(--warn); } .aw .edge { color: var(--edge); }
+.aw .blackletter { font-family: var(--black); -webkit-font-smoothing: antialiased; letter-spacing: 1px; }
+
+/* ---- the rail: six places down the wrist edge ---- */
+.aw .rail { position: absolute; left: 26px; top: 124px; width: 104px; }
+.aw .rail .node { position: relative; display: block; width: 104px; height: 96px; margin-bottom: 6px; text-align: center; color: var(--label); }
+.aw .rail .node .ic { width: 48px; height: 48px; margin: 10px auto 6px; opacity: .78; }
+.aw .rail .node .ic svg { width: 48px; height: 48px; shape-rendering: crispEdges; }
+.aw .rail .node span { display: block; font-size: var(--micro); letter-spacing: 2px; text-transform: uppercase; }
+.aw .rail .node:hover { color: var(--title); } .aw .rail .node:hover .ic { opacity: 1; }
+.aw .rail .node.on { color: var(--title); }
+.aw .rail .node.on .ic { opacity: 1; filter: drop-shadow(0 0 8px rgba(127,195,255,.9)); }
+.aw .rail .node.on::before { content: ""; position: absolute; left: -8px; top: 8px; bottom: 8px; width: 4px; background: var(--hot); box-shadow: 0 0 12px var(--edge); }
+.aw .rail .node.on::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(127,195,255,.18), rgba(127,195,255,0)); pointer-events: none; }
+.aw .rail .glint { position: absolute; right: 18px; top: 8px; width: 10px; height: 10px; transform: rotate(45deg); background: var(--hot); box-shadow: 0 0 10px var(--edge); }
+.aw .rail .glint.amber { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+.aw .rail .key { position: absolute; left: 6px; top: 6px; font-size: var(--micro); color: var(--dim); }
+.aw .you { position: absolute; left: 26px; top: 40px; width: 104px; text-align: center; }
+.aw .you .lv { font-size: 32px; line-height: 1; color: var(--title); text-shadow: 0 0 12px rgba(127,195,255,.6); }
+.aw .you .xp { margin: 8px auto 0; width: 72px; height: 4px; background: rgba(0,0,0,.5); } .aw .you .xp i { display: block; height: 4px; background: var(--good); box-shadow: 0 0 8px var(--good); }
+
+/* ---- the plate: one sheet of the band's glass ---- */
+.aw .plate { position: absolute; left: 152px; top: 40px; width: 1528px; height: 844px;
+  background:
+    repeating-linear-gradient(0deg, rgba(127,195,255,.035) 0 2px, rgba(0,0,0,0) 2px 6px),
+    radial-gradient(900px 500px at 0% 100%, rgba(127,195,255,.10), rgba(127,195,255,0)),
+    linear-gradient(180deg, rgba(22,35,58,.82), rgba(15,23,36,.86));
+  box-shadow: 0 0 0 1px rgba(127,195,255,.42), 0 0 46px rgba(127,195,255,.16), inset 0 2px 0 rgba(127,195,255,.14); }
+.aw .plate::before, .aw .plate::after { content: ""; position: absolute; width: 28px; height: 28px; border: 2px solid var(--hot); pointer-events: none; filter: drop-shadow(0 0 6px var(--edge)); }
+.aw .plate::before { left: -4px; top: -4px; border-right: 0; border-bottom: 0; }
+.aw .plate::after { right: -4px; bottom: -4px; border-left: 0; border-top: 0; }
+.aw .head { position: absolute; left: 40px; top: 28px; right: 40px; height: 56px; display: flex; align-items: flex-end; gap: 20px; }
+.aw .head .h1 { letter-spacing: 2px; }
+.aw .head .sub { padding-bottom: 5px; }
+.aw .head .right { margin-left: auto; display: flex; gap: 12px; align-items: center; padding-bottom: 4px; }
+.aw .chip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; font-size: var(--micro); letter-spacing: 2px; text-transform: uppercase;
+  color: var(--edge); box-shadow: inset 0 0 0 1px rgba(127,195,255,.55); background: rgba(127,195,255,.10); }
+.aw .chip.amber { color: var(--amber); box-shadow: inset 0 0 0 1px rgba(255,207,122,.7); background: rgba(255,207,122,.10); }
+.aw .chip.lantern { color: var(--lantern); box-shadow: inset 0 0 0 1px rgba(242,165,65,.7); background: rgba(242,165,65,.10); }
+.aw .chip.good { color: var(--good); box-shadow: inset 0 0 0 1px rgba(143,240,192,.7); background: rgba(143,240,192,.10); }
+.aw .chip img { width: 20px; height: 20px; }
+.aw .stage { position: absolute; left: 40px; top: 104px; right: 40px; bottom: 28px; }
+.aw .hair { height: 1px; background: linear-gradient(90deg, rgba(127,195,255,.45), rgba(127,195,255,0)); }
+
+/* ---- the hint bar: the keys that work now, always in one place ---- */
+.aw .hints { position: absolute; left: 152px; right: 28px; top: 900px; height: 40px; display: flex; align-items: center; gap: 26px; font-size: var(--body); color: var(--label); }
+.aw .hints .sp { margin-left: auto; }
+.aw .hint { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.aw .hint.act { cursor: pointer; } .aw .hint.act:hover { color: var(--title); }
+.aw kbd { font: inherit; font-size: var(--small); display: inline-block; min-width: 26px; height: 26px; line-height: 24px; padding: 0 7px; text-align: center; color: var(--title);
+  background: rgba(5,8,15,.7); box-shadow: inset 0 0 0 1px rgba(188,205,227,.6), 0 2px 0 rgba(188,205,227,.35); }
+.aw kbd { border: 0; white-space: nowrap; }
+.aw kbd.hold { box-shadow: inset 0 0 0 1px var(--amber), 0 2px 0 rgba(255,207,122,.5); color: var(--amber); }
+
+/* ---- a thing: one well with the real item in it, lit by its state ---- */
+.aw .well { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: rgba(5,8,15,.55); box-shadow: inset 0 0 0 1px rgba(127,195,255,.28); }
+.aw .well img { width: 40px; height: 40px; }
+.aw .well.sm { width: 40px; height: 40px; } .aw .well.sm img { width: 30px; height: 30px; }
+.aw .well.lg { width: 84px; height: 84px; } .aw .well.lg img { width: 64px; height: 64px; }
+.aw .well .n { position: absolute; right: 3px; bottom: 0; font-size: var(--small); color: var(--title); text-shadow: 1px 1px 0 #000; }
+
+/* a need: the real item, have / need under it, its name under that (the Hall's "What it takes") */
+.aw .needs { display: flex; gap: 22px; align-items: flex-start; }
+.aw .need { width: 104px; text-align: center; position: relative; }
+.aw .need .np { width: 64px; height: 64px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; }
+.aw .need .np img { width: 56px; height: 56px; filter: drop-shadow(0 6px 8px rgba(0,0,0,.6)); }
+.aw .need .c { font-size: var(--title-s); line-height: 1; }
+.aw .need.met .c { color: var(--good); } .aw .need.short .c { color: var(--warn); }
+.aw .need .nm { margin-top: 4px; font-size: var(--small); color: var(--label); line-height: 1.2; }
+.aw .need .tick { position: absolute; right: 10px; top: -2px; color: var(--good); font-size: var(--body); }
+
+/* a recipe, shown the way Minecraft shows one */
+.aw .recipe { display: inline-flex; align-items: center; gap: 12px; }
+.aw .grid { display: grid; gap: 2px; }
+.aw .grid i { width: 44px; height: 44px; background: rgba(5,8,15,.6); box-shadow: inset 0 0 0 1px rgba(127,195,255,.22); display: flex; align-items: center; justify-content: center; }
+.aw .grid i img { width: 34px; height: 34px; }
+.aw .arrow { width: 28px; height: 12px; position: relative; background: linear-gradient(var(--edge), var(--edge)) left center / 20px 4px no-repeat; opacity: .8; }
+.aw .arrow::after { content: ""; position: absolute; right: 0; top: -2px; border: 8px solid transparent; border-left-color: var(--edge); border-right: 0; }
+
+/* a stat: big number, small caption (the Hall's numerals) */
+.aw .stat { display: inline-block; text-align: left; }
+.aw .stat .caps { display: block; margin-top: 6px; }
+
+/* buttons */
+.aw .btn { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px; color: var(--title); font-size: var(--body);
+  background: rgba(27,42,68,.75); box-shadow: inset 0 0 0 1px rgba(127,195,255,.6); }
+.aw .btn:hover { background: rgba(127,195,255,.26); box-shadow: inset 0 0 0 1px var(--hot), 0 0 16px rgba(127,195,255,.35); }
+.aw .btn.primary { background: rgba(127,195,255,.20); box-shadow: inset 0 0 0 2px var(--edge), 0 0 18px rgba(127,195,255,.25); }
+.aw .btn.quiet { background: none; box-shadow: none; color: var(--label); padding: 0 6px; }
+.aw .btn.quiet:hover { color: var(--title); background: none; box-shadow: none; }
+.aw .btn.on { color: var(--amber); box-shadow: inset 0 0 0 2px var(--amber), 0 0 18px rgba(255,207,122,.25); background: rgba(255,207,122,.12); }
+.aw .hold { position: relative; overflow: hidden; }
+.aw .hold .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,207,122,.35); pointer-events: none; }
+
+/* ---- Tasks: the next thing, and the lanes ---- */
+.aw .hero { position: absolute; left: 0; top: 0; width: 756px; bottom: 0; }
+.aw .hero .eyebrow { display: flex; gap: 12px; align-items: center; height: 30px; }
+.aw .hero .pic { position: relative; height: 320px; margin-top: 16px; }
+.aw .floor { position: absolute; left: 50%; bottom: 6px; width: 620px; height: 96px; margin-left: -310px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(127,195,255,.30), rgba(127,195,255,.08) 60%, rgba(127,195,255,0)); }
+.aw .floor::after { content: ""; position: absolute; inset: 18px 60px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(127,195,255,.35); }
+.aw .cone { position: absolute; left: 50%; bottom: 40px; width: 560px; height: 250px; margin-left: -280px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(127,195,255,0), rgba(127,195,255,.07)); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+.aw .hero .title { margin-top: 14px; font-size: 32px; }
+.aw .hero .why { margin-top: 8px; color: var(--label); max-width: 720px; }
+.aw .hero .row { margin-top: 18px; display: flex; gap: 28px; align-items: center; }
+.aw .hero[data-kind=make] .pic, .aw .hero[data-kind=pieces] .pic { height: 262px; }
+.aw .hero .actions { position: absolute; left: 0; bottom: 0; display: flex; gap: 12px; align-items: center; }
+.aw .made { position: absolute; top: 56px; text-align: center; width: 250px; }
+.aw .made .obj { height: 140px; display: flex; align-items: flex-end; justify-content: center; }
+.aw .made .obj > img { width: 128px; height: 128px; filter: drop-shadow(0 10px 10px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(127,195,255,.25)); }
+.aw .made .nm { margin-top: 8px; color: var(--title); }
+.aw .made .rc { margin-top: 10px; display: flex; justify-content: center; }
+.aw .roomline { position: absolute; left: 30px; right: 30px; top: 4px; bottom: 30px; border: 2px dashed rgba(127,195,255,.28); }
+.aw .roomline b { position: absolute; left: 14px; top: -11px; padding: 0 8px; background: #152238; font-weight: normal; font-size: var(--micro); letter-spacing: 2px; color: var(--label); text-transform: uppercase; }
+.aw .then { display: inline-flex; align-items: center; gap: 12px; color: var(--label); }
+.aw .then img { width: 28px; height: 28px; }
+.aw .compass { position: relative; display: inline-block; width: 56px; height: 56px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(127,195,255,.5); flex: none; }
+.aw .compass i { position: absolute; left: 26px; top: 6px; width: 4px; height: 24px; background: var(--amber); transform-origin: 2px 22px; box-shadow: 0 0 8px var(--amber); }
+.aw .compass.big { width: 200px; height: 200px; } .aw .compass.big i { left: 97px; top: 16px; width: 6px; height: 86px; transform-origin: 3px 84px; }
+.aw .place { display: inline-flex; align-items: center; gap: 14px; }
+
+.aw .lanes { position: absolute; right: 0; top: 0; width: 676px; bottom: 0; }
+.aw .lane { position: relative; height: 114px; display: flex; align-items: center; gap: 12px; }
+.aw .lane + .lane { border-top: 1px solid rgba(127,195,255,.14); }
+.aw .lane .who { width: 96px; text-align: center; flex: none; }
+.aw .lane .who img { width: 40px; height: 40px; margin: 0 auto 6px; }
+.aw .tile { position: relative; width: 158px; flex: none; height: 98px; padding: 9px 10px 0; text-align: left; color: var(--text); background: rgba(5,8,15,.34); box-shadow: inset 0 0 0 1px rgba(127,195,255,.16); }
+.aw .tile:hover { background: rgba(127,195,255,.14); box-shadow: inset 0 0 0 1px rgba(127,195,255,.6); }
+.aw .tile.sel { background: rgba(127,195,255,.18); box-shadow: inset 0 0 0 2px var(--hot), 0 0 18px rgba(127,195,255,.3); }
+.aw .tile.top { box-shadow: inset 0 0 0 2px rgba(255,207,122,.75); } .aw .tile.top.sel { box-shadow: inset 0 0 0 2px var(--amber), 0 0 18px rgba(255,207,122,.3); }
+.aw .tile .pics { display: flex; gap: 4px; height: 34px; align-items: center; }
+.aw .tile .pics img { width: 32px; height: 32px; }
+.aw .tile .tt { margin-top: 4px; font-size: var(--small); line-height: 1.25; color: var(--title); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.aw .tile .pips { margin-left: auto; display: flex; gap: 3px; align-self: flex-start; padding-top: 4px; }
+.aw .pips i { width: 8px; height: 8px; background: rgba(111,130,156,.55); } .aw .pips i.on { background: var(--good); box-shadow: 0 0 6px var(--good); }
+.aw .tile .new { position: absolute; right: -5px; top: -5px; width: 10px; height: 10px; transform: rotate(45deg); background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+.aw .tile .trk { position: absolute; right: 8px; bottom: 6px; color: var(--amber); font-size: var(--small); }
+.aw .tile.more { width: 54px; display: flex; align-items: center; justify-content: center; padding: 0; color: var(--label); background: none; box-shadow: inset 0 0 0 1px rgba(127,195,255,.14); }
+.aw .foot { position: absolute; right: 0; bottom: 0; width: 676px; color: var(--dim); font-size: var(--small); text-align: right; }
+
+/* choices side by side (armour) */
+.aw .choices { position: absolute; left: 0; right: 0; top: 0; bottom: 26px; display: flex; justify-content: center; gap: 10px; }
+.aw .choice { position: relative; width: 186px; text-align: center; padding-top: 4px; }
+.aw .choice .suit { height: 214px; width: 150px; margin: 0 auto; background-size: cover; background-position: center top; }
+.aw .choice .nm { color: var(--title); margin-top: 2px; }
+.aw .choice:hover .suit { filter: brightness(1.25); }
+.aw .choice.sel::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: -8px; height: 3px; background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+
+/* ---- Status ---- */
+.aw .figure { position: absolute; left: 30px; top: 0; width: 420px; height: 620px; }
+.aw .figure .me { position: absolute; left: 60px; top: 20px; width: 300px; height: 534px; background-size: cover; background-position: center top; filter: drop-shadow(0 0 18px rgba(127,195,255,.25)); }
+.aw .figure .floor { width: 400px; margin-left: -200px; bottom: 30px; }
+.aw .call { position: absolute; font-size: var(--small); color: var(--label); white-space: nowrap; }
+.aw .call b { display: block; font-weight: normal; color: var(--title); font-size: var(--body); }
+.aw .call::before { content: ""; position: absolute; top: 12px; height: 1px; background: rgba(127,195,255,.6); }
+.aw .call.l::before { right: 100%; width: var(--w, 60px); margin-right: 8px; } .aw .call.r::before { left: 100%; width: var(--w, 60px); margin-left: 8px; }
+.aw .sheet { position: absolute; left: 480px; top: 0; width: 500px; }
+.aw .xpbar { display: flex; gap: 3px; margin-top: 14px; } .aw .xpbar i { width: 14px; height: 8px; background: rgba(5,8,15,.6); } .aw .xpbar i.on { background: var(--good); box-shadow: 0 0 6px var(--good); }
+.aw .road { display: flex; gap: 10px; margin-top: 18px; }
+.aw .stop { width: 152px; padding: 10px; background: rgba(5,8,15,.34); box-shadow: inset 0 0 0 1px rgba(127,195,255,.16); display: flex; gap: 10px; align-items: center; }
+.aw .stop img { width: 32px; height: 32px; flex: none; } .aw .stop .lab { line-height: 1.2; }
+.aw .stats { display: flex; gap: 10px; margin-top: 26px; }
+.aw .statcol { position: relative; width: 74px; text-align: center; padding: 10px 0 8px; }
+.aw .statcol .v { font-size: 40px; line-height: 1; color: var(--title); text-shadow: 0 0 12px rgba(127,195,255,.45); }
+.aw .statcol .plus { display: block; margin: 8px auto 0; width: 22px; height: 22px; transform: rotate(45deg); box-shadow: inset 0 0 0 2px var(--amber); color: var(--amber); }
+.aw .statcol .plus::after { content: "+"; display: block; transform: rotate(-45deg); line-height: 20px; font-size: var(--body); }
+.aw .statcol:hover, .aw .statcol.sel { background: rgba(127,195,255,.12); box-shadow: inset 0 0 0 1px rgba(127,195,255,.5); }
+.aw .statcol .add { position: absolute; right: 2px; top: 2px; color: var(--amber); font-size: var(--small); }
+.aw .statline { margin-top: 10px; min-height: 40px; color: var(--label); }
+.aw .panel { position: absolute; right: 0; top: 0; width: 440px; bottom: 0; padding-left: 28px; border-left: 1px solid rgba(127,195,255,.2); }
+.aw .medals { display: grid; grid-template-columns: repeat(8, 40px); gap: 8px; margin-top: 12px; }
+.aw .medal { width: 40px; height: 40px; position: relative; }
+.aw .medal::before { content: ""; position: absolute; inset: 8px; transform: rotate(45deg); background: rgba(5,8,15,.7); box-shadow: inset 0 0 0 2px rgba(111,130,156,.45); }
+.aw .medal.true::before { background: rgba(143,240,192,.35); box-shadow: inset 0 0 0 2px var(--good), 0 0 10px rgba(143,240,192,.6); }
+.aw .medal.near::before { box-shadow: inset 0 0 0 2px var(--amber), 0 0 10px rgba(255,207,122,.4); }
+.aw .medal.sel::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px var(--hot); }
+.aw .bar { height: 8px; background: rgba(5,8,15,.6); margin-top: 10px; } .aw .bar i { display: block; height: 8px; background: var(--amber); box-shadow: 0 0 8px rgba(255,207,122,.6); }
+.aw .lately { margin-top: 12px; } .aw .lately .it { display: flex; gap: 12px; align-items: center; height: 46px; } .aw .lately img { width: 32px; height: 32px; } .aw .lately .lab { margin-left: auto; }
+.aw .deeds { display: flex; gap: 34px; margin-top: 12px; }
+
+/* ---- Hearth ---- */
+.aw .rooms { position: absolute; left: 0; top: 96px; width: 1000px; display: grid; grid-template-columns: repeat(7, 132px); gap: 10px; }
+.aw .room { position: relative; height: 132px; text-align: center; padding-top: 14px; background: rgba(5,8,15,.34); box-shadow: inset 0 0 0 1px rgba(127,195,255,.14); color: var(--label); }
+.aw .room img { width: 64px; height: 64px; margin: 0 auto; filter: saturate(.25) brightness(.55); }
+.aw .room .nm { margin-top: 10px; font-size: var(--small); }
+.aw .room.built { background: linear-gradient(180deg, rgba(242,165,65,.05), rgba(242,165,65,.22)); box-shadow: inset 0 0 0 1px rgba(242,165,65,.55); color: var(--title); }
+.aw .room.built img, .aw .room.started img, .aw .room.next img { filter: drop-shadow(0 6px 8px rgba(0,0,0,.6)); }
+.aw .room.started { box-shadow: inset 0 0 0 2px rgba(255,207,122,.7); color: var(--title); }
+.aw .room.next { box-shadow: inset 0 0 0 2px var(--amber), 0 0 18px rgba(255,207,122,.25); color: var(--title); }
+.aw .room.unknown img { filter: brightness(0); opacity: .75; } .aw .room.unknown .nm { visibility: hidden; }
+.aw .room:hover, .aw .room.sel { background-color: rgba(127,195,255,.14); } .aw .room.sel { box-shadow: inset 0 0 0 2px var(--hot), 0 0 18px rgba(127,195,255,.3); }
+.aw .room .st { position: absolute; right: 8px; top: 6px; font-size: var(--small); } .aw .room.built .st { color: var(--good); } .aw .room.started .st, .aw .room.next .st { color: var(--amber); }
+.aw .homehead { position: absolute; left: 0; top: 0; width: 1000px; display: flex; gap: 34px; align-items: flex-end; }
+.aw .pipsrow { display: flex; gap: 4px; margin-top: 8px; } .aw .pipsrow i { width: 12px; height: 12px; background: rgba(111,130,156,.4); } .aw .pipsrow i.on { background: var(--lantern); box-shadow: 0 0 8px rgba(242,165,65,.7); }
+.aw .kin { position: absolute; left: 0; top: 548px; width: 1000px; }
+.aw .nooks { display: flex; gap: 10px; margin-top: 10px; }
+.aw .nook { width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; background: rgba(5,8,15,.34); box-shadow: inset 0 0 0 1px rgba(127,195,255,.14); color: var(--dim); font-size: var(--small); text-align: center; }
+.aw .nook img { width: 56px; height: 56px; } .aw .nook.dark img { filter: brightness(0); opacity: .7; }
+
+/* ---- Powers ---- */
+.aw .sockets { display: flex; gap: 14px; margin-top: 10px; }
+.aw .socket { width: 96px; text-align: center; } .aw .socket .well { width: 96px; height: 96px; } .aw .socket .well img { width: 72px; height: 72px; }
+.aw .socket kbd { margin-top: 8px; } .aw .socket.gap { margin-left: 22px; }
+.aw .socket.fits .well { box-shadow: inset 0 0 0 2px var(--amber), 0 0 16px rgba(255,207,122,.3); }
+.aw .pgrid { display: grid; grid-template-columns: repeat(13, 64px); gap: 8px; margin-top: 10px; }
+.aw .pw { position: relative; width: 64px; height: 64px; background: rgba(5,8,15,.4); box-shadow: inset 0 0 0 1px rgba(127,195,255,.16); display: flex; align-items: center; justify-content: center; }
+.aw .pw img { width: 48px; height: 48px; } .aw .pw:hover { box-shadow: inset 0 0 0 1px var(--edge); } .aw .pw.sel { box-shadow: inset 0 0 0 2px var(--amber), 0 0 14px rgba(255,207,122,.35); }
+.aw .pw .lv { position: absolute; left: 4px; bottom: 3px; display: flex; gap: 2px; } .aw .pw .lv i { width: 5px; height: 5px; background: var(--amber); }
+.aw .pw .on { position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; background: var(--edge); }
+.aw .energy { width: 300px; height: 10px; background: rgba(5,8,15,.6); } .aw .energy i { display: block; height: 10px; width: 100%; background: var(--edge); box-shadow: 0 0 10px var(--edge); }
+
+/* ---- Journal ---- */
+.aw .index { position: absolute; left: 0; top: 0; width: 84px; bottom: 0; display: flex; flex-direction: column; gap: 4px; }
+.aw .index button { position: relative; width: 84px; height: 54px; display: flex; align-items: center; gap: 6px; padding-left: 8px; color: var(--label); }
+.aw .index button img { width: 28px; height: 28px; } .aw .index button span { font-size: var(--micro); }
+.aw .index button.on { background: linear-gradient(90deg, rgba(127,195,255,.2), rgba(127,195,255,0)); color: var(--title); } .aw .index button:hover { color: var(--title); }
+.aw .wall { position: absolute; left: 104px; top: 0; right: 468px; bottom: 0; overflow: hidden; }
+.aw .wall .inner { position: absolute; left: 0; right: 0; top: 0; transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+.aw .shelf { padding: 0 0 22px; } .aw .shelf .hd { display: flex; gap: 12px; align-items: baseline; margin-bottom: 10px; }
+.aw .slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.aw .slot { position: relative; width: 72px; height: 72px; background: rgba(5,8,15,.4); box-shadow: inset 0 0 0 1px rgba(127,195,255,.12); display: flex; align-items: center; justify-content: center; }
+.aw .slot img { width: 48px; height: 48px; } .aw .slot.dark img { filter: brightness(0); opacity: .55; } .aw .slot.dark { cursor: default; }
+.aw .slot.found:hover { box-shadow: inset 0 0 0 1px var(--edge); } .aw .slot.sel { box-shadow: inset 0 0 0 2px var(--hot), 0 0 14px rgba(127,195,255,.35); }
+.aw .slot.wide { width: 152px; height: 86px; } .aw .slot.wide img { width: 152px; height: 86px; image-rendering: auto; } .aw .slot.wide.dark { background: rgba(5,8,15,.55); }
+.aw .slot .new { position: absolute; right: 5px; top: 5px; width: 8px; height: 8px; transform: rotate(45deg); background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.aw .bellrow { display: grid; grid-template-columns: repeat(25, 26px); gap: 4px; }
+.aw .bellrow i { width: 26px; height: 26px; background: rgba(5,8,15,.5); box-shadow: inset 0 0 0 1px rgba(127,195,255,.10); display: flex; align-items: center; justify-content: center; }
+.aw .bellrow i img { width: 20px; height: 20px; } .aw .bellrow i.dark img { filter: brightness(0); opacity: .4; }
+.aw .story .ev { display: flex; align-items: center; gap: 12px; height: 44px; } .aw .story img { width: 28px; height: 28px; } .aw .story .lab { margin-left: auto; }
+
+/* ---- the panel that speaks about the thing in focus ---- */
+.aw .detail .big { height: 190px; display: flex; align-items: center; justify-content: center; position: relative; }
+.aw .detail .big img { width: 144px; height: 144px; filter: drop-shadow(0 12px 12px rgba(0,0,0,.6)); }
+.aw .detail .big img.paint { width: 384px; height: 190px; object-fit: cover; image-rendering: auto; box-shadow: 0 0 0 1px rgba(127,195,255,.4); }
+.aw .detail .line { margin-top: 10px; color: var(--label); }
+.aw .detail .nums { display: flex; gap: 28px; margin-top: 18px; }
+.aw .detail .sec { margin-top: 20px; }
+
+/* ---- toast (undo) and the HUD card preview ---- */
+.aw .toast { position: absolute; left: 50%; bottom: 76px; transform: translateX(-50%); display: none; align-items: center; gap: 16px; padding: 10px 16px; background: rgba(15,23,36,.94); box-shadow: 0 0 0 1px rgba(127,195,255,.5), 0 0 24px rgba(127,195,255,.2); z-index: 5; }
+.aw .toast.show { display: flex; }
+.aw .hudcard { position: absolute; right: 28px; top: 28px; width: 380px; padding: 12px 14px; background: rgba(15,23,36,.9); box-shadow: 0 0 0 1px rgba(127,195,255,.45); }
+.aw.closed .plate, .aw.closed .rail, .aw.closed .you, .aw.closed > .hints { display: none; }
+.aw.closed .hints.shut { display: flex; }
+.aw .scan { animation: scan .22s steps(8) both; }
+@keyframes scan { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.aw.still .scan { animation: none; } .aw.still .wall .inner { transition: none; }
+@media (prefers-reduced-motion: reduce) { .aw .scan { animation: none; } .aw .wall .inner { transition: none; } }
+.aw .hallshot { position: absolute; inset: 0; background: #000 center / contain no-repeat; z-index: 8; display: none; }
+.aw .hallshot.show { display: block; }
+.aw .hallshot .back { position: absolute; left: 0; bottom: 0; width: 420px; height: 90px; cursor: pointer; }
+.aw .hallshot .hot { position: absolute; top: 150px; bottom: 120px; cursor: pointer; }
+.aw .hallshot .note { position: absolute; right: 20px; top: 14px; font-size: var(--small); color: var(--amber); background: rgba(0,0,0,.6); padding: 4px 8px; }
+.aw :focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
