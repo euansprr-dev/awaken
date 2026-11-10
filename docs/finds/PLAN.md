@@ -114,7 +114,7 @@ Nothing floats, every part is reachable, it can always be finished or restarted,
 4. [x] All 144 kinds, 18 sets of 8, each with a scene, a script and a walkthrough. `docs/finds/BOOK.md` lists them as built.
 5. [x] Journal slots, the glass, Atlas marks, leads (and the leads on the Tasks page). Not done: `Promises` for kinds that need a move.
 6. [x] The four `finds_` tests green with all 144. The walk simulation re-run with the field as built (SPEC §58.3).
-7. [~] Pushed; the full suite on CI; the gallery tour on GitHub's runners (`tools/autopilot/finds-gallery.txt`), one fix pass.
+7. [~] Pushed; the full suite on CI; the gallery tours on GitHub's runners (`tools/autopilot/finds-gallery-a/b/c.txt`, `finds-world.txt`, `finds-journal.txt`), one fix pass.
 8. [x] SPEC §58, BOOK.md, hand-over note.
 
 What is simplified or not built is SPEC §58.10. Nothing here has been seen in the game by a person yet.

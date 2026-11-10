@@ -20613,8 +20613,9 @@ ledger as found at a find.
 - GameTests: `finds_catalogue_is_whole` (18 sets of 8, numbered, with words, a walkthrough and a loot name),
   `finds_every_scene_stands` (58.4, two seeds a kind), `finds_every_kind_plays` (a scripted player does every kind's own
   walkthrough: it finishes, pays once and fills its slot), `finds_quiet_land_is_quiet` (58.3).
-- `tools/content/finds_tour.py` writes `tools/autopilot/finds-gallery.txt`: every kind on its own pad, then the twelve finds
-  nearest the spawn as the world made them. A look tour for GitHub's runners (`tools/tour-ci.sh`).
+- `tools/content/finds_tour.py` writes the look tours for GitHub's runners (`tools/tour-ci.sh`): `finds-gallery-a`, `-b` and `-c`
+  (every kind on its own pad, in three parts so each fits a runner's hour), `finds-world` (the twelve finds nearest the
+  spawn as the world made them) and `finds-journal` (the Places shelf empty, part filled and at its end).
 
 ### 58.10 Simplified or not built in the first run
 
