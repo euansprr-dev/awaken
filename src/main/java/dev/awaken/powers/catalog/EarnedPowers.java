@@ -513,6 +513,8 @@ public final class EarnedPowers {
             foot = groundUnder(level, aim.add(0, 0.5, 0), 12);
         } else {
             foot = groundUnder(level, c.pos().add(0, 0.2, 0), 24);
+            // your own column never starts above your feet (standing in a doorway's block, on a slab, half in a wall)
+            if (foot.y > c.pos().y) foot = new Vec3(foot.x, c.pos().y, foot.z);
             // cast in the air, it comes up from the ground beneath you and still carries you its full height
             extra = Math.max(0, c.pos().y - foot.y);
         }

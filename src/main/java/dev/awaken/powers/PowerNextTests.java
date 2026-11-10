@@ -138,7 +138,12 @@ final class PowerNextTests {
     }
 
     private static ServerPlayer player(GameTestHelper h, BlockPos rel) {
-        for (int x = -8; x <= 8; x++) for (int z = -8; z <= 8; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        for (int x = -8; x <= 8; x++) {
+            for (int z = -8; z <= 8; z++) {
+                h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+                for (int y = 1; y <= 3; y++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR); // whatever an earlier test left standing here
+            }
+        }
         ServerPlayer sp = h.makeMockServerPlayerInLevel();
         Vec3 at = h.absoluteVec(Vec3.atBottomCenterOf(rel));
         sp.snapTo(at.x, at.y, at.z, 0f, 0f);
@@ -300,7 +305,7 @@ final class PowerNextTests {
         PowerType.Result r = Casting.cast(sp, t, 0, false, 0f, 0f);
         h.assertTrue(r.ok(), "updraft casts: " + r.reason());
         Fx.testTick(sp, 3);
-        h.assertTrue(sp.hasEffect(MobEffects.LEVITATION), "you rise in your own column");
+        h.assertTrue(sp.hasEffect(MobEffects.LEVITATION), "you rise in your own column (at " + sp.position() + ", effects " + sp.getActiveEffects() + ")");
         h.assertTrue(in.hasEffect(MobEffects.LEVITATION) && in.getHealth() < in.getMaxHealth(), "what is caught in it is hit and thrown up");
         h.assertTrue(!out.hasEffect(MobEffects.LEVITATION) && out.getHealth() == out.getMaxHealth(), "and nothing outside it");
         h.assertTrue(Progression.profile(sp).counter("awaken:updraft_rides") == 1, "the ride is counted once");

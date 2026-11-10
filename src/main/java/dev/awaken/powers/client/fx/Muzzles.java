@@ -129,7 +129,8 @@ final class Muzzles {
      */
     static boolean palm(Entity e, boolean off, float pt, boolean firstPerson, double[] out) {
         // first person: only a cast profile's fists are the palm (a sprint's pumping fist is not where a charge starts)
-        if (firstPerson && CastAnims.profileOf(e.getId()) != 0 && fist(off, out)) return true;
+        // (a held cast's pose record may end with its first gesture: the hands are still the cast's for as long as the key is down)
+        if (firstPerson && (CastAnims.profileOf(e.getId()) != 0 || FxClient.ownHold()) && fist(off, out)) return true;
         if (sampled(e.getId(), off ? PALM_OFF : PALM, out)) return true;
         return baked(e, off ? PALM_OFF : PALM, pt, out);
     }

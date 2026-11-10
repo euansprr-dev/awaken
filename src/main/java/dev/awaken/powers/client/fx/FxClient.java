@@ -320,6 +320,11 @@ public final class FxClient {
         predictCast(p, type, level, 0, 0);
     }
 
+    /** Whether your own hands are holding a cast right now (a key down on it, or its loop still playing). */
+    static boolean ownHold() {
+        return HANDS.holding();
+    }
+
     /** As above, made a way (powers.fx.Ways) and with a take of its gesture: the clips' versions for them play. */
     public static void predictCast(LocalPlayer p, PowerType type, int level, int way, int take) {
         PowerFxDefs.Def def = PowerFxDefs.get(type.path);
