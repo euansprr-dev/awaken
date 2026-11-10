@@ -145,3 +145,18 @@ they are finished.
 
 Still to be judged by eye and ear, by Euan: everything in play. Nothing here has been played, and no sound has been heard in game.
 
+## After the hand-in: the light on what you wear (10 Nov 2026, evening)
+
+The hand-in above was merged into build at 66e0688df. Euan's next word was on the light over a plate: it must "map to the shape
+of the armor itself and the arm", with "custom styling for each armor piece for the different powers"; start on the finished sets,
+do the rest when the armour session is done.
+
+| Piece | State |
+|---|---|
+| The hooks: `FirstPersonDress.glow` and `surface`; the armour's side in `ArmourClient` | Built (6a033c097). The armour's shader answers the light with the type's colour; the worn arm mesh, its texture and accent are handed over. |
+| `ArmourLight`: the arm piece cut into cells, each given its part (cloth, plate, a line, what glows), the type drawn on the faces | Built for every set that has an arm mesh (all 29 fit the cutter). SPEC §32.N. |
+| A set's own record (gains, lead, soak, shimmer) | The C-rank five: Gatewrought, Vaultbreaker, Frostwalker, Sunward, Shardcrown. The other 24 take the default until their arms are finished. |
+| Off line: `tools/art/arm_light_preview.py` | Built; its rules and the game's are kept line for line. |
+| Seen in the game | Film 42866590182 (the first version, three sets): the light lies on the plates, cuff rings and crystals themselves, nothing floats or shows through. It also washed the whole arm pale (every lit cell spilt glow) and covered cloth and plate too heavily. Fixed since: cloth and plate take a tint that follows their own painting, only the lines spill, ink is thinner, a set's accent colour counts as a line. The film of that version was still queued on CI when this was written. |
+| Not done | Records for the E, D, B, A and S sets (waiting for their arms). No light on a set's awakened or living arm parts. Third person. Legs. |
+
