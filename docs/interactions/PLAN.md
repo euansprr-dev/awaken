@@ -430,4 +430,12 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
   crouch, embers and the workstations all drawing, and three faults: the table's view turned a few degrees by its
   result, the workstations framed so close that three slots filled the screen, and the game's own hand in the corner
   before a furnace. All fixed (SPEC §63.1, §63.6) and guarded by tests (square on; the whole top in the room).
+- Run 42883680457 (second, all 69 shots): the fixes hold (square views, whole workstations, no stray hand, the hint
+  gone); the glass screens, the lever and bell, and the body clips (a lunge before a furnace, a bend to a chest, arms
+  to a table) all draw. It showed three more faults, fixed: the stacks that should lie in an open chest were drawn
+  inside its solid base and never seen; at a brewing stand the hand never met the carried stack and two resting arms
+  lay across the frame; an empty main hand waited under the strip's glass as a dark shape. It could not show the lid
+  in your hands (the script held a block; the lift needs both hands free) and its film is a frame every ten ticks,
+  too slow to judge a five-tick glide or a seven-tick reach.
+- `tools/autopilot/hands-at-work-b.txt` films those three scenes again.
 

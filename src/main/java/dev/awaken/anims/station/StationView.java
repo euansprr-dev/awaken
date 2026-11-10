@@ -272,11 +272,21 @@ public final class StationView {
      */
     public static boolean onFace(Station s, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my,
                                  int guiW, int guiH, double[] out) {
+        return onUpright(s, 0.5 + FURNACE_HOLD, ex, ey, ez, rot, fov, aspect, mx, my, guiW, guiH, out);
+    }
+
+    /**
+     * Where the pointer's line meets the upright plane that stands {@code toward} out from the station's middle on your
+     * side, square to the way in: a furnace's is just out from its face, a brewing stand's passes through its middle
+     * (where its bottles hang). False when the line never reaches it.
+     */
+    public static boolean onUpright(Station s, double toward, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my,
+                                    int guiW, int guiH, double[] out) {
         float tan = (float) Math.tan(Math.toRadians(fov) / 2);
         Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
         double along = d.x * s.fx() + d.z * s.fz();
         if (along < 1e-4) return false;
-        double px = s.pos().getX() + 0.5 - s.fx() * (0.5 + FURNACE_HOLD), pz = s.pos().getZ() + 0.5 - s.fz() * (0.5 + FURNACE_HOLD);
+        double px = s.pos().getX() + 0.5 - s.fx() * toward, pz = s.pos().getZ() + 0.5 - s.fz() * toward;
         double t = ((px - ex) * s.fx() + (pz - ez) * s.fz()) / along;
         if (t <= 0) return false;
         out[0] = ex + d.x * t;

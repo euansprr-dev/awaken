@@ -103,6 +103,11 @@ public final class StationClient {
         bus.addListener(ComputeFovModifierEvent.class, StationClient::onFovModifier);
         bus.addListener(ViewportEvent.ComputeFov.class, StationClient::onFov);
         bus.addListener(SubmitCustomGeometryEvent.class, StationClient::onSubmit);
+        // the game's "name of what you now hold" line sits where a scene's strip is: not while a station is worked
+        bus.addListener(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, e -> {
+            if (e.getName().equals(net.neoforged.neoforge.client.gui.VanillaGuiLayers.SELECTED_ITEM_NAME)
+                    && Minecraft.getInstance().gui.screen() instanceof StationScreen<?>) e.setCanceled(true);
+        });
         FirstPerson.world("anims_station", 200, StationClient::pose);
     }
 

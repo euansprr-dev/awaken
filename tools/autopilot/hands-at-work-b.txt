@@ -1,0 +1,136 @@
+# Hands at Work, the three scenes the second look run (42883680457) could not settle: a chest opened with empty hands
+# (the lid in your hands; what lies in it), the brewing stand (your hand under the stack you carry), and the crafting
+# table at rest (both hands off their corners). Shots h2_*. Screens are shut with Esc, as a player shuts them.
+# Run on CI: tools/tour-ci.sh tools/autopilot/hands-at-work-b.txt 1500
+# ci knobs: PACK=feel
+world hands_at_work_b survival 4312
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+screen close
+gui 0
+window 1708 960
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+key dismiss
+wait 10
+screen close
+cmd effect give @s minecraft:slow_falling 30 1 true
+cmd tp @s 0.5 201 0.5 0 0
+wait 200
+cmd fill -4 199 -6 14 199 8 minecraft:smooth_stone
+cmd fill -4 200 -6 14 206 8 minecraft:air
+cmd fill -4 200 5 14 203 5 minecraft:spruce_planks
+cmd setblock 1 200 3 minecraft:crafting_table
+cmd setblock 5 200 3 minecraft:brewing_stand
+cmd setblock 9 200 3 minecraft:chest[facing=north]
+cmd item replace block 9 200 3 container.0 with minecraft:diamond 12
+cmd item replace block 9 200 3 container.1 with minecraft:oak_log 64
+cmd item replace block 9 200 3 container.2 with minecraft:iron_ingot 30
+cmd item replace block 9 200 3 container.4 with minecraft:bread 8
+cmd item replace block 9 200 3 container.13 with minecraft:golden_apple 3
+cmd clear @s
+camera first
+wait 20
+
+# ---- a chest, empty-handed: the lid moment a few ticks at a time, then looking down into it past the screen's foot ----
+cmd tp @s 9.5 200 1.9 0 55
+wait 20
+cmd awaken ascent pilot use
+wait 3
+shotnow h2_chest_lid_a
+wait 4
+shotnow h2_chest_lid_b
+wait 12
+shotnow h2_chest_open
+screenkey esc
+wait 4
+shotnow h2_chest_lid_down
+wait 30
+camera back
+wait 10
+cmd awaken ascent pilot use
+wait 20
+shotnow h2_chest_3p
+screenkey esc
+wait 30
+camera first
+wait 10
+
+# ---- the brewing stand: a bottle carried to an arm, the wart to the top ----
+cmd give @s minecraft:potion[potion_contents={potion:"minecraft:water"}]
+cmd give @s minecraft:potion[potion_contents={potion:"minecraft:water"}]
+cmd give @s minecraft:nether_wart 4
+cmd give @s minecraft:blaze_powder 2
+cmd tp @s 5.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot use
+wait 30
+shotnow h2_brewing_rest
+cmd awaken ascent pilot station 32 0
+wait 6
+cmd awaken ascent pilot hover 0
+wait 10
+shotnow h2_brewing_carry_bottle
+cmd awaken ascent pilot station 0 0
+wait 10
+cmd awaken ascent pilot station 33 0
+wait 6
+cmd awaken ascent pilot station 1 0
+wait 10
+cmd awaken ascent pilot station 35 0
+wait 6
+cmd awaken ascent pilot station 4 0
+wait 10
+cmd awaken ascent pilot station 34 0
+wait 6
+cmd awaken ascent pilot hover 3
+wait 10
+shotnow h2_brewing_carry_wart
+cmd awaken ascent pilot station 3 0
+wait 30
+shotnow h2_brewing_brewing
+screenkey esc
+wait 30
+
+# ---- the table: at rest with the pointer over the grid and nothing carried, then carrying ----
+cmd clear @s
+cmd give @s minecraft:oak_planks 16
+cmd tp @s 1.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot use
+wait 30
+cmd awaken ascent pilot hover 5
+wait 100
+shotnow h2_table_rest
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot hover 5
+wait 10
+shotnow h2_table_carry
+cmd awaken ascent pilot station 5 1
+wait 14
+cmd awaken ascent pilot station 2 1
+wait 14
+cmd awaken ascent pilot station 37 0
+wait 8
+cmd awaken ascent pilot station 0 0
+wait 3
+shotnow h2_table_take
+wait 20
+screenkey esc
+wait 30
+info
+quit

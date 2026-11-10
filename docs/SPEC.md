@@ -21645,6 +21645,8 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   table stood turned a few degrees and a workstation's three slots filled the screen (CI tour, 10 Nov). Framed from
   your own eyes (the fallback) the view still turns to what it sees.
 - **The hint is read once:** whole for 3.5 s after the screen opens, gone over the next 0.6 s. The room keeps its size.
+  The game's own line naming what you now hold (`selected_item_name`) is not drawn while a station screen is open: it
+  sits where the strip is.
 - **The glide** is `StationView.glideTicks` long: 5 ticks from beside the table to 9 from 4.5 blocks (4.2 + 1.1 a block),
   4 if you were at a station in the last 12 seconds; out in the same time. `StationCamera` (the furnace's camera entity,
   now general) carries it; your body and your own look never move, and movement is held while the view is away (the
@@ -21679,8 +21681,8 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   the game draws over it. No elbow, no second piece, no sleeve end in view.
 - **Timing:** the hand comes in under a picked-up stack and goes back out on a 45 ms ease; set down, it dips 0.045 and
   comes back over 150 ms; picked up, the stack rises 0.03 over 140 ms. Empty, the main hand waits just off the near edge
-  under the pointer's column while the pointer is over the station, and off the near corner on its own side when it is
-  not (0.36 across, clear of the strip's glass), as the other hand always does. A slot you change without carrying (a shift-click, a
+  under the pointer's column only once it carries; with nothing in it, it rests off the near corner on its own side
+  (0.36 across, clear of the strip's glass), as the other hand always does. A slot you change without carrying (a shift-click, a
   number key) gets one 190 ms pass from the nearer hand. Every move is an ease toward a target from wherever the hand is
   (50 ms): a new target never sends it back to rest first.
 - **One side decides.** The pointer and your own clicks drive all of it (`StationClient.tick` reads slot changes within
@@ -21751,7 +21753,9 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
   `tools/art/specs/station_moves.py` through `core.api.PlayerClips`; without the animation library a beat is vanilla's
   arm swing. The body stands up the tick the presence goes.
 - **What others see lying there:** the stacks on a table someone else is working (as the scene lays them, with piles),
-  and in any chest or ender chest whose lid is up the largest stacks lying in it, two rows of three, for you too.
+  and in any chest or ender chest whose lid is up the largest stacks lying in it, two rows of three, for you too
+  (on the base's top face, 0.635 up: vanilla's chest is a closed box whose dark top is its inside; drawn at 0.2 they
+  were hidden in it, as the second look run showed).
   Within 16 blocks. A barrel's and a shulker box's insides cannot be seen and show nothing.
 - Tests: `stations_presence` (each block's kind; a crafting menu fits a table only; ten slots seen; no beat without a
   change; a changed square is a beat with its number though the result changed too; a second change inside 3 ticks is
@@ -21840,7 +21844,10 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   click sends vanilla's own button (`clickMenuButton`, `handleInventoryButtonClick`) with its sound.
 - **A brewing stand's** brewing and blaze powder left are the two thin lines over the strip, as a furnace's. While it
   brews, a small pale bubble of our own rises in each bottle every third tick (`StationFire.bubble`; not with reduced
-  motion).
+  motion). It stands upright, so it is worked as a furnace is: a carried stack is held on the upright plane 0.34 out
+  from the stand's middle (`StationView.onUpright`; in front of every bottle and the rod), your hand under it, and the
+  hands show only while they carry or make a pass (`Rig.noHands` between). Worked on the level plane of a bench its
+  hand never met the pointer and two resting arms lay across the frame (second look run).
 - **Taking the work:** an anvil's result is three blows on the piece by the hand that isn't carrying, a smithing
   table's one on the piece, a grindstone's one on the stone (a 190 ms pass each, `StationHands.blows`), seven sparks
   of our own off each as it lands (`StationFire.sparks`). The block's sound is vanilla's.

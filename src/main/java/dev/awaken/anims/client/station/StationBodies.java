@@ -207,7 +207,9 @@ final class StationBodies {
                     int n = StationClient.pile(st.getCount());
                     for (int k = 0; k < n; k++) {
                         ps.pushPose();
-                        ps.translate(pos.getX() + 0.5 + rx * across + at.fx() * in + rx * 0.014 * k - cam.x, pos.getY() + 0.2 + 0.03 * k - cam.y,
+                        // (on the base's top face, 10 texels up: vanilla's chest is a closed box whose dark top is its inside,
+                        // and anything lower is hidden in it)
+                        ps.translate(pos.getX() + 0.5 + rx * across + at.fx() * in + rx * 0.014 * k - cam.x, pos.getY() + 0.635 + 0.012 * k - cam.y,
                                 pos.getZ() + 0.5 + rz * across + at.fz() * in + rz * 0.014 * k - cam.z);
                         ps.rotateDegrees(Axis.YP, 180F - yaw + (i * 37 % 50) - 25);
                         ps.rotateDegrees(Axis.XP, 90F);

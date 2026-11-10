@@ -145,11 +145,16 @@ final class StationHands {
      * The world layer's source: your arms at the station, as world arms. {@code w}: how far the scene is in (0..1);
      * {@code screen}: the open scene screen, or null while the view goes home.
      */
+    /** A stack carried before a brewing stand is held this far out from its middle: in front of every bottle and the rod. */
+    private static final double STAND_HOLD = 0.34;
+
     static boolean pose(float w, FirstPerson.Rig rig, @org.jspecify.annotations.Nullable StationScreen<?> screen) {
         Minecraft mc = Minecraft.getInstance();
         Station s = StationClient.station;
         if (s == null || mc.player == null) return false;
-        boolean furnace = s.kind() == Kind.FURNACE;
+        // a furnace is worked through its face and a brewing stand stands upright: both on an upright plane, with hands that
+        // show only while they work (resting before either they would be two arms across the frame)
+        boolean furnace = s.kind() == Kind.FURNACE, upright = s.kind().upright;
         long now = System.nanoTime();
         double dt = last == 0 ? 0 : Math.min(0.1, (now - last) / 1e9);
         last = now;
@@ -179,14 +184,20 @@ final class StationHands {
         double dip = dipU < 1 ? Math.sin(dipU * Math.PI) * DIP : 0, lift = liftU < 1 ? LIFT * (1 - smooth(liftU)) : 0;
         boolean above = screen != null && screen.layout != null && py < screen.layout.py0() && w > 0.6F;
         double hu = 0, hv = 0;
-        if (furnace) {
-            hasHit = above && StationView.onFace(s, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, px, py, gw, gh, HIT);
+        if (upright) {
+            hasHit = above && StationView.onUpright(s, furnace ? 0.5 + StationView.FURNACE_HOLD : STAND_HOLD, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect,
+                    px, py, gw, gh, HIT);
             if (hasHit) {
                 hu = (HIT[0] - cx) * s.rx() + (HIT[2] - cz) * s.rz();
                 if (Math.abs(hu) > 0.5 + REACH_OUT || HIT[1] < base - 0.2 || HIT[1] > base + 1.3) hasHit = false;
-                // set down, the hand goes in toward the mouth; picked up, the stack comes out to it
-                HIT[0] += s.fx() * (dip * 1.6 - lift);
-                HIT[2] += s.fz() * (dip * 1.6 - lift);
+                if (furnace) {
+                    // set down, the hand goes in toward the mouth; picked up, the stack comes out to it
+                    HIT[0] += s.fx() * (dip * 1.6 - lift);
+                    HIT[2] += s.fz() * (dip * 1.6 - lift);
+                } else {
+                    // on a stand it is set down onto its place and lifted off it
+                    HIT[1] += lift - dip;
+                }
             }
         } else {
             hasHit = above && StationView.onPlane(eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, px, py, gw, gh, top + StationView.HOVER - dip - lift, HIT);
@@ -208,15 +219,17 @@ final class StationHands {
         for (int h = 0; h < 2; h++) {
             int side = h == 0 ? 1 : -1;
             boolean isMain = side == main;
-            if (furnace) {
+            if (upright) {
                 T[0] = eye.x + s.rx() * side * 0.34 + s.fx() * 0.45;
                 T[1] = eye.y - 0.42;
                 T[2] = eye.z + s.rz() * side * 0.34 + s.fz() * 0.45;
             } else {
-                // (a hand with nothing to do rests off the near corner on its own side, clear of the strip's glass)
-                double u = isMain && hasHit ? Mth.clamp(hu, -0.3, 0.3) : side * 0.36, v = isMain && hasHit ? -0.56 : -0.6;
+                // a hand with nothing to do rests off the near corner on its own side, clear of the strip's glass; the main
+                // one comes in under the pointer's column only once it carries (waiting there empty it lay under the glass)
+                boolean under = isMain && hasHit && !carried.isEmpty();
+                double u = under ? Mth.clamp(hu, -0.3, 0.3) : side * 0.36, v = under ? -0.56 : -0.6;
                 T[0] = cx + s.rx() * u + s.fx() * v;
-                T[1] = top + (isMain && hasHit ? 0.05 : 0.03);
+                T[1] = top + (under ? 0.05 : 0.03);
                 T[2] = cz + s.rz() * u + s.fz() * v;
             }
             if (passSlot >= 0 && passU < 1 && passHand == side) {
@@ -224,7 +237,7 @@ final class StationHands {
                 double k = Math.sin(Math.min(1, passU) * Math.PI);
                 double ox = furnace ? -s.fx() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD) : 0, oz = furnace ? -s.fz() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD) : 0;
                 T[0] += (P[0] + ox - T[0]) * k;
-                T[1] += (P[1] + (furnace ? 0 : StationView.HOVER) - T[1]) * k + (furnace ? 0 : 0.03 * k);
+                T[1] += (P[1] + (upright ? 0 : StationView.HOVER) - T[1]) * k + (upright ? 0 : 0.03 * k);
                 T[2] += (P[2] + oz - T[2]) * k;
             }
             int j = h * 3;
@@ -259,12 +272,12 @@ final class StationHands {
         // the arms: world arms at the station's own scale, each lying back toward you from its fist
         float hand = StationClient.ownsCamera() ? mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.hudFov : 70F;
         double lens = cam.getFov() <= 1F ? 1 : Math.tan(Math.toRadians(hand) / 2) / Math.tan(Math.toRadians(cam.getFov()) / 2);
-        double scale = furnace ? StationView.FIST / StationView.FURNACE_FIST : ARM_SCALE;
+        double scale = upright ? StationView.FIST / StationView.FURNACE_FIST : ARM_SCALE;
         rig.fx = s.fx();
         rig.fz = s.fz();
         rig.worldArms = true;
         sleeveOn = false;
-        double most = furnace || screen == null || screen.layout == null ? 0.3
+        double most = upright || screen == null || screen.layout == null ? 0.3
                 : StationView.acrossMost(s, screen.layout, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P);
         double c = smooth(carry);
         boolean posed = false;
@@ -281,12 +294,12 @@ final class StationHands {
             // how much of this hand shows: at a table always (it rests at the near edge); before a furnace only while it
             // works (resting there it would be a corner of arm in the frame, SPEC §24)
             float show = w;
-            if (furnace) show *= (float) Math.max(isMain ? c : 0, passing && passHand == side ? Math.sin(Math.min(1, passU) * Math.PI) : 0);
+            if (upright) show *= (float) Math.max(isMain ? c : 0, passing && passHand == side ? Math.sin(Math.min(1, passU) * Math.PI) : 0);
             if (show <= 0.01F) continue;
             // in and out of the scene: up from under the near edge
-            if (!furnace) y -= (1 - w) * 0.5;
+            if (!upright) y -= (1 - w) * 0.5;
             double lean = isMain ? Mth.clamp(speedX * 0.12 * c, -0.08, 0.08) : 0;
-            if (furnace) {
+            if (upright) {
                 // back toward you and down: to a point under the inventory strip's corner on the hand's own side
                 double dw0 = Math.sqrt((x - eye.x) * (x - eye.x) + (y - eye.y) * (y - eye.y) + (z - eye.z) * (z - eye.z));
                 if (screen != null && screen.layout != null) {
@@ -307,7 +320,7 @@ final class StationHands {
                 StationView.carry(s, x - s.rx() * lean, y, z - s.rz() * lean, side, most, ARM);
             }
             // the fist's middle sits just short of where the stack is held
-            double back = furnace ? 0.13 : StationView.HAND_BACK;
+            double back = upright ? 0.13 : StationView.HAND_BACK;
             double fxw = x + ARM[3] * back, fyw = y + ARM[4] * back, fzw = z + ARM[5] * back;
             ARM[0] = fxw;
             ARM[1] = fyw;
@@ -332,7 +345,7 @@ final class StationHands {
         }
         // before a furnace the hands are the scene's even while neither shows: the game's own hand and what it holds
         // would sit in the corner of the lowered view
-        if (furnace && !posed && w > 0.01F) {
+        if (upright && !posed && w > 0.01F) {
             rig.noHands = true;
             return true;
         }
