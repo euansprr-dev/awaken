@@ -321,5 +321,7 @@
   "subtitles.awaken.arms.hit_blunt": "Heavy blow crashes home",
   "subtitles.awaken.arms.glance": "Shot glances off a blade",
   "subtitles.awaken.arms.kill": "Foe falls",
-  "subtitles.awaken.arms.cleave": "Blade cleaves through"
+  "subtitles.awaken.arms.cleave": "Blade cleaves through",
+  "subtitles.awaken.fight.dull": "Blow lands without harm",
+  "subtitles.awaken.fight.draw": "Weapon drawn"
 }

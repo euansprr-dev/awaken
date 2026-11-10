@@ -247,6 +247,17 @@ final class ArmsFeel implements CombatFeedback.Sink {
         return nanos() < holdUntil;
     }
 
+    /** When the hold on the hands now began (the feel's clock): which freeze it is, for what plays through it (the weapon's shake). */
+    static long holdStart() {
+        return holdStart;
+    }
+
+    /** How far through the hold on the hands (0..1), or -1 when nothing holds them. */
+    static float holdU() {
+        long now = nanos();
+        return now >= holdUntil || holdUntil <= holdStart ? -1F : (now - holdStart) / (float) (holdUntil - holdStart);
+    }
+
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (fovTicks > 0) fovTicks--;

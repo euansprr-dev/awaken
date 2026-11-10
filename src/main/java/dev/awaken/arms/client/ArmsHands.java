@@ -8,7 +8,9 @@ import dev.awaken.arms.ArmsItems;
 import dev.awaken.arms.ChargeDraw;
 import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.HandPose;
+import dev.awaken.arms.ArmsRules;
 import dev.awaken.arms.SwingBlend;
+import dev.awaken.arms.SwingWeight;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -41,7 +43,14 @@ final class ArmsHands {
     static void view(float partial, FirstPerson.View v) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
-        if (p == null || !ArmsPredict.fights(p)) return;
+        if (p == null || !ArmsPredict.fights(p)) {
+            FirstPerson.lagReach = FirstPerson.lagRate = 1F;
+            return;
+        }
+        // the hands trail the view's turn by the weapon's weight: daggers tight, a Maul further and slower (SwingWeight)
+        SwingWeight.Weight weight = ArmsComfort.livingHold() ? weightInHand(p) : SwingWeight.BLADE;
+        FirstPerson.lagReach = weight.lagReach();
+        FirstPerson.lagRate = weight.lagRate();
         trace(p);
         MAIN_D.zero();
         MAIN_Q.identity();
@@ -79,7 +88,7 @@ final class ArmsHands {
         float t = ArmsPredict.viewTime(), b = blowStart(def);
         if (own ? t < clip.trailFrom() || t > clip.trailTo() : t < b - 0.15F || t > b + def.active() + 0.6F) return;
         int argb = ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m);
-        float light = fs != null && fs.trail() != null ? fs.trail()[1] : 1F;
+        float light = (fs != null && fs.trail() != null ? fs.trail()[1] : 1F) * (ArmsPredict.drawnCut ? DRAWN_LIGHT : 1F);
         FpSwings.Hand h = clip == null ? FpSwings.Hand.MAIN : clip.hand();
         if (h != FpSwings.Hand.OFF) BladeTrail.open(p.getId(), 0, 60, argb, light);
         if (h == FpSwings.Hand.OFF || h == FpSwings.Hand.BOTH && own) BladeTrail.open(p.getId(), 1, 60, argb, light);
@@ -103,10 +112,31 @@ final class ArmsHands {
     static boolean transform(PoseStack ps, HumanoidArm arm, ItemStack stack, float partial, float equip) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
-        if (p == null || stack != p.getMainHandItem() || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
+        if (p == null || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
+        // the stack drawn is the one vanilla's hand saw on its last tick. A slot the server re-sends in between (wear, any
+        // sync) is a new object for the same weapon: told apart by identity, the hand's place fell back to vanilla's for
+        // those frames, and with the draw's own clock the weapon blinked out of view (the proof tour's film, 10 Nov)
+        ItemStack held = p.getMainHandItem();
+        if (stack != held && !ItemStack.isSameItem(stack, held)) return false;
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
+        // the draw (SwingWeight): a changed weapon comes up on its own clock with a turn of the wrist. Vanilla raises it only
+        // as fast as its attack cooldown refills, a cooldown the fighting never uses: nine ticks out of view for a Katana
+        // on film, over twenty by that rule for the Maul, and a strike thrown meanwhile was drawn that far under the frame
+        float turn = 0F;
+        if (ArmsComfort.weaponDraw()) {
+            double now = handsNow();
+            if (drawPending) {
+                drawPending = false;
+                drawFresh = true;
+                drawAt = now;
+            }
+            float t = (float) (now - drawAt);
+            equip = SwingWeight.drawSink(t, drawTicks);
+            turn = SwingWeight.drawTurn(t, drawTicks);
+        }
         ArmsHands.equip = equip;
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
+        if (turn != 0F) ps.rotateDegrees(com.mojang.math.Axis.ZP, inv * turn);
         guardOn(ps, p, stack, partial, inv, false);
         if (BladeTrail.open(p.getId()) && ArmsItems.of(stack.getItem()) == null) {
             // a vanilla blade: where its sprite's edge is drawn (our weapons sample their own mesh as they draw)
@@ -150,7 +180,7 @@ final class ArmsHands {
             d.set(-0.141F * g, 0.08F * g, 0.141F * g);
         }
         // a shot on it: knocked back toward the eye, up and away from the side it struck, its tip thrown back
-        d.add(inv * joltSide * JOLT_X * j, JOLT_Y * j, JOLT_Z * j);
+        d.add(inv * joltSide * JOLT_X * j, JOLT_Y * j, (joltToward ? -JOLT_Z : JOLT_Z) * j);
         GQ2.rotationX(JOLT_TIP * j * Mth.DEG_TO_RAD).mul(q, q);
     }
 
@@ -158,11 +188,30 @@ final class ArmsHands {
     private static final org.joml.Quaternionf GUARD_OFF = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf GQ = new org.joml.Quaternionf(), GQ2 = new org.joml.Quaternionf();
 
-    /** The guard's blend: up over its first ticks of use. */
+    /**
+     * The guard's blend. It comes up on a curve and seats with a small settle, in the two ticks the server's own raise
+     * takes, and lowers over three (SwingWeight): it rose in a straight line and was back at rest one frame after the key
+     * came up, measured on film. Only the picture: the deflect and block windows are the server's.
+     */
     private static float guard(LocalPlayer p, float partial) {
-        if (!p.isUsingItem() || p.getUseItem() != p.getMainHandItem()) return 0;
-        return Math.min(1F, p.getTicksUsingItem(partial) / GUARD_RISE);
+        boolean up = p.isUsingItem() && p.getUseItem() == p.getMainHandItem();
+        if (!ArmsComfort.guardEase()) {
+            guardWas = up;
+            return guardNow = up ? Math.min(1F, p.getTicksUsingItem(partial) / GUARD_RISE) : 0;
+        }
+        double now = handsNow();
+        if (up != guardWas) { // the key went down or came up: carry on from wherever the guard is
+            guardWas = up;
+            guardFrom = guardNow;
+            guardAt = now;
+        }
+        float t = (float) (now - guardAt);
+        return guardNow = up ? SwingWeight.guardUp(t, guardFrom) : SwingWeight.guardDown(t, guardFrom);
     }
+
+    private static boolean guardWas;
+    private static float guardFrom, guardNow;
+    private static double guardAt;
 
     // a shot on the guard (SPEC §25 "Shots"): the blade knocked back toward the eye, up, and away from the side it
     // struck (blocks), its tip thrown back (degrees); it rings out over JOLT_TICKS
@@ -175,7 +224,22 @@ final class ArmsHands {
         joltAt = ArmsPredict.ticks;
         joltSize = size;
         joltSide = -Mth.clamp(side, -1F, 1F); // pushed away from it
+        joltToward = false;
     }
+
+    /**
+     * A blow deflected: the blade is thrown at it and back, a third harder than a block's knock (SPEC §25 "Weight in the
+     * Hand": a parry answers the blow, it doesn't only take it).
+     */
+    static void parry(float side) {
+        joltAt = ArmsPredict.ticks;
+        joltSize = PARRY_SIZE;
+        joltSide = Mth.clamp(side, -1F, 1F); // toward where it came from
+        joltToward = true;
+    }
+
+    private static final float PARRY_SIZE = 1.3F;
+    private static boolean joltToward;
 
     /** The jolt now: at once, then a damped rebound. */
     private static float jolt(float partial) {
@@ -270,6 +334,14 @@ final class ArmsHands {
             REST_D.zero();
             REST_Q.identity();
         }
+        // the Katana rested two seconds is lowered (its drawn cut's bonus, shown): the rest pose itself moves there on an
+        // ease, so the strike that draws it is carried out of it by the blend like any other
+        float hip = hip(p, inHand) * (1F - guard(p, partial));
+        if (hip > 0F && !cutting && preview == null) {
+            REST_D.lerp(HIP_D, hip);
+            REST_Q.slerp(HIP_Q, hip);
+            stance = true;
+        }
         if (offStance && FpSwings.offStance(rest, OFF_REST_D, STANCE_Q)) { // a shield rests as a shield, never as the sword's mirror
             OFF_REST_D.mul(restK);
             OFF_REST_Q.identity().slerp(STANCE_Q, restK);
@@ -298,13 +370,34 @@ final class ArmsHands {
             OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? OFF_REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? OFF_REST_Q : ID,
                     offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
         }
-        boolean mainShown = mainMoves || mainIdle || stance || MAIN_B.active(now), offShown = offMoves || offIdle || offStance || OFF_B.active(now);
+        // the living hold (SwingWeight): a held weapon breathes, so it is shown even when nothing else moves it
+        float breath = preview == null && ArmsComfort.livingHold() ? SwingWeight.breath(ArmsFeel.nanos()) : 0F;
+        boolean pair = breath != 0F && !ArmsOffHand.shownTwin(p).isEmpty();
+        boolean mainShown = mainMoves || mainIdle || stance || breath != 0F || MAIN_B.active(now),
+                offShown = offMoves || offIdle || offStance || pair || OFF_B.active(now);
         if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.set(REST_D);
         if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.set(REST_Q);
         if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else if (offStance) OFF_D.set(OFF_REST_D); else OFF_D.zero();
         if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else if (offStance) OFF_Q.set(OFF_REST_Q); else OFF_Q.identity();
+        // the settle: where the striking hand stops after its cut it carries a little past and comes back once, by its weight
+        float settle = has && !drawn && !undecided && !cutting && preview == null && m != null ? settle(st, style, m, t) : 0F;
+        if (settle > 0F) {
+            SwingWeight.Weight w = SwingWeight.of(style.id());
+            if (mainMoves) settleOn(MAIN_D, MAIN_Q, w, settle);
+            if (offMoves) settleOn(OFF_D, OFF_Q, w, settle);
+        }
+        MAIN_D.y += breath;
+        OFF_D.y += breath;
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
+        // after the blend, so neither is carried into the next move: the shake of a blow frozen on the hands, and a glance's bounce
+        float shake = shakeNow();
+        if (shake != 0F) {
+            if (shakeHand != FpSwings.Hand.OFF) MAIN_D.add(shakeX * shake, shakeY * shake, 0F);
+            if (shakeHand != FpSwings.Hand.MAIN) OFF_D.add(-shakeX * shake, shakeY * shake, 0F); // the off hand's move is mirrored on its way to the screen
+        }
+        float bounce = bounceNow(now);
+        if (bounce != 0F) MAIN_D.add(-bounceX * BOUNCE * bounce, -bounceY * BOUNCE * bounce, BOUNCE_BACK * bounce);
         ArmsBlackBox.frame(m, t, (undecided ? ArmsBlackBox.UNDECIDED : 0) | (drawn ? ArmsBlackBox.DRAWN : 0) | (tremble ? ArmsBlackBox.CHARGING : 0)
                 | (ArmsPredict.waitHit ? ArmsBlackBox.WAITING : 0) | (Minecraft.getInstance().options.keyAttack.isDown() ? ArmsBlackBox.KEY : 0)
                 | (has ? ArmsBlackBox.HAS : 0) | (MAIN_B.active(now) ? ArmsBlackBox.BLENDING : 0), D, Q, MAIN_D, MAIN_Q, OFF_D, OFF_Q);
@@ -312,6 +405,203 @@ final class ArmsHands {
         if (mainShown) addMove(v.main, inv, MAIN_D, MAIN_Q);
         if (offShown) addMove(v.off, -inv, OFF_D, OFF_Q);
         return true;
+    }
+
+    // ---- the weight layers (SwingWeight; SPEC §25 "Weight in the Hand") ------------------------------------------------
+
+    /** The weight of the weapon in hand. */
+    private static SwingWeight.Weight weightInHand(LocalPlayer p) {
+        Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
+        return SwingWeight.of(style == null ? null : style.id());
+    }
+
+    // the shake: armed by a landed blow of the move on the hands, for the freeze that blow began
+    private static float shakeX, shakeY, shakeSize;
+    private static FpSwings.Hand shakeHand = FpSwings.Hand.MAIN;
+    private static long shakeHold = Long.MIN_VALUE;
+
+    /**
+     * A blow of the move on the hands has landed and frozen them: for that freeze the weapon shudders along the blow
+     * ({@code bx}, {@code by}: its travel on the screen, x to the right, y up, authored right-handed), by the style's weight.
+     */
+    static void shake(Archetypes.Loaded style, Archetype.Move move, float bx, float by) {
+        float n = (float) Math.sqrt(bx * bx + by * by);
+        if (n < 1e-4F) { // a thrust drives into the screen: it shudders up and down the blade's own line, a nod
+            bx = 0F;
+            by = 1F;
+            n = 1F;
+        }
+        shakeX = bx / n;
+        shakeY = by / n;
+        shakeSize = SwingWeight.of(style.id()).shake();
+        shakeHand = FpSwings.hand(FpSwings.style(style.id()), move);
+        shakeHold = ArmsFeel.holdStart();
+    }
+
+    /** The shake this frame (blocks along the blow, signed): nothing once its freeze is over, or with the layer off. */
+    private static float shakeNow() {
+        if (shakeHold == Long.MIN_VALUE) return 0F;
+        float u = ArmsFeel.holdU();
+        if (u < 0F || ArmsFeel.holdStart() != shakeHold) {
+            shakeHold = Long.MIN_VALUE;
+            return 0F;
+        }
+        return SwingWeight.shake(u, ArmsFeel.nanos()) * shakeSize * ArmsComfort.shake();
+    }
+
+    /** Where a clip's hand stops after its hit and the way it came in (SwingWeight.stop), worked out once a clip. */
+    private record Stop(float tick, org.joml.Vector3f way, org.joml.Vector3f axis) {}
+
+    private static final Stop NO_STOP = new Stop(-1F, new org.joml.Vector3f(), new org.joml.Vector3f());
+    private static final java.util.IdentityHashMap<FpSwings.Clip, Stop> STOPS = new java.util.IdentityHashMap<>();
+    private static Stop stopNow = NO_STOP;
+
+    /** The settle of the move on the hands at {@code t} ticks of its clock (0..1, scaled by the setting), its stop left in {@code stopNow}. */
+    private static float settle(FpSwings.@Nullable Style st, Archetypes.Loaded style, Archetype.Move m, float t) {
+        float k = ArmsComfort.settle();
+        FpSwings.Clip clip = FpSwings.clip(st, m);
+        Archetype.MoveDef def = style.move(m);
+        if (k <= 0F || clip == null || def == null) return 0F;
+        Stop stop = STOPS.get(clip);
+        if (stop == null) {
+            org.joml.Vector3f way = new org.joml.Vector3f(), axis = new org.joml.Vector3f();
+            float hit = m == Archetype.Move.HEAVY ? FpSwings.lands(st, m, def) : clip.lands() >= 0 ? clip.lands() : def.windup();
+            float tick = SwingWeight.stop(clip.keys(), FpSwings.dt(), hit, way, axis);
+            stop = tick < 0 ? NO_STOP : new Stop(tick, way, axis);
+            if (STOPS.size() > 512) STOPS.clear(); // a tuning session swaps whole sets of clips in
+            STOPS.put(clip, stop);
+        }
+        stopNow = stop;
+        return stop.tick() < 0 ? 0F : k * SwingWeight.settle(t - stop.tick(), SwingWeight.of(style.id()).settleTicks());
+    }
+
+    private static final org.joml.Quaternionf SETTLE_Q = new org.joml.Quaternionf();
+
+    /** The settle on a hand's pose: carried {@code k} of the weight's way past its stop, along the way it came in. */
+    private static void settleOn(org.joml.Vector3f d, org.joml.Quaternionf q, SwingWeight.Weight w, float k) {
+        d.fma(w.settle() * k, stopNow.way());
+        org.joml.Vector3f a = stopNow.axis();
+        if (a.lengthSquared() > 0F) q.premul(SETTLE_Q.fromAxisAngleDeg(a.x, a.y, a.z, w.settleTurn() * k));
+    }
+
+    // a glance off a wall (stage 5): the blade knocked back against its cut and toward the eye, rung out over two ticks and a half
+    private static final float BOUNCE = 0.05F, BOUNCE_BACK = 0.06F, BOUNCE_TICKS = 2.5F;
+    private static float bounceX, bounceY;
+    private static double bounceAt = -1000;
+
+    /** The blade met a block: it bounces back against the way it was cutting ({@code bx}, {@code by} on the screen, right-handed). */
+    static void bounce(float bx, float by) {
+        float n = Math.max(1e-4F, (float) Math.sqrt(bx * bx + by * by));
+        bounceX = bx / n;
+        bounceY = by / n;
+        bounceAt = handsNow();
+    }
+
+    private static float bounceNow(double now) {
+        float t = (float) (now - bounceAt);
+        if (t < 0F || t >= BOUNCE_TICKS) return 0F;
+        return (float) Math.exp(-t / 0.8F) * (1F - t / BOUNCE_TICKS);
+    }
+
+    // the draw: the weapon in hand changed (seen each tick, so a change made in third person is known too)
+    private static net.minecraft.world.item.@Nullable Item drawItem;
+    private static int drawSlot = -1, drawSoundAt = -1000;
+    private static boolean drawKnown, drawPending, drawFresh;
+    private static double drawAt = -1000;
+    private static float drawTicks = 8F;
+
+    /** Each tick: a change of the fighting weapon in hand starts its draw and plays its family's sound. */
+    static void tick(LocalPlayer p) {
+        Archetypes.Loaded style = ArmsPredict.fights(p) ? Arms.styleOf(p.getMainHandItem()) : null;
+        net.minecraft.world.item.Item item = style == null ? null : p.getMainHandItem().getItem();
+        int slot = p.getInventory().getSelectedSlot();
+        if (item == drawItem && slot == drawSlot) return;
+        boolean first = !drawKnown; // the weapon already in hand on joining a world isn't drawn
+        drawKnown = true;
+        drawItem = item;
+        drawSlot = slot;
+        if (style == null || first || !ArmsComfort.weaponDraw()) return;
+        drawPending = true; // its clock starts on the frame the new weapon is first drawn, once the old one has sunk
+        drawTicks = SwingWeight.of(style.id()).drawTicks();
+        if (ArmsPredict.ticks - drawSoundAt >= DRAW_SOUND_GAP) {
+            drawSoundAt = ArmsPredict.ticks;
+            ArmsAudio.draw(p, style.id());
+        }
+    }
+
+    /** Ticks between one draw's sound and the next: scrolling across the hotbar doesn't rattle. */
+    private static final int DRAW_SOUND_GAP = 4;
+
+    /** A strike has begun: a weapon still coming up is up within {@link SwingWeight#DRAW_HURRY} ticks, from where it is. */
+    static void hurryDraw() {
+        if (drawPending) { // not drawn once yet: it comes up with the strike
+            drawPending = false;
+            drawFresh = true;
+            drawAt = handsNow();
+            drawTicks = SwingWeight.DRAW_HURRY;
+            return;
+        }
+        double now = handsNow();
+        float t = (float) (now - drawAt);
+        if (t < 0F || t >= drawTicks - SwingWeight.DRAW_HURRY) return;
+        float u = t / drawTicks; // the same share of the way up, on a clock that ends two ticks from now
+        drawTicks = SwingWeight.DRAW_HURRY / (1F - u);
+        drawAt = now - u * drawTicks;
+    }
+
+    // the Katana's lowered rest: the hand just under the frame's edge, the blade laid low across the body with its point to
+    // the off side and its edge down, the guard showing (authored right-handed, from vanilla's resting hand). The first
+    // value hid the blade under the eye and showed a forearm across the frame (the proof tour, 10 Nov)
+    private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.10F, 0.15F, 0F);
+    private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(70F * Mth.DEG_TO_RAD).rotateX(-15F * Mth.DEG_TO_RAD);
+    /** How much brighter the drawn cut's ribbon burns. */
+    private static final float DRAWN_LIGHT = 1.5F;
+    private static boolean hipDown;
+    private static double hipAt = -1000;
+    private static float hipFrom, hipK;
+
+    /**
+     * How far the weapon in hand is lowered to its rest (0..1): a style with a drawn cut, rested as long as the cut asks,
+     * by the same count the server grants the cut on. It moves there and back on the hands' own clock from wherever it is
+     * (SwingWeight.lowered), so nothing that starts or stops the rest can jump the hand. A change of weapon is the one
+     * place it is set outright, and only where it can't be seen: the weapon going away keeps the pose it has while it
+     * sinks, and the one coming up takes its own rest on its first frame, still under the frame's edge, so a rested
+     * Katana rises straight to where it rests in one motion.
+     */
+    private static float hip(LocalPlayer p, Archetypes.@Nullable Loaded inHand) {
+        if (drawPending) return hipK;
+        int idle = inHand == null || !ArmsComfort.weaponDraw() ? 0 : inHand.def().traits().drawIdle();
+        boolean down = idle > 0 && ArmsPredict.restedTicks() >= idle;
+        double now = handsNow();
+        if (drawFresh) {
+            drawFresh = false;
+            hipDown = down;
+            hipFrom = hipK = down ? 1F : 0F;
+            hipAt = now - SwingWeight.LOWER_TICKS;
+            return hipK;
+        }
+        if (down != hipDown) {
+            hipDown = down;
+            hipFrom = hipK;
+            hipAt = now;
+            if (down) ArmsAudio.sheath(p);
+        }
+        return hipK = SwingWeight.lowered((float) (now - hipAt), hipFrom, down);
+    }
+
+    /** A world left: nothing is carried into the next. */
+    static void reset() {
+        drawKnown = drawPending = drawFresh = hipDown = guardWas = false;
+        hipFrom = hipK = 0F;
+        hipAt = -1000;
+        drawItem = null;
+        drawSlot = -1;
+        drawAt = bounceAt = -1000;
+        guardNow = guardFrom = 0F;
+        shakeHold = Long.MIN_VALUE;
+        STOPS.clear();
+        MAIN_B.reset();
+        OFF_B.reset();
     }
 
     /** Ticks since a move of the hands' clock (hit-stop holds pause it, the tick rate scales it). */
