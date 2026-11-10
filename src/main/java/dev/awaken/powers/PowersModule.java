@@ -63,6 +63,7 @@ public final class PowersModule {
         PowerLadderTests.register(); // the ladders (SPEC 36.9)
         TogetherPowerTests.register();
         StarterTests.register();
+        PowerNextTests.register(); // the next level: scores, takes, ways, duets, finishers, the earned five (SPEC 32.N, 50.8-50.11)
         PowersTests.registerIsolated(modBus);
     }
 

@@ -1980,7 +1980,7 @@
    "endMoment": "none",
    "lens": null,
    "origin": "palm",
-   "beginSound": "awaken:voice.breeze_inhale",
+   "beginSound": null,
    "holdSound": null,
    "begin1p": "fp_p_backdraft",
    "hold1p": null,

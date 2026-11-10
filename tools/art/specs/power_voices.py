@@ -280,7 +280,7 @@ voice("lightning_step",
       impact=[("thunder", 0, 0.45, 1.5, 0.03, 50), ("blast", 0, 0.7, 0.9), ("wind_burst", 0, 0.5, 1.2)])
 # Flight and gravity: pressure, and the air giving way
 voice("hover",
-      release=[("breeze_air", 0, 0.9, 0.8), ("flap", 0, 0.9, 0.7), ("elytra", 0, 0.4, 0.6, 0.02, 24)],
+      release=[("breeze_jump", 0, 0.8, 0.7), ("flap", 0, 0.9, 0.7), ("breeze_air", 0, 0.35, 0.7), ("elytra", 0, 0.4, 0.6, 0.02, 24)],
       end=[("breeze_land", 0, 0.8, 0.9), ("leather", 0, 0.7, 0.8)])
 voice("flight",
       release=[("wings", 0, 0.9, 0.8), ("breeze_jump", 0, 0.8, 0.8), ("elytra", 0, 0.5, 0.8, 0.02, 30)],
@@ -310,7 +310,7 @@ voice("gravity_flip",
 voice("beam",
       gather=[("breeze_inhale", 0, 0.8, 1.1), ("ignite", 0, 0.6, 0.8), ("conduit_on", 0, 0.5, 1.3, 0.02, 20)],
       hold=[("blaze", 0, 0.35, 1.4, 0.04, 13), ("fire", 0, 0.5, 1.2, 0.04, 13), ("conduit_hum", 0, 0.5, 1.5, 0.02, 13)],
-      end=[("fizz", 0, 0.6, 0.8), ("beacon_off", 0, 0.5, 1.4, 0.02, 20)])
+      end=[("fizz", 0, 0.6, 0.8), ("under_exit", 0, 0.4, 1.2), ("breath", 0, 0.5, 0.9)])
 voice("nova",
       gather=[("breeze_inhale", 0, 1.0, 0.8), ("ignite", 0, 0.5, 0.6)],
       peak=[("crossbow_end", 0, 0.5, 1.2)],
@@ -318,7 +318,7 @@ voice("nova",
                     ("thunder", 3, 0.2, 1.2, 0.03, 70)],
                    [("warden_boom", 0, 0.7, 1.2, 0.03, 44), ("fireball", 0, 0.8, 0.6), ("breeze_burst", 0, 0.7, 0.9), ("large_blast_far", 3, 0.6, 0.7)], duck=4))
 voice("barrier",
-      release=[("shulker_close", 0, 0.9, 0.7), ("conduit_on", 0, 0.6, 1.0, 0.02, 30), ("golem_walk", 0, 0.5, 0.8), ("breeze_deflect", 0, 0.6, 0.7)],
+      release=[("shulker_close", 0, 0.9, 0.7), ("conduit_on", 0, 0.3, 0.8, 0.02, 30), ("golem_walk", 0, 0.6, 0.8), ("breeze_deflect", 0, 0.45, 0.7), ("shield", 0, 0.5, 0.7)],
       end=[("glass", 0, 0.7, 0.6), ("bullet_hit", 0, 0.8, 0.6), ("breeze_deflect", 0, 0.8, 0.6), ("deepslate", 0, 0.5, 0.8)],
       extra_a=[("shulker_close", 0, 0.6, 0.9), ("leather", 0, 0.8, 0.7)])
 voice("charged_shot",
@@ -336,7 +336,7 @@ voice("overload",
                     ("wind_burst", 0, 0.8, 0.7)], duck=6))
 voice("prism_lance",
       release=[("breeze_shoot", 0, 0.9, 1.2), ("blast", 0, 0.6, 1.3), ("trident_throw", 0, 0.8, 1.2), ("glass", 0, 0.3, 1.2)],
-      hold=[("blaze", 0, 0.3, 1.5, 0.04, 14), ("fire", 0, 0.4, 1.4, 0.04, 14)])
+      hold=[("blaze", 0, 0.3, 1.0, 0.04, 14), ("fire", 0, 0.4, 1.2, 0.04, 14)])
 # Shadow: what isn't there
 voice("shadow_step",
       release=[("breath", 0, 0.9, 1.25, 0.03, 7), ("blink", 0, 0.45, 0.6)],
@@ -363,7 +363,7 @@ voice("foresight",
       extra_b=MUTE,
       end=[("under_exit", 0, 0.7, 1.1), ("breeze_burst", 0, 0.3, 1.4)])
 # Architect: stone set down by a careful hand
-voice("wall", release=[("stone", 0, 1.0, 0.7), ("piston_out", 0, 0.8, 0.8), ("deepslate", 1, 0.6, 0.9)])
+voice("wall", release=[("stone", 0, 1.0, 0.7), ("piston_out", 0, 0.45, 0.7), ("deepslate", 1, 0.7, 0.9)])
 voice("ramp", release=[("piston_out", 0, 0.8, 1.0), ("stone", 0, 0.9, 0.9), ("gravel", 1, 0.4, 1.1)], extra_a=[("breeze_slide", 0, 0.8, 1.1)])
 voice("floor", release=[("stone", 0, 1.0, 0.6), ("horse_land", 0, 0.5, 0.6), ("piston_in", 0, 0.7, 0.8)], extra_a=[("piston_out", 0, 0.8, 1.4), ("slime_big", 0, 0.5, 1.0)])
 voice("cone", release=[("stone", 0, 0.9, 1.1), ("dripstone", 0, 0.8, 1.0), ("click", 1, 0.5, 0.8)])
@@ -374,7 +374,7 @@ voice("rampart",
       extra_b=[("iron_door_open", 0, 0.8, 0.7)])
 voice("spire",
       release=[("warden_dig", 0, 0.7, 1.3, 0.03, 20), ("gravel", 0, 0.8, 0.7)],
-      impact=beat([("piston_out", 0, 1.0, 0.5), ("deepslate", 0, 0.9, 0.6), ("dripstone", 0, 0.8, 0.6), ("stone", 1, 0.9, 0.6)], surface=True),
+      impact=beat([("piston_out", 0, 0.5, 0.5), ("deepslate", 0, 0.9, 0.6), ("dripstone", 0, 0.7, 0.6), ("stone", 1, 0.9, 0.6), ("mace_ground", 0, 0.5, 0.8)], surface=True),
       tail=[("breeze_jump", 0, 0.7, 0.8), ("gravel", 0, 0.5, 0.9)])
 voice("collapse",
       release=beat([("creak_sway", 0, 0.9, 0.5), ("deepslate", 0, 1.0, 0.6), ("deepslate", 3, 0.9, 0.6), ("gravel", 5, 0.9, 0.6), ("explode", 2, 0.4, 0.6, 0.03, 36),
@@ -387,7 +387,7 @@ voice("citadel",
 # Tech: springs, latches and small motors
 voice("grapple",
       release=[("crossbow_shoot", 0, 0.9, 0.9), ("trident_throw", 0, 0.6, 1.2), ("bow", 0, 0.7, 0.8)],
-      impact=[("trident_ground", 0, 0.9, 0.9), ("crossbow_middle", 0, 0.8, 1.2), ("leash", 0, 0.8, 0.8)],
+      impact=[("trident_ground", 0, 0.5, 0.8), ("wood_hit", 0, 0.5, 0.9), ("crossbow_middle", 0, 0.8, 1.2), ("leash", 0, 0.8, 0.8)],
       extra_a=[("crit", 0, 0.9, 0.9), ("knockback", 0, 0.8, 0.8)])
 voice("jet_burst",
       release=[("fireball", 0, 0.8, 0.8), ("blaze", 0, 0.5, 1.2, 0.03, 16), ("ignite", 0, 0.8, 0.7), ("breeze_jump", 0, 0.7, 1.0)])
@@ -436,7 +436,7 @@ voice("void_maw",
       hold=[("whirlpool", 0, 0.6, 0.5), ("ravager_bite", 0, 0.5, 0.6), ("heartbeat", 0, 0.5, 0.6)],
       end=[("ravager_bite", 0, 1.0, 0.5), ("fangs", 0, 0.8, 0.6), ("golem_hit", 0, 0.6, 0.5)])
 voice("waking_dream",
-      release=[("blink", 0, 0.4, 0.5), ("under_enter", 0, 0.5, 1.2), ("door_open", 0, 0.9, 0.6), ("brush", 0, 0.7, 0.6)],
+      release=[("blink", 0, 0.4, 0.5), ("under_enter", 0, 0.5, 1.2), ("door_open", 0, 0.5, 0.6), ("brush", 0, 0.8, 0.6), ("page", 0, 0.6, 0.7)],
       end=[("door_close", 0, 0.9, 0.6), ("under_exit", 0, 0.4, 1.2)])
 voice("storm_call",
       release=beat([("thunder", 0, 0.9, 0.8, 0.03, 100), ("breeze_inhale", 0, 0.9, 0.6), ("wind_burst", 3, 0.6, 0.6), ("rain", 4, 0.5, 1.0, 0.02, 60)], duck=5))
@@ -476,9 +476,11 @@ voice("updraft",
       release=[("breeze_inhale", 0, 0.8, 0.8), ("breeze_jump", 2, 0.9, 0.7), ("wind_burst", 3, 0.6, 0.7), ("swoop", 3, 0.6, 0.6), ("leaves", 4, 0.6, 0.8), ("grass", 5, 0.5, 0.8),
                ("elytra", 4, 0.5, 0.7, 0.02, 110), ("breeze_air", 30, 0.5, 0.8), ("breeze_air", 70, 0.45, 0.85)],
       extra_a=[("breeze_shoot", 0, 0.8, 0.9), ("wings", 0, 0.7, 1.0), ("swoop", 0, 0.7, 0.9)])
-# Backdraft: the fires rushing in to you (gather), then one long breath of a furnace (release); a dragon under it at level 5.
+# Backdraft: the breath in as the hands gather (gather, on the press), the fires rushing in to you (peak, when it takes them), then
+# one long breath of a furnace (release); a dragon under it at level 5.
 voice("backdraft",
-      gather=[("breath", 0, 0.9, 0.6), ("fire", 0, 0.7, 1.4, 0.03, 8), ("fizz", 0, 0.6, 0.8), ("swoop", 0, 0.5, 0.7), ("ghast_charge", 0, 0.35, 0.7, 0.02, 10)],
+      gather=[("breeze_inhale", 0, 0.9, 0.7), ("breath", 0, 0.8, 0.6)],
+      peak=[("fire", 0, 0.7, 1.4, 0.03, 8), ("fizz", 0, 0.6, 0.8), ("swoop", 0, 0.5, 0.7), ("ghast_charge", 0, 0.35, 0.7, 0.02, 10)],
       release=beat([("fireball", 0, 1.0, 0.6), ("blaze", 0, 0.9, 0.6, 0.03, 22), ("furnace_roar", 0, 0.9, 0.7, 0.03, 30), ("large_blast", 0, 0.5, 0.6), ("breeze_shoot", 0, 0.5, 0.6),
                     ("crackle_fire", 4, 0.9, 0.7), ("crackle_fire", 10, 0.8, 0.8), ("crackle_fire", 18, 0.6, 0.9), ("fire", 2, 0.7, 0.8, 0.0, 26)], duck=4,
                    alt=[("fireball", 0, 1.0, 0.7), ("blaze", 0, 0.9, 0.7, 0.03, 22), ("furnace_roar", 1, 0.9, 0.6, 0.03, 30), ("blast", 0, 0.6, 0.5), ("ravager_roar", 0, 0.3, 0.6, 0.03, 18),

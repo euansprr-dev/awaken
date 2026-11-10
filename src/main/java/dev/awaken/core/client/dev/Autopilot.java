@@ -436,14 +436,14 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "key" -> {
-                KeyMapping k = KEYS.get(arg.trim());
+                KeyMapping k = keyOf(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
             }
             case "hold" -> { // hold <key> <ticks>: press it and keep it down that long; the script carries on meanwhile
                 String[] h = arg.trim().split("\\s+");
-                KeyMapping k = KEYS.get(h[0]);
+                KeyMapping k = keyOf(h[0]);
                 if (k == null || h.length < 2) Awaken.LOG.warn("[autopilot] hold <key> <ticks>: {}", arg);
                 else {
                     KeyMapping.click(k.getKey());
@@ -726,6 +726,11 @@ public final class Autopilot {
         mc.gui.setScreen(null);
         if (action != null) action.open().run();
         else Awaken.LOG.warn("[autopilot] the Map page opens nothing");
+    }
+
+    /** A key by its script name; "attack" is the game's own attack key (a blow with what the hand holds, at what the crosshair is on). */
+    private static KeyMapping keyOf(String name) {
+        return name.equals("attack") ? Minecraft.getInstance().options.keyAttack : KEYS.get(name);
     }
 
     private static final Map<String, KeyMapping> KEYS = Map.ofEntries(

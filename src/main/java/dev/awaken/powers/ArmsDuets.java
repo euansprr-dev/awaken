@@ -338,14 +338,17 @@ public final class ArmsDuets {
         Vec3 dir = flat.normalize();
         Vec3 from = p.position();
         ServerLevel level = p.level();
-        // the spikes run out ahead of the blow, one a tick, and hit what they come up under
+        // the spikes run out ahead of the blow, one a tick, and hit what they come up under: each body once, and through the
+        // moment of mercy the blow itself just gave it
+        java.util.Set<Integer> struck = new java.util.HashSet<>();
         for (int i = 1; i <= 7; i++) {
             int step = i;
             Scheduler.after(i, () -> {
                 Vec3 at = from.add(dir.scale(step));
                 Fx.of(p, "frost_nova", FxKind.PILLAR, at).scale(0.5 + step * 0.06).ticks(26).style(FxStyle.FROST).send();
                 for (LivingEntity e : Combat.foesAround(p, at.add(0, 0.6, 0), 1.3)) {
-                    Combat.hurtFrom(p, null, e, damage, Forces.Force.FROST, false);
+                    if (!struck.add(e.getId())) continue;
+                    Combat.hurtFrom(p, null, e, damage, Forces.Force.FROST, true);
                     Combat.knockFrom(e, at, 0.3, 0.55);
                 }
                 if (step % 2 == 1) sound(level, at, SoundEvents.GLASS_BREAK, 0.9f, 0.55f + step * 0.03f);

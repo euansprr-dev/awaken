@@ -85,14 +85,16 @@ public final class Casting {
 
     /**
      * The way the hands claim, when the body could be casting that way: it is in it now, or was within {@link #WAY_GRACE}
-     * ticks. Otherwise what the body is doing now. A claim of -1 (a command, a test) reads the body.
+     * ticks. Otherwise what the body is doing now. A cast with no claim (-1: a command, a test, a passive's own cast) is made
+     * standing: only hands that chose a way get its shape.
      */
     static int way(ServerPlayer player, int claimed, long now) {
+        if (claimed < 0) return dev.awaken.powers.fx.Ways.STAND;
         int here = dev.awaken.powers.fx.Ways.of(player);
         PowerState st = PowerState.of(player);
         if (here == dev.awaken.powers.fx.Ways.AIR) st.airAt = now;
         if (here == dev.awaken.powers.fx.Ways.RUN) st.runAt = now;
-        if (claimed < 0 || claimed == here) return here;
+        if (claimed == here) return here;
         if (claimed == dev.awaken.powers.fx.Ways.AIR && now - st.airAt <= WAY_GRACE) return claimed;
         if (claimed == dev.awaken.powers.fx.Ways.RUN && now - st.runAt <= WAY_GRACE) return claimed;
         if (claimed == dev.awaken.powers.fx.Ways.STAND && here == dev.awaken.powers.fx.Ways.RUN) return claimed; // a sprint just ended
@@ -192,6 +194,8 @@ public final class Casting {
     /** Begins a wind-up: the pose for everyone, then the power itself {@code windup} ticks later, aimed where the caster looks then. */
     private static PowerType.Result windUp(Cast c, CastProfiles.Profile prof) {
         Fx.pose(c);
+        // the wind-up's own beat of the power's voice, for a score that has one (a breath in before the fire); silent otherwise
+        Fx.voice(c, c.player.position(), dev.awaken.powers.fx.Voice.Beat.GATHER, 1f, null, 0f, 1f);
         if (prof.beginSound() != null) {
             var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(net.minecraft.resources.Identifier.parse(prof.beginSound()));
             sound.ifPresent(h -> c.sound(h, 0.8f, 1f));

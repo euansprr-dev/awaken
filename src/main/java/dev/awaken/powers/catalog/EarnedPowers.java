@@ -212,7 +212,11 @@ public final class EarnedPowers {
         Fx.at(c, FxKind.PALM, from).dir(at.subtract(from)).scale(0.9).send();
         if (t != null) {
             c.hurt(t, c.dmg() * 0.25f, Forces.Force.HEAT);
-            Fx.at(c, FxKind.AURA, at).caster(t).aux(FxKind.Aura.BRAND.ordinal()).ticks(ticks).noAnim().send();
+            // the mark shows as the palm lands (the clip's release tick), not on the press
+            var prof = dev.awaken.powers.fx.CastProfiles.byPower(c.type.path);
+            Scheduler.after(prof == null ? 1 : Math.max(1, prof.release()), () -> {
+                if (t.isAlive() && s.marks.contains(m)) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.BRAND.ordinal()).ticks(ticks).noAnim().send();
+            });
         } else {
             Fx.at(c, FxKind.GLYPH, at).scale(1.1).ticks(ticks).noAnim().send();
         }
@@ -650,7 +654,7 @@ public final class EarnedPowers {
         int n = fires;
         // every fire taken is drawn as a line of flame into the mouth
         for (int i = 0; i < Math.min(taken.size(), 12); i++) Fx.at(c, FxKind.TETHER, taken.get(i)).caster(null).to(mouth).ticks(5).noAnim().send();
-        c.voice(c.pos(), Beat.GATHER, 0.6f + 0.1f * n, PowerSounds.EMBER, 0.8f, 0.6f);
+        c.voice(c.pos(), Beat.PEAK, 0.6f + 0.1f * n, PowerSounds.EMBER, 0.8f, 0.6f);
         if (n > 0) Progression.count(p, "awaken:fires_breathed", n);
         float dmg = c.dmg() * (1 + 0.25f * n);
         double range = c.range(7) + 0.5 * n;
