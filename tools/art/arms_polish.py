@@ -168,6 +168,8 @@ def loft(stations, mat, edge_mat, part="blade", kind="double", d=2.0, flat=1.0, 
         ends = []
         t = (ap[:2] - S[k]) if last else (S[k + 1] - S[k])
         length = float(np.linalg.norm(t))
+        if length < 1e-6:
+            raise ValueError(f"{part}: two stations in one place at {S[k]}")
         t = t / length
         if k == 0 and cap:
             polys.append(list(range(m)))
@@ -402,11 +404,11 @@ def thick_of(W):
     return 1.0 if W < 3 else (2.0 if W < 9 else 2.5)
 
 
-def ground(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, d=None, back=None, tipx=1.0, flat=None,
+def ground(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, d=None, back=None, tipx=0.0, flat=None,
            point=True, flat_mat=None, **data):
     """arms_weapons.blade's stand-in: the same segments (y0, y1, width, core width) read as an outline, not a stack: the
     widest run kept, the root's shoulders sloped, and the point drawn from where the old steps began, a little lower,
-    to a true apex a texel past the old tip."""
+    to a true apex where the old tip ended (every weapon keeps its length, so no hold or swing has to be solved again)."""
     segs = sorted(segs)
     W = max(s[2] for s in segs)
     wide = [s for s in segs if s[2] == W]
@@ -435,6 +437,13 @@ def ground(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0
         if y_end > st[-1][1] + 1e-6:
             st.append((x + shift(last[0]), y_end, last[2]))
         return loft(st, core, edge, **kw, **data)
+    need = max(2.0, 0.6 * W)  # a point is never shorter than this
+    if y_end + tipx - st[-1][1] < need:
+        y_new = y_end + tipx - need
+        if len(st) > 1 and y_new > st[-2][1] + 0.5:
+            st[-1] = (st[-1][0], y_new, st[-1][2])
+        elif len(st) > 2:
+            st.pop()
     return loft(st, core, edge, apex=(x + shift(last[0]), y_end + tipx), **kw, **data)
 
 
@@ -483,11 +492,15 @@ def chain2(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
         return ORIG["chain"](x, y, links, part, side, back, stagger, cycle, **data)
     if mat in LORD_BLADES:  # painted as its own material, edge and all
         flip = bool(data.get("flip"))
+        if mat == "l_ice":
+            links = [(a, ln + (1 if i < 2 else 0), w, dp, m) for i, (a, ln, w, dp, m) in enumerate(links)]
         return curve(x, y, links, part, side, back, edge=-1 if (flip or part == "hook") else 1,
                      keep="back" if mat == "l_ice" else "centre", **data)
     if mat in KAT:
         if data.get("flip"):  # a scythe: the edge along the inside
             return curve(x, y, links, part, side, back, edge=-1, keep="centre", **data)
+        if links[0][2] >= 5:
+            links = [(a, ln + (1 if i < 2 else 0), w, dp, m) for i, (a, ln, w, dp, m) in enumerate(links)]
         return curve(x, y, links, part, side, back, edge=1, keep="back", **data)
     edge_mat = TUSK_EDGE.get(mat, "tusk_edge")
     if part != "blade":
@@ -506,9 +519,8 @@ def bit2(x0, cols, core, edge, edge_w=1, core_d=3, edge_d=1, side=-1, part="bit"
         x += side * w
         ya, yb = (cols[k + 1][1], cols[k + 1][2]) if k + 1 < n else (cols[-1][1] - 1, cols[-1][2] + 1)
         xs.append((x, ya, yb, core_d + (1.0 - core_d) * (k + 1) / n))
-    (xa, a0, a1, _), (xb, b0, b1, _) = xs[-2], xs[-1]
-    run = max(abs(xb - xa), 1e-6)
-    xs.append((x + side * edge_w, b0 + (b0 - a0) / run * edge_w, b1 + (b1 - a1) / run * edge_w, 0.0))
+    (_xb, b0, b1, _) = xs[-1]
+    xs.append((x + side * edge_w, b0, b1, 0.0))
     dd = dict(data)
     dd["edge_fixed"] = -1.0
     return wedge(xs, core, edge, part, top_mat, **dd)
@@ -590,9 +602,9 @@ class Ground:
         VX.mirror = ORIG_MIRROR
 
 
-# the Katana's curve: even from the collar to the point (the old one ran straight and hooked back at the tip), a
-# little longer, its point drawn up to the back (curve's keep="back")
-KATANA_LINKS = ((1, 5, 3, 2), (3, 5, 3, 2), (5, 5, 3, 2), (7, 4, 3, 2), (9, 4, 3, 2), (11, 3, 3, 2))
+# the Katana's curve: even from the collar to the point (the old one ran straight and hooked back at the tip), the same
+# length along the blade (22.5), its point drawn up to the back (curve's keep="back")
+KATANA_LINKS = ((1, 5, 3, 2), (3, 5, 3, 2), (5, 4, 3, 2), (7, 4, 3, 2), (9, 3, 3, 2), (11, 3, 3, 2))
 
 AFTER = {}  # (style, tier) or id -> design, where the stand-ins alone don't do it
 
@@ -624,7 +636,7 @@ def _depth(b, part, d):
 # the Beastbound Longsword: the tusk cleaver ground from its capped back to one edge, its point drawn up to the back
 AFTER[("longsword", "D")] = _swap(
     AW.beastbound, ("blade",),
-    lambda: loft([(0, 5, 5), (0, 23, 5)], "tusk", "tusk_edge", kind="single", d=2.0, flat=2.0, apex=(-2.5, 29.5), groove=-1),
+    lambda: loft([(0, 5, 5), (0, 23, 5)], "tusk", "tusk_edge", kind="single", d=2.0, flat=2.0, apex=(-2.5, 29.0), groove=-1),
     lambda b: _depth(b, "back", 3))
 
 
@@ -632,13 +644,13 @@ def _flint_cleaver():
     # the struck slab: both edges ground, a flake broken out of each, its top struck off at a slant up to the left corner
     st = [(0, 8, 9), (0, 13.6, 9), (-0.5, 14.2, 8), (-0.5, 14.8, 8), (0, 15.4, 9), (0, 21.6, 9), (0.5, 22.2, 8), (0.5, 22.8, 8),
           (0, 23.4, 9), (0, 30, 9)]
-    return loft(st, "flint", "flint_edge", d=2.0, flat=5.0, apex=(-4.5, 34.5))
+    return loft(st, "flint", "flint_edge", d=2.0, flat=5.0, apex=(-4.5, 34.0))
 
 
 AFTER[("greatblade", "E")] = _swap(AW.wildhide_greatblade, ("blade",), _flint_cleaver)
 AFTER[("greatblade", "D")] = _swap(
     AW.beastbound_greatblade, ("blade",),
-    lambda: loft([(-0.5, 8, 8), (-0.5, 28, 8)], "tusk", "tusk_edge", kind="single", d=2.5, flat=5.0, apex=(-4.5, 34.5), groove=-2),
+    lambda: loft([(-0.5, 8, 8), (-0.5, 28, 8)], "tusk", "tusk_edge", kind="single", d=2.5, flat=5.0, apex=(-4.5, 34.0), groove=-2),
     lambda b: _depth(b, "back", 3))
 
 
@@ -652,7 +664,7 @@ def _gate_window():
             if abs(b.h[2] - 1.5) < 1e-6:
                 b = VX.Box(b.c, [b.h[0], b.h[1], 1.0], b.mat, b.part, b.R, b.name, **b.data)
         out.append(b)
-    out += loft([(0, 30, 9), (0, 31, 9)], "slate", "mirror_edge", d=2.0, flat=5.0, apex=(0, 35.5))
+    out += loft([(0, 30, 9), (0, 31, 9)], "slate", "mirror_edge", d=2.0, flat=5.0, apex=(0, 34.0))
     return out, anchors, look
 
 
@@ -661,7 +673,7 @@ AFTER[("greatblade", "C")] = _gate_window
 
 def _flamberge():
     st = [(0, 8, 7)] + [(0, y0 + 1, max(AW.FLAMBERGE[k % 4], 5)) for k, y0 in enumerate(range(8, 29, 2))]
-    return loft(st, "veil", "veil_edge", d=2.5, flat=3.0, apex=(0, 35.0), span=AW.GB_SPAN)
+    return loft(st, "veil", "veil_edge", d=2.5, flat=3.0, apex=(0, 34.0), span=AW.GB_SPAN)
 
 
 AFTER[("greatblade", "B")] = _swap(AW.veilwoven_greatblade, ("blade",), _flamberge)
@@ -680,7 +692,7 @@ AFTER[("greatblade", "A")] = _swap(
 
 AFTER[("daggers", "E")] = _swap(
     AW.wildhide_daggers, ("blade",),
-    lambda: loft([(0, 3, 5), (0, 10, 5)], "flint", "flint_edge", kind="single", d=2.0, flat=2.0, apex=(-2.5, 14.5)))
+    lambda: loft([(0, 3, 5), (0, 10, 5)], "flint", "flint_edge", kind="single", d=2.0, flat=2.0, apex=(-2.5, 14.0)))
 
 
 def _axe(raw, tier, drop=(), top=None, bottom=None):
@@ -731,7 +743,7 @@ def sword2(t):
     k = AW.KIT[t]
     fuller = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}.get(t)
     B = [AW.grip(-4, 3, k["wrap"]), AW.ring(-5, -4, k["metal"], part="pommel")]
-    B += loft([(0, 5, 5), (0, 24, 5)], k["core"], k["edge"], d=2.0, flat=1.0, apex=(0, 32.0), flat_mat=fuller, span=(5, 31), column=0)
+    B += loft([(0, 5, 5), (0, 24, 5)], k["core"], k["edge"], d=2.0, flat=1.0, apex=(0, 31.0), flat_mat=fuller, span=(5, 31), column=0)
     B += [VX.slab(-6.5, 6.5, 3, 5, 3, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 3, k["metal"], "guard_top")]
     stone = (0.0, 4.0, 0.0)
     B.append(AW.stone_at(t, stone, 2, 5))
@@ -772,7 +784,7 @@ def AFTER_SWORD(t):
 def _sting():
     B, anchors, look = AW.hive_regent_daggers()
     out = [b for b in B if b.part not in ("sting",) and not b.part.startswith("barb")]
-    out += loft([(0, 3, 5), (0, 6, 5)], "l_sting", None, part="sting", d=3.0, flat=1.0, apex=(0, 16.6))
+    out += loft([(0, 3, 5), (0, 6, 5)], "l_sting", None, part="sting", d=3.0, flat=1.0, apex=(0, 16.0))
     for k, (x, y) in enumerate(((-2.2, 6.8), (2.2, 6.8), (-1.5, 10.2), (1.5, 10.2), (-0.9, 13.0), (0.9, 13.0))):
         out.append(VX.rbox((x, y, 0), (1, 2, 1), (-40 if x < 0 else 40), "obsidian", f"barb{k}"))
     return out, anchors, look
@@ -999,9 +1011,12 @@ def third_shot(row, built, look, size=(300, 400), yaw=-112, pitch=8):
     m = {"pos": np.concatenate([flip(fpos), flip(wpos)]), "nrm": np.concatenate([flip(fnrm), flip(wnrm)]),
          "uv": np.concatenate([flip(fuv), flip(wuv)]), "along": np.concatenate([np.zeros(len(fpos)), flip(built.along[:, None])[:, 0]]),
          "accent": AW.hex_rgb(look["accent"])}
-    lo, hi = m["pos"].min(axis=0), m["pos"].max(axis=0)
-    c = np.array([(lo[0] + hi[0]) / 2, (min(lo[1], 0) + max(hi[1], 2.0)) / 2, 0.0])
-    sc_px = min((size[1] - 16) / ((max(hi[1], 2.0) - min(lo[1], 0)) * 16), (size[0] - 10) / ((hi[0] - lo[0] + 0.6) * 16), 13.0)
+    view = MR.rot(yaw, pitch)
+    pv = m["pos"] @ view.T                      # fitted in the view's own frame: a long weapon points across it
+    lo, hi = pv.min(axis=0), pv.max(axis=0)
+    mid = (lo + hi) / 2
+    c = view.T @ mid
+    sc_px = min((size[1] - 14) / ((hi[1] - lo[1]) * 16), (size[0] - 10) / ((hi[0] - lo[0]) * 16), 13.0)
     img = MR.render(m, big, yaw, pitch, scale=sc_px, size=size, centre=c, time=0.27, bg=KEY)
     return img, c, sc_px
 
