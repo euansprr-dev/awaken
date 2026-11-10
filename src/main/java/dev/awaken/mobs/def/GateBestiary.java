@@ -370,15 +370,15 @@ final class GateBestiary {
     }
 
     private static void skyArchipelago(List<MobDef> out) {
-        out.add(m("gale_harpy", "Gale Harpy", Theme.SKY, Tier.NORMAL, Model.PHANTOM, "Dive Bomb from the clouds").hp(14).dmg(3).spd(0.45).tint(0xF0F4FF)
+        out.add(m("gale_harpy", "The Kite", Theme.SKY, Tier.NORMAL, Model.PHANTOM, "Skin stretched on a diamond of bones, a hooked beak at its point and a long knotted tail; it climbs, folds and drops").hp(14).dmg(3).spd(0.45).rig().size(0.9F, 0.5F).miss(30)
                 .ab(a(CHARGE, "Dive Bomb").wind(14).cd(90).range(14)).build());
-        out.add(m("cloud_breeze", "Cloud Breeze", Theme.SKY, Tier.NORMAL, Model.BREEZE, "Updraft: blows you towards the edge").hp(16).dmg(3).spd(0.28).traits(RANGED)
+        out.add(m("cloud_breeze", "The Puffer", Theme.SKY, Tier.NORMAL, Model.BREEZE, "A ball of cloud that swells to twice its size before it blows you toward the edge, and is small and slow after").hp(16).dmg(3).spd(0.28).traits(RANGED).rig().moves(Model.Move.FLY).size(0.7F, 0.7F).open(26)
                 .ab(a(GUST, "Updraft").radius(5).power(0.6F), a(BOLT, "Wind Bolt").bolt(BoltKind.GRAVITY)).build());
-        out.add(m("sky_raider", "Sky Raider", Theme.SKY, Tier.NORMAL, Model.PILLAGER, "Grav-Bolts that lift you off your feet").hp(18).dmg(3).spd(0.26).hold(Items.CROSSBOW).traits(RANGED)
+        out.add(m("sky_raider", "The Balloonist", Theme.SKY, Tier.NORMAL, Model.PILLAGER, "A small clawed thing hanging in a basket under a patched balloon; its bolts lift you, and a blow as it aims spoils the shot").hp(18).dmg(3).spd(0.26).traits(RANGED).rig().moves(Model.Move.FLY).size(0.7F, 1.4F).stopped()
                 .ab(a(BOLT, "Grav-Bolt").bolt(BoltKind.GRAVITY)).build());
-        out.add(m("thunderhead", "Thunderhead", Theme.SKY, Tier.ELITE, Model.GHAST, "Calls lightning onto marked circles").hp(22).dmg(4).spd(0.25).scale(0.35F).tint(0xC8D0E8).traits(RANGED)
+        out.add(m("thunderhead", "The Thunderhead", Theme.SKY, Tier.ELITE, Model.GHAST, "A flat-topped block of dark cloud with a bright core, trailing rain: the core brightens, then lightning lands on the marked ground").hp(22).dmg(4).spd(0.25).traits(RANGED).rig().size(1.2F, 1.0F).open(26)
                 .ab(a(RAIN, "Lightning Call").n(2).bolt(BoltKind.CHARGE), a(BOLT, "Static").n(2).bolt(BoltKind.CHARGE)).build());
-        out.add(m("the_gale", "The Gale", Theme.SKY, Tier.WARDEN, Model.BREEZE, "Gale Force and updraft traps over the void").hp(32).dmg(6).spd(0.3).scale(1.8F).traits(HUNTER)
+        out.add(m("the_gale", "The Gale", Theme.SKY, Tier.WARDEN, Model.BREEZE, "A turning column of wind with a wreck in it: sails, rope and a ship's wheel at its heart; the wind opens when it has just thrown you").hp(32).dmg(6).spd(0.3).traits(HUNTER).rig().moves(Model.Move.FLY).size(1.4F, 2.4F).open(30)
                 .ab(a(GUST, "Gale Force").radius(8).power(0.8F).heavy(), a(LIFT, "Updraft Trap"), a(BOLT, "Wind Spears").n(4).bolt(BoltKind.GRAVITY)).build());
         out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(46.5).dmg(5.73).spd(0.32).scale(3.2F).size(1.4F, 0.6F).bar(BossBarColor.BLUE).arena(28)
                 .intro("The ground is much too far below.")
@@ -389,15 +389,15 @@ final class GateBestiary {
     }
 
     private static void abyssalShrine(List<MobDef> out) {
-        out.add(m("abyss_watcher", "Abyss Watcher", Theme.ABYSS, Tier.NORMAL, Model.GUARDIAN, "Hollow Gaze: a beam that drains the spirit").hp(18).dmg(3.5).spd(0.25).traits(RANGED)
+        out.add(m("abyss_watcher", "The Watcher", Theme.ABYSS, Tier.NORMAL, Model.GUARDIAN, "A stone lamp-bowl that floats, one lidless eye on a stalk rising out of it; the stalk turns to you before the gaze").hp(18).dmg(3.5).spd(0.25).traits(RANGED).rig().size(0.7F, 1.4F).planted().open(24)
                 .ab(a(BEAM, "Hollow Gaze").bolt(BoltKind.VOID)).build());
-        out.add(m("silent_stalker", "Silent Stalker", Theme.ABYSS, Tier.NORMAL, Model.ENDERMAN, "Makes no sound at all; steps out beside you").hp(24).dmg(4).spd(0.3)
+        out.add(m("silent_stalker", "The Silent One", Theme.ABYSS, Tier.NORMAL, Model.ENDERMAN, "Long limbs and no outline, a hole in the light with two rings where eyes would be; it makes no sound at all").hp(24).dmg(4).spd(0.3).rig().size(1.0F, 1.4F).fall(28)
                 .ab(a(BLINK, "Soundless Step")).build());
-        out.add(m("void_spawn", "Void Spawn", Theme.ABYSS, Tier.NORMAL, Model.ENDERMITE, "Pours out of the dark and bites").hp(10).dmg(2.5).spd(0.3).scale(2.6F)
+        out.add(m("void_spawn", "The Void Spawn", Theme.ABYSS, Tier.NORMAL, Model.ENDERMITE, "Drops of dark with whip tails, hopping; they pour out of dark corners").hp(10).dmg(2.5).spd(0.3).rig().size(0.6F, 0.75F).miss(26)
                 .ab(a(LEAP, "Void Bite").radius(1.5F).power(0.9F).range(6).wind(10)).build());
-        out.add(m("hollow_priest", "Hollow Priest", Theme.ABYSS, Tier.ELITE, Model.WITHER_SKELETON, "Draws you in, then Hollow Bolts that wither").hp(26).dmg(5).spd(0.26).hold(Items.STONE_SWORD).traits(WITHER_TOUCH)
+        out.add(m("hollow_priest", "The Hollow Priest", Theme.ABYSS, Tier.ELITE, Model.WITHER_SKELETON, "A vestment held open round nothing, a ring of light above it; the robe opens before it pulls you in").hp(26).dmg(5).spd(0.26).traits(WITHER_TOUCH).rig().size(0.9F, 2.0F).open(28).fall(28)
                 .ab(a(BOLT, "Hollow Bolt").n(3).bolt(BoltKind.VOID), a(PULL, "Draw In")).build());
-        out.add(m("the_nothing", "The Nothing", Theme.ABYSS, Tier.WARDEN, Model.WITHER, "Three heads of nothing; an event horizon that pulls").hp(38).dmg(6.5).spd(0.28).scale(0.6F).traits(HUNTER)
+        out.add(m("the_nothing", "The Nothing", Theme.ABYSS, Tier.WARDEN, Model.WITHER, "Three hooded hollows on long necks from one sunken body; the pull comes when all three look at you together").hp(38).dmg(6.5).spd(0.28).traits(HUNTER).rig().moves(Model.Move.GROUND).size(1.6F, 2.2F).open(30).fall(40)
                 .ab(a(BOLT, "Nothing Skulls").n(3).bolt(BoltKind.VOID), a(PULL, "Event Horizon").power(0.7F).heavy(), a(DARKNESS, "Unlight")).build());
         out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(56.6).dmg(6.0).spd(0.28).scale(1.4F).size(0.85F, 3.65F).grounded().bar(BossBarColor.PURPLE).arena(24)
                 .intro("Nothing. No sound at all.")

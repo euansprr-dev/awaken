@@ -231,6 +231,19 @@ def spin_loop(rig, name, length, fn, bone, axis, turn, n=12):
     return keyed(rig, name, length, keys, loop=True)
 
 
+def turning(rig, name, length, fn, spins, n=12):
+    """spin_loop for several wheels at once: spins = {bone: (axis, degrees a loop)}."""
+    keys = []
+    for k in range(n + 1):
+        add = {}
+        for bone, (axis, turn) in spins.items():
+            rot = [0.0, 0.0, 0.0]
+            rot[axis] = turn * k / n
+            add[bone] = tuple(rot)
+        keys.append((length * k / n, plus(fn((k / n) % 1.0), add)))
+    return keyed(rig, name, length, keys, loop=True)
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Legs the motion layer can plant (SPEC §23.1). A leg bent more than ten degrees at rest bends freely on its IK.
 
