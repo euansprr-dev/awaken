@@ -85,7 +85,14 @@ final class CastFeel {
             Map.entry("ember_step", own(0f, 0.4f, 1.0f, 4, 0.03f, 4, 0, 0f)),
             Map.entry("frost_nova", own(0f, 2.0f, 0f, 8, -0.03f, 7, 50, 0.03f)),
             Map.entry("ghost_step", own(0f, 0f, 0f, 0, 0.04f, 5, 0, 0f)),
-            Map.entry("twin_strike", own(0f, 0f, 1.2f, 5, 0f, 0, 0, 0f)));
+            Map.entry("twin_strike", own(0f, 0f, 1.2f, 5, 0f, 0, 0, 0f)),
+            // the earned five: a press that sears, a lift of the chin as the lances form, the ground dropping away,
+            // a breath out that pushes you back, the land answering under your hand
+            Map.entry("brand", own(0.5f, 0.9f, -0.5f, 5, -0.02f, 5, 35, 0.02f)),
+            Map.entry("hoarfrost_lances", own(0f, -0.9f, 0f, 9, 0.015f, 10, 0, 0.02f)),
+            Map.entry("updraft", own(0f, -1.6f, 0f, 10, 0.03f, 12, 0, 0f)),
+            Map.entry("backdraft", own(0f, 1.6f, 0.3f, 9, -0.05f, 10, 40, 0.07f)),
+            Map.entry("thornwake", own(0f, 1.9f, 0f, 7, -0.025f, 7, 45, 0f)));
 
     /**
      * A power's moment at its release ({@code end} false) or its let-go ({@code end} true): its own when it has one for that

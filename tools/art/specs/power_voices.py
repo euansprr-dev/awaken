@@ -25,6 +25,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 ASSETS = os.environ.get("MC_ASSETS", "/Volumes/MEDIA/.gradle-home/caches/neoformruntime/assets")
 OUT_VOICES = os.path.join(ROOT, "src/main/resources/assets/awaken/power_voices.json")
 OUT_SOUNDS = os.path.join(ROOT, "src/main/merge/powers/assets/awaken/sounds.json")
+OUT_LANG = os.path.join(ROOT, "src/main/merge/powers_voice/assets/awaken/lang/en_us.json")
 BEATS = ["gather", "peak", "release", "travel", "impact", "tail", "echo", "hold", "end", "level5", "extra_a", "extra_b"]
 TONAL = ("block/amethyst", "note/", "block/bell", "random/levelup", "random/orb", "block/beacon/power", "item/goat_horn", "mob/allay",
          "block/respawn_anchor/charge", "block/vault", "records/", "music/", "block/copper_bulb", "entity/experience")
@@ -174,6 +175,25 @@ P("spyglass", "item/spyglass/use")
 P("bee", "mob/bee/loop#")
 P("silverfish", "mob/silverfish/step#")
 P("slime_big", "mob/slime/big#")
+# the forge, the cold and green things (the earned powers, docs/powers-next)
+P("crackle_fire", "block/furnace/fire_crackle#")
+P("furnace_roar", "block/blastfurnace/blastfurnace#", distance=36)
+P("fire_hurt", "entity/player/hurt/fire_hurt#")
+P("ghast_charge", "mob/ghast/charge", distance=32)
+P("dragon_growl", "mob/enderdragon/growl#", distance=48)
+P("powder_snow", "block/powder_snow/break#")
+P("snow_scoop", "item/bucket/fill_powder_snow#")
+P("pierce", "item/trident/pierce#")
+P("bowhit", "random/bowhit#")
+P("swoop", "mob/phantom/swoop#")
+P("leaves", "block/cherry_leaves/break#")
+P("grass", "dig/grass#")
+P("wood", "dig/wood#")
+P("roots", "block/roots/break#")
+P("rooted_dirt", "block/rooted_dirt/break#")
+P("mangrove", "block/mangrove_roots/break#")
+P("vine", "block/vine/break#")
+P("moss", "block/moss/break#")
 
 # ---- the scores ----------------------------------------------------------------------------------------------------------
 VOICES = OrderedDict()
@@ -434,6 +454,46 @@ voice("ghost_step",
 voice("twin_strike",
       release=[("mirror", 0, 0.6, 0.8, 0.03, 20), ("sweep", 0, 0.9, 0.8), ("sweep", 3, 0.8, 0.8)])
 
+# ---- Earned (SPEC 50, "Earned powers") ---------------------------------------------------------------------------------------
+# Brand: a hand on a body and the hiss of it (impact); the fire coming out when your blade lights it (release); the leap (echo).
+voice("brand",
+      impact=sets([("strong", 0, 0.8, 0.8), ("leather", 0, 0.7, 0.9), ("fizz", 1, 0.7, 0.7), ("ignite", 1, 0.8, 0.6), ("crackle_fire", 3, 0.8, 0.8), ("crackle_fire", 9, 0.6, 0.9)],
+                  [("slap", 0, 0.6, 0.7), ("strong", 0, 0.8, 0.9), ("fizz", 1, 0.8, 0.6), ("fire_hurt", 1, 0.5, 0.6), ("crackle_fire", 4, 0.8, 0.7)]),
+      release=beat([("fireball", 0, 0.9, 0.7), ("blast", 0, 0.7, 0.6), ("ignite", 0, 0.9, 0.5), ("mace_air", 0, 0.5, 0.8), ("blaze", 1, 0.7, 0.8, 0.03, 16), ("crackle_fire", 3, 0.9, 0.7),
+                    ("crackle_fire", 8, 0.7, 0.8), ("lava_pop", 5, 0.6, 0.7), ("fizz", 10, 0.4, 0.6)], surface=True, duck=3,
+                   alt=[("fireball", 0, 0.9, 0.8), ("large_blast", 0, 0.5, 0.7), ("fire_hurt", 0, 0.7, 0.5), ("mace_ground", 0, 0.5, 0.9), ("blaze", 1, 0.7, 0.7, 0.03, 16),
+                        ("crackle_fire", 2, 0.9, 0.8), ("lava_pop", 6, 0.6, 0.8)]),
+      echo=[("ignite", 0, 0.7, 0.9), ("fizz", 0, 0.5, 0.9), ("crackle_fire", 2, 0.6, 1.0)])
+# Hoarfrost Lances: ice growing out of the air by your ear (release); a thrown spear that breaks like ice (impact); the crown's ring.
+voice("hoarfrost_lances",
+      release=[("snow_scoop", 0, 0.8, 0.7), ("creak_freeze", 0, 0.9, 0.7), ("freeze", 2, 0.7, 0.9), ("dripstone", 3, 0.6, 1.1), ("dripstone", 5, 0.6, 1.2), ("dripstone", 7, 0.6, 1.3),
+               ("breeze_air", 0, 0.4, 1.1, 0.03, 20)],
+      impact=sets([("trident_throw", 0, 0.7, 1.2), ("pierce", 1, 0.9, 0.9), ("glass", 1, 0.45, 0.7), ("powder_snow", 1, 0.8, 0.8), ("freeze", 2, 0.6, 0.8)],
+                  [("bow", 0, 0.6, 0.8), ("bowhit", 1, 0.8, 0.7), ("dripstone", 1, 0.8, 0.8), ("powder_snow", 1, 0.8, 0.9), ("creak_freeze", 2, 0.5, 0.9)]),
+      extra_a=[("freeze", 0, 1.0, 0.6), ("creak_unfreeze", 0, 0.9, 0.5), ("glass", 0, 0.5, 0.5), ("dripstone", 1, 0.8, 0.7), ("dripstone", 3, 0.8, 0.8), ("wind_burst", 0, 0.4, 0.6)])
+# Updraft: the air drawn in, then let go upward, and it keeps going for as long as the column stands; the gate's throw.
+voice("updraft",
+      release=[("breeze_inhale", 0, 0.8, 0.8), ("breeze_jump", 2, 0.9, 0.7), ("wind_burst", 3, 0.6, 0.7), ("swoop", 3, 0.6, 0.6), ("leaves", 4, 0.6, 0.8), ("grass", 5, 0.5, 0.8),
+               ("elytra", 4, 0.5, 0.7, 0.02, 110), ("breeze_air", 30, 0.5, 0.8), ("breeze_air", 70, 0.45, 0.85)],
+      extra_a=[("breeze_shoot", 0, 0.8, 0.9), ("wings", 0, 0.7, 1.0), ("swoop", 0, 0.7, 0.9)])
+# Backdraft: the fires rushing in to you (gather), then one long breath of a furnace (release); a dragon under it at level 5.
+voice("backdraft",
+      gather=[("breath", 0, 0.9, 0.6), ("fire", 0, 0.7, 1.4, 0.03, 8), ("fizz", 0, 0.6, 0.8), ("swoop", 0, 0.5, 0.7), ("ghast_charge", 0, 0.35, 0.7, 0.02, 10)],
+      release=beat([("fireball", 0, 1.0, 0.6), ("blaze", 0, 0.9, 0.6, 0.03, 22), ("furnace_roar", 0, 0.9, 0.7, 0.03, 30), ("large_blast", 0, 0.5, 0.6), ("breeze_shoot", 0, 0.5, 0.6),
+                    ("crackle_fire", 4, 0.9, 0.7), ("crackle_fire", 10, 0.8, 0.8), ("crackle_fire", 18, 0.6, 0.9), ("fire", 2, 0.7, 0.8, 0.0, 26)], duck=4,
+                   alt=[("fireball", 0, 1.0, 0.7), ("blaze", 0, 0.9, 0.7, 0.03, 22), ("furnace_roar", 1, 0.9, 0.6, 0.03, 30), ("blast", 0, 0.6, 0.5), ("ravager_roar", 0, 0.3, 0.6, 0.03, 18),
+                        ("crackle_fire", 5, 0.9, 0.8), ("crackle_fire", 12, 0.7, 0.9), ("fire", 2, 0.7, 0.7, 0.0, 26)]),
+      level5=[("dragon_growl", 0, 0.6, 0.7), ("furnace_roar", 0, 0.8, 0.5, 0.02, 34)])
+# Thornwake: the ground turning over (release); wood and vine closing on a body (impact); the great root (extra).
+voice("thornwake",
+      release=beat([("mace_ground", 0, 0.45, 0.8, 0.02, 16), ("rooted_dirt", 0, 0.9, 0.7), ("roots", 1, 0.9, 0.6), ("creak_sway", 0, 0.8, 0.6), ("grass", 2, 0.7, 0.7), ("leaves", 3, 0.6, 0.8),
+                    ("gravel", 2, 0.6, 0.7)], surface=True,
+                   alt=[("warden_dig", 0, 0.35, 1.2, 0.02, 18), ("rooted_dirt", 0, 0.9, 0.8), ("mangrove", 1, 0.9, 0.6), ("creak_sway", 1, 0.8, 0.5), ("moss", 2, 0.7, 0.7), ("leaves", 3, 0.6, 0.9)]),
+      impact=sets([("mangrove", 0, 0.9, 0.7), ("vine", 0, 0.8, 0.7), ("wood", 0, 0.7, 0.6), ("creak_freeze", 1, 0.6, 0.8), ("leaves", 1, 0.5, 1.0)],
+                  [("roots", 0, 0.9, 0.7), ("wood_hit", 0, 0.4, 0.6), ("vine", 0, 0.8, 0.8), ("creak_sway", 1, 0.6, 0.9), ("leash", 0, 0.6, 0.6)]),
+      extra_a=[("warden_emerge", 0, 0.4, 1.1, 0.02, 30), ("wood_break", 0, 0.7, 0.5), ("mangrove", 0, 1.0, 0.5), ("mangrove", 3, 0.9, 0.6), ("creak_unfreeze", 2, 0.9, 0.5), ("rooted_dirt", 1, 0.9, 0.6),
+               ("leaves", 6, 0.7, 0.8), ("leaves", 12, 0.5, 0.9)])
+
 
 # ---- building ------------------------------------------------------------------------------------------------------------
 
@@ -497,8 +557,44 @@ def document():
     return out
 
 
+# What the subtitles say when a power sounds (one line a power: a score is many recordings, and none of their own subtitles
+# would be true). A power not listed says "<Name> is cast".
+SUBTITLES = {
+    "ground_slam": "Ground Slam lands", "leap": "Leap", "haymaker": "Haymaker lands", "terrain_rip": "Ground is ripped up", "shockwave": "Shockwave rolls out",
+    "brace": "Brace sets", "thunderclap": "Thunderclap", "dash": "Dash", "flow": "Time slows", "afterimage": "Afterimage splits off",
+    "lightning_step": "Lightning Step cracks", "hover": "Hover lifts", "flight": "Flight takes off", "gravity_well": "Gravity Well pulls", "telekinesis": "Telekinesis grips",
+    "meteor_dive": "Meteor Dive lands", "gravity_flip": "Gravity flips", "beam": "Beam burns", "nova": "Nova bursts", "barrier": "Barrier rises",
+    "charged_shot": "Charged Shot fires", "overload": "Overload bursts", "prism_lance": "Prism Lance burns", "shadow_step": "Shadow Step", "cloak": "Cloak closes",
+    "echo_swap": "Echo Swap", "legion": "Legion rises", "dominate": "Dominate takes hold", "read_intent": "Read Intent listens", "decoy": "Decoy is thrown",
+    "foresight": "Foresight opens", "wall": "Wall is set", "ramp": "Ramp is set", "floor": "Floor is set", "cone": "Cone is set", "rampart": "Rampart rises",
+    "spire": "Spire erupts", "collapse": "Collapse falls", "citadel": "Citadel rises", "grapple": "Grapple fires", "jet_burst": "Jets fire", "drone": "Drone launches",
+    "turret": "Turret deploys", "railgun": "Railgun fires", "nanite_skin": "Nanite Skin forms", "drone_swarm": "Drone Swarm launches", "spirit_palm": "Spirit Palm strikes",
+    "mend": "Mend heals", "third_eye": "Third Eye opens", "cord_lash": "Cord Lash cracks", "bulwark": "Bulwark rises", "hundred_palms": "Hundred Palms strike",
+    "void_maw": "Void Maw opens", "waking_dream": "Waking Dream shapes", "storm_call": "Storm Call strikes", "ember_step": "Ember Step burns", "frost_nova": "Frost Nova freezes",
+    "ghost_step": "Ghost Step", "twin_strike": "Twin Strike echoes", "brand": "Brand burns", "hoarfrost_lances": "Hoarfrost Lances fly", "updraft": "Updraft rises",
+    "backdraft": "Backdraft roars", "thornwake": "Roots wake",
+}
+
+
+def names():
+    import power_ladder_table as LT
+    return {p["id"]: p["name"] for p in LT.L}
+
+
+def subtitle_lang():
+    nm = names()
+    out = OrderedDict()
+    for power in VOICES:
+        out["subtitles.awaken.voice." + power] = SUBTITLES.get(power) or (nm.get(power, power.replace("_", " ").title()) + " is cast")
+    return out
+
+
 def sound_events(used):
     ev = OrderedDict()
+    # the subtitle's carrier: one event a power, played too quietly to hear when subtitles are on (powers.client.fx.PowerVoice)
+    for power in VOICES:
+        ev["voice.say." + power] = OrderedDict(subtitle="subtitles.awaken.voice." + power,
+                                                sounds=[OrderedDict(name="minecraft:random/click", volume=0.05, attenuation_distance=24)])
     for name in sorted(used):
         sources, distance = PALETTE[name]
         ev["voice." + name] = OrderedDict(sounds=[OrderedDict(name="minecraft:" + f, attenuation_distance=distance) for f in resolve(sources)])
@@ -518,6 +614,10 @@ def write():
     sounds.update(events)
     with open(OUT_SOUNDS, "w") as fh:
         json.dump(sounds, fh, indent=2)
+        fh.write("\n")
+    os.makedirs(os.path.dirname(OUT_LANG), exist_ok=True)
+    with open(OUT_LANG, "w") as fh:
+        json.dump(subtitle_lang(), fh, indent=1, ensure_ascii=False)
         fh.write("\n")
     return used, events
 

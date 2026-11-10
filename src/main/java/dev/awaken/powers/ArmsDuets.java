@@ -55,7 +55,11 @@ public final class ArmsDuets {
         LONG_REACH("Long Reach", "spirit_palm", "warstaff", "The palm travels down the staff, so it lands a staff's length further away.",
                 "Spirit Palm with a War-staff reaches 7.5 blocks in place of 4.5."),
         EDGE_OF_LIGHT("Edge of Light", "beam", "greatblade", "Hold the Beam and it runs up the blade. Your next heavy throws it as a crescent.",
-                "Hold Beam for a second with a Greatblade or Longsword, then land a finisher or perfect heavy within 3 seconds.");
+                "Hold Beam for a second with a Greatblade or Longsword, then land a finisher or perfect heavy within 3 seconds."),
+        THUNDER_JAVELIN("Thunder Javelin", "charged_shot", "spear", "Thrown off a spear, the shot is a javelin of lightning. It goes through everything in its line.",
+                "Fire a Charged Shot of half charge or more with a Spear in hand. The bolt goes through three more enemies."),
+        BATTER_UP("Batter Up", "terrain_rip", "maul", "You don't throw the rock. You hit it.",
+                "Use Terrain Rip with a Maul or a War-staff in hand. The rock flies half again as fast and bursts wider.");
 
         public final String name, power, style, line, how;
         public final String key = name().toLowerCase(Locale.ROOT);
@@ -92,7 +96,7 @@ public final class ArmsDuets {
 
     private static boolean holds(Player p, Duet d) {
         String s = style(p);
-        return s != null && (s.equals(d.style) || d == Duet.EDGE_OF_LIGHT && s.equals("longsword"));
+        return s != null && (s.equals(d.style) || d == Duet.EDGE_OF_LIGHT && s.equals("longsword") || d == Duet.BATTER_UP && s.equals("warstaff"));
     }
 
     /** What a player's casts have left open for their blade. Never saved: a duet lives for seconds. */
@@ -228,6 +232,21 @@ public final class ArmsDuets {
     }
 
     /** Spirit Palm's reach: a War-staff in the hand carries it further. */
+    /** Thunder Javelin: off a Spear, a Charged Shot of half charge or more goes through this many more bodies. */
+    public static int javelin(Cast c, double charge) {
+        if (charge < 0.5 || !holds(c.player, Duet.THUNDER_JAVELIN)) return 0;
+        found(c.player, Duet.THUNDER_JAVELIN);
+        return 3;
+    }
+
+    /** Batter Up: with a Maul or a War-staff in hand, Terrain Rip's rock is struck, not thrown (the caller makes it faster and wider). */
+    public static boolean batter(Cast c) {
+        if (!holds(c.player, Duet.BATTER_UP)) return false;
+        sound(c.level, c.pos(), SoundEvents.MACE_SMASH_AIR, 0.9f, 0.8f);
+        found(c.player, Duet.BATTER_UP);
+        return true;
+    }
+
     public static double reach(Cast c, double base) {
         return holds(c.player, Duet.LONG_REACH) ? base + 3.0 : base;
     }
@@ -403,8 +422,15 @@ public final class ArmsDuets {
     private static void found(ServerPlayer p, Duet d) {
         boolean first = Progression.profile(p).counter(d.counter()) == 0;
         Progression.count(p, d.counter());
-        NoticeEvents.tell(p, event(d));
-        if (first) Progression.markNewThing(p, "duet");
+        if (first) {
+            // named once, with how many you have found so far; the Journal keeps it, and never says how many there are
+            NoticeEvents.Event e = event(d);
+            List<String> details = new java.util.ArrayList<>(e.details());
+            int n = found(p);
+            details.add(n == 1 ? "This is the first Arms Duet you've found. There are more." : "You've found " + n + " Arms Duets. There are more.");
+            NoticeEvents.tell(p, new NoticeEvents.Event(e.id(), e.category(), e.name(), e.summary(), details, e.kind(), e.colour()));
+            Progression.markNewThing(p, "duet");
+        }
     }
 
     public static NoticeEvents.Event event(Duet d) {

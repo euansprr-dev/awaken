@@ -602,6 +602,52 @@ clip("fp_stomp__run",
 TAKEN = set()
 
 
+# ============================================================================================================================
+# Earned (docs/powers-next, SPEC 50 "Earned powers"). Brand and the Lances are made to be finished by the weapon, so the right
+# hand barely lowers it: the blow can follow at once.
+# ============================================================================================================================
+
+# Brand: the palm goes out flat and stays there, pressed on, while the mark takes; then the fist closes and comes away.
+one("brand",
+    off=[at(0, OUT_L, ease=L), K(1.5, -0.48, -0.34, -0.62, E_HIP, -30), at(3, (-0.06, -0.11, -1.16), (-0.38, -0.44, -0.66), -90, EOC), K(4.5, -0.13, -0.17, -1.04, (-0.46, -0.48, -0.58), -90, EOS),
+         K(7, -0.12, -0.16, -1.06, (-0.45, -0.48, -0.60), -90, EIOS), K(9, -0.26, -0.24, -0.88, (-0.54, -0.52, -0.50), -10, EIOS), at(14, OUT_L, ease=EIOS)],
+    light=[(0, 0, 0, 0, 0, L), (1.5, 0, 0, 0.5, 0.7, EOS), (3, 0, 0, 1, 1.7, L), (7, 0, 0, 1, 1.3, L), (9, 0, 0, 0.8, 0.5, EOQ), (14, 0, 0, 0.3, 0, EOQ)],
+    deep=0.6, note="pressed flat on it and held while the mark takes, then closed and drawn away")
+
+# Hoarfrost Lances: the hand lifts something heavy off the ground beside you, up past your eyes, and leaves it hanging over the shoulder.
+one("hoarfrost_lances",
+    off=[at(0, OUT_L, ease=L), K(2, -0.52, -0.40, -0.76, E_LOW, 60, EIOS), K(4.5, -0.50, 0.02, -0.82, (-0.66, -0.50, -0.56), 20, EIOS), at(6, (-0.46, 0.36, -0.80), (-0.58, -0.20, -0.62), -40, EOC),
+         K(8, -0.47, 0.32, -0.80, (-0.58, -0.24, -0.62), -40, EOS), K(11, -0.50, 0.22, -0.78, (-0.62, -0.30, -0.58), -20, EIOS), at(17, OUT_L, ease=EIOS)],
+    light=[(0, 0, 0, 0, 0, L), (2, 0, 0, 0.4, 0.6, EOS), (6, 0, 0, 1, 1.5, EOS), (8, 0, 0, 1, 0.9, EOQ), (17, 0, 0, 0.6, 0, EOQ)],
+    deep=0.5, tail=12, note="lifted from beside you up over the shoulder, and left hanging")
+
+# Updraft: the hand scoops the air off the ground in front of you and throws it straight up.
+one("updraft",
+    off=[at(0, OUT_L, ease=L), K(2, -0.40, -0.44, -0.80, (-0.60, -0.14, -0.50), -90, EIOS), K(3.5, -0.22, -0.46, -0.96, (-0.46, -0.20, -0.56), -60, EIOS), at(5, (-0.34, 0.42, -0.80), (-0.40, -0.18, -0.76), 90, EOC),
+         K(7, -0.34, 0.38, -0.80, (-0.40, -0.22, -0.76), 90, EOS), at(14, OUT_L, ease=EIOS)],
+    tail=12, note="scooped off the ground, thrown straight up")
+one("updraft", name="fp_p_updraft__air",
+    off=[at(0, OUT_L, ease=L), K(2, -0.36, 0.30, -0.74, (-0.52, -0.22, -0.54), 0, EIOS), at(5, (-0.26, -0.44, -0.92), (-0.46, 0.08, -0.62), -90, EIC), K(7, -0.26, -0.40, -0.92, (-0.46, 0.10, -0.62), -90, EOS),
+         at(14, OUT_L, ease=EIOS)],
+    tail=12, note="in the air: the palm pushed down at the ground, and the air comes up to meet it")
+
+# Backdraft: both hands gather the fire of the room in toward your mouth, a held breath, then open forward as it all goes back out.
+two("backdraft",
+    main=[at(0, REST, ease=L), K(2.5, 0.52, -0.06, -0.92, mir(E_OUT), -40, EIOS), K(5, 0.20, -0.20, -0.62, (0.58, -0.42, -0.50), 40, EIOS), K(6.5, 0.18, -0.18, -0.60, (0.58, -0.40, -0.50), 44, EIOS),
+          at(7, (0.40, -0.26, -0.96), (0.56, -0.52, -0.52), -70, EOC), K(9, 0.46, -0.30, -0.98, (0.58, -0.54, -0.54), -70, EOS), K(13, 0.46, -0.32, -0.96, (0.58, -0.56, -0.54), -60, L), at(19, REST, ease=EIOS)],
+    off=[at(0, OUT_L, ease=L), K(3, -0.54, -0.04, -0.92, E_OUT, 40, EIOS), K(5.5, -0.22, -0.18, -0.62, (-0.60, -0.40, -0.50), -40, EIOS), K(6.5, -0.20, -0.16, -0.60, (-0.60, -0.38, -0.50), -44, EIOS),
+         at(7, (-0.42, -0.24, -0.96), (-0.58, -0.50, -0.52), 70, EOC), K(9.5, -0.48, -0.28, -0.98, (-0.60, -0.52, -0.54), 70, EOS), K(13, -0.48, -0.30, -0.96, (-0.60, -0.54, -0.54), 60, L), at(19, OUT_L, ease=EIOS)],
+    light=[(0, 0, 0, 0, 0, L), (3, 0.4, 0.5, 0.4, 0.5, EOS), (6.5, 1, 1.3, 1, 1.3, EIOS), (7.5, 1, 1.8, 1, 1.8, L), (13, 0.8, 0.8, 0.8, 0.8, EOQ), (19, 0.3, 0, 0.3, 0, EOQ)],
+    note="gathered in to the mouth, a held breath, then opened forward as it goes back out")
+
+# Thornwake: the hand goes down flat on the ground, digs in, and hauls upward as the roots come.
+one("thornwake",
+    off=[at(0, OUT_L, ease=L), K(2, -0.44, -0.10, -0.74, (-0.62, -0.50, -0.46), -60, EIOS), at(5, (-0.24, -0.46, -0.92), (-0.48, 0.02, -0.62), -90, EIC), K(6.5, -0.24, -0.44, -0.92, (-0.48, 0.04, -0.62), -90, EOS),
+         K(8, -0.26, -0.40, -0.90, (-0.50, 0.04, -0.60), 0, EIOS), at(10.5, (-0.34, 0.06, -0.82), (-0.52, -0.46, -0.58), 0, EOB), K(13, -0.34, 0.00, -0.82, (-0.52, -0.48, -0.58), 0, EIOS), at(19, OUT_L, ease=EIOS)],
+    light=[(0, 0, 0, 0, 0, L), (2, 0, 0, 0.4, 0.5, EOS), (5, 0, 0, 1, 1.5, L), (8, 0, 0, 1, 0.9, EOQ), (10.5, 0, 0, 1, 1.3, EOS), (19, 0, 0, 0.4, 0, EOQ)],
+    tail=14, note="flat on the ground, dug in, then hauled upward as the roots come")
+
+
 def all_clips():
     """Every clip, with two more takes of each cast's begin and let-go (never of a hold loop)."""
     out = OrderedDict()

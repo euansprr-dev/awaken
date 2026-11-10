@@ -514,3 +514,51 @@ S("twin_strike", 2, [extend(duration=0.15)], [orbit("AURA", "wisp", n=4, r0=0.6,
 S("twin_strike", 3, [], [], share=0.7)
 S("twin_strike", 4, [extend(duration=0.3)], [])
 S("twin_strike", 5, [], [], casts=0.5)
+
+# ---- Earned (docs/powers-next): the numbers are read by catalog/EarnedPowers ------------------------------------------
+S("brand", 2, [extend(duration=0.375)],
+  [burst("PALM", "ember", n=8, speed=0.2, life=18, size=0.16, at="hand")])
+S("brand", 3, [status("burn", 60)],
+  [burst("NOVA", "ember", n=16, speed=0.5, life=20, size=0.2, grav=0.03, col="accent")], share=0.25)
+S("brand", 4, [],
+  [rings("NOVA", n=1, delay=3, r0=0.4, r1=3.0, width=0.3, life=10, col="edge")], jumps=1)
+S("brand", 5, [],
+  [sigil("NOVA", at="ground", size=3.0, spin=0.03, face="up", life=60, col="accent"), bloom("NOVA", size=1.0)], ground=80, dps=0.25)
+
+S("hoarfrost_lances", 2, [extend(duration=0.25)],
+  [orbit("AURA", "mote", n=6, r0=0.9, r1=0.9, spin=0.1, size=0.1, at="head", col="core")])
+S("hoarfrost_lances", 3, [],
+  [burst("IMPACT", "shard", n=8, speed=0.3, life=14, size=0.2, grav=0.04)], burst=0.5)
+S("hoarfrost_lances", 4, [],
+  [burst("BOLT", "shard", n=4, speed=0.2, life=10, size=0.16, at="end")], more=1)
+S("hoarfrost_lances", 5, [],
+  [sigil("AURA", at="head", size=1.6, spin=0.04, face="up", col="accent"), rings("FROST", n=2, gap=3, r0=0.4, r1=4.0, width=0.3, life=10, col="core")],
+  crown=2, ring=4.0, share=0.8)
+
+S("updraft", 2, [extend(range=0.2)],
+  [burst("RING", "dust", n=14, speed=0.25, life=24, size=0.5, grav=-0.02, col="edge")])
+S("updraft", 3, [],
+  [burst("IMPACT", "wind", n=6, speed=0.4, life=10, size=0.4)], hold=10, lift=2)
+S("updraft", 4, [],
+  [rings("RING", n=2, gap=4, r0=0.4, r1=3.2, width=0.3, life=12, col="core")], wide=0.25, longer=40)
+S("updraft", 5, [],
+  [sigil("GLYPH", at="ground", size=2.6, spin=0.05, face="up", col="accent"), column("RING", height=8, width=0.5, life=14)], taller=6, throw=1.4)
+
+S("backdraft", 2, [],
+  [burst("TETHER", "ember", n=4, speed=0.15, life=10, size=0.14)], draw=0.2)
+S("backdraft", 3, [],
+  [burst("CONE", "ember", n=16, speed=0.3, life=24, size=0.18, grav=0.02, col="accent")], cinder=60, dps=0.2)
+S("backdraft", 4, [],
+  [orbit("CONE", "ember", n=8, r0=0.5, r1=0.3, spin=0.4, size=0.12, at="body", life=14, col="core")], cap=4)
+S("backdraft", 5, [],
+  [rings("CONE", n=3, gap=2, r0=0.3, r1=2.2, width=0.3, life=9, face="dir", col="core"), bloom("CONE", size=1.2)], jet=1.6, proof=100)
+
+S("thornwake", 2, [],
+  [burst("TETHER", "dust", n=6, speed=0.2, life=18, size=0.4, col="edge")], hold=20)
+S("thornwake", 3, [],
+  [burst("IMPACT", "shard", n=6, speed=0.25, life=12, size=0.16, col="edge")], briar=0.15)
+S("thornwake", 4, [],
+  [burst("RING", "petal", n=16, speed=0.22, life=26, size=0.2)], more=2)
+S("thornwake", 5, [],
+  [sigil("RING", at="ground", size=3.6, spin=0.02, face="up", life=40, col="accent"), burst("PILLAR", "petal", n=14, speed=0.3, life=30, size=0.22)],
+  lift=40, share=1.2)

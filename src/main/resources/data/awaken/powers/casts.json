@@ -1863,6 +1863,181 @@
    }
   },
   {
+   "power": "brand",
+   "windup": 0,
+   "release": 3,
+   "begin3p": "p_brand",
+   "hold3p": null,
+   "holdAt": 0,
+   "end3p": null,
+   "channel": false,
+   "moment": "thump_light",
+   "endMoment": "none",
+   "lens": null,
+   "origin": "palm",
+   "beginSound": null,
+   "holdSound": null,
+   "begin1p": "fp_p_brand",
+   "hold1p": null,
+   "end1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_brand_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_brand_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_brand_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_brand_l5",
+     "hold1p": null
+    }
+   }
+  },
+  {
+   "power": "hoarfrost_lances",
+   "windup": 0,
+   "release": 6,
+   "begin3p": "p_hoarfrost_lances",
+   "hold3p": null,
+   "holdAt": 0,
+   "end3p": null,
+   "channel": false,
+   "moment": "lift",
+   "endMoment": "none",
+   "lens": null,
+   "origin": "palm",
+   "beginSound": null,
+   "holdSound": null,
+   "begin1p": "fp_p_hoarfrost_lances",
+   "hold1p": null,
+   "end1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_hoarfrost_lances_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_hoarfrost_lances_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_hoarfrost_lances_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_hoarfrost_lances_l5",
+     "hold1p": null
+    }
+   }
+  },
+  {
+   "power": "updraft",
+   "windup": 0,
+   "release": 5,
+   "begin3p": "p_updraft",
+   "hold3p": null,
+   "holdAt": 0,
+   "end3p": null,
+   "channel": false,
+   "moment": "lift",
+   "endMoment": "none",
+   "lens": null,
+   "origin": "palm",
+   "beginSound": null,
+   "holdSound": null,
+   "begin1p": "fp_p_updraft",
+   "hold1p": null,
+   "end1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_updraft_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_updraft_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_updraft_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_updraft_l5",
+     "hold1p": null
+    }
+   }
+  },
+  {
+   "power": "backdraft",
+   "windup": 7,
+   "release": 7,
+   "begin3p": "p_backdraft",
+   "hold3p": null,
+   "holdAt": 0,
+   "end3p": null,
+   "channel": false,
+   "moment": "release_big",
+   "endMoment": "none",
+   "lens": null,
+   "origin": "palm",
+   "beginSound": "awaken:voice.breeze_inhale",
+   "holdSound": null,
+   "begin1p": "fp_p_backdraft",
+   "hold1p": null,
+   "end1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_backdraft_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_backdraft_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_backdraft_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_backdraft_l5",
+     "hold1p": null
+    }
+   }
+  },
+  {
+   "power": "thornwake",
+   "windup": 5,
+   "release": 5,
+   "begin3p": "p_thornwake",
+   "hold3p": null,
+   "holdAt": 0,
+   "end3p": null,
+   "channel": false,
+   "moment": "thump_heavy",
+   "endMoment": "none",
+   "lens": null,
+   "origin": "palm",
+   "beginSound": null,
+   "holdSound": null,
+   "begin1p": "fp_p_thornwake",
+   "hold1p": null,
+   "end1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_thornwake_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_thornwake_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_thornwake_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_thornwake_l5",
+     "hold1p": null
+    }
+   }
+  },
+  {
    "power": "beam",
    "windup": 0,
    "release": 5,

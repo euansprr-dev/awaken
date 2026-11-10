@@ -200,12 +200,26 @@ public final class SpiritPowers {
             c.feel(hit.get(0), 40, 2f);
             return Result.OK;
         }
-        LivingEntity t = Combat.aimEntity(c, dev.awaken.powers.ArmsDuets.reach(c, 4.5), 0.6); // a War-staff carries it further (Long Reach)
+        // how it's made changes its shape (SPEC §32, "Ways"): a running palm reaches further and throws further
+        boolean run = c.way == dev.awaken.powers.fx.Ways.RUN, air = c.way == dev.awaken.powers.fx.Ways.AIR;
+        double palmReach = run ? 6.0 : 4.5;
+        LivingEntity t = Combat.aimEntity(c, dev.awaken.powers.ArmsDuets.reach(c, palmReach), 0.6); // a War-staff carries it further (Long Reach)
         if (t == null) return Result.fail("no_target");
-        dev.awaken.powers.ArmsDuets.reached(c, t, 4.5);
+        dev.awaken.powers.ArmsDuets.reached(c, t, palmReach);
         c.hurt(t, c.dmg(), Forces.Force.SPIRIT);
-        // Lotus (2): pushes harder
-        Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)), 0.35);
+        if (air) {
+            // driven down out of the air: the body goes into the ground and the print bursts out under it
+            Combat.push(t, new Vec3(c.look().x * 0.4, -1.1, c.look().z * 0.4));
+            for (LivingEntity e : Combat.foesAround(c.player, t.position(), 2.5)) {
+                if (e == t) continue;
+                Combat.hurtFrom(c.player, null, e, c.dmg() * 0.5f, Forces.Force.SPIRIT, true);
+                Combat.knockFrom(e, t.position(), 1.0, 0.35);
+            }
+            Fx.at(c, FxKind.RING, t.position()).scale(2.5).ticks(8).noAnim().send();
+        } else {
+            // Lotus (2): pushes harder
+            Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)) * (run ? 1.3 : 1), 0.35);
+        }
         Vec3 at = t.getBoundingBox().getCenter();
         // the palm print flies from the hand, rings punch through the target
         Vec3 from = c.eye().add(c.look().scale(0.6)).add(0, -0.3, 0);
@@ -719,13 +733,17 @@ public final class SpiritPowers {
     }
 
     static Result frostNova(Cast c) {
-        Vec3 at = c.pos().add(0, 1, 0);
-        double radius = c.radius(6);
+        // how it's made changes its shape (SPEC §32, "Ways"): at a run the cold lands three blocks ahead of you; brought
+        // down out of the air it's a tighter ring that holds what it catches half again as long
+        boolean run = c.way == dev.awaken.powers.fx.Ways.RUN, air = c.way == dev.awaken.powers.fx.Ways.AIR;
+        Vec3 centre = run ? c.pos().add(c.flatLook().scale(3)) : c.pos();
+        Vec3 at = centre.add(0, 1, 0);
+        double radius = c.radius(6) * (air ? 0.7 : 1);
         long until = c.now() + 160;
         for (LivingEntity e : Combat.foesAround(c.player, at, radius)) {
             c.hurt(e, c.dmg(), Forces.Force.FROST);
-            Moves.effect(e, MobEffects.SLOWNESS, 80, 2);
-            e.setTicksFrozen(Math.max(e.getTicksFrozen(), 200));
+            Moves.effect(e, MobEffects.SLOWNESS, air ? 120 : 80, 2);
+            e.setTicksFrozen(Math.max(e.getTicksFrozen(), air ? 300 : 200));
             Forces.tag(e, Forces.Tag.FROSTED);
             Scheduler.after(160, () -> {
                 if (e.isAlive() && c.level.getGameTime() >= until - 1) Forces.untag(e, Forces.Tag.FROSTED);
@@ -738,8 +756,8 @@ public final class SpiritPowers {
             if (c.step(5)) st.buff(PowerState.Buffs.FROST_BLOOM, until, c.num(5, "bloom", 0.5f));
         }
         // a frost ring, ice shards flung out, cold mist and a frosted crack in the ground
-        Fx.at(c, FxKind.FROST, c.pos()).scale(radius).flag(FxEvent.REACH).send();
-        c.voice(Beat.RELEASE, PowerSounds.FROST, 1.2f, 1f);
+        Fx.at(c, FxKind.FROST, centre).scale(radius).flag(FxEvent.REACH).send();
+        c.voice(centre, Beat.RELEASE, PowerSounds.FROST, 1.2f, 1f);
         dev.awaken.powers.ArmsDuets.frost(c, radius); // a Maul's heavy on this ground throws spikes (Icebreaker)
         Fx.quake(c.level, at, 12, 1.5f);
         return Result.OK;

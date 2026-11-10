@@ -290,7 +290,20 @@ final class KineticPowers {
                     Combat.push(t, new Vec3(0, -1.6, 0));
                     Combat.stun(t, 30 + (int) (20 * charge) + (clean ? 15 : 0));
                 }
-                default -> Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost, 0.45 + 0.6 * charge);
+                default -> {
+                    // how the punch was thrown decides where the body goes, never how hard it lands (SPEC §32, "Ways")
+                    if (c.way == dev.awaken.powers.fx.Ways.AIR) {
+                        // thrown down out of the air: it's driven into the ground, and the ground throws the rest back
+                        Combat.push(t, new Vec3(look.x * 0.5, -1.3, look.z * 0.5));
+                        for (LivingEntity e : Combat.foesAround(c.player, t.position(), 2.6)) if (e != t) Combat.knockFrom(e, t.position(), 0.9, 0.4);
+                        Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
+                    } else if (c.way == dev.awaken.powers.fx.Ways.RUN) {
+                        // with the stride in it: further and flatter
+                        Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost * 1.35, 0.3 + 0.3 * charge);
+                    } else {
+                        Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost, 0.45 + 0.6 * charge);
+                    }
+                }
             }
             if (c.step(3)) {
                 // Shockfist: a cone of force bursts out of the far side, along the punch
@@ -351,9 +364,11 @@ final class KineticPowers {
     private static Result rockOut(Cast c, BlockPos centre, List<BlockState> states) {
         Vec3 origin = Vec3.atCenterOf(centre).add(0, 1.2, 0);
         Vec3 dir = c.look();
-        Vec3 vel = dir.scale(1.5).add(0, 0.35, 0);
+        // with a Maul or a War-staff in hand the rock is struck, not thrown: faster, flatter, a wider burst (Batter Up)
+        boolean batted = dev.awaken.powers.ArmsDuets.batter(c);
+        Vec3 vel = batted ? dir.scale(2.25).add(0, 0.22, 0) : dir.scale(1.5).add(0, 0.35, 0);
         float dmg = c.dmg();
-        float radius = (float) c.radius(2.5);
+        float radius = (float) c.radius(2.5) * (batted ? 1.3f : 1f);
         BlockState main = states.get(0);
         // Mountain Hurl (5): the throw's heart is a slab
         boolean hurl = c.step(5);
@@ -451,8 +466,11 @@ final class KineticPowers {
 
     /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
-        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9);
-        double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
+        // how it's made changes its shape, never its weight (SPEC §32, "Ways"): at a run the wave goes out long and narrow,
+        // and stamped down out of the air it lands as a ring all round you
+        int way = c.way;
+        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9) * (way == dev.awaken.powers.fx.Ways.RUN ? 1.35 : way == dev.awaken.powers.fx.Ways.AIR ? 0.6 : 1);
+        double half = way == dev.awaken.powers.fx.Ways.AIR ? 180 : (c.is(1) ? 50 : c.is(2) ? 15 : 30) * (way == dev.awaken.powers.fx.Ways.RUN ? 0.6 : 1);
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();

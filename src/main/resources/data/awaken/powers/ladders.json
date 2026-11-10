@@ -6733,6 +6733,631 @@
      "code": true
     }
    ]
+  },
+  "brand": {
+   "family": "Spirit",
+   "starter": false,
+   "hidden": true,
+   "steps": [
+    {
+     "level": 2,
+     "riders": [
+      {
+       "k": "extend",
+       "radius": 0.0,
+       "range": 0.0,
+       "duration": 0.375,
+       "charge": 0.0
+      }
+     ],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "PALM"
+       ],
+       "sprite": "ember",
+       "n": 8,
+       "speed": 0.2,
+       "life": 18,
+       "size": 0.16,
+       "grav": 0.0,
+       "at": "hand",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {},
+     "code": false
+    },
+    {
+     "level": 3,
+     "riders": [
+      {
+       "k": "status",
+       "effect": "burn",
+       "ticks": 60,
+       "amp": 0
+      }
+     ],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "NOVA"
+       ],
+       "sprite": "ember",
+       "n": 16,
+       "speed": 0.5,
+       "life": 20,
+       "size": 0.2,
+       "grav": 0.03,
+       "at": "origin",
+       "col": "accent",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "share": 0.25
+     },
+     "code": true
+    },
+    {
+     "level": 4,
+     "riders": [],
+     "looks": [
+      {
+       "k": "rings",
+       "on": [
+        "NOVA"
+       ],
+       "n": 1,
+       "delay": 3,
+       "gap": 4,
+       "r0": 0.4,
+       "r1": 3.0,
+       "width": 0.3,
+       "life": 10,
+       "at": "origin",
+       "face": "up",
+       "col": "edge"
+      }
+     ],
+     "num": {
+      "jumps": 1
+     },
+     "code": true
+    },
+    {
+     "level": 5,
+     "riders": [],
+     "looks": [
+      {
+       "k": "sigil",
+       "on": [
+        "NOVA"
+       ],
+       "at": "ground",
+       "size": 3.0,
+       "spin": 0.03,
+       "face": "up",
+       "life": 60,
+       "col": "accent"
+      },
+      {
+       "k": "bloom",
+       "on": [
+        "NOVA"
+       ],
+       "size": 1.0,
+       "at": "origin",
+       "col": "core",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "ground": 80,
+      "dps": 0.25
+     },
+     "code": true
+    }
+   ]
+  },
+  "hoarfrost_lances": {
+   "family": "Spirit",
+   "starter": false,
+   "hidden": true,
+   "steps": [
+    {
+     "level": 2,
+     "riders": [
+      {
+       "k": "extend",
+       "radius": 0.0,
+       "range": 0.0,
+       "duration": 0.25,
+       "charge": 0.0
+      }
+     ],
+     "looks": [
+      {
+       "k": "orbit",
+       "on": [
+        "AURA"
+       ],
+       "sprite": "mote",
+       "n": 6,
+       "r0": 0.9,
+       "r1": 0.9,
+       "spin": 0.1,
+       "size": 0.1,
+       "at": "head",
+       "tilt": 0.0,
+       "life": 0,
+       "col": "core"
+      }
+     ],
+     "num": {},
+     "code": false
+    },
+    {
+     "level": 3,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "IMPACT"
+       ],
+       "sprite": "shard",
+       "n": 8,
+       "speed": 0.3,
+       "life": 14,
+       "size": 0.2,
+       "grav": 0.04,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "burst": 0.5
+     },
+     "code": true
+    },
+    {
+     "level": 4,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "BOLT"
+       ],
+       "sprite": "shard",
+       "n": 4,
+       "speed": 0.2,
+       "life": 10,
+       "size": 0.16,
+       "grav": 0.0,
+       "at": "end",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "more": 1
+     },
+     "code": true
+    },
+    {
+     "level": 5,
+     "riders": [],
+     "looks": [
+      {
+       "k": "sigil",
+       "on": [
+        "AURA"
+       ],
+       "at": "head",
+       "size": 1.6,
+       "spin": 0.04,
+       "face": "up",
+       "life": 0,
+       "col": "accent"
+      },
+      {
+       "k": "rings",
+       "on": [
+        "FROST"
+       ],
+       "n": 2,
+       "delay": 0,
+       "gap": 3,
+       "r0": 0.4,
+       "r1": 4.0,
+       "width": 0.3,
+       "life": 10,
+       "at": "origin",
+       "face": "up",
+       "col": "core"
+      }
+     ],
+     "num": {
+      "crown": 2,
+      "ring": 4.0,
+      "share": 0.8
+     },
+     "code": true
+    }
+   ]
+  },
+  "updraft": {
+   "family": "Flight",
+   "starter": false,
+   "hidden": true,
+   "steps": [
+    {
+     "level": 2,
+     "riders": [
+      {
+       "k": "extend",
+       "radius": 0.0,
+       "range": 0.2,
+       "duration": 0.0,
+       "charge": 0.0
+      }
+     ],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "RING"
+       ],
+       "sprite": "dust",
+       "n": 14,
+       "speed": 0.25,
+       "life": 24,
+       "size": 0.5,
+       "grav": -0.02,
+       "at": "origin",
+       "col": "edge",
+       "delay": 0
+      }
+     ],
+     "num": {},
+     "code": false
+    },
+    {
+     "level": 3,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "IMPACT"
+       ],
+       "sprite": "wind",
+       "n": 6,
+       "speed": 0.4,
+       "life": 10,
+       "size": 0.4,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "hold": 10,
+      "lift": 2
+     },
+     "code": true
+    },
+    {
+     "level": 4,
+     "riders": [],
+     "looks": [
+      {
+       "k": "rings",
+       "on": [
+        "RING"
+       ],
+       "n": 2,
+       "delay": 0,
+       "gap": 4,
+       "r0": 0.4,
+       "r1": 3.2,
+       "width": 0.3,
+       "life": 12,
+       "at": "origin",
+       "face": "up",
+       "col": "core"
+      }
+     ],
+     "num": {
+      "wide": 0.25,
+      "longer": 40
+     },
+     "code": true
+    },
+    {
+     "level": 5,
+     "riders": [],
+     "looks": [
+      {
+       "k": "sigil",
+       "on": [
+        "GLYPH"
+       ],
+       "at": "ground",
+       "size": 2.6,
+       "spin": 0.05,
+       "face": "up",
+       "life": 0,
+       "col": "accent"
+      },
+      {
+       "k": "column",
+       "on": [
+        "RING"
+       ],
+       "height": 8,
+       "width": 0.5,
+       "life": 14,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "taller": 6,
+      "throw": 1.4
+     },
+     "code": true
+    }
+   ]
+  },
+  "backdraft": {
+   "family": "Spirit",
+   "starter": false,
+   "hidden": true,
+   "steps": [
+    {
+     "level": 2,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "TETHER"
+       ],
+       "sprite": "ember",
+       "n": 4,
+       "speed": 0.15,
+       "life": 10,
+       "size": 0.14,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "draw": 0.2
+     },
+     "code": true
+    },
+    {
+     "level": 3,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "CONE"
+       ],
+       "sprite": "ember",
+       "n": 16,
+       "speed": 0.3,
+       "life": 24,
+       "size": 0.18,
+       "grav": 0.02,
+       "at": "origin",
+       "col": "accent",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "cinder": 60,
+      "dps": 0.2
+     },
+     "code": true
+    },
+    {
+     "level": 4,
+     "riders": [],
+     "looks": [
+      {
+       "k": "orbit",
+       "on": [
+        "CONE"
+       ],
+       "sprite": "ember",
+       "n": 8,
+       "r0": 0.5,
+       "r1": 0.3,
+       "spin": 0.4,
+       "size": 0.12,
+       "at": "body",
+       "tilt": 0.0,
+       "life": 14,
+       "col": "core"
+      }
+     ],
+     "num": {
+      "cap": 4
+     },
+     "code": true
+    },
+    {
+     "level": 5,
+     "riders": [],
+     "looks": [
+      {
+       "k": "rings",
+       "on": [
+        "CONE"
+       ],
+       "n": 3,
+       "delay": 0,
+       "gap": 2,
+       "r0": 0.3,
+       "r1": 2.2,
+       "width": 0.3,
+       "life": 9,
+       "at": "origin",
+       "face": "dir",
+       "col": "core"
+      },
+      {
+       "k": "bloom",
+       "on": [
+        "CONE"
+       ],
+       "size": 1.2,
+       "at": "origin",
+       "col": "core",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "jet": 1.6,
+      "proof": 100
+     },
+     "code": true
+    }
+   ]
+  },
+  "thornwake": {
+   "family": "Spirit",
+   "starter": false,
+   "hidden": true,
+   "steps": [
+    {
+     "level": 2,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "TETHER"
+       ],
+       "sprite": "dust",
+       "n": 6,
+       "speed": 0.2,
+       "life": 18,
+       "size": 0.4,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "edge",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "hold": 20
+     },
+     "code": true
+    },
+    {
+     "level": 3,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "IMPACT"
+       ],
+       "sprite": "shard",
+       "n": 6,
+       "speed": 0.25,
+       "life": 12,
+       "size": 0.16,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "edge",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "briar": 0.15
+     },
+     "code": true
+    },
+    {
+     "level": 4,
+     "riders": [],
+     "looks": [
+      {
+       "k": "burst",
+       "on": [
+        "RING"
+       ],
+       "sprite": "petal",
+       "n": 16,
+       "speed": 0.22,
+       "life": 26,
+       "size": 0.2,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "more": 2
+     },
+     "code": true
+    },
+    {
+     "level": 5,
+     "riders": [],
+     "looks": [
+      {
+       "k": "sigil",
+       "on": [
+        "RING"
+       ],
+       "at": "ground",
+       "size": 3.6,
+       "spin": 0.02,
+       "face": "up",
+       "life": 40,
+       "col": "accent"
+      },
+      {
+       "k": "burst",
+       "on": [
+        "PILLAR"
+       ],
+       "sprite": "petal",
+       "n": 14,
+       "speed": 0.3,
+       "life": 30,
+       "size": 0.22,
+       "grav": 0.0,
+       "at": "origin",
+       "col": "mid",
+       "delay": 0
+      }
+     ],
+     "num": {
+      "lift": 40,
+      "share": 1.2
+     },
+     "code": true
+    }
+   ]
   }
  }
 }

@@ -196,8 +196,24 @@ final class PowerVoice {
             if (five != null && five.sets().length > 0) layers(x, y, z, caster, five, five.sets()[Math.floorMod(seed, five.sets().length)], intensity);
         }
         if (score.surface()) surface(level, x, y, z, intensity);
+        say(power, beat, x, y, z);
         if (score.duck() > 0 && near(x, y, z, 16 * 16)) dev.awaken.core.audio.client.Soundscape.muffle(DUCK, 1400f, 0.35f, score.duck());
         return true;
+    }
+
+    private static final Map<String, Identifier> SAY = new HashMap<>();
+
+    /**
+     * The subtitle for a beat that starts something (a score is many recordings, none of whose own subtitles would be true):
+     * the power's one line, carried by an event of its own played too quietly to hear, and only while subtitles are on.
+     */
+    private static void say(String power, Voice.Beat beat, double x, double y, double z) {
+        if (beat != Voice.Beat.GATHER && beat != Voice.Beat.RELEASE && beat != Voice.Beat.IMPACT && beat != Voice.Beat.HOLD) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.options.showSubtitles().get()) return;
+        Identifier id = SAY.computeIfAbsent(power, p -> Awaken.id("voice.say." + p));
+        mc.getSoundManager().play(new SimpleSoundInstance(id, SoundSource.PLAYERS, 0.02f, 1f, SoundInstance.createUnseededRandom(), false, 0,
+                SoundInstance.Attenuation.LINEAR, x, y, z, false));
     }
 
     private static boolean near(double x, double y, double z, double within) {

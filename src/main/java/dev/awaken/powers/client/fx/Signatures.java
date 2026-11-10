@@ -28,13 +28,15 @@ import static dev.awaken.powers.fx.PowerFxParticles.*;
 final class Signatures {
     private Signatures() {}
 
-    private static final int J_RIME = 1, J_SHOCK = 2, J_GRIP = 3, J_THROUGH = 4, J_PLATE = 5, J_PETALS = 6, J_INK = 7;
+    private static final int J_RIME = 1, J_SHOCK = 2, J_GRIP = 3, J_THROUGH = 4, J_PLATE = 5, J_PETALS = 6, J_INK = 7, J_BRAND = 8, J_SEAR = 9,
+            J_LANCES = 10, J_DRAFT = 11, J_BREATH = 12;
 
     /** A signature that takes time: what, where, how big, whose, how old. */
     private static final class Job {
-        int kind, age, life, caster = -1, target = -1, seed;
+        int kind, age, life, caster = -1, target = -1, seed, n;
         double x, y, z;
-        float dx, dy, dz, radius;
+        float dx, dy, dz, radius, h;
+        boolean full;
         FxStyle style = FxStyle.NEUTRAL;
         String power = "";
     }
@@ -67,6 +69,9 @@ final class Signatures {
         free.dy = e.dy();
         free.dz = e.dz();
         free.radius = radius;
+        free.n = 0;
+        free.h = 0;
+        free.full = e.has(FxEvent.FULL);
         free.style = st;
         free.power = power;
         return free;
@@ -112,6 +117,44 @@ final class Signatures {
             case "shadow_step" -> {
                 if (kind == FxKind.BLINK) ink(e, st, caster);
             }
+            case "brand" -> {
+                if (kind == FxKind.AURA && Math.round(e.aux()) == FxKind.Aura.BRAND.ordinal()) branded(e, st, power);
+                else if (kind == FxKind.CHARGE_END) end(e.caster(), power);
+                else if (kind == FxKind.NOVA) brandBurst(e, st, mine);
+                else if (kind == FxKind.GLYPH) job(J_SEAR, e, st, power, Math.max(10, e.ticks()), Math.max(0.6f, e.scale()));
+            }
+            case "hoarfrost_lances" -> {
+                if (kind == FxKind.AURA && Math.round(e.aux()) == FxKind.Aura.LANCES.ordinal()) {
+                    end(e.caster(), power);
+                    Job j = job(J_LANCES, e, st, power, Math.max(20, e.ticks()), 1f);
+                    if (j != null) j.n = Math.max(1, Math.min(8, Math.round(e.scale())));
+                } else if (kind == FxKind.CHARGE_END) {
+                    end(e.caster(), power);
+                } else if (kind == FxKind.BOLT) {
+                    lanceFlies(e, st);
+                }
+            }
+            case "updraft" -> {
+                if (kind == FxKind.GLYPH) {
+                    Job j = job(J_DRAFT, e, st, power, Math.max(20, e.ticks()), Math.max(1f, e.scale()));
+                    if (j != null) j.h = Math.max(4f, e.aux());
+                }
+            }
+            case "backdraft" -> {
+                if (kind == FxKind.TETHER) drawnIn(e, st);
+                else if (kind == FxKind.CONE) {
+                    Job j = job(J_BREATH, e, st, power, Math.max(6, e.ticks()), Math.max(3f, e.scale()));
+                    if (j != null) {
+                        j.h = Math.max(10f, e.aux());
+                        if (mine) FxScreen.flash(st.mid, j.full ? 0.12f : 0.06f, 8);
+                    }
+                }
+            }
+            case "thornwake" -> {
+                if (kind == FxKind.TETHER) rootTakes(e, st);
+                else if (kind == FxKind.RING && e.has(FxEvent.REACH)) groundWakes(e, st);
+                else if (kind == FxKind.PILLAR) elderRoot(e, st);
+            }
             default -> {
             }
         }
@@ -129,6 +172,11 @@ final class Signatures {
                     case J_THROUGH -> throughStep(j);
                     case J_PLATE -> plate(j, mc);
                     case J_PETALS -> petals(j, mc);
+                    case J_BRAND -> brandStep(j, mc);
+                    case J_SEAR -> sear(j);
+                    case J_LANCES -> lances(j, mc);
+                    case J_DRAFT -> draft(j);
+                    case J_BREATH -> breath(j);
                     default -> {
                     }
                 }
@@ -391,5 +439,387 @@ final class Signatures {
         if (caster != null) FxAfterimages.capture(caster, 18, st.edge, 0);
         FxRecipes.tendrils(e.x(), e.y() + 0.1, e.z(), n(5), st);
         FxRecipes.smokePuffs(e.x() + e.dx(), e.y() + e.dy() + 0.2, e.z() + e.dz(), n(6), 0.5f, 0.9f, st, 0.02f, 20);
+    }
+
+    // ---- Brand: a mark seared onto the body, and the fire that comes out of it -------------------------------------------
+
+    private static final int EMBER_HOT = 0xFFFFD27A, EMBER_DEEP = 0xFFFF6A1E, BARK = 0xFF7A5230, LEAF = 0xFF8FCB6B;
+
+    private static void branded(FxEvent e, FxStyle st, String power) {
+        end(e.caster(), power); // a new mark on the same body replaces the old one
+        Job j = job(J_BRAND, e, st, power, Math.max(10, e.ticks()), 0.5f);
+        if (j == null) return;
+        if (e.dx() != 0 || e.dy() != 0 || e.dz() != 0) {
+            // it leapt here from a body that died: a line of embers across
+            double fx = e.x() + e.dx(), fy = e.y() + e.dy(), fz = e.z() + e.dz();
+            for (int i = 0; i < n(10); i++) {
+                float t = i / 10f;
+                int s = FxWorld.sprite(EMBER, fx - e.dx() * t, fy - e.dy() * t + Mth.sin(t * Mth.PI) * 0.8, fz - e.dz() * t, -e.dx() * 0.02, 0.02, -e.dz() * 0.02,
+                        8 + i, 0.2f, 0.05f, EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
+                FxWorld.drag(s, 0.9f);
+            }
+        }
+        FxRecipes.flare(e.x(), e.y(), e.z(), 0.9f, st, 5);
+        FxRecipes.embers(e.x(), e.y(), e.z(), n(8), 0.3f, st, 0.02f);
+    }
+
+    /** The mark itself: one rune that keeps its shape, on the side of the body you are looking at, breathing; faster as it runs out. */
+    private static void brandStep(Job j, Minecraft mc) {
+        Entity body = j.caster >= 0 ? mc.level.getEntity(j.caster) : null;
+        if (body == null || !body.isAlive()) {
+            j.life = j.age;
+            return;
+        }
+        Vec3 c = body.getBoundingBox().getCenter();
+        Vec3 cam = mc.gameRenderer.mainCamera().position();
+        double dx = cam.x - c.x, dz = cam.z - c.z, l = Math.sqrt(dx * dx + dz * dz) + 1e-4;
+        double off = body.getBbWidth() * 0.5 + 0.06;
+        double px = c.x + dx / l * off, py = c.y + body.getBbHeight() * 0.12, pz = c.z + dz / l * off;
+        int left = j.life - j.age;
+        float beat = left < 40 ? 0.9f : 0.28f;
+        float pulse = 0.75f + 0.25f * Mth.sin(j.age * beat);
+        float size = Math.min(0.85f, 0.42f + body.getBbWidth() * 0.22f);
+        int i = FxWorld.sprite(RUNE, px, py, pz, 0, 0, 0, 2, size, size, alpha(EMBER_HOT, pulse), alpha(EMBER_DEEP, pulse * 0.8f), FxPool.ADD);
+        FxWorld.POOL.frame[i] = j.seed & 3;
+        FxWorld.spin(i, 0, 0);
+        FxWorld.sprite(HALO, px, py, pz, 0, 0, 0, 2, size * 2.2f, size * 2.2f, alpha(EMBER_DEEP, 0.35f * pulse), alpha(EMBER_DEEP, 0.2f * pulse), FxPool.ADD);
+        if (j.age % 4 == 0) {
+            int s = FxWorld.sprite(EMBER, px + R.s() * 0.15, py + R.s() * 0.15, pz + R.s() * 0.15, R.s() * 0.01, 0.035, R.s() * 0.01, 16 + R.i(8), 0.14f, 0.03f,
+                    EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
+            FxWorld.drag(s, 0.95f);
+        }
+        if (j.age % 14 == 0) FxRecipes.smokePuffs(px, py + 0.2, pz, 1, 0.1f, 0.4f, FxStyle.SHADOW, 0.02f, 24);
+    }
+
+    /** A blow set it off: the fire comes out of the mark, the ground under it keeps the print and cools. */
+    private static void brandBurst(FxEvent e, FxStyle st, boolean mine) {
+        double x = e.x(), y = e.y(), z = e.z();
+        float r = Math.max(1.5f, e.scale());
+        boolean full = e.has(FxEvent.FULL);
+        double gy = FxWorld.groundY(x, y + 0.5, z);
+        FxRecipes.decal(x, gy + 0.02, z, SCORCH, r * 1.5f, 0xE0FFFFFF, 220);
+        for (int i = 0; i < n(full ? 7 : 5); i++) {
+            float a = i / 5f * Mth.TWO_PI + R.f() * 0.6f, d = r * R.f(0.25f, 0.7f);
+            // cracks that start gold and cool to nothing
+            FxRecipes.decal(x + Mth.cos(a) * d, gy + 0.03, z + Mth.sin(a) * d, CRACK, 1.1f + R.f() * 0.7f, EMBER_HOT, 70 + R.i(40));
+        }
+        FxRecipes.glyphAt(x, gy + 0.04, z, r * 0.55f, st, 26, 0.09f);
+        // the fire itself: a column of big soft flame going up and out, embers thrown wide
+        for (int i = 0; i < n(full ? 26 : 18); i++) {
+            float a = R.f() * Mth.TWO_PI, sp = R.f(0.05f, 0.22f) * r * 0.5f;
+            int s = FxWorld.sprite(GLOW, x + R.s() * 0.3, y + R.s() * 0.3, z + R.s() * 0.3, Mth.cos(a) * sp, R.f(0.04f, 0.2f), Mth.sin(a) * sp, 10 + R.i(8),
+                    R.f(0.5f, 0.9f), R.f(1.2f, 2.0f), alpha(EMBER_HOT, 0.85f), alpha(EMBER_DEEP, 0), FxPool.ADD);
+            FxWorld.drag(s, 0.86f);
+        }
+        FxRecipes.embers(x, y, z, n(full ? 40 : 26), r * 0.45f, st, 0.03f);
+        FxRecipes.sparks(x, y, z, n(18), 0.55f, st, 10, 0.03f, 0, 1, 0, 0.5f);
+        FxRecipes.smokePuffs(x, y + 0.6, z, n(8), r * 0.4f, 1.3f, FxStyle.SHADOW, 0.05f, 34);
+        if (full) FxRecipes.sphereBurst(x, y, z, 0.4f, r, 7, st);
+        if (mine) {
+            FxScreen.flash(EMBER_DEEP, full ? 0.14f : 0.08f, 7);
+            dev.awaken.lens.client.LensClient.pulse(full ? 0.3f : 0.18f);
+        }
+    }
+
+    /** A brand left on the ground: it glows, breathes embers, and waits. */
+    private static void sear(Job j) {
+        double gy = FxWorld.groundY(j.x, j.y + 0.5, j.z);
+        float pulse = 0.6f + 0.3f * Mth.sin(j.age * 0.3f);
+        if (j.age % 2 == 0) {
+            FxWorld.sprite(HALO, j.x, gy + 0.06, j.z, 0, 0, 0, 3, j.radius * 2.2f, j.radius * 2.2f, alpha(EMBER_DEEP, 0.4f * pulse), alpha(EMBER_DEEP, 0.3f * pulse),
+                    FxPool.ADD | FxPool.FLAT);
+        }
+        if (j.age % (j.full ? 2 : 5) == 0) {
+            float a = R.f() * Mth.TWO_PI, d = R.f() * j.radius * 0.8f;
+            int s = FxWorld.sprite(EMBER, j.x + Mth.cos(a) * d, gy + 0.1, j.z + Mth.sin(a) * d, 0, R.f(0.03f, 0.07f), 0, 18 + R.i(10), 0.15f, 0.03f, EMBER_HOT,
+                    alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
+            FxWorld.drag(s, 0.96f);
+        }
+        if (j.full && j.age % 6 == 0) {
+            float a = R.f() * Mth.TWO_PI, d = R.f() * j.radius * 0.7f;
+            FxWorld.sprite(GLOW, j.x + Mth.cos(a) * d, gy + 0.2, j.z + Mth.sin(a) * d, 0, 0.06, 0, 12, 0.4f, 0.9f, alpha(EMBER_HOT, 0.6f), alpha(EMBER_DEEP, 0), FxPool.ADD);
+        }
+    }
+
+    // ---- Hoarfrost Lances: spears of ice that hang by you, and fly when your weapon lands ---------------------------------
+
+    /** Where lance {@code i} hangs (the server's own rule, EarnedPowers.lancePos), into {@link #P}. In your own eyes they sit ahead, in the top corners. */
+    private static void lanceAt(Entity caster, int i, float pt, boolean firstPerson, float bob) {
+        float yaw = (float) Math.toRadians(caster.getViewYRot(pt));
+        double side = ((i & 1) == 0 ? 1 : -1) * (0.55 + 0.3 * (i >> 1));
+        double rx = -Math.cos(yaw), rz = -Math.sin(yaw);
+        Vec3 pos = caster.getPosition(pt);
+        P[0] = pos.x + rx * side;
+        P[1] = pos.y + caster.getBbHeight() + 0.35 + 0.12 * (i >> 1) + bob;
+        P[2] = pos.z + rz * side;
+        if (firstPerson) {
+            Vec3 look = caster.getViewVector(pt);
+            P[0] += look.x * 1.25;
+            P[1] += look.y * 1.25 - 0.12;
+            P[2] += look.z * 1.25;
+        }
+    }
+
+    private static void lances(Job j, Minecraft mc) {
+        Entity caster = j.caster >= 0 ? mc.level.getEntity(j.caster) : null;
+        if (caster == null) {
+            j.life = j.age;
+            return;
+        }
+        boolean firstPerson = caster == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
+        Vec3 look = caster.getViewVector(1f);
+        float grow = Math.min(1f, (j.age + 1) / 6f);
+        float fade = Math.min(1f, (j.life - j.age) / 8f);
+        for (int i = 0; i < j.n; i++) {
+            lanceAt(caster, i, 1f, firstPerson, 0.05f * Mth.sin(j.age * 0.12f + i * 1.7f));
+            double back = 0.45 * grow, fwd = 0.7 * grow;
+            Shape s = FxWorld.shape(Shape.BEAM, 2);
+            if (s != null) {
+                s.x = P[0] - look.x * back;
+                s.y = P[1] - look.y * back;
+                s.z = P[2] - look.z * back;
+                s.ex = P[0] + look.x * fwd;
+                s.ey = P[1] + look.y * fwd;
+                s.ez = P[2] + look.z * fwd;
+                s.a = 0.075f;
+                s.c0 = alpha(j.style.mid, fade);
+                s.c1 = alpha(0xFFFFFFFF, fade);
+                s.fadeIn = 0;
+                s.fadeOut = 1;
+            }
+            int tip = FxWorld.sprite(SHARD, P[0] + look.x * fwd, P[1] + look.y * fwd, P[2] + look.z * fwd, 0, 0, 0, 2, 0.22f, 0.22f, alpha(j.style.core, fade),
+                    alpha(j.style.mid, fade * 0.6f), FxPool.ADD);
+            FxWorld.POOL.frame[tip] = i & 3;
+            FxWorld.spin(tip, i * 0.9f, 0);
+            if ((j.age + i * 3) % 9 == 0) {
+                // cold falling off it
+                int m = FxWorld.sprite(MOTE, P[0] + R.s() * 0.2, P[1], P[2] + R.s() * 0.2, 0, -0.02, 0, 14, 0.08f, 0.02f, j.style.core, alpha(j.style.mid, 0), FxPool.ADD);
+                FxWorld.grav(m, 0.004f);
+            }
+        }
+        if (j.age == 0) {
+            for (int i = 0; i < j.n; i++) {
+                lanceAt(caster, i, 1f, firstPerson, 0);
+                FxRecipes.smokePuffs(P[0], P[1], P[2], 1, 0.15f, 0.5f, FxStyle.FLIGHT, 0.01f, 16);
+                FxRecipes.shards(P[0], P[1], P[2], n(3), 0.12f, j.style);
+            }
+        }
+    }
+
+    /** One flew (the server's BOLT, its index in ticks): one fewer hangs, and where it lands the ice breaks. */
+    private static void lanceFlies(FxEvent e, FxStyle st) {
+        for (Job j : JOBS) {
+            if (j.kind == J_LANCES && j.caster == e.caster() && j.n > 0) {
+                j.n--;
+                break;
+            }
+        }
+        double bx = e.x() + e.dx(), by = e.y() + e.dy(), bz = e.z() + e.dz();
+        float l = Mth.sqrt(e.dx() * e.dx() + e.dy() * e.dy() + e.dz() * e.dz()) + 1e-4f;
+        // a wider, slower body of ice behind the bright line the shared bolt draws
+        Shape s = FxWorld.shape(Shape.BEAM, 5);
+        if (s != null) {
+            s.x = e.x();
+            s.y = e.y();
+            s.z = e.z();
+            s.ex = bx;
+            s.ey = by;
+            s.ez = bz;
+            s.a = 0.2f;
+            s.c0 = alpha(st.mid, 0.55f);
+            s.c1 = alpha(st.core, 0.8f);
+            s.fadeIn = 0;
+            s.fadeOut = 4;
+        }
+        FxRecipes.shards(bx, by, bz, n(9), 0.28f, st);
+        FxRecipes.smokePuffs(bx, by, bz, n(3), 0.3f, 0.8f, FxStyle.FLIGHT, 0.03f, 20);
+        FxRecipes.sparks(bx, by, bz, n(8), 0.35f, st, 7, 0.03f, e.dx() / l, e.dy() / l, e.dz() / l, 0.7f);
+        double gy = FxWorld.groundY(bx, by, bz);
+        if (by - gy < 2.2) FxRecipes.decal(bx, gy + 0.02, bz, CRACK, 1.2f, 0xC8E4F6FF, 120);
+    }
+
+    // ---- Updraft: a column of air you can see ---------------------------------------------------------------------------
+
+    private static void draft(Job j) {
+        float r = j.radius, h = j.h;
+        float fade = Math.min(1f, (j.life - j.age) / 12f) * Math.min(1f, (j.age + 1) / 5f);
+        // curls of wind climbing round the inside of it
+        for (int k = 0; k < 2; k++) {
+            float a = j.age * 0.42f + k * Mth.PI + (j.seed & 7);
+            float y = (j.age * 0.33f + k * h * 0.5f) % h;
+            int s = FxWorld.sprite(WIND, j.x + Mth.cos(a) * r * 0.82, j.y + y, j.z + Mth.sin(a) * r * 0.82, -Mth.sin(a) * 0.09, 0.26, Mth.cos(a) * 0.09, 11, 0.7f, 0.3f,
+                    alpha(j.style.core, 0.55f * fade), alpha(j.style.mid, 0), FxPool.ADD);
+            FxWorld.spin(s, a, 0.12f);
+        }
+        // its edge: thin lines running up, so you can see where to step
+        if (j.age % 2 == 0) {
+            float a = R.f() * Mth.TWO_PI;
+            float y = R.f() * Math.max(1f, h - 2.4f);
+            Shape s = FxWorld.shape(Shape.BEAM, 6);
+            if (s != null) {
+                s.x = j.x + Mth.cos(a) * r;
+                s.z = j.z + Mth.sin(a) * r;
+                s.y = j.y + y;
+                s.ex = s.x;
+                s.ez = s.z;
+                s.ey = s.y + 2.4f;
+                s.a = 0.03f;
+                s.c0 = alpha(j.style.mid, 0.5f * fade);
+                s.c1 = alpha(j.style.core, 0.7f * fade);
+                s.fadeIn = 2;
+                s.fadeOut = 3;
+            }
+        }
+        // a ring that climbs it
+        if (j.age % 5 == 0) {
+            float y = (j.age * 0.5f) % h;
+            FxRecipes.ring(j.x, j.y + y, j.z, r * 0.95f, r * 0.7f, 0.1f, 0.03f, 9, alpha(j.style.core, 0.6f * fade), alpha(j.style.mid, 0), 0, 1, 0);
+        }
+        // what the ground gives up to it: dust, and now and then a leaf
+        if (j.age % 3 == 0) {
+            float a = R.f() * Mth.TWO_PI, d = R.f() * r;
+            int s = FxWorld.sprite(DUST, j.x + Mth.cos(a) * d, j.y + 0.15, j.z + Mth.sin(a) * d, -Mth.sin(a) * 0.05, R.f(0.16f, 0.3f), Mth.cos(a) * 0.05, 26, 0.3f, 0.7f,
+                    0x70CFC6B5, 0x00CFC6B5, FxPool.LIT | FxPool.ANIM);
+            FxWorld.drag(s, 0.97f);
+        }
+        if (j.age % 8 == 0) {
+            float a = R.f() * Mth.TWO_PI, d = R.f() * r * 0.9f;
+            int s = FxWorld.sprite(PETAL, j.x + Mth.cos(a) * d, j.y + 0.3, j.z + Mth.sin(a) * d, -Mth.sin(a) * 0.07, R.f(0.2f, 0.32f), Mth.cos(a) * 0.07, 40, 0.16f, 0.12f,
+                    LEAF, alpha(LEAF, 0), FxPool.LIT);
+            FxWorld.spin(s, a, 0.3f);
+            FxWorld.drag(s, 0.985f);
+        }
+        if (j.age == 0) {
+            FxRecipes.dustRing(j.x, j.y, j.z, r, n(20), FxStyle.KINETIC, 0.12f);
+            FxRecipes.ring(j.x, j.y + 0.1, j.z, 0.3f, r * 1.3f, 0.5f, 0.1f, 10, alpha(j.style.core, 0.9f), alpha(j.style.mid, 0), 0, 1, 0);
+        }
+    }
+
+    // ---- Backdraft: every fire near you comes in, and goes back out as one breath ------------------------------------------
+
+    /** One fire being taken: its flame runs along the line into the mouth. */
+    private static void drawnIn(FxEvent e, FxStyle st) {
+        int steps = n(6);
+        for (int i = 0; i < steps; i++) {
+            float t = i / (float) Math.max(1, steps);
+            int s = FxWorld.sprite(EMBER, e.x() + e.dx() * t, e.y() + e.dy() * t, e.z() + e.dz() * t, e.dx() * 0.16, e.dy() * 0.16, e.dz() * 0.16, 6, 0.3f, 0.08f,
+                    EMBER_HOT, alpha(EMBER_DEEP, 0), FxPool.ADD | FxPool.ANIM);
+            FxWorld.drag(s, 1f);
+        }
+        FxRecipes.smokePuffs(e.x(), e.y(), e.z(), 2, 0.2f, 0.6f, FxStyle.SHADOW, 0.02f, 18);
+        FxWorld.sprite(GLOW, e.x(), e.y(), e.z(), e.dx() * 0.18, e.dy() * 0.18, e.dz() * 0.18, 5, 0.7f, 0.15f, alpha(EMBER_HOT, 0.9f), alpha(EMBER_DEEP, 0), FxPool.ADD);
+    }
+
+    /** The breath: big soft flame thrown down the cone for as long as the lungs last, white at the mouth, red and smoke at its end. */
+    private static void breath(Job j) {
+        float l = Mth.sqrt(j.dx * j.dx + j.dy * j.dy + j.dz * j.dz);
+        float dx = l > 1e-4f ? j.dx / l : 0, dy = l > 1e-4f ? j.dy / l : 0, dz = l > 1e-4f ? j.dz / l : 1;
+        float reach = j.radius, spread = (float) Math.tan(Math.toRadians(j.h)) * 0.75f;
+        float strength = 1f - j.age / (float) j.life * 0.5f;
+        int count = n(j.full ? 12 : 8);
+        for (int i = 0; i < count; i++) {
+            float sx = R.s() * spread, sy = R.s() * spread * 0.7f, sz = R.s() * spread;
+            float speed = reach / 9f * R.f(0.7f, 1.15f) * strength;
+            double vx = (dx + sx) * speed, vy = (dy + sy) * speed + 0.01, vz = (dz + sz) * speed;
+            boolean core = i % 3 == 0;
+            int s = FxWorld.sprite(core ? FLARE : GLOW, j.x + dx * 0.5, j.y + dy * 0.5, j.z + dz * 0.5, vx, vy, vz, 9 + R.i(4), core ? 0.35f : 0.45f, core ? 0.9f : 1.9f,
+                    core ? 0xFFFFF3D0 : alpha(EMBER_HOT, 0.8f), alpha(EMBER_DEEP, 0), FxPool.ADD | (core ? FxPool.ANIM : 0));
+            FxWorld.drag(s, 0.93f);
+        }
+        if (j.age % 2 == 0) {
+            FxRecipes.embers(j.x + dx * reach * 0.5, j.y + dy * reach * 0.5, j.z + dz * reach * 0.5, n(5), reach * 0.25f, j.style, 0.02f);
+            FxRecipes.smokePuffs(j.x + dx * reach * 0.9, j.y + dy * reach * 0.9 + 0.3, j.z + dz * reach * 0.9, 1, reach * 0.15f, 1.4f, FxStyle.SHADOW, 0.04f, 30);
+        }
+        if (j.age == 0) {
+            FxRecipes.flare(j.x + dx * 0.6, j.y + dy * 0.6, j.z + dz * 0.6, 1.5f, j.style, 5);
+            double gx = j.x + dx * reach * 0.6, gz = j.z + dz * reach * 0.6;
+            FxRecipes.decal(gx, FxWorld.groundY(gx, j.y, gz) + 0.02, gz, SCORCH, reach * 0.55f, 0xC0FFFFFF, 200);
+        }
+    }
+
+    // ---- Thornwake: the plants that are really there take hold -----------------------------------------------------------
+
+    /** A root, drawn as a still jagged line in bark with a green heart: from the ground at (x, z) up to a point on the body. */
+    private static void root(double x, double y, double z, double tx, double ty, double tz, int life, float width, int seed) {
+        Shape s = FxWorld.shape(Shape.LIGHTNING, life);
+        if (s == null) return;
+        s.x = x;
+        s.y = y;
+        s.z = z;
+        s.ex = tx;
+        s.ey = ty;
+        s.ez = tz;
+        s.a = width;
+        s.c0 = BARK;
+        s.c1 = alpha(LEAF, 0.9f);
+        s.seed = seed;
+        s.fadeIn = 2;
+        s.fadeOut = 8;
+    }
+
+    private static void rootTakes(FxEvent e, FxStyle st) {
+        double tx = e.x() + e.dx(), ty = e.y() + e.dy(), tz = e.z() + e.dz();
+        int life = Math.max(12, e.ticks());
+        double gy = FxWorld.groundY(tx, ty + 0.5, tz);
+        // where it left the plant: soil thrown up
+        FxRecipes.debris(e.x(), e.y() + 0.1, e.z(), 0.4f, n(5), 0.4f, 0.08f);
+        // and round the body: roots out of the ground on every side, up to the waist
+        int count = n(4);
+        for (int i = 0; i < count; i++) {
+            float a = i / (float) Math.max(1, count) * Mth.TWO_PI + (e.seed() & 15) * 0.4f, d = 0.75f + R.f() * 0.35f;
+            root(tx + Mth.cos(a) * d, gy, tz + Mth.sin(a) * d, tx + Mth.cos(a + 1.1f) * 0.25, ty + R.f(-0.2f, 0.35f), tz + Mth.sin(a + 1.1f) * 0.25, life, 0.085f,
+                    e.seed() * 31 + i);
+        }
+        FxRecipes.debris(tx, gy + 0.1, tz, 0.9f, n(8), 0.45f, 0.1f);
+        FxRecipes.dustRing(tx, gy, tz, 0.9f, n(8), FxStyle.KINETIC, 0.06f);
+        for (int i = 0; i < n(7); i++) {
+            int s = FxWorld.sprite(PETAL, tx + R.s() * 0.6, gy + R.f(0.2f, 1.2f), tz + R.s() * 0.6, R.s() * 0.06, R.f(0.04f, 0.14f), R.s() * 0.06, 26 + R.i(14), 0.15f, 0.1f,
+                    LEAF, alpha(LEAF, 0), FxPool.LIT);
+            FxWorld.spin(s, R.f(0, 6.28f), 0.25f);
+            FxWorld.grav(s, 0.012f);
+            FxWorld.drag(s, 0.95f);
+        }
+    }
+
+    /** The cast itself: the ground stirs all the way out, and where it is green the leaves lift. */
+    private static void groundWakes(FxEvent e, FxStyle st) {
+        float r = Math.max(2f, e.scale());
+        boolean green = e.has(FxEvent.FULL);
+        for (int i = 0; i < n(green ? 14 : 6); i++) {
+            float a = R.f() * Mth.TWO_PI, d = Mth.sqrt(R.f()) * r;
+            double px = e.x() + Mth.cos(a) * d, pz = e.z() + Mth.sin(a) * d;
+            double gy = FxWorld.groundY(px, e.y() + 1.2, pz);
+            if (Math.abs(gy - e.y()) > 3) continue;
+            FxRecipes.debris(px, gy + 0.1, pz, 0.25f, 2, 0.3f, 0.04f);
+            if (green) {
+                int s = FxWorld.sprite(PETAL, px, gy + 0.2, pz, R.s() * 0.03, R.f(0.05f, 0.12f), R.s() * 0.03, 30 + R.i(16), 0.14f, 0.1f, LEAF, alpha(LEAF, 0), FxPool.LIT);
+                FxWorld.spin(s, a, 0.2f);
+                FxWorld.grav(s, 0.008f);
+                FxWorld.drag(s, 0.96f);
+            }
+        }
+        if (green) FxRecipes.motes(e.x(), e.y() + 0.6, e.z(), n(12), r * 0.5f, st, 0.02f);
+    }
+
+    /** Elder Grove: one great root, wound out of several, standing up under the strongest thing here. */
+    private static void elderRoot(FxEvent e, FxStyle st) {
+        double x = e.x(), z = e.z();
+        double gy = FxWorld.groundY(x, e.y() + 0.5, z);
+        float h = Math.max(2.5f, e.scale());
+        int life = Math.max(20, e.ticks());
+        for (int i = 0; i < n(6); i++) {
+            float a = i / 6f * Mth.TWO_PI, d = 1.3f;
+            root(x + Mth.cos(a) * d, gy, z + Mth.sin(a) * d, x + Mth.cos(a + 2.2f) * 0.35, gy + h * R.f(0.7f, 1f), z + Mth.sin(a + 2.2f) * 0.35, life, 0.16f, e.seed() * 17 + i);
+        }
+        FxRecipes.debris(x, gy + 0.1, z, 1.6f, n(16), 0.7f, 0.2f);
+        FxRecipes.dustRing(x, gy, z, 1.6f, n(16), FxStyle.KINETIC, 0.12f);
+        FxRecipes.decal(x, gy + 0.02, z, CRACK, 3.4f, 0xD0FFFFFF, 200);
+        for (int i = 0; i < n(14); i++) {
+            int s = FxWorld.sprite(PETAL, x + R.s() * 1.2, gy + R.f(0.5f, h), z + R.s() * 1.2, R.s() * 0.08, R.f(0.03f, 0.12f), R.s() * 0.08, 34 + R.i(16), 0.16f, 0.1f, LEAF,
+                    alpha(LEAF, 0), FxPool.LIT);
+            FxWorld.spin(s, R.f(0, 6.28f), 0.25f);
+            FxWorld.grav(s, 0.012f);
+            FxWorld.drag(s, 0.95f);
+        }
     }
 }

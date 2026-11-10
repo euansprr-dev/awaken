@@ -10,14 +10,14 @@ This file is the plan I build from and the ledger of what is done. Order is by w
 
 | # | Piece | State |
 |---|---|---|
-| M1 | The arm: schema 2 (elbow, wrist), upper arm, arm layers, the light, left-hand casts, eased put-away, grip follow | |
-| M2 | Voice: scores, the VOICE event, Classic/New setting, generator, a score for every power | |
-| M3 | Takes and ways: payload bits, `Cast.way`, event bits, clip pick, the press buffer | |
-| M4 | Every cast re-authored: `fp_casts2.py` (elbow, light, left hand), takes, ways, third person in step | |
-| M5 | A look for every power: film findings first, then family by family | |
-| M6 | Combos: Weaves by the weapon, twelve Arms Duets, nine Break finishers | |
-| M7 | New powers: Brand, Hoarfrost Lances, Updraft, then Backdraft, Thornwake | |
-| M8 | Compile, GameTests, the film again, listening page, SPEC | |
+| M1 | The arm: schema 2 (elbow, wrist), upper arm, arm layers, the light, left-hand casts, eased put-away, grip follow | Built (7237af2a9). Unseen in game. |
+| M2 | Voice: scores, the VOICE event, Classic/New setting, generator, a score for every power | Built: 64 powers, 157 beats, 386 recordings named. Unheard in game. No subtitles for the beats yet. |
+| M3 | Takes and ways: payload bits, `Cast.way`, event bits, clip pick, the press buffer | Built. The server changes the shape of Shockwave, Haymaker, Spirit Palm, Nova and Frost Nova by way; Updraft reads it too. |
+| M4 | Every cast re-authored: `fp_casts2.py` (elbow, light, left hand), takes, ways, third person in step | 69 authored, 195 clips with takes (136e448af). Still on old clips: Charged Shot, Prism Lance, Railgun, Shockwave's stand. Third person has no takes or ways yet. |
+| M5 | A look for every power: film findings first, then family by family | First pass: Frost Nova, Thunderclap, Telekinesis, Spirit Palm, Barrier, Mend, Shadow Step, the nine finishers, the five earned powers. The rest still wear the shared recipes. |
+| M6 | Combos: Weaves by the weapon, twelve Arms Duets, nine Break finishers | Nine duets and the nine finishers built (bef7d7f5c). Not built: Recall, Thunder Javelin, Batter Up; Weaves performed by the weapon (needs Arms' swing code, the weapon-feel session's). |
+| M7 | New powers: Brand, Hoarfrost Lances, Updraft, then Backdraft, Thornwake | All five built whole: behaviour, how each is earned, Tasks steps, icons, ladders, casts, scores, looks. |
+| M8 | Compile, GameTests, the film again, listening page, SPEC | Open. |
 
 Compile checks (not tests) after M3, M5, M6, M7. One test and film pass at M8.
 

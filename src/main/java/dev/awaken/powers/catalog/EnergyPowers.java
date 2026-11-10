@@ -215,8 +215,14 @@ final class EnergyPowers {
     }
 
     static Result nova(Cast c) {
-        Vec3 at = c.pos().add(0, 1, 0);
-        double radius = c.radius(6);
+        // thrown out of the air it goes off beneath you, a little wider, and the push of it lifts you (SPEC §32, "Ways")
+        boolean air = c.way == dev.awaken.powers.fx.Ways.AIR && c.variant == 0 && !c.step(5);
+        Vec3 at = c.pos().add(0, air ? -1.2 : 1, 0);
+        double radius = c.radius(6) * (air ? 1.15 : 1);
+        if (air) {
+            Moves.launch(c.player, new Vec3(0, 0.55, 0));
+            Moves.noFall(c, 60);
+        }
         if (c.is(2)) {
             for (LivingEntity e : Combat.foesAround(c.player, at, radius + 2)) Combat.push(e, at.subtract(e.position()).normalize().scale(0.8).add(0, 0.2, 0));
             c.voice(Beat.GATHER, PowerSounds.GRAVITY, 1f, 1.4f);
@@ -383,6 +389,7 @@ final class EnergyPowers {
             b.stun = 10 + (int) (20 * charge);
             b.cast = c;
             if (over) b.pierce = 1;
+            b.pierce = Math.max(b.pierce, dev.awaken.powers.ArmsDuets.javelin(c, charge)); // off a Spear it's a javelin (Thunder Javelin)
             if (c.is(1)) b.bounces = 2;
             b.fly = PowerSounds.LIGHTNING_SIZZLE.get();
             b.hitSound = PowerSounds.LIGHTNING_THUNDER.get();

@@ -110,5 +110,11 @@ public final class PowerFxDefs {
         d("frost_nova", FxStyle.FROST, CastAnim.STOMP, null, null, FxKind.FROST, null, FxKind.IMPACT, null);
         d("ghost_step", FxStyle.SOUL, CastAnim.DASH, null, null, FxKind.BLINK, null, FxKind.IMPACT, null);
         d("twin_strike", FxStyle.SOUL, CastAnim.CLAP, null, null, FxKind.AURA, null, FxKind.ECHO, FxKind.AURA);
+        // Earned: a mark the blade sets off, lances the blade looses, a column of air, a breath of fire, roots from real plants.
+        d("brand", FxStyle.HEAT, CastAnim.PALM, null, null, FxKind.PALM, FxKind.PALM, FxKind.NOVA, FxKind.AURA);
+        d("hoarfrost_lances", FxStyle.FROST, CastAnim.RAISE, null, null, FxKind.AURA, FxKind.BOLT, FxKind.IMPACT, FxKind.AURA);
+        d("updraft", FxStyle.FLIGHT, CastAnim.SKYWARD, null, null, FxKind.RING, null, FxKind.IMPACT, FxKind.GLYPH);
+        d("backdraft", FxStyle.HEAT, CastAnim.PUSH2, null, null, FxKind.CONE, FxKind.TETHER, FxKind.IMPACT, FxKind.FIRE_TRAIL);
+        d("thornwake", FxStyle.SPIRIT, CastAnim.STOMP, null, null, FxKind.RING, FxKind.TETHER, FxKind.IMPACT, FxKind.TETHER);
     }
 }

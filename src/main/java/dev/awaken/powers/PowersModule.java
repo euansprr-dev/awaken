@@ -23,6 +23,7 @@ public final class PowersModule {
 
     public static void init(IEventBus modBus) {
         ArmsDuets.init(); // the blade's moments answer what a cast left open (SPEC §50, "Arms Duets")
+        Earned.init(); // how the five earned powers come to you, and their steps on Tasks (SPEC §50, "Earned powers")
         PowerCatalog.bootstrap();
         PowerSounds.SOUNDS.register(modBus);
         PowerContent.init(modBus);

@@ -2095,7 +2095,7 @@ final class FxRecipes {
                     FxWorld.spin(p, R.f(0, 6.28f), 0.05f);
                 }
             }
-            case MARK -> {
+            case MARK, BRAND, LANCES -> {
             }
             default -> {
                 if (s.age % 4 == 0) motes(x, y + R.f(0.1f, h), z, 1, 0.45f, st, 0.015f);

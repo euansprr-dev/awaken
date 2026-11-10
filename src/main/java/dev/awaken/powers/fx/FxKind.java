@@ -120,5 +120,6 @@ public enum FxKind {
     }
 
     /** Aura looks ({@link #AURA} aux). */
-    public enum Aura { GENERIC, FLOW, BRACE, NANITE, OVERLOAD, READ, FORESIGHT, THIRD_EYE, TWIN, CLOAK, MARK, HOVER, FLIGHT, BARRIER }
+    /** BRAND and LANCES are drawn by the power's own signature (client Signatures); the shared aura adds nothing for them. */
+    public enum Aura { GENERIC, FLOW, BRACE, NANITE, OVERLOAD, READ, FORESIGHT, THIRD_EYE, TWIN, CLOAK, MARK, HOVER, FLIGHT, BARRIER, BRAND, LANCES }
 }

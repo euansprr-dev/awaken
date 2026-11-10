@@ -404,6 +404,7 @@ public final class Casting {
         int body = dev.awaken.powers.fx.Ways.of(player);
         if (body == dev.awaken.powers.fx.Ways.AIR) st.airAt = now;
         else if (body == dev.awaken.powers.fx.Ways.RUN) st.runAt = now;
+        Earned.tick(player, st);
         st.refreshPerks(player, now);
         Loadout l = Powers.loadout(player);
         int intStat = Progression.stat(player, Stat.INT);
