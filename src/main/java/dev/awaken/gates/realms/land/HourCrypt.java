@@ -168,8 +168,8 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         run();
     }
 
-    /** Where packs are: the nave, the Ossuary, its north chapel (an ambush), the Sunk Aisle, and its far bays (an ambush). */
-    static final int[][] DENS = {{0, -66}, {112, 0}, {92, -22}, {-112, 0}, {-138, 0}};
+    /** Where packs are: the nave, the Ossuary, its north chapel (an ambush), the Sunk Aisle, its far bays (an ambush), and the dark south aisle the hushlings keep. */
+    static final int[][] DENS = {{0, -66}, {112, 0}, {92, -22}, {-112, 0}, {-138, 0}, {92, 22}};
     /** The stone teeth across the Ossuary's gallery: where each row stands along the hall. */
     static final int[] TEETH = {65, 69, 73};
     /** Where the ringers' rope comes down from the bridge to the bell, once the Warden of the ropes has fallen. */
@@ -187,8 +187,10 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         leg("nave", LegKind.FIGHT, "The nave", 0, F + 1, -66, 24, 0, List.of("toll_ghoul*3", "crypt_archer*2"), "", "drum");
         leg("drum", LegKind.BREATHER, "The walk round the pit", 0, F + 1, -38, 12, -1, none, "", "gallery", "sunk", "tower", "lord");
         leg("gallery", LegKind.TRAP, "The Ossuary gallery", 69, F + 1, 0, 10, -1, none, "", "ossuary");
-        leg("ossuary", LegKind.FIGHT, "The Ossuary", 112, F + 1, 0, 12, 1, List.of("crypt_archer*3", "bell_wisp*2", "crypt_keeper"), "", "bones", "chapel");
+        leg("ossuary", LegKind.FIGHT, "The Ossuary", 112, F + 1, 0, 12, 1, List.of("crypt_archer*3", "bell_wisp*2", "crypt_keeper"), "", "bones", "chapel", "aisle");
         leg("chapel", LegKind.AMBUSH, "The north chapel", 92, F + 1, -22, 6, 2, List.of("bell_wisp*4", "toll_ghoul"), "", "reliquary");
+        // hushlings hunt by sound and leave the light alone: the door behind them opens only while the bell rings, so you wait for it in the dark, quietly
+        leg("aisle", LegKind.FIGHT, "The south aisle", 92, F + 1, 22, 6, 5, List.of("~hushling*3"), "", "reliquary");
         leg("reliquary", LegKind.HIDDEN, "The reliquary", 92, F + 2, 48, 7, -1, none, "", "ossuary");
         leg("bones", LegKind.WARDEN, "The round room of bones", 156, F + 2, 0, 18, 0, List.of("crypt_archer*3"), "", "drum");
         leg("sunk", LegKind.FIGHT, "The Sunk Aisle", -112, F - 14, 0, 13, 3, List.of("toll_ghoul*3", "bell_wisp*2"), "", "bays");

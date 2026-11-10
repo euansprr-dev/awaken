@@ -87,7 +87,8 @@ public final class Broodwarren extends CrawlLand<Broodwarren.M> {
         part(new Tunnel("slip", 43, 74, 64, 54, 73, 72, 1.4, 3, seed + 9));
         jellyCell = part(new Cave("jelly", 58, 73, 76, 5.5, 5.5, 5, seed + 10));
         part(new Tunnel("gullet", 30, 74, 70, 12, 70, 87, 2.4, 4, seed + 11));
-        ring = part(new Arena("ring", 0, 70, 92, 13, 9, 5, seed + 12));
+        // no pillars in the ring: its Warden is a centipede as long as the room and needs the floor
+        ring = part(new Arena("ring", 0, 70, 92, 15, 10, 0, seed + 12));
         part(new Tunnel("descent", -12, 70, 94, -30, 62, 100, 2.6, 5, seed + 13));
         brood = part(new Arena("brood", LORD_X, LORD_Y, LORD_Z, 22, 16, 8, seed + 14));
         part(new Tunnel("crawl1", 32, 74, 50, 36, 90, 10, 1.7, 3, seed + 15));
@@ -101,13 +102,14 @@ public final class Broodwarren extends CrawlLand<Broodwarren.M> {
         door("larder", 11, 73, 48, 14, 79, 57);
         door("larder", 24, 71, 72, 27, 78, 79);
         door("larder", 29, 74, 43, 36, 81, 45);
-        door("ring", 14, 69, 80, 17, 76, 87);
+        door("ring", 17, 69, 77, 20, 77, 84);
 
         site(SiteKind.MOUTH, 0, 112, -70, 6, "");
         site(SiteKind.PORTAL, 0, 112, -75, 2, "");
         site(SiteKind.LORD, LORD_X, LORD_Y, LORD_Z, 22, ctx.bp().heart().lord());
-        site(SiteKind.WARDEN, 0, 70, 92, 13, "comb ring");
+        site(SiteKind.WARDEN, 0, 70, 92, 15, "comb ring");
         site(SiteKind.DEN, 0, 106, -30, 10, "");
+        site(SiteKind.DEN, 30, 74, 60, 8, "");
         site(SiteKind.DEN, 30, 74, 60, 8, "");
         for (int[] f : FINDS) site(SiteKind.FIND, f[0], f[1], f[2], 2, "");
         clearSites();
@@ -117,11 +119,13 @@ public final class Broodwarren extends CrawlLand<Broodwarren.M> {
         leg("root", LegKind.ARRIVE, "The split root", 0, 112, -70, 6, -1, none, "", "ante");
         leg("ante", LegKind.FIGHT, "The antechamber", 0, 106, -30, 13, 0, List.of("hive_larva*4", "honey_slime*2"), "", "gallery", "crawl");
         leg("gallery", LegKind.TRAP, "The spitting gallery", 0, 102, -2, 16, -1, none, "", "nursery");
-        leg("nursery", LegKind.MOVEMENT, "The nursery", 0, 98, 23, 12, -1, none, "", "larder");
-        leg("larder", LegKind.AMBUSH, "The larder", 30, 74, 60, 7, 1, List.of("hive_larva*6", "drone_bee*2"), "", "ring", "jelly", "crawl");
+        leg("nursery", LegKind.MOVEMENT, "The nursery", 0, 98, 23, 12, -1, none, "", "roof");
+        // lurkers are up among the larder's sacs before you get there: they hang like the sacs do, and drop when you walk under them
+        leg("roof", LegKind.FIGHT, "The larder's roof", 30, 74, 60, 7, 2, List.of("~drip_lurker*3"), "", "larder");
+        leg("larder", LegKind.AMBUSH, "The larder", 30, 74, 60, 7, 1, List.of("hive_larva*5", "drone_bee*2"), "", "ring", "jelly", "crawl");
         leg("jelly", LegKind.HIDDEN, "The jelly cell", 58, 73, 76, 5, -1, none, "", "larder");
         leg("crawl", LegKind.SHORTCUT, "The workers' crawl", 16, 105, -25, 3, -1, none, "den1", "ante");
-        leg("ring", LegKind.WARDEN, "The comb ring", 0, 70, 92, 14, 0, List.of("hive_guard", "drone_bee*2"), "", "brood");
+        leg("ring", LegKind.WARDEN, "The comb ring", 0, 70, 92, 15, 0, List.of("!thousandfoot", "hive_guard", "drone_bee*2"), "", "brood");
         leg("brood", LegKind.LORD, "The brood chamber", LORD_X, LORD_Y, LORD_Z, 22, -1, none, "");
         // five cells light and spit one after another down the gallery, a second apart, three seconds round
         for (int i = 0; i < SPITTERS.length; i++) {

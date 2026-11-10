@@ -56,4 +56,16 @@ cmd awaken gate realm_at WARDEN 2 0 3 -12
 look 0 12
 wait 80
 shot packs_warden_ropes
+cmd awaken gate realm_at DEN 5 0 1 -9
+look 0 6
+wait 80
+shot packs_south_aisle
+# played, not looked at: walking into the north chapel springs it
+cmd gamemode survival
+cmd awaken gate realm_at DEN 2 0 0 4
+look 180 -10
+wait 45
+shot run_chapel_ambush
+cmd gamemode creative
+wait 20
 quit

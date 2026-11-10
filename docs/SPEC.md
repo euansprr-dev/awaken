@@ -20590,3 +20590,15 @@ cells, a second apart), the nursery (a shaft of hanging comb; the ledge is broke
 of thin comb that give way), the larder (the sacs burst round you: larvae and drones), the jelly cell behind the larder's
 curtain of sacs (HIDDEN), the workers' crawl back up to the antechamber once the larder is cleared (SHORTCUT), the comb ring
 (the Swarm Mind with a guard and drones) and the brood chamber (the Hive Regent; its pillars wake as she is worn down).
+
+**Creatures with bodies of their own in the packs.** A pack can name any creature the mobs module has, not only its theme's:
+the cave hunters (§23) are gate monsters now, with the bodies and motion they already have. A name marked "~" keeps its own
+habits instead of standing and waiting (a Drip Lurker leaps up and hangs from a roof three to nine blocks over it and drops on
+whoever walks under it in the dark; a Hushling hunts by sound and leaves the light alone); such a monster counts as fighting
+only once it has a target, so a room of them does not shut its doors on someone who is sneaking through. A Warden's pack that
+starts "!name" names the Warden itself. The Broodwarren: three Drip Lurkers hang among the larder's sacs before its ambush
+springs, and the comb ring's Warden is the Thousandfoot (the ring has no pillars). The Hour Crypt: three Hushlings keep the dark
+south aisle in front of the reliquary's door, which is why you wait for the toll there quietly (16 legs).
+
+**A cache per herd.** When a fight's or an ambush's pack is all down, a gate cache appears where it stood (as a room's does in
+the old gates), with the cache sound and a burst of light.

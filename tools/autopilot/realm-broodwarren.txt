@@ -72,4 +72,16 @@ cmd awaken gate realm_at LORD 0 0 1 8
 look 180 -42
 wait 80
 shot brood_chamber_up
+# the last two are played, not looked at: walking into the jelly cell pays, and walking into the larder springs it
+cmd gamemode survival
+cmd awaken gate realm_at DEN 1 27 0 15
+look -45 10
+wait 50
+shot brood_jelly_found
+cmd awaken gate realm_at DEN 1 0 0 -5
+look 0 -5
+wait 45
+shot brood_ambush
+cmd gamemode creative
+wait 20
 quit

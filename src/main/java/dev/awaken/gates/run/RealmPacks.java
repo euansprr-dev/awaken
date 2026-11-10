@@ -25,7 +25,7 @@ import java.util.Set;
 public final class RealmPacks {
     private RealmPacks() {}
 
-    private static final String PACK = "awaken_realm_pack";
+    private static final String PACK = "awaken_realm_pack", FREE = "awaken_realm_free";
     /** A pack notices you inside NOTICE if it can see you, inside CLOSE whatever stands between; its own stand within COMPANY. */
     private static final double NOTICE = 13, NOTICE_UP = 7, CLOSE = 5, COMPANY = 26;
     /** Pressure: this long with no headway and waves start, one every PERIOD; the hunter comes at HUNTER. */
@@ -58,15 +58,22 @@ public final class RealmPacks {
         return null;
     }
 
-    /** A pack as a sheet writes it ("id" or "id*n"), one name a monster, with one more of the first for every two ranks. Empty when the pack rolls from the theme. */
+    /**
+     * A pack as a sheet writes it ("id" or "id*n"), one name a monster, with one more of the first for every two ranks.
+     * Empty when the pack rolls from the theme. A name keeps its mark: "~" for a creature that keeps its own habits (a
+     * lurker hangs from the roof, a hushling listens in the dark) instead of standing and waiting, "!" for a Warden named
+     * outright.
+     */
     static List<String> roll(List<String> pack, int rank) {
         List<String> out = new java.util.ArrayList<>();
+        String more = null;
         for (String e : pack) {
             int star = e.indexOf('*');
             String id = star < 0 ? e : e.substring(0, star);
+            if (more == null && !id.startsWith("!")) more = id;
             for (int i = star < 0 ? 1 : Integer.parseInt(e.substring(star + 1)); i > 0; i--) out.add(id);
         }
-        if (!out.isEmpty()) for (int i = 0; i < rank / 2; i++) out.add(out.getFirst());
+        if (more != null) for (int i = 0; i < rank / 2; i++) out.add(more);
         return out;
     }
 
@@ -80,12 +87,17 @@ public final class RealmPacks {
     }
 
     /** One monster a sheet named. A name the mobs module doesn't know gets one of the theme's own instead, so a typo never empties a room. */
-    private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String id, BlockPos pos, String pack, ServerPlayer wakeFor) {
-        LivingEntity e = Rooms.signature(level, g, f, -1, id, pos);
-        if (e == null) e = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, pos);
+    private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String name, BlockPos pos, String pack, ServerPlayer wakeFor) {
+        boolean free = name.startsWith("~");
+        LivingEntity e = Rooms.signature(level, g, f, -1, free || name.startsWith("!") ? name.substring(1) : name, pos);
+        if (e == null) {
+            e = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, pos);
+            free = false;
+        }
         if (e == null) return null;
         e.getPersistentData().putString(PACK, pack);
-        if (wakeFor == null) Encounters.holdFree(e);
+        if (free) e.getPersistentData().putBoolean(FREE, true); // its own habits are how it waits
+        else if (wakeFor == null) Encounters.holdFree(e);
         else if (e instanceof Mob m) m.setTarget(wakeFor);
         return e;
     }
@@ -122,10 +134,16 @@ public final class RealmPacks {
     /** A Warden and the company that stands with it: the sheet's, or three of the theme's and more with rank. The Warden comes even where its company finds no footing. */
     public static LivingEntity warden(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> company) {
         BlockPos at = settle(level, center);
-        LivingEntity w = stand(level, g, f, MobRole.Role.WARDEN, at == null ? center : at, "w" + site);
+        List<String> names = roll(company, g.plan.rank().ordinal());
+        LivingEntity w = null;
+        if (!names.isEmpty() && names.getFirst().startsWith("!")) {
+            // the sheet names the Warden itself: a creature with a body and a fight of its own
+            w = named(level, g, f, names.removeFirst(), at == null ? center : at, "w" + site, null);
+            if (w != null && !Encounters.waiting(w)) Encounters.holdFree(w);
+        }
+        if (w == null) w = stand(level, g, f, MobRole.Role.WARDEN, at == null ? center : at, "w" + site);
         if (w == null) return null;
         var rnd = level.getRandom();
-        List<String> names = roll(company, g.plan.rank().ordinal());
         int n = names.isEmpty() ? 3 + g.plan.rank().ordinal() / 2 : names.size();
         double turn = rnd.nextDouble() * Math.PI * 2;
         for (int i = 0; i < n; i++) {
@@ -164,7 +182,8 @@ public final class RealmPacks {
 
     /** Whether a pack is awake and still has someone standing, anywhere near its place. */
     public static boolean fighting(ServerLevel level, BlockPos center, String pack) {
-        return !level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(40, 20, 40), m -> m.isAlive() && pack.equals(packOf(m)) && !Encounters.waiting(m)).isEmpty();
+        return !level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(40, 20, 40),
+                m -> m.isAlive() && pack.equals(packOf(m)) && !Encounters.waiting(m) && (!m.getPersistentData().getBooleanOr(FREE, false) || m.getTarget() != null)).isEmpty();
     }
 
     /** One wave after a player who has made no headway (k counts from 0), or the hunter. Returns how many came. */

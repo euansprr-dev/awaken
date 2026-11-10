@@ -345,7 +345,7 @@ public final class RealmTests {
             Land land = hour(1);
             var route = dev.awaken.gates.realms.check.RouteCheck.check(land, dev.awaken.gates.realms.check.WalkCheck.walk(land));
             if (!route.problems().isEmpty()) h.fail(route.summary() + ": " + route.problems());
-            if (land.route().size() != 15 || !land.designed()) h.fail("the Crypt's run isn't its fifteen legs: " + land.route().size());
+            if (land.route().size() != 16 || !land.designed()) h.fail("the Crypt's run isn't its sixteen legs: " + land.route().size());
             if (land.change("relic_open").isEmpty() || land.change("relic_open").size() != land.change("relic_shut").size()) h.fail("the reliquary's door doesn't go both ways");
             if (land.change("shortcut_balcony").isEmpty() || !land.seals("bones") || land.seals("ropes")) h.fail("the rope, or the Wardens' doors, aren't as the sheet says");
             h.succeed();
