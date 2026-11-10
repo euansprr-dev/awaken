@@ -1,0 +1,363 @@
+# Interactions audit C (docs/interactions/PLAN.md): every block of ours a player works, as it is today: the hands' touch
+# and the screen or scene that opens, filmed in first person from two blocks; then the Forge, the War Anvil and the
+# Inscribing Table with a blade in the hand, and the War Anvil in third person. Shots and clips o_*.
+# Run on CI: tools/tour-ci.sh tools/autopilot/interact-audit-awaken.txt 1800
+# ci knobs: PACK=feel
+world interact_audit_c survival 4303
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+screen close
+gui 0
+window 1708 960
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+key dismiss
+wait 10
+screen close
+cmd effect give @s minecraft:slow_falling 30 1 true
+cmd tp @s 0.5 201 0.5 0 0
+wait 200
+cmd forceload add -16 -16 101 16
+wait 120
+cmd fill -2 199 -4 29 199 8 minecraft:smooth_stone
+cmd fill -2 200 -4 29 206 8 minecraft:air
+cmd fill -2 200 5 29 203 5 minecraft:spruce_planks
+cmd fill 30 199 -4 61 199 8 minecraft:smooth_stone
+cmd fill 30 200 -4 61 206 8 minecraft:air
+cmd fill 30 200 5 61 203 5 minecraft:spruce_planks
+cmd fill 62 199 -4 85 199 8 minecraft:smooth_stone
+cmd fill 62 200 -4 85 206 8 minecraft:air
+cmd fill 62 200 5 85 203 5 minecraft:spruce_planks
+cmd clear @s
+cmd setblock 2 200 3 awaken:forge[facing=north]
+cmd setblock 5 200 3 awaken:war_anvil
+cmd setblock 8 200 3 awaken:inscribing_table
+cmd setblock 11 200 3 awaken:word_stone
+cmd setblock 14 200 3 awaken:fitting_stand
+cmd setblock 17 200 3 awaken:pattern_stand
+cmd setblock 20 200 3 awaken:hearth_anchor
+cmd setblock 23 200 3 awaken:hearthfire
+cmd setblock 26 200 3 awaken:spire_board
+cmd setblock 29 200 3 awaken:trophy_mount
+cmd setblock 32 200 3 awaken:foundry_crucible
+cmd setblock 35 200 3 awaken:storehouse_drop
+cmd setblock 38 200 3 awaken:ledger_desk
+cmd setblock 41 200 3 awaken:work_plan
+cmd setblock 44 200 3 awaken:bell_frame
+cmd setblock 47 200 3 awaken:found_bell
+cmd setblock 50 200 3 awaken:waking_pick_stone
+cmd setblock 53 200 3 awaken:conduit
+cmd setblock 56 200 3 awaken:waystone
+cmd setblock 59 200 3 awaken:precursor_log_terminal
+cmd setblock 62 200 3 awaken:fabricator
+cmd setblock 65 200 3 awaken:broken_machine
+cmd setblock 68 200 3 awaken:veil_cache
+cmd setblock 71 200 3 awaken:stillpoint_shrine
+cmd setblock 74 200 3 awaken:anomaly_spirit_cache
+cmd setblock 77 200 3 awaken:left_chest
+cmd setblock 80 200 3 awaken:carved_token
+camera first
+wait 20
+# ---- forge ----
+cmd tp @s 2.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_forge 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_forge
+screen close
+wait 8
+# ---- war_anvil ----
+cmd tp @s 5.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_war_anvil 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_war_anvil
+screen close
+wait 8
+# ---- inscribing_table ----
+cmd tp @s 8.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_inscribing_table 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_inscribing_table
+screen close
+wait 8
+# ---- word_stone ----
+cmd tp @s 11.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_word_stone 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_word_stone
+screen close
+wait 8
+# ---- fitting_stand ----
+cmd tp @s 14.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_fitting_stand 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_fitting_stand
+screen close
+wait 8
+# ---- pattern_stand ----
+cmd tp @s 17.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_pattern_stand 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_pattern_stand
+screen close
+wait 8
+# ---- hearth_anchor ----
+cmd tp @s 20.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_hearth_anchor 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_hearth_anchor
+screen close
+wait 8
+# ---- hearthfire ----
+cmd tp @s 23.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_hearthfire 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_hearthfire
+screen close
+wait 8
+# ---- spire_board ----
+cmd tp @s 26.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_spire_board 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_spire_board
+screen close
+wait 8
+# ---- trophy_mount ----
+cmd tp @s 29.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_trophy_mount 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_trophy_mount
+screen close
+wait 8
+# ---- foundry_crucible ----
+cmd tp @s 32.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_foundry_crucible 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_foundry_crucible
+screen close
+wait 8
+# ---- storehouse_drop ----
+cmd tp @s 35.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_storehouse_drop 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_storehouse_drop
+screen close
+wait 8
+# ---- ledger_desk ----
+cmd tp @s 38.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_ledger_desk 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_ledger_desk
+screen close
+wait 8
+# ---- work_plan ----
+cmd tp @s 41.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_work_plan 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_work_plan
+screen close
+wait 8
+# ---- bell_frame ----
+cmd tp @s 44.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_bell_frame 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_bell_frame
+screen close
+wait 8
+# ---- found_bell ----
+cmd tp @s 47.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_found_bell 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_found_bell
+screen close
+wait 8
+# ---- waking_pick_stone ----
+cmd tp @s 50.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_waking_pick_stone 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_waking_pick_stone
+screen close
+wait 8
+# ---- conduit ----
+cmd tp @s 53.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_conduit 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_conduit
+screen close
+wait 8
+# ---- waystone ----
+cmd tp @s 56.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_waystone 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_waystone
+screen close
+wait 8
+# ---- precursor_log_terminal ----
+cmd tp @s 59.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_precursor_log_terminal 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_precursor_log_terminal
+screen close
+wait 8
+# ---- fabricator ----
+cmd tp @s 62.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_fabricator 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_fabricator
+screen close
+wait 8
+# ---- broken_machine ----
+cmd tp @s 65.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_broken_machine 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_broken_machine
+screen close
+wait 8
+# ---- veil_cache ----
+cmd tp @s 68.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_veil_cache 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_veil_cache
+screen close
+wait 8
+# ---- stillpoint_shrine ----
+cmd tp @s 71.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_stillpoint_shrine 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_stillpoint_shrine
+screen close
+wait 8
+# ---- anomaly_spirit_cache ----
+cmd tp @s 74.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_anomaly_spirit_cache 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_anomaly_spirit_cache
+screen close
+wait 8
+# ---- left_chest ----
+cmd tp @s 77.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_left_chest 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_left_chest
+screen close
+wait 8
+# ---- carved_token ----
+cmd tp @s 80.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_carved_token 30 4
+cmd awaken ascent pilot use
+wait 26
+shotnow o_carved_token
+screen close
+wait 8
+# ---- with an iron sword in the hand: the Forge, the War Anvil, the Inscribing Table ----
+cmd give @s minecraft:iron_sword 1
+cmd tp @s 2.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_forge_sword 60 4
+cmd awaken ascent pilot use
+wait 30
+shotnow o_forge_sword
+wait 30
+shotnow o_forge_sword_2
+screen close
+wait 10
+cmd tp @s 5.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_war_anvil_sword 60 4
+cmd awaken ascent pilot use
+wait 30
+shotnow o_war_anvil_sword
+wait 30
+shotnow o_war_anvil_sword_2
+screen close
+wait 10
+cmd tp @s 8.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o_inscribing_table_sword 60 4
+cmd awaken ascent pilot use
+wait 30
+shotnow o_inscribing_table_sword
+wait 30
+shotnow o_inscribing_table_sword_2
+screen close
+wait 10
+# ---- the War Anvil in third person ----
+camera back
+wait 10
+cmd tp @s 5.5 200 1.6 0 30
+wait 12
+cmd awaken ascent pilot rec o3_war_anvil_back 40 4
+cmd awaken ascent pilot use
+wait 40
+shotnow o3_war_anvil_back
+screen close
+wait 10
+camera first
+wait 10
+info
+quit

@@ -89,6 +89,7 @@ final class WorldBody {
     static boolean armsThisFrame, nearLegsThisFrame;
     /** The colour the next limb is drawn in (a fist's tint), white otherwise. */
     private static int rgb = 0xFFFFFF;
+    private static final org.joml.Vector3f R0 = new org.joml.Vector3f();
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -110,8 +111,10 @@ final class WorldBody {
             List<FirstPerson.WorldSource> sources = FirstPerson.worldSources();
             boolean posed = false;
             for (int i = 0; i < sources.size() && !posed; i++) posed = sources.get(i).pose().pose(pt, RIG);
-            if (!posed || !RIG.any()) return;
-            armsThisFrame = RIG.arms();
+            if (!posed) return;
+            // a source may hold the hands and draw none: vanilla's hand stays away (drawArms skips what has no weight)
+            armsThisFrame = RIG.arms() || RIG.noHands;
+            if (!RIG.any()) return;
             submit(mc, e);
         } catch (RuntimeException ex) {
             broken = true;
@@ -232,6 +235,24 @@ final class WorldBody {
                 int h = right ? 0 : 1;
                 int light = e.getPackedLight();
                 if (RIG.glow > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(15 * Math.min(1F, RIG.glow))));
+                if (RIG.fireLight > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(6 + 9 * Math.min(1F, RIG.fireLight))));
+                if (RIG.worldArms) {
+                    // a station's arm: it lies along its own line in the world, root to fist, at the fist's scale (the
+                    // root where the world has it, as the fist is), drawn longer when it reaches across a table
+                    float k = (float) ((RIG.handDistance > 0 ? RIG.handDistance : HAND_DISTANCE) / d);
+                    R0.set((float) (RIG.root[j] - cam.x), (float) (RIG.root[j + 1] - cam.y), (float) (RIG.root[j + 2] - cam.z)).rotate(VIEW).mul(k);
+                    R0.x *= lens;
+                    R0.y *= lens;
+                    float ax = V.x - R0.x, ay = V.y - R0.y, az = V.z - R0.z, al = (float) Math.sqrt(ax * ax + ay * ay + az * az);
+                    if (al < 1e-4F) continue;
+                    float reach = (float) (FirstPerson.Rig.ARM_REACH * RIG.armStretch[h]);
+                    stretch = RIG.armStretch[h];
+                    // its back to you, as a hand over a table is seen from above
+                    limb(ps, e.getSubmitNodeCollector(), parts[i], part(model, l), type, light, V.x - ax / al * reach, V.y - ay / al * reach,
+                            V.z - az / al * reach, V.x, V.y, V.z, 0, 0, -1, 0, -1, w);
+                    stretch = 1F;
+                    continue;
+                }
                 boolean holds = !RIG.held[h].isEmpty();
                 if (holds) tipAcross = right ? (slimSkin ? -0.5F : -1F) : (slimSkin ? 0.5F : 1F); // the middle of the arm
                 // the arm rises to the fist from below it, on its own side (from the frame's corner, a hand high in the
@@ -299,6 +320,7 @@ final class WorldBody {
     private static final double HAND_TAN = 0.7002, ARM_MARGIN = 0.17;
     /** From the fist to the far end of the arm's box (its shoulder cap), along the arm, unstretched. */
     private static final double ARM_BACK = FOREARM + 2 / 16.0;
+    /** How much longer than its model the next limb is drawn along its length (a fist reaching high; a station's arm), 1 otherwise. */
     private static float stretch = 1F;
 
     /** Whether the far end of an arm lying along (dx, dy, dz) to a fist at (x, y, z), drawn {@code k} times its length, is out of the view. */
@@ -574,7 +596,8 @@ final class WorldBody {
 
     /** This frame's world body shows that arm (the right, or the left). */
     static boolean armShown(boolean right) {
-        return armsThisFrame && RIG.weight[(right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM).ordinal()] > 0.01F;
+        // (a source that holds the hands and draws none has both sides: vanilla's hand and what it holds step aside)
+        return armsThisFrame && (RIG.noHands || RIG.weight[(right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM).ordinal()] > 0.01F);
     }
 
     static void reset() {

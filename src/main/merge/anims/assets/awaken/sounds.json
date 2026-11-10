@@ -1,0 +1,134 @@
+{
+  "station.lay": {
+    "subtitle": "subtitles.awaken.station.lay",
+    "sounds": [
+      {
+        "name": "minecraft:entity.item_frame.add_item",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "station.lay_metal": {
+    "subtitle": "subtitles.awaken.station.lay",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.25
+      }
+    ]
+  },
+  "station.lay_stone": {
+    "subtitle": "subtitles.awaken.station.lay",
+    "sounds": [
+      {
+        "name": "minecraft:block.calcite.place",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "station.lay_soft": {
+    "subtitle": "subtitles.awaken.station.lay",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.place",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.1
+      }
+    ]
+  },
+  "station.lift": {
+    "subtitle": "subtitles.awaken.station.lift",
+    "sounds": [
+      {
+        "name": "minecraft:entity.item_frame.remove_item",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "station.result": {
+    "subtitle": "subtitles.awaken.station.result",
+    "sounds": [
+      {
+        "name": "minecraft:item.bundle.insert",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "station.take": {
+    "subtitle": "subtitles.awaken.station.take",
+    "sounds": [
+      {
+        "name": "minecraft:entity.item.pickup",
+        "type": "event",
+        "volume": 0.28,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "station.fuel": {
+    "subtitle": "subtitles.awaken.station.fuel",
+    "sounds": [
+      {
+        "name": "minecraft:block.gravel.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "station.flare": {
+    "subtitle": "subtitles.awaken.station.flare",
+    "sounds": [
+      {
+        "name": "minecraft:item.firecharge.use",
+        "type": "event",
+        "volume": 0.22,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "station.kneel": {
+    "subtitle": "subtitles.awaken.station.kneel",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "touch.palm": {
+    "subtitle": "subtitles.awaken.touch.palm",
+    "sounds": [
+      {
+        "name": "minecraft:block.stone.hit",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "touch.set": {
+    "subtitle": "subtitles.awaken.touch.set",
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.9
+      }
+    ]
+  }
+}

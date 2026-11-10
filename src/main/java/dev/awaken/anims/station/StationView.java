@@ -15,19 +15,90 @@ import org.joml.Vector3f;
 public final class StationView {
     private StationView() {}
 
-    /** A kind of station: its slots (the menu's first), its result slot and its hint. */
+    /**
+     * A kind of station: its slots (the menu's first), its result slot (-1: none) and its hint. The crafting table and
+     * the furnace have their own geometry below; the six workstations of SPEC §64.8 are described here: where each slot
+     * lies ({@code at}: across to your right, up from the block's foot, far along the way in from its middle, per slot;
+     * a brewing stand's bottles stand where vanilla's own model has them, whatever side you work it from), how big a
+     * slot is ({@code half}), how big its item is drawn and whether it lies flat or stands ({@code size},
+     * {@code upright}), how high the work is ({@code work}: a carried stack is held just over it), and the view's own
+     * place ({@code back} from the block's middle, {@code up} over its top).
+     */
     public enum Kind {
-        TABLE(10, 0, "screen.awaken.table.hint"),
-        FURNACE(3, AbstractFurnaceMenu.RESULT_SLOT, "screen.awaken.furnace.hint");
+        TABLE(10, 0, "screen.awaken.table.hint", null, 3 / 32.0, 0.16F, false, 1.0, 0.81, 1.12),
+        FURNACE(3, AbstractFurnaceMenu.RESULT_SLOT, "screen.awaken.furnace.hint", null, 0.15, 0.24F, true, 0.57, 1.55, -0.43),
+        ANVIL(3, 2, "screen.awaken.anvil.hint", new double[]{-0.19, 1.012, 0, 0.0, 1.012, 0, 0.21, 1.012, 0}, 0.085, 0.17F, false, 1.0, 0.85, 1.05),
+        SMITHING(4, 3, "screen.awaken.smithing.hint", new double[]{-0.27, 1.012, 0.06, -0.08, 1.012, 0.06, 0.11, 1.012, 0.06, 0.36, 1.012, 0}, 0.085, 0.16F,
+                false, 1.0, 0.81, 1.12),
+        GRINDSTONE(3, 2, "screen.awaken.grindstone.hint", new double[]{-0.15, 1.012, 0.04, 0.15, 1.012, 0.04, 0, 1.012, -0.3}, 0.09, 0.17F, false, 1.0, 0.85,
+                1.0),
+        STONECUTTER(2, 1, "screen.awaken.stonecutter.hint", new double[]{-0.2, 0.575, 0, 0.22, 0.575, 0}, 0.1, 0.19F, false, 0.5625, 0.8, 0.75),
+        CARTOGRAPHY(3, 2, "screen.awaken.cartography.hint", new double[]{-0.16, 1.012, 0.04, 0.14, 1.012, 0.12, 0.34, 1.012, -0.18}, 0.09, 0.18F, false, 1.0,
+                0.81, 1.12),
+        BREWING(5, -1, "screen.awaken.brewing.hint", new double[]{0.25, 0.42, 0, -0.195, 0.42, -0.195, -0.195, 0.42, 0.195, 0, 0.98, 0, 0, 0.14, -0.32},
+                0.12, 0.3F, true, 0.5, 1.25, 0.3);
 
         public final int slots, result;
         public final String hint;
+        final double @org.jspecify.annotations.Nullable [] at;
+        public final double half, work, back, up;
+        public final float size;
+        public final boolean upright;
 
-        Kind(int slots, int result, String hint) {
+        Kind(int slots, int result, String hint, double @org.jspecify.annotations.Nullable [] at, double half, float size, boolean upright, double work,
+             double back, double up) {
             this.slots = slots;
             this.result = result;
             this.hint = hint;
+            this.at = at;
+            this.half = half;
+            this.size = size;
+            this.upright = upright;
+            this.work = work;
+            this.back = back;
+            this.up = up;
         }
+
+        /** Worked from above, bent over it (everything but a furnace, which is worked through its face). */
+        public boolean bench() {
+            return this != FURNACE;
+        }
+    }
+
+    /**
+     * The kind of station a block is, or null when it has no scene: a crafting table, a furnace, smoker or blast
+     * furnace, an anvil (chipped and damaged too), a smithing table, a grindstone that stands on the floor, a
+     * stonecutter, a cartography table, a brewing stand.
+     */
+    public static @org.jspecify.annotations.Nullable Kind kindOf(net.minecraft.world.level.block.state.BlockState state) {
+        var b = state.getBlock();
+        // a smithing table is a crafting table by class: asked first
+        if (b instanceof net.minecraft.world.level.block.SmithingTableBlock) return Kind.SMITHING;
+        if (b instanceof net.minecraft.world.level.block.CraftingTableBlock) return Kind.TABLE;
+        if (b instanceof net.minecraft.world.level.block.AbstractFurnaceBlock) return Kind.FURNACE;
+        if (b instanceof net.minecraft.world.level.block.AnvilBlock) return Kind.ANVIL;
+        if (b instanceof net.minecraft.world.level.block.GrindstoneBlock) {
+            return state.getValue(net.minecraft.world.level.block.GrindstoneBlock.FACE) == net.minecraft.world.level.block.state.properties.AttachFace.FLOOR
+                    ? Kind.GRINDSTONE : null;
+        }
+        if (b instanceof net.minecraft.world.level.block.StonecutterBlock) return Kind.STONECUTTER;
+        if (b instanceof net.minecraft.world.level.block.CartographyTableBlock) return Kind.CARTOGRAPHY;
+        if (b instanceof net.minecraft.world.level.block.BrewingStandBlock) return Kind.BREWING;
+        return null;
+    }
+
+    /** Whether a menu is the one a station of this kind opens. */
+    public static boolean menuFits(Kind kind, net.minecraft.world.inventory.AbstractContainerMenu menu) {
+        return switch (kind) {
+            case TABLE -> menu instanceof net.minecraft.world.inventory.CraftingMenu;
+            case FURNACE -> menu instanceof AbstractFurnaceMenu;
+            case ANVIL -> menu instanceof net.minecraft.world.inventory.AnvilMenu;
+            case SMITHING -> menu instanceof net.minecraft.world.inventory.SmithingMenu;
+            case GRINDSTONE -> menu instanceof net.minecraft.world.inventory.GrindstoneMenu;
+            case STONECUTTER -> menu instanceof net.minecraft.world.inventory.StonecutterMenu;
+            case CARTOGRAPHY -> menu instanceof net.minecraft.world.inventory.CartographyTableMenu;
+            case BREWING -> menu instanceof net.minecraft.world.inventory.BrewingStandMenu;
+        };
     }
 
     /** A station being worked: where, its kind, the way in (horizontal, along an axis); across is to your right. */
@@ -39,6 +110,11 @@ public final class StationView {
         public double rz() {
             return fx;
         }
+
+        /** The height of the work: a table's top, a stonecutter's bed. */
+        public double top() {
+            return pos.getY() + kind.work;
+        }
     }
 
     /**
@@ -48,13 +124,14 @@ public final class StationView {
      */
     public static final double CELL = 3 / 16.0, GRID_HALF = 1.5 * CELL;
     /**
-     * Where the table's result lies: flat on the top's near border, in from the middle toward you, inside the table's
-     * own block so it can never go into a wall; flat, it never hides a square (floating, it hid the far ones).
+     * Where the table's result lies: flat on the top's right border (vanilla's own side of the grid), out from the middle
+     * to your right, inside the table's own block so it can never go into a wall. A hand reaching over the grid lies
+     * back toward you, so it never crosses the right border (on the near border it did; SPEC §64.2).
      */
-    public static final double RESULT_IN = 0.41, RESULT_HALF = 0.085;
+    public static final double RESULT_SIDE = 0.39, RESULT_HALF = 0.085;
 
     /**
-     * Where a slot lies on the station. A table: 0 the result, on the near border; 1..9 the grid, row 0 the far
+     * Where a slot lies on the station. A table: 0 the result, on the right border; 1..9 the grid, row 0 the far
      * one. A furnace: what cooks on the left of its mouth, the finished result on the right, the fuel on the coals below.
      */
     public static void spot(Station s, int slot, double[] out, int at) {
@@ -70,10 +147,24 @@ public final class StationView {
             return;
         }
         double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
+        if (s.kind() != Kind.TABLE) {
+            double[] d = s.kind().at;
+            double u = d[slot * 3], v = d[slot * 3 + 2];
+            if (s.kind() == Kind.BREWING && slot < 4) {
+                // the bottles and what brews them stand where the stand's own model has them, in the block's own space
+                out[at] = cx + u;
+                out[at + 2] = cz + v;
+            } else {
+                out[at] = cx + rx * u + fx * v;
+                out[at + 2] = cz + rz * u + fz * v;
+            }
+            out[at + 1] = b.getY() + d[slot * 3 + 1];
+            return;
+        }
         if (slot == 0) {
-            out[at] = cx - fx * RESULT_IN;
+            out[at] = cx + rx * RESULT_SIDE;
             out[at + 1] = cy + 0.012;
-            out[at + 2] = cz - fz * RESULT_IN;
+            out[at + 2] = cz + rz * RESULT_SIDE;
             return;
         }
         int row = (slot - 1) / 3, col = (slot - 1) % 3;
@@ -86,6 +177,7 @@ public final class StationView {
     /** How far a slot reaches from its spot (across, up, in): a grid square, the result, a furnace's opening. */
     public static double reach(Station s, int slot, int axis) {
         if (s.kind() == Kind.FURNACE) return axis == 2 ? 0.05 : 0.15;
+        if (s.kind() != Kind.TABLE) return axis == 1 ? (s.kind().upright ? s.kind().half : 0.03) : s.kind().half;
         if (axis == 1) return 0.03;
         return slot == 0 ? RESULT_HALF : CELL / 2;
     }
@@ -114,6 +206,229 @@ public final class StationView {
                     net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, player));
             if (hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
         }
+        return true;
+    }
+
+    // ---- the bench view (SPEC §64.1) --------------------------------------------------------------------------------
+
+    /**
+     * A table's own views, best first: how far back from its middle along the way in, how far over its top. The first
+     * looks down on the grid at 54 degrees; the others are lower and nearer, for a low roof or a wall behind you.
+     */
+    private static final double[][] BENCH = {{0.81, 1.12}, {0.66, 0.90}, {0.55, 0.72}};
+    public static final int BENCHES = BENCH.length;
+
+    /**
+     * A station's bench view {@code i}: where the eye is. The same from wherever you clicked it. A table's three are
+     * written out; a workstation's are its own place and two nearer, lower ones.
+     */
+    public static void benchEye(Station s, int i, double[] out) {
+        BlockPos b = s.pos();
+        double back = BENCH[i][0], up = BENCH[i][1];
+        if (s.kind() != Kind.TABLE) {
+            double k = i == 0 ? 1 : i == 1 ? 0.9 : 0.8;
+            back = Math.max(0.55, s.kind().back * k);
+            up = s.kind().up * k;
+        }
+        out[0] = b.getX() + 0.5 - s.fx() * back;
+        out[1] = b.getY() + 1.0 + up;
+        out[2] = b.getZ() + 0.5 - s.fz() * back;
+    }
+
+    /** How long the view takes to reach a station's own place from {@code d} blocks away (ticks): 5 beside it to 9. */
+    public static int glideTicks(double d) {
+        return (int) Math.round(Mth.clamp(4.2 + d * 1.1, 5, 9));
+    }
+
+    // ---- a furnace's own view (SPEC §64.6) --------------------------------------------------------------------------
+
+    /** A furnace's mouth views, best first: how far out from the middle of its face, at the height of what cooks. */
+    private static final double[] MOUTH = {1.05, 0.80, 0.60};
+    public static final int MOUTHS = MOUTH.length;
+
+    /** A furnace's mouth view {@code i}: where the eye is, the same from wherever you stand before it. */
+    public static void mouthEye(Station s, int i, double[] out) {
+        BlockPos b = s.pos();
+        out[0] = b.getX() + 0.5 - s.fx() * (0.5 + MOUTH[i]);
+        out[1] = b.getY() + 0.57;
+        out[2] = b.getZ() + 0.5 - s.fz() * (0.5 + MOUTH[i]);
+    }
+
+    /** Standing before a furnace's face (its scene may open): out from the face, and no further to the side than out. */
+    public static boolean beforeFace(Station s, double x, double z) {
+        double dx = x - s.pos().getX() - .5, dz = z - s.pos().getZ() - .5;
+        double front = -dx * s.fx() - dz * s.fz(), side = dx * s.rx() + dz * s.rz();
+        return front >= 0.6 && front <= 5.0 && Math.abs(side) <= front + 0.3;
+    }
+
+    /** A stack carried at a furnace is held this far out from its face (inside the stone it could not be seen). */
+    public static final double FURNACE_HOLD = 0.08;
+    /** A fist at a furnace reads this wide against the world (blocks): a little over half a slot. */
+    public static final double FURNACE_FIST = 0.165;
+
+    /**
+     * Where the line of sight through a point of the screen meets the upright plane a stack is held in before a furnace
+     * (into {@code out}); false when it never does.
+     */
+    public static boolean onFace(Station s, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my,
+                                 int guiW, int guiH, double[] out) {
+        return onUpright(s, 0.5 + FURNACE_HOLD, ex, ey, ez, rot, fov, aspect, mx, my, guiW, guiH, out);
+    }
+
+    /**
+     * Where the pointer's line meets the upright plane that stands {@code toward} out from the station's middle on your
+     * side, square to the way in: a furnace's is just out from its face, a brewing stand's passes through its middle
+     * (where its bottles hang). False when the line never reaches it.
+     */
+    public static boolean onUpright(Station s, double toward, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my,
+                                    int guiW, int guiH, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        double along = d.x * s.fx() + d.z * s.fz();
+        if (along < 1e-4) return false;
+        double px = s.pos().getX() + 0.5 - s.fx() * toward, pz = s.pos().getZ() + 0.5 - s.fz() * toward;
+        double t = ((px - ex) * s.fx() + (pz - ez) * s.fz()) / along;
+        if (t <= 0) return false;
+        out[0] = ex + d.x * t;
+        out[1] = ey + d.y * t;
+        out[2] = ez + d.z * t;
+        return true;
+    }
+
+    /** The point {@code dist} along the line of sight through a point of the screen (into {@code out}). */
+    public static void along(double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my, int guiW, int guiH,
+                             double dist, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        out[0] = ex + d.x * dist;
+        out[1] = ey + d.y * dist;
+        out[2] = ez + d.z * dist;
+    }
+
+    // ---- the carrying hand (SPEC §64.2) -----------------------------------------------------------------------------
+
+    /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */
+    public static final double HOVER = 0.07, HAND_BACK = 0.11;
+    /** The arm lies back toward a point this far past the table's near edge, this far over its top, leaning to its side. */
+    public static final double ARM_BEYOND = 0.45, ARM_RISE = 0.30, ARM_LEAN = 0.10;
+    /** A fist is this much of a grid square across on screen, and an arm may be drawn this much longer than its model. */
+    public static final double FIST_SQUARES = 0.8, STRETCH_MOST = 1.8;
+    /** The arm's model: a fist 4 texels across; from the fist's middle back to the arm's far end, in blocks. */
+    public static final double FIST = 0.25, ARM_BACK = 0.685;
+
+    /**
+     * How far from the eye a station's arms are drawn so a fist reads {@link #FIST_SQUARES} of a square across, for a
+     * hand {@code dw} blocks from the eye in the world ({@code lens}: the hand pass's field of view against the
+     * world's, 1 when they are the same).
+     */
+    public static double handDistance(double dw, double lens) {
+        return FIST * dw / (FIST_SQUARES * CELL * Math.max(0.05, lens));
+    }
+
+    /**
+     * The carrying arm for a stack held at {@code (px, py, pz)} over a table: the fist's middle into {@code out[0..2]},
+     * a unit vector along the arm from the fist back toward you into {@code out[3..5]}. {@code side}: 1 a right hand,
+     * -1 a left. {@code most}: how far to either side of the table's middle the arm's far end may lie and still be under
+     * the inventory strip ({@link #acrossMost}).
+     */
+    public static void carry(Station s, double px, double py, double pz, int side, double most, double[] out) {
+        BlockPos b = s.pos();
+        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5;
+        double u = (px - cx) * s.rx() + (pz - cz) * s.rz();
+        double across = Mth.clamp(u + side * ARM_LEAN, -most, most), back = 0.5 + ARM_BEYOND;
+        double ax = cx + s.rx() * across - s.fx() * back - px, ay = s.top() + ARM_RISE - py, az = cz + s.rz() * across - s.fz() * back - pz;
+        double al = Math.sqrt(ax * ax + ay * ay + az * az);
+        if (al < 1e-6) {
+            ax = -s.fx();
+            ay = 0;
+            az = -s.fz();
+            al = 1;
+        }
+        out[3] = ax / al;
+        out[4] = ay / al;
+        out[5] = az / al;
+        out[0] = px + out[3] * HAND_BACK;
+        out[1] = py + out[4] * HAND_BACK;
+        out[2] = pz + out[5] * HAND_BACK;
+    }
+
+    /**
+     * How far to either side of a table's middle an arm's far end may lie and still pass under the inventory strip: the
+     * strip's top corners, seen through the view, on the level the arm's far end is at, less the arm's own half width.
+     */
+    public static double acrossMost(Station s, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, int guiW, int guiH,
+                                    double[] p) {
+        BlockPos b = s.pos();
+        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5, y = s.top() + ARM_RISE * 0.75, most = 0.36;
+        for (int k = 0; k < 2; k++) {
+            if (!onPlane(ex, ey, ez, rot, fov, aspect, k == 0 ? l.px0() + 3 : l.px1() - 3, l.py0() + 3, guiW, guiH, y, p)) continue;
+            most = Math.min(most, Math.abs((p[0] - cx) * s.rx() + (p[2] - cz) * s.rz()) - 0.1);
+        }
+        return Math.max(0.04, most);
+    }
+
+    /**
+     * How much longer than its model the arm must be drawn for its far end to pass under the inventory strip (or off
+     * the frame), so no sleeve end is ever in view: {@code 1} to {@link #STRETCH_MOST}. {@code arm}: {@link #carry}'s six
+     * numbers; {@code scale}: world blocks to the hand's own (hand distance over the fist's distance from the eye).
+     */
+    public static float stretch(double[] arm, double scale, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect,
+                                int guiW, int guiH, double[] q) {
+        double model = ARM_BACK / scale;
+        for (double k = 1; k <= STRETCH_MOST + 1e-6; k += 0.05) {
+            double len = model * k;
+            if (!project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return (float) k;
+            if (hidden(l, q[0], q[1], guiW, guiH)) return (float) k;
+        }
+        return (float) STRETCH_MOST;
+    }
+
+    /** A point of the screen the arm's far end may be at: under the strip, or off the frame. */
+    public static boolean hidden(Layout l, double x, double y, int guiW, int guiH) {
+        return y >= guiH + 2 || x < -2 || x > guiW + 2 || (y >= l.py0() + 2 && x >= l.px0() + 2 && x <= l.px1() - 2);
+    }
+
+    /**
+     * Whether the arm lies over a slot's middle on screen (what lies there is then shown through the sleeve): the
+     * slot's middle within the arm's half width of the line from the fist to the arm's far end. {@code len}: the arm's
+     * drawn length back from the fist's middle, in world blocks; {@code half}: half its width, in world blocks.
+     */
+    public static boolean sleeveOver(Station s, int slot, double[] arm, double len, double half, double ex, double ey, double ez, Quaternionfc rot,
+                                     float fov, float aspect, int guiW, int guiH, double[] p, double[] q) {
+        spot(s, slot, p, 0);
+        if (!project(p[0], p[1], p[2], ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double sx = q[0], sy = q[1];
+        // the fist's forward end (it covers a little ahead of its middle), and the far end
+        double fwd = half;
+        if (!project(arm[0] - arm[3] * fwd, arm[1] - arm[4] * fwd, arm[2] - arm[5] * fwd, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double ax = q[0], ay = q[1];
+        if (!project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double bx = q[0], by = q[1];
+        // the arm's half width on screen, at the fist
+        if (!project(arm[0] + s.rx() * half, arm[1], arm[2] + s.rz() * half, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double wx = q[0], wy = q[1];
+        if (!project(arm[0], arm[1], arm[2], ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return false;
+        double hw = Math.hypot(wx - q[0], wy - q[1]);
+        double dx = bx - ax, dy = by - ay, ll = dx * dx + dy * dy;
+        if (ll < 1e-6) return false;
+        double t = Mth.clamp(((sx - ax) * dx + (sy - ay) * dy) / ll, 0, 1);
+        return Math.hypot(sx - (ax + dx * t), sy - (ay + dy * t)) < hw;
+    }
+
+    /**
+     * Where the line of sight through a point of the screen (gui pixels) meets the level plane at height {@code y}
+     * (into {@code out}); false when it never does.
+     */
+    public static boolean onPlane(double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, double mx, double my, int guiW, int guiH,
+                                  double y, double[] out) {
+        float tan = (float) Math.tan(Math.toRadians(fov) / 2);
+        Vector3f d = new Vector3f((float) (mx / guiW * 2 - 1) * tan * aspect, (float) (1 - my / guiH * 2) * tan, -1).normalize().rotate(rot);
+        if (Math.abs(d.y) < 1e-5) return false;
+        double t = (y - ey) / d.y;
+        if (t <= 0) return false;
+        out[0] = ex + d.x * t;
+        out[1] = y;
+        out[2] = ez + d.z * t;
         return true;
     }
 
@@ -179,8 +494,13 @@ public final class StationView {
             z0 = Math.min(z0, p[2] - m);
             z1 = Math.max(z1, p[2] + m);
         }
+        // a bench is looked at square on: straight along the way in, whatever lies to one side of it (a table's result)
+        // (from the station's own views, which stand on its middle line: your own eyes, the fallback, frame what they see)
+        boolean square = stage(s, new double[4])
+                && Math.abs((ex - s.pos().getX() - 0.5) * s.rx() + (ez - s.pos().getZ() - 0.5) * s.rz()) < 0.02;
         double ax = (x0 + x1) / 2 - ex, ay = (y0 + y1) / 2 - ey, az = (z0 + z1) / 2 - ez;
         float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG), pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
+        if (square) yaw = (float) (Mth.atan2(-s.fx(), s.fz()) * Mth.RAD_TO_DEG);
         // the room in the screen's -1..1 (y up)
         double nx0 = l.rx0() * 2.0 / guiW - 1, nx1 = l.rx1() * 2.0 / guiW - 1, ny0 = 1 - l.ry0() * 2.0 / guiH, ny1 = 1 - l.ry1() * 2.0 / guiH;
         double hx = (nx1 - nx0) / 2, hy = (ny0 - ny1) / 2, ncx = (nx0 + nx1) / 2, ncy = (ny0 + ny1) / 2;
@@ -195,8 +515,10 @@ public final class StationView {
             u.set(0, 1, 0).rotate(q);
             r.set(1, 0, 0).rotate(q);
             bounds(s, ex, ey, ez, f, u, r, p, b);
-            tan = Mth.clamp(Math.max((b[1] - b[0]) / (2 * aspect * hx), (b[3] - b[2]) / (2 * hy)) * MARGIN, 0.05, tanMax);
-            yaw += (float) Math.toDegrees(Math.atan((b[0] + b[1]) / 2) - Math.atan(ncx * tan * aspect));
+            // (square on, the width to fit is twice the wider side's, about the view's own middle)
+            double wide = square ? 2 * Math.max(Math.abs(b[0]), Math.abs(b[1])) : b[1] - b[0];
+            tan = Mth.clamp(Math.max(wide / (2 * aspect * hx), (b[3] - b[2]) / (2 * hy)) * MARGIN, 0.05, tanMax);
+            if (!square) yaw += (float) Math.toDegrees(Math.atan((b[0] + b[1]) / 2) - Math.atan(ncx * tan * aspect));
             pitch += (float) Math.toDegrees(Math.atan(ncy * tan) - Math.atan((b[2] + b[3]) / 2));
         }
         out[0] = yaw;
@@ -204,11 +526,52 @@ public final class StationView {
         out[2] = (float) Math.toDegrees(2 * Math.atan(tan));
     }
 
-    /** The slots' bounds in the view's tangent plane (x right, y up): min x, max x, min y, max y. */
+    /**
+     * The stage a bench view frames beside the slots themselves, so the station is seen whole and square on: half its
+     * width across, half its depth along the way in, and the heights it lies between over the block's foot (SPEC §64.1).
+     * A table's is as wide as its result's far edge on both sides and no deeper than its slots (its grid fills its top,
+     * and a view opened to the whole top would make every square smaller); a workstation's is its whole top; a brewing
+     * stand's is the stand, foot to top. A furnace is framed by its slots alone.
+     */
+    static boolean stage(Station s, double[] out) {
+        Kind k = s.kind();
+        if (k == Kind.FURNACE) return false;
+        if (k == Kind.TABLE) {
+            out[0] = RESULT_SIDE + RESULT_HALF + 0.01;
+            out[1] = RESULT_HALF + 0.01;
+            out[2] = out[3] = 1.0;
+        } else if (k == Kind.BREWING) {
+            out[0] = 0.42;
+            out[1] = 0;
+            out[2] = 0;
+            out[3] = 1.05;
+        } else {
+            out[0] = 0.5;
+            out[1] = 0.5;
+            out[2] = out[3] = k.work;
+        }
+        return true;
+    }
+
+    /** The slots' and the stage's bounds in the view's tangent plane (x right, y up): min x, max x, min y, max y. */
     private static void bounds(Station s, double ex, double ey, double ez, Vector3f f, Vector3f u, Vector3f r, double[] p, double[] b) {
         b[0] = b[2] = 1e9;
         b[1] = b[3] = -1e9;
         double fx = s.fx(), fz = s.fz(), rx = s.rx(), rz = s.rz();
+        double[] st = new double[4];
+        if (stage(s, st)) {
+            double cx = s.pos().getX() + 0.5, cz = s.pos().getZ() + 0.5, base = s.pos().getY();
+            for (int c = 0; c < 8; c++) {
+                double a = (c & 1) == 0 ? -st[0] : st[0], up = (c & 2) == 0 ? st[2] : st[3], in = (c & 4) == 0 ? -st[1] : st[1];
+                double wx = cx + rx * a + fx * in - ex, wy = base + up - ey, wz = cz + rz * a + fz * in - ez;
+                double z = Math.max(0.05, wx * f.x + wy * f.y + wz * f.z);
+                double tx = (wx * r.x + wy * r.y + wz * r.z) / z, ty = (wx * u.x + wy * u.y + wz * u.z) / z;
+                b[0] = Math.min(b[0], tx);
+                b[1] = Math.max(b[1], tx);
+                b[2] = Math.min(b[2], ty);
+                b[3] = Math.max(b[3], ty);
+            }
+        }
         for (int i = 0; i < s.kind().slots; i++) {
             spot(s, i, p, 0);
             double ma = reach(s, i, 0), mu = reach(s, i, 1), mi = reach(s, i, 2);
@@ -249,16 +612,20 @@ public final class StationView {
         float nx = (float) (mx / guiW * 2 - 1), ny = (float) (1 - my / guiH * 2);
         Vector3f d = new Vector3f(nx * tan * aspect, ny * tan, -1).normalize().rotate(rot);
         double[] p = new double[3];
-        if (s.kind() == Kind.FURNACE) {
+        if (s.kind() != Kind.TABLE) {
+            // a furnace: the nearest spot the line passes close to; a workstation: the spot the line passes closest to
+            // (its slots stand at different heights, and one may be behind another from where you look)
+            boolean furnace = s.kind() == Kind.FURNACE;
             int best = -1;
-            double bestAlong = Double.MAX_VALUE;
+            double bestBy = Double.MAX_VALUE, near = furnace ? 0.16 : s.kind().half * 1.15;
             for (int i = 0; i < s.kind().slots; i++) {
                 spot(s, i, p, 0);
                 double wx = p[0] - ex, wy = p[1] - ey, wz = p[2] - ez, along = wx * d.x + wy * d.y + wz * d.z;
-                double qx = wx - d.x * along, qy = wy - d.y * along, qz = wz - d.z * along;
-                if (along > 0 && along < bestAlong && qx * qx + qy * qy + qz * qz < 0.16 * 0.16) {
+                double qx = wx - d.x * along, qy = wy - d.y * along, qz = wz - d.z * along, off = qx * qx + qy * qy + qz * qz;
+                double by = furnace ? along : off;
+                if (along > 0 && by < bestBy && off < near * near) {
                     best = i;
-                    bestAlong = along;
+                    bestBy = by;
                 }
             }
             return best;
@@ -270,8 +637,8 @@ public final class StationView {
         if (t <= 0) return -1;
         double hx = ex + d.x * t - (b.getX() + 0.5), hz = ez + d.z * t - (b.getZ() + 0.5);
         double u = hx * s.rx() + hz * s.rz(), v = hx * s.fx() + hz * s.fz();
-        // the result on the near border
-        if (Math.abs(u) <= RESULT_HALF + 0.02 && Math.abs(v + RESULT_IN) <= RESULT_HALF + 0.02) return 0;
+        // the result on the right border
+        if (Math.abs(u - RESULT_SIDE) <= RESULT_HALF + 0.02 && Math.abs(v) <= RESULT_HALF + 0.02) return 0;
         if (Math.abs(u) > GRID_HALF || Math.abs(v) > GRID_HALF) return -1;
         int col = Mth.clamp((int) Math.floor((u + GRID_HALF) / CELL), 0, 2), row = Mth.clamp((int) Math.floor((GRID_HALF - v) / CELL), 0, 2);
         return 1 + row * 3 + col;
