@@ -23,9 +23,14 @@ TEXT = {
     "WING2_EV": "Read in code. Press Flying in the model below with Today selected: it runs the game's own numbers.",
 }
 
-# The game as built. Until the tour of the built game is in, these are the game's own wing code drawn outside the game
-# (tools: the scratch renderer of WingFeathers): the shapes it draws, without the game's light.
+# The game as built: pictures from the game itself (tour movement-built, run 42862885263). The Sovereign's wings drew as
+# garbage on that tour's GPU (three pairs in one draw; since drawn a pair a draw), so until the next tour is in they are
+# shown by the game's own wing code drawn outside the game.
 BUILT = [
-    ("built_offline_states", "OFFLINE", None, "<b>The game's own wing code, drawn outside the game.</b> Open, beating down, tucked for a dive, cupped to land. These are the boxes the game draws, without its light; pictures from the game itself follow when the tour finishes."),
-    ("built_offline_rungs", "OFFLINE", None, "<b>Folded on the back, then the rungs.</b> Skyborn's two pairs, and the Sovereign's six gold wings and halo, from behind and from above."),
+    ("built_hover_back", "BUILT:s_wings_hover_back", None, "<b>The first wings, in the game.</b> Held open in a hover with <code>/awaken wings show hover</code>, at dusk, from behind. 231 boxes a wing."),
+    ("built_day_open", "BUILT:s_day_open_back", None, "<b>By day.</b> The same wings, open."),
+    ("built_skyborn_hover", "BUILT:e_soar_front_07", None, "<b>Skyborn, hovering in real flight.</b> A larger pair and a smaller pair under it, seen from the front."),
+    ("built_glide_front", "BUILT:d_glide_front_02", None, "<b>A real glide, from the front.</b> The body lies on the air and the wings carry it."),
+    ("built_skyborn_open", "BUILT:s_skyborn_open_back", None, "<b>Skyborn's two pairs, from behind.</b>"),
+    ("built_offline_rungs", "OFFLINE", None, "<b>The Sovereign's six gold wings and halo</b> (bottom row), drawn by the game's wing code outside the game: in the first tour they came out broken on the test machine's graphics, and the fix has not been pictured yet."),
 ]
