@@ -1,0 +1,400 @@
+<title>Gates as Worlds, Round Two</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on a dark review-room ground; pictures break out wider; decisions sit in a form at the end. */
+:root {
+  --bg: #0f131b; --panel: #171d28; --panel-2: #1d2532; --line: #2b3546;
+  --fg: #e8e4da; --muted: #9ba5b5; --accent: #f0b24a; --accent-ink: #1b1406;
+  --cool: #82b3ea; --good: #7fc98f; --bad: #ec7a68; --wait: #6b7890;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3;
+  --fg: #19202e; --muted: #596376; --accent: #9a6200; --accent-ink: #ffffff;
+  --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; --wait: #8a94a6; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3;
+  --fg: #19202e; --muted: #596376; --accent: #9a6200; --accent-ink: #ffffff;
+  --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; --wait: #8a94a6; color-scheme: light }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+.col { max-width: 46rem; margin-inline: auto; display: flex; flex-direction: column; gap: 1.05rem; }
+.wide { max-width: 68rem; margin-inline: auto; }
+section { display: flex; flex-direction: column; gap: 1.05rem; margin-top: 3.2rem; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.65rem; font-weight: 600; }
+h3 { font-size: 1.12rem; font-weight: 600; margin-top: 0.6rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+a { color: var(--cool); }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.14rem; color: var(--fg); }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+strong { font-weight: 600; }
+.pick { border: 1px solid var(--accent); background: var(--panel); border-radius: 10px; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.pick h3 { margin: 0; color: var(--accent); }
+figure { margin: 0.4rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
+figure img { width: 100%; height: auto; border-radius: 6px; display: block; border: 1px solid var(--line); }
+figcaption { font-size: 0.88rem; color: var(--muted); max-width: 46rem; }
+.finding { border-top: 1px solid var(--line); padding-top: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12rem 0.45rem; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.seen { color: var(--good); border-color: var(--good); }
+.tag.guess { color: var(--accent); border-color: var(--accent); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 0.9rem; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.opt th:nth-child(3), .opt td:nth-child(3) { background: var(--panel); }
+.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 0.4rem 0.7rem; align-items: center; font-size: 0.9rem; }
+.bars .track { background: var(--panel-2); border-radius: 3px; height: 14px; display: flex; overflow: hidden; min-width: 0; position: relative; }
+.bars .fill { background: var(--accent); height: 100%; }
+.bars .fill.cool { background: var(--cool); }
+.bars .fill.wait { background: var(--wait); }
+.bars .fill.bad { background: var(--bad); }
+.bars .val { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.82rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.4rem; vertical-align: -1px; }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.5rem; }
+.flow div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.7rem; font-size: 0.86rem; min-width: 0; }
+.flow b { display: block; font-family: var(--display); font-size: 0.92rem; }
+.flow .hot { border-color: var(--bad); }
+.flow .new { border-color: var(--good); }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 0.8rem; }
+.part { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.95rem 1.05rem; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.93rem; min-width: 0; }
+.part h3 { margin: 0; font-size: 1.02rem; }
+.part .why { color: var(--muted); }
+.decision { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.decision h3 { margin: 0; }
+.decision label { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0.5rem; border-radius: 6px; cursor: pointer; }
+.decision label:hover { background: var(--panel-2); }
+.decision input { margin-top: 0.3rem; accent-color: var(--accent); }
+.decision input:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+.rec { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 0.08rem 0.4rem; margin-left: 0.35rem; white-space: nowrap; }
+textarea { width: 100%; box-sizing: border-box; min-height: 9.5rem; background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 0.7rem 0.8rem; font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; }
+button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 0.6rem 1.1rem; cursor: pointer; }
+.row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+</style>
+
+<div class="col">
+  <p class="eyebrow">AWAKEN · Gates as Worlds · plan for approval · 10 Nov 2026</p>
+  <h1>Gates as Worlds, Round Two</h1>
+  <p class="lede">You asked me to learn what's been built and the bar it's built to, then find how to build gates faster, better, in more volume, and closer to AAA. I read the handover, the code on all three branches, every painting and every shot, and the old session's own records. Nothing here is built yet. It waits for your yes.</p>
+
+  <div class="pick">
+    <h3>What I recommend</h3>
+    <p><strong>Build the Gate Engine, then remake The Hour Crypt at the maximum level for you to play, then you choose the level for the other 86.</strong> The engine makes depth, light and "nothing floats" come out right by construction, so a gate costs about a third of what it did and can't come out vanilla blocky because a builder ran short. The Crypt at maximum shows you the top of the range in the real game before you spend three weeks of usage on it.</p>
+    <p class="muted small">Cost until you next decide: about 19% of one week's Fable allowance and about 16 hours of session time, in three stages that each end with pictures or something to play.</p>
+  </div>
+
+  <p><strong>Look at these two first:</strong> decision 1 (which level) and decision 3 (how much of your week gates may use). They set everything else. Decision 2 is the handover's question: who merges into <span class="num">build/awaken-v1</span> now.</p>
+</div>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 1</p>
+    <h2>What I found</h2>
+    <p>Six findings. Each one is something I measured or read in the repo, and each changes what the plan should be. Where I'm guessing, it says so.</p>
+  </div>
+
+  <div class="col finding">
+    <h3>The bar is real. Amber Reach in the game stands up beside its painting. <span class="tag seen">seen</span></h3>
+  </div>
+  <figure class="wide">
+    <img src="fig-amber.jpg" alt="Amber Reach's painting beside the same view in the real game" width="1606" height="500">
+    <figcaption>Same great thing, same colour world, same light. What the painting still has that the game doesn't: three times the buildings, giant flowers framing the near view, and forms smaller than a block. Hold on to that last one. It comes back in the Maximum option.</figcaption>
+  </figure>
+
+  <div class="col finding">
+    <h3>A third of the "real-game walks" never went into the gate. <span class="tag seen">seen</span></h3>
+    <p>To photograph a gate, the tour makes a real gate form in the overworld and then steps in. On GitHub's slower machines the gate was often still forming, or found "no dry ground", so the tour took every shot standing in the overworld. <strong>7 of 21 gate walks</strong> did this, and nobody caught it because the shots scrolled past as numbers.</p>
+    <ul>
+      <li><strong>Saltcomb Flats and Kingsroot Keep have never been seen in the real game.</strong> Each had one walk. Both photographed Carillon. The handover's "Saltcomb measures well, medians 81 to 150" was daylight on the city.</li>
+      <li><strong>The test that cleared Lens of making the Crypt black never ran.</strong> The "Lens off" walk photographed a meadow at midnight. So "near-black even with Lens off" is not known.</li>
+      <li>10 of the 21 walks also ran the full 25 minutes to the watchdog, because their scripts had no quit line. A walk that works takes 8 to 13.</li>
+    </ul>
+  </div>
+  <figure class="wide">
+    <img src="fig-walks.jpg" alt="Three gates' previews beside what their real-game walks photographed: the overworld city by day, the city at night, and a meadow at midnight" width="1606" height="1362">
+    <figcaption>Left: what the gate looks like in the no-client preview. Right: what its "real-game walk" recorded. The log for each says "You're not in a Realm" on every shot.</figcaption>
+  </figure>
+
+  <div class="col finding">
+    <h3>Why The Hour Crypt is black: the dark was painted into the textures, and then the game darkened them again. <span class="tag seen">seen</span></h3>
+    <p>Minecraft shows a block as its texture multiplied by the light on it. Amber's blocks are mid-toned, so light and shadow have room to work. The Crypt's family was painted as dark as the painting's shadows. Its wall stone is 22 to 38 out of 255 before any light touches it. Multiply that by candlelight a few blocks away and you get about 10. The measured middle of the real shots is 15.</p>
+    <div class="bars" role="img" aria-label="Median brightness of each family's textures, out of 255: Salt 140, Amber 122, Fane 99, Keep 69, Knell 53">
+      <span>Salt (Saltcomb)</span><div class="track"><div class="fill" style="width:54.9%"></div></div><span class="val">140</span>
+      <span>Amber</span><div class="track"><div class="fill" style="width:47.8%"></div></div><span class="val">122</span>
+      <span>Fane (Vine Seat)</span><div class="track"><div class="fill" style="width:38.8%"></div></div><span class="val">99</span>
+      <span>Keep (Kingsroot)</span><div class="track"><div class="fill bad" style="width:27.1%"></div></div><span class="val">69</span>
+      <span>Knell (Hour Crypt)</span><div class="track"><div class="fill bad" style="width:20.8%"></div></div><span class="val">53</span>
+    </div>
+    <p class="small muted">Median brightness of each family's block textures, 0 to 255. Kingsroot's family is nearly as dark as the Crypt's, and it has never been seen in the game.</p>
+    <p>That also explains the handover's mystery, that adding hidden lights and an ambient floor "made no measurable difference". By the game's own light formula, lights at level 9 to 12 every 8 to 10 blocks add about a fifth of full brightness. A fifth of a texture at 38 is 8. There was nothing for the light to reveal. Two more causes sit on top: only Amber has its own Lens look, so the Crypt is graded with the default outdoor look, and most of its candles stand in ones and twos, which light only the two to five blocks around them.</p>
+    <p><strong>A 35-second test.</strong> I ran the preview on the same blocks with the Crypt's textures lifted to Amber's range and a lighter fog. No file in the repo changed. Measured contrast went up by half to double in every shot.</p>
+  </div>
+  <figure class="wide">
+    <img src="fig-crypt.jpg" alt="The Hour Crypt: its painting, the real game today, the preview as built, and the preview with lifted textures" width="1606" height="966">
+    <figcaption>Honest reading of the bottom right: clearly better, still not the painting. Brighter textures are necessary and not enough. The light itself is too thin. The painting has wide warm pools and cool shafts from above. That is what the first stage fixes and proves in the real game before anything else is built.</figcaption>
+  </figure>
+
+  <div class="col finding">
+    <h3>The "3 to 6 hour" gates weren't slow builds. Every step was stuck for ten minutes. <span class="tag seen">seen</span></h3>
+    <p>From about 02:20 on 10 Nov by the Mac's clock, after you'd gone to bed, every tool call in all three sessions took exactly ten minutes to come back. A permission hook was waiting for the desktop app and timing out. The Long Shaft's "6 hours", Wax's "3 hours" and Ash Isles' "3 hours" were that. Each time a session woke, it had to re-read its whole memory at full price.</p>
+    <p>When nothing was stuck, a gate took <strong>40 to 75 minutes</strong>. Amber took three hours because it also invented everything the others reuse.</p>
+    <div class="bars" role="img" aria-label="Usage per gate in millions of weighted tokens, split into building and waiting">
+      <span>Amber Reach</span><div class="track"><div class="fill" style="width:99%"></div></div><span class="val">9.9</span>
+      <span>Cinder Stair</span><div class="track"><div class="fill" style="width:54%"></div></div><span class="val">5.4</span>
+      <span>Vine Seat, twice</span><div class="track"><div class="fill" style="width:36%"></div></div><span class="val">3.6</span>
+      <span>Hour Crypt</span><div class="track"><div class="fill" style="width:32%"></div></div><span class="val">3.2</span>
+      <span>Glowroot Hollow</span><div class="track"><div class="fill" style="width:31%"></div></div><span class="val">3.1</span>
+      <span>Kingsroot Keep</span><div class="track"><div class="fill" style="width:23%"></div></div><span class="val">2.3</span>
+      <span>Sporefall</span><div class="track"><div class="fill" style="width:22%"></div></div><span class="val">2.2</span>
+      <span>Saltcomb Flats</span><div class="track"><div class="fill" style="width:12%"></div></div><span class="val">1.2</span>
+      <span>Long Shaft</span><div class="track"><div class="fill" style="width:13%"></div><div class="fill wait" style="width:54%"></div></div><span class="val">6.7</span>
+      <span>Wax Galleries</span><div class="track"><div class="fill" style="width:8%"></div><div class="fill wait" style="width:54%"></div></div><span class="val">6.2</span>
+      <span>Ash Isles</span><div class="track"><div class="fill" style="width:1%"></div><div class="fill wait" style="width:32%"></div></div><span class="val">3.3</span>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>building</span><span><i style="background:var(--wait)"></i>re-reading after each ten-minute stall</span><span>millions of weighted tokens, from the old sessions' own records</span></div>
+    <p><strong>About half of everything the two builders used went on waiting.</strong> And of the real building cost, about 60% was each step re-reading a session that had grown to 250,000 tokens. Each builder also ran the float and reach tests 13 to 16 times per gate, chasing floating blocks one coordinate list at a time.</p>
+  </div>
+
+  <div class="col finding">
+    <h3>Apart from Amber, the builds are far from their paintings. <span class="tag seen">seen</span></h3>
+    <p>The paintings were used as a mood, not as a plan. Nobody fixed where the painter stood, so the "painting" shot of The Long Shaft faces a fence and Cinder Stair's shows a hall, when its painting is a volcano seen from outside.</p>
+  </div>
+  <figure class="wide">
+    <img src="fig-gap.jpg" alt="Six gates: each painting beside the build's own painting shot" width="1606" height="2730">
+    <figcaption>What every gap has in common: the camera isn't the painter's, there are no forms smaller than a block (roots, arches, round columns, carved faces), light sits evenly without pools, no mist in layers, and nothing moves. The Vine Seat's remake fixed its layout and still has flat tiled rooms inside. The Wax Galleries, Long Shaft and Ash Isles are first passes and should be rebuilt, not patched.</figcaption>
+  </figure>
+
+  <div class="col finding">
+    <h3>Smaller things, all real</h3>
+    <ul>
+      <li>The Hour Crypt fails its own preview check on 13 of 15 shots, and it's one of the two bar gates. So the numbers aren't the bar. Looking is.</li>
+      <li>The Crypt plays the Hive's music and Amber's hall ambience. Its biome file was copied and never changed.</li>
+      <li>Most walk shots have the HUD tips and the player's hand in them.</li>
+      <li>Every new gate edits about 12 shared files. That is why the three branches will fight when merged, and why builders couldn't work side by side cleanly.</li>
+      <li>"One block family per theme" was the rule, and in practice every gate made its own. I think the practice is right (you want every gate different) and the plan below assumes a palette per gate on shared shapes.</li>
+      <li>I couldn't open the Amber Reach stop page. It lives on the old account.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 2</p>
+    <h2>What "good" means, so we can tell</h2>
+    <div class="scroll"><table>
+      <tr><th>Strong</th><td>From where you arrive, the real-game shot and the painting read as the same place: the same great thing, colours and light. Nothing within twenty blocks is a flat cube face. It moves and it sounds like somewhere. You can walk to everything and nothing floats. Built in under 45 minutes for about 1% of a week.</td></tr>
+      <tr><th>Weak</th><td>Right layout, flat faces, even light, empty air. The first Vine Seat.</td></tr>
+      <tr><th>Never</th><td>Anything floating. A blocked route. A room you can't see in. A gate that feels like another gate. A check counted as done when it never ran.</td></tr>
+    </table></div>
+    <p>Numbers I'd hold every gate to: indoor shots in the real game with a middle brightness of 45 to 90 and something over 200 in every view. Texture families between 95 and 150, no wall block under 60. No preview flags. Two real walks at most. Usage written down per gate, read from the meter before and after.</p>
+    <p class="muted small">Not in this plan: combat, XP numbers (already approved), Far Sight in gates, and the three to five great creatures per land. Creatures are a track of their own and I haven't priced them here.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 3</p>
+    <h2>The options</h2>
+    <p>One unit throughout: a share of this account's weekly Fable allowance. Today the meter read 5% after about 5.3 million weighted tokens, so I price one point of a week at about a million. That could be a third off either way. Hours are session hours at this project's real pace, taken from the commit times above.</p>
+  </div>
+  <div class="wide scroll">
+    <table class="opt">
+      <tr><th></th><th>A. Tighten</th><th>B. The Gate Engine</th><th>C. Maximum</th></tr>
+      <tr><th>What it is</th>
+        <td>Keep building each gate by hand. Fix what leaked: the stall, the walks, dark textures, a Lens look per gate, a fresh small session per gate.</td>
+        <td>Everything in A, plus tools that make quality come out by construction: a wall grammar, supports so nothing can float, light by rule with a true-light preview, the painting as the plan, one spec file per gate.</td>
+        <td>Everything in B, plus what cubes can't do: shapes smaller than a block, things that move, a built Lord's arena that changes during the fight, sound and arrival made for each gate.</td></tr>
+      <tr><th>One-off tooling</th><td class="num">2% · 2 h</td><td class="num">10% · 10 h</td><td class="num">25% · 22 h</td></tr>
+      <tr><th>Each new gate</th><td class="num">about 2% · 50–70 min</td><td class="num">1–1.5% · 35–45 min</td><td class="num">2.5–4% · 1.5–2 h</td></tr>
+      <tr><th>Finish the E wave<br><span class="muted small">3 new, 3 rebuilt, 7 finished</span></th><td class="num">20%</td><td class="num">21%</td><td class="num">54%</td></tr>
+      <tr><th>All 88</th><td class="num">1.7 weeks' allowance · 85 h</td><td class="num">1.15 weeks' · 65 h</td><td class="num">2.9 weeks' · 170 h</td></tr>
+      <tr><th>Your Mac</th><td>15–20 min in the queue per gate</td><td>Seconds per check</td><td>Seconds per check, plus a few frame-rate tours</td></tr>
+      <tr><th>GitHub's machines</th><td colspan="3">Two walks per gate at about 12 minutes each, several at once, free because the repo is public. About 35 hours of runner time for all 88.</td></tr>
+      <tr><th>What it risks</th>
+        <td>Quality still depends on a builder's stamina, wall by wall. When a session runs short, flat walls come back. That happened on four of eleven gates.</td>
+        <td>Ten hours before a new gate appears. Gates could start to look alike if the grammar does too much, so the great build of each gate stays hand-made and a test fails two gates that share a style.</td>
+        <td>Frame rate. You get 40 to 55 on Cinematic today, and new shapes and moving parts cost frames. Three weeks of allowance is a lot to commit before you've seen one.</td></tr>
+      <tr><th>Evidence</th>
+        <td>The measured costs above. Fresh small sessions cut the re-reading that was 60% of the bill.</td>
+        <td>The Crypt's walls, straight and round, already come from one function. The kit was pulled out of Amber without moving a single block (same hash on three seeds). The preview runs in 35 seconds.</td>
+        <td>The paintings' forms are smaller than a block. No amount of effort with cubes reaches them. 26.3 has the moving display entities this needs (checked in the game's source).</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <p>B costs the same as A for the E wave and pulls ahead from about the fifteenth gate. By 88 it has saved about a third, and the worst gate is much better because flat walls and floating blocks can't be produced.</p>
+    <h3>Two add-ons to any option</h3>
+    <ul>
+      <li><strong>Parallel builders.</strong> Two builders halve the hours and add about a tenth to the usage. They only work cleanly after the engine's spec files exist, because today every gate edits the same 12 files. Your limit is usage, not hours, so I wouldn't start with them.</li>
+      <li><strong>Cloud builders.</strong> Once a gate is a spec plus tests, it needs no Mac, so cloud sessions could build gates on your cloud credit instead of your weekly allowance. I'd measure the price on one gate before promising a number.</li>
+    </ul>
+    <h3>Why not just pick C</h3>
+    <p>It may well be the right level. I can't show it to you without building it, and it is where the frame-rate risk lives. So the recommendation builds B, then spends about 8% of a week on one gate at C, and you judge it by playing.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 4</p>
+    <h2>How a gate gets made, today and after</h2>
+    <p class="small muted">Today. Red boxes are where time, usage or quality was lost.</p>
+    <div class="flow">
+      <div><b>Painting</b>Used as a mood</div>
+      <div class="hot"><b>Hand-write the land</b>900 to 1,500 lines, wall by wall</div>
+      <div class="hot"><b>Fix floats</b>13 to 16 test runs</div>
+      <div class="hot"><b>Preview</b>No real darkness</div>
+      <div class="hot"><b>Real walk</b>A third never got in</div>
+      <div class="hot"><b>Edit 12 shared files</b>Branches collide</div>
+    </div>
+    <p class="small muted">With the engine. Green boxes are new.</p>
+    <div class="flow">
+      <div class="new"><b>Painting as the plan</b>Camera, palette, light, layers</div>
+      <div class="new"><b>One spec file</b>Shape, style, rule, sites</div>
+      <div><b>Hand-build the great thing</b>The part that must be unique</div>
+      <div class="new"><b>Bench</b>Floats, reach, light and pictures in seconds</div>
+      <div class="new"><b>Three pictures side by side</b>Painting, preview, game</div>
+      <div class="new"><b>Straight-in walk</b>Fails loudly if it isn't inside</div>
+    </div>
+  </div>
+  <div class="wide parts">
+    <div class="part"><h3>See truly</h3><p class="why">A third of walks photographed the wrong place and the preview had no honest light.</p><p>A command that puts the tour straight inside a gate. The walk stops at once if it isn't in a Realm, hides the HUD and hand, and always quits. The preview uses the game's own light formula and each gate's own ambient light. A test reads the real light in every room and fails dark ones.</p><p class="small muted">Proof: the same shot from preview and game side by side for the Crypt.</p></div>
+    <div class="part"><h3>Darkness comes from light</h3><p class="why">The Crypt and the Keep were painted dark, then lit dark.</p><p>The texture maker refuses a family outside Amber's range. Light is placed by rule: strong where a pool belongs, real openings to the sky for shafts, an ambient floor per gate. Every gate gets its own Lens look made from its painting's colours, and the build fails without one.</p><p class="small muted">Changes: Knell and Keep are re-toned. Amber's blocks don't move.</p></div>
+    <div class="part"><h3>A wall grammar</h3><p class="why">The bar's rule, no flat face wider than five blocks, is met by hand and skipped when a session runs short.</p><p>Any wall, straight, round or stepped, gets its plinth, pilasters, recessed panels, cornice, niches and lamps on a rhythm. So do vaults, arcades, galleries, buttresses and stairs. Each theme gets its own style, and a test fails two gates with the same one. The great build stays hand-made.</p><p class="small muted">Trade-off: less freedom on ordinary walls. That's the point.</p></div>
+    <div class="part"><h3>Nothing can float</h3><p class="why">Saltcomb's first test found 76 floating blocks. Ash Isles had 893.</p><p>Every piece says what holds it up. Carving can't cut a support. Plants and lamps only land on real ground. A last pass foots or removes strays and lists them by piece. The float test stays as the proof, and should pass first time.</p></div>
+    <div class="part"><h3>The painting as the plan</h3><p class="why">Builds drifted from their paintings because nothing tied them together.</p><p>Before any code: where the painter stood becomes the arrival camera, five colours become the materials, fog, sky and light, and the layers become a checklist. Every round I look at the painting, the preview and the game shot at full size and write down the five biggest gaps.</p></div>
+    <div class="part"><h3>One spec, no shared files</h3><p class="why">A gate touches 12 shared files and about 250 generated ones.</p><p>One file per gate produces the blueprint, biomes, tour, tests, text and roster rows. Each gate registers itself. Merges stop colliding, and builders can work side by side if you ever want that.</p></div>
+    <div class="part"><h3>A bench that answers in seconds</h3><p class="why">Each check is a Gradle run in the Mac's queue: 35 seconds for pictures, a minute or more for tests.</p><p>One process stays running. On each edit it repaints the gate, checks floats, reach and light, and writes the picture sheet.</p></div>
+    <div class="part"><h3>Small sessions that can't stall</h3><p class="why">Half the builders' usage went on a stuck hook, and 60% of the rest on re-reading a huge session.</p><p>One fresh session per gate, opened with a short bar pack: the two bar sheets, the gate's painting and the engine's cheat sheet. Keep-awake on for long runs. A builder that sees a step take ten minutes stops and says so.</p></div>
+  </div>
+  <div class="col">
+    <h3>What Maximum adds on top</h3>
+    <ul>
+      <li><strong>Shapes that aren't cubes.</strong> Arches, round column drums, slopes, ribs, corbels and carved panels with real depth, made by each family's texture maker so every theme gets them. Frame cost measured on your Mac before any roll-out.</li>
+      <li><strong>Things that move.</strong> The bell swings on its toll. Chains sway, wax drips, banners hang and shift, water falls.</li>
+      <li><strong>The Lord's place.</strong> Decision 8 from the approved plan has no kit yet: an arena built by the eight rules that changes during the fight, with reach and telegraph tests.</li>
+      <li><strong>Sound and arrival.</strong> A sound bed per gate from named vanilla recordings, and the first view framed like the painting every time.</li>
+    </ul>
+    <h3>Wonders get these for free</h3>
+    <p>The Wonders work shares this bar and hit the same wall (dark, flat, blocky in game). The straight-in walk, the true-light preview, the texture rule, the Lens look from a painting, the three-picture sheet, the wall grammar and the new shapes all apply there unchanged. I've left a note for that session.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 5</p>
+    <h2>The stages, and where each one stops</h2>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <tr><th>Stage</th><th>What gets built</th><th class="num">Cost</th><th>It passes when</th><th>You get</th></tr>
+      <tr><td><strong>0. See truly</strong></td><td>The stall guard, the straight-in walk, true light in the preview, the lit-rooms test, the texture rule. Knell and Keep re-toned. A Lens look and the right sounds for the five main-line gates.</td><td class="num">3% · 3 h</td><td>All five gates walked in the real game, every shot inside the gate. The Crypt's middle brightness between 45 and 90 with bright pools.</td><td>Real shots of five gates beside their paintings. Four of them for the first time.</td></tr>
+      <tr><td><strong>1. The engine</strong></td><td>Grammar, supports, spec files, bench, painting-as-plan. Proven by rebuilding The Wax Galleries from scratch and moving The Vine Seat's flat rooms onto the grammar.</td><td class="num">8% · 8 h</td><td>Amber's three hashes unchanged. Wax built in under 45 minutes for under 1.5%, floats test green on the first run, no preview flags.</td><td>Both gates beside their paintings, with the measured time and usage.</td></tr>
+      <tr><td><strong>2. One gate at maximum</strong></td><td>The Hour Crypt with new shapes, the bell swinging on its toll, its Lord's floor as a real arena, its own sound. One frame-rate tour on your Mac, if you allow it.</td><td class="num">8% · 5 h</td><td>Frame rate within 10% of the same gate without the extras.</td><td><strong>The Crypt to play. Then you choose the level for the rest.</strong></td></tr>
+      <tr><td><strong>3. The E wave</strong></td><td>Quiet Barrow, Flooded Ossuary, Broodwarren new. Long Shaft and Ash Isles rebuilt. Glowroot, Sporefall, Cinder Stair, Kingsroot, Saltcomb finished and walked.</td><td class="num">11% at B<br>29% at C</td><td>Every gate passes the bar above. The whole test suite is green on CI.</td><td>Fourteen gates ready to switch on.</td></tr>
+      <tr><td><strong>4 on. D to S</strong></td><td>The D wave's 16 with four new themes, then C to S, wave by wave.</td><td class="num">1–1.5% a gate at B<br>2.5–4% at C</td><td>Same bar, and any two gates differ on four of six axes.</td><td>Shots in batches. You veto what you don't like.</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <p><strong>Pace follows your share.</strong> At a quarter of a week for gates, level B is about 20 gates a week and all 88 land in about five weeks. Level C is 7 or 8 a week and about ten weeks.</p>
+    <p><strong>Undoing it.</strong> New gates stay behind the <span class="num">gateRealms</span> switch, off by default. The old hand-built way keeps working until the engine has passed stage 1. If the engine's first two gates don't cost less and look better than hand-built ones, I stop and we stay at A. If the Crypt at maximum costs frames or you can't see the difference, we stay at B.</p>
+    <h3>What I still don't know</h3>
+    <ul>
+      <li>How much of the Crypt's darkness is Lens. No valid Lens-off shot exists. Stage 0 settles it with one walk. <span class="tag guess">guess</span></li>
+      <li>Whether brighter textures plus real light pools read like the painting in the game. The preview test says it helps a lot and isn't enough alone. <span class="tag guess">guess</span></li>
+      <li>What the new shapes cost in frames on your 4K screen. Nothing measures this yet. <span class="tag guess">guess</span></li>
+      <li>Whether my usage unit holds. I'll read the meter before and after stage 0 and correct every number on this page.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 6</p>
+    <h2>Decisions for you</h2>
+    <p>My pick is marked on each. Change any you like, then copy the answers into the chat. A plain "yes to all" works too.</p>
+
+    <div class="decision" id="d1">
+      <h3>1. Which level?</h3>
+      <label><input type="radio" name="d1" id="d1a" value="Engine first, then the Hour Crypt at maximum for me to play, then I pick the level" checked><span>Engine first, then The Hour Crypt at maximum for me to play, then I pick the level for the rest <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d1" id="d1b" value="B, the Gate Engine, for everything; skip the maximum pilot"><span>B for everything. Skip the maximum pilot.</span></label>
+      <label><input type="radio" name="d1" id="d1c" value="C, Maximum, for everything from the start"><span>C for everything from the start. About three weeks' allowance for 88.</span></label>
+      <label><input type="radio" name="d1" id="d1d" value="A, Tighten only"><span>A. Keep building by hand, tightened.</span></label>
+    </div>
+
+    <div class="decision" id="d2">
+      <h3>2. Who merges into build/awaken-v1 now?</h3>
+      <p class="small muted">On the old account only the orchestrator did. I never push build either way.</p>
+      <label><input type="radio" name="d2" id="d2a" value="The manager session merges, after green CI and a read of the diff" checked><span>The manager session, after green CI and a read of the diff <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d2" id="d2b" value="The gates session merges its own work after green CI"><span>This gates session merges its own work after green CI</span></label>
+      <label><input type="radio" name="d2" id="d2c" value="I merge myself"><span>You do</span></label>
+    </div>
+
+    <div class="decision" id="d3">
+      <h3>3. How much of your week may gates use?</h3>
+      <label><input type="radio" name="d3" id="d3a" value="15% of the week for gates"><span>15%. About 12 gates a week at B.</span></label>
+      <label><input type="radio" name="d3" id="d3b" value="25% of the week for gates" checked><span>25%. About 20 a week at B, or 7 to 8 at C. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d3" id="d3c" value="40% of the week for gates"><span>40%. About 32 a week at B, or 12 at C.</span></label>
+    </div>
+
+    <div class="decision" id="d4">
+      <h3>4. May I run real-game walks on GitHub without asking each time?</h3>
+      <p class="small muted">Two per gate at most. They never touch your Mac. Frame-rate tours on your Mac I'd still ask for one by one.</p>
+      <label><input type="radio" name="d4" id="d4a" value="Yes, GitHub walks without asking, two per gate at most; ask before any tour on my Mac" checked><span>Yes, GitHub walks without asking. Ask before anything on my Mac. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d4" id="d4b" value="Ask me before every walk"><span>Ask me before every walk</span></label>
+    </div>
+
+    <div class="decision" id="d5">
+      <h3>5. The unfinished builder work</h3>
+      <p class="small muted">Wax Galleries, Long Shaft and Ash Isles are first passes. Builder B also left five edited files uncommitted.</p>
+      <label><input type="radio" name="d5" id="d5a" value="Rebuild Wax, Long Shaft and Ash Isles on the engine; save Builder B's five files as a commit on its own branch so nothing is lost" checked><span>Rebuild the three on the engine. Save Builder B's five files as a commit on its own branch so nothing is lost. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d5" id="d5b" value="Patch the three first passes instead of rebuilding"><span>Patch the three instead of rebuilding</span></label>
+    </div>
+
+    <div class="decision" id="d6">
+      <h3>6. More than one builder?</h3>
+      <label><input type="radio" name="d6" id="d6a" value="One session for now; raise parallel or cloud builders again at the D wave" checked><span>One session for now. Ask again at the D wave. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d6" id="d6b" value="Two parallel builders as soon as the spec files exist"><span>Two builders as soon as the spec files exist</span></label>
+      <label><input type="radio" name="d6" id="d6c" value="Try one gate on a cloud session after stage 1 and report the price"><span>Try one gate in the cloud after stage 1 and tell me the price</span></label>
+    </div>
+
+    <label for="answers" class="small muted">Your answers, ready to paste</label>
+    <textarea id="answers" readonly></textarea>
+    <div class="row"><button type="button" id="copy">Copy answers</button><span id="copied" class="small muted" aria-live="polite"></span></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var names = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'];
+  var out = document.getElementById('answers');
+  var note = document.getElementById('copied');
+  function compose() {
+    var lines = ['Gates as Worlds, Round Two: my answers'];
+    names.forEach(function (n, i) {
+      var el = document.querySelector('input[name="' + n + '"]:checked');
+      lines.push((i + 1) + '. ' + (el ? el.value : '(no answer)'));
+    });
+    out.value = lines.join('\n');
+    note.textContent = '';
+  }
+  document.querySelectorAll('.decision input').forEach(function (el) { el.addEventListener('change', compose); });
+  document.getElementById('copy').addEventListener('click', function () {
+    function fallback() { out.focus(); out.select(); note.textContent = 'Selected. Press Cmd+C to copy.'; }
+    try {
+      navigator.clipboard.writeText(out.value).then(function () { note.textContent = 'Copied.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+  compose();
+})();
+</script>
