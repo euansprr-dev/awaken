@@ -15,7 +15,8 @@ public final class LandPrograms {
             Map.entry("awaken:vine_seat", dev.awaken.gates.realms.land.VineSeat::new),
             Map.entry("awaken:saltcomb_flats", dev.awaken.gates.realms.land.SaltcombFlats::new),
             Map.entry("awaken:kingsroot_keep", dev.awaken.gates.realms.land.KingsrootKeep::new),
-            Map.entry("awaken:blockout", dev.awaken.gates.realms.blockout.BlockoutLand::new));
+            Map.entry("awaken:blockout", dev.awaken.gates.realms.blockout.BlockoutLand::new),
+            Map.entry("awaken:quiet_barrow", dev.awaken.gates.realms.land.QuietBarrow::new));
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);

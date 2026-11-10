@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "name": "The Quiet Barrow",
+  "line": "A moor of burial mounds under a stone ship. Nothing here likes to be woken.",
+  "form": "land",
+  "theme": "bell_crypt",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:quiet_barrow",
+    "water": 62
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/barrow_moor",
+      "awaken:realm/barrow_ship"
+    ],
+    "lens": "quiet_barrow",
+    "air": [
+      "mist",
+      "wind",
+      "smoke",
+      "far_toll",
+      "moths",
+      "bats"
+    ]
+  },
+  "life": {
+    "herds": [
+      "old_antler"
+    ],
+    "predators": [
+      "wisp_hound"
+    ],
+    "ambient": [
+      "hollow_owl",
+      "lumen_moth"
+    ]
+  },
+  "folk": {
+    "kit": "candle_keepers",
+    "villages": 1
+  },
+  "law": {
+    "kind": "hush",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 16
+  },
+  "heart": {
+    "lord": "bell_warden",
+    "seat": "ship_deck"
+  },
+  "moods": [
+    "dusk"
+  ]
+}
