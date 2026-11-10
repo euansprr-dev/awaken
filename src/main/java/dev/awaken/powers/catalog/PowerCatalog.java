@@ -71,6 +71,11 @@ package dev.awaken.powers.catalog;
  * frost_nova       Spirit     active    D*    28        12    7     frost
  * ghost_step       Spirit     movement  D*    14        2.5   3     spirit
  * twin_strike      Spirit     active    C*    25        20    60% echo spirit
+ * brand            Spirit     active    E*    18        8     9     heat      (earned: EarnedPowers, powers.Earned)
+ * hoarfrost_lances Spirit     active    D*    24        18    5x3   frost     (earned)
+ * updraft          Flight     active    E*    20        12    3               (earned)
+ * backdraft        Spirit     active    D*    30        20    6+    heat      (earned)
+ * thornwake        Spirit     active    D*    26        16    5     spirit    (earned)
  * (* hidden)
  * </pre>
  */
@@ -91,5 +96,6 @@ public final class PowerCatalog {
         ArchitectPowers.register();
         TechPowers.register();
         SpiritPowers.register();
+        EarnedPowers.register(); // the five no Core rolls (SPEC 50, "Earned powers")
     }
 }

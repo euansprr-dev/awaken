@@ -2,6 +2,7 @@ package dev.awaken.powers.catalog;
 
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 import dev.awaken.powers.fx.FxStyle;
 
 import dev.awaken.core.AwakenNet;
@@ -155,7 +156,7 @@ public final class MindPowers {
                     net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
         AwakenNet.send(c.player, new PowerPayloads.Marks(PowerPayloads.Marks.ALLY, ids, base));
-        c.sound(target.position(), PowerSounds.MIND, 1.1f, 0.8f);
+        c.voice(target.position(), Beat.RELEASE, PowerSounds.MIND, 1.1f, 0.8f);
         Running r = Casting.start(c, base);
         r.data = minds;
         r.tick(rr -> {
@@ -219,7 +220,7 @@ public final class MindPowers {
         boolean walls = c.step(4);
         PowerState.of(c.player).buff(PowerState.Buffs.READ_INTENT, c.now() + ticks, 0.15);
         if (c.step(5)) PowerState.of(c.player).buff(PowerState.Buffs.READ_CRIT, c.now() + ticks, 1.5);
-        c.sound(PowerSounds.MIND, 1f, 1.2f);
+        c.voice(Beat.RELEASE, PowerSounds.MIND, 1f, 1.2f);
         Fx.at(c, FxKind.PSI, c.player.getEyePosition()).ticks(16).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.READ.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
@@ -272,7 +273,7 @@ public final class MindPowers {
         // the image is thrown: a ripple leaves the hand and the copy shimmers into being
         Fx.at(c, FxKind.PSI, c.player.getEyePosition()).to(spot.add(0, 1.4, 0)).ticks(8).send();
         Fx.at(c, FxKind.BLINK, c.pos()).to(spot).noAnim().send();
-        c.sound(spot, PowerSounds.MIND, 0.9f, 1.4f);
+        c.voice(spot, Beat.RELEASE, PowerSounds.MIND, 0.9f, 1.4f);
         return Result.OK;
     }
 
@@ -282,8 +283,8 @@ public final class MindPowers {
         st.buff(PowerState.Buffs.FORESIGHT, c.now() + ticks, c.step(5) ? c.num(5, "misses", 2) : 1);
         TimeSlow.Zone zone = TimeSlow.add(c.player, 20, 10);
         Moves.postOn(c.player, Moves.FX_FORESIGHT);
-        c.sound(PowerSounds.FLOW_START, 1f, 1.5f);
-        c.sound(PowerSounds.MIND, 1f, 0.6f);
+        c.voice(Beat.RELEASE, PowerSounds.FLOW_START, 1f, 1.5f);
+        c.voice(Beat.EXTRA_B, PowerSounds.MIND, 1f, 0.6f);
         Fx.at(c, FxKind.RING, c.pos()).scale(6).ticks(16).colour(0xFFFFD27A).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FORESIGHT.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
@@ -305,7 +306,7 @@ public final class MindPowers {
             TimeSlow.remove(zone);
             st.clearBuff(PowerState.Buffs.FORESIGHT);
             Moves.postOff(c.player, Moves.FX_FORESIGHT);
-            c.sound(PowerSounds.FLOW_END, 0.8f, 1.5f);
+            c.voice(Beat.END, PowerSounds.FLOW_END, 0.8f, 1.5f);
         });
         return Result.OK;
     }

@@ -48,7 +48,8 @@ public final class Casting {
             return;
         }
         PowerType.Result r = cast(player, type, msg.slot(), msg.predicted(), msg.yRot(), msg.xRot(),
-                PowerPayloads.strafeOf(msg.keys()), PowerPayloads.forwardOf(msg.keys()));
+                PowerPayloads.strafeOf(msg.keys()), PowerPayloads.forwardOf(msg.keys()), dev.awaken.powers.fx.Ways.wayOf(msg.keys()),
+                dev.awaken.powers.fx.Ways.takeOf(msg.keys()));
         if (!r.ok()) feedback(player, msg.slot(), type.id.toString(), r.reason(), msg.predicted());
     }
 
@@ -76,6 +77,33 @@ public final class Casting {
     /** As above, with the movement keys held at the press (+1 left / -1 right, +1 forward / -1 back). */
     public static PowerType.Result cast(ServerPlayer player, PowerType type, int slot, boolean predicted, float yRot, float xRot,
                                         float strafe, float forward) {
+        return cast(player, type, slot, predicted, yRot, xRot, strafe, forward, -1, 0);
+    }
+
+    /** How long ago the body may have been in the air or at a run for the hands' claim of it to stand (ticks: the press travels). */
+    static final int WAY_GRACE = 5;
+
+    /**
+     * The way the hands claim, when the body could be casting that way: it is in it now, or was within {@link #WAY_GRACE}
+     * ticks. Otherwise what the body is doing now. A cast with no claim (-1: a command, a test, a passive's own cast) is made
+     * standing: only hands that chose a way get its shape.
+     */
+    static int way(ServerPlayer player, int claimed, long now) {
+        if (claimed < 0) return dev.awaken.powers.fx.Ways.STAND;
+        int here = dev.awaken.powers.fx.Ways.of(player);
+        PowerState st = PowerState.of(player);
+        if (here == dev.awaken.powers.fx.Ways.AIR) st.airAt = now;
+        if (here == dev.awaken.powers.fx.Ways.RUN) st.runAt = now;
+        if (claimed == here) return here;
+        if (claimed == dev.awaken.powers.fx.Ways.AIR && now - st.airAt <= WAY_GRACE) return claimed;
+        if (claimed == dev.awaken.powers.fx.Ways.RUN && now - st.runAt <= WAY_GRACE) return claimed;
+        if (claimed == dev.awaken.powers.fx.Ways.STAND && here == dev.awaken.powers.fx.Ways.RUN) return claimed; // a sprint just ended
+        return here;
+    }
+
+    /** As above, with how the hands made the cast (powers.fx.Ways) and the take they chose. */
+    public static PowerType.Result cast(ServerPlayer player, PowerType type, int slot, boolean predicted, float yRot, float xRot,
+                                        float strafe, float forward, int claimedWay, int take) {
         Loadout l = Powers.loadout(player);
         String id = type.id.toString();
         Loadout.Owned owned = l.get(id);
@@ -114,6 +142,8 @@ public final class Casting {
         float cost = effectiveCost(player, type, owned.variant());
         if (l.energy < cost) return PowerType.Result.fail("energy");
         Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot, strafe, forward);
+        c.way = way(player, claimedWay, now);
+        c.take = Math.max(0, Math.min(2, take));
         PowerType.Result r;
         PowerType prevCtx = Mastery.enter(type);
         boolean prevCast = Mastery.beginCast();
@@ -153,6 +183,7 @@ public final class Casting {
         if (type.dashLike) onDash(player, st);
         if (carries(type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, MOVE_HOLD);
         MoveTwists.afterCast(c, cost, now); // the Awakened Body's chains and family twists
+        ArmsDuets.cast(c); // into a stance just broken, a cast is a finisher (SPEC §50, "Break finishers")
         dev.awaken.core.api.WeaveHooks.cast(player, type.family.name(), type.forces.isEmpty() ? null : type.forces.iterator().next().name(), owned.level());
         dev.awaken.core.api.FightMoments.report(player, dev.awaken.core.api.FightMoments.Moment.CAST, null);
         st.markCombatIfFoesNear(player);
@@ -163,6 +194,8 @@ public final class Casting {
     /** Begins a wind-up: the pose for everyone, then the power itself {@code windup} ticks later, aimed where the caster looks then. */
     private static PowerType.Result windUp(Cast c, CastProfiles.Profile prof) {
         Fx.pose(c);
+        // the wind-up's own beat of the power's voice, for a score that has one (a breath in before the fire); silent otherwise
+        Fx.voice(c, c.player.position(), dev.awaken.powers.fx.Voice.Beat.GATHER, 1f, null, 0f, 1f);
         if (prof.beginSound() != null) {
             var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(net.minecraft.resources.Identifier.parse(prof.beginSound()));
             sound.ifPresent(h -> c.sound(h, 0.8f, 1f));
@@ -173,6 +206,8 @@ public final class Casting {
             if (rr.age != wait - 1 || !c.player.isAlive() || c.player.isSpectator()) return;
             Cast at = new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot(),
                     c.strafe(), c.forward());
+            at.way = c.way;
+            at.take = c.take;
             PowerType prevCtx = Mastery.enter(c.type);
             try {
                 c.type.behaviour.cast(at);
@@ -370,6 +405,10 @@ public final class Casting {
     static void tickPlayer(ServerPlayer player) {
         PowerState st = PowerState.of(player);
         long now = now(player);
+        int body = dev.awaken.powers.fx.Ways.of(player);
+        if (body == dev.awaken.powers.fx.Ways.AIR) st.airAt = now;
+        else if (body == dev.awaken.powers.fx.Ways.RUN) st.runAt = now;
+        Earned.tick(player, st);
         st.refreshPerks(player, now);
         Loadout l = Powers.loadout(player);
         int intStat = Progression.stat(player, Stat.INT);

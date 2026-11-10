@@ -112,6 +112,10 @@ public final class PowerState {
     long previewAt = Long.MIN_VALUE;
     /** When its last power was cast, for those watching (SPEC §48.1). */
     long castAt = Long.MIN_VALUE / 2;
+    /** When this body was last in the air and last at a run (game ticks): a cast's claimed way is checked against them. */
+    long airAt = Long.MIN_VALUE / 2, runAt = Long.MIN_VALUE / 2;
+    /** Ticks off the ground on your own, in one go (Earned: what the Updraft is given for). */
+    int airTicks;
     boolean loadoutDirty;
 
     void refreshPerks(ServerPlayer player, long now) {

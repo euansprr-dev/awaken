@@ -1,0 +1,198 @@
+[
+ {
+  "title": "TODAY: Spirit Palm with a sword in your hand (frames from the game)",
+  "proposed": false,
+  "frames": [
+   {
+    "file": "r0_0.jpg",
+    "name": "still 1",
+    "note": "Just after the press. The thing in your hand is still there and nothing else has moved."
+   },
+   {
+    "file": "r0_1.jpg",
+    "name": "still 2",
+    "note": "The strike. It is thrown with the weapon hand, so the weapon swings across the bottom of the view and an arm shows at the top right."
+   },
+   {
+    "file": "r0_2.jpg",
+    "name": "still 3",
+    "note": "A ring and a dome round the target. The weapon is back at the right."
+   },
+   {
+    "file": "r0_3.jpg",
+    "name": "still 4",
+    "note": "Over."
+   }
+  ]
+ },
+ {
+  "title": "PROPOSED (a drawing, not the game): the left hand casts and the sword stays",
+  "proposed": true,
+  "frames": [
+   {
+    "file": "r1_0.jpg",
+    "name": "tick 0",
+    "note": "The press. Your sword is still in your hand."
+   },
+   {
+    "file": "r1_1.jpg",
+    "name": "tick 2",
+    "note": "The left hand draws back to the hip and light starts up the arm. The sword drops into a low guard."
+   },
+   {
+    "file": "r1_2.jpg",
+    "name": "tick 4",
+    "note": "The palm drives out along the aim, the wrist turned flat."
+   },
+   {
+    "file": "r1_3.jpg",
+    "name": "tick 5",
+    "note": "Contact. The light leaves the arm through the palm."
+   },
+   {
+    "file": "r1_4.jpg",
+    "name": "tick 8",
+    "note": "The hand recoils a little and holds while the echo travels through the target."
+   },
+   {
+    "file": "r1_5.jpg",
+    "name": "tick 13",
+    "note": "Home. The sword is already back up, and you can swing."
+   }
+  ]
+ },
+ {
+  "title": "TODAY: Nova (frames from the game)",
+  "proposed": false,
+  "frames": [
+   {
+    "file": "r2_0.jpg",
+    "name": "still 1",
+    "note": "The gather. Only the tips of the fists show, at the very bottom edge."
+   },
+   {
+    "file": "r2_1.jpg",
+    "name": "still 2",
+    "note": "The burst. The whole screen goes yellow and the target catches the game's own fire."
+   },
+   {
+    "file": "r2_2.jpg",
+    "name": "still 3",
+    "note": "The fists are back near the corners."
+   },
+   {
+    "file": "r2_3.jpg",
+    "name": "still 4",
+    "note": "The weapon pops back into view."
+   }
+  ]
+ },
+ {
+  "title": "PROPOSED (a drawing, not the game): Nova",
+  "proposed": true,
+  "frames": [
+   {
+    "file": "r3_0.jpg",
+    "name": "tick 0",
+    "note": "The press."
+   },
+   {
+    "file": "r3_1.jpg",
+    "name": "tick 3",
+    "note": "The forearms cross at the chest, laid right across your view. Light gathers where they meet."
+   },
+   {
+    "file": "r3_2.jpg",
+    "name": "tick 6",
+    "note": "One beat held tight. The view pulls back a little and the world goes quiet."
+   },
+   {
+    "file": "r3_3.jpg",
+    "name": "tick 7",
+    "note": "The right arm goes first."
+   },
+   {
+    "file": "r3_4.jpg",
+    "name": "tick 8",
+    "note": "The left follows a tick later. Both swing past where they'll stop."
+   },
+   {
+    "file": "r3_5.jpg",
+    "name": "tick 12",
+    "note": "They settle back, and the last of the light fades from the arms."
+   }
+  ]
+ },
+ {
+  "title": "PROPOSED (a drawing, not the game): your arm shows the power you are casting",
+  "proposed": true,
+  "frames": [
+   {
+    "file": "r4_0.jpg",
+    "name": "Kinetic",
+    "note": "Cracks of ember light, like stone about to split."
+   },
+   {
+    "file": "r4_1.jpg",
+    "name": "Velocity",
+    "note": "Red streaks that run toward the fist."
+   },
+   {
+    "file": "r4_2.jpg",
+    "name": "Flight",
+    "note": "Pale motes lifting off the skin."
+   },
+   {
+    "file": "r4_3.jpg",
+    "name": "Energy",
+    "note": "A white-blue vein that forks."
+   },
+   {
+    "file": "r4_4.jpg",
+    "name": "Shadow",
+    "note": "Ink that creeps back from the hand."
+   },
+   {
+    "file": "r4_5.jpg",
+    "name": "Mind",
+    "note": "Rings that close round the wrist."
+   },
+   {
+    "file": "r4_6.jpg",
+    "name": "Architect",
+    "note": "A drawn gold grid."
+   },
+   {
+    "file": "r4_7.jpg",
+    "name": "Tech",
+    "note": "Plates that lock on with dark seams."
+   },
+   {
+    "file": "r4_8.jpg",
+    "name": "Spirit",
+    "note": "Tongues of jade flame from the hand."
+   }
+  ]
+ },
+ {
+  "title": "PROPOSED (a drawing, not the game): Shockwave fits what your body is doing",
+  "proposed": true,
+  "frames": [
+   {
+    "file": "r5_0.jpg",
+    "name": "Standing",
+    "note": "The stomp, as today: the knee comes up into view and the boot goes down."
+   },
+   {
+    "file": "r5_1.jpg",
+    "name": "In the air",
+    "note": "You come down fist first. The wave leaves from your knuckles as they hit the ground."
+   },
+   {
+    "file": "r5_2.jpg",
+    "name": "At a sprint",
+    "note": "A slide kick. Your heel digs in and the wave runs out ahead of the slide."
+   }
+  ]
+ }
+]

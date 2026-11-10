@@ -230,4 +230,11 @@ public final class SilveredHalls extends GeneratedCrawl<SilveredHalls.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0xc8ccdc, 0.35F).light(lord.cx, lord.feet + 4, lord.cz, 0xfff0d0, 18, 0.8F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a palace: galleries, crossings and colonnades, wide high ways, a glass floor nobody should trust. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIERS, Cave.Form.HALL), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.CROSS, Arena.Plan.SQUARE), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.HANGERS, Chasm.Kind.BEAMS), true, 3.0, 6);
+    }
 }

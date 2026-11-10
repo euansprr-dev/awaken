@@ -244,6 +244,8 @@ final class PowerEvents {
         StepHooks.frostHit(sp, victim);
         StepHooks.dealt(sp, victim, amount);
         if (SpiritPowers.isMelee(src, sp)) StepHooks.mimic(sp, victim, amount);
+        // a blow of any kind spends what a cast left for it: a Brand goes off, a Hoarfrost Lance flies
+        if (SpiritPowers.isMelee(src, sp)) dev.awaken.powers.catalog.EarnedPowers.meleeHit(sp, victim);
         double chain = st.buff(PowerState.Buffs.CHAIN_BLOWS, now);
         if (chain > 0 && SpiritPowers.isMelee(src, sp)) StepHooks.chainBlow(sp, victim, amount * (float) chain);
         double twin = st.buff(PowerState.Buffs.TWIN, now);
@@ -289,6 +291,7 @@ final class PowerEvents {
         if (event.getSource().getEntity() instanceof ServerPlayer killer) {
             if (Combat.airborne(killer)) Progression.count(killer, "awaken:kills_airborne");
             VelocityPowers.flowKill(killer);
+            Earned.killed(killer, dead); // where you fight decides what the land gives (SPEC 50, "Earned powers")
         }
         if (dead instanceof dev.awaken.powers.content.ShadowSoldier soldier) {
             dev.awaken.powers.catalog.ShadowPowers.soldierFell(soldier);
@@ -301,6 +304,7 @@ final class PowerEvents {
         Loadout l = Powers.loadout(sp);
         if (l.energy < 0) l.energy = Powers.maxEnergy(sp);
         Progression.setCounter(sp, Counters.DASH_CHAIN_AIRBORNE_BEST + "_session", 0);
+        Earned.check(sp); // anything earned before this build knew how to give it
         Powers.markDirty(sp);
     }
 

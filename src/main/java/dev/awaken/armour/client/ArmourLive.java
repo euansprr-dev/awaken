@@ -17,8 +17,11 @@ import org.joml.Quaternionf;
 public final class ArmourLive {
     private ArmourLive() {}
 
-    /** How a part moves: round its axis, leaning round and round, swinging, wandering, or swelling on a double beat. */
-    public enum Kind { TURN, TILT, SWAY, DRIFT, PULSE }
+    /**
+     * How a part moves: round its axis, leaning round and round, swinging, wandering, swelling on a double beat, or
+     * (Signal's Echo) jumping out of line and back like a window tearing.
+     */
+    public enum Kind { TURN, TILT, SWAY, DRIFT, PULSE, GLITCH }
 
     /**
      * One living part, in its bone's part space (blocks; y down, z back). speed: degrees a tick (turn), radians a tick
@@ -48,6 +51,17 @@ public final class ArmourLive {
         if (p.kind == Kind.DRIFT) {
             float t = p.speed * age, r = p.reach * (1F + kw);
             ps.translate(r * Mth.sin(t + p.phase), -r * Mth.sin(0.7F * t + 2 * p.phase) - bob, -r * Mth.sin(1.3F * t + 3 * p.phase));
+            return;
+        }
+        if (p.kind == Kind.GLITCH) {
+            // speed: the length of a slot in ticks; idle: how many ticks a jump holds; about a third of the slots jump,
+            // which and which way by a hash of the slot, so every client shows the same without a word sent
+            int slot = Mth.floor(age / p.speed);
+            float h = Mth.frac((float) Math.sin(slot * 12.9898 + p.phase * 78.233) * 43758.547F);
+            float off = 0F;
+            if (kick > 0.25F) off = (Mth.floor(age / 2F) & 1) == 0 ? p.reach : -p.reach; // its set's ability: it tears
+            else if (h < 0.34F && age - slot * p.speed < p.idle) off = h < 0.17F ? -p.reach : p.reach;
+            if (off != 0F) ps.translate(p.ax * off, p.ay * off, p.az * off);
             return;
         }
         ps.translate(p.px, p.py - bob, p.pz);

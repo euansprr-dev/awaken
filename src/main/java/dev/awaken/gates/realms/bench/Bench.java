@@ -195,7 +195,7 @@ public final class Bench {
             for (String wrong : route.problems()) s.append("  ").append(wrong).append('\n');
             // where each leg is, so whoever writes a tour can stand a camera in it
             if (land.designed()) for (Land.Leg leg : land.route()) s.append("  leg ").append(leg.id()).append(' ').append(leg.kind().name().toLowerCase(Locale.ROOT)).append(" at ")
-                    .append(leg.x()).append(' ').append(leg.y()).append(' ').append(leg.z()).append('\n');
+                    .append(leg.x()).append(' ').append(leg.y()).append(' ').append(leg.z()).append("  (").append(leg.name()).append(")\n");
             s.append("shots: ").append(names.size());
             if (!flagged.isEmpty()) s.append(", flagged ").append(flagged.size()).append(": ").append(String.join("; ", flagged));
             s.append('\n');

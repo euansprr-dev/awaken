@@ -223,4 +223,11 @@ public final class SealedWing extends GeneratedCrawl<SealedWing.M> {
         if (lord != null) air.light(lord.cx, lord.feet + 4, lord.cz, 0xbff0ff, 20, 0.7F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a laboratory: bays, a walk round a core, a pit with something in it, conduits to cross on. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.PIT, Cave.Form.RING), List.of(Arena.Plan.SQUARE, Arena.Plan.RING),
+                List.of(Arena.Plan.SQUARE, Arena.Plan.ROTUNDA), List.of(Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.FALLING, Chasm.Kind.BRIDGE), true, 2.6, 5);
+    }
 }

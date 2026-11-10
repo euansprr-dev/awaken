@@ -847,8 +847,10 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.client.FirstPersonDress` (client; §44.1, 2026-11-10) — what your own limbs wear in first person:
   `register(Dresser)`, `limb(Limb, PoseStack, SubmitNodeCollector, light)` (the pose on the limb's bone) and
   `hand(AvatarRenderer, HumanoidArm, PoseStack, SubmitNodeCollector, light)` (straight after vanilla's own hand
-  draw). Whoever draws a first-person limb asks; the armour answers. A power's light on the arm belongs here too
-  when it is built (the dresser's draw takes an energy and an accent already).
+  draw). Whoever draws a first-person limb asks; the armour answers. A light on the limb passes through here too (§32.N,
+  "The light on what you wear"): `glow(rgb, amount)` / `glowColour()` / `glowAmount()` tell the dresser the light on the limb
+  about to be dressed, and `register(Surfaces)` / `surface(Limb)` hand back the shape of what it wears (`Surface`: triangles,
+  normals, texels, the texture with its material half, a style name, an accent colour) so the light can be drawn on that shape.
 - `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
@@ -902,6 +904,10 @@ of `AwakenConfig.Client`.
   `listen(Listener)` (`on(ServerPlayer, Moment, @Nullable LivingEntity target)`), `report(player, moment, target)`
   (server). Arms reports its eight through `Marks.fire` (the same moments its marks answer), powers reports CAST from
   `Casting` after each cast. The armour module listens (set abilities).
+- `dev.awaken.anims.client.ArmLayers` (§32.N, client) — draws on the first-person arm after its skin: `add(Layer)`,
+  `Layer.draw(Arm, PoseStack, SubmitNodeCollector)` in the arm cube's own space; `Arm` gives `right`, `main`, `grip`, `x0`, `x1`,
+  `charge`, `heat`, `keyed`, `packedLight`, `partialTick`. Powers' arm light is one. `FirstPerson.View` also carries `armMain/armOff`,
+  `lightMain/lightOff` and `stowEase` (§32.N, "The arm").
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
@@ -11911,6 +11917,106 @@ from that ball.
   pose, held sound and screen moment run; the first-person clips still follow the setting, and the boot checks the setting itself. The held sound
   starts with the charge orb (`FxRecipes.startCharge`), so Volley, which never charges, has none.
 
+### 32.N The next level (plan docs/powers-next/PLAN.md, build ledger docs/powers-next/BUILD.md, page https://claude.ai/artifact/W1U5AFoQMizBjLxbUg8VHv; Euan approved all of it 2026-11-10: "Go ahead with the full thing")
+
+The film of 10 Nov (`tools/autopilot/powers-next-before.txt`, 17 casts in first person) showed why casts read weak: the arm was one
+straight box, wind-ups happened off screen, a weapon popped out of the hand and back, and most powers ended as the same ring and flash.
+What follows replaces that. Nothing here changes what a power does to a number unless it says so.
+
+**The arm** (module `anims`; clip schema 2, `FpClipSet.SCHEMA`; schema 1 files still load).
+- A fists clip may say `"arm": true`: each fist key's three spare values are then how the arm would lie (pitch and yaw, degrees, view
+  space, 0 0 straight ahead) and the wrist's roll. **The arm drawn is still vanilla's: one straight box, its sleeve end out of sight**
+  (Euan, 10 Nov 2026, on the first film, where an elbow and a separate upper arm read as a broken arm: "keep the arms closer to vanilla
+  style and not break them"). It comes to the fist from under the frame's corner on its own side (`side * 0.48, -0.84, -0.53`), as it
+  always did; the keyed lie turns it toward itself by at most 38 degrees and never so far that the far end of the box would show; a fist
+  held too high for that is reached by drawing the same arm longer, at most 1.6 times, about its shoulder (`WorldBody.drawFist`). There
+  is no elbow joint and never a second piece. The roll turns the arm's front. Without `arm` the arm is exactly as before.
+- `"mainMoves"` / `"offMoves"`: that hand's track is offsets (it moves what the hand holds) while the other hand is fists. This is the
+  left-hand cast: the off hand acts, the main hand keeps the weapon and lowers it into a guard. A weapon's grip follows the move.
+- `"ease": true` with `"stow"`: a two-handed cast puts the weapon away over 2.5 ticks and brings it back over 3, never a pop. The weapon
+  session's draw never plays when a cast gives the weapon back.
+- `"light"`: `[tick, chargeMain, heatMain, chargeOff, heatOff, ease]` keys. `FirstPerson.View` carries `armMain/armOff` (pitch, yaw,
+  roll, weight), `lightMain/lightOff` (charge, heat, weight) and `stowEase`.
+- **Arm layers** (`anims.client.ArmLayers`, public): anything may draw on the first-person arm after its skin, in the arm cube's own
+  space (x from `x0/16` to `x1/16`, y `-2/16` at the shoulder end to `10/16` at the hand, z `±2/16`). `ArmLayers.add(Layer)`;
+  `Layer.draw(Arm, PoseStack, SubmitNodeCollector)`; `Arm` says which arm, whether it holds something, and the light keyed on it.
+  The arm's armour (§44.1, `core.client.FirstPersonDress`) is drawn first, stretched with the arm, and `Arm.dressed` says it was:
+  what a layer puts on the skin may be under a plate. A layer's `prepare(Arm)` runs before the arm is dressed.
+- **The light on what you wear** (`powers.client.fx.ArmourLight`; Euan, 10 Nov 2026: the light must "map to the shape of the armor
+  itself and the arm, instead of sitting below it and looking glitchy", with "custom styling for each armor piece for the different
+  powers"). On an arm that wears armour the light is never drawn on the skin. Two things pass through `FirstPersonDress` (§12):
+  - `glow(rgb, amount)`, set by the light before the arm is dressed and cleared after. The armour answers in its own shader: for that
+    draw its accent is the type's colour and it flares by the amount (`ArmourClient.dressArm`), so the piece's edges and what glows of
+    itself take the colour.
+  - `surface(limb)`: the shape of what the limb wears (the armour gives the worn chestplate's arm mesh, its texture and the set's id).
+    The light cuts it into cells, one a texel of every face, once a shape. Each cell plays a part read from the set's own texture
+    (its colour half and its material half): **cloth**, **plate**, a **line** (a trim: bright glossy metal, or the set's accent
+    colour wherever it is painted, that is a rim or a strip a texel or two wide; the middle of a wide one is plate or cloth again)
+    or what **glows of itself** (material blue over 0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
+    own face.
+  The light is drawn cell by cell on the faces themselves, 0.003 off them (faces turned from the eye left out), with a soft additive
+  spill round the lit lines only (when every lit cell spilt, the spills added up to a pale wash over the whole arm). Lines are crisp (cover 0.25 + 0.75 of their light); cloth and plate are tinted, never painted out
+  (0.1 + 0.55), and take the light by their own painting (times 0.5 + 0.65 of the texel's brightness), so the piece still reads. Rule for every type: **the set's lines carry the type, and the type's motif lies on the rest one
+  face at a time**, moving the way it moves on bare skin (to the fist, or back from the hand). Kinetic: the lines pulse, a seam
+  wanders down each face. Heat: the hand's end burns, the lines glow hot, embers in the rest. Velocity: streaks down every line and
+  one lane a face. Flight: motes, the lines pale. Gravity: falling bands, ink at the wrist with the lines lit over it. Energy and
+  Prism: a pulse down the lines, a forking vein a face. Charge: lightning crawling the lines in jumps. Shadow: ink from the hand, the
+  lines lit in it. Mind and Soul: rings round the wrist across all they cross. Architect: the lines inked in, a rule every third row.
+  Tech: the lines lit and a scan row sweeping. Spirit: tongues from the hand, taller on the lines. Frost: rime on the lines first,
+  then crystals across the rest.
+  **A set's record** (`ArmourLight.SETS`) says how its materials take it: a gain for cloth, plate, lines and glowing parts; `lead`,
+  how many rows its lines run ahead of the rest (metal conducts); `soak`, how much its cloth holds a glow where the light has been
+  (hide and cloth); `shimmer`, how much what glows of itself flickers (crystal). Records exist for the sets whose arms are finished,
+  the armour's C rank on 10 Nov 2026: Gatewrought (a leather sleeve under a plated glove: lead 1.5, soak 0.12), Vaultbreaker (steel:
+  lead 2.5), Frostwalker (hide: lead 0.5, soak 0.2), Sunward (cloth under gold bands and a stone: lead 1.5, soak 0.14, shimmer 0.5),
+  Shardcrown (crystal: shimmer 1, glowing parts 1.3). Every other set takes the default (lead 1) until its arm is finished and it
+  gets its own. `tools/art/arm_light_preview.py` draws the same cells and rules off line, a sheet a set; its `light` and
+  `ArmourLight.light` are kept line for line. A dresser that gives no shape gets the stopgap: the skin's light drawn 0.16 nearer the
+  eye along the line of sight.
+- **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style
+  (15), drawn on the skin's own pixel grid (4 x 12 a face, 3 wide on slim arms) 0.004 above it, running toward the fist as the charge
+  climbs, with a soft halo. A cast with no light track gets one from its age against its release tick. Powers that sit on you (Barrier,
+  Mend, Brace, Nanite Skin, Cloak, Bulwark, Overload, Hoarfrost Lances) keep the arms lit for as long as they last, and hold a resting
+  fist in view when the main hand is empty. Blocky fists, no fingers.
+- Authoring: `tools/art/specs/fp_casts2.py` writes `assets/awaken/fp_clips/fp_casts2.json` (read last, so a clip there replaces the
+  older one of the same name). One-handed casts key only the left fist. Its rules are checked on build: every pose held two ticks is
+  on screen above the hotbar; no hand sits in the middle fifth of the view for more than two ticks; two hands never start on the same
+  tick; a strike overshoots and settles. 77 clips authored (207 with takes). The three held aims (Charged Shot, Prism Lance, Railgun)
+  keep the fist places their first clips gave them, because the ball, the core and the rail's line are measured from the hands; only
+  Shockwave's standing stamp is still its earlier clip (a stamp is the foot's, and its run and air ways are authored).
+
+**Takes.** Every authored cast has three takes (`_t2`, `_t3`: the same cast with its path and timing a little different, never its
+release pose). The client picks one that isn't the last one it used for that power and sends it with the cast, so everyone sees the
+same take.
+
+**Ways** (`powers.fx.Ways`: STAND 0, RUN 1, AIR 2). The client says how the body was moving at the press; the server keeps the claim
+if it was true within 5 ticks (`Casting.WAY_GRACE`). The cast payload's `keys` carries the way in bits 4-5 and the take in 6-7; an FX
+event's flags carry them in bits 12-13 and 14-15. A way picks its own clip (`base__run`, `base__air`, falling back to the base) and may
+change the power's shape, never its damage:
+- Shockwave: at a run 35% longer and 40% narrower; stamped down out of the air, a ring all round you at 60% of the range.
+- Haymaker: at a run the body is thrown 35% further and flatter; out of the air it is driven into the ground and those within 2.6
+  blocks are thrown back.
+- Spirit Palm: at a run it reaches 6 blocks (4.5) and throws 30% further; out of the air the body goes down and the print bursts under
+  it for half on everything within 2.5.
+- Nova: out of the air it goes off beneath you, 15% wider, and lifts you.
+- Frost Nova: at a run the ring lands three blocks ahead; out of the air it is 30% tighter and holds half again as long.
+- Updraft: cast in the air, the column starts at the ground beneath you and still carries its full height above you.
+There is no timing in any of this: the way is whatever you were already doing.
+
+**The press buffer.** A power key pressed within 3 ticks of its cooldown's end is kept and cast on the first tick it can be.
+
+**A moment each** (`CastFeel.POWER`): 57 powers have their own screen moment at the release (view kick with yaw, field of view,
+hold, flash) in place of the eight shared ones. Camera shake and reduced motion still scale them.
+
+**Signatures** (`powers.client.fx.Signatures`): after a power's shared recipe has drawn, its signature adds the one thing only that
+power has. Built so far: Frost Nova (rime runs out along the ground and stands up as crystals), Thunderclap (lightning along the floor),
+Telekinesis (a line of force from the palm, the ground lifting round what is held), Spirit Palm (the handprint goes through the body and
+out the far side), Barrier (a curved plate of hexes that turns with your look), Mend (petals climbing round you), Shadow Step (your shape
+left behind in ink), and the five earned powers (§50.11). The rule for the rest: no power's main effect may be only a ring, a flash and a
+number. Signatures are drawn, never real, inside the effect budget, and off at the Minimal effects level.
+
+**Open** (in the ledger): third person has no takes or ways yet; the remaining powers' signatures.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 33. Trails (optional guidance for everything; plan docs/trails/PLAN.md, page https://claude.ai/artifact/QvuzZLthjqdy1dmXFgNit4; Euan approved all ten recommendations 2026-10-27)
@@ -18095,13 +18201,43 @@ blocks through stone, no marks, no danger sense).
     shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
     and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
     step brighter, to part the two.
-  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+  - **Stage 3, set by set** (limbs, belts and backs only; no helm is touched). Euan saw C-rank in his play copy
+    and said, on 11 Nov 2026: "with all B, A, and S plates... This is already great work so far. Let's fully update
+    this and finish it." C-rank:
     **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
     blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
     under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
     a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
     forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
     own (cut-ice plates, fluted gold) and nothing more.
+  - **B, A and S** (`armour_finish.PLATES`, parts named `p_*`, run before the language, night and gauntlet passes so
+    a new plate takes its set's surface and light like any other). Each set gets what its own idea was missing on
+    limbs and back, an elbow where Lordscale has one and it did not, and a sleeve where the wearer's own skin showed
+    under a pauldron (Deepcarapace, Tidebreaker, Hollowheart, Leviathan, Starfall, Riftwalker). Every box is whole
+    texels in size and joined to the suit; only Dreamsteel's and Riftwalker's plates stand a texel off, as they
+    already did. The three Hunter sets of these ranks (Veilwoven, Lordscale, Sovereign Weave) are not touched.
+    - **Deepcarapace**: a knuckled elbow with a spur swept back from it, another spur at the calf, a keel on the knee
+      like the breast's.
+    - **Cloudrunner**: the helm's and heel's feathered fins again at the forearm, swept back from a plated elbow; a
+      feather-tipped plate on each thigh.
+    - **Tidebreaker**: the crest's webbed fin and amethyst spines down the back of the forearm; a spine on the knee
+      (the spines hold their light at night, as the crest's do).
+    - **Hollowheart**: its spine: three vertebrae with their wings down the cape, where a back would be; a bone spur
+      at the elbow.
+    - **Leviathan**: the back's sail again on forearm and calf, a fin cut in three steps with a bone ray along its
+      top (lit at night with the other fins); a tooth on the knee.
+    - **Galewing**: a wing feather swept back from a steel elbow; two flight feathers laid over each thigh.
+    - **Halo Choir**: a choir's organ on the back: five pipes rising to the middle, a gold lip on each and a lit
+      mouth; a gilt elbow.
+    - **Dreamsteel**: the mirror on its back broken in three, each piece at its own depth, light in the cracks; a
+      plate on the upper arm and the thigh; a shard at the elbow.
+    - **Starfall**: the star again on the back as it fell, its tail burning up toward the shoulder; a pointed elbow.
+    - **Riftwalker**: the rift's light in the gap under the forearm's and the thigh's standing plates; the shoulder,
+      where the wearer's shirt showed, closed.
+    - **Nightcourt**: a duelist's half-cloak over the left shoulder to the elbow, in a lighter night blue with a
+      silver hem, the sword arm left free; a silver half-belt with two buttons across the back of the coat.
+    - **Signal's Echo**: the System's light down the back, three dashes that light in turn; a scanline plate on each
+      thigh; and its displaced slices of robe now really glitch (§44.10).
   - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
     one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
     kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
@@ -18458,15 +18594,19 @@ that fidgets would be wrong).
   those boxes as a mesh of their own (`<piece>_<bone>_live<k>.mesh`), the rest of the bone as `<piece>_<bone>_still.mesh`,
   and the numbers as `assets/awaken/armour/<set>/live.json`. The whole bone is still written as before
   (`<piece>_<bone>.mesh`): first person, the Hall of Arms, the forge's work and a client with motion off draw that.
-- **Five motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
+- **Six motions** (`ArmourLive.pose`, the same maths as the kit's `pose`, so the kit's pictures are the game's):
   **turn** (round its axis, degrees a tick), **tilt** (leans round and round, never spinning), **sway** (swings on its
   axis: a slow idle swing, a share of your stride, and a share of the wind), **drift** (wanders a fraction of a texel on
-  three slow sines) and **pulse** (swells on a double beat). Any of them may bob up and down.
+  three slow sines), **pulse** (swells on a double beat) and **glitch** (jumps a texel along its axis and back for two
+  or three ticks, in about a third of its slots of 31 to 53 ticks; which slots and which way come from a hash of the
+  slot number, so every client shows the same jump with nothing sent; with the set's ability fired it tears back and
+  forth every two ticks). Any of the first five may bob up and down.
 - **What moves it** is the frame's render state alone: the wearer's age, stride and stride phase, and the wind, which is
   1 in an elytra's glide, else the cape's rise in a fall (`capeFlap / 32`) or its lean past a walk
   (`(capeLean - 50) / 100`). Nothing is kept per wearer, nothing is sent and nothing is saved, so every client shows the
   same and a server never knows. Armour stands and the Fitting Stand's suit move by time alone.
-- **The sets.** Signal's Echo: the marker turns and bobs. Sunward: the rays turn slowly behind the disc. Halo Choir: the
+- **The sets.** Signal's Echo: the marker turns and bobs, and the four slices of robe that sit out of line (on the
+  body, the cape and both skirts) glitch, each on its own clock, so one jumps somewhere every couple of seconds. Sunward: the rays turn slowly behind the disc. Halo Choir: the
   halo tilts and bobs, the small wings breathe. Lanternlight: the brow lamp and both shoulder lanterns swing with your
   stride. Bladeward and Nightcourt: the plume sways and streams back in the wind. Galewing: the cape's primaries open in
   a fall, a glide or a sprint (up to 30 degrees) and stir when you stand. Dreamsteel: the crown's shards drift, odd and
@@ -20763,6 +20903,119 @@ At level 5 a full shot bores (`Bore.through`): up to 14 blocks along the line an
 `tools/art/specs/audio_power_voice.py`. Each power has a charge or wind, a release, an impact, a tail and a level 5 layer, two versions of each, from CC0 recordings and air (Kenney, `tools/art/sources/ritual`). Nothing pitched or struck above the sub. The family's level-up stinger is off for these four (`PowerSounds.ownPack`), since that's where the dings came from. Loops are mastered wrapped round themselves, so there is no dropout at the join. The sound build fails any new file with a held tone in its loud part (`ding_check.py`: a line above 800 Hz, 14 dB over the third-octave around it, held 45 ms, within 14 dB of the loudest frame). It can't see below 800 Hz. Old files stay until Euan has passed the new ones.
 
 Light bending round the Well (decision 10) is not in Stage 0: nothing in the game can warp the screen around a point in the world yet, so it needs its own pass in the Lens chain.
+
+### 50.8 Scores (docs/powers-next; Euan 9 and 10 Nov 2026: built sounds read fake, "the sounds are a big one")
+
+A power's sound is a score: for each beat of its cast a few layers, and every layer is one of Minecraft's own recordings named the way
+`sounds.json` names it (`awaken:voice.<name>` → `minecraft:<file>`), at a volume, a pitch and a start tick. The game plays them from
+its own files; nothing of Mojang's is in the mod.
+- **Beats** (`powers.fx.Voice.Beat`): GATHER, PEAK, RELEASE, TRAVEL, IMPACT, TAIL, ECHO, HOLD, END, LEVEL5, EXTRA_A, EXTRA_B. The
+  server names a beat with `Cast.voice(...)` (an `FxKind.VOICE` event: the beat in `ticks`, intensity in `scale`, and the power's
+  classic sound, volume and pitch riding along). GATHER, PEAK and HOLD are never held back to the release frame.
+- **Client** (`powers.client.fx.PowerVoice`, `assets/awaken/power_voices.json`, schema 1): picks one of a beat's sets by the cast's
+  seed, wanders each layer's pitch a little, plays at most 12 layers (2 beyond 24 blocks), cuts what was gathering on a let-go, adds the
+  break sound of the block a hit lands on (`surface`), and ducks the world for a few ticks under a big release. At level 5 the LEVEL5
+  set plays under the hit (or the release when the power has no hit).
+- **Classic or New**: client setting `newPowerVoice` (and `/awaken fx voice new|classic`). Classic, or a power with no score for a
+  beat, plays the classic sound the event carries, exactly as before. An empty set is a beat meant to be silent.
+- **Subtitles**: one line a power (`subtitles.awaken.voice.<power>`, "Frost Nova freezes"), shown on GATHER, RELEASE, IMPACT and HOLD.
+  It rides an event of its own (`voice.say.<power>`) played too quietly to hear, and only while subtitles are on.
+- **Authoring**: `tools/art/specs/power_voices.py build`. It refuses a recording this Minecraft doesn't ship, any tonal source
+  (amethyst, note blocks, bells, the level-up, the experience orb), more than 12 layers, a volume above 1 or a pitch outside 0.5 to 2.
+  Today: 64 powers, 157 beats, 591 layers over 386 recordings. The ring check stays a tripwire; Euan's ear is the judge.
+- Left as plain sounds for now: bolts in flight, Force reactions, zones, the ladder's step hooks, flying blocks, the movement twists.
+
+### 50.9 Arms Duets (`powers.ArmsDuets`; Euan 10 Nov 2026: "it really feels like you're actually doing combos between the weapon and then the power")
+
+One power and one weapon style make something neither does alone. Nothing is timed: a cast opens a few seconds in which the blade's own
+moments answer it (`core.api.FightMoments`), or the power answers the weapon in your hand as it lands. The style is read from the held
+item's own name, so nothing in Arms changes. Damage goes through `Combat` under the usual caps. They are found by trying; the System
+names each the first time with how many you have found ("There are more"), and the Journal keeps it. Counters `awaken:arms_duets/<key>`.
+
+| Duet | Power + weapon | What happens |
+|---|---|---|
+| Both Barrels | Haymaker + Gauntlets | A second blow from the other fist for 60% |
+| Chain Step | Shadow Step + Daggers | A kill or finisher within 2 s brings Shadow Step straight back |
+| Icebreaker | Frost Nova + Maul | For 6 s a finisher or perfect heavy on its ground throws a row of ice spikes 7 blocks ahead |
+| Reap | Gravity Well + Scythe | A hit on anything inside your Well cuts everything else inside it (once a Well) |
+| Still Cut | Flow + Katana | Each hit during Flow hangs a cut on its target, six at most; they all land when Flow ends |
+| Mirror Guard | Barrier + Shieldblade | A deflect or guard while Barrier is up throws a blast at what struck you |
+| Crossing | Lightning Step + Twin Blades | Everything on the line is cut a second time as you arrive |
+| Long Reach | Spirit Palm + War-staff | The palm lands 3 blocks further away |
+| Edge of Light | Beam + Greatblade or Longsword | Hold Beam a second; your next finisher or perfect heavy within 3 s throws it as a crescent 11 blocks long |
+| Thunder Javelin | Charged Shot + Spear | At half charge or more the bolt goes through three more bodies |
+| Batter Up | Terrain Rip + Maul or War-staff | The rock is struck, not thrown: half again as fast, 30% wider |
+
+Not built: Recall (Telekinesis + any weapon), and the 36 Weaves performed by the weapon itself, which need Arms' swing code.
+
+### 50.10 Break finishers
+
+A cast at a body whose stance you broke within the last 2.5 seconds (`ArmsDuets.FINISH_WINDOW` 50 ticks, within 16 blocks) is a
+finisher: the power lands half again on it (at least as a 4-damage power would), an `FxKind.FINISHER` event plays the family's own
+ending on the body (nine looks in `Signatures.finisher`: Kinetic goes straight through and breaks the ground, Velocity cuts from every
+side, Flight lets the ground go, Energy comes out of its back, Shadow's shape finishes it a beat late, Mind closes rings on its head,
+Architect pins it from the floor, Tech fires from all round, Spirit's palm goes through), and the caster gets a held beat. Named by the
+System the first time for each family; counters `awaken:break_finishers/<family>`. The break gives the seconds: nothing to time.
+
+### 50.11 Earned powers (`powers.catalog.EarnedPowers`, `powers.Earned`; Euan 10 Nov 2026: "surprise me, as long as it still feels like MC"; 9 Nov: "easy unlocks")
+
+Five powers no Power Core rolls (hidden). Each is given the moment you have done enough of something you were doing anyway and hold the
+rank it asks, and each fills a hole: Heat and Frost had one power apiece while every weapon attunes to both, nothing answered the forge,
+nothing tied Flight to climbing, and nothing used the land you stand on. They level through mastery like any hidden power.
+
+| Power | Family, force | Cost, cooldown, damage | Given for | Rank |
+|---|---|---|---|---|
+| Brand | Spirit, Heat | 18, 8 s, 9 | Forging a weapon on the War Anvil | E |
+| Hoarfrost Lances | Spirit, Frost | 24, 18 s, 5 a lance | Ten kills where it is cold enough to snow | D |
+| Updraft | Flight | 20, 12 s, 3 | Six seconds off the ground in one go, on your own (no wings, mount, water, ladder, levitation or slow falling) | E |
+| Backdraft | Spirit, Heat | 30, 20 s, 6 and up | Setting off fifteen Brands | D |
+| Thornwake | Spirit | 26, 16 s, 5 | Ten kills on green ground (grass, moss, podzol, leaves, flowers, crops) | D |
+
+- **Brand**: press your palm to a body within 4.5 blocks (a quarter hit) and leave a mark for 8 s, or aim at a block within 5.5 and
+  leave it on the ground as a trap (armed after 15 ticks, goes off under the first enemy within 1.5). Three marks at most. Your next
+  melee blow of any kind on the marked body (or on anything within 2.5 of a ground mark) sets it off two ticks later: full damage to
+  the body, 60% to everything within 3.5, all set burning. A finisher or perfect heavy sets it off for half again, 30% wider. If the
+  body dies of something else first, the mark leaps to the nearest unmarked enemy within 6 with 5 s on it, once. Variants: Slow Burn
+  (twice as long, 80%), Flash Brand (40% wider, 85%). Ladder: Deep Brand (+3 s), Wildfire (the burst's share 85%, and burning),
+  Second Brand (leaps twice), Forge Mark (the burst sears the ground: 4 s of burning at a quarter a second).
+- **Hoarfrost Lances**: three lances hang over your shoulders for 12 s. Each melee blow you land looses one at what you hit (70%
+  of the power's damage, Frost, slowed and Frosted for 3 s; at most one every 6 ticks); a finisher or perfect heavy looses all that
+  are left (60% each). Pressing the key again throws the rest at what you aim at within 22 blocks, or along your look. The cooldown
+  starts when the last one flies or the time runs out. Variants: Long Winter (twice as long, 85%), Heavy Lances (two, 170%). Ladder:
+  Long Winter (+3 s), Rime (a lance into something already Frosted bursts for half within 2.5), Fourth Lance, Glacier Crown (two
+  more, and when the last flies a ring of frost bursts round you for 80% within 4).
+- **Updraft**: a column of rising air where you stand, 2.2 blocks wide and 14 tall, for 6 s. You and your allies inside it are
+  carried up by the game's own Levitation (about 9 blocks a second) with no fall damage after; enemies take the power's damage once,
+  are thrown up for a second and a half and dropped (bosses and heavy bodies are only hit); projectiles that aren't yours are swept
+  upward. Variants: Far Draft (placed where you aim, up to 14 blocks away), Tall Draft (half again as tall, 70% as long). Ladder:
+  Thermal (20% taller), Gust (thrown higher, held half a second longer), Wide Draft (25% wider, 2 s longer), Skyward Gate (6 taller,
+  and the top throws each rider forward along their look).
+- **Backdraft**: after a 7-tick breath in, every fire within 8 blocks is taken: burning bodies stop burning (yours and your friends'
+  too), fire blocks go out, your own Brands are swallowed, and up to two campfires or lava blocks feed it without going out. Eight
+  fires at most. Three ticks later it all comes back as a cone: 7 blocks and 26 degrees, +0.5 block, +1.5 degrees and +25% damage a
+  fire, setting alight. With no fire near it is a small puff. Variant: Deep Breath (draws from half again as far, 90%). Ladder: Deep
+  Breath (+20% draw), Cinder (the ground it crossed burns 3 s), Kindle (twelve fires), Dragon's Breath (a jet 60% longer and
+  narrower, and fire can't hurt you for 5 s).
+- **Thornwake**: wakes the plants within 7 blocks. Each root seizes one enemy (nearest first): the power's damage, and held still for
+  2.5 s (bosses only slowed). Two roots, plus one for every two living plants near (flowers, leaves, saplings, crops, tall grass,
+  vines, bamboo, cane, cactus) and one for every 24 blocks of turf, six at most; a root comes from the plant nearest its enemy. On
+  bare ground: one thin root for half, held 1 s. Variant: Briar Ring (60% of the reach, held 60% longer). Ladder: Deep Roots (+1 s),
+  Briar (held enemies are cut every half second), Overgrowth (two more), Elder Grove (one great root under the strongest enemy: hit
+  again for 120% and held in the air 2 s).
+
+**Tasks** (`Earned.steps`, thread `powers.earned`): nothing is announced beforehand. Once you have made a start (one cold kill, a few
+seconds of air, one Brand set off, one green kill) and hold the rank, a Lead says what kind of thing is waking and where ("Fight in
+snow country"), with the count. Brand has no such line: forging your first weapon is already on the main path. Once you own one, a
+single plain step says how it is used, until you have used it once (`awaken:brands_set_off`, `awaken:lances_loosed`,
+`awaken:updraft_rides`, `awaken:fires_breathed`, `awaken:roots_woken`). Brand and the two it leads to sit on Weapons; Updraft and
+Thornwake on Out there.
+
+**Each has** an icon and a Core crystal (a commanded Core still shows right), a ladder (§36), a cast profile with its own
+first-person clip (Brand and the Lances are left-handed so the blow can follow at once; Backdraft takes both hands), a score, a screen
+moment and a signature: the brand is one rune that keeps its shape on the side of the body you are looking at, and its burst leaves
+cooling cracks; the lances hang where the server throws them from (in your own eyes, ahead in the top corners) and one fewer hangs each
+time one flies; the column's edge is drawn in thin rising lines with curls of wind, dust and the odd leaf; the breath is big soft flame
+down the cone for as long as the lungs last; roots are still jagged lines of bark with a green heart, soil thrown up, leaves falling.
 ## 53. One short list (the Tasks page through the whole game; plan docs/tasks-progression/PLAN.md, page https://claude.ai/artifact/JqgFfTyCLV13rx6N1XupRd; Euan approved all sixteen recommendations 2026-11-09)
 
 The Tasks page (§27.13) keeps its model: steps stay derived from the world, no quest flags. This section is what it now promises.
@@ -21404,6 +21657,43 @@ whole walls, curtains of vine and glow berries along lines in the roof). With th
 Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
 a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
 
+**No two alike.** Euan, 10 Nov, on the first seventeen: "they look very repetitive, just with different themes... add more
+variation in terms of the different parkour things and everything, so that they never look exactly the same." He was right:
+the generator knew one room, one Lord's hall, one shaft and one chasm, and a kind changed only the blocks. Now every leg rolls
+what it is cut like, and a kind says which cuts are its own (`GeneratedCrawl.Style`, one `style()` per kind):
+
+- **Rooms** (`Cave.Form`, eight): the oval; a long hall; a cross; a ring round a core of rock; a hall with two rows of piers; a
+  room with a terrace three up along one side and two ramps onto it; a pit with a walk two up all round it and four ramps down;
+  a rift, long and tall, whose floor steps up a block and then two more. The first fight and the ambush take only level
+  forms, because other ways lead off them.
+- **Wardens' rooms and Lords' halls** (`Arena.Plan`, six): a ring of pillars; a nave with two rows; a cross with four at the
+  crossing; a rotunda with two rings and a higher dome; a round floor with two tiers of steps round it; a square hall on four
+  great piers. The middle is always open and level, because the Lords were built for a level floor. A Warden that needs the
+  floor (no pillars) gets a plan with nothing raised.
+- **Gulfs** (`Chasm.Kind`, eight ways across): pillars; a bridge with two spans gone, on piers, what fell lying in the pool;
+  rafters one cell wide, each ending on a cross beam a block lower, the next beside it or over a gap of two; a ledge along the
+  left wall, a pillar in the middle, a ledge along the right; platforms hung from the roof by a chain; great steps down, two
+  or three lower each time (never on a climb); a ford, wall to wall in shallow water, with stones at the water's top and more
+  that lead nowhere; a deck that gives way under whoever stands on it (the crumbling floor's rule: a block goes fifteen ticks
+  after you step on it and comes back after a hundred), where a fall puts you back on a shelf, never on the deck.
+- **Shafts**: round, or square with flights along four walls for what was built.
+- **Ways**: as wide and as high as the kind says (2 to 3 each side, 4 to 6 high).
+- **How often.** From a standard run up there is always a gulf to cross (it takes the place of a second fight if the bag
+  drew none), and a great run's second stretch has a climb or a crossing of its own.
+- **A branch.** From a standard run up, where there is room: off a den after the first or a Warden's room, to one side, a way to a gulf with no
+  fall in it and a vault beyond with two caches. Nobody has to cross it; whoever does is paid for it. It is only ever a
+  crossing that is as easy to come back over as to go out on (never the great steps, never the pillars with their run-ups),
+  and the den's doors shut it with the rest.
+
+Rules these keep, so that a skin written for the oval and the pillars dresses all of them without knowing:
+`feet` is a room's lowest floor and every other level is raised from it (what a skin draws at `feet` is on the floor or
+under it, never in the air); a new room is still a `Cave`, a new hall an `Arena` with `pillar()`, a new crossing a `Chasm`;
+every jump is a sprint over one to three cells straight along or straight across, level or down, and the only way up is a
+step of one; what was built (`wild()` under a half) stands square to the compass however the way came to it; whatever a skin
+grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
+names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
+leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
@@ -21828,6 +22118,223 @@ No hand clips. Motes and recordings are vanilla's by name. The Stilled are the k
 its own, no second storey of story (books, notes), and nothing that changes after it is done except what its steps change.
 Water set in a place stands still (the feature schedules no fluid ticks: no falls, no running races). Nothing has been
 played by a person. Where each place stands against its brief: docs/places/STATUS.md.
+
+## 60. Monsters of the Gates (plan docs/gates-as-worlds/monsters/PLAN.md, page https://claude.ai/artifact/5AbsTYzFh8aNbt71DW4rDZ; Euan approved option B on 2026-11-10)
+
+Every gate monster that wore a Minecraft mob's body has a body of its own: 78 of them, across the fifteen gate themes
+(48 normal, 15 elite, 15 Wardens). The Mirror Shade keeps the player's face, which is its point. Lords, Provings and
+the Gate Worlds' creatures already had bodies and are untouched. A monster's bestiary id, numbers, abilities, drops and
+spawn rules do not change; its name and one-line description may (`docs/gates-as-worlds/monsters/ROSTER.md`).
+
+### 60.1 Bodies
+
+- One rig and animation system: the hero rigs (§23), drawn by `WildRenderer` with the life layer and the motion layer.
+  A gate monster's rig id is its bestiary id. `MobDef.rig()` marks it; `MobTypes` then makes it a
+  `mobs.entity.GateMonster`, and `AwRenderers` draws it on its rig. If the rig is missing the old body draws instead,
+  silently (the fallback): the old skins stay in `textures/entity/mobs/`, the new ones are in
+  `textures/entity/monsters/<id>.png` and `<id>_glow.png`.
+- Authoring: `tools/art/specs/gm/<theme>.py` on `gm/kit.py`; `tools/art/specs/gate_monsters.py` builds
+  (`python3 tools/art/build_all.py gate_monsters`), checks (`... gate_monsters.py check [theme|id]`) and previews
+  (`... preview DIR theme`). Generated, never edited by hand: `mobs/client/anim/GateMonsterData.java`,
+  `assets/awaken/life/monsters_motion.json` and `monsters_creatures.json` (read beside `motion.json` and
+  `creatures.json`, same shape), the textures, and `src/main/merge/mobs_monsters/` (voices, names).
+- Each theme has one rule of colour, set against its room so its monsters read at twenty blocks, and one light of its
+  own (the Bell Crypt's cold wisp, the Hive's amber, the Abyss's single violet ring, and so on). No Minecraft or Fresh
+  Animations asset is used or copied.
+- Size: a body is its own size (entity scales were removed, except the Gel Sample's 1.6). Hitboxes come from
+  `.size()` on the def. Bone budgets: 40 for a normal monster, 60 for an elite or a Warden.
+- Clips every body has: idle, walk and run (or fly), angry, hurt, death, its plain blow (`windup`, `strike`, and
+  `heavy_windup`, `heavy_strike` on big bodies), and for each ability its move's `<move>_windup`, `<move>_strike` and
+  `<move>_open`. A wind-up is stretched to the ability's real wind-up time, so the body's tell is the server's tell.
+- Voices: `monster.<id>.<ambient|hurt|death|step>`, each a list of Minecraft's own sound events named in
+  `sounds.json` with a volume and pitch (never a new recording, never a built sound).
+- Legs: a four-legged body's forelegs bend knee-forward and its hind legs hock-back, as the motion layer bends them
+  (§23.1) and as an animal's do; a knuckle-walker (the Toller, the Yeti) is the other way round. The offline check
+  refuses a quadruped whose joints both fold in under the belly. A crawler's leg may hang from a mount turned its way
+  (`splay_pairs(mounts=True)`), so its knee stands as high as it was drawn however far round it is turned. Two bodies
+  walk on three legs (the Riveter, the Security Unit): two in front and one behind, which the motion layer ranks as a
+  hind leg.
+
+### 60.2 The cue
+
+A gate monster tells its body what it is doing in one synced int (`RigBody`, shared with the fauna): slot + 1,
+stage << 8, a serial << 11. Stages: none, wind-up, strike, roar, warn, and two new ones: OPEN 5 (the move fired and
+left it open: the body plays the strike, then holds `<move>_open` until the server lets it go) and STUCK 6 (a lunge
+missed: the body goes into `<move>_open` from wherever it stands). The plain blow has two slots after the abilities
+(light, heavy). A late joiner gets the current cue with the entity's data.
+
+### 60.3 The fight rules
+
+Each is data on the def, judged by the server, and none changes another creature's numbers:
+
+| Rule | On the def | What it does |
+|---|---|---|
+| An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
+| Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
+| A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
+| Planted to shoot | `.planted()` | As a wind-up begins it squares up to its target (5 ticks, 45 degrees a tick), then cannot turn, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side. (Before the square-up it took whatever way its body faced, and a shooter backing off from you lost every shot as it began: the Riveter never fired on film.) |
+| A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
+| The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
+
+`.moves(Move)` overrides how a body moves where its old body's way no longer fits (the Shimmer, the Prism, the Snow
+Star, the Puffer, the Balloonist and the Gale fly; the Honeypot walks; the Nothing is on the ground).
+
+### 60.4 Engine changes this needed
+
+- `LegSurface.clear` samples a leg's line every 0.1 block, leaving 0.2 at each end, as `LegBlockTrial` does (it took
+  0.25-block steps and could let a leg cross a kerb's corner). This is shared by every body with planted feet.
+- `AwakenMob.holdStill(ticks)`: stand still and start nothing, without ending what it is doing (an opening).
+
+### 60.5 Tests
+
+`gate_monsters_own_bodies` (all 78 have a body, and the body acts every ability the bestiary gives its monster, with
+an open pose wherever the server can leave it open), and one test for each rule: `gate_monster_front_holds`,
+`gate_monster_open_bites_deeper`, `gate_monster_stopped_by_a_blow`, `gate_monster_miss_leaves_it_stuck`,
+`gate_monster_planted_loses_its_aim`. The life layer's tests (`creature_`, `life_`) cover every rig's legs, springs and
+motion profile. The offline check (`gate_monsters.py check`) covers what needs no game: bone budgets, clips, the floor
+(nothing more than 2 px under it in any clip), strike begins where wind-up ends, stride cadence at full chase (0.6 to
+3.6 a second), leg joints, voices, the bestiary's abilities against the body's moves, and that a death ends with
+the body lying on the floor (`kit.lying` folds any limb that would hold a fallen body up in the air; `fall` does it
+for every death that uses it).
+
+### 60.6 Known gaps
+
+- The Mirage's "only the real one casts a shadow" and the Sheet's "moves only when you blink" lean on rules the
+  bestiary already had (DECOY, HAUNTED) and were not re-tuned.
+- The Gel Sample's two halves come out bare: bones named `jar*` (its glass walls, cap and plinth) are not drawn on a
+  split child (`WildModel`, `AwakenMob.F_SPLIT_CHILD`).
+- The shared carriers (the wave, the lobbed globe, the ground line, the pull) are the fight language of §47.2 and are
+  drawn the same for every creature on purpose; a monster's own look is its body, its shot (§60.7), its matter and its
+  two fight voices (§60.8).
+- The fight voices and the shots have not been heard or seen by Euan; the film reels (§60.9) are how they were checked.
+
+### 60.7 What they throw (the fight pass, Euan 2026-11-10: "some still fire ordinary arrows... completely custom attacks")
+
+No gate monster fires an arrow or the plain glow. Every monster with a BOLT, ARROWS or NOVA ability names its shot on
+its bestiary line, `.shot(ShotLook.X, up, out)`:
+
+- `mobs.def.ShotLook` (18 looks: rib, spore, cinder, thorn, ink, quill, card, rivet, shard, oil, hail, point, arc,
+  gust, quarrel, spar, ring, hood): a 16×8 sprite in the body's own colours
+  (`textures/entity/monsters/shots/<id>.png`, painted by `tools/art/specs/gm/shots.py`), whether it flies tip first
+  (a dart: two crossed planes along the flight) or tumbles (a billboard turning in the eye's plane), and how fast it spins.
+- `AwBolt` carries the look (synced byte); `mobs.client.ShotRenderer` draws the sprite full-bright inside the
+  answer-colour glow (kept smaller, so the class still reads: white-gold deflects).
+- `up`, `out`: the muzzle, in blocks over its feet and ahead of its body yaw (`Abilities.muzzle`). Shots leave from
+  there and the wind-up's gathering motes collect there: the Mourner's ribs from its chest, the Riveter's rivets from
+  its gun, the Lamplighter's flasks from the top of its pole.
+- ARROWS on a body with a shot is a volley of its own shots (`Abilities.volley`: the fan of §47.2, each at 0.65 of the
+  ability's damage, LIGHT), never `AbstractArrow`.
+- The offline check refuses a shooter with no shot and a `ShotLook` with no sprite; the game test asserts the same
+  and that the Mourner's volley is ribs.
+
+### 60.8 Its own way of hitting (the fight pass)
+
+**The bug this pass found.** In play no ordinary creature's plain blow ever landed. `MobGoals.ToldMelee` stops its
+navigation while it winds up, and vanilla's `MeleeAttackGoal.canContinueToUse` (not following unseen) gives up when the
+path is done, so the goal selector ended the goal two ticks into every wind-up; twenty ticks later it began again and
+was ended again. Abilities were unaffected, which hid it, and `mobs_told_melee` drives the goal by hand and never met
+the selector. Fix: `ToldMelee.canContinueToUse` holds while a blow is being told or followed through, and the chase is
+taken up again as the blow is thrown (at the goal's own speed). `gate_monster_plain_blow_lands` runs the real loop.
+Who this changes: every creature whose melee does not follow a target it cannot see, which is every ordinary monster
+(`AwakenMob`: the gates' and the world's), the hunters among the fauna (`FaunaMob` HUNTER) and the Hush cave creatures
+(`CaveFauna`). The named beasts, the water creatures and the neutral fauna follow unseen and always landed. Fights
+with ordinary monsters are harder than they were between 25 Oct and this fix.
+
+**Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
+blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
+for `STRING_GAP` (5) ticks, walking after a target its blow knocked back, and as it tells the next blow (with its own
+closing circle) it lunges across what is left of the gap (at most about 2.2 blocks). The first film showed why: the
+Bramble Hound's first bite knocked the dummy out of reach and its second bit air. The goal also holds through its
+rest (the 20-tick attack cooldown), so the rhythm is the monster's own, tell and rest; before, the selector stopped
+the goal after every blow and began it again at once, and creatures swung every 13 to 22 ticks instead of 28 to 40. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+`blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
+own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
+did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
+
+- Snappers, two quick bites or cuts (8, 2): Sporeling, Capweaver, Coal Tick, Cog Hound, Sand Stalker, Bramble Hound,
+  Ice Hound, Glint, Test Subject, Silent One, Void Spawn.
+- Duelists, three (9, 3): Fan Dancer (left fan, right fan, left), Glass Duelist (cut, thrust, cut).
+- One-two (12, 2): the Rot, the Overseer (swing and backhand), the Regulator, the Lamplighter, the Unblinking, the
+  Sweeper, the Waking (right arm, left arm), the Nothing (middle head, left head).
+- Slow and heavy, one blow: 16: Pallbearer, Steam Hammer, Overgrowth, Yeti; 14: Sexton, Shelf, Pickhead, Slag Boar,
+  Door, Empty Suit (then open, `spent`), Security Unit, Tall One; 12: Toller, Shardwalker, Creaker, Frozen Monk, Gel
+  Sample, Sheet, Hollow Priest; 10: Chime (its dive), Slag Pot, Blotter, Prism, Grub, Honeypot, Hopping Lantern, Many
+  Eyes, the Gale.
+- Shooters that keep their range and fliers that only dive keep their rank's tell.
+
+**The other swing.** A body that strings its blows has a second swing, clips `windup2` / `strike2`
+(`K.plain(..., second=(wind, hit))`; for a bite, `K.other_side`: the head rolled over the other way and driven
+further). The server cues it as a third plain slot (`GateMonster.secondSlot`, after the plain and the heavy) for every
+second blow of a string; the renderer stretches every plain wind-up to the def's own tell. The offline check refuses a
+chain without a second swing.
+
+**Spent.** `MobDef.spent(t)`: its own plain blow leaves it open for `t` ticks (the last blow of a string): the cue goes
+to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
+
+**Matter.** `MobDef.matter(Matter.X, 0xRRGGBB)`: what its blows throw off, one of the shots' seven particle shapes
+(spark, ember, flake, wisp, puff, drop, sliver) in its own colour: bronze sparks off the Toller, paper off the Fan
+Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
+lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
+where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
+its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
+fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
+(`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
+puff, blast, portal sparkle or ink is not drawn.
+
+**Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
+Minecraft's own recordings by name, re-pitched; what the body is made of, moving; no high ring at the blow). `wind`
+plays under the tell's own sound as a blow or a move begins (0.7 volume; the tell's sound stays the same on every
+creature so it can be learned), `blow` as it lets go; a heavy is pitched down, the later blows of a string up. A call
+(a summon, a heal, a guard, its copies, a frenzy) is its own ambient voice raised. A body with a blow voice no longer
+plays the borrowed creature sounds for its moves (the enderman's teleport, the evoker's summon, the illusioner, the
+ravager's roar, the dragon's breath, the shulker, the shrieker, the skeleton's bow, the beacon). The game registers
+exactly the voices that exist (`mobs.def.GateVoices`, generated): a flier has no step.
+
+**In the studio.** `/awaken admin monster target` gives the nearest gate monster the nearest creature that isn't one of
+ours as its target; `/awaken admin monster act <n>` makes it act its nth move at it (`GateMonster.act`).
+
+### 60.9 Motion, and how it is checked
+
+- Wind-ups ease: out of the counter-move and into the gathered pose on a smoothstep (two keys between), never a
+  straight run. Strikes and flinches end with a small rock back toward the blow before they are still.
+- Loops keep what is written into them: a long idle is sampled finely and its even keys doubled until a straight line
+  between neighbours is within 0.8°, 0.1 px and 1.5% of scale of the function (`K.enough_keys`), so a glance or a twitch
+  a quarter of a second wide plays as written.
+- Loops have no seam. The game's curve through a clip's keys (vanilla `CATMULLROM`) takes each key's slope from its two
+  neighbours and clamps at the clip's two ends, so a looping clip lost about half its speed for an instant every time
+  it came round: a hitch in every wingbeat, stride and breath. `K.seal_loops` gives every looping clip one key before
+  its start and one after its end (the loop carried on a step either way; a wheel that turns steadily keeps turning),
+  and `HeroRig.problems` and the rig check allow those two keys on a looping clip. The older hero rigs' loops (the Drip
+  Lurker's and the rest of `fauna_rig`'s users) still have the hitch; the same call would cure them.
+- **The blow lands as the circle closes.** The server deals a blow on the tick its tell ends, and the closing circle
+  shuts then; the body's strike clip used to begin only when the client heard it had struck, so its hit frame came
+  0.07 to 0.09 s after the circle. A gate monster's wind-up is now gathered `STRIKE_LEAD` (0.08 s) before the tell ends
+  and its strike begins there (`WildRenderer.resolve`), holding at the hit frame until the strike's own cue takes it
+  on from where it had got to (`begun`). The other bodies the renderer draws are unchanged.
+- The wind-up is gathered over the tell's real length, which the server already syncs (`RigBody.cueTell`, read as the
+  cue arrives), not the move's usual one: a heavy, or a blow told shorter or longer than its move, no longer pops.
+- **A step, then its cut** (`RigBody.CUE_POISED`, stage 7): a monster that blinks strikes `BLINK_CUT` (8) ticks after it
+  arrives, with its own tell. Its body used to play the strike on arrival, six ticks before the cut landed. It now
+  arrives poised (the move's wind-up held at its last frame) and strikes as the cut's tell ends; if the cut never
+  comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
+- From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
+  body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
+- A gate monster's dive lands at the touch: its reach is half the two widths + 0.9 (the other fliers keep 1.3). On film
+  the Lantern Moth's blow landed a block and a half short of its target, a tenth of a second before it arrived.
+- A dormant gate monster wakes in its own matter and voice (`GateMonster.wake`), with the game's warning sound under
+  it, not the borrowed sparks. `/awaken admin monster target` and `act` rouse a dormant one (it otherwise waits for a
+  player to come near: on film the Security Unit slept through its fight).
+- A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
+  it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
+  strike ever played.
+- A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
+  death that ends more than 12 px over the floor.
+- **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
+  monsters a reel, ten reels; `film --as <name> <id>...` writes one named reel for those monsters; frames 854x480,
+  since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
+  a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.
 
 ## 61. Old World Monuments (plan docs/places/MONUMENTS.md; paintings docs/places/img; page https://claude.ai/artifact/1Fign2AXfzSB9AhJwe9Jns; Euan on the paintings, 10 Nov 2026: "this is 100% what I'm looking for")
 
