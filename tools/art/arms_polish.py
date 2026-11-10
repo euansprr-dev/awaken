@@ -525,8 +525,11 @@ def split_mat(name):
     return key
 
 
+RIDGE_TO = 1.0  # how far up the widest run the ridge stands proud (1: all of it); past that it is painted flat
+
+
 def vblade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, ridge=None, ridge_d=3, repoint=True,
-           flat_mat=None, **data):
+           flat_mat=None, ridge_to=None, **data):
     """arms_weapons.blade's voxel stand-in: the same segments, the core no longer a post. A slab one texel thick the
     blade's full width (its outer texel a side the edge's material), a ridge one texel wide (three on a blade 9 or
     wider) standing a texel proud each side, and a point restaged in finer, longer steps that ends one texel square."""
@@ -549,6 +552,18 @@ def vblade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0
         stages = [s[:3] for s in segs if s[0] > wide[-1][0]]
     out = []
     allsegs = body + stages
+    # where the ridge stops standing proud: a whole texel row, part way up the widest run (above it the blade is one
+    # texel thick and the ridge is only painted)
+    to = RIDGE_TO if ridge_to is None else ridge_to
+    y_proud = round(wide[0][0] + to * (body[-1][1] - wide[0][0])) if to < 1 else None
+    if y_proud is not None:
+        cut = []
+        for (y0, y1, w) in allsegs:
+            if y0 < y_proud < y1:
+                cut += [(y0, y_proud, w), (y_proud, y1, w)]
+            else:
+                cut.append((y0, y1, w))
+        allsegs = cut
     for k, (y0, y1, w) in enumerate(allsegs):
         cx = x + shift(y0)
         tip = w == 1
@@ -559,8 +574,13 @@ def vblade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0
             out.append(VX.slab(cx - (w - 2) / 2, cx + (w - 2) / 2, y0, y1, 1, split_mat(core), part, cx=cx, **data))
         out.append(VX.slab(cx - w / 2, cx + w / 2, y0, y1, 1, split_mat(edge) if edge == "slate_flat" else edge, part, cx=cx, **data))
         r = min(rw, w - 2)
-        if r >= 1 and ridge_d > 1:
-            out.append(VX.slab(cx - r / 2, cx + r / 2, y0, y1, ridge_d, flat_mat or core, part, **data))
+        if r >= 1:
+            proud = ridge_d > 1 and (y_proud is None or y1 <= y_proud)
+            rib = VX.slab(cx - r / 2, cx + r / 2, y0, y1, ridge_d if proud else 1, flat_mat or core, part, **data)
+            if proud:
+                out.append(rib)
+            else:  # painted, not raised: it must come first to keep the plane it shares with the slab
+                out.insert(len(out) - (2 if (w >= 3 and edge != "slate_flat") else 1), rib)
     return out
 
 

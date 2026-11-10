@@ -38,6 +38,7 @@ ul, ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; 
 .muted { color: var(--muted); }
 .gold { color: var(--gold); } .steel { color: var(--steel); }
 blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--gold); background: var(--panel); border-radius: 0 8px 8px 0; max-width: 72ch; }
+.note { border: 1px solid var(--line); border-left: 3px solid var(--bad); background: var(--panel); border-radius: 0 10px 10px 0; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; max-width: 76ch; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .fact { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .fact b { font: 600 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
@@ -49,6 +50,7 @@ img { display: block; max-width: 100%; height: auto; border-radius: 8px; backgro
 .pair > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .tag { font: 600 12px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .dirs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dirs.three { grid-template-columns: repeat(3, 1fr); }
 .dirs > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .dirs h3 { font-size: 15px; }
 .dirs p { font-size: 14px; line-height: 1.45; color: var(--muted); }
@@ -58,7 +60,7 @@ table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
 th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font: 600 12px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 tr:last-child td { border-bottom: 0; }
-td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .v { font: 600 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; border: 1px solid currentColor; white-space: nowrap; display: inline-block; }
 .v.fat { color: var(--bad); } .v.ok { color: var(--steel); } .v.keep { color: var(--good); }
 .style { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; gap: 12px; }
@@ -89,20 +91,25 @@ svg text { font-family: var(--mono); }
 @media (max-width: 720px) {
   .pair, .twocol { grid-template-columns: 1fr; }
   .dirs { grid-template-columns: 1fr 1fr; }
+  .dirs.three { grid-template-columns: 1fr; }
 }
 </style>
 
 <div class="wrap">
 
 <section>
-  <span class="eyebrow">AWAKEN · plan for your approval · 10 November 2026</span>
+  <span class="eyebrow">AWAKEN · plan for your approval · second version · 10 November 2026</span>
   <h1>Weapon polish pass</h1>
-  <p class="lede">I looked at all 111 weapon models as they are in the game today. The fat blades have one cause, and one fix brings every blade up to the Maul's level without redesigning anything. Nothing is built. Your five answers are at the bottom.</p>
+  <div class="note">
+    <b>What changed since the first version.</b>
+    <span>You said the first proposal "doesn't feel like MC at all anymore" and that it "has to stay that voxel style". You were right. Every slanted face and smooth point is gone from this page. Everything proposed below is boxes on the pixel grid, the same pieces the weapons are made of today.</span>
+  </div>
+  <p class="lede">I looked at all 111 weapon models as they are in the game. The fat blades have one cause, and it can be fixed without leaving the voxel style: take the thick post out of the middle of each blade. Nothing is built. Your five answers are at the bottom.</p>
   <div class="facts">
-    <div class="fact"><b>82</b><span>weapons change: every bladed kind, and 11 Lord-forged</span></div>
-    <div class="fact"><b>29</b><span>stay exactly as they are: the Maul, War-staff, Precursor Arm, Gauntlets</span></div>
-    <div class="fact"><b>0</b><span>changes to length, grip, stats, recipes, holds or swings</span></div>
-    <div class="fact"><b><!--LS_PCT--></b><span>thinner on screen for the Longsword, and it gains a real point</span></div>
+    <div class="fact"><b><!--N_CHANGED--></b><span>weapons change: the bladed kinds, and 6 Lord-forged</span></div>
+    <div class="fact"><b><!--N_KEPT--></b><span>stay exactly as they are, the Maul first among them</span></div>
+    <div class="fact"><b>0</b><span>slanted faces, new shapes, or changes to length, grip, stats, holds or swings</span></div>
+    <div class="fact"><b>2</b><span>of your weapons already have the cut I'm proposing for the rest</span></div>
   </div>
 </section>
 
@@ -110,20 +117,22 @@ svg text { font-family: var(--mono); }
   <span class="eyebrow">What you asked for</span>
   <h2>Keep the language, lose the fat</h2>
   <blockquote>"Some of them are a bit too chunky and don't look that good in the hand. Some of the blades to me look a bit fat. Most are still really good, like the Maul... the Katana is decent, but I think can still be slightly improved... I don't want to completely scrap everything."</blockquote>
+  <blockquote>"It has to kind of stay that voxel style. Just like extremely well polished voxel style."</blockquote>
   <div class="twocol">
     <div>
       <h3>How I'll know it worked</h3>
       <ul>
-        <li>In first person a blade reads as a blade at a glance: thin at the edge, a clear point, one clean line of light down it.</li>
-        <li>Each weapon is plainly still the same weapon. Same outline, same materials, same hilt.</li>
-        <li>The Maul and the other block-shaped weapons are untouched.</li>
+        <li>In first person a blade reads slim: a thin edge, a clear line down the middle, a point that steps down finely.</li>
+        <li>Every piece is a box. It looks like something Minecraft could have made, only better finished.</li>
+        <li>Each weapon is plainly still the same weapon, and the Maul is untouched.</li>
       </ul>
     </div>
     <div>
       <h3>What would be a failure</h3>
       <ul>
-        <li>Thinner, but still a stack of boxes.</li>
-        <li>A new look that loses the chunky painted feel. You have turned down two looks before: plain cubes ("still very, very blocky") and smooth sculpted meshes ("too thin and noisy"). This plan stays between them.</li>
+        <li>Any shape Minecraft doesn't have: a slanted face, a wedge, a smooth taper. That was the first version, and you turned it down.</li>
+        <li>Blades so thin they lose their weight.</li>
+        <li>A change you can't see in the hand.</li>
       </ul>
     </div>
   </div>
@@ -140,7 +149,6 @@ svg text { font-family: var(--mono); }
         <text x="380" y="28" text-anchor="middle">Longsword today</text>
         <text x="650" y="28" text-anchor="middle">Longsword proposed</text>
       </g>
-      <!-- 1 texel = 36px; held sizes differ, so each is drawn at its size in the hand: vanilla 0.68, ours 0.425 -->
       <g transform="translate(110 110)">
         <rect x="-49" y="-12.2" width="98" height="24.5" fill="var(--steel)"/>
         <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--muted)">1 thick</text>
@@ -152,12 +160,13 @@ svg text { font-family: var(--mono); }
         <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--bad)">a 3 by 3 post</text>
       </g>
       <g transform="translate(650 110)">
-        <polygon points="-38.2,0 -7.6,-15.3 7.6,-15.3 38.2,0 7.6,15.3 -7.6,15.3" fill="var(--gold)"/>
-        <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--gold)">a flat, two bevels, a knife edge</text>
+        <rect x="-38.2" y="-7.6" width="76.5" height="15.3" fill="var(--gold)"/>
+        <rect x="-7.6" y="-23" width="15.3" height="46" fill="var(--gold)"/>
+        <text x="0" y="62" text-anchor="middle" font-size="12" fill="var(--gold)">a thin slab and a 1-wide ridge</text>
       </g>
-      <text x="380" y="204" text-anchor="middle" font-size="11.5" fill="var(--muted)">Each cut straight across the blade, drawn at the size it is held in first person.</text>
+      <text x="380" y="204" text-anchor="middle" font-size="11.5" fill="var(--muted)">Each cut straight across the blade, drawn at the size it is held in first person. All boxes.</text>
     </svg>
-    <figcaption>Today's blade is nearly twice as thick in the hand as a vanilla sword's (0.080 against 0.043 of a block). The proposed blade is thinner than vanilla's on average and comes to a true edge.</figcaption>
+    <figcaption>Today's blade is nearly twice as thick in the hand as a vanilla sword's. The proposed one is a slab one texel thick, like every vanilla blade, with a ridge one texel wide down the middle so it keeps some weight.</figcaption>
   </figure>
   <!--INGAME_BEFORE-->
   <div class="twocol">
@@ -166,8 +175,8 @@ svg text { font-family: var(--mono); }
       <p>On 9 November you asked for swords to be held like a vanilla sword, edge ahead. That was right, and it is in the build. It also means the eye now looks straight at the blade's thickness. Before that, the flat was turned toward you and hid it.</p>
     </div>
     <div>
-      <h3>The second cause: steps</h3>
-      <p>Points, axe bits and spear heads are stacks of boxes, so they end in stairs. A stepped tip reads blunt however thin the blade is.</p>
+      <h3>Two of your weapons already have the right cut</h3>
+      <p>The Rapier and the Gatewrought Daggers are built as a thin slab with a one-texel ridge. They are the blades that already read slim in the hand. The plan gives every other blade that same cut.</p>
     </div>
   </div>
   <p class="muted">Two things I checked and ruled out. The weapons are not too big: at mid-blade a Longsword is <!--LS_TODAY--> pixels across on a 1280 by 720 screen and a vanilla diamond sword is <!--VANILLA-->. And the hilts are not the problem any more: the 2 November pass already brought them down to 5 deep.</p>
@@ -178,43 +187,54 @@ svg text { font-family: var(--mono); }
   <h2>All sixteen kinds, graded</h2>
   <div class="scroll">
     <table>
-      <thead><tr><th>Kind</th><th>Verdict</th><th>Blade today<br>wide × thick</th><th>Proposed</th><th>On screen<br>today → proposed</th></tr></thead>
+      <thead><tr><th>Kind</th><th>Verdict</th><th>Blade today</th><th>Proposed, all boxes</th></tr></thead>
       <tbody>
 <!--GRADES-->
       </tbody>
     </table>
   </div>
-  <p class="muted">Sizes are in texels (one texel is one pixel of the player's skin). "On screen" is the width of the held weapon across its own length at mid-blade, in first person at rest, on a 1280 by 720 screen, for the Gatewrought weapon of each kind.</p>
+  <p class="muted">Sizes are in texels (one texel is one pixel of the player's skin), wide by thick.</p>
 </section>
 
 <section>
-  <span class="eyebrow">Three ways to fix it</span>
-  <h2>Grind the blades</h2>
-  <p>The same Gatewrought Longsword four ways, at your first-person view, then upright from the front and from the edge.</p>
+  <span class="eyebrow">The voxel cuts I tried</span>
+  <h2>A thin slab with a ridge</h2>
+  <p>The same Gatewrought Longsword four ways, at your first-person view, then upright from the front and from the edge. All four are boxes only.</p>
   <div class="dirs">
-    <div><img src="direction_today.jpg" alt="The Gatewrought Longsword today in first person and upright" loading="lazy"><h3>Today</h3><p>Three stacked planks and a stepped tip.</p></div>
-    <div><img src="direction_a.jpg" alt="The same sword with a thinner core" loading="lazy"><h3>A. Thinner boxes</h3><p>The post made 2 deep. Cheapest. You can hardly tell.</p></div>
-    <div class="pick"><img src="direction_b.jpg" alt="The same sword with a ground blade and a true point" loading="lazy"><h3 class="gold">B. Ground blades</h3><p>A flat, a real bevel each side to a knife edge, a true point. My recommendation.</p></div>
-    <div><img src="direction_c.jpg" alt="The same sword one texel thick" loading="lazy"><h3>C. Flat, like vanilla</h3><p>One texel thick. Loses all its weight and still has stairs.</p></div>
+    <div><img src="vdir_today.jpg" alt="The Gatewrought Longsword today in first person and upright" loading="lazy"><h3>Today</h3><p>A 3 by 3 post between thin edges. Three stacked planks.</p></div>
+    <div><img src="vdir_thin.jpg" alt="The same sword with the post made two deep" loading="lazy"><h3>A. A thinner post</h3><p>The post 2 deep. You can hardly tell.</p></div>
+    <div class="pick"><img src="vdir_ridge.jpg" alt="The same sword as a thin slab with a one-texel ridge and a longer stepped point" loading="lazy"><h3 class="gold">B. Slab and ridge</h3><p>The Rapier's cut. One texel thick, a ridge 1 wide, a longer point in finer steps. My recommendation.</p></div>
+    <div><img src="vdir_flat.jpg" alt="The same sword as a flat slab with its ridge only painted" loading="lazy"><h3>C. Flat, ridge painted</h3><p>One texel thick everywhere, like a vanilla sword, the ridge only a painted line. Slimmest. Less of a model.</p></div>
   </div>
   <div class="twocol">
     <div>
       <h3>Why B</h3>
       <ul>
-        <li>It is the only one that removes the stacked planks and gives a real point.</li>
-        <li>It keeps the same pixel size, the same paint, the same hilts. Only the blade's cut changes.</li>
-        <li>The blade becomes one clean plane that catches the light, so it reads sharp when it moves.</li>
-        <li>The models get lighter, not heavier: the Longsword goes from 248 triangles to 188.</li>
+        <li>It takes out the post and keeps a spine, so the blade is slim without looking like paper. C is slimmer still, and it is a fair choice if you want blades as thin as vanilla's.</li>
+        <li>It is already in your game on the Rapier, so it is your language, not a new one.</li>
+        <li>The point steps down over more texels and ends one texel square, as a pixel-art sword does.</li>
+        <li>No new tools. The model toolkit builds it today.</li>
       </ul>
     </div>
     <div>
-      <h3>What it costs, and the guard rails</h3>
+      <h3>What it costs</h3>
       <ul>
-        <li>One new piece in the model toolkit: a slanted face. Everything else is the box toolkit you have now.</li>
-        <li>The risk is drifting toward the sculpted look you rejected. So: flat faces only, never smoothed; one bevel a side; no new kinds of detail; hilts, stones, hafts and chains untouched.</li>
-        <li>A fourth way, re-sculpting the weapons, would scrap the language. I did not draft it.</li>
+        <li>It is a quieter change than the one you rejected. A blade gets slimmer and cleaner. It does not become a different object.</li>
+        <li>From the front, in the Hall and in the icon, most weapons look almost the same. The change is in the hand and from the edge.</li>
+        <li>Blades show more of their flat, so their patterns (flint flakes, scales, the oil sheen) are seen more.</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">The Katana</span>
+  <h2>An even curve, a stepped point, one texel thick</h2>
+  <p>Today the Katana runs straight and then hooks back at the tip, and it is a bar 3 wide and 2 thick. Two voxel versions, same length, same turned boxes it is made of now.</p>
+  <div class="dirs three">
+    <div><img src="vkat_today.jpg" alt="The Gatewrought Katana today" loading="lazy"><h3>Today</h3><p>Straight, then a hook. A 3 by 2 bar.</p></div>
+    <div><img src="vkat_curve.jpg" alt="The Katana with an even curve at today's thickness" loading="lazy"><h3>Curve only</h3><p>The bend spread evenly along the blade, the point stepping up to the back. Same thickness.</p></div>
+    <div class="pick"><img src="vkat_flat.jpg" alt="The Katana with an even curve, one texel thick" loading="lazy"><h3 class="gold">Curve, and one texel thick</h3><p>The same, as thin as a vanilla blade. The temper line shows better. My recommendation.</p></div>
   </div>
 </section>
 
@@ -235,8 +255,9 @@ svg text { font-family: var(--mono); }
     <div>
       <h3>Never changes</h3>
       <ul>
+        <li>The voxel style. Boxes at whole-texel sizes, and the turned boxes the weapons already use for stones, antlers and curved blades. Nothing else.</li>
         <li>Every weapon's name, id, damage, speed, uses, recipe and where you find it.</li>
-        <li>Its length, its grip and which side its edge is on. I measured all 82: every end is within half a texel of today's.</li>
+        <li>Its length, its grip and which side its edge is on. I measured every changed weapon: each end is within half a texel of today's.</li>
         <li>How it is held and every swing. The weapon-feel plan needs nothing re-done because of this one.</li>
         <li>Hilts, guards, stones, hafts, chains, glows and the light that lifts off the high ranks.</li>
       </ul>
@@ -244,14 +265,15 @@ svg text { font-family: var(--mono); }
     <div>
       <h3>Changes</h3>
       <ul>
-        <li>The blade's cut: a flat, a bevel, a knife edge, a point.</li>
-        <li>Axe bits become wedges. Spear heads become real leaves and spires.</li>
-        <li>Curved blades (Katana, Glaive, Scythe, tusks) become one smooth curve with no joints.</li>
-        <li>The Shieldblade's sword slims from 6 wide to the Longsword's 5, with its lit groove painted into the flat.</li>
-        <li>Icons are redrawn from the new models, so they gain the points too.</li>
+        <li>Straight blades: the post becomes a slab one texel thick with a one-texel ridge (three wide on the Greatblades).</li>
+        <li>Points: longer, in finer steps, ending one texel square.</li>
+        <li>Curved blades (Glaive, Scythe): a thin flat with a thick back along the spine.</li>
+        <li>The Katana: an even curve, one texel thick, a stepped point.</li>
+        <li>The Shieldblade's sword slims from 6 wide to the Longsword's 5, its lit groove becoming its ridge.</li>
       </ul>
     </div>
   </div>
+  <p class="muted">Left alone on purpose: the Maul, War-staff, Precursor Arm and Gauntlets (block-shaped, and good), the Rapier (it already has the cut), the Axes (thinning the bit set its teeth and caps fighting, and the head is good), and the Chainblades' tusk hooks.</p>
 </section>
 
 <section>
@@ -259,15 +281,15 @@ svg text { font-family: var(--mono); }
   <h2>Four stages, each one undoable</h2>
   <div class="stages">
     <div class="stage"><span class="eyebrow">Stage 0 · proof</span><h3>Longsword and Katana</h3><p>All six ranks of each, in the real game. A look tour in first person, third person and the Hall, and the War Anvil forging one. I send you the shots.</p></div>
-    <div class="stage"><span class="eyebrow">Stage 1</span><h3>Blades held edge ahead</h3><p>Greatblade, the Shieldblade's sword, Daggers, Twinblades, Rapier. 29 weapons.</p></div>
-    <div class="stage"><span class="eyebrow">Stage 2</span><h3>Heads on hafts</h3><p>Axe, Spear, Glaive, Scythe, Chainblade. 30 weapons.</p></div>
-    <div class="stage"><span class="eyebrow">Stage 3</span><h3>The Lord-forged</h3><p>The 11 with blades, each re-cut by hand and shown to you before it lands.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 1</span><h3>The other swords</h3><p>Greatblade, the Shieldblade's sword, Daggers, Twinblades. 24 weapons.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 2</span><h3>Blades on hafts and chains</h3><p>Glaive, Scythe, Spear, Chainblade heads. 21 weapons.</p></div>
+    <div class="stage"><span class="eyebrow">Stage 3</span><h3>The Lord-forged</h3><p>The 6 that share these cuts, each checked by hand and shown to you before it lands.</p></div>
   </div>
   <div class="twocol">
     <div>
       <h3>How each stage is checked</h3>
       <ul>
-        <li>The model checks that exist today, plus new ones for slanted faces (no gaps, no faces fighting over one plane, no stretched pixels).</li>
+        <li>The model checks that exist today. They already pass on every draft here: nothing outside the item box, no two faces fighting over one plane, every glow on the weapon.</li>
         <li>The full test suite on CI.</li>
         <li>A look tour in the real game, every shot read for clipping, floating parts and wrong scale before you see it.</li>
         <li>Every weapon's ends measured against today's.</li>
@@ -277,8 +299,8 @@ svg text { font-family: var(--mono); }
       <h3>Undo, cost and risk</h3>
       <ul>
         <li>Only generated files change (models, textures, icons). One commit per kind, so any kind can be put back alone.</li>
-        <li>About 2 hours for Stage 0 and 4 for the rest. The drafts on this page already exist.</li>
-        <li>Main risk: it reads like the sculpted look in play. Stage 0 is there to find that out on two weapons, not eighty.</li>
+        <li>About 1 hour for Stage 0 and 3 for the rest. There is no new tooling this time: it is the weapon file's own numbers.</li>
+        <li>Main risk: it is too quiet a change for you, or a blade reads too thin in play. Stage 0 finds that out on two weapons.</li>
         <li>The build is about to get the new K menu and Hall. I merge that in first.</li>
       </ul>
     </div>
@@ -290,22 +312,24 @@ svg text { font-family: var(--mono); }
   <h2>Five answers</h2>
   <p>My recommendation is picked for each. Change what you like, then copy the answers and paste them to the session that sent you this page.</p>
   <form id="answers" onsubmit="return false" style="display:flex;flex-direction:column;gap:16px">
-    <fieldset><legend>1. The direction</legend>
-      <label class="opt"><input type="radio" name="d1" id="d1a" value="Ground blades (B)" checked><span>Ground blades <span class="rec">recommended</span><small>A flat, a bevel, a knife edge, a true point.</small></span></label>
-      <label class="opt"><input type="radio" name="d1" id="d1b" value="Thinner boxes only (A)"><span>Thinner boxes only<small>Safest and smallest. Blades stay stacked and stepped.</small></span></label>
+    <fieldset><legend>1. The voxel re-cut</legend>
+      <label class="opt"><input type="radio" name="d1" id="d1a" value="Go with the voxel re-cut (slab and ridge)" checked><span>Go with slab and ridge <span class="rec">recommended</span><small>Every blade takes the Rapier's cut. Boxes only.</small></span></label>
+      <label class="opt"><input type="radio" name="d1" id="d1b" value="Flat blades with the ridge only painted (C)"><span>Flat, ridge painted<small>Slimmer still, closest to a vanilla sword. I would keep a real spine on the Greatblades.</small></span></label>
+      <label class="opt"><input type="radio" name="d1" id="d1d" value="Only the thinner post (A)"><span>Only the thinner post<small>The smallest change. Hard to see.</small></span></label>
       <label class="opt"><input type="radio" name="d1" id="d1c" value="Leave the weapons as they are"><span>Leave the weapons as they are</span></label>
     </fieldset>
-    <fieldset><legend>2. How far</legend>
-      <label class="opt"><input type="radio" name="d2" id="d2a" value="All 82 bladed weapons" checked><span>All 82 bladed weapons <span class="rec">recommended</span><small>One language across the wall. Mixed, the old ones would look worse beside the new.</small></span></label>
-      <label class="opt"><input type="radio" name="d2" id="d2b" value="Swords and the Katana first, the rest after I have played them"><span>Swords and the Katana first, the rest after I have played them</span></label>
+    <fieldset><legend>2. The Katana</legend>
+      <label class="opt"><input type="radio" name="d2" id="d2a" value="Katana: even curve, stepped point, one texel thick" checked><span>Even curve, stepped point, one texel thick <span class="rec">recommended</span></span></label>
+      <label class="opt"><input type="radio" name="d2" id="d2b" value="Katana: even curve and stepped point, keep its thickness"><span>Even curve and stepped point, keep its thickness</span></label>
+      <label class="opt"><input type="radio" name="d2" id="d2c" value="Katana: leave it"><span>Leave the Katana</span></label>
     </fieldset>
-    <fieldset><legend>3. The Lord-forged</legend>
-      <label class="opt"><input type="radio" name="d3" id="d3a" value="Grind the Lord-forged too, last, each by hand" checked><span>Grind them too, last, each by hand <span class="rec">recommended</span><small>The drafts here are an automatic first pass. Each gets its own care and you see it first.</small></span></label>
-      <label class="opt"><input type="radio" name="d3" id="d3b" value="Leave the Lord-forged alone"><span>Leave the Lord-forged alone</span></label>
+    <fieldset><legend>3. How far</legend>
+      <label class="opt"><input type="radio" name="d3" id="d3a" value="All the bladed kinds on this page" checked><span>All the bladed kinds on this page <span class="rec">recommended</span><small>One cut across the wall. Mixed, the old ones would look fat beside the new.</small></span></label>
+      <label class="opt"><input type="radio" name="d3" id="d3b" value="Longsword and Katana first, the rest after I have played them"><span>Longsword and Katana first, the rest after I have played them</span></label>
     </fieldset>
-    <fieldset><legend>4. The Katana's length</legend>
-      <label class="opt"><input type="radio" name="d4" id="d4a" value="Katana: same length, new curve and point" checked><span>Same length, new curve and point <span class="rec">recommended</span><small>No motion work needed.</small></span></label>
-      <label class="opt"><input type="radio" name="d4" id="d4b" value="Katana: also two texels longer"><span>Also two texels longer in the blade<small>A little more elegant. The weapon-feel session would re-solve its swings.</small></span></label>
+    <fieldset><legend>4. The Lord-forged</legend>
+      <label class="opt"><input type="radio" name="d4" id="d4a" value="Re-cut the six Lord-forged too, last, each by hand" checked><span>Re-cut the six too, last, each by hand <span class="rec">recommended</span></span></label>
+      <label class="opt"><input type="radio" name="d4" id="d4b" value="Leave the Lord-forged alone"><span>Leave the Lord-forged alone</span></label>
     </fieldset>
     <fieldset><legend>5. After the first two weapons are in the game</legend>
       <label class="opt"><input type="radio" name="d5" id="d5a" value="Send me the Stage 0 shots and carry on" checked><span>Send me the shots and carry on <span class="rec">recommended</span><small>You can stop it at any stage.</small></span></label>
@@ -324,11 +348,12 @@ svg text { font-family: var(--mono); }
   <span class="eyebrow">How this was checked</span>
   <h2>What is real here and what is not</h2>
   <ul>
-    <li><b>Real:</b> every "today" model is built from the game's own weapon file, unchanged. Every "proposed" model is a real draft built by the same pipeline, with real textures and icons.</li>
+    <li><b>Real:</b> every "today" model is built from the game's own weapon file, unchanged. Every "proposed" model is a real draft built by the same pipeline, with real textures and icons, and passes the game's model checks.</li>
     <!--REAL_GAME-->
     <li><b>Outside the game:</b> the four-view pictures. They use the game's shader and first-person camera maths. The third-person figure is a stand-in and the Hall view is the bare model, not the Hall's screen.</li>
-    <li><b>Not done:</b> nothing is in your build. You have not played any of it. The Lord-forged drafts are automatic and rougher than the rest.</li>
+    <li><b>Not done:</b> nothing is in your build. You have not played any of it.</li>
     <li><b>A structured review, not a playtest:</b> I read every picture for clipping, floating parts and wrong scale. That is my eye, not yours in play.</li>
+    <li><b>What I got wrong the first time:</b> I let "sharper" pull the blades out of the voxel style. The rule is written down now: weapons are boxes on the grid, and polish happens inside that.</li>
   </ul>
 </section>
 
@@ -336,13 +361,12 @@ svg text { font-family: var(--mono); }
 
 <script>
 (function () {
-  var G = /*GALLERY_DATA*/{};
   document.querySelectorAll(".style").forEach(function (sec) {
     var img = sec.querySelector("img"), box = sec.querySelector(".strip"), z = sec.querySelector(".zoomer");
     sec.querySelectorAll(".tiers button").forEach(function (b) {
       b.addEventListener("click", function () {
         sec.querySelectorAll(".tiers button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
-        img.src = "strips/" + b.dataset.id + ".jpg";
+        img.src = "vstrips/" + b.dataset.id + ".jpg";
         img.alt = b.dataset.name + ": today and proposed, in first person, third person, the Hall of Arms and as an icon";
       });
     });
@@ -352,7 +376,7 @@ svg text { font-family: var(--mono); }
   });
   var out = document.getElementById("out");
   function text() {
-    var lines = ["Weapon polish pass, my answers:"];
+    var lines = ["Weapon polish pass (voxel version), my answers:"];
     for (var i = 1; i <= 5; i++) {
       var c = document.querySelector('input[name="d' + i + '"]:checked');
       lines.push(i + ". " + (c ? c.value : "(no answer)"));
@@ -367,10 +391,10 @@ svg text { font-family: var(--mono); }
   document.getElementById("copy").addEventListener("click", function () {
     var b = this, t = text();
     function done(ok) { b.textContent = ok ? "Copied" : "Select the text below and copy it"; setTimeout(function () { b.textContent = "Copy my answers"; }, 2400); }
+    function sel() { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(t).then(function () { done(true); }, function () { sel(); done(false); });
     } else { sel(); done(false); }
-    function sel() { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
   });
 })();
 </script>

@@ -1,7 +1,51 @@
-# Weapon polish: ground blades (plan, 10 Nov 2026)
+# Weapon polish (plan, 10 Nov 2026)
 
-Status: **waiting for Euan**. Nothing in `src/` has changed. The approval page is the artifact linked from the hand-back
-note; this file is the record behind it. Process: `.claude/PLANNING-PROCESS.md`, craft bar `.claude/UI-EXCELLENCE.md`.
+Status: **waiting for Euan** on the second version of the page (https://claude.ai/artifact/EZkCwbGng9aNhA6rB4t6rC).
+Nothing in `src/` has changed.
+
+## Revision 2: voxel only (this is the plan now)
+
+Euan, 10 Nov, on the first version's "ground blades" (sections 6 to 8 below): "I think this looks really bad. It takes
+away from the MC... it doesn't feel like MC at all anymore. Nowhere in MC would we have shapes just like this. It has to
+kind of stay that voxel style. Just like extremely well polished voxel style."
+
+So the hard rule: **weapons are boxes at whole-texel sizes, plus the whole-angle turned boxes they already use. No
+slanted face, wedge, loft or smooth taper.** The audit and root cause (sections 2 to 4) stand. The fix changes:
+
+- **Straight blades take the Rapier's cut:** a slab one texel thick the blade's full width (its outer texel a side the
+  edge's material), a ridge one texel wide and three deep down the middle (three wide on blades 9 or wider). The Rapier
+  and the Gatewrought Daggers and Twinblades are already built this way and read slim in the hand.
+- **Points** are restaged: steps of two texels in width over more texels (a Longsword's 5, 3, 1 over eight), ending one
+  texel square. Never shorter than today's, at most about a third of the blade.
+- **Katana:** the same six turned boxes and the same length along the blade (24), the bend spread evenly (1, 3, 5, 7,
+  9, 11 degrees where today it is 0, 3, 6, 9, 13, 20), one texel thick, the last two links narrowing to the back.
+- **Glaive, Scythe:** each link a flat one texel thick with a back one wide and three deep on links 4 or wider.
+- **Tusk and talon daggers, the tusk Twinblades:** a texel thinner.
+- **Shieldblade's sword:** 5 wide (was 6), the slab and its lit fuller as the ridge; stone 5 deep (was 7).
+- **Left alone:** Maul, War-staff, Precursor Arm, Gauntlets, Rapier (has the cut), Axes and the Chainblades' tusk hooks
+  (thinning them set neighbouring parts fighting over planes).
+
+63 of 111 weapons change (57 forged, 6 Lord-forged: `docs/weapon-polish/changed.json`). Every changed weapon keeps its
+ends within half a texel and passes the plane-fight check. No toolkit change is needed: `voxel.py` builds all of it.
+Alternatives shown on the page: a thinner post (hard to see), flat blades with the ridge only painted (slimmer, less of
+a model), and for the Katana the curve alone at today's thickness.
+
+What the measurement says, so nobody oversells it: with the ridge kept, a Longsword's outline on screen is almost
+unchanged (148 to 145 px at mid-blade); what goes is the post's mass. The Katana is 21% thinner and the Shieldblade's
+sword 19%.
+
+Stages: 0 Longsword and Katana in the game; 1 Greatblade, Shieldblade's sword, Daggers, Twinblades (24); 2 Glaive,
+Scythe, Spear, Chainblade heads (21); 3 the six Lord-forged by hand. In the build this is edits to
+`arms_weapons.py` only (its `blade()` helper, the link tables and a few designs), SPEC 25 and
+`docs/combat/weapon-style.md` rule 3 in the same commits.
+
+Draft code: `tools/art/arms_polish.py` (`MODE = "voxel"`: `vblade`, `vchain`, `AFTER_V`; the ground-blade code above it
+is kept only as the record of what was rejected). Real-game tour of the voxel drafts: run 42812463084 on the throwaway
+branch (queued at the time of writing).
+
+---
+
+# Revision 1 (rejected 10 Nov: its slanted faces are not Minecraft). Kept as the record.
 
 ## 1. The brief
 
