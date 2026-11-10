@@ -376,7 +376,13 @@ public final class AscentServer {
         if (d > 1e-3) t.knockback(0.5 + 0.3 * came, -dx / d, -dz / d, source, damage);
         dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, t);
         link(p, AscentMemory.Track.TETHER, 3);
-        dev.awaken.core.api.TipHooks.done(p, AscentTips.STRIKE);
+        made(p, AscentGoals.STRUCK, AscentTips.STRIKE);
+    }
+
+    /** A move of §62 made: counted (its row leaves the Tasks page after the first) and its tip a step nearer retiring. */
+    private static void made(ServerPlayer p, String counter, net.minecraft.resources.Identifier tip) {
+        dev.awaken.progression.Progression.count(p, counter);
+        dev.awaken.core.api.TipHooks.done(p, tip);
     }
 
     // ---- a push carries (SPEC §62) -----------------------------------------------------------------------------------
@@ -411,13 +417,14 @@ public final class AscentServer {
             case AscentPayloads.EV_SLING -> {
                 if (st == AscentState.ZIP) {
                     link(p, AscentMemory.Track.TETHER, 2);
-                    dev.awaken.core.api.TipHooks.done(p, AscentTips.SLING);
+                    made(p, AscentGoals.SLUNG, AscentTips.SLING);
                 }
             }
             case AscentPayloads.EV_SPRING -> {
-                if (Ascent.has(p, Ascent.Tier.TETHER) && st == AscentState.CARRY) {
+                if (Ascent.has(p, Ascent.Tier.TETHER) && st == AscentState.CARRY
+                        && p.getData(AscentContent.MEMORY).level(AscentMemory.Track.TETHER) >= AirRules.SPRING_LEVEL) {
                     link(p, AscentMemory.Track.TETHER, 2);
-                    dev.awaken.core.api.TipHooks.done(p, AscentTips.SPRING);
+                    made(p, AscentGoals.SPRUNG, AscentTips.SPRING);
                 }
             }
             // the moves the air earned (SPEC §62): each a link, once in a while, only out of the state it comes from
@@ -426,7 +433,7 @@ public final class AscentServer {
                 if (Ascent.has(p, Ascent.Tier.WINGS) && now(p) - m.endedAt < SOFT_LANDING && now(p) - m.flareAt >= 60) {
                     m.flareAt = now(p);
                     link(p, AscentMemory.Track.WINGS, 2);
-                    dev.awaken.core.api.TipHooks.done(p, AscentTips.FLARE);
+                    made(p, AscentGoals.FLARED, AscentTips.FLARE);
                 }
             }
             case AscentPayloads.EV_SKIM -> {
@@ -435,7 +442,7 @@ public final class AscentServer {
                         && p.getData(AscentContent.MEMORY).level(AscentMemory.Track.WINGS) >= AirRules.SKIM_LEVEL) {
                     m.skimAt = now(p);
                     link(p, AscentMemory.Track.WINGS, 3);
-                    dev.awaken.core.api.TipHooks.done(p, AscentTips.SKIM);
+                    made(p, AscentGoals.SKIMMED, AscentTips.SKIM);
                 }
             }
             case AscentPayloads.EV_TAKEOFF -> {
@@ -443,7 +450,7 @@ public final class AscentServer {
                 if (Ascent.has(p, Ascent.Tier.SKYBORN) && st == AscentState.SOAR && now(p) - m.since <= 10) {
                     m.aether = Math.max(0, m.aether - AirRules.TAKEOFF_AETHER);
                     link(p, AscentMemory.Track.SKYBORN, 2);
-                    dev.awaken.core.api.TipHooks.done(p, AscentTips.TAKEOFF);
+                    made(p, AscentGoals.TOOK_OFF, AscentTips.TAKEOFF);
                 }
             }
             case AscentPayloads.EV_STRIKE -> strikeBlow(p, motion(p), msg.speed());

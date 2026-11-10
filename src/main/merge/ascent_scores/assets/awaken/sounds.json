@@ -1,0 +1,794 @@
+{
+  "ascent.score.rope_fire.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_fire",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fishing_bobber.throw",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.15,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_fire.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_fire",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.shoot",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.35,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_fire.2": {
+    "subtitle": "subtitles.awaken.ascent.rope_fire",
+    "sounds": [
+      {
+        "name": "minecraft:entity.arrow.shoot",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.8,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_bite.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_bite",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.hit_ground",
+        "type": "event",
+        "volume": 0.75,
+        "pitch": 1.1,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_bite.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_bite",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_strain.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_strain",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_middle",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.75,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rope_strain.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_strain",
+    "sounds": [
+      {
+        "name": "minecraft:item.lead.tied",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rope_release.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_release",
+    "sounds": [
+      {
+        "name": "minecraft:item.lead.untied",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rope_release.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_release",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rope_swoop.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_swoop",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.swoop",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 1.25,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_swoop.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_swoop",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.slide",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.1,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_snap.0": {
+    "subtitle": "subtitles.awaken.ascent.rope_snap",
+    "sounds": [
+      {
+        "name": "minecraft:item.lead.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.2,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rope_snap.1": {
+    "subtitle": "subtitles.awaken.ascent.rope_snap",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.shoot",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.6,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.launch.0": {
+    "subtitle": "subtitles.awaken.ascent.launch",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.jump",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.launch.1": {
+    "subtitle": "subtitles.awaken.ascent.launch",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wind_charge.wind_burst",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.35,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.wind.0": {
+    "subtitle": "subtitles.awaken.ascent.wind",
+    "sounds": [
+      {
+        "name": "minecraft:item.elytra.flying",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ascent.score.wings_open.0": {
+    "subtitle": "subtitles.awaken.ascent.wings_open",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_elytra",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.wings_open.1": {
+    "subtitle": "subtitles.awaken.ascent.wings_open",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.3,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.wings_open.2": {
+    "subtitle": "subtitles.awaken.ascent.wings_open",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.flap",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.wings_fold.0": {
+    "subtitle": "subtitles.awaken.ascent.wings_fold",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_elytra",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.wings_fold.1": {
+    "subtitle": "subtitles.awaken.ascent.wings_fold",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.fall",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.9,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.flap.0": {
+    "subtitle": "subtitles.awaken.ascent.flap",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.35,
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ascent.score.flap.1": {
+    "subtitle": "subtitles.awaken.ascent.flap",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.flap",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9,
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ascent.score.boom.0": {
+    "subtitle": "subtitles.awaken.ascent.boom",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.sonic_boom",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "ascent.score.boom.1": {
+    "subtitle": "subtitles.awaken.ascent.boom",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_air",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "ascent.score.boom.2": {
+    "subtitle": "subtitles.awaken.ascent.boom",
+    "sounds": [
+      {
+        "name": "minecraft:entity.lightning_bolt.thunder",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.3,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "ascent.score.land.0": {
+    "subtitle": "subtitles.awaken.ascent.land",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.small_fall",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.land.1": {
+    "subtitle": "subtitles.awaken.ascent.land",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.fall",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.remember.0": {
+    "subtitle": "subtitles.awaken.ascent.remember",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.remember.1": {
+    "subtitle": "subtitles.awaken.ascent.remember",
+    "sounds": [
+      {
+        "name": "minecraft:block.conduit.activate",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.updraft.0": {
+    "subtitle": "subtitles.awaken.ascent.updraft",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.idle_air",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.updraft.1": {
+    "subtitle": "subtitles.awaken.ascent.updraft",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.inhale",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.vow_call.0": {
+    "subtitle": "subtitles.awaken.ascent.vow_call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.inhale",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.vow_call.1": {
+    "subtitle": "subtitles.awaken.ascent.vow_call",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.vow_line.0": {
+    "subtitle": "subtitles.awaken.ascent.vow_line",
+    "sounds": [
+      {
+        "name": "minecraft:entity.fishing_bobber.throw",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.vow_line.1": {
+    "subtitle": "subtitles.awaken.ascent.vow_line",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.throw",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.vow_line.2": {
+    "subtitle": "subtitles.awaken.ascent.vow_line",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.hit_ground",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.rappel_catch.0": {
+    "subtitle": "subtitles.awaken.ascent.rappel_catch",
+    "sounds": [
+      {
+        "name": "minecraft:item.lead.tied",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.rappel_catch.1": {
+    "subtitle": "subtitles.awaken.ascent.rappel_catch",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.1,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.rappel_kick.0": {
+    "subtitle": "subtitles.awaken.ascent.rappel_kick",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.small_fall",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rappel_kick.1": {
+    "subtitle": "subtitles.awaken.ascent.rappel_kick",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.rappel_plant.0": {
+    "subtitle": "subtitles.awaken.ascent.rappel_plant",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.fall",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ascent.score.rappel_plant.1": {
+    "subtitle": "subtitles.awaken.ascent.rappel_plant",
+    "sounds": [
+      {
+        "name": "minecraft:block.ladder.step",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ascent.score.rappel_reel.0": {
+    "subtitle": "subtitles.awaken.ascent.rappel_reel",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.quick_charge_1",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.1,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.rappel_reel.1": {
+    "subtitle": "subtitles.awaken.ascent.rappel_reel",
+    "sounds": [
+      {
+        "name": "minecraft:item.spyglass.use",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.3,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.rappel_fit.0": {
+    "subtitle": "subtitles.awaken.ascent.rappel_fit",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.rappel_fit.1": {
+    "subtitle": "subtitles.awaken.ascent.rappel_fit",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.score.sling.0": {
+    "subtitle": "subtitles.awaken.ascent.sling",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.shoot",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.sling.1": {
+    "subtitle": "subtitles.awaken.ascent.sling",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.jump",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.spring.0": {
+    "subtitle": "subtitles.awaken.ascent.spring",
+    "sounds": [
+      {
+        "name": "minecraft:entity.goat.long_jump",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.spring.1": {
+    "subtitle": "subtitles.awaken.ascent.spring",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wind_charge.wind_burst",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.5,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.flare.0": {
+    "subtitle": "subtitles.awaken.ascent.flare",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.85,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.flare.1": {
+    "subtitle": "subtitles.awaken.ascent.flare",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.fall",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.flare.2": {
+    "subtitle": "subtitles.awaken.ascent.flare",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.flap",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.skim.0": {
+    "subtitle": "subtitles.awaken.ascent.skim",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.slide",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.3,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.skim.1": {
+    "subtitle": "subtitles.awaken.ascent.skim",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.swoop",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.5,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.takeoff.0": {
+    "subtitle": "subtitles.awaken.ascent.takeoff",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_elytra",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.takeoff.1": {
+    "subtitle": "subtitles.awaken.ascent.takeoff",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wind_charge.wind_burst",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.takeoff.2": {
+    "subtitle": "subtitles.awaken.ascent.takeoff",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.takeoff.3": {
+    "subtitle": "subtitles.awaken.ascent.takeoff",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.score.strike.0": {
+    "subtitle": "subtitles.awaken.ascent.strike",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.strong",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.85,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.strike.1": {
+    "subtitle": "subtitles.awaken.ascent.strike",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_air",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.strike.2": {
+    "subtitle": "subtitles.awaken.ascent.strike",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.knockback",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.9,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.score.beat.0": {
+    "subtitle": "subtitles.awaken.ascent.beat",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.flap",
+        "type": "event",
+        "volume": 0.45,
+        "pitch": 1.1,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.beat.1": {
+    "subtitle": "subtitles.awaken.ascent.beat",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.hit",
+        "type": "event",
+        "volume": 0.2,
+        "pitch": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.score.hum.0": {
+    "subtitle": "subtitles.awaken.ascent.hum",
+    "sounds": [
+      {
+        "name": "minecraft:item.elytra.flying",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

@@ -47,6 +47,8 @@ public final class AscentModule {
         AscentTrials.register();
         // each tier's tip as it's given (Carillon's tip system; SPEC §17.17)
         AscentTips.register();
+        // the moves the rope and the wings earn, on the Tasks page (SPEC §62)
+        AscentGoals.register();
         // promises (SPEC §27): the Ascent answers a rung's need, and a rung given re-reads the locks the player met
         dev.awaken.core.api.Promises.addAnswer((p, need) -> need.kind().equals(dev.awaken.core.api.Promises.TIER) && heldByName(p, need.value()));
         Ascent.onGranted((p, t) -> {

@@ -108,6 +108,9 @@ public final class AirRules {
         }
     }
 
+    /** Tether mastery that opens the spring off a top (the move itself is the client's: AscentMoves.pullOver). */
+    public static final int SPRING_LEVEL = 3;
+
     // ---- the flare --------------------------------------------------------------------------------------------------
 
     /** Coming down this slow (blocks a tick, all of it and the fall alone) this near the ground (blocks) is a flare. */

@@ -350,6 +350,11 @@ public final class AscentMoves {
                         && aether >= Math.max(AirRules.TAKEOFF_AETHER, AscentRules.AETHER_START);
                 sneakFor = crouch ? sneakFor + 1 : 0;
                 if (sneakFor > 0) WingLayer.gather(p, sneakFor / (float) AirRules.TAKEOFF_SNEAK);
+                // looking up from the ground with flight to spare: the takeoff's tip
+                if (!runner && !sneak && p.onGround() && pitch <= -AirRules.TAKEOFF_LOOK - 15 && has(AscentPayloads.Tier.SKYBORN)
+                        && aether >= Math.max(AirRules.TAKEOFF_AETHER, AscentRules.AETHER_START)) {
+                    dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.TAKEOFF);
+                }
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
                 } else if (jumpPressed && AirRules.takeoffReady(pitch, sneakFor, aether, p.onGround())) {
@@ -473,6 +478,10 @@ public final class AscentMoves {
                         if (!FeelConfig.wingsFeathers()) flapAt = ticks;
                         AscentSounds.local(p, AscentContent.FLAP.get(), 0.45F, 0.85F + p.getRandom().nextFloat() * 0.1F);
                     }
+                    // in flight the feathered wings beat on their own clock: each downstroke is heard, softly
+                    if (FeelConfig.wingsFeathers() && WingLayer.mode(p.getId()) == WingLayer.FLYING && WingLayer.downstroke(p.getId())) {
+                        AscentSounds.move(p, "beat", null, 0.7F, 0.95F + p.getRandom().nextFloat() * 0.1F);
+                    }
                     if (sidePressed != 0) sideTap(p, sidePressed);
                     if (ticks - takeoffAt < AirRules.TAKEOFF_TICKS) {
                         // a takeoff's rise: straight up on its own curve, the flight's own step after it
@@ -493,6 +502,7 @@ public final class AscentMoves {
             }
         }
         if (jumpPressed) lastJumpPress = ticks;
+        if (state != AscentState.NONE) moveTips(p, yaw, pitch);
         aetherTick(p);
         // moving air (updrafts, windways): the free states feel it from the next tick
         double share = switch (state) {
@@ -884,7 +894,7 @@ public final class AscentMoves {
         fireCool = 2;
         AscentFlow.gain(blocked ? 0.02F : 0.07F);
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.6F, 1.12F);
-        if (!blocked) AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.5F, 1.2F);
+        if (!blocked) AscentSounds.move(p, "sling", AscentContent.LAUNCH.get(), 0.5F, 1.2F);
         FeelDirector.release(releaseQuality);
         AscentFp.released();
         event(AscentPayloads.EV_SLING, (float) K.speed());
@@ -962,6 +972,29 @@ public final class AscentMoves {
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
         markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
+        // where only a sling answers, its tip (SPEC §62): the rope works here too
+        if (markerOn && MARKER.sling) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.SLING);
+    }
+
+    /**
+     * The tips of the moves the air earned (SPEC §62), each offered where its move would work now and only while it can
+     * still teach (a retired tip costs one lookup). Called once a tick while a state holds the body.
+     */
+    private static void moveTips(LocalPlayer p, float yaw, float pitch) {
+        var tips = dev.awaken.core.api.TipHooks.client();
+        if (state == AscentState.ZIP && !slinging && strikeTarget < 0 && !keyFwd && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= AirRules.SPRING_LEVEL) {
+            tips.offer(dev.awaken.body.ascent.AscentTips.SPRING);
+        }
+        if (state == AscentState.GLIDE && !skimming && lv(dev.awaken.body.ascent.AscentMemory.Track.WINGS) >= AirRules.SKIM_LEVEL
+                && K.speed() >= AirRules.SKIM_SPEED && ticks % 10 == 0 && tips.wants(dev.awaken.body.ascent.AscentTips.SKIM)
+                && p.getY() - AscentAnchors.floorUnder(p.level(), p, p.getX(), p.getY() + 0.5, p.getZ(), 10) < 9.5) {
+            tips.offer(dev.awaken.body.ascent.AscentTips.SKIM);
+        }
+        if ((state == AscentState.TETHER || state == AscentState.CARRY) && ticks % 10 == 0 && has(AscentPayloads.Tier.TETHER)
+                && lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER) >= AirRules.STRIKE_LEVEL && tips.wants(dev.awaken.body.ascent.AscentTips.STRIKE)
+                && strikePick(p, yaw, pitch) != null) {
+            tips.offer(dev.awaken.body.ascent.AscentTips.STRIKE);
+        }
     }
 
     /** The marker's look, its running cost (ns) and the budget over which it looks half as often (SPEC §17.31). */
@@ -1444,7 +1477,7 @@ public final class AscentMoves {
     }
 
     /** Tether mastery at which a top reached with forward held is sprung off. */
-    public static final int SPRING_LEVEL = 3;
+    public static final int SPRING_LEVEL = AirRules.SPRING_LEVEL;
 
     /** The body's half width and a little: how far out from a block's face the body clears it. */
     private static final double VAULT_CLEAR = 0.5 + 0.3 + 0.08;
@@ -1520,7 +1553,7 @@ public final class AscentMoves {
             K.vy = AscentRules.SPRING_UP;
             fireCool = 2;
             AscentFlow.gain(0.06F);
-            AscentSounds.local(sp, AscentContent.LAUNCH.get(), 0.55F, 1.25F);
+            AscentSounds.move(sp, "spring", AscentContent.LAUNCH.get(), 0.55F, 1.25F);
             FeelDirector.leapLaunch(0.5F);
             AscentFp.launched();
             event(AscentPayloads.EV_SPRING, (float) AscentRules.SPRING_SPEED);
@@ -1975,6 +2008,7 @@ public final class AscentMoves {
         if (skimFor == 6) {
             // a real skim (not a brush past a hilltop): a link, and Flow
             AscentFlow.gain(0.06F);
+            AscentSounds.move(p, "skim", null, 0.8F, 1F);
             event(AscentPayloads.EV_SKIM, (float) speed);
             trace("skim");
         } else if (skimFor > 6 && skimFor % 12 == 0) {
@@ -1997,8 +2031,12 @@ public final class AscentMoves {
         takeoffAt = soarAt = deployAt = ticks;
         setState(p, AscentState.SOAR);
         flapAt = ticks;
-        AscentSounds.local(p, AscentContent.WINGS_OPEN.get(), 1F, 1.1F);
-        AscentSounds.local(p, AscentContent.FLAP.get(), 1F, 0.8F);
+        if (AscentScores.on()) {
+            AscentSounds.move(p, "takeoff", null, 1F, 1F);
+        } else {
+            AscentSounds.local(p, AscentContent.WINGS_OPEN.get(), 1F, 1.1F);
+            AscentSounds.local(p, AscentContent.FLAP.get(), 1F, 0.8F);
+        }
         AscentFx.ring(p.getX(), p.getY() + 0.1, p.getZ(), new Vec3(0, 1, 0), 0.45F);
         FeelDirector.deploy();
         FeelDirector.flap();
@@ -2100,8 +2138,12 @@ public final class AscentMoves {
         releaseAt = ticks;
         toCarry(p, "rope strike");
         event(AscentPayloads.EV_STRIKE, speed);
-        AscentSounds.local(p, AscentContent.LAUNCH.get(), 1F, 0.85F);
-        AscentSounds.local(p, AscentContent.LAND.get(), 0.9F, 0.8F);
+        if (AscentScores.on()) {
+            AscentSounds.move(p, "strike", null, 1F, 1F);
+        } else {
+            AscentSounds.local(p, AscentContent.LAUNCH.get(), 1F, 0.85F);
+            AscentSounds.local(p, AscentContent.LAND.get(), 0.9F, 0.8F);
+        }
         if (speed > 1e-3) AscentFx.ring(ax, ay, az, new Vec3(nx / speed, ny / speed, nz / speed), 0.45F);
         FeelDirector.slam(Math.min(1.2F, speed * 0.6F));
         AscentFlow.gain(0.14F);
@@ -2125,7 +2167,7 @@ public final class AscentMoves {
             WingLayer.flare(p.getId());
             AscentFlow.gain(0.08F);
             event(AscentPayloads.EV_FLARE, landSpeed);
-            AscentSounds.local(p, AscentContent.FLAP.get(), 0.55F, 0.72F);
+            AscentSounds.move(p, "flare", AscentContent.FLAP.get(), 0.55F, 0.72F);
             trace("a flare");
         }
         AscentSounds.local(p, AscentContent.LAND.get(), Math.min(1F, 0.3F + landSpeed * 0.5F) * (flared ? 0.6F : 1F), wings ? 1.1F : 1F);
@@ -2149,6 +2191,8 @@ public final class AscentMoves {
             p.setDeltaMovement(K.vx * keep, Math.min(0, p.getDeltaMovement().y), K.vz * keep);
         }
         if (landSpeed > 0.75 && !flared) dev.awaken.body.client.ClientMoves.ascentRoll(p);
+        // a hard landing off the wings: the flare's tip
+        if (wings && !flared && landSpeed > 0.75) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.FLARE);
     }
 
     private static void toCarry(LocalPlayer p, String why) {

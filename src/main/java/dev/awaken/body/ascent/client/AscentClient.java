@@ -62,6 +62,8 @@ public final class AscentClient {
             if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) AscentFp.viewPose(pt, v);
         });
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        // the movement's sounds as scores of the game's own recordings (SPEC §62)
+        bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, AscentScores::onPlay);
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
         bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
