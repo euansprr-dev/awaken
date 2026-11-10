@@ -20,6 +20,7 @@ public final class Guide implements Script {
     private String role = "";
     private ParticleOptions look = ParticleTypes.END_ROD;
     private double speed = 0.16;
+    private net.minecraft.sounds.SoundEvent note;
 
     private Guide(String way) {
         this.way = way;
@@ -37,6 +38,12 @@ public final class Guide implements Script {
     /** The scene's creature with this role is the guide. */
     public Guide creature(String role) {
         this.role = role;
+        return this;
+    }
+
+    /** A sound it makes each time it reaches a waypoint, a little higher each time. */
+    public Guide note(net.minecraft.sounds.SoundEvent e) {
+        note = e;
         return this;
     }
 
@@ -89,6 +96,7 @@ public final class Guide implements Script {
                     f = 0;
                     i++;
                     c.v(0, i);
+                    if (note != null) c.sound(c.pos(way, i), note, 1.0F, 0.8F + 0.06F * i);
                     if (i == n - 1) {
                         c.sound(c.pos(way, i), SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.2F);
                         c.v(1, 0);

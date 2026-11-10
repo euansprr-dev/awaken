@@ -169,6 +169,12 @@ public final class Scene {
         return this;
     }
 
+    /** Life standing {@code k} above a column's ground (on a branch, a ledge). */
+    public Scene spawnUp(EntityType<?> type, int lx, int lz, int k, int flags, String role) {
+        spawns.add(new Spawn(type, rel(lx, g(lx, lz) + 1 + k, lz), flags, role));
+        return this;
+    }
+
     /** Where the tell shows, above a column's ground. */
     public Scene tell(int lx, int lz, int k) {
         tell = rel(lx, g(lx, lz) + 1 + k, lz);

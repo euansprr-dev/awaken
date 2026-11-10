@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class Read implements Script {
     private final String part;
+    private boolean ordered;
 
     private Read(String part) {
         this.part = part;
@@ -20,9 +21,16 @@ public final class Read implements Script {
         return new Read(part);
     }
 
+    /** They have to be read first to last. */
+    public Read inOrder() {
+        ordered = true;
+        return this;
+    }
+
     @Override
     public boolean use(Ctx c, ServerPlayer p, String name, int i, ItemStack held) {
         if (!name.equals(part)) return false;
+        if (ordered && Integer.bitCount(c.v(0)) != i) return (c.v(0) & (1 << i)) != 0;
         int bits = c.v(0) | (1 << i);
         c.v(0, bits);
         c.sound(c.pos(part, i), SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.9F);

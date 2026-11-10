@@ -29,22 +29,6 @@ final class Stilled {
         return st -> st.is(b.get().asItem());
     }
 
-    /** The Long Table: after the twelfth bowl is filled, the gift comes with the next morning. The clock is when it was filled. */
-    private static final class Morning implements Script {
-        @Override
-        public void wake(Ctx c) {}
-
-        @Override
-        public void tick(Ctx c) {
-            if (c.clock() == 0) c.clock(c.now());
-            if (c.now() - c.clock() < 600 || c.hour() > 6000) return;
-            for (int i = 0; i < c.count("bowl"); i++) c.set("bowl", i, Props.STONE_BOWL.get().of(0));
-            for (int i = 0; i < c.count("full"); i++) c.set("full", i, Props.STONE_BOWL.get().of(0));
-            var near = c.players(16);
-            c.complete(near.isEmpty() ? null : near.get(0));
-        }
-    }
-
     static void init() {
         Kind.of(FSet.STILLED, 1, "stilled_fisher", "The Stilled Fisher").verb(Verb.CARRY).curio().rank(0).anchor(Anchor.SHORE).made(Made.STILLED)
                 .see("A stone figure sitting on the bank with its hands held out, closed round nothing. A rod lies in the reeds.")
@@ -237,7 +221,11 @@ final class Stilled {
                     s.partOn("cache", 0, 2, 0);
                     Dress.skirt(s, 7, m);
                 })
-                .script(() -> Steps.of(Sockets.need("bowl", st -> st.has(net.minecraft.core.component.DataComponents.FOOD), i -> Props.STONE_BOWL.get().of(1)), new Morning()))
+                .script(() -> Steps.of(Sockets.need("bowl", st -> st.has(net.minecraft.core.component.DataComponents.FOOD), i -> Props.STONE_BOWL.get().of(1)), Later.morning()))
+                .after(c -> {
+                    c.set("bowl", 0, Props.STONE_BOWL.get().of(0));
+                    for (int i = 0; i < c.count("full"); i++) c.set("full", i, Props.STONE_BOWL.get().of(0));
+                })
                 .play(t -> t.hold(net.minecraft.world.item.Items.BREAD).use("bowl", 0).hour(1000).ticks(1).pass(700).ticks(1))
                 .add();
     }
