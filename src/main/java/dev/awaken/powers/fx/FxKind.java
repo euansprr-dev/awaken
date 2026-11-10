@@ -101,7 +101,19 @@ public enum FxKind {
     /** A shot swallowed by a well at pos. */
     SHOT_EATEN,
     /** A Railgun's tunnel closes from pos + d back to pos over ticks. */
-    BORE_SEAL;
+    BORE_SEAL,
+    /**
+     * A beat of a power's voice (powers.fx.Voice): ticks = the beat's ordinal, scale = intensity (a charge's share), and the
+     * power's classic sound for players who chose it: colour = its registry id (-1 none), d.x = its volume, aux = its pitch.
+     */
+    VOICE,
+    /**
+     * A Break finisher (SPEC §50, "Break finishers"): a power cast into a body whose stance has just broken. At the target
+     * (target id), d = the way the cast went; the client draws the family's own ending and hitches the caster's view.
+     */
+    FINISHER,
+    /** A breath down a cone (Backdraft): origin, direction, scale the reach, aux the half angle. Drawn whole by the power's signature. */
+    BREATH;
 
     private static final FxKind[] VALUES = values();
 
@@ -110,5 +122,6 @@ public enum FxKind {
     }
 
     /** Aura looks ({@link #AURA} aux). */
-    public enum Aura { GENERIC, FLOW, BRACE, NANITE, OVERLOAD, READ, FORESIGHT, THIRD_EYE, TWIN, CLOAK, MARK, HOVER, FLIGHT, BARRIER }
+    /** BRAND and LANCES are drawn by the power's own signature (client Signatures); the shared aura adds nothing for them. */
+    public enum Aura { GENERIC, FLOW, BRACE, NANITE, OVERLOAD, READ, FORESIGHT, THIRD_EYE, TWIN, CLOAK, MARK, HOVER, FLIGHT, BARRIER, BRAND, LANCES }
 }

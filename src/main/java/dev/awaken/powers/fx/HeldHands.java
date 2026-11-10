@@ -97,4 +97,11 @@ public final class HeldHands {
     public CastProfiles.@Nullable Profile loop() {
         return loop;
     }
+
+    /** Whether a key is down on a held cast, or its loop is still playing: the hands are a cast's, from the press to the let-go. */
+    public boolean holding() {
+        if (loop != null) return true;
+        for (CastProfiles.Profile k : keys) if (k != null) return true;
+        return false;
+    }
 }

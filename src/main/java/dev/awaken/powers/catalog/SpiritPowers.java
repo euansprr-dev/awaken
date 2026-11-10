@@ -3,6 +3,7 @@ package dev.awaken.powers.catalog;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 import dev.awaken.powers.fx.FxStyle;
 
 import dev.awaken.Awaken;
@@ -195,21 +196,36 @@ public final class SpiritPowers {
             }
             Fx.at(c, FxKind.PALM, c.eye().add(c.look().scale(0.6)).add(0, -0.3, 0)).dir(c.look().scale(6)).scale(2.2).anim(CastAnim.PUSH2).send();
             Fx.at(c, FxKind.CONE, c.pos()).dir(c.look()).scale(5).aux(40).ticks(6).flag(FxEvent.REACH).noAnim().send();
-            c.sound(PowerSounds.SPIRIT, 1.2f, 0.8f);
+            c.voice(Beat.RELEASE, PowerSounds.SPIRIT, 1.2f, 0.8f);
             c.feel(hit.get(0), 40, 2f);
             return Result.OK;
         }
-        LivingEntity t = Combat.aimEntity(c, 4.5, 0.6);
+        // how it's made changes its shape (SPEC §32, "Ways"): a running palm reaches further and throws further
+        boolean run = c.way == dev.awaken.powers.fx.Ways.RUN, air = c.way == dev.awaken.powers.fx.Ways.AIR;
+        double palmReach = run ? 6.0 : 4.5;
+        LivingEntity t = Combat.aimEntity(c, dev.awaken.powers.ArmsDuets.reach(c, palmReach), 0.6); // a War-staff carries it further (Long Reach)
         if (t == null) return Result.fail("no_target");
+        dev.awaken.powers.ArmsDuets.reached(c, t, palmReach);
         c.hurt(t, c.dmg(), Forces.Force.SPIRIT);
-        // Lotus (2): pushes harder
-        Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)), 0.35);
+        if (air) {
+            // driven down out of the air: the body goes into the ground and the print bursts out under it
+            Combat.push(t, new Vec3(c.look().x * 0.4, -1.1, c.look().z * 0.4));
+            for (LivingEntity e : Combat.foesAround(c.player, t.position(), 2.5)) {
+                if (e == t) continue;
+                Combat.hurtFrom(c.player, null, e, c.dmg() * 0.5f, Forces.Force.SPIRIT, true);
+                Combat.knockFrom(e, t.position(), 1.0, 0.35);
+            }
+            Fx.at(c, FxKind.RING, t.position()).scale(2.5).ticks(8).noAnim().send();
+        } else {
+            // Lotus (2): pushes harder
+            Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)) * (run ? 1.3 : 1), 0.35);
+        }
         Vec3 at = t.getBoundingBox().getCenter();
         // the palm print flies from the hand, rings punch through the target
         Vec3 from = c.eye().add(c.look().scale(0.6)).add(0, -0.3, 0);
         Fx.at(c, FxKind.PALM, from).dir(at.subtract(from)).scale(1.3).send();
         Fx.at(c, FxKind.IMPACT, at).target(t).dir(c.look()).scale(1.6).noAnim().send();
-        c.sound(at, PowerSounds.SPIRIT, 1.2f, 1f);
+        c.voice(at, Beat.IMPACT, PowerSounds.SPIRIT, 1.2f, 1f);
         c.feel(t, 60, 2.5f);
         if (c.kit.pierce != null) {
             // Through (3): the print carries on into the foe behind
@@ -237,7 +253,7 @@ public final class SpiritPowers {
             if (c.step(4)) Moves.effect(t, MobEffects.SLOWNESS, (int) c.num(4, "slow", 40), 1);
             Vec3 p = t.getBoundingBox().getCenter();
             Fx.at(c, FxKind.ECHO, p).dir(c.look()).scale(c.is(1) ? 1.4 : 1.1).style(FxStyle.SOUL).noAnim().send();
-            c.level.playSound(null, p.x, p.y, p.z, PowerSounds.SPIRIT.get(), net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.5f);
+            c.voice(p, Beat.ECHO, PowerSounds.SPIRIT, 0.8f, 1.5f);
         });
         return Result.OK;
     }
@@ -249,7 +265,7 @@ public final class SpiritPowers {
         float total = (float) ((4 + 0.2 * spi + 0.2 * missing) * c.v.dmg() * dev.awaken.powers.PowerMath.powerLevelScale(c.powerLevel) * (1 + c.num(2, "more", 0f)));
         if (c.step(5)) bloom(c, total);
         cleanse(c.player);
-        c.sound(PowerSounds.HEAL, 1f, 1.1f);
+        c.voice(Beat.RELEASE, PowerSounds.HEAL, 1f, 1.1f);
         List<Player> allies = new ArrayList<>();
         if (!c.is(1)) {
             double r = c.is(2) ? 10 : 6;
@@ -309,7 +325,7 @@ public final class SpiritPowers {
         double range = Math.max(c.is(1) ? 64 : 32, c.num(5, "range", 0f));
         double shared = c.num(4, "shared", 0f);
         Moves.postOn(c.player, Moves.FX_THIRD_EYE);
-        c.sound(PowerSounds.EYE, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.EYE, 1f, 1f);
         Fx.at(c, FxKind.PSI, c.player.getEyePosition()).ticks(12).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.THIRD_EYE.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
@@ -354,7 +370,7 @@ public final class SpiritPowers {
         // a rippling soul cord from the hand to the target
         Fx.at(c, FxKind.TETHER, c.player.getEyePosition()).target(t).to(t.getBoundingBox().getCenter()).aux(0).ticks(c.is(2) ? 40 : 10).send();
         Fx.at(c, FxKind.IMPACT, t.getBoundingBox().getCenter()).scale(1).noAnim().send();
-        c.sound(PowerSounds.LASH, 1.1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.LASH, 1.1f, 1f);
         if (c.is(1)) {
             Vec3 d = t.position().subtract(c.pos());
             Moves.launch(c.player, d.normalize().scale(Math.min(2.2, 0.6 + d.length() * 0.14)).add(0, 0.35, 0));
@@ -385,7 +401,7 @@ public final class SpiritPowers {
                 c.hurt(t, c.dmg() * 0.6f, Forces.Force.SPIRIT);
                 c.hurt(other, c.dmg() * 0.6f, Forces.Force.SPIRIT);
                 Fx.at(c, FxKind.IMPACT, at).scale(1.6).noAnim().send();
-                c.sound(at, PowerSounds.IMPACT, 1.1f, 0.8f);
+                c.voice(at, Beat.IMPACT, PowerSounds.IMPACT, 1.1f, 0.8f);
                 Fx.quake(c.level, at, 10, 1.4f);
             }
         });
@@ -396,7 +412,7 @@ public final class SpiritPowers {
         Vec3 centre = c.pos();
         double radius = c.radius(6);
         int ticks = c.ticks(160);
-        c.sound(PowerSounds.WARD, 1.3f, 0.8f);
+        c.voice(Beat.RELEASE, PowerSounds.WARD, 1.3f, 0.8f);
         // a dome of will rises from a lotus circle
         Fx.at(c, FxKind.DOME, centre).scale(radius).aux(1).ticks(ticks).flag(FxEvent.REACH).send();
         // Lotus Dome (5): the dome opens with a blast that throws foes away
@@ -449,7 +465,7 @@ public final class SpiritPowers {
         boolean more = c.num(2, "more", 0f) > 0;
         double launch = Math.min(3.2, 1.8 * c.num(4, "last", 1f));
         float figure = 1 + c.num(5, "figure", 0f);
-        c.sound(PowerSounds.SPIRIT, 1.2f, 1.4f);
+        c.voice(Beat.RELEASE, PowerSounds.SPIRIT, 1.2f, 1.4f);
         // two seconds of palm prints too fast to follow (the screen beat rides on the flurry), then one that launches
         Fx.at(c, FxKind.FLURRY, c.eye()).ticks(40).scale(range).aux(half).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, 40);
@@ -473,9 +489,9 @@ public final class SpiritPowers {
                 }
             }
             if (last) Fx.at(c, FxKind.CAST, c.eye()).anim(CastAnim.PALM).send();
-            if (rr.age % 8 == 0) c.sound(PowerSounds.PUNCH, 0.6f, 1.6f + c.player.getRandom().nextFloat() * 0.3f);
+            if (rr.age % 8 == 0) c.voice(Beat.HOLD, PowerSounds.PUNCH, 0.6f, 1.6f + c.player.getRandom().nextFloat() * 0.3f);
             if (last) {
-                c.sound(PowerSounds.IMPACT, 1.3f, 0.8f);
+                c.voice(Beat.IMPACT, PowerSounds.IMPACT, 1.3f, 0.8f);
                 c.feel(targets.isEmpty() ? null : targets.get(0), 80, 4f);
             } else if (rr.age % 10 == 0 && !targets.isEmpty()) {
                 c.feel(targets.get(0), 20, 0.8f);
@@ -495,7 +511,7 @@ public final class SpiritPowers {
         int ticks = c.ticks(80);
         boolean dark = c.player.position().distanceToSqr(centre) < 20 * 20;
         if (dark) Moves.postOn(c.player, Moves.FX_VOID);
-        c.sound(centre, PowerSounds.VOID, 1.5f, 0.6f);
+        c.voice(centre, Beat.RELEASE, PowerSounds.VOID, 1.5f, 0.6f);
         // the maw: a void core in a violet rim, contracting rings, ink and debris dragged in
         Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(ticks).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, ticks).at(centre);
@@ -513,11 +529,11 @@ public final class SpiritPowers {
                         if (bite > 0) c.player.heal(Math.min(c.player.getMaxHealth() * 0.3f, e.getMaxHealth() * 0.2f * bite));
                         Casting.restore(c.player, 10);
                         Fx.at(c, FxKind.NOVA, centre).scale(2.5).flag(FxEvent.REPULSE).style(FxStyle.SOUL).noAnim().send();
-                        c.sound(centre, PowerSounds.VOID, 1f, 1.4f);
+                        c.voice(centre, Beat.END, PowerSounds.VOID, 1f, 1.4f);
                     }
                 }
             }
-            if (rr.age % 20 == 0) c.sound(centre, PowerSounds.VOID, 0.8f, 0.5f);
+            if (rr.age % 20 == 0) c.voice(centre, Beat.HOLD, PowerSounds.VOID, 0.8f, 0.5f);
             // Chew (4): what the maw chews spits debris at everything round it
             if (debris > 0 && rr.age % 20 == 10) {
                 List<LivingEntity> round = Combat.foesAround(c.player, centre, radius);
@@ -586,7 +602,7 @@ public final class SpiritPowers {
         int placed = Constructs.place(c.player, shape, slabs, true, Math.round(400 * c.num(4, "lasting", 1f)));
         if (placed == 0) return Result.fail("blocked");
         ArchitectPowers.assemble(c, shape);
-        c.sound(PowerSounds.DREAM, 1.2f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.DREAM, 1.2f, 1f);
         return Result.OK;
     }
 
@@ -613,7 +629,7 @@ public final class SpiritPowers {
         }
         Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.PUSH2).send();
         Fx.at(c, FxKind.GLYPH, c.pos()).scale(1.6).ticks(30).send();
-        c.sound(PowerSounds.DREAM, 1.2f, 0.8f);
+        c.voice(Beat.END, PowerSounds.DREAM, 1.2f, 0.8f);
         return Result.OK;
     }
 
@@ -645,7 +661,7 @@ public final class SpiritPowers {
             n++;
         }
         if (c.step(5)) eyeOfStorm(c, c.dmg() * harder * 0.6f);
-        c.sound(PowerSounds.THUNDER, 1.4f, 0.8f);
+        c.voice(Beat.RELEASE, PowerSounds.THUNDER, 1.4f, 0.8f);
         Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.RAISE).send();
         Fx.quake(c.level, c.pos(), 24, 3f);
         return Result.OK;
@@ -669,7 +685,7 @@ public final class SpiritPowers {
     static Result emberStep(Cast c) {
         if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward()));
         Moves.noFall(c, 30);
-        c.sound(PowerSounds.EMBER, 1f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.EMBER, 1f, 1f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(10).send();
         List<Vec3> trail = new ArrayList<>();
         float dmg = c.dmg();
@@ -717,13 +733,17 @@ public final class SpiritPowers {
     }
 
     static Result frostNova(Cast c) {
-        Vec3 at = c.pos().add(0, 1, 0);
-        double radius = c.radius(6);
+        // how it's made changes its shape (SPEC §32, "Ways"): at a run the cold lands three blocks ahead of you; brought
+        // down out of the air it's a tighter ring that holds what it catches half again as long
+        boolean run = c.way == dev.awaken.powers.fx.Ways.RUN, air = c.way == dev.awaken.powers.fx.Ways.AIR;
+        Vec3 centre = run ? c.pos().add(c.flatLook().scale(3)) : c.pos();
+        Vec3 at = centre.add(0, 1, 0);
+        double radius = c.radius(6) * (air ? 0.7 : 1);
         long until = c.now() + 160;
         for (LivingEntity e : Combat.foesAround(c.player, at, radius)) {
             c.hurt(e, c.dmg(), Forces.Force.FROST);
-            Moves.effect(e, MobEffects.SLOWNESS, 80, 2);
-            e.setTicksFrozen(Math.max(e.getTicksFrozen(), 200));
+            Moves.effect(e, MobEffects.SLOWNESS, air ? 120 : 80, 2);
+            e.setTicksFrozen(Math.max(e.getTicksFrozen(), air ? 300 : 200));
             Forces.tag(e, Forces.Tag.FROSTED);
             Scheduler.after(160, () -> {
                 if (e.isAlive() && c.level.getGameTime() >= until - 1) Forces.untag(e, Forces.Tag.FROSTED);
@@ -736,8 +756,9 @@ public final class SpiritPowers {
             if (c.step(5)) st.buff(PowerState.Buffs.FROST_BLOOM, until, c.num(5, "bloom", 0.5f));
         }
         // a frost ring, ice shards flung out, cold mist and a frosted crack in the ground
-        Fx.at(c, FxKind.FROST, c.pos()).scale(radius).flag(FxEvent.REACH).send();
-        c.sound(PowerSounds.FROST, 1.2f, 1f);
+        Fx.at(c, FxKind.FROST, centre).scale(radius).flag(FxEvent.REACH).send();
+        c.voice(centre, Beat.RELEASE, PowerSounds.FROST, 1.2f, 1f);
+        dev.awaken.powers.ArmsDuets.frost(c, radius); // a Maul's heavy on this ground throws spikes (Icebreaker)
         Fx.quake(c.level, at, 12, 1.5f);
         return Result.OK;
     }
@@ -762,10 +783,10 @@ public final class SpiritPowers {
         // a trail of wisps through the wall, a soul afterimage left behind
         Fx.at(c, FxKind.BLINK, from).to(to).send();
         if (c.step(5)) veilDoor(c, from, to);
-        c.sound(from, PowerSounds.SPIRIT, 0.8f, 1.6f);
+        c.voice(from, Beat.RELEASE, PowerSounds.SPIRIT, 0.8f, 1.6f);
         if (mirror) {
             Fx.at(c, FxKind.IMPACT, to.add(0, 1, 0)).scale(1.8).style(FxStyle.PRISM).noAnim().send();
-            c.sound(to, PowerSounds.SHATTER, 0.6f, 1.6f);
+            c.voice(to, Beat.IMPACT, PowerSounds.SHATTER, 0.6f, 1.6f);
             ForceInteractions.count(c.player, ForceInteractions.Reaction.MIRROR_SHATTER);
         }
         return Result.OK;
@@ -784,7 +805,7 @@ public final class SpiritPowers {
                 if (!through.add(p.getUUID())) continue;
                 Moves.teleport(p, to);
                 Fx.at(c, FxKind.BLINK, from).to(to).caster(p).plain().send();
-                c.sound(to, PowerSounds.SPIRIT, 0.7f, 1.7f);
+                c.voice(to, Beat.EXTRA_A, PowerSounds.SPIRIT, 0.7f, 1.7f);
             }
         });
     }
@@ -794,7 +815,7 @@ public final class SpiritPowers {
         // Stronger (3): the echo hits harder; Twin Souls (5): it repeats your power hits too (Combat.hurtBy)
         PowerState.of(c.player).buff(PowerState.Buffs.TWIN, c.now() + ticks, c.num(3, "share", 0.6f));
         if (c.step(5)) PowerState.of(c.player).buff(PowerState.Buffs.TWIN_CASTS, c.now() + ticks, c.num(5, "casts", 0.5f));
-        c.sound(PowerSounds.SPIRIT, 1f, 0.6f);
+        c.voice(Beat.RELEASE, PowerSounds.SPIRIT, 1f, 0.6f);
         // the twin soul: blue echoes of you trailing half a step behind
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.TWIN.ordinal()).ticks(ticks).send();
         Running r = Casting.start(c, ticks);

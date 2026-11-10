@@ -27,6 +27,7 @@ import dev.awaken.powers.WaveSurface;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 import dev.awaken.powers.fx.FxStyle;
 import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
@@ -129,7 +130,7 @@ final class KineticPowers {
                 if (rr.age == hang && hang > 0) {
                     rr.value = c.player.getY();
                     Moves.launch(c.player, new Vec3(0, -2.4, 0));
-                    c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+                    c.voice(Beat.GATHER, PowerSounds.WHOOSH, 1f, 0.5f);
                     return;
                 }
                 if (rr.age > hang + 1 && (c.player.onGround() || c.player.isInWater())) {
@@ -139,7 +140,7 @@ final class KineticPowers {
                 }
             });
             r.pos = c.pos();
-            c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
+            c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1f, 0.6f);
             return Result.OK;
         }
         slamImpact(c, 0);
@@ -175,7 +176,7 @@ final class KineticPowers {
         for (LivingEntity e : Combat.bystandersAround(c.player, at.add(0, 0.5, 0), radius)) Combat.knockFrom(e, at, 0.45, 0.4);
         // shockwave ring, cracks, the ground's own chunks thrown up, dust; a falling slam is bigger and hotter
         Fx.at(c, FxKind.SLAM, at).scale(radius).flag(FxEvent.REACH).flag(FxEvent.FULL, bonus > 4).send();
-        c.sound(PowerSounds.SLAM, 1.2f, bonus > 0 ? 0.7f : 0.9f);
+        c.voice(Beat.IMPACT, PowerSounds.SLAM, 1.2f, bonus > 0 ? 0.7f : 0.9f);
         Fx.quake(c.level, at, 14, 2.5f + (float) bonus * 0.2f);
         c.feel(first, hit > 0 ? 60 : 0, 3f);
     }
@@ -192,7 +193,7 @@ final class KineticPowers {
     static Result leap(Cast c) {
         if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward()));
         Moves.noFall(c, 120);
-        c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
+        c.voice(Beat.RELEASE, PowerSounds.WHOOSH, 1f, 0.8f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(20).send();
         Running r = Casting.start(c, 100);
         if (c.step(5)) {
@@ -203,7 +204,7 @@ final class KineticPowers {
                 r.count = 1;
                 Moves.launch(c.player, new Vec3(0, -2.6, 0));
                 Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(30).plain().send();
-                c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+                c.voice(Beat.EXTRA_A, PowerSounds.WHOOSH, 1f, 0.5f);
             });
         }
         r.tick(rr -> {
@@ -217,7 +218,7 @@ final class KineticPowers {
                     // Hard Landing (3) hits harder
                     Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg() * c.num(3, "land", 1f), null, 0.8, 0.4);
                     Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
-                    c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
+                    c.voice(at, Beat.IMPACT, PowerSounds.IMPACT, 0.8f, 1.1f);
                     Fx.quake(c.level, at, 8, 1.2f);
                 }
                 if (c.step(4)) {
@@ -247,7 +248,7 @@ final class KineticPowers {
         r.tick(rr -> {
             if (rr.age == full) {
                 Fx.at(c, FxKind.HOLD_READY, c.player.getEyePosition()).scale(1.1).noAnim().send();
-                c.sound(PowerSounds.HAY_PEAK, 1.1f, 1f);
+                c.voice(Beat.PEAK, PowerSounds.HAY_PEAK, 1.1f, 1f);
             }
         }).end((rr, why) -> {
             double charge = Math.min(1.0, rr.age / (double) full);
@@ -261,8 +262,8 @@ final class KineticPowers {
                 if (wall != null && wall.getType() != HitResult.Type.MISS) {
                     Vec3 on = wall.getLocation();
                     Fx.at(c, FxKind.WALL_CRACK, on).dir(Vec3.atLowerCornerOf(wall.getDirection().getUnitVec3i())).scale(0.5 + 0.8 * charge).noAnim().send();
-                    c.sound(PowerSounds.HAY_RELEASE, 0.75f, 1f);
-                    c.sound(on, PowerSounds.HAY_WALL, 0.75f + 0.45f * (float) charge, 1.08f - 0.16f * (float) charge);
+                    c.voice(Beat.RELEASE, PowerSounds.HAY_RELEASE, 0.75f, 1f);
+                    c.voice(on, Beat.EXTRA_A, PowerSounds.HAY_WALL, 0.75f + 0.45f * (float) charge, 1.08f - 0.16f * (float) charge);
                     Fx.quake(c.level, on, 8, 0.6f + 1.2f * (float) charge);
                     c.feel(null, 0, 1.5f + 3f * (float) charge);
                     return;
@@ -270,7 +271,7 @@ final class KineticPowers {
                 // a punch into the air still throws a ring of force
                 Vec3 front = c.player.getEyePosition().add(look.scale(1.6));
                 Fx.at(c, FxKind.IMPACT, front).dir(look).scale(0.5 + 0.5 * charge).send();
-                c.sound(PowerSounds.HAY_RELEASE, 0.85f + 0.25f * (float) charge, 1.1f - 0.2f * (float) charge);
+                c.voice(Beat.RELEASE, PowerSounds.HAY_RELEASE, 0.85f + 0.25f * (float) charge, 1.1f - 0.2f * (float) charge);
                 return;
             }
             int pressed = PowerMath.pressedAge(rr.age, c.player.connection.latency());
@@ -289,7 +290,20 @@ final class KineticPowers {
                     Combat.push(t, new Vec3(0, -1.6, 0));
                     Combat.stun(t, 30 + (int) (20 * charge) + (clean ? 15 : 0));
                 }
-                default -> Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost, 0.45 + 0.6 * charge);
+                default -> {
+                    // how the punch was thrown decides where the body goes, never how hard it lands (SPEC §32, "Ways")
+                    if (c.way == dev.awaken.powers.fx.Ways.AIR) {
+                        // thrown down out of the air: it's driven into the ground, and the ground throws the rest back
+                        Combat.push(t, new Vec3(look.x * 0.5, -1.3, look.z * 0.5));
+                        for (LivingEntity e : Combat.foesAround(c.player, t.position(), 2.6)) if (e != t) Combat.knockFrom(e, t.position(), 0.9, 0.4);
+                        Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
+                    } else if (c.way == dev.awaken.powers.fx.Ways.RUN) {
+                        // with the stride in it: further and flatter
+                        Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost * 1.35, 0.3 + 0.3 * charge);
+                    } else {
+                        Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost, 0.45 + 0.6 * charge);
+                    }
+                }
             }
             if (c.step(3)) {
                 // Shockfist: a cone of force bursts out of the far side, along the punch
@@ -304,12 +318,13 @@ final class KineticPowers {
             if (c.step(4) && charge >= 1 && !c.is(2)) Steps.carry(c, t, dmg * c.num(4, "fly", 0.6f), 20);
             // a clean one folds it, and the wall it lands against cracks and hits it again
             if (clean && c.variant == 0) WallSlam.watch(c, t, 26, dmg * 0.5f, PowerStance.MEDIUM, 1.2f, PowerSounds.HAY_WALL);
+            dev.awaken.powers.ArmsDuets.haymaker(c, t, dmg, charge); // Gauntlets on: the other fist follows (Both Barrels)
             Fx.at(c, FxKind.IMPACT, at).target(t).dir(look).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
             if (clean) Fx.at(c, FxKind.PERFECT, at).target(t).dir(look).noAnim().send();
             if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(clean ? 3 : 2.2).noAnim().send();
-            c.sound(PowerSounds.HAY_RELEASE, 0.75f + 0.25f * (float) charge, 1.08f - 0.16f * (float) charge);
-            c.sound(at, PowerSounds.HAY_IMPACT, 1.2f, 1.1f - 0.25f * (float) charge);
-            if (charge >= 1) c.sound(at, c.step(5) ? PowerSounds.HAY_L5 : PowerSounds.HAY_TAIL, clean ? 1.2f : 0.9f, 1f);
+            c.voice(Beat.RELEASE, PowerSounds.HAY_RELEASE, 0.75f + 0.25f * (float) charge, 1.08f - 0.16f * (float) charge);
+            c.voice(at, Beat.IMPACT, PowerSounds.HAY_IMPACT, 1.2f, 1.1f - 0.25f * (float) charge);
+            if (charge >= 1) c.voice(at, Beat.TAIL, c.step(5) ? PowerSounds.HAY_L5 : PowerSounds.HAY_TAIL, clean ? 1.2f : 0.9f, 1f);
             c.feel(t, clean ? 150 : (int) (40 + 40 * charge), clean ? 7f : 1.5f + 3f * (float) charge);
         });
         return Result.OK;
@@ -349,9 +364,11 @@ final class KineticPowers {
     private static Result rockOut(Cast c, BlockPos centre, List<BlockState> states) {
         Vec3 origin = Vec3.atCenterOf(centre).add(0, 1.2, 0);
         Vec3 dir = c.look();
-        Vec3 vel = dir.scale(1.5).add(0, 0.35, 0);
+        // with a Maul or a War-staff in hand the rock is struck, not thrown: faster, flatter, a wider burst (Batter Up)
+        boolean batted = dev.awaken.powers.ArmsDuets.batter(c);
+        Vec3 vel = batted ? dir.scale(2.25).add(0, 0.22, 0) : dir.scale(1.5).add(0, 0.35, 0);
         float dmg = c.dmg();
-        float radius = (float) c.radius(2.5);
+        float radius = (float) c.radius(2.5) * (batted ? 1.3f : 1f);
         BlockState main = states.get(0);
         // Mountain Hurl (5): the throw's heart is a slab
         boolean hurl = c.step(5);
@@ -401,7 +418,7 @@ final class KineticPowers {
         }
         Vec3 at = Vec3.atCenterOf(centre);
         Fx.at(c, FxKind.SLAM, at.add(0, 0.5, 0)).scale(2.6).send();
-        c.sound(at, PowerSounds.RIP, 1.2f, 0.8f);
+        c.voice(at, Beat.RELEASE, PowerSounds.RIP, 1.2f, 0.8f);
         Fx.quake(c.level, at, 12, 2f);
         return Result.OK;
     }
@@ -422,7 +439,7 @@ final class KineticPowers {
         }
         if (c.step(5)) {
             Steps.roll(c, at.add(flat.scale(0.8)), flat, 7.5, dmg * c.num(5, "hurl", 1.0f), 1.4, null);
-            c.sound(at, PowerSounds.STOMP_PLANT, 1.3f, 0.8f);
+            c.voice(at, Beat.IMPACT, PowerSounds.STOMP_PLANT, 1.3f, 0.8f);
             Fx.quake(c.level, at, 14, 2.5f);
         }
     }
@@ -444,17 +461,20 @@ final class KineticPowers {
         }
         Fx.at(c, FxKind.SLAM, c.player.position().add(side.scale(1.6))).scale(1.3).noAnim().flag(FxEvent.QUIET).send();
         Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, state, from, vel, dmg, null, radius * 0.8f, 1.0f), 30);
-        c.sound(c.player.position(), PowerSounds.RIP, 1.0f, 1.0f);
+        c.voice(c.player.position(), Beat.EXTRA_A, PowerSounds.RIP, 1.0f, 1.0f);
     }
 
     /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
-        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9);
-        double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
+        // how it's made changes its shape, never its weight (SPEC §32, "Ways"): at a run the wave goes out long and narrow,
+        // and stamped down out of the air it lands as a ring all round you
+        int way = c.way;
+        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9) * (way == dev.awaken.powers.fx.Ways.RUN ? 1.35 : way == dev.awaken.powers.fx.Ways.AIR ? 0.6 : 1);
+        double half = way == dev.awaken.powers.fx.Ways.AIR ? 180 : (c.is(1) ? 50 : c.is(2) ? 15 : 30) * (way == dev.awaken.powers.fx.Ways.RUN ? 0.6 : 1);
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();
-        c.sound(PowerSounds.STOMP_PLANT, 1.3f, 1f);
+        c.voice(Beat.RELEASE, PowerSounds.STOMP_PLANT, 1.3f, 1f);
         // it travels at one speed, so a long wave takes longer to arrive and you can watch it go
         int waveTicks = Math.max(10, Math.round((float) range / 0.9f));
         // the real ground ripples along the front (FxGroundWave), with dust and chunks thrown up where it passes
@@ -482,7 +502,7 @@ final class KineticPowers {
                 if (rr.hit.size() <= 5) {
                     Vec3 mid = e.getBoundingBox().getCenter();
                     Fx.at(c, FxKind.IMPACT, mid).dir(dir).scale(0.8).noAnim().send();
-                    c.sound(mid, PowerSounds.WAVE_KNOCK, crest ? 1.1f : 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.2f);
+                    c.voice(mid, Beat.IMPACT, PowerSounds.WAVE_KNOCK, crest ? 1.1f : 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.2f);
                 }
                 if (rr.hit.size() == 1) c.feel(e, 50, 0f); // the first body struck freezes a beat
             }
@@ -529,7 +549,7 @@ final class KineticPowers {
         if (c.step(4)) st.buff(PowerState.Buffs.BRACE_PROJECTILE, c.now() + ticks, c.num(4, "projectile", 0.5f));
         if (c.step(5)) st.buff(PowerState.Buffs.BRACE_PLATES, c.now() + ticks, c.num(5, "blocks", 3));
         Moves.addMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "brace", 1.0, AttributeModifier.Operation.ADD_VALUE);
-        c.sound(PowerSounds.BRACE, 1f, 0.8f);
+        c.voice(Beat.RELEASE, PowerSounds.BRACE, 1f, 0.8f);
         Fx.at(c, FxKind.RING, c.pos()).scale(1.8).ticks(9).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.BRACE.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
@@ -548,7 +568,7 @@ final class KineticPowers {
                 float shove = c.step(3) ? (float) absorbed * c.num(3, "shove", 0.4f) : 0;
                 Moves.blast(c, c.pos().add(0, 0.5, 0), burst, c.dmg() + shove, null, c.step(3) ? 1.4 : 0.9, 0.3);
                 Fx.at(c, FxKind.SLAM, c.pos()).scale(burst).flag(FxEvent.REACH).anim(CastAnim.STOMP).send();
-                c.sound(PowerSounds.IMPACT, 0.8f, 1.2f);
+                c.voice(Beat.IMPACT, PowerSounds.IMPACT, 0.8f, 1.2f);
                 if (c.step(5)) {
                     // the plates fly outward and cut what's near; ones that caught a hit fly too, cracked
                     float cut = c.dmg() * c.num(5, "share", 0.5f) * (plates >= 1 ? 1f : 0.6f);
@@ -580,7 +600,7 @@ final class KineticPowers {
                 Combat.stun(o, stun / 2);
                 forks++;
             }
-            c.sound(t.position(), PowerSounds.THUNDER, 1.4f, 1.1f);
+            c.voice(t.position(), Beat.IMPACT, PowerSounds.THUNDER, 1.4f, 1.1f);
             c.feel(t, 70, 4f);
             // the storm steps (4, 5) gather over you here too: a small ring at your feet carries their looks
             if (c.step(4)) Fx.at(c, FxKind.RING, at).scale(1.4).ticks(8).noAnim().send();
@@ -605,7 +625,7 @@ final class KineticPowers {
                 Fx.at(c, FxKind.LIGHTNING, at.add(0, 1.5, 0)).to(e.position().add(0, e.getBbHeight() * 0.5, 0)).ticks(6).noAnim().send();
             }
             if (ring == 0) ForceInteractions.chargeSummons(c.player, at, radius);
-            c.sound(at, PowerSounds.THUNDER, 1.5f, 1.0f - ring * 0.1f);
+            c.voice(at, Beat.RELEASE, PowerSounds.THUNDER, 1.5f, 1.0f - ring * 0.1f);
             Fx.quake(c.level, at, 20, 4f);
         });
         thunderSteps(c);
@@ -635,6 +655,6 @@ final class KineticPowers {
         Fx.at(c, FxKind.STRIKE, t.position()).scale(0.8).plain().flag(FxEvent.QUIET).send();
         Combat.hurtFrom(c.player, null, t, dmg, Forces.Force.CHARGE, true);
         Combat.stun(t, 10);
-        c.sound(t.position(), PowerSounds.THUNDER, 0.7f, 1.4f);
+        c.voice(t.position(), Beat.EXTRA_A, PowerSounds.THUNDER, 0.7f, 1.4f);
     }
 }

@@ -27,6 +27,8 @@ public final class Cast {
     public final int slot;
     /** True when the client already applied this power's motion (movement prediction). */
     public final boolean predicted;
+    /** How this cast is made (powers.fx.Ways: standing, at a run, in the air) and which take of its gesture plays. Set by Casting. */
+    public int way, take;
     /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
     public boolean poseSent;
     /** What the power's ladder adds at the level this cast started at (SPEC 36.3). */
@@ -228,6 +230,23 @@ public final class Cast {
             tierSounded = true;
             level.playSound(null, at.x, at.y, at.z, PowerSounds.tier(type.family, powerLevel), SoundSource.PLAYERS, Math.min(1f, volume) * 0.9f, 1f);
         }
+    }
+
+    /**
+     * A beat of this cast's voice (powers.fx.Voice), at the caster: the score every client plays for it, with the power's
+     * classic sound for players who chose Classic or while the power has no score. Use this for every sound a power makes.
+     */
+    public void voice(dev.awaken.powers.fx.Voice.Beat beat, @Nullable Holder<SoundEvent> classic, float volume, float pitch) {
+        Fx.voice(this, player.position(), beat, 1f, classic, volume, pitch);
+    }
+
+    public void voice(Vec3 at, dev.awaken.powers.fx.Voice.Beat beat, @Nullable Holder<SoundEvent> classic, float volume, float pitch) {
+        Fx.voice(this, at, beat, 1f, classic, volume, pitch);
+    }
+
+    /** As above, scaled by how much of the power this is (a charge's share, 0 to 1 and a little over). */
+    public void voice(Vec3 at, dev.awaken.powers.fx.Voice.Beat beat, float intensity, @Nullable Holder<SoundEvent> classic, float volume, float pitch) {
+        Fx.voice(this, at, beat, intensity, classic, volume, pitch);
     }
 
     public <T extends ParticleOptions> void particles(T p, Vec3 at, int count, double spread, double speed) {
