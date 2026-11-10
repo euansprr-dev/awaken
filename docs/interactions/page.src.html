@@ -1,0 +1,498 @@
+<title>Hands at Work</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column with wide figures breaking out of it; real pictures left, the plan right; decisions as a ledger at the end. */
+:root {
+  --bg: #edf0f3; --panel: #ffffff; --sunk: #e2e7ec; --ink: #121a25; --muted: #566375; --line: #cfd6de;
+  --accent: #1667b3; --accent-soft: #dcebf9; --amber: #94570f; --amber-soft: #f6e8d2; --good: #1c7449; --bad: #a8401c;
+  --display: "Archivo", "Inter", system-ui, sans-serif; --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --col: 46rem; --wide: 72rem;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d131b; --panel: #151d28; --sunk: #0a0f16; --ink: #e6ecf3; --muted: #94a2b3; --line: #273344;
+  --accent: #7fc3ff; --accent-soft: #14304b; --amber: #e3aa63; --amber-soft: #33260f; --good: #73d19c; --bad: #f2a078; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d131b; --panel: #151d28; --sunk: #0a0f16; --ink: #e6ecf3; --muted: #94a2b3; --line: #273344;
+  --accent: #7fc3ff; --accent-soft: #14304b; --amber: #e3aa63; --amber-soft: #33260f; --good: #73d19c; --bad: #f2a078; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--body); margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 5rem }
+main, header.top, nav.jump { max-width: var(--wide); margin-inline: auto }
+.col { max-width: var(--col) }
+h1, h2, h3 { font-family: var(--display); font-stretch: 112%; text-wrap: balance; line-height: 1.12; margin: 0 }
+h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 800; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); font-weight: 700; margin-top: 4.5rem; padding-top: 1.2rem; border-top: 2px solid var(--ink) }
+h3 { font-size: 1.12rem; font-weight: 700; margin-top: 2.2rem }
+p { margin: 0.8rem 0 0 }
+a { color: var(--accent) }
+.eyebrow { font: 600 0.74rem/1.3 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+header.top { padding-top: 3.2rem }
+header.top .lede { font-size: 1.2rem; line-height: 1.5; max-width: 40rem; margin-top: 1.1rem }
+blockquote.words { margin: 2rem 0 0; padding: 1.1rem 1.3rem; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--amber); max-width: var(--col); font-size: 0.97rem; line-height: 1.62 }
+blockquote.words footer { margin-top: 0.6rem; color: var(--muted); font: 600 0.74rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase }
+.status { display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; margin-top: 1.4rem; font: 600 0.8rem var(--mono); color: var(--muted) }
+.status b { color: var(--ink) }
+nav.jump { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: 2rem; padding-block: 0.55rem; display: flex; gap: 0.2rem 1.1rem; flex-wrap: wrap; font: 600 0.78rem var(--mono) }
+nav.jump a { color: var(--muted); text-decoration: none; padding: 0.15rem 0 }
+nav.jump a:hover, nav.jump a:focus-visible { color: var(--accent) }
+nav.jump .count { margin-left: auto; color: var(--ink) }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+ol.found { margin: 1.2rem 0 0; padding: 0; list-style: none; counter-reset: f; display: grid; gap: 0.7rem; max-width: var(--col) }
+ol.found li { counter-increment: f; display: grid; grid-template-columns: 2rem 1fr; gap: 0.2rem 0.6rem }
+ol.found li::before { content: counter(f); font: 600 0.85rem var(--mono); color: var(--amber); padding-top: 0.2rem }
+ol.found b { font-weight: 600 }
+figure { margin: 1.6rem 0 0 }
+figure img, figure canvas { display: block; width: 100%; height: auto; max-width: 100%; background: var(--sunk); border: 1px solid var(--line) }
+figcaption { font-size: 0.86rem; color: var(--muted); margin-top: 0.5rem; max-width: var(--col) }
+.tag { display: inline-block; font: 600 0.68rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; padding: 0.28rem 0.45rem; border: 1px solid currentColor; margin-right: 0.5rem; vertical-align: 0.08em }
+.tag.real { color: var(--amber) } .tag.plan { color: var(--accent) }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.2rem; margin-top: 1.6rem }
+.pair figure { margin: 0 }
+.trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin-top: 1.6rem }
+.trio figure { margin: 0 }
+.num { font: 600 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; display: block; margin-top: 0.55rem; color: var(--ink) }
+.num small { font: 500 0.78rem var(--mono); color: var(--muted); margin-left: 0.4rem }
+.scroll { overflow-x: auto; margin-top: 1.2rem }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 34rem }
+th, td { text-align: left; vertical-align: top; padding: 0.55rem 0.9rem 0.55rem 0; border-bottom: 1px solid var(--line) }
+th { font: 600 0.72rem var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); white-space: nowrap }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap }
+tr.rec td { background: var(--accent-soft) } tr.rec td:first-child { padding-left: 0.6rem }
+.proto { margin-top: 1.6rem; background: var(--panel); border: 1px solid var(--line); padding: 0.8rem }
+.proto canvas { cursor: none; touch-action: none; border: 0 }
+.bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.7rem }
+.seg { display: inline-flex; border: 1px solid var(--line) }
+button, .seg button { font: 600 0.8rem var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 0.5rem 0.8rem; cursor: pointer }
+.seg button { border: 0; border-right: 1px solid var(--line) } .seg button:last-child { border-right: 0 }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.readout { font: 500 0.8rem var(--mono); color: var(--muted); margin-left: auto }
+ul.rules { margin: 1rem 0 0; padding-left: 1.1rem; max-width: var(--col) } ul.rules li { margin-top: 0.45rem }
+.dec { background: var(--panel); border: 1px solid var(--line); padding: 1.2rem 1.3rem; margin-top: 1rem; display: grid; gap: 0.7rem }
+.dec h3 { margin: 0; font-size: 1.05rem }
+.dec .k { font: 600 0.72rem var(--mono); color: var(--amber); letter-spacing: 0.07em }
+.dec p { margin: 0; font-size: 0.93rem; max-width: 44rem }
+.opts { display: flex; flex-wrap: wrap; gap: 0.5rem }
+.opts label { display: inline-flex; gap: 0.45rem; align-items: center; border: 1px solid var(--line); padding: 0.45rem 0.75rem; font-size: 0.9rem; cursor: pointer; background: var(--bg) }
+.opts label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft) }
+.opts .recm { font: 600 0.62rem var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent) }
+.dec textarea { width: 100%; min-height: 2.6rem; font: 400 0.9rem/1.45 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); padding: 0.5rem 0.6rem; resize: vertical }
+.saved { font: 500 0.72rem var(--mono); color: var(--muted); min-height: 1em }
+.saved.ok { color: var(--good) } .saved.err { color: var(--bad) }
+.allbar { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin-top: 1.4rem; padding: 1rem 1.2rem; border: 2px solid var(--ink); background: var(--panel) }
+.allbar button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-size: 0.86rem; padding: 0.65rem 1rem }
+svg text { font-family: var(--mono) }
+.note { font-size: 0.86rem; color: var(--muted); max-width: var(--col) }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
+</style>
+
+<header class="top">
+  <div class="eyebrow">AWAKEN · a plan for your approval · 10 Nov 2026</div>
+  <h1>Hands at Work</h1>
+  <p class="lede">Every block you work, done by your own hands: the stack carried over the grid, a real crouch at the furnace, a lid you lift. The same from any distance, in first and third person, and as quick as the plain screen.</p>
+  <blockquote class="words">looking at all the interactive animations with like the crafting tables and the chests and everything like that to massively improve the smoothness of all of it. Like, for example, in the crafting table, I think it would be dope if when you're like hovering with an item, it actually shows like the actual hand of the player going over the box with that item in its hand, for example. And just overall, like for all of the like interactive animations like that, like massively level them up. Think about how it acts when you're more at the distance, when you're closer. Think about the POV, so it's really optimized to still be like usable and very nice. Same with the furnace. Maybe like the furnace, you actually crouch down, so you put stuff in the furnace that way. Think about the animations and from third person as well. And like for the audit, basically all of that, and then create a plan to massively improve them and bring them up to like AAA level and the quality bar that we keep saying.
+    <footer>Euan, 10 Nov 2026</footer></blockquote>
+  <div class="status"><span><b>Nothing here is built.</b></span><span>Ten decisions, one recommendation each</span><span>Your answers save on this page</span><span>About 13 hours to build at our pace</span></div>
+</header>
+
+<nav class="jump" aria-label="Sections">
+  <a href="#today">Today</a><a href="#hand">Try the hand</a><a href="#view">The view</a><a href="#furnace">Furnace</a><a href="#boxes">Chests</a><a href="#rest">Everything else</a><a href="#third">Third person</a><a href="#build">Cost and proof</a><a href="#decisions">Decisions</a>
+  <span class="count" id="navcount">0 of 10 answered</span>
+</nav>
+
+<main>
+<section id="today">
+  <h2>What working a block is like today</h2>
+  <p class="col">I read the code for every block a player can work, then filmed them all in the real game at your window size. Sixty-odd blocks, four tours. This is what the film shows.</p>
+  <ol class="found">
+    <li><div><b>The hand never carries anything.</b> The stack on your pointer is a flat screen icon. Your hands wait at the table's corners and tap a square after the click has already happened.</div></li>
+    <li><div><b>The scene is only as good as the spot you stand on.</b> The view is framed from your own eyes. Two blocks back, a grid square is a sliver seen almost side-on.</div></li>
+    <li><div><b>In third person there is no scene.</b> The plain grey screen opens and your character does nothing. Nobody else ever sees you work.</div></li>
+    <li><div><b>The furnace view drops, but nothing crouches.</b> No body, no bend in the move.</div></li>
+    <li><div><b>Thirteen workstations hide their own hand moment.</b> The hands play and a vanilla grey screen opens over them in the same tick.</div></li>
+    <li><div><b>It is silent and it pops.</b> No sound for laying or lifting. Items appear and vanish in one frame. A stack on a square shows no count.</div></li>
+    <li><div><b>Quick clicks twitch.</b> Each click sends the hand back to its rest before it goes out again.</div></li>
+  </ol>
+
+  <h3>The same table from three places</h3>
+  <div class="trio">
+    <figure><img src="img/today_near.jpg" alt="The crafting table scene from right against the table" loading="lazy"><figcaption><span class="tag real">Today · real</span>Pressed against it<span class="num">42 × 22<small>pixels a square, seen from 30°</small></span></figcaption></figure>
+    <figure><img src="img/today_mid.jpg" alt="The crafting table scene from two blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>Two blocks back, where you usually stand<span class="num">68 × 21<small>seen from 18°</small></span></figcaption></figure>
+    <figure><img src="img/today_far.jpg" alt="The crafting table scene from four blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>Four blocks back<span class="num">114 × 18<small>seen from 9°</small></span></figcaption></figure>
+  </div>
+  <p class="note">Sizes are in GUI pixels from the game's own camera maths; a vanilla slot is 16 × 16. The view zooms to fit the grid, so the further back you stand the flatter and more stretched it gets.</p>
+
+  <h3>Carrying and laying, frame by frame</h3>
+  <figure><img src="img/strip_lay.jpg" alt="Frame strip: a plank carried on the pointer as a flat icon, then laid, then the hand taps the square" loading="lazy"><figcaption><span class="tag real">Today · real</span>The plank rides the pointer as a flat icon, lands on the square in one frame, and only then does a hand go out to tap where it already is.</figcaption></figure>
+  <figure><img src="img/strip_fast.jpg" alt="Frame strip: three quick clicks, the hand restarting from rest each time" loading="lazy"><figcaption><span class="tag real">Today · real</span>Three clicks six ticks apart. The hand jumps back to its corner at the start of each one.</figcaption></figure>
+
+  <h3>Third person, and the screens that cover the hands</h3>
+  <div class="pair">
+    <figure><img src="img/today_3p.jpg" alt="Third person: the plain vanilla crafting screen over the player" loading="lazy"><figcaption><span class="tag real">Today · real</span>Third person. No scene, the grey screen, and your character stands still behind it.</figcaption></figure>
+    <figure><img src="img/today_grey.jpg" alt="A sheet of vanilla workstation screens as they open today" loading="lazy"><figcaption><span class="tag real">Today · real</span>Anvil, smithing table, grindstone, stonecutter, loom, brewing stand. Each has a hand moment. Each opens this over it at once.</figcaption></figure>
+  </div>
+</section>
+
+<section id="plan">
+  <h2>The plan in one line</h2>
+  <p class="col" style="font-size:1.15rem">Give every station <b>one view of its own</b>, put <b>the thing you carry in your own hand</b>, give items <b>weight and sound</b>, and give your character <b>a body at work</b> that others can see. Build that once, then describe each station to it.</p>
+  <div class="scroll"><table>
+    <tr><th>Direction</th><th>What it is</th><th>Why, or why not</th></tr>
+    <tr><td><b>A. Repair</b></td><td>Keep today's scenes. Add the carrying hand at today's view, fix the twitch, add sound.</td><td>The view is still a sliver from two blocks back and third person is still a grey screen. It answers one sentence of what you asked.</td></tr>
+    <tr class="rec"><td><b>B. One stage for every station</b><br><span class="tag plan" style="margin-top:.4rem">Recommended</span></td><td>A view that belongs to the station, the carrying hand, weight and sound, a body for others, applied family by family.</td><td>Fixes each cause once. Every later station gets all of it by describing where its slots are.</td></tr>
+    <tr><td><b>C. Everything in the world</b></td><td>Chests and every other screen become objects you handle one at a time, with no slots on screen.</td><td>Twenty-seven chest slots drawn inside a chest are a few pixels each. It would be slower than vanilla at the thing you do most.</td></tr>
+  </table></div>
+</section>
+
+<section id="hand">
+  <h2>Try the hand</h2>
+  <p class="col">Move your pointer over the table. Click a square to lay the whole stack, right click (or Shift and click) to lay one, click a laid stack to pick it up. Two planks one above the other make sticks; take them from the right border.</p>
+  <div class="proto">
+    <canvas id="carry" width="1366" height="743" aria-label="Mock-up: a hand carrying a stack over the crafting grid, following your pointer"></canvas>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="Which version"><button id="mNew" aria-pressed="true">The plan</button><button id="mOld" aria-pressed="false">Today</button></div>
+      <button id="gPlank">Pick up planks</button><button id="gReset">Clear the table</button><button id="gLeft" aria-pressed="false">Left-handed</button>
+      <span class="readout" id="readout">The demonstration runs until you move in</span>
+    </div>
+  </div>
+  <figcaption><span class="tag plan">Plan · mock-up over a real picture</span>The picture is the real game, taken from the view the plan proposes. The hand, the stack and anything you lay are drawn by this page in the game's own camera, so their places and sizes are true. The arm's skin, armour, light and timing will be the game's own. "Today" shows the real hands and the flat icon.</figcaption>
+  <h3>The rules it keeps</h3>
+  <ul class="rules">
+    <li><b>The stack is exactly on your pointer.</b> No lag at all. What you click is what it is over.</li>
+    <li><b>One straight vanilla arm</b>, lying back across the table toward you like an arm reaching over a table. Its far end is under your inventory, never in view. No elbow.</li>
+    <li><b>It is small on purpose:</b> 0.8 of a square wide, so it can cover only the squares nearer to you in the same column.</li>
+    <li><b>Nothing is hidden.</b> Whatever lies under the sleeve shows through it as a glass ghost. The result moves to the right border, vanilla's own side, where an arm never crosses it.</li>
+    <li><b>Life without lag:</b> the arm leans against your pointer's speed and the stack tips with it.</li>
+    <li><b>Stacks read as stacks:</b> a small pile, and a count on a glass tag. Today a square shows one item whatever is on it.</li>
+    <li><b>Quick hands:</b> a new target bends the hand from where it is. It never goes home first. No click ever waits for it.</li>
+    <li><b>Your pointer and your clicks decide the hand.</b> A reply from the server changes only what lies on a square, as on any screen.</li>
+  </ul>
+</section>
+
+<section id="view">
+  <h2>One view, from wherever you stand</h2>
+  <p class="col">Today the view is framed from your eyes, so it changes with every step. The plan gives each station a view of its own. For the table it sits over the near edge on the side you came from, looking down at 54 degrees. From one block or four, the view glides there in a quarter to half a second, and the grid is the same size in the same place every time. Your body does not move.</p>
+  <div class="pair">
+    <figure><img src="img/today_mid_clean.jpg" alt="Today: the table from where you stand, two blocks back" loading="lazy"><figcaption><span class="tag real">Today · real</span>From where you stand. A square is 68 × 21.</figcaption></figure>
+    <figure><img src="img/bench.jpg" alt="The proposed view: over the table's near edge, looking down" loading="lazy"><figcaption><span class="tag plan">Plan · a real picture from that place</span>From the bench view. A square is 31 × 26, nearly twice a vanilla slot each way. Made today by standing the player on a half block.</figcaption></figure>
+  </div>
+  <figure>
+    <svg viewBox="0 0 900 250" role="img" aria-label="Side view: three standing places, one bench view" style="width:100%;height:auto;background:var(--panel);border:1px solid var(--line)">
+      <line x1="20" y1="210" x2="880" y2="210" stroke="var(--line)" stroke-width="2"/>
+      <rect x="690" y="140" width="70" height="70" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="2"/>
+      <text x="725" y="180" text-anchor="middle" font-size="12" fill="var(--amber)">table</text>
+      <g fill="none" stroke="var(--muted)" stroke-width="2">
+        <rect x="596" y="88" width="24" height="122"/><rect x="420" y="88" width="24" height="122"/><rect x="130" y="88" width="24" height="122"/>
+      </g>
+      <g fill="var(--muted)"><circle cx="608" cy="96" r="5"/><circle cx="432" cy="96" r="5"/><circle cx="142" cy="96" r="5"/></g>
+      <g stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 5" fill="none">
+        <line x1="608" y1="96" x2="725" y2="140"/><line x1="432" y1="96" x2="725" y2="140"/><line x1="142" y1="96" x2="725" y2="140"/>
+      </g>
+      <circle cx="668" cy="62" r="8" fill="var(--accent)"/>
+      <line x1="668" y1="62" x2="725" y2="140" stroke="var(--accent)" stroke-width="3"/>
+      <g fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M608 96 Q640 60 668 62"/><path d="M432 96 Q560 40 668 62"/><path d="M142 96 Q420 10 668 62"/></g>
+      <text x="676" y="50" font-size="12" fill="var(--accent)">the bench view, 54°</text>
+      <text x="608" y="232" text-anchor="middle" font-size="12" fill="var(--muted)">1 block · 30°</text>
+      <text x="432" y="232" text-anchor="middle" font-size="12" fill="var(--muted)">2 blocks · 18°</text>
+      <text x="142" y="232" text-anchor="middle" font-size="12" fill="var(--muted)">4 blocks · 9°</text>
+    </svg>
+    <figcaption>Dashed: what your eyes see of the table top today. Blue: where the view goes in the plan. Your character stays put.</figcaption>
+  </figure>
+  <ul class="rules">
+    <li><b>Clicks are live on the first frame.</b> The slot under the pointer is found through the view as drawn, as it is now. Your inventory strip never moves.</li>
+    <li><b>Still while you aim.</b> The view's small breath stops while the pointer is over the station.</li>
+    <li><b>If the place is taken</b> (a low roof, a wall): lower and nearer, then your own eyes as today, then the plain screen. Never through a block.</li>
+    <li><b>Sneak and use</b> still opens the plain screen. Reduced motion cuts instead of gliding.</li>
+  </ul>
+</section>
+
+<section id="furnace">
+  <h2>The furnace: you really crouch</h2>
+  <p class="col">Today the view drops to the mouth on a plain ease and your body is simply hidden. In the plan the view goes down the way a body does (a dip and a nod as the knees bend, then down and in), your character kneels where others can see it, and your hand takes the food in.</p>
+  <figure><img src="img/strip_furnace.jpg" alt="Frame strip: the furnace view dropping today" loading="lazy"><figcaption><span class="tag real">Today · real</span>The drop to the mouth as it is: a straight slide down. Nothing in it says knees.</figcaption></figure>
+  <div class="proto">
+    <canvas id="furn" width="1366" height="743" aria-label="Mock-up: a hand carrying food into the furnace's mouth"></canvas>
+  </div>
+  <figcaption><span class="tag plan">Plan · mock-up over a real picture</span>The real mouth, lit, from the kneeling view. Drawn over it: your hand takes the beef in on the left, tosses coal onto the fire, and draws the steak out on the right. A lit fire lights the skin of your arm, as the powers do.</figcaption>
+  <figure>
+    <svg viewBox="0 0 900 230" role="img" aria-label="Side view: the path of the view as you kneel" style="width:100%;height:auto;background:var(--panel);border:1px solid var(--line)">
+      <line x1="20" y1="200" x2="880" y2="200" stroke="var(--line)" stroke-width="2"/>
+      <rect x="700" y="120" width="80" height="80" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="2"/>
+      <rect x="700" y="146" width="22" height="34" fill="var(--amber)"/>
+      <text x="745" y="112" text-anchor="middle" font-size="12" fill="var(--amber)">furnace</text>
+      <g fill="none" stroke="var(--muted)" stroke-width="2"><rect x="398" y="62" width="24" height="138"/></g>
+      <circle cx="410" cy="72" r="5" fill="var(--muted)"/>
+      <text x="410" y="50" text-anchor="middle" font-size="12" fill="var(--muted)">standing</text>
+      <g fill="none" stroke="var(--accent)" stroke-width="2.5">
+        <path d="M410 72 Q425 96 436 118 Q470 152 590 156"/>
+      </g>
+      <g fill="var(--accent)"><circle cx="436" cy="118" r="4"/><circle cx="590" cy="156" r="7"/></g>
+      <text x="446" y="112" font-size="12" fill="var(--accent)">3 ticks: dip and nod</text>
+      <text x="520" y="146" font-size="12" fill="var(--accent)">5 more: down and in</text>
+      <line x1="590" y1="156" x2="700" y2="162" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <g fill="none" stroke="var(--accent)" stroke-width="2">
+        <path d="M560 200 L560 158 L584 150"/><path d="M560 200 L592 200 L596 176 L560 176"/><path d="M572 160 L640 166"/>
+      </g>
+      <text x="566" y="222" text-anchor="middle" font-size="12" fill="var(--accent)">one knee down</text>
+      <path d="M410 72 L410 157" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 5" fill="none"/>
+      <text x="300" y="150" font-size="12" fill="var(--muted)">today: straight down</text>
+    </svg>
+    <figcaption>The path of the view. Grey: today. Blue: the plan.</figcaption>
+  </figure>
+  <ul class="rules">
+    <li><b>The fire answers.</b> Fuel on the coals brings a flare, embers of its own and a whoosh. The fire stands as high as the fuel that is left.</li>
+    <li><b>Cooking shows on the food.</b> It turns toward the cooked thing through the last third. The two thin lines stay for exactness, in the band's own style.</li>
+    <li><b>From the side or the back</b> you get the plain screen, as today. Smoker and blast furnace are the same scene with their own mouths and sounds.</li>
+  </ul>
+</section>
+
+<section id="boxes">
+  <h2>Chests: keep them fast, make the moment yours</h2>
+  <p class="col">Nothing is faster than slots on a screen for twenty-seven stacks, and you open chests more than anything else. So the glass screen stays, and everything around it changes.</p>
+  <div class="pair">
+    <figure><img src="img/strip_chest.jpg" alt="Frame strip: opening a chest today" loading="lazy"><figcaption><span class="tag real">Today · real</span>Both hands go to the lid for four ticks, then the screen covers everything. Closing has no hand at all.</figcaption></figure>
+    <figure><canvas id="chest" width="1366" height="743" aria-label="Mock-up: hands on an open chest's lid with its contents inside"></canvas><figcaption><span class="tag plan">Plan · mock-up over a real picture</span>The lid is in your hands and follows them. You look in. What is inside lies in the box, for you and anyone near.</figcaption></figure>
+  </div>
+  <ul class="rules">
+    <li><b>The lid is in your hands,</b> up and down. The hands follow the lid's real edge each frame. A barrel's hatch and a shulker's shell get their own lifts.</li>
+    <li><b>You look in:</b> the view tips four degrees toward the open box while the screen is up.</li>
+    <li><b>The glass rises out of the box.</b> A glow runs from the chest's mouth to the panel. Slots are clickable in their final places from the first frame.</li>
+    <li><b>Living slots</b> on every glass container and your bag: a stack you shift-click travels to its slot in 120 ms, the stack on your pointer lifts and tips with your speed, a count rolls to its new number. No click waits.</li>
+  </ul>
+</section>
+
+<section id="rest">
+  <h2>Everything else you work</h2>
+  <p class="col">Three families. A station is put in a family by what suits its slots, and each family is built once.</p>
+  <div class="scroll"><table>
+    <tr><th>Family</th><th>Which</th><th>Today</th><th>In the plan</th></tr>
+    <tr><td><b>Scenes</b><br>slots in the world, the bench view, the carrying hand</td><td>Crafting table · furnace, smoker, blast furnace · <b>brewing stand · anvil · smithing table · grindstone · stonecutter · cartography table</b></td><td>Two are scenes. The six in bold open a grey screen over a hidden hand moment.</td><td>Bottles set on the stand's arms and colouring as they brew. The piece on the anvil's face, three blows to take it. The wheel turning under your hand. The blade spinning up.</td></tr>
+    <tr><td><b>Boxes and panels</b><br>slots stay on screen, on glass</td><td>Chest, barrel, ender chest, shulker box, our caches · <b>loom, beacon, hopper, dispenser, dropper, crafter, lectern</b></td><td>Chests are on glass. The seven in bold are vanilla grey, four of them with no hand at all.</td><td>All on the band's glass with living slots. The hand moment plays first and is seen. A lid let down when you leave.</td></tr>
+    <tr><td><b>Quick touches</b><br>no screen</td><td>Doors, levers, buttons, campfire, plants, palms on stones · <b>bell, jukebox, note block, composter, cauldron, flower pot, bookshelf, pot, item frame, armour stand, cake, sign, candle, bed</b> · and 30 of ours</td><td>Fourteen kinds of touch exist. The ones in bold have nothing. So do most of ours: the Word Stone says "hold your hand to it" and no hand comes.</td><td>Every one has a hand, a sound where vanilla is silent, and a body that others see reach.</td></tr>
+  </table></div>
+  <div class="trio">
+    <figure><img src="img/v_anvil.jpg" alt="The anvil today: a grey screen" loading="lazy"><figcaption><span class="tag real">Today · real</span>The anvil</figcaption></figure>
+    <figure><img src="img/v_brewing.jpg" alt="The brewing stand today: a grey screen" loading="lazy"><figcaption><span class="tag real">Today · real</span>The brewing stand</figcaption></figure>
+    <figure><img src="img/v_grindstone.jpg" alt="The grindstone today: a grey screen" loading="lazy"><figcaption><span class="tag real">Today · real</span>The grindstone</figcaption></figure>
+  </div>
+  <p class="col">The War Anvil, the Inscribing Table, the Forge's song and the Hall of Arms are already at the bar and keep their scenes. They are where this plan takes its standard from: the Inscribing Table's burin already follows your pointer.</p>
+  <div class="pair">
+    <figure><img src="img/o_war_anvil.jpg" alt="The War Anvil's scene" loading="lazy"><figcaption><span class="tag real">Today · real</span>The War Anvil. Its own view, tools in the hands.</figcaption></figure>
+    <figure><img src="img/o_inscribing.jpg" alt="The Inscribing Table's scene" loading="lazy"><figcaption><span class="tag real">Today · real</span>The Inscribing Table.</figcaption></figure>
+  </div>
+</section>
+
+<section id="third">
+  <h2>Third person, and other players</h2>
+  <p class="col">Two different things, and the plan answers both.</p>
+  <ul class="rules">
+    <li><b>If you play in third person,</b> using a station brings the view over your character's shoulder down to the bench view, and takes it back when you leave. You get the same hands and the same grid as everyone. On the way in and out you see your own character bend to the work.</li>
+    <li><b>What others see.</b> Your character bent over the table, down on one knee at the furnace, bent to a chest with a hand on its lid, and reaching to each slot as you click it. They see what lies on your table and the largest stacks in a chest whose lid is up, the way they already see inside a furnace.</li>
+    <li><b>How it stays honest.</b> Your clicks reach the server as they always have. The server passes on which slot you touched, at most six times a second, and nothing is saved. It shows no more than standing behind you would.</li>
+  </ul>
+  <div class="pair">
+    <figure><img src="img/today_3p_furnace.jpg" alt="Third person at the furnace today" loading="lazy"><figcaption><span class="tag real">Today · real</span>At the furnace in third person: standing straight, a grey screen.</figcaption></figure>
+    <figure><img src="img/o_smith.jpg" alt="The smith at the War Anvil in third person" loading="lazy"><figcaption><span class="tag real">Today · real</span>The standard we already hold: the smith at the War Anvil, a full-body clip. Stations get clips made the same way.</figcaption></figure>
+  </div>
+</section>
+
+<section id="build">
+  <h2>Cost, proof and what could go wrong</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th>Hours</th></tr>
+    <tr><td class="n">1</td><td>The stage itself: bench view, carrying hand, weight, counts, the result's move. The crafting table on it.</td><td class="n">2</td></tr>
+    <tr><td class="n">2</td><td>Furnace, smoker, blast furnace: the crouch, the mouth, the fire.</td><td class="n">1.5</td></tr>
+    <tr><td class="n">3</td><td>The body and others: presence, clips, beats, contents. Third person in and out.</td><td class="n">2</td></tr>
+    <tr><td class="n">4</td><td>Boxes: the lid in your hands, looking in, contents, living slots.</td><td class="n">1.5</td></tr>
+    <tr><td class="n">5</td><td>Six workstation scenes.</td><td class="n">2.5</td></tr>
+    <tr><td class="n">6</td><td>Glass for seven screens. The quick touches, old and new, with bodies.</td><td class="n">2</td></tr>
+    <tr><td class="n">7</td><td>Sounds, one look tour, the full suite on CI, fixes.</td><td class="n">1.5</td></tr>
+    <tr><td></td><td><b>All of it, in one run</b></td><td class="n"><b>about 13</b></td></tr>
+  </table></div>
+  <p class="note">Scaled from this repo's history: the whole first-person hands system, both scenes and fourteen touches, took two hours on 25 Oct. The Inscribing Table's scene took three on 2 Nov. CI queues add 20 to 40 minutes a run today.</p>
+  <h3>How we will know it works</h3>
+  <ul class="rules">
+    <li><b>Same view from anywhere:</b> a test frames the table from twenty standing places and seven window sizes and gets one view.</li>
+    <li><b>Nothing hidden:</b> a test checks every slot, both main hands and seven window sizes: the arm never covers the result or the square under the pointer, and every square it lies over is ghosted.</li>
+    <li><b>Same clicks as vanilla:</b> the existing click tests run against the new view.</li>
+    <li><b>Quick hands:</b> nine clicks in nine ticks all land, and the hand never goes home between them.</li>
+    <li><b>Two players:</b> a second player gets your presence, beats and contents, and loses them when you close, leave range or log out.</li>
+  </ul>
+  <h3>When things go wrong</h3>
+  <div class="scroll"><table>
+    <tr><th>Case</th><th>What happens</th></tr>
+    <tr><td>The view's place is inside a block, or something is in the way</td><td>Lower and nearer, then your own eyes, then the plain screen</td></tr>
+    <tr><td>A block is placed into the view while you work</td><td>The view goes back to your eyes and the screen stays open</td></tr>
+    <tr><td>The server refuses a click</td><td>The item goes back, as on any screen. The hand does not replay</td></tr>
+    <tr><td>You are hit, die, change dimension or log out</td><td>The scene ends at once</td></tr>
+    <tr><td>Both hands full</td><td>They are put away as at any station and come back when you leave</td></tr>
+    <tr><td>No animation library</td><td>First person is unchanged. Third person shows vanilla's arm swing</td></tr>
+    <tr><td>You don't like the new view</td><td>A setting puts today's framing back. Scenes off gives plain screens</td></tr>
+  </table></div>
+  <p class="note">Seen in the real game for this page: every "today" picture and strip, and the bench view's pictures. Not seen anywhere yet: the carrying hand in the game, the crouch, the bodies, any sound. Those are mock-ups and words until built.</p>
+</section>
+
+<section id="decisions">
+  <h2>Ten decisions</h2>
+  <p class="col">Each has one recommendation, already picked. Change any you disagree with and add a note if you like. They save as you go.</p>
+  <div class="allbar"><button class="primary" id="yesAll">Go with every recommendation</button><span id="allcount" class="readout" style="margin-left:0">0 of 10 answered</span><span id="dbstate" class="saved"></span></div>
+  <div id="decs"></div>
+</section>
+</main>
+
+<script>
+/*CARRY*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var A = window.AwakenCarry, V = A.v;
+  function img(src) { return new Promise(function (res) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src; }); }
+  function blank(c, text) { var x = c.getContext('2d'); x.fillStyle = '#1b2430'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#9fb0c4'; x.font = '28px sans-serif'; x.textAlign = 'center'; x.fillText(text, c.width / 2, c.height / 2); }
+  var GUI = /*GUI*/[488, 266]/*GUI*/;
+
+  // ---- the table: the carrying hand ----
+  Promise.all([img('img/p_table_empty.jpg'), img('img/p_table_hands.jpg')]).then(function (im) {
+    var c = document.getElementById('carry');
+    if (!im[0]) { blank(c, 'The picture did not load'); return; }
+    var read = document.getElementById('readout');
+    var P = A.mount(c, { plate: im[0], plateHands: im[1] || im[0], eye: [0.5, 2.12, -0.31], gui: GUI, onState: function (S, hov) {
+      var t = S.live ? (S.mode === 'new' ? (S.covered ? 'Under the sleeve, shown through it: ' + S.covered + (S.covered === 1 ? ' square' : ' squares') : 'Nothing under the sleeve') : 'Today: a flat icon on the pointer') : 'The demonstration runs until you move in';
+      if (read.textContent !== t) read.textContent = t;
+    } });
+    function press(a, b, on) { a.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-pressed', on ? 'false' : 'true'); }
+    var mN = document.getElementById('mNew'), mO = document.getElementById('mOld'), left = document.getElementById('gLeft');
+    mN.onclick = function () { P.setMode('new'); press(mN, mO, true); };
+    mO.onclick = function () { P.setMode('old'); press(mN, mO, false); };
+    document.getElementById('gPlank').onclick = function () { P.give('plank'); };
+    document.getElementById('gReset').onclick = function () { P.reset(); };
+    left.onclick = function () { var on = left.getAttribute('aria-pressed') !== 'true'; left.setAttribute('aria-pressed', on ? 'true' : 'false'); P.setHand(on ? -1 : 1); };
+  });
+
+  // ---- the furnace: food in, fuel on, the cooked thing out (a loop over the real mouth) ----
+  img('img/p_furnace_lit.jpg').then(function (plate) {
+    var c = document.getElementById('furn'), ctx = c.getContext('2d'), W = c.width, H = c.height, aspect = W / H;
+    if (!plate) { blank(c, 'The picture did not load'); return; }
+    var lay = A.layout(GUI[0], GUI[1], 2), eye = /*FEYE*/[0.5, 0.57, -2.1]/*FEYE*/;
+    var boxes = [[0.65, 0.57, 0.1875, 0.15, 0.15, 0.05], [0.5, 0.26, 0.1875, 0.15, 0.15, 0.05], [0.35, 0.57, 0.1875, 0.15, 0.15, 0.05]];
+    var fr = A.frameBoxes(boxes, eye, lay, GUI[0], GUI[1], aspect), cam = new A.Camera(eye, fr.yaw, fr.pitch, fr.tan, aspect);
+    var out = [0.42, 0.5, -0.55], spots = { food: [0.65, 0.6, 0.1], coal: [0.5, 0.42, -0.06], done: [0.35, 0.6, 0.1] };
+    var up = [cam.r[1], cam.u[1], cam.f[1]], t0 = performance.now();
+    function mix(a, b, k) { return [V.lerp(a[0], b[0], k), V.lerp(a[1], b[1], k), V.lerp(a[2], b[2], k)]; }
+    function frame(now) {
+      var t = ((now - t0) / 1000) % 7.5, hand, held = null, flare = 0, toss = null;
+      if (t < 2.4) { var k = V.smooth(t / 1.1); hand = mix(out, spots.food, Math.min(1, k)); held = t < 1.25 ? 'beef' : null; if (t > 1.5) hand = mix(spots.food, out, V.smooth((t - 1.5) / 0.8)); }
+      else if (t < 4.6) { var u = t - 2.4; hand = mix(out, spots.coal, V.smooth(u / 0.8)); held = u < 0.85 ? 'coal' : null;
+        if (u >= 0.85 && u < 1.2) { var q = (u - 0.85) / 0.35; toss = [0.5, 0.42 - 0.14 * q + 0.1 * Math.sin(q * Math.PI), -0.06 + 0.27 * q]; }
+        if (u >= 1.15) flare = Math.max(0, 1 - (u - 1.15) / 0.9);
+        if (u > 1.3) hand = mix(spots.coal, out, V.smooth((u - 1.3) / 0.7)); }
+      else { var w = t - 4.6; hand = mix(out, spots.done, V.smooth(w / 0.9)); if (w > 1.1) { hand = mix(spots.done, out, V.smooth((w - 1.1) / 1.0)); held = 'steak'; } }
+      ctx.drawImage(plate, 0, 0, W, H);
+      if (flare > 0) { var fp = cam.project([0.5, 0.3, 0.2]), g = ctx.createRadialGradient(fp[0] * W, fp[1] * H, 0, fp[0] * W, fp[1] * H, W * 0.16); g.addColorStop(0, 'rgba(255,190,90,' + 0.75 * flare + ')'); g.addColorStop(1, 'rgba(255,120,30,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+      if (toss) A.drawItem(ctx, W, H, cam, 'coal', toss, [-1, 0, 0], [0, 1, 0], 0.13, 1, 1);
+      var pc = cam.toCam(hand), root = cam.toCam([hand[0] - 0.35, hand[1] - 0.5, hand[2] - 1.6]), a = V.norm(V.sub(root, pc)), e = V.add(pc, V.mul(a, 0.07));
+      var lit = 1 + 0.25 * flare + 0.12 * Math.max(0, 1 - Math.abs(hand[2] - 0.05) * 3);
+      A.drawArm(ctx, W, H, cam, e, a, 0.13, '#c9906a', '#2e4a5e', lit, up, [2, 0, 0]);
+      if (held) A.drawItem(ctx, W, H, cam, held, [hand[0], hand[1] + 0.03, hand[2]], [-1, 0, 0], [0, 1, 0], 0.14, 1 + 0.2 * flare, 1);
+      ctx.save(); ctx.globalAlpha = 0.9; var sx = lay.px0 / GUI[0], sy = lay.py0 / GUI[1], sw = (lay.px1 - lay.px0) / GUI[0], sh = (lay.py1 - lay.py0) / GUI[1];
+      ctx.drawImage(plate, sx * plate.width, sy * plate.height, sw * plate.width, sh * plate.height, sx * W, sy * H, sw * W, sh * H); ctx.restore();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // ---- the chest: the lid in your hands, what's inside, the glass rising ----
+  img('img/p_chest_open.jpg').then(function (plate) {
+    var c = document.getElementById('chest'), ctx = c.getContext('2d'), W = c.width, H = c.height, aspect = W / H;
+    if (!plate) { blank(c, 'The picture did not load'); return; }
+    var cam = new A.Camera(/*CEYE*/[0.5, 2.12, -0.31]/*CEYE*/, 0, 54, Math.tan(35 * Math.PI / 180), aspect), up = [cam.r[1], cam.u[1], cam.f[1]];
+    var inside = [['plank', 0.3, 0.42, 4], ['coal', 0.52, 0.36, 3], ['beef', 0.7, 0.5, 2], ['stick', 0.42, 0.66, 2], ['steak', 0.68, 0.7, 1]], t0 = performance.now();
+    function frame(now) {
+      var t = ((now - t0) / 1000) % 6, k = V.smooth(Math.min(1, t / 0.6)) * (t > 5 ? V.smooth((6 - t) / 0.8) : 1), i, n;
+      ctx.drawImage(plate, 0, 0, W, H);
+      for (i = 0; i < inside.length; i++) for (n = 0; n < inside[i][3]; n++)
+        A.drawItem(ctx, W, H, cam, inside[i][0], [inside[i][1] + n * 0.02, 0.6 + n * 0.012, inside[i][2] - n * 0.015], [-1, 0, 0], [0, 0, 1], 0.2, 0.8 + 0.05 * n, k);
+      for (var s = -1; s <= 1; s += 2) {
+        var hand = [0.5 + s * 0.3, 0.93 + 0.5 * k, 0.1 + 0.62 * k], pc = cam.toCam(hand), root = cam.toCam([hand[0] + s * 0.12, hand[1] - 0.2, hand[2] - 1.5]);
+        var a = V.norm(V.sub(root, pc));
+        A.drawArm(ctx, W, H, cam, V.add(pc, V.mul(a, 0.02)), a, 0.2, '#c9906a', '#2e4a5e', 1, up, [2, 0, 0]);
+      }
+      if (t > 0.5 && t < 5.2) { // the glass rising out of the box
+        var g = Math.min(1, (t - 0.5) / 0.5) * (t > 4.8 ? (5.2 - t) / 0.4 : 1), m = cam.project([0.5, 0.95, 0.5]), gw = W * 0.34, gh = H * 0.2, gx = W * 0.5 - gw / 2, gy = H * 0.07;
+        ctx.strokeStyle = 'rgba(127,195,255,' + 0.5 * g + ')'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(m[0] * W - 40, m[1] * H); ctx.lineTo(gx, gy + gh); ctx.moveTo(m[0] * W + 40, m[1] * H); ctx.lineTo(gx + gw, gy + gh); ctx.stroke();
+        ctx.fillStyle = 'rgba(15,23,36,' + 0.78 * g + ')'; ctx.fillRect(gx, gy, gw, gh); ctx.strokeStyle = 'rgba(127,195,255,' + g + ')'; ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
+        var cw = gw / 9.6, ch = gh / 3.5;
+        for (var r = 0; r < 3; r++) for (var q = 0; q < 9; q++) { ctx.strokeStyle = 'rgba(127,195,255,' + 0.28 * g + ')'; ctx.strokeRect(gx + cw * 0.3 + q * cw + 0.5, gy + ch * 0.25 + r * ch + 0.5, cw - 4, ch - 4); }
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // ---- the decisions ----
+  var D = [
+    ['d1', 'The carrying hand, as shown', 'Your main hand holds the stack on your pointer. It is 0.8 of a square wide, the arm lies back across the table, anything under the sleeve shows through, and the result moves to the right border.', ['Yes, as shown', 'A full-size hand (covers more)', 'No hand over the grid']],
+    ['d2', 'One view per station, from any distance', 'The view glides to the station\'s own bench view from wherever you clicked. Your body stays where it is and nothing walks you there.', ['Yes', 'Keep the view from where I stand', 'Step me to the station instead']],
+    ['d3', 'Third person', 'In third person the scene still takes the bench view, coming over your character\'s shoulder. Your character does the work for others to see.', ['Yes', 'Third person keeps the plain screen']],
+    ['d4', 'A real crouch at the furnace', 'The view goes down the way knees bend, your character kneels, your hand takes the food in and the fire answers.', ['Yes', 'Keep today\'s drop']],
+    ['d5', 'Chests', 'Keep the fast glass screen. Add the lid in your hands (up and down), the look in, what\'s inside lying in the box, and living slots.', ['Yes', 'Try chests fully in the world (slower)']],
+    ['d6', 'The other workstations', 'Six become scenes: brewing stand, anvil, smithing table, grindstone, stonecutter, cartography table. Seven go onto glass with a hand moment you can see: loom, beacon, hopper, dispenser, dropper, crafter, lectern.', ['All of them', 'Brewing stand and anvil only for now', 'Leave them for later']],
+    ['d7', 'Others see your work', 'Players near you see what lies on your table and the largest stacks in a chest whose lid is up, as they already see inside a furnace.', ['Yes', 'Keep it to yourself']],
+    ['d8', 'Sound', 'Every lay, lift, lid and kneel gets a sound from Minecraft\'s own recordings, by what the item is made of. I pick first, then you mark them by ear on a local listening page.', ['Yes', 'Silent for now']],
+    ['d9', 'Doors that swing with your hand', 'A door flips open in one frame in vanilla. Swinging it with your palm needs a mixin in the renderer under the Turbo contract. I recommend leaving it out of this plan.', ['Not now', 'Look into it after this']],
+    ['d10', 'How to build it', 'All seven stages in one run, about 13 hours, then tested once: the module\'s tests, the full suite on CI and one look tour.', ['Yes, build it all', 'Stage 1 first, then show me']]
+  ];
+  var box = document.getElementById('decs'), state = {}, db = null, timers = {};
+  function label(i) { return i === 0 ? 'rec' : 'alt' + i; }
+  D.forEach(function (d, n) {
+    var el = document.createElement('div'); el.className = 'dec'; el.id = d[0];
+    var opts = d[3].map(function (o, i) { return '<label><input type="radio" name="' + d[0] + '" id="' + d[0] + '_' + i + '" value="' + label(i) + '"><span>' + o + '</span>' + (i === 0 ? '<span class="recm">Recommended</span>' : '') + '</label>'; }).join('');
+    el.innerHTML = '<div class="k">DECISION ' + (n + 1) + '</div><h3></h3><p></p><div class="opts" role="radiogroup">' + opts + '</div><textarea id="' + d[0] + '_note" placeholder="A note, if you want (optional)" aria-label="Note for decision ' + (n + 1) + '"></textarea><div class="saved" id="' + d[0] + '_s"></div>';
+    el.querySelector('h3').textContent = d[1]; el.querySelector('p').textContent = d[2];
+    box.appendChild(el);
+    el.addEventListener('change', function (ev) { if (ev.target.type === 'radio') save(d[0]); });
+    el.querySelector('textarea').addEventListener('input', function () { clearTimeout(timers[d[0]]); timers[d[0]] = setTimeout(function () { save(d[0]); }, 900); });
+  });
+  function read(id) { var r = document.querySelector('input[name="' + id + '"]:checked'); return { choice: r ? r.value : '', note: document.getElementById(id + '_note').value }; }
+  function show(id, a) {
+    if (!a) return;
+    state[id] = a;
+    var r = document.querySelector('input[name="' + id + '"][value="' + a.choice + '"]'); if (r) r.checked = true;
+    var ta = document.getElementById(id + '_note'); if (document.activeElement !== ta && typeof a.note === 'string') ta.value = a.note;
+    count();
+  }
+  function count() {
+    var n = D.filter(function (d) { return state[d[0]] && state[d[0]].choice; }).length, t = n + ' of 10 answered';
+    document.getElementById('navcount').textContent = t; document.getElementById('allcount').textContent = t;
+  }
+  function mark(id, cls, text) { var s = document.getElementById(id + '_s'); s.className = 'saved ' + cls; s.textContent = text; }
+  var chain = {};
+  function save(id) {
+    var a = read(id); a.at = new Date().toISOString(); state[id] = a; count();
+    try { localStorage.setItem('haw_' + id, JSON.stringify(a)); } catch (e) {}
+    if (!db) { mark(id, '', 'Kept in this browser only. It could not reach the page\'s store.'); return; }
+    mark(id, '', 'Saving');
+    chain[id] = (chain[id] || Promise.resolve()).then(function () { return db.doc('answers/' + id).set(a); })
+      .then(function () { mark(id, 'ok', 'Saved'); }, function () { mark(id, 'err', 'Not saved. Kept in this browser; try again in a moment.'); });
+  }
+  document.getElementById('yesAll').onclick = function () {
+    D.forEach(function (d) { var r = document.getElementById(d[0] + '_0'); if (!r.checked) { r.checked = true; save(d[0]); } else if (!state[d[0]] || !state[d[0]].choice) save(d[0]); });
+  };
+  D.forEach(function (d) { try { var v = localStorage.getItem('haw_' + d[0]); if (v) show(d[0], JSON.parse(v)); } catch (e) {} });
+  var ds = document.getElementById('dbstate');
+  if (window.claude && window.claude.use) {
+    var slow = setTimeout(function () { ds.textContent = 'Still reaching the page\'s store'; }, 10000);
+    window.claude.use('db').then(function (d) {
+      if (!d) { clearTimeout(slow); ds.textContent = 'Answers stay in this browser (the store is not available here)'; return; }
+      db = d;
+      d.collection('answers').onSnapshot(function (snap) {
+        clearTimeout(slow); ds.textContent = '';
+        snap.docs.forEach(function (doc) { if (document.getElementById(doc.id)) show(doc.id, doc.data()); });
+      }, function () { clearTimeout(slow); db = null; ds.className = 'saved err'; ds.textContent = 'The store stopped answering. Answers stay in this browser.'; });
+    });
+  } else { ds.textContent = 'Answers stay in this browser'; }
+  count();
+})();
+</script>

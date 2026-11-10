@@ -21607,3 +21607,39 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 - **The classic band stays** (`classicBand`), with `HoloStatusScreen`, `StatusScreen`, the old sections and `HearthScreen`:
   the plan deletes them one build after the stage has been played, and it has not been played yet.
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 63. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md; PROPOSED 10 Nov 2026, not approved, nothing built)
+
+Euan, 10 Nov 2026: "massively improve the smoothness of all of it ... when you're like hovering with an item, it actually
+shows like the actual hand of the player going over the box with that item in its hand ... Think about how it acts when
+you're more at the distance, when you're closer. Think about the POV ... Maybe like the furnace, you actually crouch down
+... Think about the animations and from third person as well."
+
+**Status: a plan waiting for his answers. Until he says yes, §24 "Station scenes" and "Touches" describe the game as it
+is, and nothing below is in the code.** The plan record, the audit and its evidence are in `docs/interactions/PLAN.md`;
+the page's source is `docs/interactions/page.src.html` (its pictures are CI tour shots, not in the repo); the mock-up
+that draws the carrying hand in the game's own camera is `docs/interactions/proto/` (`carry.js`, `stationgeo.py`, a port
+of `StationView`; planning tools, nothing in the game reads them).
+
+What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-vanilla.txt`, `-awaken.txt`, `-plates.txt`):
+- The station hands never hold anything: a 9-tick tap after a slot has changed, restarted from rest on each click.
+- The station view is framed from the player's eyes, so it depends on where they stand: the table's centre square is
+  42 by 22 GUI pixels against the table, 68 by 21 at two blocks (seen from 18 degrees, field of view 19) and 114 by 18 at
+  four (9 degrees, field of view 5.7), at a 488 by 266 GUI.
+- No scene in third person (`StationClient.on()`), no body clip for any station but the War Anvil, nothing for others to
+  see at a table.
+- Thirteen workstations start a touch and a vanilla screen in the same tick; only the chest's screen waits (4 ticks).
+- No sound and no count for anything laid on a station.
+
+What the plan proposes, in the order it would be built (PLAN §4, §6): a view that belongs to the station (the bench
+view), the carrying hand (the stack exactly on the pointer, one straight arm lying back across the station, a ghost of
+anything under the sleeve, the table's result on its right border), items with weight, piles and counts, sounds from
+Minecraft's recordings, presence and beats so others see a body at work and what lies on a table or in an open chest,
+a real crouch at the furnace, lids in the hands and living slots for boxes, six more workstation scenes, glass for seven
+screens, and a hand, a sound and a body for every quick touch. The click path (`StationScreen`, vanilla's own menu) does
+not change.
+
+One dev-only addition is in the code from the audit: the pilot's `hover <slot>` (`StationClient.devHover`), which puts
+the mouse over a slot of the open station scene so a tour can film a carried stack over the grid. Autopilot runs only.
