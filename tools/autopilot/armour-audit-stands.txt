@@ -1,0 +1,176 @@
+# Armour polish audit (on an armour stand and on a Fitting Stand, each set at its own station). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 200, noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit3 creative 5153
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 200 0.5 0 0
+cmd forceload add -16 -16 180 16
+wait 300
+cmd fill -6 199 0 180 199 12 minecraft:smooth_stone
+cmd fill -6 200 11 180 208 11 minecraft:light_gray_concrete
+wait 20
+cmd summon minecraft:armor_stand -0.7 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:wildhide_helmet"},chest:{id:"awaken:wildhide_chestplate"},legs:{id:"awaken:wildhide_leggings"},feet:{id:"awaken:wildhide_boots"}}}
+cmd setblock 1 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:wildhide_helmet",count:1},{id:"awaken:wildhide_chestplate",count:1},{id:"awaken:wildhide_leggings",count:1},{id:"awaken:wildhide_boots",count:1}]}
+cmd summon minecraft:armor_stand 5.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:bellguard_helmet"},chest:{id:"awaken:bellguard_chestplate"},legs:{id:"awaken:bellguard_leggings"},feet:{id:"awaken:bellguard_boots"}}}
+cmd setblock 7 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:bellguard_helmet",count:1},{id:"awaken:bellguard_chestplate",count:1},{id:"awaken:bellguard_leggings",count:1},{id:"awaken:bellguard_boots",count:1}]}
+cmd summon minecraft:armor_stand 11.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:rootwarden_helmet"},chest:{id:"awaken:rootwarden_chestplate"},legs:{id:"awaken:rootwarden_leggings"},feet:{id:"awaken:rootwarden_boots"}}}
+cmd setblock 13 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:rootwarden_helmet",count:1},{id:"awaken:rootwarden_chestplate",count:1},{id:"awaken:rootwarden_leggings",count:1},{id:"awaken:rootwarden_boots",count:1}]}
+cmd summon minecraft:armor_stand 17.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:amberwing_helmet"},chest:{id:"awaken:amberwing_chestplate"},legs:{id:"awaken:amberwing_leggings"},feet:{id:"awaken:amberwing_boots"}}}
+cmd setblock 19 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:amberwing_helmet",count:1},{id:"awaken:amberwing_chestplate",count:1},{id:"awaken:amberwing_leggings",count:1},{id:"awaken:amberwing_boots",count:1}]}
+cmd summon minecraft:armor_stand 23.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:beastbound_helmet"},chest:{id:"awaken:beastbound_chestplate"},legs:{id:"awaken:beastbound_leggings"},feet:{id:"awaken:beastbound_boots"}}}
+cmd setblock 25 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:beastbound_helmet",count:1},{id:"awaken:beastbound_chestplate",count:1},{id:"awaken:beastbound_leggings",count:1},{id:"awaken:beastbound_boots",count:1}]}
+cmd summon minecraft:armor_stand 29.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:cleftrunner_helmet"},chest:{id:"awaken:cleftrunner_chestplate"},legs:{id:"awaken:cleftrunner_leggings"},feet:{id:"awaken:cleftrunner_boots"}}}
+cmd setblock 31 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:cleftrunner_helmet",count:1},{id:"awaken:cleftrunner_chestplate",count:1},{id:"awaken:cleftrunner_leggings",count:1},{id:"awaken:cleftrunner_boots",count:1}]}
+cmd summon minecraft:armor_stand 35.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:lanternlight_helmet"},chest:{id:"awaken:lanternlight_chestplate"},legs:{id:"awaken:lanternlight_leggings"},feet:{id:"awaken:lanternlight_boots"}}}
+cmd setblock 37 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:lanternlight_helmet",count:1},{id:"awaken:lanternlight_chestplate",count:1},{id:"awaken:lanternlight_leggings",count:1},{id:"awaken:lanternlight_boots",count:1}]}
+cmd summon minecraft:armor_stand 41.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:bladeward_helmet"},chest:{id:"awaken:bladeward_chestplate"},legs:{id:"awaken:bladeward_leggings"},feet:{id:"awaken:bladeward_boots"}}}
+cmd setblock 43 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:bladeward_helmet",count:1},{id:"awaken:bladeward_chestplate",count:1},{id:"awaken:bladeward_leggings",count:1},{id:"awaken:bladeward_boots",count:1}]}
+cmd summon minecraft:armor_stand 47.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:hornlord_helmet"},chest:{id:"awaken:hornlord_chestplate"},legs:{id:"awaken:hornlord_leggings"},feet:{id:"awaken:hornlord_boots"}}}
+cmd setblock 49 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:hornlord_helmet",count:1},{id:"awaken:hornlord_chestplate",count:1},{id:"awaken:hornlord_leggings",count:1},{id:"awaken:hornlord_boots",count:1}]}
+cmd summon minecraft:armor_stand 53.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:gatewrought_helmet"},chest:{id:"awaken:gatewrought_chestplate"},legs:{id:"awaken:gatewrought_leggings"},feet:{id:"awaken:gatewrought_boots"}}}
+cmd setblock 55 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:gatewrought_helmet",count:1},{id:"awaken:gatewrought_chestplate",count:1},{id:"awaken:gatewrought_leggings",count:1},{id:"awaken:gatewrought_boots",count:1}]}
+cmd summon minecraft:armor_stand 59.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet"},chest:{id:"awaken:vaultbreaker_chestplate"},legs:{id:"awaken:vaultbreaker_leggings"},feet:{id:"awaken:vaultbreaker_boots"}}}
+cmd setblock 61 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:vaultbreaker_helmet",count:1},{id:"awaken:vaultbreaker_chestplate",count:1},{id:"awaken:vaultbreaker_leggings",count:1},{id:"awaken:vaultbreaker_boots",count:1}]}
+cmd summon minecraft:armor_stand 65.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:frostwalker_helmet"},chest:{id:"awaken:frostwalker_chestplate"},legs:{id:"awaken:frostwalker_leggings"},feet:{id:"awaken:frostwalker_boots"}}}
+cmd setblock 67 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:frostwalker_helmet",count:1},{id:"awaken:frostwalker_chestplate",count:1},{id:"awaken:frostwalker_leggings",count:1},{id:"awaken:frostwalker_boots",count:1}]}
+cmd summon minecraft:armor_stand 71.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:sunward_helmet"},chest:{id:"awaken:sunward_chestplate"},legs:{id:"awaken:sunward_leggings"},feet:{id:"awaken:sunward_boots"}}}
+cmd setblock 73 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:sunward_helmet",count:1},{id:"awaken:sunward_chestplate",count:1},{id:"awaken:sunward_leggings",count:1},{id:"awaken:sunward_boots",count:1}]}
+cmd summon minecraft:armor_stand 77.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:shardcrown_helmet"},chest:{id:"awaken:shardcrown_chestplate"},legs:{id:"awaken:shardcrown_leggings"},feet:{id:"awaken:shardcrown_boots"}}}
+cmd setblock 79 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:shardcrown_helmet",count:1},{id:"awaken:shardcrown_chestplate",count:1},{id:"awaken:shardcrown_leggings",count:1},{id:"awaken:shardcrown_boots",count:1}]}
+cmd summon minecraft:armor_stand 83.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:veilwoven_helmet"},chest:{id:"awaken:veilwoven_chestplate"},legs:{id:"awaken:veilwoven_leggings"},feet:{id:"awaken:veilwoven_boots"}}}
+cmd setblock 85 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:veilwoven_helmet",count:1},{id:"awaken:veilwoven_chestplate",count:1},{id:"awaken:veilwoven_leggings",count:1},{id:"awaken:veilwoven_boots",count:1}]}
+cmd summon minecraft:armor_stand 89.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
+cmd setblock 91 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:deepcarapace_helmet",count:1},{id:"awaken:deepcarapace_chestplate",count:1},{id:"awaken:deepcarapace_leggings",count:1},{id:"awaken:deepcarapace_boots",count:1}]}
+cmd summon minecraft:armor_stand 95.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
+cmd setblock 97 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:cloudrunner_helmet",count:1},{id:"awaken:cloudrunner_chestplate",count:1},{id:"awaken:cloudrunner_leggings",count:1},{id:"awaken:cloudrunner_boots",count:1}]}
+cmd summon minecraft:armor_stand 101.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
+cmd setblock 103 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:tidebreaker_helmet",count:1},{id:"awaken:tidebreaker_chestplate",count:1},{id:"awaken:tidebreaker_leggings",count:1},{id:"awaken:tidebreaker_boots",count:1}]}
+cmd summon minecraft:armor_stand 107.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
+cmd setblock 109 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:hollowheart_helmet",count:1},{id:"awaken:hollowheart_chestplate",count:1},{id:"awaken:hollowheart_leggings",count:1},{id:"awaken:hollowheart_boots",count:1}]}
+cmd summon minecraft:armor_stand 113.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:lordscale_helmet"},chest:{id:"awaken:lordscale_chestplate"},legs:{id:"awaken:lordscale_leggings"},feet:{id:"awaken:lordscale_boots"}}}
+cmd setblock 115 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:lordscale_helmet",count:1},{id:"awaken:lordscale_chestplate",count:1},{id:"awaken:lordscale_leggings",count:1},{id:"awaken:lordscale_boots",count:1}]}
+cmd summon minecraft:armor_stand 119.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd setblock 121 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:leviathan_helmet",count:1},{id:"awaken:leviathan_chestplate",count:1},{id:"awaken:leviathan_leggings",count:1},{id:"awaken:leviathan_boots",count:1}]}
+cmd summon minecraft:armor_stand 125.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd setblock 127 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:galewing_helmet",count:1},{id:"awaken:galewing_chestplate",count:1},{id:"awaken:galewing_leggings",count:1},{id:"awaken:galewing_boots",count:1}]}
+cmd summon minecraft:armor_stand 131.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd setblock 133 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:halo_choir_helmet",count:1},{id:"awaken:halo_choir_chestplate",count:1},{id:"awaken:halo_choir_leggings",count:1},{id:"awaken:halo_choir_boots",count:1}]}
+cmd summon minecraft:armor_stand 137.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd setblock 139 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:dreamsteel_helmet",count:1},{id:"awaken:dreamsteel_chestplate",count:1},{id:"awaken:dreamsteel_leggings",count:1},{id:"awaken:dreamsteel_boots",count:1}]}
+cmd summon minecraft:armor_stand 143.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:sovereign_helmet"},chest:{id:"awaken:sovereign_chestplate"},legs:{id:"awaken:sovereign_leggings"},feet:{id:"awaken:sovereign_boots"}}}
+cmd setblock 145 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:sovereign_helmet",count:1},{id:"awaken:sovereign_chestplate",count:1},{id:"awaken:sovereign_leggings",count:1},{id:"awaken:sovereign_boots",count:1}]}
+cmd summon minecraft:armor_stand 149.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd setblock 151 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:starfall_helmet",count:1},{id:"awaken:starfall_chestplate",count:1},{id:"awaken:starfall_leggings",count:1},{id:"awaken:starfall_boots",count:1}]}
+cmd summon minecraft:armor_stand 155.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd setblock 157 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:riftwalker_helmet",count:1},{id:"awaken:riftwalker_chestplate",count:1},{id:"awaken:riftwalker_leggings",count:1},{id:"awaken:riftwalker_boots",count:1}]}
+cmd summon minecraft:armor_stand 161.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd setblock 163 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:nightcourt_helmet",count:1},{id:"awaken:nightcourt_chestplate",count:1},{id:"awaken:nightcourt_leggings",count:1},{id:"awaken:nightcourt_boots",count:1}]}
+cmd summon minecraft:armor_stand 167.3 200 7.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+cmd setblock 169 200 7 awaken:fitting_stand[facing=north]{suit:[{id:"awaken:signals_echo_helmet",count:1},{id:"awaken:signals_echo_chestplate",count:1},{id:"awaken:signals_echo_leggings",count:1},{id:"awaken:signals_echo_boots",count:1}]}
+hud off
+camera first
+opt fov 40
+wait 40
+cmd tp @s 0.45 200 3.9 0 4
+wait 14
+shot s_wildhide
+cmd tp @s 6.45 200 3.9 0 4
+wait 14
+shot s_bellguard
+cmd tp @s 12.45 200 3.9 0 4
+wait 14
+shot s_rootwarden
+cmd tp @s 18.45 200 3.9 0 4
+wait 14
+shot s_amberwing
+cmd tp @s 24.45 200 3.9 0 4
+wait 14
+shot s_beastbound
+cmd tp @s 30.45 200 3.9 0 4
+wait 14
+shot s_cleftrunner
+cmd tp @s 36.45 200 3.9 0 4
+wait 14
+shot s_lanternlight
+cmd tp @s 42.45 200 3.9 0 4
+wait 14
+shot s_bladeward
+cmd tp @s 48.45 200 3.9 0 4
+wait 14
+shot s_hornlord
+cmd tp @s 54.45 200 3.9 0 4
+wait 14
+shot s_gatewrought
+cmd tp @s 60.45 200 3.9 0 4
+wait 14
+shot s_vaultbreaker
+cmd tp @s 66.45 200 3.9 0 4
+wait 14
+shot s_frostwalker
+cmd tp @s 72.45 200 3.9 0 4
+wait 14
+shot s_sunward
+cmd tp @s 78.45 200 3.9 0 4
+wait 14
+shot s_shardcrown
+cmd tp @s 84.45 200 3.9 0 4
+wait 14
+shot s_veilwoven
+cmd tp @s 90.45 200 3.9 0 4
+wait 14
+shot s_deepcarapace
+cmd tp @s 96.45 200 3.9 0 4
+wait 14
+shot s_cloudrunner
+cmd tp @s 102.45 200 3.9 0 4
+wait 14
+shot s_tidebreaker
+cmd tp @s 108.45 200 3.9 0 4
+wait 14
+shot s_hollowheart
+cmd tp @s 114.45 200 3.9 0 4
+wait 14
+shot s_lordscale
+cmd tp @s 120.45 200 3.9 0 4
+wait 14
+shot s_leviathan
+cmd tp @s 126.45 200 3.9 0 4
+wait 14
+shot s_galewing
+cmd tp @s 132.45 200 3.9 0 4
+wait 14
+shot s_halo_choir
+cmd tp @s 138.45 200 3.9 0 4
+wait 14
+shot s_dreamsteel
+cmd tp @s 144.45 200 3.9 0 4
+wait 14
+shot s_sovereign
+cmd tp @s 150.45 200 3.9 0 4
+wait 14
+shot s_starfall
+cmd tp @s 156.45 200 3.9 0 4
+wait 14
+shot s_riftwalker
+cmd tp @s 162.45 200 3.9 0 4
+wait 14
+shot s_nightcourt
+cmd tp @s 168.45 200 3.9 0 4
+wait 14
+shot s_signals_echo
+quit
