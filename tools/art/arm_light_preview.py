@@ -31,16 +31,57 @@ STYLES = {
     "PRISM": (0xFFFFFF, 0xE9D8FF, 0x8F6BFF, 0x7FC3FF),
 }
 
-# A set's own way with the light (ArmourLight.SETS): how much its cloth, plate, trim and glowing parts each take; how
-# many rows its lines run ahead of the rest (metal conducts); how much its cloth holds a glow where the light has been
-# (cloth and hide soak it up); how much what glows of itself shimmers (crystal).
+# A set's own way with the light (ArmourLight.SETS and FAMILIES; the two tables are kept the same, row for row).
+# soft, plate, trim, emit: how much its cloth, plate, lines and glowing parts each take.
+# lead: how many rows its lines run ahead of the rest (metal conducts).
+# soak: how much its cloth holds a glow where the light has been (hide and cloth).
+# shimmer: how much what glows of itself flickers (crystal, a signal).
+# grain: +1 its bright texels take more light, -1 its dark ones do (the light sits in bark's cracks, bone's hollows).
+# tips: how much the parts that stand off the arm (fins, feathers, spurs) light late and bright.
+# ripple: how much a wave of shade runs down its plate and cloth (rows of scales, of feathers).
+# glitter: how often an unlit texel where the light has been catches it for a moment (mail's links, rivets, star metal).
+def style(soft, plate, trim, emit, lead, soak=0.0, shimmer=0.0, grain=1.0, tips=0.5, ripple=0.0, glitter=0.0):
+    return dict(soft=soft, plate=plate, trim=trim, emit=emit, lead=lead, soak=soak, shimmer=shimmer, grain=grain, tips=tips,
+                ripple=ripple, glitter=glitter)
+
+
 SETS = {
-    "default": (0.8, 0.85, 1.0, 1.15, 1.0, 0.0, 0.0),
-    "gatewrought": (0.85, 0.9, 1.0, 1.15, 1.5, 0.12, 0.0),   # a leather sleeve under a plated glove
-    "vaultbreaker": (0.7, 0.85, 1.05, 1.2, 2.5, 0.0, 0.0),   # steel: the cuff rings run well ahead
-    "frostwalker": (0.9, 0.85, 1.0, 1.2, 0.5, 0.2, 0.0),     # hide: it soaks the light up
-    "sunward": (0.85, 0.9, 1.1, 1.2, 1.5, 0.14, 0.5),        # cloth under gold bands and a stone
-    "shardcrown": (0.7, 0.8, 1.0, 1.3, 1.0, 0.0, 1.0),       # crystal fills and shimmers
+    "default": style(0.8, 0.85, 1.0, 1.15, 1.0),
+    # E
+    "wildhide": style(0.9, 0.85, 1.0, 1.15, 0.5, soak=0.22, tips=0.0),                     # fur and hide: it soaks; the lacing leads a little
+    "bellguard": style(0.8, 0.9, 0.9, 1.15, 2.0, soak=0.08),                               # bell bronze, rim after rim: they carry it far
+    "rootwarden": style(0.9, 0.85, 1.0, 1.3, 0.5, soak=0.1, grain=-1.0, tips=0.0),         # bark: the light sits in its cracks, the resin fills
+    "amberwing": style(0.9, 0.85, 1.0, 1.15, 1.0, soak=0.14, tips=0.3),                    # a jerkin: it soaks, the amber cuff leads
+    # D
+    "beastbound": style(0.85, 0.85, 1.0, 1.2, 1.0, soak=0.06, grain=-1.0, tips=0.7),       # bone plates: the light in their hollows
+    "cleftrunner": style(0.85, 0.85, 1.0, 1.15, 1.5, soak=0.16, tips=0.3),                 # cloth under lamellar strips
+    "lanternlight": style(0.85, 0.9, 1.0, 1.3, 1.5, soak=0.08, glitter=0.6),               # a robe over mail: the links glitter, the lantern glass fills
+    "bladeward": style(0.8, 0.9, 1.0, 1.15, 2.0, soak=0.08, glitter=0.35),                 # a brigandine: its rivets catch the light
+    "hornlord": style(0.7, 0.85, 1.05, 1.2, 2.0, grain=-0.6),                              # horn and plate: the light in the horn's grooves
+    # C
+    "gatewrought": style(0.85, 0.9, 1.0, 1.15, 1.5, soak=0.12),                            # a leather sleeve under a plated glove
+    "vaultbreaker": style(0.7, 0.85, 1.05, 1.2, 2.5),                                      # steel: the cuff rings run well ahead
+    "frostwalker": style(0.9, 0.85, 1.0, 1.2, 0.5, soak=0.2, shimmer=0.6, tips=0.0),       # hide: it soaks the light up; its stone flickers
+    "sunward": style(0.85, 0.9, 1.1, 1.2, 1.5, soak=0.14, shimmer=0.5),                    # cloth under gold bands and a stone
+    "shardcrown": style(0.7, 0.8, 1.0, 1.3, 1.0, shimmer=1.0, tips=0.6),                   # crystal fills and shimmers
+    # B
+    "veilwoven": style(0.85, 0.85, 0.65, 1.15, 2.0, soak=0.12, tips=0.3),                   # a veil of threads: they carry it, and are kept from flooding
+    "deepcarapace": style(0.85, 0.85, 1.0, 1.25, 1.0, grain=-1.0, tips=0.8),               # shell: the light between its plates, out along the spurs
+    "cloudrunner": style(0.9, 0.85, 0.9, 1.15, 1.0, soak=0.1, tips=1.0, ripple=0.6),       # feathers: a wave down the rows, out to the tips
+    "tidebreaker": style(0.85, 0.9, 1.0, 1.2, 1.5, soak=0.06, tips=0.8, ripple=0.4, glitter=0.5),  # wet mail and fins
+    "hollowheart": style(0.85, 0.85, 1.0, 1.25, 1.0, soak=0.08, grain=-1.0, tips=0.7),     # bone: the light in the hollows, the heart-stone fills
+    # A
+    "lordscale": style(0.7, 0.85, 1.05, 1.3, 2.0, ripple=0.6),                             # scales: a wave down their rows, the ember seams fill
+    "leviathan": style(0.8, 0.85, 1.05, 1.25, 1.5, soak=0.06, tips=0.9, ripple=0.4),       # deep plate and fins: out along the fins
+    "galewing": style(0.9, 0.85, 1.0, 1.15, 1.0, soak=0.1, tips=1.0, ripple=0.6),          # feathers, as Cloudrunner's, over plate
+    "halo_choir": style(0.8, 0.85, 0.95, 1.3, 2.0, soak=0.08, shimmer=0.5, glitter=0.3),   # ivory and gold: the gold carries it, the halo's stone flickers
+    "dreamsteel": style(0.8, 0.85, 1.0, 1.3, 1.5, shimmer=0.8, tips=0.6),                  # dream steel: plates off the sleeve, stones that flicker
+    # S
+    "sovereign": style(0.7, 0.85, 0.85, 1.25, 2.5, ripple=0.3),                             # the Weave: its threads carry the light well ahead
+    "starfall": style(0.7, 0.85, 1.05, 1.2, 2.0, glitter=0.8),                             # star metal: specks of it catch the light
+    "riftwalker": style(0.85, 0.9, 0.85, 1.2, 1.5, tips=0.8, glitter=0.4),                  # plates that float off the sleeve
+    "nightcourt": style(0.9, 0.85, 0.9, 1.15, 1.0, soak=0.18, tips=0.0),                   # court leather and a half-cloak that hangs: it soaks, nothing flares
+    "signals_echo": style(0.85, 0.85, 1.0, 1.0, 1.0, soak=0.12, shimmer=0.7, tips=0.3),    # the Signal runs through it already: its light flickers, never doubles
 }
 
 
@@ -98,6 +139,8 @@ def cells(corners, tex, accent=(0, 0, 0)):
     w, h = tex.size
     px = tex.load()
     out = []
+    # the arm's own middle: a left arm's bone has the arm a texel to its right, a right arm's a texel to its left
+    axis = 1.0 if sum(c[0][0] for c in corners) > 0 else -1.0
     for q in range(len(corners) // 6):
         six = corners[q * 6:q * 6 + 6]
         a, b, c = six[0], six[1], six[2]
@@ -134,8 +177,11 @@ def cells(corners, tex, accent=(0, 0, 0)):
                 # a line: bright glossy metal (the armour shader's own trims), or the set's accent colour wherever it is painted
                 role = EMIT if emit > 0.25 else TRIM if metal * gloss * smooth(0.35, 0.7, max(alb[:3]) / 255) > 0.3 or near(alb[:3], accent) else base
                 cy = sum(pt[1] for pt in p) / 4 * 16
+                cx, cz = sum(pt[0] for pt in p) / 4 * 16, sum(pt[2] for pt in p) / 4 * 16
+                # how far it stands off the sleeve (the arm is two texels each way from its middle, a sleeve and its cuff two more)
+                off = min(4.0, max(0.0, max(abs(cx - axis), abs(cz)) - 4.0))
                 grid[(i, j)] = len(out)
-                out.append(dict(p=p, n=n, alb=alb, role=role, base=base, q=q, v=cy + 2.0, face=face, lum=max(alb[:3]) / 255,
+                out.append(dict(p=p, n=n, alb=alb, role=role, base=base, q=q, v=cy + 2.0, face=face, lum=max(alb[:3]) / 255, off=off,
                                 ul=j if first_along else i, cols=n2 if first_along else n1))
         # a line is thin: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide one is plate or cloth again.
         inner = [k for (i, j), k in grid.items() if out[k]["role"] == TRIM
@@ -148,13 +194,17 @@ def cells(corners, tex, accent=(0, 0, 0)):
 def light(style, c, t, seed, charge, awake, gains):
     """ArmourLight.light: how lit one cell is. 0 dark, to 1 and a touch over; negative for ink."""
     v, q, ul, cols, role, f = c["v"], c["q"], c["ul"], max(1, c["cols"]), c["role"], c["face"]
+    lead, soak, shimmer = gains["lead"], gains["soak"], gains["shimmer"]
+    # what stands off the arm lights late: the light has to run out along it (to the fist it arrives later; from the hand it grows later)
+    out = c["off"] * 0.8 * gains["tips"]
+    if out > 0:
+        v = v - out if style in FROM_HAND else v + out
     vi = math.floor(v)
     reach = charge * ROWS
     line = role >= TRIM  # the set's own lines: its trims and what glows of itself
-    lead, soak, shimmer = gains[4], gains[5], gains[6]
     here = v < reach + (lead if line else 0.0)  # the lines run ahead of the rest
     region = here  # where the light has been: there a set's cloth may hold a glow
-    g = gains[role]
+    g = (gains["soft"], gains["plate"], gains["trim"], gains["emit"])[role]
     i = 0.0
     if style == "KINETIC":
         # cracks: the set's lines pulse as if about to split, one seam wanders down every face
@@ -291,13 +341,25 @@ def light(style, c, t, seed, charge, awake, gains):
     else:
         if here and (line or (ul + vi) % 3 == 0):
             i = 0.6
-    if i == 0.0 and role == SOFT and soak > 0 and region:
-        return soak * (0.8 + 0.2 * math.sin(t * 0.3 + q))
+    if i == 0.0 and not line and region:
+        # nothing of the motif here: a texel may still catch the light for a moment (mail, rivets), or cloth hold a glow
+        if gains["glitter"] > 0 and hash3(seed, q * 13 + ul, vi * 7 + int(t * 0.5)) > 1.0 - 0.07 * gains["glitter"]:
+            return 0.95 * g
+        if role == SOFT and soak > 0:
+            return soak * (0.8 + 0.2 * math.sin(t * 0.3 + q))
+        return 0.0
     if role == EMIT and i > 0:
         i *= 1.0 - 0.3 * shimmer * hash3(seed, q * 7 + ul, vi + int(t * 0.6))
-    # cloth and plate take the light by their own painting: a bright texel more, a dark one less, so the piece still reads
     if not line and i > 0:
-        i *= 0.5 + 0.65 * c["lum"]
+        # cloth and plate take the light by their own painting, so the piece still reads: its bright texels more (grain +1)
+        # or its dark ones (grain -1: the light sits in the cracks)
+        grain, lum = gains["grain"], c["lum"]
+        i *= 0.5 + 0.65 * (lum * (1 + grain) + (1 - lum) * (1 - grain)) * 0.5
+        # rows of scales or feathers: a wave of shade running down them
+        if gains["ripple"] > 0:
+            i *= 1.0 - 0.35 * gains["ripple"] * (0.5 + 0.5 * math.sin(t * 0.45 - v * 1.4 + q * 0.7))
+    if i > 0 and c["off"] > 0:
+        i *= 1.0 + 0.35 * gains["tips"] * min(c["off"], 3.0) / 3.0  # and what stands off the arm burns a little brighter
     return i * g if i > 0 else i
 
 
@@ -305,7 +367,11 @@ def alpha(c, i):
     """ArmourLight: how much of a cell the light covers. The lines are crisp; cloth and plate are tinted, never painted out."""
     if i < 0:
         return 0.62 * min(1.0, -i)
-    return max(0.0, min(1.0, 0.25 + 0.75 * i if c["role"] >= TRIM else 0.1 + 0.55 * i))
+    return max(0.0, min(1.0, 0.18 + 0.55 * i if c["role"] >= TRIM else 0.62 * i))
+
+
+# The types whose light grows back from the hand (the rest run to the fist).
+FROM_HAND = ("HEAT", "SHADOW", "MIND", "SOUL", "SPIRIT", "FROST")
 
 
 def rgb(x):
