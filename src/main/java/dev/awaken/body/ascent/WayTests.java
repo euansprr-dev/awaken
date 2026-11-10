@@ -69,6 +69,7 @@ final class WayTests {
             // a place wakes: the row points at it, and the Now line carries it
             BlockPos vault = p.blockPosition().offset(310, 0, 0);
             p.setData(WayUp.MEMORY, WayUp.memory(p).withPlace(WayUp.Rung.ROPE, vault));
+            p.setOnGround(true);
             WayUp.read(p, now);
             h.assertTrue(WayUp.memory(p).told(WayUp.Rung.ROPE), "the vault that woke was told");
             if (p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD) {

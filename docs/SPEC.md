@@ -21684,10 +21684,16 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   rope and without it. For the rung that waits a place is found with `RuinLocator.near` (the structure sets' own maths, 12
   terrain samples a call at most, nothing loaded): a vault within 2,000 (else the spawn vault), a Tether Spire within
   1,500, a sky platform within 3,000 then 8,000. A ruin the player has already found (`AboveData`) is taken first when it
-  is no more than twice as far as the nearest. *Differs:* found ruins, not the Saved for later book.
+  is no more than twice as far as the nearest. A candidate inside the city's reserve (`terrain.api.CityBasin.reserved`)
+  is skipped: the locator's placement maths names chunks there, but no ruin forms in them (the second built tour was sent
+  to a vault 110 blocks off inside Carillon's basin). *Differs:* found ruins, not the Saved for later book.
 - **The record** is its own attachment, `awaken:way_up` (`WayMemory`, schema 1: places, told, done, owed, the Gauntlet's
   gate), not `AscentMemory` schema 4, so the ladder's record and the §62 branch's edits to it never meet. Kept through
   death; synced to its owner as `ascent_way` when it changes.
+- **When:** a place is told twenty seconds after its rung began to wait and with the player on the ground, so the rank
+  fight's own messages come first; then as a CRITICAL line, because the director files a paced line that has waited
+  45 s and this one must be seen (neither built tour's shots caught it while it was IMPORTANT). The gate at a crown's
+  foot is said the same way.
 - **Told:** one toast ("A vault has lit up for the chain you're carrying. It's 310 blocks east of here."; "A sky platform
   has lit up for you. It's … You climb its rings by rope."), `NowHooks` for ten minutes with its needle (priority 60), and
   a thin beam of the rope's own light on the place, in the rank's colour, drawn from 24 to 1,400 blocks
@@ -21720,7 +21726,8 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   100 ticks, which is an old world's first load). Done is read by the server: the rope's mastery up by two throws or the
   Vow kept, any Leaper mastery, a GLIDE, a SOAR, any Sovereign mastery.
 - **The Lesson** (`body.ascent.client.Lesson`, layer `ascent_lesson`). Kinds: the vault's mast, the chasm's edge, the first
-  flight, the sky's strip, the form, and the three owed ones (offered when free for 12 s, again a minute later). The cap
+  flight, the sky's strip, the form, and the three owed ones (offered when free for 12 s, again a minute later, and never
+  within twenty seconds of a rung being handed down, so one never sits on another's gift). The cap
   is `Kit.cap` with the player's binding and up to seven words on a dark plate, pinned by projecting the target through
   the camera, with a stem and a breathing ring, or held at the edge with an arrow; with no target it sits under the
   crosshair (the form's low, over the gold line). The prompt leaves when the key is pressed (the rope's key held two

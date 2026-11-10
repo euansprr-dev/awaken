@@ -86,6 +86,12 @@ public final class WayUp {
     static final int EVERY = 100, RAISED_FOR = 20 * 60 * 10;
     /** How far a place is looked for: a vault, a spire, a sky platform (then the platform's search widens once). */
     static final int VAULT_REACH = 2000, SPIRE_REACH = 1500, SKY_REACH = 3000, SKY_FAR = 8000;
+    /**
+     * A place is told this long after its rung began to wait, so the rank fight's own messages (the rank, the rival's
+     * lines) have had their say first. Then it is told at once: the director files a paced line that has waited 45 s, and
+     * this one must be seen.
+     */
+    static final int TELL_AFTER = 20 * 20;
     /** After a core's gift a fall is a soft landing for this long (the first flight may take a few tries). */
     static final int SOFT_FALL = 20 * 60;
     /** The Tasks thread and the Now ids the row stands for. */
@@ -96,6 +102,7 @@ public final class WayUp {
 
     private static final Map<UUID, Sent> SENT = new HashMap<>();
     private static final Map<UUID, long[]> WOKE_AT = new HashMap<>();
+    private static final Map<UUID, long[]> WAITING_SINCE = new HashMap<>();
     private static final Map<UUID, Long> SOFT_UNTIL = new HashMap<>();
     /** Mastery points seen last (rope, leap, form): a rise is the move done once. */
     private static final Map<UUID, int[]> POINTS = new HashMap<>();
@@ -124,6 +131,7 @@ public final class WayUp {
     static void forget(UUID id) {
         SENT.remove(id);
         WOKE_AT.remove(id);
+        WAITING_SINCE.remove(id);
         SOFT_UNTIL.remove(id);
         POINTS.remove(id);
     }
@@ -159,11 +167,19 @@ public final class WayUp {
         long now = AscentServer.now(p);
         if ((now + (p.getUUID().hashCode() & 63)) % 5 == 0) watch(p);
         if ((now + (p.getUUID().hashCode() & 127)) % EVERY != 0) return;
-        read(p, now);
+        read(p, now, false);
     }
 
-    /** Every five seconds: the form at Sovereign rank, the place for the rung that waits, the gate still standing, the sync. */
+    /** The road read now, a woken place told at once (the dev command, tests). */
     static void read(ServerPlayer p, long now) {
+        read(p, now, true);
+    }
+
+    /**
+     * Every five seconds: the form at Sovereign rank, the place for the rung that waits, the gate still standing, the
+     * sync. {@code atOnce}: a place found is told now, not after {@link #TELL_AFTER}.
+     */
+    static void read(ServerPlayer p, long now, boolean atOnce) {
         if (!on(p)) return;
         // the last rank fight pays the last rung (SPEC §63.2): the rank is the fight's win
         if (Progression.rank(p) == Rank.SOVEREIGN && !Ascent.has(p, Ascent.Tier.SOVEREIGN)) Sovereign.give(p);
@@ -181,7 +197,9 @@ public final class WayUp {
                 BlockPos at = find(p, level, r);
                 if (at != null) m = m.withPlace(r, at);
             }
-            if (m.place(r) != null && !m.told(r)) {
+            long[] since = WAITING_SINCE.computeIfAbsent(p.getUUID(), k -> new long[Rung.VALUES.length]);
+            if (since[r.ordinal()] == 0) since[r.ordinal()] = now;
+            if (m.place(r) != null && !m.told(r) && (atOnce || now - since[r.ordinal()] >= TELL_AFTER) && p.onGround()) {
                 m = m.withTold(r, true);
                 woke = r.ordinal();
                 WOKE_AT.computeIfAbsent(p.getUUID(), k -> new long[Rung.VALUES.length])[r.ordinal()] = now;
@@ -271,9 +289,12 @@ public final class WayUp {
     }
 
     private static @Nullable BlockPos nearest(ServerPlayer p, ServerLevel level, BlockPos me, int reach, List<RuinKind> kinds) {
-        List<RuinLocator.Found> found = RuinLocator.near(level, me, reach, kinds, dev.awaken.above.Above.data(p), false, 6, 12);
+        List<RuinLocator.Found> found = RuinLocator.near(level, me, reach, kinds, dev.awaken.above.Above.data(p), false, 10, 14);
         RuinLocator.Found best = null;
         for (RuinLocator.Found f : found) {
+            // the city keeps its basin: the placement maths names chunks there, but no ruin ever forms in them
+            // (PrecursorRuinStructure.findGenerationPoint); the built tour was sent to a vault that does not exist
+            if (dev.awaken.terrain.api.CityBasin.reserved(f.pos().getX(), f.pos().getZ())) continue;
             // one already met comes first when it is no more than twice as far as the nearest
             if (best == null) best = f;
             else if (f.discovered() && !best.discovered() && f.distance() <= best.distance() * 2 + 64) best = f;
@@ -345,7 +366,7 @@ public final class WayUp {
             default -> null;
         };
         // the leap's first row is told by the Tasks page alone: there is nothing to see light up yet
-        if (line != null) Signal.toast(p, Component.literal(line), dev.awaken.core.api.Notices.Tier.IMPORTANT, "ascent_way");
+        if (line != null) Signal.toast(p, Component.literal(line), dev.awaken.core.api.Notices.Tier.CRITICAL, "ascent_way");
         Progression.markNewThing(p, "way " + r.name().toLowerCase(java.util.Locale.ROOT));
         DirectorLog.log(p, "ascent", "the way up: " + r + " wakes at " + at.toShortString() + " (" + where + ")");
         dev.awaken.Awaken.LOG.info("[ascent] the way up: {} wakes for {} at {} ({})", r, p.getPlainTextName(), at.toShortString(), where);

@@ -41,12 +41,13 @@ wait 400
 key dismiss
 wait 10
 screen close
-cmd awaken ascent way
-# the toast is paced by the director: two looks at it, toward the vault (its beam over the roofs)
 cmd tp @s ~ ~ ~ facing 27 140 -341
-wait 120
+wait 10
+# the place is told at once by the command (in play: twenty seconds after the rank, on the ground)
+cmd awaken ascent way
+wait 30
 shotnow way_01_vault_told
-wait 240
+wait 200
 shotnow way_02_vault_beam
 screen band tasks
 wait 30
@@ -99,14 +100,17 @@ shotnow way_05_tasks_leap_row
 screen close
 # ---- a Tether Spire climbed by rope: the gate opens at its foot ----
 cmd awaken ascent spire goto
-wait 100
-camera back
+# no standing about: the crown answers a climb that is most of the last twenty seconds
+wait 30
 cmd awaken ascent pilot run spire
-wait 500
+wait 120
+camera back
 shotnow way_06_climbing
-wait 400
+wait 180
 camera first
 shotnow way_07_crown_gate_told
+wait 60
+shotnow way_07b_crown
 cmd awaken ascent pilot stop
 screen band tasks
 wait 30
@@ -135,8 +139,9 @@ wait 400
 key dismiss
 wait 10
 screen close
+camera first
 cmd awaken ascent way
-wait 40
+wait 30
 shotnow way_13_sky_told
 screen band tasks
 wait 30

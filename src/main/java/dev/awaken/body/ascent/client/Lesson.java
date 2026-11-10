@@ -148,6 +148,11 @@ final class Lesson {
         return k.isUnbound() ? "Not set" : k.getTranslatedKeyMessage().getString();
     }
 
+    /** A lesson owed is not offered for this long (a rung has just been handed down with another's gift). */
+    static void deferOwed(int ticks) {
+        owedNext = Math.max(owedNext, clock + ticks);
+    }
+
     static void reset() {
         endGhost();
         kind = null;
@@ -228,7 +233,7 @@ final class Lesson {
      */
     private static void offerOwed(Minecraft mc, LocalPlayer p) {
         if (clock < owedNext || cardAge >= 0 || WayClient.owed == 0) return;
-        if (mc.gui.screen() != null || !p.onGround() || AscentMoves.active() || AscentScene.running() || VowScene.stage >= 0
+        if (mc.gui.screen() != null || !p.onGround() || AscentMoves.active() || AscentScene.running() || AscentScene.pending != 0 || VowScene.stage >= 0
                 || dev.awaken.core.api.Notices.client().quiet()) return;
         owedNext = clock + OWED_REST;
         if (WayClient.isOwed(WayUp.Rung.ROPE)) begin(Kind.ROPE_OWED, null, null);

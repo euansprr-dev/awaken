@@ -63,6 +63,8 @@ public final class WayClient {
         event.register(WayPayloads.Way.TYPE, (msg, ctx) -> {
             told = msg.told();
             done = msg.done();
+            // a rung handed down arrives with another's gift: its own lesson waits a quarter minute and more
+            if ((msg.owed() & ~owed) != 0) Lesson.deferOwed(400);
             owed = msg.owed();
             System.arraycopy(msg.places(), 0, PLACES, 0, Math.min(PLACES.length, msg.places().length));
             gateAt = msg.gateAt();
