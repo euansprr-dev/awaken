@@ -1,0 +1,115 @@
+[17:04:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL: on DELL U2725QE, fullscreen
+[17:04:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL fullscreen
+[17:04:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=DELL_U2725QE fb=3840x2160 window=1920x1080 rd=16 sd=10 heapMax=8192MB gc=ZGC Minor Cycles,ZGC Minor Pauses,ZGC Major Cycles,ZGC Major Pauses mods=entity_model_features,minecraft,entity_texture_features,ambientsounds,mousetweaks,jade,shouldersurfing,creativecore,lithostitched,lithium,apollib,trender,notenoughanimations,controlling,neoforge,awaken,searchables,dynamic_fps_common,entityculling,immersivevfx,midnightlib,immediatelyfast,architectury,appleskin,ferritecore,conditional_mixin,transition,dynamic_fps,sodium,moreculling,player_animation_library,cameraoverhaul,skinlayers3d,cloth_config,sound_physics_remastered,mezz_config,jei,bendable_cuboids,tectonic,smooth_steps
+[17:04:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on: gpu timing on
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [look] ImmersiveVFX asleep
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [look] CINEMATIC: Lens CINEMATIC, Distant Horizons not installed, Iris shaders not installed
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look CINEMATIC: applied
+[17:04:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lookswitch cinematic
+[17:05:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:05:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:05:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_raw_still 12
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_raw_still frames=925 avg_fps=76.9 p50=12.91ms p95=15.34ms p99=16.71ms max=25.34ms tick_p95=7.25ms heap=5498/8192MB fb=3840x2160 load=14.5 occluded=false minimized=false
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_raw_still samples=926 world_p50=11.38ms world_p95=11.72ms world_p99=12.00ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_raw_still: air_raw_still samples=926 world_p50=11.38ms world_p95=11.72ms world_p99=12.00ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_raw_still
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:05:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_raw_turn 12
+[17:06:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_raw_turn frames=927 avg_fps=77.0 p50=12.84ms p95=15.57ms p99=16.91ms max=61.50ms tick_p95=7.95ms heap=6526/8192MB fb=3840x2160 load=12.2 occluded=false minimized=false
+[17:06:04] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_raw_turn samples=928 world_p50=11.31ms world_p95=11.89ms world_p99=12.14ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:06:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_raw_turn: air_raw_turn samples=928 world_p50=11.31ms world_p95=11.89ms world_p99=12.14ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:06:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_raw_turn
+[17:06:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:06:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:06:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_norays_raw_still 12
+[17:06:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_norays_raw_still frames=955 avg_fps=79.3 p50=12.51ms p95=15.13ms p99=16.07ms max=30.65ms tick_p95=6.40ms heap=2492/8192MB fb=3840x2160 load=10.4 occluded=false minimized=false
+[17:06:22] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_norays_raw_still samples=956 world_p50=11.02ms world_p95=11.25ms world_p99=11.55ms upscale_p50=0.43ms upscale_p99=0.56ms
+[17:06:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_norays_raw_still: air_norays_raw_still samples=956 world_p50=11.02ms world_p95=11.25ms world_p99=11.55ms upscale_p50=0.43ms upscale_p99=0.56ms
+[17:06:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_norays_raw_still
+[17:06:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:06:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:06:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_nosunpass_raw_still 12
+[17:06:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_nosunpass_raw_still frames=978 avg_fps=81.2 p50=12.21ms p95=14.52ms p99=15.64ms max=19.12ms tick_p95=7.47ms heap=4270/8192MB fb=3840x2160 load=8.1 occluded=false minimized=false
+[17:06:42] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_nosunpass_raw_still samples=979 world_p50=10.74ms world_p95=10.95ms world_p99=11.32ms upscale_p50=0.43ms upscale_p99=0.56ms
+[17:06:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_nosunpass_raw_still: air_nosunpass_raw_still samples=979 world_p50=10.74ms world_p95=10.95ms world_p99=11.32ms upscale_p50=0.43ms upscale_p99=0.56ms
+[17:06:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_nosunpass_raw_still
+[17:06:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:06:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:06:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_raw_still 12
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_raw_still frames=1049 avg_fps=87.1 p50=11.39ms p95=13.66ms p99=14.78ms max=17.19ms tick_p95=6.30ms heap=5884/8192MB fb=3840x2160 load=6.4 occluded=false minimized=false
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu cine_raw_still samples=1050 world_p50=9.89ms world_p95=10.18ms world_p99=10.45ms upscale_p50=0.43ms upscale_p99=0.54ms
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_raw_still: cine_raw_still samples=1050 world_p50=9.89ms world_p95=10.18ms world_p99=10.45ms upscale_p50=0.43ms upscale_p99=0.54ms
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_raw_still
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:07:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_raw_turn 12
+[17:07:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_raw_turn frames=1046 avg_fps=87.0 p50=11.38ms p95=14.27ms p99=15.53ms max=20.87ms tick_p95=5.60ms heap=6954/8192MB fb=3840x2160 load=5.6 occluded=false minimized=false
+[17:07:12] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu cine_raw_turn samples=1047 world_p50=9.91ms world_p95=10.77ms world_p99=11.05ms upscale_p50=0.43ms upscale_p99=0.55ms
+[17:07:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_raw_turn: cine_raw_turn samples=1047 world_p50=9.91ms world_p95=10.77ms world_p99=11.05ms upscale_p50=0.43ms upscale_p99=0.55ms
+[17:07:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_raw_turn
+[17:07:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:07:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:07:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_temporal_raw_still 12
+[17:07:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_temporal_raw_still frames=945 avg_fps=78.5 p50=12.62ms p95=15.68ms p99=18.57ms max=35.55ms tick_p95=16.89ms heap=5702/8192MB fb=3840x2160 load=5.2 occluded=false minimized=false
+[17:07:30] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_temporal_raw_still samples=946 world_p50=11.11ms world_p95=11.46ms world_p99=11.65ms upscale_p50=0.43ms upscale_p99=0.55ms
+[17:07:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_temporal_raw_still: air_temporal_raw_still samples=946 world_p50=11.11ms world_p95=11.46ms world_p99=11.65ms upscale_p50=0.43ms upscale_p99=0.55ms
+[17:07:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_temporal_raw_still
+[17:07:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:07:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:07:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_played_still 15
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_played_still frames=894 avg_fps=59.5 p50=16.48ms p95=19.25ms p99=20.38ms max=21.89ms tick_p95=7.10ms heap=7298/8192MB fb=3840x2160 load=4.5 occluded=false minimized=false
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_played_still samples=895 world_p50=10.81ms world_p95=11.14ms world_p99=11.36ms upscale_p50=0.42ms upscale_p99=0.57ms
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_played_still: air_played_still samples=895 world_p50=10.81ms world_p95=11.14ms world_p99=11.36ms upscale_p50=0.42ms upscale_p99=0.57ms
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_played_still
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:07:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_played_turn 12
+[17:08:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_played_turn frames=719 avg_fps=59.7 p50=16.31ms p95=19.42ms p99=21.19ms max=35.75ms tick_p95=6.00ms heap=2070/8192MB fb=3840x2160 load=4.4 occluded=false minimized=false
+[17:08:04] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_played_turn samples=720 world_p50=10.84ms world_p95=11.42ms world_p99=11.58ms upscale_p50=0.42ms upscale_p99=0.54ms
+[17:08:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_played_turn: air_played_turn samples=720 world_p50=10.84ms world_p95=11.42ms world_p99=11.58ms upscale_p50=0.42ms upscale_p99=0.54ms
+[17:08:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_played_turn
+[17:08:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 0 -30
+[17:08:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:08:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:08:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_night_raw_still 12
+[17:08:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_night_raw_still frames=883 avg_fps=73.4 p50=13.53ms p95=16.47ms p99=18.57ms max=29.04ms tick_p95=9.32ms heap=1836/8192MB fb=3840x2160 load=4.0 occluded=false minimized=false
+[17:08:28] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_night_raw_still samples=884 world_p50=12.06ms world_p95=12.28ms world_p99=12.42ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:08:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_night_raw_still: air_night_raw_still samples=884 world_p50=12.06ms world_p95=12.28ms world_p99=12.42ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:08:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_night_raw_still
+[17:08:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[17:08:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:08:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:08:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_newland 20
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_newland frames=1513 avg_fps=75.5 p50=12.94ms p95=18.02ms p99=23.45ms max=48.30ms tick_p95=13.84ms heap=4946/8192MB fb=3840x2160 load=4.2 occluded=false minimized=false
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_fly_newland samples=1514 world_p50=11.47ms world_p95=12.12ms world_p99=12.43ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_newland: air_fly_newland samples=1514 world_p50=11.47ms world_p95=12.12ms world_p99=12.43ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_newland
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:08:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_back_raw 20
+[17:09:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_back_raw frames=1518 avg_fps=75.8 p50=13.05ms p95=17.27ms p99=21.94ms max=69.14ms tick_p95=11.98ms heap=2414/8192MB fb=3840x2160 load=4.3 occluded=false minimized=false
+[17:09:18] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_fly_back_raw samples=1519 world_p50=11.58ms world_p95=12.28ms world_p99=12.55ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:09:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_back_raw: air_fly_back_raw samples=1519 world_p50=11.58ms world_p95=12.28ms world_p99=12.55ms upscale_p50=0.44ms upscale_p99=0.58ms
+[17:09:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_back_raw
+[17:09:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[17:09:23] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:09:23] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:09:23] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_played 20
+[17:09:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf air_fly_played frames=1192 avg_fps=59.5 p50=16.40ms p95=20.23ms p99=23.87ms max=28.42ms tick_p95=9.04ms heap=2136/8192MB fb=3840x2160 load=4.3 occluded=false minimized=false
+[17:09:43] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu air_fly_played samples=1193 world_p50=11.07ms world_p95=11.84ms world_p99=12.11ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:09:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_played: air_fly_played samples=1193 world_p50=11.07ms world_p95=11.84ms world_p99=12.11ms upscale_p50=0.44ms upscale_p99=0.57ms
+[17:09:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu air_fly_played
+[17:09:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[17:09:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[17:09:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[17:09:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_fly_back_raw 20
+[17:10:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cine_fly_back_raw frames=1782 avg_fps=88.9 p50=11.20ms p95=14.58ms p99=17.93ms max=39.75ms tick_p95=14.81ms heap=2440/8192MB fb=3840x2160 load=4.1 occluded=false minimized=false
+[17:10:08] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu cine_fly_back_raw samples=1783 world_p50=9.75ms world_p95=10.39ms world_p99=10.72ms upscale_p50=0.43ms upscale_p99=0.54ms
+[17:10:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_fly_back_raw: cine_fly_back_raw samples=1783 world_p50=9.75ms world_p95=10.39ms world_p99=10.72ms upscale_p50=0.43ms upscale_p99=0.54ms
+[17:10:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu cine_fly_back_raw
+[17:10:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels config: scale 1.00 (4K 0.75), SHARP, ready
+[17:10:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels config

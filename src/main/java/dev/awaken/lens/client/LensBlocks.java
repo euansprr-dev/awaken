@@ -41,8 +41,11 @@ final class LensBlocks {
     /** Within this many blocks of the camera (on x and z) every section has been read once the window has settled. */
     static final float TRUSTED = 46f;
     static final int UNKNOWN = 0xFFFFFFFF, CELLS = CHUNKS * CHUNKS * SLOTS * 256;
-    // sections read a tick when the window moves, sections looked at again a tick for changes, chunks uploaded a tick
-    private static final int READS_PER_TICK = 14, RESCANS_PER_TICK = 6, UPLOADS_PER_TICK = 6, NEAR_EVERY = 10;
+    // sections read a tick when the window moves, sections looked at again a tick for changes, chunks uploaded a tick,
+    // and of the 27 sections round the camera those looked at again a tick
+    private static final int READS_PER_TICK = 14, RESCANS_PER_TICK = 6, UPLOADS_PER_TICK = 6, NEAR_PER_TICK = 3;
+    /** What a tick may spend reading sections before it leaves the rest for the next one. */
+    private static final long BUDGET_NANOS = 500_000L;
     private static final byte OPEN = 0, SOLID = 1, LEAVES = 2, LOW = 3, UNSET = -1;
 
     final Texture texture = new Texture();
@@ -58,7 +61,7 @@ final class LensBlocks {
     private final int[] order = ringOrder();
     private byte[] kinds = new byte[0];
     private int minSectionY, centreX, centreZ;
-    private int rescanAt, nearIn;
+    private int rescanAt, nearAt;
     private boolean started;
 
     LensBlocks() {
@@ -114,14 +117,19 @@ final class LensBlocks {
             }
         }
         started = true;
+        // a tick's reading has a time limit as well as a count (a tick that took 2 ms and more here was a late frame in
+        // flight); what waits is read on the next tick
+        long until = System.nanoTime() + BUDGET_NANOS;
         // read what isn't known yet, nearest the camera first
         int reads = 0;
+        scan:
         for (int i = 0; i < order.length && reads < READS_PER_TICK; i++) {
             int cx = ccx + (short) (order[i] >> 16), cz = ccz + (short) order[i], slot = (cz & 7) * CHUNKS + (cx & 7);
             LevelChunk chunk = null;
             for (int k = 0; k < SLOTS; k++) {
                 int at = slot * SLOTS + k;
                 if (known[at]) continue;
+                if (reads > 0 && System.nanoTime() > until) break scan;
                 if (chunk == null) {
                     if (level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) instanceof LevelChunk c) chunk = c;
                     else break;
@@ -129,20 +137,17 @@ final class LensBlocks {
                 if (read(level, chunk, slot, k)) reads++;
             }
         }
-        // look again at what is known, for blocks placed and broken: a few sections in turn, and those round the camera
-        // often (a change near you shows within half a second, one farther off within a few)
-        for (int i = 0; i < RESCANS_PER_TICK; i++) {
+        // look again at what is known, for blocks placed and broken. The 27 sections round the camera in turn, three a
+        // tick, so each is looked at about twice a second and no tick takes them all (a change near you shows within
+        // half a second); then a few of the rest in turn (one farther off shows within a few seconds)
+        for (int i = 0; i < NEAR_PER_TICK; i++) {
+            nearAt = (nearAt + 1) % 27;
+            int slot = ((ccz + nearAt / 9 - 1) & 7) * CHUNKS + ((ccx + nearAt / 3 % 3 - 1) & 7);
+            rescan(level, slot, ((camY >> 4) + nearAt % 3 - 1) & 7);
+        }
+        for (int i = 0; i < RESCANS_PER_TICK && System.nanoTime() < until; i++) {
             rescanAt = (rescanAt + 1) % (CHUNKS * CHUNKS * SLOTS);
             rescan(level, rescanAt / SLOTS, rescanAt % SLOTS);
-        }
-        if (--nearIn <= 0) {
-            nearIn = NEAR_EVERY;
-            for (int dz = -1; dz <= 1; dz++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    int slot = ((ccz + dz) & 7) * CHUNKS + ((ccx + dx) & 7);
-                    for (int sy = (camY >> 4) - 1; sy <= (camY >> 4) + 1; sy++) rescan(level, slot, sy & 7);
-                }
-            }
         }
         upload();
     }

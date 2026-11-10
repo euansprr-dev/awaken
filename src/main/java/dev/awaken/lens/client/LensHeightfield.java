@@ -61,7 +61,9 @@ final class LensHeightfield {
     // a read's sections that may hold a block the heightmaps skip, and one column's tops (LensHeights)
     private boolean[] has = new boolean[0];
     private final int[] col = new int[2];
-    private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64, nextRow;
+    /** What a tick may spend reading chunks before it leaves the rest for the next one. */
+    private static final long BUDGET_NANOS = 500_000L;
+    private int centreX = Integer.MIN_VALUE, centreZ, rescan, near, clock, maxTop = -64, nextRow;
     private boolean maxDirty;
     private ClientLevel level;
 
@@ -123,21 +125,28 @@ final class LensHeightfield {
             dirtyCount = dirty.length;
         }
         if (camChunkX != centreX || camChunkZ != centreZ) recentre(camChunkX, camChunkZ);
+        // a tick's reading has a time limit as well as a count (Steady Light, SPEC §22: a tick that took 2 to 5 ms here
+        // was a late frame in flight); what waits is read on the next tick, nearest first as ever
+        long until = System.nanoTime() + BUDGET_NANOS;
         int reads = 0;
         // waiting slots, nearest first
         for (int i = 0; i < ORDER.length && reads < READS_PER_TICK; i++) {
             int slot = slotAt(ORDER[i]);
             if (pending[slot]) {
+                if (reads > 0 && System.nanoTime() > until) break;
                 pending[slot] = false;
                 if (read(slot)) reads++;
             }
         }
-        // the camera's neighbourhood often (blocks broken and placed nearby), the rest of the window in turn
-        if (++clock % NEAR_EVERY == 0) {
-            int nearSlots = (2 * NEAR_RADIUS + 1) * (2 * NEAR_RADIUS + 1);
-            for (int i = 0; i < nearSlots; i++) read(slotAt(ORDER[i]));
+        // the camera's neighbourhood often (blocks broken and placed nearby): its 25 chunks in turn, a few a tick, so
+        // each is still read every NEAR_EVERY ticks and no tick reads them all; then the rest of the window in turn
+        int nearSlots = (2 * NEAR_RADIUS + 1) * (2 * NEAR_RADIUS + 1), share = (nearSlots + NEAR_EVERY - 1) / NEAR_EVERY;
+        for (int i = 0; i < share; i++) {
+            near = (near + 1) % nearSlots;
+            read(slotAt(ORDER[near]));
         }
-        for (int n = 0; n < RESCANS_PER_TICK; n++) {
+        clock++;
+        for (int n = 0; n < RESCANS_PER_TICK && System.nanoTime() < until; n++) {
             rescan = (rescan + 1) % ORDER.length;
             read(slotAt(ORDER[rescan]));
         }

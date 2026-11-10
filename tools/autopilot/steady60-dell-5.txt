@@ -1,0 +1,126 @@
+# Steady Light on the Dell, third pass (SPEC §22): the Air with solid clouds, the night sky, the wisps and the sun's
+# rays, raw (vsync off, no cap) and as Euan plays (vsync, 60 cap), standing, turning, by night and flying; with the lit
+# air off, the Sun Pass off and the Air off for what each costs.
+# tools/steady60-tour.sh tools/autopilot/steady60-dell-5.txt dell-7
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch cinematic
+wait 1200
+lens cost
+pixels gpu reset
+perf air_raw_still 12
+pixels gpu air_raw_still
+lens cost
+turn 1.5 240
+pixels gpu reset
+perf air_raw_turn 12
+pixels gpu air_raw_turn
+shot d1_air_morning
+lens rays off
+wait 80
+pixels gpu reset
+perf air_norays_raw_still 12
+pixels gpu air_norays_raw_still
+lens rays setting
+wait 40
+lens sunpass off
+wait 80
+pixels gpu reset
+perf air_nosunpass_raw_still 12
+pixels gpu air_nosunpass_raw_still
+lens sunpass setting
+lens air off
+wait 80
+pixels gpu reset
+perf cine_raw_still 12
+pixels gpu cine_raw_still
+turn 1.5 240
+pixels gpu reset
+perf cine_raw_turn 12
+pixels gpu cine_raw_turn
+lens air setting
+lens temporal on
+wait 80
+pixels gpu reset
+perf air_temporal_raw_still 12
+pixels gpu air_temporal_raw_still
+lens temporal setting
+opt vsync 1
+opt maxFps 60
+wait 60
+pixels gpu reset
+perf air_played_still 15
+pixels gpu air_played_still
+lens cost
+turn 1.5 240
+pixels gpu reset
+perf air_played_turn 12
+pixels gpu air_played_turn
+# ---- flights: out over new land, back over it, then as played
+opt vsync 0
+opt maxFps 260
+cmd time set 18000
+look 0 -30
+wait 200
+pixels gpu reset
+perf air_night_raw_still 12
+pixels gpu air_night_raw_still
+shot d3_air_night
+cmd time set 3000
+wait 100
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+glide 0.8 0 0 400
+lens cost
+pixels gpu reset
+perf air_fly_newland 20
+pixels gpu air_fly_newland
+lens cost
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf air_fly_back_raw 20
+pixels gpu air_fly_back_raw
+lens cost
+shot d2_air_flight
+opt vsync 1
+opt maxFps 60
+look -90 12
+wait 40
+glide 0.8 0 0 400
+pixels gpu reset
+perf air_fly_played 20
+pixels gpu air_fly_played
+lens cost
+opt vsync 0
+opt maxFps 260
+lens air off
+look 90 12
+wait 40
+glide -0.8 0 0 400
+pixels gpu reset
+perf cine_fly_back_raw 20
+pixels gpu cine_fly_back_raw
+lens air setting
+pixels config
+quit

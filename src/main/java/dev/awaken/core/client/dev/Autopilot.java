@@ -613,6 +613,10 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().equals("cost")) {
+                    Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
+                    return true;
+                }
                 if (arg.trim().startsWith("rays")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.rays(arg.trim().substring(4)));
                     waitTicks = 20;

@@ -90,6 +90,30 @@ public final class LensClient {
         return "rays " + (forcedRays != null ? forcedRays : "on with the Sun Pass") + (litAir != null ? ", " + litAir.report() : "");
     }
 
+    // what Lens's own tick work costs the render thread (the heightfield, the block map, the lit air's hand-over): the
+    // sum, the worst and the count since the last report
+    private static final long[] costSum = new long[3], costMax = new long[3];
+    private static int costTicks;
+
+    private static void cost(int what, long nanos) {
+        costSum[what] += nanos;
+        costMax[what] = Math.max(costMax[what], nanos);
+        if (what == 0) costTicks++;
+    }
+
+    /** Autopilot {@code lens cost}: the tick work's mean and worst time since the last call, and starts over. */
+    public static String cost() {
+        int n = Math.max(1, costTicks);
+        String out = String.format(java.util.Locale.ROOT,
+                "tick cost over %d ticks, mean/worst ms: heightfield %.3f/%.2f, block map %.3f/%.2f, lit air %.3f/%.2f%s", costTicks,
+                costSum[0] / 1.0e6 / n, costMax[0] / 1.0e6, costSum[1] / 1.0e6 / n, costMax[1] / 1.0e6, costSum[2] / 1.0e6 / n, costMax[2] / 1.0e6,
+                litAir != null ? "; " + litAir.report() : "");
+        java.util.Arrays.fill(costSum, 0L);
+        java.util.Arrays.fill(costMax, 0L);
+        costTicks = 0;
+        return out;
+    }
+
     /** How much of the sun reaches a point by the lit air, 0..1; -1 where it has no answer (LensParticles' motes). */
     static float litAir(double x, double y, double z) {
         return rays && litAir != null ? litAir.at(x, y, z) : -1f;
@@ -315,14 +339,20 @@ public final class LensClient {
         sunHere = mc.level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD;
         if (lit && sunHere) {
             var at = mc.gameRenderer.mainCamera().blockPosition();
+            long t0 = System.nanoTime();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
+            long t1 = System.nanoTime();
             if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
+            cost(0, t1 - t0);
+            cost(1, System.nanoTime() - t1);
         }
         rays = lit && sunHere && sunPass && air && (forcedRays != null ? forcedRays : true) && blocks != null && litAir != null;
         if (rays) {
             var at = mc.gameRenderer.mainCamera().blockPosition();
+            long t0 = System.nanoTime();
             litAir.tick(blocks, heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y, moonLight ? -sunDir.z : sunDir.z,
                     at.getX(), at.getZ());
+            cost(2, System.nanoTime() - t0);
         } else if (litAir != null) {
             litAir.forget();
         }

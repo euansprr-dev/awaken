@@ -6192,12 +6192,33 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from
     the sun; fainter with distance (`exp(-1.9 r)`). The prefilter's sky mask under the Air is the open sky whatever
     its colour, cut whole by Lens's clouds. Composite strength 0.95 of the look's shafts (0.35 without the Air).
-- **Measured** (the Dell, his settings, a copy of his world, 10 Nov): the game alone 2.8 ms of GPU time, Cinematic
-  before 8.9, with all of the above 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays
-  (vsync, 60 cap) 98.6% of frames on time standing, 98.9% turning, 95.2% flying. The ImmersiveVFX pairs:
-  https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`, `tools/steady60-tour.sh`.
-- **Not built yet**: the frame record and the governor (the flying target is 98%), Far Sight off by default on these
-  tiers, the Air on Swift (it has no view direction there), ground mist, the Look page rows.
+- **Lens's own tick work** (the heightfield, the block map, the lit air's hand-over; autopilot `lens cost`): each has a
+  time limit of 0.5 ms a tick on top of its counts (what waits is read on the next tick, nearest first), and the
+  re-reads of the terrain round the camera go in turn, a few a tick (the heightfield's 25 chunks three a tick, the
+  block map's 27 sections three a tick), where they went all at once every 10 ticks: those ticks took 2 to 5 ms.
+  Measured in flight after: heightfield 0.15 to 0.2 ms a tick (worst 1 to 2), block map 0.3 (worst under 1), lit air
+  0.02; the worker's sweep 2.5 to 8.5 ms, its upload 0.06 to 0.5 ms.
+- **Measured** (the Dell, his settings, a copy of his world, 10 Nov; data in `docs/perf/steady60/data/`).
+  - Quiet Mac, the first pass (dell-6): the game alone 2.8 ms of GPU time, Cinematic before 8.9, the Air and the Sun
+    Pass 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays (vsync, 60 cap) 98.6% of
+    frames on time standing, 98.9% turning, 95.2% flying ("on time": the gap to the next frame rounds to exactly two
+    refreshes of the 120 Hz screen).
+  - This pass, on a Mac busy with other sessions (dell-7 to dell-9; the same runs put Cinematic-before at 9.9 to 10.7,
+    so every figure is about a tenth high): all of the above 11.3 to 11.9 standing (71 to 77 fps uncapped), which is 1.0
+    to 1.5 ms over Cinematic-before in the same run (2.3 in the first pass: the light buffer is 960x540 again and the
+    lit air's sure answers save the block walks they cost); 12.0 to 12.1 at night looking up; the lit air off changes
+    nothing measurable, the Sun Pass off saves 0.2 to 0.6. As he plays: 99.1 to 99.9% on time standing, 96.4 to 98.5%
+    turning, 92.2 to 93.6% flying.
+  - Flying is not the look's (fly-1: the same route back and forth over loaded land, as he plays): the Air 92.2 to
+    95.6% on time over four legs, the Sun Pass off 93.5 and 94.0, the lit air off 91.1 and 93.7, the Air off (Cinematic
+    before) 92.4 and 94.9. The legs differ more than the settings do. In flight as he plays the GPU's world pass is
+    12.5 ms (p99 14.6) with the Air and 10.9 (p99 13.1) without, both inside the 15 ms a 60 fps frame leaves it; the
+    late frames are the game's own chunk work on the render thread, which the next step profiles.
+  - The ImmersiveVFX pairs: https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`,
+    `tools/steady60-tour.sh`.
+- **Not built yet**: the frame record, a profile of late frames in flight and what it leads to (the flying target is
+  98%), the pass-by-pass trim of the older Cinematic steps, Far Sight off by default on these tiers, the Air on Swift
+  (it has no view direction there), ground mist, the Look page rows.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
