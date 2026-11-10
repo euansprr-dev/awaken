@@ -78,28 +78,42 @@ final class FindsTests {
     }
 
     private static void scenes(GameTestHelper h) {
+        java.util.List<String> bad = new java.util.ArrayList<>();
         for (Kind k : Kinds.all())
             for (int i = 0; i < 6; i++) {
                 Site s = Sites.forced(k, 0, 64, 0, i & 3, 77L * i + k.id().hashCode());
-                Scene sc = Sites.build(s, Terrain.flat(64));
-                h.assertTrue(!sc.blocks().isEmpty(), k.id() + " builds something");
+                Scene sc;
+                try {
+                    sc = Sites.build(s, Terrain.flat(64));
+                } catch (RuntimeException e) {
+                    bad.add(k.id() + " (seed " + i + ") doesn't build: " + e);
+                    break;
+                }
+                String why = "";
+                if (sc.blocks().isEmpty()) why = "builds nothing";
                 int above = 0, shaped = 0;
                 for (var e : sc.blocks().long2ObjectEntrySet()) {
                     long key = e.getLongKey();
                     int x = BlockPos.getX(key), y = BlockPos.getY(key), z = BlockPos.getZ(key);
-                    h.assertTrue(Math.abs(x) <= k.reach() && Math.abs(z) <= k.reach(), k.id() + " builds past its reach at " + x + "," + z);
+                    if (Math.abs(x) > k.reach() || Math.abs(z) > k.reach()) why = "builds past its reach at " + x + "," + z;
                     BlockState b = e.getValue();
-                    if (b.isAir() || y < 1) continue;
+                    // what grows (leaves) is neither a plain cube nor shaped stone: it isn't counted either way
+                    if (b.isAir() || y < 1 || b.is(net.minecraft.tags.BlockTags.LEAVES)) continue;
                     above++;
                     if (!b.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) shaped++;
                 }
                 for (var e : sc.parts().entrySet())
-                    for (BlockPos p : e.getValue()) h.assertTrue(Math.abs(p.getX()) <= k.reach() && Math.abs(p.getZ()) <= k.reach(), k.id() + ": part " + e.getKey() + " past its reach");
+                    for (BlockPos p : e.getValue()) if (Math.abs(p.getX()) > k.reach() || Math.abs(p.getZ()) > k.reach()) why = "part " + e.getKey() + " is past its reach";
                 String f = floats(sc);
-                h.assertTrue(f.isEmpty(), k.id() + " (seed " + i + ") has something floating at " + f);
-                h.assertTrue(above == 0 || shaped * 3 >= above, k.id() + ": only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)");
-                h.assertTrue(sc.blocks().get(BlockPos.asLong(0, -2, 0)) == null, k.id() + " builds where its heart goes");
+                if (!f.isEmpty()) why = "has something floating at " + f;
+                else if (above > 0 && shaped * 3 < above) why = "only " + shaped + " of " + above + " blocks above the ground aren't plain cubes (the bar is a third)";
+                if (sc.blocks().get(BlockPos.asLong(0, -2, 0)) != null) why = "builds where its heart goes";
+                if (!why.isEmpty()) {
+                    bad.add(k.id() + " (seed " + i + ") " + why);
+                    break;
+                }
             }
+        h.assertTrue(bad.isEmpty(), bad.size() + " scenes fall short: " + String.join(" | ", bad.subList(0, Math.min(14, bad.size()))));
         h.succeed();
     }
 
@@ -114,36 +128,43 @@ final class FindsTests {
         });
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         int n = 0;
+        java.util.List<String> bad = new java.util.ArrayList<>();
         for (Kind k : Kinds.all()) {
             if (k.play() == null) continue;
             Ctx.testTicks = 0;
             Ctx.testHour = 6000;
             Site s = FindsFeature.stamp(level, k, at, n & 3, 4242L + n);
-            h.assertTrue(level.getBlockEntity(s.heart()) instanceof FindHeartBlockEntity, k.id() + " has its heart");
-            FindHeartBlockEntity be = (FindHeartBlockEntity) level.getBlockEntity(s.heart());
-            p.setData(FindsContent.FINDS, FindsData.EMPTY);
-            p.snapTo(at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, 0, 0);
-            try {
-                k.play().run(new Trial(be, p));
-            } catch (RuntimeException e) {
-                h.fail(k.id() + ": the walkthrough broke: " + e);
+            String why = "";
+            if (!(level.getBlockEntity(s.heart()) instanceof FindHeartBlockEntity be)) why = "has no heart";
+            else {
+                p.setData(FindsContent.FINDS, FindsData.EMPTY);
+                p.snapTo(at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, 0, 0);
+                try {
+                    k.play().run(new Trial(be, p));
+                } catch (RuntimeException e) {
+                    why = "its walkthrough broke: " + e;
+                }
+                Ctx c = be.ctx();
+                if (!why.isEmpty()) {
+                    // said already
+                } else if (!be.done()) why = "its walkthrough doesn't finish it (stage " + be.stage() + ")";
+                else if (!be.claimed(p.getUUID())) why = "doesn't pay who finished it";
+                else if (p.getData(FindsContent.FINDS).count(k.id()) != 1) why = "counts " + p.getData(FindsContent.FINDS).count(k.id()) + " times";
+                else if (!p.getData(FindsContent.FINDS).paidAt(s.key())) why = "doesn't remember the site";
+                else if (c == null || Reward.late(c, p)) why = "pays the same player twice";
             }
-            h.assertTrue(be.done(), k.id() + ": the walkthrough doesn't finish it (stage " + be.stage() + ")");
-            h.assertTrue(be.claimed(p.getUUID()), k.id() + " pays who finished it");
-            h.assertTrue(p.getData(FindsContent.FINDS).count(k.id()) == 1, k.id() + " counts once: " + p.getData(FindsContent.FINDS).count(k.id()));
-            h.assertTrue(p.getData(FindsContent.FINDS).paidAt(s.key()), k.id() + " remembers the site");
-            Ctx c = be.ctx();
-            h.assertTrue(c != null && !Reward.late(c, p), k.id() + " never pays the same player twice");
+            if (!why.isEmpty()) bad.add(k.id() + " " + why);
             // clear the pad for the next
             int r = k.reach() + 4;
             for (Entity e : level.getEntities((Entity) null, new AABB(at).inflate(r + 8, 40, r + 8), e -> !(e instanceof ServerPlayer))) e.discard();
             BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
             for (int dx = -r; dx <= r; dx++)
                 for (int dz = -r; dz <= r; dz++)
-                    for (int dy = -4; dy <= 24; dy++) level.setBlock(m.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    for (int dy = -8; dy <= 24; dy++) level.setBlock(m.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             Sites.reset();
             n++;
         }
+        h.assertTrue(bad.isEmpty(), bad.size() + " finds don't play through: " + String.join(" | ", bad.subList(0, Math.min(14, bad.size()))));
         h.assertTrue(n > 0, "some kind was played");
         h.succeed();
     }

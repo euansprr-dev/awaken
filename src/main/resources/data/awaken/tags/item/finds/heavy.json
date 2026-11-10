@@ -4,6 +4,7 @@
     "awaken:find_stone_sheep",
     "awaken:find_lens",
     "awaken:find_summit_stone",
-    "awaken:find_boulder"
+    "awaken:find_boulder",
+    "awaken:find_old_bell"
   ]
 }

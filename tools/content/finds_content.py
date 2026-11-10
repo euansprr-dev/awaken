@@ -327,6 +327,10 @@ prop("boulder", "Round Boulder", [
     [b(1, 0, 1, 15, 10, 15, tex), b(3, 10, 3, 13, 14, 13, tex), b(0, 2, 3, 16, 8, 13, tex), b(3, 2, 0, 13, 8, 16, tex)] + extra for tex, extra in (
         ("stone", []), ("mossy", []), ("stone", [b(7.5, 0, 0.6, 8.5, 14.2, 1.2, "dark"), b(7.5, 14, 1, 8.5, 14.4, 9, "dark")]), ("cobble", []))],
      (1, 0, 1, 15, 14, 15), heavy=True)
+prop("old_bell", "Old Bell", [
+    [b(4, 0, 4, 12, 3, 12, "bronze"), b(5, 3, 5, 11, 9, 11, "bronze"), b(6, 9, 6, 10, 12, 10, "verdigris"), b(7, 12, 7, 9, 14, 9, "bronze")],
+    [b(4, 0, 4, 12, 3, 12, "bronze"), b(5, 3, 5, 11, 9, 11, "bronze"), b(6, 9, 6, 10, 12, 10, "verdigris"), b(7, 12, 7, 9, 14, 9, "bronze"), b(7.3, -2, 7.3, 8.7, 1, 8.7, "gold")]] * 2,
+     (4, 0, 4, 12, 14, 12), heavy=True)
 prop("hoard", "Small Hoard", [
     [b(4, 0, 4, 12, 2, 12, "straw"), b(5, 2, 5, 8, 4, 8, "gold"), b(8, 2, 8, 11, 3.5, 11, "blue"), b(6, 2, 9, 8, 3, 11, "brass")],
     [b(4, 0, 4, 12, 2, 12, "straw")]] * 2,

@@ -16,7 +16,8 @@ public final class Notes implements Script {
     private static final int[] STEPS = {0, 3, 5, 7, 10, 12, 15, 17, 19};
     private final String part;
     private final int length;
-    private boolean lowToHigh;
+    private boolean lowToHigh, byFoot;
+    private final java.util.Map<java.util.UUID, Integer> on = new java.util.HashMap<>();
 
     private Notes(String part, int length) {
         this.part = part;
@@ -31,6 +32,12 @@ public final class Notes implements Script {
     /** The order is simply first part to last (icicles short to long), and nothing plays it for you. */
     public Notes lowToHigh() {
         lowToHigh = true;
+        return this;
+    }
+
+    /** The notes are played by stepping onto the parts, not by striking them. */
+    public Notes byFoot() {
+        byFoot = true;
         return this;
     }
 
@@ -84,6 +91,14 @@ public final class Notes implements Script {
 
     @Override
     public void tick(Ctx c) {
+        if (byFoot) {
+            for (ServerPlayer p : c.players(c.kind().reach() + 2)) {
+                int at = -1;
+                for (int i = 0; i < c.count(part); i++) if (p.blockPosition().equals(c.pos(part, i).above()) || p.blockPosition().equals(c.pos(part, i))) at = i;
+                Integer was = on.put(p.getUUID(), at);
+                if (at >= 0 && (was == null || was != at)) strike(c, p, part, at);
+            }
+        }
         if (lowToHigh || c.v(0) != 0) return;
         // the wind: every twelve seconds it plays the order through, one note every half second
         long t = c.now() - c.clock();
