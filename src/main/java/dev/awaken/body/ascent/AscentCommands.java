@@ -34,6 +34,19 @@ final class AscentCommands {
                 AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111, AscentPayloads.REMEMBER));
                 return 1;
             }));
+            // tours: from beside a sky platform's core onto its pier, facing off its end (the first flight, SPEC §63.2)
+            ascent.then(Commands.literal("pier").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                net.minecraft.core.BlockPos me = p.blockPosition();
+                for (net.minecraft.core.BlockPos q : net.minecraft.core.BlockPos.betweenClosed(me.offset(-20, -6, -20), me.offset(20, 6, 20))) {
+                    if (!p.level().getBlockState(q).is(AscentContent.WING_CORE.get())) continue;
+                    int pier = dev.awaken.above.ruin.SkyRig.PIER;
+                    p.teleportTo(p.level(), q.getX() + pier - 3.5, q.getY() + 1.0, q.getZ() + pier - 3.5, java.util.Set.of(), -45F, 5F, true);
+                    return 1;
+                }
+                c.getSource().sendFailure(Component.literal("No Wing Core within 20 blocks"));
+                return 0;
+            }));
             // The Way Up (SPEC §63): your road as the server reads it, read again now (tours, and "why is nothing lit?")
             ascent.then(Commands.literal("way").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

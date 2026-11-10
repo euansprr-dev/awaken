@@ -1,0 +1,209 @@
+# The Way Up (SPEC 63), as built: each rung's place waking and each unlock's Lesson, in one world.
+# E-rank Tasks (no row); D-rank: the vault lights up (toast, Now line, beam), the one Tasks row, the K rows; the vault's
+# Vow with your key pinned on the mast and the gold figure, the rope thrown, its card; the leap's row; a Tether Spire
+# climbed by the pilot (the gate opens at its foot, its row); the leap's prompt, figure and card; C-rank: a sky platform
+# lights up; its rings climbed, the core's gift, the first flight off the pier (rings of light, the prompt, wings opened,
+# the card); the sky's strip of keys; the Sovereign's prompt on a full gold line.
+# Run on CI: tools/tour-ci.sh tools/autopilot/way-up.txt 2400
+world autopilot_way_up survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tick sprint 6200
+# the sprint must be over before anything is timed
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 5500
+hud on
+camera first
+screen band tasks
+wait 30
+shotnow way_00_tasks_e_rank
+screen close
+# ---- D-rank without the rope: a vault lights up ----
+cmd awaken admin rankup
+wait 400
+key dismiss
+wait 10
+screen close
+cmd awaken ascent way
+wait 30
+shotnow way_01_vault_told
+cmd tp @s ~ ~ ~ facing 27 150 -341
+wait 40
+shot way_02_vault_beam
+screen band tasks
+wait 30
+shotnow way_03_tasks_rope_row
+screen close
+screen band powers
+wait 30
+shotnow way_04_k_rows
+screen close
+# ---- the vault: the Vow, the key on the mast, the gold figure ----
+camera back
+cmd awaken ascent vow goto
+wait 50
+shotnow way_vow_01
+wait 20
+shotnow way_vow_02
+wait 20
+shotnow way_vow_03
+wait 20
+shotnow way_vow_04
+wait 20
+shotnow way_vow_05
+wait 20
+shotnow way_vow_06
+wait 20
+shotnow way_vow_07
+wait 20
+shotnow way_vow_08
+wait 20
+shotnow way_vow_09
+wait 20
+shotnow way_vow_10
+wait 30
+camera first
+wait 10
+shotnow way_vow_11_first_person
+# the rope thrown at the mast by hand: the prompt leaves, the card shows
+cmd tp @s ~ ~ ~ facing 27 97 -341
+wait 10
+cmd awaken ascent pilot hold tether 40
+wait 8
+shotnow way_vow_12_thrown
+wait 30
+shotnow way_vow_13_card
+wait 80
+camera back
+shotnow way_vow_14_after
+screen band tasks
+wait 30
+shotnow way_05_tasks_leap_row
+screen close
+# ---- a Tether Spire climbed by rope: the gate opens at its foot ----
+cmd awaken ascent spire goto
+wait 140
+cmd awaken ascent pilot run spire
+wait 420
+shotnow way_06_crown
+wait 60
+shotnow way_07_crown_gate_told
+cmd awaken ascent pilot stop
+screen band tasks
+wait 30
+shotnow way_08_tasks_gate_row
+screen close
+# ---- the leap's Lesson (its edge moment, then its gift's card) ----
+cmd spreadplayers ~30 ~30 0 6 false @s
+wait 60
+camera back
+cmd awaken ascent scene leap_edge
+wait 16
+shotnow way_09_leap_prompt
+wait 14
+shotnow way_10_leap_figure
+wait 14
+shotnow way_11_leap_figure
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 30
+cmd awaken ascent scene leap
+wait 150
+shotnow way_12_leap_card
+wait 100
+# ---- C-rank: a sky platform lights up ----
+cmd awaken admin rankup
+wait 400
+key dismiss
+wait 10
+screen close
+cmd awaken ascent way
+wait 40
+shotnow way_13_sky_told
+screen band tasks
+wait 30
+shotnow way_14_tasks_sky_row
+screen close
+# ---- the platform: its rings, its core, the first flight ----
+cmd time set 5500
+cmd awaken ascent sky goto
+wait 100
+camera back
+shot way_15_under_platform
+cmd awaken ascent pilot run climb
+wait 600
+shotnow way_sky_01
+wait 30
+shotnow way_sky_02
+wait 30
+shotnow way_sky_03
+wait 30
+shotnow way_sky_04
+wait 30
+shotnow way_sky_05
+wait 30
+shotnow way_sky_06
+wait 30
+shotnow way_sky_07
+wait 30
+shotnow way_sky_08
+wait 30
+cmd awaken ascent pilot stop
+cmd awaken ascent pier
+wait 20
+shotnow way_sky_09_pier
+camera first
+wait 10
+shotnow way_sky_10_pier_first_person
+wait 30
+shotnow way_sky_11_rings
+camera back
+cmd awaken ascent pilot hold forward,sprint 40
+wait 26
+cmd awaken ascent pilot hold jump 2
+wait 6
+shotnow way_sky_12_opened
+wait 24
+shotnow way_sky_13_card
+wait 60
+shotnow way_sky_14_glide
+wait 200
+# ---- the sky's strip of keys, and the Sovereign's prompt ----
+cmd spreadplayers ~ ~ 0 6 false @s
+wait 80
+cmd awaken ascent scene sky_edge
+wait 20
+shotnow way_16_sky_strip
+wait 200
+cmd awaken ascent grant sovereign
+cmd awaken ascent scene sovereign
+wait 60
+shotnow way_17_sovereign_gift
+wait 100
+cmd awaken ascent pilot aether 1
+wait 30
+shotnow way_18_form_prompt
+screen band powers
+wait 30
+shotnow way_19_k_rows_all
+screen close
+info
+quit
