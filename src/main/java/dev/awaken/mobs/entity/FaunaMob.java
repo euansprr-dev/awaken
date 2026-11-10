@@ -53,7 +53,7 @@ import java.util.Set;
  * alone. Each creature's talent (moths dowse for ore, sprites tend crops...) is a goal that looks around a few times
  * a minute at most; nothing here scans entities every tick.
  */
-public class FaunaMob extends AwakenMob {
+public class FaunaMob extends AwakenMob implements RigBody {
     /** Pose bits synced to the client ({@link AwLook#fauna}). */
     public static final int P_AIR = 1, P_STALK = 1 << 1, P_GRAZE = 1 << 2, P_ANGRY = 1 << 3, P_BURROW = 1 << 4, P_REST = 1 << 5, P_GUARD = 1 << 6,
             P_ALERT = 1 << 7, P_SPRINT = 1 << 8, P_PUFF = 1 << 9;

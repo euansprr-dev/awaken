@@ -1,0 +1,385 @@
+# Monsters of the Gates (SPEC §60): every new body standing in its row, by theme (lantern, frost, mirror, precursor, nightmare, sky, abyss), then each one close.
+# Stills of the bodies as built (NoAI: they stand and breathe). Generated; see docs/gates-as-worlds/monsters/BUILD.md.
+# ci knobs: PACK=perf,feel
+world monsterstoday creative 811
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+cmd time set 6000
+wait 20
+# lantern
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:lantern_moth -6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:lantern_moth,limit=1,sort=nearest,x=-6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:pickpocket -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:pickpocket,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:wick_slime 0.0 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:wick_slime,limit=1,sort=nearest,x=0.0,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:masked_duelist 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:masked_duelist,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_lamplighter 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_lamplighter,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_lantern
+wait 6
+cmd tp @s -7.71 201.31 7.40 -19 4
+look -19 4
+wait 26
+shot lantern_lantern_moth
+wait 4
+cmd tp @s -4.41 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot lantern_pickpocket
+wait 4
+cmd tp @s -0.91 199.82 7.40 -19 4
+look -19 4
+wait 26
+shot lantern_wick_slime
+wait 4
+cmd tp @s 2.21 200.48 6.60 -19 4
+look -19 4
+wait 26
+shot lantern_masked_duelist
+wait 4
+cmd tp @s 4.84 201.19 4.39 -19 4
+look -19 4
+wait 26
+shot lantern_the_lamplighter
+wait 4
+# frost
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:rime_acolyte -8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:rime_acolyte,limit=1,sort=nearest,x=-8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:hail_stray -5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:hail_stray,limit=1,sort=nearest,x=-5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:frost_wisp -1.7 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:frost_wisp,limit=1,sort=nearest,x=-1.7,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:ice_hound 1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:ice_hound,limit=1,sort=nearest,x=1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:chant_master 5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:chant_master,limit=1,sort=nearest,x=5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_yeti 8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_yeti,limit=1,sort=nearest,x=8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_frost
+wait 6
+cmd tp @s -9.41 199.93 7.40 -19 4
+look -19 4
+wait 26
+shot frost_rime_acolyte
+wait 4
+cmd tp @s -6.01 199.98 7.40 -19 4
+look -19 4
+wait 26
+shot frost_hail_stray
+wait 4
+cmd tp @s -2.61 201.47 7.40 -19 4
+look -19 4
+wait 26
+shot frost_frost_wisp
+wait 4
+cmd tp @s 0.79 200.04 7.40 -19 4
+look -19 4
+wait 26
+shot frost_ice_hound
+wait 4
+cmd tp @s 4.09 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot frost_chant_master
+wait 4
+cmd tp @s 7.19 200.59 6.26 -19 4
+look -19 4
+wait 26
+shot frost_the_yeti
+wait 4
+# mirror
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:silver_knight -5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:silver_knight,limit=1,sort=nearest,x=-5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:glint_mite -1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:glint_mite,limit=1,sort=nearest,x=-1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:glass_duelist 1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:glass_duelist,limit=1,sort=nearest,x=1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_unblinking 5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_unblinking,limit=1,sort=nearest,x=5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_mirror
+wait 6
+cmd tp @s -6.23 200.42 6.77 -19 4
+look -19 4
+wait 26
+shot mirror_silver_knight
+wait 4
+cmd tp @s -2.61 199.88 7.40 -19 4
+look -19 4
+wait 26
+shot mirror_glint_mite
+wait 4
+cmd tp @s 0.51 200.48 6.60 -19 4
+look -19 4
+wait 26
+shot mirror_glass_duelist
+wait 4
+cmd tp @s 3.67 200.70 5.92 -19 4
+look -19 4
+wait 26
+shot mirror_the_unblinking
+wait 4
+# precursor
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:test_subject -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:test_subject,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:security_unit -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:security_unit,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:coil_unit 0.0 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:coil_unit,limit=1,sort=nearest,x=0.0,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:gel_sample 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:gel_sample,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_sweeper 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_sweeper,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_precursor
+wait 6
+cmd tp @s -7.71 200.15 7.40 -19 4
+look -19 4
+wait 26
+shot precursor_test_subject
+wait 4
+cmd tp @s -4.31 199.93 7.40 -19 4
+look -19 4
+wait 26
+shot precursor_security_unit
+wait 4
+cmd tp @s -0.91 201.64 7.40 -19 4
+look -19 4
+wait 26
+shot precursor_coil_unit
+wait 4
+cmd tp @s 2.49 199.93 7.40 -19 4
+look -19 4
+wait 26
+shot precursor_gel_sample
+wait 4
+cmd tp @s 5.57 199.93 6.48 -19 4
+look -19 4
+wait 26
+shot precursor_the_sweeper
+wait 4
+# nightmare
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:sleepwalker -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:sleepwalker,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:night_terror -3.4 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:night_terror,limit=1,sort=nearest,x=-3.4,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:many_eyes 0.0 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:many_eyes,limit=1,sort=nearest,x=0.0,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_tall_one 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_tall_one,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_waking 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_waking,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_nightmare
+wait 6
+cmd tp @s -8.05 200.53 6.43 -19 4
+look -19 4
+wait 26
+shot nightmare_sleepwalker
+wait 4
+cmd tp @s -4.31 201.31 7.40 -19 4
+look -19 4
+wait 26
+shot nightmare_night_terror
+wait 4
+cmd tp @s -0.91 199.88 7.40 -19 4
+look -19 4
+wait 26
+shot nightmare_many_eyes
+wait 4
+cmd tp @s 1.50 201.14 4.56 -19 4
+look -19 4
+wait 26
+shot nightmare_the_tall_one
+wait 4
+cmd tp @s 5.37 200.70 5.92 -19 4
+look -19 4
+wait 26
+shot nightmare_the_waking
+wait 4
+# sky
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:gale_harpy -6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:gale_harpy,limit=1,sort=nearest,x=-6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:cloud_breeze -3.4 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:cloud_breeze,limit=1,sort=nearest,x=-3.4,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:sky_raider 0.0 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:sky_raider,limit=1,sort=nearest,x=0.0,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:thunderhead 3.4 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:thunderhead,limit=1,sort=nearest,x=3.4,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_gale 6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_gale,limit=1,sort=nearest,x=6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_sky
+wait 6
+cmd tp @s -7.71 201.25 7.40 -19 4
+look -19 4
+wait 26
+shot sky_gale_harpy
+wait 4
+cmd tp @s -4.31 201.36 7.40 -19 4
+look -19 4
+wait 26
+shot sky_cloud_breeze
+wait 4
+cmd tp @s -0.91 201.75 7.40 -19 4
+look -19 4
+wait 26
+shot sky_sky_raider
+wait 4
+cmd tp @s 2.48 201.53 7.36 -19 4
+look -19 4
+wait 26
+shot sky_thunderhead
+wait 4
+cmd tp @s 5.37 202.30 5.92 -19 4
+look -19 4
+wait 26
+shot sky_the_gale
+wait 4
+# abyss
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:abyss_watcher -6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:abyss_watcher,limit=1,sort=nearest,x=-6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:silent_stalker -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:silent_stalker,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:void_spawn 0.0 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:void_spawn,limit=1,sort=nearest,x=0.0,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:hollow_priest 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:hollow_priest,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_nothing 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_nothing,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_abyss
+wait 6
+cmd tp @s -7.71 201.75 7.40 -19 4
+look -19 4
+wait 26
+shot abyss_abyss_watcher
+wait 4
+cmd tp @s -4.31 200.15 7.40 -19 4
+look -19 4
+wait 26
+shot abyss_silent_stalker
+wait 4
+cmd tp @s -0.91 199.79 7.40 -19 4
+look -19 4
+wait 26
+shot abyss_void_spawn
+wait 4
+cmd tp @s 2.21 200.48 6.60 -19 4
+look -19 4
+wait 26
+shot abyss_hollow_priest
+wait 4
+cmd tp @s 5.49 200.59 6.26 -19 4
+look -19 4
+wait 26
+shot abyss_the_nothing
+wait 4
+cmd kill @e[tag=p]
+wait 10
+cmd gamemode creative
+info
+quit

@@ -95,10 +95,18 @@ final class AudioTests {
         int files = 0;
         for (var e : sounds.entrySet()) {
             JsonObject ev = e.getValue().getAsJsonObject();
-            if (!BuiltInRegistries.SOUND_EVENT.containsKey(Identifier.fromNamespaceAndPath("awaken", e.getKey()))) {
+            // A power's score (SPEC §50.8) is layers of Minecraft's own recordings, played by id on the client: its events are
+            // names in sounds.json only, never registered. A layer has no subtitle of its own (a score is many at once, and none
+            // of theirs would be true); the score's one line rides voice.say.<power>, which must have it like any other event.
+            boolean voice = e.getKey().startsWith("voice."), layer = voice && !e.getKey().startsWith("voice.say.");
+            if (!voice && !BuiltInRegistries.SOUND_EVENT.containsKey(Identifier.fromNamespaceAndPath("awaken", e.getKey()))) {
                 problems.add("in sounds.json but never registered: " + e.getKey());
             }
             String subtitle = ev.has("subtitle") ? ev.get("subtitle").getAsString() : null;
+            if (subtitle == null && layer) {
+                for (JsonElement s : ev.getAsJsonArray("sounds")) if (!sub(s).startsWith("minecraft:")) problems.add(e.getKey() + ": a score layer names " + sub(s));
+                continue;
+            }
             if (subtitle == null) problems.add(e.getKey() + ": no subtitle");
             else if (!lang.has(subtitle)) problems.add(e.getKey() + ": subtitle " + subtitle + " has no lang line");
             for (JsonElement s : ev.getAsJsonArray("sounds")) {
