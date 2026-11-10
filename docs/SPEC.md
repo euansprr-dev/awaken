@@ -21792,6 +21792,12 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   0.07 to 0.09 s after the circle. A gate monster's wind-up is now gathered `STRIKE_LEAD` (0.08 s) before the tell ends
   and its strike begins there (`WildRenderer.resolve`), holding at the hit frame until the strike's own cue takes it
   on from where it had got to (`begun`). The other bodies the renderer draws are unchanged.
+- The wind-up is gathered over the tell's real length, which the server already syncs (`RigBody.cueTell`, read as the
+  cue arrives), not the move's usual one: a heavy, or a blow told shorter or longer than its move, no longer pops.
+- **A step, then its cut** (`RigBody.CUE_POISED`, stage 7): a monster that blinks strikes `BLINK_CUT` (8) ticks after it
+  arrives, with its own tell. Its body used to play the strike on arrival, six ticks before the cut landed. It now
+  arrives poised (the move's wind-up held at its last frame) and strikes as the cut's tell ends; if the cut never
+  comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.

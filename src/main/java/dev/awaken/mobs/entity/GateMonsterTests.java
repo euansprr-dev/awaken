@@ -266,6 +266,31 @@ public final class GateMonsterTests {
             });
         });
 
+        // a step, then its cut: the body stands poised while the cut is told and strikes as that tell ends
+        AwakenTests.register("gate_monster_poised_after_its_step", 240, h -> {
+            ServerLevel level = h.getLevel();
+            GateMonster m = spawn(h, "sand_stalker", 1.5, 0.5);
+            Zombie z = dummy(h, 1.5, 5.5);
+            face(m, 0.0F);
+            float hp = z.getHealth();
+            boolean[] did = new boolean[3]; // its step began, it stood poised, it struck
+            AwakenTests.onEnd(h, () -> {
+                m.discard();
+                z.discard();
+            });
+            h.succeedWhen(() -> {
+                h.assertTrue(m.abilities != null, "its abilities are ready (made on its first tick)");
+                if (!did[0]) did[0] = m.act(level, 0, z);
+                h.assertTrue(did[0], "its step begins");
+                int stage = FaunaMob.cueStage(m.cue());
+                if (stage == RigBody.CUE_POISED) did[1] = true;
+                h.assertTrue(did[1], "it steps and stands poised, its cut told");
+                if (stage == FaunaMob.CUE_STRIKE) did[2] = true;
+                h.assertTrue(did[2], "the cut is thrown as its tell ends");
+                h.assertTrue(z.getHealth() < hp, "and it lands");
+            });
+        });
+
         AwakenTests.register("gate_monster_planted_loses_its_aim", 200, h -> {
             ServerLevel level = h.getLevel();
             GateMonster m = spawn(h, "crypt_archer", 1.5, 1.5);

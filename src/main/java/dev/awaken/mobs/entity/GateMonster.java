@@ -57,11 +57,13 @@ public class GateMonster extends AwakenMob implements RigBody {
     private boolean stuck;
     private boolean plantedNow;
     private float plantYaw;
+    private boolean poised;
+    private int poisedTicks;
     private boolean missWatch, missMoved;
     private int missSlot, missStamp, missWait;
     private int deathHold;
     // client
-    private int cueStart, lastCue, prevCue, prevCueStart, prevCueEnd, dyingTicks;
+    private int cueStart, lastCue, prevCue, prevCueStart, prevCueEnd, dyingTicks, cueTell, prevCueTell;
     private float gait, gaitO, gaitSpeed;
 
     public GateMonster(EntityType<? extends GateMonster> type, Level level) {
@@ -107,6 +109,7 @@ public class GateMonster extends AwakenMob implements RigBody {
     private void forgetCue() {
         cueAbility = null;
         meleeTold = false;
+        poised = false;
         missWatch = false;
         plantedNow = false;
         if (FaunaMob.cueStage(cue()) != FaunaMob.CUE_NONE) cue(FaunaMob.CUE_NONE, -1);
@@ -139,6 +142,15 @@ public class GateMonster extends AwakenMob implements RigBody {
         MobDef d = def();
         plantedNow = false;
         int slot = slot(a);
+        if (a.kind() == Ability.Kind.BLINK && abilities != null && abilities.cutPending()) {
+            // it has stepped, and the cut it stepped for is told but not thrown: it stands poised (its wind-up's last
+            // frame) and strikes as that tell ends; the blow's sound and matter come with the cut (swingForAttack)
+            meleeTold = false;
+            poised = true;
+            poisedTicks = 0;
+            cue(CUE_POISED, slot);
+            return;
+        }
         if (opens(a) || a.kind() == Ability.Kind.BLINK) {
             // the move is a blow: its own sound, and its own matter thrown off where its body let go
             say("blow", a.heavy() ? 0.8F : 1.0F);
@@ -191,6 +203,11 @@ public class GateMonster extends AwakenMob implements RigBody {
         if (openTicks > 0 && --openTicks == 0) {
             stuck = false;
             if (FaunaMob.cueStage(cue()) == CUE_OPEN || FaunaMob.cueStage(cue()) == CUE_STUCK) cue(FaunaMob.CUE_NONE, -1);
+        }
+        // poised for a cut that never came (its target gone): let the pose go
+        if (poised && ++poisedTicks > AbilityRunner.BLINK_CUT + 6) {
+            poised = false;
+            if (FaunaMob.cueStage(cue()) == CUE_POISED) cue(FaunaMob.CUE_NONE, -1);
         }
         if (missWatch && abilities != null) {
             if (abilities.holdsStill()) {
@@ -272,6 +289,15 @@ public class GateMonster extends AwakenMob implements RigBody {
     @Override
     public void swingForAttack(InteractionHand hand) {
         super.swingForAttack(hand);
+        if (poised && !level().isClientSide()) {
+            // the cut after a step: the move's own strike
+            poised = false;
+            meleeTold = false;
+            cue(FaunaMob.CUE_STRIKE, FaunaMob.cueSlot(cue()));
+            say("blow", 0.9F);
+            if (level() instanceof ServerLevel sl) Abilities.shed(sl, this, front(), 8, 0.22, 0.11);
+            return;
+        }
         if (meleeTold && !level().isClientSide()) {
             meleeTold = false;
             int slot = FaunaMob.cueSlot(cue());
@@ -391,6 +417,10 @@ public class GateMonster extends AwakenMob implements RigBody {
             prevCueEnd = tickCount;
             cueStart = tickCount;
             lastCue = entityData.get(DATA_CUE);
+            // the tell that began with this wind-up (synced before the cue: its data id is the lower)
+            prevCueTell = cueTell;
+            int stage = FaunaMob.cueStage(lastCue);
+            cueTell = stage == FaunaMob.CUE_WINDUP || stage == CUE_POISED ? telegraphTicks() : 0;
         }
     }
 
@@ -432,6 +462,16 @@ public class GateMonster extends AwakenMob implements RigBody {
     @Override
     public int prevCueEnd() {
         return prevCueEnd;
+    }
+
+    @Override
+    public int cueTell() {
+        return cueTell;
+    }
+
+    @Override
+    public int prevCueTell() {
+        return prevCueTell;
     }
 
     /** Its plain blow is a cue of its own (a wind-up and a strike), so no swing clip plays on top. */

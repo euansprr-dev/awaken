@@ -44,6 +44,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
      * on the tick the server deals the blow and the closing circle shuts, not a tenth of a second after it.
      */
     private static final float STRIKE_LEAD = 0.08F;
+    /** Seconds a body stands poised after a step if nothing says how long its cut is told (AbilityRunner.BLINK_CUT). */
+    private static final float POISED = 0.4F;
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
             | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP | WildPose.S_GRAZE;
@@ -163,16 +165,17 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         s.run = Mth.clamp((s.speed - rig.runFrom) / Math.max(0.01F, rig.runFull - rig.runFrom), 0.0F, 1.0F);
         s.angry = (l.fauna & FaunaMob.P_ANGRY) != 0 ? 1.0F : 0.0F;
         float now = s.ageInTicks;
-        resolve(f.cue(), (now - f.cueStart()) / 20.0F + begun(f), s, false);
+        resolve(f.cue(), (now - f.cueStart()) / 20.0F + begun(f), s, false, f.cueTell());
         s.prevClip = -1;
         s.prevWeight = 0;
         int was = FaunaMob.cueStage(f.prevCue());
-        if (FaunaMob.cueStage(f.cue()) == FaunaMob.CUE_NONE && (was == FaunaMob.CUE_WINDUP || was == RigBody.CUE_OPEN || was == RigBody.CUE_STUCK)) {
+        if (FaunaMob.cueStage(f.cue()) == FaunaMob.CUE_NONE
+                && (was == FaunaMob.CUE_WINDUP || was == RigBody.CUE_OPEN || was == RigBody.CUE_STUCK || was == RigBody.CUE_POISED)) {
             float fade = (now - f.prevCueEnd()) / 20.0F;
             if (fade < FADE) {
                 int clip = s.cueClip;
                 float time = s.cueTime;
-                resolve(f.prevCue(), (f.prevCueEnd() - f.prevCueStart()) / 20.0F, s, true);
+                resolve(f.prevCue(), (f.prevCueEnd() - f.prevCueStart()) / 20.0F, s, true, f.prevCueTell());
                 s.prevClip = s.cueClip;
                 s.prevTime = s.cueTime;
                 s.prevWeight = 1.0F - fade / FADE;
@@ -202,13 +205,16 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         if (lead <= 0) return 0;
         int stage = FaunaMob.cueStage(f.cue()), slot = FaunaMob.cueSlot(f.cue());
         if (stage != FaunaMob.CUE_STRIKE && stage != RigBody.CUE_OPEN) return 0;
-        if (FaunaMob.cueStage(f.prevCue()) != FaunaMob.CUE_WINDUP || FaunaMob.cueSlot(f.prevCue()) != slot) return 0;
+        int was = FaunaMob.cueStage(f.prevCue());
+        if ((was != FaunaMob.CUE_WINDUP && was != RigBody.CUE_POISED) || FaunaMob.cueSlot(f.prevCue()) != slot) return 0;
         if (slot < 0 || slot >= windupSeconds.length || windupSeconds[slot] <= 0 || strike[slot] < 0) return 0;
-        float gather = Math.max(0.05F, windupSeconds[slot] - lead);
+        float real = f.prevCueTell() > 0 ? f.prevCueTell() / 20.0F : was == RigBody.CUE_POISED ? POISED : windupSeconds[slot];
+        float gather = was == RigBody.CUE_POISED ? Math.max(0.0F, real - lead) : Math.max(0.05F, real - lead);
         return Mth.clamp((f.prevCueEnd() - f.prevCueStart()) / 20.0F - gather, 0.0F, lead);
     }
 
-    private void resolve(int cue, float since, WildRenderState s, boolean held) {
+    /** tell: the wind-up's real length in ticks if the body knows it (RigBody.cueTell), else 0 and the move's own is used. */
+    private void resolve(int cue, float since, WildRenderState s, boolean held, int tell) {
         int stage = FaunaMob.cueStage(cue), slot = FaunaMob.cueSlot(cue);
         s.cueClip = -1;
         s.cueWeight = 0;
@@ -220,6 +226,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
                 int c = windup[slot];
                 float len = m.length(c);
                 float real = windupSeconds[slot];
+                if (real > 0 && tell > 0) real = tell / 20.0F;
                 if (real <= 0) {
                     s.cueClip = c;
                     letGo(s, since, len);
@@ -234,6 +241,22 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
                 } else {
                     s.cueClip = c;
                     s.cueTime = Math.min(len, since * len / gather);
+                }
+                float over = since - real - (held ? 0 : HOLD);
+                s.cueWeight = held ? 1.0F : over <= 0 ? 1.0F : Math.max(0.0F, 1.0F - over / FADE);
+            }
+            case RigBody.CUE_POISED -> {
+                // stepped, its cut told but not thrown: the wind-up's last frame, then the strike begun so the cut
+                // lands as the tell ends (and held at its hit frame until the server says it struck)
+                if (slot < 0 || slot >= strike.length || strike[slot] < 0) return;
+                float real = tell > 0 ? tell / 20.0F : POISED;
+                float gather = Math.max(0.0F, real - lead);
+                if (since > gather || windup[slot] < 0) {
+                    s.cueClip = strike[slot];
+                    s.cueTime = Mth.clamp(since - gather, 0.0F, Math.max(lead, 0.0F));
+                } else {
+                    s.cueClip = windup[slot];
+                    s.cueTime = m.length(windup[slot]);
                 }
                 float over = since - real - (held ? 0 : HOLD);
                 s.cueWeight = held ? 1.0F : over <= 0 ? 1.0F : Math.max(0.0F, 1.0F - over / FADE);

@@ -89,6 +89,11 @@ public final class AbilityRunner {
         return (active != null && active.roots()) || chargeTicks > 0 || leapTicks > 0 || blinkCut > 0;
     }
 
+    /** Whether it has stepped and its cut is still to come (told, {@link #BLINK_CUT} ticks after the step). */
+    boolean cutPending() {
+        return blinkCut > 0;
+    }
+
     /** A kit boss's runner (SPEC §35.3): it starts nothing itself; its FightRunner fires abilities as moves strike. */
     private boolean scripted;
 
