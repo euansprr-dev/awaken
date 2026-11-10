@@ -309,6 +309,12 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         return w.mode == FLYING && age % WingForm.FLY_TICKS == 0 || w.mode == HOVERING && age % WingForm.HOVER_TICKS == 0;
     }
 
+    /** Whether your own wings are drawn through your own eyes now: open, never folded or lifting for a takeoff (they would fill the view). */
+    static boolean inView(int entityId) {
+        Wings w = find(entityId);
+        return w != null && w.mode != FOLDED && w.mode != GATHER;
+    }
+
     /** What this entity's feathered wings are doing (FOLDED when it has none out). */
     static int mode(int entityId) {
         Wings w = find(entityId);
@@ -555,6 +561,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         v.pal = radiant ? WingFeathers.GOLD : rung == 1 ? WingFeathers.SKY : WingFeathers.LIGHT;
         for (int i = 0; i < v.pairs.length; i++) poseNow(w, pt, v.pairs[i][2], v.pose[i]);
         v.alpha = show * (first ? fpAlpha : 1F);
+        // through your own eyes the opening comes in as it spreads: folded, the wings would pass across the middle of the view
+        if (first && w.mode == UNFOLD) v.alpha *= WingForm.ease((AscentMoves.ticks - w.modeAt + pt - 3) / 9F);
         v.glow = GLOW_BY[w.mode];
         v.lod = lod;
         v.first = first;

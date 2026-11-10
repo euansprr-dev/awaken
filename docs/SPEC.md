@@ -22152,8 +22152,9 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   Each face carries its shade in its colour, as the model's do. Halos are additive discs facing the eye
   (`ascent_wing_halo`). Vanilla types stand in if either fails to build.
 - First person: the outer feathers only, set `fpAhead` 0.8 ahead of the eye and `fpUp` -0.12 under it (where the wings
-  really are nothing of them is in view; an offline render of this drawing code showed them as thin lines at eye level
-  and filling the view in a dive when set higher). **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
+  really are nothing of them is in view). A tour of three placements in real flight (run 42863429201) showed them at
+  the frame's lower sides in a glide and sweeping in on a beat or a turn; the opening fades in as it spreads, and
+  folded or lifting wings are not drawn through your own eyes. **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
   changes them while the game runs, and `/awaken wings show <state> [rung]` holds the wings in any state to look at.
 - Known limit: the game culls a player by their own box, so wings three blocks wide vanish when the body is just off
   screen (as the old wings did).

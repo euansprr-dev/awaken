@@ -170,8 +170,8 @@ final class AscentRender {
         // your own wings in first person: off until they have a look of their own (drawn whole they fill the frame's
         // lower corners; Phase 1 gives them light at the edges instead)
         // feathered wings (SPEC §62) also show their flare and their fold after the state has ended
-        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && (AscentMoves.state().wings
-                || dev.awaken.body.client.feel.FeelConfig.wingsFeathers() && WingLayer.mode(mc.player.getId()) != WingLayer.FOLDED)) {
+        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && (dev.awaken.body.client.feel.FeelConfig.wingsFeathers()
+                ? WingLayer.inView(mc.player.getId()) : AscentMoves.state().wings)) {
             firstPersonWings(ps, out, mc);
         }
     }
