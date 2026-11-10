@@ -815,10 +815,51 @@ public final class AscentSwing {
         boolean past = (k.x - pv[0]) * fx(hd) + (k.z - pv[2]) * fz(hd) > 0;
         double fwdSpeed = k.vx * fx(hd) + k.vz * fz(hd);
         if (ahead >= 0 && ahead < 4) return WALL;
-        // held, with the guide: let go while it still goes forward, and only once it has swung (rising, past the bottom)
-        double apex = guide ? t.apexHeld : t.apex;
-        if (past && (ang > apex && (!guide || k.vy > 0) || ang > t.apex || fwdSpeed < 0.15 || k.vy < -0.02 && ang > 8)) return TOP;
-        return GO;
+        if (!past) return GO;
+        if (ang > t.apex || fwdSpeed < 0.15 || k.vy < -0.02 && ang > 8) return TOP;
+        // held, with the guide: let go while it still goes forward, once it has swung (rising, past the bottom), and
+        // only if that flight comes down on something (over nothing the rope holds on toward the top, as it always did)
+        return guide && ang > t.apexHeld && k.vy > 0 && landsOnSomething(s, k, rope, yaw, w) ? TOP : GO;
+    }
+
+    /** The early let-go's guard: how far a flight may fall with nothing met before the ground is asked for, the reach of
+     * that asking (a space answers no further down), and how much ground a landing wants on ahead of it. */
+    private static final double VOID_FALL = 16, VOID_DEEP = 63.5, VOID_EDGE = 3;
+
+    /**
+     * Whether a let-go now would come down on something (SPEC §62). The guide lets a held rope go early, while it still
+     * goes forward, and that throws the body half as far again as the top of the arc did. Over ground that is the
+     * point. Over nothing (a dream's Run is roads in a void, laid for the old let-go; a sky island; a spire's top) it
+     * threw the body clean past the far side. So the early let-go's flight is played first: false only when it falls
+     * {@link #VOID_FALL} without meeting anything and no ground lies within a space's reach under it, or when it lands
+     * with nothing under the next three blocks of its way (a road's last edge). Then the rope holds on, a tick at a time,
+     * until the flight does land or the arc tops out. In the open world there is always ground: nothing changes there.
+     */
+    static boolean landsOnSomething(SwingSpace s, AscentRules.Kin hand, Rope rope, double yaw, Work w) {
+        AscentRules.Kin k = w.k2;
+        k.set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
+        letGo(k, rope, yaw, w);
+        double from = k.y;
+        for (int i = 0; i < 90; i++) {
+            double x = k.x, y = k.y, z = k.z;
+            k.vy = (k.vy - AscentRules.G) * AscentRules.CARRY_DRAG_V;
+            k.vx *= AscentRules.CARRY_DRAG_H;
+            k.vz *= AscentRules.CARRY_DRAG_H;
+            k.x += k.vx;
+            k.y += k.vy;
+            k.z += k.vz;
+            if (swept(s, x, y, z, k.x, k.y, k.z)) {
+                // met something: a landing wants ground on ahead of it too (a face is the let-go's own look's to judge)
+                double h = Math.sqrt(k.vx * k.vx + k.vz * k.vz);
+                return h < 1e-3 || !nothingUnder(s, k.x + k.vx / h * VOID_EDGE, y - AscentRules.HAND_HEIGHT + 1, k.z + k.vz / h * VOID_EDGE);
+            }
+            if (from - k.y > VOID_FALL) return !nothingUnder(s, k.x, k.y - AscentRules.HAND_HEIGHT, k.z);
+        }
+        return true;
+    }
+
+    private static boolean nothingUnder(SwingSpace s, double x, double from, double z) {
+        return s.floorUnder(x, from, z) <= from - VOID_DEEP;
     }
 
     /** Letting go before a wall: a hop up and away from it. */
