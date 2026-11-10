@@ -397,18 +397,19 @@ final class HearthPlace implements BandPlaces.Place {
         for (GuideData.Part p : u.parts()) {
             ItemStack stack = GuideSections.stack(p.item());
             String name = stack.getHoverName().getString();
-            if (px > x && px + Kit.NEED_W > x + PW) {
+            // four across the panel (a tier takes four things), so the button under them stays in view
+            if (px > x && px + 108 > x + PW) {
                 px = x;
                 y += rowH + 8;
                 rowH = 0;
             }
-            if (Kit.need(s, stack, name, p.have(), p.need(), px, y, mx, my)) {
+            if (Kit.need(s, stack, name, p.have(), p.need(), px - 2, y, mx, my)) {
                 String where = dev.awaken.tasks.client.WhereFrom.line(p.item().toString());
                 tipTitle = name;
                 tipMore = where.isEmpty() ? List.of() : List.of(where);
             }
             rowH = Math.max(rowH, Kit.needHeight(s, name, p.need()));
-            px += Kit.NEED_W;
+            px += PW / 4F;
         }
         if (!u.parts().isEmpty()) y += rowH + 8;
         if (u.discount() > 0) y = s.lines("Your rank takes " + u.discount() + "% off.", x, y, PW, Sheet.LABEL, Glass.a(s.label, 1F)) + 8;

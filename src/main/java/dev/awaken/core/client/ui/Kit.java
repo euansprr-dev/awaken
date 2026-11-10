@@ -73,6 +73,9 @@ public final class Kit {
             } catch (RuntimeException ex) {
                 e = null;
             }
+            // a body of its own number, below every real one: code that reads an entity's id while it is drawn (a name plate)
+            // gets an answer instead of "ID before ID assignment" (seen on the first tour: every body fell back to its egg)
+            if (e != null) e.setId(-1000 - BODIES.size());
             BODIES.put(type, e);
             if (e == null) return false;
         }

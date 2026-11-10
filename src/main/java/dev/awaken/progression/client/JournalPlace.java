@@ -29,7 +29,8 @@ import java.util.List;
 final class JournalPlace implements BandPlaces.Place {
     private static final float X0 = BandPlaces.X0, Y0 = BandPlaces.Y0, X1 = BandPlaces.X1, Y1 = BandPlaces.Y1;
     private static final float PANEL = X1 - 488, PW = 440, INDEX_W = 190, WX0 = X0 + INDEX_W + 22, WX1 = PANEL - 24;
-    private static final float TILE = 72, STEP = 82, ROW = 54;
+    // a tile's name has the step's width: nine letters of a label fit ("Stonehorn" broke as "Stonehor / n" at 82)
+    private static final float TILE = 76, STEP = 90, ROW = 54;
     private static final String[] EMBLEMS = {"minecraft:bone", "minecraft:lead", "minecraft:grass_block", "minecraft:filled_map", "minecraft:ender_eye",
             "minecraft:pointed_dripstone", "minecraft:bell", "minecraft:written_book", "minecraft:clock", "minecraft:raw_iron", "minecraft:enchanted_book",
             "minecraft:writable_book"};

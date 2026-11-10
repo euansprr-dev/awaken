@@ -263,10 +263,15 @@ cmd item replace entity @s inventory.24 with minecraft:campfire
 cmd item replace entity @s inventory.25 with minecraft:red_bed
 cmd item replace entity @s inventory.26 with minecraft:bell
 wait 10
+# the bag itself is the survival one (creative opens the game's own item picker)
+cmd gamemode survival
+wait 10
 holo inv open
 wait 60
 shot b50_bag
 screen close
+wait 10
+cmd gamemode creative
 wait 10
 # ---- the old band, one setting away ----
 holo classic on
