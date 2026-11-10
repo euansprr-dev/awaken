@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "note": "The kit's sample: every shape and every role once. Anything that stands on rough ground starts below it (the moor can sit 3 lower), or it floats on some seeds.",
+  "half": 220,
+  "mouthYaw": 0,
+  "masses": [
+    {"name": "moor",        "op": "add", "shape": "box",      "from": [-220, 0, -220], "to": [220, 63, 220], "role": "ground", "rough": 3},
+    {"name": "hill",        "op": "add", "shape": "dome",     "at": [0, 58, 40], "r": 70, "h": 40, "role": "ground", "rough": 2},
+    {"name": "ship",        "op": "add", "shape": "box",      "from": [-8, 90, 10], "to": [8, 106, 70], "role": "great"},
+    {"name": "beacon",      "op": "add", "shape": "box",      "from": [-1, 107, 39], "to": [1, 109, 41], "role": "glow"},
+    {"name": "stair",       "op": "add", "shape": "wedge",    "from": [-30, 58, -50], "to": [-22, 94, 10], "up": "+z", "role": "walk"},
+    {"name": "passage",     "op": "cut", "shape": "box",      "from": [-3, 66, -30], "to": [3, 71, 40]},
+    {"name": "tower",       "op": "add", "shape": "cylinder", "at": [90, 56, -20], "r": 9, "h": 48, "inner": 7, "role": "wall"},
+    {"name": "tower_floor", "op": "add", "shape": "cylinder", "at": [90, 56, -20], "r": 7, "h": 9, "role": "floor"},
+    {"name": "spire",       "op": "add", "shape": "cone",     "at": [90, 104, -20], "r": 10, "r2": 0, "h": 18, "role": "roof"},
+    {"name": "trunk",       "op": "add", "shape": "cylinder", "at": [-90, 56, -40], "r": 2, "h": 30, "role": "wall"},
+    {"name": "crown",       "op": "add", "shape": "sphere",   "at": [-90, 92, -40], "r": 12, "role": "foliage"},
+    {"name": "pond_bank",   "op": "add", "shape": "cylinder", "at": [120, 56, 120], "r": 19, "h": 8, "role": "ground"},
+    {"name": "pond_bed",    "op": "cut", "shape": "cylinder", "at": [120, 58, 120], "r": 16, "h": 9},
+    {"name": "pond",        "op": "add", "shape": "cylinder", "at": [120, 58, 120], "r": 16, "h": 5, "role": "water"},
+    {"name": "landing",     "op": "add", "shape": "cylinder", "at": [0, 56, -190], "r": 8, "h": 12, "role": "walk"}
+  ],
+  "sites": [
+    {"kind": "MOUTH",  "at": [0, 68, -190], "radius": 6, "what": "mouth"},
+    {"kind": "PORTAL", "at": [0, 68, -195], "radius": 3, "what": "the arch home"},
+    {"kind": "LORD",   "at": [0, 107, 55],  "radius": 12, "what": "the deck"}
+  ],
+  "cameras": {
+    "painting": [0, 78, -205, 0, -4],
+    "tower":    [60, 80, -80, -27, -15],
+    "pond":     [120, 74, 85, 0, 15]
+  }
+}

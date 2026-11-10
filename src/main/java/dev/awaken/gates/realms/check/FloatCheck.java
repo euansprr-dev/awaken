@@ -1,27 +1,15 @@
 package dev.awaken.gates.realms.check;
 
 import dev.awaken.gates.realms.Land;
+import dev.awaken.gates.realms.kit.Kinds;
 import dev.awaken.gates.realms.kit.Piece;
 import dev.awaken.gates.realms.kit.V;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.block.BushBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CarpetBlock;
-import net.minecraft.world.level.block.DoublePlantBlock;
-import net.minecraft.world.level.block.HangingRootsBlock;
-import net.minecraft.world.level.block.LanternBlock;
-import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,31 +40,11 @@ public final class FloatCheck {
         }
     }
 
-    private static final int AIR = 0, BODY = 1, ON_GROUND = 2, HANGS = 3, BESIDE = 4, AFLOAT = 5, WATER = 6, LEAF = 7;
+    private static final int AIR = Kinds.AIR, BODY = Kinds.BODY, ON_GROUND = Kinds.ON_GROUND, HANGS = Kinds.HANGS, BESIDE = Kinds.BESIDE, AFLOAT = Kinds.AFLOAT, WATER = Kinds.WATER, LEAF = Kinds.LEAF;
 
-    private static final Map<BlockState, Integer> KIND = java.util.Collections.synchronizedMap(new IdentityHashMap<>());
-
-    private static int kind(BlockState s) {
-        if (s == null) return AIR;
-        return KIND.computeIfAbsent(s, FloatCheck::classify);
-    }
-
-    private static int classify(BlockState s) {
-        Block b = s.getBlock();
-        if (b == Blocks.WATER) return WATER;
-        if (s.isAir() || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
-        String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
-        if (id.endsWith("_updraft")) return AIR;
-        if (id.equals("keep_climb_root")) return BESIDE; // a root net holds on to the wall beside it
-        if (id.equals("fane_leaf") || id.equals("fane_leaf_lit") || id.equals("fane_leaf_deep") || id.equals("keep_leaf") || id.equals("keep_leaf_lit") || id.equals("keep_leaf_deep")) return LEAF; // the boughs are checked; a crown's outer leaves don't all touch, but vines may hang from them
-        if (b == Blocks.LILY_PAD || id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
-        if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
-        if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;
-        if (b instanceof HangingRootsBlock || id.endsWith("_drip") || id.endsWith("_vines") || id.endsWith("_vines_plant")) return HANGS;
-        if (b instanceof VineBlock) return BESIDE;
-        if (b instanceof BushBlock || b instanceof DoublePlantBlock || b instanceof CarpetBlock || b instanceof net.minecraft.world.level.block.CropBlock
-                || id.endsWith("_crumbs") || id.endsWith("_petals") || id.endsWith("_candle") || id.endsWith("_drift")) return ON_GROUND;
-        return s.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty() ? ON_GROUND : BODY;
+    /** What a block needs to stay where it is: the kit's one table ({@link Kinds}), so Settle and this check agree. */
+    public static int kindOf(BlockState s) {
+        return Kinds.of(s);
     }
 
     /** One chunk's worth of kinds, three bits a block. */
@@ -124,7 +92,7 @@ public final class FloatCheck {
             land.paint(v);
             int ox = cx * 16, oz = cz * 16;
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 0; y < V.H; y++) {
-                int k = kind(v.get(ox + x, y, oz + z));
+                int k = Kinds.of(v.get(ox + x, y, oz + z));
                 if (k != AIR) c.put(idx(x, y, z), k);
             }
             map.put(key(cx, cz), c);

@@ -2,6 +2,7 @@ package dev.awaken.gates.realms;
 
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.gates.content.Theme;
+import dev.awaken.gates.realms.blockout.Blockout.Role;
 import dev.awaken.gates.realms.check.FloatCheck;
 import dev.awaken.gates.realms.check.LookChecks;
 import dev.awaken.gates.realms.kit.V;
@@ -83,6 +84,127 @@ public final class RealmTests {
             if (r.floaters().size() != 3) h.fail("expected a post, a plant and a lantern in the air, got: " + r.summary());
             FloatCheck.Report ok = FloatCheck.scan(new Probe(0), 0, 0, 31, 31);
             if (!ok.clean()) h.fail("a post on the ground counted as floating: " + ok.summary());
+            h.succeed();
+        });
+        // Settle (SPEC §50.6): a land drawn from a sheet can't keep a small stray, and the count says what to go and fix
+        AwakenTests.register("realm_settle_clears_strays", 200, h -> {
+            SettleProbe land = new SettleProbe(false);
+            FloatCheck.Report r = FloatCheck.scan(land, 0, 0, 31, 31);
+            if (!r.clean()) h.fail("strays survived: " + r.summary());
+            V v = new V(16, 16);
+            land.paint(v);
+            if (v.get(20, 9, 20) == null || v.get(20, 9, 20).getBlock() != Blocks.WATER) h.fail("a stray under water left a hole: " + v.get(20, 9, 20));
+            var tally = dev.awaken.gates.realms.kit.Settle.lastTally(land);
+            dev.awaken.Awaken.LOG.info("[realms] {}", tally.line());
+            // a lantern, a grass, a tall grass (two), a vine, a lily, a lone block with a lantern on it and one under it, a grass in the pool
+            if (tally.total() != 10) h.fail("expected ten strays, " + tally.line());
+            if (!tally.line().contains("2 tall_grass in the open")) h.fail("the count doesn't name what went: " + tally.line());
+            h.succeed();
+        });
+        AwakenTests.register("realm_settle_keeps_the_sound", 200, h -> {
+            SettleProbe land = new SettleProbe(true);
+            FloatCheck.Report r = FloatCheck.scan(land, 0, 0, 31, 31);
+            if (!r.clean()) h.fail("the probe's held things aren't held: " + r.summary());
+            var tally = dev.awaken.gates.realms.kit.Settle.lastTally(land);
+            if (tally.total() != 0) h.fail("things properly held were taken out: " + tally.line());
+            V v = new V(0, 0);
+            land.paint(v);
+            int[][] kept = {{8, 20, 8}, {12, 11, 8}, {12, 11, 12}, {12, 12, 12}, {8, 15, 12}, {4, 11, 4}, {4, 11, 12}, {4, 12, 12}};
+            for (int[] c : kept) if (v.get(c[0], c[1], c[2]) == null) h.fail("gone from " + c[0] + "," + c[1] + "," + c[2]);
+            h.succeed();
+        });
+        // The blockout (SPEC §50.7): every shape reads back as written, a mistake says where it is, and the sample stands up as a land
+        AwakenTests.register("realm_blockout_parses", 2400, h -> {
+            var b = dev.awaken.gates.realms.blockout.Blockout.load("sample");
+            java.util.function.BiConsumer<Boolean, String> must = (ok, what) -> { if (!ok) h.fail(what); };
+            // a box, and the beacon standing on it
+            must.accept(b.role(0, 100, 40) == Role.GREAT && b.role(9, 100, 40) != Role.GREAT, "the ship isn't where its box is");
+            must.accept(b.mass("ship").edge(-8, 100, 40) == 0.5 && b.mass("ship").edge(-7, 100, 40) == 1.5 && b.mass("ship").edge(-9, 100, 40) < 0, "a box's edge is " + b.mass("ship").edge(-8, 100, 40));
+            must.accept(b.role(0, 108, 40) == Role.GLOW, "no beacon");
+            // a cut made after the hill, and the hill still over it
+            must.accept(b.role(0, 68, 20) == null && !b.solid(0, 68, 20) && b.solid(0, 75, 20) && b.solid(5, 68, 20), "the passage isn't cut through the hill");
+            // a dome: tall in the middle, nothing past its rim (the moor is there instead)
+            must.accept(b.mass("hill").contains(0, 90, 40) && !b.mass("hill").contains(0, 90, 105) && b.mass("hill").top(80, 40) == -1, "the hill isn't a dome");
+            // a wedge rises in a straight line along +z
+            var stair = b.mass("stair");
+            must.accept(stair.top(-26, -50) == 58 && stair.top(-26, 10) == 94 && stair.top(-26, -20) == 76 && stair.top(-31, -20) == -1, "the stair climbs " + stair.top(-26, -50) + ", " + stair.top(-26, -20) + ", " + stair.top(-26, 10));
+            // a ring: wall two thick, floor inside it, open above the floor
+            var tower = b.mass("tower");
+            must.accept(b.role(99, 80, -20) == Role.WALL && b.role(98, 80, -20) == Role.WALL && b.role(97, 80, -20) == null && b.role(100, 80, -20) == null, "the tower's wall isn't two thick");
+            must.accept(tower.edge(99, 80, -20) > 0 && tower.edge(99, 80, -20) < 1 && tower.edge(98, 80, -20) < 2 && tower.edge(97, 80, -20) < 0, "the tower's edge is " + tower.edge(99, 80, -20) + ", " + tower.edge(98, 80, -20));
+            must.accept(b.role(90, 64, -20) == Role.FLOOR && b.ground(90, -20) >= 64 && tower.cx == 90 && tower.r == 9 && tower.h == 48, "the tower's floor or numbers are off");
+            // a cone: as wide as its base at the bottom, a point at the top
+            var spire = b.mass("spire");
+            must.accept(spire.contains(100, 104, -20) && !spire.contains(101, 104, -20) && spire.contains(90, 121, -20) && !spire.contains(92, 121, -20) && spire.top(90, -20) == 121, "the spire isn't a cone");
+            // a sphere, sitting on its trunk
+            var crown = b.mass("crown");
+            must.accept(crown.contains(-90, 92, -40) && crown.contains(-90, 104, -40) && crown.contains(-90, 80, -40) && !crown.contains(-90, 105, -40) && !crown.contains(-77, 92, -40), "the crown isn't a sphere");
+            must.accept(b.role(-90, 84, -40) == Role.FOLIAGE && b.role(-90, 70, -40) == Role.WALL, "the tree isn't a trunk under a crown");
+            // water in a bed cut for it, inside a bank
+            must.accept(b.role(120, 62, 120) == Role.WATER && b.role(120, 63, 120) == null && !b.solid(120, 62, 120) && b.role(138, 63, 120) == Role.GROUND, "the pond isn't water in a bank");
+            // rough ground: within its three blocks, the same for a seed, different between seeds
+            var one = b.seeded(1);
+            var again = b.seeded(1);
+            var two = b.seeded(2);
+            int differ = 0, lo = 999, hi = 0;
+            for (int x = -200; x <= -120; x += 4) for (int z = 100; z <= 200; z += 4) {
+                int g = one.ground(x, z);
+                lo = Math.min(lo, g);
+                hi = Math.max(hi, g);
+                if (g != again.ground(x, z)) h.fail("one seed gave two grounds at " + x + "," + z);
+                if (g != two.ground(x, z)) differ++;
+            }
+            must.accept(lo >= 60 && hi <= 66 && hi > lo, "rough ground runs from " + lo + " to " + hi);
+            must.accept(differ > 20, "two seeds made the same moor");
+            must.accept(b.ground(0, -190) == 67 && b.ground(500, 0) == -1, "the landing's ground is " + b.ground(0, -190));
+            must.accept(b.cameras().size() == 3 && b.tourShots().contains("cmd awaken gate realm_at MOUTH 0 0 8 -15"), "the cameras don't make a walk: " + b.tourShots());
+            // a mistake names the mass and the field
+            String[][] wrong = {
+                    {"{'name':'tower','op':'add','shape':'cylinder','at':[0,64,0],'h':9,'role':'wall'}", "mass 'tower': 'r' is missing"},
+                    {"{'name':'tower','op':'add','shape':'cylinder','at':[0,64,0],'r':4,'h':9,'role':'wal'}", "mass 'tower': 'role' is 'wal'"},
+                    {"{'name':'ramp','op':'add','shape':'wedge','from':[0,64,0],'to':[4,70,9],'up':'north','role':'walk'}", "mass 'ramp': 'up' is 'north'"},
+                    {"{'name':'moor','op':'add','shape':'box','from':[0,0,0],'to':[9,9],'role':'ground'}", "mass 'moor': 'to' must be 3 numbers"},
+                    {"{'name':'moor','op':'add','shape':'box','from':[0,0,0],'to':[9,9,9],'role':'ground','ruogh':2}", "mass 'moor': 'ruogh' is not a field"}};
+            for (String[] w : wrong) {
+                try {
+                    dev.awaken.gates.realms.blockout.Blockout.parse("t", ("{'schemaVersion':1,'half':64,'masses':[" + w[0] + "],'sites':[{'kind':'MOUTH','at':[0,64,0]}]}").replace('\'', '"'));
+                    h.fail("no complaint about " + w[1]);
+                } catch (IllegalArgumentException e) {
+                    if (!e.getMessage().contains(w[1])) h.fail("wanted \"" + w[1] + "\", got \"" + e.getMessage() + "\"");
+                }
+            }
+            // the sample as a land: drawn in its role's blocks, sites from the data, nothing floating on two seeds, nothing for Settle to take
+            if (!LandPrograms.has("awaken:blockout")) h.fail("no land program awaken:blockout");
+            Blueprint bp = new Blueprint(1, "t", "land", "hive", List.of(), new Blueprint.LandSpec("awaken:blockout", 62, Map.of()),
+                    AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
+            for (long seed : new long[]{1, 2}) {
+                Land land = RealmPlan.of("awaken:blockout_sample", bp, Rank.E, seed, 1).land();
+                if (land.halfSize() != 220 || land.mouth().y() != 68 || land.sites(Land.SiteKind.LORD).size() != 1) h.fail("the land didn't take its size and sites from the blockout");
+                if (at(land, 99, 80, -20) == null || at(land, 99, 80, -20).getBlock() != Blocks.STONE || at(land, 120, 62, 120).getBlock() != Blocks.WATER) h.fail("the tower wall is " + at(land, 99, 80, -20));
+                FloatCheck.Report r = FloatCheck.scan(land, -236, -236, 236, 236);
+                var tally = dev.awaken.gates.realms.kit.Settle.lastTally(land);
+                dev.awaken.Awaken.LOG.info("[realms] blockout sample, seed {}: {} in {} ms; {}", seed, r.summary(), r.millis(), tally.line());
+                if (!r.clean()) h.fail("seed " + seed + ": " + r.summary());
+                if (tally.total() != 0) h.fail("seed " + seed + ": the sample has strays: " + tally.line());
+            }
+            // sixty masses over one chunk still draw fast (the best of several, so a busy machine doesn't fail it)
+            StringBuilder many = new StringBuilder("{'schemaVersion':1,'half':64,'sites':[{'kind':'MOUTH','at':[0,90,0]}],'masses':[");
+            String[] shapes = {"'shape':'box','from':[-9,%d,-9],'to':[24,%d,24]", "'shape':'cylinder','at':[8,%d,8],'r':14,'h':6,'inner':5", "'shape':'dome','at':[8,%d,8],'r':16,'h':7",
+                    "'shape':'cone','at':[8,%d,8],'r':15,'h':8", "'shape':'sphere','at':[8,%d,8],'r':13", "'shape':'wedge','from':[-9,%d,-9],'to':[24,%d,24],'up':'+x'"};
+            for (int i = 0; i < 60; i++) {
+                int y = 20 + i * 4;
+                many.append(i == 0 ? "" : ",").append("{'name':'m").append(i).append("','op':'").append(i % 7 == 6 ? "cut" : "add").append("','role':'wall','rough':").append(i % 3).append(',')
+                        .append(String.format(shapes[i % 6], y, y + 5)).append('}');
+            }
+            var crowd = new dev.awaken.gates.realms.blockout.BlockoutLand(new Land.Ctx(bp, "awaken:crowd", Rank.E, 1, 1), dev.awaken.gates.realms.blockout.Blockout.parse("crowd", many.append("]}").toString().replace('\'', '"')));
+            long best = Long.MAX_VALUE;
+            for (int i = 0; i < 12; i++) {
+                long t0 = System.nanoTime();
+                crowd.paint(new V(0, 0));
+                best = Math.min(best, System.nanoTime() - t0);
+            }
+            dev.awaken.Awaken.LOG.info("[realms] blockout: a chunk under 60 masses draws and settles in {} ms", String.format("%.2f", best / 1e6));
+            if (best > 30_000_000L) h.fail("a chunk under 60 masses took " + best / 1_000_000 + " ms");
             h.succeed();
         });
         AwakenTests.register("realm_amber_never_floats", 1200, h -> {
@@ -430,6 +552,53 @@ public final class RealmTests {
         @Override public int halfSize() { return 16; }
         @Override public List<? extends dev.awaken.gates.realms.kit.Piece<?>> pieces() { return List.of(); }
         @Override public List<double[]> ways() { return List.of(); }
+        @Override public float mouthYaw() { return 0; }
+    }
+
+    /**
+     * A flat square with a hanging lantern, a grass, a tall grass, a vine, a lily and a lone block (a lantern standing on it,
+     * another hung under it), each properly held or each left in the air, and a grass at the bottom of a pool.
+     */
+    private static final class SettleProbe extends dev.awaken.gates.realms.kit.SheetLand<dev.awaken.gates.realms.kit.Mats> {
+        final boolean held;
+
+        SettleProbe(boolean held) {
+            super(new Ctx(AMBER, "settle_probe", Rank.E, 0, 1), 0);
+            this.held = held;
+        }
+
+        @Override protected dev.awaken.gates.realms.kit.Mats mats() { return null; }
+        @Override public int ground(int x, int z) { return 10; }
+
+        @Override
+        protected void draw(V v) {
+            var stone = Blocks.STONE.defaultBlockState();
+            var water = Blocks.WATER.defaultBlockState();
+            var grass = Blocks.SHORT_GRASS.defaultBlockState();
+            var hung = Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HANGING, true);
+            for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) for (int y = 0; y <= 10; y++) v.set(x, y, z, stone);
+            for (int x = 18; x <= 22; x++) for (int z = 18; z <= 22; z++) for (int y = 8; y <= 10; y++) v.set(x, y, z, water);
+            if (!held) v.set(20, 9, 20, grass);
+            int up = held ? 0 : 4;
+            if (held) {
+                for (int y = 11; y <= 21; y++) v.set(7, y, 8, stone);
+                v.set(8, 21, 8, stone);
+                for (int y = 11; y <= 15; y++) v.set(9, y, 12, stone);
+                v.set(4, 10, 4, water);
+            }
+            v.set(8, 20, 8, hung);
+            v.set(12, 11 + up, 8, grass);
+            v.set(12, 11 + up, 12, Blocks.TALL_GRASS.defaultBlockState());
+            v.set(12, 12 + up, 12, Blocks.TALL_GRASS.defaultBlockState().setValue(net.minecraft.world.level.block.DoublePlantBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+            v.set(8, 15, 12, Blocks.VINE.defaultBlockState());
+            v.set(4, 11, 4, Blocks.LILY_PAD.defaultBlockState());
+            v.set(4, 11 + 2 * up, 12, stone);
+            v.set(4, 12 + 2 * up, 12, Blocks.LANTERN.defaultBlockState());
+            if (!held) v.set(4, 10 + 2 * up, 12, hung);
+        }
+
+        @Override public int biome(int x, int y, int z) { return 0; }
+        @Override public int halfSize() { return 16; }
         @Override public float mouthYaw() { return 0; }
     }
 }
