@@ -1,0 +1,283 @@
+package dev.awaken.core.client.ui;
+
+import dev.awaken.signal.client.Glass;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
+
+/**
+ * The parts every AWAKEN screen is built from (SPEC §57): a thing in its well, lit by its state; what something takes, as
+ * the real item with have and need; a recipe drawn as a recipe; a number with its caption; a needle and a distance; key
+ * caps and the bar of keys; buttons, chips and the name under the pointer. All on a {@link Sheet}, in sheet pixels. Every
+ * icon is the real item, drawn by the game: nothing here draws a picture of its own.
+ */
+public final class Kit {
+    private Kit() {}
+
+    /** How a thing is lit: not found yet, known, ready to act on, yours already, waiting on you, in focus. */
+    public enum Lit { NOT_FOUND, KNOWN, READY, YOURS, WAITS, FOCUS }
+
+    private static final int WELL = 0x05080F;
+
+    // ---- a thing --------------------------------------------------------------------------------------------------
+
+    /** The well a thing sits in: dark glass and a rim that says its state. {@code over}: the pointer is on it. */
+    public static void well(Sheet s, float x0, float y0, float x1, float y1, Lit lit, boolean over) {
+        int rim = switch (lit) {
+            case FOCUS -> Glass.a(0xC4E6FF, 1F);
+            case WAITS -> Glass.a(Glass.AMBER, s.bright ? 1F : .78F);
+            case READY -> Glass.a(Glass.EDGE, .85F);
+            case YOURS -> Glass.a(Glass.LANTERN, .6F);
+            default -> Glass.a(s.bright ? 0xC4E6FF : Glass.EDGE, s.bright ? .7F : over ? .6F : .16F);
+        };
+        int fill = lit == Lit.YOURS ? Sheet.argb(0x3A2A12, .55F) : lit == Lit.FOCUS || over ? Sheet.argb(0x1B3350, .62F) : Sheet.argb(WELL, .40F);
+        if (lit == Lit.FOCUS) s.glow(x0, y0, x1, y1, Glass.EDGE, .45F);
+        else if (lit == Lit.WAITS) s.glow(x0, y0, x1, y1, Glass.AMBER, .22F);
+        s.fill(x0, y0, x1, y1, fill);
+        s.outline(x0, y0, x1, y1, lit == Lit.FOCUS || lit == Lit.WAITS ? 2 : 1, rim);
+    }
+
+    /** A thing: its well and the real item in the middle of it. Not found: the well alone, with a dark mark. */
+    public static void thing(Sheet s, ItemStack stack, float x, float y, float size, Lit lit, boolean over) {
+        well(s, x, y, x + size, y + size, lit, over);
+        float in = Math.round(size * .14F);
+        if (lit == Lit.NOT_FOUND || stack.isEmpty()) unknown(s, x + size / 2F, y + size / 2F, size * .22F);
+        else s.item(stack, x + in, y + in, size - 2 * in);
+    }
+
+    /** What stands in for something you haven't found: a dark diamond with a faint edge. It gives nothing away. */
+    public static void unknown(Sheet s, float cx, float cy, float r) {
+        s.g.pose().pushMatrix().translate(cx, cy).rotate((float) (Math.PI / 4));
+        int n = Math.round(r);
+        s.g.fill(-n, -n, n, n, Sheet.argb(0x02040A, .9F));
+        s.g.fill(-n, -n, n, -n + 1, Glass.a(Glass.EDGE, .35F));
+        s.g.fill(-n, n - 1, n, n, Glass.a(Glass.EDGE, .35F));
+        s.g.fill(-n, -n + 1, -n + 1, n - 1, Glass.a(Glass.EDGE, .35F));
+        s.g.fill(n - 1, -n + 1, n, n - 1, Glass.a(Glass.EDGE, .35F));
+        s.g.pose().popMatrix();
+    }
+
+    /** The glint on something new, or (amber) something that waits on you. */
+    public static void glint(Sheet s, float cx, float cy, int rgb) {
+        s.glow(cx - 5, cy - 5, cx + 5, cy + 5, rgb, .5F);
+        s.g.pose().pushMatrix().translate(cx, cy).rotate((float) (Math.PI / 4));
+        s.g.fill(-4, -4, 4, 4, Glass.a(rgb, 1F));
+        s.g.pose().popMatrix();
+    }
+
+    // ---- what it takes ----------------------------------------------------------------------------------------------
+
+    public static final float NEED_W = 112F, NEED_H = 118F;
+
+    /**
+     * One need: the real item, how many you have of how many it takes, and its name under that. A condition (no item) is
+     * a tick or a dot with its words. Returns whether the pointer is on it (its tip is the caller's to draw, last).
+     */
+    public static boolean need(Sheet s, ItemStack icon, String name, int have, int need, float x, float y, float mx, float my) {
+        boolean met = have >= need, over = Sheet.in(mx, my, x, y, x + NEED_W, y + NEED_H);
+        float cx = x + NEED_W / 2F;
+        if (icon.isEmpty()) {
+            s.centre(met ? "✓" : "·", cx, y + 12, Sheet.TITLE + 1, Glass.a(met ? Glass.GOOD : s.label, 1F));
+        } else {
+            if (over) s.glow(cx - 30, y, cx + 30, y + 60, Glass.EDGE, .3F);
+            s.item(icon, cx - 28, y + 2, 56);
+        }
+        String count = icon.isEmpty() && need <= 1 ? "" : Math.min(have, 9999) + "/" + need;
+        if (!count.isEmpty()) s.centre(count, cx, y + 62, Sheet.TITLE, Glass.a(met ? Glass.GOOD : Glass.WARN, 1F));
+        List<FormattedCharSequence> lines = s.wrap(name, NEED_W, Sheet.LABEL);
+        float ty = y + (count.isEmpty() ? 62 : 90);
+        for (int i = 0; i < Math.min(2, lines.size()); i++) {
+            float w = s.font.width(lines.get(i)) * s.snap(Sheet.LABEL);
+            s.text(lines.get(i), cx - w / 2F, ty, Sheet.LABEL, Glass.a(s.label, 1F));
+            ty += s.line(Sheet.LABEL);
+        }
+        return over;
+    }
+
+    public static final float CELL = 44F;
+
+    /** How wide {@link #recipe} draws: the grid, the arrow and what it makes. */
+    public static float recipeWidth(int w, float result) {
+        return w * (CELL + 2) + 44 + result;
+    }
+
+    /**
+     * A recipe as Minecraft draws one: the grid ({@code w} across, rows down; an empty stack is an empty square), an arrow,
+     * and what it makes, {@code result} sheet pixels across. Centred on y0..y0 + 3 cells.
+     */
+    public static void recipe(Sheet s, int w, int h, List<ItemStack> cells, ItemStack made, float x, float y, float result) {
+        float gh = h * (CELL + 2) - 2, tall = Math.max(gh, result), gy = y + (tall - gh) / 2F;
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                int i = row * w + col;
+                float cx = x + col * (CELL + 2), cy = gy + row * (CELL + 2);
+                s.fill(cx, cy, cx + CELL, cy + CELL, Sheet.argb(WELL, .6F));
+                s.outline(cx, cy, cx + CELL, cy + CELL, 1, Glass.a(Glass.EDGE, .22F));
+                if (i < cells.size()) s.item(cells.get(i), cx + 5, cy + 5, CELL - 10);
+            }
+        }
+        float ax = x + w * (CELL + 2) + 8, ay = y + tall / 2F;
+        s.fill(ax, ay - 2, ax + 20, ay + 2, Glass.a(Glass.EDGE, .8F));
+        for (int i = 0; i < 8; i++) s.fill(ax + 20 + i, ay - 8 + i, ax + 21 + i, ay + 8 - i, Glass.a(Glass.EDGE, .8F));
+        s.item(made, ax + 36, y + (tall - result) / 2F, result);
+    }
+
+    // ---- numbers and places -----------------------------------------------------------------------------------------
+
+    /** A number and what it is: the value at size n, its caption in spaced capitals under it. Returns its width. */
+    public static float number(Sheet s, String value, String caption, float x, float y, float n, int rgb) {
+        s.lit(value, x, y, n, Glass.a(rgb, 1F));
+        s.caps(caption, x, y + 8 * s.snap(n) + 6, Glass.a(s.label, 1F));
+        return Math.max(s.width(value, n), s.width(caption.toUpperCase(java.util.Locale.ROOT), Sheet.LABEL));
+    }
+
+    /** A ring with a needle to a place: up is the way you face. {@code degrees} NaN: the way isn't known (no needle). */
+    public static void needle(Sheet s, float cx, float cy, float r, float degrees) {
+        int ring = Glass.a(Glass.EDGE, .5F);
+        int steps = Math.max(16, Math.round(r * .9F));
+        for (int i = 0; i < steps; i++) {
+            double a0 = Math.PI * 2 * i / steps, a1 = Math.PI * 2 * (i + 1) / steps;
+            s.ray(cx + (float) Math.cos(a0) * r, cy + (float) Math.sin(a0) * r, cx + (float) Math.cos(a1) * r, cy + (float) Math.sin(a1) * r, 2F, ring);
+        }
+        if (Float.isNaN(degrees)) return;
+        float t = Math.max(3F, r / 14F);
+        s.g.pose().pushMatrix().translate(cx, cy).rotate((float) Math.toRadians(degrees));
+        s.g.fill(Math.round(-t / 2), Math.round(-r * .82F), Math.round(t / 2 + .5F), 0, Glass.a(Glass.AMBER, 1F));
+        s.g.fill(Math.round(-t / 2), 0, Math.round(t / 2 + .5F), Math.round(r * .3F), Glass.a(s.label, .5F));
+        s.g.pose().popMatrix();
+    }
+
+    /** Dots for how far along something is: {@code met} of {@code of}. */
+    public static void pips(Sheet s, float x, float y, int met, int of) {
+        for (int i = 0; i < Math.min(of, 8); i++) {
+            float px = x + i * 11;
+            s.fill(px, y, px + 8, y + 8, i < met ? Glass.a(Glass.GOOD, 1F) : Sheet.argb(0x6F829C, .55F));
+        }
+    }
+
+    // ---- keys and the bar of keys -----------------------------------------------------------------------------------
+
+    private static final float KEY_H = 26F;
+
+    /** One key cap; amber for one you hold. Returns its width. */
+    public static float key(Sheet s, String key, float x, float y, boolean hold) {
+        float tw = s.width(key, Sheet.LABEL), w = Math.max(KEY_H, tw + 14);
+        s.fill(x, y, x + w, y + KEY_H, Sheet.argb(0x05080F, .7F));
+        int rim = hold ? Glass.a(Glass.AMBER, 1F) : Glass.a(s.label, .6F);
+        s.outline(x, y, x + w, y + KEY_H, 1, rim);
+        s.fill(x, y + KEY_H, x + w, y + KEY_H + 2, hold ? Glass.a(Glass.AMBER, .5F) : Glass.a(s.label, .35F));
+        s.text(key, x + (w - tw) / 2F, y + (KEY_H - 7 * s.snap(Sheet.LABEL)) / 2F, Sheet.LABEL, Glass.a(hold ? Glass.AMBER : Glass.TITLE, 1F));
+        return w;
+    }
+
+    /** What one hint says: its keys ("Hold" first for a held one), and what they do, in a few plain words. */
+    public record Hint(String label, boolean hold, String... keys) {
+        public static Hint of(String label, String... keys) {
+            return new Hint(label, false, keys);
+        }
+
+        public static Hint hold(String label, String... keys) {
+            return new Hint(label, true, keys);
+        }
+    }
+
+    /** One hint from x: its key caps, then its words. Returns the x after it. */
+    public static float hint(Sheet s, Hint h, float x, float y) {
+        if (h.hold) x += key(s, "Hold", x, y, true) + 4;
+        for (String k : h.keys) x += key(s, k, x, y, false) + 4;
+        x += 4;
+        s.text(h.label, x, y + (KEY_H - 7 * s.snap(Sheet.BODY)) / 2F, Sheet.BODY, Glass.a(s.label, 1F));
+        return x + s.width(h.label, Sheet.BODY);
+    }
+
+    public static float hintWidth(Sheet s, Hint h) {
+        float w = 4 + s.width(h.label, Sheet.BODY);
+        if (h.hold) w += Math.max(KEY_H, s.width("Hold", Sheet.LABEL) + 14) + 4;
+        for (String k : h.keys) w += Math.max(KEY_H, s.width(k, Sheet.LABEL) + 14) + 4;
+        return w;
+    }
+
+    /** The bar of keys: {@code left} from x0 on, {@code right} ending at x1. The same place on every screen. */
+    public static void hints(Sheet s, List<Hint> left, List<Hint> right, float x0, float x1, float y) {
+        float x = x0;
+        for (Hint h : left) x = hint(s, h, x, y) + 26;
+        float w = 0;
+        for (Hint h : right) w += hintWidth(s, h) + 26;
+        x = x1 - Math.max(0, w - 26);
+        for (Hint h : right) x = hint(s, h, x, y) + 26;
+    }
+
+    // ---- buttons and chips ------------------------------------------------------------------------------------------
+
+    public static final float BUTTON_H = 44F;
+
+    /** What a button looks like: the one to take, a plain one, one that's on (tracked), a quiet one. */
+    public enum Look { PRIMARY, PLAIN, ON, QUIET }
+
+    public static float buttonWidth(Sheet s, String key, String label) {
+        return 36 + s.width(label, Sheet.BODY) + (key.isEmpty() ? 0 : Math.max(KEY_H, s.width(key, Sheet.LABEL) + 14) + 10);
+    }
+
+    /**
+     * A button from (x, y): an optional key cap, then its words. {@code held} 0..1 fills it for a hold. Returns its width;
+     * the caller adds its rectangle to its {@link Hot} zones with what a click does.
+     */
+    public static float button(Sheet s, String key, String label, float x, float y, Look look, boolean over, boolean enabled, float held) {
+        float w = buttonWidth(s, key, label);
+        if (look != Look.QUIET) {
+            int rgb = look == Look.ON ? Glass.AMBER : Glass.EDGE;
+            int fill = !enabled ? Sheet.argb(0x1A2232, .7F) : look == Look.ON ? Glass.a(Glass.AMBER, .14F)
+                    : over ? Glass.a(Glass.EDGE, .28F) : look == Look.PRIMARY ? Glass.a(Glass.EDGE, .20F) : Sheet.argb(0x1B2A44, .75F);
+            if (enabled && (over || look == Look.PRIMARY || look == Look.ON)) s.glow(x, y, x + w, y + BUTTON_H, rgb, over ? .35F : .2F);
+            s.fill(x, y, x + w, y + BUTTON_H, fill);
+            if (held > 0F) s.fill(x, y, x + w * Math.min(1F, held), y + BUTTON_H, Glass.a(Glass.AMBER, .35F));
+            s.outline(x, y, x + w, y + BUTTON_H, look == Look.PLAIN ? 1 : 2, Glass.a(enabled ? rgb : s.label, enabled ? (over ? 1F : look == Look.PLAIN ? .6F : .9F) : .3F));
+        }
+        float tx = x + 18;
+        if (!key.isEmpty()) tx += key(s, key, tx, y + (BUTTON_H - KEY_H) / 2F - 1, false) + 10;
+        int ink = !enabled ? Glass.a(s.label, .6F) : look == Look.ON ? Glass.a(Glass.AMBER, 1F) : look == Look.QUIET && !over ? Glass.a(s.label, 1F) : Glass.a(Glass.TITLE, 1F);
+        s.text(label, tx, y + (BUTTON_H - 7 * s.snap(Sheet.BODY)) / 2F, Sheet.BODY, ink);
+        return w;
+    }
+
+    /** A chip: where you are, or what waits. Returns its width. */
+    public static float chip(Sheet s, ItemStack icon, String words, float x, float y, int rgb) {
+        String t = words.toUpperCase(java.util.Locale.ROOT);
+        float w = 24 + s.width(t, Sheet.LABEL) + (icon.isEmpty() ? 0 : 28);
+        s.fill(x, y, x + w, y + 30, Glass.a(rgb, .10F));
+        s.outline(x, y, x + w, y + 30, 1, Glass.a(rgb, .6F));
+        float tx = x + 12;
+        if (!icon.isEmpty()) {
+            s.item(icon, tx, y + 5, 20);
+            tx += 28;
+        }
+        s.text(t, tx, y + (30 - 7 * s.snap(Sheet.LABEL)) / 2F, Sheet.LABEL, Glass.a(rgb, 1F));
+        return w;
+    }
+
+    /** The name under the pointer, in the band's glass: a white line, then quieter ones. Drawn last, on a stratum of its own. */
+    public static void tip(Sheet s, float mx, float my, String title, List<String> more) {
+        float w = s.width(title, Sheet.BODY);
+        java.util.ArrayList<FormattedCharSequence> lines = new java.util.ArrayList<>();
+        for (String m : more) lines.addAll(s.wrap(m, 420F, Sheet.LABEL));
+        for (FormattedCharSequence l : lines) w = Math.max(w, s.font.width(l) * s.snap(Sheet.LABEL));
+        float h = 20 + s.line(Sheet.BODY) + lines.size() * s.line(Sheet.LABEL) - 4;
+        float x = Math.min(mx + 18, Sheet.W - w - 34), y = Math.max(8, Math.min(my + 18, Sheet.H - h - 8));
+        s.g.nextStratum();
+        s.fill(x, y, x + w + 24, y + h, Sheet.argb(0x0F1724, .96F));
+        s.outline(x, y, x + w + 24, y + h, 1, Glass.a(Glass.EDGE, .6F));
+        s.text(title, x + 12, y + 10, Sheet.BODY, Glass.a(Glass.TITLE, 1F));
+        float ty = y + 10 + s.line(Sheet.BODY);
+        for (FormattedCharSequence l : lines) {
+            s.text(l, x + 12, ty, Sheet.LABEL, Glass.a(s.label, 1F));
+            ty += s.line(Sheet.LABEL);
+        }
+    }
+
+    /** A hairline that fades to the right: under a heading, between groups. */
+    public static void hair(Sheet s, float x0, float x1, float y) {
+        float step = (x1 - x0) / 8F;
+        for (int i = 0; i < 8; i++) s.fill(x0 + i * step, y, x0 + (i + 1) * step, y + 1, Glass.a(Glass.EDGE, .45F * (1F - i / 8F)));
+    }
+}

@@ -95,7 +95,7 @@ public final class HoloClient {
         // the K menu is worked with the cursor; the crosshair would only sit on the panel's edge
         bus.addListener(RenderGuiLayerEvent.Pre.class, e -> {
             if (e.getName().equals(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR)
-                    && Minecraft.getInstance().gui.screen() instanceof HoloStatusScreen) e.setCanceled(true);
+                    && (Minecraft.getInstance().gui.screen() instanceof HoloStatusScreen || Minecraft.getInstance().gui.screen() instanceof BandStage)) e.setCanceled(true);
         });
         bus.addListener(EventPriority.HIGHEST, RenderGuiLayerEvent.Post.class, HudMotion::post);
         bus.addListener(EventPriority.LOWEST, RenderGuiEvent.Post.class, HudMotion::endFrame);
@@ -135,6 +135,8 @@ public final class HoloClient {
 
     /** The K menu on a page: holo when chosen and the shaders loaded, otherwise the flat screen. */
     public static Screen statusScreen(dev.awaken.progression.client.StatusSections.Tab page, String... focus) {
+        // the stage (SPEC §57) unless the old band is asked for; it draws solid where the holo shaders didn't load
+        if (!HoloConfig.classicBand) return new BandStage(page, focus);
         if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen(page, focus);
         return new StatusScreen(page, focus);
     }
@@ -152,6 +154,11 @@ public final class HoloClient {
     }
 
     static void openStatusPanel() {
+        // the old band's own shape: beside you, trailing your view (the stage lands the same panel on the screen)
+        STATUS.onScreen = false;
+        STATUS.handsOver = false;
+        STATUS.w = HoloStatusScreen.W;
+        STATUS.h = HoloStatusScreen.H;
         if (!STATUS.timeline.active()) {
             Minecraft mc = Minecraft.getInstance();
             var cam = mc.gameRenderer.mainCamera();
@@ -161,6 +168,19 @@ public final class HoloClient {
     }
 
     static void closeStatusPanel() {
+        closeIntoWrist(STATUS, false);
+    }
+
+    /** The band's stage opened (or was laid out again): its plate's rectangle on the screen, in GUI pixels (SPEC §57). */
+    static void openStagePanel(int x, int y, int w, int h) {
+        STATUS.w = w;
+        STATUS.h = h;
+        STATUS.handsOver = true;
+        STATUS.landOn(x, y);
+        openOnWrist(STATUS, INVENTORY, false);
+    }
+
+    static void closeStagePanel() {
         closeIntoWrist(STATUS, false);
     }
 
@@ -262,7 +282,7 @@ public final class HoloClient {
         Minecraft m0 = Minecraft.getInstance();
         // the band came off with the K menu open: the menu has nothing to stand on
         if (m0.player != null && !dev.awaken.core.api.HoloBand.worn(m0.player)
-                && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen)) m0.gui.setScreen(null);
+                && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen || m0.gui.screen() instanceof BandStage)) m0.gui.setScreen(null);
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
         HoloKind want = HoloScene.mapOpen() ? HoloKind.MAP : opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
@@ -427,6 +447,10 @@ public final class HoloClient {
             }
             case "hud" -> {
                 HoloConfig.forcedHudMotion = HoloConfig.HudMotion.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
+                HoloConfig.refresh();
+            }
+            case "classic" -> { // classic on|off|auto: the K menu as it was before the stage (SPEC §57)
+                HoloConfig.forcedClassicBand = a[1].equals("auto") ? null : a[1].equals("on");
                 HoloConfig.refresh();
             }
             case "peek" -> HoloOthers.peekSelf = a[1].equals("on");

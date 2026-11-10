@@ -842,6 +842,11 @@ of `AwakenConfig.Client`.
   `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
   `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
   `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
+- `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
+  (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
+  `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
+  frame) and `BandPlaces` (`Place`, `set(pageOrdinal, place)`: what a band page shows on the stage). `Goals.Step.icon`
+  (`Builder.icon(itemId)`) names the real item that stands for a step there.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
@@ -20505,3 +20510,67 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 `ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
+
+## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
+
+Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The
+rule: **the band shows you things, and speaks only about the one you point at.** Built in stages (PLAN §6); the old band stays behind
+`classicBand` in `awaken-holo-client.toml` for one build. With his approval he asked for two things: on Status the real player stands
+under the armour and looks at the pointer as in the bag, and every icon and name is the real item's own ("all the icons are actually
+correct and the names are actually correct").
+
+### 57.1 The sheet and the kit (`core.client.ui`)
+- **One sheet.** `Sheet`: 1708 x 960 (the Hall's, §52), fitted to the window and letterboxed, so the band no longer depends on the GUI
+  scale. Type roles in sheet pixels to a font pixel: numeral 6, display 5, title 3 (4 for the step in focus), body 2, label 1.5; each
+  snaps to whole real pixels, and Band size (§30.6) moves every one a real pixel down or up.
+- **Colours** are `signal.client.Glass`'s, by job: EDGE what you can act on, AMBER what waits on you, GOOD have and ready, WARN short,
+  LANTERN home. Never colour alone: a count, a tick, a glint or a rim goes with it. Under the game's High Contrast option the plate is
+  solid and the quiet text brightens.
+- **The kit** (`Kit`): a thing in its well lit by its state (not found, known, ready, yours, waits, in focus); a need as the real item
+  with have/need and its name; a recipe as a grid, an arrow and what it makes; a number with its caption; a needle (up is ahead) and a
+  distance; key caps and the bar of keys; buttons (primary, plain, on, quiet; a hold fills); chips; the name under the pointer in the
+  band's glass. **Every icon is the real item, drawn by the game (`g.item`), and a plain item's name is the item's own**; nothing in
+  the kit draws a picture of its own. What stands in for something not found is a dark diamond that gives nothing away.
+- **What can be clicked** (`Hot`): each part that draws something clickable adds its rectangle and what a click does, in the same
+  pass, so drawing and clicking can't disagree.
+
+### 57.2 The band's stage (`holo.client.BandStage`, geometry `holo.ui.StageLayout`)
+- K opens the stage: the band's glass as one plate (152,40 to 1680,884) with you (level, rank, XP) and the six places down the wrist
+  edge (Status, Tasks, Hearth, Powers, Journal, Map: same names, order, icons and number keys), the open place's name, the stage
+  (192,144 to 1640,856, its right 440 the panel that speaks about the thing in focus) and one bar of keys under it.
+- The glass unfolds from the wrist as the band's 3D panel and lands on the plate's rectangle, where the flat face takes over (the
+  bag's hand-over, §16; the same `HoloPanel`, so others still see the STATUS kind and nothing of its content). Changing place prints
+  the stage in behind a scan line (220 ms; a cut with reduced motion). Without the holo shaders the plate is solid.
+- **Keys, the same on every AWAKEN screen:** Esc one step back (then it shuts), Tab and Shift+Tab the next thing, Q and E the place
+  beside this one (the Map keeps its own key and screen), 1 to 6 a place, K shuts it, T tracks, hold commits, Z takes back. The bar
+  shows the ones that work now.
+- **Places** (`BandPlaces.set`): a module gives its page a `Place` (draw, hints, key, next, back, scroll). A page without one shows its
+  old sections on the stage (`LegacyPlace`): columns of the old band's width, each section to the shortest column, a unit two sheet
+  pixels; Tab, Q and E keep their shared meaning there. Stage 0 moved Tasks; the others follow in PLAN §6's order.
+- A glint on a rail node says something waits: points to spend (amber), new steps, new Journal lines.
+- Tours: `screen band [status|tasks|hearth|powers|journal]`, `band click <x> <y>` (sheet pixels), `screenkey` (now also x, z, esc,
+  enter, left, right, back, 1 to 6), `tasks focus <step key or its start>`, `holo classic on|off|auto`.
+
+### 57.3 Tasks on the stage (`tasks.client.TasksPlace`; the model of §27.13 and §53 is unchanged)
+- **No tabs.** The goals are lanes at the right (Hearth, Armour, Weapons, Bells, Gates, Out there), each with its rows as tiles (the
+  step's real items, its name on up to three lines, pips for how much of what it takes you have, a glint when new, an amber rim on
+  the step on top) and a "+n" tile for what waits in Later, which opens that list in the focus area (Track, Put back). A lane shows
+  once it has something.
+- **The step in focus** (the one on top when you arrive; click a tile or Tab for another): whose it is and why it's in front
+  (Tracked, Do this next, When you want, Also open to you; READY), its name, one line (`opens`, else `why`; two lines at most, the
+  rest as the tip), then its picture:
+  - picks → side by side: armour as figures wearing each set (a `ClientMannequin`, so a body is under the armour), anything else as
+    the things themselves; click or Left/Right looks at one and lists what it takes; Enter or the button chooses; "See them worn"
+    opens the Hall's line-up (§52);
+  - something it needs that you place and craft → its recipe drawn as a grid (`TaskPayloads.RecipeRow`), the thing beside it, and
+    how many you have;
+  - only a place → a needle, the distance as a number and the direction;
+  - else the thing itself on the lit floor.
+  Under it: what it takes as the real items with have/need (where a missing one comes from is its tip), the way as a small needle,
+  and what comes after.
+- **Track** replaces the word Pin on this page (the same `PIN`/`UNPIN` and the same HUD card); Set aside (X) and Undo (Z, for the
+  same ten seconds) as before, never on the step on top.
+- **Pictures.** A step is pictured by its picks, else what it takes, else `Goals.Step.icon`, else its goal's own item (`EMBLEM`).
+- **Recipes** (`tasks.TaskRecipes`, in `tasks_view`, payload version 3): for each unmet need of a shown row that is a block you place,
+  the crafting recipe that carries the item's own id, read from the server's recipes (shaped or shapeless; a tag's members turn a
+  second each). Materials get none.

@@ -109,11 +109,13 @@ public final class Goals {
      * off the main path (a Sanctuary over a Bedroom), never the top step. {@code covers} lists Now suggestion ids (or id
      * prefixes ending in ':' or '/') this step stands for, so they don't show twice. {@code thread} is the line of work it
      * belongs to (one row per thread shows, lowest {@code order} first; "" makes it its own thread), {@code opens} one line
-     * of what it gets you, and {@code teaches} what it leads the player to (a room, a block, a tier: SPEC §53).
+     * of what it gets you, and {@code teaches} what it leads the player to (a room, a block, a tier: SPEC §53). {@code icon}
+     * is the real item that stands for it on the band's stage when its needs don't already show one ("" for the goal's own;
+     * SPEC §57): an item id, never a picture of something the player hasn't met.
      */
     public record Step(String key, Goal goal, String title, String why, List<Need> needs, Optional<BlockPos> where, int path,
                        boolean optional, int priority, List<Choice> choices, List<String> covers, String thread, int order, Voice voice,
-                       String opens, List<String> teaches) {
+                       String opens, List<String> teaches, String icon) {
         public static Builder of(String key, Goal goal, String title) {
             return new Builder(key, goal, title);
         }
@@ -139,6 +141,7 @@ public final class Goals {
         private int order;
         private Voice voice = Voice.PLAIN;
         private final List<String> teaches = new ArrayList<>();
+        private String icon = "";
 
         private Builder(String key, Goal goal, String title) {
             this.key = key;
@@ -222,9 +225,19 @@ public final class Goals {
             return this;
         }
 
+        /** The real item that stands for this step on the band's stage (an item id): what you'd make, use or go to. */
+        public Builder icon(String itemId) {
+            icon = itemId;
+            return this;
+        }
+
+        public Builder icon(Item item) {
+            return icon(BuiltInRegistries.ITEM.getKey(item).toString());
+        }
+
         public Step build() {
             return new Step(key, goal, title, why, List.copyOf(needs), where, path, optional, priority, List.copyOf(choices), List.copyOf(covers),
-                    thread, order, voice, opens, List.copyOf(teaches));
+                    thread, order, voice, opens, List.copyOf(teaches), icon);
         }
     }
 
