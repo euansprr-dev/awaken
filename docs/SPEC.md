@@ -6362,11 +6362,14 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   - **Where it holds.** Every world (it is the player's taste, not a place's). A story moment's look
     (`LensClient.override`) plays as it was authored: the grade eases out for its length and back after. A change of
     grade eases over about a third of a second. Parameter texels 22 to 24 carry it.
-  - **Vivid**: an azure sky (`azure` 0.5), bright greens (`leaf` 0.5), `vibrance` 0.4, `dark` 0.3, `rise` 0.1,
+  - **Vivid**: an azure sky (`azure` 0.5), bright greens (`leaf` 0.65), `vibrance` 0.4, `dark` 0.3, `rise` 0.1,
     `punch` 0.25, `gold` 0.3, `split` 0.25, the near haze 1.25 times as thick, and a little more bloom, sun glow, sky
     glow and mist. Tuned offline on finished frames against his three pictures, then compared on CI
     (`tools/autopilot/steady60-grade-ci.txt`: a garden under both grades at morning, noon, golden hour, dusk, night
-    and rain). Test: `lens_grade_vivid_reads`.
+    and rain). The first comparison (run 42853594714) found two faults, both in `azure`: by moonlight it turned a
+    purple flower blue (its guard was an absolute difference, and every difference is small in the dark; it is now
+    red over green by a share of the blue), and a bright sky paled to cyan (green rose with it; now red gives way
+    and green hardly moves). Test: `lens_grade_vivid_reads`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.

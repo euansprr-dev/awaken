@@ -59,9 +59,11 @@ vec3 screen(vec3 a, vec3 b) { return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)
 // 22 and 23, each 0..1; all zero is the look as built and the step is skipped). Every part works by how far one
 // channel leads the others, so it is smooth across a gradient and has no hue to branch on.
 vec3 lensGrade(vec3 c, vec4 a, vec4 b) {
-    // azure: a violet blue toward azure, by blue's lead over the other two; purples (red over green) keep their hue
-    float lead = max(c.b - max(c.r, c.g), 0.0) * smoothstep(-0.16, -0.02, c.g - c.r) * b.r;
-    c.g += lead * 0.30;
+    // azure: a violet blue toward a deeper azure, by blue's lead over the other two (red gives way; green hardly
+    // rises, or a bright sky pales to cyan). Purples keep their hue: red over green by more than a share of the blue,
+    // so a flower stays purple by moonlight too, where every difference is small
+    float lead = max(c.b - max(c.r, c.g), 0.0) * smoothstep(-0.14, -0.02, (c.g - c.r) / max(c.b, 1.0e-3)) * b.r;
+    c.g += lead * 0.08;
     c.r -= lead * 0.50;
     // leaf: green's lead brightens toward a sunlit yellow-green
     float leaf = max(c.g - max(c.r, c.b), 0.0) * b.g;
