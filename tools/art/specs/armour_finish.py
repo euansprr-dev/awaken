@@ -110,18 +110,18 @@ def copy(m, details=None, **kw):
 # gem, or None), and which of its parts the set takes (a set that already wears something there keeps it)
 ALL = ("cuff", "hand")
 GAUNTLET = {
-    "wildhide": ("hide_dark", "strap", None, ("cuff",)),
+    "wildhide": ("hide_dark", "strap", None, ("cuff_sides",)),   # its bone toggles keep the outer face
     "bellguard": ("bronze_plain", "hoop", None, ()),
-    "rootwarden": ("bark_plate", "root_wrap", None, ALL),
-    "amberwing": ("leather_st", "amber", None, ALL),
-    "beastbound": ("iron_riv", "iron", None, ALL, "tusk"),      # an iron cuff; the bone is only the plate's lip
+    "rootwarden": ("bark_plate", "root_wrap", None, ("cuff_sides", "hand")),  # its sap inlay keeps the outer face
+    "amberwing": ("leather_st", "amber", None, ("cuff_sides", "hand")),  # its amber inlay keeps the outer face
+    "beastbound": ("iron_riv", "iron", None, ("hand",), "tusk"),  # its hide strap is the wrist band; a bone lip on the plate
     "cleftrunner": ("iron", "iron_hem", None, ()),
-    "lanternlight": ("iron", "brass", "glass_small", ALL),
-    "bladeward": ("steel", "steel_hem", None, ALL),
+    "lanternlight": ("iron", "brass", "glass_small", ("hand",)),  # its own brass cuff is at the wrist
+    "bladeward": ("steel", "steel_hem", None, ("cuff_of", "hand")),  # its couter sits behind the wrist
     "hornlord": ("iron", "gold", "eye", ("cuff_sides", "hand_seam")),
     "gatewrought": ("stone", "silver", "door", ALL),
     "vaultbreaker": ("steel", "diamond", None, ()),
-    "frostwalker": ("ice", "ice_rim", "icicle_glow", ALL),
+    "frostwalker": ("ice", "ice_rim", "icicle_glow", ("hand",)),  # its own fur cuff is already at the wrist
     "sunward": ("gold", "gold_rim", "sun_heart", ALL),
     "shardcrown": ("steel", "crystal", "crystal_glow", ALL),
     "veilwoven": ("plate", "silver", "gem", ()),
@@ -236,11 +236,16 @@ def gauntlet(sid, d):
     mats["g_trim"] = copy(t, details=(), emit=0.0)
     mats["g_glove"] = copy(mats[glove[0]], details=tuple(mats[glove[0]].details) + (fingers(),), emit=0.0)
     add = [B(-3.5, 1.5, -11, CUT, -2.5, 2.5, "g_glove", "g_glove")]
-    if "cuff" in parts:      # a flare a texel proud round the forearm's end, open toward the body
+    # a flare a texel proud round the forearm's end, open toward the body: its outer, front and back bars ("cuff" is all
+    # three; "cuff_sides" the front and back alone, flush with an outer face that keeps a line or a detail of the set's;
+    # "cuff_of" outer and front where the set wears something behind the wrist)
+    if "cuff" in parts or "cuff_of" in parts:
         add.append(B(-5, -4, CUT, CUT + 1, -3, 3, "g_trim", "g_cuff"))
-    if "cuff" in parts or "cuff_sides" in parts:  # (a set whose line runs through keeps the outer face clear)
-        x0 = -5 if "cuff" in parts else -4
-        add += [B(x0, 2, CUT, CUT + 1, 3, 4, "g_trim", "g_cuff"), B(x0, 2, CUT, CUT + 1, -4, -3, "g_trim", "g_cuff")]
+    x0 = -4 if "cuff_sides" in parts else -5
+    if "cuff" in parts or "cuff_sides" in parts or "cuff_of" in parts:
+        add.append(B(x0, 2, CUT, CUT + 1, 3, 4, "g_trim", "g_cuff"))
+    if "cuff" in parts or "cuff_sides" in parts:
+        add.append(B(x0, 2, CUT, CUT + 1, -4, -3, "g_trim", "g_cuff"))
     if "hand" in parts:      # the back of the hand
         add.append(B(-4.5, -3.5, -10, -8, -2, 2, "g_hand", "g_hand"))
     if "hand_seam" in parts:  # a longer plate from the wrist to the knuckles, the line down its middle
@@ -383,3 +388,28 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     col = col + rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6
     col = col + accent[None] * flash * (0.18 + 0.6 * emit + 0.35 * rim)
     return np.clip(col, 0, 1)
+
+
+# ---- checks ---------------------------------------------------------------------------------------------------------
+
+def overlaps(design):
+    """Faces the pass added that lie in one plane with, and over, a face of a part the set already had (two faces in one
+    place flicker in the game; the kit's own plane check only sees different texel grids). Returns messages."""
+    bad = []
+    for piece, bones in design["pieces"].items():
+        for bone, boxes in bones.items():
+            ours = [b for b in boxes if b.part.startswith("g_") and np.allclose(b.R, np.eye(3))]
+            theirs = [b for b in boxes if not b.part.startswith("g_") and np.allclose(b.R, np.eye(3))]
+            for a in ours:
+                alo, ahi = a.c - a.h, a.c + a.h
+                for b in theirs:
+                    blo, bhi = b.c - b.h, b.c + b.h
+                    for ax in range(3):
+                        o = [i for i in range(3) if i != ax]
+                        over = all(min(ahi[i], bhi[i]) - max(alo[i], blo[i]) > 1e-6 for i in o)
+                        if not over:
+                            continue
+                        for pa, pb in ((alo[ax], blo[ax]), (ahi[ax], bhi[ax])):
+                            if abs(pa - pb) < 1e-6:
+                                bad.append(f"{piece}/{bone}: {a.part} and {b.part} share a face (axis {'xyz'[ax]} at {pa:g})")
+    return sorted(set(bad))

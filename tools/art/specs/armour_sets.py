@@ -989,6 +989,10 @@ def gatewrought():
         B(-5, 5, 0, 1, -4, -3, "silver", "collar"),
         VX.rbox((0, -4.5, 4.5), (5, 5, 1), 45, "plinth", "plinth"),
         VX.rbox((0, -4.5, 5.5), (1, 1, 1), 45, "door", "core"),
+        # the gate again on the back (the Armour Finish, stage 3: the back was a blank slab): two pillars and a lintel
+        # round a doorway of gate light, so whoever follows you sees which gate you came out of
+        B(-3, -2, -9, -1, -4, -3, "pillar", "backgate"), B(2, 3, -9, -1, -4, -3, "pillar", "backgate"),
+        B(-3, 3, -1, 0, -4, -3, "pillar", "backgate"), B(-1, 1, -8, -1, -4, -3, "door", "backdoor"),
     ]
     for i in range(5):
         a = math.radians(90 + 72 * i)
@@ -1806,6 +1810,10 @@ def vaultbreaker():
         "steel_lames": AW.Mat("flint", 5, 0.85, 0.85, details=(lames(2, -1),)),
         "steel_rim": AW.Mat("flint", 5, 0.85, 0.85, details=(rims("mirror", 6),)),
         "steel_dark": AW.Mat("flint", 2, 0.8, 0.75, details=(lames(2, -1),)),
+        # the body's own steel, two steps darker than the helm's (the Armour Finish, stage 3: the suit was grey on grey;
+        # now bright rims and diamonds sit on dark vault steel)
+        "steel_body": AW.Mat("flint", 3, 0.85, 0.8, details=(lames(2, -1),)),
+        "vault_door": AW.Mat("flint", 4, 0.85, 0.85, details=(rims("mirror", 6), rivet_grid("pearl", 6, 2))),
         "studs": AW.Mat("flint", 5, 0.85, 0.85, details=(rivet_grid("pearl", 6, 2),)),
         "diamond": AW.Mat("pearl", 5, 0.2, 1.0, emit=0.25, bevel=False),
         "slit": AW.Mat("ice", 5, 0.0, 0.5, emit=0.75, bevel=False),
@@ -1825,17 +1833,19 @@ def vaultbreaker():
 
     # ---- chestplate: a great breastplate studded with diamond, a diamond at its heart; a fauld; the pauldrons
     body = [
-        B(-5, 5, -10, 0, -3, 3, "steel_lames", "cuirass"),
+        B(-5, 5, -10, 0, -3, 3, "steel_body", "cuirass"),
         B(-4, 4, -7, 0, 3, 4, "studs", "breast"),
         B(-2, 2, -5, -1, 4, 5, "steel_rim", "boss"), B(-1, 1, -4, -2, 5, 6, "diamond", "heart"),
         B(-6, 6, -10, -8, -4, 4, "steel_rim", "fauld"),
         B(-5, 5, 0, 2, -4, 4, "steel_rim", "gorget"),
+        # a vault's door on the back: a rimmed, riveted plate, a diamond for its lock
+        B(-3, 3, -7, -1, -4, -3, "vault_door", "vaultdoor"), B(-1, 1, -5, -3, -5, -4, "diamond", "vaultlock"),
     ]
     # the sword arm: a round pauldron stepping in to a knob, tipped outward
     dome = [B(-6, 2, -1, 1, -4, 4, "steel_rim", "pldome"), B(-5, 1, 1, 2, -3, 3, "steel", "pldome"),
             B(-4, 0, 2, 3, -2, 2, "steel", "pldome"), B(-3, -1, 3, 4, -1, 1, "diamond", "plknob")]
     arm = [
-        B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
+        B(-4, 2, -5, -1, -3, 3, "steel_body", "rerebrace"),
         B(-4, 2, -9, -5, -3, 3, "steel", "vambrace"), B(-5, 3, -7, -6, -4, 4, "steel_rim", "cop"),
         B(-4, 2, -11, -9, -3, 3, "leather", "gauntlet"), B(-5, 3, -10, -9, -4, 4, "steel_rim", "cuff"),
     ]
@@ -1850,7 +1860,7 @@ def vaultbreaker():
 
     # ---- leggings: a belt; steel cuisses; knee cops with a diamond stud; a plate tasset front and back
     belt = [B(-5, 5, -13, -10, -3, 3, "steel_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "diamond", "buckle")]
-    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_lames", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_body", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
                  B(-1, 0, -7, -6, 4, 5, "diamond", "poleyn_gem")]
     front_cloth = [B(-3, 3, -5, 0, 0, 1, "steel_dark", "tasset", hem=True)]
     back_cloth = [B(-4, 4, -5, 0, -1, 0, "steel_dark", "tasset", hem=True)]
@@ -2083,6 +2093,9 @@ def shardcrown():
         B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
         B(-4, 2, -10, -5, -3, 3, "steel", "vambrace"),
         B(-4, 2, -11, -10, -3, 3, "steel_rim", "gauntlet"),
+        # crystal breaking out of the forearm behind the elbow, as it does from the shoulder and the knee (the Armour
+        # Finish, stage 3: the limbs were plain plate on a set whose whole idea is crystal growing out of it)
+        shard((-4.5, -3.0, -1.0), 1.5, 28, -12, "crystal", "vshard"), shard((-4.5, -4.5, 1.0), 1.0, 20, 14, "crystal_dark", "vshard2", 0.5),
     ]
     cape0 = [B(-5, 5, -6, 0, -1, 0, "cloth", "cape")]
     cape1 = [B(-5, 5, -5, 0, -1, 0, "cloth", "cape", hem=True)]
@@ -3742,6 +3755,7 @@ def check():
         if n > BUDGET:
             bad.append(f"{sid}: {n} corners (at most {BUDGET})")
         bad += [f"{sid}: {w}" for w in warns]
+        bad += [f"{sid}: {w}" for w in FIN.overlaps(design)]
         if albedo.shape[0] > 512:
             bad.append(f"{sid}: atlas {albedo.shape[0]} tall")
         for piece, bones in BONES.items():

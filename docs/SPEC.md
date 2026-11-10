@@ -17719,15 +17719,28 @@ blocks through stone, no marks, no danger sense).
     fingers grooved; on the back of the hand a plate of the set's plate with a lip of its trim and, from C, two lit
     texels of its glow. The four sets with a molten line down the forearm (Lordscale, Sovereign Weave, Hornlord,
     Deepcarapace) keep the outer face clear and run the line on down a longer hand plate. A set that already wore a
-    flare or a feature there keeps it and takes the glove alone (Bellguard, Vaultbreaker, Veilwoven, Nightcourt,
-    Signal's Echo, Cleftrunner; Wildhide a rolled cuff and a glove of its own wrap; Dreamsteel and Riftwalker a cuff
-    under their floating plate). `GAUNTLET` in the kit is the table.
+    flare or a feature there keeps it (Bellguard, Vaultbreaker, Veilwoven, Nightcourt, Signal's Echo, Cleftrunner take
+    the glove alone; Frostwalker, Lanternlight and Beastbound the glove and plate under their own cuff or strap;
+    Wildhide, Rootwarden and Amberwing a cuff on the front and back only, round their toggles and inlays; Bladeward
+    none behind, where its couter sits; Dreamsteel and Riftwalker a cuff under their floating plate). `GAUNTLET` in
+    the kit is the table.
   - **Plate languages** (a first version; stage 3 hand-finishes them): on the limb and belt plates of the later sets
     the one rimmed panel is replaced by a painter of the set's own (`LANGUAGE`: rivets for Vaultbreaker and
     Lanternlight, cut faces for Frostwalker, Shardcrown, Dreamsteel and Starfall, flutes for Sunward and Halo Choir,
     shell segments for Deepcarapace and Hollowheart, feather lames for Cloudrunner and Galewing, scales for Leviathan
     and Tidebreaker); breasts and pauldrons keep their rims. Galewing's steel is a step paler and Leviathan's fins a
     step brighter, to part the two.
+  - **Stage 3, set by set** (limbs, belts and backs only; Euan sees C-rank before B, A and S are done). C-rank:
+    **Gatewrought** wears its gate again on the back (two pillars, a lintel, a doorway of gate light: the back was a
+    blank slab, and whoever follows you now sees it lit at night). **Vaultbreaker**'s body steel is two steps darker
+    under its bright rims and diamonds (the helm's steel is untouched; the suit was grey on grey), and its back carries
+    a vault's door, rimmed and riveted, with a diamond for a lock. **Shardcrown** has crystal breaking out of the
+    forearm behind the elbow, as it does from the shoulder and knee. **Frostwalker** and **Sunward** take the pass's
+    own (cut-ice plates, fluted gold) and nothing more.
+  - **A check the pass brought** (`armour_finish.overlaps`, run by the kit's `check`): nothing the pass adds may lie in
+    one plane with, and over, a face of a part the set already had (two faces in one place flicker in the game; the
+    kit's older plane check only sees different texel grids). It caught the cuff lying over six sets' own wrist
+    details, which now keep their outer face (`cuff_sides`, `cuff_of` in `GAUNTLET`) or take no cuff.
 - **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
   texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
   seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
