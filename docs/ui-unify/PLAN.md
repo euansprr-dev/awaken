@@ -13,10 +13,16 @@ decisions taken as recommended. Two things he asked for with it:
 - The Fitting Stand's icon in the mock-up was vanilla's armour stand. Every icon and every name must be the real item's own. (Its
   name, Fitting Stand, was right.) In the build every icon is the registered item drawn by the game and a plain item's name is the
   item's own; `tasks_stage_pictures` checks it.
+- Later the same day, with a screenshot of a stat's line ending "...and you shrug off more h...": nothing on the menu may ever be
+  cut off, "so you can actually always read everything that you need to read". It is now a rule of the system (SPEC §57.6): on the
+  stage text cannot be shortened (what holds it grows, or scrolls), and the old sections fit their text smaller or wrap it;
+  `ui_text_never_cut` checks the fit.
 
-**What is built** (SPEC §57, on this branch; unplayed): Stage 0 (the sheet, the kit, the stage shell, Tasks, `classicBand`) and, from
-Stage 1, Status. Still to build: Powers, Hearth and its second door, the Journal wall, the bag's tip, the Tab glance, the cards, the
-workshops, the clean-up; and the tests `ui_word_budget` and `ui_keys_one_meaning`.
+**What is built** (SPEC §57, on this branch; seen on four CI tours, unplayed): Stage 0 (the sheet, the kit, the stage shell, Tasks,
+`classicBand`) and, from Stage 1, Status and Powers. Hearth and the Journal show their old sections inside the new shell. Still to
+build: Hearth and its second door, the Journal wall, the bag's tip, the Tab glance, the cards, the workshops (which still shorten
+text with their own `Stage.fit`), the clean-up; and the tests `ui_word_budget` and `ui_keys_one_meaning`. Decision 6 stands: Euan
+plays this before the later stages are built.
 
 What follows is the plan as approved. When it was written, no game code or data had changed. The branch holds this plan, two tour scripts, an isolated
 prototype (`docs/ui-unify/proto/`) and rendered frames (`docs/ui-unify/shots/`). The approval page is `docs/ui-unify/page.html`, published (private) at
