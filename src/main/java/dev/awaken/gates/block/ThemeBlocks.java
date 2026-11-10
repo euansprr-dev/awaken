@@ -2,6 +2,7 @@ package dev.awaken.gates.block;
 
 import dev.awaken.gates.worlds.WorldRules;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.BlockGetter;
@@ -26,7 +28,9 @@ import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -50,9 +54,12 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
+    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE, CARVED, CARVED_FACING, CARVED_AXIS }
 
-    /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
+    /**
+     * One block: its id, shape, map colour, sound, light and (props, touchstones, carved blocks) its outline in pixels: six numbers a
+     * box, as many boxes as the shape has.
+     */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
         static Def of(String name, Shape shape, MapColor color, SoundType sound, int light) {
             return new Def(name, shape, color, sound, light, null, false);
@@ -64,6 +71,15 @@ public final class ThemeBlocks {
 
         static Def box(String name, Shape shape, MapColor color, SoundType sound, int light, double... box) {
             return new Def(name, shape, color, sound, light, box, false);
+        }
+
+        /**
+         * A carved block (SPEC 50.8): its outline is every box of its model, drawn facing north
+         * ({@link Shape#CARVED_FACING}) or running north to south ({@link Shape#CARVED_AXIS}). The boxes come from the family's
+         * art spec (tools/art/specs, _gw_kit.carved), which writes the model from the same numbers.
+         */
+        static Def carved(String name, Shape turn, MapColor color, SoundType sound, double... boxes) {
+            return new Def(name, turn, color, sound, 0, boxes, false);
         }
     }
 
@@ -178,6 +194,12 @@ public final class ThemeBlocks {
             Def.of("knell_patina", C, MapColor.COLOR_CYAN, SoundType.COPPER, 0),
             Def.of("knell_bronze_key", C, MapColor.GOLD, SoundType.COPPER, 0),
             Def.of("knell_iron", C, MapColor.COLOR_BLACK, SoundType.IRON, 0),
+            // Knell's carved stone and chain: the same boxes as CARVED in tools/art/specs/realm_knell.py
+            Def.carved("knell_arch", Shape.CARVED_FACING, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 6, 14, 16, 16, 16, 0, 10, 12, 16, 16, 14, 0, 12, 10, 16, 16, 12, 0, 14, 6, 16, 16, 10),
+            Def.carved("knell_flute", Shape.CARVED_FACING, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 0, 2, 16, 16, 16, 0, 0, 0, 2, 16, 2, 4, 0, 0, 7, 16, 2, 9, 0, 0, 12, 16, 2, 14, 0, 0, 16, 16, 2),
+            Def.carved("knell_rib", Shape.CARVED_AXIS, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 5, 12, 0, 11, 16, 16, 7, 10, 0, 9, 12, 16),
+            Def.carved("knell_corbel", Shape.CARVED_FACING, MapColor.COLOR_GRAY, SoundType.STONE, 3, 12, 4, 13, 16, 16, 3, 8, 8, 13, 12, 16, 3, 4, 12, 13, 8, 16),
+            Def.carved("knell_link", Shape.CARVED_AXIS, MapColor.COLOR_BLACK, SoundType.CHAIN, 6, 14, 4, 10, 16, 12, 6, 4, 4, 10, 6, 12, 6, 6, 4, 10, 14, 6, 6, 6, 10, 10, 14, 12),
             // Amber Reach, the first Realm's own materials (50.7): the warm mid-tones of its painting
             Def.of("amber_stone", C, MapColor.COLOR_ORANGE, SoundType.STONE, 0),
             Def.of("amber_stone_worn", C, MapColor.TERRACOTTA_ORANGE, SoundType.STONE, 0),
@@ -442,12 +464,17 @@ public final class ThemeBlocks {
             case SKETCH -> p -> new Folding(p, Shapes.block());
             case CLOUD -> p -> new Shaped(p, Shapes.block(), false);
             case FIGURE -> p -> new Figure(p, boxOf(d));
+            case CARVED -> p -> new Shaped(p, boxOf(d), true);
+            case CARVED_FACING -> p -> new CarvedFacing(p, boxOf(d));
+            case CARVED_AXIS -> p -> new CarvedAxis(p, boxOf(d));
         };
     }
 
     private static VoxelShape boxOf(Def d) {
         double[] b = d.box();
-        return Block.box(b[0], b[1], b[2], b[3], b[4], b[5]);
+        VoxelShape s = Block.box(b[0], b[1], b[2], b[3], b[4], b[5]);
+        for (int i = 6; i + 5 < b.length; i += 6) s = Shapes.or(s, Block.box(b[i], b[i + 1], b[i + 2], b[i + 3], b[i + 4], b[i + 5]));
+        return s;
     }
 
     private static BlockBehaviour.Properties props(Def d, BlockBehaviour.Properties p) {
@@ -467,7 +494,8 @@ public final class ThemeBlocks {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)
             case CLOUD -> p = p.noCollision().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false);
-            case CARPET, PROP, TOUCH, FOLD, FIGURE -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
+            // a carved block hides no neighbour's face, and being less than a whole block it lets light through, as a stair does
+            case CARPET, PROP, TOUCH, FOLD, FIGURE, CARVED, CARVED_FACING, CARVED_AXIS -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
             default -> {}
         }
         return p;
@@ -497,6 +525,60 @@ public final class ThemeBlocks {
         @Override
         protected boolean isPathfindable(BlockState s, PathComputationType t) {
             return !collide || shape.max(net.minecraft.core.Direction.Axis.Y) < 0.2;
+        }
+    }
+
+    /** A carved block that turns to face one of four ways (SPEC 50.8); its boxes are drawn facing north. */
+    public static final class CarvedFacing extends Block {
+        public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+        private final Map<Direction, VoxelShape> shapes;
+
+        public CarvedFacing(BlockBehaviour.Properties p, VoxelShape north) {
+            super(p);
+            shapes = Shapes.rotateHorizontal(north);
+            registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FACING);
+        }
+
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return shapes.get(s.getValue(FACING));
+        }
+    }
+
+    /** A carved block that runs north to south or east to west (a rib, a chain link); its boxes are drawn running north to south. */
+    public static final class CarvedAxis extends Block {
+        public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
+        private final Map<Direction.Axis, VoxelShape> shapes;
+
+        public CarvedAxis(BlockBehaviour.Properties p, VoxelShape alongZ) {
+            super(p);
+            shapes = Shapes.rotateHorizontalAxis(alongZ);
+            registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.Z));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(AXIS);
+        }
+
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return defaultBlockState().setValue(AXIS, ctx.getHorizontalDirection().getAxis());
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return shapes.get(s.getValue(AXIS));
         }
     }
 

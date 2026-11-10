@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/knell_corbel"
+    },
+    "facing=east": {
+      "model": "awaken:block/knell_corbel",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/knell_corbel",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/knell_corbel",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=z": {
+      "model": "awaken:block/knell_rib"
+    },
+    "axis=x": {
+      "model": "awaken:block/knell_rib",
+      "y": 90
+    }
+  }
+}

@@ -2,7 +2,7 @@
 content writer (models by shape, blockstates, items, loot, lang, tags) for a theme's block table, which is the same table
 as dev.awaken.gates.block.ThemeBlocks.DEFS. Imported by tools/art/specs/gate_worlds_<theme>.py; build_all skips it.
 
-Shapes: cube, column, glass, plant, hang, carpet, fall, touch, prop, set. A block may have a glow texture (only its
+Shapes: cube, column, glass, plant, hang, carpet, fall, touch, prop, set, carved. A block may have a glow texture (only its
 bright texels, the rest clear) drawn over it at full light, so only those parts glow and Lens blooms them.
 """
 from __future__ import annotations
@@ -438,6 +438,73 @@ def fall_model(name, emission=15):
             "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#fall", cull=False), **({"light_emission": emission} if emission else {})}]}
 
 
+# ---- carved blocks ----------------------------------------------------------------------------------------------------
+# A shape smaller than a block (SPEC 50.8): a list of boxes (x0, y0, z0, x1, y1, z1) in whole pixels of the 16-px grid, sizes in
+# 2-px steps, drawn facing north ("facing") or running north to south ("axis"). The same numbers are the block's outline in
+# ThemeBlocks.DEFS (Def.carved), so what you see, what you walk into and what the preview draws are one shape.
+
+_AX = {"west": (0, 0), "east": (0, 1), "down": (1, 0), "up": (1, 1), "north": (2, 0), "south": (2, 1)}
+
+
+def _covered(b, side, others):
+    """Whether another box lies flat against the whole of this face (it can never be seen)."""
+    ax, hi = _AX[side]
+    at = b[ax + 3] if hi else b[ax]
+    for o in others:
+        if not (o[ax] <= at < o[ax + 3] if hi else o[ax] < at <= o[ax + 3]):
+            continue
+        if all(o[k] <= b[k] and o[k + 3] >= b[k + 3] for k in range(3) if k != ax):
+            return True
+    return False
+
+
+def carved_model(tex, boxes):
+    """One element per box, no rotated elements (the preview can't draw those). Each face shows the part of the texture it lies
+    on (the game's own rule for a face with no uv, written out), so the stone's grain runs straight through the carving. A face on
+    the block's edge is culled by its neighbour; a face wholly against another box is left out."""
+    els = []
+    for i, b in enumerate(boxes):
+        x0, y0, z0, x1, y1, z1 = b
+        if any(c != int(c) or not 0 <= c <= 16 for c in b) or x0 >= x1 or y0 >= y1 or z0 >= z1:
+            raise ValueError(f"a carved box must be whole pixels inside the block, low corner first: {b}")
+        uv = {"down": [x0, 16 - z1, x1, 16 - z0], "up": [x0, z0, x1, z1], "north": [16 - x1, 16 - y1, 16 - x0, 16 - y0],
+              "south": [x0, 16 - y1, x1, 16 - y0], "west": [z0, 16 - y1, z1, 16 - y0], "east": [16 - z1, 16 - y1, 16 - z0, 16 - y0]}
+        fs = {}
+        for d in SIDES:
+            if _covered(b, d, boxes[:i] + boxes[i + 1:]):
+                continue
+            fs[d] = {"uv": uv[d], "texture": "#all"}
+            ax, hi = _AX[d]
+            if (b[ax + 3] == 16) if hi else (b[ax] == 0):
+                fs[d]["cullface"] = d
+        els.append({"from": [x0, y0, z0], "to": [x1, y1, z1], "faces": fs})
+    return {"parent": "minecraft:block/block", "textures": {"all": B + tex, "particle": B + tex}, "elements": els}
+
+
+def carved_state(name, turn=None):
+    """turn: None, "facing" (north, east, south, west) or "axis" (z, x); turned by the blockstate, never in the model."""
+    m = B + name
+    if turn == "facing":
+        return {"variants": {f"facing={d}": ({"model": m, "y": y} if y else {"model": m}) for d, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270))}}
+    if turn == "axis":
+        return {"variants": {"axis=z": {"model": m}, "axis=x": {"model": m, "y": 90}}}
+    return simple_state(name)
+
+
+def carved(theme, table, folder="gates"):
+    """Writes a family's carved blocks the way content() writes its cubes. table: name -> (English, tool, base texture, turn, boxes)."""
+    blocks = {n: (t[0], t[1]) for n, t in table.items()}
+    models = {n: carved_model(t[2], list(t[4])) for n, t in table.items()}
+    states = {n: carved_state(n, t[3]) for n, t in table.items()}
+    content(theme, blocks, models, states, {}, folder=folder)
+
+
+def carved_java(table):
+    """The boxes as Def.carved wants them, to paste into ThemeBlocks.DEFS when a shape changes."""
+    for n, t in table.items():
+        print(f'"{n}" {t[3] or "plain"}: ' + ", ".join(str(c) for b in t[4] for c in b))
+
+
 # ---- content ----------------------------------------------------------------------------------------------------------
 
 def write(path, data):
@@ -469,8 +536,9 @@ def loot(name):
 TOOLS = {"pickaxe": "mineable/pickaxe", "axe": "mineable/axe", "shovel": "mineable/shovel", "hoe": "mineable/hoe"}
 
 
-def content(theme, blocks, models, states, lang, climbable=(), flat_items=()):
-    """Writes a theme's content. blocks: name -> (English, tool or None); models: name -> json; states: name -> json."""
+def content(theme, blocks, models, states, lang, climbable=(), flat_items=(), folder="gates"):
+    """Writes a theme's content. blocks: name -> (English, tool or None); models: name -> json; states: name -> json. Lang and tags go
+    to src/main/merge/<folder>/."""
     for name, data in models.items():
         write(os.path.join(ASSETS, f"models/block/{name}.json"), data)
     for name, data in states.items():
@@ -483,15 +551,15 @@ def content(theme, blocks, models, states, lang, climbable=(), flat_items=()):
             ref = B + (name if name in models else next(k for k in models if k.startswith(name)))
         write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": ref}})
         loot(name)
-    path = os.path.join(MERGE, "gates/assets/awaken/lang/en_us.json")
+    path = os.path.join(MERGE, f"{folder}/assets/awaken/lang/en_us.json")
     merge(path, {f"block.awaken.{k}": v[0] for k, v in blocks.items()})
     merge(path, lang)
     for tool, tag in TOOLS.items():
         vals = [f"awaken:{k}" for k, v in blocks.items() if v[1] == tool]
         if vals:
-            merge(os.path.join(MERGE, f"gates/data/minecraft/tags/block/{tag}.json"), {"values": vals})
+            merge(os.path.join(MERGE, f"{folder}/data/minecraft/tags/block/{tag}.json"), {"values": vals})
     if climbable:
-        merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/climbable.json"), {"values": [f"awaken:{k}" for k in climbable]})
+        merge(os.path.join(MERGE, f"{folder}/data/minecraft/tags/block/climbable.json"), {"values": [f"awaken:{k}" for k in climbable]})
     print(f"{theme}: content written for {len(blocks)} blocks")
 
 
