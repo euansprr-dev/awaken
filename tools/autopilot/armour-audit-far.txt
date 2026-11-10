@@ -1,5 +1,5 @@
-# Armour polish audit (at a distance by day and by night, rank by rank; the night smear; a cast in first person). Written by docs/armour/polish/tours.py: edit that, not this.
-# A studio at y 200, noon, a mid-grey wall behind, Euan's window size.
+# Armour polish audit (at a distance by day and by night, rank by rank; a cast in first person). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
 # ci knobs: LENS=cinematic
 world armouraudit4 creative 5154
 waitworld
@@ -18,178 +18,170 @@ cmd weather clear 1000000
 cmd time set 6000
 screen close
 cmd gamemode creative
-cmd tp @s 0.5 200 0.5 0 0
+cmd tp @s 0.5 150 0.5 0 0
 cmd forceload add -32 -64 32 32
 wait 300
-cmd fill -14 199 -48 14 199 0 minecraft:smooth_stone
-cmd fill -14 199 1 14 199 14 minecraft:smooth_stone
-cmd fill -14 200 13 14 210 13 minecraft:light_gray_concrete
+cmd fill -14 149 -48 14 149 0 minecraft:smooth_stone
+cmd fill -14 149 1 14 149 14 minecraft:smooth_stone
+cmd fill -14 150 13 14 160 13 minecraft:light_gray_concrete
 hud off
 camera first
 wait 20
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:wildhide_helmet"},chest:{id:"awaken:wildhide_chestplate"},legs:{id:"awaken:wildhide_leggings"},feet:{id:"awaken:wildhide_boots"}}}
-cmd summon minecraft:armor_stand 1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:bellguard_helmet"},chest:{id:"awaken:bellguard_chestplate"},legs:{id:"awaken:bellguard_leggings"},feet:{id:"awaken:bellguard_boots"}}}
-cmd summon minecraft:armor_stand -0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:rootwarden_helmet"},chest:{id:"awaken:rootwarden_chestplate"},legs:{id:"awaken:rootwarden_leggings"},feet:{id:"awaken:rootwarden_boots"}}}
-cmd summon minecraft:armor_stand -2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:amberwing_helmet"},chest:{id:"awaken:amberwing_chestplate"},legs:{id:"awaken:amberwing_leggings"},feet:{id:"awaken:amberwing_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:wildhide_helmet"},chest:{id:"awaken:wildhide_chestplate"},legs:{id:"awaken:wildhide_leggings"},feet:{id:"awaken:wildhide_boots"}}}
+cmd summon minecraft:armor_stand 1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:bellguard_helmet"},chest:{id:"awaken:bellguard_chestplate"},legs:{id:"awaken:bellguard_leggings"},feet:{id:"awaken:bellguard_boots"}}}
+cmd summon minecraft:armor_stand -0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:rootwarden_helmet"},chest:{id:"awaken:rootwarden_chestplate"},legs:{id:"awaken:rootwarden_leggings"},feet:{id:"awaken:rootwarden_boots"}}}
+cmd summon minecraft:armor_stand -2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:amberwing_helmet"},chest:{id:"awaken:amberwing_chestplate"},legs:{id:"awaken:amberwing_leggings"},feet:{id:"awaken:amberwing_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_E_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_E_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_E_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_E_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_E_24_night
+cmd tp @s 0.5 150 11.9 180 2
+wait 20
+shot f_E_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:beastbound_helmet"},chest:{id:"awaken:beastbound_chestplate"},legs:{id:"awaken:beastbound_leggings"},feet:{id:"awaken:beastbound_boots"}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:cleftrunner_helmet"},chest:{id:"awaken:cleftrunner_chestplate"},legs:{id:"awaken:cleftrunner_leggings"},feet:{id:"awaken:cleftrunner_boots"}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:lanternlight_helmet"},chest:{id:"awaken:lanternlight_chestplate"},legs:{id:"awaken:lanternlight_leggings"},feet:{id:"awaken:lanternlight_boots"}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:bladeward_helmet"},chest:{id:"awaken:bladeward_chestplate"},legs:{id:"awaken:bladeward_leggings"},feet:{id:"awaken:bladeward_boots"}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:hornlord_helmet"},chest:{id:"awaken:hornlord_chestplate"},legs:{id:"awaken:hornlord_leggings"},feet:{id:"awaken:hornlord_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:beastbound_helmet"},chest:{id:"awaken:beastbound_chestplate"},legs:{id:"awaken:beastbound_leggings"},feet:{id:"awaken:beastbound_boots"}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:cleftrunner_helmet"},chest:{id:"awaken:cleftrunner_chestplate"},legs:{id:"awaken:cleftrunner_leggings"},feet:{id:"awaken:cleftrunner_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:lanternlight_helmet"},chest:{id:"awaken:lanternlight_chestplate"},legs:{id:"awaken:lanternlight_leggings"},feet:{id:"awaken:lanternlight_boots"}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:bladeward_helmet"},chest:{id:"awaken:bladeward_chestplate"},legs:{id:"awaken:bladeward_leggings"},feet:{id:"awaken:bladeward_boots"}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:hornlord_helmet"},chest:{id:"awaken:hornlord_chestplate"},legs:{id:"awaken:hornlord_leggings"},feet:{id:"awaken:hornlord_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_D_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_D_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_D_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_D_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_D_24_night
+cmd tp @s 0.5 150 11.9 180 2
+wait 20
+shot f_D_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:gatewrought_helmet"},chest:{id:"awaken:gatewrought_chestplate"},legs:{id:"awaken:gatewrought_leggings"},feet:{id:"awaken:gatewrought_boots"}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet"},chest:{id:"awaken:vaultbreaker_chestplate"},legs:{id:"awaken:vaultbreaker_leggings"},feet:{id:"awaken:vaultbreaker_boots"}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:frostwalker_helmet"},chest:{id:"awaken:frostwalker_chestplate"},legs:{id:"awaken:frostwalker_leggings"},feet:{id:"awaken:frostwalker_boots"}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:sunward_helmet"},chest:{id:"awaken:sunward_chestplate"},legs:{id:"awaken:sunward_leggings"},feet:{id:"awaken:sunward_boots"}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:shardcrown_helmet"},chest:{id:"awaken:shardcrown_chestplate"},legs:{id:"awaken:shardcrown_leggings"},feet:{id:"awaken:shardcrown_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:gatewrought_helmet"},chest:{id:"awaken:gatewrought_chestplate"},legs:{id:"awaken:gatewrought_leggings"},feet:{id:"awaken:gatewrought_boots"}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:vaultbreaker_helmet"},chest:{id:"awaken:vaultbreaker_chestplate"},legs:{id:"awaken:vaultbreaker_leggings"},feet:{id:"awaken:vaultbreaker_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:frostwalker_helmet"},chest:{id:"awaken:frostwalker_chestplate"},legs:{id:"awaken:frostwalker_leggings"},feet:{id:"awaken:frostwalker_boots"}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:sunward_helmet"},chest:{id:"awaken:sunward_chestplate"},legs:{id:"awaken:sunward_leggings"},feet:{id:"awaken:sunward_boots"}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:shardcrown_helmet"},chest:{id:"awaken:shardcrown_chestplate"},legs:{id:"awaken:shardcrown_leggings"},feet:{id:"awaken:shardcrown_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_C_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_C_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_C_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_C_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_C_24_night
+cmd tp @s 0.5 150 11.9 180 2
+wait 20
+shot f_C_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:veilwoven_helmet"},chest:{id:"awaken:veilwoven_chestplate"},legs:{id:"awaken:veilwoven_leggings"},feet:{id:"awaken:veilwoven_boots"}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:veilwoven_helmet"},chest:{id:"awaken:veilwoven_chestplate"},legs:{id:"awaken:veilwoven_leggings"},feet:{id:"awaken:veilwoven_boots"}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_B_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_B_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_B_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_B_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_B_24_night
+cmd tp @s 0.5 150 11.9 180 2
+wait 20
+shot f_B_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:lordscale_helmet"},chest:{id:"awaken:lordscale_chestplate"},legs:{id:"awaken:lordscale_leggings"},feet:{id:"awaken:lordscale_boots"}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:lordscale_helmet"},chest:{id:"awaken:lordscale_chestplate"},legs:{id:"awaken:lordscale_leggings"},feet:{id:"awaken:lordscale_boots"}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_A_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_A_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_A_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_A_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_A_24_night
+cmd tp @s 0.5 150 11.9 180 2
+wait 20
+shot f_A_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:sovereign_helmet"},chest:{id:"awaken:sovereign_chestplate"},legs:{id:"awaken:sovereign_leggings"},feet:{id:"awaken:sovereign_boots"}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
-cmd tp @s 0.5 200 -3.5 0 2
+cmd summon minecraft:armor_stand 4.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:sovereign_helmet"},chest:{id:"awaken:sovereign_chestplate"},legs:{id:"awaken:sovereign_leggings"},feet:{id:"awaken:sovereign_boots"}}}
+cmd summon minecraft:armor_stand 2.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd summon minecraft:armor_stand -1.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd summon minecraft:armor_stand -3.5 150 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+cmd tp @s 0.5 150 -3.5 0 2
 wait 30
 shot f_S_12
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_S_24
-cmd tp @s 0.5 200 -39.5 0 0
+cmd tp @s 0.5 150 -39.5 0 0
 wait 20
 shot f_S_48
 cmd time set 18000
-cmd tp @s 0.5 200 -3.5 0 2
+cmd tp @s 0.5 150 -3.5 0 2
 wait 60
 shot f_S_12_night
-cmd tp @s 0.5 200 -15.5 0 0
+cmd tp @s 0.5 150 -15.5 0 0
 wait 20
 shot f_S_24_night
-cmd kill @e[type=minecraft:armor_stand]
-cmd time set 6000
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:lordscale_helmet",components:{"awaken:forged":{set:"lordscale",mastery:6000}}},chest:{id:"awaken:lordscale_chestplate",components:{"awaken:forged":{set:"lordscale",mastery:6000}}},legs:{id:"awaken:lordscale_leggings",components:{"awaken:forged":{set:"lordscale",mastery:6000}}},feet:{id:"awaken:lordscale_boots",components:{"awaken:forged":{set:"lordscale",mastery:6000}}}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:leviathan_helmet",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},chest:{id:"awaken:leviathan_chestplate",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},legs:{id:"awaken:leviathan_leggings",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},feet:{id:"awaken:leviathan_boots",components:{"awaken:forged":{set:"leviathan",mastery:6000}}}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",mastery:6000}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",mastery:6000}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",mastery:6000}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",mastery:6000}}}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:halo_choir_helmet",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},chest:{id:"awaken:halo_choir_chestplate",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},legs:{id:"awaken:halo_choir_leggings",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},feet:{id:"awaken:halo_choir_boots",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},chest:{id:"awaken:dreamsteel_chestplate",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},legs:{id:"awaken:dreamsteel_leggings",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},feet:{id:"awaken:dreamsteel_boots",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}}}}
-cmd tp @s 0.5 200 -3.5 0 2
-wait 30
-shot v_A_day
-cmd time set 18000
-wait 30
-shot v_A_night_a
-wait 60
-shot v_A_night_b
-cmd kill @e[type=minecraft:armor_stand]
-cmd summon minecraft:armor_stand 4.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:veilwoven_helmet",components:{"awaken:forged":{set:"veilwoven",mastery:6000}}},chest:{id:"awaken:veilwoven_chestplate",components:{"awaken:forged":{set:"veilwoven",mastery:6000}}},legs:{id:"awaken:veilwoven_leggings",components:{"awaken:forged":{set:"veilwoven",mastery:6000}}},feet:{id:"awaken:veilwoven_boots",components:{"awaken:forged":{set:"veilwoven",mastery:6000}}}}}
-cmd summon minecraft:armor_stand 2.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet",components:{"awaken:forged":{set:"deepcarapace",mastery:6000}}},chest:{id:"awaken:deepcarapace_chestplate",components:{"awaken:forged":{set:"deepcarapace",mastery:6000}}},legs:{id:"awaken:deepcarapace_leggings",components:{"awaken:forged":{set:"deepcarapace",mastery:6000}}},feet:{id:"awaken:deepcarapace_boots",components:{"awaken:forged":{set:"deepcarapace",mastery:6000}}}}}
-cmd summon minecraft:armor_stand 0.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet",components:{"awaken:forged":{set:"cloudrunner",mastery:6000}}},chest:{id:"awaken:cloudrunner_chestplate",components:{"awaken:forged":{set:"cloudrunner",mastery:6000}}},legs:{id:"awaken:cloudrunner_leggings",components:{"awaken:forged":{set:"cloudrunner",mastery:6000}}},feet:{id:"awaken:cloudrunner_boots",components:{"awaken:forged":{set:"cloudrunner",mastery:6000}}}}}
-cmd summon minecraft:armor_stand -1.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet",components:{"awaken:forged":{set:"tidebreaker",mastery:6000}}},chest:{id:"awaken:tidebreaker_chestplate",components:{"awaken:forged":{set:"tidebreaker",mastery:6000}}},legs:{id:"awaken:tidebreaker_leggings",components:{"awaken:forged":{set:"tidebreaker",mastery:6000}}},feet:{id:"awaken:tidebreaker_boots",components:{"awaken:forged":{set:"tidebreaker",mastery:6000}}}}}
-cmd summon minecraft:armor_stand -3.5 200 8.5 {ShowArms:1b,Rotation:[180f,0f],equipment:{head:{id:"awaken:hollowheart_helmet",components:{"awaken:forged":{set:"hollowheart",mastery:6000}}},chest:{id:"awaken:hollowheart_chestplate",components:{"awaken:forged":{set:"hollowheart",mastery:6000}}},legs:{id:"awaken:hollowheart_leggings",components:{"awaken:forged":{set:"hollowheart",mastery:6000}}},feet:{id:"awaken:hollowheart_boots",components:{"awaken:forged":{set:"hollowheart",mastery:6000}}}}}
-wait 30
-shot v_B_night_a
-cmd tp @s 0.5 200 1.5 0 2
+cmd tp @s 0.5 150 11.9 180 2
 wait 20
-shot v_B_night_close
+shot f_S_back_night
 cmd kill @e[type=minecraft:armor_stand]
 cmd time set 6000
 wait 20
@@ -201,22 +193,48 @@ cmd item replace entity @s weapon.mainhand with minecraft:air
 cmd gamemode survival
 cmd awaken admin power learn beam
 cmd awaken admin energy full
-cmd tp @s 0.5 200 0.5 0 0
+cmd tp @s 0.5 150 0.5 0 0
 hud on
 look 0 6
 wait 30
-shot c_rest
+shot c_lordscale_rest
 cmd tick rate 4
 wait 4
 cmd awaken admin power cast beam
 wait 5
-shotnow c_cast_a
+shotnow c_lordscale_cast_a
 wait 5
-shotnow c_cast_b
+shotnow c_lordscale_cast_b
 wait 6
-shotnow c_cast_c
+shotnow c_lordscale_cast_c
 wait 8
-shotnow c_cast_d
+shotnow c_lordscale_cast_d
 cmd tick rate 20
-wait 40
+wait 60
+cmd item replace entity @s armor.head with awaken:galewing_helmet
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate
+cmd item replace entity @s armor.legs with awaken:galewing_leggings
+cmd item replace entity @s armor.feet with awaken:galewing_boots
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd gamemode survival
+cmd awaken admin power learn beam
+cmd awaken admin energy full
+cmd tp @s 0.5 150 0.5 0 0
+hud on
+look 0 6
+wait 30
+shot c_galewing_rest
+cmd tick rate 4
+wait 4
+cmd awaken admin power cast beam
+wait 5
+shotnow c_galewing_cast_a
+wait 5
+shotnow c_galewing_cast_b
+wait 6
+shotnow c_galewing_cast_c
+wait 8
+shotnow c_galewing_cast_d
+cmd tick rate 20
+wait 60
 quit

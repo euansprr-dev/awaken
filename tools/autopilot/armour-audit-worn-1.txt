@@ -1,5 +1,5 @@
 # Armour polish audit (worn: front, back, first person, the Status figure). Written by docs/armour/polish/tours.py: edit that, not this.
-# A studio at y 200, noon, a mid-grey wall behind, Euan's window size.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
 # ci knobs: LENS=cinematic
 world armouraudit1 creative 5151
 waitworld
@@ -18,11 +18,11 @@ cmd weather clear 1000000
 cmd time set 6000
 screen close
 cmd gamemode creative
-cmd tp @s 0.5 200 0.5 0 0
+cmd tp @s 0.5 150 0.5 0 0
 cmd forceload add -16 -16 16 16
 wait 300
-cmd fill -12 199 -8 12 199 12 minecraft:smooth_stone
-cmd fill -12 200 11 12 208 11 minecraft:light_gray_concrete
+cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone
+cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete
 cmd item replace entity @s weapon.mainhand with minecraft:air
 wait 20
 cmd item replace entity @s armor.head with awaken:wildhide_helmet
@@ -30,15 +30,15 @@ cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
 cmd item replace entity @s armor.legs with awaken:wildhide_leggings
 cmd item replace entity @s armor.feet with awaken:wildhide_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_wildhide_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_wildhide_back
 opt fov 70
@@ -57,15 +57,15 @@ cmd item replace entity @s armor.chest with awaken:bellguard_chestplate
 cmd item replace entity @s armor.legs with awaken:bellguard_leggings
 cmd item replace entity @s armor.feet with awaken:bellguard_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_bellguard_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_bellguard_back
 opt fov 70
@@ -84,15 +84,15 @@ cmd item replace entity @s armor.chest with awaken:rootwarden_chestplate
 cmd item replace entity @s armor.legs with awaken:rootwarden_leggings
 cmd item replace entity @s armor.feet with awaken:rootwarden_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_rootwarden_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_rootwarden_back
 opt fov 70
@@ -111,15 +111,15 @@ cmd item replace entity @s armor.chest with awaken:amberwing_chestplate
 cmd item replace entity @s armor.legs with awaken:amberwing_leggings
 cmd item replace entity @s armor.feet with awaken:amberwing_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_amberwing_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_amberwing_back
 opt fov 70
@@ -138,15 +138,15 @@ cmd item replace entity @s armor.chest with awaken:beastbound_chestplate
 cmd item replace entity @s armor.legs with awaken:beastbound_leggings
 cmd item replace entity @s armor.feet with awaken:beastbound_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_beastbound_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_beastbound_back
 opt fov 70
@@ -165,15 +165,15 @@ cmd item replace entity @s armor.chest with awaken:cleftrunner_chestplate
 cmd item replace entity @s armor.legs with awaken:cleftrunner_leggings
 cmd item replace entity @s armor.feet with awaken:cleftrunner_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_cleftrunner_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_cleftrunner_back
 opt fov 70
@@ -192,15 +192,15 @@ cmd item replace entity @s armor.chest with awaken:lanternlight_chestplate
 cmd item replace entity @s armor.legs with awaken:lanternlight_leggings
 cmd item replace entity @s armor.feet with awaken:lanternlight_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_lanternlight_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_lanternlight_back
 opt fov 70
@@ -219,15 +219,15 @@ cmd item replace entity @s armor.chest with awaken:bladeward_chestplate
 cmd item replace entity @s armor.legs with awaken:bladeward_leggings
 cmd item replace entity @s armor.feet with awaken:bladeward_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_bladeward_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_bladeward_back
 opt fov 70
@@ -246,15 +246,15 @@ cmd item replace entity @s armor.chest with awaken:hornlord_chestplate
 cmd item replace entity @s armor.legs with awaken:hornlord_leggings
 cmd item replace entity @s armor.feet with awaken:hornlord_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_hornlord_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_hornlord_back
 opt fov 70
@@ -273,15 +273,15 @@ cmd item replace entity @s armor.chest with awaken:gatewrought_chestplate
 cmd item replace entity @s armor.legs with awaken:gatewrought_leggings
 cmd item replace entity @s armor.feet with awaken:gatewrought_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_gatewrought_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_gatewrought_back
 opt fov 70
@@ -300,15 +300,15 @@ cmd item replace entity @s armor.chest with awaken:vaultbreaker_chestplate
 cmd item replace entity @s armor.legs with awaken:vaultbreaker_leggings
 cmd item replace entity @s armor.feet with awaken:vaultbreaker_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_vaultbreaker_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_vaultbreaker_back
 opt fov 70
@@ -327,15 +327,15 @@ cmd item replace entity @s armor.chest with awaken:frostwalker_chestplate
 cmd item replace entity @s armor.legs with awaken:frostwalker_leggings
 cmd item replace entity @s armor.feet with awaken:frostwalker_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_frostwalker_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_frostwalker_back
 opt fov 70
@@ -354,15 +354,15 @@ cmd item replace entity @s armor.chest with awaken:sunward_chestplate
 cmd item replace entity @s armor.legs with awaken:sunward_leggings
 cmd item replace entity @s armor.feet with awaken:sunward_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_sunward_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_sunward_back
 opt fov 70
@@ -381,15 +381,15 @@ cmd item replace entity @s armor.chest with awaken:shardcrown_chestplate
 cmd item replace entity @s armor.legs with awaken:shardcrown_leggings
 cmd item replace entity @s armor.feet with awaken:shardcrown_boots
 hud off
-opt fov 40
-cmd tp @s 0.5 200 7.5 180 0
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
 camera front
-look 180 4
+look 180 8
 wait 14
 shot w_shardcrown_front
-cmd tp @s 0.5 200 5.5 0 0
+cmd tp @s 0.5 150 5.5 0 0
 camera back
-look 0 8
+look 0 10
 wait 14
 shot w_shardcrown_back
 opt fov 70
