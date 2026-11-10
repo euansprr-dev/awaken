@@ -1,0 +1,53 @@
+# Measurement only (Steady Light): Lens Cinematic's GPU cost with the Air off and on, on the MacBook's own screen at
+# Euan's world size (render scale 0.95 = 4.7 megapixels). Run it on two builds to compare them.
+#   FOREGROUND= tools/steady60-tour.sh tools/autopilot/steady60-ab.txt ab-<name>
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+pixels 0.95 sharp
+pixels gpu on
+lookswitch cinematic
+lens air off
+wait 1200
+pixels gpu reset
+perf off_a 10
+pixels gpu off_a
+lens air on
+wait 60
+pixels gpu reset
+perf on_a 10
+pixels gpu on_a
+lens air off
+wait 60
+pixels gpu reset
+perf off_b 10
+pixels gpu off_b
+lens air on
+wait 60
+pixels gpu reset
+perf on_b 10
+pixels gpu on_b
+lens temporal on
+wait 60
+pixels gpu reset
+perf on_temporal 10
+pixels gpu on_temporal
+lookswitch swift
+wait 80
+pixels gpu reset
+perf swift 10
+pixels gpu swift
+quit

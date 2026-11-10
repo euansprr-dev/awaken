@@ -1,0 +1,101 @@
+# The sky and rays tour (a shorter look tour for the night sky, the wisps, the clouds and the sun's rays).
+# The Air's look tour (SPEC §22 "Steady Light"): Lens Cinematic with the Air at the moments ImmersiveVFX was shot at
+# (docs/perf/steady60/page/shots), in a copy of Euan's world, with his settings (the game's Clouds setting off: the
+# Air's clouds must draw anyway). Shots only: FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-sky.txt sky-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+lookswitch cinematic
+wait 400
+# ---- the saved view: shadows, clouds, particles
+shot a1_morning
+# ---- a low sun: its rays, into the sun and from the side, and without the lit air
+cmd time set 700
+look -35 -6
+wait 160
+shot r1_low_side
+cmd time set 10300
+look 90 -6
+wait 160
+shot r3_evening_sunward
+lens rays off
+wait 60
+shot r3_evening_sunward_norays
+lens rays setting
+look 50 -6
+wait 80
+shot r3_evening_left
+look 130 -6
+wait 60
+shot r3_evening_right
+look 180 -8
+wait 60
+shot r3_evening_side
+cmd time set 11300
+look 90 -6
+wait 160
+shot r4_late_sunward
+# ---- the day sky: toward the sun, straight up
+cmd time set 3000
+look -90 -30
+wait 140
+shot b1_morning_sunward
+look 0 -70
+wait 20
+shot b1_morning_up
+cmd time set 11800
+look 90 -12
+wait 140
+shot b2_dusk_sunward
+cmd time set 12700
+look 90 -6
+wait 140
+shot b3_sunset_low
+# ---- the night sky
+cmd time set 14200
+look 90 -25
+wait 140
+shot b4_nightfall
+cmd time set 18000
+look 0 -40
+wait 140
+shot b5_night_sky
+look 0 -78
+wait 20
+shot b5_night_up
+look 180 -25
+wait 20
+shot b5_night_north
+look -90 -30
+wait 20
+shot b5_night_east
+shot a5_night_ground
+# ---- the open view from 45 up
+cmd time set 3000
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 200
+shot c1_open_morning
+cmd time set 18000
+look -90 -8
+wait 160
+shot c5_open_night
+cmd time set 22600
+look -90 -6
+wait 160
+shot c6_open_first_light
+quit

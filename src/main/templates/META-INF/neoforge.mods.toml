@@ -49,6 +49,12 @@ config="awaken.pixels.mixins.json"
 [[mixins]]
 config="awaken.wateredge.mixins.json"
 
+# Chunk pacing (Steady Light, SPEC §22): chunks that leave the view go out of Sodium's renderer a few a frame. A
+# client-only hook in Sodium's chunk tracker under the Turbo contract (dev.awaken.turbo.chunkpace.mixin); not required,
+# pseudo.
+[[mixins]]
+config="awaken.chunkpace.mixins.json"
+
 # Tiles (Lens on Apple, SPEC §22): Lens's post passes without depth, separate clears or loads, as a tile-based GPU wants
 # them. Client-only mixins under the Turbo contract (dev.awaken.turbo.tiles.mixin); not required.
 [[mixins]]

@@ -1,0 +1,43 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+[20:40:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch off
+[20:40:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 20
+[20:40:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:40:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:40:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 400
+[20:40:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_A_3 20
+[20:41:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_A_3 frames=1182 avg_fps=59.0 p50=16.99ms p95=20.24ms p99=24.06ms max=314.70ms tick_p95=12.04ms heap=3408/8192MB fb=3840x2160 load=6.2 occluded=false minimized=false
+[20:41:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on: pacing on; unload hook in, frames that held unloads back 200, longest queue 33; batch hook in, smaller batches asked for 0
+[20:41:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on
+[20:41:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 20
+[20:41:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[20:41:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:41:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.8 0 0 400
+[20:41:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_B_3 20
+[20:41:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_B_3 frames=1196 avg_fps=59.7 p50=16.84ms p95=19.96ms p99=22.44ms max=39.60ms tick_p95=12.88ms heap=3840/8192MB fb=3840x2160 load=5.9 occluded=false minimized=false
+[20:41:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[20:41:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 30
+[20:41:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.8 0 0 1700
+[20:41:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 430
+[20:41:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch off: pacing on; unload hook in, frames that held unloads back 420, longest queue 33; batch hook in (held off), smaller batches asked for 122
+[20:41:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch off
+[20:41:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newA_1 14
+[20:42:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newA_1 frames=794 avg_fps=56.6 p50=17.61ms p95=23.41ms p99=28.49ms max=39.45ms tick_p95=31.62ms heap=4044/8192MB fb=3840x2160 load=7.3 occluded=false minimized=false
+[20:42:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on: pacing on; unload hook in, frames that held unloads back 140, longest queue 33; batch hook in, smaller batches asked for 0
+[20:42:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on
+[20:42:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newB_1 14
+[20:42:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newB_1 frames=776 avg_fps=55.3 p50=18.05ms p95=25.03ms p99=33.47ms max=77.29ms tick_p95=32.41ms heap=5358/8192MB fb=3840x2160 load=8.6 occluded=false minimized=false
+[20:42:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on: pacing on; unload hook in, frames that held unloads back 140, longest queue 33; batch hook in, smaller batches asked for 59
+[20:42:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on
+[20:42:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newB_2 14
+[20:42:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newB_2 frames=836 avg_fps=59.7 p50=16.96ms p95=21.87ms p99=28.81ms max=36.61ms tick_p95=29.35ms heap=5094/8192MB fb=3840x2160 load=9.6 occluded=false minimized=false
+[20:42:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch off: pacing on; unload hook in, frames that held unloads back 129, longest queue 33; batch hook in (held off), smaller batches asked for 50
+[20:42:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch off
+[20:42:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newA_2 14
+[20:42:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf batch_newA_2 frames=835 avg_fps=59.4 p50=16.86ms p95=21.52ms p99=26.72ms max=51.18ms tick_p95=24.16ms heap=5488/8192MB fb=3840x2160 load=9.8 occluded=false minimized=false
+[20:42:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on: pacing on; unload hook in, frames that held unloads back 95, longest queue 53; batch hook in, smaller batches asked for 0
+[20:42:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace batch on
+[20:42:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace setting: pacing on; unload hook in, frames that held unloads back 0, longest queue 0; batch hook in, smaller batches asked for 0
+[20:42:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] chunkpace setting
+[20:42:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

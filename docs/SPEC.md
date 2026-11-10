@@ -6111,6 +6111,182 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     it. The rest is the full-size passes; time them per pass next.
   - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
+**Steady Light** (Euan, 2026-11-10: "nearly on par with immersive VFX ... a stable 60 but extremely high quality"; plan
+docs/perf/steady60/PLAN.md, page https://claude.ai/artifact/4UjwicVDJEoS9vceUanMyQ, state docs/perf/steady60/STATUS.md).
+ImmersiveVFX's look, made in Lens inside a frame budget. Measured on his Dell (4K at 120 Hz, the world at 2880x1620,
+RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass redrawn every frame; Cinematic 8.7.
+- **The Air** (Cinematic and Ultra under an overworld sky; client `lensAir`, default on; autopilot `lens air`).
+  `include/lens_air.glsl`, frame texels 22 (toward the sun, under the horizon by night; w the Air's strength) and 23
+  (the game's sky colour, its star brightness).
+  - **Sky**: Lens's own, in the composite for sky pixels: a violet-blue gradient by day (zenith (0.33, 0.41, 0.86), mid
+    (0.53, 0.61, 0.95), horizon (0.83, 0.86, 0.98)), rose and gold toward the sun and violet away from it at dusk and
+    dawn (from sin 0.50 of sun height down to -0.32), near-black blue by night, a glow round the sun, greyed by rain.
+    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour.
+  - **Night sky** (`airNight`, from sun height sin 0.06 down to -0.20, not in rain; Euan 2026-11-10: "ours has
+    basically no stars ... like a fantasy shader"). It turns with the sun about the world's z, as the game's stars do.
+    Stars in four sizes, each a square of the game's own kind with its own brightness, tint (blue-white to warm) and
+    slow twinkle: a dust of faint ones (a grid 230 cells across the sky, 7.5% of cells, up to 27.5% along the galaxy),
+    small (140, 8.5 to 18.5%), middling (70, 8.5%), and the few bright ones (27, 8.5%) with four thin points. The
+    galaxy: a soft band (pole (0.32, 0.47, 0.82), `exp(-13 b²)`) of blue to violet noise with dark lanes and a warmer
+    heart. A shooting star: one chance in two every nine seconds, 0.9 s long. A wide halo round the moon.
+  - **Wisps** (`airWisps`): a second, high layer 680 blocks up, over the sky and under the block clouds: feathered
+    streaks of noise (26-block cells, longer east-west so they gather toward a low sun, bent by two slow drifts so
+    none is a ruled line), drifting 2.2 blocks a second. White at up to 34% by day, rose and gold at up to 50% at dusk
+    and dawn, none by night (they drew dark lanes through the stars). No march: one plane, three noise reads.
+  - **Fog**: land fades into the sky that stands behind it (`airFog`: the sky's colour in the pixel's own direction,
+    the horizon's from above). Far: `1 - exp(-3.2 t²)` over the render distance (five times that while a far renderer
+    draws), a little thinner 40 blocks and more above the eye. Near: `1 - exp(-(d - 4) / L)`, L 280 blocks by day to 150
+    at dusk, dawn, night and in rain, so each line of trees is paler than the one before; thinner only well above
+    the eye (130-block scale: a haze that thinned over a tree's height left dark crowns on vanished trunks). It is the
+    air along the view: only a camera under cover (parameter texel 21) looking at a covered point is left out. Gates
+    and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
+  - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
+    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. The noise repeats
+    every 128 cells, so the whole field of cells is one fixed 128x128 texture (`awaken:lens_cloud_cells`, 16 bits a
+    cell, made by `tools/lens/cloud_cells.py` from the noise): a cell is one exact read by cell number modulo 128. Walked cell by
+    cell (exact entry and exit), sigma 0.95 a block
+    (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
+    2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
+    little by the face the ray came in by (0.75 to 1; a joined block keeps the first face), the sky's light 86% on an
+    underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
+    white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
+    a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
+      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+      depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
+      the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
+      The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
+      Cinematic; `blockPiece` from 640 blocks on for up to 600 more, 800 on Ultra), walked every frame with nothing
+      carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
+      the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
+      like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
+    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
+  - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
+    cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
+    sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
+    as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
+    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
+    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
+    the clouds and light are always spread over frames (`lensTemporal` as if on).
+  - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
+    through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
+    the sunlit dust, which stands only where the lit air (below) says the sun reaches, under a canopy too. Lens's
+    particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
+    particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
+    depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
+  across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
+  block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
+  half (a slab); all ones is a section not read yet. Up to 14 sections read a tick nearest first, 6 looked at again,
+  the 3x3x3 round the camera every 10 ticks, 6 chunks uploaded a tick; frame texel 17 z the trusted reach (46 blocks),
+  w the lowest y. Where the heightfield says shade and the point is inside the map, the light pass walks the map
+  toward the light (`blockRay`, up to 72 blocks, never the block it starts in): a block stops it, three texels in ten
+  of a leaf face pass it, a lower half stops it under half height; out of the map in the open, the heightfield
+  carries on from there. Inside the map every face is asked and the turn of a face decides nothing (deciding by the
+  face lit the one-pixel sides of path plates and block lips while the ground lay in shade: bright rims at dusk, Euan
+  2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
+  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 960x540. Before it walks, the
+  light pass asks the lit air (below) at the point, half a block off its face: three slices, each smoothed over four
+  cells, all over 0.996 is a walk that would meet nothing, so it is skipped and the heightfield carries on from where
+  the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
+  never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
+  beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
+- **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
+  - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
+    R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
+    from the volume's own corner (frame texels 15 w, 20 zw and 21 w: whether it is there and the camera's place in
+    it). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
+    lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
+    a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
+    what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is
+    dappled in whole blocks), a section not read yet 1. Beyond the window the air is lit: the volume holds only what
+    its own blocks do, and the land out there is the light pass's to judge. A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
+    20 ticks at rest and every 5 once the camera is 5 blocks off the volume's middle; none where the light leaves the
+    x-y plane or sits under sin 0.02. The light pass's mist march spends its first 60 blocks in it (12 steps, 18 on
+    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side), each
+    step times the sun map's answer at the point where the sun's ray leaves the volume (the same far shade the ground
+    gets), and the rest in the sun map as before (5 steps, 10 on Ultra).
+  - **Rays on the screen** (`lens_shafts.fsh` under the Air): the light is the sky round the sun itself
+    (`exp(-14 d²)` of screen heights), gathered in 40 jittered steps along each pixel's line to the sun, so a cloud, a
+    crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from
+    the sun; fainter with distance (`exp(-1.9 r)`). The prefilter's sky mask under the Air is the open sky whatever
+    its colour, cut whole by Lens's clouds. Composite strength 0.95 of the look's shafts (0.35 without the Air).
+- **Lens's own tick work** (the heightfield, the block map, the lit air's hand-over; autopilot `lens cost`): each has a
+  time limit of 0.5 ms a tick on top of its counts (what waits is read on the next tick, nearest first), and the
+  re-reads of the terrain round the camera go in turn, a few a tick (the heightfield's 25 chunks three a tick, the
+  block map's 27 sections three a tick), where they went all at once every 10 ticks: those ticks took 2 to 5 ms.
+  Measured in flight after: heightfield 0.15 to 0.2 ms a tick (worst 1 to 2), block map 0.3 (worst under 1), lit air
+  0.02; the worker's sweep 2.5 to 8.5 ms, its upload 0.06 to 0.5 ms.
+- **Measured** (the Dell, his settings, a copy of his world, 10 Nov; data in `docs/perf/steady60/data/`).
+  - Quiet Mac, the first pass (dell-6): the game alone 2.8 ms of GPU time, Cinematic before 8.9, the Air and the Sun
+    Pass 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays (vsync, 60 cap) 98.6% of
+    frames on time standing, 98.9% turning, 95.2% flying ("on time": the gap to the next frame rounds to exactly two
+    refreshes of the 120 Hz screen).
+  - This pass, on a Mac busy with other sessions (dell-7 to dell-9; the same runs put Cinematic-before at 9.9 to 10.7,
+    so every figure is about a tenth high): all of the above 11.3 to 11.9 standing (71 to 77 fps uncapped), which is 1.0
+    to 1.5 ms over Cinematic-before in the same run (2.3 in the first pass: the light buffer is 960x540 again and the
+    lit air's sure answers save the block walks they cost); 12.0 to 12.1 at night looking up; the lit air off changes
+    nothing measurable, the Sun Pass off saves 0.2 to 0.6. As he plays: 99.1 to 99.9% on time standing, 96.4 to 98.5%
+    turning, 92.2 to 93.6% flying.
+  - Flying is not the look's (fly-1: the same route back and forth over loaded land, as he plays): the Air 92.2 to
+    95.6% on time over four legs, the Sun Pass off 93.5 and 94.0, the lit air off 91.1 and 93.7, the Air off (Cinematic
+    before) 92.4 and 94.9. The legs differ more than the settings do. In flight as he plays the GPU's world pass is
+    12.5 ms (p99 14.6) with the Air and 10.9 (p99 13.1) without, both inside the 15 ms a 60 fps frame leaves it; the
+    late frames are the game's own chunk work on the render thread, which the next step profiles.
+  - With the near clouds at the frame's size (dell-10, dell-11; Cinematic-before 10.1 in the same runs): 11.9 standing
+    (74 fps uncapped), 12.2 to 12.6 flying under open sky (71 fps), 12.6 to 13.2 at night looking up. The cloud pass
+    is about 0.3 ms standing in the clearing and 0.8 flying. As he plays: 99.0 to 99.8% on time standing, 98.7 to
+    99.0% turning, 89.0 to 91.1% flying. The cell texture changed nothing measurable: the cost is the full-size pass
+    and its walks, not the cell reads.
+  - The ImmersiveVFX pairs: https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`,
+    `tools/steady60-tour.sh`.
+- **The late frames in flight** (Euan 2026-11-10: "let's really see how much we can push the performance ... can we
+  optimize how chunks load?"). Measured with `LateFrames` (dev; autopilot `late on|calibrate|report <label>|off`):
+  every frame split on the render thread into its ticks, its render and the rest, and a watcher that takes the render
+  thread's stack twice a millisecond only while a part has already run well past its usual length. Data
+  `docs/perf/steady60/data/late-1`, `pace-1`, `batch-1`; tours `steady60-late.txt`, `steady60-pace.txt`.
+  - **Why a frame is late.** At 60 a second on a 120 Hz screen the GPU's work starts only after the frame's ticks and
+    extraction, and takes about 12 ms of the 16.7: the CPU has three to five milliseconds before the frame misses its
+    refresh. The usual tick is 1.5 to 2 ms (one frame in three has one) and the render 0.7 to 0.9; no frame ran two
+    ticks, and the collector's pauses were under a millisecond in every window. The late frames (3 to 4% flying over
+    loaded land, 9 to 15% over land never seen) lose their time in single spikes: about two thirds of it between the
+    render events (extraction, packets, the submit), a fifth in ticks.
+  - **What the spikes were** (shares of the render thread's samples in long parts, flying over loaded land): Sodium
+    taking the sections of unloaded chunks out of its renderer, all in the frame after they leave (sort triggers out
+    of an interval tree, meshes back into the buffer arenas), 38 to 45%; the Vulkan submit, 6 to 12%; the game's
+    client light engine (it copies its section maps whenever a frame changed any), 5 to 10%; chunk packets being
+    taken in, 2 to 8%; Sodium cloning sections for rebuild tasks, 4 to 8%; Lens's own tick work, 3 to 6%; the Atlas
+    (a chunk's columns sampled as it loads, and re-read in its tick), 2 to 5%; other Awaken client ticks (Wild Tint,
+    Kin, Delve, Ritual), 2 to 5%.
+  - **Chunk pacing** (Turbo: `dev.awaken.turbo.chunkpace`, `awaken.chunkpace.mixins.json`, client setting
+    `turboChunkPacing`, autopilot `chunkpace on|off|setting`; version-locked to Minecraft 26.3, NeoForge 26.3.0.95 and
+    Sodium 0.9.3-beta.1+mc26.3; approved by Euan on 2026-11-10, asked about this hook by name: "Yes, turn it on". On by
+    default; its line in CLAUDE.md's Turbo list is still to be added by a session that may edit that file). A pseudo mixin in
+    Sodium's `ChunkTracker.forEachEvent`: before it runs, all but three of the queued unloads (or a fortieth of a long
+    queue) are lifted out of `unloadQueue`, and after it they go back in, so between frames the queue is Sodium's own
+    and a chunk that returns before its turn is taken off it by Sodium's own bookkeeping. A waiting chunk is one
+    already out of view, drawn a few frames longer at the far edge. Same flight, legs alternating (pace-1, as he
+    plays): 94.9% of frames on time against 93.3%, late frames 2.8% against 3.5%, every paced leg above every unpaced
+    one; Sodium's removals fell from 29% of the long-part samples to 5 to 7%.
+  - **Tried and dropped**: the client asking the server for 2.5 ms' worth of chunks a tick where the game asks for 7
+    ms' worth (`ChunkBatchSizeCalculator`). With unloads paced in both, alternating legs (batch-1): 94.2% against
+    94.0% over loaded land, 77.2% against 82.1% over new land. Smaller batches put chunk work into more frames, and
+    with so little to spare a frame with a little of it is as late as a frame with all of it.
+  - **Lens's own share**: the block map's reader remembers the last block's kind (a column is runs of one state; the
+    id lookup behind it was a hash probe a block).
+  - **What is left**, in order: the game's client light engine and chunk packets (vanilla), Sodium's rebuild task
+    preparation, the Atlas and the other Awaken client ticks (their modules'), and land never seen before, where the
+    integrated server's world generation is the load.
+  - **A terrain renderer of our own in Sodium's place** (Euan asked, 2026-11-10): not now. With Sodium the whole
+    world pass is 2.8 ms of GPU time at his settings, Lens's passes about 9: the terrain is a fifth of the frame at
+    most, and the CPU spikes above are bookkeeping that small hooks pace. Our own passes are the larger and safer
+    target. It is worth asking again if, after those, the terrain pass is what limits the frame, or as Far Sight
+    drawn inward (Sodium for the near chunks, our meshes beyond) once Far Sight costs less than it does (4.2 ms at
+    near reach).
+- **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
+  each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
+  Swift (it has no view direction there), ground mist, the Look page rows.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
