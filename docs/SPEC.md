@@ -22647,7 +22647,7 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   the wings open near the ground until three seconds after a hard landing; the sling's key pinned on a block's top on
   foot, the pull over it and its card; the K rows with the sling's line and "◆ Another move at mastery 3."; the gold
   figure standing six blocks ahead and rising. **The figure does not read as gold light:** it is your own skin drawn
-  solid with a shadow under it (the gates' ghost renderer does not draw its tint's see-through), plain in the fourth
+  solid with a shadow under it (its tint's see-through does not show in the pictures; why was not traced), plain in the fourth
   tour and amber-brown with `Lesson.GOLD` in the fifth. It shows the move, but a figure of light needs a renderer of
   its own (flat gold, lit, no shadow): not built. What the tours changed: the edge arrow moved onto the
   plate; the flare's words were shortened; the sling gained its on-foot look (it had begun only as the key went down);
