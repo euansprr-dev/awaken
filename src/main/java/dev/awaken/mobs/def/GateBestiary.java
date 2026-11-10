@@ -258,15 +258,15 @@ final class GateBestiary {
     }
 
     private static void precursorLab(List<MobDef> out) {
-        out.add(m("test_subject", "Test Subject", Theme.PRECURSOR, Tier.NORMAL, Model.ZOMBIE, "Overcharged: bursts into sparks when killed").hp(22).dmg(3).spd(0.24).traits(DEATH_SHARDS)
+        out.add(m("test_subject", "The Test Subject", Theme.PRECURSOR, Tier.NORMAL, Model.ZOMBIE, "A shape under a sheet, still strapped to the table it walks on; it lurches the whole table at you, and it bursts into sparks when it dies").hp(22).dmg(3).spd(0.24).traits(DEATH_SHARDS).rig().size(1.0F, 1.4F).miss(30).fall(22)
                 .ab(a(CHARGE, "Lurch").power(1.2F).cd(110)).build());
-        out.add(m("security_unit", "Security Unit", Theme.PRECURSOR, Tier.NORMAL, Model.IRON_GOLEM, "Dormant until you come close; then a Scan Lance").hp(20).dmg(4).spd(0.25).scale(0.6F).tint(0xA8C8E8).traits(DORMANT)
+        out.add(m("security_unit", "The Security Unit", Theme.PRECURSOR, Tier.NORMAL, Model.IRON_GOLEM, "A shut steel egg that opens three legs and one lens when you come near; shut, nothing hurts it, and it has to open to see you").hp(20).dmg(4).spd(0.25).traits(DORMANT).rig().size(0.8F, 1.0F).planted().open(24).fall(20)
                 .ab(a(BEAM, "Scan Lance").bolt(BoltKind.CHARGE).power(1.4F)).build());
-        out.add(m("coil_unit", "Coil Unit", Theme.PRECURSOR, Tier.NORMAL, Model.BLAZE, "Coil Bolts, and a discharge if you crowd it").hp(14).dmg(3).spd(0.28).tint(0x9CC8FF).traits(RANGED)
+        out.add(m("coil_unit", "The Coil", Theme.PRECURSOR, Tier.NORMAL, Model.BLAZE, "A ring floating over a column, sparks climbing it: the sparks reach the ring, then it fires; crowd it and it lets everything go at once").hp(14).dmg(3).spd(0.28).traits(RANGED).rig().size(0.7F, 1.2F).open(24)
                 .ab(a(BOLT, "Coil Bolt").n(2).bolt(BoltKind.CHARGE), a(NOVA, "Discharge").n(8).bolt(BoltKind.CHARGE).range(5)).build());
-        out.add(m("gel_sample", "Gel Sample", Theme.PRECURSOR, Tier.ELITE, Model.SLIME, "Containment Breach: splits in two when killed").hp(26).dmg(4).spd(0.26).scale(1.6F).tint(0x9CE8FF).traits(SPLITS)
+        out.add(m("gel_sample", "The Gel Sample", Theme.PRECURSOR, Tier.ELITE, Model.SLIME, "Gel that carries the broken glass of its own tank round it like a shell; kill it and it becomes two").hp(26).dmg(4).spd(0.26).scale(1.6F).traits(SPLITS).rig().size(1.0F, 1.0F).open(26)
                 .ab(a(LEAP, "Containment Breach").radius(3).heavy()).build());
-        out.add(m("the_sweeper", "The Sweeper", Theme.PRECURSOR, Tier.WARDEN, Model.RAVAGER, "Purge Protocol: a charge, a sweep, a decontamination blast").hp(38).dmg(7).spd(0.3).tint(0x9CC0F0).traits(HUNTER)
+        out.add(m("the_sweeper", "The Sweeper", Theme.PRECURSOR, Tier.WARDEN, Model.RAVAGER, "A floor-cleaning engine as wide as the corridor, a turning drum of brushes in front; it charges straight, and it cannot see anything that is beside it").hp(38).dmg(7).spd(0.3).traits(HUNTER).rig().size(1.6F, 1.0F).open(28).miss(34).fall(36)
                 .ab(a(CHARGE, "Purge Protocol").heavy(), a(NOVA, "Sweep").n(12).bolt(BoltKind.CHARGE), a(GUST, "Decon Blast").radius(6)).build());
         out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(129.9).dmg(1.71).spd(0.3).scale(1.85F).size(0.56F, 2.32F).bar(BossBarColor.BLUE).arena(22)
                 .intro("A voice counting down in no language.")
@@ -351,15 +351,15 @@ final class GateBestiary {
     }
 
     private static void nightmare(List<MobDef> out) {
-        out.add(m("sleepwalker", "Sleepwalker", Theme.NIGHTMARE, Tier.NORMAL, Model.ZOMBIE, "Moves only when you blink: steps from nowhere").hp(20).dmg(3.5).spd(0.24).traits(HAUNTED)
+        out.add(m("sleepwalker", "The Sheet", Theme.NIGHTMARE, Tier.NORMAL, Model.ZOMBIE, "A bedsheet over something taller than a person, two hands pressing out from inside; it moves only when you blink").hp(20).dmg(3.5).spd(0.24).traits(HAUNTED).rig().size(0.7F, 2.1F).fall(24)
                 .ab(a(BLINK, "Sleepstep").cd(140)).build());
-        out.add(m("night_terror", "Night Terror", Theme.NIGHTMARE, Tier.NORMAL, Model.PHANTOM, "Night Dive from somewhere above").hp(14).dmg(3).spd(0.45)
+        out.add(m("night_terror", "The Night Terror", Theme.NIGHTMARE, Tier.NORMAL, Model.PHANTOM, "A mouth with wings and nothing else; you hear it before you see it, and it dives from straight above").hp(14).dmg(3).spd(0.45).rig().size(0.8F, 0.6F).miss(30)
                 .ab(a(CHARGE, "Night Dive").wind(14).cd(90).range(14)).build());
-        out.add(m("many_eyes", "Many Eyes", Theme.NIGHTMARE, Tier.NORMAL, Model.SPIDER, "Staring: every eye opens and you slow").hp(18).dmg(3).spd(0.3).tint(0xC090C0)
+        out.add(m("many_eyes", "Many Eyes", Theme.NIGHTMARE, Tier.NORMAL, Model.SPIDER, "A low dark heap covered in shut eyelids: when it stares every eye opens and you slow; they shut again, and that is when to go in").hp(18).dmg(3).spd(0.3).rig().size(1.1F, 0.9F).open(30).fall(24)
                 .ab(a(DARKNESS, "Staring").radius(8).fx(MobEffects.SLOWNESS, 60, 1).cd(200)).build());
-        out.add(m("the_tall_one", "The Tall One", Theme.NIGHTMARE, Tier.ELITE, Model.ENDERMAN, "Doorways: it is always in the one behind you").hp(26).dmg(5).spd(0.3).scale(1.35F)
+        out.add(m("the_tall_one", "The Tall One", Theme.NIGHTMARE, Tier.ELITE, Model.ENDERMAN, "A long black coat on a stand, taller than the door; it is always in the doorway behind you").hp(26).dmg(5).spd(0.3).rig().size(0.7F, 3.2F).open(26).fall(36)
                 .ab(a(BLINK, "Doorway"), a(DARKNESS, "Lights Off")).build());
-        out.add(m("the_waking", "The Waking", Theme.NIGHTMARE, Tier.WARDEN, Model.WARDEN, "A wake-up call that tears at the spirit").hp(36).dmg(6.5).spd(0.28).traits(HUNTER)
+        out.add(m("the_waking", "The Waking", Theme.NIGHTMARE, Tier.WARDEN, Model.WARDEN, "A giant of rumpled bedclothes with an alarm clock caged in its chest: the ringing builds before the call; stop the clock and it sleeps for a moment").hp(36).dmg(6.5).spd(0.28).traits(HUNTER).rig().size(1.3F, 2.4F).stopped().open(30).fall(40)
                 .ab(a(BEAM, "Wake-Up Call").bolt(BoltKind.DREAM).power(1.66F).wind(34).heavy(), a(SLAM, "Thrash").radius(4), a(SUMMON, "Bad Dreams").summon("night_terror").n(2)).build());
         out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(45.2).dmg(3.78).spd(0.24).scale(2.2F).size(1.0F, 1.8F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
                 .intro("You've been here before. You haven't.")

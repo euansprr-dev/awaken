@@ -59,6 +59,16 @@
     "silver_knight": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"look": 3, "settle": 2}, "arms": 0.2, "mass": 1.6, "springHz": 1.6},
     "glint_mite": {"blink": [0, 0], "temperament": "insect", "breathDepth": 0.0, "idles": {"settle": 2, "flick": 1}},
     "glass_duelist": {"blink": [0, 0], "temperament": "hunter", "breathDepth": 0.0, "idles": {"look": 3, "settle": 2}, "arms": 0.0, "headSpeed": 5.0, "springHz": 2.2},
-    "the_unblinking": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "mass": 2.4, "springHz": 1.2}
+    "the_unblinking": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "mass": 2.4, "springHz": 1.2},
+    "test_subject": {"blink": [0, 0], "temperament": "monster", "breath": 0.6, "breathDepth": 1.4, "idles": {"settle": 2, "shake": 1}, "arms": 0.0, "mass": 1.8, "springHz": 1.6, "springGain": 1.4},
+    "security_unit": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "mass": 1.4},
+    "coil_unit": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 1.6},
+    "gel_sample": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.0, "springGain": 1.6, "mass": 2.4},
+    "the_sweeper": {"blink": [0, 0], "temperament": "beast", "breathDepth": 0.0, "idles": {"settle": 1}, "bob": 0.0, "sway": 0.2, "mass": 4.0, "springHz": 1.4},
+    "sleepwalker": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"look": 2, "settle": 1}, "arms": 0.0, "bob": 0.0, "sway": 0.9, "springHz": 1.0, "springDamping": 0.12, "springGain": 1.5},
+    "night_terror": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.4},
+    "many_eyes": {"blink": [0, 0], "temperament": "monster", "breath": 0.4, "breathDepth": 1.2, "idles": {"settle": 2}, "mass": 1.8},
+    "the_tall_one": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"look": 4, "settle": 1}, "arms": 0.5, "headSpeed": 2.5, "mass": 1.8, "springHz": 1.0, "springGain": 1.4},
+    "the_waking": {"blink": [0, 0], "temperament": "beast", "breath": 0.35, "breathDepth": 1.2, "idles": {"settle": 3, "look": 1}, "mass": 3.2, "arms": 0.5, "springHz": 1.0, "springGain": 1.4, "headSpeed": 2.5}
   }
 }

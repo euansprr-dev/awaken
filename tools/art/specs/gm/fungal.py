@@ -175,8 +175,8 @@ def capweaver():
     K.flinch(r, {"body": {"pos": (0, -1, 1)}, "head": (8, 0, 10)}, plant=EIGHT)
     curl = {f"leg{t}": (0, 0, (-58 if t.endswith("l") else 58)) for t in EIGHT}
     curl.update({f"shin{t}": (0, 0, (50 if t.endswith("l") else -50)) for t in EIGHT})
-    K.keyed(r, "death", 1.0, [(0, {}), (0.14, K.planted(r, {"body": {"pos": (0, 3, 0), "rot": (-20, 0, 0)}}, EIGHT)),
-                              (0.5, K.on_floor(r, dict(curl, body=(0, 0, 176), head=(0, 0, 0)))),
+    start = K.planted(r, {"body": {"pos": (0, 3, 0), "rot": (-20, 0, 0)}}, EIGHT)
+    K.keyed(r, "death", 1.0, [(0, {}), (0.14, start)] + K.fall(r, 0.14, start, 0.5, dict(curl, body=(0, 0, 176), head=(0, 0, 0)), steps=6) + [
                               (1.0, K.on_floor(r, dict(K.scaled(curl, 1.15), body=(0, 0, 180))))])
     return r
 

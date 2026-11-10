@@ -251,7 +251,8 @@ def coal_tick():
     K.flinch(r, {"body": {"pos": (0, 0.8, 1), "rot": (0, 0, 16)}}, plant=SIX)
     curl = {f"leg{t}": (0, 0, (-60 if t.endswith("l") else 60)) for t in SIX}
     curl.update({f"shin{t}": (0, 0, (50 if t.endswith("l") else -50)) for t in SIX})
-    K.keyed(r, "death", 0.8, [(0, {}), (0.12, K.planted(r, {"body": {"pos": (0, 2, 0)}}, SIX)), (0.45, K.on_floor(r, dict(curl, body=(0, 0, 170)))),
+    start = K.planted(r, {"body": {"pos": (0, 2, 0)}}, SIX)
+    K.keyed(r, "death", 0.8, [(0, {}), (0.12, start)] + K.fall(r, 0.12, start, 0.45, dict(curl, body=(0, 0, 170)), steps=6) + [
                               (0.8, K.on_floor(r, dict(K.scaled(curl, 1.1), body=(0, 0, 180))))])
     return r
 

@@ -494,7 +494,12 @@ def planted(rig, pose, tags, lift=None):
         want = point(rig, tipb, local, frames=rest)
         if lift and tag in lift:
             want = (want[0], want[1] - lift[tag], want[2])
-        p = solve(rig, p, [("leg" + tag, 0), ("leg" + tag, 2), ("shin" + tag, 0)], (tipb, local), want)
+        # a walker's leg swings fore and aft at the hip and bends its knee about x; a crawler's leg, out to the side,
+        # sweeps round its hip and bends its knee about z (the way it was built), so those are the joints to turn
+        shin = rig.by_name["shin" + tag]
+        splay = abs(shin.rot[2]) > abs(shin.rot[0])
+        joints = [("leg" + tag, 1), ("leg" + tag, 2), ("shin" + tag, 2)] if splay else [("leg" + tag, 0), ("leg" + tag, 2), ("shin" + tag, 0)]
+        p = solve(rig, p, joints, (tipb, local), want)
         if "foot" + tag in rig.by_name:  # the foot stays level: it takes back what hip and knee turned
             p = level(rig, p, "foot" + tag)
     return p
