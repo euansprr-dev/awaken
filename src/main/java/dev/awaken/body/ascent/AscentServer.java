@@ -383,6 +383,8 @@ public final class AscentServer {
     private static void made(ServerPlayer p, String counter, net.minecraft.resources.Identifier tip) {
         dev.awaken.progression.Progression.count(p, counter);
         dev.awaken.core.api.TipHooks.done(p, tip);
+        // The Way Up (SPEC §63.8): the move's lesson is over for good
+        WayUp.moveMade(p);
     }
 
     // ---- a push carries (SPEC §62) -----------------------------------------------------------------------------------
