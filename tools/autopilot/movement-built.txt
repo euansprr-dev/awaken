@@ -41,6 +41,10 @@ screen close
 info
 camera back
 wait 10
+# a mark where the wood begins, its chunk held, so the first-person run can start from the same trees (in run
+# 42872444094 the first run ended in a lake and the second was filmed from its bed)
+cmd forceload add ~ ~
+cmd summon minecraft:marker ~ ~ ~ {Tags:["wood_start"]}
 shotnow a_wood_tp_00
 # forward and the rope held, nothing else: no jump is ever pressed (the game's own hop from the ground)
 cmd awaken ascent pilot hold forward,sprint,tether 470
@@ -107,6 +111,8 @@ wait 13
 shotnow a_wood_tp_30
 cmd awaken ascent pilot stop
 wait 30
+cmd tp @s @e[type=minecraft:marker,tag=wood_start,limit=1]
+wait 100
 camera first
 hud on
 cmd awaken ascent pilot hold forward,sprint,tether 250
