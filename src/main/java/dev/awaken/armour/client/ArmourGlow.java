@@ -30,6 +30,7 @@ final class ArmourGlow {
     /** A set became whole on someone in view: their armour wakes. */
     static void whole(ArmourPayloads.Whole w) {
         BY_ENTITY.computeIfAbsent(w.entity(), k -> new Glow()).wakeAt = Util.getMillis();
+        ArmourSoundsClient.whole(w.entity(), w.set());
     }
 
     private static final Int2ObjectOpenHashMap<Glow> BY_ENTITY = new Int2ObjectOpenHashMap<>();

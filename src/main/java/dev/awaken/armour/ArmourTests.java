@@ -55,6 +55,7 @@ final class ArmourTests {
         AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
         AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
         AwakenTests.register("armour_whole_wakes", 40, ArmourTests::wholeWakes);
+        AwakenTests.register("armour_sounds_named", 20, ArmourTests::soundsNamed);
         AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
         AwakenTests.register("armour_forge_tune_inlay", 40, ArmourTests::tuneInlay);
         AwakenTests.register("armour_looks_accents", 20, ArmourTests::looksAccents);
@@ -858,6 +859,53 @@ final class ArmourTests {
     }
 
     /** Puts the first n pieces of a set on (helm, cuirass, greaves, boots) and the rest off, and counts them. */
+    /**
+     * Armour's sounds (SPEC §44.12): every sound event of the module has its entry in sounds.json, and every entry and
+     * every layer names one of Minecraft's own events, never a file of ours, unless Euan kept it as built; every set is
+     * made of something, and its pieces go on with that thing's sound.
+     */
+    private static void soundsNamed(GameTestHelper h) {
+        com.google.gson.JsonObject sounds = json(h, "/assets/awaken/sounds.json"), layers = json(h, "/assets/awaken/armour/sound_layers.json");
+        int ours = 0;
+        for (var id : net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.keySet()) {
+            if (!id.getNamespace().equals(dev.awaken.Awaken.MODID) || !(id.getPath().startsWith("armour.") || id.getPath().startsWith("forge."))) continue;
+            h.assertTrue(sounds.has(id.getPath()), id + " has its entry in sounds.json");
+            for (var s : sounds.getAsJsonObject(id.getPath()).getAsJsonArray("sounds")) {
+                if (!s.isJsonObject() || !s.getAsJsonObject().has("type")) continue; // kept as built: a file of ours
+                String name = s.getAsJsonObject().get("name").getAsString();
+                h.assertTrue(name.startsWith("minecraft:") && net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT
+                        .containsKey(net.minecraft.resources.Identifier.parse(name)), id + " names Minecraft's own event, got " + name);
+                ours++;
+            }
+        }
+        h.assertTrue(ours >= 40, "armour's sounds are Minecraft's recordings by name, got " + ours);
+        for (var e : layers.entrySet()) {
+            h.assertTrue(sounds.has(e.getKey().substring(e.getKey().indexOf(':') + 1)), "a layer's event " + e.getKey() + " is in sounds.json");
+            for (var l : e.getValue().getAsJsonArray()) {
+                String name = l.getAsJsonObject().get("sound").getAsString();
+                h.assertTrue(net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(net.minecraft.resources.Identifier.parse(name)),
+                        e.getKey() + "'s layer is one of Minecraft's events, got " + name);
+            }
+        }
+        for (ArmourSet s : ArmourSet.values()) {
+            ArmourSounds.Family f = ArmourSounds.of(s);
+            h.assertTrue(ArmourSounds.move(f) != null && ArmourSounds.struck(f) != null, s.id + " has its stride and its blow");
+            if (s.hunter != null || !s.made()) continue;
+            var worn = ArmourItems.stack(s, ArmorType.CHESTPLATE).get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+            h.assertTrue(worn != null && worn.equipSound().value() == ArmourSounds.equip(s).value(), s.id + "'s cuirass goes on with its own sound");
+        }
+        h.succeed();
+    }
+
+    private static com.google.gson.JsonObject json(GameTestHelper h, String path) {
+        try (InputStream in = ArmourTests.class.getResourceAsStream(path)) {
+            if (in == null) throw h.assertionException(path + " is not shipped");
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (IOException e) {
+            throw h.assertionException(path + " does not read: " + e);
+        }
+    }
+
     /**
      * The moment a set becomes whole (SPEC §44.11): not for what you logged in wearing, once when the last piece goes on,
      * remembered so the System speaks the first time only, and not again while pieces are swapped in and out.

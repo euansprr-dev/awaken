@@ -77,6 +77,11 @@ public final class ForgeClient {
                                     ArmourClientConfig.motion(com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on"));
                                     return 1;
                                 })))
+                        .then(net.minecraft.commands.Commands.literal("movesound").then(net.minecraft.commands.Commands.argument("level",
+                                com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 100)).executes(c -> {
+                                    ArmourClientConfig.moveSound(com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "level"));
+                                    return 1;
+                                })))
                         .then(net.minecraft.commands.Commands.literal("camera").then(net.minecraft.commands.Commands.argument("view",
                                 com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
                                     boolean first = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "view").startsWith("first");

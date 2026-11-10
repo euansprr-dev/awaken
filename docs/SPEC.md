@@ -18068,8 +18068,8 @@ an inlay gives its Force's colour; one dye you carry colours the whole worn suit
 up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
 
 **44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
-settings screen; also `/awaken armour sculpted on|near|off`, `/awaken armour camera cinematic|first` and
-`/awaken armour motion true|false`):
+settings screen; also `/awaken armour sculpted on|near|off`, `/awaken armour camera cinematic|first`,
+`/awaken armour motion true|false` and `/awaken armour movesound <0-100>`):
 - **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
   painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
   view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
@@ -18083,6 +18083,7 @@ settings screen; also `/awaken armour sculpted on|near|off`, `/awaken armour cam
   III within the hour, IV in about two hours and V in about four.
 - **Armour motion** on (default) / off: whether a set's living parts move (§44.10). Off: every part is rigid on its
   bone, exactly as before the Finish.
+- **Armour movement sound** 0 to 100 (default 60; 0 off): the soft sound a set makes at each stride (§44.12).
 
 **44.10 Living parts (the Finish, stage 4).** One or two things on a set that should never stand still move: a halo, a
 marker, a plume, lanterns, wings. Twelve sets have them; the rest stand still on purpose (a Bellguard or a Beastbound
@@ -18144,6 +18145,45 @@ that fidgets would be wrong).
   `ICON_SPLAY`).
 - **The Status line** is offered, not built: `ArmourBonus.statusLine(entity)` gives "Lordscale, whole. Mastery III" or
   "Lordscale, 3 of 4" (null with nothing of ours on) for the K menu's owner to place under the name.
+
+**44.12 Sound (the Finish, stage 5).** Every armour sound is one of Minecraft's own recordings, named in sounds.json
+(Euan 2026-11-09: built sounds read fake). No audio of ours is added, and none of Mojang's is in the repo.
+- **One table** (`tools/art/armour_sounds.py`, `ROWS`): 45 sounds, each with three picks, a pick a recipe of recordings
+  (one of Minecraft's events, a volume, a pitch, a start in ms). Pick 1 is the best guess and what the game plays until
+  Euan has listened; `tools/art/specs/armour_sound_picks.json` holds his choices (1, 2, 3 or "today"), written by
+  `apply` from his marks. `build` writes armour's sounds.json entries and `assets/awaken/armour/sound_layers.json`;
+  `check` fails on a recording this game does not have.
+- **In the game.** An event's entry in sounds.json is the recipe's first recording, as a reference to Minecraft's event
+  (`"type": "event"`, with the recipe's volume and pitch: vanilla multiplies them in, and its own variants come along).
+  A recipe's other recordings cannot be said in sounds.json, so the client adds them (`ArmourSoundsClient`, on
+  NeoForge's `PlaySoundEvent`): at the same place, scaled by the volume and pitch the caller asked for (a pitched note
+  stays in tune), at once or a tick or more late. No `sound_layers.json`: the first recording plays alone.
+- **The 25 sounds built on 29 October** (seven hammers, the bellows, pull, quench, count, note, cut, fit, wake, miss;
+  charged, Bastion, Flow, Edge, rune, overchannel, Ring, Rooted, Gore) are remade this way. Their old files stay in the
+  repo until Euan has marked the page ("As built" plays them; `specs/armour_sounds_before.json` is their entries), then
+  go.
+- **What a set is made of** (`ArmourSounds.Family`): hide (Wildhide, Rootwarden, Nightcourt), cloth (Cleftrunner,
+  Veilwoven, Sovereign Weave, Signal's Echo), mail (Amberwing, Lanternlight, Tidebreaker, Riftwalker), plate
+  (Bellguard, Bladeward, Gatewrought, Sunward), heavy plate (Hornlord, Vaultbreaker, Lordscale, Leviathan, Starfall),
+  crystal (Frostwalker, Shardcrown, Halo Choir, Dreamsteel), bone and shell (Beastbound, Deepcarapace, Hollowheart),
+  feathers (Cloudrunner, Galewing).
+- **Putting a piece on** sounds like what it is made of (`armour.equip_<family>`, the piece's own equip sound), for the
+  23 sets with items of their own. The six Hunter sets' items are the gear module's and keep their rank's vanilla
+  sound until that module asks `ArmourSounds.equip(set)`.
+- **Walking in a set** (`armour.move_<family>`, client only): one soft sound a stride (1.7 blocks on the ground) from
+  every armoured player within 12 blocks, by their cuirass (else their greaves), a quarter louder at a sprint, silent
+  at a sneak. Setting **Armour movement sound** 0 to 100, default 60, where a stride plays as loud as its recipe
+  says; 0 is off (`/awaken armour movesound <0-100>`).
+- **A blow landing on your armour** (`armour.struck_soft|plate|crystal|bone`, server): under Minecraft's own hurt
+  sound, on what the cuirass is made of, louder with the damage (0.35 + 0.05 a point, at most 0.9).
+- **A set becoming whole** (§44.11): the first three notes of the Forge Song it is made with (`forge.note`, pitched,
+  three ticks apart, the last a little louder) at its wearer, the stand's `forge.wake` quiet under them.
+- **By ear.** Nobody has heard any of it. `python3 tools/art/armour_sounds.py listen` serves a page on 127.0.0.1 only
+  (`run-autopilot/armour-listen/`, gitignored, never hosted) that plays every pick alone and in its moment from this
+  machine's own copy of the game; Euan marks one a row, `apply` then `build` puts his choices in the game. His ear is
+  the gate: the picks are guesses until then.
+- Test `armour_sounds_named`: every armour and forge sound event has its entry, every entry and layer names one of
+  Minecraft's events, every set has its family and its pieces go on with its sound.
 
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 

@@ -926,6 +926,10 @@ public final class ArmourAbilities {
     static void onDamaged(LivingDamageEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || Strikes.of(e.getSource()) == Strikes.Kind.NONE || e.getInflictedDamage() <= 0) return;
         State s = state(p);
+        // the blow sounds on what the cuirass is made of, under Minecraft's own hurt sound (SPEC §44.12)
+        ArmourLooks.Look chest = ArmourLooks.of(p.getItemBySlot(EquipmentSlot.CHEST));
+        if (chest != null) sound(p, ArmourSounds.struck(ArmourSounds.of(chest.set())), Math.min(0.9F, 0.35F + e.getInflictedDamage() * 0.05F),
+                0.94F + p.getRandom().nextFloat() * 0.12F);
         if (s.full == null) return;
         if (ability(s.full) == Archetype.BULWARK) fill(p, s, shelled(p, s) ? BASTION_TAKEN * 2 : BASTION_TAKEN);
         long now = p.level().getGameTime();

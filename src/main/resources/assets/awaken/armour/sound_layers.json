@@ -1,0 +1,210 @@
+{
+ "awaken:armour.bastion": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.breeze.wind_burst",
+   "volume": 0.6
+  }
+ ],
+ "awaken:armour.charged": [
+  {
+   "delay": 0,
+   "pitch": 1.2,
+   "sound": "minecraft:block.amethyst_block.resonate",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.edge": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:item.trident.throw",
+   "volume": 0.7
+  }
+ ],
+ "awaken:armour.equip_bone": [
+  {
+   "delay": 0,
+   "pitch": 1.1,
+   "sound": "minecraft:block.bone_block.place",
+   "volume": 0.6
+  }
+ ],
+ "awaken:armour.equip_cloth": [
+  {
+   "delay": 0,
+   "pitch": 1.1,
+   "sound": "minecraft:item.armor.equip_elytra",
+   "volume": 0.6
+  }
+ ],
+ "awaken:armour.equip_crystal": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.amethyst_block.place",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.flow": [
+  {
+   "delay": 0,
+   "pitch": 1.6,
+   "sound": "minecraft:entity.enderman.teleport",
+   "volume": 0.3
+  }
+ ],
+ "awaken:armour.gore": [
+  {
+   "delay": 0,
+   "pitch": 1.1,
+   "sound": "minecraft:entity.ravager.attack",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.overchannel": [
+  {
+   "delay": 0,
+   "pitch": 1.2,
+   "sound": "minecraft:entity.wind_charge.wind_burst",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.ring": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.bell.resonate",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.rooted": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:block.mangrove_roots.place",
+   "volume": 0.9
+  }
+ ],
+ "awaken:armour.struck_bone": [
+  {
+   "delay": 0,
+   "pitch": 1.1,
+   "sound": "minecraft:entity.skeleton.hurt",
+   "volume": 0.4
+  }
+ ],
+ "awaken:armour.struck_crystal": [
+  {
+   "delay": 0,
+   "pitch": 1.4,
+   "sound": "minecraft:item.shield.block",
+   "volume": 0.4
+  }
+ ],
+ "awaken:armour.struck_plate": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:item.armor.equip_iron",
+   "volume": 0.5
+  }
+ ],
+ "awaken:armour.struck_soft": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:item.armor.equip_leather",
+   "volume": 0.5
+  }
+ ],
+ "awaken:forge.bellows": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:entity.breeze.inhale",
+   "volume": 0.35
+  }
+ ],
+ "awaken:forge.fit": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.wood.place",
+   "volume": 0.6
+  }
+ ],
+ "awaken:forge.miss": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:block.anvil.place",
+   "volume": 0.3
+  }
+ ],
+ "awaken:forge.strike_copper": [
+  {
+   "delay": 0,
+   "pitch": 1.3,
+   "sound": "minecraft:block.anvil.place",
+   "volume": 0.3
+  }
+ ],
+ "awaken:forge.strike_deepglass": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.amethyst_cluster.hit",
+   "volume": 0.8
+  }
+ ],
+ "awaken:forge.strike_diamond": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:block.amethyst_block.hit",
+   "volume": 0.5
+  }
+ ],
+ "awaken:forge.strike_hide": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.wood.hit",
+   "volume": 0.6
+  }
+ ],
+ "awaken:forge.strike_iron": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.netherite_block.hit",
+   "volume": 0.6
+  }
+ ],
+ "awaken:forge.strike_netherite": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.netherite_block.hit",
+   "volume": 0.9
+  }
+ ],
+ "awaken:forge.strike_starmetal": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.amethyst_block.resonate",
+   "volume": 0.5
+  }
+ ],
+ "awaken:forge.wake": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:block.enchantment_table.use",
+   "volume": 0.5
+  }
+ ]
+}

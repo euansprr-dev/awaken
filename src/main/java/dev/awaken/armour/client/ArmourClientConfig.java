@@ -40,12 +40,17 @@ public final class ArmourClientConfig {
             .comment("Armour motion: the parts of a set that should not stand still (a halo, a marker, a plume, lanterns, wings)",
                     "move. false: every part is rigid on its bone.")
             .define("armour_motion", true);
+    public static final ModConfigSpec.IntValue MOVE_SOUND = B
+            .comment("Armour movement sound, 0 to 100: the soft sound a set makes at each stride, by what it is made of (hide",
+                    "creaks, mail shifts, plate clinks). Low by default, silent when you sneak. 0 turns it off.")
+            .defineInRange("armour_movement_sound", 60, 0, 100);
     public static final ModConfigSpec SPEC = B.build();
 
     // read on every armoured figure each frame: cached, updated when the file loads or changes
     private static volatile Sculpted sculpted = Sculpted.ON;
     private static volatile ForgeView view = ForgeView.CINEMATIC;
     private static volatile boolean motion = true;
+    private static volatile int moveSound = 60;
 
     static void register(IEventBus modBus) {
         try {
@@ -63,6 +68,7 @@ public final class ArmourClientConfig {
             sculpted = SCULPTED.get();
             view = FORGE_VIEW.get();
             motion = MOTION.get();
+            moveSound = MOVE_SOUND.get();
         } catch (RuntimeException e) {
             sculpted = Sculpted.ON;
             view = ForgeView.CINEMATIC;
@@ -76,6 +82,19 @@ public final class ArmourClientConfig {
         if (!SPEC.isLoaded()) return;
         MOTION.set(on);
         SPEC.save();
+    }
+
+    /** Sets and saves the movement sound's level, 0-100 (the command; tours). */
+    static void moveSound(int level) {
+        moveSound = Math.max(0, Math.min(100, level));
+        if (!SPEC.isLoaded()) return;
+        MOVE_SOUND.set(moveSound);
+        SPEC.save();
+    }
+
+    /** The movement sound's level, 0..1 (SPEC §44.12). */
+    public static float moveSound() {
+        return moveSound / 100F;
     }
 
     /** Whether a set's living parts move (SPEC §44.10). */

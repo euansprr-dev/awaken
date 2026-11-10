@@ -51,6 +51,7 @@ public final class ArmourClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("armour_meshes"),
                 (ResourceManagerReloadListener) ArmourMeshes::reload));
+        ArmourSoundsClient.init(modBus);
         modBus.addListener(RegisterRenderPipelinesEvent.class, ArmourPipelines::onRegister);
         // a piece in a hand, on the ground, in a frame: the piece itself, not its icon (SPEC §44.11)
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent.class,
