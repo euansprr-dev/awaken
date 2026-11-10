@@ -30,6 +30,7 @@ public final class LandPrograms {
             Map.entry("awaken:sporewells", dev.awaken.gates.realms.land.Sporewell::new),
             Map.entry("awaken:cinder_workings", dev.awaken.gates.realms.land.CinderWorkings::new),
             Map.entry("awaken:silvered_halls", dev.awaken.gates.realms.land.SilveredHalls::new),
+            Map.entry("awaken:sealed_wing", dev.awaken.gates.realms.land.SealedWing::new),
             Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new));
 
     public static boolean has(String id) {
