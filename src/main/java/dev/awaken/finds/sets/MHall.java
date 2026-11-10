@@ -66,8 +66,8 @@ final class MHall {
                 }
         if (d.roof() == 2) for (int x = -L + 3; x <= L - 3; x += 6) for (int z = -4; z <= 4; z += 8) {   // its columns stand on, into the daylight
             if (h(s, x, 8, z) < 70) continue;
-            for (int y = aisle; y <= 2 + h(s, x, 9, z) % 5; y++) s.put(x, y, z, M.pillar(Direction.Axis.Y));
-            s.put(x, 3 + h(s, x, 9, z) % 5, z, M.capital());
+            for (int y = aisle; y <= 6 + h(s, x, 9, z) % 6; y++) s.put(x, y, z, M.pillar(Direction.Axis.Y));
+            s.put(x, 7 + h(s, x, 9, z) % 6, z, M.capital());
         }
         // -- water standing in it
         for (int k = 1; k <= d.flood(); k++)

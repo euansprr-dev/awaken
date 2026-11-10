@@ -171,6 +171,8 @@ final class MDoor {
             }
         M.giant(s, -W - 2, s.g(-W - 2, 6) + 1, 6, Direction.SOUTH, 16, false, 1, true);
         M.giant(s, W + 4, s.g(W + 4, 8) + 1, 8, Direction.SOUTH, 16, false, 0, true);
+        M.giant(s, 13, 1, 2, Direction.SOUTH, 16, true, 2, false);   // one still sits by the hall's mouth: what you see of it from a hill
+        G.foot(s, 8, -1, 18, 9, 1);
         M.finish(s, 2, 56);
         dune(s, -W, W, 1, 3, 26);
         for (int z = 1; z <= 3; z++) for (int x = -1; x <= 1; x++) for (int y = 1; y <= 5; y++) { BlockState b = s.get(x, y, z); if (b != null && !b.isAir() && !Olden(b)) s.put(x, y, z, AIR); }

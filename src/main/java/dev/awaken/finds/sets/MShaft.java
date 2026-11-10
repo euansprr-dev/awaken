@@ -135,9 +135,10 @@ final class MShaft {
             double a = Math.toRadians(state == 0 ? 240 + 60 * i : i * 360.0 / n + 30);
             int x = (int) Math.round(Math.cos(a) * (R + 5)), z = (int) Math.round(Math.sin(a) * (R + 5));
             Direction in = Math.abs(x) >= Math.abs(z) ? (x > 0 ? Direction.WEST : Direction.EAST) : (z > 0 ? Direction.NORTH : Direction.SOUTH);
-            if (state == 1) M.giant(s, x + in.getOpposite().getStepX() * 2, 1, cz + z + in.getOpposite().getStepZ() * 2, in.getOpposite(), gh, false, i % 3 == 0 ? 1 : 0, true);
+            if (state == 1 && i != 1) M.giant(s, x + in.getOpposite().getStepX() * 2, 1, cz + z + in.getOpposite().getStepZ() * 2, in.getOpposite(), gh, false, i % 3 == 0 ? 1 : 0, true);
             else if (state == 2 && i == n / 2) M.giant(s, -(R + 8), 1, cz, Direction.EAST, gh, false, 0, true);    // the one that fell in: across the rim, its head over the drop
-            else M.giant(s, x, 1, cz + z, in, gh, false, state == 4 ? 0 : (i * 5 + Mon.pick(s, 71, 3)) % 4 == 0 ? 2 : 0, false);
+            // (of the fallen ring, one still stands, headless: what you see of it from a hill)
+            else M.giant(s, x, 1, cz + z, in, gh, false, state == 4 ? 0 : state == 1 ? 1 : (i * 5 + Mon.pick(s, 71, 3)) % 4 == 0 ? 2 : 0, false);
         }
         if (state == 0) {                                          // the lid: slid half off to the east, resting on the rim
             for (int x = -R - 1; x <= R + 1; x++) for (int z = -R - 1; z <= R + 1; z++) { double r = Math.sqrt(x * x + z * z); if (r <= R + 1.3) for (int y = 1; y <= 2; y++) s.put(x + R, y, cz + z, y == 2 && Math.abs(r - R / 2.0) < 0.6 ? M.bronzeBand() : r < 1.2 && y == 2 ? M.seal() : M.block()); }

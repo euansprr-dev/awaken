@@ -148,7 +148,7 @@ final class MMast {
         s.clear(56);
         // the stump stands at the east end; the rest of it lies along the ground to the west in three lengths
         base(s, 44, 0, 56);
-        tower(s, 44, 0, 9, false);
+        tower(s, 44, 0, 17, false);
         int[] from = {-50, -24, 4}, to = {-28, 0, 30}, lift = {0, 1, 3};
         for (int q = 0; q < 3; q++)
             for (int x = from[q]; x <= to[q]; x++) {
@@ -172,7 +172,7 @@ final class MMast {
         pin(s, -38, s.g(-38, 17) + 1, 17);
         Mon.carving(s, -6, s.g(-6, 0) + 3, -R + 1);
         Mon.carving(s, 12, s.g(12, 1) + 5, 2 - R);
-        gantry(s, 44, 0, 6, Direction.NORTH, 4, false);
+        gantry(s, 44, 0, 12, Direction.NORTH, 4, false);
         M.heap(s, 2, 6, 3.2);
         M.heap(s, -26, -6, 3.0);
         finish(s, 56, 44, 0);
