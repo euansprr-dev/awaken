@@ -256,7 +256,7 @@ final class PlacesWild {
                     moss(s, -16, 1, -16, 16, 16, 16, 18);
                     s.spawn(EntityTypes.FROG, 20, 20, 0, "frog").spawnUp(EntityTypes.PARROT, -6, 6, 12, 0, "parrot");
                     wild(s, 24, 35, 9);
-                    s.cam(0, 16, 52, 180, 6).cam(25, 34, 25, 135, 40).cam(0, 10, 8, 180, 0).cam(0, 8, -1, 180, -8);
+                    s.cam(0, 16, 52, 180, 6).cam(25, 34, 25, 135, 40).cam(0, 10, 8, 180, 0).cam(2, 9, -1, 150, 6);
                 })
                 .script(() -> Steps.of(Turn.dials("mirror"), Prize.at("dais")))
                 .play(t -> { int[] w = Turn.targets(t.seed(), 4); for (int i = 0; i < 4; i++) for (int k = 0; k < w[i]; k++) t.use("mirror", i); t.use("dais", 0); })
@@ -337,7 +337,7 @@ final class PlacesWild {
                     s.tell(-9, 6, 2);
                     s.spawn(EntityTypes.FOX, 14, -8, 0, "fox");
                     wild(s, 20, 33, 12);
-                    s.cam(0, 12, 42, 180, 10).cam(20, 24, 24, 140, 38).cam(0, 2, 21, 180, 0).cam(0, 2, -5, 0, 6);
+                    s.cam(0, 12, 42, 180, 10).cam(20, 24, 24, 140, 38).cam(0, 2, 21, 180, 0).cam(0, 1, -4, 0, -2);
                 })
                 .script(() -> Steps.of(Sockets.need("stove", st -> st.is(net.minecraft.tags.ItemTags.LOGS) || st.is(net.minecraft.tags.ItemTags.PLANKS),
                                 i -> st(Blocks.FURNACE).setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT, true)).carry("loose"),
@@ -385,6 +385,15 @@ final class PlacesWild {
                     for (int x = -24; x <= -17; x += 3) for (int z = -2; z <= 2; z += 4) { for (int y = 1; y <= 3; y++) s.put(x, y, z, st(Blocks.SPRUCE_FENCE)); s.put(x, 4, z, Props.FLAG.get().of(1)); }
                     ring(s, -8, 14, 1.5, 1, st(Blocks.COBBLESTONE));
                     s.put(-8, 0, 14, st(Blocks.ICE));
+                    // the ice grew past the hall: spikes of it stand round the place, the tallest three times the roof
+                    for (int[] k : new int[][] {{-20, -15, 16}, {-6, -20, 11}, {12, -19, 20}, {21, -8, 12}, {20, 12, 17}, {4, 19, 9}, {-17, 14, 13}, {-13, -17, 8}}) {
+                        for (int y = 1; y <= k[2]; y++) {
+                            double r = 2.7 * Math.pow(1 - (y - 1) / (double) k[2], 0.8) + 0.35;
+                            int lx = k[0] + (y * (k[0] > 0 ? 1 : -1)) / 9;
+                            for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) if (x * x + z * z <= r * r) s.put(lx + x, y, k[1] + z, ice.apply(h(s, lx + x, y, k[1] + z)));
+                        }
+                    }
+                    for (int z = -1; z <= 1; z += 2) stilled(s, -17, 1, z * 2, 0, Direction.WEST);   // the door wards, iced where they stood
                     for (int i = 0; i < 6; i++) { double a = Math.PI * (0.15 + 0.14 * i); int x = (int) Math.round(Math.cos(a) * 19), z = 8 + (int) Math.round(Math.sin(a) * 12); for (int y = 1; y <= 3 + (i * 7 % 3); y++) s.put(x, y, z, ice.apply(h(s, x, y, z))); }
                     fill(s, 6, 1, 12, 8, 1, 12, st(Blocks.SPRUCE_SLAB));
                     s.put(6, 1, 13, st(Blocks.SPRUCE_FENCE));

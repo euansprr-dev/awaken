@@ -166,7 +166,7 @@ final class PlacesFar {
                     stilled(s, 4, -4, 5, 3, Direction.WEST);
                     for (int z = 26; z >= 8; z--) for (int x = -1; x <= 1; x++) if (h(s, x, 3, z) < 200 && !s.taken(x, s.g(x, z) + 1, z)) s.put(x, s.g(x, z), z, st(Blocks.SMOOTH_SANDSTONE));
                     wild(s, 24, 35, 9);
-                    s.cam(0, 14, 50, 180, 18).cam(21, 22, 21, 135, 44).cam(0, 2, 28, 180, 12).cam(4, -4, 10, 150, -8);
+                    s.cam(0, 14, 50, 180, 18).cam(21, 22, 21, 135, 44).cam(0, 2, 28, 180, 12).cam(8, -3, 7, 135, 4);
                 })
                 .script(() -> Steps.of(Notes.of("stone", 5), Prize.at("prize")))
                 .play(t -> { for (int i : Notes.order(t.seed(), 5, 5)) t.use("stone", i); t.use("prize", 0); })
@@ -283,7 +283,7 @@ final class PlacesFar {
                     limb(s, 16, 1, 0, 16, 1, -2, st(Blocks.IRON_CHAIN));
                     for (int x = -6; x <= 0; x += 3) { s.put(x, 1, 4, st(Blocks.BARREL)); s.put(x + 1, 1, 4, Props.ROPE_COIL.get().of(0)); }
                     for (int[] k : new int[][] {{-15, 4}, {10, 5}}) s.put(k[0], 1, k[1], Props.FIRE_BASKET.get().of(1));
-                    s.cam(0, 13, -46, 0, 8).cam(19, 24, 9, 135, 40).cam(1, 2, 3, 180, -12).cam(6, 7, -9, 90, 0);
+                    s.cam(0, 13, -46, 0, 8).cam(19, 24, 9, 135, 40).cam(1, 2, 3, 180, -12).cam(14, 7, -6, 90, 0);
                 })
                 .script(() -> Steps.of(Sockets.need("plank", st -> st.is(net.minecraft.tags.ItemTags.PLANKS), i -> st(Blocks.BIRCH_PLANKS)).carry("loose"),
                         Prize.at("wedge").then((c, i) -> { c.set("wedge", 0, AIR); c.sound(c.pos("wedge", 0), SoundEvents.WOOD_BREAK, 3.0F, 0.5F); }), Prize.at("chest")))

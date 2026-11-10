@@ -160,13 +160,25 @@ final class PlacesPlain {
                 .air(Air.of(0xC9D0D2, 64).mote(() -> ParticleTypes.WHITE_ASH, 0.9F, 3, 0.003F).loop(() -> SoundEvents.AMBIENT_CAVE.value(), 520, 0.3F, 0.8F))
                 .scene(s -> {
                     s.level(27, 8).clear(29);
-                    java.util.function.IntFunction<BlockState> turf = h -> h < 40 ? st(Blocks.COARSE_DIRT) : h < 70 ? st(Blocks.MOSS_BLOCK) : st(Blocks.GRASS_BLOCK);
+                    java.util.function.IntFunction<BlockState> turf = h -> h < 14 ? st(Blocks.COARSE_DIRT) : h < 150 ? st(Blocks.MOSS_BLOCK) : st(Blocks.GRASS_BLOCK); // moss is green on every face: a mound of grass blocks shows its earth sides
                     BlockState stone = st(Blocks.STONE), mossy = st(Blocks.MOSSY_COBBLESTONE);
+                    // the henge: a ditch and a bank thrown up outside it, all the way round but for the way in from the south
+                    for (int x = -28; x <= 28; x++)
+                        for (int z = -28; z <= 28; z++) {
+                            double d = Math.sqrt(x * x + z * z);
+                            if (d <= 23.2 || d > 27.6 || (Math.abs(x) <= 2 && z > 0)) continue;
+                            s.ground(x, z, d <= 24.6 ? -1 : d > 25.4 && d <= 26.8 ? 2 : 1);
+                        }
+                    for (int i = 0; i < 4; i++)                            // the avenue: paired stones up to the door
+                        for (int x = -3; x <= 3; x += 6) {
+                            int z = 9 + i * 4, hgt = 2 + (h(s, x, i, z) % 3);
+                            for (int y = 1; y <= hgt; y++) s.put(x, y, z, y == hgt ? st(Blocks.TUFF) : h(s, x, y, z) < 120 ? mossy : stone);
+                        }
                     for (int i = 0; i < 6; i++) {
                         double a = i * Math.PI / 3 + Math.PI / 6;
-                        int x = (int) Math.round(Math.cos(a) * 20), z = (int) Math.round(Math.sin(a) * 20);
-                        blob(s, x, 1, z, 4.6, 4.2, 4.6, turf);
-                        int dx = (int) Math.round(-Math.cos(a) * 4.4), dz = (int) Math.round(-Math.sin(a) * 4.4), px = Math.abs(dz) > Math.abs(dx) ? 1 : 0, pz = 1 - px;
+                        int x = (int) Math.round(Math.cos(a) * 17), z = (int) Math.round(Math.sin(a) * 17);
+                        blob(s, x, 1, z, 5.2, 4.8, 5.2, turf);
+                        int dx = (int) Math.round(-Math.cos(a) * 5.0), dz = (int) Math.round(-Math.sin(a) * 5.0), px = Math.abs(dz) > Math.abs(dx) ? 1 : 0, pz = 1 - px;
                         for (int k = -1; k <= 1; k++) for (int y = 1; y <= 3; y++) s.put(x + dx + px * k, y, z + dz + pz * k, k == 0 ? (y == 3 ? st(Blocks.TUFF) : mossy) : y == 3 ? st(Blocks.TUFF) : stone);
                     }
                     // the open barrow in the middle: a passage from the south into a round room
@@ -383,7 +395,7 @@ final class PlacesPlain {
                     vines(s, 12, 9, -2, 36, 16, 2, 22);
                     for (int i = 0; i < 10; i++) { int x = 3 + s.rnd.nextInt(10), z = 6 + s.rnd.nextInt(7); if (!s.taken(x, 1, z) && s.get(x, 0, z) == null) s.put(x, 1, z, st(i % 2 == 0 ? Blocks.FERN : Blocks.SHORT_GRASS)); }
                     s.spawn(EntityTypes.FROG, 8, 7, 0, "frog");
-                    s.cam(0, 18, 50, 180, 4).cam(18, 30, 20, 150, 38).cam(-36, 2, 12, 180, -20).cam(-6, 17, 0, -90, 6);
+                    s.cam(0, 14, 40, 180, 4).cam(18, 30, 20, 150, 38).cam(-36, 2, 12, 180, -20).cam(-6, 17, 0, -90, 6);
                 })
                 .script(() -> Prize.at("gate").then((c, i) -> { PlacesWood.fillPart(c, "fall"); PlacesWood.fillPart(c, "run"); c.sound(c.pos("gate", 0), SoundEvents.IRON_DOOR_CLOSE, 2.0F, 0.6F); }))
                 .play(t -> t.use("gate", 0))

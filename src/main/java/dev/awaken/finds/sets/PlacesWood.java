@@ -239,7 +239,7 @@ final class PlacesWood {
                     path(s, 9, 33, 9, 4, 1, st(Blocks.DIRT_PATH), st(Blocks.COARSE_DIRT));
                     wild(s, 24, 33, 10);
                     s.spawn(EntityTypes.FROG, -4, 6, 0, "frog").spawnUp(EntityTypes.COD, -11, -2, -2, 0, "fish").spawnUp(EntityTypes.COD, -9, 0, -2, 0, "fish");
-                    s.cam(-2, 13, 44, 175, 10).cam(-14, 26, 24, -140, 40).cam(9, 2, 13, 180, -8).cam(10, 2, 0, 135, 5);
+                    s.cam(-2, 13, 44, 175, 10).cam(-14, 26, 24, -140, 40).cam(9, 2, 13, 180, -8).cam(10, 1, 0, 135, 2);
                 })
                 .script(() -> Steps.of(Sockets.need("paddle", st -> st.is(Items.SPRUCE_SLAB) || st.is(net.minecraft.tags.ItemTags.PLANKS), i -> st(Blocks.SPRUCE_PLANKS)).carry("loose"),
                         Prize.at("lever").then((c, i) -> c.sound(c.pos("lever", 0), SoundEvents.GRINDSTONE_USE, 2.0F, 0.6F))))
@@ -256,12 +256,16 @@ final class PlacesWood {
                     s.level(15, 8).clear(11);
                     BlockState bark = st(Blocks.DARK_OAK_WOOD), pale = st(Blocks.STRIPPED_DARK_OAK_WOOD), plank = st(Blocks.OAK_PLANKS);
                     ground(s, 0, 0, 13, h -> h < 110 ? st(Blocks.PODZOL) : h < 150 ? st(Blocks.COARSE_DIRT) : h < 175 ? st(Blocks.MOSS_BLOCK) : null);
-                    for (int x = -5; x <= 5; x++)
-                        for (int z = -5; z <= 5; z++) {
-                            double d = Math.sqrt(x * x + z * z);
-                            if (d < 4 || d >= 5) continue;
+                    // the trunk: three great lobes, flared at the foot, a little narrower at the broken crown
+                    for (int x = -9; x <= 9; x++)
+                        for (int z = -9; z <= 9; z++) {
+                            double d = Math.sqrt(x * x + z * z), th = Math.atan2(z, x);
+                            if (d < 3.2 || d >= 9) continue;
                             int top = 27 + (int) Math.round(n(s, x * 3.0, z * 3.0, 4.0) * 5);
-                            for (int y = 1; y <= top; y++) s.put(x, y, z, h(s, x, y, z) < 26 ? pale : bark);
+                            for (int y = 1; y <= top; y++) {
+                                double out = 5.4 + 0.5 * Math.sin(3 * th + 1) + Math.max(0, (7 - y) * 0.45) - y * 0.015;
+                                if (d >= 4.0 && d < out) s.put(x, y, z, h(s, x, y, z) < 26 ? pale : bark);
+                            }
                         }
                     for (int d = 0; d < 8; d++) {                          // root buttresses
                         double a = d * Math.PI / 4 + 0.35;
@@ -312,7 +316,13 @@ final class PlacesWood {
                             s.put(x, 30, z, bark);
                         }
                     }
-                    vines(s, -6, 2, -6, 6, 18, 6, 9);
+                    for (int d = 0; d < 7; d++) {                          // lesser boughs, a few still in leaf
+                        double a = d * 0.9 + 0.15;
+                        int ex = (int) Math.round(Math.cos(a) * (9 + d % 3 * 2)), ey = 23 + (d % 4) * 2, ez = (int) Math.round(Math.sin(a) * (9 + d % 3 * 2));
+                        limb(s, (int) Math.round(Math.cos(a) * 4), 17 + (d % 3) * 3, (int) Math.round(Math.sin(a) * 4), ex, ey, ez, bark);
+                        if (d % 2 == 0) leaves(s, ex, ey + 1, ez, 2.5, leaf(Blocks.DARK_OAK_LEAVES));
+                    }
+                    vines(s, -7, 2, -7, 7, 18, 7, 9);
                     moss(s, -13, 0, -13, 13, 5, 13, 14);
                     for (int i = 0; i < 14; i++) {
                         int x = s.rnd.nextInt(25) - 12, z = s.rnd.nextInt(25) - 12;
@@ -321,7 +331,7 @@ final class PlacesWood {
                     ring(s, -8, 8, 1.5, 1, st(Blocks.COBBLESTONE_SLAB));
                     s.put(-8, 1, 8, fire(false, false));
                     wild(s, 11, 22, 7);
-                    s.cam(0, 18, 38, 180, -4).cam(13, 36, 13, 135, 52).cam(1, 2, 10, 175, -8).cam(0, 12, 1, 150, 10);
+                    s.cam(0, 18, 38, 180, -4).cam(13, 36, 13, 135, 52).cam(0, 2, 13, 180, -10).cam(0, 12, 1, 150, 10);
                 })
                 .script(() -> Steps.of(Quiet.near("sleeper", "prize", 5).voice(SoundEvents.PARROT_AMBIENT), Prize.at("chest")))
                 .play(t -> t.use("prize", 0).use("chest", 0))
@@ -340,6 +350,10 @@ final class PlacesWood {
                     blob(s, 0, 2, 10, 3.5, 4.0, 3.0, rock);
                     blob(s, 8, 2, 9, 3.8, 5.0, 3.4, rock);
                     blob(s, 4, 6, 9, 5.5, 2.4, 3.0, rock);
+                    // more of the tor standing round the mouth, so the heap shows over the trees
+                    for (int[] k : new int[][] {{-6, 12, 30}, {14, 13, 27}, {-3, 3, 23}, {12, 3, 25}, {-10, 5, 19}, {18, 8, 19}})
+                        boulder(s, k[0], k[1], k[2] / 10.0, st(Blocks.STONE), st(Blocks.MOSSY_COBBLESTONE), st(Blocks.TUFF));
+                    blob(s, 5, 9, 8, 3.2, 2.6, 2.6, rock);
                     // the hall: thirty by twenty, under nine blocks of rock
                     carve(s, 0, -15, -9, 14.5, 6.0, 10.5, rock);
                     for (int x = -17; x <= 17; x++)
@@ -395,7 +409,7 @@ final class PlacesWood {
                     s.put(-13, -18, -15, st(Blocks.AMETHYST_CLUSTER));
                     for (int[] k : new int[][] {{6, -14, -4}, {-9, -13, -6}, {0, -12, -14}, {9, -14, -12}}) s.put(k[0], k[1], k[2], light(6));
                     s.spawnUp(EntityTypes.GLOW_SQUID, -5, -9, -20, 0, "squid").spawnUp(EntityTypes.GLOW_SQUID, 1, -12, -20, 0, "squid").spawnUp(EntityTypes.BAT, 6, -6, -14, 0, "bat");
-                    s.cam(4, 9, 30, 180, 12).cam(10, -12, -2, 115, 18).cam(4, 2, 15, 180, 8).cam(6, -17, -5, 110, 2);
+                    s.cam(4, 9, 30, 180, 12).cam(14, 12, 16, 150, 32).cam(4, 2, 15, 180, 8).cam(15, -16, -8, 90, 4);
                 })
                 .script(() -> Notes.of("stone", 3))
                 .play(t -> { for (int i : Notes.order(t.seed(), 3, 3)) t.use("stone", i); })

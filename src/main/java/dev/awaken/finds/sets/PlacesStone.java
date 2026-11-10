@@ -203,6 +203,13 @@ final class PlacesStone {
                     s.put(7, 13, 0, st(Blocks.IRON_CHAIN));
                     // the winding house
                     house(s, 13, -3, 19, 3, 0, 3, Pal.COBBLE, 3, 0);
+                    for (int y = 1; y <= 13; y++) s.put(19, y, -4, st(y % 4 == 0 ? Blocks.COBBLESTONE : Blocks.BRICKS));   // the engine's stack
+                    s.put(19, 14, -4, st(Blocks.CAMPFIRE).setValue(net.minecraft.world.level.block.CampfireBlock.SIGNAL_FIRE, true));
+                    // the spoil: a grey heap as big as the winding house, and the timber for the galleries
+                    blob(s, -13, 2, 11, 7.5, 4.6, 6.0, h -> h < 80 ? st(Blocks.GRAVEL) : h < 150 ? st(Blocks.TUFF) : h < 200 ? st(Blocks.COBBLESTONE) : st(Blocks.COARSE_DIRT));
+                    logPile(s, 12, 9, 1, 5, true, log);
+                    logPile(s, 12, 13, 1, 4, true, st(Blocks.DARK_OAK_LOG));
+                    cart(s, 2, 1, 12, true);
                     s.put(12, 1, 0, Props.WINCH.get().of(0));
                     s.part("wheel", 12, 1, 0);
                     limb(s, 12, 2, 0, 12, 12, 0, st(Blocks.IRON_CHAIN));
@@ -231,7 +238,7 @@ final class PlacesStone {
                     s.part("cache", 6, 1, 3);
                     path(s, 0, 30, 2, 5, 1, st(Blocks.GRAVEL), st(Blocks.COARSE_DIRT));
                     wild(s, 20, 31, 7);
-                    s.cam(0, 16, 46, 180, 6).cam(21, 26, 19, 135, 40).cam(-8, 2, -4, 180, 0).cam(-8, 2, -13, 180, 0);
+                    s.cam(0, 16, 46, 180, 6).cam(21, 26, 19, 135, 40).cam(-8, 2, -4, 180, 0).cam(-8, 1, -12, 180, 0);
                 })
                 .script(() -> Steps.of(Prize.at("cart").then((c, i) -> { c.set("cart", 0, st(Blocks.BARREL)); c.sound(c.pos("cart", 0), SoundEvents.WOOD_PLACE, 1.5F, 0.7F); }),
                         Prize.at("wheel").then((c, i) -> { PlacesWood.fillPart(c, "cage"); c.set("up", 0, st(Blocks.BARREL)); c.sound(c.pos("wheel", 0), SoundEvents.CHAIN_STEP, 2.0F, 0.5F); }), Prize.at("up")))
