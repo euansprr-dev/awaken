@@ -5,6 +5,7 @@ waitworld
 camera first
 cmd gamerule send_command_feedback false
 cmd weather clear 100000
+cmd gamerule advance_weather false
 cmd gamerule spawn_mobs false
 wait 40
 cmd awaken opening skip
@@ -16,6 +17,7 @@ screen close
 cmd awaken powers starter 1
 wait 20
 cmd time set 6000
+cmd gamerule advance_time false
 screen journal
 journal places
 wait 40

@@ -7,6 +7,7 @@ waitworld
 camera first
 cmd gamerule send_command_feedback false
 cmd weather clear 100000
+cmd gamerule advance_weather false
 cmd gamerule spawn_mobs false
 wait 40
 cmd awaken opening skip
@@ -18,11 +19,15 @@ screen close
 cmd awaken powers starter 1
 wait 20
 cmd time set 6000
+cmd gamerule advance_time false
 cmd gamerule awaken:fauna_spawning false
 hud off
 opt fov 45
-cmd tp @s 1000 240 0
-wait 60
+cmd tp @s 1000 260 -40
+wait 100
+cmd setblock 1000 259 -40 minecraft:barrier
+cmd tp @s 1000 260 -40
+wait 100
 cmd tp @s 1000 208 -9 0 24
 wait 12
 cmd execute positioned 1000 200 0 rotated 0 0 run awaken finds place wanderers_cairn

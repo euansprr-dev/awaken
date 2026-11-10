@@ -125,7 +125,8 @@ public record FindsFeature() implements Feature {
                 if (dx * dx + dz * dz <= cr * cr) cols.add(BlockPos.asLong(dx, 0, dz));
         int sea = level.getSeaLevel();
         BlockState snow = Blocks.SNOW.defaultBlockState();
-        for (long c : cols) {
+        // (not for one stood by hand: a test pad in the sky is above the snow line whatever the land below is)
+        if (s.layer() != 2) for (long c : cols) {
             int dx = BlockPos.getX(c), dz = BlockPos.getZ(c), x = s.x() + dx, z = s.z() + dz;
             if (x < x0 || x > x1 || z < z0 || z > z1) continue;
             int base = s.y() + sc.groundAt(dx, dz);
