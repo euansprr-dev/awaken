@@ -41,6 +41,8 @@ public final class HearthClient {
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RoomSection());
         HomePage.register(); // the band's Hearth page at a glance (SPEC §27.13; it was the Journal's HEARTH section)
+        // on the stage the Hearth is a place of its own; the sections above are the classic band's (SPEC §57.7)
+        dev.awaken.core.client.ui.BandPlaces.set(dev.awaken.progression.client.StatusSections.Tab.HEARTH.ordinal(), HearthPlace.INSTANCE);
         dev.awaken.citizens.client.CityGlow.source(HomeClient.GLOW);
         CodexEntries.addSource(HearthClient::rumours);
         // (W6) from Tier IV your village has its name on the Atlas, as the settlements of the world do

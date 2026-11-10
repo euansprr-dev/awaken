@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Band stage · prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500&family=Jacquard+24&display=swap">
+<style>
+/* local only: the game's own font, built by setup_font.py; the published page falls back to Pixelify Sans */
+@font-face { font-family: "MCLocal"; src: url("file:///Volumes/MEDIA/ui-unify-work/font/mclocal.ttf"); }
+html, body { margin: 0; background: #05080F; overflow: hidden; }
+</style>
+<link rel="stylesheet" href="proto.css">
+</head><body>
+<div id="sheet"></div>
+<script src="data.js"></script><script src="proto.js"></script>
+<script>
+  // state from the hash, as JSON: index.html#{"place":"tasks","task":"armour/first"}
+  let o = { still: location.search.includes("still") };
+  try { Object.assign(o, JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}")); } catch (e) {}
+  AW_PROTO.mount(document.getElementById('sheet'), o);
+  const fit = () => { const k = Math.min(innerWidth / 1708, innerHeight / 960); document.getElementById('sheet').style.transform = `scale(${k})`; };
+  addEventListener('resize', fit); fit();
+</script>
+</body></html>

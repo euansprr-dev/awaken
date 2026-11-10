@@ -260,7 +260,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
                 String label = n.label();
                 int room = nx + col - 2 - lx;
                 if (font.width(label) > room && label.indexOf(" (") > 0) label = label.substring(0, label.indexOf(" ("));
-                g.text(font, font.plainSubstrByWidth(label, room), lx, ny + 4, ok ? LABEL : TITLE, false);
+                dev.awaken.signal.client.Ui.fitted(g, font, label, lx, ny + 4, room, 1, ok ? LABEL : TITLE, false); // whole, never cut (SPEC §57.6)
             }
             y += (needs.size() + 1) / 2 * 17;
         }
@@ -287,7 +287,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             y += 20;
             if (!tight) {
                 String line = inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]);
-                g.text(font, font.plainSubstrByWidth(line, pw - 16), px + 8, y, inlay == 0 ? DIM : ArmourInlay.colour(Forces.Force.values()[inlay - 1]), false);
+                dev.awaken.signal.client.Ui.fitted(g, font, line, px + 8, y, pw - 16, 1, inlay == 0 ? DIM : ArmourInlay.colour(Forces.Force.values()[inlay - 1]), false);
                 y += 12;
             }
         }
@@ -386,7 +386,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             }
             g.item(it, px + 11, ry + 1);
             ArmourSet drawn = ArmourLooks.drawn(it).set();
-            g.text(font, font.plainSubstrByWidth(drawn == own.set() ? drawn.setName + " (its own)" : drawn.setName, pw - 76), px + 31, ry + 5,
+            dev.awaken.signal.client.Ui.fitted(g, font, drawn == own.set() ? drawn.setName + " (its own)" : drawn.setName, px + 31, ry + 5, pw - 76, 1,
                     0xFF000000 | drawn.rank.colour, false);
             if (lookChoices(own.set()).size() > 1) {
                 arrow(g, px + pw - 36, ry + 3, "<", mouseX, mouseY);

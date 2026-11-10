@@ -64,6 +64,9 @@ final class PieceView extends CloseView {
     private List<FormattedCharSequence> blurb = List.of(), why = List.of();
     /** Whole paragraphs, so the panel leaves one out rather than cutting it off. */
     private final List<List<FormattedCharSequence>> special = new ArrayList<>(4);
+    /** What makes this kind different, each a few words and its number; the whole sentence shows for the one you point at. */
+    private final List<HallSpecial.Mark> marks = new ArrayList<>(6);
+    private HallSpecial.@Nullable Mark overMark;
     private final List<String[]> stats = new ArrayList<>(4);
     private String compare = "";
     private int compareColour = Stage.LABEL;
@@ -283,9 +286,10 @@ final class PieceView extends CloseView {
         }
 
         List<String> sp = new ArrayList<>();
+        marks.clear();
         if (!hidden) {
-            sp.addAll(HallSpecial.of(style));
-            if (lord != null) sp.addAll(HallSpecial.lord(lord));
+            marks.addAll(HallSpecial.marks(style));
+            if (lord != null) marks.addAll(HallSpecial.lordMarks(lord));
             if (!stack.isEmpty()) sp.addAll(ForgeHooks.cardLines(stack));
         }
         special.clear();
@@ -390,7 +394,7 @@ final class PieceView extends CloseView {
                     line = "You have made this. It's yours to carry.";
                     whyColour = Stage.GOOD;
                 }
-                subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, com.mojang.blaze3d.platform.InputConstants.KEY_T));
+                subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, dev.awaken.holo.ui.StageKeys.TRACK));
             }
         }
         why = line.isEmpty() ? List.of() : s.wrap(sentence(line), TEXT_W, 3F);
@@ -434,8 +438,7 @@ final class PieceView extends CloseView {
             }
             y += 72F;
             if (!compare.isEmpty()) {
-                s.text(s.fit(compare, TEXT_W, 3F), X, y, 3F, compareColour);
-                y += 32F;
+                y += Math.max(32F, s.fitted(compare, X, y, TEXT_W, 3F, compareColour, -1) + 2F);
             }
             y += 8F;
         }
@@ -448,14 +451,23 @@ final class PieceView extends CloseView {
         float whyTop = actionTop - 12F - why.size() * 30F;
         float needHeight = Panel.needsHeight(needs.size());
 
-        if (!special.isEmpty()) {
+        overMark = null;
+        if (!marks.isEmpty() || !special.isEmpty()) {
             s.text("What makes it different", X, y, 3F, Stage.EDGE);
             y += 32F;
-            float last = whyTop - needHeight - 8F;
-            for (List<FormattedCharSequence> paragraph : special) {
-                if (y + paragraph.size() * 30F > last) break;
-                y = lines(s, paragraph, y, paragraph.size(), Stage.TITLE) + 6F;
+            // marks with their numbers (they were a paragraph each, and the ones that didn't fit were dropped)
+            for (HallSpecial.Mark m : marks) {
+                boolean on = fly >= 1F && mx >= X - 6F && mx < RIGHT + 6F && my >= y - 3F && my < y + 27F;
+                if (on) {
+                    overMark = m;
+                    s.fill(X - 6F, y - 3F, RIGHT + 6F, y + 27F, 0x332A3A56);
+                }
+                float vw = m.value().isEmpty() ? 0F : s.width(m.value(), 3F) + 16F;
+                s.fitted(m.label(), X, y, TEXT_W - vw, 3F, on ? Stage.TITLE : Stage.LABEL, -1);
+                if (!m.value().isEmpty()) s.right(m.value(), RIGHT, y, 3F, Stage.TITLE);
+                y += 30F;
             }
+            for (List<FormattedCharSequence> paragraph : special) y = lines(s, paragraph, y, paragraph.size(), Stage.TITLE) + 6F;
             y += 8F;
         }
 
@@ -471,16 +483,29 @@ final class PieceView extends CloseView {
         float x = X;
         for (int i = 0; i < subs.size() && i < subX0.length; i++) {
             Panel.Act a = subs.get(i);
-            float w = s.width(a.label(), 3F) + 24F;
+            String cap = a.key() == dev.awaken.holo.ui.StageKeys.TRACK ? "T" : "";
+            float capW = cap.isEmpty() ? 0F : 38F;
+            float w = s.width(a.label(), 3F) + 24F + capW;
             subX0[i] = x;
             subX1[i] = x + w;
             boolean over = fly >= 1F && a.enabled() && mx >= x && mx < x + w && my >= subY0 && my < subY1;
             if (over) s.fill(x, subY0, x + w, subY1, 0x552A3A56);
             s.outline(x, subY0, x + w, subY1, 2, a.enabled() ? 0xA07FC3FF : 0x602A3446);
-            s.text(a.label(), x + 12F, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
+            if (!cap.isEmpty()) s.key(cap, x + 10F, subY0 + 4F);
+            s.text(a.label(), x + 12F + capW, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
             x += w + 14F;
         }
         pendingFor = Math.max(0F, pendingFor - dt);
+        if (overMark != null) { // the whole sentence, by the pointer
+            List<FormattedCharSequence> tip = s.wrap(overMark.says(), 520F, 2F);
+            float tw = 0F;
+            for (FormattedCharSequence l : tip) tw = Math.max(tw, s.font.width(l) * s.snap(2F));
+            float th = tip.size() * 21F + 18F, tx = Math.min(mx + 18F, Stage.W - tw - 34F), ty = Math.min(my + 20F, Stage.H - th - 8F);
+            s.g.nextStratum();
+            s.fill(tx, ty, tx + tw + 24F, ty + th, 0xF50F1724);
+            s.outline(tx, ty, tx + tw + 24F, ty + th, 1, 0x997FC3FF);
+            for (int i = 0; i < tip.size(); i++) s.text(tip.get(i), tx + 12F, ty + 10F + i * 21F, 2F, Stage.TITLE);
+        }
         g.pose().popMatrix();
     }
 
@@ -507,14 +532,13 @@ final class PieceView extends CloseView {
 
     private void drawFoot(Stage s, float slide) {
         float y = 916F + 60F * slide;
-        s.text("Esc", 40F, y, 3F, Stage.EDGE);
-        s.text("Back", 120F, y, 3F, Stage.LABEL);
+        s.hint("Esc", "Back", 40F, y);
         if (lord != null) {
-            s.centre("Drag to turn", CX, y, 3F, Stage.DIM);
+            s.hint("Drag", "Turn it", CX - 80F, y);
             return;
         }
         if (!prevName.isEmpty()) s.text("< " + prevName, 250F, y, 3F, Stage.LABEL);
-        s.centre("Drag to turn", 640F, y, 3F, Stage.DIM);
+        s.hint("Drag", "Turn it", 560F, y);
         if (!nextName.isEmpty()) s.right(nextName + " >", 1000F, y, 3F, Stage.LABEL);
     }
 

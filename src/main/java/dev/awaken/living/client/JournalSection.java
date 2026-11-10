@@ -3,7 +3,7 @@ package dev.awaken.living.client;
 import dev.awaken.living.LivingNet;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
-import dev.awaken.signal.client.HudLook;
+import dev.awaken.signal.client.Ui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -59,9 +59,9 @@ final class JournalSection implements StatusSections.Section {
             // the hero: a lit bar, the chain's name, and the step you're on
             g.fill(x, row, x + width, row + HERO - 4, Glass.a(Glass.HORIZON, 0.07f));
             g.fill(x, row, x + 2, row + HERO - 4, 0xFF000000 | Glass.HORIZON);
-            HudLook.text(g, font, font.plainSubstrByWidth(hero.title(), width - 10), x + 7, row + 3, 0xFFFFFFFF, false);
+            Ui.fitted(g, font, hero.title(), x + 7, row + 3, width - 10, 1, 0xFFFFFFFF, true); // fitted, never cut (SPEC §57.6)
             String step = "▸ " + hero.line();
-            HudLook.text(g, font, font.plainSubstrByWidth(step, width - 10), x + 7, row + 16, 0xFF000000 | Glass.TEXT, false);
+            Ui.fitted(g, font, step, x + 7, row + 16, width - 10, 1, 0xFF000000 | Glass.TEXT, true);
             row += HERO;
             if (entries.size() > 1) {
                 float m = StatusSections.micro();
@@ -78,12 +78,12 @@ final class JournalSection implements StatusSections.Section {
             int accent = e.bounty() ? 0xE7C27A : 0x7FC3FF;
             g.fill(x, row + 1, x + 2, row + ROW - 3, 0xFF000000 | accent);
             String title = (e.bounty() ? "BOUNTY · " : "") + e.title();
-            HudLook.text(g, font, font.plainSubstrByWidth(title, width - 8), x + 7, row + 1, 0xFF000000 | 0xEAF7FF, false);
+            Ui.fitted(g, font, title, x + 7, row + 1, width - 8, 1, 0xFF000000 | 0xEAF7FF, true);
             float s = StatusSections.small();
             g.pose().pushMatrix();
             g.pose().translate(x + 7, row + 11);
             g.pose().scale(s, s);
-            g.text(font, font.plainSubstrByWidth(e.line(), (int) ((width - 8) / s)), 0, 0, 0xFF000000 | Glass.LABEL, false);
+            Ui.fitted(g, font, e.line(), 0, 0, (int) ((width - 8) / s), 1, 0xFF000000 | Glass.LABEL, false);
             g.pose().popMatrix();
             row += ROW;
         }

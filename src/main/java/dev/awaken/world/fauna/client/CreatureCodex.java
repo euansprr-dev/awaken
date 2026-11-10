@@ -56,7 +56,7 @@ public final class CreatureCodex {
                 continue;
             }
             var egg = eggs.get(d.id);
-            out.add(new Catalogue.Slot(d.name, true, body(p, d), egg == null ? ItemStack.EMPTY : new ItemStack(egg.get())));
+            out.add(new Catalogue.Slot(d.name, true, body(p, d), egg == null ? ItemStack.EMPTY : new ItemStack(egg.get()), MobTypes.type(d)));
         }
         return out;
     }

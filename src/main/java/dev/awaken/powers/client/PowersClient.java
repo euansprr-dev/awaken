@@ -54,6 +54,8 @@ public final class PowersClient {
             return p == null ? null : p.getData(PowerContent.LOADOUT.get());
         };
         StatusSections.add(StatusSections.Tab.POWERS, new PowersSection());
+        // the band's stage (SPEC §57.5): Powers is a place of its own; the section above is the old band's and the flat screen's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.POWERS.ordinal(), new PowersPlace());
         StarterClient.init(modBus);
         dev.awaken.powers.client.fx.FxClient.init(modBus);
     }

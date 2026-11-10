@@ -69,17 +69,25 @@ final class HudTests {
         // the Tab glance (SPEC §40.7): the rows in order, only those with something to say; the arm and panel are up while
         // the key is held and only then (no tap keeps it up)
         AwakenTests.register("hud_glance_rows", 20, h -> {
-            var out = new dev.awaken.holo.ui.GlanceRules.Row[dev.awaken.holo.ui.GlanceRules.Row.values().length];
+            var out = new dev.awaken.holo.ui.GlanceRules.Row[dev.awaken.holo.ui.GlanceRules.MOST];
             // Euan 9 Nov, a third hand: everything the hand pass draws goes by this, not only vanilla's hands
             h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(false, 0.5F, 0F) == 0.5F && dev.awaken.holo.ui.GlanceRules.handsAway(false, 1.1F, 0F) == 1F,
                     "the hands sink as the arm rises and are gone at its top");
             h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(true, 1F, 0.3F) == 0.3F, "as it lowers they follow the re-equip, as vanilla's do");
-            int n = dev.awaken.holo.ui.GlanceRules.rows(true, true, true, true, true, true, out);
-            h.assertTrue(n == 10 && java.util.Arrays.equals(java.util.Arrays.copyOf(out, n), dev.awaken.holo.ui.GlanceRules.Row.values()),
-                    "everything, in order");
-            n = dev.awaken.holo.ui.GlanceRules.rows(false, false, true, true, false, false, out);
-            h.assertTrue(n == 4 && out[0] == dev.awaken.holo.ui.GlanceRules.Row.LEVEL && out[3] == dev.awaken.holo.ui.GlanceRules.Row.ARMOUR,
-                    "no Aether yet, no task, nowhere to go, no holo look: the vitals alone");
+            // (SPEC §57.9) the vitals two to a row; a task's name and step take a row a line, so nothing is cut; no "next" row
+            var R = dev.awaken.holo.ui.GlanceRules.Row.class;
+            int n = dev.awaken.holo.ui.GlanceRules.rows(4, 1, 1, 1, true, out);
+            h.assertTrue(n == 7 && out[0] == dev.awaken.holo.ui.GlanceRules.Row.LEVEL && out[1] == dev.awaken.holo.ui.GlanceRules.Row.VITALS
+                    && out[2] == dev.awaken.holo.ui.GlanceRules.Row.VITALS && out[3] == dev.awaken.holo.ui.GlanceRules.Row.TASK
+                    && out[4] == dev.awaken.holo.ui.GlanceRules.Row.STEP && out[5] == dev.awaken.holo.ui.GlanceRules.Row.HEADING
+                    && out[6] == dev.awaken.holo.ui.GlanceRules.Row.HOTBAR, "everything, in order, in seven rows (it was ten): " + R.getSimpleName());
+            n = dev.awaken.holo.ui.GlanceRules.rows(3, 0, 2, 0, false, out);
+            h.assertTrue(n == 3 && out[0] == dev.awaken.holo.ui.GlanceRules.Row.LEVEL && out[2] == dev.awaken.holo.ui.GlanceRules.Row.VITALS,
+                    "no Aether yet, no task, nowhere to go, no holo look: the vitals alone, and no step without a task");
+            n = dev.awaken.holo.ui.GlanceRules.rows(4, 2, 3, 2, true, out);
+            h.assertTrue(n == 11, "a long name and a long step take the rows they need: " + n);
+            n = dev.awaken.holo.ui.GlanceRules.rows(4, 40, 40, 40, true, out);
+            h.assertTrue(n <= dev.awaken.holo.ui.GlanceRules.MOST && out[n - 1] == dev.awaken.holo.ui.GlanceRules.Row.HOTBAR, "and never past the panel's most");
             var key = new dev.awaken.holo.ui.GlanceRules.Key();
             key.tick(true);
             h.assertTrue(key.arm() && key.panel(), "held: arm and panel");

@@ -23,6 +23,10 @@ import java.util.function.Predicate;
 final class HoloTests {
     private HoloTests() {}
 
+    private static int words(String s) {
+        return s == null || s.isBlank() ? 0 : s.trim().split("\\s+").length;
+    }
+
     /** Records the players a relay went to without sending anything to the mock connections. */
     private static Predicate<ServerPlayer> recorder(List<ServerPlayer> into) {
         return p -> {
@@ -32,6 +36,118 @@ final class HoloTests {
     }
 
     static void register() {
+        // one meaning for each key on the band, in the Hall, on the map and in the bag (SPEC §57.11): the table is whole, a
+        // key's verb is the same wherever it is shared, and every exception is one of the three written down with its reason
+        AwakenTests.register("ui_keys_one_meaning", 20, h -> {
+            var K = dev.awaken.holo.ui.StageKeys.class;
+            java.util.Set<Integer> seen = new java.util.HashSet<>();
+            for (var v : dev.awaken.holo.ui.StageKeys.Verb.values()) {
+                int keys = 0;
+                for (int key : new int[]{dev.awaken.holo.ui.StageKeys.BACK, dev.awaken.holo.ui.StageKeys.NEXT, dev.awaken.holo.ui.StageKeys.BESIDE_BACK,
+                        dev.awaken.holo.ui.StageKeys.BESIDE_ON, dev.awaken.holo.ui.StageKeys.TRACK, dev.awaken.holo.ui.StageKeys.SET_ASIDE,
+                        dev.awaken.holo.ui.StageKeys.UNDO, dev.awaken.holo.ui.StageKeys.COMMIT}) if (dev.awaken.holo.ui.StageKeys.verb(key) == v) keys++;
+                h.assertTrue(keys >= 1, v + " has a key: " + K.getSimpleName());
+            }
+            int exceptions = 0;
+            java.util.Set<String> surfaces = new java.util.HashSet<>();
+            for (var u : dev.awaken.holo.ui.StageKeys.USES) {
+                surfaces.add(u.surface());
+                h.assertTrue(seen.add(u.surface().hashCode() * 1009 + u.key()), u.surface() + " names key " + u.key() + " once");
+                if (u.except().isEmpty()) {
+                    h.assertTrue(u.verb() != null && dev.awaken.holo.ui.StageKeys.verb(u.key()) == u.verb(),
+                            "on the " + u.surface() + ", key " + u.key() + " is " + dev.awaken.holo.ui.StageKeys.verb(u.key()) + " as everywhere, not " + u.verb());
+                } else {
+                    exceptions++;
+                    h.assertTrue(u.verb() == null && u.except().length() > 20, "an exception says why: " + u);
+                }
+            }
+            h.assertTrue(surfaces.equals(java.util.Set.of("band", "hall", "map", "bag")), "the four surfaces: " + surfaces);
+            h.assertTrue(exceptions == 3, "three exceptions, each with its reason (the map's two turning keys, the bag's Tidy): a fourth is a decision, not a slip. Found " + exceptions);
+            for (String surface : surfaces) {
+                boolean back = false;
+                for (var u : dev.awaken.holo.ui.StageKeys.USES) if (u.surface().equals(surface) && u.verb() == dev.awaken.holo.ui.StageKeys.Verb.BACK) back = true;
+                h.assertTrue(back, "Esc steps back on the " + surface);
+            }
+            h.succeed();
+        });
+
+        // walls of text don't come back (SPEC §57.11): what the stage holds without a scroll is the budget, checked at the
+        // source for every room, every power, and every step a fresh hunter is given. The plan's tighter budget (one sentence
+        // of 14 words) is a rewrite of the copy that hasn't been made; this holds the line where it is.
+        AwakenTests.register("ui_word_budget", 100, h -> {
+            for (dev.awaken.hearth.room.RoomType t : dev.awaken.hearth.room.RoomType.values()) {
+                h.assertTrue(words(t.label) <= 3, "a room's name is a name: " + t.label);
+                h.assertTrue(words(t.gives) <= 12, t.label + ": what it gives, in 12 words: " + words(t.gives));
+                h.assertTrue(words(t.does) <= 40, t.label + ": what it does, in 40 words: " + words(t.does));
+            }
+            for (dev.awaken.powers.PowerType t : dev.awaken.powers.PowerRegistry.all()) {
+                h.assertTrue(words(t.name) <= 4, "a power's name is a name: " + t.name);
+                h.assertTrue(words(t.description) <= 60, t.name + ": what it does, in 60 words: " + words(t.description));
+            }
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "ui-words", net.minecraft.core.BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            int steps = 0;
+            for (dev.awaken.core.api.Goals.Step s : dev.awaken.core.api.Goals.all(live.player())) {
+                steps++;
+                h.assertTrue(words(s.title()) <= 14, "a step's name, in 14 words: " + s.title());
+                h.assertTrue(words(s.why()) <= 40, s.title() + ": why it matters, in 40 words: " + words(s.why()));
+                h.assertTrue(words(s.opens()) <= 24, s.title() + ": what it opens, in 24 words: " + words(s.opens()));
+                h.assertTrue(!s.title().endsWith("...") && !s.title().endsWith("…") && !s.why().endsWith("…"), "nothing is written already cut: " + s.title());
+            }
+            h.assertTrue(steps >= 0, "the steps were read");
+            h.succeed();
+        });
+        // nothing on the band is ever cut off (SPEC §57.6; Euan, 10 Nov): a line that doesn't fit its slot is drawn a whole real
+        // pixel smaller at a time, then wrapped, and if it still doesn't fit it runs on rather than lose its end
+        AwakenTests.register("ui_text_never_cut", 20, h -> {
+            java.util.function.ToIntFunction<String> six = dev.awaken.signal.ui.SignalText::approxWidth;
+            String[] lines = {"rest heals here", "armour made here lasts longer", "More health, and you shrug off more harm.",
+                    "A Fitting Stand and a crafting table in one closed room. Your first armour is made there, before your first gate.", "Hall", ""};
+            for (String text : lines) for (int width : new int[]{24, 66, 110, 232}) for (int rows = 1; rows <= 3; rows++) for (int ppu = 1; ppu <= 8; ppu++) {
+                var fit = dev.awaken.signal.ui.SignalText.fitBox(text, width, rows, ppu, six);
+                String what = "'" + text + "' in " + width + " x " + rows + " at " + ppu + " px a unit";
+                // a word wider than its slot is broken across lines (nothing else can be done with it); no letter is ever lost
+                h.assertTrue(String.join("", fit.lines()).replace(" ", "").equals(text.replace(" ", "")), what + ": every letter is still there: " + fit.lines());
+                if (width >= 66) h.assertTrue(String.join(" ", fit.lines()).equals(text), what + ": and no word is broken where a word fits: " + fit.lines());
+                float px = fit.scale() * ppu;
+                h.assertTrue(fit.scale() <= 1f && Math.abs(px - Math.round(px)) < 1e-4f && (ppu < 2 || px >= Math.min(ppu, 2) - 1e-4f) && fit.scale() >= .5f - 1e-4f,
+                        what + ": on whole real pixels, never under half size: " + fit.scale());
+                for (String l : fit.lines()) h.assertTrue(l.indexOf(' ') < 0 || six.applyAsInt(l) * fit.scale() <= width + 1e-3f, what + ": each line inside the slot: " + l);
+            }
+            var plain = dev.awaken.signal.ui.SignalText.fitBox("Bedroom", 66, 1, 4, six);
+            h.assertTrue(plain.scale() == 1f && plain.lines().size() == 1, "what fits is drawn as written");
+            var smaller = dev.awaken.signal.ui.SignalText.fitBox("armour made here", 80, 1, 4, six); // 96 wide as written, 72 at three quarters
+            h.assertTrue(smaller.scale() == .75f && smaller.lines().size() == 1, "a little too long: one step smaller, still one line: " + smaller);
+            var wrapped = dev.awaken.signal.ui.SignalText.fitBox("armour made here lasts longer", 66, 1, 4, six); // 174 wide as written
+            h.assertTrue(wrapped.scale() == .5f && wrapped.lines().size() == 2, "far too long: half size on two lines in the same slot: " + wrapped);
+            h.succeed();
+        });
+        // the band's stage (SPEC §57.2): everything inside the sheet, nothing on top of anything else, at every window
+        AwakenTests.register("band_stage_layout", 20, h -> {
+            float px0 = dev.awaken.holo.ui.StageLayout.PLATE_X0, py0 = dev.awaken.holo.ui.StageLayout.PLATE_Y0, px1 = dev.awaken.holo.ui.StageLayout.PLATE_X1,
+                    py1 = dev.awaken.holo.ui.StageLayout.PLATE_Y1;
+            int W = dev.awaken.holo.ui.StageLayout.W, H = dev.awaken.holo.ui.StageLayout.H;
+            h.assertTrue(px0 > 0 && py0 > 0 && px1 < W && py1 < H, "the plate inside the sheet");
+            for (int i = 0; i < dev.awaken.holo.ui.StageLayout.PLACES; i++) {
+                float y = dev.awaken.holo.ui.StageLayout.nodeY(i);
+                h.assertTrue(dev.awaken.holo.ui.StageLayout.RAIL_X >= 0 && dev.awaken.holo.ui.StageLayout.RAIL_X + dev.awaken.holo.ui.StageLayout.NODE_W <= px0 - 8,
+                        "place " + i + " on the rail, clear of the plate");
+                h.assertTrue(y >= 110 && y + dev.awaken.holo.ui.StageLayout.NODE_H <= H, "place " + i + " under you and inside the sheet: " + y);
+                if (i > 0) h.assertTrue(y >= dev.awaken.holo.ui.StageLayout.nodeY(i - 1) + dev.awaken.holo.ui.StageLayout.NODE_H, "places " + (i - 1) + " and " + i + " apart");
+            }
+            float sx0 = dev.awaken.holo.ui.StageLayout.STAGE_X0, sy0 = dev.awaken.holo.ui.StageLayout.STAGE_Y0, sx1 = dev.awaken.holo.ui.StageLayout.STAGE_X1,
+                    sy1 = dev.awaken.holo.ui.StageLayout.STAGE_Y1;
+            h.assertTrue(sx0 >= px0 + 24 && sx1 <= px1 - 24 && sy0 >= py0 + 96 && sy1 <= py1 - 24, "the stage inside the plate, under the place's name");
+            h.assertTrue(dev.awaken.holo.ui.StageLayout.PANEL_X0 > sx0 + 700 && sx1 - dev.awaken.holo.ui.StageLayout.PANEL_X0 >= 440, "the panel keeps 440 and leaves the things 700");
+            h.assertTrue(dev.awaken.holo.ui.StageLayout.HINT_Y >= py1 + 8 && dev.awaken.holo.ui.StageLayout.HINT_Y + dev.awaken.holo.ui.StageLayout.HINT_H <= H - 8,
+                    "the bar of keys under the plate and inside the sheet");
+            // the plate lands inside every window, whatever its shape: wide, the Mac's, 4:3, tall
+            for (int[] w : new int[][]{{488, 266}, {854, 480}, {1708, 960}, {640, 480}, {427, 240}, {960, 1080}, {3840, 2160}}) {
+                int[] r = dev.awaken.holo.ui.StageLayout.plateOnScreen(w[0], w[1]);
+                h.assertTrue(r[0] >= 0 && r[1] >= 0 && r[0] + r[2] <= w[0] && r[1] + r[3] <= w[1] && r[2] > w[0] / 2, w[0] + "x" + w[1] + ": the plate fits: " + java.util.Arrays.toString(r));
+            }
+            h.succeed();
+        });
         // the band's panel (SPEC §30): the rail's six pages inside it and apart, the K key clear of them, the content
         // clear of the rail; its labels on whole pixels; and 288 units wide keeps the owner's screens at 5 and 6 px a unit
         AwakenTests.register("holo_band_layout", 20, h -> {
