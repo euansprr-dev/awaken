@@ -110,6 +110,8 @@ final class FxRecipes {
             case SHOT_EATEN -> shotEaten(e, st);
             case BORE_SEAL -> boreSeal(e, st);
         }
+        // the power's own look on top of the shared recipe (SPEC §32, "Signatures")
+        Signatures.add(e, st, caster, mine);
     }
 
     /** A power's sound on its release frame: the registry id rides in colour (Fx.sound). */
@@ -1028,8 +1030,10 @@ final class FxRecipes {
         int life = Math.max(6, e.ticks());
         // sonic ring at the start, facing the way you go
         ring(x + dx * 0.4, y + 0.9, z + dz * 0.4, 0.3f, 1.5f, 0.32f, 0.04f, 7, alpha(st.core, 0.95f), alpha(st.mid, 0), dx, dy, dz);
-        // speed lines streaming back past the body
-        for (int i = 0; i < n(14); i++) {
+        // speed lines streaming back past the body (not in your own first person: end on, a streak is a square on your screen,
+        // and the screen's own speed lines do that job there)
+        boolean ownEyes = mine && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        for (int i = 0; i < (ownEyes ? 0 : n(14)); i++) {
             double ox = R.s() * 0.8, oy = R.f(0.1f, 1.8f), oz = R.s() * 0.8;
             int s = FxWorld.sprite(SPARK, x + ox + dx * R.f(0, 2), y + oy, z + oz + dz * R.f(0, 2), -dx * 0.35f, -dy * 0.35f, -dz * 0.35f, 5 + R.i(4),
                     0.12f, 0.06f, alpha(st.core, 0.9f), alpha(st.mid, 0), FxPool.ADD | FxPool.STRETCH);

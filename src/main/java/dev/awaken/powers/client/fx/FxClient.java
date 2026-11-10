@@ -106,6 +106,7 @@ public final class FxClient {
             FxScreen.tick();
             CastLens.tick();
             PowerVoice.tick();
+            Signatures.tick();
             drainDeferred();
         } catch (RuntimeException ex) {
             // effects must never take the game down: drop them all and carry on
@@ -140,6 +141,7 @@ public final class FxClient {
         CastAnims.reset();
         TravellingSound.reset();
         PowerVoice.reset();
+        Signatures.reset();
         FxScreen.reset();
         CastLens.reset();
     }
@@ -159,8 +161,32 @@ public final class FxClient {
             // the local key press already started this pose; don't restart it when the server echoes it
             if (!(own && CastAnims.recently(e.caster(), anim, 8))) CastAnims.play(e.caster(), anim, 0, CastClips.family(e));
         }
+        if (own) auraOnArms(e);
         if (defer(e)) return;
         build(e);
+    }
+
+    /**
+     * A power that sits on you shows on your own arms for as long as it lasts (SPEC §32, "The arm"): its aura, a shield
+     * that follows you, a heal. Barrier and Mend showed nothing at all in first person before.
+     */
+    private static void auraOnArms(FxEvent e) {
+        if (e.power() <= 0 || e.has(FxEvent.RIDER)) return;
+        PowerType type = dev.awaken.powers.PowerRegistry.byIndex(e.power() - 1);
+        if (type == null) return;
+        int level = dev.awaken.powers.Fx.levelOf(e);
+        switch (e.kind()) {
+            case AURA -> {
+                if (e.ticks() > 0) ArmLight.aura(type, level, e.ticks(), 0.8f);
+            }
+            case DOME -> {
+                if (e.ticks() > 0 && e.has(FxEvent.FOLLOW)) ArmLight.aura(type, level, e.ticks(), 0.85f);
+            }
+            case HEAL -> ArmLight.aura(type, level, Math.max(20, e.ticks()), 1f);
+            case CHARGE_END -> ArmLight.endAura(type);
+            default -> {
+            }
+        }
     }
 
     private static void build(FxEvent e) {

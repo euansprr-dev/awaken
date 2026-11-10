@@ -94,12 +94,30 @@ final class Muzzles {
         out[2] = c.z + f.z() * depth + (-l.z() * x + u.z() * y) * r;
     }
 
-    /** Whether the hands' fist for this hand was keyed within the last frames: your own palm in first person, into out. */
+    /**
+     * Whether the hands' fist for this hand was keyed within the last frames: your own palm in first person, into out. A cast
+     * made with one hand keys only that hand (the left casts while the right keeps the weapon), so the palm asked for is the
+     * hand that is casting. The palm lies a hand's depth along the forearm when the clip keys how the arm lies, else toward the aim.
+     */
     static boolean fist(boolean off, double[] out) {
         if (System.nanoTime() - FirstPerson.lastFistNanos > FRESH) return false;
         float[] f = off ? FirstPerson.LAST_FIST_OFF : FirstPerson.LAST_FIST_MAIN;
+        float[] arm = off ? FirstPerson.LAST_ARM_OFF : FirstPerson.LAST_ARM_MAIN;
+        if (f[3] <= 0 && !off && FirstPerson.LAST_FIST_OFF[3] > 0) {
+            f = FirstPerson.LAST_FIST_OFF;
+            arm = FirstPerson.LAST_ARM_OFF;
+        }
         if (f[3] <= 0) return false;
-        viewToWorld(f[0] / f[3], f[1] / f[3], f[2] / f[3] - PALM_FORWARD, out);
+        float x = f[0] / f[3], y = f[1] / f[3], z = f[2] / f[3];
+        if (arm[3] > 0) {
+            double pitch = Math.toRadians(arm[0] / arm[3]), yaw = Math.toRadians(arm[1] / arm[3]), cp = Math.cos(pitch);
+            x += (float) (Math.sin(yaw) * cp) * PALM_FORWARD;
+            y += (float) Math.sin(pitch) * PALM_FORWARD;
+            z -= (float) (Math.cos(yaw) * cp) * PALM_FORWARD;
+        } else {
+            z -= PALM_FORWARD;
+        }
+        viewToWorld(x, y, z, out);
         return true;
     }
 

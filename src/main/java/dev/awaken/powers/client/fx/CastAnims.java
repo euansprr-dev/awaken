@@ -143,7 +143,9 @@ final class CastAnims {
             dev.awaken.core.api.FirstPerson.play(a.profile.begin1p());
             a.begin1p = a.profile.begin1p();
         } else {
-            a.begin1p = play1p(a.profile.begin1p(), a.way, a.take);
+            // the level-1 name: a level shows in the arm's light and the effect now, and every way and take is authored on the base
+            CastProfiles.Profile base = CastProfiles.byPower(a.profile.power());
+            a.begin1p = play1p(base == null ? a.profile.begin1p() : base.begin1p(), a.way, a.take);
         }
     }
 
@@ -243,7 +245,7 @@ final class CastAnims {
         if (a != null && a.held && a.releasedAt < 0 && (a.profile == null ? profileId <= 0 : a.profile.id() == profileId)) {
             a.releasedAt = FxWorld.ticks;
             if (a.profile != null) {
-                momentFor(entityId, a.profile.endMoment(), a.profile);
+                momentFor(entityId, a.profile.endMoment(), a.profile, true);
                 lensFor(entityId, a.profile, true);
                 // your hands let go in first person too (a push out of the hold), from the pose the hold is in
                 if (a.profile.end1p() != null && entityId == mcPlayerId() && PowerFxConfig.animations()) {
@@ -261,10 +263,12 @@ final class CastAnims {
         else CastLens.release(prof);
     }
 
-    private static void momentFor(int entityId, String name, CastProfiles.Profile prof) {
+    private static void momentFor(int entityId, String name, CastProfiles.Profile prof, boolean end) {
         var level = Minecraft.getInstance().level;
         Entity who = level == null ? null : level.getEntity(entityId);
-        if (who != null) CastFeel.moment(name, who, FxStyle.of(dev.awaken.powers.PowerRegistry.get(prof.power()) == null ? PowerType.Family.ENERGY : dev.awaken.powers.PowerRegistry.get(prof.power()).family).mid);
+        if (who == null) return;
+        PowerType type = dev.awaken.powers.PowerRegistry.get(prof.power());
+        CastFeel.moment(prof.power(), prof.channel(), end, name, who, FxStyle.of(type == null ? PowerType.Family.ENERGY : type.family).mid);
     }
 
     /** Freezes an entity's animation for a hit-stop. */
@@ -293,7 +297,7 @@ final class CastAnims {
             // the profile's screen moment lands on the tick its clips release on
             if (a.profile != null && !a.momentPlayed && age >= a.profile.release()) {
                 a.momentPlayed = true;
-                momentFor(a.entity, a.profile.moment(), a.profile);
+                momentFor(a.entity, a.profile.moment(), a.profile, false);
                 lensFor(a.entity, a.profile, false);
             }
             // a profile's begin clip hands over to its hold loop where it ends (the hold starts in the pose the begin ends in)

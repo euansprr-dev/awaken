@@ -38,7 +38,8 @@ public final class FpClipSet {
 
     public static final int SCHEMA = 2;
     /** The files read, in order (a later file's clip replaces an earlier one's of the same name). */
-    public static final String[] FILES = {"assets/awaken/fp_clips/fp_moves.json", "assets/awaken/fp_clips/fp_casts.json"};
+    public static final String[] FILES = {"assets/awaken/fp_clips/fp_moves.json", "assets/awaken/fp_clips/fp_casts.json",
+            "assets/awaken/fp_clips/fp_casts2.json"};
 
     /** One key: its tick, the six values, the curve that eases into it. */
     public record Key(float t, float[] v, int ease) {}
