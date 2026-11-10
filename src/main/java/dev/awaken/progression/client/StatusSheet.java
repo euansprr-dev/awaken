@@ -206,8 +206,8 @@ final class StatusSheet {
 
     // ---- the stats ------------------------------------------------------------------------------------------------
 
-    private static final String[] NAME = {"STRENGTH", "AGILITY", "VITALITY", "INTELLIGENCE", "PERCEPTION", "SPIRIT"};
-    private static final String[] SAYS = {"Harder hits, and stronger Kinetic powers.", "You move faster, and Flow builds sooner.",
+    static final String[] NAME = {"STRENGTH", "AGILITY", "VITALITY", "INTELLIGENCE", "PERCEPTION", "SPIRIT"};
+    static final String[] SAYS = {"Harder hits, and stronger Kinetic powers.", "You move faster, and Flow builds sooner.",
             "More health, and you shrug off more harm.", "More energy for Energy and Tech powers.",
             "More critical hits, and you notice secrets and omens.", "Stronger in the Veil and in dreams."};
 
@@ -391,14 +391,14 @@ final class StatusSheet {
             return false;
         }
 
-        private static boolean place(Stat s) {
+        static boolean place(Stat s) {
             if (PLACED.size() >= profile().unspent()) return false;
             PLACED.add(s);
             StatusSections.cue(StatusSections.Cue.SPEND);
             return true;
         }
 
-        private static boolean undo() {
+        static boolean undo() {
             if (PLACED.isEmpty()) return false;
             PLACED.removeLast();
             StatusSections.cue(StatusSections.Cue.UNDO);
@@ -406,7 +406,7 @@ final class StatusSheet {
         }
 
         /** One request for every point placed ("STR:1,AGI:2"); the server checks it against what you have. */
-        private static boolean confirm() {
+        static boolean confirm() {
             if (PLACED.isEmpty()) return false;
             StringBuilder arg = new StringBuilder();
             java.util.Arrays.fill(FLASH, false);

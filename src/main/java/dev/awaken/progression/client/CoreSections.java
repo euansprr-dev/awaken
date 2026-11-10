@@ -43,6 +43,8 @@ final class CoreSections {
 
     static void register() {
         // the Status page is a sheet about you: the hero, then the six stats (SPEC §30.3)
+        // the band's stage (SPEC §57.4): Status is a place of its own; the sections below are the old band's and the flat screen's
+        dev.awaken.core.client.ui.BandPlaces.set(StatusSections.Tab.STATUS.ordinal(), new StatusPlace());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());

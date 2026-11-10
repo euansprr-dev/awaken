@@ -8,6 +8,8 @@ import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Progression;
 import dev.awaken.tasks.net.TaskPayloads;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
@@ -23,6 +25,54 @@ final class TasksTests {
     private TasksTests() {}
 
     static void register() {
+        // the band's stage (SPEC §57.3): what a step shows is the real thing. A placed thing's recipe is the game's own, a
+        // material gets none, every picture names a registered item, and the page survives the wire with its recipes
+        AwakenTests.register("tasks_stage_pictures", 100, h -> {
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "tasks-pictures", BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            ServerPlayer sp = live.player();
+            TaskPayloads.RecipeRow stand = TaskRecipes.recipe(sp, "awaken:fitting_stand");
+            h.assertTrue(stand != null && stand.width() == 3 && stand.height() == 3 && stand.cells().size() == 9, "a Fitting Stand is drawn as its 3 x 3 recipe: " + stand);
+            h.assertTrue(stand.cells().get(1).equals(List.of("minecraft:copper_ingot")) && stand.cells().get(3).isEmpty()
+                    && stand.cells().get(6).contains("minecraft:oak_planks"), "copper at the top, an empty square, any planks along the foot: " + stand.cells());
+            TaskPayloads.RecipeRow table = TaskRecipes.recipe(sp, "minecraft:crafting_table");
+            h.assertTrue(table != null && table.width() == 2 && table.height() == 2 && table.cells().get(0).size() > 1, "a crafting table: 2 x 2, any planks: " + table);
+            h.assertTrue(TaskRecipes.recipe(sp, "minecraft:diamond") == null && TaskRecipes.recipe(sp, "minecraft:iron_ingot") == null
+                    && TaskRecipes.recipe(sp, "#minecraft:beds") == null && TaskRecipes.recipe(sp, "awaken:no_such_thing") == null,
+                    "a material, a tag and a thing that doesn't exist get no recipe");
+            for (String[] e : TaskPictures.EMBLEM) h.assertTrue(TaskPictures.real(e[0]) || TaskPictures.real(e[1]), "a goal's emblem is a real item: " + e[0]);
+            h.assertTrue(TaskPictures.real(TaskPictures.EMBLEM[Goal.ARMOUR.ordinal()][0]) && TaskPictures.real(TaskPictures.EMBLEM[Goal.WEAPONS.ordinal()][0])
+                    && TaskPictures.real(TaskPictures.EMBLEM[Goal.RANK.ordinal()][0]), "AWAKEN's own emblems are registered");
+            h.assertTrue(Step.of("t/icon", Goal.HEARTH, "x").icon("awaken:fitting_stand").build().icon().equals("awaken:fitting_stand")
+                    && Step.of("t/icon2", Goal.HEARTH, "x").icon("awaken:not_a_thing").build().icon().isEmpty(), "a step's picture is a real item or nothing");
+            // a page with a step that needs the stand: the recipe rides with it, once, and only while it's unmet and shown
+            if (SOURCE.compareAndSet(false, true)) Goals.register(p -> STEPS.getOrDefault(p.getUUID(), List.of()));
+            List<Step> mine = new java.util.ArrayList<>();
+            STEPS.put(sp.getUUID(), mine);
+            AwakenTests.onEnd(h, () -> STEPS.remove(sp.getUUID()));
+            // (a real source counts the pack each time it's asked: this one is built again after the pack changes)
+            java.util.function.Supplier<Step> armoury = () -> Step.of("t/armoury", Goal.HEARTH, "Build your Armoury").thread("a", 10).icon("minecraft:campfire")
+                    .need(Goals.Need.item(sp, BuiltInRegistries.ITEM.getValue(Identifier.parse("awaken:fitting_stand")), 1))
+                    .need(Goals.Need.item(sp, net.minecraft.world.item.Items.CRAFTING_TABLE, 1))
+                    .need(Goals.Need.item(sp, net.minecraft.world.item.Items.IRON_INGOT, 3)).build();
+            mine.add(armoury.get());
+            mine.add(Step.of("t/second", Goal.HEARTH, "Another").thread("b", 10)
+                    .need(Goals.Need.item(sp, BuiltInRegistries.ITEM.getValue(Identifier.parse("awaken:fitting_stand")), 1)).build());
+            var view = TasksModule.view(sp, TaskBook.fresh(sp));
+            h.assertTrue(view.recipe("awaken:fitting_stand") != null && view.recipe("minecraft:crafting_table") != null && view.recipe("minecraft:iron_ingot") == null
+                    && view.recipes().size() == 2, "the page carries each recipe once: " + view.recipes().size());
+            h.assertTrue(rowOf(view, "t/armoury").extra().icon().equals("minecraft:campfire"), "a step's own picture is sent with it");
+            for (TaskPayloads.StepRow r : view.steps()) for (TaskPayloads.NeedRow n : r.needs())
+                h.assertTrue(n.item().isEmpty() || n.item().startsWith("#") || TaskPictures.real(n.item()), "a need's picture is a real item: " + n.item());
+            sp.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CRAFTING_TABLE));
+            mine.set(0, armoury.get());
+            view = TasksModule.view(sp, TaskBook.fresh(sp));
+            h.assertTrue(view.recipe("minecraft:crafting_table") == null && view.recipe("awaken:fitting_stand") != null, "once you have one, its recipe is no longer sent");
+            var buf = io.netty.buffer.Unpooled.buffer();
+            TaskPayloads.View.STREAM_CODEC.encode(buf, view);
+            h.assertTrue(TaskPayloads.View.STREAM_CODEC.decode(buf).equals(view), "the page survives the wire, recipes and pictures and all");
+            h.succeed();
+        });
         AwakenTests.register("tasks_book_rules", 100, h -> {
             Step fire = Step.of("hearth:ember", Goal.HEARTH, "Light a fire").path(Goals.PATH_FIRE).build();
             Step armoury = Step.of("hearth/armoury", Goal.HEARTH, "Build your Armoury").path(Goals.PATH_ARMOURY).priority(60)

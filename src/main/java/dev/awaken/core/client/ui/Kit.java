@@ -58,6 +58,20 @@ public final class Kit {
         s.g.pose().popMatrix();
     }
 
+    /** A mark: a diamond, lit when it's yours, rimmed in amber when it's close, dark when it isn't yet. */
+    public static void mark(Sheet s, float cx, float cy, float r, int rgb, float fill, float rim, boolean focus) {
+        if (focus) s.glow(cx - r, cy - r, cx + r, cy + r, Glass.EDGE, .5F);
+        s.g.pose().pushMatrix().translate(cx, cy).rotate((float) (Math.PI / 4));
+        int n = Math.round(r * .7F);
+        s.g.fill(-n, -n, n, n, fill > 0F ? Glass.a(rgb, fill) : Sheet.argb(0x05080F, .7F));
+        int edge = focus ? Glass.a(0xC4E6FF, 1F) : Glass.a(rgb, rim);
+        s.g.fill(-n, -n, n, -n + 2, edge);
+        s.g.fill(-n, n - 2, n, n, edge);
+        s.g.fill(-n, -n + 2, -n + 2, n - 2, edge);
+        s.g.fill(n - 2, -n + 2, n, n - 2, edge);
+        s.g.pose().popMatrix();
+    }
+
     /** The glint on something new, or (amber) something that waits on you. */
     public static void glint(Sheet s, float cx, float cy, int rgb) {
         s.glow(cx - 5, cy - 5, cx + 5, cy + 5, rgb, .5F);

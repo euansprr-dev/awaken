@@ -227,7 +227,9 @@ public final class Goals {
 
         /** The real item that stands for this step on the band's stage (an item id): what you'd make, use or go to. */
         public Builder icon(String itemId) {
-            icon = itemId;
+            // only ever a real item: a wrong id would draw nothing, so it is dropped and the goal's own item shows
+            Identifier id = Identifier.tryParse(itemId);
+            icon = id != null && BuiltInRegistries.ITEM.containsKey(id) ? itemId : "";
             return this;
         }
 

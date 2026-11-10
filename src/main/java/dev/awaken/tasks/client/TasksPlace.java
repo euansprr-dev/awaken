@@ -42,11 +42,7 @@ final class TasksPlace implements BandPlaces.Place {
     private static final String ADD = "hearth/add";
     private static final float HERO_X1 = BandPlaces.X0 + 756F, LANES_X0 = BandPlaces.X1 - 676F;
     private static final float LANE_H = 114F, TILE_W = 158F, TILE_H = 98F;
-    /** The real item that stands for each goal when a step shows nothing of its own, with a vanilla one if it's missing. */
-    private static final String[][] EMBLEM = {
-            {"minecraft:campfire", "minecraft:campfire"}, {"awaken:wildhide_chestplate", "minecraft:leather_chestplate"},
-            {"awaken:wildhide_longsword", "minecraft:iron_sword"}, {"minecraft:bell", "minecraft:bell"},
-            {"awaken:core_shard", "minecraft:ender_eye"}, {"minecraft:compass", "minecraft:compass"}};
+    private static final String[][] EMBLEM = dev.awaken.tasks.TaskPictures.EMBLEM;
 
     /** The step in focus ("" for the one on top), the pick looked at on it, and the lane whose Later list is open (-1). */
     private String focus = "", choice = "";

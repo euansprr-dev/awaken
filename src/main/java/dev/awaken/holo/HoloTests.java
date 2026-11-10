@@ -32,6 +32,32 @@ final class HoloTests {
     }
 
     static void register() {
+        // the band's stage (SPEC §57.2): everything inside the sheet, nothing on top of anything else, at every window
+        AwakenTests.register("band_stage_layout", 20, h -> {
+            float px0 = dev.awaken.holo.ui.StageLayout.PLATE_X0, py0 = dev.awaken.holo.ui.StageLayout.PLATE_Y0, px1 = dev.awaken.holo.ui.StageLayout.PLATE_X1,
+                    py1 = dev.awaken.holo.ui.StageLayout.PLATE_Y1;
+            int W = dev.awaken.holo.ui.StageLayout.W, H = dev.awaken.holo.ui.StageLayout.H;
+            h.assertTrue(px0 > 0 && py0 > 0 && px1 < W && py1 < H, "the plate inside the sheet");
+            for (int i = 0; i < dev.awaken.holo.ui.StageLayout.PLACES; i++) {
+                float y = dev.awaken.holo.ui.StageLayout.nodeY(i);
+                h.assertTrue(dev.awaken.holo.ui.StageLayout.RAIL_X >= 0 && dev.awaken.holo.ui.StageLayout.RAIL_X + dev.awaken.holo.ui.StageLayout.NODE_W <= px0 - 8,
+                        "place " + i + " on the rail, clear of the plate");
+                h.assertTrue(y >= 110 && y + dev.awaken.holo.ui.StageLayout.NODE_H <= H, "place " + i + " under you and inside the sheet: " + y);
+                if (i > 0) h.assertTrue(y >= dev.awaken.holo.ui.StageLayout.nodeY(i - 1) + dev.awaken.holo.ui.StageLayout.NODE_H, "places " + (i - 1) + " and " + i + " apart");
+            }
+            float sx0 = dev.awaken.holo.ui.StageLayout.STAGE_X0, sy0 = dev.awaken.holo.ui.StageLayout.STAGE_Y0, sx1 = dev.awaken.holo.ui.StageLayout.STAGE_X1,
+                    sy1 = dev.awaken.holo.ui.StageLayout.STAGE_Y1;
+            h.assertTrue(sx0 >= px0 + 24 && sx1 <= px1 - 24 && sy0 >= py0 + 96 && sy1 <= py1 - 24, "the stage inside the plate, under the place's name");
+            h.assertTrue(dev.awaken.holo.ui.StageLayout.PANEL_X0 > sx0 + 700 && sx1 - dev.awaken.holo.ui.StageLayout.PANEL_X0 >= 440, "the panel keeps 440 and leaves the things 700");
+            h.assertTrue(dev.awaken.holo.ui.StageLayout.HINT_Y >= py1 + 8 && dev.awaken.holo.ui.StageLayout.HINT_Y + dev.awaken.holo.ui.StageLayout.HINT_H <= H - 8,
+                    "the bar of keys under the plate and inside the sheet");
+            // the plate lands inside every window, whatever its shape: wide, the Mac's, 4:3, tall
+            for (int[] w : new int[][]{{488, 266}, {854, 480}, {1708, 960}, {640, 480}, {427, 240}, {960, 1080}, {3840, 2160}}) {
+                int[] r = dev.awaken.holo.ui.StageLayout.plateOnScreen(w[0], w[1]);
+                h.assertTrue(r[0] >= 0 && r[1] >= 0 && r[0] + r[2] <= w[0] && r[1] + r[3] <= w[1] && r[2] > w[0] / 2, w[0] + "x" + w[1] + ": the plate fits: " + java.util.Arrays.toString(r));
+            }
+            h.succeed();
+        });
         // the band's panel (SPEC §30): the rail's six pages inside it and apart, the K key clear of them, the content
         // clear of the rail; its labels on whole pixels; and 288 units wide keeps the owner's screens at 5 and 6 px a unit
         AwakenTests.register("holo_band_layout", 20, h -> {

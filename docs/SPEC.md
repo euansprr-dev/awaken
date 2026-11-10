@@ -20574,3 +20574,25 @@ correct and the names are actually correct").
 - **Recipes** (`tasks.TaskRecipes`, in `tasks_view`, payload version 3): for each unmet need of a shown row that is a block you place,
   the crafting recipe that carries the item's own id, read from the server's recipes (shaped or shapeless; a tag's members turn a
   second each). Materials get none.
+
+### 57.4 Status on the stage (`progression.client.StatusPlace`)
+- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you
+  (`InventoryScreen.extractEntityInInventoryFollowsMouse`): your body is under your armour, and you turn to the pointer as in
+  vanilla's inventory (Euan, 10 Nov). Your name and title under it.
+- **Level and rank as numbers**, when the next rank comes (the rank's tip says what it opens for you), your path; XP as 32 segments.
+- **What comes next:** the level road's next three stops as tiles (level, name; the long line is the tip).
+- **Stats:** the six as columns. A click (or arrows and Space) places a point; nothing is sent until **Hold to confirm** (Enter held
+  or the button held, 0.6 s: spent points can't be taken back), Undo (Backspace) takes the last one back. The same
+  `spend_many` request and the same placed list as §30.3, so points placed on the old band are still placed here.
+- **Truths as marks:** one diamond each (32), yours lit green, the closest three rimmed amber, the rest dark and unnamed. Point at
+  or click one and the panel reads it: its words, what it takes with a bar, what it gives. Nothing is named until it's yours or close.
+- **The panel** otherwise says what happened lately (the Journal's three newest lines) and three deeds as numbers, and under them
+  holds what only applies now or hasn't moved yet, as it was written (`SectionHost`): a decision waiting, this gate, the Deep Pack,
+  this room, your mount, the path choice, titles and latents. The Now row is gone: the glint on Tasks says it.
+- `SectionHost` (progression.client) is how old sections show on the stage: columns of 232 units, a unit two sheet pixels, each
+  section to the shortest column, tooltips sent to the real pointer (`GuiCanvas.tooltipsAt`).
+- **Words:** Track replaces Pin wherever a step is tracked (the Bell Book's leads, a beast's want, the old band's Tasks page).
+- Tests: `band_stage_layout` (the stage's geometry at seven window shapes), `tasks_stage_pictures` (a Fitting Stand's and a crafting
+  table's recipes are the game's own, a material gets none, every picture is a registered item, a recipe stops being sent once
+  you have the thing, the page survives the wire). Not tested yet: the key meanings across screens and a word budget on the copy.
+
