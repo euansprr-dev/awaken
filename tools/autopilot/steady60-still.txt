@@ -1,0 +1,92 @@
+# The shimmer check: three frames a few frames apart with the camera at rest, at four sun heights, looking at the
+# floor near and far. tools/steady60-flicker.py compares them: what differs between frames of a still scene is shimmer.
+# The Air's look tour (SPEC §22 "Steady Light"): Lens Cinematic with the Air at the moments ImmersiveVFX was shot at
+# (docs/perf/steady60/page/shots), in a copy of Euan's world, with his settings (the game's Clouds setting off: the
+# Air's clouds must draw anyway). Shots only: FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-still.txt still-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 3000
+look 90 38
+wait 160
+shotnow s3000_near_1
+wait 2
+shotnow s3000_near_2
+wait 2
+shotnow s3000_near_3
+wait 2
+look 90 10
+wait 160
+shotnow s3000_far_1
+wait 2
+shotnow s3000_far_2
+wait 2
+shotnow s3000_far_3
+wait 2
+cmd time set 10800
+look 90 38
+wait 160
+shotnow s10800_near_1
+wait 2
+shotnow s10800_near_2
+wait 2
+shotnow s10800_near_3
+wait 2
+look 90 10
+wait 160
+shotnow s10800_far_1
+wait 2
+shotnow s10800_far_2
+wait 2
+shotnow s10800_far_3
+wait 2
+cmd time set 11300
+look 90 38
+wait 160
+shotnow s11300_near_1
+wait 2
+shotnow s11300_near_2
+wait 2
+shotnow s11300_near_3
+wait 2
+look 90 10
+wait 160
+shotnow s11300_far_1
+wait 2
+shotnow s11300_far_2
+wait 2
+shotnow s11300_far_3
+wait 2
+cmd time set 700
+look -90 38
+wait 160
+shotnow s700_near_1
+wait 2
+shotnow s700_near_2
+wait 2
+shotnow s700_near_3
+wait 2
+look -90 10
+wait 160
+shotnow s700_far_1
+wait 2
+shotnow s700_far_2
+wait 2
+shotnow s700_far_3
+wait 2
+quit
