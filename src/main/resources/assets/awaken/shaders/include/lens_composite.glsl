@@ -14,7 +14,6 @@ uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): 
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
-uniform sampler2D CloudBlocksSampler; // the Air's near clouds at the frame's size (lens_cloud_blocks.fsh), the same
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -39,6 +38,8 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_normal.glsl>
 #include <awaken:lens_storm_frame.glsl>
 #include <awaken:lens_air.glsl>
+#include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_cloud_walk.glsl>
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
@@ -508,10 +509,14 @@ void main() {
             }
         }
         if (behind) c = c * cl.a + cl.rgb;
-        // the Air's near clouds over all of it: walked at this size against this pixel's own depth, so they need no
-        // such test, and a tree in front of one keeps its own edge
-        vec4 cb = texture(CloudBlocksSampler, texCoord);
-        c = c * cb.a + cb.rgb;
+        // the Air's near clouds over all of it: walked here, at the frame's own size and against this pixel's own
+        // depth (lens_cloud_walk.glsl), so they need no such test and a tree in front of one keeps its own edge
+        if (cloudBlocks() && cp.x > 0.0) {
+            bool beyond = sky || farTerrain;
+            vec3 nv = beyond ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+            vec4 cb = cloudNear(nv, sky ? 1.0e9 : (farTerrain ? d : length(pRel)));
+            c = c * cb.a + cb.rgb;
+        }
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;

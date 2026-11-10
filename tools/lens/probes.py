@@ -12,7 +12,7 @@ FX = ROOT / "src/main/resources/assets/awaken/post_effect"
 GROUPS = {
     "sunmap": ["awaken:post/lens_sunmap"],
     "light": ["awaken:post/lens_light"],
-    "clouds": ["awaken:post/lens_clouds", "awaken:post/lens_cloud_blocks"],
+    "clouds": ["awaken:post/lens_clouds"],
     "prefilter": ["awaken:post/lens_prefilter_lit"],
     "bloom": ["awaken:post/lens_down", "awaken:post/lens_blur"],
     "shafts": ["awaken:post/lens_shafts"],

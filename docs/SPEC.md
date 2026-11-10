@@ -6158,8 +6158,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
     white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
     a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
-    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
-      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) are walked at the frame's own size (at first in
+      a pass of their own, since "The trim" inside the composite): every pixel walks its ray every frame against its own
       depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
       the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
       The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
@@ -6310,6 +6310,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     effect requested, the steady pass off, the sizes equal, and on the chains `lens_cinematic`, `lens_ultra` and
     `lens_swift`; otherwise the chain runs as written. Pixels' upscale itself cannot join the composite: sharpening
     reads the finished picture's neighbours.
+  - **Near clouds in the composite.** The walk of the near clouds (`include/lens_cloud_walk.glsl`, `cloudNear`) runs
+    inside the composite, per pixel against that pixel's depth, and once more at half size in the bloom prefilter
+    (the glow and the rays' mask). It was a frame-size pass and target of its own (`lens_cloud_blocks`,
+    `lens_cloudblocks`), both gone: the chain is 15 passes. The cells' shared definitions moved to
+    `include/lens_cloud_cells.glsl`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows.
