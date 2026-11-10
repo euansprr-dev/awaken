@@ -25,6 +25,7 @@ public final class LandPrograms {
             Map.entry("awaken:catacombs", dev.awaken.gates.realms.land.Catacomb::new),
             Map.entry("awaken:root_cellars", dev.awaken.gates.realms.land.RootCellar::new),
             Map.entry("awaken:tallow_runs", dev.awaken.gates.realms.land.TallowRun::new),
+            Map.entry("awaken:sleepless_ward", dev.awaken.gates.realms.land.SleeplessWard::new),
             Map.entry("awaken:sporewells", dev.awaken.gates.realms.land.Sporewell::new),
             Map.entry("awaken:cinder_workings", dev.awaken.gates.realms.land.CinderWorkings::new));
 
