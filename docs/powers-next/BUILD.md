@@ -11,13 +11,13 @@ This file is the plan I build from and the ledger of what is done. Order is by w
 | # | Piece | State |
 |---|---|---|
 | M1 | The arm: schema 2 (elbow, wrist), upper arm, arm layers, the light, left-hand casts, eased put-away, grip follow | Built (7237af2a9). The first film's elbow and upper-arm piece read as a broken arm (Euan, 10 Nov): the arm is one straight vanilla box again, turned at most 38 degrees by a clip and drawn longer for a high fist. Light, left-hand casts and poses kept. |
-| M2 | Voice: scores, the VOICE event, Classic/New setting, generator, a score for every power | Built: 64 powers, 157 beats, 386 recordings named. Unheard in game. No subtitles for the beats yet. |
+| M2 | Voice: scores, the VOICE event, Classic/New setting, generator, a score for every power | Built: 64 powers, 158 beats, each layer one of Minecraft's own recordings by name; one subtitle a power. Unheard in game. |
 | M3 | Takes and ways: payload bits, `Cast.way`, event bits, clip pick, the press buffer | Built. The server changes the shape of Shockwave, Haymaker, Spirit Palm, Nova and Frost Nova by way; Updraft reads it too. |
 | M4 | Every cast re-authored: `fp_casts2.py` (elbow, light, left hand), takes, ways, third person in step | 77 authored, 207 clips with takes. Only Shockwave's standing stamp is its earlier clip. Third person has no takes or ways yet. |
 | M5 | A look for every power: film findings first, then family by family | First pass: Frost Nova, Thunderclap, Telekinesis, Spirit Palm, Barrier, Mend, Shadow Step, the nine finishers, the five earned powers. The rest still wear the shared recipes. |
-| M6 | Combos: Weaves by the weapon, twelve Arms Duets, nine Break finishers | Nine duets and the nine finishers built (bef7d7f5c). Not built: Recall, Thunder Javelin, Batter Up; Weaves performed by the weapon (needs Arms' swing code, the weapon-feel session's). |
+| M6 | Combos: Weaves by the weapon, twelve Arms Duets, nine Break finishers | Eleven duets (Thunder Javelin and Batter Up among them) and the nine finishers built. Not built: Recall; Weaves performed by the weapon (needs Arms' swing code, the weapon-feel session's). |
 | M7 | New powers: Brand, Hoarfrost Lances, Updraft, then Backdraft, Thornwake | All five built whole: behaviour, how each is earned, Tasks steps, icons, ladders, casts, scores, looks. |
-| M8 | Compile, GameTests, the film again, listening page, SPEC | Open. |
+| M8 | Compile, GameTests, the film again, listening page, SPEC | Done: see "What the close found" at the end. Unplayed, unheard. |
 
 Compile checks (not tests) after M3, M5, M6, M7. One test and film pass at M8.
 
@@ -106,13 +106,22 @@ earned power, how one is given and shown on Tasks). The first full run on CI (16
 the first blow never loosed a lance; the Updraft not lifting its caster; Haymaker's gather missing its release tick; takes expected
 of a held gather; and the audio test wanting every `voice.*` layer registered and subtitled (it now holds a layer to naming
 Minecraft's recordings and `voice.say.<power>` to its subtitle). The second (8b7ab2c47) failed one, the Updraft, which was a
-column whose foot was found a block above its caster. All eleven pass locally on 88ca4d898; the full suite on that tip is run
-42841941739.
+column whose foot was found a block above its caster. All eleven pass locally on 88ca4d898. The third full run (42841941739, on
+88ca4d898) failed one test that is not this work's: `fights_mind_drinks_hive_regent` (the boss fights' own test) answered 33 of 56
+drinks where 34 pass; on three other branches' green runs the same day it scored 38, 39 and 40, and 35 on this branch's second
+run, so it sits on a chance edge.
+
+Build was merged in twice at the close: f00f43572 (clean) and b63585d74 (e55846387; two conflicts, both sides kept). The second
+brought the armour's first-person sleeves (`core.client.FirstPersonDress`, SPEC 44.1) to the same line of `WorldBody.limb` as the
+arm's layers: the armour is drawn first and stretches with the arm, then the layers, and `ArmLayers.Arm.dressed` tells a layer so.
 
 Films (CI, `PACK=feel`, macOS runners; stills in `run-autopilot/screenshots-ci/`, gitignored):
 - `powers-next-before.txt`, the same 17 casts: before 42788742556; after 42824337477 (the arm with an elbow), 42831914646 (the
   vanilla arm).
-- `powers-next-new.txt`, the five earned powers and a Brand + sword combo: 42824336832, 42830503858, and later runs.
+- `powers-next-new.txt`, the five earned powers and a Brand + sword combo: 42824336832, 42830503858, and later runs (the last on
+  d1185d223: 42844319708).
+- `powers-next-armour.txt`, four casts in a plate (Vaultbreaker) and in a light chestplate (Amberwing), after the second merge:
+  42849658135 (the light gone under the sleeve), 42854993033 (the light on the plate).
 
 What the films changed:
 - **The arm.** The elbow and the separate upper-arm piece read as a broken arm (Euan: "the arm is completely broken ... keep the
@@ -123,6 +132,16 @@ What the films changed:
   world. Thornwake's roots read as lightning: they are little blocks of real wood now (`FxDebris`).
 - Haymaker's cocked fist sat off the left edge on a 16:10 screen; the on-screen rule in `fp_casts2.py` is strict enough to catch it.
 - Shadow Step left its own grey shape in the caster's face.
+- With the armour's first-person sleeves merged in, a chestplate covered the whole cast arm and the type's light with it. On a
+  dressed arm the light is drawn 0.16 nearer the eye along the line of sight, so it lies on the plate (`ArmLight`, SPEC §32.N).
+  A cast arm shows a set's plates closer, more from the side and up to 1.6 times longer than vanilla's resting hand does: how
+  each set's arm reads like that is the armour's to judge.
 
-Still to be judged by eye and ear, by Euan: everything. Nothing here has been played, and no sound has been heard in game.
+Euan on the armour film (10 Nov, the Barrier stills in Vaultbreaker and Amberwing): the light over a plate "looks glitchy"; a
+power's light must map to the shape of each armour piece, styled per set. He called the rest of the hand-in "all perfect" and
+asked for it to go into the main build. So the light over a plate as built here is a stopgap, and the next piece of work is the
+light on the armour's own shapes: the finished sets first (the armour session's stage 3 is C-rank only so far), the rest as
+they are finished.
+
+Still to be judged by eye and ear, by Euan: everything in play. Nothing here has been played, and no sound has been heard in game.
 
