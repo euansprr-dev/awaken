@@ -165,6 +165,9 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
                      ('h_furnace_carry', 'built_furnace_carry'), ('h_furnace_flare', 'built_furnace_flare'), ('h_anvil_result', 'built_anvil'),
                      ('h_smithing_result', 'built_smithing'), ('h_glass_hopper', 'built_glass'), ('h_body_kneel_side', 'built_kneel')):
             shot(B(n), o)
+    built_b = os.environ.get('BUILT_B')  # the short tour's folder (hands-at-work-b)
+    if built_b:
+        shot(os.path.join(built_b, 'h2_brewing_carry_wart.png'), 'built_brewing')
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
         sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)

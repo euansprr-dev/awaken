@@ -107,7 +107,7 @@ svg text { font-family: var(--mono) }
 <main>
 <section id="built">
   <h2>Built: how it looks in the game</h2>
-  <p class="col">All seven stages are coded and on the branch. These are real frames from the game, taken on GitHub's test machine by a script that works each block. They are from the second filmed run, after the first round of fixes. You have not played any of it yet, and none of the sounds have been heard.</p>
+  <p class="col">All seven stages are coded and on the branch. These are real frames from the game, taken on GitHub's test machine by a script that works each block. They are from the second and third filmed runs, after each round of fixes. You have not played any of it yet, and none of the sounds have been heard.</p>
   <div class="pair">
     <figure><img src="img/built_carry.jpg" alt="The crafting table from the bench view, square on: an arm reaches over the grid holding a stack of planks, the count 64 beside it" loading="lazy"><figcaption><span class="tag real">Built · real</span>Your hand carries the stack over the grid, exactly under the pointer. The count rides beside it.</figcaption></figure>
     <figure><img src="img/built_result.jpg" alt="Two planks laid on the grid and four sticks lying on the table's right border" loading="lazy"><figcaption><span class="tag real">Built · real</span>Two planks laid. The sticks come together on the right border, where your arm never crosses them.</figcaption></figure>
@@ -118,21 +118,23 @@ svg text { font-family: var(--mono) }
     <figure><img src="img/built_anvil.jpg" alt="The anvil seen whole from above: a worn sword, a diamond and the mended sword in a row, a name line and a cost under them" loading="lazy"><figcaption><span class="tag real">Built · real</span>The anvil. The piece, what mends it and the result lie on its face; the name line and the cost sit under it.</figcaption></figure>
     <figure><img src="img/built_smithing.jpg" alt="The smithing table from above: template, sword and ingot in a row and a netherite sword to the right" loading="lazy"><figcaption><span class="tag real">Built · real</span>The smithing table, with your hands resting at its near corners.</figcaption></figure>
     <figure><img src="img/built_glass.jpg" alt="A hopper's screen drawn on the same glass as the chest's" loading="lazy"><figcaption><span class="tag real">Built · real</span>A hopper on glass. Dispenser, dropper, crafter and beacon match it.</figcaption></figure>
+    <figure><img src="img/built_brewing.jpg" alt="The brewing stand: an arm reaches to its top holding nether wart, bottles on its arms, blaze powder at its foot" loading="lazy"><figcaption><span class="tag real">Built · real</span>The brewing stand. Your hand takes the wart to the top; the bottle under your sleeve shows through on a small plate of glass.</figcaption></figure>
     <figure><img src="img/built_kneel.jpg" alt="Third person: the player down in a low lunge before a furnace" loading="lazy"><figcaption><span class="tag real">Built · real</span>What others see at a furnace: down on one knee. Here played on my own character so it could be filmed.</figcaption></figure>
   </div>
 
   <h3>What the filmed runs found</h3>
-  <p class="col">Filming is the only thing that runs the hands and the views for real, and both runs earned their place. Everything below is fixed in the code. A short third run to film the last four fixes is waiting in GitHub's queue.</p>
+  <p class="col">Filming is the only thing that runs the hands and the views for real, and both runs earned their place. Everything below is fixed in the code, and all but the chest has been filmed again after its fix.</p>
   <ol class="found">
     <li><div><b>Opening a brewing stand crashed the game.</b> A real crash, in code no headless test reaches. Fixed, and the second run opened it cleanly.</div></li>
     <li><div><b>The table sat turned a few degrees and the new workstations were framed far too close.</b> Every bench view now looks square on and shows the block's whole top. Confirmed in the pictures above.</div></li>
     <li><div><b>The hint text stayed over the table's near edge.</b> It now leaves after three and a half seconds. Confirmed.</div></li>
-    <li><div><b>The stacks that should lie in an open chest were drawn inside its solid base.</b> Nobody could ever have seen them. They now lie on the floor you can see. Not yet filmed.</div></li>
-    <li><div><b>At the brewing stand the hand never met the stack you carry.</b> It is now worked upright, as the furnace is. Not yet filmed.</div></li>
-    <li><div><b>Vanilla's own hand sat in the corner at the furnace.</b> My first fix did not take; the second run showed it still there. Fixed again, properly. Not yet filmed.</div></li>
-    <li><div><b>An empty hand waited under the inventory's glass as a dark shape.</b> It now rests off its own corner until it carries. Not yet filmed.</div></li>
+    <li><div><b>The stacks that should lie in an open chest were drawn inside its solid base.</b> Nobody could ever have seen them. They now lie on the floor you can see. Not yet filmed: my short run looked at the floor instead of the chest, and a run for the chest alone is on GitHub now.</div></li>
+    <li><div><b>At the brewing stand the hand never met the stack you carry.</b> It is now worked upright, as the furnace is. Confirmed in the third run (picture above).</div></li>
+    <li><div><b>Vanilla's own hand sat in the corner at the furnace.</b> My first fix did not take; the second run showed it still there. Fixed again, properly. Confirmed in the third run.</div></li>
+    <li><div><b>An empty hand waited under the inventory's glass as a dark shape.</b> It now rests off its own corner until it carries. Confirmed in the third run.</div></li>
+    <li><div><b>The stack you carry was drawn one frame behind the hand that holds it.</b> Invisible at your frame rate, plain on a machine that draws two frames a second. Fixed; not filmed since.</div></li>
   </ol>
-  <p class="note">Not shown by any run: the lid in your hands at a chest (the script was holding a block, and the lift needs both hands free), and motion. The test machine films one frame every ten ticks, so a five-tick glide cannot be judged from it. Tests: 32 of 32 for this work, and the full suite passed on GitHub at the last stage's commit.</p>
+  <p class="note">Not shown by any run: the lid in your hands at a chest (the script was holding a block, and the lift needs both hands free), and motion. The test machine films one frame every ten ticks, so a five-tick glide cannot be judged from it. Tests: 32 of 32 for this work at the last code I tested, and the full suite passed on GitHub at the last stage's commit. Since your new rule I run no more test suites; the manager runs one after merging.</p>
 
   <h3>Different from the plan</h3>
   <ol class="found">
