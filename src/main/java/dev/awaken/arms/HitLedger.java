@@ -18,6 +18,13 @@ public final class HitLedger {
     private int next;
     public int predicted, confirmed, unconfirmed;
 
+    /** Told each blow that was played and never confirmed, as it is counted (development: {@link HitWhy} says why). */
+    public interface Ghosts {
+        void ghost(int seq, int body);
+    }
+
+    public @org.jspecify.annotations.Nullable Ghosts ghosts;
+
     /** The client played this blow now: its freeze began at {@code at} (nanos) for {@code freezeMs}. */
     public void played(int seq, int body, int tick, long at, int freezeMs) {
         put(seq, body, tick, at, freezeMs, (byte) 1);
@@ -62,7 +69,10 @@ public final class HitLedger {
         int n = 0;
         for (int i = 0; i < SIZE; i++) {
             if (state[i] == 0 || now - tick[i] <= LIFE) continue;
-            if (state[i] == 1) n++;
+            if (state[i] == 1) {
+                n++;
+                if (ghosts != null) ghosts.ghost(seq[i], body[i]);
+            }
             state[i] = 0;
         }
         unconfirmed += n;
@@ -83,7 +93,10 @@ public final class HitLedger {
         if (i < 0) {
             i = next;
             next = (next + 1) % SIZE;
-            if (state[i] == 1) unconfirmed++; // a full ledger drops its oldest: never confirmed in time
+            if (state[i] == 1) { // a full ledger drops its oldest: never confirmed in time
+                unconfirmed++;
+                if (ghosts != null) ghosts.ghost(seq[i], body[i]);
+            }
         }
         seq[i] = s;
         body[i] = b;

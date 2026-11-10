@@ -25,6 +25,11 @@ final class ArmsBlackBox {
     static final int UNDECIDED = 1, DRAWN = 2, CHARGING = 4, WAITING = 8, KEY = 16, HAS = 32, BLENDING = 64;
 
     private static final boolean ON = !FMLEnvironment.isProduction();
+
+    /** Whether this is a development run (the black box and the ghost report are kept). */
+    static boolean on() {
+        return ON;
+    }
     private static final int FRAMES = 1 << 14, EVENTS = 1 << 12;
     /** A frame's numbers: the camera's lean, the clip's main hand, then each hand as shown. */
     private static final int COLS = 3 + 7 * 3;

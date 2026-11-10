@@ -96,6 +96,10 @@ public final class ArmsPredict {
     // the hit at once (SPEC §47.1): the blows this client played before the server's word, the running move's press,
     // the creature the press meant and the sweep's focus (as the server keeps them), and the client's own freeze rule
     static final dev.awaken.arms.HitLedger LEDGER = new dev.awaken.arms.HitLedger();
+
+    static {
+        if (ArmsBlackBox.on()) LEDGER.ghosts = ArmsGhosts::ghost; // development: each ghost gets its cause (SPEC §25 "Weight in the Hand")
+    }
     static int moveSeq = -1, aimedId = -1, focusId = -1, focusSeenAt;
     private static int bodies, lastFreezeAt = -1000, freezeSeq = -1, freezeFrom, freezeBase;
 
@@ -768,6 +772,7 @@ public final class ArmsPredict {
             boolean aimed = e.getId() == aimedId;
             if (!aimed && !foe(p, e)) continue;
             if (!ArmsRules.predicts(eye, p.getY(), e.getBoundingBox(), yaw, def.arc(), aimed ? meantReach : reach, aimed, aimed)) continue;
+            ArmsGhosts.shown(moveSeq, e, move, eye, aimed ? meantReach : reach);
             played(p, def, e);
         }
     }
@@ -978,6 +983,7 @@ public final class ArmsPredict {
                 focusSeenAt = ticks;
                 Blow b = Blow.unpack(r.aux2());
                 if (LEDGER.confirm(r.seq(), r.entity(), ticks)) {
+                    ArmsFilm.event("confirmed seq " + r.seq() + " body " + r.entity());
                     confirmed(p, r.seq(), r.entity(), b, r.aux());
                     return;
                 }
@@ -1190,6 +1196,7 @@ public final class ArmsPredict {
             com.mojang.logging.LogUtils.getLogger().info("[arms] strikes played: {}", PLAYED);
             PLAYED.setLength(0);
         }
+        ArmsGhosts.summary();
         ArmsBlackBox.dump();
         LEDGER.clear();
         LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;

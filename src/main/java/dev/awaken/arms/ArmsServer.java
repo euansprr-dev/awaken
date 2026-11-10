@@ -210,10 +210,14 @@ final class ArmsServer {
      * CLAIM_OPEN), the server's own read.
      */
     static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, int claim) {
-        if (claim == ArmsPayloads.CLAIM_NOTHING) return; // too early for the hands: a mash far ahead of the window
+        if (claim == ArmsPayloads.CLAIM_NOTHING) { // too early for the hands: a mash far ahead of the window
+            HitWhy.press(seq, now, HitWhy.NOTHING);
+            return;
+        }
         if (claim == ArmsPayloads.CLAIM_AGAIN) { // the strike they queued, pressed again: still one strike, and this press is its press now
             if (s.buffered != null) s.bufferedSeq = seq;
             else s.moveSeq = seq;
+            HitWhy.press(seq, now, s.buffered != null ? HitWhy.QUEUED : s.move != null ? HitWhy.RAN : HitWhy.NOTHING);
             return;
         }
         Archetype.Move said = Archetype.Move.byId(claim);
@@ -221,12 +225,18 @@ final class ArmsServer {
         int mastery = ArmsMastery.step(p, style);
         if (claimed < 0) {
             if (offChain(p, s, style, now, seq, said, mastery)) return;
-            if (said != null) return; // hands on a move the server can't grant: no blow, and no strike in its place
+            if (said != null) { // hands on a move the server can't grant: no blow, and no strike in its place
+                HitWhy.press(seq, now, HitWhy.NOT_GRANTED);
+                return;
+            }
         }
         int strikes = ArmsMastery.strikes(mastery);
         ArmsRules.Decision d = ArmsRules.follow(style, ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, strikes,
                         said == null ? style.def().buffer() : ArmsRules.HEARD_BUFFER), claimed, s.lastStep, now - s.lastStepAt, strikes);
-        if (d == null) return; // too early: a mash far ahead of the window counts for nothing
+        if (d == null) { // too early: a mash far ahead of the window counts for nothing
+            HitWhy.press(seq, now, HitWhy.TOO_EARLY);
+            return;
+        }
         if (d.step() >= 0) { // on the press, not its start: a strike still queued counts, or the next claim would look like a skip
             s.lastStep = d.step();
             s.lastStepAt = now;
@@ -234,6 +244,7 @@ final class ArmsServer {
         if (d.startAt() > now) {
             s.buffered = d;
             s.bufferedSeq = seq;
+            HitWhy.press(seq, now, HitWhy.QUEUED);
             return;
         }
         begin(p, s, style, d.move(), d.step(), d.cadence(), now, seq);
@@ -322,6 +333,7 @@ final class ArmsServer {
         // are on the draw, ChargeDraw): a tap lands it, a hold becomes the charge instead (ArmsRules.waitsOnHold)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
         FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
+        HitWhy.press(seq, now, HitWhy.RAN);
         s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
@@ -474,6 +486,30 @@ final class ArmsServer {
             s.markHit(t.getId());
             strikeThing(p, s, def, t, now);
         }
+        if (HitWhy.on) unstruck(p, s, def, now, eye, yaw, reach, meantReach);
+    }
+
+    /**
+     * Development only ({@link HitWhy}): every foe near this sweep that it did not strike, and why, so a hit the fighter's
+     * game showed and this server never confirmed can be given its cause. It looks {@link HitWhy#LOOK} past the reach.
+     */
+    private static void unstruck(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now, Vec3 eye, float yaw, double reach, double meantReach) {
+        AABB wide = p.getBoundingBox().inflate(meantReach + HitWhy.LOOK);
+        for (LivingEntity t : p.level().getEntitiesOfClass(LivingEntity.class, wide, t -> t != p && t.isAlive() && !s.hasHit(t.getId()))) {
+            boolean aimed = t.getId() == s.aimed;
+            if (!aimed && !foe(p, t)) continue;
+            double r = aimed && !(t instanceof Player) ? meantReach : reach;
+            AABB box = t.getBoundingBox();
+            double gap = Aim.gap(eye, box);
+            if (gap > r) {
+                HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.REACH, (float) gap, (float) r);
+                continue;
+            }
+            float toward = (float) (Mth.atan2((box.minZ + box.maxZ) * 0.5 - eye.z, (box.minX + box.maxX) * 0.5 - eye.x) * Mth.RAD_TO_DEG) - 90F;
+            float outside = Math.abs(Mth.wrapDegrees(toward - yaw)) - def.arc() / 2;
+            if (!aimed && outside > 0) HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.ARC, outside, def.arc());
+            else HitWhy.body(s.moveSeq, t.getId(), now, HitWhy.HEIGHT, (float) (box.minY - eye.y), 0F);
+        }
     }
 
     /** The anomalies a sweep strikes in its arc (anything else not alive is struck only when aimed, as vanilla's is). */
@@ -593,6 +629,7 @@ final class ArmsServer {
         pendingPushScale = ArmsRules.pushScale(def);
         // a combo's blows come faster than vanilla's half second of immunity: each move strikes each creature once
         if (t.getLastHurtByMob() == p) t.damageCooldownTime = 0;
+        int cooldown = t.damageCooldownTime;
         try {
             if (speed != null) speed.addOrUpdateTransientModifier(FULL_STRENGTH_MOD);
             p.attack(t);
@@ -601,6 +638,7 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
             pendingPush = false;
         }
+        HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
         if (!pendingLanded) return;
         int lift = ArmsRules.lift(def);
         // a player's push is sent and put back by vanilla's attack; only a creature is pinned or lifted here

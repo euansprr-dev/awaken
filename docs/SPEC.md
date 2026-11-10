@@ -7931,6 +7931,56 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
+**Weight in the Hand** (the polish pass on the weapons' motion and the fight's feel; page
+https://claude.ai/artifact/7myPKAY51tmf9kCzryQdVw, its source docs/weapon-feel/plan.src.html with the measuring scripts in
+docs/weapon-feel/harness/; Euan 2026-11-10: "the animations are still decent... what's the kind of small polish pass that we
+can do to massively bring it to the most extreme and awesome level", then "Go ahead with all": all six decisions as
+recommended).
+- **What it is.** Every one of the 179 first-person moves is kept. The pass adds what is round them: hits that are honest,
+  sounds that can be heard, a blow whose direction is the blade's, weight in the freeze and after it, a guard that eases, a
+  draw for every weapon, a world that answers. Measured before anything was built (the page's section 2): 99 of the 334 hits
+  his game showed in fifteen sessions (4 to 9 Nov) were never confirmed by the server; the hits on flesh and armour, the blunt
+  hit, the kill and the Execution carry 80 to 98% of their sound below 300 Hz (the block's old fault, §47.3); 36 of the 102
+  weapon sound files hold the thin tone he calls a synthetic ding; the view's kick and the knockback's side read the timing
+  table's old `from`/`to` and disagree with the baked blade on 17 of 143 cuts, nine thrown the opposite way; the fast part of
+  a cut is about three frames at 60 a second, and after its freeze the blade is at a dead stop within 60 ms; the guard drops in
+  one frame; a changed weapon stays below the frame for its attack cooldown (vanilla's `FirstPersonHandsAndItems`), 9 ticks
+  filmed for the Katana; Fight Feel's stages 2 to 4 (above) were never built.
+- **The rules of the pass** (from the sixteen Swing Studio rounds, which tuned to scores): no script score is a target; no
+  weapon's motion changes until he has flagged it in play; every feel layer is built for the Longsword and the Maul first and
+  he picks between it and today's in the game before it goes to the other fourteen; his play log is read before any theory.
+  Every layer is drawn by the client from what the hands already decided, on the hands' own double clock, has its switch in
+  `awaken-arms-client.toml` (off: today's picture, frame for frame), and never moves a hand that is at rest.
+- **The decisions** (2026-11-10): the layers, not a re-make (1); stage 0 is built before he plays, so one session gives his
+  first feel of the 9 Nov round and the ghosts' causes (2); the fourteen sounds that failed are remade from Minecraft's own
+  recordings named in `sounds.json`, after a listening page, with the draws' new sounds, and the swishes stay (3); blows stop
+  at walls, with the glance (4); counter-hits are not in this pass: their rule goes to the fights' owner, who places it with
+  the bosses' minds (5); the Katana rests lowered at the hip with no new model (6).
+- **The stages**, each handed over on its own and played before the next: 0 truth; 1 honest hits, and the blow's direction
+  from the baked blade; 2 sound; 3 weight (the shake in the freeze, the settle where the blade stops, the living hold); 4 the
+  guard, the draws, the Katana's sheath, the look-lag by weight; 5 walls, the glance, grass; 6 his notes weapon by weapon, by
+  hand as the Daggers were, then third person against first.
+- **Stage 0, truth** (built 2026-11-10; nothing a player sees or feels changes). *The ghost report*, development runs only
+  (the black box's switch, `!FMLEnvironment.isProduction()`): the server keeps, per press and body, the nearest it came to
+  landing a blow (`arms.HitWhy`, fixed arrays, written only while a development client in the same JVM has it on, as
+  `FilmLog` is): what it did with each press (the hands said nothing, too early, a move it couldn't grant, queued, run), and
+  for every foe within 4 blocks past a sweep's reach that the sweep left unstruck whether it was out of reach (the gap and the
+  reach), outside the arc (the degrees) or out of the height's band, and for every body struck whether damage landed (with the
+  damage cooldown vanilla saw). The game notes each blow it plays (`ArmsGhosts.shown`: the press, the body, the gap it saw, the
+  reach), and when the ledger counts one as never confirmed (`HitLedger.ghosts`) the server's record gives its cause
+  (`HitWhy.explain`): out of reach, outside the arc, out of height, struck with no damage, landed under another press (a blow
+  on the same body within 1.5 s under a different press: the same blow filed differently, which the game then played twice),
+  nowhere near, the press ran no move, landed and the word not matched, or no record (a server in another process). Each is
+  a line of the play log (`[arms] ghost: seq 212 strike_2 on minecraft:husk: shown at gap 2.91 (reach 3.30); out of reach: on
+  the server it was 0.82 beyond reach ...`) and an E row of the black box, with `shown` and `confirmed` rows beside the
+  `impact` one; on leaving the world `[arms] ghosts by cause, N of M blows shown: ...` follows the old count. Test
+  `arms_hit_why` (the nearest call is kept, each cause is told apart, nothing is kept while off, the ledger tells each ghost
+  once, the real sweep and blow write the record). *The listening page* (`tools/art/weapon_listen.py`, written to the
+  gitignored `run-autopilot/weapon-listen/` and served to the browser pane; it plays Minecraft's own recordings from this
+  machine's asset cache, so it is never hosted or committed): each of the fourteen sounds and the five draws in a scene at the
+  game's own timing, today's sound beside three picks made of named recordings, his mark for each saved to `picks.json`
+  there. *The baseline film*: `tools/autopilot/arms-feel-baseline.txt` (CI run 42788877636).
+
 **Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
 moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,
 undercut, plunge), its own guard and dodge numbers and its base speed (recovery scales with the item's attack speed
