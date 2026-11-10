@@ -56,6 +56,7 @@ public final class ArmsClient {
         // the first-person swings (1.1 MB of JSON) load off the render thread, before anyone draws a blade
         java.util.concurrent.CompletableFuture.runAsync(dev.awaken.arms.FpSwings::warm, net.minecraft.util.Util.backgroundExecutor());
         ArmsComfort.register();
+        dev.awaken.arms.HitWhy.on = ArmsBlackBox.on(); // development: the server keeps why each blow did or didn't land
         ArmourySection.register();
         dev.awaken.arms.anvil.client.AnvilClient.init(modBus);
         CombatFeedback.install(ArmsFeel.INSTANCE);

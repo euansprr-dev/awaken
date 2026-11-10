@@ -29,6 +29,92 @@ final class HitNowTests {
 
     static void register() {
         AwakenTests.register("arms_hit_now", 60, HitNowTests::hitNow);
+        AwakenTests.register("arms_hit_why", 60, HitNowTests::hitWhy);
+    }
+
+    /**
+     * SPEC §25 "Weight in the Hand", stage 0: a hit shown and never confirmed is given its cause from the server's own
+     * record. Checked: the nearest the server came to landing is what is kept; each cause is told from the others; nothing
+     * is kept while off; the ledger tells each ghost once; and the real sweep and blow write the record.
+     */
+    static void hitWhy(GameTestHelper h) {
+        boolean was = HitWhy.on;
+        HitWhy.on = true;
+        HitWhy.clear();
+        try {
+            StringBuilder say = new StringBuilder();
+            long shown = System.nanoTime();
+            HitWhy.press(5, 100, HitWhy.RAN);
+            HitWhy.body(5, 70, 100, HitWhy.REACH, 4.4F, 3.3F);
+            HitWhy.body(5, 70, 101, HitWhy.REACH, 4.1F, 3.3F);
+            HitWhy.body(5, 70, 102, HitWhy.REACH, 4.6F, 3.3F);
+            HitWhy.Why w = HitWhy.explain(5, 70, shown, say);
+            h.assertTrue(w.cause() == HitWhy.Cause.OUT_OF_REACH && Math.abs(w.beyond() - 0.8F) < 0.01F,
+                    "out of reach, by the nearest the body came: " + w + " (" + say + ")");
+            HitWhy.body(5, 70, 103, HitWhy.ARC, 12F, 100F);
+            h.assertTrue(HitWhy.explain(5, 70, shown, say).cause() == HitWhy.Cause.OUT_OF_ARC, "in reach and outside the arc is the nearer miss");
+            HitWhy.body(5, 70, 104, HitWhy.NO_DAMAGE, 14F, 0F);
+            HitWhy.body(5, 70, 105, HitWhy.REACH, 9F, 3.3F);
+            h.assertTrue(HitWhy.explain(5, 70, shown, say).cause() == HitWhy.Cause.NO_DAMAGE, "struck with no damage outlasts any miss");
+            HitWhy.body(4, 71, 99, HitWhy.LANDED, 0F, 0F);
+            h.assertTrue(HitWhy.explain(5, 71, shown, say).cause() == HitWhy.Cause.OTHER_PRESS, "a blow landed on the body under the press before is the same blow");
+            h.assertTrue(HitWhy.explain(4, 71, shown, say).cause() == HitWhy.Cause.UNMATCHED, "landed under this very press: the word was lost");
+            h.assertTrue(HitWhy.explain(5, 72, shown, say).cause() == HitWhy.Cause.NOT_NEAR, "the move ran and the body was nowhere near");
+            HitWhy.press(6, 110, HitWhy.TOO_EARLY);
+            h.assertTrue(HitWhy.explain(6, 72, shown, say).cause() == HitWhy.Cause.NEVER_RAN, "a press the server took as too early ran no move");
+            HitWhy.press(7, 111, HitWhy.QUEUED);
+            HitWhy.press(7, 112, HitWhy.RAN);
+            HitWhy.press(7, 113, HitWhy.QUEUED);
+            h.assertTrue(HitWhy.explain(7, 72, shown, say).cause() == HitWhy.Cause.NOT_NEAR, "a queued strike that ran has run");
+            HitWhy.clear();
+            HitWhy.on = false;
+            HitWhy.body(8, 70, 120, HitWhy.LANDED, 0F, 0F);
+            h.assertTrue(HitWhy.explain(8, 70, shown, say).cause() == HitWhy.Cause.NO_RECORD, "nothing is kept while off");
+
+            HitLedger l = new HitLedger();
+            int[] told = new int[3];
+            l.ghosts = (seq, body) -> {
+                told[0]++;
+                told[1] = seq;
+                told[2] = body;
+            };
+            l.played(2, 9, 0, 5, 200L, 60);
+            l.played(3, 9, 1, 5, 200L, 60);
+            l.confirm(3, 9, 1, 6);
+            l.expire(5 + HitLedger.LIFE + 1);
+            h.assertTrue(told[0] == 1 && told[1] == 2 && told[2] == 9, "the ledger tells the one ghost, once: " + told[0] + " (" + told[1] + ", " + told[2] + ")");
+
+            // one blow filed under two presses is one blow (stage 1): the server's word under the older press confirms the
+            // hands' blow of the same move on the same body, and a blow the server struck first isn't struck again by the hands
+            HitLedger m = new HitLedger();
+            m.ghosts = (seq, body) -> told[0] += 100;
+            m.played(12, 40, 1, 100, 300L, 45);
+            h.assertTrue(m.confirm(11, 40, 1, 101), "the server's HIT under the press before confirms the same strike on the same body");
+            h.assertTrue(m.reconciled == 1 && m.matchedFreezeMs() == 45, "counted as matched by body and move, its freeze kept");
+            h.assertTrue(!m.confirm(11, 41, 2, 102), "a body the hands haven't struck is the server's to play");
+            h.assertTrue(m.struck(12, 41, 2, 104) && !m.struck(12, 41, 3, 104) && !m.struck(12, 41, 2, 102 + HitLedger.SAME_BLOW + 1),
+                    "the hands leave it alone for that move, for a while, and only for that move");
+            m.played(13, 42, 0, 110, 0L, 0);
+            h.assertTrue(!m.confirm(14, 42, 1, 111), "another move on the same body is another blow");
+            m.expire(200);
+            h.assertTrue(told[0] == 101 && m.unconfirmed == 1, "and the one left waiting is the one ghost");
+
+            // the real server: one zombie in reach is struck, one a block and more past the reach is explained
+            HitWhy.on = true;
+            ServerPlayer p = ArmsTests.fighter(h, 1.5, 0.5, 0F);
+            LivingEntity near = ArmsTests.put(h, EntityTypes.ZOMBIE, 1.5, 2.6, 200), far = ArmsTests.put(h, EntityTypes.ZOMBIE, 1.5, 5.4, 200);
+            ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1));
+            ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_TAP, 0F, 0F, -1));
+            ArmsTests.runActive(p);
+            h.assertTrue(near.getHealth() < 200 && far.getHealth() == 200, "the sweep strikes the near one only");
+            HitWhy.Why a = HitWhy.explain(1, near.getId(), System.nanoTime(), say), b = HitWhy.explain(1, far.getId(), System.nanoTime(), say);
+            h.assertTrue(a.cause() == HitWhy.Cause.UNMATCHED, "the blow that landed is on record: " + a);
+            h.assertTrue(b.cause() == HitWhy.Cause.OUT_OF_REACH && b.beyond() > 0.5F && b.beyond() < 2.5F, "the far one is out of reach, by about a block: " + b + " (" + say + ")");
+            ArmsTests.done(h, p);
+        } finally {
+            HitWhy.on = was;
+            HitWhy.clear();
+        }
     }
 
     static void hitNow(GameTestHelper h) {
@@ -67,12 +153,12 @@ final class HitNowTests {
 
         // the ledger: each blow once; the server's word on a blow played adds, never replays; a blow it never confirms is counted
         HitLedger l = new HitLedger();
-        l.played(1, 7, 0, 100L, 60);
-        h.assertTrue(l.confirm(1, 7, 1), "the server's HIT for a blow played is not played again");
-        h.assertTrue(l.freezeMs(1, 7) == 60, "the played blow's freeze is kept for a kill's beat");
-        h.assertTrue(!l.confirm(1, 8, 1), "a blow the client didn't play is the server's to play");
+        l.played(1, 7, 0, 0, 100L, 60);
+        h.assertTrue(l.confirm(1, 7, 0, 1), "the server's HIT for a blow played is not played again");
+        h.assertTrue(l.freezeMs(1, 7) == 60 && l.matchedFreezeMs() == 60, "the played blow's freeze is kept for a kill's beat");
+        h.assertTrue(!l.confirm(1, 8, 0, 1), "a blow the client didn't play is the server's to play");
         h.assertTrue(l.has(1, 8), "and the client's sweep then leaves that body be for this move");
-        l.played(2, 9, 5, 200L, 60);
+        l.played(2, 9, 1, 5, 200L, 60);
         h.assertTrue(l.expire(5 + HitLedger.LIFE + 1) == 1, "a blow never confirmed is counted once it's old");
         h.assertTrue(l.predicted == 2 && l.confirmed == 1 && l.unconfirmed == 1,
                 "counted: played " + l.predicted + ", confirmed " + l.confirmed + ", unconfirmed " + l.unconfirmed);

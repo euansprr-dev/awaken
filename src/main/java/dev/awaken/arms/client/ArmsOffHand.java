@@ -75,7 +75,7 @@ final class ArmsOffHand {
 
     /** How far the twin is dropped by the main hand's equip (vanilla's inverse arm height: 0 up, 1 down). */
     static float equip() {
-        return mainEquip;
+        return ArmsComfort.weaponDraw() ? ArmsHands.equip : mainEquip; // a pair is drawn together, on the draw's own clock (SwingWeight)
     }
 
     /** For Hands (FirstPerson.offHandShows): the off hand holds the twin, so a stance's fist never takes its place. */
@@ -99,7 +99,7 @@ final class ArmsOffHand {
         PoseStack ps = e.getPoseStack();
         ps.pushPose();
         // vanilla's resting hand on the off side, risen as far as the main hand (a pair is drawn together)
-        ps.translate(inv * 0.56F, -0.52F + Math.max(mainEquip, away) * -0.6F, -0.72F);
+        ps.translate(inv * 0.56F, -0.52F + Math.max(equip(), away) * -0.6F, -0.72F);
         ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv, true);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);

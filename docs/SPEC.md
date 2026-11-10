@@ -781,7 +781,9 @@ of `AwakenConfig.Client`.
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
   clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
-  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26; `lagReach`, `lagRate`: how far and how quickly the
+  hands trail the view's turn against the body's own, 1 and 1 unless what is held sets them each frame, additive, Arms
+  2026-11-10, §25 "Weight in the Hand"). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -6116,6 +6118,182 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     it. The rest is the full-size passes; time them per pass next.
   - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
+**Steady Light** (Euan, 2026-11-10: "nearly on par with immersive VFX ... a stable 60 but extremely high quality"; plan
+docs/perf/steady60/PLAN.md, page https://claude.ai/artifact/4UjwicVDJEoS9vceUanMyQ, state docs/perf/steady60/STATUS.md).
+ImmersiveVFX's look, made in Lens inside a frame budget. Measured on his Dell (4K at 120 Hz, the world at 2880x1620,
+RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass redrawn every frame; Cinematic 8.7.
+- **The Air** (Cinematic and Ultra under an overworld sky; client `lensAir`, default on; autopilot `lens air`).
+  `include/lens_air.glsl`, frame texels 22 (toward the sun, under the horizon by night; w the Air's strength) and 23
+  (the game's sky colour, its star brightness).
+  - **Sky**: Lens's own, in the composite for sky pixels: a violet-blue gradient by day (zenith (0.33, 0.41, 0.86), mid
+    (0.53, 0.61, 0.95), horizon (0.83, 0.86, 0.98)), rose and gold toward the sun and violet away from it at dusk and
+    dawn (from sin 0.50 of sun height down to -0.32), near-black blue by night, a glow round the sun, greyed by rain.
+    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour.
+  - **Night sky** (`airNight`, from sun height sin 0.06 down to -0.20, not in rain; Euan 2026-11-10: "ours has
+    basically no stars ... like a fantasy shader"). It turns with the sun about the world's z, as the game's stars do.
+    Stars in four sizes, each a square of the game's own kind with its own brightness, tint (blue-white to warm) and
+    slow twinkle: a dust of faint ones (a grid 230 cells across the sky, 7.5% of cells, up to 27.5% along the galaxy),
+    small (140, 8.5 to 18.5%), middling (70, 8.5%), and the few bright ones (27, 8.5%) with four thin points. The
+    galaxy: a soft band (pole (0.32, 0.47, 0.82), `exp(-13 b²)`) of blue to violet noise with dark lanes and a warmer
+    heart. A shooting star: one chance in two every nine seconds, 0.9 s long. A wide halo round the moon.
+  - **Wisps** (`airWisps`): a second, high layer 680 blocks up, over the sky and under the block clouds: feathered
+    streaks of noise (26-block cells, longer east-west so they gather toward a low sun, bent by two slow drifts so
+    none is a ruled line), drifting 2.2 blocks a second. White at up to 34% by day, rose and gold at up to 50% at dusk
+    and dawn, none by night (they drew dark lanes through the stars). No march: one plane, three noise reads.
+  - **Fog**: land fades into the sky that stands behind it (`airFog`: the sky's colour in the pixel's own direction,
+    the horizon's from above). Far: `1 - exp(-3.2 t²)` over the render distance (five times that while a far renderer
+    draws), a little thinner 40 blocks and more above the eye. Near: `1 - exp(-(d - 4) / L)`, L 280 blocks by day to 150
+    at dusk, dawn, night and in rain, so each line of trees is paler than the one before; thinner only well above
+    the eye (130-block scale: a haze that thinned over a tree's height left dark crowns on vanished trunks). It is the
+    air along the view: only a camera under cover (parameter texel 21) looking at a covered point is left out. Gates
+    and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
+  - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
+    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. The noise repeats
+    every 128 cells, so the whole field of cells is one fixed 128x128 texture (`awaken:lens_cloud_cells`, 16 bits a
+    cell, made by `tools/lens/cloud_cells.py` from the noise): a cell is one exact read by cell number modulo 128. Walked cell by
+    cell (exact entry and exit), sigma 0.95 a block
+    (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
+    2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
+    little by the face the ray came in by (0.75 to 1; a joined block keeps the first face), the sky's light 86% on an
+    underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
+    white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
+    a tenth. They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
+    - **Near and far**: the clouds within 640 blocks (`CLOUD_NEAR`) have a pass of their own at the frame's own size
+      (`lens_cloud_blocks.fsh`, target `awaken:lens_cloudblocks`): every pixel walks its ray every frame against its own
+      depth, so an edge is true to the pixel and a tree in front keeps its own; ground is out after one depth read,
+      the walk ends at the first cloud (up to 80 cells), and the colours are worked out only for a pixel that met one.
+      The composite lays it over everything, with no test. The far ones stay in the small cloud buffer (800x450 on
+      Cinematic; `blockPiece` from 640 blocks on for up to 600 more, 800 on Ultra), walked every frame with nothing
+      carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
+      the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
+      like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
+    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
+  - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
+    cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
+    sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
+    as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
+    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
+    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
+    the clouds and light are always spread over frames (`lensTemporal` as if on).
+  - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
+    through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
+    the sunlit dust, which stands only where the lit air (below) says the sun reaches, under a canopy too. Lens's
+    particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
+    particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
+    depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
+  across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
+  block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
+  half (a slab); all ones is a section not read yet. Up to 14 sections read a tick nearest first, 6 looked at again,
+  the 3x3x3 round the camera every 10 ticks, 6 chunks uploaded a tick; frame texel 17 z the trusted reach (46 blocks),
+  w the lowest y. Where the heightfield says shade and the point is inside the map, the light pass walks the map
+  toward the light (`blockRay`, up to 72 blocks, never the block it starts in): a block stops it, three texels in ten
+  of a leaf face pass it, a lower half stops it under half height; out of the map in the open, the heightfield
+  carries on from there. Inside the map every face is asked and the turn of a face decides nothing (deciding by the
+  face lit the one-pixel sides of path plates and block lips while the ground lay in shade: bright rims at dusk, Euan
+  2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
+  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 960x540. Before it walks, the
+  light pass asks the lit air (below) at the point, half a block off its face: three slices, each smoothed over four
+  cells, all over 0.996 is a walk that would meet nothing, so it is skipped and the heightfield carries on from where
+  the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
+  never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
+  beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
+- **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
+  - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
+    R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
+    from the volume's own corner (frame texels 15 w, 20 zw and 21 w: whether it is there and the camera's place in
+    it). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
+    lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
+    a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
+    what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is
+    dappled in whole blocks), a section not read yet 1. Beyond the window the air is lit: the volume holds only what
+    its own blocks do, and the land out there is the light pass's to judge. A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
+    20 ticks at rest and every 5 once the camera is 5 blocks off the volume's middle; none where the light leaves the
+    x-y plane or sits under sin 0.02. The light pass's mist march spends its first 60 blocks in it (12 steps, 18 on
+    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side), each
+    step times the sun map's answer at the point where the sun's ray leaves the volume (the same far shade the ground
+    gets), and the rest in the sun map as before (5 steps, 10 on Ultra).
+  - **Rays on the screen** (`lens_shafts.fsh` under the Air): the light is the sky round the sun itself
+    (`exp(-14 d²)` of screen heights), gathered in 40 jittered steps along each pixel's line to the sun, so a cloud, a
+    crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from
+    the sun; fainter with distance (`exp(-1.9 r)`). The prefilter's sky mask under the Air is the open sky whatever
+    its colour, cut whole by Lens's clouds. Composite strength 0.95 of the look's shafts (0.35 without the Air).
+- **Lens's own tick work** (the heightfield, the block map, the lit air's hand-over; autopilot `lens cost`): each has a
+  time limit of 0.5 ms a tick on top of its counts (what waits is read on the next tick, nearest first), and the
+  re-reads of the terrain round the camera go in turn, a few a tick (the heightfield's 25 chunks three a tick, the
+  block map's 27 sections three a tick), where they went all at once every 10 ticks: those ticks took 2 to 5 ms.
+  Measured in flight after: heightfield 0.15 to 0.2 ms a tick (worst 1 to 2), block map 0.3 (worst under 1), lit air
+  0.02; the worker's sweep 2.5 to 8.5 ms, its upload 0.06 to 0.5 ms.
+- **Measured** (the Dell, his settings, a copy of his world, 10 Nov; data in `docs/perf/steady60/data/`).
+  - Quiet Mac, the first pass (dell-6): the game alone 2.8 ms of GPU time, Cinematic before 8.9, the Air and the Sun
+    Pass 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays (vsync, 60 cap) 98.6% of
+    frames on time standing, 98.9% turning, 95.2% flying ("on time": the gap to the next frame rounds to exactly two
+    refreshes of the 120 Hz screen).
+  - This pass, on a Mac busy with other sessions (dell-7 to dell-9; the same runs put Cinematic-before at 9.9 to 10.7,
+    so every figure is about a tenth high): all of the above 11.3 to 11.9 standing (71 to 77 fps uncapped), which is 1.0
+    to 1.5 ms over Cinematic-before in the same run (2.3 in the first pass: the light buffer is 960x540 again and the
+    lit air's sure answers save the block walks they cost); 12.0 to 12.1 at night looking up; the lit air off changes
+    nothing measurable, the Sun Pass off saves 0.2 to 0.6. As he plays: 99.1 to 99.9% on time standing, 96.4 to 98.5%
+    turning, 92.2 to 93.6% flying.
+  - Flying is not the look's (fly-1: the same route back and forth over loaded land, as he plays): the Air 92.2 to
+    95.6% on time over four legs, the Sun Pass off 93.5 and 94.0, the lit air off 91.1 and 93.7, the Air off (Cinematic
+    before) 92.4 and 94.9. The legs differ more than the settings do. In flight as he plays the GPU's world pass is
+    12.5 ms (p99 14.6) with the Air and 10.9 (p99 13.1) without, both inside the 15 ms a 60 fps frame leaves it; the
+    late frames are the game's own chunk work on the render thread, which the next step profiles.
+  - With the near clouds at the frame's size (dell-10, dell-11; Cinematic-before 10.1 in the same runs): 11.9 standing
+    (74 fps uncapped), 12.2 to 12.6 flying under open sky (71 fps), 12.6 to 13.2 at night looking up. The cloud pass
+    is about 0.3 ms standing in the clearing and 0.8 flying. As he plays: 99.0 to 99.8% on time standing, 98.7 to
+    99.0% turning, 89.0 to 91.1% flying. The cell texture changed nothing measurable: the cost is the full-size pass
+    and its walks, not the cell reads.
+  - The ImmersiveVFX pairs: https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`,
+    `tools/steady60-tour.sh`.
+- **The late frames in flight** (Euan 2026-11-10: "let's really see how much we can push the performance ... can we
+  optimize how chunks load?"). Measured with `LateFrames` (dev; autopilot `late on|calibrate|report <label>|off`):
+  every frame split on the render thread into its ticks, its render and the rest, and a watcher that takes the render
+  thread's stack twice a millisecond only while a part has already run well past its usual length. Data
+  `docs/perf/steady60/data/late-1`, `pace-1`, `batch-1`; tours `steady60-late.txt`, `steady60-pace.txt`.
+  - **Why a frame is late.** At 60 a second on a 120 Hz screen the GPU's work starts only after the frame's ticks and
+    extraction, and takes about 12 ms of the 16.7: the CPU has three to five milliseconds before the frame misses its
+    refresh. The usual tick is 1.5 to 2 ms (one frame in three has one) and the render 0.7 to 0.9; no frame ran two
+    ticks, and the collector's pauses were under a millisecond in every window. The late frames (3 to 4% flying over
+    loaded land, 9 to 15% over land never seen) lose their time in single spikes: about two thirds of it between the
+    render events (extraction, packets, the submit), a fifth in ticks.
+  - **What the spikes were** (shares of the render thread's samples in long parts, flying over loaded land): Sodium
+    taking the sections of unloaded chunks out of its renderer, all in the frame after they leave (sort triggers out
+    of an interval tree, meshes back into the buffer arenas), 38 to 45%; the Vulkan submit, 6 to 12%; the game's
+    client light engine (it copies its section maps whenever a frame changed any), 5 to 10%; chunk packets being
+    taken in, 2 to 8%; Sodium cloning sections for rebuild tasks, 4 to 8%; Lens's own tick work, 3 to 6%; the Atlas
+    (a chunk's columns sampled as it loads, and re-read in its tick), 2 to 5%; other Awaken client ticks (Wild Tint,
+    Kin, Delve, Ritual), 2 to 5%.
+  - **Chunk pacing** (Turbo: `dev.awaken.turbo.chunkpace`, `awaken.chunkpace.mixins.json`, client setting
+    `turboChunkPacing`, autopilot `chunkpace on|off|setting`; version-locked to Minecraft 26.3, NeoForge 26.3.0.95 and
+    Sodium 0.9.3-beta.1+mc26.3; approved by Euan on 2026-11-10, asked about this hook by name: "Yes, turn it on". On by
+    default; its line in CLAUDE.md's Turbo list is still to be added by a session that may edit that file). A pseudo mixin in
+    Sodium's `ChunkTracker.forEachEvent`: before it runs, all but three of the queued unloads (or a fortieth of a long
+    queue) are lifted out of `unloadQueue`, and after it they go back in, so between frames the queue is Sodium's own
+    and a chunk that returns before its turn is taken off it by Sodium's own bookkeeping. A waiting chunk is one
+    already out of view, drawn a few frames longer at the far edge. Same flight, legs alternating (pace-1, as he
+    plays): 94.9% of frames on time against 93.3%, late frames 2.8% against 3.5%, every paced leg above every unpaced
+    one; Sodium's removals fell from 29% of the long-part samples to 5 to 7%.
+  - **Tried and dropped**: the client asking the server for 2.5 ms' worth of chunks a tick where the game asks for 7
+    ms' worth (`ChunkBatchSizeCalculator`). With unloads paced in both, alternating legs (batch-1): 94.2% against
+    94.0% over loaded land, 77.2% against 82.1% over new land. Smaller batches put chunk work into more frames, and
+    with so little to spare a frame with a little of it is as late as a frame with all of it.
+  - **Lens's own share**: the block map's reader remembers the last block's kind (a column is runs of one state; the
+    id lookup behind it was a hash probe a block).
+  - **What is left**, in order: the game's client light engine and chunk packets (vanilla), Sodium's rebuild task
+    preparation, the Atlas and the other Awaken client ticks (their modules'), and land never seen before, where the
+    integrated server's world generation is the load.
+  - **A terrain renderer of our own in Sodium's place** (Euan asked, 2026-11-10): not now. With Sodium the whole
+    world pass is 2.8 ms of GPU time at his settings, Lens's passes about 9: the terrain is a fifth of the frame at
+    most, and the CPU spikes above are bookkeeping that small hooks pace. Our own passes are the larger and safer
+    target. It is worth asking again if, after those, the terrain pass is what limits the frame, or as Far Sight
+    drawn inward (Sodium for the near chunks, our meshes beyond) once Far Sight costs less than it does (4.2 ms at
+    near reach).
+- **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
+  each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
+  Swift (it has no view direction there), ground mist, the Look page rows.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
@@ -7935,6 +8113,173 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **Config**: `awaken-arms.toml` `enabled` (server, synced; default on). Off: vanilla melee, and the guard Arms gave a
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
+
+**Weight in the Hand** (the polish pass on the weapons' motion and the fight's feel; page
+https://claude.ai/artifact/7myPKAY51tmf9kCzryQdVw, its source docs/weapon-feel/plan.src.html with the measuring scripts in
+docs/weapon-feel/harness/; Euan 2026-11-10: "the animations are still decent... what's the kind of small polish pass that we
+can do to massively bring it to the most extreme and awesome level", then "Go ahead with all": all six decisions as
+recommended).
+- **What it is.** Every one of the 179 first-person moves is kept. The pass adds what is round them: hits that are honest,
+  sounds that can be heard, a blow whose direction is the blade's, weight in the freeze and after it, a guard that eases, a
+  draw for every weapon, a world that answers. Measured before anything was built (the page's section 2): 99 of the 334 hits
+  his game showed in fifteen sessions (4 to 9 Nov) were never confirmed by the server; the hits on flesh and armour, the blunt
+  hit, the kill and the Execution carry 80 to 98% of their sound below 300 Hz (the block's old fault, §47.3); 36 of the 102
+  weapon sound files hold the thin tone he calls a synthetic ding; the view's kick and the knockback's side read the timing
+  table's old `from`/`to` and disagree with the baked blade on 28 of 139 cuts, eleven thrown the opposite way (the page's
+  first count, 17 and nine, had not mirrored the off hand's moves); the fast part of
+  a cut is about three frames at 60 a second, and after its freeze the blade is at a dead stop within 60 ms; the guard drops in
+  one frame; a changed weapon stays below the frame for its attack cooldown (vanilla's `FirstPersonHandsAndItems`), 9 ticks
+  filmed for the Katana; Fight Feel's stages 2 to 4 (above) were never built.
+- **The rules of the pass** (from the sixteen Swing Studio rounds, which tuned to scores): no script score is a target; no
+  weapon's motion changes until he has flagged it in play; every feel layer is built for the Longsword and the Maul first and
+  he picks between it and today's in the game before it goes to the other fourteen; his play log is read before any theory.
+  Every layer is drawn by the client from what the hands already decided, on the hands' own double clock, has its switch in
+  `awaken-arms-client.toml` (off: today's picture, frame for frame), and never moves a hand that is at rest.
+- **The decisions** (2026-11-10): the layers, not a re-make (1); stage 0 is built before he plays, so one session gives his
+  first feel of the 9 Nov round and the ghosts' causes (2); the fourteen sounds that failed are remade from Minecraft's own
+  recordings named in `sounds.json`, after a listening page, with the draws' new sounds, and the swishes stay (3); blows stop
+  at walls, with the glance (4); counter-hits are not in this pass: their rule goes to the fights' owner, who places it with
+  the bosses' minds (5); the Katana rests lowered at the hip with no new model (6).
+- **Code first** (Euan 2026-11-10, after stage 0: "The whole plan is approved. Just go ahead and actually do everything and
+  code everything... prioritize coding over testing... code at the best possible level of code... and then do a test"):
+  stages 1 to 5 were built in one run with their first values and one test pass at the end. Where the plan said "after your
+  play" the best call was made and its switch and its measurement kept, so his play corrects it: the ghosts' fixes without
+  his log (the ghost report stays on), the sounds on the listening page's first pick for each row (the page stays), the
+  weight layers on for all sixteen weapons (one command flips them: `/awaken swing weight on|off`). Stage 6 needs his notes.
+- **The stages**: 0 truth; 1 honest hits, and the blow's direction
+  from the baked blade; 2 sound; 3 weight (the shake in the freeze, the settle where the blade stops, the living hold); 4 the
+  guard, the draws, the Katana's sheath, the look-lag by weight; 5 walls, the glance, grass; 6 his notes weapon by weapon, by
+  hand as the Daggers were, then third person against first.
+- **Stage 0, truth** (built 2026-11-10; nothing a player sees or feels changes). *The ghost report*, development runs only
+  (the black box's switch, `!FMLEnvironment.isProduction()`): the server keeps, per press and body, the nearest it came to
+  landing a blow (`arms.HitWhy`, fixed arrays, written only while a development client in the same JVM has it on, as
+  `FilmLog` is): what it did with each press (the hands said nothing, too early, a move it couldn't grant, queued, run), and
+  for every foe within 4 blocks past a sweep's reach that the sweep left unstruck whether it was out of reach (the gap and the
+  reach), outside the arc (the degrees) or out of the height's band, and for every body struck whether damage landed (with the
+  damage cooldown vanilla saw). The game notes each blow it plays (`ArmsGhosts.shown`: the press, the body, the gap it saw, the
+  reach), and when the ledger counts one as never confirmed (`HitLedger.ghosts`) the server's record gives its cause
+  (`HitWhy.explain`): out of reach, outside the arc, out of height, struck with no damage, landed under another press (a blow
+  on the same body within 1.5 s under a different press: the same blow filed differently, which the game then played twice),
+  nowhere near, the press ran no move, landed and the word not matched, or no record (a server in another process). Each is
+  a line of the play log (`[arms] ghost: seq 212 strike_2 on minecraft:husk: shown at gap 2.91 (reach 3.30); out of reach: on
+  the server it was 0.82 beyond reach ...`) and an E row of the black box, with `shown` and `confirmed` rows beside the
+  `impact` one; on leaving the world `[arms] ghosts by cause, N of M blows shown: ...` follows the old count. Test
+  `arms_hit_why` (the nearest call is kept, each cause is told apart, nothing is kept while off, the ledger tells each ghost
+  once, the real sweep and blow write the record). *The listening page* (`tools/art/weapon_listen.py`, written to the
+  gitignored `run-autopilot/weapon-listen/` and served to the browser pane; it plays Minecraft's own recordings from this
+  machine's asset cache, so it is never hosted or committed): each of the fourteen sounds and the five draws in a scene at the
+  game's own timing, today's sound beside three picks made of named recordings, his mark for each saved to `picks.json`
+  there. *The baseline film*: `tools/autopilot/arms-feel-baseline.txt` (CI run 42788877636).
+- **Stage 1, honest hits and the blade's own direction** (built 2026-11-10).
+  - *The direction.* `tools/arms/blows.py` writes each cut's travel on the screen at its hit into its swing row of
+    archetypes.json as `blow` [x right, y up] (`Archetype.Swing.blow`, optional), read from the blade the baked keys draw: the
+    blade's middle over the half tick round the hit, mirrored for a move the off hand strikes, the two together for both
+    hands; a hand-keyed move keeps the direction its own bake worked out (its `kick`); a thrust has none. `ArmsRules.blowX`,
+    `blowY` and `side` read it (the row's `from`/`to` only where a move has none), so the knockback's side, the struck
+    body's recoil and a kill's fall follow the blade, and so does the view's kick (`ArmsPredict.impact`: a thrust now nods
+    the view in as the hand-keyed stabs do, `THRUST_NOD` 0.6, and a left-handed fighter's kick is mirrored as their screen
+    is). `blows.py check` fails when a row is more than 20 degrees off the bake: run it after any re-bake. Test
+    `arms_blow_dir`.
+  - *A blow always lands whole.* `ArmsServer.hit` clears the struck body's damage cooldown before every Arms blow, whoever
+    hurt it last (it was cleared only after the fighter's own): vanilla's half second of immunity after fire, a fall, a
+    pet's or another fighter's blow swallowed or shrank blows the game had shown. Each move still strikes a body once.
+  - *One blow, one press.* The two sides can file a strike under different presses (a queued strike pressed again moves to
+    the newer press on each side's own clock, and a HIT sent in between carries the older number): its impact then played
+    twice and one copy was a ghost. `HitLedger.confirm` matches the server's word by the press, then by the body and the
+    move (the oldest such blow still waiting, `reconciled` counted in the log's line); `HitLedger.struck` keeps the hands
+    off a body the server already struck with the same move under another press (`SAME_BLOW`, 12 ticks); and a HIT is held
+    for the blade by the move, not the press (`ArmsPredict.early`), also for a strike still queued behind the one on the
+    hands (the server ran ahead), never longer than `QUEUE_WAIT` (8 ticks).
+  - *The hands' word.* The game draws a creature about three ticks behind where the server has it (26.3's stepped
+    interpolation, by the entity type's update interval), so one just knocked back can look in reach and be a block further
+    on. When the hands play a blow they say so (`ArmsPayloads.PRESS_HIT`: the move's press, the body, the move's
+    ordinal), and the server lands it by their word (`ArmsServer.claimed`, `grantClaims`) when its own sweep left that body:
+    only a creature its sweep would look at (a foe or the aimed one, never a person), once a move, only while the move they
+    name runs here (from 3 ticks before its first active tick to 6 after its last; a word that comes before its move waits
+    up to 20), and only within `CLAIM_REACH` 1.25 blocks and `CLAIM_ARC` 20 degrees past the move's own reach and arc, and
+    never through a wall. The damage, the push and everything after are the server's own. Switch `claimedHits`
+    (awaken-arms.toml, on); `[arms] N landed by the hands' word (x past the server's reach on average)` in a development
+    run's log says how much it is used. Test `arms_claim`.
+  - *Struck, no harm.* A blow that strikes and does no damage (an invulnerable body, another mod's refusal) is answered
+    (`ArmsPayloads.DULL`): Minecraft's own weak-attack sound, and the ledger counts it answered, not a ghost.
+- **Stage 2, sound** (built 2026-11-10 on the listening page's first pick for each row; his ear is still the judge, and
+  the page stays). Fourteen sounds play as mixes of Minecraft's own recordings (`ArmsSounds.mix`, `Voice`), each recording
+  named as an event of its own in the merged sounds.json (`fight.*`, `"type": "event"`, so it follows the game's own
+  variants and no file of Mojang's is in the repo), layered in code on both sides (`ArmsSounds.play`, `ArmsAudio.play`):
+  a hit on flesh the strong attack over the kit's thump at 0.45; a heavy one the critical hit (pitch 0.85) and the knockback
+  hit (0.7 at 0.8) over the thump at 0.5; the Maul's the mace's own blow (0.8) over its thump; armour an iron golem struck
+  (0.9 at 1.2) with the strong attack (0.6); a spirit a breeze hurt (0.8) with a sweep of air (0.6 at 1.2); a blow on you
+  the knockback hit (0.9 at 0.8) over the thump; the parry an anvil landing (0.45 at 1.6) over the shield block (at 1.1);
+  the glance a breeze turning a shot; the charge a crossbow drawn (0.8 at 0.8) and its glint the crossbow locking (0.9 at
+  1.2), a wooden click in place of the ting; the kill the critical hit (at 0.8) over the body drop; the cleave Minecraft's
+  own sweep; the Execution the mace's heaviest ground blow (0.9) with the critical hit (0.9 at 0.7); the perfect dodge a
+  dragon's wingbeat (0.6 at 1.7). The swishes, bone, wood, stone, slime, the block, the tells and the Art are as they were.
+  Switch `recordedSounds` (awaken-arms-client.toml; off: the 25 Oct kit).
+- **Stage 3, weight** (built 2026-11-10; `arms.SwingWeight`, plain maths, drawn by `ArmsHands` over the same keys; test
+  `arms_weight`). By `ArmsRules.heft` (snap / blade / heavy):
+  - *The shake* (`weaponShake`): while a landed blow of the move on the hands is frozen, the striking hand shudders along the
+    blow's own direction, 0.005 / 0.008 / 0.012 blocks at first (about 5, 9 and 13 pixels at 1080p), dying to nothing by the
+    freeze's end, its sign turning every 16 ms. Added after the blend, so it is never carried into the next move.
+  - *The settle* (`weaponSettle`): where a baked move's hand stops after its hit (`SwingWeight.stop`: the first key under
+    6% of the move's fastest, found once a clip) it carries 0.015 / 0.025 / 0.04 blocks and 1.5 / 2.5 / 4 degrees past, along
+    the way it came in, peaking 0.9 / 1.4 / 2.2 ticks after the stop and back to nothing with no second swing (x e^(1-x)).
+    A stop within 0.05 of the pose the move ends on is the rest itself and is never settled: 138 of the 179 moves have a
+    stop, the rest go home in one motion.
+  - *The living hold* (`livingHold`, off under reduced motion): a held weapon rises and sinks 3 mm once in 4.5 s, and the
+    hands trail the view's turn by the weapon's weight (`FirstPerson.lagReach`, `lagRate`, §12, read by Hands' look-lag:
+    0.75 of the reach and 1.3 of the rate for a dagger, 1.45 and 0.65 for a Maul).
+  - Reduced motion halves the shake and the settle. `/awaken swing weight on|off` flips the shake, the settle, the living
+    hold, the draw and the guard's ease together.
+- **Stage 4, the guard and presence** (built 2026-11-10).
+  - *The guard* (`guardEase`): it comes up on an ease-out that seats with a small settle, in the server's own two ticks
+    (past nine tenths by a tick and a half), and lowers over three, from wherever it is (`SwingWeight.guardUp`,
+    `guardDown`). On film it rose in a straight line and was back at rest one frame after the key came up. Only the
+    picture: the windows are the server's. A deflect throws the blade at the blow and back, a third harder than a block's
+    knock (`ArmsHands.parry`).
+  - *The draw* (`weaponDraw`): a change of the fighting weapon in hand (its item or its slot, seen each tick) plays its
+    family's sound (blades Minecraft's iron armour going on, pitched by the blade; hafted weapons an axe biting wood; the
+    Chain-blade a chain; the Gauntlets leather; the Precursor Arm a conduit waking; `ArmsSounds.draw`, those near from the
+    server on the equipment change) and the weapon comes up on the draw's own clock, 6 / 8 / 10 ticks by weight on an
+    ease-out that seats a hair above its place, its wrist turned in 22 degrees at first (`SwingWeight.drawSink`,
+    `drawTurn`). It replaces vanilla's rise for a fighting weapon: vanilla raises a changed item only as its attack cooldown
+    refills (the item swap scale, cubed), a cooldown Arms never uses, so the weapon was out of view for nine ticks on film
+    with the Katana and by that rule over twenty with the Maul, and a strike thrown meanwhile was drawn that far under the
+    frame. A strike begun during a draw brings the weapon up within 2 ticks from where it is. A power's stow never draws.
+    The hand's own transform takes the stack vanilla's hand drew last tick when it is the same item as the one held: a
+    slot the server re-sends (wear, any sync) is a new object until the next tick, and told apart by identity the weapon
+    fell back to vanilla's place and sink for those frames (the proof tour's film: out of view for 0.4 ticks mid-draw).
+  - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks from the last move's end, the count
+    the server grants the cut on: a press, a hold not yet a move and a dodge leave it be, so the hands show the cut
+    exactly when it will be given), it is lowered across the body: the hand just under the frame's edge, the blade low
+    with its point to the off side and its edge down, the guard showing (`ArmsHands.HIP_D` (-0.10, 0.15, 0), `HIP_Q` 70
+    degrees over and 15 forward; the first value, back past the hip, hid the blade and laid a forearm across the frame).
+    It lowers and rises over 6 ticks on the hands' own clock from wherever it is (`SwingWeight.lowered`, `ArmsHands.hip`:
+    the rest pose itself moves, so the strike that draws it is carried out by the blend, and nothing that starts or
+    breaks the rest moves the hand in one frame), with a soft click on the way down. A change of weapon is the one place
+    it is set outright, and only unseen: the weapon going away keeps its pose while it sinks, and the one coming up
+    takes its own rest on its first frame, still under the frame, so a rested Katana rises straight to this rest. The drawn cut has its own sound over the swish (a rasp and a ring) and a
+    ribbon half again as bright. No scabbard (decision 6).
+- **Stage 5, the world answers** (built 2026-11-10; `arms.ArmsWalls`, one set of rules for the server's sweep and the
+  client's prediction; tests `arms_walls`, `arms_cut_grass`).
+  - *Walls stop blows* (`wallsStopBlows`, awaken-arms.toml, on): a body is struck only when a line from the eye to its
+    nearest point, its middle or its top is clear of every block a body can't pass. Three points, so a creature half
+    behind a door frame still counts; glass, fences and leaves stop a blade, tall grass doesn't. The hands' word is held
+    to it too. Things that aren't alive (a rift's core) are struck as before.
+  - *The glance* (`glance`, client): a strike that has struck no body by a third of a tick past its hit, and whose blade
+    meets a block within the move's reach (three lines 14 degrees either side of the look; a pinning blow one more, 25
+    degrees down), glances off it: the block's own hit sound, lower and louder, with a ring over stone and metal; its
+    chips (three); sparks off stone and metal (warm, `FxClient.guardSpark` at size 0.85, under the size that adds a
+    deflect's ring) and duller ones off wood (0.5), started 0.08 blocks off the face and thrown out of it along the
+    blade's way. They are the guard's near-eye sparks and not a body's: a wall is struck within a blade's length of the
+    eye, and the effects engine shows no glow inside 1.5 blocks and only part of one inside 4, so a body's sparks at a
+    wall were never seen (two proof tours, 10 Nov). The blade is knocked back against its cut for two and a half ticks;
+    the view kicked one degree against it; a 30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
+    block isn't harmed and the chain goes on. Those near hear the block's hit from the server on the move's last active
+    tick.
+  - *Grass* (`cutGrass`, awaken-arms.toml, on): each active tick cuts the plants tagged `#awaken:cut_by_sweeps` (short
+    and tall grass, ferns, dead and plain bushes, dry grass) in the sweep's arc and reach, as a player's break
+    (`CommonHooks.fireBlockBreak`, so a claim can refuse; drops as vanilla's), at most 12 a blow; never where the
+    fighter can't build, at a Hearth, in the city or in a village.
 
 **Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
 moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,

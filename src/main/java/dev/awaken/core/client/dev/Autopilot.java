@@ -200,6 +200,16 @@ public final class Autopilot {
             Arrays.sort(t);
             tick = String.format(java.util.Locale.ROOT, "%.2f", t[(int) (t.length * 0.95)] / 1e6);
         }
+        // measurement only (look-steady-60): every frame of the window in order, for hitch and pacing analysis
+        try {
+            Path dir = mc.gameDirectory.toPath().resolve("perf-traces");
+            Files.createDirectories(dir);
+            StringBuilder trace = new StringBuilder(frameCount * 8);
+            for (int i = 0; i < frameCount; i++) trace.append(FRAMES[i] / 1000).append('\n'); // microseconds
+            Files.writeString(dir.resolve(label + ".txt"), trace);
+        } catch (IOException e) {
+            Awaken.LOG.warn("[autopilot] perf {} trace not written: {}", label, e.toString());
+        }
         Runtime rt = Runtime.getRuntime();
         Awaken.LOG.info(String.format(java.util.Locale.ROOT,
                 "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s minimized=%s",
@@ -630,6 +640,25 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().equals("cost")) {
+                    Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
+                    return true;
+                }
+                if (arg.trim().startsWith("rays")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.rays(arg.trim().substring(4)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("sunpass")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.sunPass(arg.trim().substring(7)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("air")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.air(arg.trim().substring(3)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("temporal")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.temporal(arg.trim().substring(8)));
                     waitTicks = 20;
@@ -650,6 +679,10 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] look {}: {}", tier, took ? "applied" : "not available here");
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
+            case "chunkpace" -> // chunkpace on|off|setting: Chunk pacing (Turbo) for the following scenes, and its report
+                Awaken.LOG.info("[autopilot] chunkpace {}: {}", arg.trim(), dev.awaken.turbo.chunkpace.ChunkPace.autopilot(arg));
+            case "late" -> // late on|calibrate|report <label>|off: where the late frames' time goes (LateFrames)
+                Awaken.LOG.info("[autopilot] late {}: {}", arg.trim(), LateFrames.command(arg));
             case "pixels" -> { // pixels <scale> [fsr|sharp|bilinear] | config | state | gpu ...: Pixels for the following scenes
                 Awaken.LOG.info("[autopilot] pixels {}: {}", arg.trim(), dev.awaken.turbo.pixels.Pixels.autopilot(arg));
                 if (!arg.trim().startsWith("gpu")) waitTicks = 10;
@@ -681,9 +714,42 @@ public final class Autopilot {
                     case "fov" -> mc.options.fov().set(v); // 30 to 110: a narrow one films something far off at its real distance
 
                     case "volume" -> mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(v / 100.0);
+                    case "vsync" -> mc.options.enableVsync().set(v != 0); // measurement only (look-steady-60)
+                    case "clouds" -> mc.options.cloudStatus().set(v == 0 ? net.minecraft.client.CloudStatus.OFF
+                            : v == 1 ? net.minecraft.client.CloudStatus.FAST : net.minecraft.client.CloudStatus.FANCY);
+                    case "maxFps" -> mc.options.framerateLimit().set(v);
                     default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
                 }
                 waitTicks = 20;
+            }
+            case "display" -> { // display <name prefix> [fullscreen]: measurement only (look-steady-60), with the owner's OK:
+                // the tour on the screen he plays on (e.g. "display DELL fullscreen"), where tours otherwise never go
+                String[] d = arg.trim().split("\\s+");
+                long window = mc.getWindow().handle();
+                java.nio.IntBuffer displays = org.lwjgl.sdl.SDLVideo.SDL_GetDisplays();
+                int target = 0;
+                if (displays != null) {
+                    for (int i = 0; i < displays.remaining(); i++) {
+                        String name = org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(displays.get(i));
+                        if (name != null && name.toUpperCase(java.util.Locale.ROOT).startsWith(d[0].toUpperCase(java.util.Locale.ROOT))) target = displays.get(i);
+                    }
+                    org.lwjgl.sdl.SDLStdinc.SDL_free(displays);
+                }
+                if (target == 0) {
+                    Awaken.LOG.warn("[autopilot] display {}: no such display", d[0]);
+                } else {
+                    int centred = org.lwjgl.sdl.SDLVideo.SDL_WINDOWPOS_CENTERED_DISPLAY(target);
+                    org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, centred, centred);
+                    mc.getWindow().syncWindow();
+                    boolean full = d.length > 1 && d[1].equals("fullscreen");
+                    mc.options.fullscreen().set(full);
+                    Awaken.LOG.info("[autopilot] display {}: on {}{}", d[0], org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target), full ? ", fullscreen" : "");
+                }
+                waitTicks = 80;
+            }
+            case "vfx" -> { // vfx dump | key=value;key=value: ImmersiveVFX's own settings, for timing it a feature at a time
+                Awaken.LOG.info("[autopilot] vfx {}: {}", arg.trim(), VfxProbe.run(arg));
+                waitTicks = 40;
             }
             case "leave" -> {
                 if (mc.level != null) mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);

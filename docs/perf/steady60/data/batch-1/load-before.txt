@@ -1,0 +1,16 @@
+20:36  up 35 days,  6:36, 1 user, load averages: 7.67 7.67 7.94
+ 98.2  37600 /opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python tools/art/specs/gate_m
+ 39.6 105056 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -daemon
+ 22.0  63392 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder
+ 14.4 1553696 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer) --type=renderer --user-data-dir=
+  5.8 108544 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper --type=gpu-process --user-data-dir=/Users/euanspencer/L
+  5.2  20848 /usr/libexec/syspolicyd
+  3.4  18656 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd
+  2.8  10448 /usr/libexec/trustd
+  1.9 482992 /Applications/Claude.app/Contents/MacOS/Claude
+  1.9  73920 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer) --type=renderer --user-data-dir=/
+  1.8  19024 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system
+  1.1  43440 /System/Library/DriverExtensions/com.apple.DriverKit-AppleBCMWLAN.dext/com.apple.DriverKit-AppleBCMWLAN com.apple.bcmwlan 0x100000f0c com.apple.Dri
+  0.9  53440 /usr/libexec/duetexpertd
+  0.9  13216 /usr/libexec/trustd --agent
+  0.9   2992 /bin/zsh -c source /Users/euanspencer/.claude/shell-snapshots/snapshot-zsh-1794310533207-pz3ww5.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB N
