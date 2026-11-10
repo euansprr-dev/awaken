@@ -850,7 +850,7 @@ of `AwakenConfig.Client`.
   draw). Whoever draws a first-person limb asks; the armour answers. A light on the limb passes through here too (§32.N,
   "The light on what you wear"): `glow(rgb, amount)` / `glowColour()` / `glowAmount()` tell the dresser the light on the limb
   about to be dressed, and `register(Surfaces)` / `surface(Limb)` hand back the shape of what it wears (`Surface`: triangles,
-  normals, texels, the texture with its material half, a style name) so the light can be drawn on that shape.
+  normals, texels, the texture with its material half, a style name, an accent colour) so the light can be drawn on that shape.
 - `dev.awaken.core.client.ui` (client; §57, 2026-11-10) — the one sheet and the kit every big screen is built from: `Sheet`
   (1708 x 960 fitted to the window, text snapped to whole real pixels, `item`, `gx/gy` to GUI pixels), `Kit` (`well`, `thing`,
   `need`, `recipe`, `number`, `needle`, `pips`, `key`, `hints`, `button`, `chip`, `tip`), `Hot` (what can be clicked this
@@ -11950,9 +11950,9 @@ What follows replaces that. Nothing here changes what a power does to a number u
     itself take the colour.
   - `surface(limb)`: the shape of what the limb wears (the armour gives the worn chestplate's arm mesh, its texture and the set's id).
     The light cuts it into cells, one a texel of every face, once a shape. Each cell plays a part read from the set's own texture
-    (its colour half and its material half): **cloth**, **plate**, a **line** (a trim: bright glossy metal that is the rim of a plate
-    or a strip a texel or two wide; the middle of a wide bright plate is plate) or what **glows of itself** (material blue over
-    0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
+    (its colour half and its material half): **cloth**, **plate**, a **line** (a trim: bright glossy metal, or the set's accent
+    colour wherever it is painted, that is a rim or a strip a texel or two wide; the middle of a wide one is plate or cloth again)
+    or what **glows of itself** (material blue over 0.25). Each cell knows how far down the arm it is (0 at the shoulder end, 12.5 at the fingertips) and where it sits across its
     own face.
   The light is drawn cell by cell on the faces themselves, 0.003 off them (faces turned from the eye left out), with a soft additive
   spill round the brightest cells. Lines are crisp (cover 0.25 + 0.75 of their light); cloth and plate are tinted, never painted out

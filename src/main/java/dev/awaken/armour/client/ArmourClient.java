@@ -282,6 +282,11 @@ public final class ArmourClient {
         public String style() {
             return set.id;
         }
+
+        @Override
+        public int accent() {
+            return mesh.accent();
+        }
     }
 
     /** One kept a side, so asking every frame makes nothing. */

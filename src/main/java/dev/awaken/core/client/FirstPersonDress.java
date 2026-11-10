@@ -57,6 +57,11 @@ public final class FirstPersonDress {
 
         /** A name for the look (an armour set's id), for a drawer that treats some its own way. */
         String style();
+
+        /** The look's own accent colour (0xRRGGBB; 0 for none): where the surface is painted in it, it is a line of the design. */
+        default int accent() {
+            return 0;
+        }
     }
 
     /** Gives the shape of what a limb wears now, or null when it wears nothing of this giver's. */

@@ -24,7 +24,8 @@ import java.util.Map;
  * <p>
  * The arm's piece is taken as it is drawn ({@link FirstPersonDress.Surface}) and cut into cells, one a texel of every
  * face. Each cell has a part to play, read from the set's own texture: cloth, plate, a <i>line</i> (a trim: the rim of a
- * bright plate, a cuff ring, a band) or something that glows of itself (a stone, a crystal, a seam). The light is then
+ * bright plate, a cuff ring, a band, or the set's accent colour wherever it is painted) or something that glows of itself
+ * (a stone, a crystal, a seam). The light is then
  * drawn cell by cell on the faces themselves, a hair off them: the type's colour runs down the set's own lines, fills its
  * stones, and lays the type's motif over cloth and plate, one face at a time, as a tint that follows their own painting
  * (never a coat of paint over it). So every set wears each type its own way
@@ -108,6 +109,14 @@ final class ArmourLight {
         return t * t * (3f - 2f * t);
     }
 
+    /** A texel in the set's own accent colour (by hue: both taken at full brightness), and not a dark one. */
+    private static boolean near(int rgb, int accent) {
+        int r = rgb >> 16 & 255, g = rgb >> 8 & 255, b = rgb & 255, ar = accent >> 16 & 255, ag = accent >> 8 & 255, ab = accent & 255;
+        float m = Math.max(r, Math.max(g, b)), ma = Math.max(ar, Math.max(ag, ab));
+        if (m <= 110 || ma == 0) return false;
+        return Math.abs(r / m - ar / ma) + Math.abs(g / m - ag / ma) + Math.abs(b / m - ab / ma) < 0.25f;
+    }
+
     private static boolean same(float[] p, int a, int b) {
         return p[a * 3] == p[b * 3] && p[a * 3 + 1] == p[b * 3 + 1] && p[a * 3 + 2] == p[b * 3 + 2];
     }
@@ -115,7 +124,7 @@ final class ArmourLight {
     private static Cells build(FirstPersonDress.Surface surface) throws java.io.IOException {
         float[] p = surface.positions(), uv = surface.texels();
         byte[] nr = surface.normals();
-        int faces = p.length / 18;
+        int faces = p.length / 18, accent = surface.accent();
         Cells out = new Cells();
         out.style = SETS.getOrDefault(surface.style(), DEFAULT);
         var resource = Minecraft.getInstance().getResourceManager().getResource(surface.texture());
@@ -159,6 +168,7 @@ final class ArmourLight {
             out.faceStart = new int[faces + 1];
             out.faces = faces;
             int[] grid = new int[widest];
+            byte[] base = new byte[most];
             int n = 0;
             for (int f = 0; f < faces; f++) {
                 out.faceStart[f] = n;
@@ -191,7 +201,10 @@ final class ArmourLight {
                         if ((alb >>> 24) < 26) continue;
                         float metal = (mat >> 16 & 255) / 255f, gloss = (mat >> 8 & 255) / 255f, emit = (mat & 255) / 255f;
                         float bright = Math.max(alb >> 16 & 255, Math.max(alb >> 8 & 255, alb & 255)) / 255f;
-                        int role = emit > 0.25f ? EMIT : metal * gloss * smooth(0.35f, 0.7f, bright) > 0.3f ? TRIM : metal > 0.3f ? PLATE : SOFT;
+                        int plain = metal > 0.3f ? PLATE : SOFT;
+                        // a line: bright glossy metal (the armour shader's own trims), or the set's accent colour wherever it is painted
+                        int role = emit > 0.25f ? EMIT : metal * gloss * smooth(0.35f, 0.7f, bright) > 0.3f || near(alb, accent) ? TRIM : plain;
+                        base[n] = (byte) plain;
                         int at = n * 12;
                         corner(out.pos, at, ax, ay, az, e1x, e1y, e1z, e2x, e2y, e2z, s0, t0);
                         corner(out.pos, at + 3, ax, ay, az, e1x, e1y, e1z, e2x, e2y, e2z, s1, t0);
@@ -207,8 +220,8 @@ final class ArmourLight {
                         grid[i * w2 + j] = n++;
                     }
                 }
-                // a trim is a line: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide bright
-                // plate is plate. (Worked out before any is changed, so a plate's rim stays a rim.)
+                // a line is thin: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide one is
+                // plate or cloth again. (Worked out before any is changed, so a plate's rim stays a rim.)
                 for (int i = 1; i < w1 - 1; i++) {
                     for (int j = 1; j < w2 - 1; j++) {
                         int k = grid[i * w2 + j];
@@ -217,7 +230,7 @@ final class ArmourLight {
                                 && trim(out, grid[i * w2 + j + 1])) out.role[k] |= 8;
                     }
                 }
-                for (int k = out.faceStart[f]; k < n; k++) if ((out.role[k] & 8) != 0) out.role[k] = PLATE;
+                for (int k = out.faceStart[f]; k < n; k++) if ((out.role[k] & 8) != 0) out.role[k] = base[k];
             }
             out.faceStart[faces] = n;
             out.n = n;

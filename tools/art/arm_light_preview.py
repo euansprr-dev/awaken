@@ -75,12 +75,25 @@ def read(path):
     return out
 
 
+def accent_of(path):
+    b = open(path, "rb").read()
+    return b[12], b[13], b[14]
+
+
+def near(colour, accent):
+    """ArmourLight.near: a texel in the set's own accent colour (by hue: both taken at full brightness), and not a dark one."""
+    m, ma = max(colour), max(accent)
+    if m <= 110 or ma == 0:
+        return False
+    return sum(abs(colour[k] / m - accent[k] / ma) for k in range(3)) < 0.25
+
+
 def smooth(a, b, x):
     t = max(0.0, min(1.0, (x - a) / (b - a)))
     return t * t * (3 - 2 * t)
 
 
-def cells(corners, tex):
+def cells(corners, tex, accent=(0, 0, 0)):
     """ArmourLight.build: every pair of triangles is one flat face; a cell a texel of it."""
     w, h = tex.size
     px = tex.load()
@@ -117,16 +130,18 @@ def cells(corners, tex):
                 metal, gloss, emit = mat[0] / 255, mat[1] / 255, mat[2] / 255
                 if alb[3] < 26:
                     continue
-                role = EMIT if emit > 0.25 else TRIM if metal * gloss * smooth(0.35, 0.7, max(alb[:3]) / 255) > 0.3 else PLATE if metal > 0.3 else SOFT
+                base = PLATE if metal > 0.3 else SOFT
+                # a line: bright glossy metal (the armour shader's own trims), or the set's accent colour wherever it is painted
+                role = EMIT if emit > 0.25 else TRIM if metal * gloss * smooth(0.35, 0.7, max(alb[:3]) / 255) > 0.3 or near(alb[:3], accent) else base
                 cy = sum(pt[1] for pt in p) / 4 * 16
                 grid[(i, j)] = len(out)
-                out.append(dict(p=p, n=n, alb=alb, role=role, q=q, v=cy + 2.0, face=face, lum=max(alb[:3]) / 255,
+                out.append(dict(p=p, n=n, alb=alb, role=role, base=base, q=q, v=cy + 2.0, face=face, lum=max(alb[:3]) / 255,
                                 ul=j if first_along else i, cols=n2 if first_along else n1))
-        # a trim is a line: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide bright plate is plate.
+        # a line is thin: the rim of a bright plate, or a strip a texel or two wide. The middle of a wide one is plate or cloth again.
         inner = [k for (i, j), k in grid.items() if out[k]["role"] == TRIM
                  and all(out[grid[nb]]["role"] == TRIM if nb in grid else False for nb in ((i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)))]
         for k in inner:
-            out[k]["role"] = PLATE
+            out[k]["role"] = out[k]["base"]
     return out
 
 
@@ -337,7 +352,8 @@ def view(cs, lit, style, yaw, pitch, size=(250, 400), scale=30):
 
 def sheet(out, sid, styles, charge=1.0, t=37.0, awake=False):
     tex = Image.open(os.path.join(ROOT, "textures", "entity", "armour", sid + ".png")).convert("RGBA")
-    cs = cells(read(os.path.join(ROOT, "armour", sid, "chestplate_left_arm.mesh")), tex)
+    mesh = os.path.join(ROOT, "armour", sid, "chestplate_left_arm.mesh")
+    cs = cells(read(mesh), tex, accent_of(mesh))
     gains = SETS.get(sid, SETS["default"])
     views = [(0, 0), (90, 0), (180, 0), (-90, 0), (55, -50)]
     img = Image.new("RGB", (250 * len(views) * 2 + 20, 400 * ((len(styles) + 1) // 2)), (24, 26, 34))
