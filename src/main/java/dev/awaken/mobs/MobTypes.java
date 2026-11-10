@@ -90,6 +90,9 @@ public final class MobTypes {
                 holder = ENTITIES.registerEntityType(d.id, BrokerBoss::new, MobCategory.MONSTER, b -> configure(b, d));
             } else if (d.tier.isBoss()) {
                 holder = ENTITIES.registerEntityType(d.id, AwakenBoss::new, MobCategory.MONSTER, b -> configure(b, d));
+            } else if (d.rig) {
+                // a gate monster on a body of its own (SPEC §60): same id, same numbers, its moves acted out
+                holder = ENTITIES.registerEntityType(d.id, dev.awaken.mobs.entity.GateMonster::new, MobCategory.MONSTER, b -> configure(b, d));
             } else {
                 holder = ENTITIES.registerEntityType(d.id, AwakenMob::new, MobCategory.MONSTER, b -> configure(b, d));
             }

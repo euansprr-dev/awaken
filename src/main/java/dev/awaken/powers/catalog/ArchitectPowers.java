@@ -3,6 +3,7 @@ package dev.awaken.powers.catalog;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.Voice.Beat;
 
 import dev.awaken.powers.Bolts;
 import dev.awaken.powers.Cast;
@@ -154,7 +155,7 @@ final class ArchitectPowers {
     static Result build(Cast c, List<BlockPos> shape, Set<BlockPos> slabs) {
         int placed = Constructs.place(c.player, shape, slabs, false, life(c));
         if (placed == 0) return Result.fail("blocked");
-        c.sound(PowerSounds.BUILD, 1f, 0.9f + c.player.getRandom().nextFloat() * 0.3f);
+        c.voice(Beat.RELEASE, PowerSounds.BUILD, 1f, 0.9f + c.player.getRandom().nextFloat() * 0.3f);
         assemble(c, shape);
         return Result.OK;
     }
@@ -237,7 +238,7 @@ final class ArchitectPowers {
                     PowerState.of(p).buff(PowerState.Buffs.NO_FALL, now + 100, 1);
                     p.resetFallDistance();
                     Fx.at(c, FxKind.RING, p.position()).dir(fwd).scale(1.6).ticks(10).plain().send();
-                    c.sound(p.position(), PowerSounds.WHOOSH, 1f, 1.2f);
+                    c.voice(p.position(), Beat.EXTRA_A, PowerSounds.WHOOSH, 1f, 1.2f);
                 }
             }
             // Rails: a foe that sets foot on it is thrown off the side
@@ -285,7 +286,7 @@ final class ArchitectPowers {
             for (BlockPos pos : row) if (Constructs.isConstruct(c.level, pos)) zone.blocks.add(pos.immutable());
             if (rr.age % 6 == 0) {
                 assemble(c, row, true);
-                c.sound(p.position(), PowerSounds.BUILD, 0.5f, 1.3f + c.player.getRandom().nextFloat() * 0.3f);
+                c.voice(p.position(), Beat.EXTRA_A, PowerSounds.BUILD, 0.5f, 1.3f + c.player.getRandom().nextFloat() * 0.3f);
             }
         });
     }
@@ -361,7 +362,7 @@ final class ArchitectPowers {
                     b.cast = c;
                     fired++;
                 }
-                if (fired > 0) c.sound(inside, PowerSounds.SHOT, 0.8f, 1.3f);
+                if (fired > 0) c.voice(inside, Beat.EXTRA_A, PowerSounds.SHOT, 0.8f, 1.3f);
             }
             // Gatehouse: friends near the door open it; it closes behind them
             if (c.step(4) && rr.age % 2 == 0) {
@@ -372,9 +373,9 @@ final class ArchitectPowers {
                 boolean shut = Constructs.isConstruct(c.level, doorAt);
                 if (friend && shut) {
                     for (BlockPos d : door) if (Constructs.isConstruct(c.level, d)) Constructs.lift(c.level, d);
-                    c.sound(Vec3.atCenterOf(doorAt), PowerSounds.CONSTRUCT_FADE, 0.7f, 1.4f);
+                    c.voice(Vec3.atCenterOf(doorAt), Beat.END, PowerSounds.CONSTRUCT_FADE, 0.7f, 1.4f);
                 } else if (!friend && !shut && Constructs.place(c.player, door, Math.max(20, life - rr.age)) > 0) {
-                    c.sound(Vec3.atCenterOf(doorAt), PowerSounds.BUILD, 0.5f, 1.5f);
+                    c.voice(Vec3.atCenterOf(doorAt), Beat.EXTRA_B, PowerSounds.BUILD, 0.5f, 1.5f);
                 }
             }
             // Keep: the beacon slows every foe near it
@@ -413,7 +414,7 @@ final class ArchitectPowers {
                 assemble(c, spike);
                 Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(new Vec3(0, 1, 0)).scale(1.2).noAnim().send();
             }
-            c.sound(PowerSounds.BUILD, 1.2f, 0.6f);
+            c.voice(Beat.RELEASE, PowerSounds.BUILD, 1.2f, 0.6f);
             return Result.OK;
         }
         // Tall (4): a taller pillar; Seams (2) and Tall throw you higher
@@ -430,8 +431,8 @@ final class ArchitectPowers {
             thrown.add(e);
         }
         if (c.step(3) && !thrown.isEmpty()) spikedRim(c, thrown);
-        c.sound(PowerSounds.BUILD, 1.3f, 0.5f);
-        c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
+        c.voice(Beat.IMPACT, PowerSounds.BUILD, 1.3f, 0.5f);
+        c.voice(Beat.TAIL, PowerSounds.WHOOSH, 1f, 0.8f);
         // the pillar erupts: a column of light, ground thrown out, then each block assembles as it rises
         Fx.at(c, FxKind.PILLAR, c.pos()).scale(height).send();
         List<BlockPos> column = new ArrayList<>();
@@ -534,7 +535,7 @@ final class ArchitectPowers {
         }
         if (thrown == 0) return Result.fail("no_target");
         Fx.at(c, FxKind.RING, c.pos()).scale(Math.min(10, radius * 0.5)).ticks(12).anim(CastAnim.THROW).send();
-        c.sound(PowerSounds.COLLAPSE, 1.3f, 0.8f);
+        c.voice(Beat.RELEASE, PowerSounds.COLLAPSE, 1.3f, 0.8f);
         Fx.quake(c.level, c.pos(), 16, 2.5f);
         return Result.OK;
     }
@@ -545,7 +546,7 @@ final class ArchitectPowers {
         BlockPos centre = Constructs.feet(c.player);
         List<BlockPos> dome = Constructs.dome(centre, radius);
         int rows = radius + 1;
-        c.sound(PowerSounds.BUILD, 1.5f, 0.5f);
+        c.voice(Beat.RELEASE, PowerSounds.BUILD, 1.5f, 0.5f);
         Vec3 middle = Vec3.atBottomCenterOf(centre);
         PowerState st = PowerState.of(c.player);
         // blueprint circle, a ground dome of hard light, and the dome's blocks assembling ring by ring
@@ -575,7 +576,7 @@ final class ArchitectPowers {
                 List<BlockPos> ring = new ArrayList<>();
                 for (BlockPos p : dome) if (p.getY() == y) ring.add(p);
                 Constructs.place(c.player, ring, Set.of(), false, life - rr.age);
-                c.sound(middle, PowerSounds.BUILD, 0.6f, 0.6f + rr.age * 0.1f);
+                c.voice(middle, Beat.HOLD, PowerSounds.BUILD, 0.6f, 0.6f + rr.age * 0.1f);
             }
             double r2 = radius * radius;
             if (rr.age % 20 == 0) {
@@ -607,7 +608,7 @@ final class ArchitectPowers {
                     if (aim == null) continue;
                     var b = Bolts.fire(c.level, c.player, null, top, aim.getBoundingBox().getCenter().subtract(top), 2.6f, boltDmg, c.force(), BOLT, 20, 0f);
                     b.cast = c;
-                    c.sound(top, PowerSounds.SHOT, 0.7f, 1.2f);
+                    c.voice(top, Beat.EXTRA_A, PowerSounds.SHOT, 0.7f, 1.2f);
                 }
             }
         });

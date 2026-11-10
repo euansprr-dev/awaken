@@ -93,6 +93,33 @@ final class GateCommands {
                                 }
                                 return 1;
                             })))))));
+            // tours: look at the n-th leg of a kind in the run (MOVEMENT 0 is its first climb or crossing) from <back> cells
+            // short of it, or at it turned toward where it leads when <back> is 0, with the eye <up> over the floor
+            gate.then(Commands.literal("realm_leg").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", StringArgumentType.word()).then(Commands.argument("index", IntegerArgumentType.integer(0))
+                            .then(Commands.argument("back", IntegerArgumentType.integer()).then(Commands.argument("up", IntegerArgumentType.integer()).executes(c -> {
+                                ServerPlayer p = c.getSource().getPlayerOrException();
+                                GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+                                var plan = g == null ? null : dev.awaken.gates.realms.Realms.plan(g);
+                                if (plan == null) {
+                                    c.getSource().sendFailure(Component.literal("You're not in a Realm."));
+                                    return 0;
+                                }
+                                var kind = dev.awaken.gates.realms.Land.LegKind.valueOf(StringArgumentType.getString(c, "kind").toUpperCase());
+                                int back = IntegerArgumentType.getInteger(c, "back");
+                                double[] view = plan.land().legView(kind, IntegerArgumentType.getInteger(c, "index"), back);
+                                if (view == null) {
+                                    c.getSource().sendFailure(Component.literal("This run has no such " + kind + " leg."));
+                                    return 0;
+                                }
+                                var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) Math.round(view[0]), (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) Math.round(view[2]));
+                                p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), (float) view[3], back == 0 ? 18F : 10F, true);
+                                if (p.isCreative()) {
+                                    p.getAbilities().flying = true;
+                                    p.onUpdateAbilities();
+                                }
+                                return 1;
+                            }))))));
             gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
                 GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
                 if (g == null || g.realm.isEmpty()) return 0;

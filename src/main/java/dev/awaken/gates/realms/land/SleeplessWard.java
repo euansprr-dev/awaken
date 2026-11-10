@@ -253,4 +253,11 @@ public final class SleeplessWard extends GeneratedCrawl<SleeplessWard.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x5a4a80, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xffe090, 18, 0.8F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a house a dream remembers: corridors that are rooms, a landing along one side, boards that give, a stairwell. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.TERRACE, Cave.Form.HALL), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
+                List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE), List.of(Chasm.Kind.FALLING, Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.BRIDGE), true, 2.2, 4);
+    }
 }

@@ -244,4 +244,11 @@ public final class CinderWorkings extends GeneratedCrawl<CinderWorkings.M> {
         if (lord != null) air.mist(lord.feet + 1, 5, 0x7a2a12, 0.45F).light(lord.cx, lord.feet + 4, lord.cz, 0xff8030, 18, 0.9F);
         return air.build();
     }
+
+    /** What this kind is cut like (SPEC §50.9, "No two alike"): a mine: tall cuts along the seam, benches of spoil, timbers over the workings, a square pit-head shaft. */
+    @Override
+    protected Style style() {
+        return new Style(List.of(Cave.Form.RIFT, Cave.Form.OVAL, Cave.Form.TERRACE, Cave.Form.PIT), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
+                List.of(Arena.Plan.TIERS, Arena.Plan.RING), List.of(Chasm.Kind.BEAMS, Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.STEPS), true, 2.2, 4);
+    }
 }
