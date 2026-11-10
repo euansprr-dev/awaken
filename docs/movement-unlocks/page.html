@@ -176,7 +176,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <h2>The road, in hours of play</h2>
   <p class="muted">Hours are from the game's own pacing simulator for a balanced player. A careful player takes about a third longer.</p>
   <div class="scroll">
-  <svg class="road" viewBox="-20 0 1020 330" role="img" aria-label="Two roads on one time axis from 0 to 66 hours. Today: the rope at 3.4 hours, the leap and wings at no known time, flight at 35.8 hours, the Sovereign after the ending. Proposed: the rope at 3.4 hours then a vault, the leap at the first crown reached by rope, wings at 10.2 hours then a sky platform, flight at 35.8 hours, the Sovereign at 61.4 hours.">
+  <svg class="road" viewBox="-20 0 1020 330" role="img" aria-label="Two roads on one time axis from 0 to 66 hours. Before: the rope at 3.4 hours, the leap and wings at no known time, flight at 35.8 hours, the Sovereign after the ending. As built: the rope at 3.4 hours then a vault, the leap at the first crown reached by rope, wings at 10.2 hours then a sky platform, flight at 35.8 hours, the Sovereign at 61.4 hours.">
     <!-- x = 60 + hours * 13.4 -->
     <line class="axis" x1="60" y1="292" x2="960" y2="292"/>
     <g class="t-m" text-anchor="middle">
@@ -197,7 +197,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
       <rect class="fv" x="840.8" y="16" width="84" height="18" rx="3"/><text x="882.8" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">SOVEREIGN</text>
     </g>
     <!-- today -->
-    <text class="t-h" x="320" y="62">Today</text>
+    <text class="t-h" x="320" y="62">Before</text>
     <line class="lane" x1="60" y1="104" x2="960" y2="104"/>
     <circle class="dot n" cx="60" cy="104" r="6"/><text x="50" y="108" text-anchor="end">Runner</text>
     <circle class="dot d" cx="105.6" cy="104" r="7"/><text x="105.6" y="88" text-anchor="middle">Rope</text>
@@ -206,7 +206,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
     <circle class="dot a" cx="539.7" cy="104" r="7"/><text x="548" y="88">Flight</text>
     <circle class="dot v" cx="936" cy="104" r="7"/><text x="936" y="88" text-anchor="end">Sovereign, after the ending</text>
     <!-- proposed -->
-    <text class="t-h" x="320" y="212">Proposed</text>
+    <text class="t-h" x="400" y="206">As built</text>
     <line class="lane" x1="60" y1="254" x2="960" y2="254"/>
     <circle class="dot n" cx="60" cy="254" r="6"/><text x="50" y="258" text-anchor="end">Runner</text>
     <circle class="dot d" cx="105.6" cy="254" r="7"/><rect class="place" x="116" y="250" width="8" height="8" transform="rotate(45 120 254)"/><line class="axis" x1="105.6" y1="246" x2="105.6" y2="226"/><text x="111" y="230">Rope, at a vault</text>
@@ -220,13 +220,39 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
 </section>
 
 <section>
-  <h2>Rung by rung: today, and what I propose</h2>
-  <p class="muted">The pictures on the left are the real game before this plan, taken by tours on GitHub's machines. The pictures on the right are the mock-ups you approved, drawn over real screenshots. Pictures of the built moments replace them when their tour lands.</p>
+  <h2>Built on 11 November</h2>
+  <p>All twelve decisions are coded on the branch <code>claude/movement-unlocks-b62e18</code>, behind one world option, <code>wayUp</code>, which is on. Switch it off and every old rule is back exactly. It is not merged and you have not played it.</p>
+  <div class="kit">
+    <div class="side">
+      <span class="eyebrow">Different from the plan</span>
+      <ol class="find">
+        <li><b>The six new Rope and Wings moves have no lesson yet.</b> Their triggers live on that branch. Each is a few lines once the two are merged.</li>
+        <li><b>The lit place is a thin beam,</b> not brighter rings on the platform.</li>
+        <li><b>The gold figure follows a path worked out on the spot</b> (a swing to the mast, two hops, a run off the pier), not a recorded run.</li>
+        <li><b>The K rows are text and a bar,</b> not key caps and ten pips. That page can only draw text and bars.</li>
+        <li><b>A soft landing after the wings' gift works anywhere for a minute,</b> not only on the platform. A first glide leaves the platform.</li>
+      </ol>
+    </div>
+    <div class="side">
+      <span class="eyebrow">Found by looking at it built</span>
+      <ol class="find">
+        <li><b>Wings need two presses.</b> Once you hold the leap, the first press in the air is the double jump. The prompt, the card and the K row now say "twice".</li>
+        <li><b>The line that tells you a place lit up could be filed away unseen.</b> The game files any ordinary message that has waited 45 seconds, and a rank-up is crowded. It is now told twenty seconds after the rank and cannot be filed.</li>
+        <li><b>The game's ruin finder names vaults inside Carillon,</b> where none can exist. The road skips them.</li>
+        <li><b>A first visit to a vault is also a discovery,</b> and its big card sat over the rope's words. The rope's title now moves below it.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Rung by rung: before, and as built</h2>
+  <p class="muted">Every picture is the real game, taken by tours on GitHub's machines. On the left, before this plan. On the right, the same moment as built, on the branch that waits to be merged.</p>
 
   <div class="rung" id="rope">
     <header><span class="chip d">D-RANK</span><h3>The rope</h3><span class="when">3.4 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         <figure><img src="shots/tether_now.jpg" alt="2.9 seconds after the Ringer falls, in a real D rank assessment. The dark links on the floor ahead are its chain: this is the moment the rope is given. The only message on screen is Minecraft&#x27;s own recipe toast." loading="lazy"><figcaption><b>2.9 seconds after the Ringer falls, in a real D rank assessment.</b> The dark links on the floor ahead are its chain: this is the moment the rope is given. The only message on screen is Minecraft's own recipe toast.</figcaption></figure>
         <dl class="facts">
           <dt>Earned by</dt><dd>Winning the D rank fight. The Ringer's chain is the rope.</dd>
@@ -234,26 +260,22 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
           <dt>Stuck?</dt><dd>No. But nothing asks you to use it, and the first vault's promise from hour one ("Its line waits for a D-rank hunter") is never paid.</dd>
         </dl>
       </div>
-      <div class="side next"><span class="eyebrow">Proposed</span>
-        <div class="mock"><img src="shots/vow_b.jpg" alt="" loading="lazy"><div class="shade"></div>
-          <div class="pin" style="left:28%;top:25%"><div class="lab"><kbd class="cap">Left Alt</kbd>Hold to throw it</div><div class="stem"></div><div class="ring"></div></div>
-          <div class="card"><b>The rope</b><span><kbd class="cap">Left Alt</kbd> hold: swing</span><span>let go: fly</span></div>
-        </div>
-        <span class="mocknote">Mock-up over a real screenshot of the vault. Your own key sits on the thing to aim at.</span>
+      <div class="side next"><span class="eyebrow">Built</span>
+        <figure><img src="shots/built_rope.jpg" alt="Built: the vault&#x27;s mast. Your own key, with &quot;Throw it at the mast&quot;, sits on the mast until you throw the rope yourself." loading="lazy"><figcaption><b>Built: the vault's mast.</b> Your own key, with "Throw it at the mast", sits on the mast until you throw the rope yourself.</figcaption></figure>
         <ol class="steps">
           <li><b>Opened</b><span>The Ringer falls. Its chain is at your feet, as now. It is cold iron until a vault wakes it.</span></li>
-          <li><b>A place</b><span>Home from the fight: "A vault has lit up for the chain you're carrying. It's 310 blocks east of here." The one you met in hour one, if you met one. <span class="tag built">vaults built</span></span></li>
-          <li><b>Given</b><span>You step under its pylons. The vault takes the chain, the rope throws itself and pulls you up the pylon. Then you throw it yourself to reach the mast. <span class="tag built">scene built, unreachable today</span></span></li>
+          <li><b>A place</b><span>Twenty seconds after you are home: "A vault has lit up for the chain you're carrying. It's 310 blocks east of here." One you have already found, if it is near. Any vault will do.</span></li>
+          <li><b>Given</b><span>You step under its pylons. The vault takes the chain, the rope throws itself and pulls you up the pylon. Then your own key sits on the mast until you throw it yourself.</span></li>
         </ol>
       </div>
     </div>
-    <div class="strip"><figure><img src="shots/vow_a.jpg" alt="The vault&#x27;s rope scene: built, tested, and out of reach in a new world. The rope has just pulled the player up the pylon. Its words, &quot;The line is yours&quot;, are drawn underneath the vault&#x27;s own discovery card. The tour forced the two together; the scene itself holds nothing back." loading="lazy"><figcaption><b>The vault's rope scene: built, tested, and out of reach in a new world.</b> The rope has just pulled the player up the pylon. Its words, "The line is yours", are drawn underneath the vault's own discovery card. The tour forced the two together; the scene itself holds nothing back.</figcaption></figure><figure><img src="shots/vow_b.jpg" alt="Then it makes you use it. &quot;Reach the beacon mast&quot;, with a ring of light on the mast at the left." loading="lazy"><figcaption><b>Then it makes you use it.</b> "Reach the beacon mast", with a ring of light on the mast at the left.</figcaption></figure><figure><img src="shots/tasks_vow.jpg" alt="Today&#x27;s Tasks page at D-rank, rope in hand. The card at the bottom right, &quot;Keep the Tether Vow&quot;, can never be done in a new world: the vow only starts for someone without the rope." loading="lazy"><figcaption><b>Today's Tasks page at D-rank, rope in hand.</b> The card at the bottom right, "Keep the Tether Vow", can never be done in a new world: the vow only starts for someone without the rope.</figcaption></figure></div>
+    <div class="strip"><figure><img src="shots/built_beam.jpg" alt="Built: a vault lights up. The thin green line over the roofs is its beam, 450 blocks away. The message was still a toast here and its last words were cut; it is now a panel that shows all of them." loading="lazy"><figcaption><b>Built: a vault lights up.</b> The thin green line over the roofs is its beam, 450 blocks away. The message was still a toast here and its last words were cut; it is now a panel that shows all of them.</figcaption></figure><figure><img src="shots/built_rope_card.jpg" alt="Built: the rope thrown by hand. The prompt has gone and the rope&#x27;s card of keys shows for four seconds." loading="lazy"><figcaption><b>Built: the rope thrown by hand.</b> The prompt has gone and the rope's card of keys shows for four seconds.</figcaption></figure><figure><img src="shots/vow_a.jpg" alt="Before: the vault&#x27;s rope scene, out of reach in a new world. The rope has just pulled the player up the pylon. Its words, &quot;The line is yours&quot;, are drawn underneath the vault&#x27;s own discovery card. The tour forced the two together; the scene itself holds nothing back." loading="lazy"><figcaption><b>Before: the vault's rope scene, out of reach in a new world.</b> The rope has just pulled the player up the pylon. Its words, "The line is yours", are drawn underneath the vault's own discovery card. The tour forced the two together; the scene itself holds nothing back.</figcaption></figure><figure><img src="shots/vow_b.jpg" alt="Before: then it asked you to use it, &quot;Reach the beacon mast&quot;, with a ring of light on the mast at the left." loading="lazy"><figcaption><b>Before: then it asked you to use it,</b> "Reach the beacon mast", with a ring of light on the mast at the left.</figcaption></figure><figure><img src="shots/tasks_vow.jpg" alt="Before: the Tasks page at D-rank, rope in hand. The card at the bottom right, &quot;Keep the Tether Vow&quot;, can never be done in a new world: the vow only starts for someone without the rope." loading="lazy"><figcaption><b>Before: the Tasks page at D-rank, rope in hand.</b> The card at the bottom right, "Keep the Tether Vow", can never be done in a new world: the vow only starts for someone without the rope.</figcaption></figure></div>
   </div>
 
   <div class="rung" id="leap">
     <header><span class="chip d">AFTER D</span><h3>The leap</h3><span class="when">double jump, air dash, slam</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         <figure><img src="shots/leap_now.jpg" alt="The chasm&#x27;s edge in the Leaper&#x27;s Gauntlet. &quot;Your legs remember the air.&quot; and one line, drawn over the course&#x27;s clock and another notice." loading="lazy"><figcaption><b>The chasm's edge in the Leaper's Gauntlet.</b> "Your legs remember the air." and one line, drawn over the course's clock and another notice.</figcaption></figure>
         <dl class="facts">
           <dt>Earned by</dt><dd>400 points of rope use that are shown nowhere: 2 a throw, 3 a jump off it. About 200 throws for hands that only hold the key. Then a gate opens 20 blocks ahead, once.</dd>
@@ -261,27 +283,22 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
           <dt>Stuck?</dt><dd class="stuck">Yes, twice. Swing too little and nothing ever says so. Walk on from the toast and the gate is somewhere behind you for good.</dd>
         </dl>
       </div>
-      <div class="side next"><span class="eyebrow">Proposed</span>
-        <div class="mock"><img src="shots/leap_place.jpg" alt="" loading="lazy"><div class="shade"></div>
-          <div class="ghost" style="left:44%;top:30%"></div><div class="trail" style="left:30%;top:52%;width:32%;transform:rotate(-24deg)"></div>
-          <div class="pin" style="left:62%;top:44%"><div class="lab"><kbd class="cap">Space</kbd>Press again in the air</div><div class="stem"></div><div class="ring"></div></div>
-          <div class="card"><b>The leap</b><span><kbd class="cap">Space</kbd> again</span><span><kbd class="cap">Ctrl</kbd> dash</span><span><kbd class="cap">Shift</kbd> slam from high up</span></div>
-        </div>
-        <span class="mocknote">Mock-up over a real screenshot of the course. A pale gold figure of you jumps the gap once, ahead of you.</span>
+      <div class="side next"><span class="eyebrow">Built</span>
+        <figure><img src="shots/built_leap.jpg" alt="Built: the leap&#x27;s moment. One plain sentence, and your key under the crosshair until you press it in the air." loading="lazy"><figcaption><b>Built: the leap's moment.</b> One plain sentence, and your key under the crosshair until you press it in the air.</figcaption></figure>
         <ol class="steps">
           <li><b>Opened</b><span>By what the rope is for: the first crown you reach by rope, on a Tether Spire or a great tree. The hidden count stays as a second way in, for worlds with no spire near.</span></li>
-          <li><b>A place</b><span>The course's gate opens at the foot of what you climbed, and stays on your Tasks page until you have run it. <span class="tag built">course built</span></span></li>
-          <li><b>Given</b><span>At the gap no running jump can cross. As built, plus your key at the edge and the gold figure. <span class="tag new">the figure reuses the course's ghost</span></span></li>
+          <li><b>A place</b><span>The course's gate opens at the foot of what you climbed, and stays on your Tasks page until you have run it. If it is ever lost it opens again.</span></li>
+          <li><b>Given</b><span>At the gap no running jump can cross: your key under the crosshair, a gold figure of you jumping it once, then the card of the leap's three keys.</span></li>
         </ol>
       </div>
     </div>
-    <div class="strip"><figure><img src="shots/spire.jpg" alt="A Tether Spire, from its plaza. There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope." loading="lazy"><figcaption><b>A Tether Spire, from its plaza.</b> There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope.</figcaption></figure></div>
+    <div class="strip"><figure><img src="shots/built_leap_card.jpg" alt="Built: the leap&#x27;s card of keys." loading="lazy"><figcaption><b>Built: the leap's card of keys.</b></figcaption></figure><figure><img src="shots/spire.jpg" alt="The place: a Tether Spire, from its plaza. There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope." loading="lazy"><figcaption><b>The place: a Tether Spire, from its plaza.</b> There is one a median 160 to 290 blocks from anywhere they grow. Its crown answers only to the rope.</figcaption></figure></div>
   </div>
 
   <div class="rung" id="wings">
     <header><span class="chip c">C-RANK</span><h3>Wings</h3><span class="when">10.2 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         <figure><img src="shots/wings_now.jpg" alt="A sky core gives wings. A title and one line. Then nothing says how to get down." loading="lazy"><figcaption><b>A sky core gives wings.</b> A title and one line. Then nothing says how to get down.</figcaption></figure>
         <dl class="facts">
           <dt>Earned by</dt><dd>C-rank, and reaching a sky platform's core by rope up its rings.</dd>
@@ -289,26 +306,22 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
           <dt>Stuck?</dt><dd class="stuck">Yes, softly. Nobody says to look up. The nearest platform is usually 280 to 380 blocks away, about 1,300 at worst.</dd>
         </dl>
       </div>
-      <div class="side next"><span class="eyebrow">Proposed</span>
-        <div class="mock"><div class="shade"></div>
-          <div class="beam" style="left:64%;top:0;height:46%"></div>
-          <div class="now">A sky platform has lit up for you<br><span>↗ 420 m · 96 above</span></div>
-        </div>
-        <span class="mocknote">Mock-up over a real screenshot. The platform shows itself, and the corner of the screen says how far.</span>
+      <div class="side next"><span class="eyebrow">Built</span>
+        <figure><img src="shots/built_wings.jpg" alt="Built: the first flight. A line of rings off the pier, and your key on the way out." loading="lazy"><figcaption><b>Built: the first flight.</b> A line of rings off the pier, and your key on the way out.</figcaption></figure>
         <ol class="steps">
           <li><b>Opened</b><span>By the C rank fight. The core's own rule stays: C-rank, up its rings by rope.</span></li>
-          <li><b>A place</b><span>The nearest sky platform lights up: brighter rings, a thin beam at night, a needle and a distance. <span class="tag built">platform, rings and core built</span></span></li>
-          <li><b>Given</b><span>The core gives wings. Then the way down is the lesson: a line of light runs off the pier, "Run off the end and press Space in the air", and the windway carries your first glide to the next platform or to the ground. <span class="tag built">windways built</span> <span class="tag new">joined up</span></span></li>
+          <li><b>A place</b><span>The nearest sky platform lights up: a thin beam, a line that says how far and which way, and one row on Tasks.</span></li>
+          <li><b>Given</b><span>The core gives wings. Then the way down is the lesson: a line of rings runs off the pier, with "Run off the end, then press twice". Twice, because once you hold the leap the first press in the air is the double jump. A fall is a soft landing for a minute.</span></li>
         </ol>
       </div>
     </div>
-    <div class="strip"><figure><img src="shots/wings_after.jpg" alt="Four seconds later. The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened." loading="lazy"><figcaption><b>Four seconds later.</b> The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened.</figcaption></figure><figure><img src="shots/wings_k.jpg" alt="The K menu at C-rank with wings. The next row still says the sky &quot;calls you to a trial&quot;. That trial can no longer be reached." loading="lazy"><figcaption><b>The K menu at C-rank with wings.</b> The next row still says the sky "calls you to a trial". That trial can no longer be reached.</figcaption></figure><figure><img src="shots/sky_gift.jpg" alt="The Sky Warden falls. &quot;The sky is yours.&quot; and four moves in one line of text." loading="lazy"><figcaption><b>The Sky Warden falls.</b> "The sky is yours." and four moves in one line of text.</figcaption></figure></div>
+    <div class="strip"><figure><img src="shots/built_wings_open.jpg" alt="Built: wings open on the second press, and the Wings card shows." loading="lazy"><figcaption><b>Built: wings open on the second press,</b> and the Wings card shows.</figcaption></figure><figure><img src="shots/wings_after.jpg" alt="Before: four seconds after the gift. The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened." loading="lazy"><figcaption><b>Before: four seconds after the gift.</b> The scene is over and you are standing in the cabin, high in the sky, with wings you have never opened.</figcaption></figure><figure><img src="shots/wings_k.jpg" alt="Before: the K menu at C-rank with wings. The next row still says the sky &quot;calls you to a trial&quot;. That trial can no longer be reached." loading="lazy"><figcaption><b>Before: the K menu at C-rank with wings.</b> The next row still says the sky "calls you to a trial". That trial can no longer be reached.</figcaption></figure><figure><img src="shots/sky_gift.jpg" alt="Before: the Sky Warden falls. &quot;The sky is yours.&quot; and four moves in one line of text." loading="lazy"><figcaption><b>Before: the Sky Warden falls.</b> "The sky is yours." and four moves in one line of text.</figcaption></figure></div>
   </div>
 
   <div class="rung" id="flight">
     <header><span class="chip a">A-RANK</span><h3>The open sky</h3><span class="when">35.8 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         <figure><img src="shots/sky_now.jpg" alt="Flight given in a real A rank fight. A title and a line while the Sky Warden winds up its next blow." loading="lazy"><figcaption><b>Flight given in a real A rank fight.</b> A title and a line while the Sky Warden winds up its next blow.</figcaption></figure>
         <dl class="facts">
           <dt>Earned by</dt><dd>The A rank fight. At a third of the Sky Warden's health the roof lifts and flight is given.</dd>
@@ -316,11 +329,8 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
           <dt>Stuck?</dt><dd>No. The separate Sky Leviathan trial can no longer be reached, and three texts still send you to it.</dd>
         </dl>
       </div>
-      <div class="side next"><span class="eyebrow">Proposed</span>
-        <div class="mock"><img src="shots/sky_now.jpg" alt="" loading="lazy"><div class="shade"></div>
-          <div class="card" style="bottom:auto;top:8%"><span><kbd class="cap">Space</kbd> again on open wings: fly</span><span><kbd class="cap">W</kbd> push on</span><span><kbd class="cap">Ctrl</kbd> boost</span></div>
-        </div>
-        <span class="mocknote">Mock-up over a real screenshot. In a fight there is no scene: only a strip of keys, out of the way.</span>
+      <div class="side next"><span class="eyebrow">Built</span>
+        <figure><img src="shots/built_sky.jpg" alt="Built: flight&#x27;s keys as a strip at the top of the screen, out of the fight&#x27;s way. (Shown here outside the fight, by a tour command.)" loading="lazy"><figcaption><b>Built: flight's keys as a strip</b> at the top of the screen, out of the fight's way. (Shown here outside the fight, by a tour command.)</figcaption></figure>
         <ol class="steps">
           <li><b>Kept</b><span>This one already is the rule. The fight is the place, and its last third needs the move. <span class="tag built">built</span></span></li>
           <li><b>Changed</b><span>The moment becomes a strip of your keys in place of a sentence. If you never earned wings they come two seconds earlier with their own beat, so three gifts don't land at once.</span></li>
@@ -333,7 +343,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="sovereign">
     <header><span class="chip v">SOVEREIGN</span><h3>The Sovereign's form</h3><span class="when">61.4 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         <figure><img src="shots/sov_now.jpg" alt="The Sovereign&#x27;s form. Given five seconds after an ending." loading="lazy"><figcaption><b>The Sovereign's form.</b> Given five seconds after an ending.</figcaption></figure>
         <dl class="facts">
           <dt>Earned by</dt><dd>Any ending of the story. So it comes after the last fight.</dd>
@@ -341,7 +351,8 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
           <dt>Stuck?</dt><dd>No. But the hardest rung to earn arrives when there is nothing left to use it on.</dd>
         </dl>
       </div>
-      <div class="side next"><span class="eyebrow">Proposed</span>
+      <div class="side next"><span class="eyebrow">Built</span>
+        <figure><img src="shots/built_form.jpg" alt="Built: the Sovereign&#x27;s key, shown the first time the gold line is full." loading="lazy"><figcaption><b>Built: the Sovereign's key,</b> shown the first time the gold line is full.</figcaption></figure>
         <ol class="steps">
           <li><b>Opened</b><span>By the last rank fight, the one that makes you Sovereign rank and opens the Seed. The hardest fight in the game pays the last rung.</span></li>
           <li><b>Used</b><span>You carry the form into the Seed and the final fight. An ending still gives it to any save that lacks it.</span></li>
@@ -380,16 +391,9 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
       <tr><td><b>The card</b></td><td>Four seconds, bottom centre: the move's name and its keys. No sentence. The same row then lives in K, Powers.</td><td>The K menu's kit</td></tr>
     </table></div>
     <div class="side">
-      <span class="eyebrow">K › Powers, proposed rows (mock-up)</span>
-      <div class="krows" aria-label="Mock-up of the K menu rows for the ladder">
-        <div class="krow"><div><b>The rope</b><div class="pips" title="Mastery 3 of 10; the next gem is a move"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="gem"></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="keys"><span><kbd class="cap">Left Alt</kbd> hold: swing</span><span>let go: fly</span></div></div>
-        <div class="krow"><div><b>The leap</b><div class="pips"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="keys"><span><kbd class="cap">Space</kbd> again</span><span><kbd class="cap">Ctrl</kbd> dash</span><span><kbd class="cap">Shift</kbd> slam</span></div></div>
-        <div class="krow dark"><div><b>◆ Next</b></div><div class="keys">Something a sky platform keeps. One has lit up for you.</div></div>
-        <div class="krow dark"><div><b>◆</b></div><div class="keys"></div></div>
-      </div>
-      <span class="eyebrow">Tasks › Gates and rank, the one row (mock-up)</span>
-      <div class="krows"><div class="task"><div class="dia"></div><div><b>Take the Ringer's chain to the vault that lit up</b><small>It will make something of it.</small></div><div class="needle">↗ 310 m</div></div></div>
-      <p class="small muted">One row at a time, never a list. It says the kind of place and how far. It never says what the move is, and it never names a fight.</p>
+      <figure><img src="shots/built_k.jpg" alt="Built: the K menu&#x27;s rows. Each rung with its keys and its mastery, and &quot;You haven&#x27;t used it yet&quot; until you have." loading="lazy"><figcaption><b>Built: the K menu's rows.</b> Each rung with its keys and its mastery, and "You haven't used it yet" until you have.</figcaption></figure>
+      <figure><img src="shots/built_tasks.jpg" alt="Built: the one row on Tasks, &quot;Take the Ringer&#x27;s chain to the vault that lit up&quot;." loading="lazy"><figcaption><b>Built: the one row on Tasks,</b> "Take the Ringer's chain to the vault that lit up".</figcaption></figure>
+      <p class="small muted">One row at a time, never a list. It says the kind of place. It never says what the move is, and it never names a fight.</p>
     </div>
   </div>
   <div class="tw"><table>

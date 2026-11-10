@@ -176,7 +176,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <h2>The road, in hours of play</h2>
   <p class="muted">Hours are from the game's own pacing simulator for a balanced player. A careful player takes about a third longer.</p>
   <div class="scroll">
-  <svg class="road" viewBox="-20 0 1020 330" role="img" aria-label="Two roads on one time axis from 0 to 66 hours. Today: the rope at 3.4 hours, the leap and wings at no known time, flight at 35.8 hours, the Sovereign after the ending. Proposed: the rope at 3.4 hours then a vault, the leap at the first crown reached by rope, wings at 10.2 hours then a sky platform, flight at 35.8 hours, the Sovereign at 61.4 hours.">
+  <svg class="road" viewBox="-20 0 1020 330" role="img" aria-label="Two roads on one time axis from 0 to 66 hours. Before: the rope at 3.4 hours, the leap and wings at no known time, flight at 35.8 hours, the Sovereign after the ending. As built: the rope at 3.4 hours then a vault, the leap at the first crown reached by rope, wings at 10.2 hours then a sky platform, flight at 35.8 hours, the Sovereign at 61.4 hours.">
     <!-- x = 60 + hours * 13.4 -->
     <line class="axis" x1="60" y1="292" x2="960" y2="292"/>
     <g class="t-m" text-anchor="middle">
@@ -197,7 +197,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
       <rect class="fv" x="840.8" y="16" width="84" height="18" rx="3"/><text x="882.8" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">SOVEREIGN</text>
     </g>
     <!-- today -->
-    <text class="t-h" x="320" y="62">Today</text>
+    <text class="t-h" x="320" y="62">Before</text>
     <line class="lane" x1="60" y1="104" x2="960" y2="104"/>
     <circle class="dot n" cx="60" cy="104" r="6"/><text x="50" y="108" text-anchor="end">Runner</text>
     <circle class="dot d" cx="105.6" cy="104" r="7"/><text x="105.6" y="88" text-anchor="middle">Rope</text>
@@ -206,7 +206,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
     <circle class="dot a" cx="539.7" cy="104" r="7"/><text x="548" y="88">Flight</text>
     <circle class="dot v" cx="936" cy="104" r="7"/><text x="936" y="88" text-anchor="end">Sovereign, after the ending</text>
     <!-- proposed -->
-    <text class="t-h" x="320" y="212">Proposed</text>
+    <text class="t-h" x="400" y="206">As built</text>
     <line class="lane" x1="60" y1="254" x2="960" y2="254"/>
     <circle class="dot n" cx="60" cy="254" r="6"/><text x="50" y="258" text-anchor="end">Runner</text>
     <circle class="dot d" cx="105.6" cy="254" r="7"/><rect class="place" x="116" y="250" width="8" height="8" transform="rotate(45 120 254)"/><line class="axis" x1="105.6" y1="246" x2="105.6" y2="226"/><text x="111" y="230">Rope, at a vault</text>
@@ -252,7 +252,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="rope">
     <header><span class="chip d">D-RANK</span><h3>The rope</h3><span class="when">3.4 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         @@FIG:tether_now@@
         <dl class="facts">
           <dt>Earned by</dt><dd>Winning the D rank fight. The Ringer's chain is the rope.</dd>
@@ -275,7 +275,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="leap">
     <header><span class="chip d">AFTER D</span><h3>The leap</h3><span class="when">double jump, air dash, slam</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         @@FIG:leap_now@@
         <dl class="facts">
           <dt>Earned by</dt><dd>400 points of rope use that are shown nowhere: 2 a throw, 3 a jump off it. About 200 throws for hands that only hold the key. Then a gate opens 20 blocks ahead, once.</dd>
@@ -298,7 +298,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="wings">
     <header><span class="chip c">C-RANK</span><h3>Wings</h3><span class="when">10.2 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         @@FIG:wings_now@@
         <dl class="facts">
           <dt>Earned by</dt><dd>C-rank, and reaching a sky platform's core by rope up its rings.</dd>
@@ -321,7 +321,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="flight">
     <header><span class="chip a">A-RANK</span><h3>The open sky</h3><span class="when">35.8 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         @@FIG:sky_now@@
         <dl class="facts">
           <dt>Earned by</dt><dd>The A rank fight. At a third of the Sky Warden's health the roof lifts and flight is given.</dd>
@@ -343,7 +343,7 @@ textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius
   <div class="rung" id="sovereign">
     <header><span class="chip v">SOVEREIGN</span><h3>The Sovereign's form</h3><span class="when">61.4 hours in</span></header>
     <div class="pair">
-      <div class="side now"><span class="eyebrow">Today</span>
+      <div class="side now"><span class="eyebrow">Before</span>
         @@FIG:sov_now@@
         <dl class="facts">
           <dt>Earned by</dt><dd>Any ending of the story. So it comes after the last fight.</dd>
