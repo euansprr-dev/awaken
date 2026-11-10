@@ -52,3 +52,30 @@ Each builder ran at 190k to 380k of context per step, and the orchestrator at 65
 - Builders should not open paintings or picture sheets (they don't judge looks) and should get a short API card in place of reading
   the kit's sources: both swell their context.
 - The orchestrator must keep its own context small: sheets and status in files, a fresh session per wave.
+
+## 10 Nov, 14:45 local: look round 1 done, test reported, waiting on Euan
+
+- Look round 1 merged (tip of the three builder branches: Hour Crypt `1b80b6972`, Quiet Barrow `b8a0d1df9`, Wax Galleries
+  `2d8a9c7ca`); each took 6 to 7 minutes with 0 failed rounds and cost 0.8M, 1.7M and 0.8M weighted tokens.
+- Real-game walks, both sets, all PASS and all inside the Realm, 5 to 7 minutes each: first pass runs 42769275037 (wax),
+  42769274848 (barrow), 42769274754 (hour); after the look round 42772347380, 42772347597, 42772347305. Shots are in
+  `run-autopilot/screenshots-ci/` in the gates worktree (untracked). `realm_enter` works in a real client.
+- The results are on the approval page (version 3): https://claude.ai/artifact/VGSkfcKhLahyckPstoWWvN, figure `fig-test.jpg`.
+- Usage: the whole test is about 30M weighted tokens, about 17.5% of a Fable week. The weekly Fable meter read 70% at 14:40 local
+  with the reset at 13:00 local on 11 Nov. The three builders are idle; nothing more is to run until Euan answers.
+- Asked of Euan: (1) carry on this way with the changes listed on the page? (2) until the reset, stop (my pick) or one more look
+  round for the Barrow and the Crypt (about 3%)? (3) after the reset, bring these three to the bar for him to play first (my pick)
+  or go on to new gates?
+
+## Known faults to fix in the next look round
+
+- Quiet Barrow: still too blue; the path is a wide straight tiled road (make it 3 wide and winding); no mist in the game;
+  the deck shot shows the game's own square sun and clouds (give the gate its own night sky, no vanilla sun in view);
+  `old_antler` is a Warden-tier stag and must not be the herd.
+- Hour Crypt: one flat blue with pale candle points; `pool` reads 2 against 10. Likely fix: Lens lights (`AirPlan.light`) at every
+  lit bay so Lens paints warm pools, and a less blue Lens look for `knell_crypt`.
+- Wax Galleries: thick pale drips and brighter arcades; `painting` lum 54 against 60 to 100; one chain still crosses the
+  `seat_painting` camera.
+- Not run on the merged tree: the full GameTest suite (CI ran it on the pushes; check the Actions tab before merging to build).
+- SPEC 50 has none of this written in yet: bench, `realm_enter`, `need realm`, TrueLight numbers, tone rule, Settle, SheetLand,
+  the blockout, carved blocks, `RealmClapper`, `RealmHush`, the two new gates.
