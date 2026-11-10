@@ -35,6 +35,11 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
     /** The walls: the nave's half width and the round drum's radius at the floor; both step back a block a tier as they rise. */
     static final int NAVE = 30, DRUM = 46, DRUM_TOP = DRUM + TIERS, HEAD_Z = -112;
     static final double PIT_R = 29.2, RAIL_R = 29.8;
+    /**
+     * The great bell's tongue isn't painted: it swings, so the Realm hangs it as block displays ({@code RealmClapper}). The middle of its ball in the
+     * land's own blocks, how far above that its pivot is, and how far above that the yoke.
+     */
+    public static final int CLAPPER_X = 0, CLAPPER_Y = F + 16, CLAPPER_Z = 0, CLAPPER_DROP = 44, CLAPPER_YOKE = 56;
     private static final BlockState PIT_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 13);
     private static final BlockState POOL_GLOW = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12);
 
@@ -719,7 +724,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
 
     /** The bell itself and what it hangs from. It's the one thing in the crypt that is meant to be in the air. */
     final class GreatBell extends Piece<M> {
-        static final int LIP = F + 16;
+        static final int LIP = CLAPPER_Y;
         static final double[][] PROFILE = {{0, 19.2}, {1.5, 19.4}, {3, 18.4}, {5, 17.2}, {9, 16}, {14, 15.2}, {22, 14.6}, {32, 14.2}, {38, 13.4}, {42, 11.8}, {45, 9.4}, {47, 6.2}, {48, 2.6}};
         static final int YOKE = LIP + 56;
 
@@ -762,10 +767,7 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
                     if (r <= out && r > out - 2.3) v.set(x, y, z, r > out - 1 ? skin(m, x, z, hh, theta, out) : hh % 9 == 3 ? m.gold : m.bronze);
                     else if (hh >= 44 && r <= out) v.set(x, y, z, m.bronzeDark);
                 }
-                // the clapper, and the head the bell hangs by
-                if (r <= 1.3 && hh < 44) v.set(x, y, z, m.iron);
-                double ball = Math.sqrt(r * r + hh * hh);
-                if (hh <= 4 && ball < 4.2) v.set(x, y, z, hh == 0 || ball > 3.4 ? m.iron : m.bronzeDark);
+                // no clapper here: the Realm hangs it, so it can swing (CLAPPER_Y). Above, the head the bell hangs by
                 // what the candles on the floor can't reach: the inside of the bell shows gold from the floor
                 if (hh >= 3 && hh <= 38 && hh % 5 == 2 && r >= 9 && r < 10) v.set(x, y, z, m.light);
                 if (hh > 48) {

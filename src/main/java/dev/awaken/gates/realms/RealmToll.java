@@ -33,6 +33,10 @@ final class RealmToll {
             apply(level, ref, plan.land(), "toll_open");
             for (ServerPlayer p : players(level, g)) level.playSound(null, p.blockPosition(), SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.7F, 0.55F);
         }
+        // the bell's tongue swings for as long as the doors are down, and each stroke after the first sounds again, quieter
+        if (RealmClapper.tick(level, g, ref, plan.land(), st.tollOpenAt == 0 ? -1 : (int) (now - (st.tollOpenAt - SHUT)))) {
+            for (ServerPlayer p : players(level, g)) level.playSound(null, p.blockPosition(), GatesRegistry.SND_WORLD_GREAT.get(), SoundSource.BLOCKS, 0.55F, 0.75F);
+        }
         if (now < st.tollAt) return;
         st.tollAt = now + PERIOD;
         st.tollOpenAt = now + SHUT;
@@ -43,6 +47,7 @@ final class RealmToll {
             if (!st.tolled) Signal.toast(p, Component.literal("The bell has rung and every door in the crypt has dropped. They'll lift again when it stops."));
         }
         st.tolled = true;
+        RealmClapper.tick(level, g, ref, plan.land(), 0);
     }
 
     private static java.util.List<ServerPlayer> players(ServerLevel level, GateRecord g) {
