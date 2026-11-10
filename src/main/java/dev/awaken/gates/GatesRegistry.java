@@ -471,6 +471,9 @@ public final class GatesRegistry {
             PARTICLES.register("gate_air_orb", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLASH =
             PARTICLES.register("gate_air_flash", () -> new SimpleParticleType(false));
+    /** An upright bar of light: a beam down a shaft is a few of these, one over another (SPEC §38.9 `beams`). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_BEAM =
+            PARTICLES.register("gate_air_beam", () -> new SimpleParticleType(false));
     /** A glowing mote the server sends in a colour (a world's rule showing the way: spores, cinders, pollen, fireflies). */
     public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> P_TRAIL =
             PARTICLES.register("gate_world_trail", () -> coloured(false));

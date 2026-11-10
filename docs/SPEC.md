@@ -12423,10 +12423,13 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   kind (`gate_air_wisp`, `_streak`, `_flake`, `_orb`, `_flash`; `tools/art/specs/gate_worlds_air.py`); at most 260 near
   you, made only in open air. `shaft_dust`: pale motes turning slowly along Gate Air's light shafts within 40, lit by the
   shaft (as many tries a tick as a third of the shafts, from 2 to 8, so one shaft among twenty is as full as one among
-  five). `beams` (11 Nov, for the rolled dungeons, §50.9): soft glowing wisps hanging down every shaft within 36 and
-  sinking slowly, in the shaft's colour made pale, so a shaft reads as light in the air from the side. `floor_mist` (the
-  same day): low wisps on whatever dry floor lies inside one of Gate Air's mist layers near you, in the layer's colour made
-  pale, thicker for a denser layer. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  five). `beams` (11 Nov, for the rolled dungeons, §50.9): down every shaft within 44 a few upright bars of light
+  (`gate_air_beam`, a sixth sprite), one over another, coming and going slowly, in the shaft's colour made pale, so a shaft
+  reads as light in the air from the side. Minecraft's particle shader throws away anything under a tenth opaque, so a
+  beam cannot be a faint gradient (the first try, fainter wisps, drew nothing at all): each bar is just over a tenth, and
+  the beam's soft edge is their ragged sides not lining up. `floor_mist` (the same day): low wisps on whatever dry floor
+  lies inside one of Gate Air's mist layers near you, in the layer's colour made pale, thicker for a denser layer, strong
+  enough that a wisp's middle clears that same tenth. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
   within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
   open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
   three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
@@ -21686,8 +21689,9 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
   a slot in the roof three cells by one, off the middle, over open floor, going six cells up into the rock to a light
   nobody sees the source of. It is real light: unseen lights down the middle of it every three cells, so the pool reaches
   the floor however high the roof is and what grows and lies there can be seen. Gate Air has a shaft down it that leans a
-  little, in the colour of the day at the way in, and every kind asks for `beams` and `shaft_dust` (§38.9), so glowing
-  wisps and motes hang in it. A well is only cut where
+  little, in the colour of the day at the way in, and every kind asks for `beams` and `shaft_dust` (§38.9), so bars of
+  light and motes hang in it. Those two and `floor_mist` come first in every kind's list: the client takes a list in order
+  and stops at 260 sprites, and in a kind full of fireflies nothing later in the list was ever reached. A well is only cut where
   nothing else of the run comes within three cells of it. The side cell and the way in have none (the way in has its own
   crack to the sky).
 - **Mist on the floor** of the biggest rooms: the Lord's (a skin lays its own), then the Wardens', then the dens, widest

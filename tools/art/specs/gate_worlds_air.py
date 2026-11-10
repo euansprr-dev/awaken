@@ -2,7 +2,8 @@
 
 Tinted by the client per world: a soft wisp (mist on water, smoke off candles, spore clouds, steam), a falling streak
 (rain, and with a short tail sparks or ash), a flake (snow, ash, petals, paper scraps, sand), a glowing orb with a halo
-(ghost lights, fireflies, lantern spirits, glowing spores) and a soft flash (lightning through a window).
+(ghost lights, fireflies, lantern spirits, glowing spores), a soft flash (lightning through a window) and an upright
+bar of light (a beam down a shaft, laid one over another).
 
     python3 tools/art/build_all.py gate_worlds_air
     python3 tools/art/specs/gate_worlds_air.py content
@@ -68,6 +69,21 @@ def sprites(P):
                 c.set(x, y, (255, 255, 255, a))
     s["gate_air_orb"] = c
     s["gate_air_flash"] = _soft(P, 16, 1.2, "flash", core=1.0)
+    # a beam (11 Nov, for light coming down a shaft): an upright bar of light, every lit pixel fully there. Minecraft's
+    # particle shader throws away anything under a tenth opaque, so a beam can't be a faint gradient: it is a few of these
+    # cards one over another, each just over a tenth, and its soft edge is their ragged sides not lining up.
+    for i, (lo, hi) in enumerate(((5, 10), (6, 9), (4, 11))):
+        c = P.Canvas(16, 16)
+        r = P.rng_for("air", "beam%d" % i)
+        for y in range(16):
+            # the foot thins out over the last rows; the sides are ragged all the way down
+            thin = max(0.0, (y - 11) / 5.0)
+            for x in range(lo - 1, hi + 2):
+                edge = x < lo or x > hi
+                if r.random() < (0.5 if edge else 0.0) + thin * 0.7:
+                    continue
+                c.set(x, y, (255, 255, 255, 255))
+        s["gate_air_beam_%d" % i] = c
     return s
 
 
@@ -77,6 +93,7 @@ PARTICLES = {
     "gate_air_flake": ["gate_air_flake_0", "gate_air_flake_1", "gate_air_flake_2"],
     "gate_air_orb": ["gate_air_orb"],
     "gate_air_flash": ["gate_air_flash"],
+    "gate_air_beam": ["gate_air_beam_0", "gate_air_beam_1", "gate_air_beam_2"],
 }
 
 
