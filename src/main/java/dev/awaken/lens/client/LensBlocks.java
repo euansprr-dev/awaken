@@ -44,8 +44,6 @@ final class LensBlocks {
     // sections read a tick when the window moves, sections looked at again a tick for changes, chunks uploaded a tick,
     // and of the 27 sections round the camera those looked at again a tick
     private static final int READS_PER_TICK = 14, RESCANS_PER_TICK = 6, UPLOADS_PER_TICK = 6, NEAR_PER_TICK = 3;
-    /** What a tick may spend reading sections before it leaves the rest for the next one. */
-    private static final long BUDGET_NANOS = 500_000L;
     private static final byte OPEN = 0, SOLID = 1, LEAVES = 2, LOW = 3, UNSET = -1;
 
     final Texture texture = new Texture();
@@ -121,7 +119,7 @@ final class LensBlocks {
         started = true;
         // a tick's reading has a time limit as well as a count (a tick that took 2 ms and more here was a late frame in
         // flight); what waits is read on the next tick
-        long until = System.nanoTime() + BUDGET_NANOS;
+        long until = System.nanoTime() + LensClient.tickBudget();
         // read what isn't known yet, nearest the camera first
         int reads = 0;
         scan:
