@@ -89,8 +89,9 @@ def main():
     # the wake: the light climbing the body when the last piece goes on
     for s in ("lordscale", "halo_choir"):
         strip(f"built_wake_{s}.jpg", [(moments, f"m_{s}_wake_{k}", FIG, lab) for k, lab in (("0", "THREE PIECES"), ("b", "THE FOURTH"), ("d", ""), ("f", ""), ("h", ""))], (300, 375))
-    strip("built_wake_line.jpg", [(moments, "m_wake_line", (0, 0, W, H), "")], (960, 522))
-    strip("built_held.jpg", [(moments, f"m_held_{p}_fp", (1108, 560, 3416, 1858), p.upper()) for p in ("helmet", "chestplate", "leggings", "boots")], (400, 225))
+    # a piece in the hand from your own eyes is left off the page: it has been raised since this run and not shot again
+    strip("built_held_front.jpg", [(moments, "m_held_front", (1908, 700, 3308, 1750), "")], (640, 480))
+    strip("built_marks_zoom.jpg", [(moments, f"m_marks_{i}", (1250, 820, 1850, 1440), lab) for i, lab in enumerate(("PLAIN", "FLAWLESS", "SCALE FLAW"))], (400, 413))
     strip("built_frames.jpg", [(moments, "m_frames", (608, 300, 2808, 1500), "")], (960, 524))
     strip("built_ground.jpg", [(moments, "m_ground", (608, 500, 2808, 1700), "")], (960, 524))
     strip("built_marks.jpg", [(moments, f"m_marks_{i}", (1108, 300, 2308, 1700), lab) for i, lab in enumerate(("PLAIN", "FLAWLESS", "SCALE FLAW", "FLAWLESS", "SCALE FLAW"))], (300, 350))
@@ -126,8 +127,8 @@ def section():
         ("3. Plates", "C-rank only: a gate on Gatewrought&rsquo;s back, a vault door on Vaultbreaker&rsquo;s, crystal on Shardcrown&rsquo;s forearm.", "<strong>Waits for your eye.</strong> B, A and S are not started."),
         ("4. Parts that move", "Twelve sets have one or two parts that live: a marker, a halo, rays, lanterns, plumes, wings, shards, a heart.", "Built. Seen in the game."),
         ("5. Sound", "45 sounds, every one from Minecraft&rsquo;s own recordings: the Forge Song remade, and new ones for putting a piece on, walking in a set and a blow landing on it.", "<strong>Waits for your ear.</strong> Nobody has heard any of it."),
-        ("6. Moments and marks", "A set lights feet to crown when its last piece goes on. A forged piece shows its flaw, its fold and its maker&rsquo;s mark. A piece in your hand, on the ground or in a frame is the piece, not an icon.", "Built. Tested; shots below as they land."),
-        ("After the pass", "The suit answers its own ability (wings beat on Gust, the halo rings on Hymn). Hold O to Admire: the camera circles you once.", "Built. Shots below as they land."),
+        ("6. Moments and marks", "A set lights feet to crown when its last piece goes on. A forged piece shows its flaw, its fold and its maker&rsquo;s mark. A piece in your hand, on the ground or in a frame is the piece, not an icon.", "Built. Tested, and seen in the game."),
+        ("After the pass", "The suit answers its own ability (wings beat on Gust, the halo rings on Hymn). Hold O to Admire: the camera circles you once.", "Built. Seen in the game."),
     ]
     table = ('<div class="tablewrap"><table class="built"><thead><tr><th>Stage</th><th>What it does</th><th>Where it stands</th></tr></thead><tbody>'
              + "".join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in rows) + "</tbody></table></div>")
@@ -159,10 +160,11 @@ def section():
             fig("built_wake_fp.jpg", "The wake on your own arm in first person", "The same light on your own arm, from your own eyes.", False),
         ]),
         group("Forge marks, and a piece in the world", "Armour now shows how it was made, as weapons do. And a piece you hold, drop or frame is drawn as the piece itself.", [
-            fig("built_marks.jpg", "Forged pieces with their marks", "Galewing plain, Flawless (the fold&rsquo;s ripples and a maker&rsquo;s mark on the forearm) and with a scale flaw; Vaultbreaker Flawless and flawed."),
-            fig("built_held.jpg", "Galewing's four pieces held in first person", "Galewing&rsquo;s four pieces in your hand."),
-            fig("built_frames.jpg", "Pieces in item frames", "In frames on a wall."),
-            fig("built_ground.jpg", "Pieces lying on the ground", "Dropped on the ground."),
+            fig("built_marks_zoom.jpg", "Galewing's forearm plain, Flawless and flawed, close up", "Galewing&rsquo;s forearm, close. Plain. Flawless: its maker&rsquo;s mark, a small diamond cut into the plate with the set&rsquo;s light in it. With a scale flaw: dull patches the hammer never cleared."),
+            fig("built_marks.jpg", "Forged pieces with their marks", "The same from further off: Galewing plain, Flawless and flawed; Vaultbreaker Flawless and flawed. The marks are small on purpose."),
+            fig("built_frames.jpg", "Pieces in item frames", "In frames on a wall.", False),
+            fig("built_ground.jpg", "Pieces lying on the ground", "Dropped on the ground.", False),
+            fig("built_held_front.jpg", "Holding a helm and a cuirass", "Held, seen from outside: a helm in one hand, a cuirass in the other.", False),
         ]),
         group("After the pass: the suit in a fight, and Admire", "Both of the bigger options you chose are built.", [
             fig("built_kick_galewing.jpg", "Galewing's wings on Gust", "Galewing: its ability fires and the wings are thrown open, then fold."),

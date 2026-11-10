@@ -3601,15 +3601,17 @@ def pattern_icon(helm, rank, lord, size=32):
     return out
 
 
-# How a piece sits in a hand, on the ground, in a frame and on a shelf when it is drawn as its real mesh (the piece
-# fills about a block; these are a block's own transforms, a little larger in a frame where it is the whole show)
+# How a piece sits in a hand, on the ground, in a frame and on a shelf when it is drawn as its real mesh (the renderer
+# fits the whole piece, crests and all, to a block; these are a block's own transforms, larger in a frame where it is
+# the whole show and most of a crested helm's block is air)
 HELD_DISPLAY = {
     "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.4, 0.4, 0.4]},
-    "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
+    "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1.0, 1.0, 1.0]},
     "on_shelf": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
     "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
-    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
-    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
+    # a little higher than a block sits in the hand: the first tour had most of a helm under the screen's edge
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 2, 0], "scale": [0.45, 0.45, 0.45]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 2, 0], "scale": [0.45, 0.45, 0.45]},
 }
 
 
