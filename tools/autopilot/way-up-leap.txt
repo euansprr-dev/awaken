@@ -1,0 +1,55 @@
+# The Way Up (SPEC 63), the leap's place: a Tether Spire climbed by rope, a step to the middle of its crown (the crown
+# watches within 2.6 of its block; the pilot stops on the rim), and the Leaper's Gauntlet opening at the spire's foot:
+# its panel, the gate seen from the crown and from the plaza, and its row on Tasks.
+# Seed 4245: the spire at 188, -356 (plaza 61, crown 120).
+# Run on CI: tools/tour-ci.sh tools/autopilot/way-up-leap.txt 1200
+world autopilot_way_up_leap survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 5500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken admin rankup
+wait 200
+key dismiss
+wait 10
+screen close
+cmd awaken ascent grant tether
+hud on
+cmd awaken ascent spire goto
+wait 30
+camera back
+cmd awaken ascent pilot run spire
+wait 260
+cmd awaken ascent pilot stop
+camera first
+# to the middle of the crown, looking out and down at where the gate will stand
+cmd tp @s 189.5 120.2 -355.5 facing 198 62 -356
+wait 30
+shotnow leap_01_gate_told
+wait 60
+shotnow leap_02_gate_from_crown
+screen band tasks
+wait 30
+shotnow leap_03_tasks_gate_row
+screen close
+cmd tp @s 191 62 -349 facing 198 63 -356
+wait 60
+shot leap_04_gate_at_foot
+cmd awaken ascent way
+wait 20
+info
+quit
