@@ -1,7 +1,9 @@
 # Hands at Work: every block you work, by your own hands
 
-Plan record. **Proposed, not approved: nothing here is built.** Approval page: see the end of this file.
-Branch `claude/interactions-plan-145244`. SPEC §63 points here. Written 10 Nov 2026.
+Plan record. **Approved in full by Euan on 10 Nov 2026, after trying the page: "Go with all recommendations and the
+full plan".** All ten decisions in §7 are yes as recommended. Being built on branch `claude/interactions-plan-145244`,
+all seven stages in one run, tested once at the end (his rule of 10 Nov). SPEC §63 says what exists as it lands.
+Approval page (private): https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B (his answers are its `answers/d1` to `d10`).
 
 Euan, 10 Nov 2026:
 

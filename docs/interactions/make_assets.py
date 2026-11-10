@@ -149,6 +149,14 @@ def main(stations, sclips, plates, vanilla=None, vclips=None, awaken=None):
     save(hands, 'p_table_hands', q=88)
     shot(S('a_furnace_lit'), 'p_furnace_lit', q=88)
     shot(P('p_chest_open'), 'p_chest_open', q=88)
+    shot(S('a_furnace_side'), 'today_plain')
+    for n, o in (('p_anvil', 'b_anvil'), ('p_brewing_stand', 'b_brewing'), ('p_grindstone', 'b_grindstone')):
+        shot(P(n), o, w=910, crop=(0.25, 0.08, 0.75, 0.72))
+    # ours that are already at the bar: shots from their own tours (other worktrees), when they are on this machine
+    for src, o in (('/Volumes/MEDIA/Awaken/.claude/worktrees/armour-forge-plan-c98ed9/run-autopilot/screenshots-ci/arms-anvil-every-41587690872/blade_strikes.png', 'o_war_anvil'),
+                   ('/Volumes/MEDIA/Awaken/.claude/worktrees/enchanting-plan-c9d533/run-autopilot/screenshots-ci/enchant-table-41439843140/enchant_06_the_first_stroke.png', 'o_inscribing')):
+        if os.path.exists(src):
+            shot(src, o)
     if vanilla:
         V = lambda n: os.path.join(vanilla, n + '.png')
         sheet([V('v_anvil'), V('v_smithing_table'), V('v_grindstone'), V('v_stonecutter'), V('v_loom'), V('v_brewing_stand')], 'today_grey', cols=3)

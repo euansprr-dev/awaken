@@ -21610,15 +21610,15 @@ A stat's line ended "…and you shrug off more h..." on the first build. The rul
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## 63. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md; PROPOSED 10 Nov 2026, not approved, nothing built)
+## 63. Hands at Work (every block you work, by your own hands; plan docs/interactions/PLAN.md, page https://claude.ai/artifact/LZUb3jA5f6B3iYcwQNdK2B; Euan approved all ten recommendations 2026-11-10: "Go with all recommendations and the full plan")
 
 Euan, 10 Nov 2026: "massively improve the smoothness of all of it ... when you're like hovering with an item, it actually
 shows like the actual hand of the player going over the box with that item in its hand ... Think about how it acts when
 you're more at the distance, when you're closer. Think about the POV ... Maybe like the furnace, you actually crouch down
 ... Think about the animations and from third person as well."
 
-**Status: a plan waiting for his answers. Until he says yes, §24 "Station scenes" and "Touches" describe the game as it
-is, and nothing below is in the code.** The plan record, the audit and its evidence are in `docs/interactions/PLAN.md`;
+**Status: approved, being built stage by stage (PLAN §6). Each part is written into this section as it lands; until a
+part is here, §24 "Station scenes" and "Touches" describe the game as it is.** The plan record, the audit and its evidence are in `docs/interactions/PLAN.md`;
 the page's source is `docs/interactions/page.src.html` (its pictures are CI tour shots, not in the repo); the mock-up
 that draws the carrying hand in the game's own camera is `docs/interactions/proto/` (`carry.js`, `stationgeo.py`, a port
 of `StationView`; planning tools, nothing in the game reads them).
