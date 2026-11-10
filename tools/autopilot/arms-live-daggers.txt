@@ -1,0 +1,286 @@
+# Daggers at the speed of play, in survival (Euan 2026-11-09: "they're glitching up and glitching down sometimes"). Every
+# film before this ran the world at a tenth of play's speed in creative, sampled about every half a tick, so a jump of a
+# frame or two at 20 ticks a second was never in the numbers. No pictures to speak of: every drawn frame's blades as they
+# are drawn, and what can move them (track.tsv). Standing, spamming, holding, walking, swinging at air, being hit.
+# ci knobs: PACK=perf,feel,comfort,world
+world armslivedaggers creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:gatewrought_daggers
+arms waitserver 100
+camera first
+look 0 6
+cmd gamemode survival
+cmd effect give @s minecraft:resistance 600 3 true
+wait 40
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_combo 90 1000 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_spam 110 1000 2
+wait 3
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_hold 90 1000 2
+wait 3
+arms strike 12
+wait 30
+arms strike 12
+wait 30
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_slow 90 1000 2
+wait 3
+arms strike 2
+wait 12
+arms strike 2
+wait 12
+arms strike 2
+wait 12
+arms strike 2
+wait 12
+arms strike 2
+wait 12
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_walk 90 1000 2
+wait 3
+arms walkhold 70
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 20
+look 0 -50
+wait 10
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_air 90 1000 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 20
+look 0 6
+wait 10
+cmd data merge entity @e[type=minecraft:husk,limit=1] {NoAI:0b}
+wait 10
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+wait 2
+arms film live_fight 120 1000 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 20
+wait 10
+quit

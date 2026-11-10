@@ -997,6 +997,51 @@ def bake(out=SWINGS, solve=False, round_=None):
     return out
 
 
+def splice(names):
+    """Re-bakes only the named moves (style:move) from the rig, every other byte of fp_swings.json as it was: a change to
+    one move must not re-roll the styles nobody asked about (a whole bake runs every generator's current state)."""
+    import swing_studio as SS
+    raw = open(SWINGS).read()
+    data = json.loads(raw)
+    if json.dumps(data, separators=(",", ":")) != raw:
+        raise SystemExit("fp_swings.json is not in the lab's compact form: nothing written")
+    tab = table()
+    for name in names:
+        sid, mv = name.split(":")
+        st, m = tab[sid], tab[sid]["moves"][mv]
+        held = Held("gatewrought_" + sid)
+        keys = []
+        for tt in np.arange(0, m["windup"] + m["active"] + m["recovery"] + 1e-6, KEY_DT):
+            d, R = rig_pose(st, m, held, float(tt))
+            keys.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)]
+                        + [round(float(v), 3) for v in camera(st, m, float(tt))])
+        row = data["styles"][sid]["moves"][mv]
+        row["keys"], row["form"] = keys, form_of(m)[0]
+        row["swish"] = SS.swish_of(sid, mv, m)[0]
+        if mv.startswith("strike_"):
+            row["set"] = SS.set_of(st, mv, held)
+    with open(SWINGS, "w") as f:
+        f.write(json.dumps(data, separators=(",", ":")))
+    return SWINGS
+
+
+def rerig(names):
+    """Third person solved again for the named moves (style:move) of the rigged styles, after their first-person keys or
+    their hold changed: arms_rig4.json and those moves' wrists alone (the hand-keyed styles' wrists are arms_keys.py's)."""
+    import arms_rig4 as R4
+    done = R4.bake_moves(names)
+    data = json.load(open(SWINGS))
+    for name in names:
+        sid, mv = name.split(":")
+        row = data["styles"][sid]["moves"][mv]
+        row.pop("wrist3", None)
+        row.pop("wrist3s", None)
+        row.update(rig4_wrists(done[sid][mv]))
+    with open(SWINGS, "w") as f:
+        f.write(json.dumps(data, separators=(",", ":")))
+    return SWINGS
+
+
 def rig4_wrists(r):
     """A move's wrist keys from third person's blade-first rig (arms_rig4): the bent clip's (wrist3) and the straight
     one's (wrist3s, without Bendable Cuboids: its arms solved straight, so its own turn)."""
@@ -2274,6 +2319,12 @@ def main(argv):
         print(out)
         for k, v in rep.items():
             print(f"  {k:9s} edge lead {v:.2f}")
+        return 0
+    if argv[0] == "splice":  # style:move ...   only those moves re-baked
+        print(splice(argv[1:]))
+        return 0
+    if argv[0] == "rerig":  # style:move ...   third person solved again for those moves
+        print(rerig(argv[1:]))
         return 0
     if argv[0] == "bake":  # [--solve] third person's wrists solved again; [--round N]; [--out PATH] (a tuning folder)
         out = argv[argv.index("--out") + 1] if "--out" in argv else SWINGS

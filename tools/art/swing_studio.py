@@ -244,6 +244,7 @@ MASTERY_LINK = 2  # ArmsRules.MASTERY_LINK: a finisher's press into the mastery 
 CHAIN_MARGIN = 0.85  # a leading strike's blade middle stays this far inside the frame (ndc) at the end of its carry
 CHAIN_TIP_Y = 0.4  # and its tip (a maul's head) this near the middle of the screen's height: read, not a sliver
 CHAIN_SET = 0.9  # and a chained strike's set
+HEAVY_SET = 0.75  # and a heavy's, further in: a charge holds it for as long as the press lasts
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 FULL_SET = 0.7  # a cut's set has its blade's middle this far out on the side it comes from (of the way to the screen's edge)
 FULL_END = 0.75  # and its carry takes it this far out on the far side: edge to edge, never a half cut
@@ -761,10 +762,11 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     # the last of a chain carries on out of the frame, unless the other hand waits over there (the daggers' strike 5)
     pre, stop = _full_arc(held, at, u, pre, stop, lag, roll0, drop, nxt is None and not _gives_room(st, mv),
                           form in ("chop", "slam", "rise"))
-    if chained(st, mv):
+    if chained(st, mv) or mv == "heavy":
         # a chained strike's set stays in view too: a shorter draw back from where the last one ended, never a dip
-        # out of the frame and a blade that reappears only on the hit
-        pre = _on_screen_set(held, at, pre, kn["creep"], lag, roll0)
+        # out of the frame and a blade that reappears only on the hit. A heavy's set is what a charge holds for as long
+        # as the press lasts, overheads included (Euan 2026-11-09: "you can't even see the blade anymore")
+        pre = _on_screen_set(held, at, pre, kn["creep"], lag, roll0, HEAVY_SET if mv == "heavy" else CHAIN_SET)
     if nxt is not None:
         # a strike that leads on: its follow-through ends on the screen (the next strike starts from there, in view)
         stop, drop = _on_screen_end(held, at, stop, drop, lag)
@@ -893,6 +895,10 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     else:
         gone = _off_screen(held, low)
         up = exit_t if not cad or not gone else min(max(exit_t, cad[0] + 0.25), total - min(kn["rise"], 1.5))
+    # a strike already home, waiting there for the next press, has nothing to rise from: no dip down and back up out of
+    # the stance (Euan 2026-11-09, the war-staff: "puts into the natural stance and then dips downwards and back upwards")
+    if not twirl and float(np.linalg.norm(low[0])) < 0.03 and abs(float(L.mat_quat(low[1])[3])) > 0.9996:
+        return out(rest, spun)
     rise = min(kn["rise"], total - up)
     far = far_led(st, mv)
     seen_out = lambda q: out(q, spun)
@@ -1033,13 +1039,14 @@ def _tip_ndc(held, pose):
     return ndc(np.array([L.HX, L.HY, L.HZ]) + d + R @ held.tip)
 
 
-def _on_screen_set(held, at, pre, creep, lag, roll0):
-    """The draw back cut until the blade's middle, at the set, is inside the frame (CHAIN_SET)."""
+def _on_screen_set(held, at, pre, creep, lag, roll0, limit=None):
+    """The draw back cut until the blade's middle, at the set, is inside the frame (limit, CHAIN_SET unless told)."""
+    limit = CHAIN_SET if limit is None else limit
     for k in np.linspace(1.0, 0.2, 17):
         d, R = at(-pre * k - creep, lag, roll0)
         mid = np.array([L.HX, L.HY, L.HZ]) + d + R @ (held.grip + (held.tip - held.grip) * L.MID)
         n = ndc(mid)
-        if mid[2] < 0 and abs(n[0]) <= CHAIN_SET and abs(n[1]) <= CHAIN_SET:
+        if mid[2] < 0 and abs(n[0]) <= limit and abs(n[1]) <= limit:
             return pre * k
     return pre * 0.2
 

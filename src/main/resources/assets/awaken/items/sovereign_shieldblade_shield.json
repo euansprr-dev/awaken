@@ -1,0 +1,10 @@
+{
+ "model": {
+  "type": "minecraft:special",
+  "base": "awaken:item/sovereign_shieldblade_shield_in_hand",
+  "model": {
+   "type": "awaken:weapon",
+   "weapon": "sovereign_shieldblade_shield"
+  }
+ }
+}
