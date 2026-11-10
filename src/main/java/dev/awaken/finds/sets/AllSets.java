@@ -30,4 +30,9 @@ public final class AllSets {
         PlacesFar.init();
         Monuments.init();
     }
+
+    /** Scenes that are not kinds: a generator given other numbers, drawn for a plan's page by the picture maker. */
+    public static java.util.Map<String, java.util.function.Consumer<dev.awaken.finds.Scene>> proofs() {
+        return Monuments.proofs();
+    }
 }

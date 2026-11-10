@@ -203,128 +203,153 @@ final class Monuments {
 
     // ---- B. The Listening Dish --------------------------------------------------------------------------------------
 
-    private static final int DISH = 30;
+    /**
+     * What one dish is: how wide, how steeply tipped to the north-east, how deep its bowl, how tall its pylon stands, and
+     * which arc of its rim has fallen (degrees, east 0, south 90). One generator, many dishes: the family's variants are
+     * rows of this, not copies of the code.
+     */
+    record Dish(int r, double tilt, int depth, int pylon, int fallFrom, int fallTo) {
+        /** How far a column lies toward the high side. */
+        double lean(int x, int z) {
+            return (x - z) / Math.sqrt(2);
+        }
 
-    /** How far a column lies toward the dish's high side (the north-east). */
-    private static double lean(int x, int z) {
-        return (x - z) / Math.sqrt(2);
+        /** The height of the bowl's skin at a column: a rim plane tipped to the north-east, less the bowl's depth. */
+        int bowl(int x, int z) {
+            return (int) Math.round(1 + tilt * r + tilt * lean(x, z) - depth * (1 - (x * x + z * z) / (double) (r * r)));
+        }
     }
 
-    /** The height of the bowl's skin at a column: a rim plane tipped to the north-east, less the bowl's depth. */
-    private static int bowl(int x, int z) {
-        return (int) Math.round(13 + 0.4 * lean(x, z) - 9 * (1 - (x * x + z * z) / (double) (DISH * DISH)));
-    }
+    static final Dish LISTENING = new Dish(30, 0.4, 9, 34, -170, -100);
 
     private static void listeningDish(Scene s) {
-        s.level(36, 6).clear(46);
+        dish(s, LISTENING);
+        s.cam(-30, 5, 33, -138, -8).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(22, 2, -8, 170, -12);
+    }
+
+    static void dish(Scene s, Dish d) {
+        int R = d.r();
+        s.level(R + 6, 6).clear(R + 16);
         // -- the dish: a skin three thick, bronze rings, a lip; solid where it rests on the ground
-        for (int x = -31; x <= 31; x++)
-            for (int z = -31; z <= 31; z++) {
+        for (int x = -R - 1; x <= R + 1; x++)
+            for (int z = -R - 1; z <= R + 1; z++) {
                 double r = Math.sqrt(x * x + z * z);
-                if (r > 30.6) continue;
-                int top = Math.max(1, bowl(x, z));
-                boolean rim = r > 28.4;
-                BlockState skin = rim ? M.block() : Math.abs(r - 10) < 0.7 || Math.abs(r - 20) < 0.7 ? M.bronze() : r < 5.2 ? M.mosaic() : M.flag();
+                if (r > R + 0.6) continue;
+                int top = Math.max(1, d.bowl(x, z));
+                boolean rim = r > R - 1.6;
+                BlockState skin = rim ? M.block() : Math.abs(r - R / 3.0) < 0.7 || Math.abs(r - R * 2 / 3.0) < 0.7 ? M.bronze() : r < 5.2 ? M.mosaic() : M.flag();
                 for (int y = top - 3 <= 3 ? 1 : top - 2; y < top; y++) s.put(x, y, z, M.course(y));
                 s.put(x, top, z, skin);
                 if (rim) {
-                    s.put(x, top + 1, z, r > 29.5 ? M.bronzeBand() : M.block());
-                    if (r > 29.5 && Math.floorMod(x + z, 5) == 0) s.put(x, top + 2, z, M.blockSlab());
+                    s.put(x, top + 1, z, r > R - 0.5 ? M.bronzeBand() : M.block());
+                    if (r > R - 0.5 && Math.floorMod(x + z, 5) == 0) s.put(x, top + 2, z, M.blockSlab());
                 }
             }
-        // -- what carries the high side: a drum, and twelve fins out to the rim with a way through each
-        for (int x = -20; x <= 20; x++)
-            for (int z = -20; z <= 20; z++) {
+        // -- what carries the high side: a drum, and fins out to the rim with a way through each
+        double drum = R * 0.62;
+        for (int x = -R; x <= R; x++)
+            for (int z = -R; z <= R; z++) {
                 double r = Math.sqrt(x * x + z * z);
-                if (r < 17.6 || r >= 19.4) continue;
-                for (int y = 1; y <= bowl(x, z) - 3; y++) s.put(x, y, z, y % 10 == 0 ? M.band() : M.course(y));
+                if (r < drum - 0.9 || r >= drum + 0.9) continue;
+                for (int y = 1; y <= d.bowl(x, z) - 3; y++) s.put(x, y, z, y % 10 == 0 ? M.band() : M.course(y));
             }
         for (int k = 0; k < 12; k++) {
             double a = Math.toRadians(k * 30 + 15);
-            for (int r = 20; r <= 29; r++) {
-                int x = (int) Math.round(Math.cos(a) * r), z = (int) Math.round(Math.sin(a) * r), top = bowl(x, z) - 3;
-                boolean way = r >= 23 && r <= 25 && top > 8;
+            for (int r = (int) drum + 1; r <= R - 1; r++) {
+                int x = (int) Math.round(Math.cos(a) * r), z = (int) Math.round(Math.sin(a) * r), top = d.bowl(x, z) - 3;
+                boolean way = Math.abs(r - (drum + R) / 2) <= 1.2 && top > 8;
                 for (int y = 1; y <= top; y++) {
                     if (way && y <= 4) continue;
                     s.put(x, y, z, way && y == 5 ? M.band() : y % 10 == 0 ? M.band() : M.course(y));
                 }
-                if (r == 29 && top > 4) s.put(x, top + 1, z, M.block());
+                if (r == R - 1 && top > 4) s.put(x, top + 1, z, M.block());
             }
         }
-        // -- the third of the rim that fell, between west and north: a ragged bite out of the dish, stumps of what carried it
-        for (int x = -31; x <= 0; x++)
-            for (int z = -31; z <= 0; z++) {
-                double r = Math.sqrt(x * x + z * z), th = Math.toDegrees(Math.atan2(z, x));
-                if (th > -100 || th < -170) continue;
-                double edge = 16 + n(s, x * 1.5, z * 1.5, 4.0) * 9;
-                if (r < edge) continue;
-                int stump = (int) (n(s, x * 2.1 + 9, z * 2.1, 2.5) * 7) - 1;
-                for (int y = Math.max(1, stump + 1); y <= 34; y++) {
-                    var q = s.rel(x, y, z);
-                    s.blocks().remove(net.minecraft.core.BlockPos.asLong(q.getX(), q.getY(), q.getZ()));
+        // -- the arc of the rim that fell: a ragged bite out of the dish, stumps of what carried it
+        if (d.fallTo() > d.fallFrom())
+            for (int x = -R - 1; x <= R + 1; x++)
+                for (int z = -R - 1; z <= R + 1; z++) {
+                    double r = Math.sqrt(x * x + z * z), th = Math.toDegrees(Math.atan2(z, x));
+                    if (th > d.fallTo() || th < d.fallFrom()) continue;
+                    if (r < R * 0.53 + n(s, x * 1.5, z * 1.5, 4.0) * R * 0.3) continue;
+                    int stump = (int) (n(s, x * 2.1 + 9, z * 2.1, 2.5) * 7) - 1;
+                    for (int y = Math.max(1, stump + 1); y <= d.pylon() + 8; y++) {
+                        var q = s.rel(x, y, z);
+                        s.blocks().remove(net.minecraft.core.BlockPos.asLong(q.getX(), q.getY(), q.getZ()));
+                    }
                 }
-            }
         // -- the pylon: a plinth, a base with the vault in it, a shaft that leans to the high side and is broken off
-        disc(s, 0, 0, 5.3, 5, M.block());
-        M.mass(s, -3, 6, -3, 3, 11, 3);
-        air(s, -1, 6, -1, 1, 8, 1);
-        for (int x = -1; x <= 1; x++) for (int y = 6; y <= 9; y++) s.put(x, y, 4, y == 9 ? M.band() : x == 0 ? AIR : M.bronzeBand());
-        for (int y = 6; y <= 7; y++) {
+        int c = Math.max(1, d.bowl(0, 0)), H = d.pylon() - 4 + c;      // the dish's middle, and where the shaft ends
+        disc(s, 0, 0, 5.3, c + 1, M.block());
+        M.mass(s, -3, c + 2, -3, 3, c + 7, 3);
+        air(s, -1, c + 2, -1, 1, c + 4, 1);
+        for (int x = -1; x <= 1; x++) for (int y = c + 2; y <= c + 5; y++) s.put(x, y, 4, y == c + 5 ? M.band() : x == 0 ? AIR : M.bronzeBand());
+        for (int y = c + 2; y <= c + 3; y++) {
             s.put(0, y, 2, AIR);
             s.put(0, y, 3, M.door());
             s.part("door", 0, y, 3);
         }
-        s.put(0, 6, -1, M.seal());
-        s.part("prize", 0, 6, -1);
-        s.put(0, 9, 0, M.lamp(true));
+        s.put(0, c + 2, -1, M.seal());
+        s.part("prize", 0, c + 2, -1);
+        s.put(0, c + 5, 0, M.lamp(true));
         for (int[] k : new int[][] {{3, 0}, {-3, 0}, {0, -3}}) {
-            s.put(k[0], 7, k[1], M.glyph());
-            s.put(k[0], 8, k[1], M.glyph());
-            s.part("carving", k[0], 7, k[1]);
+            s.put(k[0], c + 3, k[1], M.glyph());
+            s.put(k[0], c + 4, k[1], M.glyph());
+            s.part("carving", k[0], c + 3, k[1]);
         }
-        for (int y = 12; y <= 34; y++) {
-            int hs = y < 21 ? 2 : 1, o = (y - 12) / 7;
+        for (int y = c + 8; y <= H; y++) {
+            int up = y - c - 8, hs = up < (H - c - 8) * 0.4 ? 2 : 1, o = up / 7;
             for (int x = -hs; x <= hs; x++)
-                for (int z = -hs; z <= hs; z++) s.put(o + x, y, -o + z, y == 12 || y == 20 || y == 27 ? M.bronzeBand() : M.course(y));
-            if (y == 16) {                                         // the light in its core, seen through a cross cut in each face
-                for (int d = 0; d < 4; d++) for (int k = 1; k <= 2; k++) s.put(o + DX[d] * k, y, -o + DZ[d] * k, AIR);
+                for (int z = -hs; z <= hs; z++) s.put(o + x, y, -o + z, up % 8 == 0 ? M.bronzeBand() : M.course(y));
+            if (up == 4) {                                         // the light in its core, seen through a cross cut in each face
+                for (int q = 0; q < 4; q++) for (int k = 1; k <= 2; k++) s.put(o + DX[q] * k, y, -o + DZ[q] * k, AIR);
                 s.put(o, y, -o, M.lamp(true));
             }
         }
-        M.ruin(s, -3, -8, 8, 3, 30, 3, 34);
+        M.ruin(s, -3, -8, 8, 3, H - 4, 3, H);
         // -- the sockets in the low rim, where three banded stones fell out
-        for (int[] k : new int[][] {{-21, 21}, {-13, 27}, {-27, 13}}) {
-            int y = Math.max(1, bowl(k[0], k[1])) + 1;
-            s.put(k[0], y, k[1], M.rubble());
-            s.part("socket", k[0], y, k[1]);
+        for (int deg = 115; deg <= 155; deg += 20) {
+            int x = (int) Math.round(Math.cos(Math.toRadians(deg)) * R), z = (int) Math.round(Math.sin(Math.toRadians(deg)) * R), y = Math.max(1, d.bowl(x, z)) + 1;
+            s.put(x, y, z, M.rubble());
+            s.part("socket", x, y, z);
         }
         M.age(s, 6, 40);
-        // -- what fell
-        M.heap(s, -22, -20, 4.6);
-        M.heap(s, -14, -27, 3.8);
-        M.heap(s, -28, -11, 3.6);
-        M.heap(s, -15, -13, 3.0);
-        M.heap(s, -31, -25, 2.8);
+        // -- what fell, lying under the arc it fell from
+        if (d.fallTo() > d.fallFrom())
+            for (int i = 0; i < 5; i++) {
+                double a = Math.toRadians(d.fallFrom() + (d.fallTo() - d.fallFrom()) * (i + 0.5) / 5), rr = R * (0.75 + (i % 3) * 0.14);
+                M.heap(s, (int) Math.round(Math.cos(a) * rr), (int) Math.round(Math.sin(a) * rr), 2.8 + (i * 7 % 5) * 0.45);
+            }
         // -- the herders: lean-tos under the high rim, a hearth with one of the fallen stones for its back
-        for (int[] k : new int[][] {{19, -13}, {10, -22}}) {
-            for (int x = 0; x <= 3; x += 3) for (int y = 1; y <= 2; y++) s.put(k[0] + x, y, k[1] + 2, st(Blocks.SPRUCE_FENCE));
-            for (int x = -1; x <= 4; x++) for (int z = 0; z <= 2; z++) s.put(k[0] + x, z == 2 ? 3 : 2 + (z == 1 ? 1 : 0), k[1] + z, z == 1 ? top(st(Blocks.SPRUCE_SLAB)) : st(Blocks.SPRUCE_SLAB));
-            for (int x = -1; x <= 4; x += 5) s.put(k[0] + x, 1, k[1], st(Blocks.SPRUCE_PLANKS));
-            s.put(k[0] + 1, 1, k[1] + 1, st(Blocks.HAY_BLOCK));
-            s.put(k[0] + 2, 1, k[1] + 1, st(Blocks.CARPET.pick(DyeColor.BROWN)));
-            s.put(k[0] + 3, 1, k[1] + 3, st(Blocks.BARREL));
-        }
-        s.put(15, 0, -16, st(Blocks.COBBLESTONE));
-        s.put(15, 1, -16, st(Blocks.CAMPFIRE).setValue(CampfireBlock.LIT, false));
-        int[][] loose = {{16, -17}, {-33, -14}, {6, 34}};
+        int[][] camp = {{(int) (R * 0.63), (int) (-R * 0.43)}, {(int) (R * 0.33), (int) (-R * 0.73)}};
+        if (R >= 24)
+            for (int[] k : camp) {
+                for (int x = 0; x <= 3; x += 3) for (int y = 1; y <= 2; y++) s.put(k[0] + x, y, k[1] + 2, st(Blocks.SPRUCE_FENCE));
+                for (int x = -1; x <= 4; x++) for (int z = 0; z <= 2; z++) s.put(k[0] + x, z == 2 ? 3 : 2 + (z == 1 ? 1 : 0), k[1] + z, z == 1 ? top(st(Blocks.SPRUCE_SLAB)) : st(Blocks.SPRUCE_SLAB));
+                for (int x = -1; x <= 4; x += 5) s.put(k[0] + x, 1, k[1], st(Blocks.SPRUCE_PLANKS));
+                s.put(k[0] + 1, 1, k[1] + 1, st(Blocks.HAY_BLOCK));
+                s.put(k[0] + 2, 1, k[1] + 1, st(Blocks.CARPET.pick(DyeColor.BROWN)));
+                s.put(k[0] + 3, 1, k[1] + 3, st(Blocks.BARREL));
+            }
+        int hx = (int) (R * 0.5), hz = (int) (-R * 0.53);
+        s.put(hx, 0, hz, st(Blocks.COBBLESTONE));
+        s.put(hx, 1, hz, st(Blocks.CAMPFIRE).setValue(CampfireBlock.LIT, false));
+        int[][] loose = {{hx + 1, hz - 1}, {-R - 3, -R / 2}, {R / 5, R + 4}};
         for (int[] k : loose) {
             s.put(k[0], 1, k[1], M.bronzeBand());
             s.part("loose", k[0], 1, k[1]);
         }
-        path(s, 0, 42, -12, 31, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
-        for (int x = -40; x <= -8; x++) for (int z = 22; z <= 42; z++) if (!s.taken(x, 1, z) && x * x + z * z < 45 * 45 && x * x + z * z > 31 * 31) s.put(x, 1, z, AIR);
-        wild(s, 33, 45, 14);
-        s.cam(-30, 5, 33, -138, -8).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(22, 2, -8, 170, -12);
+        path(s, 0, R + 12, -R * 2 / 5, R + 1, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
+        for (int x = -R - 10; x <= -8; x++) for (int z = R * 3 / 4; z <= R + 12; z++) if (!s.taken(x, 1, z) && x * x + z * z < (R + 15) * (R + 15) && x * x + z * z > (R + 1) * (R + 1)) s.put(x, 1, z, AIR);
+        wild(s, R + 3, R + 15, 14);
+    }
+
+    /** Dishes that are not in the game: the same generator given other numbers, for the plan's page (docs/places/PLAN.md). */
+    static java.util.Map<String, java.util.function.Consumer<Scene>> proofs() {
+        java.util.Map<String, java.util.function.Consumer<Scene>> m = new java.util.LinkedHashMap<>();
+        m.put("dish_small_steep", s -> dish(s, new Dish(18, 0.8, 5, 22, 0, 0)));
+        m.put("dish_fallen_flat", s -> dish(s, new Dish(26, 0.12, 8, 16, 10, 150)));
+        return m;
     }
 
     // ---- C. The Sleepers' Hall --------------------------------------------------------------------------------------

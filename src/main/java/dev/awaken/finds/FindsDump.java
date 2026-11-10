@@ -26,33 +26,51 @@ final class FindsDump {
                 Awaken.LOG.error("[finds] dump: {} doesn't build", k.id(), e);
                 continue;
             }
-            StringBuilder b = new StringBuilder(1 << 18);
-            b.append("K ").append(k.id()).append(' ').append(k.number()).append(' ').append(k.reach()).append(' ').append(k.name()).append('\n');
-            b.append("L");
-            for (var g : k.lands()) b.append(' ').append(g);
-            b.append('\n');
-            for (long key : sc.shaped) {
-                int x = BlockPos.getX(key), z = BlockPos.getZ(key);
-                b.append("G ").append(x).append(' ').append(z).append(' ').append(sc.groundAt(x, z)).append('\n');
-            }
-            for (var e : sc.blocks().long2ObjectEntrySet()) {
-                long key = e.getLongKey();
-                String s = e.getValue().toString(); // Block{minecraft:oak_stairs}[facing=north,...]
-                b.append("B ").append(BlockPos.getX(key)).append(' ').append(BlockPos.getY(key)).append(' ').append(BlockPos.getZ(key)).append(' ')
-                        .append(s, 6, s.length()).append('\n');
-            }
-            for (var e : sc.parts().entrySet())
-                for (BlockPos p : e.getValue()) b.append("P ").append(e.getKey()).append(' ').append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ()).append('\n');
-            for (int[] c : sc.cams()) b.append("C ").append(c[0]).append(' ').append(c[1]).append(' ').append(c[2]).append(' ').append(c[3]).append(' ').append(c[4]).append('\n');
-            for (Scene.Spawn s : sc.spawns())
-                b.append("S ").append(BuiltInRegistries.ENTITY_TYPE.getKey(s.type())).append(' ').append(s.rel().getX()).append(' ').append(s.rel().getY()).append(' ').append(s.rel().getZ()).append('\n');
-            try {
-                Files.writeString(dir.resolve(k.id() + ".txt"), b);
-                n++;
-            } catch (IOException e) {
-                Awaken.LOG.error("[finds] dump: {} not written", k.id(), e);
-            }
+            write(dir, k.id(), k, k.number(), k.name(), sc);
+            n++;
         }
+        // generators given other numbers (a plan's proofs): the same file, under the proof's name, on the dish's own site
+        Kind host = Kinds.byId("listening_dish");
+        if (host != null)
+            for (var e : dev.awaken.finds.sets.AllSets.proofs().entrySet()) {
+                Scene sc = new Scene(Sites.forced(host, 0, 64, 0, 0, 7L), Terrain.flat(64));
+                try {
+                    e.getValue().accept(sc);
+                } catch (RuntimeException ex) {
+                    Awaken.LOG.error("[finds] dump: proof {} doesn't build", e.getKey(), ex);
+                    continue;
+                }
+                write(dir, e.getKey(), host, 90 + n, e.getKey().replace('_', ' '), sc);
+                n++;
+            }
         Awaken.LOG.info("[finds] dump: {} places written to {}", n, dir.toAbsolutePath());
+    }
+
+    private static void write(Path dir, String file, Kind k, int number, String name, Scene sc) {
+        StringBuilder b = new StringBuilder(1 << 18);
+        b.append("K ").append(file).append(' ').append(number).append(' ').append(k.reach()).append(' ').append(name).append('\n');
+        b.append("L");
+        for (var g : k.lands()) b.append(' ').append(g);
+        b.append('\n');
+        for (long key : sc.shaped) {
+            int x = BlockPos.getX(key), z = BlockPos.getZ(key);
+            b.append("G ").append(x).append(' ').append(z).append(' ').append(sc.groundAt(x, z)).append('\n');
+        }
+        for (var e : sc.blocks().long2ObjectEntrySet()) {
+            long key = e.getLongKey();
+            String s = e.getValue().toString(); // Block{minecraft:oak_stairs}[facing=north,...]
+            b.append("B ").append(BlockPos.getX(key)).append(' ').append(BlockPos.getY(key)).append(' ').append(BlockPos.getZ(key)).append(' ')
+                    .append(s, 6, s.length()).append('\n');
+        }
+        for (var e : sc.parts().entrySet())
+            for (BlockPos p : e.getValue()) b.append("P ").append(e.getKey()).append(' ').append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ()).append('\n');
+        for (int[] c : sc.cams()) b.append("C ").append(c[0]).append(' ').append(c[1]).append(' ').append(c[2]).append(' ').append(c[3]).append(' ').append(c[4]).append('\n');
+        for (Scene.Spawn s : sc.spawns())
+            b.append("S ").append(BuiltInRegistries.ENTITY_TYPE.getKey(s.type())).append(' ').append(s.rel().getX()).append(' ').append(s.rel().getY()).append(' ').append(s.rel().getZ()).append('\n');
+        try {
+            Files.writeString(dir.resolve(file + ".txt"), b);
+        } catch (IOException e) {
+            Awaken.LOG.error("[finds] dump: {} not written", file, e);
+        }
     }
 }
