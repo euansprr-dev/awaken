@@ -994,6 +994,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_light",
@@ -1876,6 +1882,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_clouds",
@@ -2753,6 +2765,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_cloudblocks",

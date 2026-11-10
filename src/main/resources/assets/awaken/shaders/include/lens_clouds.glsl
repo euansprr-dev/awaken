@@ -34,13 +34,14 @@ bool cloudBlocks() { return F(22).w > 0.0; }
 float cloudUnder() { return cloudBlocks() ? 2.0 : 6.0; }
 float cloudThick() { return cloudBlocks() ? 3.0 * CLOUD_TIER : CLOUD_THICK; }
 
-float cloudCellHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7))) * 43758.5453); }
+// The Air's cloud cells: one texel a twelve-block cell, 128 across (the noise repeats every 1536 blocks, which is 128
+// cells, so the whole field is this one small texture: tools/lens/cloud_cells.py). 16 bits, red the high byte.
+uniform sampler2D CloudCellSampler;
 
 // how deep inside a group of cloud a twelve-block cell stands (0 or less: open sky)
 float cloudCell(vec2 cell, float cover) {
-    vec2 u = (cell + 0.5) * CLOUD_CELL;
-    float n = textureLod(CloudNoiseSampler, fract(u / 1536.0), 0.0).r * 0.62 + textureLod(CloudNoiseSampler, fract(u / 384.0 + 0.37), 0.0).g * 0.38;
-    return n + (cloudCellHash(cell) - 0.5) * 0.045 - (1.0 - cover * 0.72);
+    vec2 t = texelFetch(CloudCellSampler, ivec2(cell) & 127, 0).rg;
+    return (t.r * 65280.0 + t.g * 255.0) * (1.25 / 65535.0) - (1.0 - cover * 0.72);
 }
 
 float cloudBlock(vec3 rel, vec4 cp, float camY) {

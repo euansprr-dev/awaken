@@ -6135,7 +6135,9 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     air along the view: only a camera under cover (parameter texel 21) looking at a covered point is left out. Gates
     and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
   - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
-    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. Walked cell by
+    middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. The noise repeats
+    every 128 cells, so the whole field of cells is one fixed 128x128 texture (`awaken:lens_cloud_cells`, 16 bits a
+    cell, made by `tools/lens/cloud_cells.py` from the noise): a cell is one exact read by cell number modulo 128. Walked cell by
     cell (exact entry and exit), sigma 0.95 a block
     (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
     2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
@@ -6225,6 +6227,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     before) 92.4 and 94.9. The legs differ more than the settings do. In flight as he plays the GPU's world pass is
     12.5 ms (p99 14.6) with the Air and 10.9 (p99 13.1) without, both inside the 15 ms a 60 fps frame leaves it; the
     late frames are the game's own chunk work on the render thread, which the next step profiles.
+  - With the near clouds at the frame's size (dell-10, dell-11; Cinematic-before 10.1 in the same runs): 11.9 standing
+    (74 fps uncapped), 12.2 to 12.6 flying under open sky (71 fps), 12.6 to 13.2 at night looking up. The cloud pass
+    is about 0.3 ms standing in the clearing and 0.8 flying. As he plays: 99.0 to 99.8% on time standing, 98.7 to
+    99.0% turning, 89.0 to 91.1% flying. The cell texture changed nothing measurable: the cost is the full-size pass
+    and its walks, not the cell reads.
   - The ImmersiveVFX pairs: https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`,
     `tools/steady60-tour.sh`.
 - **Not built yet**: the frame record, a profile of late frames in flight and what it leads to (the flying target is
