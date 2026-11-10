@@ -58,7 +58,7 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "awaken:music.gate.overgrown_temple",
+        "sound": "awaken:music.gate.hive",
         "min_delay": 3600,
         "max_delay": 12000
       }

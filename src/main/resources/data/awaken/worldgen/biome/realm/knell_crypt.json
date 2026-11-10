@@ -52,13 +52,13 @@
         "offset": 2.0
       },
       "additions": {
-        "sound": "awaken:realm.amber.hall",
-        "tick_chance": 0.03
+        "sound": "awaken:gate.ambient.bell",
+        "tick_chance": 0.004
       }
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "awaken:music.gate.hive",
+        "sound": "awaken:music.gate.bell_crypt",
         "min_delay": 3600,
         "max_delay": 12000
       }
