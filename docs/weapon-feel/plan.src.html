@@ -98,10 +98,12 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 <div class="wrap">
 
 <header>
-  <div class="eyebrow">AWAKEN · weapon motion and fight feel · approved in full 10 Nov 2026 · stage 0 built</div>
+  <div class="eyebrow">AWAKEN · weapon motion and fight feel · approved in full 10 Nov 2026 · stages 0 to 5 built and merged · played once, briefly</div>
   <h1>Weight in the Hand</h1>
   <p class="lead">The swings are decent, as you said. What keeps them from the top level is not the swings. It is what happens around them: whether a hit you see really landed, whether you can hear it, whether the blade and the world agree on which way it went, and whether the weapon has any weight when it stops. This plan keeps every swing and fixes those.</p>
-  <p class="note"><strong>Where it stands.</strong> You said "Go ahead with all" on 10 Nov, so all six decisions stand as recommended. Stage 0 is built: the ghost report and the listening page. Nothing you see or feel in a fight has changed yet. Next is your ten minutes of play (section 9) and your marks on the listening page.</p>
+  <p class="note"><strong>Where it stands.</strong> You said "Go ahead with all" on 10 Nov, then asked for all of it to be coded first and tested once at the end. Stages 0 to 5 are built and merged into the build (f00f43572): honest hits, the fourteen sounds made from Minecraft's own recordings, the shake, the settle and the breath, the eased guard, a draw for every weapon, the Katana's lowered rest, walls, the glance and cut grass. Stage 6, one round by hand for each weapon you flag, waits for your notes.</p>
+  <p class="note"><strong>The one test pass.</strong> The weapon tests pass, 78 of 78. Look tours on GitHub showed the game starts with all of it, every hit shown was confirmed by the server (4 of 4, no ghosts), and a blow that does no damage is answered with a dull knock. Their film also showed four faults, all fixed since: the weapon blinked out for two frames in mid-draw, the Katana jumped to its rest in one frame, its rest showed a forearm and no blade, and the sparks off a wall could not be seen. Not shown by any tour: a sweep cutting grass (its test passes; the tour's studio stands in the city, where sweeps leave plants alone).</p>
+  <p class="note"><strong>What is still yours.</strong> You played it for four minutes on 10 Nov: about sixty strikes in the air and one hit, which the server confirmed. That is too few hits to say whether the ghost hits are gone, so the ten minutes in section 9 still stand, with the Katana added. The fourteen sounds are my first picks until you mark the listening page. Nothing here has been judged by your eye or ear yet.</p>
   <div class="answer">
     <div class="eyebrow">The short version</div>
     <ul>
@@ -130,7 +132,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
     <tr><td>A hit is a hit</td><td>Hits shown on screen that the server confirms</td><td class="num">235 of 334 (70%)</td><td>95% or more in your next play log</td></tr>
     <tr><td>You hear the hit</td><td>Share of a hit sound above 300 Hz, the part a laptop plays</td><td class="num">2 to 20%</td><td>At least vanilla's own strong attack (39%), then your ear</td></tr>
     <tr><td>No fake ding</td><td>Sound files with a thin held tone above 800 Hz</td><td class="num">36 of 102</td><td>None you would pick out by ear</td></tr>
-    <tr><td>The blow goes where the blade went</td><td>Cuts whose camera kick and knockback match the blade on screen</td><td class="num">126 of 143</td><td class="num">143 of 143</td></tr>
+    <tr><td>The blow goes where the blade went</td><td>Cuts whose camera kick and knockback match the blade on screen</td><td class="num">111 of 139</td><td class="num">139 of 139</td></tr>
     <tr><td>The weapon has weight</td><td>Motion during the freeze, and after the blade stops</td><td>None, and none</td><td>A shake and a settle you pick over today's in a blind A/B</td></tr>
     <tr><td>Every weapon has a presence</td><td>Its own motion and sound when you change to it</td><td class="num">0 of 16</td><td class="num">16 of 16</td></tr>
     <tr><td>The world answers</td><td>A swing into a wall</td><td>Passes through, silent</td><td>Stops, clanks, sparks</td></tr>
@@ -181,13 +183,14 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
   </div></div>
 
   <div class="finding"><div class="big">4</div><div>
-    <h3>Seventeen cuts kick or throw the wrong way <span class="tag bad">measured</span></h3>
-    <p>The view's kick on a hit, and the side a creature is thrown to, are both read from an old pair of numbers in the timing table. The blade you see comes from the baked keys. Most of the time they agree. On 17 of 143 cuts they don't, and on nine of them the creature is thrown to the <em>opposite</em> side from your cut:</p>
+    <h3>Twenty-eight cuts kick or throw the wrong way <span class="tag bad">measured</span></h3>
+    <p>The view's kick on a hit, and the side a creature is thrown to, are both read from an old pair of numbers in the timing table. The blade you see comes from the baked keys. Most of the time they agree. On 28 of 139 cuts they don't, and on eleven of them the creature is thrown to the <em>opposite</em> side from your cut:</p>
     <ul>
-      <li><strong>Axe</strong>, fourth strike. <strong>Maul</strong>, second strike. <strong>War-staff</strong>, fourth strike. <strong>Daggers</strong>, the Art.</li>
-      <li><strong>Twin Blades</strong>, strikes 2, 3 and 4, the Slipcut and the Undercut. The 9 Nov spins changed the table's timings but not its direction numbers, which still describe the old figure-eight.</li>
+      <li><strong>Axe</strong>, fourth strike. <strong>Maul</strong>, second strike. <strong>War-staff</strong>, fourth strike. <strong>Daggers</strong>, fifth strike. <strong>Gauntlets</strong>, fourth strike.</li>
+      <li><strong>Twin Blades</strong>, strikes 2, 3 and 4, the heavy, the Slipcut and the Undercut. The 9 Nov spins changed the table's timings but not its direction numbers, which still describe the old figure-eight.</li>
     </ul>
-    <p>The other eight throw the right way but kick the view 50 to 125 degrees off the blade (the Maul's first strike, the Katana's second, three Gauntlet moves among them).</p>
+    <p>The other seventeen throw the right way but kick the view 49 to 73 degrees off the blade (the Maul's first strike, six Scythe moves and three Gauntlet moves among them).</p>
+    <p class="note">Corrected on 10 Nov. This page first said 17 of 143, and named the Daggers' Art. That count forgot to mirror the strikes thrown by the off hand. The numbers here are from the tool that was then built (<code>tools/arms/blows.py report</code>), and they are what the fix covers.</p>
   </div></div>
 
   <div class="finding"><div class="big">5</div><div>
@@ -288,7 +291,7 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
 
   <div class="change"><h3><span class="n">3</span>The blade and the world agree</h3>
     <dl class="rows">
-      <dt>Evidence</dt><dd>17 of 143 cuts kick or throw off the blade; 9 throw the creature the opposite way.</dd>
+      <dt>Evidence</dt><dd>28 of 139 cuts kick or throw off the blade; 11 throw the creature the opposite way.</dd>
       <dt>Change</dt><dd>When the swings are baked, each cut's real direction on screen at the hit is written into the timing table once. The view's kick, the side the creature is thrown, the turn of its recoil and the way a kill falls all read that one number.</dd>
       <dt>You get</dt><dd>Cut left to right and it flies right, on every weapon, with the view going with it.</dd>
       <dt>Keeps</dt><dd>Every key. Knockback strength. The 126 cuts that already agree don't change.</dd>
@@ -414,18 +417,18 @@ code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); pad
   <div class="scroll"><table>
     <tr><th>Weapon</th><th>Weight</th><th>Made</th><th>Draw</th><th>Flagged for your eye</th></tr>
     <tr><td>Longsword (and every vanilla sword)</td><td>Blade</td><td>By rule</td><td>Steel ring</td><td>Third person's heavy is still the old rising cut</td></tr>
-    <tr><td>Katana</td><td>Blade</td><td>By rule</td><td>Steel ring; the sheath</td><td>2nd strike kicks the view 50° off the blade. The sheath bonus can't be seen</td></tr>
+    <tr><td>Katana</td><td>Blade</td><td>By rule</td><td>Steel ring; the sheath</td><td>The sheath bonus can't be seen</td></tr>
     <tr><td>Greatblade</td><td>Heavy</td><td>By rule</td><td>Steel ring, heaved</td><td>Nothing measured</td></tr>
     <tr><td>Axe (and vanilla axes)</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>4th strike throws the creature the opposite way</td></tr>
-    <tr><td>Maul (and the mace)</td><td>Heavy</td><td>By rule</td><td>Wooden knock, heaved</td><td>2nd strike throws the opposite way. The slam kicks 60° off</td></tr>
+    <tr><td>Maul (and the mace)</td><td>Heavy</td><td>By rule</td><td>Wooden knock, heaved</td><td>2nd strike throws the opposite way. The slam kicks 49° off</td></tr>
     <tr><td>Spear</td><td>Blade</td><td>By rule</td><td>Wooden knock</td><td>Nothing measured</td></tr>
     <tr><td>Glaive</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>Nothing measured</td></tr>
-    <tr><td>Scythe</td><td>Heavy</td><td>By hand, 3 Nov</td><td>Wooden knock</td><td>Third person: both hands on for only half of strike 2, and off in the Undercut</td></tr>
+    <tr><td>Scythe</td><td>Heavy</td><td>By hand, 3 Nov</td><td>Wooden knock</td><td>Six moves kick 50 to 67° off. Third person: both hands on for only half of strike 2, and off in the Undercut</td></tr>
     <tr><td>War-staff</td><td>Heavy</td><td>By rule</td><td>Wooden knock</td><td>4th strike throws the opposite way</td></tr>
     <tr><td>Rapier</td><td>Snap</td><td>By rule</td><td>Thin steel ring</td><td>Nothing measured</td></tr>
-    <tr><td>Daggers</td><td>Snap</td><td>By hand, 9 Nov</td><td>Two short rings</td><td>The Art throws the opposite way. 5th strike kicks off the blade</td></tr>
-    <tr><td>Gauntlets</td><td>Snap</td><td>By rule</td><td>Leather creak, a clench</td><td>Undercut, Plunge and Execution kick 51 to 68° off</td></tr>
-    <tr><td>Twin Blades</td><td>Blade</td><td>By hand, 9 Nov</td><td>Steel ring, a half turn</td><td>Five moves throw the opposite way (old table)</td></tr>
+    <tr><td>Daggers</td><td>Snap</td><td>By hand, 9 Nov</td><td>Two short rings</td><td>5th strike throws the opposite way. 3rd strike kicks 66° off</td></tr>
+    <tr><td>Gauntlets</td><td>Snap</td><td>By rule</td><td>Leather creak, a clench</td><td>4th strike throws the opposite way. Undercut, Plunge and Execution kick 55 to 67° off</td></tr>
+    <tr><td>Twin Blades</td><td>Blade</td><td>By hand, 9 Nov</td><td>Steel ring, a half turn</td><td>Six moves throw the opposite way (old table)</td></tr>
     <tr><td>Chain-blade</td><td>Blade</td><td>By rule</td><td>Chain rattle</td><td>Nothing measured</td></tr>
     <tr><td>Shieldblade</td><td>Blade</td><td>By hand, 9 Nov</td><td>Ring and a shield knock</td><td>Nothing measured</td></tr>
     <tr><td>Precursor Arm</td><td>Blade</td><td>By rule</td><td>Hum</td><td>Nothing measured</td></tr>
@@ -493,21 +496,21 @@ flowchart LR
 
 <section id="stages">
   <div class="eyebrow">9 · Stages</div>
-  <h2>Seven stages, each one stops for you</h2>
+  <h2>Seven stages: 0 to 5 are built, 6 waits for you</h2>
   <div class="scroll"><table>
     <tr><th>Stage</th><th>What is built</th><th>What I need from you</th><th>Gate to go on</th><th class="num">Size</th></tr>
-    <tr><td><strong>0 · Truth</strong></td><td>No feel change. The server's reasons for a refused hit, the black box recording hits, the listening page</td><td>Ten minutes of play (below), and your marks on the listening page</td><td>The cause of the ghosts is known</td><td class="num">2–3 h</td></tr>
-    <tr><td><strong>1 · Honest hits</strong></td><td>The ghost fix by its cause; the blow's direction from the blade (changes 1, 3)</td><td>A fight or two</td><td>Ghosts under 5%; 143 of 143</td><td class="num">2–4 h</td></tr>
-    <tr><td><strong>2 · Sound</strong></td><td>The fourteen sounds you marked (change 2)</td><td>Your ear in a fight</td><td>You'd keep them</td><td class="num">3–4 h</td></tr>
-    <tr><td><strong>3 · Weight</strong></td><td>The shake, settle and living hold on the Longsword and Maul, with the A/B key; then all sixteen (change 4)</td><td>The A/B, two minutes</td><td>You pick the new one</td><td class="num">4–5 h</td></tr>
-    <tr><td><strong>4 · Guard and presence</strong></td><td>The guard, the sixteen draws, the sheath, the weighted look (changes 5, 6)</td><td>Play and listen</td><td>Nothing reads as a glitch</td><td class="num">4–5 h</td></tr>
-    <tr><td><strong>5 · The world</strong></td><td>Walls, the glance, grass (change 7)</td><td>A fight in a cave</td><td>No miss that feels unfair</td><td class="num">3–4 h</td></tr>
+    <tr><td><strong>0 · Truth</strong> <span class="tag ok">built</span></td><td>No feel change. The server's reasons for a refused hit, the black box recording hits, the listening page</td><td>Ten minutes of play (below), and your marks on the listening page</td><td>The cause of the ghosts is known</td><td class="num">2–3 h</td></tr>
+    <tr><td><strong>1 · Honest hits</strong> <span class="tag ok">built</span></td><td>The ghost fix by its cause; the blow's direction from the blade (changes 1, 3)</td><td>A fight or two</td><td>Ghosts under 5%; 139 of 139</td><td class="num">2–4 h</td></tr>
+    <tr><td><strong>2 · Sound</strong> <span class="tag ok">built</span></td><td>The fourteen sounds you marked (change 2)</td><td>Your ear in a fight</td><td>You'd keep them</td><td class="num">3–4 h</td></tr>
+    <tr><td><strong>3 · Weight</strong> <span class="tag ok">built</span></td><td>The shake, settle and living hold on the Longsword and Maul, with the A/B key; then all sixteen (change 4)</td><td>The A/B, two minutes</td><td>You pick the new one</td><td class="num">4–5 h</td></tr>
+    <tr><td><strong>4 · Guard and presence</strong> <span class="tag ok">built</span></td><td>The guard, the sixteen draws, the sheath, the weighted look (changes 5, 6)</td><td>Play and listen</td><td>Nothing reads as a glitch</td><td class="num">4–5 h</td></tr>
+    <tr><td><strong>5 · The world</strong> <span class="tag ok">built</span></td><td>Walls, the glance, grass (change 7)</td><td>A fight in a cave</td><td>No miss that feels unfair</td><td class="num">3–4 h</td></tr>
     <tr><td><strong>6 · Your notes</strong></td><td>One hand-keyed round per weapon you flag; third person checked (change 8)</td><td>Your notes as you play, and an either-or per weapon</td><td>You sign each weapon off</td><td class="num">1–2 h each</td></tr>
   </table></div>
-  <p class="note">Sizes are from this project's own pace: the whole 9 Nov weapon round took about a day. Each stage runs the weapon tests while building and the full suite on GitHub at hand-off. Before stage 0 I merge the build into this branch, since the One Stage UI is about to land there. Each finished stage goes to the manager session to merge; I never merge into the build myself.</p>
-  <h3>The ten minutes, after stage 0</h3>
+  <p class="note">On 10 Nov you asked for the code first and one test at the end, so stages 1 to 5 were built in one run without a stop between them. The stops in this table are now one stop: the ten minutes below test all of it together. Each layer has its own switch, and <code>/awaken swing weight off</code> turns the weight layers off at once if you want to compare. The sizes were estimates from this project's own pace. The manager session merges the branch; I never merge into the build myself.</p>
+  <h3>The ten minutes</h3>
   <ol>
-    <li>Take the Longsword, the Maul and the Daggers.</li>
+    <li>Take the Longsword, the Maul, the Daggers and the Katana. Let the Katana rest two seconds and watch it lower; the first strike out of that rest is its drawn cut.</li>
     <li>Fight a few zombies in the open with each. Chain them the way you normally do.</li>
     <li>Fight one boss you know.</li>
     <li>Block a few blows. Swap weapons a few times.</li>
