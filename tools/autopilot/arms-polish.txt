@@ -1,0 +1,112 @@
+# The weapon polish plan's look tour (docs/weapon-polish/PLAN.md): the same weapons at the same views on any branch, so the
+# plan branch (today's models) and the draft branch (the proposed ones) can be laid side by side. First person at rest, then
+# the same weapon from the front in third person, then the Hall of Arms.
+# ci knobs: PACK=perf,feel,comfort,world
+world armspolish creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_longsword
+arms studio awaken:gatewrought_katana
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_katana
+arms studio awaken:sovereign_greatblade
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_greatblade
+arms studio awaken:veilwoven_scythe
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_scythe
+arms studio awaken:gatewrought_axe
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_axe
+arms studio awaken:lordscale_spear
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_spear
+arms studio awaken:gatewrought_shieldblade
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_shieldblade
+arms studio awaken:beastbound_daggers
+arms waitserver 100
+look 0 6
+wait 20
+shot fp_daggers
+# third person, from the front, nothing in the way
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 40
+camera front
+look 0 4
+wait 30
+shot tp_longsword
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+shot tp_katana
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_greatblade
+wait 40
+shot tp_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 40
+shot tp_scythe
+camera first
+wait 10
+# the Hall of Arms: the wall, then weapons brought close
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+cmd awaken hall learn katana
+cmd awaken hall learn axe
+cmd awaken hall learn greatblade
+cmd awaken hall learn scythe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 30
+cmd awaken hall wall 2
+wait 80
+shot hall_wall
+cmd awaken hall piece longsword 2
+wait 70
+shot hall_longsword
+cmd awaken hall piece katana 2
+wait 70
+shot hall_katana
+cmd awaken hall piece greatblade 5
+wait 70
+shot hall_greatblade
+cmd awaken hall piece scythe 3
+wait 70
+shot hall_scythe
+screen close
+quit

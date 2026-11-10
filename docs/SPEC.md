@@ -8044,6 +8044,23 @@ against it, so a vanilla item plays its designed tempo).
   texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
   every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
   (`docs/combat/weapons-voxel-2026-10-26.png`).
+- **The weapon polish pass** (Euan 2026-11-10: "some of the blades to me look a bit fat... the Maul is really, really
+  good... the Katana is decent, but I think can still be slightly improved... I don't want to completely scrap
+  everything"; plan docs/weapon-polish/PLAN.md, page https://claude.ai/artifact/EZkCwbGng9aNhA6rB4t6rC, approved
+  "This is great go ahead with the full plan"). The cause: the look was built from a hammer, so every blade had a
+  hammer's body, a post 3 wide and 3 deep down a blade 5 wide, and since the swords stand edge ahead (9 Nov) the eye
+  looks straight at it. A first answer, blades ground to a slanted bevel and a smooth point, he turned down: "it
+  doesn't feel like MC at all anymore... it has to stay that voxel style. Just extremely well polished voxel style."
+  **So weapons are boxes at whole-texel sizes and the whole-angle turned boxes they already had, nothing else, ever.**
+  Inside that: every straight blade 4 or wider takes the Rapier's cut (a slab one texel thick with a ridge one texel
+  wide, three on the Greatblades; `blade()`), points step finer and longer and end one texel square (`point()`), the
+  Katana is one texel thick on an even curve with its point stepped up to the back, the Glaive and Scythe are a thin
+  flat with a back three deep along the spine (`curved()`), the tusk and talon Daggers and the tusk Twinblades lose a
+  texel of depth, and the Shieldblade's sword is the Longsword's width with its lit fuller as its ridge. 63 of the 111
+  change (docs/weapon-polish/changed.json: 57 forged, 6 Lord-forged); the Maul, War-staff, Precursor Arm, Gauntlets,
+  Rapier, Axes and the Chainblades' tusk hooks do not. No weapon's length, grip, width, edge side, hold or swing
+  changed (each end within half a texel), so nothing was re-solved. The build was checked corner for corner against
+  the drafts he approved (docs/weapon-polish/fingerprint.py).
 - **The weapon audit** (Euan 2026-11-02, of the Longsword in first person: "not long enough... it almost looks like a
   small dagger... the two blocky things at the bottom look very, very chunky, and you can barely see the blade
   itself"; the hammer "perfect right now"): every weapon measured and graded against the Maul (session weapon-designs,
