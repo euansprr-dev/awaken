@@ -33,6 +33,8 @@ cmd forceload add 1968 -256 2047 255
 cmd awaken ascent grant none
 cmd awaken ascent grant tether
 cmd awaken terrain visit minecraft:forest
+# the search for a forest can take a minute before the passage even begins: wait it out, then the passage itself
+wait 1500
 waitpassage
 wait 200
 screen close
@@ -40,11 +42,9 @@ info
 camera back
 wait 10
 shotnow a_wood_tp_00
-cmd awaken ascent pilot hold forward,sprint 470
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 440
+# forward and the rope held, nothing else: no jump is ever pressed (the game's own hop from the ground)
+cmd awaken ascent pilot hold forward,sprint,tether 470
+wait 18
 wait 13
 shotnow a_wood_tp_01
 wait 13
@@ -109,11 +109,8 @@ cmd awaken ascent pilot stop
 wait 30
 camera first
 hud on
-cmd awaken ascent pilot hold forward,sprint 250
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 220
+cmd awaken ascent pilot hold forward,sprint,tether 250
+wait 18
 wait 15
 shotnow a_wood_fp_01
 wait 15
@@ -167,11 +164,8 @@ cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
 camera back
 cmd tp @s 2000.5 151 5.5 0 -10
 wait 20
-cmd awaken ascent pilot hold forward,sprint 208
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 188
+cmd awaken ascent pilot hold forward,sprint,tether 208
+wait 18
 wait 14
 shotnow b_lane_tp_01
 wait 14
@@ -201,11 +195,8 @@ wait 20
 # the street (towers either side), the rope held
 cmd tp @s 2000.5 151 -6.5 180 -10
 wait 20
-cmd awaken ascent pilot hold forward,sprint 184
-wait 8
-cmd awaken ascent pilot hold jump 2
-wait 5
-cmd awaken ascent pilot hold tether 164
+cmd awaken ascent pilot hold forward,sprint,tether 184
+wait 18
 wait 14
 shotnow c_street_tp_01
 wait 14
@@ -637,7 +628,7 @@ cmd awaken ascent pilot stop
 # ---- the takeoff: look up, sneak, jump ----
 cmd awaken ascent pilot stop
 cmd tp @s 2000.5 151 4.5 0 -40
-camera back
+camera front
 cmd awaken ascent pilot aether 1
 wait 30
 shotnow h_takeoff_00
@@ -669,7 +660,12 @@ shotnow h_takeoff_11
 wait 30
 shotnow h_takeoff_12_hover
 # ---- the Sovereign's form: six wings and a halo ----
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera back
+cmd awaken ascent grant sovereign
 cmd awaken ascent pilot aether 1
+wait 20
 cmd awaken ascent pilot ascend
 wait 12
 shotnow i_sovereign_back_01

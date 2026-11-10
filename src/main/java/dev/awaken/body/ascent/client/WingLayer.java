@@ -65,11 +65,15 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         float alpha, glow, turn;
         int lod;
         boolean first, ring;
-        final SubmitNodeCollector.CustomGeometryRenderer feathers = this::feathers, lights = this::lights;
+        /** A renderer a pair (each pair is its own draw: WingPipelines.feather), and the halos'. */
+        final SubmitNodeCollector.CustomGeometryRenderer[] feathers = {(pose, vc) -> feathers(pose, vc, 0), (pose, vc) -> feathers(pose, vc, 1),
+                (pose, vc) -> feathers(pose, vc, 2)};
+        final SubmitNodeCollector.CustomGeometryRenderer lights = this::lights;
 
-        private void feathers(PoseStack.Pose pose, VertexConsumer vc) {
-            for (int i = 0; i < pairs.length; i++) WingFeathers.pair(pose, vc, this.pose[i], 0, pairs[i], i, pal, alpha, lod, first);
-            if (ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
+        private void feathers(PoseStack.Pose pose, VertexConsumer vc, int i) {
+            if (i >= pairs.length) return;
+            WingFeathers.pair(pose, vc, this.pose[i], 0, pairs[i], i, pal, alpha, lod, first);
+            if (i == 0 && ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
         }
 
         private void lights(PoseStack.Pose pose, VertexConsumer vc) {
@@ -583,10 +587,10 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             getParentModel().body.translateAndRotate(poseStack);
             if (mark && lod < 2) {
                 markPulse = 1 + 0.25F * Mth.sin((AscentMoves.ticks % 50 + pt) / 50F * Mth.TWO_PI);
-                out.submitCustomGeometry(poseStack, WingPipelines.feather(), MARK);
+                out.submitCustomGeometry(poseStack, WingPipelines.feather(0), MARK);
             }
             if (w != null && prepare(w, w.third, pt, lod, false)) {
-                out.submitCustomGeometry(poseStack, WingPipelines.feather(), w.third.feathers);
+                for (int i = 0; i < w.third.pairs.length; i++) out.submitCustomGeometry(poseStack, WingPipelines.feather(i), w.third.feathers[i]);
                 if (lod < 2) out.order(1).submitCustomGeometry(poseStack, WingPipelines.halo(), w.third.lights);
             }
             poseStack.popPose();
@@ -608,7 +612,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (w == null) return false;
         if (FeelConfig.wingsFeathers()) {
             if (!prepare(w, w.own, pt, 0, true)) return false;
-            out.submitCustomGeometry(ps, WingPipelines.feather(), w.own.feathers);
+            for (int i = 0; i < w.own.pairs.length; i++) out.submitCustomGeometry(ps, WingPipelines.feather(i), w.own.feathers[i]);
             out.order(1).submitCustomGeometry(ps, WingPipelines.halo(), w.own.lights);
             return true;
         }

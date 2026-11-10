@@ -63,6 +63,19 @@ final class AscentSwingTests {
                 h.assertTrue(held.ropesPerRun() >= 3, place + ": the rope hardly fires " + held);
                 h.assertTrue(held.medianDistance() >= woodsAtLeast[i], place + ": a held rope goes " + held + ", wanted " + woodsAtLeast[i]);
             }
+            // the player who only holds forward and the rope, from the ground, never jump (one thumb: the rope on one key,
+            // jump on another). The "holding" bot above also hops on every landing and throws only in the air, so the
+            // game's own hop from the ground went unplayed, and in the game it never fired. This bot follows the game's
+            // rule for a throw from the ground; hills may stop it (a face two blocks high with nothing over it).
+            String[] keyPlaces = {"lane", "city", "forest", "oak", "spruce", "roofs", "hills"};
+            double[] keyAtLeast = {240, 230, 230, 140, 180, 165, 135};
+            for (int i = 0; i < keyPlaces.length; i++) {
+                SwingBench.Row key = SwingBench.benchKey(keyPlaces[i]);
+                rows.append("\nkey    ").append(key);
+                h.assertTrue(key.hardOnRope() == 0, keyPlaces[i] + ", key only: hard hits on the rope " + key);
+                h.assertTrue(key.ropesPerRun() >= 3, keyPlaces[i] + ", key only: the rope hardly fires from the ground " + key);
+                h.assertTrue(key.medianDistance() >= keyAtLeast[i], keyPlaces[i] + ", key only: goes " + key + ", wanted " + keyAtLeast[i]);
+            }
             AscentSwing.guide = false;
             for (String place : new String[] {"lane", "city"}) {
                 SwingBench.Row today = SwingBench.bench(place, false), assist = SwingBench.bench(place, true);

@@ -16,6 +16,9 @@ code does, with its numbers and where it differs from this plan, is SPEC §62 "B
 - The sling aims 3.3 over the top (not 2.4), carries all of gravity and may throw 1.3 b/t upward: the plan's numbers,
   swept with the body's box, refused four single trees in five from a sprint jump. Bench now: oak 198, lane 243, city 263.
 - A pull up a wall is limited by its sweep, not by 16 blocks (the limit cut off cliffs the old rope reached).
+- The first tour of the built game found the held rope never threw again from the ground: the game read a speed that is
+  always nothing inside the input step. Fixed, and the bench gained a bot that only holds forward and the rope (the
+  audit's "holding" bot also tapped jump on every landing): lane 261, city 247, oak wood 152 from the ground.
 - The takeoff is "look up, sneak a moment, jump" (holding jump can't be told from the game's own hop).
 - The two rappel loops keep their old sound.
 - First-person wing placement is two numbers set from a tour, live-tunable with `/awaken wings set`.

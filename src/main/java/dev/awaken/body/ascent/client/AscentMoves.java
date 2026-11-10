@@ -157,6 +157,15 @@ public final class AscentMoves {
     static float windowNow;
     static int slingAt = -100;
 
+    /**
+     * The step the body really took last tick (blocks): where it is now less where it was at the last input step. Inside
+     * the input step the game has not moved the body yet this tick, so {@code x - xo} is nothing there: every move begun
+     * from the ground or a fall used to start with no speed across the ground, and the held rope's hop from a landing,
+     * which asks whether you are running, never fired (SPEC §62, found by the tour of the built game).
+     */
+    private static double seenX, seenZ, stepX, stepZ;
+    private static boolean seenValid;
+
     // ---- the air's contract and the moves it earned (SPEC §62, AirRules) ----
     /**
      * While a state holds the body its game motion is left at nothing between steps (as the server leaves its copy):
@@ -270,6 +279,13 @@ public final class AscentMoves {
         if (!(e.getEntity() instanceof LocalPlayer p) || p != mc.player) return;
         ClientInput in = e.getInput();
         input = in;
+        stepX = seenValid ? p.getX() - seenX : 0;
+        stepZ = seenValid ? p.getZ() - seenZ : 0;
+        // a teleport is no step
+        if (stepX * stepX + stepZ * stepZ > 9) stepX = stepZ = 0;
+        seenX = p.getX();
+        seenZ = p.getZ();
+        seenValid = true;
         Input k = in.keyPresses;
         boolean tether = AwakenKeys.ROPE.isDown() && mc.gui.screen() == null;
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
@@ -361,9 +377,11 @@ public final class AscentMoves {
                     takeoff(p);
                 } else if (chain && !runner && !p.onGround() && fire(p, false)) {
                     // walked or ran off an edge with the rope held: it swings
-                } else if (AscentSwing.guide && chain && !runner && groundFor >= 3 && fwd > 0 && ticks - fireAt >= 10 && running(p)
-                        && fire(p, false)) {
-                    // landed with the rope held and still running: a hop into the next rope (SPEC §62)
+                } else if (AscentSwing.guide && chain && !runner && groundFor >= 3 && fwd > 0 && ticks - fireAt >= 10
+                        && (running(p) || p.horizontalCollision)) {
+                    // landed with the rope held and still running, or stopped against something with forward held: a hop
+                    // into the next rope (SPEC §62)
+                    if (!fire(p, false) && TRACE && ticks % 20 == 0) trace("the held rope finds nothing to throw at from the ground");
                 } else if (runner) {
                     // the Runner's own jumps (a wall jump, a ledge jump)
                 } else if (!p.onGround() && leaperMove(p, jumpPressed, sprintPressed, sneakPressed, true)) {
@@ -696,8 +714,9 @@ public final class AscentMoves {
         double hx0 = p.getX(), hy0 = p.getY() + AscentRules.HAND_HEIGHT, hz0 = p.getZ();
         boolean overhead = a != null && overhead(a.x() - hx0, a.y() - hy0, a.z() - hz0);
         if (assist && !overhead) {
-            // a pull up a face wants a press, or to be in the air already: the held rope's hop from the ground only swings or slings
-            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround());
+            // a pull up a face wants a press, to be in the air already, or a face in the way: running, the held rope's hop
+            // from the ground only swings or slings
+            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
             if (pk != null && refusedLately(p, pk.x, pk.y, pk.z)) pk = null;
             if (pk != null) {
                 fired(p);
@@ -722,7 +741,7 @@ public final class AscentMoves {
             trace("rope missed");
             return false;
         }
-        Vec3 v = state == AscentState.NONE ? new Vec3(p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo) : null;
+        Vec3 v = state == AscentState.NONE ? new Vec3(stepX, p.getDeltaMovement().y, stepZ) : null;
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
         swinging = slinging = false;
         ax = a.x();
@@ -781,7 +800,7 @@ public final class AscentMoves {
     /** The hand point and the body's velocity now, into {@link #HAND} (from the ground, with the hop a swing starts with). */
     private static void hand(LocalPlayer p) {
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
-        if (state == AscentState.NONE) HAND.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (state == AscentState.NONE) HAND.set(hx, hy, hz, stepX, p.getDeltaMovement().y, stepZ);
         else HAND.set(hx, hy, hz, K.vx, K.vy, K.vz);
         if (p.onGround()) HAND.vy = Math.max(HAND.vy, 0.5);
     }
@@ -807,8 +826,7 @@ public final class AscentMoves {
 
     /** Moving at a run across the ground (the held rope's hop into the next rope asks for it). */
     private static boolean running(LocalPlayer p) {
-        double dx = p.getX() - p.xo, dz = p.getZ() - p.zo;
-        return dx * dx + dz * dz > 0.15 * 0.15;
+        return stepX * stepX + stepZ * stepZ > 0.15 * 0.15;
     }
 
     /** The server refused a rope at this point's block within the last second: it isn't thrown at again yet. */
@@ -1722,7 +1740,7 @@ public final class AscentMoves {
         boolean dash = sprintPressed && (airMovesUsed & 2) == 0;
         boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT;
         if (!dbl && !dash && !dive) return false;
-        if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         if (dbl) {
             airMovesUsed |= 1;
             K.vy = Math.max(K.vy, 0) + AscentRules.DOUBLE_JUMP
@@ -1769,7 +1787,7 @@ public final class AscentMoves {
      */
     static boolean judgementDive(LocalPlayer p, double minHeight, double speed) {
         if (state.rope || p.onGround() || heightAboveGround(p) < minHeight) return false;
-        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         slamming = true;
         K.vx *= 0.2;
         K.vz *= 0.2;
@@ -1786,7 +1804,7 @@ public final class AscentMoves {
     static void sovereignLift(LocalPlayer p) {
         if (state.rope || state == AscentState.SOAR || off(p)) return;
         if (state == AscentState.NONE) {
-            K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, 0.9, p.getZ() - p.zo);
+            K.set(p.getX(), p.getY(), p.getZ(), stepX, 0.9, stepZ);
         }
         startSoar(p);
     }
@@ -1798,7 +1816,7 @@ public final class AscentMoves {
     // ---- wings --------------------------------------------------------------------------------------------------------
 
     private static void startGlide(LocalPlayer p) {
-        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         deployAt = ticks;
         glideFromEmpty = false;
@@ -1874,7 +1892,7 @@ public final class AscentMoves {
             return false;
         }
         glideFromEmpty = false;
-        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         boolean fromGlide = state == AscentState.GLIDE;
         soarAt = ticks;
         setState(p, AscentState.SOAR);
@@ -2024,7 +2042,7 @@ public final class AscentMoves {
 
     /** The takeoff (SPEC §62): straight up into flight for a tenth of the Aether. */
     private static void takeoff(LocalPlayer p) {
-        K.set(p.getX(), p.getY(), p.getZ(), (p.getX() - p.xo) * 0.5, 0, (p.getZ() - p.zo) * 0.5);
+        K.set(p.getX(), p.getY(), p.getZ(), stepX * 0.5, 0, stepZ * 0.5);
         aether -= AirRules.TAKEOFF_AETHER;
         glideFromEmpty = false;
         sneakFor = 0;
@@ -2293,6 +2311,8 @@ public final class AscentMoves {
         groundFor = 0;
         refusedBlock = null;
         zeroed = rested = castMotion = aiming = skimming = attackWas = false;
+        seenValid = false;
+        stepX = stepZ = 0;
         pushX = pushY = pushZ = 0;
         strikeTarget = -1;
         skimFor = sneakFor = 0;

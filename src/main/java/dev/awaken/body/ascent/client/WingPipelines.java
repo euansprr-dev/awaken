@@ -56,7 +56,8 @@ final class WingPipelines {
     private static final OitPipelineSet HALO_OIT = OitPipelineSet.builder(Awaken.id("ascent_wing_halo"),
             RenderPipeline.builder(HALO_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
-    private static RenderType feather, halo;
+    private static final RenderType[] FEATHERS = new RenderType[3];
+    private static RenderType halo;
     private static int ok = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
@@ -77,13 +78,19 @@ final class WingPipelines {
         return ok == 1;
     }
 
-    /** The feathers' type; vanilla's translucent entity type if ours didn't build (lit by the world, but there). */
-    static RenderType feather() {
-        if (feather == null) {
-            feather = ok() ? RenderType.create("awaken_ascent_wing_feather", RenderSetup.builder(FEATHER).withTexture("Sampler0", WHITE).createRenderSetup())
-                    : RenderTypes.entityTranslucent(WHITE);
+    /**
+     * The feathers' type for one pair of wings (0 to 2); vanilla's translucent entity type if ours didn't build (lit by
+     * the world, but there). A type a pair, the same in everything but name, so each pair is its own draw: the game joins
+     * consecutive geometry of one type into a single draw, and the Sovereign's three pairs in one draw (33,600 vertices)
+     * came out as garbage on the tour's GPU (a white flood, stray triangles), where two pairs (22,200) were whole.
+     */
+    static RenderType feather(int pair) {
+        int i = Math.max(0, Math.min(FEATHERS.length - 1, pair));
+        if (FEATHERS[i] == null) {
+            FEATHERS[i] = ok() ? RenderType.create("awaken_ascent_wing_feather_" + i,
+                    RenderSetup.builder(FEATHER).withTexture("Sampler0", WHITE).createRenderSetup()) : RenderTypes.entityTranslucent(WHITE);
         }
-        return feather;
+        return FEATHERS[i];
     }
 
     /** The halos' type (position and colour only); vanilla's lightning if ours didn't build. */

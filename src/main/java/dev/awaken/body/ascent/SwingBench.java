@@ -269,14 +269,22 @@ public final class SwingBench {
         final AscentSwing.Pick pick = new AscentSwing.Pick(), marker = new AscentSwing.Pick();
         final SwingSpace.Hit hit = new SwingSpace.Hit();
         final double[] s = new double[3], a = new double[3];
-        final double z0;
+        double z0;
         boolean onRope, zip, sling, wasDown, markerOn;
         /** The sling's aim (a point over the top it bit) and its age. */
         double sx, sy, sz;
         int slingAge;
         // the old rope's: its anchor, length and the length it reels to
         double tax, tay, taz, tlen, ttarget;
-        int t, travel, held, ropeStart, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        int t, travel, held, ropeStart = -100, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        /**
+         * The bot that only holds forward and the rope, never jump (how the game is played with one thumb): the rope may
+         * throw from the ground, by the game's own rule (AscentMoves: a press, or three ticks down at a run ten ticks
+         * after the last throw), with the hop the game gives a throw from the ground, and never a pull up a face.
+         */
+        boolean keyOnly;
+        private boolean groundThrow, blocked;
+        int groundFor;
         double lastZ, pullTop, pullNx, pullNz;
         final Run run = new Run();
 
@@ -341,7 +349,7 @@ public final class SwingBench {
                 }
                 sling = false;
                 // a pull up a face only with a clear, short way to it (SPEC §62)
-                if (p == null && markerOn && marker.zip && (!AscentSwing.guide || marker.len <= AscentSwing.T.wallZip
+                if (p == null && !groundThrow && markerOn && marker.zip && (!AscentSwing.guide || marker.len <= AscentSwing.T.wallZip
                         && AscentSwing.zipClear(w, hx, hy, hz, marker))) p = marker;
                 if (p != null && !p.zip) {
                     rope.set(p.x, p.y, p.z, p.len, p.fitLen);
@@ -349,7 +357,7 @@ public final class SwingBench {
                     travel = AscentSwing.travel(p.len);
                     AscentSwing.entry(k, yaw);
                 } else {
-                    if (p == null && (!AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)
+                    if (p == null && (groundThrow || !AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)
                             || AscentSwing.guide && (pick.len > AscentSwing.T.wallZip || !AscentSwing.zipClear(w, hx, hy, hz, pick)))) return false;
                     AscentSwing.Pick z = p != null ? p : pick;
                     tax = z.x;
@@ -385,8 +393,10 @@ public final class SwingBench {
             if (!onRope) {
                 if (b.onGround) {
                     double hx = AscentSwing.fx(yaw), hz = AscentSwing.fz(yaw);
-                    b.vx = hx * 0.36 * Math.max(0.3, fwd);
-                    b.vz = hz * 0.36 * Math.max(0.3, fwd);
+                    // a sprint on the ground is 0.28; the hopping bots sprint-jump at 0.36
+                    double run = keyOnly ? 0.28 : 0.36;
+                    b.vx = hx * run * Math.max(0.3, fwd);
+                    b.vz = hz * run * Math.max(0.3, fwd);
                     if (jump) b.vy = 0.42;
                 } else {
                     b.vy -= AscentRules.G;
@@ -407,6 +417,7 @@ public final class SwingBench {
                 }
                 double lost = move(w, b, b.vx, b.vy, b.vz);
                 hitBy(lost);
+                blocked = lost > 0 && b.onGround;
                 if (lost > 0 && b.y - w.floorUnder(b.x, b.y + 0.01, b.z) < 3) {
                     // a bot against a trunk or a boulder low down steps round it, as a player would
                     for (double sx : SIDESTEP) {
@@ -446,8 +457,20 @@ public final class SwingBench {
                     if (!markerOn && AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, marker)) markerOn = true;
                 }
                 boolean wants = assist ? ropeKey : pressed;
+                groundFor = b.onGround ? groundFor + 1 : 0;
                 if (wants && cooldown == 0 && b.y > 0.2 && (!b.onGround || !assist)) {
                     if (!fire(yaw, pitch) && assist) cooldown = 2;
+                } else if (keyOnly && assist && AscentSwing.guide && wants && cooldown == 0 && b.onGround
+                        && (pressed || groundFor >= 3 && t - ropeStart >= 10 && b.vx * b.vx + b.vz * b.vz > 0.15 * 0.15)) {
+                    double vy = b.vy;
+                    b.vy = Math.max(b.vy, 0.5);
+                    // running, only a swing or a sling; stopped against a face, the pull up it too (the game's rule)
+                    groundThrow = !blocked && !pressed;
+                    if (!fire(yaw, pitch)) {
+                        b.vy = vy;
+                        cooldown = 2;
+                    }
+                    groundThrow = false;
                 }
             } else {
                 // a let-go into something just ahead waits a moment (the rope holds on)
@@ -593,18 +616,34 @@ public final class SwingBench {
 
     /** {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. */
     static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
+        return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
+    }
+
+    /**
+     * {@code keyOnly}: forward and the rope held from the first tick, jump never pressed, starting on the ground past any
+     * launch tower: the player Euan is (the rope on one key, jump on another, one thumb).
+     */
+    static Run play(String place, boolean assist, boolean hold, boolean keyOnly, double x0, double zOff, double pitch, double speed, int ticks) {
         Sim sim = new Sim(place(place), assist, x0, zOff, speed);
         Body b = sim.b;
+        sim.keyOnly = keyOnly;
+        if (keyOnly) {
+            b.y = 0;
+            b.z += 8;
+            b.vz = 0.28;
+            sim.z0 = b.z;
+        }
         while (sim.t < ticks) {
             double yaw = clamp(b.x * 2.5, -15, 15);
             boolean jump = false, rope;
             if (b.onGround && !sim.onRope) {
                 sim.ground++;
-                jump = sim.t < 2 || sim.ground > 4;
+                // the key-only bot never presses jump; the game's own auto-jump (on by default) hops a block in its way
+                jump = keyOnly ? sim.blocked : sim.t < 2 || sim.ground > 4;
                 if (jump) sim.ground = 0;
             }
             if (!sim.onRope) {
-                rope = assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10;
+                rope = keyOnly || (assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10);
             } else {
                 rope = true;
                 if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
@@ -641,11 +680,20 @@ public final class SwingBench {
 
     /** {@code hold}: with the bot that only holds the key. */
     public static Row bench(String place, boolean assist, boolean hold) {
+        return bench(place, assist, hold, false);
+    }
+
+    /** The key-only bot (forward and the rope held from the ground, never jump): {@link Sim#keyOnly}. */
+    public static Row benchKey(String place) {
+        return bench(place, true, true, true);
+    }
+
+    private static Row bench(String place, boolean assist, boolean hold, boolean keyOnly) {
         Rng rnd = new Rng(99);
         List<Run> runs = new ArrayList<>();
         for (int i = 0; i < 40; i++) {
             double x0 = (rnd.next() - 0.5) * 8, zOff = rnd.next() * 6, pitch = -(10 + rnd.next() * 25), speed = 0.85 + rnd.next() * 0.4;
-            runs.add(play(place, assist, hold, x0, zOff, pitch, speed, 300));
+            runs.add(play(place, assist, hold, keyOnly, x0, zOff, pitch, speed, 300));
         }
         double[] d = runs.stream().mapToDouble(r -> r.distance).toArray();
         Arrays.sort(d);
@@ -682,6 +730,7 @@ public final class SwingBench {
                 System.out.println(bench(p, false));
                 System.out.println(bench(p, true));
                 System.out.println("hold   " + bench(p, true, true));
+                System.out.println("key    " + benchKey(p));
             }
         }
     }

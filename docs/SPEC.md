@@ -21899,17 +21899,30 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   the candidate only if nothing is met, or only a landing after the let-go. To the server and to watchers a sling is a
   ZIP; its let-go is `EV_SLING`.
 - Held, a swing lets go at `apexHeld` 55 degrees while it still rises and the flight after is clear (95 otherwise, as
-  before). With the key held and a run on, three ticks on the ground hop into the next rope. A pull up a wall is taken
+  before). With the key and forward held, three ticks on the ground at a run (or stopped against something) hop into
+  the next rope, ten ticks at least after the last throw; running, the hop takes a swing or a sling, and stopped against
+  a face the pull up it too.
+- **The step the body really took.** Inside the input step the game has not yet moved the body this tick, so
+  `x - xo` is nothing there. The Ascent read it in nine places: every move begun from the ground or a fall (the first
+  rope, a double jump, a dash, opening the wings, taking flight) started with no speed across the ground, and the hop
+  above, which asks whether you are running, never fired (the first tour of the built game: one rope in the lane, then
+  nine seconds of running with the key held). `AscentMoves` now keeps the step taken since the last input step and
+  uses that. Moves begun from a run keep their run. A pull up a wall is taken
   only by a clear, swept way (`zipClear`; the 16-block limit of the plan cut off cliffs the old rope reached, so the
   limit is `wallZip` 44 and the sweep decides). A top reached with forward held at Tether mastery 3 is sprung off
   (0.6 b/t on, 0.46 up; `EV_SPRING`). A rope the server refuses is not thrown at that block for a second, and the
   server logs why. The marker is a ring for a swing, a chevron for a sling, a bracket for a pull; the rope's halo
   swells and whitens through the let-go window. The first-person fist sits at (0.46, -0.3, -0.8).
-- **Bench, holding bot, 40 runs of 15 s, median blocks:** lane 243, city 263, forest 249, cliff 122, plains 103, spire
-  109, oak wood 198, spruce wood 192, hills 192, stair roofs 194. No hard hit anywhere, on a rope or flying free, and no
-  stopped run. The plan's gates hold (oak 190, lane 240, city 250). The trial's oak 203 was a sling not swept with the
-  body's box; swept and with the numbers above it is 198. The gates in `ascent_swing_bench` are a little under these
-  (oak 185, spruce 180, hills 175, roofs 180, lane 240, city 250, forest 240) and the single-tree count above.
+- **Bench, 40 runs of 15 s, median blocks.** Two bots hold the rope. The "holding" bot of the audit never lets go by
+  hand, but it also taps jump on every landing and throws only in the air, from a launch tower where a place has one:
+  lane 243, city 263, forest 249, cliff 122, plains 103, spire 109, oak wood 198, spruce wood 192, hills 192, stair
+  roofs 194; no hard hit anywhere and no stopped run. **The key-only bot is the player Euan is** (the rope on one key,
+  jump on another, one thumb): forward and the rope held from the ground, jump never pressed (the game's auto-jump hops
+  a block in its way), a ground sprint of 0.28, the game's own rule for a throw from the ground: **lane 261, city 247,
+  forest 247, oak wood 152, spruce wood 195, hills 150, stair roofs 177** (running alone covers 75), no hard hit on a
+  rope, one flying free in the lane and one in the hills of 40 runs each. Hills stop it in 7 runs of 40: a face two
+  blocks high with nothing over it wants a jump or a climb. The gates in `ascent_swing_bench` are a little under these
+  for both bots, and the single-tree count above.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
@@ -21929,6 +21942,9 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   six slabs (27).
 - Drawn in their own pipeline (`awaken:pipeline/ascent_wing_feather`: the entity shaders unlit and unshaded, depth
   written, both sides): vanilla's emissive type writes no depth, so 231 overlapping boxes would draw in the order sent.
+  Each pair is its own draw (a render type a pair, the same but for its name): the game joins consecutive geometry of
+  one type into one draw, and the Sovereign's three pairs in one (33,600 vertices) came out as garbage on the tour's
+  GPU, where two pairs (22,200) were whole.
   Each face carries its shade in its colour, as the model's do. Halos are additive discs facing the eye
   (`ascent_wing_halo`). Vanilla types stand in if either fails to build.
 - First person: the outer feathers only, set `fpAhead` 0.8 ahead of the eye and `fpUp` -0.12 under it (where the wings
