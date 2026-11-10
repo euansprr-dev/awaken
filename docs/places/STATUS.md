@@ -1,5 +1,14 @@
 # Places: where they stand (10 Nov 2026)
 
+> **Third take, 10 Nov, waiting on Euan: the plan for the long world.** He approved the three paintings ("100% what I'm
+> looking for"), saw the three monuments in the game ("a massive improvement... this is awesome") and asked for many more,
+> by hand or by rule, so that the further you go the more new things you find. The answer is `PLAN.md`: twelve families
+> (one idea and one painting each, built as a generator), five named monuments a family placed by distance, every site aged
+> by its seed and its land, one relic a family that grows. Nine new paintings are in `img/`. Approval page:
+> https://claude.ai/artifact/12tDyrZQ8yPY67hMjYDCj1 (eight decisions). Nothing of it is built. Two findings it carries:
+> a real world with only the three places 12 monuments in 616 choosing cells (no level ground for a footprint a hundred
+> wide), and the Sleepers' Hall shows nothing above ground.
+
 > **Rejected as content, 10 Nov 2026, on the picture page.** Euan: "they basically just feel like decoration... no meaning to
 > them, no lore to them, no gameplay mechanics to them. They're kind of all just empty buildings... They look very vanilla
 > and boring and flat right now. They don't have depth." He wants the remains of a world inhabited for a very long time:
