@@ -14,8 +14,8 @@ import java.util.function.Supplier;
  */
 public class LegSurface implements Legs.Ground {
     /** How far apart a leg's line is sampled (blocks), and at most how many samples. */
-    private static final double SAMPLE = 0.25;
-    private static final int MOST = 16;
+    private static final double SAMPLE = 0.1, ENDS = 0.2;
+    private static final int MOST = 40;
 
     private final Supplier<? extends BlockGetter> world;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
@@ -69,10 +69,13 @@ public class LegSurface implements Legs.Ground {
     public boolean clear(double x0, double y0, double z0, double x1, double y1, double z1) {
         BlockGetter level = world.get();
         if (level == null) return true;
-        double dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
-        int n = Math.min(MOST, (int) Math.ceil(Math.sqrt(dx * dx + dy * dy + dz * dz) / SAMPLE));
-        for (int k = 1; k < n; k++) {
-            double t = (double) k / n, x = x0 + dx * t, y = y0 + dy * t, z = z0 + dz * t;
+        double dx = x1 - x0, dy = y1 - y0, dz = z1 - z0, len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // every tenth of a block along the leg, leaving a fifth of a block at the hip and at the ankle: what the block
+        // trial measures (LegBlockTrial.crosses). A coarser walk let a long low leg slip through a kerb's corner between
+        // two samples (the gates' monsters, SPEC §60: the Door's legs stood on a kerb through its edge)
+        int n = 0;
+        for (double d = ENDS; d < len - ENDS && n < MOST; d += SAMPLE, n++) {
+            double t = d / len, x = x0 + dx * t, y = y0 + dy * t, z = z0 + dz * t;
             int cx = Mth.floor(x), cz = Mth.floor(z);
             if (solid(level, cx, y, cz, x - cx, z - cz)) return false;
         }
