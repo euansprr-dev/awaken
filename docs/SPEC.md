@@ -21918,7 +21918,7 @@ Each is data on the def, judged by the server, and none changes another creature
 | An opening | `.open(ticks)` | After a move that commits its body (not a summon, heal, guard, decoy, frenzy or blink) it stands open for that long: it starts nothing, and a blow bites 1.5 times as deep |
 | Stopped by a blow | `.stopped()` | A direct hit while it winds a move up ends the move and staggers it for 26 ticks |
 | A front that holds | `.front()` | A blow from within 70 degrees of its front does nothing unless it stands open, staggered, fallen or dormant |
-| Planted to shoot | `.planted()` | It cannot turn while it winds up, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side |
+| Planted to shoot | `.planted()` | As a wind-up begins it squares up to its target (5 ticks, 45 degrees a tick), then cannot turn, and loses the move (an 18-tick stagger) if its target gets more than 80 degrees to its side. (Before the square-up it took whatever way its body faced, and a shooter backing off from you lost every shot as it began: the Riveter never fired on film.) |
 | A miss costs it | `.miss(ticks)` | A charge or a leap that hurt nobody leaves it stuck and open for that long; a flier is brought down |
 | The fall | `.fall(ticks)` | Its body is kept that long as it dies, so the death clip plays out |
 
@@ -21988,8 +21988,11 @@ with ordinary monsters are harder than they were between 25 Oct and this fix.
 
 **Rhythm.** `MobDef.blow(tell, chain)`: its plain blow is told for `tell` ticks (never under 8) and it strings `chain`
 blows (1 to 3). After a blow of a string lands or whiffs, while its target is within its reach + 2, it follows through
-for `STRING_GAP` (5) ticks, steps in (0.42 b/t toward a target out of reach) and tells the next, with its own closing
-circle. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
+for `STRING_GAP` (5) ticks, walking after a target its blow knocked back, and as it tells the next blow (with its own
+closing circle) it lunges across what is left of the gap (at most about 2.2 blocks). The first film showed why: the
+Bramble Hound's first bite knocked the dummy out of reach and its second bit air. The goal also holds through its
+rest (the 20-tick attack cooldown), so the rhythm is the monster's own, tell and rest; before, the selector stopped
+the goal after every blow and began it again at once, and creatures swung every 13 to 22 ticks instead of 28 to 40. Rank still makes every third blow of a Warden HEAVY (+6 ticks). Every blow of a rhythm is weighed:
 `blowWeight = (chain·tell + (chain−1)·5 + 20) / ((rankTell + 20)·chain)`, a transient `mobs_rhythm` multiplier on its
 own attack damage for that blow, so a string or a slow swing does per second exactly what one plain swing of its rank
 did (a 16-tick blow lands 1.29×, each of two 8-tick bites 0.66×; test). Nothing here touches another creature's numbers.
@@ -22019,7 +22022,10 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
 where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
-its fallen body goes at the end of its fall (no white death puff). Wherever a monster has matter the borrowed vanilla
+its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
+fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
+(`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla
 puff, blast, portal sparkle or ink is not drawn.
 
 **Voice.** Two more voices per monster, `monster.<id>.wind` and `monster.<id>.blow` (`tools/art/specs/gm/fights.py`:
@@ -22060,12 +22066,18 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   comes, the pose lets go after 14 ticks. Test `gate_monster_poised_after_its_step`.
 - From one cue straight into another (the next blow of a string told while the last settles, a miss as it struck) the
   body crosses from the pose it was in over a tenth of a second (`WildRenderer` `CROSS`); it used to switch in one frame.
+- A gate monster's dive lands at the touch: its reach is half the two widths + 0.9 (the other fliers keep 1.3). On film
+  the Lantern Moth's blow landed a block and a half short of its target, a tenth of a second before it arrived.
+- A dormant gate monster wakes in its own matter and voice (`GateMonster.wake`), with the game's warning sound under
+  it, not the borrowed sparks. `/awaken admin monster target` and `act` rouse a dormant one (it otherwise waits for a
+  player to come near: on film the Security Unit slept through its fight).
 - A flier's dive holds its wind-up all the way in (`AwakenMob.diving`, set by `MobGoals.FlyHunt`): the strike plays when
   it hits, and the pose lets go when it gives the dive up. Before, the pose dropped three ticks into the dive and no
   strike ever played.
 - A fallen body lies down: `K.lying` folds whichever limb would prop the trunk in the air, and the check refuses a
   death that ends more than 12 px over the floor.
 - **Film.** `python3 tools/art/specs/gate_monsters.py film` writes `tools/autopilot/monsters-film-<n>.txt` (eight
-  monsters a reel, ten reels): each filmed close from the side by the clip recorder, standing, closing on a dummy and
+  monsters a reel, ten reels; `film --as <name> <id>...` writes one named reel for those monsters; frames 854x480,
+  since at 427x240 a pose cannot be judged): each filmed close from the side by the clip recorder, standing, closing on a dummy and
   striking it, acting each of its moves, and dying. `tools/tour-ci.sh` runs a reel on CI; `tools/ascent/clip.py` turns
   a clip into a video and a contact sheet. The first reels are what showed the plain blow never landing.

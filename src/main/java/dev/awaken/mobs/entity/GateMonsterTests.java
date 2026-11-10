@@ -311,6 +311,7 @@ public final class GateMonsterTests {
             String move = m.def().phases.get(0).abilities().get(0).name();
             boolean[] did = new boolean[2]; // started, target moved behind it
             float[] yaw = new float[1];
+            int[] began = {-1};
             AwakenTests.onEnd(h, () -> {
                 m.discard();
                 z.discard();
@@ -321,6 +322,9 @@ public final class GateMonsterTests {
                 h.assertTrue(did[0], "its volley begins");
                 if (!did[1]) {
                     h.assertTrue(m.abilities.active() != null && FaunaMob.cueStage(m.cue()) == FaunaMob.CUE_WINDUP, "it plants and winds up");
+                    if (began[0] < 0) began[0] = m.tickCount;
+                    // it squares up to its target for PLANT_TURN ticks first; only then is its facing held
+                    h.assertTrue(m.tickCount - began[0] > GateMonster.PLANT_TURN + 1, "it has squared up and holds its facing");
                     did[1] = true;
                     yaw[0] = m.yBodyRot;
                     Vec3 behind = m.position().add(-Mth.sin(-yaw[0] * Mth.DEG_TO_RAD) * 3.0, 0, -Mth.cos(yaw[0] * Mth.DEG_TO_RAD) * 3.0);

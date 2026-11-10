@@ -99,6 +99,28 @@ unique and very smooth... on par with the system we have for the circles that cl
 - **Film.** `python3 tools/art/specs/gate_monsters.py film` writes ten reels (`tools/autopilot/monsters-film-<n>.txt`),
   eight monsters each, filmed close from the side: standing, fighting a dummy, each move, dying.
 
+## What the first film showed (10 Nov, six reels read)
+
+Filmed close from the side on CI, each monster against a dummy. What worked on film: plain blows land, and the hit
+frame meets the damage on the same frame; the shots, the matter and the deaths are the monsters' own. What it showed
+wrong, each fixed the same evening:
+
+- **A string's second blow bit air.** The first bite knocked the dummy out of reach. The next blow of a string now
+  follows its target and lunges across the gap.
+- **The rhythm was not the monster's.** The game's goal stopped after every blow and began again at once, so creatures
+  swung every 13 to 22 ticks, not every 28 to 40. The goal now holds through its rest.
+- **Vanilla evoker fangs** in the Scribe's, the Censer's and the Overgrowth's moves. They raise spikes of their own
+  matter out of the floor now.
+- **The Riveter never fired.** Planted shooters took whatever way their body faced as the wind-up began; backing off,
+  that was away from you, and the shot was lost at once. They square up first.
+- **The Security Unit slept through its fight** (dormant monsters wake only for a player): the studio command rouses
+  one, and a gate monster wakes in its own matter and voice.
+- **A dive landed before it arrived** (the Lantern Moth, a block and a half short). A gate monster's dive now lands at
+  the touch.
+
+The first reels were recorded at 427x240, too small to show Euan. A second filming of all ten reels on the fixed
+build, at 854x480, was queued the same evening.
+
 ## What is not done
 
 - Nothing has been played by Euan. The film reels on CI are how the fight pass was checked.
