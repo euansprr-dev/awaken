@@ -84,6 +84,33 @@ public final class RealmTests {
             if (!ok.clean()) h.fail("a post on the ground counted as floating: " + ok.summary());
             h.succeed();
         });
+        // Settle (SPEC §50.6): a land drawn from a sheet can't keep a small stray, and the count says what to go and fix
+        AwakenTests.register("realm_settle_clears_strays", 200, h -> {
+            SettleProbe land = new SettleProbe(false);
+            FloatCheck.Report r = FloatCheck.scan(land, 0, 0, 31, 31);
+            if (!r.clean()) h.fail("strays survived: " + r.summary());
+            V v = new V(16, 16);
+            land.paint(v);
+            if (v.get(20, 9, 20) == null || v.get(20, 9, 20).getBlock() != Blocks.WATER) h.fail("a stray under water left a hole: " + v.get(20, 9, 20));
+            var tally = dev.awaken.gates.realms.kit.Settle.lastTally(land);
+            dev.awaken.Awaken.LOG.info("[realms] {}", tally.line());
+            // a lantern, a grass, a tall grass (two), a vine, a lily, a lone block with a lantern on it and one under it, a grass in the pool
+            if (tally.total() != 10) h.fail("expected ten strays, " + tally.line());
+            if (!tally.line().contains("2 tall_grass in the open")) h.fail("the count doesn't name what went: " + tally.line());
+            h.succeed();
+        });
+        AwakenTests.register("realm_settle_keeps_the_sound", 200, h -> {
+            SettleProbe land = new SettleProbe(true);
+            FloatCheck.Report r = FloatCheck.scan(land, 0, 0, 31, 31);
+            if (!r.clean()) h.fail("the probe's held things aren't held: " + r.summary());
+            var tally = dev.awaken.gates.realms.kit.Settle.lastTally(land);
+            if (tally.total() != 0) h.fail("things properly held were taken out: " + tally.line());
+            V v = new V(0, 0);
+            land.paint(v);
+            int[][] kept = {{8, 20, 8}, {12, 11, 8}, {12, 11, 12}, {12, 12, 12}, {8, 15, 12}, {4, 11, 4}, {4, 11, 12}, {4, 12, 12}};
+            for (int[] c : kept) if (v.get(c[0], c[1], c[2]) == null) h.fail("gone from " + c[0] + "," + c[1] + "," + c[2]);
+            h.succeed();
+        });
         AwakenTests.register("realm_amber_never_floats", 1200, h -> {
             for (long seed : new long[]{1, 2}) {
                 Land land = amber(seed);
@@ -429,6 +456,53 @@ public final class RealmTests {
         @Override public int halfSize() { return 16; }
         @Override public List<? extends dev.awaken.gates.realms.kit.Piece<?>> pieces() { return List.of(); }
         @Override public List<double[]> ways() { return List.of(); }
+        @Override public float mouthYaw() { return 0; }
+    }
+
+    /**
+     * A flat square with a hanging lantern, a grass, a tall grass, a vine, a lily and a lone block (a lantern standing on it,
+     * another hung under it), each properly held or each left in the air, and a grass at the bottom of a pool.
+     */
+    private static final class SettleProbe extends dev.awaken.gates.realms.kit.SheetLand<dev.awaken.gates.realms.kit.Mats> {
+        final boolean held;
+
+        SettleProbe(boolean held) {
+            super(new Ctx(AMBER, "settle_probe", Rank.E, 0, 1), 0);
+            this.held = held;
+        }
+
+        @Override protected dev.awaken.gates.realms.kit.Mats mats() { return null; }
+        @Override public int ground(int x, int z) { return 10; }
+
+        @Override
+        protected void draw(V v) {
+            var stone = Blocks.STONE.defaultBlockState();
+            var water = Blocks.WATER.defaultBlockState();
+            var grass = Blocks.SHORT_GRASS.defaultBlockState();
+            var hung = Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HANGING, true);
+            for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) for (int y = 0; y <= 10; y++) v.set(x, y, z, stone);
+            for (int x = 18; x <= 22; x++) for (int z = 18; z <= 22; z++) for (int y = 8; y <= 10; y++) v.set(x, y, z, water);
+            if (!held) v.set(20, 9, 20, grass);
+            int up = held ? 0 : 4;
+            if (held) {
+                for (int y = 11; y <= 21; y++) v.set(7, y, 8, stone);
+                v.set(8, 21, 8, stone);
+                for (int y = 11; y <= 15; y++) v.set(9, y, 12, stone);
+                v.set(4, 10, 4, water);
+            }
+            v.set(8, 20, 8, hung);
+            v.set(12, 11 + up, 8, grass);
+            v.set(12, 11 + up, 12, Blocks.TALL_GRASS.defaultBlockState());
+            v.set(12, 12 + up, 12, Blocks.TALL_GRASS.defaultBlockState().setValue(net.minecraft.world.level.block.DoublePlantBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+            v.set(8, 15, 12, Blocks.VINE.defaultBlockState());
+            v.set(4, 11, 4, Blocks.LILY_PAD.defaultBlockState());
+            v.set(4, 11 + 2 * up, 12, stone);
+            v.set(4, 12 + 2 * up, 12, Blocks.LANTERN.defaultBlockState());
+            if (!held) v.set(4, 10 + 2 * up, 12, hung);
+        }
+
+        @Override public int biome(int x, int y, int z) { return 0; }
+        @Override public int halfSize() { return 16; }
         @Override public float mouthYaw() { return 0; }
     }
 }
