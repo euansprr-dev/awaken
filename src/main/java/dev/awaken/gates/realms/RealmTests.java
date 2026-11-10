@@ -47,6 +47,8 @@ public final class RealmTests {
     private static dev.awaken.gates.realms.land.QuietBarrow barrow(long seed) {
         return new dev.awaken.gates.realms.land.QuietBarrow(new Land.Ctx(new Blueprint(1, "t", "land", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:quiet_barrow", 62, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:quiet_barrow", Rank.E, seed, 1));
+    }
+
     private static dev.awaken.gates.realms.land.WaxGalleries wax(long seed) {
         return new dev.awaken.gates.realms.land.WaxGalleries(new Land.Ctx(new Blueprint(1, "t", "deep", "hive", List.of("E"), new Blueprint.LandSpec("awaken:wax_galleries", 0, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:wax_galleries", Rank.E, seed, 1));
@@ -303,6 +305,8 @@ public final class RealmTests {
             if (land.sleepers().size() != 9 || land.sites(Land.SiteKind.DEN).size() != 9) h.fail("nine mounds should sleep, each with its den");
             for (int i = 0; i < 9; i++) if (land.change("wake_" + i).size() < 18) h.fail("mound " + i + " has no seal to take out");
             if (land.change("heart_open").isEmpty() || land.change("heart_shut").isEmpty()) h.fail("the way aboard doesn't open and shut");
+            h.succeed();
+        });
         AwakenTests.register("realm_wax_galleries_walks_to_everything", 2400, h -> {
             List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(wax(1));
             if (!bad.isEmpty()) h.fail("can't reach: " + bad);
