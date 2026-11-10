@@ -517,6 +517,8 @@ def parse(path):
             d["id"], d["n"], d["reach"], d["name"] = t[1], int(t[2]), int(t[3]), " ".join(t[4:])
         elif t[0] == "L":
             d["lands"] = t[1:]
+        elif t[0] == "W":
+            d["wide"] = int(t[1])
         elif t[0] == "G":
             d["ground"][(int(t[1]), int(t[2]))] = int(t[3])
         elif t[0] == "B":
@@ -541,9 +543,10 @@ def world(d, margin=5):
     The slab is as wide as what was built, not as wide as the place's reach: empty ground round it tells nothing."""
     built = [p for p, b in d["blocks"].items() if plain(b[0]) not in NOTHING and (p[1] >= 2 or p[1] <= -2) and kind_of(plain(b[0]), b[0]) != "cross"]
     R = min(d["reach"] + 2, max(max(abs(p[0]), abs(p[2])) for p in built) + margin) if built else d["reach"]
+    R = d.get("wide", R)   # a monument where the world put it: the land round it is the point
     d["slab"] = R
     ys = [p[1] for p in d["blocks"]] + list(d["ground"].values())
-    lo = max(-34, min(ys) - 2)
+    lo = max(-72 if "wide" in d else -34, min(ys) - 2)   # (real land is drawn down to its valleys, so water lies in them)
     top, under = SKIN.get(d["lands"][0] if d["lands"] else "", ("grass_block", "dirt"))
     if not d["lands"]:
         top, under = "sand", "sandstone"   # the shore places

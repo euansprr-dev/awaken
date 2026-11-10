@@ -40,6 +40,59 @@ final class FindsEvents {
             Sites.reset();
             Hearts.reset();
         });
+        if (CENSUS != null) bus.addListener(FindsEvents::countAndStop);
+    }
+
+    /**
+     * A count without a client (SPEC §62.9): with AWAKEN_FINDS_CENSUS=&lt;rings of cells&gt; in its environment a dedicated
+     * dev server counts the world's monuments into its log as soon as the regions are known, and stops. The count asks
+     * only the generator's noise, so no land is made for it: a world of 17 km square is counted in a minute or two,
+     * where a look tour waits its turn on a runner for hours.
+     */
+    private static final String CENSUS = System.getenv("AWAKEN_FINDS_CENSUS");
+    private static boolean counted;
+
+    private static void countAndStop(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
+        var server = e.getServer();
+        if (counted || !server.isDedicatedServer() || dev.awaken.living.region.RegionService.mapIfReady(server) == null) return;
+        counted = true;
+        ServerLevel level = server.overworld();
+        for (String line : Sites.census(level, Integer.parseInt(CENSUS.trim()))) dev.awaken.Awaken.LOG.info("[finds] census {}", line);
+        if (System.getenv("AWAKEN_FINDS_REAL") != null) {
+            // a fair sample, never a flattering one: the four a player meets first, the eight on the roughest ground,
+            // and the nearest of every family's painted one (or of whatever of the family stands)
+            Terrain t = Terrain.of(level);
+            BlockPos spawn = level.getRespawnData().pos();
+            java.util.List<Site> all = new java.util.ArrayList<>(Sites.counted);
+            java.util.LinkedHashSet<Site> pick = new java.util.LinkedHashSet<>();
+            java.util.Comparator<Site> near = java.util.Comparator.comparingDouble(s -> Math.hypot(s.x() - spawn.getX(), s.z() - spawn.getZ()));
+            all.sort(near);
+            for (int i = 0; i < Math.min(4, all.size()); i++) pick.add(all.get(i));
+            java.util.Map<Site, Integer> rough = new java.util.HashMap<>();
+            for (Site s : all) {
+                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, r = s.kind().reach();
+                for (int j = 0; j < 24; j++) {
+                    double a = j * Math.PI / 12;
+                    int f = t.floor(s.x() + (int) Math.round(Math.cos(a) * r), s.z() + (int) Math.round(Math.sin(a) * r));
+                    lo = Math.min(lo, f);
+                    hi = Math.max(hi, f);
+                }
+                rough.put(s, hi - lo);
+            }
+            java.util.List<Site> byRough = new java.util.ArrayList<>(all);
+            byRough.sort(java.util.Comparator.comparingInt((Site s) -> -rough.get(s)));
+            for (int i = 0; i < Math.min(8, byRough.size()); i++) pick.add(byRough.get(i));
+            for (Family f : Family.values()) {
+                Site best = null;
+                for (Site s : all) if (s.kind().family() == f && (best == null || (s.kind().tier() == 3 && best.kind().tier() != 3))) best = s;
+                if (best != null) pick.add(best);
+            }
+            int[] spread = rough.values().stream().mapToInt(Integer::intValue).sorted().toArray();
+            if (spread.length > 0) dev.awaken.Awaken.LOG.info("[finds] census the land's fall across a monument's whole reach: middle {}, nine tenths within {}, most {}",
+                    spread[spread.length / 2], spread[spread.length * 9 / 10], spread[spread.length - 1]);
+            FindsDump.real(level, java.nio.file.Path.of("finds-real"), new java.util.ArrayList<>(pick));
+        }
+        server.halt(false);
     }
 
     private static void resync(ServerPlayer p, BlockPos pos) {
