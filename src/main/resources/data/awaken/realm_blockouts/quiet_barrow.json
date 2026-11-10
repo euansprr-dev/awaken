@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "half": 240,
+  "mouthYaw": 0,
+  "masses": [
+    {"name": "moor", "op": "add", "shape": "box", "from": [-240, 0, -240], "to": [240, 63, 240], "role": "ground", "rough": 3},
+
+    {"name": "rim_w1", "op": "add", "shape": "dome", "at": [-236, 64, -120], "r": 60, "h": 30, "role": "ground", "rough": 3},
+    {"name": "rim_w2", "op": "add", "shape": "dome", "at": [-240, 64, 20], "r": 70, "h": 38, "role": "ground", "rough": 3},
+    {"name": "rim_w3", "op": "add", "shape": "dome", "at": [-236, 64, 160], "r": 60, "h": 32, "role": "ground", "rough": 3},
+    {"name": "rim_e1", "op": "add", "shape": "dome", "at": [236, 64, -110], "r": 60, "h": 28, "role": "ground", "rough": 3},
+    {"name": "rim_e2", "op": "add", "shape": "dome", "at": [240, 64, 40], "r": 72, "h": 40, "role": "ground", "rough": 3},
+    {"name": "rim_e3", "op": "add", "shape": "dome", "at": [232, 64, 170], "r": 64, "h": 30, "role": "ground", "rough": 3},
+    {"name": "rim_n1", "op": "add", "shape": "dome", "at": [-120, 64, 246], "r": 70, "h": 36, "role": "ground", "rough": 3},
+    {"name": "rim_n2", "op": "add", "shape": "dome", "at": [0, 64, 250], "r": 80, "h": 30, "role": "ground", "rough": 3},
+    {"name": "rim_n3", "op": "add", "shape": "dome", "at": [130, 64, 242], "r": 70, "h": 34, "role": "ground", "rough": 3},
+
+    {"name": "hill0", "op": "add", "shape": "cylinder", "at": [0, 64, 70], "rx": 102, "rz": 80, "h": 4, "role": "ground"},
+    {"name": "hill1", "op": "add", "shape": "cylinder", "at": [0, 68, 70], "rx": 96, "rz": 74, "h": 4, "role": "ground"},
+    {"name": "hill2", "op": "add", "shape": "cylinder", "at": [0, 72, 70], "rx": 90, "rz": 68, "h": 4, "role": "ground"},
+    {"name": "hill3", "op": "add", "shape": "cylinder", "at": [0, 76, 70], "rx": 84, "rz": 62, "h": 4, "role": "ground"},
+    {"name": "hill4", "op": "add", "shape": "cylinder", "at": [0, 80, 70], "rx": 78, "rz": 56, "h": 4, "role": "ground"},
+    {"name": "hill5", "op": "add", "shape": "cylinder", "at": [0, 84, 70], "rx": 72, "rz": 50, "h": 4, "role": "ground"},
+    {"name": "hill6", "op": "add", "shape": "cylinder", "at": [0, 88, 70], "rx": 66, "rz": 44, "h": 4, "role": "ground"},
+    {"name": "hill7", "op": "add", "shape": "cylinder", "at": [0, 92, 70], "rx": 60, "rz": 38, "h": 4, "role": "ground"},
+    {"name": "hill8", "op": "add", "shape": "cylinder", "at": [0, 96, 70], "rx": 55, "rz": 33, "h": 4, "role": "ground"},
+    {"name": "hill9", "op": "add", "shape": "cylinder", "at": [0, 100, 70], "rx": 50, "rz": 28, "h": 4, "role": "ground"},
+    {"name": "hill10", "op": "add", "shape": "cylinder", "at": [0, 104, 70], "rx": 46, "rz": 24, "h": 4, "role": "ground"},
+
+    {"name": "stair_cut", "op": "cut", "shape": "box", "from": [-3, 65, -12], "to": [3, 118, 46]},
+    {"name": "stair", "op": "add", "shape": "wedge", "from": [-3, 64, -12], "to": [3, 107, 46], "up": "+z", "role": "walk"},
+
+    {"name": "hull", "op": "add", "shape": "box", "from": [-36, 108, 63], "to": [36, 116, 77], "role": "great"},
+    {"name": "bow1", "op": "add", "shape": "box", "from": [37, 109, 65], "to": [42, 116, 75], "role": "great"},
+    {"name": "bow2", "op": "add", "shape": "box", "from": [43, 111, 67], "to": [46, 116, 73], "role": "great"},
+    {"name": "stern1", "op": "add", "shape": "box", "from": [-41, 109, 65], "to": [-37, 116, 75], "role": "great"},
+    {"name": "stern2", "op": "add", "shape": "box", "from": [-45, 111, 67], "to": [-42, 116, 73], "role": "great"},
+    {"name": "deck", "op": "cut", "shape": "box", "from": [-34, 114, 65], "to": [34, 116, 75]},
+    {"name": "hold", "op": "cut", "shape": "box", "from": [-5, 107, 67], "to": [5, 113, 73]},
+    {"name": "hold_glow", "op": "add", "shape": "box", "from": [-5, 105, 67], "to": [5, 106, 73], "role": "glow"},
+
+    {"name": "prow1", "op": "add", "shape": "box", "from": [44, 116, 68], "to": [47, 126, 72], "role": "great"},
+    {"name": "prow2", "op": "add", "shape": "box", "from": [46, 126, 68], "to": [49, 132, 72], "role": "great"},
+    {"name": "prow3", "op": "add", "shape": "box", "from": [45, 132, 68], "to": [48, 135, 72], "role": "great"},
+    {"name": "prow_head", "op": "add", "shape": "box", "from": [40, 133, 69], "to": [45, 136, 71], "role": "great"},
+    {"name": "sternpost1", "op": "add", "shape": "box", "from": [-48, 116, 69], "to": [-46, 124, 71], "role": "great"},
+    {"name": "sternpost2", "op": "add", "shape": "box", "from": [-50, 124, 69], "to": [-47, 127, 71], "role": "great"},
+
+    {"name": "mast", "op": "add", "shape": "box", "from": [-5, 114, 69], "to": [-3, 148, 71], "role": "great"},
+    {"name": "yard", "op": "add", "shape": "box", "from": [-16, 140, 70], "to": [8, 141, 70], "role": "great"},
+    {"name": "sail", "op": "add", "shape": "box", "from": [-14, 128, 70], "to": [6, 139, 70], "role": "foliage"},
+
+    {"name": "long_barrow", "op": "add", "shape": "box", "from": [96, 64, -52], "to": [156, 71, -34], "role": "ground", "rough": 1},
+    {"name": "long_barrow_hall", "op": "cut", "shape": "box", "from": [102, 65, -46], "to": [150, 69, -40]},
+    {"name": "long_barrow_door", "op": "cut", "shape": "box", "from": [94, 65, -44], "to": [102, 67, -42]},
+
+    {"name": "ring_mound", "op": "add", "shape": "dome", "at": [-130, 64, 34], "r": 26, "h": 5, "role": "ground"},
+
+    {"name": "tarn_cut", "op": "cut", "shape": "cylinder", "at": [112, 60, 150], "r": 24, "h": 8},
+    {"name": "tarn", "op": "add", "shape": "cylinder", "at": [112, 60, 150], "r": 24, "h": 3, "role": "water"},
+    {"name": "tarn_isle", "op": "add", "shape": "dome", "at": [112, 60, 150], "r": 11, "h": 11, "role": "ground"},
+    {"name": "tarn_causeway", "op": "add", "shape": "box", "from": [86, 60, 149], "to": [102, 63, 151], "role": "walk"},
+
+    {"name": "village_green", "op": "add", "shape": "cylinder", "at": [-92, 62, 150], "r": 28, "h": 3, "role": "floor"}
+  ],
+  "sites": [
+    {"kind": "MOUTH", "at": [0, 65, -205], "radius": 8, "what": ""},
+    {"kind": "PORTAL", "at": [0, 65, -211], "radius": 2, "what": ""},
+    {"kind": "LORD", "at": [0, 114, 70], "radius": 30, "what": "lord"},
+    {"kind": "WARDEN", "at": [126, 66, -43], "radius": 14, "what": "long barrow"},
+    {"kind": "WARDEN", "at": [-130, 70, 34], "radius": 16, "what": "stone ring"},
+    {"kind": "WARDEN", "at": [112, 72, 150], "radius": 12, "what": "tarn"},
+    {"kind": "VILLAGE", "at": [-92, 65, 150], "radius": 26, "what": ""}
+  ],
+  "cameras": {
+    "painting": [0.5, 66.8, -205.5, 0, -7],
+    "path": [0.5, 67, -120.5, 0, -10],
+    "hill_foot": [0.5, 67, -30.5, 0, -24],
+    "ship_side": [-60.5, 112, 30.5, -56, -6],
+    "deck": [-30.5, 116, 70.5, -90, 4],
+    "deck_painting": [-26.5, 124, 58.5, -62, 18],
+    "from_ship": [0.5, 118, 62.5, 180, 12],
+    "long_barrow": [80.5, 67, -43.5, -90, -4],
+    "ring": [-100.5, 68, 20.5, 66, -6],
+    "tarn": [80.5, 67, 150.5, -90, -6],
+    "village": [-60.5, 68, 140.5, 76, -2]
+  }
+}
