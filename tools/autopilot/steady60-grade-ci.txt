@@ -1,6 +1,6 @@
 # The grades side by side on CI (SPEC §22 "Grades"): a garden (flowers, wheat, a pond, an oak, a cherry) in a forest's
 # green, each view once with the look as built and once with Vivid: the morning, the flowers from above, the sky,
-# golden hour, dusk toward the sun, night, rain. Then the Look page with its Colour grade row.
+# golden hour, dusk toward the sun, night, rain. Then the Look page with its Colour grade row, and Swift under both.
 # Run: tools/tour-ci.sh tools/autopilot/steady60-grade-ci.txt 1800
 # ci knobs: LENS=cinematic
 world steadystill creative 4545
@@ -133,4 +133,13 @@ screen look
 wait 30
 shot g9_look_page
 screen close
+lookswitch swift
+wait 120
+lens grade awaken
+wait 30
+shot g10_swift_awaken
+lens grade vivid
+wait 30
+shot g10_swift_vivid
+lens grade setting
 quit
