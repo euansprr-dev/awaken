@@ -2,7 +2,9 @@
 
 Plan for Euan's 2026-11-10 request, written by the armour-polish session on branch `claude/armour-polish-plan-5e3628`.
 Status: **waiting for Euan**. Nothing here is built for real. Follows `.claude/PLANNING-PROCESS.md` and holds every
-choice to `.claude/UI-EXCELLENCE.md`, read for armour. The approval page is `docs/armour/polish/page/` (link in §9).
+choice to `.claude/UI-EXCELLENCE.md`, read for armour. Approval page: https://claude.ai/artifact/JtNLQPLzyWQBUjiUEfZnMy
+(private to Euan; source `docs/armour/polish/page/`, built by `build.py` from the tour shots; his answers save in the
+page's `answers` collection, documents `d1` to `d7`).
 
 ## 1. Understanding and success contract
 
@@ -74,7 +76,7 @@ Numbers come from `armour_sets.py check` and from scripts over the built texture
 | F10 | **What the forge did does not show.** | `Forged` carries quality, flaw, twin-struck, fold and true ring. The armour shader draws none (the weapons' shader draws flaws, a pattern weld and temper colours). | A Flawless piece and a Plain one look the same on the body. |
 | F11 | **Promised motion never built.** | Plan §4.2: Galewing's cape "opens like wings when you fly", Dreamsteel's "fragments drifting". Both are rigid. Halos, markers, lantern cages, plumes and wings are rigid on every set. | Suits read as statues that walk. |
 | F12 | **Skin shows on six sets.** | Share of the front that is the wearer's own skin: Wildhide 9%, Sunward 6%, Cleftrunner 4%, Veilwoven 3%, Amberwing 2%. Riftwalker shows the wearer's shirt through a gap at each shoulder (CI shots `w_riftwalker_front`, `_back`). | With a bright skin the set's palette breaks; on black Riftwalker the gap is the brightest thing on the figure. |
-| F13 | **A smear in two old night shots.** | Two of the building session's five night row shots (runs 40886121168, 40896380184) show screen-wide coloured sheets. Six new night rows with the same sets at mastery V are clean. | Not reproduced. The runner's GPU is known to scramble some draws (SPEC §13). Watch item, no fix planned. |
+| F13 | **A smear in two old night shots.** | Two of the building session's five night row shots (runs 40886121168, 40896380184) show screen-wide coloured sheets. Four new night shots of the A and B rows at mastery V (auras on) and over fifty plain night rows are clean. | Not reproduced. The runner's GPU is known to scramble some draws (SPEC §13). Watch item, no fix planned. |
 | F15 | **Greaves and boots icons read as blocks; a piece in the hand is a flat picture.** | The 32-pixel icons are drawn from the meshes: helms read (bell, horns, halo), greaves and boots are box shapes. Held, dropped or framed, a piece is that flat icon, while a weapon is its real mesh. | The bag and the forge's lists are harder to scan than they should be; a helm you just forged is a cut-out in your hand. |
 | F14 | **Never measured.** | The original plan's perf pass (P5) did not run. A figure is about 17 draws and 2,000 to 4,000 corners written each frame. | Unknown cost with many armoured players in view. |
 
@@ -264,5 +266,19 @@ session's: the line is offered to them, not built over them → a tour of the wa
   energy and accent; their elbow and wrist set where the arm mesh is cut.
 
 ## 9. Decisions for Euan
-See the page. In short: the pass as a whole; the night rule; the hands; movement sound on or off by default; which
-bigger options; a Mac run for the many-players measure.
+On the page, each with a recommendation: (1) build stages 0 to 6, or stage 0 only; (2) the hands; (3) the night rule;
+(4) movement sound on, off by default, or not built; (5) stage 3's plate changes on sixteen sets; (6) which bigger
+options; (7) a measuring run on the Mac at the end.
+
+## 10. The draft and the pictures (what exists, and what it is not)
+- Branch `claude/armour-polish-plan-5e3628` carries a draft of changes 5.1 to 5.3 and a first version of 5.4, marked
+  not for merge (commits 1709ae19e and c89edcf16): `tools/art/specs/armour_finish.py`, the two shader files, the
+  dresser calls. It exists so the same tours could shoot every set before and after. After a yes, each stage is built
+  properly from build's tip, with the hook in core, tests and SPEC; the draft is a reference, not a base.
+- Branch `claude/armour-polish-before` is build at 43dceee2a plus the K menu branch and the tours: the "today" side.
+- Shots: `run-autopilot/screenshots-ci/before-armour-audit-*` and `after2-armour-audit-*` (191 each; ignored by git).
+  The first after take (`after-armour-audit-*`) showed the draft's edge light washing dark metal grey and Lordscale's
+  heart-stone pale; it was retuned to lift the plate's own colour and shot again.
+- Not in any picture: the hand-finishing of stage 3, living parts (one offline loop on the page), sound, the wake.
+- Only shot on Lens Cinematic. Swift and the VFX Look are unchecked.
+- A few first-person shots carry one of the game's own hint lines or "Saving world" in a corner; one has a bird.

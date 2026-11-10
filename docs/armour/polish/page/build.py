@@ -103,7 +103,7 @@ BOX = {
     "back": (1148, 400, 2268, 1800),
     "fp": (1780, 880, 3416, 1858),         # the arm, lower right
     "status": (340, 150, 1300, 1660),      # the K menu's figure, with room for the tallest crest
-    "stand": (540, 290, 3060, 1858),       # an armour stand and a Fitting Stand
+    "stand": (377, 200, 3039, 1858),       # an armour stand and a Fitting Stand, with room for the tallest crest
 }
 SIZE = {"front": (400, 500), "back": (400, 500), "fp": (560, 335), "status": (360, 566), "stand": (700, 436)}
 
