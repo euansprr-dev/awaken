@@ -531,19 +531,9 @@ public final class EarnedPowers {
         AABB box = new AABB(f.x - radius, f.y - 0.5, f.z - radius, f.x + radius, f.y + height, f.z + radius);
         Running r = Casting.start(c, ticks).at(foot);
         r.tick(rr -> {
-            for (ServerPlayer p : level.players()) {
-                if (!p.isAlive() || p.isSpectator() || !inColumn(p, f, radius, height)) continue;
-                if (p != c.player && !Combat.isAlly(c.player, p)) continue;
-                // levitation is the game's own way to carry a player up: the client moves itself, nothing rubber-bands
-                p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 6, 8, true, false, false));
-                p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 50, 0, true, false, false));
-                p.resetFallDistance();
-                if (rr.hit.add(p.getId())) {
-                    Progression.count(p, "awaken:updraft_rides");
-                    // Skyward Gate (5): the top of the column throws you on along your look
-                    if (c.step(5)) gate(c, p, f.y + height);
-                }
-            }
+            // you, and whoever is with you
+            carry(c, rr, c.player, f, radius, height);
+            for (ServerPlayer p : level.players()) if (p != c.player && Combat.isAlly(c.player, p)) carry(c, rr, p, f, radius, height);
             if (rr.age % 2 == 0) {
                 for (LivingEntity e : Combat.foesAround(c.player, f.add(0, height * 0.5, 0), Math.max(radius, height * 0.5) + 1)) {
                     if (!inColumn(e, f, radius, height)) continue;
@@ -568,6 +558,19 @@ public final class EarnedPowers {
         // in the air it's a catch: the column takes the fall out of you at once
         if (inAir) c.player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 0, true, false, false));
         return Result.OK;
+    }
+
+    /** The column carries a player inside it: the game's own Levitation, so the client moves itself and nothing rubber-bands. */
+    private static void carry(Cast c, Running rr, ServerPlayer p, Vec3 foot, double radius, double height) {
+        if (!p.isAlive() || p.isSpectator() || !inColumn(p, foot, radius, height)) return;
+        p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 6, 8, true, false, false));
+        p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 50, 0, true, false, false));
+        p.resetFallDistance();
+        if (rr.hit.add(p.getId())) {
+            Progression.count(p, "awaken:updraft_rides");
+            // Skyward Gate (5): the top of the column throws you on along your look
+            if (c.step(5)) gate(c, p, foot.y + height);
+        }
     }
 
     /** Skyward Gate: once a rider nears the top, a push along their look and a ring to go through. */

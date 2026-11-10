@@ -115,7 +115,7 @@ final class Signatures {
                 if (kind == FxKind.HEAL && caster != null) job(J_PETALS, e, st, power, Math.min(40, Math.max(14, e.ticks())), 0.6f);
             }
             case "shadow_step" -> {
-                if (kind == FxKind.BLINK) ink(e, st, caster);
+                if (kind == FxKind.BLINK) ink(e, st, caster, mine);
             }
             case "brand" -> {
                 if (kind == FxKind.AURA && Math.round(e.aux()) == FxKind.Aura.BRAND.ordinal()) branded(e, st, power);
@@ -412,7 +412,9 @@ final class Signatures {
                 double depth = 1.25 - 0.10 * (col * col) - 0.06 * (row * row);
                 double px = eye.x + look.x * depth + right.x * u + up.x * v, py = eye.y + look.y * depth + right.y * u + up.y * v,
                         pz = eye.z + look.z * depth + right.z * u + up.z * v;
-                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.mid, pulse * k), alpha(j.style.core, 0.25f * k), FxPool.ADD);
+                // drawn over the world as well as adding light: a plate of light is invisible against a noon sky if it only adds
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.mid, 0.6f * pulse * k), alpha(j.style.mid, 0.4f * k), FxPool.BRIGHT);
+                FxWorld.sprite(HEX, px, py, pz, 0, 0, 0, 3, 0.46f, 0.46f, alpha(j.style.core, 0.5f * pulse * k), alpha(j.style.core, 0.15f * k), FxPool.ADD);
             }
         }
     }
@@ -435,8 +437,10 @@ final class Signatures {
 
     // ---- Shadow Step: you leave your shape behind in ink --------------------------------------------------------------
 
-    private static void ink(FxEvent e, FxStyle st, @Nullable Entity caster) {
-        if (caster != null) FxAfterimages.capture(caster, 18, st.edge, 0);
+    private static void ink(FxEvent e, FxStyle st, @Nullable Entity caster, boolean mine) {
+        // the shape is taken where the body is now. In your own eyes that is where you are standing: a wall of grey in your face
+        boolean ownEyes = mine && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        if (caster != null && !ownEyes) FxAfterimages.capture(caster, 18, st.edge, 0);
         FxRecipes.tendrils(e.x(), e.y() + 0.1, e.z(), n(5), st);
         FxRecipes.smokePuffs(e.x() + e.dx(), e.y() + e.dy() + 0.2, e.z() + e.dz(), n(6), 0.5f, 0.9f, st, 0.02f, 20);
     }
@@ -444,7 +448,7 @@ final class Signatures {
     // ---- Brand: a mark seared onto the body, and the fire that comes out of it -------------------------------------------
 
     private static final int EMBER_HOT = 0xFFFFD27A, EMBER_DEEP = 0xFFFF6A1E, FLAME = 0xFFFF9A2E, FLAME_END = 0xFFB02A0A, BARK = 0xFF7A5230, BARK_DARK = 0xFF55381E,
-            LEAF = 0xFF8FCB6B, AIR = 0xFFEAF6FF, DUSTY = 0xFFD8CFBD;
+            LEAF = 0xFF8FCB6B, AIR = 0xFFEAF6FF, DUSTY = 0xFFD8CFBD, ICE = 0xFFCFEFFF;
 
     private static void branded(FxEvent e, FxStyle st, String power) {
         end(e.caster(), power); // a new mark on the same body replaces the old one
@@ -592,6 +596,14 @@ final class Signatures {
                     alpha(j.style.mid, fade * 0.6f), FxPool.ADD);
             FxWorld.POOL.frame[tip] = i & 3;
             FxWorld.spin(tip, i * 0.9f, 0);
+            // it is ice, not light: two chunks of it along the shaft, drawn solid
+            for (int k = 0; k < 2; k++) {
+                double at = (k == 0 ? -0.18 : 0.26) * grow;
+                int ice = FxWorld.sprite(PLATE, P[0] + look.x * at, P[1] + look.y * at, P[2] + look.z * at, 0, 0, 0, 2, k == 0 ? 0.2f : 0.15f, k == 0 ? 0.2f : 0.15f,
+                        alpha(ICE, 0.9f * fade), alpha(ICE, 0.8f * fade), FxPool.BRIGHT);
+                FxWorld.POOL.frame[ice] = (i + k) & 1;
+                FxWorld.spin(ice, i * 1.3f + k * 0.8f, 0);
+            }
             if ((j.age + i * 3) % 9 == 0) {
                 // cold falling off it
                 int m = FxWorld.sprite(MOTE, P[0] + R.s() * 0.2, P[1], P[2] + R.s() * 0.2, 0, -0.02, 0, 14, 0.08f, 0.02f, j.style.core, alpha(j.style.mid, 0), FxPool.ADD);

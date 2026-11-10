@@ -180,12 +180,13 @@ def two(power, main, off, release=None, tail=10, light=None, name=None, note="")
 # ============================================================================================================================
 
 # Haymaker: the left fist drawn back where you can see it, the light climbing the arm; the let-go crosses the whole view.
-DRAWN = (-0.66, -0.24, -0.56)
+DRAWN = (-0.52, -0.12, -0.62)  # the cocked fist: well inside the left third on a 16:10 screen, never at its edge
 clip("fp_p_haymaker",
-     off=[at(0, OUT_L, ease=L), K(2, -0.54, -0.36, -0.68, E_HIP, 10), K(9, -0.62, -0.28, -0.60, E_BACK, 18, EIOS), at(18, DRAWN, E_BACK, 24, EIOS)],
+     off=[at(0, OUT_L, ease=L), K(2, -0.54, -0.36, -0.68, E_HIP, 10), K(4, -0.57, -0.34, -0.66, E_HIP, 12, EIOS), K(9, -0.56, -0.20, -0.62, E_BACK, 18, EIOS),
+          at(18, DRAWN, E_BACK, 24, EIOS)],
      moves=[M(0, ease=L), M(3, 0.06, -0.14, 0.05, -8, 0, 10, EOC), M(18, 0.07, -0.16, 0.06, -9, 0, 12, EIOS)],
      light=[(0, 0, 0, 0, 0, L), (4, 0, 0, 0.2, 0.4, EOS), (18, 0, 0, 1, 0.95, L)],
-     events=[(18, "hold")], to_stance=True, length=18, note="the left fist drawn back and up, in view; the weapon low")
+     events=[(18, "hold")], release=4, to_stance=True, length=18, note="the left fist drawn back and up, in view; the weapon low")
 
 
 def shake(p, k, a=0.008):
@@ -759,7 +760,7 @@ def check():
                 x, y, z = a["p"]
                 if a["p"] in (OUT_L, REST):
                     continue
-                if held and (y < -0.58 * abs(z) or abs(y) > 0.68 * abs(z) or abs(x) > 1.2 * abs(z)):
+                if held and (y < -0.58 * abs(z) or abs(y) > 0.68 * abs(z) or abs(x) > 1.0 * abs(z)):
                     warn.append(f"{name}: {side} held off screen at tick {a['t']:g} {a['p']}")
                 if held and abs(x) < 0.25 * abs(z) and abs(y) < 0.14 * abs(z):
                     warn.append(f"{name}: {side} held over the crosshair at tick {a['t']:g}")
