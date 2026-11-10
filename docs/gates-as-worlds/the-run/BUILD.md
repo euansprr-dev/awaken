@@ -99,6 +99,13 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
   5. **The real-game walk of the Broodwarren** (run 42789486172, all 13 shots inside) showed named packs were not spawning
      who they named: `MobHooks.spawnCreature` only makes a Realm's peaceful life, so every name fell back to a roll from the
      theme. Added `MobHooks.spawnNamed` (any creature by id, in its tier's role, a monster of the gate) and a test.
+  6. All three builder skins came back clean on three bench seeds each (Hollow Hills in 9 minutes) and were merged
+     (bf8b07601, 4c2619c16, 3293dd5c2; each merge conflicted on the one line all three add to `LandPrograms`). Herds by theme
+     for the six older lands (`gates/run/Herds`), the run line on the HUD (`RealmLive.hint`), and `PLAY.md` for Euan.
+  7. Real-game walks: the Crypt's run (42789489026: packs in the nave and Ossuary, monsters wading in the Sunk Aisle, a row of
+     teeth up across the gallery, the reliquary's door shut, the break in the tower stair). The Broodwarren with named
+     monsters (42794222878): the Thousandfoot in the comb ring with its guard, Lurkers in the larder (on the floor in the shot,
+     not yet hung), and in the played moment the larder's ambush sprang, its sacs burst and the skin sealed the way out.
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 

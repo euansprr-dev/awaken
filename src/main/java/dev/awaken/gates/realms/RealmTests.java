@@ -29,6 +29,9 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:broodwarren", Rank.E, seed, 1));
     }
 
+    /** Every skin on the crawl generator: each has to play on any seed. */
+    private static final String[] CRAWLS = {"awaken:brood_burrow", "awaken:catacombs", "awaken:hollow_hills", "awaken:root_cellars", "awaken:tallow_runs"};
+
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:hour_crypt", Rank.E, seed, 1));
@@ -367,7 +370,7 @@ public final class RealmTests {
         });
         // a rolled crawl has to play whatever the seed: every one walks, floats nothing and passes the same route check a designed run does
         AwakenTests.register("realm_generated_crawls_play", 4800, h -> {
-            for (String program : new String[]{"awaken:brood_burrow", "awaken:catacombs"}) for (long seed = 1; seed <= 6; seed++) {
+            for (String program : CRAWLS) for (long seed = 1; seed <= 6; seed++) {
                 Blueprint bp = new Blueprint(1, "t", "dungeon", program.endsWith("catacombs") ? "bell_crypt" : "hive", List.of("E"), new Blueprint.LandSpec(program, 0, Map.of()),
                         AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
                 Land land = LandPrograms.make(new Land.Ctx(bp, program, Rank.E, seed, 1));

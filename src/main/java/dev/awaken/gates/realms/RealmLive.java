@@ -388,6 +388,28 @@ public final class RealmLive {
         return Math.max(1, n);
     }
 
+    /**
+     * One line for the run HUD (SPEC §50.9): how many herds and Wardens are down of how many, then that the way on is open.
+     * A herd that keeps its own habits (lurkers in a roof) isn't counted: it may never be met. Null once the Lord is down.
+     */
+    public static String hint(MinecraftServer server, GateRecord g) {
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null || g.bossDead) return null;
+        RealmState st = RealmData.get(server).state(g.id);
+        if (st.heartOpen) return "Every Warden is down. The way on is open.";
+        int herds = 0, down = 0, wardens = 0;
+        for (Land.Leg leg : plan.land().route()) {
+            if (leg.kind() == Land.LegKind.WARDEN) wardens++;
+            if (leg.kind() != Land.LegKind.FIGHT && leg.kind() != Land.LegKind.AMBUSH) continue;
+            boolean stands = leg.pack().isEmpty();
+            for (String name : leg.pack()) stands |= !name.startsWith("~");
+            if (!stands) continue;
+            herds++;
+            if (st.densCleared.contains(leg.site())) down++;
+        }
+        return "Herds " + down + " / " + herds + " · Wardens " + st.wardensDown.size() + " / " + wardens;
+    }
+
     private static int hiddenLegs(Land land) {
         int n = 0;
         for (Land.Leg leg : land.route()) if (leg.kind() == Land.LegKind.HIDDEN) n++;

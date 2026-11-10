@@ -20635,3 +20635,17 @@ Seat, Kingsroot Keep, Saltcomb Flats, The Quiet Barrow, The Wax Galleries, until
 its theme's herds, four each for the Hive, the Bell Crypt and the Overgrown Temple, gone round den by den from a start the
 seed picks, so two camps in one land are not the same fight. Under a roof a fifth herd joins the round: Drip Lurkers or
 Hushlings with one of the theme's own. A theme with no herds rolls from its roster as before.
+
+**The run on the HUD.** In a Realm the run HUD's hint line reads "Herds 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
+are all down, of those the run has; a herd that keeps its own habits isn't counted), then "Every Warden is down. The way on is
+open." until the Lord falls (`RealmLive.hint`).
+
+Three more skins, each one file a builder wrote from a thirty-line brief in ten to twenty minutes (bench on three seeds, then
+the six-seed test here):
+- **The Hollow Hills** (`awaken:hollow_hills`, Bell Crypt, the Barrow family): passages under a mound, packed earth shored
+  with kerb stones, urns and shields, grave-glow low on the walls; darker than the catacombs, with pools, because Hushlings
+  live in it.
+- **The Root Cellars** (`awaken:root_cellars`, Overgrown Temple, the Fane family): a temple's undercroft half swallowed by
+  roots, moss and vines, lit leaves and braziers; the temple's hounds, archers and creakers, with Lurkers in one herd.
+- **The Tallow Runs** (`awaken:tallow_runs`, Hive, the Wax family): soot rock that pale wax has run down and set over, candle
+  banks at the foot of the walls, lit comb in the ambush and the Lord's hall; the one that glows.

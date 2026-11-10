@@ -73,6 +73,7 @@ public final class Hud {
                 | (g.plan.has(Modifier.SILENCE) ? GatePayloads.RunHud.SILENCE : 0);
         int floors = realm ? 0 : run.area == 0 ? g.plan.floors() : 2; // none: the client says the place, not a floor
         String hint = Twists.hint(p, g, run);
+        if (hint == null && realm) hint = dev.awaken.gates.realms.RealmLive.hint(p.level().getServer(), g); // a Realm's run: what's down and what's left
         AwakenNet.send(p, new GatePayloads.RunHud(g.id, (f == null ? g.plan.theme() : f.theme).id, g.plan.rank().ordinal(), run.area,
                 run.floor, floors, Satchel.count(run.satchel), (int) Math.round(run.satchelXp), run.kills, (int) (onFloor / 20), pressure,
                 g.plan.has(Modifier.SILENCE) ? run.noise : -1, collapse, flags, hint == null ? "" : hint));
