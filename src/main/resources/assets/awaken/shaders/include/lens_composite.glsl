@@ -37,6 +37,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
 #include <awaken:lens_storm_frame.glsl>
+#include <awaken:lens_air.glsl>
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
@@ -173,6 +174,8 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
 // fetched twice)
 vec3 lrKept;
 bool lrHave = false;
+// how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
+float lensOpen = 1.0;
 
 vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
     dbg = vec4(0.0);
@@ -210,6 +213,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
             }
         }
         float open = 1.0 - smoothstep(1.0, 7.0, cover);
+        lensOpen = open;
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
         // game's own face shading and only cast shadows show; by golden hour every face is lit or shaded by its turn
         float lowSun = 1.0 - smoothstep(0.5, 0.92, f14.y);
@@ -224,11 +228,12 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float depthOfShade = l17.g * (1.0 + 0.3 * golden) * (1.0 + 0.35 * smoothstep(24.0, 160.0, dist));
         vec3 shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade));
         // a glow is light, not a lit surface: it keeps its brightness in the shade
-        // look-steady-60 proof of concept (lensdebug 9, never in play): sunlight that reads. A brighter, warmer key and a
-        // deeper cool shade, so a cast shadow is a shape on the ground and not a tint
-        if (int(P(0).r * 255.0 + 0.5) == 9) {
-            key = mix(vec3(1.22, 1.15, 0.96), key * vec3(1.12, 1.06, 0.98), max(golden, f16.y));
-            shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade * 1.85));
+        // the Air (Steady Light): sunlight that reads. A brighter, warmer key and a shade about twice as deep, so a
+        // cast shadow is a shape on the ground and not a tint; by moonlight the shade deepens less
+        float air = airOn();
+        if (air > 0.0) {
+            key = mix(key, mix(vec3(1.24, 1.17, 0.98), key * vec3(1.14, 1.07, 0.99), max(golden, f16.y)), air);
+            shade *= mix(1.0, (1.0 - min(0.85, depthOfShade * mix(1.9, 1.35, f16.y))) / max(1.0 - min(0.85, depthOfShade), 0.15), air);
         }
         float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
         m = mix(vec3(1.0), mix(shade, key, direct), k);
@@ -382,12 +387,39 @@ void main() {
     }
     if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
+    // the Air (Steady Light): Lens's own sky, and a far fog of the sky's own horizon colour that takes the land into it,
+    // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
+    // over its own sky colour); Lens's larger stars join them by night. Places under cover keep the game's air
+    float airK = airOn();
+    if (airK > 0.0) {
+        vec3 dirA = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+        vec4 f22 = F(22), f23 = F(23);
+        float rainA = F(16).z;
+        if (sky) {
+            vec3 was = mix(fogColor.rgb, f23.rgb, smoothstep(-0.02, 0.30, dirA.y));
+            vec3 extra = max(c - was - 0.05, 0.0);
+            float keep = smoothstep(0.04, 0.22, luma(extra));
+            vec3 s = airSky(dirA, f22.xyz, rainA);
+            s += airStars(dirA, F(17).x) * airHour(f22.y).z * (1.0 - rainA) * (1.0 - s);
+            c = mix(c, s + extra * keep, airK);
+        } else if (!farTerrain && !plate) {
+            // by distance over the render distance (a far renderer's land carries on past it, so the fog thins out
+            // over its reach instead), a little thinner on land well above the eye so peaks stand out of it
+            float reach = rdEnd * (p0.b > 0.5 ? 5.0 : 1.0);
+            float t = d / reach;
+            float wy = pRel.y + F(12).y;
+            float thin = mix(1.0, exp(-max(wy - F(12).y - 24.0, 0.0) / 150.0), 0.55);
+            float fog = (1.0 - exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * lensOpen * airK;
+            vec3 fc = airFog(dirA, f22.xyz, rainA);
+            c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
+            c = mix(c, fc, fog);
+        }
+    }
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
     // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
     // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
     int storms = stormCount();
-    float cl_cover = 0.0;
 #ifdef PROBE_NO_CLOUDS
     if (false) {
 #else
@@ -399,9 +431,10 @@ void main() {
             vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
             float camY = F(12).y, dist = farTerrain ? d : length(pRel);
             if (cp.x > 0.0) {
-                float base = cp.x - 6.0, enter = 1.0e9;
-                if (camY >= base && camY <= base + 84.0) enter = 0.0;
-                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+                // (the Air's blocks: a thinner layer, lens_clouds.glsl)
+                float base = cp.x - (airK > 0.0 ? 2.0 : 6.0), thick = airK > 0.0 ? 21.0 : 84.0, enter = 1.0e9;
+                if (camY >= base && camY <= base + thick) enter = 0.0;
+                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + thick - camY) / cv.y;
                 behind = enter >= 0.0 && dist > enter;
             }
             for (int k = 0; k < 2; k++) {
@@ -409,10 +442,7 @@ void main() {
                 behind = behind || dist > max(stormEntry(cv, k, camY), 16.0);
             }
         }
-        if (behind) {
-            c = c * cl.a + cl.rgb;
-            cl_cover = 1.0 - cl.a;
-        }
+        if (behind) c = c * cl.a + cl.rgb;
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
@@ -423,6 +453,10 @@ void main() {
     // none proven yet (a depth that reads as one value everywhere) distance is the far renderer's own fog: hazing only
     // the near terrain would draw a ring where it ends. A depth that proves itself eases the haze in (trust g).
     if (p0.b > 0.5) haze *= farTrust.g;
+#ifdef LENS_LIGHT
+    // the Air's fog has already taken the distance
+    haze *= 1.0 - airOn();
+#endif
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
 #ifdef LENS_LIGHT
@@ -437,49 +471,6 @@ void main() {
     }
 #endif
     float l0 = luma(c);
-#ifdef LENS_LIGHT
-    // look-steady-60 proof of concept (lensdebug 9, never in play): "the Air". The land goes into a blue distance and
-    // the sky's horizon is that same colour, so the end of the world is never a line; the zenith is deeper; at dusk the
-    // sky and the fog turn rose and violet. No new pass, no new texture: this pixel's depth and direction only
-    bool air = int(p0.r * 255.0 + 0.5) == 9;
-    if (air) {
-        vec3 dirA = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
-        vec4 fA = F(14);
-        float up = clamp(dirA.y, 0.0, 1.0);
-        float night = F(16).y;
-        float dusk = max(p1.a, 1.0 - smoothstep(0.08, 0.42, fA.y)) * (1.0 - night) * step(0.0001, fA.w);
-        float sunSide = 0.5 + 0.5 * dot(normalize(dirA.xz + vec2(1.0e-4)), normalize(fA.xz + vec2(1.0e-4)));
-        float fl = max(luma(fogColor.rgb), 0.02);
-        // the fog: the game's own horizon colour pulled toward blue by day, toward rose and violet at dusk
-        vec3 airFog = mix(fogColor.rgb, vec3(0.57, 0.67, 1.0) * fl * 1.2, 0.55 * (1.0 - night));
-        vec3 duskFog = mix(vec3(0.58, 0.46, 0.80), vec3(1.0, 0.64, 0.60), sunSide * sunSide) * (0.30 + 0.75 * fl);
-        airFog = mix(airFog, duskFog, dusk * 0.8);
-        if (sky) {
-            // a deeper zenith by day, the horizon band left as the fog
-            vec3 deep = max(mix(vec3(l0), c, 1.22), 0.0) * mix(vec3(1.0), vec3(0.86, 0.87, 1.07), 1.0 - night);
-            c = mix(deep, c, pow(1.0 - up, 3.0));
-            vec3 duskSky = mix(vec3(0.33, 0.27, 0.60), duskFog * 1.2, pow(1.0 - up, 1.6));
-            c = mix(c, duskSky * (0.6 + 1.4 * l0), dusk * 0.88 * (1.0 - cl_cover));
-            c = mix(c, airFog, pow(1.0 - up, 7.0) * 0.92 * (1.0 - cl_cover));
-        } else {
-            // the game's own clouds (their layer at 192.33, four blocks thick): seen far past the land's end, so their
-            // fog runs on a longer scale; a little whiter and softer against the sky
-            float wy = pRel.y + F(12).y;
-            bool cloud = wy > 191.0 && wy < 197.5 && d > 32.0 && !farTerrain;
-            float t = d / (cloud ? rdEnd * 4.5 : rdEnd);
-            // (a stand-in for the soft cloud of stage 1b: tinted by the hour, a third of the sky showing through)
-            if (cloud) {
-                vec3 through = mix(airFog, airFog * vec3(0.66, 0.72, 1.04), up);
-                c = mix(c * mix(vec3(0.95, 0.95, 1.0), duskFog * 1.7, dusk * 0.75), mix(through, duskFog, dusk * 0.6), 0.32);
-            }
-            float fog = (1.0 - exp(-t * t * 2.8)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * step(0.001, h.r);
-            if (plate) fog = 0.0;
-            c = mix(c, mix(c, vec3(l0), 0.25), fog);
-            c = mix(c, airFog, fog);
-        }
-        haze = 0.0;
-    }
-#endif
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);
 #ifdef LENS_LIGHT

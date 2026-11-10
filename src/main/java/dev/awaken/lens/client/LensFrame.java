@@ -49,6 +49,22 @@ final class LensFrame {
     // the Living Wilds' storm cells this frame (StormSky.lensCells), marched in the cloud pass
     private final float[] storms = new float[dev.awaken.living.client.StormSky.MAX * dev.awaken.living.pulse.StormCell.FLOATS];
 
+    // the Air (SPEC §22 "Steady Light"): the sun's own direction (under the horizon by night), how much of the Air is on,
+    // the game's sky colour this frame and its stars' brightness
+    private float airSunX, airSunY = 1f, airSunZ, airOn, skyR, skyG, skyB, stars;
+
+    /** This frame's Air: toward the sun, its strength (0: off), the game's sky colour and star brightness. */
+    void air(float sunX, float sunY, float sunZ, float on, float r, float g, float b, float starBrightness) {
+        airSunX = sunX;
+        airSunY = sunY;
+        airSunZ = sunZ;
+        airOn = on;
+        skyR = r;
+        skyG = g;
+        skyB = b;
+        stars = starBrightness;
+    }
+
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
     void clouds(float base, float cover, double drift, int colour) {
         cloudBase = base;
@@ -123,7 +139,9 @@ final class LensFrame {
         put(20, plateCount, stormCount, 0f, 0f);
         // 21: the sun on screen (uv; z 1 when it is ahead), the estimate WorldProjection's replaces
         put(SUN, sunU, sunV, sunFront, 0f);
-        for (int i = 22; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
+        // 22-23: the Air (lens_air.glsl)
+        put(22, airSunX, airSunY, airSunZ, airOn);
+        put(23, skyR, skyG, skyB, stars);
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;

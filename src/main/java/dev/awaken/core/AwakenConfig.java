@@ -147,6 +147,11 @@ public final class AwakenConfig {
                         "frame in four and its light every other frame, the rest carried forward from the frames before (still and",
                         "slow views look the same; a fast turn settles in a few frames). Off: every pixel every frame.")
                 .define("lensTemporal", true);
+        public static final ModConfigSpec.BooleanValue LENS_AIR = C
+                .comment("The Air (Cinematic and Ultra): Lens's own sky, a far fog of the sky's own colour that takes the land into",
+                        "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
+                        "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
+                .define("lensAir", true);
         public static final ModConfigSpec.BooleanValue LENS_TILES = C
                 .comment("Lens's passes as Apple's (tile-based) GPUs want them: no depth buffers, separate clears or reloads of the frame",
                         "between its passes. The picture is the same; it saves memory traffic. Off: exactly as the game does it.")

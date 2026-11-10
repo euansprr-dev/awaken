@@ -1,0 +1,73 @@
+# The Air's look tour (SPEC §22 "Steady Light"): Lens Cinematic with the Air at the moments ImmersiveVFX was shot at
+# (docs/perf/steady60/page/shots), in a copy of Euan's world, with his settings (the game's Clouds setting off: the
+# Air's clouds must draw anyway). Shots only: FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-air.txt air-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+lookswitch cinematic
+wait 400
+# ---- the saved view through the day
+shot a1_morning
+lens air off
+wait 60
+shot a1_morning_off
+lens air setting
+cmd time set 11800
+wait 140
+shot a2_dusk
+cmd time set 6000
+wait 140
+shot a3_noon
+cmd time set 18000
+wait 140
+shot a5_night
+cmd time set 23000
+wait 140
+shot a6_dawn
+# ---- the sky: toward the sun, away from it, straight up
+cmd time set 3000
+look -90 -30
+wait 140
+shot b1_morning_sunward
+look 90 -30
+wait 20
+shot b1_morning_away
+look 0 -70
+wait 20
+shot b1_morning_up
+cmd time set 11800
+look 90 -12
+wait 140
+shot b2_dusk_sunward
+look -90 -15
+wait 20
+shot b2_dusk_away
+cmd time set 18000
+look 0 -40
+wait 140
+shot b5_night_sky
+# ---- the open view from 45 up
+cmd time set 3000
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 200
+shot c1_open_morning
+cmd time set 11800
+look 90 8
+wait 140
+shot c2_open_dusk_sunward
+quit

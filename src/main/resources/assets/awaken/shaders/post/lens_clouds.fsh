@@ -20,6 +20,7 @@ uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
 
 #include <awaken:lens_frame.glsl>
+#include <awaken:lens_air.glsl>
 #include <awaken:lens_clouds.glsl>
 #include <awaken:lens_storm_frame.glsl>
 #include <awaken:lens_storm.glsl>
@@ -79,10 +80,85 @@ float historyDepth(float t0, float scene) {
     return max(min(at, scene), 1.0);
 }
 
+// The Air's blocks along the ray from t0 to t1, cell by cell (a walk of the twelve-block grid, so each block is met
+// exactly where the ray enters and leaves it: its edges are true edges, with no steps to miss it or smear it). A block
+// takes the sun on the face the ray came in by and through the cloud above it, and the sky's light by its height.
+void blockPiece(float t0, float t1, vec4 cp) {
+    const float sigma = 0.062;
+    float oy = camY - (cp.x - 2.0);
+    vec2 o = cp.zw;
+    vec2 pxz = o + v.xz * t0;
+    vec2 cell = floor(pxz / CLOUD_CELL);
+    vec2 sgn = vec2(v.x < 0.0 ? -1.0 : 1.0, v.z < 0.0 ? -1.0 : 1.0);
+    vec2 inv = 1.0 / max(abs(v.xz), vec2(1.0e-5));
+    vec2 next = t0 + ((cell + max(sgn, 0.0)) * CLOUD_CELL - pxz) * sgn * inv;
+    float t = t0, thick = 3.0 * CLOUD_TIER;
+    int axis = 2;
+    for (int i = 0; i < 72; i++) {
+        if (t >= t1 || T < 0.02) break;
+        float tExit = min(min(next.x, next.y), t1);
+        float val = cloudCell(cell, cp.y);
+        if (val > 0.0) {
+            float top = CLOUD_TIER * (1.0 + floor(min(val / 0.055, 2.0)));
+            float ta = t, tb = tExit;
+            bool capped = false;
+            if (abs(v.y) > 1.0e-5) {
+                float y0 = -oy / v.y, y1 = (top - oy) / v.y;
+                float lo = min(y0, y1), hi = max(y0, y1);
+                if (lo > ta) {
+                    ta = lo;
+                    capped = true;
+                }
+                tb = min(tb, hi);
+            } else if (oy <= 0.0 || oy >= top) {
+                tb = ta;
+            }
+            if (tb > ta) {
+                // the face it came in by: the block's top or underside, or the side of the cell it crossed
+                vec3 n = capped || axis == 2 ? vec3(0.0, v.y > 0.0 ? -1.0 : 1.0, 0.0)
+                        : (axis == 0 ? vec3(-sgn.x, 0.0, 0.0) : vec3(0.0, 0.0, -sgn.y));
+                vec3 w = v * (ta + min((tb - ta) * 0.5, 2.5));
+                float od = 0.0, s = 3.0, lt = 0.0;
+                for (int k = 0; k < 3; k++) {
+                    lt += s;
+                    od += cloudBlock(w + l * lt, cp, camY) * s;
+                    s *= 2.0;
+                }
+                float h = clamp((w.y + oy) / thick, 0.0, 1.0);
+                float beer = max(exp(-od * sigma * 1.6), 0.30 * exp(-od * sigma * 0.35));
+                float face = 0.50 + 0.50 * max(dot(n, l), 0.0);
+                // the underside is the cloud's own shade; the sides and top take the sky by their height
+                float skyOn = n.y < -0.5 ? 0.62 : (n.y > 0.5 ? 1.0 : 0.80 + 0.12 * h);
+                vec3 S = sunCol * beer * face * phase + ambient * skyOn;
+                float a = 1.0 - exp(-sigma * (tb - ta));
+                L += T * S * a;
+                if (tHit < 0.0 && a > 0.05) tHit = ta;
+                T *= 1.0 - a;
+            }
+        }
+        if (next.x < next.y) {
+            cell.x += sgn.x;
+            next.x += CLOUD_CELL * inv.x;
+            axis = 0;
+        } else {
+            cell.y += sgn.y;
+            next.y += CLOUD_CELL * inv.y;
+            axis = 1;
+        }
+        t = tExit;
+    }
+}
+
 void layerPiece(float t0, float t1, int steps, vec4 cp) {
     if (t1 <= t0 || steps <= 0 || T < 0.02) return;
-    const float sigma = 0.03;
-    float dt = (t1 - t0) / float(steps), base = cp.x - 6.0;
+    if (cloudBlocks()) {
+        blockPiece(t0, t1, cp);
+        return;
+    }
+    bool blocks = false;
+    // (the Air's blocks are thin: denser, so one still reads as cloud, and lit by shorter steps)
+    float sigma = blocks ? 0.075 : 0.03;
+    float dt = (t1 - t0) / float(steps), base = cp.x - cloudUnder(), thick = cloudThick();
     int lightSteps = ultra ? 5 : 3;
     for (int i = 0; i < 32; i++) {
         if (i >= steps) break;
@@ -95,19 +171,19 @@ void layerPiece(float t0, float t1, int steps, vec4 cp) {
             if (d <= 0.004) continue;
         }
         // light reaching this point through the cloud above it, toward the sun
-        float od = 0.0, s = 6.0, lt = 0.0;
+        float od = 0.0, s = blocks ? 3.0 : 6.0, lt = 0.0;
         for (int k = 0; k < lightSteps; k++) {
             lt += s;
             od += cloudDensity(w + l * lt, cp, camY, 0) * s;
             s *= 2.0;
         }
-        float h = clamp((w.y + camY - base) / CLOUD_THICK, 0.0, 1.0);
+        float h = clamp((w.y + camY - base) / thick, 0.0, 1.0);
         // two octaves of Beer's law: the second, weaker and longer, stands in for light scattered many times inside the
         // cloud, so its interior and base stay soft grey-white instead of storm-dark
         float beer = max(exp(-od * sigma * 1.4), 0.35 * exp(-od * sigma * 0.3));
         // powder: the thin edges facing the sun glow, dense cores darken (a cheap stand-in for multiple scattering)
         float powder = 1.0 - exp(-d * 6.0);
-        vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.6 + 0.4 * h);
+        vec3 S = sunCol * beer * phase * mix(1.0, powder, blocks ? 0.25 : 0.5) + ambient * (blocks ? 0.55 + 0.45 * h : 0.6 + 0.4 * h);
         float a = 1.0 - exp(-d * sigma * dt);
         L += T * S * a;
         if (tHit < 0.0 && a > 0.05) tHit = t;
@@ -235,6 +311,18 @@ void main() {
     // (overcast keeps it: a grey sky is bright grey, not night); with no layer this frame, by the fog's colour
     vec3 skyTint = cp.x > 0.0 ? max(cc.rgb, vec3(0.5)) : max(P(10).rgb * 1.2, vec3(0.3));
     ambient = skyTint * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * (0.95 + 0.9 * smoothstep(0.6, 0.95, cp.y));
+    // the Air: the clouds take the sky's own light. Their shade is the sky overhead and at the horizon mixed, lifted
+    // toward white by day; their lit faces the sun's colour for the hour, rose at dusk, the moon's by night
+    vec3 airFar = P(10).rgb;
+    if (cloudBlocks()) {
+        vec4 f22 = F(22);
+        vec3 hr = airHour(f22.y);
+        vec3 over = airSky(vec3(0.0, 1.0, 0.0), f22.xyz, f16.z), edge = airSky(normalize(vec3(v.x, 0.12, v.z)), f22.xyz, f16.z);
+        ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.30 * hr.x) * (0.80 + 0.5 * hr.x + 0.25 * hr.y) + vec3(0.012, 0.016, 0.03) * hr.z;
+        vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
+        sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.30 : lit * (0.55 + 0.25 * hr.y)) * f14.w;
+        airFar = airFog(v, f22.xyz, f16.z);
+    }
     // a storm cell's: the same brightness, but cool grey-blue
     stormSky = vec3(dot(ambient, vec3(0.3, 0.59, 0.11))) * vec3(0.74, 0.8, 0.92);
 
@@ -243,7 +331,7 @@ void main() {
     vec4 f13 = F(13);
     bool interleave = F(17).y > 0.5 && f13.w > 0.5;
     if (cp.x > 0.0) {
-        float base = cp.x - 6.0, top = base + CLOUD_THICK;
+        float base = cp.x - cloudUnder(), top = base + cloudThick();
         if (abs(v.y) > 1.0e-4) {
             float a = (base - camY) / v.y, b = (top - camY) / v.y;
             t0 = max(min(a, b), 0.0);
@@ -252,6 +340,8 @@ void main() {
             t1 = maxD;
         }
         t1 = min(min(t1, scene), min(maxD, t0 + (ultra ? 1100.0 : 800.0)));
+        // (the Air's blocks are small: the march keeps to the near thousand blocks, where they can be told apart)
+        if (cloudBlocks()) t1 = min(t1, max(t0, 0.0) + (ultra ? 1000.0 : 860.0));
     }
     if (interleave) {
         ivec2 tile = ivec2(gl_FragCoord.xy) >> 3;
@@ -276,7 +366,7 @@ void main() {
             }
         }
     }
-    int steps = ultra ? 32 : 20;
+    int steps = ultra ? 32 : (cloudBlocks() ? 28 : 20);
     float len = max(t1 - t0, 1.0);
     // storms nearest first, each skipped by the layer's march (the layer has thinned to nothing there anyway)
     int first = 0;
@@ -297,9 +387,11 @@ void main() {
     // far cloud melts into the haze toward the horizon
     // (to nothing at the march's reach, so the deck never ends in a line)
     float at = tHit > 0.0 ? tHit : t0;
-    float far = smoothstep(1500.0, maxD, at);
-    L = mix(L, P(10).rgb * (1.0 - T), far * 0.7) * (1.0 - far);
-    T = 1.0 - (1.0 - T) * (1.0 - far);
+    float far = cloudBlocks() ? smoothstep(260.0, 1500.0, at) : smoothstep(1500.0, maxD, at);
+    // (the Air's far clouds take the fog's colour first and thin out later, so the sky keeps cloud toward the horizon)
+    float gone = cloudBlocks() ? smoothstep(520.0, 1500.0, at) * 0.6 : far;
+    L = mix(L, airFar * (1.0 - T), far * (cloudBlocks() ? 0.9 : 0.7)) * (1.0 - gone);
+    T = 1.0 - (1.0 - T) * (1.0 - gone);
     vec4 res = vec4(L, T);
     // last frame's clouds along this ray, found where it first met cloud; lightning shows at once (and fades over a few
     // frames, an afterglow)
@@ -309,6 +401,10 @@ void main() {
         // marching one frame in four: the same response over time as a march every frame (1 - (1 - f)^4)
         if (interleave) fresh = 1.0 - pow(1.0 - fresh, 4.0);
         fresh = mix(fresh, 0.85, clamp(flashSeen * 4.0, 0.0, 1.0));
+        // the Air's blocks are walked exactly, with no noise for the frames to average away: a marched pixel is its own
+        // answer (blending it into a history carried by a camera that sways at rest blurred every edge a little more
+        // each frame). A storm cell in the ray is still marched with jitter, and keeps its blend
+        if (cloudBlocks() && nStorm == 0) fresh = 1.0;
         if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) res = mix(texture(HistorySampler, s.xy), res, fresh);
     }
     fragColor = clamp(res + (jitter - 0.5) / 255.0, 0.0, 1.0);

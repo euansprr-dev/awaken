@@ -108,6 +108,22 @@ public final class LensClient {
     private static boolean temporal = true;
     private static @org.jspecify.annotations.Nullable Boolean forcedTemporal;
 
+    // the Air (SPEC §22 "Steady Light"): the lensAir setting, or the autopilot's override for A/Bs
+    private static boolean air = true;
+    private static @org.jspecify.annotations.Nullable Boolean forcedAir;
+    // the game's sky colour and star brightness this frame (what it drew behind the sun, moon and stars)
+    private static float skyR, skyG, skyB, starBrightness;
+
+    /** Autopilot {@code lens air on|off|setting}: the A/B switch for the Air. */
+    public static String air(String arg) {
+        forcedAir = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "air " + (forcedAir != null ? forcedAir : "from the setting");
+    }
+
     /** Autopilot {@code lens temporal on|off|setting}: the A/B switch for the interleaved clouds and light. */
     public static String temporal(String arg) {
         forcedTemporal = switch (arg.trim()) {
@@ -129,7 +145,7 @@ public final class LensClient {
     }
 
     public static void debug(int mode) {
-        debug = Math.clamp(mode, 0, 9); // 9: the look-steady-60 proof of concept (measurement only, never in play)
+        debug = Math.clamp(mode, 0, 8);
         Awaken.LOG.info("[lens] debug view {}", debug);
     }
 
@@ -183,6 +199,7 @@ public final class LensClient {
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
         temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
+        air = forcedAir != null ? forcedAir : AwakenConfig.Client.LENS_AIR.get();
         // the VFX tier is ImmersiveVFX alone: no Lens at all, story scenes included (without that mod it reads as Swift)
         boolean vfx = setting == AwakenConfig.Client.LensLook.VFX && Companions.immersiveVfxLoaded();
         boolean off = setting == AwakenConfig.Client.LensLook.OFF || vfx;
@@ -403,9 +420,16 @@ public final class LensClient {
      */
     private static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent e) {
         var state = e.getRenderState();
-        // (debug 9, the look-steady-60 proof of concept: the game's own clouds stay, and Lens lights and fogs them)
-        cloudsHere = active && lit && debug != 9 && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
-                && e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF;
+        var sky = state.skyRenderState;
+        if (sky.skyColor != null) {
+            skyR = sky.skyColor.x();
+            skyG = sky.skyColor.y();
+            skyB = sky.skyColor.z();
+        }
+        starBrightness = sky.starBrightness;
+        // (with the Air on, Lens's clouds are part of its sky: drawn whatever the Clouds video setting says)
+        cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
+                && (air || e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF);
         if (!cloudsHere) return;
         cloudColour = state.cloudColor;
         cloudHeight = state.cloudHeight;
@@ -443,6 +467,7 @@ public final class LensClient {
         float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + weather * 0.4f) : 0f;
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
+        lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

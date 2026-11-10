@@ -613,6 +613,11 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("air")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.air(arg.trim().substring(3)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("temporal")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.temporal(arg.trim().substring(8)));
                     waitTicks = 20;

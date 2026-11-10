@@ -21,9 +21,38 @@ float cloudNoise3(vec3 p) {
 // x layer base (0: none), y cover, z/w the camera's x and z plus the wind (modulo 30720)
 vec4 cloudParams() { return F(18); }
 
+// The Air's clouds (SPEC §22 "Steady Light"; frame texel 22 w): the game's own cloud, made soft. Flat-bottomed blocks
+// twelve across, in one to three tiers of seven that step in as they rise, so a group mounds up toward its middle;
+// lit and shaded through their volume like any cloud here, and thin enough that the sky shows through their edges.
+const float CLOUD_CELL = 12.0, CLOUD_TIER = 7.0;
+
+bool cloudBlocks() { return F(22).w > 0.0; }
+// under the layer's base by this much, and this thick
+float cloudUnder() { return cloudBlocks() ? 2.0 : 6.0; }
+float cloudThick() { return cloudBlocks() ? 3.0 * CLOUD_TIER : CLOUD_THICK; }
+
+float cloudCellHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7))) * 43758.5453); }
+
+// how deep inside a group of cloud a twelve-block cell stands (0 or less: open sky)
+float cloudCell(vec2 cell, float cover) {
+    vec2 u = (cell + 0.5) * CLOUD_CELL;
+    float n = textureLod(CloudNoiseSampler, fract(u / 1536.0), 0.0).r * 0.62 + textureLod(CloudNoiseSampler, fract(u / 384.0 + 0.37), 0.0).g * 0.38;
+    return n + (cloudCellHash(cell) - 0.5) * 0.08 - (1.0 - cover * 0.72);
+}
+
+float cloudBlock(vec3 rel, vec4 cp, float camY) {
+    float y = rel.y + camY - (cp.x - 2.0);
+    if (y <= 0.0 || y >= 3.0 * CLOUD_TIER) return 0.0;
+    float v = cloudCell(floor((rel.xz + cp.zw) / CLOUD_CELL), cp.y);
+    if (v <= 0.0) return 0.0;
+    float top = CLOUD_TIER * (1.0 + floor(min(v / 0.055, 2.0)));
+    return smoothstep(0.0, 1.5, y) * (1.0 - smoothstep(top - 2.0, top, y));
+}
+
 // cloud density at a camera-relative point (0..1); detail 0 skips the billows (light and shadow look-ups), 1 one octave
 // of them (Cinematic), 2 two (Ultra)
 float cloudDensity(vec3 rel, vec4 cp, float camY, int detail) {
+    if (cloudBlocks()) return cloudBlock(rel, cp, camY);
     float base = cp.x - 6.0;
     float h = (rel.y + camY - base) / CLOUD_THICK;
     if (h <= 0.0 || h >= 1.0) return 0.0;
@@ -55,9 +84,11 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, int detail) {
 // how much sunlight the clouds let down to a camera-relative point (the light ray through the layer's middle)
 float cloudShadow(vec3 rel, vec3 l, vec4 cp, float camY) {
     if (cp.x <= 0.0 || l.y < 0.03) return 1.0;
-    float t = (cp.x - 6.0 + CLOUD_THICK * 0.35 - (rel.y + camY)) / l.y;
+    float mid = cp.x - cloudUnder() + cloudThick() * (cloudBlocks() ? 0.2 : 0.35);
+    float t = (mid - (rel.y + camY)) / l.y;
     if (t <= 0.0) return 1.0;
     vec3 q = rel + l * t;
-    q.y = cp.x - 6.0 + CLOUD_THICK * 0.35 - camY;
-    return mix(1.0, 0.28, cloudDensity(q, cp, camY, 0));
+    q.y = mid - camY;
+    // (the Air's thinner blocks let more light down, and their shadows are the blocks' own shapes)
+    return mix(1.0, cloudBlocks() ? 0.5 : 0.28, cloudDensity(q, cp, camY, 0));
 }
