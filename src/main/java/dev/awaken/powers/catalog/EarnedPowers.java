@@ -674,7 +674,7 @@ public final class EarnedPowers {
                 e.igniteForSeconds(3 + n * 0.5f);
                 Combat.knockFrom(e, p.position(), 0.5 + 0.08 * n, 0.2);
             }
-            Fx.at(c, FxKind.CONE, from).dir(look).scale(reach).aux(cone).ticks(8 + n).flag(FxEvent.REACH).flag(FxEvent.FULL, n >= 4).send();
+            Fx.at(c, FxKind.BREATH, from).dir(look).scale(reach).aux(cone).ticks(8 + n).flag(FxEvent.REACH).flag(FxEvent.FULL, n >= 4).send();
             c.voice(p.position(), Beat.RELEASE, 0.7f + 0.1f * n, PowerSounds.EMBER, 1.3f, 0.6f);
             Fx.feel(p, null, 0, 1.5f + 0.4f * n);
             // Cinder (3): the ground the breath crossed keeps burning

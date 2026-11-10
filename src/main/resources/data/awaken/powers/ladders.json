@@ -7155,7 +7155,7 @@
       {
        "k": "burst",
        "on": [
-        "CONE"
+        "BREATH"
        ],
        "sprite": "ember",
        "n": 16,
@@ -7181,7 +7181,7 @@
       {
        "k": "orbit",
        "on": [
-        "CONE"
+        "BREATH"
        ],
        "sprite": "ember",
        "n": 8,
@@ -7207,7 +7207,7 @@
       {
        "k": "rings",
        "on": [
-        "CONE"
+        "BREATH"
        ],
        "n": 3,
        "delay": 0,
@@ -7223,7 +7223,7 @@
       {
        "k": "bloom",
        "on": [
-        "CONE"
+        "BREATH"
        ],
        "size": 1.2,
        "at": "origin",

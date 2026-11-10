@@ -114,7 +114,7 @@ public final class PowerFxDefs {
         d("brand", FxStyle.HEAT, CastAnim.PALM, null, null, FxKind.PALM, FxKind.PALM, FxKind.NOVA, FxKind.AURA);
         d("hoarfrost_lances", FxStyle.FROST, CastAnim.RAISE, null, null, FxKind.AURA, FxKind.BOLT, FxKind.IMPACT, FxKind.AURA);
         d("updraft", FxStyle.FLIGHT, CastAnim.SKYWARD, null, null, FxKind.RING, null, FxKind.IMPACT, FxKind.GLYPH);
-        d("backdraft", FxStyle.HEAT, CastAnim.PUSH2, null, null, FxKind.CONE, FxKind.TETHER, FxKind.IMPACT, FxKind.FIRE_TRAIL);
+        d("backdraft", FxStyle.HEAT, CastAnim.PUSH2, null, null, FxKind.BREATH, FxKind.TETHER, FxKind.IMPACT, FxKind.FIRE_TRAIL);
         d("thornwake", FxStyle.SPIRIT, CastAnim.STOMP, null, null, FxKind.RING, FxKind.TETHER, FxKind.IMPACT, FxKind.TETHER);
     }
 }

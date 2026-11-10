@@ -110,6 +110,9 @@ final class FxRecipes {
             case SHOT_EATEN -> shotEaten(e, st);
             case BORE_SEAL -> boreSeal(e, st);
             case FINISHER -> Signatures.finisher(e, st, caster, mine);
+            case BREATH -> {
+                // the breath is its power's own (Signatures, below): no shared recipe throws dirt under a fire
+            }
         }
         // the power's own look on top of the shared recipe (SPEC §32, "Signatures")
         Signatures.add(e, st, caster, mine);

@@ -547,11 +547,11 @@ S("updraft", 5, [],
 S("backdraft", 2, [],
   [burst("TETHER", "ember", n=4, speed=0.15, life=10, size=0.14)], draw=0.2)
 S("backdraft", 3, [],
-  [burst("CONE", "ember", n=16, speed=0.3, life=24, size=0.18, grav=0.02, col="accent")], cinder=60, dps=0.2)
+  [burst("BREATH", "ember", n=16, speed=0.3, life=24, size=0.18, grav=0.02, col="accent")], cinder=60, dps=0.2)
 S("backdraft", 4, [],
-  [orbit("CONE", "ember", n=8, r0=0.5, r1=0.3, spin=0.4, size=0.12, at="body", life=14, col="core")], cap=4)
+  [orbit("BREATH", "ember", n=8, r0=0.5, r1=0.3, spin=0.4, size=0.12, at="body", life=14, col="core")], cap=4)
 S("backdraft", 5, [],
-  [rings("CONE", n=3, gap=2, r0=0.3, r1=2.2, width=0.3, life=9, face="dir", col="core"), bloom("CONE", size=1.2)], jet=1.6, proof=100)
+  [rings("BREATH", n=3, gap=2, r0=0.3, r1=2.2, width=0.3, life=9, face="dir", col="core"), bloom("BREATH", size=1.2)], jet=1.6, proof=100)
 
 S("thornwake", 2, [],
   [burst("TETHER", "dust", n=6, speed=0.2, life=18, size=0.4, col="edge")], hold=20)

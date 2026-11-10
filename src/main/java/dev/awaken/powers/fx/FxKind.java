@@ -111,7 +111,9 @@ public enum FxKind {
      * A Break finisher (SPEC §50, "Break finishers"): a power cast into a body whose stance has just broken. At the target
      * (target id), d = the way the cast went; the client draws the family's own ending and hitches the caster's view.
      */
-    FINISHER;
+    FINISHER,
+    /** A breath down a cone (Backdraft): origin, direction, scale the reach, aux the half angle. Drawn whole by the power's signature. */
+    BREATH;
 
     private static final FxKind[] VALUES = values();
 

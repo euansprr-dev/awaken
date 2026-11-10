@@ -501,7 +501,7 @@ SPRITES = {"glow", "spark", "flare", "bolt", "wisp", "ember", "ring", "rune", "h
            "smoke", "dust", "halo", "petal", "feather", "plate", "sigil"}
 KINDS = {"CAST", "CHARGE", "CHARGE_END", "IMPACT", "SLAM", "RING", "NOVA", "CONE", "BEAM", "BOLT", "LIGHTNING", "STRIKE", "DASH",
          "BLINK", "TRAIL", "AFTERIMAGE", "SMOKE", "DOME", "VORTEX", "TETHER", "AURA", "PALM", "ECHO", "FLURRY", "HEAL", "FROST",
-         "FIRE_TRAIL", "EXHAUST", "CONSTRUCT", "PILLAR", "HOLO", "RAIL", "SUMMON", "PSI", "GLYPH", "METEOR", "LIFT"}
+         "FIRE_TRAIL", "EXHAUST", "CONSTRUCT", "PILLAR", "HOLO", "RAIL", "SUMMON", "PSI", "GLYPH", "METEOR", "LIFT", "BREATH"}
 PLACES = {"origin", "end", "hand", "offhand", "body", "feet", "head", "back", "ground", "target"}
 COLS = {"core", "mid", "edge", "accent"}
 
