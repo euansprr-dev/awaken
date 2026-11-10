@@ -51,7 +51,7 @@ final class Monuments {
         }
         if (b == 99) return 2;                                 // past the last pier: a stub
         double t = (x - a) / (double) (b - a);
-        return (int) Math.round(6 * (1 - Math.sqrt(Math.max(0, 1 - (2 * t - 1) * (2 * t - 1)))));
+        return (int) Math.round(10 * (1 - Math.sqrt(Math.max(0, 1 - (2 * t - 1) * (2 * t - 1)))));
     }
 
     private static void stairThatStops(Scene s) {
@@ -177,6 +177,8 @@ final class Monuments {
             s.put(-29, 2, z, st(Blocks.WOOL_SLAB.pick(DyeColor.LIGHT_GRAY)));
             s.put(-25, 2, z, st(Blocks.WOOL_SLAB.pick(DyeColor.LIGHT_GRAY)));
         }
+        s.put(-27, 1, 12, cloth);                                  // the back of the tent, which holds the ridge up
+        s.put(-27, 2, 12, cloth);
         s.put(-27, 1, 13, st(Blocks.CARPET.pick(DyeColor.RED)));
         s.put(-27, 1, 14, st(Blocks.CARPET.pick(DyeColor.BROWN)));
         s.put(-32, 0, 15, st(Blocks.COBBLESTONE));
@@ -261,32 +263,33 @@ final class Monuments {
                 }
             }
         // -- the pylon: a plinth, a base with the vault in it, a shaft that leans to the high side and is broken off
-        disc(s, 0, 0, 4.3, 5, M.block());
-        M.mass(s, -2, 6, -2, 2, 10, 2);
+        disc(s, 0, 0, 5.3, 5, M.block());
+        M.mass(s, -3, 6, -3, 3, 11, 3);
         air(s, -1, 6, -1, 1, 8, 1);
-        for (int x = -1; x <= 1; x++) for (int y = 6; y <= 9; y++) s.put(x, y, 3, y == 9 ? M.band() : x == 0 ? AIR : M.bronzeBand());
+        for (int x = -1; x <= 1; x++) for (int y = 6; y <= 9; y++) s.put(x, y, 4, y == 9 ? M.band() : x == 0 ? AIR : M.bronzeBand());
         for (int y = 6; y <= 7; y++) {
-            s.put(0, y, 2, M.door());
-            s.part("door", 0, y, 2);
+            s.put(0, y, 2, AIR);
+            s.put(0, y, 3, M.door());
+            s.part("door", 0, y, 3);
         }
-        s.put(0, 8, 2, M.band());
         s.put(0, 6, -1, M.seal());
         s.part("prize", 0, 6, -1);
         s.put(0, 9, 0, M.lamp(true));
-        for (int[] k : new int[][] {{2, 0}, {-2, 0}, {0, -2}}) {
+        for (int[] k : new int[][] {{3, 0}, {-3, 0}, {0, -3}}) {
             s.put(k[0], 7, k[1], M.glyph());
+            s.put(k[0], 8, k[1], M.glyph());
             s.part("carving", k[0], 7, k[1]);
         }
-        for (int y = 11; y <= 27; y++) {
-            int hs = y < 14 ? 2 : 1, o = (y - 11) / 6;
+        for (int y = 12; y <= 34; y++) {
+            int hs = y < 21 ? 2 : 1, o = (y - 12) / 7;
             for (int x = -hs; x <= hs; x++)
-                for (int z = -hs; z <= hs; z++) s.put(o + x, y, -o + z, y == 14 || y == 21 ? M.bronzeBand() : M.course(y));
-            if (y == 18) {
+                for (int z = -hs; z <= hs; z++) s.put(o + x, y, -o + z, y == 12 || y == 20 || y == 27 ? M.bronzeBand() : M.course(y));
+            if (y == 16) {                                         // the light in its core, seen through a cross cut in each face
+                for (int d = 0; d < 4; d++) for (int k = 1; k <= 2; k++) s.put(o + DX[d] * k, y, -o + DZ[d] * k, AIR);
                 s.put(o, y, -o, M.lamp(true));
-                for (int d = 0; d < 4; d++) s.put(o + DX[d], y, -o + DZ[d], AIR);
             }
         }
-        M.ruin(s, -2, -7, 7, 2, 25, 2, 28);
+        M.ruin(s, -3, -8, 8, 3, 30, 3, 34);
         // -- the sockets in the low rim, where three banded stones fell out
         for (int[] k : new int[][] {{-21, 21}, {-13, 27}, {-27, 13}}) {
             int y = Math.max(1, bowl(k[0], k[1])) + 1;
@@ -318,7 +321,7 @@ final class Monuments {
         }
         path(s, 0, 42, -12, 31, 1, st(Blocks.COARSE_DIRT), st(Blocks.GRAVEL));
         wild(s, 33, 42, 12);
-        s.cam(-42, 7, 42, -135, -6).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(13, 2, -9, -150, -18);
+        s.cam(-42, 7, 42, -135, -6).cam(34, 52, 44, 140, 40).cam(0, 4, 14, 180, -8).cam(22, 2, -8, 170, -12);
     }
 
     // ---- C. The Sleepers' Hall --------------------------------------------------------------------------------------

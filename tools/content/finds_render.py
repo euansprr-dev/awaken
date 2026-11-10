@@ -597,7 +597,9 @@ def render(vox, a, view=0, keep=None, lights=False):
                 continue
             if V.get((X + 1, y, Z)) is None or V.get((X, y, Z + 1)) is None:
                 arms |= 32
-        dark = roof.get((X, Z), -99) > y + 1 and kind != "water"
+        # under cover: something roofs this column and this block's own top is open to the air below it (a floor, a bench);
+        # a wall's blocks have masonry over them and are lit from the side like any other
+        dark = roof.get((X, Z), -99) > y + 1 and kind != "water" and (X, y + 1, Z) not in solid
         items.append((X + Z + y, y, X, Z, b, arms, dark))
     if not items:
         return Image.new("RGB", (64, 64), (24, 26, 30))
