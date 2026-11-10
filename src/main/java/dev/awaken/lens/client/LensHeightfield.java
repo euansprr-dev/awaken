@@ -91,6 +91,16 @@ final class LensHeightfield {
         return maxTop;
     }
 
+    /** The top of everything in a column, leaves included, by the CPU mirror (ring coordinates); NONE where unknown. */
+    float topAt(int x, int z) {
+        return Float.float16ToFloat(mirror[0].getShort((z * SIZE + x) * 4));
+    }
+
+    /** The same without leaves (a roof, the ground under a canopy). */
+    float solidAt(int x, int z) {
+        return Float.float16ToFloat(mirror[0].getShort((z * SIZE + x) * 4 + 2));
+    }
+
     /**
      * Whether a point near the camera is in sunlight by the CPU mirror (Lens 2's dust only shows in sunlit air): a short
      * march toward the light over level 0, leaves counting as shade.

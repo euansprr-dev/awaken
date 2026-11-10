@@ -6320,6 +6320,12 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     horizon, stored as a square root) and the wisps' cover (`airSlow`). The composite reads them with one filtered
     lookup a sky pixel, where it worked out eight noise values a pixel for the wisps by day and six more for the
     galaxy by night. Stars, the shooting star, the moon's halo and the wisps' colour stay in the composite.
+  - **The sun map on the CPU** (`LensSunMap`, texture `awaken:lens_sunmap`, RGBA8 1024x1024, one cell a block on
+    every tier). It was a pass marched for every column every frame (512x512 with two-block cells on Cinematic, 24
+    steps). The sun travels in the x-y plane, so each row of the ring has an exact answer in one sweep from the sun's
+    side (a column's own top, or the height handed on from the column sunward less the light's drop over a block): a
+    worker sweeps the whole trusted window every 8 ticks from the heightfield's mirror, and the result goes up an
+    eighth of the texture a tick. The pass, its target and its shader are gone: 14 passes with the sky buffer counted.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows.

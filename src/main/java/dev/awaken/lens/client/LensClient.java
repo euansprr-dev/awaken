@@ -64,6 +64,9 @@ public final class LensClient {
     static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
     // the lit air (SPEC §22 "Steady Light"): which air near the camera the sun reaches, for its rays
     private static LensLit litAir;
+    // the sun map (SPEC §22): the height the sun reaches in each column, swept on a worker in place of a pass
+    private static LensSunMap sunMap;
+    static final Identifier SUNMAP = Awaken.id("textures/effect/lens_sunmap.png");
     static final Identifier LIT = Awaken.id("textures/effect/lens_lit.png");
     private static boolean sunPass = true;
     private static @org.jspecify.annotations.Nullable Boolean forcedSunPass;
@@ -107,7 +110,7 @@ public final class LensClient {
         String out = String.format(java.util.Locale.ROOT,
                 "tick cost over %d ticks, mean/worst ms: heightfield %.3f/%.2f, block map %.3f/%.2f, lit air %.3f/%.2f%s", costTicks,
                 costSum[0] / 1.0e6 / n, costMax[0] / 1.0e6, costSum[1] / 1.0e6 / n, costMax[1] / 1.0e6, costSum[2] / 1.0e6 / n, costMax[2] / 1.0e6,
-                litAir != null ? "; " + litAir.report() : "");
+                (litAir != null ? "; " + litAir.report() : "") + (sunMap != null ? "; " + sunMap.report() : ""));
         java.util.Arrays.fill(costSum, 0L);
         java.util.Arrays.fill(costMax, 0L);
         costTicks = 0;
@@ -343,6 +346,8 @@ public final class LensClient {
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
             long t1 = System.nanoTime();
             if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
+            if (sunMap != null) sunMap.tick(heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y,
+                    moonLight ? -sunDir.z : sunDir.z, at.getX(), at.getZ());
             cost(0, t1 - t0);
             cost(1, System.nanoTime() - t1);
         }
@@ -492,6 +497,8 @@ public final class LensClient {
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
         litAir = new LensLit();
+        sunMap = new LensSunMap();
+        Minecraft.getInstance().getTextureManager().register(SUNMAP, sunMap.texture);
         Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
         Minecraft.getInstance().getTextureManager().register(LIT, litAir.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);

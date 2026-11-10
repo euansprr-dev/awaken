@@ -10,7 +10,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FX = ROOT / "src/main/resources/assets/awaken/post_effect"
 GROUPS = {
-    "sunmap": ["awaken:post/lens_sunmap"],
     "light": ["awaken:post/lens_light"],
     "clouds": ["awaken:post/lens_clouds"],
     "prefilter": ["awaken:post/lens_prefilter_lit"],
