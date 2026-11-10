@@ -146,7 +146,7 @@ final class MHall {
         if (d.above() == 0) {
             // the ribs of the vault that fell: piers either side of the slot, arching in, most of them broken at the crown
             for (int x = -L + 6; x <= L - 6; x += 12) {
-                boolean wholeRib = Mon.pick(s, 60 + x, 4) == 0;
+                boolean wholeRib = Mon.pick(s, 60 + x, 2) == 0;     // about half of them still meet at the crown
                 for (int side = -1; side <= 1; side += 2) {
                     for (int dx = -1; dx <= 1; dx++) for (int z = 6; z <= 7; z++) for (int y = 0; y <= 11; y++) s.put(x + dx, y, side * z, y % 5 == 0 ? M.band() : dx == 0 ? M.block() : M.course(y));
                     for (int dx = -1; dx <= 1; dx++) s.put(x + dx, 12, side * 7, dx == 0 ? M.block() : M.blockSlab());

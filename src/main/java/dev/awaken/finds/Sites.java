@@ -290,26 +290,35 @@ public final class Sites {
     /** How far a remain may stand from the monument it belongs to. */
     public static final int REMAINS_REACH = 1000;
 
-    /** The nearest monument that stands within {@code max} blocks of a point, or null. Cells that chose nothing are never asked for their ground. */
+    /**
+     * The nearest monument that stands within {@code max} blocks of a point, or null. Cells are asked ring by ring from
+     * the point outward and the search stops as soon as nothing further out could be nearer, so it asks for the ground
+     * (the slow part) of only the few cells round the answer; cells that chose nothing are never asked at all.
+     * {@code remain}: for a remain's own placing, which may not stand inside a monument's ground; otherwise the monument
+     * you are standing in is passed over.
+     */
     private static @Nullable Site nearestMonument(Ask a, int x, int z, int max, boolean remain) {
-        int c = CELL[2], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c), rings = max / c + 1;
+        int c = CELL[2], cx0 = Math.floorDiv(x, c), cz0 = Math.floorDiv(z, c), rings = Math.min(7, max / c + 1);
         Site best = null;
         double bestD = max;
-        for (int i = -rings; i <= rings; i++)
-            for (int j = -rings; j <= rings; j++) {
-                if (basePick(a, 2, cx0 + i, cz0 + j) < 0) continue;
-                Site s = cell(a, 2, cx0 + i, cz0 + j);
-                if (s == null) continue;
-                double d = Math.hypot(s.x() - x, s.z() - z);
-                if (d <= s.kind().reach() + 30) {
-                    if (remain) return null;                    // inside a monument's own ground: nothing else stands there
-                    continue;                                   // the one you are standing in is not news
+        for (int ring = 0; ring <= rings; ring++) {
+            for (int i = -ring; i <= ring; i++)
+                for (int j = -ring; j <= ring; j++) {
+                    if (Math.max(Math.abs(i), Math.abs(j)) != ring || basePick(a, 2, cx0 + i, cz0 + j) < 0) continue;
+                    Site s = cell(a, 2, cx0 + i, cz0 + j);
+                    if (s == null) continue;
+                    double d = Math.hypot(s.x() - x, s.z() - z);
+                    if (d <= s.kind().reach() + 30) {
+                        if (remain) return null;                    // inside a monument's own ground: nothing else stands there
+                        continue;                                   // the one you are standing in is not news
+                    }
+                    if (d < bestD) {
+                        bestD = d;
+                        best = s;
+                    }
                 }
-                if (d < bestD) {
-                    bestD = d;
-                    best = s;
-                }
-            }
+            if (best != null && bestD < (ring - 0.2) * (double) c) break;   // nothing in a further ring can be nearer
+        }
         return best;
     }
 
