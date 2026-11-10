@@ -257,9 +257,12 @@ class Rig:
             for (bone, target), keys in c.tracks.items():
                 if bone not in self.by_name:
                     problems.append(f"{self.id}/{c.name}: no bone {bone}")
+                # (a looping clip may carry one key before its start and one after its end: the loop carried on a step
+                # either way, so the curve has a slope to take at the seam; see gm/kit.py seal_loops)
+                lo, hi = (-c.length, 2 * c.length) if c.loop else (0.0, c.length)
                 for t, _, _ in keys:
-                    if t < -1e-6 or t > c.length + 1e-6:
-                        problems.append(f"{self.id}/{c.name}: key at {t} outside 0..{c.length}")
+                    if t < lo - 1e-6 or t > hi + 1e-6:
+                        problems.append(f"{self.id}/{c.name}: key at {t} outside {lo}..{hi}")
         for bn, _, _ in self.look:
             if bn not in self.by_name:
                 problems.append(f"{self.id}: look bone {bn} missing")
