@@ -94,7 +94,7 @@ cmd kill @e[type=!minecraft:player,distance=..160]
 wait 44
 cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd tp @s -5.9 201.58 2.6 -90 -6
+cmd tp @s -11.7 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
