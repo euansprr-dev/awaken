@@ -103,17 +103,17 @@ final class GateBestiary {
     }
 
     private static void drownedArchive(List<MobDef> out) {
-        out.add(m("ink_drowned", "Ink Drowned", Theme.DROWNED, Tier.NORMAL, Model.DROWNED, "Ink Spit: a black bolt that blinds").hp(23).dmg(3).spd(0.23).hold(Items.TRIDENT)
+        out.add(m("ink_drowned", "The Blotter", Theme.DROWNED, Tier.NORMAL, Model.DROWNED, "A walking heap of drowned books; the book it has for a head opens wide before it spits ink, and a blow snaps it shut").hp(23).dmg(3).spd(0.23).rig().size(0.9F, 1.7F).stopped().open(24).fall(24)
                 .ab(a(BOLT, "Ink Spit").bolt(BoltKind.WATER).cd(80)).build());
-        out.add(m("page_wraith", "Page Wraith", Theme.DROWNED, Tier.NORMAL, Model.VEX, "A swarm of wet pages that rustle, then cut").hp(10.3).dmg(2.5).spd(0.5).tint(0xE8E0C8)
+        out.add(m("page_wraith", "The Paper Crane", Theme.DROWNED, Tier.NORMAL, Model.VEX, "Birds folded from wet pages: they rustle, then cut in a line; a cut that misses leaves one sodden on the floor").hp(10.3).dmg(2.5).spd(0.5).rig().size(0.6F, 0.6F).miss(34)
                 .ab(a(CHARGE, "Papercut").power(1.0F).wind(12).cd(70).range(10)).build());
-        out.add(m("archive_eye", "Archive Eye", Theme.DROWNED, Tier.NORMAL, Model.GUARDIAN, "Reading Beam: locks on, glows, then burns").hp(20.7).dmg(3).spd(0.25).traits(RANGED)
+        out.add(m("archive_eye", "The Reading Glass", Theme.DROWNED, Tier.NORMAL, Model.GUARDIAN, "A floating reading glass: light gathers in it, then the beam; it has to hold still to read you").hp(20.7).dmg(3).spd(0.25).traits(RANGED).rig().size(0.7F, 1.3F).planted().open(24)
                 .ab(a(BEAM, "Reading Beam").bolt(BoltKind.WATER).power(1.6F)).build());
-        out.add(m("salt_stray", "Salt Stray", Theme.DROWNED, Tier.NORMAL, Model.STRAY, "Brine Arrows that weigh you down").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, SLOW_TOUCH)
+        out.add(m("salt_stray", "The Quillback", Theme.DROWNED, Tier.NORMAL, Model.STRAY, "A salt-crusted beast with a back full of quill pens; it bows to aim them, and bowed it cannot see you").hp(20.7).dmg(3).spd(0.24).traits(RANGED, SLOW_TOUCH).rig().size(0.9F, 1.0F).open(26).fall(20)
                 .ab(a(ARROWS, "Brine Arrows").n(2).fx(MobEffects.SLOWNESS, 60, 1)).build());
-        out.add(m("drowned_scribe", "Drowned Scribe", Theme.DROWNED, Tier.ELITE, Model.EVOKER, "Writes wraiths from torn pages; ink fangs rise along the floor").hp(27.6).dmg(4).spd(0.25).traits(RANGED)
+        out.add(m("drowned_scribe", "The Scribe", Theme.DROWNED, Tier.ELITE, Model.EVOKER, "An inkwell on four long pens: what it writes in the air becomes a crane; a blow while it writes loses the page").hp(27.6).dmg(4).spd(0.25).traits(RANGED).rig().size(1.0F, 1.9F).stopped().open(26).fall(26)
                 .ab(a(SUMMON, "Torn Pages").summon("page_wraith").n(2), a(FANGS, "Ink Fangs"), a(BOLT, "Ink Spit").bolt(BoltKind.WATER)).build());
-        out.add(m("the_curator", "The Curator", Theme.DROWNED, Tier.WARDEN, Model.ELDER_GUARDIAN, "Shushes you with Mining Fatigue, then its beam reads you to death").hp(39.1).dmg(6).spd(0.22).scale(0.8F).traits(HUNTER, RANGED)
+        out.add(m("the_curator", "The Curator", Theme.DROWNED, Tier.WARDEN, Model.ELDER_GUARDIAN, "A cabinet of small drawers on a skirt of loose cards; every attack is a drawer sliding open, and when they all slam shut it has shushed you").hp(39.1).dmg(6).spd(0.22).traits(HUNTER, RANGED).rig().size(1.2F, 1.9F).open(30).fall(36)
                 .ab(a(BEAM, "Silence in the Stacks").bolt(BoltKind.WATER).power(1.65F).heavy(), a(DARKNESS, "Shush").fx(MobEffects.MINING_FATIGUE, 200, 2), a(NOVA, "Ink Tide").n(10).bolt(BoltKind.WATER)).build());
         out.add(m("drowned_archivist", "The Drowned Archivist", Theme.DROWNED, Tier.LORD, Model.DROWNED, "Tidal Page washes you back; the shelves empty; then the Flood").hp(125.3).dmg(2.02).spd(0.24).scale(1.9F).size(0.9F, 2.4F).hold(Items.TRIDENT).offhand(Items.BOOK).bar(BossBarColor.BLUE).arena(22)
                 .intro("Every book here was written by someone who drowned.")
@@ -124,15 +124,15 @@ final class GateBestiary {
     }
 
     private static void clockworkFoundry(List<MobDef> out) {
-        out.add(m("cog_hound", "Cog Hound", Theme.CLOCKWORK, Tier.NORMAL, Model.WOLF, "Ratchet Pounce: winds itself up with a clatter, then leaps").hp(18.4).dmg(3).spd(0.34)
+        out.add(m("cog_hound", "The Cog Hound", Theme.CLOCKWORK, Tier.NORMAL, Model.WOLF, "A hound built round one great gear, a key in its back: the key winds before it pounces, and a miss leaves it standing there unwinding").hp(18.4).dmg(3).spd(0.34).rig().size(0.7F, 1.2F).miss(34).fall(22)
                 .ab(a(LEAP, "Ratchet Pounce").radius(1.8F)).build());
-        out.add(m("rivet_gunner", "Rivet Gunner", Theme.CLOCKWORK, Tier.NORMAL, Model.PILLAGER, "Rivet Burst: three hot rivets from a crossbow").hp(20.7).dmg(3).spd(0.26).hold(Items.CROSSBOW).traits(RANGED)
+        out.add(m("rivet_gunner", "The Riveter", Theme.CLOCKWORK, Tier.NORMAL, Model.PILLAGER, "A rivet gun on three piston legs: it plants all three before a burst and cannot turn while they are down").hp(20.7).dmg(3).spd(0.26).traits(RANGED).rig().size(1.0F, 1.3F).planted().open(22).fall(24)
                 .ab(a(BOLT, "Rivet Burst").n(3).bolt(BoltKind.PLAIN).power(0.8F)).build());
-        out.add(m("spark_drone", "Spark Drone", Theme.CLOCKWORK, Tier.NORMAL, Model.BEE, "Spark Sting: buzzes louder, then a sting that stuns").hp(10.3).dmg(2).spd(0.5).traits(SLOW_TOUCH)
+        out.add(m("spark_drone", "The Governor", Theme.CLOCKWORK, Tier.NORMAL, Model.BEE, "Two brass balls spinning round a spindle: the arms rise as it spins up; a blow stops the spin, and a sting that misses drops it").hp(10.3).dmg(2).spd(0.5).traits(SLOW_TOUCH).rig().size(0.6F, 1.0F).stopped().miss(30)
                 .ab(a(CHARGE, "Spark Sting").bolt(BoltKind.CHARGE).wind(14).cd(80).range(10)).build());
-        out.add(m("foundry_marshal", "Foundry Marshal", Theme.CLOCKWORK, Tier.ELITE, Model.VINDICATOR, "Steam Charge, then a Piston Slam where it stops").hp(29.9).dmg(5).spd(0.28).hold(Items.IRON_AXE)
+        out.add(m("foundry_marshal", "The Steam Hammer", Theme.CLOCKWORK, Tier.ELITE, Model.VINDICATOR, "A boiler with one arm that is a piston as big as the rest of it: it charges, the hammer falls where it stops, and it vents for a breath after").hp(29.9).dmg(5).spd(0.28).rig().size(1.1F, 1.8F).open(28).miss(30).fall(30)
                 .ab(a(CHARGE, "Steam Charge").heavy(), a(SLAM, "Piston Slam")).build());
-        out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(43.7).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
+        out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "A riveted boiler on four legs with a dial for a face: the needle climbs as it speeds up, and when the valve blows it has nothing left for a moment").hp(43.7).dmg(7).spd(0.27).traits(HUNTER).rig().size(1.4F, 1.9F).open(30).fall(40)
                 .ab(a(SLAM, "Governor Slam").radius(4).heavy(), a(NOVA, "Spark Ring").n(12).bolt(BoltKind.CHARGE), a(FRENZY, "Overclock")).build());
         out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").body(BodyMaterial.ARMOR).hp(156.4).dmg(2.2).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry built one thing. It is still building it.")
@@ -143,15 +143,15 @@ final class GateBestiary {
     }
 
     private static void glassDesert(List<MobDef> out) {
-        out.add(m("glass_husk", "Glass Husk", Theme.GLASS, Tier.NORMAL, Model.HUSK, "Sandblast blinds; shatters into shards when slain").hp(23).dmg(3).spd(0.23).traits(DEATH_SHARDS)
+        out.add(m("glass_husk", "The Shardwalker", Theme.GLASS, Tier.NORMAL, Model.HUSK, "A bundle of long glass blades that walks on its points; it leans back before it sandblasts, and it shatters when it dies").hp(23).dmg(3).spd(0.23).traits(DEATH_SHARDS).rig().size(0.9F, 1.7F).open(26).fall(20)
                 .ab(a(CONE, "Sandblast").power(0.6F).bolt(BoltKind.GLASS).fx(MobEffects.BLINDNESS, 30, 0)).build());
-        out.add(m("sand_stalker", "Sand Stalker", Theme.GLASS, Tier.NORMAL, Model.SPIDER, "Burrows and bursts up beside you").hp(18.4).dmg(3).spd(0.32).tint(0xE8D098)
+        out.add(m("sand_stalker", "The Sand Stalker", Theme.GLASS, Tier.NORMAL, Model.SPIDER, "Flat and wide, with sickle jaws: it goes flat into the sand and comes up beside you, jaws first").hp(18.4).dmg(3).spd(0.32).rig().size(1.2F, 0.5F).fall(20)
                 .ab(a(BLINK, "Burrow Strike")).build());
-        out.add(m("heat_shimmer", "Heat Shimmer", Theme.GLASS, Tier.NORMAL, Model.BREEZE, "Mirage Gust: a wall of hot air, then glass on the wind").hp(18.4).dmg(3).spd(0.28).traits(RANGED)
+        out.add(m("heat_shimmer", "The Shimmer", Theme.GLASS, Tier.NORMAL, Model.BREEZE, "Thin glass plates stacked in a twist, almost clear: it turns flat toward you before the gust").hp(18.4).dmg(3).spd(0.28).traits(RANGED).rig().moves(Model.Move.FLY).size(0.6F, 1.0F).open(24)
                 .ab(a(GUST, "Mirage Gust").radius(5).power(0.4F), a(BOLT, "Glass Gust").bolt(BoltKind.GLASS)).build());
-        out.add(m("prism_sentinel", "Prism Sentinel", Theme.GLASS, Tier.ELITE, Model.ENDERMAN, "Refracts: teleports beside you, then lances light").hp(29.9).dmg(5).spd(0.3)
+        out.add(m("prism_sentinel", "The Prism", Theme.GLASS, Tier.ELITE, Model.ENDERMAN, "A spire of glass hanging point down, a light climbing inside it: when the light reaches the tip it fires, and it breaks into pieces to move").hp(29.9).dmg(5).spd(0.3).rig().moves(Model.Move.FLY).size(0.7F, 1.6F).open(28)
                 .ab(a(BLINK, "Refract"), a(BEAM, "Prism Lance").bolt(BoltKind.GLASS)).build());
-        out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "Splits into mirages; only one of them casts a shadow").hp(36.8).dmg(5.5).spd(0.28).traits(HUNTER, RANGED)
+        out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "A traveller's cloak and wide hat with nothing inside; it splits into several, and only the real one's hat casts a shadow").hp(36.8).dmg(5.5).spd(0.28).traits(HUNTER, RANGED).rig().size(1.0F, 2.0F).open(28).fall(28)
                 .ab(a(DECOY, "Mirages").n(3), a(BOLT, "Sunshards").n(5).bolt(BoltKind.GLASS), a(BLINK, "Heat Mirage")).build());
         out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").body(BodyMaterial.STONE).hp(57.5).dmg(3).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
                 .intro("Your reflection blinks first.")
@@ -200,14 +200,14 @@ final class GateBestiary {
     }
 
     private static void lanternMarket(List<MobDef> out) {
-        out.add(m("lantern_moth", "Lantern Moth", Theme.LANTERN, Tier.NORMAL, Model.PHANTOM, "Drawn to light; harmless until something hits it").hp(9.2).dmg(2).spd(0.4).scale(0.55F).traits(NEUTRAL)
+        out.add(m("lantern_moth", "The Lantern Moth", Theme.LANTERN, Tier.NORMAL, Model.PHANTOM, "A moth whose body is a lit paper lantern; harmless until something hits it").hp(9.2).dmg(2).spd(0.4).traits(NEUTRAL).rig().size(0.6F, 0.6F).miss(30)
                 .ab(a(CHARGE, "Drawn to Light").power(0.8F).wind(12).cd(80).range(10)).build());
-        out.add(m("pickpocket", "Market Pickpocket", Theme.LANTERN, Tier.NORMAL, Model.PILLAGER, "Snatches a shard and runs; catch it to get it back").hp(16.1).dmg(2).spd(0.33).traits(STEALER).build());
-        out.add(m("wick_slime", "Wick Slime", Theme.LANTERN, Tier.NORMAL, Model.SLIME, "A slime with a candle in it; burns if provoked").hp(13.8).dmg(2).spd(0.26).scale(0.7F).traits(NEUTRAL, IGNITE)
+        out.add(m("pickpocket", "The Magpie", Theme.LANTERN, Tier.NORMAL, Model.PILLAGER, "A long-legged runner with a hooked mask and a sack bigger than it is: it takes a shard and runs; catch it and the sack spills").hp(16.1).dmg(2).spd(0.33).traits(STEALER).rig().size(0.7F, 1.7F).fall(22).build());
+        out.add(m("wick_slime", "The Hopping Lantern", Theme.LANTERN, Tier.NORMAL, Model.SLIME, "A round paper lantern that hops on its tassel; leave it be and it leaves you be, and the split opens on its flame when it is angry").hp(13.8).dmg(2).spd(0.26).traits(NEUTRAL, IGNITE).rig().size(0.7F, 0.8F).open(24)
                 .ab(a(LEAP, "Wick Hop").bolt(BoltKind.FIRE)).build());
-        out.add(m("masked_duelist", "Masked Duelist", Theme.LANTERN, Tier.ELITE, Model.PIGLIN, "Parries your swing, then a Fan Dance lunge").hp(27.6).dmg(5).spd(0.3).hold(Items.GOLDEN_SWORD).traits(NEUTRAL)
+        out.add(m("masked_duelist", "The Fan Dancer", Theme.LANTERN, Tier.ELITE, Model.PIGLIN, "A tall thing made of folding fans: shut, they turn any blow from the front; it has to open them to lunge").hp(27.6).dmg(5).spd(0.3).traits(NEUTRAL).rig().size(0.7F, 2.0F).front().open(30).miss(30).fall(28)
                 .ab(a(GUARD, "Parry"), a(CHARGE, "Fan Dance")).build());
-        out.add(m("the_lamplighter", "The Lamplighter", Theme.LANTERN, Tier.WARDEN, Model.ENDERMAN, "Steps between lamps and snuffs them out").hp(36.8).dmg(6).spd(0.3).traits(HUNTER)
+        out.add(m("the_lamplighter", "The Lamplighter", Theme.LANTERN, Tier.WARDEN, Model.ENDERMAN, "A small body on stilts as tall as a house, with a snuffing pole: it steps between the lamps and puts them out one by one").hp(36.8).dmg(6).spd(0.3).traits(HUNTER).rig().size(0.9F, 3.3F).open(28).fall(40)
                 .ab(a(BLINK, "Between Lamps"), a(DARKNESS, "Snuff the Lamps"), a(BOLT, "Lamp Oil").n(3).bolt(BoltKind.FIRE)).build());
         out.add(m("lantern_broker", "The Lantern Broker", Theme.LANTERN, Tier.LORD, Model.LANTERN, "Trades with you; duels you only if you ask (sneak and use)").hp(138).dmg(2.78).spd(0.28).scale(2.0F).size(0.6F, 2.2F).traits(FRIENDLY).bar(BossBarColor.YELLOW).arena(18)
                 .intro("A duel, then. Lanterns down.")

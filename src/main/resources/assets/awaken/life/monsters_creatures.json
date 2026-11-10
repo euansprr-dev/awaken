@@ -28,6 +28,27 @@
     "thorn_archer": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 3, "settle": 1}, "springHz": 2.2, "springGain": 1.3, "bob": 0.8, "sway": 2.4},
     "thorn_hound": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 3, "sniff": 2, "flick": 2, "stretch": 1}, "springHz": 2.6},
     "incense_priest": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 2}, "springHz": 0.9, "springDamping": 0.12, "springGain": 1.6, "mass": 1.4},
-    "the_overgrowth": {"blink": [0, 0], "temperament": "beast", "breathDepth": 0.0, "idles": {"settle": 2, "look": 1}, "mass": 3.4, "arms": 0.6, "springHz": 1.0, "springGain": 1.3, "headSpeed": 2.6}
+    "the_overgrowth": {"blink": [0, 0], "temperament": "beast", "breathDepth": 0.0, "idles": {"settle": 2, "look": 1}, "mass": 3.4, "arms": 0.6, "springHz": 1.0, "springGain": 1.3, "headSpeed": 2.6},
+    "ink_drowned": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 2, "settle": 2}, "mass": 1.8, "arms": 0.8, "springHz": 1.6, "springGain": 1.3},
+    "page_wraith": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.6},
+    "archive_eye": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 1.4, "springGain": 1.4, "headSpeed": 3.0},
+    "salt_stray": {"blink": [0, 0], "temperament": "beast", "idles": {"look": 3, "sniff": 2, "shake": 1, "settle": 1}, "mass": 1.4, "springHz": 2.4, "springGain": 1.4},
+    "drowned_scribe": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 2}, "arms": 0.0, "springHz": 1.8, "springGain": 1.4, "mass": 1.4},
+    "the_curator": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 1.1, "springDamping": 0.14, "springGain": 1.5, "mass": 3.0},
+    "cog_hound": {"blink": [0, 0], "temperament": "hunter", "breathDepth": 0.0, "idles": {"look": 3, "sniff": 1, "flick": 2}, "springHz": 3.0},
+    "rivet_gunner": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"look": 3, "settle": 1}, "headSpeed": 5.0, "mass": 1.6},
+    "spark_drone": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}},
+    "foundry_marshal": {"blink": [0, 0], "temperament": "beast", "breath": 0.6, "breathDepth": 0.8, "idles": {"look": 2, "settle": 2}, "mass": 2.6, "arms": 0.3, "springHz": 1.4},
+    "the_regulator": {"blink": [0, 0], "temperament": "beast", "breath": 0.5, "breathDepth": 0.5, "idles": {"settle": 2, "look": 1}, "mass": 3.6, "springHz": 1.0},
+    "glass_husk": {"blink": [0, 0], "temperament": "monster", "breathDepth": 0.0, "idles": {"settle": 2}, "springHz": 3.0, "mass": 1.4},
+    "sand_stalker": {"blink": [0, 0], "temperament": "insect", "idles": {"settle": 2, "flick": 1}},
+    "heat_shimmer": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}},
+    "prism_sentinel": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "mass": 1.6},
+    "the_mirage": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"look": 3, "settle": 1}, "bob": 0.0, "sway": 0.8, "arms": 0.4, "springHz": 1.0, "springDamping": 0.12, "springGain": 1.5},
+    "lantern_moth": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.4},
+    "pickpocket": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 4, "flick": 2, "settle": 1}, "headSpeed": 7.0, "springHz": 2.6, "arms": 0.0},
+    "wick_slime": {"blink": [0, 0], "temperament": "spirit", "breathDepth": 0.0, "idles": {"settle": 1}, "springHz": 2.4, "springGain": 1.6},
+    "masked_duelist": {"blink": [0, 0], "temperament": "hunter", "idles": {"look": 3, "settle": 2}, "arms": 0.2, "headSpeed": 5.0, "springHz": 2.0},
+    "the_lamplighter": {"blink": [0, 0], "temperament": "monster", "idles": {"look": 3, "settle": 2}, "mass": 2.0, "arms": 0.2, "headSpeed": 3.5, "springHz": 1.2, "springGain": 1.4}
   }
 }

@@ -219,6 +219,18 @@ def loop(rig, name, length, fn, n=12, plant=()):
     return keyed(rig, name, length, keys, loop=True)
 
 
+def spin_loop(rig, name, length, fn, bone, axis, turn, n=12):
+    """A looping clip from fn(p) -> pose in which `bone` also turns steadily through `turn` degrees about one axis
+    (0 x, 1 y, 2 z). A wheel whose shape repeats every `turn` degrees comes round to where it began, so the loop's seam
+    never shows; turn it by its symmetry (a gear of eight teeth: 45, a two-armed governor: 180)."""
+    keys = []
+    for k in range(n + 1):
+        rot = [0.0, 0.0, 0.0]
+        rot[axis] = turn * k / n
+        keys.append((length * k / n, plus(fn((k / n) % 1.0), {bone: tuple(rot)})))
+    return keyed(rig, name, length, keys, loop=True)
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Legs the motion layer can plant (SPEC §23.1). A leg bent more than ten degrees at rest bends freely on its IK.
 
@@ -295,14 +307,22 @@ def legs2(parent, tag, hip, upper, lower, fwd, **kw):
         bent_leg(parent, f"{tag}_{nm}", hip, upper, lower, fwd, side=side, share=share, **kw)
 
 
-def splay_pairs(body, hip_y, xs, zs, upper, lower, rise=32, yaws=None, thick=1):
-    """Pairs of crawler's legs off a body bone (marked with at()), front to back, sharing one pair of textures."""
+def splay_pairs(body, hip_y, xs, zs, upper, lower, rise=32, yaws=None, thick=1, mounts=False):
+    """Pairs of crawler's legs off a body bone (marked with at()), front to back, sharing one pair of textures.
+    mounts: each leg hangs from a small bone turned its way (mount<k>_<side>), so the leg itself only rises: its knee
+    then stands exactly as high as `rise` says however far round it is turned (a leg that carries its own yaw loses a
+    little of its rise to it, more the further it is turned)."""
     n = len(zs)
     yaws = yaws or [36 - 72 * k / max(1, n - 1) for k in range(n)]
     for side, nm in SIDES2:
         for k in range(n):
             first = side > 0 and k == 0
-            splay_leg(body, f"{k}_{nm}", side, (xs[k], hip_y, zs[k]), upper, lower, rise, yaws[k], thick=thick, share=None if first else ("thigh0_l", "shinb0_l"))
+            share = None if first else ("thigh0_l", "shinb0_l")
+            if mounts:
+                m = at(body.bone(f"mount{k}_{nm}", (side * xs[k], hip_y, zs[k]), (0, side * yaws[k], 0)), body._world_y + hip_y)
+                splay_leg(m, f"{k}_{nm}", side, (0, 0, 0), upper, lower, rise, 0, thick=thick, share=share)
+            else:
+                splay_leg(body, f"{k}_{nm}", side, (xs[k], hip_y, zs[k]), upper, lower, rise, yaws[k], thick=thick, share=share)
 
 
 def tags(n):
