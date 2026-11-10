@@ -75,10 +75,11 @@ final class PixelsSteady {
     }
 
     /**
-     * Fills this frame's steady image from the world ({@code low}: colour and depth; {@code hand}: the hand's depth) and
-     * last frame's, and returns it (the world's resolution) for the upscale.
+     * Fills this frame's steady image from the world ({@code low}: its depth and size; {@code colour}: the finished
+     * picture, low's own colour or the texture the composite drew straight out into; {@code hand}: the hand's depth)
+     * and last frame's, and returns it (the world's resolution) for the upscale.
      */
-    static GpuTextureView resolve(CommandEncoder encoder, TextureTarget low, TextureTarget hand) {
+    static GpuTextureView resolve(CommandEncoder encoder, TextureTarget low, TextureTarget hand, GpuTextureView colour) {
         int w = low.width, h = low.height;
         if (!zeroToOneKnown) {
             zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
@@ -114,7 +115,7 @@ final class PixelsSteady {
         if (valid && WorldProjection.history()) WorldProjection.copyReprojection(encoder, frame, 0L);
         try (RenderPass pass = encoder.createRenderPass(LABEL, out.getColorTextureView(), CLEAR)) {
             pass.setPipeline(RenderSystem.getCompiledPipeline(PixelsPipelines.STEADY));
-            pass.setUniform("InSampler", low.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            pass.setUniform("InSampler", colour, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             pass.setUniform("DepthSampler", low.getDepthTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             pass.setUniform("HandSampler", hand.getDepthTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             pass.setUniform("HistorySampler", last.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
