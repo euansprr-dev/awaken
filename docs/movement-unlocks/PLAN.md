@@ -1,7 +1,8 @@
 # The Way Up: how each move is earned (plan record, 10 Nov 2026)
 
-Status: **APPROVED in full by Euan on 10 Nov 2026 ("Go with all recommendations": all twelve decisions yes).** Being built
-on `claude/movement-unlocks-b62e18`, the whole plan coded first and tested once at the end (his rule of 10 Nov). What is
+Status: **APPROVED in full by Euan on 10 Nov 2026 ("Go with all recommendations": all twelve decisions yes). Built on
+`claude/movement-unlocks-b62e18` and merged into `build/awaken-v1` (51cca70ac); the six Rope and Wings moves' Lessons
+(4.7's last paragraph) and the crown's rim followed on 11 Nov, once §62 was in build.** What is
 built, and how it differs from this record, is in SPEC §63 "Built". The approval page is
 https://claude.ai/artifact/JWLvKJnkCf5Ti5YcoH35VN (built by `docs/movement-unlocks/build_page.py` from `page.src.html` and
 `shots.py`; his answers save in its `answers` collection, `d1` to `d12`). This file is the builder's

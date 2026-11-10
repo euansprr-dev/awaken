@@ -63,7 +63,7 @@ final class Lesson {
         /** On a creature out of reach, from the rope or the air. */
         STRIKE(WayUp.Move.STRIKE, false, "Your rope pulls you into it"),
         /** Coming down on open wings, and after a hard landing on them: no key, only how. */
-        FLARE(WayUp.Move.FLARE, false, "Level out just above the ground to land softly"),
+        FLARE(WayUp.Move.FLARE, false, "Level out just before you land"),
         /** Fast on open wings with the ground a little too far under you. */
         SKIM(WayUp.Move.SKIM, false, "Drop lower and skim the ground"),
         /** At home after the Sky Warden: standing outdoors with flight; and whenever you look up from the ground. */
@@ -248,6 +248,8 @@ final class Lesson {
         begin(k, at, null);
         follow = entity;
         moveSeen = clock;
+        // (a tour reads this: which lesson showed, and when)
+        dev.awaken.Awaken.LOG.info("[ascent] the way up: the {} lesson shows ({} of {} this session)", k, moveShown[mv.ordinal()], MOVE_SHOWS);
         return true;
     }
 

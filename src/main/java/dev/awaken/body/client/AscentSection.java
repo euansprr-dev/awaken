@@ -85,12 +85,12 @@ final class AscentSection extends UiSection {
                 ui.pair(r.name(), "Mastery " + level + " of 10", Glass.a(Glass.TITLE, 1F), Glass.a(Glass.LABEL, 0.8F));
                 ui.bar(level / 10.0, Glass.a(Glass.EDGE, 0.9F), 80);
                 ui.text(KeyText.resolve(r.keys()), Glass.a(Glass.LABEL, 0.9F));
+                int more = 0;
                 for (Extra x : r.extras()) {
                     if (level >= x.level()) {
                         ui.text(KeyText.resolve(x.keys()), Glass.a(Glass.LABEL, 0.9F));
                     } else {
-                        // the next one only: that it waits, never what it is
-                        ui.text("◆ Another move at mastery " + x.level() + ".", Glass.a(Glass.HORIZON, 0.85F));
+                        more = x.level();
                         break;
                     }
                 }
@@ -100,6 +100,8 @@ final class AscentSection extends UiSection {
                 if (BodyConfig.wayUp() && !WayClient.isDone(r.rung()) && r.rung() != WayUp.Rung.SKY && r.rung() != WayUp.Rung.FORM) {
                     ui.text("You haven't used it yet.", Glass.a(Glass.AMBER, 0.9F));
                 }
+                // the next move only: that it waits, never what it is
+                if (more > 0) ui.text("◆ Another move at mastery " + more + ".", Glass.a(Glass.HORIZON, 0.85F));
             } else if (next) {
                 // the next rung: a dark diamond and where it waits; never how it plays
                 String lead = lead(r);

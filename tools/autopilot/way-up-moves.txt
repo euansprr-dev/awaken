@@ -1,9 +1,12 @@
 # The Way Up (SPEC 63.8): the Lessons of Rope and Wings' six moves, the ones a tour can reach without mastery.
-# The takeoff's (standing outdoors with flight: the keys held at the top with an arrow, the gold figure rising; then
-# looking up, the caps on the ring in the sky; the takeoff made and its card), the flare's (a glide down toward the
-# ground), the K rows with a line a move, and a try at the sling's (a wall ahead with nothing to swing from).
+# On a stone floor built in the open sky (nothing to swing from, nothing overhead): the takeoff's (standing outdoors
+# with flight: the keys held at the top with an arrow and the gold figure rising; then looking up, the caps on the ring
+# in the sky; the takeoff made and its card), the flare's (a glide down onto the floor), the K rows with a line a move,
+# and the sling's (a low block sixteen ahead: the key on its top, the pull over it, the card).
 # Flight is a dev grant here (no rung is handed down, so no lesson is owed).
-# Run on CI: tools/tour-ci.sh tools/autopilot/way-up-moves.txt 1500
+# The world must be five minutes old before the standing lesson may show (the director's settling time), so the script
+# sprints twice. "[ascent] the way up: the X lesson shows" in latest.log says which lessons began, and when.
+# Run on CI: tools/tour-ci.sh tools/autopilot/way-up-moves.txt 1800
 world autopilot_way_up_moves survival 4245
 waitworld
 gui 0
@@ -25,16 +28,23 @@ cmd tick sprint 6200
 # the sprint must be over before anything is timed
 wait 2400
 cmd tick sprint stop
+wait 20
+cmd tick sprint 4000
+wait 1200
+cmd tick sprint stop
 wait 40
 cmd gamerule advance_time false
 cmd time set 5500
 hud on
 camera first
+# ---- the stage: a floor in the open sky ----
+cmd fill -294 250 -20 -270 250 110 minecraft:smooth_stone
+cmd tp @s -282.5 251 -16.5 0 0
+wait 60
 # ---- the takeoff, standing outdoors with flight ----
 cmd awaken ascent grant skyborn
 cmd awaken ascent aether full
 cmd awaken ascent pilot aether 1
-cmd tp @s ~ ~ ~ ~ 0
 # the road is told within five seconds; then standing still brings the lesson
 wait 150
 shotnow moves_01_takeoff_standing
@@ -42,61 +52,71 @@ wait 16
 shotnow moves_02_takeoff_figure
 wait 16
 shotnow moves_03_takeoff_figure
+wait 16
+shotnow moves_04_takeoff_figure
 cmd tp @s ~ ~ ~ ~ -50
-wait 12
-shotnow moves_04_takeoff_looking_up
+wait 14
+shotnow moves_05_takeoff_looking_up
 cmd awaken ascent pilot aether 1
-cmd awaken ascent pilot hold sneak 16
-wait 12
+cmd awaken ascent pilot hold sneak 60
+wait 22
 cmd awaken ascent pilot hold jump 3
-wait 8
-shotnow moves_05_takeoff_made
-wait 30
-shotnow moves_06_takeoff_card
-# fold and come down
+wait 10
+shotnow moves_06_takeoff_made
+wait 25
+shotnow moves_07_takeoff_card
+# fold, and back to the floor
+cmd awaken ascent pilot stop
+wait 4
 cmd awaken ascent pilot hold sneak 6
-wait 120
-# ---- the flare: a glide down toward the ground ----
-cmd tp @s ~ ~48 ~ ~ 8
-wait 6
-cmd awaken ascent pilot hold jump 2
-wait 6
-cmd awaken ascent pilot hold jump 2
-wait 20
-shotnow moves_07_glide_high
-wait 20
-shotnow moves_08_glide
-wait 20
-shotnow moves_09_glide
-wait 20
-shotnow moves_10_glide
-wait 20
-shotnow moves_11_glide
-wait 20
-shotnow moves_12_glide
-wait 20
-shotnow moves_13_glide
-wait 20
-shotnow moves_14_glide
 wait 30
-shotnow moves_15_landed
-wait 60
+cmd tp @s -282.5 251 -16.5 0 0
+wait 100
+# ---- the flare: a glide down onto the floor ----
+cmd tp @s -282.5 268 -16.5 0 6
+wait 5
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 14
+shotnow moves_08_glide
+wait 14
+shotnow moves_09_glide
+wait 14
+shotnow moves_10_glide
+wait 14
+shotnow moves_11_glide
+wait 14
+shotnow moves_12_glide
+wait 14
+shotnow moves_13_glide
+wait 14
+shotnow moves_14_glide
+wait 14
+shotnow moves_15_glide
+wait 20
+shotnow moves_16_landed
+wait 140
 # ---- the K rows: a line a move, and the next one only as a diamond ----
 screen band powers
 wait 30
-shotnow moves_16_k_rows
+shotnow moves_17_k_rows
 screen close
-# ---- a try at the sling: a wall ahead, nothing tall enough to swing from ----
-cmd tp @s ~ ~ ~ 0 -10
-cmd fill ~-4 ~ ~7 ~4 ~6 ~9 minecraft:stone
-wait 30
-shotnow moves_17_sling_marker
-wait 30
+# ---- the sling: a low block sixteen ahead, nothing tall enough to swing from ----
+cmd tp @s -282.5 251 -16.5 0 0
+cmd fill -288 251 0 -276 254 5 minecraft:stone
+wait 50
 shotnow moves_18_sling_marker
-cmd awaken ascent pilot hold tether 50
-wait 16
-shotnow moves_19_sling_pull
-wait 40
-shotnow moves_20_sling_card
+wait 20
+shotnow moves_19_sling_marker
+cmd awaken ascent pilot hold tether 40
+wait 8
+shotnow moves_20_sling_pull
+wait 12
+shotnow moves_21_sling_over
+wait 20
+shotnow moves_22_sling_card
+wait 20
+shotnow moves_23_sling_card
 info
 quit

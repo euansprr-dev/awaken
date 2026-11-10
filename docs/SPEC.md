@@ -22587,7 +22587,7 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   | Sling | with the rope | the marker shows a sling (nothing to swing from, a top ahead) | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
   | Spring | Tether mastery 3 | a pull is carrying you up onto a top, forward not held | Hold + forward: "Spring off the top" (stays 3.5 s: the pull is over before it is read) |
   | Rope strike | Tether mastery 5 | on the rope or in its carry, a creature out of reach under the crosshair | the attack key, pinned on the creature as it moves: "Your rope pulls you into it" |
-  | Flare | with wings | gliding down with the ground within 14 blocks; and after a hard landing on wings | no key: "Level out just above the ground to land softly" |
+  | Flare | with wings | gliding down with the ground within 14 blocks; and after a hard landing on wings | no key: "Level out just before you land" |
   | Skim | Wings mastery 3 | gliding fast within 9.5 blocks of the ground and not yet skimming | no key: "Drop lower and skim the ground" |
   | Takeoff | with flight | at home: standing still outdoors in the overworld with flight and Aether to spare, no fight (a rank fight is in its own dimension, so this is after the way home); and whenever you look up from the ground | Hold + sneak, "then", jump: "while you look up", pinned on a ring in the sky up ahead; at home the gold figure crouches and rises 14 blocks, three ahead |
   A move's prompt shows while its moment lasts (15 s at most), at most four times a session and a minute apart (the
