@@ -976,6 +976,13 @@
           "height": 1024
         },
         {
+          "sampler_name": "Lit",
+          "location": "awaken:lens_lit",
+          "width": 2048,
+          "height": 1024,
+          "bilinear": true
+        },
+        {
           "sampler_name": "Frame",
           "location": "awaken:lens_frame",
           "width": 48,
@@ -2752,6 +2759,12 @@
           "sampler_name": "Clouds",
           "target": "awaken:lens_clouds",
           "bilinear": true
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
         }
       ],
       "output": "awaken:lens_half",

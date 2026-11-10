@@ -62,6 +62,9 @@ public final class LensClient {
     // the Sun Pass's block map (SPEC §22 "Steady Light"): which blocks near the camera stop the sun
     private static LensBlocks blocks;
     static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
+    // the lit air (SPEC §22 "Steady Light"): which air near the camera the sun reaches, for its rays
+    private static LensLit litAir;
+    static final Identifier LIT = Awaken.id("textures/effect/lens_lit.png");
     private static boolean sunPass = true;
     private static @org.jspecify.annotations.Nullable Boolean forcedSunPass;
 
@@ -73,6 +76,23 @@ public final class LensClient {
             default -> null;
         };
         return "sun pass " + (forcedSunPass != null ? forcedSunPass : "from the setting");
+    }
+    private static boolean rays;
+    private static @org.jspecify.annotations.Nullable Boolean forcedRays;
+
+    /** Autopilot {@code lens rays on|off|setting}: the A/B switch for the lit air (the sun's rays). */
+    public static String rays(String arg) {
+        forcedRays = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "rays " + (forcedRays != null ? forcedRays : "on with the Sun Pass") + (litAir != null ? ", " + litAir.report() : "");
+    }
+
+    /** How much of the sun reaches a point by the lit air, 0..1; -1 where it has no answer (LensParticles' motes). */
+    static float litAir(double x, double y, double z) {
+        return rays && litAir != null ? litAir.at(x, y, z) : -1f;
     }
     private static boolean lit, sunHere;
     private static float lightStrength, rain, warmth;
@@ -180,6 +200,7 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
         // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
@@ -296,6 +317,14 @@ public final class LensClient {
             var at = mc.gameRenderer.mainCamera().blockPosition();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
             if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
+        }
+        rays = lit && sunHere && sunPass && air && (forcedRays != null ? forcedRays : true) && blocks != null && litAir != null;
+        if (rays) {
+            var at = mc.gameRenderer.mainCamera().blockPosition();
+            litAir.tick(blocks, heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y, moonLight ? -sunDir.z : sunDir.z,
+                    at.getX(), at.getZ());
+        } else if (litAir != null) {
+            litAir.forget();
         }
         if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
                 air && sunHere, sunDir.y, rain);
@@ -432,7 +461,9 @@ public final class LensClient {
         blocks = new LensBlocks();
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
+        litAir = new LensLit();
         Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
+        Minecraft.getInstance().getTextureManager().register(LIT, litAir.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
     }
 
@@ -492,6 +523,8 @@ public final class LensClient {
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
+        lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
+                rays && litAir.valid());
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

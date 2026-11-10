@@ -63,6 +63,21 @@ public final class LensParticles {
     private static float carry;
     private static int breathIn = 40;
 
+    // Lens's particles are light in the air, not things: they never write depth, so Lens's own shadows, contact
+    // darkness and haze pass them by (drawn into the depth they cast blocky little shadows on the ground, Euan 10 Nov)
+    static final com.mojang.renderpearl.api.pipeline.RenderPipeline AIR_PIPELINE = com.mojang.renderpearl.api.pipeline.RenderPipeline
+            .builder(net.minecraft.client.renderer.RenderPipelines.PARTICLE_SNIPPET)
+            .withLocation(dev.awaken.Awaken.id("pipeline/lens_particle"))
+            .withColorTargetState(new com.mojang.renderpearl.api.pipeline.ColorTargetState(com.mojang.renderpearl.api.pipeline.BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new com.mojang.renderpearl.api.pipeline.DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build();
+    static final SingleQuadParticle.Layer AIR_LAYER = new SingleQuadParticle.Layer(true, net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_PARTICLES,
+            AIR_PIPELINE, net.minecraft.client.renderer.RenderPipelines.OIT_PARTICLE);
+
+    static void pipelines(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent e) {
+        e.registerPipeline(AIR_PIPELINE);
+    }
+
     static void register(RegisterParticleProvidersEvent e) {
         e.registerSpriteSet(LensModule.MOTE.get(), s -> new Provider(s, MOTE));
         e.registerSpriteSet(LensModule.EMBER.get(), s -> new Provider(s, EMBER));
@@ -96,7 +111,10 @@ public final class LensParticles {
             int n = count(r, (air ? 5f : 2.5f) * scale);
             for (int i = 0; i < n; i++) {
                 double x = eye.x + (r.nextFloat() - 0.5f) * 18, y = eye.y + (r.nextFloat() - 0.4f) * 8, z = eye.z + (r.nextFloat() - 0.5f) * 18;
-                if (!level.getBlockState(BlockPos.containing(x, y, z)).isAir() || !height.sunlit(x, y, z, lightDir)) continue;
+                if (!level.getBlockState(BlockPos.containing(x, y, z)).isAir()) continue;
+                // (by the lit air where it reaches: the motes stand in the sun's rays and nowhere else, under a canopy too)
+                float sun = LensClient.litAir(x, y, z);
+                if (sun < 0f ? !height.sunlit(x, y, z, lightDir) : sun < 0.55f) continue;
                 float dx = (float) (x - eye.x), dy = (float) (y - eye.y), dz = (float) (z - eye.z), len = Mth.sqrt(dx * dx + dy * dy + dz * dz);
                 float toward = (dx * lightDir.x() + dy * lightDir.y() + dz * lightDir.z()) / Math.max(len, 0.01f);
                 float glint = 0.2f + 0.8f * smooth((toward - 0.2f) / 0.75f);
@@ -296,7 +314,7 @@ public final class LensParticles {
 
         @Override
         protected SingleQuadParticle.Layer getLayer() {
-            return SingleQuadParticle.Layer.TRANSLUCENT;
+            return AIR_LAYER;
         }
 
         @Override
@@ -365,6 +383,13 @@ public final class LensParticles {
                     zd += (r.nextFloat() - 0.5f) * 0.0006;
                     alpha = base * fade * (0.55f + 0.45f * Mth.sin(t * 0.35f));
                 }
+            }
+            // light in the air is small and out there: one that drifts up to the eye fades before it fills the view as
+            // a flat square (a breath is yours and stays)
+            if (kind != BREATH) {
+                var eye = net.minecraft.client.Minecraft.getInstance().gameRenderer.mainCamera().position();
+                double dx = x - eye.x, dy = y - eye.y, dz = z - eye.z;
+                alpha *= Math.clamp(((float) Math.sqrt(dx * dx + dy * dy + dz * dz) - 1.2f) / 2.2f, 0f, 1f);
             }
         }
     }

@@ -19,7 +19,8 @@ uniform sampler2D HeightSampler;
 uniform sampler2D SunmapSampler;    // lens_sunmap.fsh: the height above which the sun reaches each column
 uniform sampler2D CloudNoiseSampler; // Lens 2's clouds (L4): their shadows on the land and in the beams
 uniform sampler2D HistorySampler;   // last frame's light buffer (persistent)
-uniform sampler2D BlocksSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
+uniform sampler2D BlocksSampler;
+uniform sampler2D LitSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
 
@@ -103,6 +104,41 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     return 1.0;
 }
 
+// the lit air (LensLit; SPEC §22 "Steady Light"): the camera's place in its volume, in blocks from the volume's corner,
+// and w whether the texture holds one (frame texels 15, 20 and 21)
+vec4 litCam() { return vec4(F(20).zw, F(21).w, F(15).w); }
+
+// how much of the sun reaches a point of air w (camera-relative) by the lit air: x the light, y how far to trust it
+// (0 outside the volume, rising over its outer blocks). Smooth across x and y by the texture's own filter; across z
+// (slice to slice) by dz, a different -0.5..0.5 each frame
+vec2 litNear(vec3 w, vec4 lc, float dz) {
+    vec3 q = w + lc.xyz, e = min(q, 128.0 - q);
+    float trust = clamp(min(min(e.x, e.z) / 8.0, e.y / 3.0), 0.0, 1.0);
+    if (trust <= 0.0) return vec2(1.0, 0.0);
+    float zi = clamp(floor(q.z + dz), 0.0, 127.0);
+    vec2 uv = (vec2(mod(zi, 16.0), floor(zi / 16.0)) * 128.0 + clamp(q.xy, 0.5, 127.5)) / vec2(2048.0, 1024.0);
+    return vec2(texture(LitSampler, uv).r, trust);
+}
+
+// what the lit air already knows of a surface point (camera-relative, a little off its face): 0 deep in shade, 1 in
+// full sun, -1 where it can't say and the block map must be walked (near any shadow's edge, under leaves, outside the
+// volume). Three slices, each smoothed across its four cells, must agree: the volume is a block coarse and a second
+// old, so it only answers where nothing near the point differs
+float litSure(vec3 a) {
+    vec4 lc = litCam();
+    if (lc.w <= 0.0) return -1.0;
+    vec3 q = a + lc.xyz;
+    if (any(lessThan(q, vec3(2.0))) || any(greaterThan(q, vec3(126.0)))) return -1.0;
+    float zi = floor(q.z), lo = 1.0, hi = 0.0;
+    for (int k = -1; k <= 1; k++) {
+        float z = zi + float(k);
+        float v = texture(LitSampler, (vec2(mod(z, 16.0), floor(z / 16.0)) * 128.0 + q.xy) / vec2(2048.0, 1024.0)).r;
+        lo = min(lo, v);
+        hi = max(hi, v);
+    }
+    return hi < 0.004 ? 0.0 : (lo > 0.996 ? 1.0 : -1.0);
+}
+
 // the heightfield, from o (a point in the world's ring) toward the light: 0 under solid blocks, dimmed through leaves
 float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof);
 
@@ -115,6 +151,10 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     float vis = heightRay(o, l, noise, ultra, true);
     if (vis > 0.97 || F(17).z <= 0.0) return vis;
     if (max(abs(o.x - f12.x), abs(o.z - f12.z)) > F(17).z - 1.0) return vis;
+    // (most of a forest's pixels come this far; the lit air settles the ones well inside the sun or the shade for
+    // three texture reads, and the walk is left for the edges, where its exactness shows)
+    float sure = litSure(p + n * 0.55);
+    if (sure >= 0.0) return sure;
     int status;
     float tOut;
     float through = blockRay(o, l, status, tOut);
@@ -245,18 +285,40 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
     float ground = heightAt(ivec2(floor(f12.xz)), 0).g;
     vec4 cp = cloudParams();
     float floorY = ground > -1000.0 ? max(ground, 40.0) : 63.0;
-    float dt = d / float(steps), scaleH = max(v19.g * 256.0, 4.0), acc = 0.0;
-    for (int i = 0; i < steps; i++) {
-        vec3 w = v * ((float(i) + jitter) * dt);
-        // (on Ultra the clouds' shadows cut the beams too)
-        float cs = ultra ? mix(1.0, cloudShadow(w, l, cp, f12.y), 0.5) : 1.0;
-        acc += litAt(w, f12, cell) * cs * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
-    }
+    float scaleH = max(v19.g * 256.0, 4.0), acc = 0.0, from = 0.0;
     const float g = 0.6;
-    float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));
+    float mu = dot(v, l), phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
     // (the Air: the low sun's air holds more light)
     float low = F(22).w > 0.0 ? 1.0 + 1.6 * (1.0 - smoothstep(0.1, 0.5, F(22).y)) * (1.0 - F(16).y) : 1.0;
-    return 1.0 - exp(-acc * dt * 0.0016 * strength * phase * low);
+    vec4 lc = litCam();
+    if (lc.w > 0.0) {
+        // the sun's rays: the first blocks of the ray go through the lit air, which knows the canopy's gaps, the far
+        // side of a trunk and a doorway from the open, in steps short enough to keep them apart. Seen from the side
+        // the air close by holds a share the far mist's forward glow leaves out (a shaft is something near you)
+        float near = min(d, 60.0), dn = near / float(ultra ? 18 : 12), got = 0.0;
+        for (int i = 0; i < (ultra ? 18 : 12); i++) {
+            vec3 w = v * ((float(i) + jitter) * dn);
+            vec2 ln = litNear(w, lc, fract(jitter * 7.31 + float(i) * 0.618) - 0.5);
+            float lit = ln.y >= 1.0 ? ln.x : mix(litAt(w, f12, cell), ln.x, ln.y);
+            got += lit * exp(-max(w.y + f12.y - floorY, 0.0) / (scaleH * 1.5));
+        }
+        // (into the sun it weighs as the far mist does: more there, with the screen's own rays on top, whitened the
+        // whole sky round a low sun)
+        acc = got * dn * (1.0 + 0.30 / max(phase, 0.12));
+        from = near;
+        steps = ultra ? 10 : 5;
+    }
+    if (d > from + 1.0) {
+        float dt = (d - from) / float(steps), far = 0.0;
+        for (int i = 0; i < steps; i++) {
+            vec3 w = v * (from + (float(i) + jitter) * dt);
+            // (on Ultra the clouds' shadows cut the beams too)
+            float cs = ultra ? mix(1.0, cloudShadow(w, l, cp, f12.y), 0.5) : 1.0;
+            far += litAt(w, f12, cell) * cs * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
+        }
+        acc += far * dt;
+    }
+    return 1.0 - exp(-acc * 0.0016 * strength * phase * low);
 }
 
 // last frame's answer for this surface (or sky direction): xyz the light, w how much of the 2x2 history saw the same
@@ -335,7 +397,7 @@ void main() {
                     ps = mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
                 }
                 // a low sun's shadows are long and their edges wide: the disc grows as it sinks
-                rad *= 0.4 + 2.6 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
+                rad *= 0.2 + 2.8 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
             vis = sunVisibility(ps, n, l, noise, ultra);

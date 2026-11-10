@@ -74,6 +74,18 @@ final class LensFrame {
         blocksMinY = minY;
     }
 
+    // the lit air (LensLit): its volume's corner in the world, and whether the texture holds one
+    private int litX, litY, litZ;
+    private boolean litOn;
+
+    /** This frame's lit air: the volume's lowest block on each axis, and whether to read it. */
+    void lit(int x, int y, int z, boolean on) {
+        litX = x;
+        litY = y;
+        litZ = z;
+        litOn = on;
+    }
+
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
     void clouds(float base, float cover, double drift, int colour) {
         cloudBase = base;
@@ -131,7 +143,10 @@ final class LensFrame {
         put(12, (float) (x - Math.floor(x / ring) * ring), (float) y, (float) (z - Math.floor(z / ring) * ring), frame);
         put(13, valid ? (float) (x - prevX) : 0f, valid ? (float) (y - prevY) : 0f, valid ? (float) (z - prevZ) : 0f, valid ? 1f : 0f);
         put(14, lightX, lightY, lightZ, light);
-        put(15, height != null ? ring : 0f, height != null ? height.maxTop() : -64f, LensHeightfield.TRUSTED, 0f);
+        // (15 w, 20 zw and 21 w: the lit air, whether it is there and the camera's place in its volume, in blocks from
+        // its corner)
+        float lcx = (float) (x - litX), lcy = (float) (y - litY), lcz = (float) (z - litZ);
+        put(15, height != null ? ring : 0f, height != null ? height.maxTop() : -64f, LensHeightfield.TRUSTED, litOn && height != null ? 1f : 0f);
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
         // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost; y 1 when the clouds
         // and light are spread over frames (lensTemporal)
@@ -146,9 +161,9 @@ final class LensFrame {
         // width and half its height as vectors (3 texels a plate)
         plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
         int stormCount = dev.awaken.living.client.StormSky.lensCells(storms, x, y, z);
-        put(20, plateCount, stormCount, 0f, 0f);
+        put(20, plateCount, stormCount, lcx, lcy);
         // 21: the sun on screen (uv; z 1 when it is ahead), the estimate WorldProjection's replaces
-        put(SUN, sunU, sunV, sunFront, 0f);
+        put(SUN, sunU, sunV, sunFront, lcz);
         // 22-23: the Air (lens_air.glsl)
         put(22, airSunX, airSunY, airSunZ, airOn);
         put(23, skyR, skyG, skyB, stars);

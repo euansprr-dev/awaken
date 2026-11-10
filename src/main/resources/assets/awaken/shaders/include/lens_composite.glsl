@@ -73,9 +73,9 @@ float farDistance(float depth, float zNear, float zFar, int flags, bool deviceZe
 #ifdef LENS_LIGHT
 // the light buffer (a its one-byte distance) at this pixel: of its 2x2 texels with bilinear weights, those that saw
 // this surface's distance (so a near silhouette doesn't bleed onto the far side), else the closest match
-vec3 upsample(sampler2D buf, float want) {
+vec3 upsampleAt(sampler2D buf, vec2 uv, float want, out float got) {
     vec2 size = vec2(textureSize(buf, 0));
-    vec2 lp = texCoord * size - 0.5;
+    vec2 lp = uv * size - 0.5;
     ivec2 b = ivec2(floor(lp));
     vec2 fr = lp - vec2(b);
     float bestDiff = 2.0, wsum = 0.0;
@@ -92,7 +92,13 @@ vec3 upsample(sampler2D buf, float want) {
             best = L.rgb;
         }
     }
+    got = wsum;
     return wsum > 1.0e-3 ? acc / wsum : best;
+}
+
+vec3 upsample(sampler2D buf, float want) {
+    float got;
+    return upsampleAt(buf, texCoord, want, got);
 }
 
 // the light's colour: the sun's (warm by the sunrise colour's strength), or the moon's
@@ -186,17 +192,35 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     float dist = length(p);
     float near = smoothstep(1.25, 1.45, dist);
     if (near <= 0.0) return c;
-    // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface
-    vec3 lr = upsample(LightSampler, packDistance8(dist));
-    lrKept = lr;
-    lrHave = true;
     vec3 m = vec3(1.0);
     float rich = 0.0;
     float sun = f14.w * l17.r;
-    bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0);
+    float air = airOn();
+    bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0) || air > 0.0;
     // the screen-derivative normal where this pixel's 2x2 quad lies on one surface; the careful four taps across an edge
     vec3 n = quickNormal;
     if (needNormal && n == vec3(0.0)) n = normalAt(clamp(ivec2(texCoord * OutSize), ivec2(0), ivec2(OutSize) - 1), p, depth, inv, z01, OutSize);
+    // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface.
+    // The Air: on a block face it is read where the centre of this pixel's 1/16-block texel lies on screen, so every
+    // screen pixel of a texel takes one light and a shadow's edge is the texture's own pixel edge at any buffer size
+    // (stretched from a smaller buffer it was a soft band, and the shadow had no weight)
+    float want = packDistance8(dist), got = 0.0;
+    vec3 lr = vec3(1.0, 1.0, 0.0);
+    bool snapped = false;
+    if (air > 0.0 && dist < 72.0) {
+        vec3 an = abs(n);
+        if (max(an.x, max(an.y, an.z)) > 0.99) {
+            vec3 w = p + f12.xyz;
+            vec3 q = project(frameMat(4), mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - f12.xyz, z01);
+            if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
+                lr = upsampleAt(LightSampler, q.xy, want, got);
+                snapped = got > 1.0e-3;
+            }
+        }
+    }
+    if (!snapped) lr = upsampleAt(LightSampler, texCoord, want, got);
+    lrKept = lr;
+    lrHave = true;
     if (sun > 0.0) {
         // solid blocks above this point in its own column: under a ledge it's shade, deep under a roof it's left alone
         float cover = 0.0;
@@ -238,10 +262,13 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         // a glow is light, not a lit surface: it keeps its brightness in the shade
         // the Air (Steady Light): sunlight that reads. A brighter, warmer key and a shade about twice as deep, so a
         // cast shadow is a shape on the ground and not a tint; by moonlight the shade deepens less
-        float air = airOn();
         if (air > 0.0) {
             key = mix(key, mix(vec3(1.24, 1.17, 0.98), key * vec3(1.14, 1.07, 0.99), max(golden, f16.y)), air);
-            shade *= mix(1.0, (1.0 - min(0.85, depthOfShade * mix(1.9, 1.35, f16.y))) / max(1.0 - min(0.85, depthOfShade), 0.15), air);
+            // (a shadow with weight: deep and cool by day, less so by moonlight)
+            // (deepest under a high sun; as the sun sinks its key fades into the shade, and a shade that stayed this
+            // deep left a morning forest black under a bright sky)
+            float deep = mix(1.5, 2.5, smoothstep(0.10, 0.50, f14.y) * (1.0 - f16.y));
+            shade *= mix(1.0, (1.0 - min(0.9, depthOfShade * deep)) / max(1.0 - min(0.85, depthOfShade), 0.15), air);
         }
         // the Sun Pass (frame texel 17 z: the block map's reach): under cover the heightfield had no sun to give, so the
         // model stood back and left the game's light. The map knows where the sun does come in (a doorway, a window,
@@ -412,8 +439,14 @@ void main() {
             vec3 extra = max(c - was - 0.05, 0.0);
             float keep = smoothstep(0.04, 0.22, luma(extra));
             vec3 s = airSky(dirA, f22.xyz, rainA);
-            s += airStars(dirA, F(17).x) * airHour(f22.y).z * (1.0 - rainA) * (1.0 - s);
-            c = mix(c, s + extra * keep, airK);
+            // the night's own: stars, the galaxy, a shooting star (they come out as the sun goes under); then the high
+            // wisps over all of it
+            float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rainA);
+            if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark;
+            s += extra * keep;
+            vec4 wisp = airWisps(dirA, F(18).zw, F(12).y, f22.xyz, rainA, F(17).x);
+            s = mix(s, wisp.rgb, wisp.a);
+            c = mix(c, s, airK);
         } else if (!farTerrain && !plate) {
             // by distance over the render distance (a far renderer's land carries on past it, so the fog thins out
             // over its reach instead), a little thinner on land well above the eye so peaks stand out of it
@@ -548,7 +581,7 @@ void main() {
 #endif
             float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
             // (the Air: the sunlit mist is stronger, so beams stand in the air between the trees)
-            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 3.4, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
+            c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 3.4, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * mix(0.35, 0.95, airOn()));
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

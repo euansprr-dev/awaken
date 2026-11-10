@@ -35,12 +35,12 @@
       "height": 300
     },
     "awaken:lens_light": {
-      "width": 1440,
-      "height": 810
+      "width": 960,
+      "height": 540
     },
     "awaken:lens_hist": {
-      "width": 1440,
-      "height": 810,
+      "width": 960,
+      "height": 540,
       "persistent": true
     },
     "awaken:lens_sunmap": {
@@ -974,6 +974,13 @@
           "location": "awaken:lens_blocks",
           "width": 128,
           "height": 1024
+        },
+        {
+          "sampler_name": "Lit",
+          "location": "awaken:lens_lit",
+          "width": 2048,
+          "height": 1024,
+          "bilinear": true
         },
         {
           "sampler_name": "Frame",
@@ -2752,6 +2759,12 @@
           "sampler_name": "Clouds",
           "target": "awaken:lens_clouds",
           "bilinear": true
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
         }
       ],
       "output": "awaken:lens_half",

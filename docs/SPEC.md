@@ -6115,8 +6115,18 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   - **Sky**: Lens's own, in the composite for sky pixels: a violet-blue gradient by day (zenith (0.33, 0.41, 0.86), mid
     (0.53, 0.61, 0.95), horizon (0.83, 0.86, 0.98)), rose and gold toward the sun and violet away from it at dusk and
     dawn (from sin 0.50 of sun height down to -0.32), near-black blue by night, a glow round the sun, greyed by rain.
-    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour; Lens's larger
-    twinkling stars join them by night.
+    The sun, the moon and the game's stars are kept as what the frame held over its own sky colour.
+  - **Night sky** (`airNight`, from sun height sin 0.06 down to -0.20, not in rain; Euan 2026-11-10: "ours has
+    basically no stars ... like a fantasy shader"). It turns with the sun about the world's z, as the game's stars do.
+    Stars in four sizes, each a square of the game's own kind with its own brightness, tint (blue-white to warm) and
+    slow twinkle: a dust of faint ones (a grid 230 cells across the sky, 7.5% of cells, up to 27.5% along the galaxy),
+    small (140, 8.5 to 18.5%), middling (70, 8.5%), and the few bright ones (27, 8.5%) with four thin points. The
+    galaxy: a soft band (pole (0.32, 0.47, 0.82), `exp(-13 b²)`) of blue to violet noise with dark lanes and a warmer
+    heart. A shooting star: one chance in two every nine seconds, 0.9 s long. A wide halo round the moon.
+  - **Wisps** (`airWisps`): a second, high layer 680 blocks up, over the sky and under the block clouds: feathered
+    streaks of noise (26-block cells, longer east-west so they gather toward a low sun, bent by two slow drifts so
+    none is a ruled line), drifting 2.2 blocks a second. White at up to 34% by day, rose and gold at up to 50% at dusk
+    and dawn, none by night (they drew dark lanes through the stars). No march: one plane, three noise reads.
   - **Fog**: land fades into the sky that stands behind it (`airFog`: the sky's colour in the pixel's own direction,
     the horizon's from above). Far: `1 - exp(-3.2 t²)` over the render distance (five times that while a far renderer
     draws), a little thinner 40 blocks and more above the eye. Near: `1 - exp(-(d - 4) / L)`, L 280 blocks by day to 150
@@ -6126,17 +6136,28 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     and underwater keep the game's fog (the environmental-fog factor, as the haze had). The old haze is off under it.
   - **Clouds**: the game's own shapes, soft. Twelve-block cells in one to three tiers of seven (taller toward the
     middle of a group), where the cloud noise at 1536 and 384 blocks a repeat clears `1 - 0.72 cover`. Walked cell by
-    cell in the cloud pass (`blockPiece`: exact entry and exit, up to 72 cells and 860 blocks), sigma 0.16 a block, lit
-    by three steps toward the sun and by the face the ray came in by (a joined block keeps the first face), the sky's
-    light by height, 54% under the base. No history blend for a walked pixel (a camera that sways at rest blurred the
+    cell in the cloud pass (`blockPiece`: exact entry and exit, up to 72 cells and 860 blocks), sigma 0.95 a block
+    (solid: at 0.16 and 0.34 the cells and tiers behind showed through as the sections a cloud is built from, Euan
+    2026-11-10), one even tone: lit by three steps toward the sun (`max(exp(-0.16 od), 0.30 exp(-0.03 od))`) and a
+    little by the face the ray came in by (0.75 to 1; a joined block keeps the first face), the sky's light 86% on an
+    underside, 91 to 98% on a side, whole on a top. Their shade is the sky overhead and at the horizon mixed, 52% toward
+    white by day (the sky's own blue read as the sky seen through); the sun's share 0.40 (to 0.70 at dusk), the moon's
+    a tenth. No history blend for a walked pixel (a camera that sways at rest blurred the
     edges). They take the fog's colour from 260 blocks and thin from 520. Drawn whatever the Clouds video setting says.
     Cinematic's cloud buffer is 800x450. Storm cells are still marched as before.
-  - **Sunlight**: key (1.24, 1.17, 0.98) by day, the shade about 1.9 times as deep; the sun's light fades into the shade
-    as it sinks (sin 0.55 to 0.05), and its disc widens, so dusk is one soft light and not long streaks. With the Air on
+  - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
+    cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
+    sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
+    as it sinks (sin 0.55 to 0.05), and its disc widens (0.2 to 3 times), so dusk is one soft light and not long
+    streaks. A shadow keeps the texture's pixels: within 72 blocks the composite reads the light buffer at the centre
+    of the pixel's own 1/16-block texel (`upsampleAt`), so its edge runs along texel edges at any buffer size. With the Air on
     the clouds and light are always spread over frames (`lensTemporal` as if on).
   - **Life** (`LensParticles`, on the spore sprite, no new particle type): fireflies from sun height sin 0.32 down
     through the night, low over open ground, none in snow or rain; pollen in sunlit air near the ground by day; twice
-    the sunlit dust. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+    the sunlit dust, which stands only where the lit air (below) says the sun reaches, under a canopy too. Lens's
+    particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
+    particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
+    depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
 - **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
   across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
   block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
@@ -6148,13 +6169,35 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   carries on from there. Inside the map every face is asked and the turn of a face decides nothing (deciding by the
   face lit the one-pixel sides of path plates and block lips while the ground lay in shade: bright rims at dusk, Euan
   2026-11-10); under cover the key shows where the map says the sun comes in. Contact shadows near the eye are a block
-  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 1440x810.
+  and a half long in 16 even steps from the texel's centre. Cinematic's light buffer is 960x540. Before it walks, the
+  light pass asks the lit air (below) at the point, half a block off its face: three slices, each smoothed over four
+  cells, all under 0.004 is shade and all over 0.996 is sun, for three texture reads; only the rest (a shadow's edge,
+  leaves, the volume's rim) walks the map.
+- **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
+  - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
+    R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
+    from the volume's own corner (frame texels 15 w, 20 zw and 21 w: whether it is there and the camera's place in
+    it). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
+    lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
+    a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
+    what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is
+    dappled in whole blocks), a section not read yet 1. Beyond the window the land casts in from the sunward edge by
+    the heightfield's CPU mirror (up to 400 blocks). A volume takes 8 to 11 ms of the worker and 0.2 ms to upload, every
+    20 ticks at rest and every 5 once the camera is 5 blocks off the volume's middle; none where the light leaves the
+    x-y plane or sits under sin 0.02. The light pass's mist march spends its first 60 blocks in it (12 steps, 18 on
+    Ultra, linear in x and y, dithered in z; weight `1 + 0.30 / max(phase, 0.12)` so a shaft shows from the side) and
+    the rest in the sun map as before (5 steps, 10 on Ultra).
+  - **Rays on the screen** (`lens_shafts.fsh` under the Air): the light is the sky round the sun itself
+    (`exp(-14 d²)` of screen heights), gathered in 40 jittered steps along each pixel's line to the sun, so a cloud, a
+    crown of leaves or a ridge on that line leaves a dark lane and the gaps between stand out as beams fanning from
+    the sun; fainter with distance (`exp(-1.9 r)`). The prefilter's sky mask under the Air is the open sky whatever
+    its colour, cut whole by Lens's clouds. Composite strength 0.95 of the look's shafts (0.35 without the Air).
 - **Measured** (the Dell, his settings, a copy of his world, 10 Nov): the game alone 2.8 ms of GPU time, Cinematic
   before 8.9, with all of the above 11.2 (78 fps uncapped; ImmersiveVFX 11.3 standing and 16.7 flying). As he plays
   (vsync, 60 cap) 98.6% of frames on time standing, 98.9% turning, 95.2% flying. The ImmersiveVFX pairs:
   https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg. Tours `tools/autopilot/steady60-*.txt`, `tools/steady60-tour.sh`.
 - **Not built yet**: the frame record and the governor (the flying target is 98%), Far Sight off by default on these
-  tiers, the Air on Swift (it has no view direction there), ground mist and beams under a canopy, the Look page rows.
+  tiers, the Air on Swift (it has no view direction there), ground mist, the Look page rows.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 

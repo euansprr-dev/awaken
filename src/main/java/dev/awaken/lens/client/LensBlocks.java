@@ -40,14 +40,14 @@ final class LensBlocks {
     static final int SIZE = 128, CHUNKS = SIZE / 16, SLOTS = 8;
     /** Within this many blocks of the camera (on x and z) every section has been read once the window has settled. */
     static final float TRUSTED = 46f;
-    private static final int UNKNOWN = 0xFFFFFFFF;
+    static final int UNKNOWN = 0xFFFFFFFF, CELLS = CHUNKS * CHUNKS * SLOTS * 256;
     // sections read a tick when the window moves, sections looked at again a tick for changes, chunks uploaded a tick
     private static final int READS_PER_TICK = 14, RESCANS_PER_TICK = 6, UPLOADS_PER_TICK = 6, NEAR_EVERY = 10;
     private static final byte OPEN = 0, SOLID = 1, LEAVES = 2, LOW = 3, UNSET = -1;
 
     final Texture texture = new Texture();
     // the texture's mirror: [chunk slot][section slot][z][x], one int a column
-    private final int[] cells = new int[CHUNKS * CHUNKS * SLOTS * 256];
+    private final int[] cells = new int[CELLS];
     // what each chunk slot and each section slot holds now, and whether it has been read
     private final int[] heldX = new int[CHUNKS * CHUNKS], heldZ = new int[CHUNKS * CHUNKS];
     private final int[] heldY = new int[CHUNKS * CHUNKS * SLOTS];
@@ -57,7 +57,7 @@ final class LensBlocks {
     private final int[] scratch = new int[256];
     private final int[] order = ringOrder();
     private byte[] kinds = new byte[0];
-    private int minSectionY;
+    private int minSectionY, centreX, centreZ;
     private int rescanAt, nearIn;
     private boolean started;
 
@@ -73,9 +73,25 @@ final class LensBlocks {
         return minSectionY << 4;
     }
 
+    /** The window's lowest block x and z (the lit air's corner: LensLit). */
+    int originX() {
+        return (centreX - CHUNKS / 2) << 4;
+    }
+
+    int originZ() {
+        return (centreZ - CHUNKS / 2) << 4;
+    }
+
+    /** The whole map as it stands, for a worker to read at its leisure (LensLit's sweep). */
+    void snapshot(int[] into) {
+        System.arraycopy(cells, 0, into, 0, CELLS);
+    }
+
     /** Once a client tick: the window follows the camera, and a few sections are read, looked at again and uploaded. */
     void tick(ClientLevel level, int camX, int camY, int camZ) {
         int ccx = camX >> 4, ccz = camZ >> 4;
+        centreX = ccx;
+        centreZ = ccz;
         minSectionY = (camY >> 4) - 3;
         // what each slot should hold now; anything else is forgotten
         for (int dz = -CHUNKS / 2; dz < CHUNKS / 2; dz++) {

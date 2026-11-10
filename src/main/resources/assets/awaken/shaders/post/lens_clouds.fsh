@@ -84,7 +84,9 @@ float historyDepth(float t0, float scene) {
 // exactly where the ray enters and leaves it: its edges are true edges, with no steps to miss it or smear it). A block
 // takes the sun on the face the ray came in by and through the cloud above it, and the sky's light by its height.
 void blockPiece(float t0, float t1, vec4 cp) {
-    const float sigma = 0.16;
+    // (solid: a block hides what is behind it within two blocks of its skin. Seen through, the cells and tiers behind
+    // read as the sections a cloud is built from, Euan 2026-11-10; only the outermost skin stays soft)
+    const float sigma = 0.95;
     float oy = camY - (cp.x - 2.0);
     vec2 o = cp.zw;
     vec2 pxz = o + v.xz * t0;
@@ -131,13 +133,12 @@ void blockPiece(float t0, float t1, vec4 cp) {
                     s *= 2.0;
                 }
                 float h = clamp((w.y + oy) / thick, 0.0, 1.0);
-                float beer = max(exp(-od * sigma * 1.6), 0.30 * exp(-od * sigma * 0.35));
-                float face = 0.40 + 0.60 * max(dot(n, l), 0.0);
-                // the underside is the cloud's own shade; the sides and top take the sky by their height; and no two
-                // blocks are quite one tone
-                float skyOn = n.y < -0.5 ? 0.54 : (n.y > 0.5 ? 1.0 : 0.72 + 0.22 * h);
-                float tone = 0.97 + 0.06 * cloudCellHash(cell + 3.7);
-                vec3 S = (sunCol * beer * face * phase + ambient * skyOn) * tone;
+                // one even tone: the faces differ a little by where the sun is, the underside is a shade under the
+                // sides, and light comes through the cloud above (a cloud whose faces differ much shows every cell)
+                float beer = max(exp(-od * 0.16), 0.30 * exp(-od * 0.03));
+                float face = 0.75 + 0.25 * max(dot(n, l), 0.0);
+                float skyOn = n.y < -0.5 ? 0.86 : (n.y > 0.5 ? 1.0 : 0.91 + 0.07 * h);
+                vec3 S = sunCol * beer * face * phase + ambient * skyOn;
                 float a = 1.0 - exp(-sigma * (tb - ta));
                 L += T * S * a;
                 if (tHit < 0.0 && a > 0.05) tHit = ta;
@@ -331,9 +332,12 @@ void main() {
         vec4 f22 = F(22);
         vec3 hr = airHour(f22.y);
         vec3 over = airSky(vec3(0.0, 1.0, 0.0), f22.xyz, f16.z), edge = airSky(normalize(vec3(v.x, 0.12, v.z)), f22.xyz, f16.z);
-        ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.30 * hr.x) * (0.80 + 0.5 * hr.x + 0.25 * hr.y) + vec3(0.012, 0.016, 0.03) * hr.z;
+        // (by day well toward white: a shade the sky's own blue reads as the sky seen through the cloud)
+        ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.52 * hr.x) * (0.80 + 0.14 * hr.x + 0.25 * hr.y) + vec3(0.020, 0.028, 0.050) * hr.z;
         vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
-        sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.30 : lit * (0.72 + 0.2 * hr.y)) * f14.w;
+        // (the sun's share small enough that a lit face is white and not past it, and by night the moon's a quarter of
+        // that: a moonlit side far brighter than the cloud's own dark read as glass boxes)
+        sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.10 : lit * (0.40 + 0.3 * hr.y)) * f14.w;
         airFar = airFog(v, f22.xyz, f16.z);
     }
     // a storm cell's: the same brightness, but cool grey-blue
