@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "": {
+      "model": "awaken:block/barrow_shield",
+      "y": 180
+    }
+  }
+}

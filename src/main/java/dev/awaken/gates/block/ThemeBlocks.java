@@ -2,6 +2,7 @@ package dev.awaken.gates.block;
 
 import dev.awaken.gates.worlds.WorldRules;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.BlockGetter;
@@ -26,7 +28,9 @@ import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -50,9 +54,12 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
+    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE, CARVED, CARVED_FACING, CARVED_AXIS }
 
-    /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
+    /**
+     * One block: its id, shape, map colour, sound, light and (props, touchstones, carved blocks) its outline in pixels: six numbers a
+     * box, as many boxes as the shape has.
+     */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
         static Def of(String name, Shape shape, MapColor color, SoundType sound, int light) {
             return new Def(name, shape, color, sound, light, null, false);
@@ -65,6 +72,15 @@ public final class ThemeBlocks {
         static Def box(String name, Shape shape, MapColor color, SoundType sound, int light, double... box) {
             return new Def(name, shape, color, sound, light, box, false);
         }
+
+        /**
+         * A carved block (SPEC 50.8): its outline is every box of its model, drawn facing north
+         * ({@link Shape#CARVED_FACING}) or running north to south ({@link Shape#CARVED_AXIS}). The boxes come from the family's
+         * art spec (tools/art/specs, _gw_kit.carved), which writes the model from the same numbers.
+         */
+        static Def carved(String name, Shape turn, MapColor color, SoundType sound, double... boxes) {
+            return new Def(name, turn, color, sound, 0, boxes, false);
+        }
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
@@ -72,6 +88,143 @@ public final class ThemeBlocks {
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
+            // The Fane, the Overgrown Temple's Realms (50.8): pale cut limestone, moss, root bark as thick as a house
+            Def.of("fane_stone", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("fane_stone_worn", C, MapColor.COLOR_GREEN, SoundType.STONE, 0),
+            Def.of("fane_stone_deep", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE, 0),
+            Def.of("fane_stone_pale", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("fane_hexstone", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("fane_flagstone", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("fane_brick", C, MapColor.COLOR_YELLOW, SoundType.MUD_BRICKS, 0),
+            Def.of("fane_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("fane_plaster_band", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("fane_tile", C, MapColor.COLOR_GREEN, SoundType.DECORATED_POT, 0),
+            Def.of("fane_tile_deep", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.soft("fane_timber", COL, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.soft("fane_planks", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.of("fane_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("fane_window", C, MapColor.GOLD, SoundType.GLASS, 13),
+            Def.soft("fane_moss", C, MapColor.COLOR_GREEN, SoundType.MOSS, 0),
+            Def.soft("fane_bed", C, MapColor.COLOR_BROWN, SoundType.ROOTED_DIRT, 0),
+            Def.soft("fane_bark", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.soft("fane_bark_moss", C, MapColor.COLOR_GREEN, SoundType.WOOD, 0),
+            Def.soft("fane_leaf", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_leaf_lit", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_leaf_deep", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_fall", F, MapColor.WATER, SoundType.EMPTY, 3),
+            Def.soft("fane_thorn", L, MapColor.COLOR_BROWN, SoundType.ROOTS, 0),
+            Def.of("fane_relief", C, MapColor.SAND, SoundType.STONE, 0),
+            // The Keep, the Overgrown Temple's strongholds (50.8): cold wet ashlar, verdigris, pale roots, rust cloth
+            Def.of("keep_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
+            Def.of("keep_stone_worn", C, MapColor.COLOR_GREEN, SoundType.STONE, 0),
+            Def.of("keep_stone_deep", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE, 0),
+            Def.of("keep_stone_pale", C, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0),
+            Def.of("keep_hexstone", C, MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("keep_flagstone", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("keep_brick", C, MapColor.TERRACOTTA_BROWN, SoundType.MUD_BRICKS, 0),
+            Def.of("keep_plaster", C, MapColor.COLOR_LIGHT_GRAY, SoundType.CALCITE, 0),
+            Def.of("keep_plaster_band", C, MapColor.COLOR_LIGHT_GRAY, SoundType.CALCITE, 0),
+            Def.of("keep_tile", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.of("keep_tile_deep", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.soft("keep_timber", COL, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.soft("keep_planks", C, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.of("keep_gilt", C, MapColor.COLOR_BROWN, SoundType.METAL, 0),
+            Def.soft("keep_window", C, MapColor.COLOR_ORANGE, SoundType.GLASS, 13),
+            Def.soft("keep_moss", C, MapColor.COLOR_GREEN, SoundType.MOSS, 0),
+            Def.soft("keep_bed", C, MapColor.COLOR_BROWN, SoundType.ROOTED_DIRT, 0),
+            Def.soft("keep_bark", C, MapColor.COLOR_LIGHT_GRAY, SoundType.WOOD, 0),
+            Def.soft("keep_bark_moss", C, MapColor.COLOR_GREEN, SoundType.WOOD, 0),
+            Def.soft("keep_leaf", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("keep_leaf_lit", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("keep_leaf_deep", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("keep_fall", F, MapColor.WATER, SoundType.EMPTY, 3),
+            Def.soft("keep_thorn", L, MapColor.COLOR_BROWN, SoundType.ROOTS, 0),
+            Def.of("keep_relief", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
+            Def.soft("keep_banner", C, MapColor.COLOR_RED, SoundType.WOOL, 0),
+            Def.soft("keep_vines", H, MapColor.PLANT, SoundType.CAVE_VINES, 0),
+            Def.soft("keep_climb_root", H, MapColor.COLOR_LIGHT_GRAY, SoundType.ROOTS, 0),
+            // The Salt family, the dry Hive's Realms (50.8): bone-coloured wax, white crust, dune sand, black paving
+            Def.of("salt_stone", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("salt_stone_worn", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("salt_stone_deep", C, MapColor.COLOR_BLUE, SoundType.DEEPSLATE, 0),
+            Def.of("salt_stone_pale", C, MapColor.QUARTZ, SoundType.STONE, 0),
+            Def.of("salt_hexstone", C, MapColor.SAND, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("salt_flagstone", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("salt_brick", C, MapColor.COLOR_ORANGE, SoundType.MUD_BRICKS, 0),
+            Def.of("salt_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("salt_plaster_band", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("salt_tile", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.of("salt_tile_deep", C, MapColor.COLOR_ORANGE, SoundType.DECORATED_POT, 0),
+            Def.soft("salt_timber", COL, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.soft("salt_planks", C, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.of("salt_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("salt_window", C, MapColor.GOLD, SoundType.GLASS, 13),
+            Def.soft("salt_moss", C, MapColor.COLOR_YELLOW, SoundType.MOSS, 0),
+            Def.soft("salt_bed", C, MapColor.SAND, SoundType.SAND, 0),
+            Def.of("salt_bark", C, MapColor.QUARTZ, SoundType.BONE_BLOCK, 0),
+            Def.of("salt_bark_moss", C, MapColor.SAND, SoundType.BONE_BLOCK, 0),
+            Def.soft("salt_fall", F, MapColor.SAND, SoundType.EMPTY, 3),
+            Def.of("salt_relief", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.soft("salt_banner", C, MapColor.COLOR_ORANGE, SoundType.WOOL, 0),
+            Def.soft("salt_crust", C, MapColor.QUARTZ, SoundType.CALCITE, 0),
+            Def.soft("salt_crust_cracked", C, MapColor.QUARTZ, SoundType.CALCITE, 0),
+            Def.soft("salt_sand", C, MapColor.SAND, SoundType.SAND, 0),
+            Def.soft("salt_sand_ripple", C, MapColor.SAND, SoundType.SAND, 0),
+            Def.of("salt_comb", C, MapColor.SAND, SoundType.STONE, 0),
+            // The Wax family, the Hive's deep places (50.8): cold tallow over dark rock, comb lit from inside. Its shaped blocks are in WarmWaxBlock.
+            Def.soft("wax_cold", C, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 0), Def.soft("wax_old", C, MapColor.COLOR_YELLOW, SoundType.CANDLE, 0), Def.soft("wax_run", C, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 0),
+            Def.soft("wax_comb", C, MapColor.TERRACOTTA_WHITE, SoundType.CORAL_BLOCK, 0), Def.soft("wax_cell", C, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 13), Def.of("wax_deck", C, MapColor.TERRACOTTA_WHITE, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("wax_soot", C, MapColor.COLOR_BLACK, SoundType.TUFF, 0), Def.of("wax_soot_band", C, MapColor.COLOR_BROWN, SoundType.TUFF, 0), Def.soft("wax_bead_drip", H, MapColor.COLOR_YELLOW, SoundType.CANDLE, 8),
+            new Def("wax_candle_bank", PR, MapColor.TERRACOTTA_WHITE, SoundType.CANDLE, 13, new double[]{1, 0, 1, 15, 9, 15}, true), new Def("wax_comb_cell", PR, MapColor.TERRACOTTA_WHITE, SoundType.CORAL_BLOCK, 0, new double[]{0, 0, 0, 16, 16, 16}, true),
+            new Def("wax_comb_cell_lit", PR, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 12, new double[]{0, 0, 0, 16, 16, 16}, true), Def.soft("wax_fall", F, MapColor.COLOR_ORANGE, SoundType.EMPTY, 10),
+            // The Brood family, the Hive's nests (50.9): grey nest paper in layers, dark resin underfoot, comb with something alive in it. Its slab is registered below.
+            Def.soft("brood_paper", C, MapColor.TERRACOTTA_LIGHT_GRAY, SoundType.WOOL, 0), Def.soft("brood_paper_dark", C, MapColor.TERRACOTTA_BROWN, SoundType.WOOL, 0), Def.soft("brood_paper_pale", C, MapColor.SAND, SoundType.WOOL, 0),
+            Def.of("brood_earth", C, MapColor.DIRT, SoundType.ROOTED_DIRT, 0), Def.of("brood_resin", C, MapColor.TERRACOTTA_RED, SoundType.PACKED_MUD, 0),
+            Def.soft("brood_cell", C, MapColor.COLOR_BROWN, SoundType.CORAL_BLOCK, 0), Def.soft("brood_cell_lit", C, MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 10),
+            Def.soft("brood_sac_drip", H, MapColor.COLOR_ORANGE, SoundType.SLIME_BLOCK, 7), Def.soft("brood_membrane", G, MapColor.COLOR_RED, SoundType.SLIME_BLOCK, 4),
+            Def.soft("brood_jelly", C, MapColor.COLOR_YELLOW, SoundType.SLIME_BLOCK, 12),
+            Def.soft("brood_spitter", C, MapColor.COLOR_BROWN, SoundType.CORAL_BLOCK, 0), Def.soft("brood_spitter_lit", C, MapColor.COLOR_YELLOW, SoundType.CORAL_BLOCK, 12),
+            // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak
+            Def.of("knell_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
+            Def.of("knell_stone_worn", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),
+            Def.of("knell_stone_deep", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE, 0),
+            Def.of("knell_stone_pale", C, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0),
+            Def.of("knell_hexstone", C, MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("knell_flagstone", C, MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("knell_brick", C, MapColor.TERRACOTTA_BROWN, SoundType.MUD_BRICKS, 0),
+            Def.of("knell_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("knell_plaster_band", C, MapColor.COLOR_BLACK, SoundType.CALCITE, 0),
+            Def.of("knell_tile", C, MapColor.COLOR_GRAY, SoundType.DECORATED_POT, 0),
+            Def.of("knell_tile_deep", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.soft("knell_timber", COL, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.soft("knell_planks", C, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.of("knell_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("knell_window", C, MapColor.COLOR_BLUE, SoundType.GLASS, 12),
+            Def.soft("knell_moss", C, MapColor.COLOR_CYAN, SoundType.MOSS, 0),
+            Def.soft("knell_bed", C, MapColor.COLOR_BLACK, SoundType.SOUL_SOIL, 0),
+            Def.of("knell_bronze", C, MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0),
+            Def.of("knell_bronze_dark", C, MapColor.TERRACOTTA_BROWN, SoundType.COPPER, 0),
+            Def.of("knell_patina", C, MapColor.COLOR_CYAN, SoundType.COPPER, 0),
+            Def.of("knell_bronze_key", C, MapColor.GOLD, SoundType.COPPER, 0),
+            Def.of("knell_iron", C, MapColor.COLOR_BLACK, SoundType.IRON, 0),
+            // The Quiet Barrow (SPEC 50.8, gate 6): tools/art/specs/realm_barrow.py
+            Def.soft("barrow_heather", PL, MapColor.COLOR_PURPLE, SoundType.GRASS, 0),
+            Def.soft("barrow_heather_pale", PL, MapColor.SAND, SoundType.GRASS, 0),
+            Def.soft("barrow_bent", PL, MapColor.SAND, SoundType.GRASS, 0),
+            Def.soft("barrow_turf", C, MapColor.PODZOL, SoundType.ROOTED_DIRT, 0),
+            Def.box("barrow_menhir_cap", PR, MapColor.COLOR_GRAY, SoundType.STONE, 0, 0, 0, 0, 16, 12, 16),
+            Def.box("barrow_kerb", PR, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 2, 0, 2, 14, 10, 14),
+            Def.box("barrow_shield", PR, MapColor.WOOD, SoundType.WOOD, 0, 1, 1, 11, 15, 15, 16),
+            Def.box("barrow_shield_south", PR, MapColor.WOOD, SoundType.WOOD, 0, 1, 1, 0, 15, 15, 5),
+            Def.box("barrow_urn", PR, MapColor.TERRACOTTA_ORANGE, SoundType.DECORATED_POT, 0, 2, 0, 2, 14, 14, 14),
+            Def.of("barrow_grave_glow", C, MapColor.COLOR_LIGHT_GREEN, SoundType.FROGLIGHT, 11),
+            Def.box("barrow_sail", PR, MapColor.TERRACOTTA_RED, SoundType.WOOL, 0, 0, 0, 6, 16, 16, 10),
+            // Knell's carved stone and chain: the same boxes as CARVED in tools/art/specs/realm_knell.py
+            Def.carved("knell_arch", Shape.CARVED_FACING, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 6, 14, 16, 16, 16, 0, 10, 12, 16, 16, 14, 0, 12, 10, 16, 16, 12, 0, 14, 6, 16, 16, 10),
+            Def.carved("knell_flute", Shape.CARVED_FACING, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0, 0, 2, 16, 16, 16, 0, 0, 0, 2, 16, 2, 4, 0, 0, 7, 16, 2, 9, 0, 0, 12, 16, 2, 14, 0, 0, 16, 16, 2),
+            Def.carved("knell_rib", Shape.CARVED_AXIS, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 5, 12, 0, 11, 16, 16, 7, 10, 0, 9, 12, 16),
+            Def.carved("knell_corbel", Shape.CARVED_FACING, MapColor.COLOR_GRAY, SoundType.STONE, 3, 12, 4, 13, 16, 16, 3, 8, 8, 13, 12, 16, 3, 4, 12, 13, 8, 16),
+            Def.carved("knell_link", Shape.CARVED_AXIS, MapColor.COLOR_BLACK, SoundType.CHAIN, 6, 14, 4, 10, 16, 12, 6, 4, 4, 10, 6, 12, 6, 6, 4, 10, 14, 6, 6, 6, 10, 10, 14, 12),
             // Amber Reach, the first Realm's own materials (50.7): the warm mid-tones of its painting
             Def.of("amber_stone", C, MapColor.COLOR_ORANGE, SoundType.STONE, 0),
             Def.of("amber_stone_worn", C, MapColor.TERRACOTTA_ORANGE, SoundType.STONE, 0),
@@ -317,6 +470,9 @@ public final class ThemeBlocks {
     public static Map<String, DeferredBlock<? extends Block>> register(DeferredRegister.Blocks blocks) {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
         for (Def d : DEFS) out.put(d.name(), blocks.registerBlock(d.name(), factory(d), p -> props(d, p)));
+        dev.awaken.gates.realms.WarmWaxBlock.register(blocks, out);
+        out.put("brood_resin_slab", blocks.registerBlock("brood_resin_slab", net.minecraft.world.level.block.SlabBlock::new,
+                p -> p.mapColor(MapColor.TERRACOTTA_RED).sound(SoundType.PACKED_MUD).strength(1.5F)));
         return out;
     }
 
@@ -336,12 +492,17 @@ public final class ThemeBlocks {
             case SKETCH -> p -> new Folding(p, Shapes.block());
             case CLOUD -> p -> new Shaped(p, Shapes.block(), false);
             case FIGURE -> p -> new Figure(p, boxOf(d));
+            case CARVED -> p -> new Shaped(p, boxOf(d), true);
+            case CARVED_FACING -> p -> new CarvedFacing(p, boxOf(d));
+            case CARVED_AXIS -> p -> new CarvedAxis(p, boxOf(d));
         };
     }
 
     private static VoxelShape boxOf(Def d) {
         double[] b = d.box();
-        return Block.box(b[0], b[1], b[2], b[3], b[4], b[5]);
+        VoxelShape s = Block.box(b[0], b[1], b[2], b[3], b[4], b[5]);
+        for (int i = 6; i + 5 < b.length; i += 6) s = Shapes.or(s, Block.box(b[i], b[i + 1], b[i + 2], b[i + 3], b[i + 4], b[i + 5]));
+        return s;
     }
 
     private static BlockBehaviour.Properties props(Def d, BlockBehaviour.Properties p) {
@@ -361,7 +522,8 @@ public final class ThemeBlocks {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)
             case CLOUD -> p = p.noCollision().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false);
-            case CARPET, PROP, TOUCH, FOLD, FIGURE -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
+            // a carved block hides no neighbour's face, and being less than a whole block it lets light through, as a stair does
+            case CARPET, PROP, TOUCH, FOLD, FIGURE, CARVED, CARVED_FACING, CARVED_AXIS -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
             default -> {}
         }
         return p;
@@ -391,6 +553,60 @@ public final class ThemeBlocks {
         @Override
         protected boolean isPathfindable(BlockState s, PathComputationType t) {
             return !collide || shape.max(net.minecraft.core.Direction.Axis.Y) < 0.2;
+        }
+    }
+
+    /** A carved block that turns to face one of four ways (SPEC 50.8); its boxes are drawn facing north. */
+    public static final class CarvedFacing extends Block {
+        public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+        private final Map<Direction, VoxelShape> shapes;
+
+        public CarvedFacing(BlockBehaviour.Properties p, VoxelShape north) {
+            super(p);
+            shapes = Shapes.rotateHorizontal(north);
+            registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FACING);
+        }
+
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return shapes.get(s.getValue(FACING));
+        }
+    }
+
+    /** A carved block that runs north to south or east to west (a rib, a chain link); its boxes are drawn running north to south. */
+    public static final class CarvedAxis extends Block {
+        public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
+        private final Map<Direction.Axis, VoxelShape> shapes;
+
+        public CarvedAxis(BlockBehaviour.Properties p, VoxelShape alongZ) {
+            super(p);
+            shapes = Shapes.rotateHorizontalAxis(alongZ);
+            registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.Z));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(AXIS);
+        }
+
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return defaultBlockState().setValue(AXIS, ctx.getHorizontalDirection().getAxis());
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return shapes.get(s.getValue(AXIS));
         }
     }
 

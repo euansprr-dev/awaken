@@ -37,7 +37,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
         final @Nullable ArmourSet[] suit = new ArmourSet[4];
         final boolean[] foil = new boolean[4];
         final int[] glow = new int[4];
-        final int[] mastery = new int[4], accent = new int[4];
+        final int[] mastery = new int[4], accent = new int[4], marks = new int[4];
         float yaw, wake, age;
         boolean whole;
         // the work
@@ -78,6 +78,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
             dev.awaken.armour.Forged f = st.get(dev.awaken.armour.ArmourContent.FORGED.get());
             s.mastery[i] = f == null ? 0 : f.masteryStep();
             s.accent[i] = f == null ? 0 : f.accent();
+            s.marks[i] = look == null ? 0 : ArmourLayer.marks(f, look.set());
         }
         s.whole = be.wholeSet() != null;
         s.wake = Math.max(0F, 1F - (s.age - be.wokeAt) / 50F);
@@ -147,12 +148,23 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
             ArmourMesh[] bones = ArmourMeshes.piece(set, ForgeSong.PIECES[slot]);
             if (bones == null) continue;
             ArmourMesh[] awake = s.mastery[slot] >= ArmourLayer.AWAKENED ? ArmourMeshes.awakened(set, ForgeSong.PIECES[slot]) : null;
+            // a suit on its form lives too (SPEC §44.10): time alone moves it, there is no stride and no wind
+            ArmourLive.Part[] live = ArmourClientConfig.motion() ? ArmourMeshes.live(set, ForgeSong.PIECES[slot]) : null;
+            ArmourMesh[] still = live == null ? null : ArmourMeshes.still(set, ForgeSong.PIECES[slot]);
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
-                if (mesh == null && extra == null) continue;
+                boolean lives = still != null && ArmourLive.on(live, b);
+                ArmourMesh mesh = lives ? still[b.ordinal()] : bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null && !lives) continue;
                 ps.pushPose();
                 rest(ps, b);
-                if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
+                if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot], s.marks[slot]);
+                if (lives) for (ArmourLive.Part p : live) {
+                    if (p.bone() != b) continue;
+                    ps.pushPose();
+                    ArmourLive.pose(ps, p, s.age, 0F, 0F, 0F, 0F);
+                    ArmourLayer.draw(out, ps, p.mesh(), set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot], s.marks[slot]);
+                    ps.popPose();
+                }
                 if (extra != null) ArmourLayer.draw(out, ps, extra, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
                 ps.popPose();
             }

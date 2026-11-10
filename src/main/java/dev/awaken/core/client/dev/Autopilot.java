@@ -81,6 +81,10 @@ import java.util.Map;
  *                                                long, until the terrain around is loaded and built
  * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments); logs the
  *                                                edge hold's cue when it shows
+ * need realm                                     the tour is of a Realm (SPEC 50.8): waits up to ten seconds to be in the
+ *                                                Realms' world, else logs "FAIL not in a Realm", takes no more shots and
+ *                                                quits. A command answered "You're not in a Realm." fails the same way
+ * hud off|on                                     the F1 view; off also hides every layer of ours and the first-person body
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
  * </pre>
@@ -100,6 +104,9 @@ public final class Autopilot {
     private static double glideX, glideY, glideZ;
     private static int glideTicks;
     private static int walkTicks;
+    // "need realm": how long it has waited for the Realm, and whether the tour has failed (no more shots, then quit)
+    private static int needTicks;
+    private static boolean failed;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -122,6 +129,13 @@ public final class Autopilot {
         }
         NeoForge.EVENT_BUS.addListener(Autopilot::tick);
         NeoForge.EVENT_BUS.addListener(Autopilot::frame);
+        NeoForge.EVENT_BUS.addListener(Autopilot::chat);
+        // "hud off" means a clean picture. The game's own layers and its hand already go with the HUD; ours don't all
+        // ask, so while it's off no layer draws at all and the first-person body (core.api.FirstPerson) is posed as nothing
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, e -> {
+            if (Minecraft.getInstance().gui.hud.isHidden()) e.setCanceled(true);
+        });
+        dev.awaken.core.api.FirstPerson.world("autopilot_hud_off", Integer.MAX_VALUE, (pt, rig) -> Minecraft.getInstance().gui.hud.isHidden());
         keepAwake();
         Awaken.LOG.info("[autopilot] {} lines from {}", LINES.size(), path);
     }
@@ -344,6 +358,26 @@ public final class Autopilot {
     }
 
     /**
+     * The tour can't show what it's for (it never got into its Realm): say so where the report reads it, take no more
+     * shots, and close the game the way a "quit" line does.
+     */
+    private static void fail(String why) {
+        if (failed) return;
+        failed = true;
+        Awaken.LOG.error("[autopilot] FAIL {}", why);
+        shotPending = null;
+        waitTicks = 0;
+        needTicks = 0;
+        index = LINES.size();
+        LINES.add("quit");
+    }
+
+    /** A command that answers "You're not in a Realm." was sent from the wrong world: every shot after it would be too. */
+    private static void chat(net.neoforged.neoforge.client.event.ClientChatReceivedEvent e) {
+        if (!failed && e.getMessage().getString().contains("not in a Realm")) fail("not in a Realm");
+    }
+
+    /**
      * While a passage is up (one of Awaken's teleports waiting for its land, SPEC §28.9), at most 65 s: a shot and a
      * "waitpassage" line wait it out, so a travel command's shot is taken where it went, not of the dusk on the way.
      */
@@ -385,6 +419,19 @@ public final class Autopilot {
             case "wait" -> waitTicks = Integer.parseInt(arg.trim());
             case "waitpassage" -> { // until a passage (Awaken's teleport waiting for its land) has moved you
                 if (inPassage()) return false;
+            }
+            case "need" -> { // need realm: the tour is of a Realm; anywhere else it fails now, not after twenty shots of the overworld
+                if (!arg.trim().equals("realm")) {
+                    Awaken.LOG.warn("[autopilot] unknown line: {}", line);
+                    break;
+                }
+                // the move between worlds takes the client a moment: ten seconds, then it isn't coming
+                if (mc.level == null || mc.player == null || !mc.level.dimension().equals(dev.awaken.gates.realms.RealmsModule.REALMS)) {
+                    if (++needTicks < 200) return false;
+                    fail("not in a Realm");
+                    return false;
+                }
+                needTicks = 0;
             }
             case "cmd" -> {
                 if (mc.player == null) return false;

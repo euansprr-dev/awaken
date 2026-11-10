@@ -1,0 +1,39 @@
+# Blockout of quiet_barrow from its own cameras, for tools/preview/preview.sh (the orchestrator's composition check).
+world autopilot_blockout_quiet_barrow creative 20261120
+waitworld
+cmd awaken gate realm E awaken:blockout_quiet_barrow
+
+cmd awaken gate realm_at MOUTH 0 0 0 0
+look 0 4
+shot bo_painting
+cmd awaken gate realm_at MOUTH 0 0 0 34
+look 17 -2
+shot bo_path
+cmd awaken gate realm_at MOUTH 0 -37 0 58
+look 0 -20
+shot bo_hill_foot
+cmd awaken gate realm_at MOUTH 0 20 14 94
+look 43 -16
+shot bo_ship_side
+cmd awaken gate realm_at MOUTH 0 0 40 155
+look 90 2
+shot bo_deck
+cmd awaken gate realm_at MOUTH 0 -92 52 147
+look -81 14
+shot bo_deck_painting
+cmd awaken gate realm_at MOUTH 0 -37 40 148
+look 180 12
+shot bo_from_ship
+cmd awaken gate realm_at MOUTH 0 -79 1 310
+look 90 -4
+shot bo_long_barrow
+cmd awaken gate realm_at MOUTH 0 84 2 305
+look -52 -4
+shot bo_ring
+cmd awaken gate realm_at MOUTH 0 0 1 315
+look 0 -4
+shot bo_tarn
+cmd awaken gate realm_at MOUTH 0 118 2 154
+look -73 -2
+shot bo_village
+quit

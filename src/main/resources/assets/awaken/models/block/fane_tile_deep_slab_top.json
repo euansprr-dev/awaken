@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "awaken:block/fane_tile_deep",
+    "top": "awaken:block/fane_tile_deep",
+    "side": "awaken:block/fane_tile_deep"
+  }
+}

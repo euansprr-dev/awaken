@@ -1,0 +1,48 @@
+{
+  "variants": {
+    "length=0": [
+      {
+        "model": "awaken:block/wax_drip_0"
+      },
+      {
+        "model": "awaken:block/wax_drip_0_b"
+      },
+      {
+        "model": "awaken:block/wax_drip_0_c"
+      }
+    ],
+    "length=1": [
+      {
+        "model": "awaken:block/wax_drip_1"
+      },
+      {
+        "model": "awaken:block/wax_drip_1_b"
+      },
+      {
+        "model": "awaken:block/wax_drip_1_c"
+      }
+    ],
+    "length=2": [
+      {
+        "model": "awaken:block/wax_drip_2"
+      },
+      {
+        "model": "awaken:block/wax_drip_2_b"
+      },
+      {
+        "model": "awaken:block/wax_drip_2_c"
+      }
+    ],
+    "length=3": [
+      {
+        "model": "awaken:block/wax_drip_3"
+      },
+      {
+        "model": "awaken:block/wax_drip_3_b"
+      },
+      {
+        "model": "awaken:block/wax_drip_3_c"
+      }
+    ]
+  }
+}

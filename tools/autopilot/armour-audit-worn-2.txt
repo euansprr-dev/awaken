@@ -1,0 +1,433 @@
+# Armour polish audit (worn: front, back, first person, the Status figure). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit2 creative 5152
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 150 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -12 149 -8 12 149 12 minecraft:smooth_stone
+cmd fill -12 150 11 12 158 11 minecraft:light_gray_concrete
+cmd item replace entity @s weapon.mainhand with minecraft:air
+wait 20
+cmd item replace entity @s armor.head with awaken:veilwoven_helmet
+cmd item replace entity @s armor.chest with awaken:veilwoven_chestplate
+cmd item replace entity @s armor.legs with awaken:veilwoven_leggings
+cmd item replace entity @s armor.feet with awaken:veilwoven_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_veilwoven_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_veilwoven_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_veilwoven_fp
+screen band status
+wait 40
+shot w_veilwoven_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:deepcarapace_helmet
+cmd item replace entity @s armor.chest with awaken:deepcarapace_chestplate
+cmd item replace entity @s armor.legs with awaken:deepcarapace_leggings
+cmd item replace entity @s armor.feet with awaken:deepcarapace_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_deepcarapace_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_deepcarapace_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_deepcarapace_fp
+screen band status
+wait 40
+shot w_deepcarapace_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:cloudrunner_helmet
+cmd item replace entity @s armor.chest with awaken:cloudrunner_chestplate
+cmd item replace entity @s armor.legs with awaken:cloudrunner_leggings
+cmd item replace entity @s armor.feet with awaken:cloudrunner_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_cloudrunner_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_cloudrunner_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_cloudrunner_fp
+screen band status
+wait 40
+shot w_cloudrunner_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:tidebreaker_helmet
+cmd item replace entity @s armor.chest with awaken:tidebreaker_chestplate
+cmd item replace entity @s armor.legs with awaken:tidebreaker_leggings
+cmd item replace entity @s armor.feet with awaken:tidebreaker_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_tidebreaker_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_tidebreaker_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_tidebreaker_fp
+screen band status
+wait 40
+shot w_tidebreaker_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:hollowheart_helmet
+cmd item replace entity @s armor.chest with awaken:hollowheart_chestplate
+cmd item replace entity @s armor.legs with awaken:hollowheart_leggings
+cmd item replace entity @s armor.feet with awaken:hollowheart_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_hollowheart_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_hollowheart_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_hollowheart_fp
+screen band status
+wait 40
+shot w_hollowheart_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:lordscale_helmet
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+cmd item replace entity @s armor.legs with awaken:lordscale_leggings
+cmd item replace entity @s armor.feet with awaken:lordscale_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_lordscale_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_lordscale_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_lordscale_fp
+screen band status
+wait 40
+shot w_lordscale_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:leviathan_helmet
+cmd item replace entity @s armor.chest with awaken:leviathan_chestplate
+cmd item replace entity @s armor.legs with awaken:leviathan_leggings
+cmd item replace entity @s armor.feet with awaken:leviathan_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_leviathan_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_leviathan_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_leviathan_fp
+screen band status
+wait 40
+shot w_leviathan_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:galewing_helmet
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate
+cmd item replace entity @s armor.legs with awaken:galewing_leggings
+cmd item replace entity @s armor.feet with awaken:galewing_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_galewing_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_galewing_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_galewing_fp
+screen band status
+wait 40
+shot w_galewing_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:halo_choir_helmet
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+cmd item replace entity @s armor.legs with awaken:halo_choir_leggings
+cmd item replace entity @s armor.feet with awaken:halo_choir_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_halo_choir_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_halo_choir_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_halo_choir_fp
+screen band status
+wait 40
+shot w_halo_choir_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:dreamsteel_helmet
+cmd item replace entity @s armor.chest with awaken:dreamsteel_chestplate
+cmd item replace entity @s armor.legs with awaken:dreamsteel_leggings
+cmd item replace entity @s armor.feet with awaken:dreamsteel_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_dreamsteel_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_dreamsteel_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_dreamsteel_fp
+screen band status
+wait 40
+shot w_dreamsteel_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:sovereign_helmet
+cmd item replace entity @s armor.chest with awaken:sovereign_chestplate
+cmd item replace entity @s armor.legs with awaken:sovereign_leggings
+cmd item replace entity @s armor.feet with awaken:sovereign_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_sovereign_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_sovereign_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_sovereign_fp
+screen band status
+wait 40
+shot w_sovereign_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:starfall_helmet
+cmd item replace entity @s armor.chest with awaken:starfall_chestplate
+cmd item replace entity @s armor.legs with awaken:starfall_leggings
+cmd item replace entity @s armor.feet with awaken:starfall_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_starfall_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_starfall_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_starfall_fp
+screen band status
+wait 40
+shot w_starfall_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:riftwalker_helmet
+cmd item replace entity @s armor.chest with awaken:riftwalker_chestplate
+cmd item replace entity @s armor.legs with awaken:riftwalker_leggings
+cmd item replace entity @s armor.feet with awaken:riftwalker_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_riftwalker_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_riftwalker_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_riftwalker_fp
+screen band status
+wait 40
+shot w_riftwalker_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:nightcourt_helmet
+cmd item replace entity @s armor.chest with awaken:nightcourt_chestplate
+cmd item replace entity @s armor.legs with awaken:nightcourt_leggings
+cmd item replace entity @s armor.feet with awaken:nightcourt_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_nightcourt_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_nightcourt_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_nightcourt_fp
+screen band status
+wait 40
+shot w_nightcourt_status
+screen close
+wait 4
+cmd item replace entity @s armor.head with awaken:signals_echo_helmet
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate
+cmd item replace entity @s armor.legs with awaken:signals_echo_leggings
+cmd item replace entity @s armor.feet with awaken:signals_echo_boots
+hud off
+opt fov 50
+cmd tp @s 0.5 150 7.5 180 0
+camera front
+look 180 8
+wait 14
+shot w_signals_echo_front
+cmd tp @s 0.5 150 5.5 0 0
+camera back
+look 0 10
+wait 14
+shot w_signals_echo_back
+opt fov 70
+camera first
+hud on
+look 0 10
+wait 14
+shot w_signals_echo_fp
+screen band status
+wait 40
+shot w_signals_echo_status
+screen close
+wait 4
+quit

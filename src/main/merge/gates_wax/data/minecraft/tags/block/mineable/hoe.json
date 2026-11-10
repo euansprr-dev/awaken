@@ -1,0 +1,15 @@
+{
+  "values": [
+    "awaken:wax_cold",
+    "awaken:wax_old",
+    "awaken:wax_run",
+    "awaken:wax_comb",
+    "awaken:wax_cell",
+    "awaken:wax_arch",
+    "awaken:wax_candle_bank",
+    "awaken:wax_comb_cell",
+    "awaken:wax_comb_cell_lit",
+    "awaken:wax_cold_slab",
+    "awaken:wax_cold_stairs"
+  ]
+}

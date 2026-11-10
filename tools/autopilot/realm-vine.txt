@@ -1,0 +1,79 @@
+# The Vine Seat (SPEC 50.8), walked as a player does from the Mouth (entered with gate realm_enter). Shots beside its two paintings.
+world autopilot_realm_vine creative 20261114
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:vine_seat
+need realm
+hud off
+wait 200
+shot vine_crossing
+cmd awaken gate realm_at MOUTH 0 0 3 -4
+look 180 -21
+wait 200
+shot vine_painting
+cmd awaken gate realm_at MOUTH 0 0 2 -62
+look 180 -22
+wait 80
+shot vine_causeway
+cmd awaken gate realm_at MOUTH 0 12 12 -84
+look 180 -16
+wait 80
+shot vine_stair
+cmd awaken gate realm_at MOUTH 0 -56 12 -80
+look 180 -24
+wait 80
+shot vine_face
+cmd awaken gate realm_at MOUTH 0 0 41 -132
+look 180 8
+wait 80
+shot vine_door
+cmd awaken gate realm_heart
+cmd awaken gate realm_at LORD 0 8 2 16
+look 180 -10
+wait 200
+shot vine_lord_floor
+cmd awaken gate realm_at LORD 0 0 20 16
+look 180 18
+wait 80
+shot vine_lord_wide
+cmd awaken gate realm_at LORD 0 26 1 -28
+look 90 -36
+wait 80
+shot vine_tree_up
+cmd awaken gate realm_at LORD 0 0 38 24
+look 180 20
+wait 80
+shot vine_balcony
+cmd awaken gate realm_at WARDEN 1 -5 5 -18
+look -40 -8
+wait 80
+shot vine_root_hall
+cmd awaken gate realm_at WARDEN 0 -36 -4 34
+look 215 -10
+wait 80
+shot vine_islet
+cmd awaken gate realm_at WARDEN 2 40 4 -36
+look 130 -8
+wait 80
+shot vine_crown
+cmd awaken gate realm_at VILLAGE 0 34 14 30
+look 130 -10
+wait 80
+shot vine_village
+cmd awaken gate realm_at MOUTH 0 120 42 40
+look 150 -8
+wait 80
+shot vine_rim
+quit
