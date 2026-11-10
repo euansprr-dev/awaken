@@ -563,11 +563,6 @@ final class ArmsHands {
         return u * u * (3F - 2F * u);
     }
 
-    /** Whether the weapon in hand rests at the hip now (its next first strike is the drawn cut). */
-    static boolean atHip() {
-        return hipWas;
-    }
-
     /** A world left: nothing is carried into the next. */
     static void reset() {
         drawKnown = drawPending = hipWas = guardWas = false;
