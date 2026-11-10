@@ -183,7 +183,52 @@ public final class ArmourClient {
         ArmourMesh mesh = bones == null ? null : bones[(side == HumanoidArm.RIGHT ? Bone.RIGHT_ARM : Bone.LEFT_ARM).ordinal()];
         if (mesh == null) return false;
         Forged f = chest.get(ArmourContent.FORGED.get());
-        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), 0, 0, -1, f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent());
+        // DRAFT (armour polish): your own set's charge and flare show on your own arm, as everyone else sees them on you
+        ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
+        boolean low = player.getHealth() < player.getMaxHealth() * LOW_HEALTH;
+        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow), -1,
+                f == null ? 0 : f.masteryStep(), low, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(chest));
         return true;
+    }
+
+    /**
+     * DRAFT (armour polish): for a drawer that has just drawn vanilla's empty hand itself ({@code renderRightHand} /
+     * {@code renderLeftHand}, which never reach {@link RenderArmEvent}): the same arm, dressed, at the same pose.
+     */
+    public static boolean dressHand(AvatarRenderer<?> renderer, HumanoidArm side, PoseStack ps, SubmitNodeCollector out, int light) {
+        var player = Minecraft.getInstance().player;
+        if (player == null) return false;
+        boolean right = side == HumanoidArm.RIGHT;
+        ModelPart arm = right ? renderer.getModel().rightArm : renderer.getModel().leftArm;
+        ps.pushPose();
+        arm.resetPose();
+        arm.zRot = right ? 0.1F : -0.1F;
+        arm.translateAndRotate(ps);
+        boolean drew = dressArm(player, side, ps, out, light);
+        ps.popPose();
+        return drew;
+    }
+
+    /**
+     * DRAFT (armour polish): your own leg in first person (the world body's legs on a wall, a slide, a ledge): the worn
+     * greaves' and sabatons' meshes on that leg, the pose already on the leg's bone.
+     */
+    public static boolean dressLeg(Player player, boolean right, PoseStack ps, SubmitNodeCollector out, int light) {
+        if (ArmourClientConfig.sculpted() == ArmourClientConfig.Sculpted.OFF) return false;
+        boolean drew = false;
+        for (ArmorType slot : new ArmorType[]{ArmorType.LEGGINGS, ArmorType.BOOTS}) {
+            ItemStack stack = player.getItemBySlot(slot.getSlot());
+            ArmourLooks.Look look = ArmourLooks.drawn(stack);
+            if (look == null || look.piece() != slot) continue;
+            ArmourMesh[] bones = ArmourMeshes.piece(look.set(), slot);
+            ArmourMesh mesh = bones == null ? null : bones[(right ? Bone.RIGHT_LEG : Bone.LEFT_LEG).ordinal()];
+            if (mesh == null) continue;
+            Forged f = stack.get(ArmourContent.FORGED.get());
+            ArmourGlow.Glow glow = ArmourGlow.of(player.getId());
+            ArmourLayer.draw(out, ps, mesh, look.set(), light, stack.hasFoil(), ArmourGlow.energy(glow), ArmourGlow.flash(glow), -1,
+                    f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent(), dev.awaken.core.api.EnchantApi.glowBits(stack));
+            drew = true;
+        }
+        return drew;
     }
 }

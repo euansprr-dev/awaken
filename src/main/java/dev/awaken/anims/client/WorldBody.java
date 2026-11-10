@@ -362,10 +362,35 @@ final class WorldBody {
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
         int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
+        if (w > 0.5F) dress(ps, out, part, light); // DRAFT (armour polish): the limb wears what you wear
         if (!Float.isNaN(tipAcross)) {
             // where the fingers are, in the space this is drawn in (an item held there is drawn at it)
             ps.last().pose().transformPosition((part.x + tipAcross) / 16F, (part.y + 10.5F) / 16F, (part.z - 1F) / 16F, TIP);
             tipAcross = Float.NaN;
+        }
+        ps.popPose();
+    }
+
+    /** DRAFT (armour polish): the worn armour on one of our own limbs, where the limb was just drawn. */
+    private static void dress(PoseStack ps, SubmitNodeCollector out, ModelPart part, int light) {
+        var pl = Minecraft.getInstance().player;
+        if (pl == null) return;
+        boolean rightArm = false, leftArm = false, rightLeg = false, leftLeg = false;
+        for (PlayerModel m : new PlayerModel[]{wide, slim}) {
+            if (m == null) continue;
+            rightArm |= part == m.rightArm;
+            leftArm |= part == m.leftArm;
+            rightLeg |= part == m.rightLeg;
+            leftLeg |= part == m.leftLeg;
+        }
+        if (!(rightArm || leftArm || rightLeg || leftLeg)) return;
+        ps.pushPose();
+        part.translateAndRotate(ps);
+        if (rightArm || leftArm) {
+            dev.awaken.armour.client.ArmourClient.dressArm(pl, rightArm ? net.minecraft.world.entity.HumanoidArm.RIGHT
+                    : net.minecraft.world.entity.HumanoidArm.LEFT, ps, out, light);
+        } else {
+            dev.awaken.armour.client.ArmourClient.dressLeg(pl, rightLeg, ps, out, light);
         }
         ps.popPose();
     }

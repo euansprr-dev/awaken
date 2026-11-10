@@ -22,6 +22,7 @@ layout(location = 6) in vec3 viewNormal;
 layout(location = 7) flat in vec4 state;
 layout(location = 8) flat in vec2 mastery;
 layout(location = 9) flat in vec2 script;
+layout(location = 10) flat in float skyLight;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -29,6 +30,7 @@ const vec3 KEY = vec3(-0.4511, 0.7018, 0.5514); // the studio key, view space (u
 const vec3 SKY = vec3(0.78, 0.86, 1.0);
 const vec3 GROUND = vec3(0.40, 0.36, 0.34);
 const vec3 STRIP = vec3(1.0, 0.97, 0.9);
+const vec3 MOON = vec3(0.50, 0.62, 0.92); // DRAFT (armour polish): what an edge takes from an open night sky
 const float TAU = 6.2831853;
 // each enchantment's own light (SPEC §45.11), by the palette index the renderer packs: 1 Heat Ward ember, 2 Frost Ward
 // ice, 3 Charge Ward gold, 4 Gravity Ward violet, 5 Spirit Ward teal, 6 the other wards steel, 7 Clear Blood green,
@@ -71,21 +73,35 @@ void main() {
     float spec = pow(max(dot(r, KEY), 0.0), 6.0 + 84.0 * gloss) * gloss;
     col += spec * mix(vec3(1.0), min(alb.rgb * 1.7, vec3(1.0)), metal) * 0.85;
     float rim = pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 3.0);
+    // DRAFT (armour polish): form light. The open sky on every edge turned up to it, more on bright metal, so plates
+    // part from one another and from what stands behind them; cloth and hide take a soft fuzz instead. Up is where the
+    // two lights come from (the world's y, or a menu's own, whose y runs down).
+    vec3 upDir = Light0_Direction + Light1_Direction;
+    upDir = dot(upDir, upDir) > 0.01 ? normalize(upDir) : vec3(0.0, 1.0, 0.0);
+    float up = smoothstep(-0.5, 0.6, dot(nw, upDir));
+    col += SKY * rim * up * (0.07 + 0.26 * gloss + 0.10 * metal);
+    col += alb.rgb * rim * 0.25 * (1.0 - metal) * (1.0 - gloss);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
 
     // the world's light (sky and blocks) on everything but what glows of itself
-    col *= lightMapColor.rgb;
+    vec3 world = lightMapColor.rgb;
+    float dark = 1.0 - clamp(dot(world, vec3(0.30, 0.59, 0.11)), 0.0, 1.0);
+    col *= world;
+    // DRAFT: under an open sky at night what is turned up to it, and every edge, still catches the moon: a set keeps its
+    // shape in the dark (never its colours), bright metal most; none of it underground or by a fire
+    col += MOON * (0.30 * max(dot(nw, upDir), 0.0) + 0.55 * rim * up) * (0.04 + 0.26 * gloss) * skyLight * dark;
 
     // a sheen runs feet to crown every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
+    // DRAFT: under the world's light, like the plate it runs on (it used to cross a figure standing in the dark)
     float cycle = fract(GameTime * 240.0);
     float band = exp(-pow((along - (cycle * 1.8 - 0.4)) * 7.0, 2.0));
-    col += band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash);
+    col += band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash) * max(world, vec3(flash));
 
     // mastery (SPEC §44.5): from II the trims (bright gloss metal) catch more light; from III what glows of itself
     // glows more, and when the wearer is low it beats with their heart (a double beat, about seventy a minute)
     float step = mastery.x;
     float trims = step >= 1.0 ? metal * gloss * smoothstep(0.35, 0.7, max(alb.r, max(alb.g, alb.b))) : 0.0;
-    col += alb.rgb * trims * (0.22 + 0.25 * spec) + accent * trims * rim * 0.25;
+    col += (alb.rgb * trims * (0.22 + 0.25 * spec) + accent * trims * rim * 0.25) * world; // DRAFT: lit by the world too
     float beat = 0.0;
     if (step >= 2.0 && mastery.y > 0.5) {
         float ph = fract(GameTime * 1200.0 * 1.15);

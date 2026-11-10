@@ -168,6 +168,7 @@ final class Wrist {
         pose.mulPose(CANCEL);
         if (side < 0) renderer.renderLeftHand(pose, e.getSubmitNodeCollector(), light, skin, avatar.showLeftSleeve);
         else renderer.renderRightHand(pose, e.getSubmitNodeCollector(), light, skin, avatar.showRightSleeve);
+        dev.awaken.armour.client.ArmourClient.dressHand(renderer, side < 0 ? HumanoidArm.LEFT : HumanoidArm.RIGHT, pose, e.getSubmitNodeCollector(), light); // DRAFT (armour polish)
         pose.popPose();
 
         // the device, in the arm's model units; the strap after the arm, the light after the strap
@@ -249,6 +250,7 @@ final class Wrist {
             pose.translate(invert * 5.6F, 0.0F, 0.0F);
             if (side > 0) renderer.renderRightHand(pose, e.getSubmitNodeCollector(), light, skin, avatar.showRightSleeve);
             else renderer.renderLeftHand(pose, e.getSubmitNodeCollector(), light, skin, avatar.showLeftSleeve);
+            dev.awaken.armour.client.ArmourClient.dressHand(renderer, side > 0 ? HumanoidArm.RIGHT : HumanoidArm.LEFT, pose, e.getSubmitNodeCollector(), light); // DRAFT (armour polish)
         } else {
             pose.translate(invert * 0.56F, -0.52F + drop * -0.6F, -0.72F);
             ps.firstPersonHandsAndItems.mainHandRenderState.submit(pose, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
