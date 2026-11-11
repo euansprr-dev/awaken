@@ -24548,11 +24548,13 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   party's members with how far they are, `[ Leave party ]`, anyone within 48 blocks with `[ Travel together ]`, and
   the My fights switch. Travel together is a 30-second card for the other (`together:join:<asker>:<other>`),
   remembered by the server so a client can't answer one it wasn't asked; both asking makes it at once. Not in a fight.
-  Commands: `/awaken together status | with <player> | leave | fights full|gentle`. **Not built yet:** `Share my
-  home` and `Go to` on the section (the Hearth's own invite still does the first), and the second keeper below.
+  Commands: `/awaken together status | with <player> | leave | fights full|gentle`. A party member who doesn't
+  share your home has `[ Share my home ]` under their name: the Hearth's own invitation card (`Household.invite`).
+  **Not built yet:** `Go to` on the section, and the second keeper below.
 - Players who walk the opening together are a party from the square on.
-- A home for two (**not built yet**): a party member placing the Ember within 24 blocks of another member who has no
-  home asks them "Make this your home too?"; a yes makes them the **second keeper** (`HearthRecord` household, optional field): the owner's
+- A home for two: when a party member has a home of their own and another member with no home stands within 24
+  blocks of its Anchor, the invitation is made for them, once a session (`HomeForTwo`). A yes makes them a member as
+  before. **Not built yet:** the **second keeper** (`HearthRecord` household, optional field): the owner's
   rights except ending the household. One second keeper a Hearth.
 - Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
 

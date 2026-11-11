@@ -28,9 +28,9 @@ import java.util.UUID;
 public final class TogetherNet {
     private TogetherNet() {}
 
-    public static final int TRAVEL = 0, LEAVE = 1, FULL = 2, GENTLE = 3;
+    public static final int TRAVEL = 0, LEAVE = 1, FULL = 2, GENTLE = 3, HOME = 4;
     /** State bits of a member. */
-    public static final int F_GENTLE = 1, F_KNEEL = 2, F_DOWN = 4, F_IN_GATE = 8, F_ELSEWHERE = 16, F_SELF = 32;
+    public static final int F_GENTLE = 1, F_KNEEL = 2, F_DOWN = 4, F_IN_GATE = 8, F_ELSEWHERE = 16, F_SELF = 32, F_HOUSEMATE = 64;
     /** Ping kinds. */
     public static final int HERE = 0, CAREFUL = 1, TARGET = 2;
 
@@ -142,6 +142,10 @@ public final class TogetherNet {
                 ServerPlayer other = p.level().getServer().getPlayerList().getPlayer(m.other());
                 if (other != null) PartyService.ask(p, other);
             }
+            case HOME -> {
+                ServerPlayer other = p.level().getServer().getPlayerList().getPlayer(m.other());
+                if (other != null) HomeForTwo.share(p, other);
+            }
             default -> {}
         }
     }
@@ -187,7 +191,8 @@ public final class TogetherNet {
 
     private static Member member(ServerPlayer viewer, ServerPlayer m) {
         int flags = (m == viewer ? F_SELF : 0) | (Fights.gentle(m) ? F_GENTLE : 0) | (Fights.down(m.getUUID()) ? F_DOWN : 0)
-                | (Fights.kneeling(m.getUUID()) && !Fights.down(m.getUUID()) ? F_KNEEL : 0) | (m.level() != viewer.level() ? F_ELSEWHERE : 0);
+                | (Fights.kneeling(m.getUUID()) && !Fights.down(m.getUUID()) ? F_KNEEL : 0) | (m.level() != viewer.level() ? F_ELSEWHERE : 0)
+                | (m != viewer && dev.awaken.core.api.HearthHooks.shareHearth(viewer, m.getUUID()) ? F_HOUSEMATE : 0);
         int floor = 0;
         var run = Gates.activeRun(m);
         if (run.isPresent()) {

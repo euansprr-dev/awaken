@@ -23,7 +23,7 @@ final class TogetherSection implements StatusSections.Section {
     private static final int ROW = 13, PAD = 6, MAX_NEAR = 3;
     private static final double NEAR = 48;
     private static final int INK = 0xFFFFFFFF, SOFT = 0xFFB9C7D9, HOLO = 0xFF7FD4FF, ROSE = 0xFFF0B79C, RIM = 0xFF7FD4FF;
-    private static final String TRAVEL = "[ Travel together ]", LEAVE = "[ Leave party ]", FULL = "[ Full ]", GENTLE = "[ Gentle ]";
+    private static final String TRAVEL = "[ Travel together ]", LEAVE = "[ Leave party ]", FULL = "[ Full ]", GENTLE = "[ Gentle ]", HOME = "[ Share my home ]";
     private static final String FIGHTS = "My fights are yours alone. Full is the game as it is. On Gentle, blows aimed at you are plainer and do half, and a blow that would kill you is a second wind instead. You can change it any time you're out of a fight.";
     private static final UUID NOBODY = new UUID(0, 0);
 
@@ -64,6 +64,13 @@ final class TogetherSection implements StatusSections.Section {
         return Math.max(0, ClientParty.members().size() - 1);
     }
 
+    /** Party members who don't share your home yet: each has one more row, the offer. */
+    private static int strangersAtHome() {
+        int n = 0;
+        for (TogetherNet.Member m : ClientParty.members()) if (!m.is(TogetherNet.F_SELF) && !m.is(TogetherNet.F_HOUSEMATE)) n++;
+        return n;
+    }
+
     @Override
     public boolean visible() {
         return Minecraft.getInstance().player != null; // the switch is yours even alone
@@ -76,7 +83,7 @@ final class TogetherSection implements StatusSections.Section {
     @Override
     public int height(int width) {
         Font font = Minecraft.getInstance().font;
-        int rows = mates() + Math.min(MAX_NEAR, near().size());
+        int rows = mates() + strangersAtHome() + Math.min(MAX_NEAR, near().size());
         return PAD + rows * ROW + (mates() > 0 ? ROW : 0) + 4 + ROW + fights(font, width).size() * 10 + PAD;
     }
 
@@ -102,6 +109,10 @@ final class TogetherSection implements StatusSections.Section {
             dev.awaken.signal.client.Ui.fitted(g, font, m.name(), x + PAD + 8, ty, width - PAD * 3 - 8 - lw, 1, INK, false);
             dev.awaken.signal.client.Ui.fitted(g, font, line, x + width - PAD - lw, ty, lw, 1, SOFT, false);
             ty += ROW;
+            if (!m.is(TogetherNet.F_HOUSEMATE)) {
+                button(g, font, HOME, x + width - PAD - font.width(HOME), ty, TogetherNet.HOME, m.id(), HOLO, mouseX, mouseY);
+                ty += ROW;
+            }
         }
         if (mates() > 0) {
             button(g, font, LEAVE, x + width - PAD - font.width(LEAVE), ty, TogetherNet.LEAVE, NOBODY, SOFT, mouseX, mouseY);

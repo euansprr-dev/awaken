@@ -99,6 +99,7 @@ public final class TogetherModule {
             TogetherNet.tick(e.getServer());
             TourPartner.tick(e.getServer());
             Answering.tick(e.getServer());
+            HomeForTwo.tick(e.getServer());
             if (e.getServer().getTickCount() % 20 == 0) PartyService.openingTogether(e.getServer());
         });
         bus.addListener((ServerStoppingEvent e) -> TourPartner.removeAll(e.getServer()));
@@ -107,6 +108,7 @@ public final class TogetherModule {
             PartyService.forget();
             TogetherNet.forget();
             Answering.forget();
+            HomeForTwo.forget();
         });
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             // whoever is already playing hears that someone new has arrived, once a session (SPEC §70.6)
