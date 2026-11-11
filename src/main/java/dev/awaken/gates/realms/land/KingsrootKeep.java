@@ -277,6 +277,7 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
         drawPieces(v, m);
         drape(v, m);
         settle(v, m);
+        dev.awaken.gates.realms.kit.Settle.overSlabs(v); // nothing small half a block over a low slab (SPEC 50.6)
         for (Edit e : grille) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
     }
 

@@ -132,8 +132,9 @@ public final class RealmLife {
     static void tick(ServerLevel level, ServerPlayer p, GateRecord g, RealmPlan plan, RealmRef ref, int lx, int lz, int t) {
         if ((t / 10 + p.getId()) % 4 != 0) return;
         Blueprint bp = plan.bp();
-        for (String herd : bp.life().herds()) herd(level, p, g, plan.land(), ref, herd, lx, lz);
-        for (String fly : bp.life().ambient()) flies(level, p, g, plan.land(), ref, fly, lx, lz);
+        // under a sky the herds stand on grounds of their own (RealmCountry); only a land without a country keeps them round the player
+        if (!RealmCountry.has(plan.land())) for (String herd : bp.life().herds()) herd(level, p, g, plan.land(), ref, herd, lx, lz);
+        for (String fly : bp.life().ambient()) flies(level, p, g, plan.land(), ref, fly, lx, lz, FLY_WANT, 2, 16);
         if (bp.folk().villages() > 0) folk(level, p, g, plan.land(), ref, lx, lz, folkOf(g));
     }
 
@@ -146,17 +147,37 @@ public final class RealmLife {
         int group = 3 + r.nextInt(3);
         for (int i = 0; i < group; i++) {
             BlockPos at = open(level, land, ref, cx - 5 + r.nextInt(11), cz - 5 + r.nextInt(11));
-            if (at != null && clearOfPlayers(level, at)) MobHooks.spawnCreature(level, id, at, 0, g.key());
+            if (at != null && clearOfPlayers(level, at)) creature(level, g, id, at, 0);
         }
     }
 
-    private static void flies(ServerLevel level, ServerPlayer p, GateRecord g, Land land, RealmRef ref, String id, int lx, int lz) {
-        if (count(level, p.blockPosition(), id, FLY_NEAR) >= FLY_WANT) return;
+    /** Things in the air: up to {@code want} of them near a player, each coming in at least {@code far} off and {@code up} or more above the ground. */
+    static void flies(ServerLevel level, ServerPlayer p, GateRecord g, Land land, RealmRef ref, String id, int lx, int lz, int want, int up, int far) {
+        if (count(level, p.blockPosition(), id, FLY_NEAR + far - 16) >= want) return;
         RandomSource r = level.getRandom();
         double a = r.nextDouble() * Math.PI * 2;
-        int d = 16 + r.nextInt(20);
+        int d = far + r.nextInt(20);
         BlockPos at = open(level, land, ref, lx + (int) (Math.cos(a) * d), lz + (int) (Math.sin(a) * d));
-        if (at != null) MobHooks.spawnCreature(level, id, at.above(2 + r.nextInt(4)), 0, g.key());
+        if (at != null) creature(level, g, id, at.above(up + r.nextInt(4)), Progression.contentLevel(g.plan.rank()));
+    }
+
+    /**
+     * One of a Realm's peaceful creatures: its own (the Reach's grazers and flies), or one of the wide world's wild animals
+     * at the gate's level. Never a monster of the gate: it is not counted, it pays nothing from the gate's pool, and it
+     * goes when nobody is near. A name that is no animal at all gives nothing, and neither does one that is no peaceful
+     * animal: a night hunter, or one of the wide world's named beasts, each of which is one of a kind out there (the
+     * Quiet Barrow's sheet named the Old Antler as its herd, and the first walk of the country stood five of him on the
+     * moor).
+     */
+    static LivingEntity creature(ServerLevel level, GateRecord g, String id, BlockPos at, int lv) {
+        LivingEntity e = MobHooks.spawnCreature(level, id, at, 0, g.key());
+        if (e != null) return e;
+        e = MobHooks.spawnNamed(level, id, at, lv, java.util.Set.of(), "");
+        if (e != null && !MobHooks.peaceful(e)) {
+            e.discard();
+            return null;
+        }
+        return e;
     }
 
     /** The village has people in it before you reach it, and they stay near their own doors. */
@@ -188,7 +209,7 @@ public final class RealmLife {
     }
 
     /** Valley floor only: not on a rock's top, not a roof, not in the honey, and well inside the land's edge. */
-    private static BlockPos open(ServerLevel level, Land land, RealmRef ref, int x, int z) {
+    static BlockPos open(ServerLevel level, Land land, RealmRef ref, int x, int z) {
         if (land.edge(x, z) > -8) return null;
         BlockPos top = Realms.world(ref.cell(), x, 0, z);
         if (!level.isLoaded(top)) return null;
@@ -216,7 +237,7 @@ public final class RealmLife {
         return true;
     }
 
-    private static int count(ServerLevel level, BlockPos around, String id, int r) {
+    static int count(ServerLevel level, BlockPos around, String id, int r) {
         return level.getEntitiesOfClass(FaunaMob.class, new AABB(around).inflate(r, 40, r), e -> e.isAlive() && id.equals(e.def().id)).size();
     }
 

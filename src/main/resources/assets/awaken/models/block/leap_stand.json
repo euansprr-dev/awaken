@@ -1,0 +1,366 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "awaken:block/foundry_brass",
+    "plate": "awaken:block/foundry_plate",
+    "brass": "awaken:block/foundry_brass",
+    "face": "awaken:block/gate_press_face",
+    "glow": "awaken:block/foundry_sparks_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        3,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#plate",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#plate"
+        },
+        "north": {
+          "texture": "#plate",
+          "cullface": "north",
+          "uv": [
+            0,
+            13,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plate",
+          "cullface": "south",
+          "uv": [
+            0,
+            13,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#plate",
+          "cullface": "west",
+          "uv": [
+            0,
+            13,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#plate",
+          "cullface": "east",
+          "uv": [
+            0,
+            13,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        3,
+        0
+      ],
+      "to": [
+        16,
+        4,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "north": {
+          "texture": "#brass",
+          "cullface": "north",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "cullface": "west",
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "cullface": "east",
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        3,
+        15
+      ],
+      "to": [
+        16,
+        4,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            15,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#brass",
+          "cullface": "south",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "cullface": "west",
+          "uv": [
+            15,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "cullface": "east",
+          "uv": [
+            15,
+            0,
+            16,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        3,
+        1
+      ],
+      "to": [
+        1,
+        4,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#brass",
+          "uv": [
+            0,
+            1,
+            1,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "cullface": "west",
+          "uv": [
+            1,
+            0,
+            15,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "uv": [
+            1,
+            0,
+            15,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        15,
+        3,
+        1
+      ],
+      "to": [
+        16,
+        4,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#brass",
+          "uv": [
+            15,
+            1,
+            16,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "uv": [
+            1,
+            0,
+            15,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "cullface": "east",
+          "uv": [
+            1,
+            0,
+            15,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        3
+      ],
+      "to": [
+        13,
+        3.5,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#face",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "north": {
+          "texture": "#brass",
+          "uv": [
+            3,
+            0,
+            13,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#brass",
+          "uv": [
+            3,
+            0,
+            13,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#brass",
+          "uv": [
+            3,
+            0,
+            13,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#brass",
+          "uv": [
+            3,
+            0,
+            13,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3.5,
+        3
+      ],
+      "to": [
+        13,
+        3.55,
+        13
+      ],
+      "light_emission": 15,
+      "shade_direction_override": "up",
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -75,6 +75,7 @@ public final class RealmTests {
             h.succeed();
         });
         dev.awaken.gates.realms.bench.BenchTests.register(); // realm_bench (tools/bench/bench.sh) and the straight-in walk's command
+        dev.awaken.gates.realms.kit.land.LandTests.register(); // the rolled lands (SPEC 50.9): each walks to everything and floats nothing
         AwakenTests.register("realm_blueprints_parse", 40, h -> {
             String why = AMBER.problem();
             if (!why.isEmpty()) h.fail("Amber's blueprint: " + why);
@@ -87,6 +88,38 @@ public final class RealmTests {
                 if (dev.awaken.gates.world.Cells.cellAt(x, z) >= 0) h.fail("a Realm reads as a floor cell");
             }
             if (RealmCells.cellAt(RealmCells.centerX(0) + RealmCells.HALF + 8, RealmCells.centerZ(0)) != -1) h.fail("the gap between cells belongs to one");
+            h.succeed();
+        });
+        // Who lives there (SPEC 50.9): a cell's haunt comes from the seed and the ground alone, keeps off the run's own places, and leaves quiet stretches
+        AwakenTests.register("realm_country_haunts", 200, h -> {
+            Land land = amber(1);
+            if (!RealmCountry.has(land)) h.fail("Amber Reach has no country");
+            int half = land.halfSize() / RealmCountry.CELL + 1, cells = 0, quiet = 0, herds = 0, packs = 0;
+            StringBuilder list = new StringBuilder();
+            for (int cz = -half; cz <= half; cz++) {
+                for (int cx = -half; cx <= half; cx++) {
+                    RealmCountry.Haunt a = RealmCountry.find(land, 1, cx, cz);
+                    if (!a.equals(RealmCountry.find(land, 1, cx, cz))) h.fail("cell " + cx + "," + cz + " gave two answers");
+                    if (land.edge(cx * RealmCountry.CELL + RealmCountry.CELL / 2, cz * RealmCountry.CELL + RealmCountry.CELL / 2) > -20) {
+                        if (a.kind() != RealmCountry.Kind.NONE) h.fail("a haunt past the land's edge at cell " + cx + "," + cz);
+                        continue;
+                    }
+                    cells++;
+                    switch (a.kind()) {
+                        case NONE -> quiet++;
+                        case HERD, SMALL -> herds++;
+                        default -> packs++;
+                    }
+                    if (a.kind() == RealmCountry.Kind.NONE) continue;
+                    if (!RealmCountry.free(land, a.x(), a.z(), 24)) h.fail("a " + a.kind() + " at " + a.x() + "," + a.z() + " stands on one of the run's own places");
+                    if (Math.abs(a.y() - 1 - land.ground(a.x(), a.z())) != 0) h.fail("a haunt that isn't on the ground at " + a.x() + "," + a.z());
+                    list.append(' ').append(a.kind()).append('@').append(a.x()).append(',').append(a.y()).append(',').append(a.z());
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[country] amber seed 1: {} cells, {} quiet, {} herds, {} packs:{}", cells, quiet, herds, packs, list);
+            if (herds == 0 || packs == 0) h.fail("Amber Reach's country is empty: " + herds + " herds and " + packs + " packs in " + cells + " cells");
+            if (quiet * 3 < cells) h.fail("no quiet stretches: only " + quiet + " of " + cells + " cells hold nothing");
+            if (!RealmCountry.find(land, 2, 1, 1).equals(RealmCountry.find(land, 2, 1, 1))) h.fail("another seed gave two answers");
             h.succeed();
         });
         AwakenTests.register("realm_truelight_matches_the_shader", 20, h -> { String why = dev.awaken.gates.realms.preview.TrueLight.problem(); if (!why.isEmpty()) h.fail(why); h.succeed(); });
@@ -697,6 +730,44 @@ public final class RealmTests {
                 dev.awaken.gates.GateLiveTests.teardown(level, null, g);
                 dev.awaken.gates.GateLiveTests.useLevel(null);
             }
+            h.succeed();
+        });
+        // the Lord's fight holds through a leap past the heart's line, a pause, a save and a reload, and ends only when nobody
+        // is left in it (SPEC §68.6)
+        AwakenTests.register("realm_fight_holds", 400, h -> {
+            h.assertTrue(RealmLive.outOfFight(true, true, true, 0) == null, "a fighter at the hall is in the fight");
+            h.assertTrue(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS) == null, "a leap or a step out of the door keeps you in the fight");
+            h.assertTrue("went far from the hall".equals(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS + 1)), "away from the hall for long: out");
+            h.assertTrue("fell".equals(RealmLive.outOfFight(true, false, true, 0)), "falling is out at once");
+            h.assertTrue("left the Realm".equals(RealmLive.outOfFight(true, true, false, 0)), "leaving the Realm is out at once");
+            h.assertTrue(RealmLive.outOfFight(false, false, false, 20) == null, "a moment offline (a reload) is still in the fight");
+            h.assertTrue("left the game".equals(RealmLive.outOfFight(false, false, false, RealmLive.AWAY_TICKS + 1)), "offline for long: out");
+            // who is in the fight is saved with the Realm, and a save from before it still loads
+            RealmState st = new RealmState();
+            st.lordWoken = st.doorShut = st.heartOpen = true;
+            java.util.UUID u = java.util.UUID.randomUUID();
+            st.fighters.add(u);
+            var tag = RealmState.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, st).getOrThrow();
+            RealmState back = RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow();
+            h.assertTrue(back.fighters.contains(u) && back.doorShut && back.lordWoken, "the fight came back from the save as it was");
+            ((net.minecraft.nbt.CompoundTag) tag).remove("fighters");
+            h.assertTrue(RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow().fighters.isEmpty(), "an older save loads with nobody listed");
+            // the old rule's trap: a rolled crawl's hall has floor past the heart's line, where one look ended the fight
+            Blueprint bp = new Blueprint(1, "t", "dungeon", "hive", List.of("E"), new Blueprint.LandSpec("awaken:cinder_workings", 0, Map.of()),
+                    AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
+            Land land = LandPrograms.make(new Land.Ctx(bp, "awaken:cinder_workings", Rank.E, 383, 1));
+            Map<Long, V> painted = new java.util.HashMap<>();
+            int[] edge = RealmLive.pastTheLine(land, (x, y, z) -> {
+                int cx = Math.floorDiv(x, 16), cz = Math.floorDiv(z, 16);
+                V v = painted.computeIfAbsent(((long) cx << 32) ^ (cz & 0xffffffffL), k -> {
+                    V nv = new V(cx * 16, cz * 16);
+                    land.paint(nv);
+                    return nv;
+                });
+                return solid(v.get(x, y, z));
+            });
+            h.assertTrue(edge != null, "the Lord's hall has floor past the heart's line");
+            dev.awaken.Awaken.LOG.info("[realms] cinder_workings 383: past the heart's line at {} {} {}, {} blocks from the Lord", edge[0], edge[1], edge[2], edge[3]);
             h.succeed();
         });
         AwakenTests.register("realm_seeds_differ", 200, h -> {

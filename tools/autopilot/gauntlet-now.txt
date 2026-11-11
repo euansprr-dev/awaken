@@ -1,0 +1,137 @@
+# The Leaper's Gauntlet as it is today (SPEC §17.10, §63.2), in first person with the HUD on, the way Euan met it on
+# 11 Nov: for the plan docs/leapers-gauntlet/PLAN.md, not a test of anything. The gate opening (its panel), the gate in
+# the world, the antechamber, the course from its doorway and from the start, then the edge as he ran it: a sprint off
+# the run-up with no second jump, so the leap is given and the pit takes him half a second later (a shot every few
+# ticks). Then the leap made, the far landing (the gift's words, the card, the medal) and the way out.
+#
+#   /awaken ascent trial leaper        open the trial gate in front of you now
+#   /awaken gate rig at <part>         start, first, gap, ledge, press, wall, ring, runup, edge, last
+#   /awaken ascent pilot run leap      sprint, jump at the edge, jump again in the air
+# Run on CI: tools/tour-ci.sh tools/autopilot/gauntlet-now.txt 1800
+world gauntlet_now survival 20261025
+waitworld
+gui 0
+window 1708 960
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# the director's settling time over, so messages behave as they do an hour into a world
+cmd tick sprint 6200
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 6000
+# away from spawn first: no gate forms in Carillon's basin
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken ascent grant tether
+wait 20
+hud on
+camera first
+# ---- the gate opens ----
+cmd awaken ascent trial leaper
+wait 24
+shotnow now_01_gate_opens
+wait 60
+shotnow now_02_gate_panel
+wait 220
+shotnow now_03_gate_in_world
+# ---- inside ----
+cmd awaken gate enter 1
+wait 60
+shotnow now_04_arrival
+wait 140
+shotnow now_05_antechamber
+cmd awaken gate interior goto rig
+wait 100
+shotnow now_06_course_from_doorway
+cmd awaken gate rig at start
+wait 30
+shotnow now_07_on_the_start
+cmd awaken gate rig at first
+wait 12
+shotnow now_08_clock_started
+cmd awaken gate rig at ring
+wait 20
+shotnow now_09_at_a_ring
+# ---- the edge, as he ran it: a sprint and no second jump ----
+cmd awaken gate rig at runup
+wait 20
+shotnow now_10_runup
+cmd awaken ascent pilot hold forward,sprint 60
+wait 2
+shotnow now_11a_edge
+wait 2
+shotnow now_11b_edge
+wait 2
+shotnow now_11c_edge
+wait 2
+shotnow now_11d_edge
+wait 2
+shotnow now_11e_edge
+wait 2
+shotnow now_11f_edge
+wait 2
+shotnow now_11g_edge
+wait 2
+shotnow now_11h_edge
+wait 2
+shotnow now_11i_edge
+wait 2
+shotnow now_11j_edge
+wait 4
+shotnow now_11k_edge
+wait 4
+shotnow now_11l_edge
+cmd awaken ascent pilot stop
+wait 60
+shotnow now_12_thrown_back
+# ---- the leap made ----
+cmd awaken gate rig at runup
+wait 20
+cmd awaken ascent pilot run leap
+wait 14
+shotnow now_13a_leap
+wait 6
+shotnow now_13b_leap
+wait 6
+shotnow now_13c_leap
+wait 6
+shotnow now_13d_leap
+wait 30
+cmd awaken ascent pilot stop
+# on to the far landing: the clock stops, the gift's words, the card, the way out
+cmd awaken gate rig at last
+wait 6
+shotnow now_14a_far_landing
+wait 8
+shotnow now_14b_far_landing
+wait 12
+shotnow now_14c_far_landing
+wait 20
+shotnow now_14d_far_landing
+wait 40
+shotnow now_14e_far_landing
+wait 80
+shotnow now_15_after
+cmd tp @s ~ ~ ~ ~ 0
+wait 60
+shotnow now_16_way_out
+screen band tasks
+wait 30
+shotnow now_17_tasks_after
+screen close
+info
+quit

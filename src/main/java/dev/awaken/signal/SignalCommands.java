@@ -57,6 +57,17 @@ final class SignalCommands {
                 }));
             }
             signal.then(demo);
+            // /awaken signal unlock <id>: shows a registered Unlock title (SPEC §71.2), for tours and for wiring one
+            signal.then(Commands.literal("unlock").requires(AwakenCommands.admin())
+                    .then(Commands.argument("id", StringArgumentType.greedyString()).executes(c -> {
+                        net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(StringArgumentType.getString(c, "id"));
+                        if (id == null || dev.awaken.core.api.Unlocks.get(id) == null) {
+                            c.getSource().sendFailure(Component.literal("No such unlock. The ladder's: awaken:unlock/rope, double_jump, air_dash, slam, dive, wings, flight, sovereign_form."));
+                            return 0;
+                        }
+                        dev.awaken.core.api.Unlocks.show(c.getSource().getPlayerOrException(), id);
+                        return 1;
+                    })));
             signal.then(Commands.literal("withdraw").requires(AwakenCommands.admin())
                     .then(Commands.argument("action", StringArgumentType.greedyString()).executes(c -> {
                         boolean was = Signal.withdraw(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "action"));

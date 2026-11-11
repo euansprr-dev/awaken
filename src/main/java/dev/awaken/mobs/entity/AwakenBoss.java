@@ -576,7 +576,15 @@ public class AwakenBoss extends AwakenMob {
         Player near = level.getNearestPlayer(home.x, home.y, home.z, radius + 16, p -> !p.isSpectator() && !((Player) p).isCreative());
         if (near == null) {
             lonelyTicks += 20;
-            if (lonelyTicks >= 600 && (getHealth() < getMaxHealth() || phase > 0)) reset(level);
+            if (lonelyTicks >= 600 && (getHealth() < getMaxHealth() || phase > 0)) {
+                // the one rule that heals a Lord in place (SPEC §47.14 "Left alone"): said in the log and to whoever was fighting it
+                dev.awaken.Awaken.LOG.info("[fights] {} had nobody within {} blocks for {}s: healed from {}/{} and starts over",
+                        net.minecraft.world.entity.EntityType.getKey(getType()), radius + 16, lonelyTicks / 20, Math.round(getHealth()), Math.round(getMaxHealth()));
+                Component told = Component.literal(d.name + " had nobody to fight for half a minute, so it has healed and the fight starts over.");
+                double far = radius + 96;
+                for (ServerPlayer p : level.players()) if (!p.isSpectator() && p.distanceToSqr(home) <= far * far) p.sendSystemMessage(told);
+                reset(level);
+            }
         } else {
             lonelyTicks = 0;
             if (!introduced && getTarget() != null) {

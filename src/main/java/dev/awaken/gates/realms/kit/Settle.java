@@ -121,6 +121,33 @@ public final class Settle {
         return p.removed;
     }
 
+    /**
+     * For a land that is not drawn from a sheet, and so is never settled: the one stray its own tidying never looked for,
+     * a small thing set over a slab laid low ({@link Kinds#low}), is taken out, with anything that stood on it. The float
+     * check found 96 of them in three such lands the day it learnt to look. Returns how many went.
+     */
+    public static int overSlabs(V v) {
+        BlockState[] b = v.b;
+        int gone = 0;
+        for (int a = 1; a <= 16; a++) for (int c = 1; c <= 16; c++) {
+            int base = (a * V.W + c) * V.H;
+            boolean dropped = false;
+            for (int y = 1; y < V.H; y++) {
+                BlockState s = b[base + y];
+                if (s == null || Kinds.of(s) != Kinds.ON_GROUND) {
+                    dropped = false;
+                    continue;
+                }
+                dropped = dropped || Kinds.low(b[base + y - 1]);
+                if (dropped) {
+                    b[base + y] = null;
+                    gone++;
+                }
+            }
+        }
+        return gone;
+    }
+
     private static final class Pass {
         final V v;
         final byte[] k;
@@ -157,7 +184,8 @@ public final class Settle {
                 for (int y = 0; y < V.H; y++) {
                     if (k[base + y] != Kinds.ON_GROUND) continue;
                     int below = y > 0 ? k[base + y - 1] : Kinds.AIR;
-                    if (!holds(below) && below != Kinds.ON_GROUND) drop(a, y, c);
+                    // nothing under it, or a slab laid low: either way there is air under its foot
+                    if (!holds(below) && below != Kinds.ON_GROUND || below == Kinds.BODY && Kinds.low(v.b[base + y - 1])) drop(a, y, c);
                 }
             }
             for (int a = 1; a <= 16; a++) for (int c = 1; c <= 16; c++) {

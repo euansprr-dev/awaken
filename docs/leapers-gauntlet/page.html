@@ -1,0 +1,492 @@
+<title>The Leaper's Gauntlet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=Pixelify+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Evidence first (his run on a time strip, today's screen), then the proposal as mock-ups
+   drawn over real screenshots at the game's own 16:9, then the course as a side-on map, then the decisions. */
+:root{
+  --bg:#F3F4F1;--surface:#FFFFFF;--sunk:#E7E9E4;--ink:#141A1F;--muted:#57626B;--line:#D5D9D2;
+  --signal:#0F5FA8;--signal-soft:#DCEAF7;--forge:#A4501A;--forge-soft:#F4E3D5;--gold:#8A6100;--gold-soft:#F5EACB;
+  --warn:#B3261E;--warn-soft:#FBE4E1;--good:#1E7B46;
+  --display:"Chakra Petch","Avenir Next Condensed","Arial Narrow",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pixel:"Pixelify Sans","Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B0E11;--surface:#141A20;--sunk:#0F1419;--ink:#E9EEF2;--muted:#94A1AC;--line:#27313A;
+  --signal:#7FC3FF;--signal-soft:#12283F;--forge:#F0A064;--forge-soft:#33200F;--gold:#F0C766;--gold-soft:#2E2610;
+  --warn:#FF8A80;--warn-soft:#3A1614;--good:#6FD79A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B0E11;--surface:#141A20;--sunk:#0F1419;--ink:#E9EEF2;--muted:#94A1AC;--line:#27313A;
+  --signal:#7FC3FF;--signal-soft:#12283F;--forge:#F0A064;--forge-soft:#33200F;--gold:#F0C766;--gold-soft:#2E2610;
+  --warn:#FF8A80;--warn-soft:#3A1614;--good:#6FD79A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding-block:36px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px;overflow-wrap:break-word}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(24px,3.4vw,32px);font-weight:600}
+h3{font-size:19px;font-weight:600}
+p{margin:0;max-width:68ch}
+.muted{color:var(--muted)}.small{font-size:13.5px}
+.eyebrow{font:500 12.5px/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+a{color:var(--signal)}
+.status{display:inline-block;max-width:100%;font-size:13.5px;color:var(--warn);background:var(--warn-soft);padding:6px 12px;border-radius:4px;align-self:flex-start}
+blockquote{margin:0;padding:16px 20px;background:var(--surface);border-left:3px solid var(--forge);font-size:15.5px}
+blockquote footer{margin-top:8px;color:var(--muted);font-size:13.5px}
+.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.rule{font-family:var(--display);font-size:clamp(21px,3vw,28px);font-weight:600;line-height:1.3;max-width:30ch}
+.rule b{color:var(--forge);font-weight:700}
+kbd.cap{font:400 11px/1 var(--pixel);display:inline-block;padding:5px 7px 4px;border:1.5px solid currentColor;border-bottom-width:3px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+/* the time strip */
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.strip{display:block;min-width:820px;width:100%;height:auto}
+.strip text{font-family:var(--body);fill:var(--ink);font-size:12.5px}
+.strip .t-m{fill:var(--muted)}.strip .t-g{fill:var(--gold);font-weight:600}.strip .t-w{fill:var(--warn)}
+.strip .axis{stroke:var(--line);stroke-width:1}.strip .lane{stroke:var(--muted);stroke-width:2}
+.strip .pit{stroke:var(--warn);stroke-width:3}.strip .press{stroke:var(--muted);stroke-width:3}
+.strip .gift{stroke:var(--gold);stroke-width:4}.strip .dot{fill:var(--surface);stroke:var(--muted);stroke-width:2.5}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:3px;height:14px;background:var(--muted);vertical-align:middle;margin-right:6px}
+.legend i.w{background:var(--warn)}.legend i.g{background:var(--gold);width:4px}
+/* pictures */
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;background:var(--sunk);max-width:100%}
+figure img.free{aspect-ratio:auto}
+figcaption{font-size:13.5px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.side>.eyebrow{display:flex;gap:8px;align-items:center}
+.side>.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.side.next>.eyebrow::before{background:var(--gold)}
+/* the mock-up: a real screenshot with the proposed screen drawn over it, in the game's proportions */
+.mock{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#0B0E11;max-width:100%;container-type:inline-size;color:#F4F7FA;font-family:var(--pixel)}
+.mock>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mock .dim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 34%,rgba(4,6,9,.58),rgba(4,6,9,.22) 62%,rgba(4,6,9,.36))}
+.mock .dim.soft{background:linear-gradient(180deg,rgba(4,6,9,.16),rgba(4,6,9,.34))}
+.unlock{position:absolute;left:50%;top:17%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1.1cqw;text-align:center;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(0,0,0,.75)}
+.unlock .lab{font-size:1.9cqw;letter-spacing:.62em;margin-right:-.62em;color:#F0C766}
+.unlock .ray{width:52cqw;height:.28cqw;background:linear-gradient(90deg,rgba(240,199,102,0),#F0C766 30%,#FFFFFF 50%,#F0C766 70%,rgba(240,199,102,0));box-shadow:0 0 2.4cqw rgba(240,199,102,.85)}
+.unlock .name{font-size:6.6cqw;line-height:1.05;color:#FFFFFF}
+.unlock .how{font-size:2.2cqw;color:#E3EAF0;display:flex;align-items:center;gap:.9cqw;margin-top:.5cqw}
+.mock kbd{font:400 1.55cqw/1 var(--pixel);display:inline-block;padding:.5cqw .8cqw .4cqw;border:.2cqw solid #EAF2F8;border-bottom-width:.42cqw;border-radius:.3cqw;background:rgba(8,12,18,.72);color:#FFFFFF;white-space:nowrap}
+.mock kbd.hold{border-color:#F0C766;color:#F0C766}
+.unlock.sm{top:14%}.unlock.sm .name{font-size:6cqw}.unlock.sm .ray{width:42cqw}
+.hudline{position:absolute;left:2.2%;top:4.5%;font-size:1.55cqw;color:#DCE6EE;background:rgba(8,12,18,.66);padding:.7cqw 1.1cqw;border-left:.32cqw solid #F0A064;max-width:70%}
+.pin{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center}
+.pin .lab{display:flex;gap:.9cqw;align-items:center;background:rgba(8,12,18,.78);border-top:.22cqw solid #7FC3FF;padding:.85cqw 1.2cqw;font-size:1.75cqw;white-space:nowrap}
+.pin .stem{width:.22cqw;height:5cqw;background:rgba(127,195,255,.9)}
+.pin .ring{width:2.2cqw;height:2.2cqw;border:.3cqw solid #7FC3FF;box-shadow:0 0 1.6cqw #7FC3FF}
+.fig{position:absolute;width:2.4%;aspect-ratio:1/2.1;background:linear-gradient(180deg,#FFF3C9,#F0C766);box-shadow:0 0 2.2cqw 0.5cqw rgba(240,199,102,.75);opacity:.92}
+.arc{position:absolute;border:.28cqw dotted rgba(240,199,102,.9);border-bottom:0;border-radius:50% 50% 0 0/100% 100% 0 0}
+.stand{position:absolute;left:50%;bottom:17%;width:17cqw;height:22cqw;transform:translateX(-50%)}
+.stand i{position:absolute;display:block}
+.stand .dais{left:0;right:0;bottom:0;height:2.2cqw;background:linear-gradient(180deg,#C98A4A,#5E3718);box-shadow:0 0 3.2cqw rgba(240,199,102,.55)}
+.stand .post{bottom:2.2cqw;width:1.5cqw;height:18.5cqw;background:linear-gradient(90deg,#3A2A1C,#8A5A2E,#3A2A1C)}
+.stand .post.l{left:1.2cqw}.stand .post.r{right:1.2cqw}
+.stand .head{left:2.7cqw;right:2.7cqw;top:0;height:5.2cqw;background:linear-gradient(180deg,#B7773A,#4A2C14);border-bottom:.5cqw solid #F0C766}
+.stand.down .head{top:9.4cqw;box-shadow:0 2cqw 5cqw 1.5cqw rgba(255,236,170,.85)}
+.flash{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 62%,rgba(255,240,190,.72),rgba(255,240,190,0) 46%)}
+.tally{position:absolute;left:50%;top:13%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1.3cqw;white-space:nowrap;text-shadow:0 .25cqw 0 rgba(0,0,0,.75)}
+.tally .num{font-size:6cqw;line-height:1;color:#FFFFFF}
+.tally .num small{font-size:2cqw;color:#F0C766}
+.tally .bar{width:34cqw;height:1.1cqw;background:rgba(8,12,18,.7);outline:.2cqw solid rgba(234,242,248,.5)}
+.tally .bar i{display:block;height:100%;width:64%;background:linear-gradient(90deg,#B98E2B,#F0C766)}
+.tally .row{font-size:1.7cqw;color:#DCE6EE}
+.plate{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);background:linear-gradient(180deg,rgba(142,92,46,.92),rgba(70,42,20,.94));border:.3cqw solid #F0C766;padding:1.3cqw 2.2cqw;display:flex;flex-direction:column;align-items:center;gap:.8cqw;font-size:1.7cqw;white-space:nowrap}
+.plate b{font-size:2.6cqw;font-weight:400;color:#FFF3C9}
+.cardrow{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:flex;gap:1.6cqw;align-items:center;background:rgba(8,12,18,.8);border-top:.22cqw solid #7FC3FF;padding:.9cqw 1.4cqw;font-size:1.6cqw;white-space:nowrap}
+.cardrow .off{opacity:.42}
+.mocknote{font-size:12.5px;color:var(--muted)}
+/* storyboard */
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px;counter-reset:f}
+.board figure{counter-increment:f}
+.board figcaption b{color:var(--ink)}
+.board figcaption::before{content:counter(f) ".";font-family:var(--display);font-weight:600;color:var(--forge);margin-right:6px}
+/* the map */
+.map{display:block;min-width:900px;width:100%;height:auto}
+.map text{font-family:var(--body);fill:var(--ink);font-size:12.5px}
+.map .t-h{font-family:var(--display);font-weight:600;font-size:14px}.map .t-m{fill:var(--muted)}.map .t-g{fill:var(--gold);font-weight:600}
+.map .floor{fill:var(--forge);opacity:.82}.map .soft{fill:none;stroke:var(--signal);stroke-width:1.5;stroke-dasharray:3 4}
+.map .hot{fill:var(--warn);opacity:.3}.map .jump{fill:none;stroke:var(--gold);stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round}
+.map .mstand{fill:var(--gold)}.map .sep{stroke:var(--line);stroke-width:1}.map .slam{stroke:var(--gold);stroke-width:2.5;fill:none}
+/* tables, lists */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px 9px 0;border-bottom:1px solid var(--line)}
+th{font:500 12.5px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.bad{color:var(--warn)}td.ok{color:var(--good)}
+ol.find,ul.find{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px;max-width:74ch}
+ol.find li::marker{font-family:var(--display);font-weight:600;color:var(--muted)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:820px){.three{grid-template-columns:minmax(0,1fr)}}
+.opt{min-width:0;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.opt.pick{border-color:var(--forge);box-shadow:inset 0 0 0 1px var(--forge)}
+.opt .eyebrow{color:var(--forge)}
+/* the K rows mock */
+.krows{background:#0B1320;border:1px solid #24334D;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;color:#E7EEF9;font-size:13.5px}
+.krow{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px 10px;align-items:baseline;padding:8px 10px;background:#111C2E;border-radius:3px}
+.krow.dark{opacity:.5}
+.krow b{font-family:var(--display)}
+.krow i{width:9px;height:9px;background:#F0C766;transform:rotate(45deg);display:block;margin-top:4px}
+.krow.dark i{background:transparent;border:1.5px solid #93A1B8}
+.krow kbd{color:#EAF7FF}
+/* decisions */
+.tallybar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:14.5px}
+button{font:500 14px/1 var(--body);padding:9px 14px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){border-color:var(--signal)}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:var(--bg)}
+button:disabled{opacity:.5;cursor:default}
+.cards{display:flex;flex-direction:column;gap:14px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.dcard h3{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;font-size:17px;line-height:1.35}
+.dcard h3 small{font:600 15px/1.35 var(--display);color:var(--muted)}
+.dcard .rec{font-size:14.5px;color:var(--muted);max-width:none}
+.dcard .rec b{color:var(--ink)}
+.ans{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.st{font-size:13px;color:var(--muted)}
+textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+@media (prefers-reduced-motion:no-preference){.pin .ring{animation:pulse 1.6s ease-in-out infinite}}
+@keyframes pulse{50%{box-shadow:0 0 2.6cqw .4cqw #7FC3FF}}
+</style>
+
+<div class="wrap">
+
+<section>
+  <span class="eyebrow">AWAKEN · a plan for your approval · 11 November</span>
+  <h1>The Leaper's Gauntlet, and a title for every unlock</h1>
+  <span class="status">Approved in full on 11 November ("Go ahead with the full plan"). Built so far: the Unlock title, the stands and the lessons. The course itself is not built yet. The screens below are the plan's mock-ups, drawn over real screenshots.</span>
+  <div class="quotes">
+    <blockquote>"I had no idea that's where I got the double jump from. … I thought I already had it, and it was just telling me to use it as an extra thing here."<footer>You, 11 November, after playing it</footer></blockquote>
+    <blockquote>"It took like maybe 30 seconds to finish the whole gate, and like I don't even know if I got XP from it. Like, what was the point of that gate?"<footer>You, 11 November</footer></blockquote>
+    <blockquote>"AAA level would be … the big title, and it says you just unlocked double jump. Press space in the air again to use it. … And maybe every time you unlock a major thing in the game, it actually shows you that as well."<footer>You, 11 November, in this session</footer></blockquote>
+  </div>
+  <p class="rule">You <b>take</b> each move at a stand. The game <b>names it</b> in its biggest type. The hall after it <b>can't be crossed without it</b>. Then you are <b>paid where you can see it</b>.</p>
+</section>
+
+<section>
+  <h2>Built so far, in the game</h2>
+  <p>These are real screenshots from a run on 11 November, not mock-ups. They show the title and the stand working on the <b>old</b> course, because the new course is not built yet. The sounds have not been listened to.</p>
+  <div class="grid3">
+    <figure><img src="shots/built_title.jpg" alt="First person at the edge of the pit. Large white text reads Double Jump under a small gold label, Unlocked, and a gold line. Under it: Press Space again in the air, with Space drawn as a key." loading="lazy"><figcaption><b>The title, at the old edge.</b> Your body is held where you stood for five seconds, so you read it on the floor, not in the pit. The run clock behind it in this shot now steps aside while a title shows.</figcaption></figure>
+    <figure><img src="shots/built_figure.jpg" alt="The same view after the title. A small box reads Space, press again in the air. A figure made of pale gold light stands at the edge." loading="lazy"><figcaption><b>Then the lesson.</b> Your key stays pinned where the move is needed, and a figure of light makes the jump. The figure is now light, not a copy of your skin.</figcaption></figure>
+    <figure><img src="shots/built_two.jpg" alt="A corridor past the course. The title reads Slam, with Press Left Shift in the air, from high up." loading="lazy"><figcaption><b>Air Dash, then Slam.</b> On the old course both are given at the far landing, so they play one after the other.</figcaption></figure>
+    <figure><img src="shots/built_stand.jpg" alt="A low dark plate with gold sparks on a copper floor. A small box above it reads Step onto it." loading="lazy"><figcaption><b>A stand.</b> This one was placed by command to test it. It lights up and says what to do.</figcaption></figure>
+    <figure><img src="shots/built_stand_title.jpg" alt="Standing on the plate. The title reads Air Dash, with Press Left Control in the air." loading="lazy"><figcaption><b>Taking it.</b> Stand on it, hold Use for a second, and the move's title plays.</figcaption></figure>
+  </div>
+  <p>The same title now plays for a <b>new power</b> (with the key it landed on), a <b>new rank</b> and a <b>new stratum</b>, each in place of its old window or toast.</p>
+</section>
+
+<section>
+  <h2>What happened in your run</h2>
+  <p>This is your own play on 11 November, read from the game's log. The leap was given while you were sprinting off a wall-run. One second later the pit threw you back. It did that three times before you crossed. You then needed the move once, and the gate was over.</p>
+  <div class="scroll"><svg class="strip" viewBox="0 0 1000 178" role="img" aria-label="A time strip of 85 seconds. You enter at 17:26:18. A press or the pit throws you back five times in the first half minute. At 17:27:28.6 the leap is given. The pit throws you back at 17:27:29.6, 17:27:31.4 and 17:27:34.4. You cross at about 17:27:37.">
+    <line class="lane" x1="40" y1="96" x2="958" y2="96"/>
+    <g class="t-m"><line class="axis" x1="94" y1="92" x2="94" y2="100"/><text class="t-m" x="94" y="150" text-anchor="middle">17:26:20</text>
+    <line class="axis" x1="310" y1="92" x2="310" y2="100"/><text class="t-m" x="310" y="150" text-anchor="middle">17:26:40</text>
+    <line class="axis" x1="526" y1="92" x2="526" y2="100"/><text class="t-m" x="526" y="150" text-anchor="middle">17:27:00</text>
+    <line class="axis" x1="742" y1="92" x2="742" y2="100"/><text class="t-m" x="742" y="150" text-anchor="middle">17:27:20</text>
+    <line class="axis" x1="958" y1="92" x2="958" y2="100"/><text class="t-m" x="958" y="150" text-anchor="middle">17:27:40</text></g>
+    <circle class="dot" cx="81" cy="96" r="6"/><text x="81" y="126" text-anchor="middle">you enter</text>
+    <line class="press" x1="213" y1="80" x2="213" y2="112"/>
+    <line class="pit" x1="230" y1="80" x2="230" y2="112"/><line class="pit" x1="287" y1="80" x2="287" y2="112"/><line class="pit" x1="325" y1="80" x2="325" y2="112"/>
+    <line class="press" x1="334" y1="80" x2="334" y2="112"/>
+    <text class="t-m" x="272" y="68" text-anchor="middle">thrown back five times</text>
+    <line class="press" x1="784" y1="80" x2="784" y2="112"/>
+    <line class="gift" x1="835" y1="56" x2="835" y2="124"/>
+    <line class="pit" x1="846" y1="80" x2="846" y2="112"/><line class="pit" x1="866" y1="80" x2="866" y2="112"/><line class="pit" x1="898" y1="80" x2="898" y2="112"/>
+    <text class="t-g" x="829" y="30" text-anchor="end">17:27:28.6 the leap is given</text>
+    <text class="t-w" x="829" y="48" text-anchor="end">17:27:29.6 the pit throws you back</text>
+    <circle class="dot" cx="926" cy="96" r="6"/><text x="926" y="126" text-anchor="middle">across</text>
+  </svg></div>
+  <div class="legend"><span><i class="g"></i>the leap given</span><span><i class="w"></i>the pit throws you back</span><span><i></i>a press throws you back</span></div>
+
+  <p>The same thing on today's build, in first person, taken by a tour on GitHub's machines that ran the edge the way you did:</p>
+  <div class="grid3">
+    <figure><img src="shots/now_gift.jpg" alt="First person, falling toward the pit. The clock reads 5.9 over par 8.1. The title says You can jump again in the air now. A small line under it says New power." loading="lazy"><figcaption><b>The gift, today.</b> The title shares the screen with the clock, "par 8.1" and another notice, while you are already falling.</figcaption></figure>
+    <figure><img src="shots/now_gift_pit.jpg" alt="The same title with a toast at the top right: The pit throws you back." loading="lazy"><figcaption><b>One second later.</b> "The pit throws you back." is a critical line, so it is drawn over anything.</figcaption></figure>
+    <figure><img src="shots/now_end.jpg" alt="An empty room with the exit portal. A small card at the bottom names three moves." loading="lazy"><figcaption><b>The end, today.</b> A card names the dash and the slam. Neither was ever needed. The room is empty.</figcaption></figure>
+    <figure><img src="shots/now_xp.jpg" class="free" alt="A crop of the lower left of the screen with small gold text: plus 90 XP." loading="lazy"><figcaption><b>The pay, today.</b> "+90 XP", this size, low on the left. Nothing about mastery.</figcaption></figure>
+    <figure><img src="shots/now_arrival.jpg" alt="Arriving in the gate. The panel says D-rank Clockwork Foundry, Layout Labyrinth, Find the Rest Shrine." loading="lazy"><figcaption><b>Arriving, today.</b> The gate's panel calls it a labyrinth and says "Find the Rest Shrine". Nothing says what this gate is for.</figcaption></figure>
+    <figure><img src="shots/now_clock.jpg" alt="The course from its first step: a straight strip over the pit, a ring ahead, the clock at 0.9 over par 8.1." loading="lazy"><figcaption><b>The whole course is this strip.</b> Its own check runs it in 8.1 seconds. The clock starts on your first step.</figcaption></figure>
+  </div>
+  <div class="tw"><table>
+    <tr><th>You said</th><th>What causes it</th><th>Where I saw it</th></tr>
+    <tr><td>"I had no idea that's where I got it"</td><td>It is given on a row you sprint across, a second before the pit.</td><td>Your log; the first two pictures</td></tr>
+    <tr><td>"I thought I already had it"</td><td>The words are a tip's. Nothing says unlocked.</td><td>The title: "You can jump again in the air now."</td></tr>
+    <tr><td>"I had to use it one single time"</td><td>26 of the course's 31 rows are moves you had. One chasm needs the leap.</td><td>The course's code</td></tr>
+    <tr><td>"30 seconds … what was the point"</td><td>Par is 8.1 seconds, and the door never says why to go in.</td><td>The clock; the gate's card</td></tr>
+    <tr><td>"I don't even know if I got XP"</td><td>You got a fifth of a level. It shows as small text for a moment.</td><td>The fourth picture</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>The unlock title</h2>
+  <p>This is what you asked for. It is built like the discovery title the game already has, one size up, in gold: a spaced label, a line of light opening from the middle, the name, and how to use it with your own key. It shows for six seconds. While it shows, nothing else is drawn: no clock, no toasts, no tips. It can only start while you are standing still, so you can't be falling when it arrives.</p>
+  <div class="grid2">
+    <div class="side"><span class="eyebrow">Today</span>
+      <figure><img src="shots/now_gift.jpg" alt="Today's title, as above." loading="lazy"><figcaption>A sentence, in the same size as everything else, mid-fall.</figcaption></figure>
+    </div>
+    <div class="side next"><span class="eyebrow">Proposed</span>
+      <div class="mock" role="img" aria-label="Mock-up. Over a dark foundry hall: the label UNLOCKED in gold, a line of light, the name Double Jump in large type, and under it: Press Space again in the air.">
+        <img src="shots/sw_hall.jpg" alt=""><div class="dim"></div>
+        <div class="unlock"><span class="lab">UNLOCKED</span><span class="ray"></span><span class="name">Double Jump</span><span class="how">Press <kbd>Space</kbd> again in the air</span></div>
+      </div>
+      <p class="mocknote">Mock-up. The room is a real picture of the Stopped Works. The words and their sizes are the proposal.</p>
+    </div>
+  </div>
+  <h3>The same title for every major unlock</h3>
+  <div class="grid3">
+    <div class="side"><div class="mock" role="img" aria-label="Mock-up: UNLOCKED, Rope, Hold Left Option to swing. Let go to fly."><img src="shots/way_spire.jpg" alt=""><div class="dim"></div><div class="unlock sm"><span class="lab">UNLOCKED</span><span class="ray"></span><span class="name">Rope</span><span class="how"><kbd class="hold">Hold</kbd><kbd>Left Option</kbd> to swing. Let go to fly.</span></div></div><p class="mocknote">Where the rope is given.</p></div>
+    <div class="side"><div class="mock" role="img" aria-label="Mock-up: UNLOCKED, Air Dash, Press Left Control in the air."><img src="shots/sw_long.jpg" alt=""><div class="dim"></div><div class="unlock sm"><span class="lab">UNLOCKED</span><span class="ray"></span><span class="name">Air Dash</span><span class="how">Press <kbd>Left Control</kbd> in the air</span></div></div><p class="mocknote">At the Gauntlet's second stand.</p></div>
+    <div class="side"><div class="mock" role="img" aria-label="Mock-up: UNLOCKED, Wings, In a fall, press Space twice."><img src="shots/way_cabin.jpg" alt=""><div class="dim"></div><div class="unlock sm"><span class="lab">UNLOCKED</span><span class="ray"></span><span class="name">Wings</span><span class="how">In a fall, press <kbd>Space</kbd> twice</span></div></div><p class="mocknote">At a sky platform's core.</p></div>
+  </div>
+  <p>If everything gets this title, nothing does. I would keep it for four kinds of thing, and leave the rest as the small messages they are now.</p>
+  <div class="tw"><table>
+    <tr><th>Gets the title</th><th>Examples</th><th>Today</th></tr>
+    <tr><td><b>A new way to move</b></td><td>Rope, Double Jump, Air Dash, Slam, Wings, Flight, the Sovereign's Form</td><td>A sentence each</td></tr>
+    <tr><td><b>A new power</b></td><td>Haymaker, Shockwave</td><td>A small "New power" message</td></tr>
+    <tr><td><b>A new rank</b></td><td>D-rank</td><td>A small message</td></tr>
+    <tr><td><b>A new layer of the world</b></td><td>"Stratum 3 · The Drowned Choir"</td><td>A small message. On your D-rank day the log shows it waited 45 seconds behind other messages and was then filed away unseen.</td></tr>
+  </table></div>
+  <ul class="find">
+    <li><b>It is never lost.</b> An unlock is not queued behind small messages and is never filed. Two at once play one after the other.</li>
+    <li><b>It never plays in a fight.</b> It waits for the fight to end.</li>
+    <li><b>The sound</b> is the game's own moment swell under Minecraft's challenge-complete sound. No synthetic ding.</li>
+    <li><b>After it,</b> the how-line stays on screen as a small prompt pinned where the move is first used.</li>
+    <li><b>At your screen size</b> (427 by 240) the name is drawn three times the size of normal text, and a name up to 22 letters fits. A longer one steps down a size and is never cut off.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Taking it: the first stand</h2>
+  <p>The vault's rope worked for you because it is a place you stand in and it does something to you. The Gauntlet's moves should arrive the same way. Each one waits on a stand. You hold Use for a second to take it. Before the first stand you meet a gulf you can't cross and watch a figure of light cross it, so you want the move before you have it. You said the same about wings: put them in a glass case "to make you want it".</p>
+  <div class="board">
+    <figure><div class="mock" role="img" aria-label="Frame 1. A gulf in the floor. A figure of gold light is in the air over it on a dotted arc. A line at the top left reads: Reach the first stand."><img src="shots/gulf.jpg" alt=""><div class="dim soft"></div><div class="hudline">Reach the first stand</div><div class="arc" style="left:36%;top:30%;width:28%;height:20%"></div><div class="fig" style="left:55%;top:27%"></div></div><figcaption><b>The gulf.</b> Too wide to jump. A figure of light crosses it with a second jump, again and again. If you try, a net of chains lifts you back. Nothing hurts.</figcaption></figure>
+    <figure><div class="mock" role="img" aria-label="Frame 2. A press on a round dais, lit. A prompt pinned on it reads: Hold, right mouse."><img src="shots/sw_hall.jpg" alt=""><div class="dim soft"></div><div class="stand"><i class="post l"></i><i class="post r"></i><i class="head"></i><i class="dais"></i></div><div class="pin" style="left:50%;top:46%"><span class="lab"><kbd class="hold">Hold</kbd><kbd>Right Button</kbd></span><span class="stem"></span><span class="ring"></span></div></div><figcaption><b>The stand.</b> A press on a dais, lit. Your own key sits on it. It doesn't say what it holds.</figcaption></figure>
+    <figure><div class="mock" role="img" aria-label="Frame 3. The press has come down. A burst of light at its foot."><img src="shots/sw_hall.jpg" alt=""><div class="dim soft"></div><div class="stand down"><i class="post l"></i><i class="post r"></i><i class="head"></i><i class="dais"></i></div><div class="flash"></div></div><figcaption><b>The stroke.</b> You hold for one second. The press comes down and light climbs your legs. You are held still for a second and a half. Let go early and nothing happens.</figcaption></figure>
+    <figure><div class="mock" role="img" aria-label="Frame 4. The unlock title: UNLOCKED, Double Jump, Press Space again in the air."><img src="shots/sw_hall.jpg" alt=""><div class="dim"></div><div class="unlock"><span class="lab">UNLOCKED</span><span class="ray"></span><span class="name">Double Jump</span><span class="how">Press <kbd>Space</kbd> again in the air</span></div></div><figcaption><b>The title.</b> Six seconds, alone on the screen. The move is saved the moment the press lands.</figcaption></figure>
+    <figure><div class="mock" role="img" aria-label="Frame 5. Back at the gulf. A prompt is pinned over the middle of the gulf: Space, again in the air."><img src="shots/gulf.jpg" alt=""><div class="dim soft"></div><div class="hudline">Cross the hall</div><div class="arc" style="left:36%;top:30%;width:28%;height:20%"></div><div class="fig" style="left:44%;top:31%"></div><div class="pin" style="left:50%;top:40%"><span class="lab"><kbd>Space</kbd> again in the air</span><span class="stem"></span><span class="ring"></span></div></div><figcaption><b>The first use.</b> The how-line is now pinned over the gulf, where you press. No clock. Miss and the net lifts you back.</figcaption></figure>
+    <figure><div class="mock" role="img" aria-label="Frame 6. Across the gulf. A card at the bottom lists three moves: Double Jump lit, Air Dash and Slam dimmed with the words further in."><img src="shots/sw_long.jpg" alt=""><div class="dim soft"></div><div class="hudline">Cross the hall</div><div class="cardrow"><span><kbd>Space</kbd> Double Jump</span><span class="off">Air Dash · further in</span><span class="off">Slam · further in</span></div></div><figcaption><b>Across.</b> A small card shows what you hold and that two more wait further in. It doesn't say how they are used.</figcaption></figure>
+  </div>
+  <p class="mocknote">A storyboard, not a prototype: I can't run the game's own screen in a page. Frames 1 and 5 use today's hall as a stand-in for the gulf. The stand is a sketch of its shape, not its final look.</p>
+</section>
+
+<section>
+  <h2>The Gauntlet, hall by hall</h2>
+  <p>Three stands, a hall after each that needs that move, then one timed run that needs all of them, then the pay. Five to eight minutes the first time. Nothing before the timed run has a clock or can hurt you.</p>
+  <div class="scroll"><svg class="map" viewBox="0 0 1100 330" role="img" aria-label="A side-on map of the Gauntlet in six parts from left to right. The way in is flat and ends at a gulf. Hall one, Twice, climbs in steps. Hall two, Through, has long gaps. Hall three, Down, drops through a shaft. The Long Run crosses three levels over the pit. The tally floor ends it.">
+    <g><line class="sep" x1="150" y1="40" x2="150" y2="250"/><line class="sep" x1="350" y1="40" x2="350" y2="250"/><line class="sep" x1="545" y1="40" x2="545" y2="250"/><line class="sep" x1="715" y1="40" x2="715" y2="250"/><line class="sep" x1="975" y1="40" x2="975" y2="250"/></g>
+    <text class="t-h" x="20" y="30">The way in</text><text class="t-h" x="160" y="30">1 · Twice</text><text class="t-h" x="360" y="30">2 · Through</text><text class="t-h" x="555" y="30">3 · Down</text><text class="t-h" x="725" y="30">4 · The Long Run</text><text class="t-h" x="985" y="30">5 · The tally</text>
+    <!-- way in -->
+    <rect class="floor" x="20" y="200" width="70" height="10"/><rect class="floor" x="130" y="186" width="20" height="10"/>
+    <path class="soft" d="M92 232 H128"/><path class="jump" d="M88 198 Q108 150 128 184"/>
+    <!-- 1 twice -->
+    <rect class="mstand" x="158" y="176" width="12" height="10"/><rect class="floor" x="150" y="186" width="34" height="10"/>
+    <rect class="floor" x="200" y="150" width="40" height="10"/><rect class="floor" x="262" y="150" width="24" height="10"/><rect class="floor" x="304" y="118" width="46" height="10"/>
+    <path class="jump" d="M182 184 Q192 120 204 148"/><path class="jump" d="M238 148 Q250 118 264 148"/><path class="jump" d="M284 148 Q294 80 308 116"/>
+    <path class="soft" d="M186 232 H302"/>
+    <!-- 2 through -->
+    <rect class="mstand" x="358" y="108" width="12" height="10"/><rect class="floor" x="350" y="118" width="36" height="10"/>
+    <rect class="floor" x="446" y="118" width="30" height="10"/><rect class="floor" x="515" y="118" width="30" height="10"/>
+    <path class="jump" d="M384 116 Q400 80 414 96 H446"/><path class="jump" d="M474 116 Q484 86 494 100 H515"/>
+    <path class="soft" d="M388 232 H513"/>
+    <!-- 3 down -->
+    <rect class="mstand" x="553" y="108" width="12" height="10"/><rect class="floor" x="545" y="118" width="48" height="10"/>
+    <rect class="floor" x="610" y="150" width="34" height="5"/><rect class="floor" x="596" y="205" width="119" height="10"/>
+    <path class="slam" d="M627 96 V148"/><path class="slam" d="M621 140 L627 150 L633 140"/><path class="slam" d="M670 150 V203"/><path class="slam" d="M664 195 L670 205 L676 195"/>
+    <!-- 4 long run -->
+    <rect class="hot" x="715" y="222" width="260" height="28"/>
+    <rect class="floor" x="715" y="205" width="34" height="10"/><rect class="floor" x="772" y="170" width="28" height="10"/><rect class="floor" x="826" y="136" width="30" height="10"/><rect class="floor" x="886" y="136" width="24" height="10"/><rect class="floor" x="930" y="196" width="45" height="10"/>
+    <path class="jump" d="M747 203 Q760 140 776 168"/><path class="jump" d="M798 168 Q812 108 830 134"/><path class="jump" d="M854 134 Q866 112 876 122 H886"/>
+    <path class="slam" d="M946 136 V194"/><path class="slam" d="M940 186 L946 196 L952 186"/><path class="jump" d="M908 134 Q928 116 946 134"/>
+    <!-- 5 tally -->
+    <rect class="floor" x="975" y="196" width="105" height="10"/><rect class="mstand" x="1020" y="160" width="26" height="36" opacity=".8"/>
+    <text class="t-m" x="20" y="272">Moves you have,</text><text class="t-m" x="20" y="289">then a gulf you</text><text class="t-m" x="20" y="306">can't cross.</text>
+    <text class="t-g" x="160" y="272">Double Jump × 4</text><text class="t-m" x="160" y="289">The gulf, a high step,</text><text class="t-m" x="160" y="306">a ledge, off a wall-run.</text>
+    <text class="t-g" x="360" y="272">Air Dash × 4</text><text class="t-m" x="360" y="289">A gap of 9, presses,</text><text class="t-m" x="360" y="306">a corner, a wide gulf.</text>
+    <text class="t-g" x="555" y="272">Slam × 3</text><text class="t-m" x="555" y="289">A cracked deck, three</text><text class="t-m" x="555" y="306">constructs, a hammer.</text>
+    <text class="t-g" x="725" y="272">All of them × 14, timed</text><text class="t-m" x="725" y="289">6 jumps, 5 dashes, 3 slams. Par</text><text class="t-m" x="725" y="306">about 85 s. The pit throws back.</text>
+    <text class="t-m" x="985" y="272">XP counted out.</text><text class="t-m" x="985" y="289">Your time on</text><text class="t-m" x="985" y="306">a plate.</text>
+  </svg></div>
+  <div class="legend"><span><i class="g"></i>a stand, and where a move is needed</span><span style="color:var(--signal)">- - a net: you are lifted back, unhurt</span><span style="color:var(--warn)">▮ the pit: you are thrown back to the last ring, unhurt</span></div>
+  <div class="tw"><table>
+    <tr><th>Hall</th><th>What it makes you do</th><th>Uses</th></tr>
+    <tr><td><b>The way in</b></td><td>A short run of moves you have. It ends at a gulf six wide whose far side is two higher. A figure of light crosses it. You can't yet.</td><td class="n">0</td></tr>
+    <tr><td><b>1 · Twice</b><br><span class="muted small">after the Double Jump stand</span></td><td>The gulf you couldn't cross. A step three blocks up. A gap onto a high ledge. A second jump off a wall-run.</td><td class="n">4</td></tr>
+    <tr><td><b>2 · Through</b><br><span class="muted small">after the Air Dash stand</span></td><td>A gap of nine: jump, then dash. A line of presses you dash between. A corner, because the dash goes where you look. A wide gulf: jump, jump, dash.</td><td class="n">4</td></tr>
+    <tr><td><b>3 · Down</b><br><span class="muted small">after the Slam stand</span></td><td>A shaft eight deep with a cracked deck that only a slam breaks. Three constructs on a plate, thrown by a slam. A stuck hammer you free by slamming its plate.</td><td class="n">3</td></tr>
+    <tr><td><b>4 · The Long Run</b></td><td>One course on three levels. The clock starts on your first step. Rings are checkpoints. Medals against par, about 85 seconds. Any finish counts.</td><td class="n">14</td></tr>
+    <tr><td><b>5 · The tally</b></td><td>The pay, the plate with your time, the way out.</td><td class="n"></td></tr>
+  </table></div>
+  <p>Each hall follows the same four beats: a safe first use, a harder one, one that mixes in a move you already had, then on. Today's course asks for the leap once. This one asks 11 times before the test and 14 times in it.</p>
+  <h3>You can't get stuck</h3>
+  <ul class="find">
+    <li>After three misses at one spot, the figure of light shows it again.</li>
+    <li>After six, that spot eases: a wider landing or a slower press. It still needs the move.</li>
+    <li>You can leave at any point. Coming back starts you at the last stand you reached.</li>
+    <li>If you arrive already holding the leap (a sky core hands it down), the stands are dark, the halls still teach, and the run and the pay are the same.</li>
+  </ul>
+  <p class="small muted">The aimed dive you asked the rope session for gets a fourth stand and a short hall of its own when it exists. Until then the Gauntlet is whole without it.</p>
+</section>
+
+<section>
+  <h2>The pay, where you can see it</h2>
+  <div class="grid2">
+    <div class="side"><span class="eyebrow">Today</span>
+      <figure><img src="shots/now_far.jpg" alt="The far landing today: a sentence, the clock, an empty room." loading="lazy"><figcaption>A sentence and a medal line. "+90 XP" was the small text in the picture further up.</figcaption></figure>
+    </div>
+    <div class="side next"><span class="eyebrow">Proposed</span>
+      <div class="mock" role="img" aria-label="Mock-up of the tally. A large number, plus 1,240 XP, a mastery bar labelled Leap mastery 1 to 2, and a brass plate reading 2:31, Bronze, par 1:25, Double jumps 14, Dashes 9, Slams 4.">
+        <img src="shots/sw_floor.jpg" alt=""><div class="dim"></div>
+        <div class="tally"><span class="num">+1,240 <small>XP</small></span><span class="bar"><i></i></span><span class="row">Leap mastery 1 → 2</span></div>
+        <div class="plate"><b>2:31 · Bronze</b><span>par 1:25</span><span>Double jumps 14 · Dashes 9 · Slams 4</span></div>
+      </div>
+      <p class="mocknote">Mock-up. The numbers are examples.</p>
+    </div>
+  </div>
+  <p>The game already has one pay that works: after a Lord falls, a number climbs in the middle of your view with a bell for each step. The Gauntlet's end would use the same count. Then the mastery bar fills from where it was. Then your time and medal are struck onto a plate, with how many times you used each move.</p>
+  <p>I would also raise the first run's XP from a fifth of a level to half a level, and keep the gate standing afterwards so you can run it again for a better medal. Both are your call below.</p>
+</section>
+
+<section>
+  <h2>The words</h2>
+  <div class="tw"><table>
+    <tr><th>Where</th><th>Today</th><th>Proposed</th></tr>
+    <tr><td>The gate opens</td><td>"A gate has opened for you. It stands in front of you. It is a course, not a fight."</td><td>"A gate has opened for you. It's the Leaper's Gauntlet. It holds a new way to move. No fighting."</td></tr>
+    <tr><td>Its card</td><td>"A course of the Foundry, and at its end a chasm no running jump will cross."</td><td>"A works that stopped mid-stroke. What it made is still on its stands. About six minutes. No fighting."</td></tr>
+    <tr><td>Tasks</td><td>"Run the gate that opened where you climbed" (even when it opened in front of you)</td><td>"Run the Leaper's Gauntlet" · "It holds a new way to move."</td></tr>
+    <tr><td>Arriving</td><td>"Layout Labyrinth · Find the Rest Shrine."</td><td>"Reach the first stand", then a line for the hall you are in</td></tr>
+    <tr><td>The gift</td><td>"You can jump again in the air now."</td><td>UNLOCKED · Double Jump · "Press [Space] again in the air"</td></tr>
+    <tr><td>A fall</td><td>"The pit throws you back." as a critical toast, every time</td><td>No words. The throw and its sound say it. Never over an unlock.</td></tr>
+    <tr><td>The end</td><td>"That was the leap. It's yours."</td><td>The tally, then "The Gauntlet is yours to run again."</td></tr>
+  </table></div>
+  <p>The door now says what kind of thing is inside, a new way to move. It still never says which.</p>
+  <div class="grid2">
+    <div class="side"><span class="eyebrow">The K menu, under The leap</span>
+      <div class="krows">
+        <div class="krow"><i></i><span><b>Double Jump</b> · <kbd class="cap">Space</kbd> again in the air</span></div>
+        <div class="krow"><i></i><span><b>Air Dash</b> · <kbd class="cap">Left Control</kbd> in the air</span></div>
+        <div class="krow dark"><i></i><span>Another move waits further into the Gauntlet.</span></div>
+      </div>
+      <p class="mocknote">Mock-up: two stands taken, one to go.</p>
+    </div>
+    <div class="side"><span class="eyebrow">Read back from your next play</span>
+      <p class="small">The log would gain plain lines, so the next time you play it I can see what happened without asking: when each move was unlocked and at which stand, and at the tally, "run: 14 double jumps, 9 dashes, 4 slams, 2:31, bronze, eased 1".</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Three ways to do this</h2>
+  <div class="three">
+    <div class="opt"><span class="eyebrow">A · Repair the moment</span><p>Keep today's hall. Stop you before the chasm, show the unlock title, hold the pit's toast, add two more chasms, count out the pay.</p><p class="muted">About half a day. You would know where it came from. The dash and the slam would still never be needed, and it would still be about 90 seconds.</p></div>
+    <div class="opt pick"><span class="eyebrow">B · Take it, learn it, prove it · recommended</span><p>Three stands, a hall each, one timed run, a counted pay, in the look of the Stopped Works.</p><p class="muted">The only one that answers all four of your points. The course is new and needs the gates session.</p></div>
+    <div class="opt"><span class="eyebrow">C · The spire is the course</span><p>No gate. You take the leap on a Tether Spire's crown, and the course is the spire and its yard, out in the world.</p><p class="muted">The best fit to "the way out of the place is the move". It means rebuilding every spire and gives up the gates' pit, rings and medals. Not now.</p></div>
+  </div>
+  <p class="small muted">Two things from outside the game shaped B. Nintendo's 3D Mario levels teach one idea in four beats (introduce it safely, develop it, twist it, conclude) in about five minutes (<a href="https://www.engadget.com/2015/03/17/super-mario-3d-world-design/">Engadget on Koichi Hayashida's level design, 2015</a>). And in the Zelda games a dungeon's item changes how the rest of the dungeon reads, while a dungeon you can finish without its item makes the item feel optional (<a href="https://amara.org/videos/sA8tGCZJvrxP/en-gb/3101254">Mark Brown's Boss Keys on Link's Awakening</a>). Both are other people's analyses, not the makers' own documents.</p>
+</section>
+
+<section>
+  <h2>Who builds what, and in what order</h2>
+  <div class="tw"><table>
+    <tr><th>Piece</th><th>Who</th><th>Hours</th></tr>
+    <tr><td>The unlock title, and the ladder's seven titles</td><td>This session</td><td class="n">3 to 4</td></tr>
+    <tr><td>The stand and its scene, one move at a time, the lessons for the dash and the slam, the words, Tasks and K rows</td><td>This session</td><td class="n">4 to 6</td></tr>
+    <tr><td>The figure of light drawn as light (today it draws as a solid copy of your skin; the open item from the last page)</td><td>This session</td><td class="n">3 to 4</td></tr>
+    <tr><td>Letting the leap's moves be switched on one at a time; the aimed dive; the double jump that mantles</td><td>The rope session (it owns those files)</td><td class="n">1 to 2 for the switch</td></tr>
+    <tr><td>The place, the halls, the Long Run, its check, the tally floor, the door's card and lines, running it again</td><td>The gates session</td><td>About one built land's work, by its own estimate</td></tr>
+    <tr><td>A new power, a new rank and a new layer of the world using the title</td><td>Their own sessions, a line each</td><td class="n">under 1 each</td></tr>
+  </table></div>
+  <p>The unlock title needs nothing else, so it lands first and works on all five rungs of the ladder. The stands and the course land together. Today's course stays in the code until the new one's own check passes. Checks are tours on GitHub from the same camera as the pictures above, then your play.</p>
+  <h3>What the gates session says it can build</h3>
+  <p>It answered after this page first went up. In short: build the Gauntlet as a place laid by hand in the Stopped Works' kit, the way the Hour Crypt was built, and leave the old hall behind.</p>
+  <div class="tw"><table>
+    <tr><th>The plan asks for</th><th>Its answer</th></tr>
+    <tr><td>A place in the Stopped Works' look, as long and as tall as it needs</td><td class="ok">Yes. The depth, air, light and sound come with the kit.</td></tr>
+    <tr><td>A high step, a long gap, a deep shaft, small targets far below</td><td class="ok">Easy. They are shapes.</td></tr>
+    <tr><td>Stands you stop at, doors that open on a move, no clock and no pit in the halls that teach</td><td class="ok">Yes to all three.</td></tr>
+    <tr><td>Constructs to throw with a slam</td><td class="ok">Easy. The Foundry's own, standing asleep.</td></tr>
+    <tr><td>Staying open to run again</td><td class="ok">Easy.</td></tr>
+    <tr><td>A deck or a plate that only a slam breaks</td><td>Medium. It needs one call from my side when a slam lands.</td></tr>
+    <tr><td>The clock, rings and medals for the Long Run</td><td>Medium. They exist in the old course and have to be moved over.</td></tr>
+    <tr><td>A gate that opens onto this one place, for you</td><td>Small, and new.</td></tr>
+  </table></div>
+  <p class="small muted">It flagged two things. A fall in its kit costs a little health today, so "nothing hurts in the halls" is a change it would make for this gate. And nothing in the kit carries a player, so there are no moving platforms; the plan uses none. It also found why presses seemed to appear in front of you in this run: a press was not drawn while it was up. It has fixed that on its own branch.</p>
+  <h3>What I have not confirmed</h3>
+  <ul class="find">
+    <li><b>The leap's exact reach.</b> The course's check needs the real numbers for a second jump, a dash and a slam. They live in the rope session's files, which are changing this week. So the sizes above (three up, nine across, eight down) are targets until the check runs on the real rules.</li>
+    <li><b>Whether the pay can count up as a Lord's does.</b> The gates session can show a window with rows for time, XP and mastery today. Reusing the Lord's climbing number for a trial is still to check.</li>
+    <li><b>How your gate opened.</b> The log has no line for a crown reached by rope, so it most likely opened because you had used the rope enough. Either way in is kept.</li>
+    <li><b>The mock-ups show layout and words.</b> They aren't the finished look, and no one has played any of this.</li>
+  </ul>
+</section>
+
+<section id="decide">
+  <h2>What you decide</h2>
+  <p class="muted">Yes or no on each, with a note if you want something changed. Your answers save as you click.</p>
+  <div class="tallybar"><span id="tally">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to everything left</button></div>
+  <div class="cards" id="cards"></div>
+</section>
+
+</div>
+
+<script>
+const DECISIONS=[
+ ["The unlock title: a big title like a discovery's, with the label UNLOCKED, the move's name, and how to use it with your own key. For the leap: Double Jump · Press Space again in the air.","Yes. It is what you asked for."],
+ ["The same title every time you unlock something major. Four kinds count: a new way to move, a new power, a new rank, a new layer of the world. Everything else stays a small message.","Yes. Tell me if the list should be longer or shorter."],
+ ["Three unlocks in the Gauntlet instead of one: Double Jump, Air Dash and Slam, each at its own stand with its own title. The aimed dive gets a fourth when it exists.","Yes. It is the only way the dash and the slam get a moment of their own. It needs a small change from the rope session."],
+ ["You take each one yourself: stand on the stand and hold Use for a second. Nothing can touch you until the title has gone.","Yes."],
+ ["You see it before you have it: a gulf you can't cross, and a figure of light crossing it. That needs the figure drawn as light, which it isn't today.","Yes, and build the figure's own drawing as part of this."],
+ ["A hall after each stand that can't be crossed without that move: 4, 4 and 3 uses, with no clock and nothing that hurts.","Yes."],
+ ["Then one timed run that needs all of them, about 85 seconds at par, with medals. The pit there throws you back and doesn't hurt.","Yes."],
+ ["The pay is counted out in front of you as after a Lord: XP with a bell a step, the mastery bar, your time and medal on a plate, your counts. First-run XP goes from a fifth of a level to half a level.","Yes to both. Say no and leave a note to keep it at a fifth."],
+ ["The Gauntlet stays standing as a course you can run again for a better medal, with your best time on its card.","Yes. Say no and it comes down after the first run, as now."],
+ ["It is rebuilt in the look of the Stopped Works, a foundry stopped mid-stroke.","Yes. The gates session has confirmed its kit can lay it by hand."],
+ ["The gate says its point at the door: It holds a new way to move. No fighting.","Yes. It still never says which move."],
+ ["Order: the unlock title first, on all five rungs of the ladder, because it needs nothing else. Then the stands and the course together.","Yes."]
+];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cardsEl=document.getElementById("cards"),tally=document.getElementById("tally"),allYes=document.getElementById("allyes");
+let db=null,dbReady=false,canWrite=true,answers={};
+cardsEl.innerHTML=DECISIONS.map((d,i)=>{const id="d"+(i+1);return `<div class="dcard" id="card-${id}"><h3><small>${i+1}</small><span>${esc(d[0])}</span></h3><p class="rec"><b>My recommendation:</b> ${esc(d[1])}</p><div class="ans"><button type="button" id="${id}-yes" data-id="${id}" data-v="yes" aria-pressed="false">Yes</button><button type="button" id="${id}-no" data-id="${id}" data-v="no" aria-pressed="false">No</button><span class="st" id="${id}-st"></span></div><textarea id="${id}-note" data-id="${id}" rows="1" placeholder="Anything to change? (optional)" aria-label="Note on decision ${i+1}"></textarea></div>`}).join("");
+function renderAns(){
+  let yes=0,no=0;
+  DECISIONS.forEach((d,i)=>{const id="d"+(i+1),a=answers[id]||{};
+    if(a.answer==="yes")yes++;if(a.answer==="no")no++;
+    const y=document.getElementById(id+"-yes"),n=document.getElementById(id+"-no"),t=document.getElementById(id+"-note");
+    y.setAttribute("aria-pressed",a.answer==="yes");n.setAttribute("aria-pressed",a.answer==="no");
+    y.disabled=n.disabled=t.disabled=!canWrite||!db;
+    if(document.activeElement!==t&&(a.note||"")!==t.value)t.value=a.note||"";
+  });
+  const left=DECISIONS.length-yes-no;
+  tally.textContent=!dbReady?"Loading your answers…":!db?"Answers can't be saved in this view. Open the page while signed in.":`${yes} yes · ${no} no · ${left} to answer`;
+  allYes.hidden=!(db&&canWrite&&left>0);
+}
+async function save(id,patch){
+  if(!db)return;
+  const st=document.getElementById(id+"-st");
+  const next=Object.assign({answer:null,note:""},answers[id],patch,{at:new Date().toISOString()});
+  answers[id]=next;renderAns();st.textContent="saving…";
+  try{await db.doc("answers/"+id).set(next);st.textContent="saved";}
+  catch(e){if(e&&(e.code==="permission_denied"||e.code==="not_granted"||e.code==="invalid_argument")){canWrite=false;st.textContent="only Euan can answer";renderAns();}else st.textContent="not saved, try again";}
+}
+cardsEl.addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b){const id=b.dataset.id,cur=answers[id]&&answers[id].answer;save(id,{answer:cur===b.dataset.v?null:b.dataset.v});}});
+cardsEl.addEventListener("change",e=>{if(e.target.matches("textarea"))save(e.target.dataset.id,{note:e.target.value.trim()});});
+allYes.addEventListener("click",async()=>{for(let i=1;i<=DECISIONS.length;i++){const id="d"+i;if(!(answers[id]&&answers[id].answer))await save(id,{answer:"yes"});}});
+renderAns();
+(async()=>{
+  try{db=window.claude&&window.claude.use?await window.claude.use("db"):null;}catch(e){db=null;}
+  dbReady=true;
+  if(!db){renderAns();return;}
+  try{const user=await window.claude.use("user");if(user&&(await user.can("data.write"))===false)canWrite=false;}catch(e){}
+  const timer=setTimeout(renderAns,10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);for(const d of snap.docs)if(d.exists)answers[d.id]=Object.assign({},d.data());renderAns();},()=>{clearTimeout(timer);renderAns();});
+  renderAns();
+})();
+</script>

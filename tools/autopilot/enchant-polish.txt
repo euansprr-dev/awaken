@@ -227,6 +227,11 @@ wait 6
 shotnow polish_25_a_bane_b
 wait 20
 shotnow polish_26_a_bane_c
+cmd damage @e[type=minecraft:zombie,limit=1,sort=nearest] 60 minecraft:player_attack by @s
+wait 4
+shotnow polish_26_b_a_banes_kill
+wait 6
+shotnow polish_26_c_a_banes_kill
 cmd kill @e[type=minecraft:zombie]
 wait 20
 # ---- at work: a ward's plate (seen from the front) ----
@@ -246,6 +251,31 @@ shotnow polish_29_a_ward_c
 camera first
 cmd effect clear @s minecraft:night_vision
 wait 20
+# ---- Gather: what you kill comes to your pack along a gold thread ----
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword[enchantments={"awaken:gather":2,"awaken:remembrance":1}]
+cmd summon minecraft:cow 0.5 201 -1.8 {NoAI:1b,Silent:1b}
+cmd tp @s 0.5 201 1.0 180 10
+wait 30
+cmd damage @e[type=minecraft:cow,limit=1,sort=nearest] 40 minecraft:player_attack by @s
+wait 3
+shotnow polish_34_gather_a
+wait 4
+shotnow polish_34_gather_b
+wait 30
+# ---- Wayfarer: motes at your heels on a path ----
+cmd fill -4 200 -2 4 200 -2 minecraft:dirt_path
+cmd item replace entity @s armor.feet with awaken:dreamsteel_boots[enchantments={"awaken:wayfarer":3}]
+cmd tp @s -3.5 201 -1.5 -90 20
+camera back
+wait 20
+walk 30
+wait 12
+shotnow polish_35_wayfarer_a
+wait 10
+shotnow polish_35_wayfarer_b
+camera first
+cmd fill -4 200 -2 4 200 -2 minecraft:polished_deepslate
+wait 40
 # ---- Lantern in a dark tunnel: without it, then with it ----
 cmd tp @s -10.5 201 14.5 90 0
 wait 60

@@ -42,7 +42,7 @@ final class EnchantGoals {
     /** The tab an enchantment belongs to: Armour for one that fits armour, Weapons for weapons and tools. */
     static Goal tab(Inscriptions.Entry e) {
         return switch (e.fits()) {
-            case "armour", "boots", "helmets", "leggings" -> Goal.ARMOUR;
+            case "armour", "boots", "helmets", "leggings", "chestplates" -> Goal.ARMOUR;
             default -> Goal.WEAPONS;
         };
     }

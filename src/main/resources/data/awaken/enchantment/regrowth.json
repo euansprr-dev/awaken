@@ -1,0 +1,24 @@
+{
+  "anvil_cost": 4,
+  "description": {
+    "translate": "enchantment.awaken.regrowth"
+  },
+  "effects": {
+    "awaken:regrowth": {}
+  },
+  "max_cost": {
+    "base": 42,
+    "per_level_above_first": 10
+  },
+  "max_level": 3,
+  "min_cost": {
+    "base": 12,
+    "per_level_above_first": 10
+  },
+  "slots": [
+    "any"
+  ],
+  "supported_items": "#minecraft:enchantable/durability",
+  "weight": 2,
+  "exclusive_set": "minecraft:mending"
+}

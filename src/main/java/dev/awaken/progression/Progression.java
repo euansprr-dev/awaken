@@ -682,10 +682,10 @@ public final class Progression {
         p.rank = next;
         p.reassessmentReady = next.next() != null && p.level >= next.next().levelRequired;
         player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
-        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(next.label + "-rank"))
-                .body(Component.literal("Reassessment passed. The world will treat you differently now."))
-                .row(Component.literal("New gates"), Component.literal(next.label + "-rank pillars will appear"))
-                .priority(9).ttl(20 * 10).build());
+        // a new rank is named in the Unlock title (SPEC §71.2), in the rank's own colour: the one announcement, no window
+        dev.awaken.core.api.Unlocks.show(player, new dev.awaken.core.api.Unlocks.Unlock(
+                dev.awaken.Awaken.id("unlock/rank/" + next.name().toLowerCase(java.util.Locale.ROOT)), "Rank up", next.label + "-rank",
+                next.label + "-rank gates will start to appear for you", next.colour));
         ProgressionNotices.remember(player, "rank/" + next.name(), "Rank advanced", next.label + "-rank",
                 "You passed reassessment, so " + next.label + "-rank gates will start to appear for you.");
         markNewThing(player, "rank");

@@ -31,6 +31,12 @@ public final class EnchantModule {
         bus.addListener(EnchantFx::onLootingDrops);
         bus.addListener(EnchantFx::onPickupXp);
         bus.addListener(EnchantFx::onFall);
+        bus.addListener(Words::onPlayerTick);
+        bus.addListener(Words::onLogout);
+        bus.addListener(Words::onDeath);
+        // after Harvest's extra and the glints: what Gather takes is the whole of what fell
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOW, Words::onBlockDrops);
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOW, Words::onLivingDrops);
         bus.addListener(Lantern::onPlayerTick);
         bus.addListener(Lantern::onLogout);
         bus.addListener(Lantern::onStopping);

@@ -52,8 +52,16 @@ public abstract class Land {
     public record Trap(String leg, TrapKind kind, int x0, int y0, int z0, int x1, int y1, int z1, int period, int phase,
                        net.minecraft.world.level.block.state.BlockState on, net.minecraft.world.level.block.state.BlockState off) {}
 
-    /** A stretch you can fall from: inside this box a long fall puts you back on the last of its ledges you stood on. Each ledge is x, y, z of your feet. */
-    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges) {
+    /**
+     * A stretch you can fall from: inside this box a long fall puts you back on the last of its ledges you stood on. Each
+     * ledge is x, y, z of your feet. {@code free}: the fall costs nothing and nothing is said (a hall that teaches a move,
+     * SPEC §17.10: the Leaper's Gauntlet's halls before its Long Run, and the Long Run's own pit).
+     */
+    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges, boolean free) {
+        public Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges) {
+            this(leg, x0, y0, z0, x1, y1, z1, ledges, false);
+        }
+
         public boolean holds(int x, int y, int z) {
             return x >= x0 && x <= x1 && y >= y0 && y <= y1 && z >= z0 && z <= z1;
         }

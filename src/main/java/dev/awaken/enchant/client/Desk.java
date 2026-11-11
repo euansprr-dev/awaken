@@ -162,7 +162,8 @@ final class Desk {
         for (int i = 0; i < n; i++) {
             Offer o = OFFERS.get(i);
             float at = i - (n - 1) / 2F;
-            float u = at * step, v = ROW_V - 0.006F * at * at, y = InscribingTableRenderer.SLATE + ROW_Y, size = PAGE, lean = 46F, lit = 1F;
+            // a shallow fan toward you; held to a sixteenth of a block, or a dozen pages' ends hang low over the desk's legs
+            float u = at * step, v = ROW_V - Math.min(0.06F, 0.006F * at * at), y = InscribingTableRenderer.SLATE + ROW_Y, size = PAGE, lean = 46F, lit = 1F;
             if (!o.ok()) {
                 // it can't go on: lying on the slate, dim
                 y = InscribingTableRenderer.SLATE + 0.012F + 0.0015F * i;

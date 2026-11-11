@@ -24,6 +24,11 @@ public final class RealmState {
     public boolean doorShut;
     /** How far the Lord's hall has changed in this fight: 0 not yet, then each stage in turn. */
     public int heartStage;
+    /**
+     * Who is fighting the Lord (SPEC §50.8 "Who is in the fight"): everyone who has stood in its hall since it woke and
+     * hasn't fallen, left the Realm or gone far from the hall. Saved, so a pause, a save or a reload never rests the Lord.
+     */
+    public final Set<java.util.UUID> fighters = new LinkedHashSet<>();
     /** When the bell next tolls and when the doors lift again, in game time; not saved, a restart just starts the count over. */
     public long tollAt, tollOpenAt;
     /** When the salt next turns, and which way it's gone; not saved, the crust is laid out hard and a restart only begins the count again. */
@@ -54,8 +59,9 @@ public final class RealmState {
             Codec.BOOL.optionalFieldOf("door_shut", false).forGetter(s -> s.doorShut),
             Codec.INT.optionalFieldOf("heart_stage", 0).forGetter(s -> s.heartStage),
             Codec.INT.optionalFieldOf("folk_trades", 0).forGetter(s -> s.folkTrades),
-            Codec.STRING.listOf().optionalFieldOf("sealed", List.of()).forGetter(s -> List.copyOf(s.sealed))
-    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs, ft, se) -> {
+            Codec.STRING.listOf().optionalFieldOf("sealed", List.of()).forGetter(s -> List.copyOf(s.sealed)),
+            net.minecraft.core.UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("fighters", List.of()).forGetter(s -> List.copyOf(s.fighters))
+    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs, ft, se, fi) -> {
         RealmState s = new RealmState();
         s.wardensDown.addAll(w);
         s.densCleared.addAll(d);
@@ -69,6 +75,7 @@ public final class RealmState {
         s.heartStage = hs;
         s.folkTrades = ft;
         s.sealed.addAll(se);
+        s.fighters.addAll(fi);
         return s;
     }));
 }

@@ -175,6 +175,11 @@ public final class SystemHud {
         return DECK.current() != null || panel != null;
     }
 
+    /** A choice card is up: it needs an answer, so an Unlock title waits for it. */
+    static boolean choiceUp() {
+        return DECK.current() != null;
+    }
+
     static void pending(List<SignalPayloads.PendingEntry> entries) {
         List<ChoiceDeck.Entry> list = new ArrayList<>(entries.size());
         for (var e : entries) list.add(new ChoiceDeck.Entry(e.window(), e.ticksLeft()));
@@ -317,8 +322,9 @@ public final class SystemHud {
     private static void tickToasts(Minecraft mc) {
         for (ToastBurst.Out<ToastItem> out : BURST.poll(ticks)) TOAST_WAIT.addLast(out);
         LIVE_TOASTS.removeIf(t -> t[0] <= ticks);
-        // they wait (and merge) until the player is back, or a Fault lets go of the screen
-        if (mc.gui.screen() instanceof QuietScreen || dev.awaken.core.api.HudState.toastsWait) return;
+        // they wait (and merge) until the player is back, or a Fault lets go of the screen; and while an Unlock title has
+        // the screen to itself, critical ones too (SPEC §71.2: a pit's toast was drawn over the leap's gift)
+        if (mc.gui.screen() instanceof QuietScreen || dev.awaken.core.api.HudState.toastsWait || UnlockMoment.active()) return;
         boolean any = false;
         while (!TOAST_WAIT.isEmpty() && LIVE_TOASTS.size() < SignalLayout.MAX_TOASTS) {
             int free = SignalLayout.MAX_TOASTS - LIVE_TOASTS.size();
@@ -375,7 +381,7 @@ public final class SystemHud {
             if (panel.closingAt < 0 && (expired || DECK.current() != null)) panel.closingAt = panel.age;
             if (panel.closingAt >= 0 && panel.age - panel.closingAt >= CLOSE_TICKS) panel = null;
         }
-        if (panel == null && DECK.current() == null && !PANELS.isEmpty()) {
+        if (panel == null && DECK.current() == null && !PANELS.isEmpty() && !UnlockMoment.active()) {
             panel = new Panel(PANELS.pollFirst());
             play(CoreModule.SIGNAL_OPEN.get(), 0.45f);
         }

@@ -597,10 +597,16 @@ final class AscentTests {
         net.minecraft.server.level.ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(BlockPos.ZERO);
         int cx = o.getX(), cz = o.getZ(), deckY = level.getMaxY() - 20;
-        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz, false);
         var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
         h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
                 && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
+        // the wings' hall: its mark under the core, the case's rail joined into a ring, a portal's corner opened
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz), "the hall's mark is under the core");
+        var rail = level.getBlockState(placed.core().offset(2, 0, 0));
+        h.assertTrue(rail.is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL)
+                && rail.getValue(net.minecraft.world.level.block.WallBlock.NORTH) != net.minecraft.world.level.block.state.properties.WallSide.NONE, "the case's rail, joined");
+        h.assertTrue(level.getBlockState(placed.core().offset(4, 0, 4)).isAir(), "the pier's corner of the cabin is a portal");
         // the core: by movement, wings; by a tower, nothing
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
@@ -618,11 +624,15 @@ final class AscentTests {
             moved[0] = true;
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
+            // the rank is asked first, then the way: at C a tower still gets nothing
+            moved[0] = false;
+            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower at C gets nothing");
+            moved[0] = true;
             h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
-            for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+            for (BlockPos q : BlockPos.betweenClosed(cx - 5, placed.chainBottom() - 1, cz - 5, cx + 20, deckY + 5, cz + 20)) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }
