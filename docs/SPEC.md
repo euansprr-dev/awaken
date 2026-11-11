@@ -24612,9 +24612,10 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   it, before the body's own capsules come down, so that is the tick the ring closes on there; its wave beyond is not
   the ring's (it draws itself on the ground, and a hit by it is logged as a blow the ring said passes by). A
   **charge** is walked ahead as the server carries it (straight at you and 1.5 past, a flier down to your feet, a
-  stride a tick from the tick after it sets off, its body's touch within 0.6 asked before each stride and its capsules
+  stride a tick from two ticks after it sets off, its body's touch within 0.6 asked before each stride and its capsules
   where it stands): the ring closes on that tick but shows **no band**, because the tick is an estimate (a wall, the
-  ground under a flier, who else stands in the way). A **leap** or a **step** closes its ring as it sets off, as the
+  ground under a flier, who else stands in the way; filmed, four of the Regent's dives landed 0 to 3.3 ticks after the
+  ring closed, 1.7 on average, before the estimate was moved a tick later). A **leap** or a **step** closes its ring as it sets off, as the
   tell always did, with no band. Any other body: from the count it first showed, on the
   client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
 - **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
@@ -24641,6 +24642,18 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   time, the last five (`logs/arms-blackbox-<time>.tsv`). A tour raises the guard on the ring's own clock with `arms
   parry <ticks>` (`ArmsAutopilot`: at the first tick a deflectable blow that reaches you is that near, held 8 ticks),
   which is how the band is measured against the server (`tools/autopilot/boss-experience.txt`).
+- **Measured** (CI run 42994866259, `tools/autopilot/boss-experience.txt`: the three pilots fighting a player put back
+  in front of them every three seconds, their own choice of blows and aim; 68 blows the ring said reach, answered). **The band:** 12 guards
+  went up while the ring showed white (from 0.80 to 3.15 ticks before the blow) and all 12 were deflected. Outside it,
+  5 went up 3.55 to 4.00 ticks before (4 deflected, one at 4.00 blocked: "Too early") and 4 went up 0.17 to 0.69
+  before (3 deflected, one at 0.59 struck): the margins hold, and are not generous. **The clock:** of those 68 blows,
+  60 landed with the ring between 0 and 1 tick from closed (the server's word reaches the client inside the
+  tick the ring closes in; the body's animation runs on the same clock), the Colossus's 7 of 7 and the Ringer's Swings
+  among them (49 of its 54). The 8 others: 3 of the Regent's 4 dives (the charge's estimate, above) and 5 of the Ringer's 54,
+  4 of them Clangs, 2 to 6 ticks after the ring closed. Those are not explained: the likeliest is the Clang's wave
+  reaching a player its core and bells missed, in a film that moves the player by command in the middle of wind-ups;
+  a played fight's log (`[fights] clock:` and `[fights] ring:`) is the check. A blow played by command (`duel play`)
+  is no measure: it begins between two of the boss's ticks, so it lands a tick sooner than a move the boss begins.
 - Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
 - Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
 

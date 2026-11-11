@@ -229,7 +229,7 @@ public final class TellClock implements Strikes.Coming {
 
     /**
      * A charge, walked ahead as the server carries it (AbilityRunner's CHARGE): from where it stands, straight at you and
-     * {@link KitReach#CHARGE_PAST} past (a flier down to your feet), a stride a tick from the tick after it sets off;
+     * {@link KitReach#CHARGE_PAST} past (a flier down to your feet), a stride a tick from two ticks after it sets off;
      * each tick its body's touch is asked before its stride, and its blow's capsules where it stands.
      */
     private static int charge(KitMoves.Move m, int s, AwakenBoss boss, LocalPlayer p, net.minecraft.world.phys.AABB box, float lean, float hip) {
@@ -244,8 +244,10 @@ public final class TellClock implements Strikes.Coming {
         double vx = rx / run * speed, vy = ry / run * speed, vz = rz / run * speed;
         net.minecraft.world.phys.AABB body = boss.getBoundingBox().move(SX[s] - boss.getX(), SY[s] - boss.getY(), SZ[s] - boss.getZ());
         java.util.List<java.util.List<KitMoves.Capsule>> hits = m.hits();
-        for (int k = 0; k <= ticks; k++) {
-            int strides = Math.max(0, k - 1);
+        for (int k = 0; k <= ticks + 1; k++) {
+            // filmed (CI run 42994866259, the Regent's dive, four of them): with a stride from the tick after it sets off the
+            // ring closed 1.7 ticks before the dive landed on average, so the body is taken to start a tick later still
+            int strides = Math.max(0, k - 2);
             double ox = vx * strides, oy = vy * strides, oz = vz * strides;
             if (k >= 1 && body.move(ox, oy, oz).inflate(KitReach.CHARGE_GRAZE).intersects(box)) return k;
             if (k < ACTIVE[s] && k < hits.size()) {
