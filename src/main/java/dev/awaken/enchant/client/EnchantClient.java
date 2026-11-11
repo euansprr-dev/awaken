@@ -138,17 +138,23 @@ public final class EnchantClient {
     }
 
     /**
-     * The autopilot's hand at a table (tours can't drag a mouse): {@code /awaken enchant pilot hover <no> | choose <no> |
-     * memory <no> | trace | again | close}, numbers as in the Journal.
+     * The autopilot's hand at a table (tours can't drag a mouse): {@code /awaken enchant pilot hover <no> | socket <n> |
+     * choose <no> | memory <no> | trace | again | close}, numbers as in the Journal; socket 0 is the first, -1 none.
      */
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("enchant").then(Commands.literal("pilot")
-                .then(Commands.literal("hover").then(Commands.argument("no", IntegerArgumentType.integer(0, 30)).executes(c -> {
+                .then(Commands.literal("hover").then(Commands.argument("no", IntegerArgumentType.integer(0, 36)).executes(c -> {
                     InscribeScreen.pilotHover = IntegerArgumentType.getInteger(c, "no");
+                    Desk.pilotSocket = -1;
                     return 1;
                 })))
-                .then(Commands.literal("choose").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), false))))
-                .then(Commands.literal("memory").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), true))))
+                .then(Commands.literal("socket").then(Commands.argument("n", IntegerArgumentType.integer(-1, 15)).executes(c -> {
+                    InscribeScreen.pilotHover = 0;
+                    Desk.pilotSocket = IntegerArgumentType.getInteger(c, "n");
+                    return 1;
+                })))
+                .then(Commands.literal("choose").then(Commands.argument("no", IntegerArgumentType.integer(1, 36)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), false))))
+                .then(Commands.literal("memory").then(Commands.argument("no", IntegerArgumentType.integer(1, 36)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), true))))
                 .then(Commands.literal("trace").executes(c -> {
                     InscribeScene.pilot = true;
                     return 1;
@@ -160,6 +166,7 @@ public final class EnchantClient {
                 .then(Commands.literal("close").executes(c -> {
                     if (Minecraft.getInstance().gui.screen() instanceof InscribeScreen s) s.onClose();
                     InscribeScene.pilot = false;
+                    Desk.pilotSocket = -1;
                     return 1;
                 })))));
     }

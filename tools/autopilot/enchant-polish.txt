@@ -58,9 +58,10 @@ shotnow polish_00_a_page_flying_a
 wait 5
 shotnow polish_00_a_page_flying_b
 wait 30
+shotnow polish_00_c_the_card_it_comes_with
 cmd item replace entity @s weapon.mainhand with awaken:enchantment_page[stored_enchantments={"awaken:bane_of_crawlers":1},custom_data={awaken_where:"From the Hive Regent, the Lord of the Hive"}]
 wait 30
-shot polish_01_a_page_in_the_hand
+shotnow polish_01_a_page_in_the_hand
 use
 wait 6
 shotnow polish_02_reading_a
@@ -68,9 +69,9 @@ wait 8
 shotnow polish_03_reading_b
 wait 10
 shotnow polish_04_reading_c
-wait 60
-shot polish_05_the_card_after
-wait 200
+wait 30
+shotnow polish_05_the_card_after
+wait 260
 key dismiss
 screen close
 # ---- the desk in the room ----
@@ -133,6 +134,12 @@ shot polish_16_after_the_wake
 cmd awaken enchant pilot again
 wait 40
 shot polish_17_its_socket_filled
+cmd awaken enchant pilot socket 0
+wait 20
+shot polish_17_b_the_socket_pointed_at
+cmd awaken enchant pilot hover 14
+wait 20
+shot polish_17_c_what_cant_go_on
 cmd awaken enchant pilot close
 wait 30
 # ---- a breastplate on the slate ----
@@ -146,10 +153,13 @@ wait 20
 shot polish_19_a_ward_pointed_at
 cmd awaken enchant pilot choose 1
 wait 20
+shotnow polish_20_a_the_mark_on_armour
 cmd awaken enchant pilot trace
 wait 30
 shotnow polish_20_tracing_on_armour
-wait 100
+wait 24
+shotnow polish_20_c_armour_waking
+wait 76
 shot polish_21_armour_woken
 cmd awaken enchant pilot close
 wait 30
@@ -159,6 +169,17 @@ wait 10
 use
 wait 60
 shot polish_22_a_helm_on_the_slate
+cmd awaken enchant pilot hover 31
+wait 20
+shot polish_22_b_lantern_pointed_at
+cmd awaken enchant pilot choose 31
+wait 20
+shotnow polish_22_c_the_mark_on_a_helm
+cmd awaken enchant pilot trace
+wait 30
+shotnow polish_22_d_tracing_on_a_helm
+wait 100
+shot polish_22_e_helm_woken
 cmd awaken enchant pilot close
 wait 30
 # ---- the shine on the sword in the hand ----

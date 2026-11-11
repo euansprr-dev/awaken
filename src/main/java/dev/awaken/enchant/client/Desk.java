@@ -64,6 +64,8 @@ final class Desk {
     static int hover = -1, socket = -1, hoverSince;
     /** The page on its way down to the piece (-1 none), and when it left the row. */
     static int picked = -1, pickedAt = -1000;
+    /** A tour's pointer on a socket (-1 none): {@code /awaken enchant pilot socket <n>}. */
+    static int pilotSocket = -1;
     /** The socket a press is held on (-1 none), and since when. */
     static int held = -1, heldAt;
 
@@ -260,6 +262,10 @@ final class Desk {
             }
         }
         if (forced > 0) for (int i = 0; i < n; i++) if (OFFERS.get(i).e.no() == forced) hover = i;
+        if (pilotSocket >= 0 && pilotSocket < room) {
+            hover = -1;
+            socket = pilotSocket;
+        }
         if (hover != was || socket != wasSocket) hoverSince = InscribeScene.ticks;
         if (socket != held) held = -1;
     }
