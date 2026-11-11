@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * place, kind) and the planner's version, never the plan: after a restart the first chunk to paint makes the same plan
  * again from the land. It shapes no terrain itself (its markers do); its pens get their animals as they generate.
  */
-public class VillagePiece extends StructurePiece implements PieceBeardifierModifier {
+public class VillagePiece extends StructurePiece implements PieceBeardifierModifier, dev.awaken.core.api.GroundPiece {
     private final SettlementGrid.Anchor anchor;
     private final int version;
     static long paintNanos, chunks, blocks;
@@ -73,6 +73,13 @@ public class VillagePiece extends StructurePiece implements PieceBeardifierModif
         if (p != null || Plans.known(anchor.key())) return p;
         ServerLevel sl = level.getLevel();
         return Plans.of(anchor, GenTerrain.of(generator, level, sl.getChunkSource().randomState()));
+    }
+
+    /** The land the settlement's plan paints or clears, with a road's banks round it (SPEC §28.9, "Ground others stand on"). */
+    @Override
+    public boolean usesGround(WorldGenLevel level, ChunkGenerator generator, int x, int z, int r) {
+        VillagePlan p = plan(level, generator);
+        return p != null && dev.awaken.village.road.ClearOfSettlements.touches(p, x, z, r + dev.awaken.village.road.ClearOfSettlements.BANKS);
     }
 
     @Override
