@@ -1,0 +1,96 @@
+# A real jungle giant's shadow from every side (Euan, playing, 11 Nov, of his own tree after the first fix: "Same exact
+# glitch with the tree shadow changing based on where I stand ... on one side of the tree the shadow is perfect, then if
+# I go to the other side, the shadow is gone"). The first fix was shown on a tree built for the tour, a thin crown on a
+# bare trunk. This grows the game's own mega jungle tree on the lawn, under the sun his save held (30 degrees up in the
+# east), so its crown's shadow lies forty blocks and more to the west. The same ground from the west, the east, the
+# south (and from the south again 25 blocks to either side: the same shadow from three places to stand), the north and
+# above. Each view twice: as played, and with the block map's walk off (`lens sunpass off`), which is the heightfield's
+# answer alone and the same wherever the camera is. The shadow should be one shape in all of them.
+# SPEC §22 "Shadows beyond the block map".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-jungletree-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1977
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 121 60.5 180 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 121 -10 50 150 110 minecraft:air
+cmd fill -75 120 -10 50 120 50 minecraft:grass_block
+cmd fill -75 120 51 50 120 110 minecraft:grass_block
+# the game's own giant, twice in case the first try finds no room (a second on top of the first fails and changes nothing)
+cmd place feature minecraft:mega_jungle_tree 30 121 50
+wait 20
+cmd place feature minecraft:mega_jungle_tree 30 121 50
+wait 20
+cmd place feature minecraft:mega_jungle_tree 31 121 52
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+opt fov 90
+wait 400
+cmd time set 1977
+cmd tp @s -45.5 121.2 50.5 -90 5
+wait 260
+shot j1_from_west
+lens sunpass off
+wait 80
+shot j1_from_west_walk_off
+lens sunpass setting
+cmd tp @s 24.5 121.2 50.5 90 12
+wait 260
+shot j2_from_east
+lens sunpass off
+wait 80
+shot j2_from_east_walk_off
+lens sunpass setting
+cmd tp @s -8.5 121.2 76.5 180 12
+wait 260
+shot j3_from_south
+lens sunpass off
+wait 80
+shot j3_from_south_walk_off
+lens sunpass setting
+cmd tp @s -33.5 121.2 76.5 180 12
+wait 260
+shot j4_south_25_west
+lens sunpass off
+wait 80
+shot j4_south_25_west_walk_off
+lens sunpass setting
+cmd tp @s 17.5 121.2 76.5 180 12
+wait 260
+shot j5_south_25_east
+lens sunpass off
+wait 80
+shot j5_south_25_east_walk_off
+lens sunpass setting
+cmd tp @s -8.5 121.2 24.5 0 12
+wait 260
+shot j6_from_north
+lens sunpass off
+wait 80
+shot j6_from_north_walk_off
+lens sunpass setting
+cmd tp @s -8.5 150 50.5 -90 90
+wait 260
+shot j7_above
+lens sunpass off
+wait 80
+shot j7_above_walk_off
+lens sunpass setting
+quit
