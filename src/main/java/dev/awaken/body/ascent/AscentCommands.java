@@ -270,13 +270,13 @@ final class AscentCommands {
                     var next = helix.get(Math.min(helix.size() - 1, stones.size()));
                     double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));
                     double sx = low.x() + 0.5 - dx / d * 6, sz = low.z() + 0.5 - dz / d * 6;
-                    // the ground under the start, found down from the lowest stone's top: a higher stone of the helix can hang
-                    // over the start, and the heightmap stood the body on it (stair tour 43030529770: on a stone at 226, the
-                    // pilot found no platform 150 over it and never climbed)
-                    var g = new net.minecraft.core.BlockPos.MutableBlockPos((int) Math.floor(sx), low.top() + 1, (int) Math.floor(sz));
-                    while (g.getY() > level.getMinY() && !net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque().test(level.getBlockState(g))) g.move(net.minecraft.core.Direction.DOWN);
-                    int gy = g.getY() == low.top() + 1 ? level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, g.getX(), g.getZ())
-                            : g.getY() + 1;
+                    // the ground there, found from the lowest stone's own height down: the column's height is no use, since
+                    // the stone a whole turn up (ten stones on, eleven degrees back) hangs over this very spot, and the
+                    // heightmap stood the player on it, 120 blocks up, looking down
+                    var foot = new net.minecraft.core.BlockPos.MutableBlockPos((int) Math.floor(sx), low.top() + 3, (int) Math.floor(sz));
+                    while (foot.getY() < low.top() + 24 && !level.getBlockState(foot).getCollisionShape(level, foot).isEmpty()) foot.move(0, 1, 0);
+                    while (foot.getY() > level.getMinY() + 1 && level.getBlockState(foot.below()).getCollisionShape(level, foot.below()).isEmpty()) foot.move(0, -1, 0);
+                    int gy = foot.getY();
                     float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                     float pitch = (float) -Math.toDegrees(Math.atan2(low.top() + 1 - (gy + 1.62), 6));
                     p.teleportTo(level, sx, gy, sz, java.util.Set.of(), yaw, pitch, true);

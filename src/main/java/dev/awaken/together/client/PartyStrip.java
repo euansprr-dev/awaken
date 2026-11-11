@@ -72,7 +72,8 @@ final class PartyStrip {
             for (TogetherNet.Member m : ClientParty.members()) {
                 if (m.is(TogetherNet.F_SELF)) continue;
                 int colour = ClientParty.COLOURS[row % ClientParty.COLOURS.length];
-                row(g, font, m, LEFT, TOP + row * ROW, colour);
+                // no panel for a partner's name and health (Euan, 12 Nov: "it looks very bad ... I don't think we need that at
+                // all"). The arrow, the pings and the toast when a partner goes down say what matters; row() is kept unused.
                 if (!m.is(TogetherNet.F_ELSEWHERE)) arrow(g, font, me, m.name(), ClientParty.where(m, pt), pt, w, h, colour, false);
                 row++;
             }

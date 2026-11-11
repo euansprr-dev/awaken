@@ -113,6 +113,86 @@ public abstract class Land {
         traps.add(t);
     }
 
+    /**
+     * A crossing that needs a move of the leap (SPEC §17.10): from the cell feet stand in on one side to the cell they
+     * land in on the other, and which move ("double", "dash", "slam"). The walk check takes these as crossings a player
+     * with the move can make, and separately proves that none can be made without it.
+     */
+    public record Leap(String move, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    /** The crossings of this land that need a move of the leap. None, for every land but a trial of it. */
+    public List<Leap> leaps() {
+        return List.of();
+    }
+
+    /**
+     * A stand of a trial (SPEC §17.10): the cell its plate lies in, the move it holds ("double", "dash", "slam"), and the
+     * press head that hangs over it: its lowest cell at rest. The stand is the Ascent's block, set live by the course.
+     */
+    public record Stand(String move, int x, int y, int z, int head) {}
+
+    /** The stands of this land, in the order they are met. None, for every land but a trial. */
+    public List<Stand> stands() {
+        return List.of();
+    }
+
+    /**
+     * A press over a way that never hurts (SPEC §17.10): a head of {@code block} over the footprint, {@code tall} cells
+     * deep, whose lowest cell is at {@code feet} when it is down and {@code travel} higher when it is up, on a rod. With a
+     * period it runs on the Realm's clock (down, a rise, up, a warning, a fall); with none it is down until
+     * {@code freedBy} (a {@link Slam}'s id) lifts it. Whoever it would come down on is set clear of it, unhurt.
+     */
+    public record Ram(int x0, int z0, int x1, int z1, int feet, int tall, int travel, int period, int phase, String freedBy,
+                      net.minecraft.world.level.block.state.BlockState block, net.minecraft.world.level.block.state.BlockState rod) {}
+
+    public List<Ram> rams() {
+        return List.of();
+    }
+
+    /**
+     * Something only a slam moves (SPEC §17.10): a slam landing inside the box applies the change {@code slam_<id>}
+     * and lifts the ram it frees, for everyone in the gate and for good, as a stand's bars open. {@code again}: it is
+     * part of the timed run, and is put back ({@code rearm_<id>}) each time a runner starts the clock.
+     */
+    public record Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1, boolean again) {
+        public Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+            this(id, x0, y0, z0, x1, y1, z1, false);
+        }
+    }
+
+    public List<Slam> slams() {
+        return List.of();
+    }
+
+    /**
+     * A place of a trial's course the Ascent shows something at (SPEC §17.10, {@code TrialHooks.at}): the mark's name
+     * ("reach", "use/double/1", "use/dash/2", ...) and the two ends of the thing marked, each the cell feet stand in.
+     * Told once to each runner who comes near its first end; a first use of a move only once they hold it.
+     */
+    public record Spot(String mark, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    public List<Spot> spots() {
+        return List.of();
+    }
+
+    /**
+     * The timed run of a trial (SPEC §17.10): the box whose first step starts the clock and the box that stops it (each
+     * x0 y0 z0 x1 y1 z1), its rings in the order they are passed (each x, y, z of the lane under it and the way the
+     * course runs there along z, -1 or 1), par in ticks, and where someone who has run it before is set down (x, y, z,
+     * yaw).
+     */
+    public record Timed(int[] start, int[] finish, List<int[]> rings, int par, int[] door) {}
+
+    /** This land's timed run, or null. */
+    public Timed timed() {
+        return null;
+    }
+
+    /** Whether nothing in this land hurts for falling (a trial's halls: a fall there costs nothing, SPEC §17.10). */
+    public boolean soft() {
+        return false;
+    }
+
     protected final void course(Course c) {
         courses.add(c);
     }

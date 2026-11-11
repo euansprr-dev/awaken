@@ -58,10 +58,16 @@ public final class FpSwings {
      * {@code kick} (schema 7, a hand-keyed move; null: the row's from/to): the view's kick on a hit [yaw, pitch], a unit
      * from the blade the keys draw (SPEC §25 "Hand-keyed moves": a stab nods the view in, a cut kicks along it).
      * {@code lands} (a hand-keyed move's own {@code hit}; else -1): the clip tick its blow reaches what it strikes.
+     * A one-faced weapon of a style whose forged weapons strike with either face ({@link #faced3}: the Toll, the hooked
+     * Chainblades), on a blow those keys land with its other face (SPEC §25 "One-faced heads"): {@code turn} its half turn
+     * about its own length in the fist in first person, one value a key (half turns, signed, 0 at both ends; empty for
+     * none), and {@code turnRight} .. {@code turnStraightLeft} third person's wrist keys with that turn in them (empty: the
+     * move's own wrist).
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
                        float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set,
-                       float trailFrom, float trailTo, float @Nullable [] kick, float lands) {
+                       float trailFrom, float trailTo, float @Nullable [] kick, float lands, float[] turn, float[] turnRight,
+                       float[] turnLeft, float[] turnStraightRight, float[] turnStraightLeft) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -100,14 +106,15 @@ public final class FpSwings {
 
     /**
      * One whole read of the file: its schema, the studio's round, the key steps, every style, and third person's flipped
-     * weapons (their single edge on the other side from their style's) and haft grips (where the fist closes on a weapon
-     * held down its haft; the rest at the item's grip). Swapped whole, so nothing reads half of two files.
+     * weapons (their single edge on the other side from their style's), haft grips (where the fist closes on a weapon
+     * held down its haft; the rest at the item's grip) and one-faced weapons (their own turns: {@link Clip}). Swapped
+     * whole, so nothing reads half of two files.
      */
     public record Data(int schema, int round, float dt, float wristDt, Map<String, Style> styles, java.util.Set<String> flipped,
-                       Map<String, Vector3f> grip3) {}
+                       Map<String, Vector3f> grip3, java.util.Set<String> faced) {}
 
     private static final float[] NONE = new float[0];
-    private static final Data EMPTY = new Data(0, 0, 0.25F, 0.5F, Map.of(), java.util.Set.of(), Map.of());
+    private static final Data EMPTY = new Data(0, 0, 0.25F, 0.5F, Map.of(), java.util.Set.of(), Map.of(), java.util.Set.of());
     private static final Data JAR = jar();
     private static volatile Data data = JAR;
 
@@ -140,6 +147,8 @@ public final class FpSwings {
         float wristDt = root.has("wristDt") ? root.get("wristDt").getAsFloat() : 0.5F;
         java.util.Set<String> flipped = new java.util.HashSet<>();
         if (root.has("flipped3")) root.getAsJsonArray("flipped3").forEach(id -> flipped.add(id.getAsString()));
+        java.util.Set<String> faced = new java.util.HashSet<>();
+        if (root.has("faced3")) root.getAsJsonArray("faced3").forEach(id -> faced.add(id.getAsString()));
         Map<String, Vector3f> grip3 = new HashMap<>();
         if (root.has("grip3")) {
             for (var g : root.getAsJsonObject("grip3").entrySet()) grip3.put(g.getKey(), vec(g.getValue().getAsJsonArray()));
@@ -158,6 +167,8 @@ public final class FpSwings {
                 Hand h = hand == null ? Hand.MAIN : Hand.valueOf(hand.getAsString().toUpperCase(java.util.Locale.ROOT));
                 JsonObject wrist = row.getAsJsonObject("wrist3");
                 JsonObject straight = row.getAsJsonObject("wrist3s");
+                JsonObject wristT = row.getAsJsonObject("wrist3t"), straightT = row.getAsJsonObject("wrist3st");
+                float[] turn = row.has("turn") ? floats(row.getAsJsonArray("turn"), row.getAsJsonArray("keys").size()) : NONE;
                 float swish = row.has("swish") ? row.get("swish").getAsFloat() : 0F;
                 JsonArray bite = row.has("bite") ? row.getAsJsonArray("bite") : null;
                 String sound = row.has("swishSound") ? row.get("swishSound").getAsString() : null;
@@ -168,7 +179,8 @@ public final class FpSwings {
                         row.has("trail") ? row.getAsJsonArray("trail").get(0).getAsFloat() : -1F,
                         row.has("trail") ? row.getAsJsonArray("trail").get(1).getAsFloat() : -1F,
                         row.has("kick") ? floats(row.getAsJsonArray("kick"), 2) : null,
-                        row.has("hit") ? row.get("hit").getAsFloat() : -1F));
+                        row.has("hit") ? row.get("hit").getAsFloat() : -1F, turn, floats(wristT, "right"), floats(wristT, "left"),
+                        floats(straightT, "right"), floats(straightT, "left")));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -181,7 +193,7 @@ public final class FpSwings {
                     st.has("off") ? offHand(st.getAsJsonObject("off")) : null));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
-                java.util.Set.copyOf(flipped), Map.copyOf(grip3));
+                java.util.Set.copyOf(flipped), Map.copyOf(grip3), java.util.Set.copyOf(faced));
     }
 
     /** The set the jar carries. */
@@ -375,10 +387,20 @@ public final class FpSwings {
      * has them. False (out left alone) when it doesn't turn.
      */
     public static boolean wrist(@Nullable Style st, Archetype.Move m, boolean left, boolean straight, float t, Quaternionf out) {
+        return wrist(st, m, left, straight, false, t, out);
+    }
+
+    /**
+     * As {@link #wrist(Style, Archetype.Move, boolean, boolean, float, Quaternionf)}, for a one-faced weapon when
+     * {@code faced} ({@link #faced3}): the move's turned keys where it has them, its head's one face into the blow.
+     */
+    public static boolean wrist(@Nullable Style st, Archetype.Move m, boolean left, boolean straight, boolean faced, float t,
+                                Quaternionf out) {
         Clip c = st == null ? null : st.moves().get(m);
-        float[] k = c == null ? NONE : left ? c.wristLeft() : c.wristRight();
+        boolean turned = faced && c != null && (left ? c.turnLeft() : c.turnRight()).length > 0;
+        float[] k = c == null ? NONE : turned ? (left ? c.turnLeft() : c.turnRight()) : left ? c.wristLeft() : c.wristRight();
         if (straight && c != null) {
-            float[] s = left ? c.straightLeft() : c.straightRight();
+            float[] s = turned ? (left ? c.turnStraightLeft() : c.turnStraightRight()) : left ? c.straightLeft() : c.straightRight();
             if (s.length > 0) k = s;
         }
         int n = k.length / 4;
@@ -403,6 +425,27 @@ public final class FpSwings {
     /** Whether a weapon is turned over in its third-person hold (its wrist then turns turned over too). */
     public static boolean flipped3(String weapon) {
         return data.flipped().contains(weapon);
+    }
+
+    /**
+     * Whether a weapon strikes with one face of a head its style's forged weapons strike with either face of (the Toll's
+     * bell, a Chainblade's hook): its moves' turns ({@link Clip#turn}, the turned wrists) are its own.
+     */
+    public static boolean faced3(String weapon) {
+        return data.faced().contains(weapon);
+    }
+
+    /**
+     * First person, a one-faced weapon ({@link #faced3}): its turn about its own length in the fist at {@code t} ticks of
+     * a move (half turns, signed; 0 when the move has none), on the same clock as {@link #sample}'s keys.
+     */
+    public static float turn(@Nullable Style st, Archetype.@Nullable Move m, float t) {
+        Clip c = st == null || m == null ? null : st.moves().get(m);
+        if (c == null || c.turn().length == 0) return 0F;
+        float[] k = c.turn();
+        float x = Math.max(0, t / data.dt());
+        int i = Math.min(k.length - 1, (int) x), j = Math.min(k.length - 1, i + 1);
+        return k[i] + (k[j] - k[i]) * Math.min(1F, x - i);
     }
 
     /** Where the fist closes on a weapon in third person, the wrist's pivot (item space): down a haft, or null at its grip. */

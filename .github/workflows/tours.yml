@@ -146,7 +146,10 @@ jobs:
       - name: Report
         id: report
         if: always() && steps.req.outcome == 'success'
-        run: python3 -I tools/tour-report.py tour-out
+        run: |
+          # a client that died hard leaves the JVM's own report: without it a crash is one line of the log
+          cp run-autopilot/hs_err_pid*.log tour-out/ 2>/dev/null || true
+          python3 -I tools/tour-report.py tour-out
 
       - uses: actions/upload-artifact@v4
         if: always() && steps.req.outcome == 'success'

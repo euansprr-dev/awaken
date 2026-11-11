@@ -4286,6 +4286,10 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
     with your rope."
   - line (`core.line`): "The core stays dark. It only answers someone who climbed its rings with the rope, not with a
     pearl, a flight or bare hands."
+  **A core is never used up** (Euan, 11 Nov 2026, asked whether a second player should have to find a second
+  platform: "let's leave it as is"): the core keeps no record, so every player takes their wings from the same core,
+  each by their own rank and their own climb, and each sees their own case; a partner below the rank is told to come
+  back while the other's case opens (`ascent_sky_rig` holds it with two hunters).
   Any way the rope carries a climber up the rings counts, however it ends: the sling, the zip's own let-go, the pull-up
   tap, the double jump onto the deck. A pearl, a power's flight or a Runner hang never does. The core no longer asks
   `Ascent.arrivedByMovement(p, 20)` (a third of the last 20 s on the rope or in a Runner move): that stopwatch turned
@@ -4304,8 +4308,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
   middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
   faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
-  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
-  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  after another every ten seconds). Every motion is a cycle of whole ticks (the turn 760, the breath 289, the sway 195,
+  the bob 145, the sheen 200), never a float of time. One pair, drawn within 80 blocks (the far forms past 48), nothing
+  allocated in a frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
   open and empty over a low light.
   - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
     opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
@@ -8139,6 +8144,28 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
   (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
   third person do the same thing (a spear's Art is a thrust in both).
+- **One-faced heads** (Euan 2026-11-11, the Bell Warden's Toll: "facing the wrong way and hitting with the wrong end"):
+  a head that works one way, in a style whose forged weapons strike with either side (the Maul's two hammer faces, the
+  Chainblade's dart), declares its side like a single edge (arms_holds.EDGES: the Toll's bell mouth -x, its crown and
+  hanging loop +x; the Beastbound tusk hook, the Veilwoven sickle and the Lantern Broker's Due, each hook curling to -x
+  with its back, and the tusk's barb, to +x). Undeclared, each was held as drawn and the audit took either side as a
+  hit: the Toll's mouth faced the eye in the right hand and its backhands landed with the crown; the hooks' plunge and
+  execution landed with the hook's back, and in third person their three chain strikes and riposte. `arms_weapons.py
+  check` holds every Axe, Maul and Scythe head to it from its boxes: a head not mirrored about its haft must declare a
+  side, and the side it declares is the one its mass leans to. Its holds turn that side to the front
+  (arms_holds.FACES: the side a style's one-sided heads are held with, the Maul's +x and the Chainblade's -x), and on
+  each blow the style's baked keys land with the other side the weapon turns half round about its own length in the
+  fist on the way in, whole just before the hit, and back as it comes home; the hand and the arm never turn. First
+  person: FpSwings' per-move `turn` (half turns a key, signed the way round that keeps the head away from the eye; the
+  Maul's strike_2, strike_4, riposte, slipcut and undercut, the Chainblade's plunge and execution), played by
+  WeaponRenderer about the item's diagonal through its grip on the hands' own clock and carried across a change of
+  source like the hands (ArmsHands.roll). Third person: `wrist3t` and `wrist3st`, the move's wrist keys with the turn
+  in them (the Maul's strike_2, strike_4, slipcut, undercut, the carry onto the body landing its riposte square; the
+  Chainblade's strike_1 to 3 and riposte), for the weapons `faced3` names; the Toll, its mouth the other side from the
+  forged mauls' front face, is turned over in its hold too (`flipped3`). `anim_lab.py faced` writes both from the keys
+  as they stand, and bake, splice, rerig and the rig's inject run it; the audit counts a one-sided head's own side
+  only. GameTest `arms_fp_swings` holds the Toll's mouth away from the eye in both first-person hands, names the four
+  in faced3 and holds every turn home by its move's end.
 - **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"; then "it's
   literally going through his body"): vanilla's third-person hold sets a weapon across the fist, square to the
   forearm, and a vanilla arm has no wrist, so the forearm's roll swings the blade round rather than turning its edge,
@@ -26221,7 +26248,7 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   rights except ending the household. One second keeper a Hearth.
 - Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
 
-**70.2 Seeing and pointing.**
+**70.2 Seeing and pointing.** **12 Nov, Euan: the strip's panel (a partner's name and health, top left) is off:** "it looks very bad ... I don't think we need that at all"; `PartyStrip.row` is no longer drawn. The edge arrows, the pings, the Atlas marks, the band's section and the toast when a partner goes down stay.
 - The party strip (client, the band's look, off with the HUD, setting small / off): a row per member: name, health,
   one state (in a menu, in a gate with its floor, on Gentle, on a knee, down, far) and an arrow on the screen's edge
   with the distance when out of view. Hidden with no party. Synced on change only: health in twentieths, state,
@@ -26465,3 +26492,79 @@ and re-run: the gates session.
 - **K, Powers:** while the leap is held by parts, a line a move taken and "◆ Another move waits further into the
   Gauntlet."
 - **Tests:** `way_up_stands` (new), `way_up_road` (the gate stays until the run is paid; paid once).
+
+**71.8 Built: the place (11 Nov 2026, the gates session; `gates.realms.land.LeapersGauntlet`, `gates.realms.RealmTrial`).**
+A Realm laid by hand in the Stopped Works' blocks (blueprint `awaken:leapers_gauntlet`; `Realms.choose` gives it to a
+plan with `leaperTrial` once it says it is ready, which it does not until someone has walked it end to end). No monsters, no Lord.
+- **Halls.** A hall is a machine hall 17 wide with a way of decks 5 wide down its middle over a casting pit 18 down
+  (piers every eighth cell, a beam between each pair, press heads stopped over the pit, a lit casting floor). The way in:
+  a gap of 2, a step, a gap of 3, then the gulf (6 wide, the far side 2 higher) with the first stand's room off its lip.
+  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 7 beside a wall. "Through": a gap of 7, two
+  presses over a deck 28 long, a turn with a gap of 7, a gulf of 12. "Down" is rooms, not a hall: a gantry over a well
+  with a cracked deck across it 5 down and the way on 3 under that; three castings stood in a doorway with a brass plate
+  before them; a room with a bay sunk 4 and a ram stuck down in its way out.
+- **A stand's room** is round, the stand (`awaken:leap_stand`, set live by the course so it has its block entity) on a
+  dais in the middle and a press head hung in a well over it. When the Ascent says the stand was taken
+  (`TrialHooks.onStand`) the head comes down 3 cells in 6 ticks, stays 22 and goes back (never lower than 4 over the
+  plate), and the bars past that stand open for everyone in the gate, for good (`stand_<move>` in the gate's saved
+  state). A stand that has nothing left to give someone (theirs from another day) does not answer them: stood on for 4 s
+  it opens its bars all the same, with no stroke.
+- **The presses of "Through"** (`Land.Ram`, run every tick by `RealmTrial.tickServer` for gates someone is near): a
+  head 5 by 3 and 3 deep on a rod, real blocks, always in view: up 5 over the deck, a puff of dust 12 ticks before it
+  falls, down in 3 ticks, down for 34, up at a cell a tick; a beat of 64 ticks, the second press 10 ticks after the
+  first, so a dash rides the beat down the line and a runner on foot takes them one beat each. Two in "Through" (a third
+  at the deck's turn could be walked round by its corner) and two on the Long Run. A press never hurts: whoever
+  it would come down on is set clear of it on the nearer side.
+- **What a slam moves** (`Land.Slam`, `TrialHooks.onSlam`): a slam landing on the cracked deck breaks it; one landing
+  near the castings clears them out of their doorway (from either side); one landing on the bay's plate lifts the stuck
+  ram (4 cells, a cell every 3 ticks). Each is for everyone in the gate, for good (`slam_<id>`).
+- **Nothing hurts.** A fall in this land does no damage (`Land.soft`, `LivingFallEvent`), and a fall into a hall's pit
+  is caught as on any course, at no cost and with no words (`Course.free`).
+- **What the Ascent is told** (`Land.Spot`, `TrialHooks.at`): `reach` at the first gulf to whoever has not been to the
+  first stand; `use/<move>/<n>` once to each runner who comes within 5 cells of that place's near end (double 1 to 4,
+  dash 1 to 4 with the presses as 2, slam 1 to 3), a move's first place only once its stand is theirs;
+  `miss` or `miss/<move>` for every third fall at one place.
+- **The HUD's line** (`RealmTrial.hint`): "Reach the first stand", then "Cross the hall".
+- Dev: `/awaken gate realm_stand <move>` (a stand as if taken, with its stroke), `/awaken gate realm_slam` (a slam as if
+  one landed where you stand); tour `tools/autopilot/realm-leapers_gauntlet.txt`. Tests:
+  `realm_leapers_gauntlet_needs_its_moves` (the walk reaches every leg with the stands' bars open and what a slam moves
+  moved, no crossing said to need a move can be made without it, three stands with room under their presses, a place
+  for every mark, a press's beat), `realm_leapers_gauntlet_nothing_floats`.
+- **The Long Run** (`Land.Timed`, run every tick by `RealmTrial`): three halls on three levels (Y 100, 90, 80), each run
+  the other way to the one before, joined by a well with a cracked deck 5 under its lip. First hall: a gap of 3, a gulf
+  of 6 with the far side 2 higher, a step 3 up, a gap of 9, a gap of 10 beside a wall, a gulf of 12. Second: a gap of 9,
+  two presses on the beat of "Through", a step 3 up, a gulf of 12, three castings in a doorway. Third: a gap of 3, a
+  gap of 10 beside a wall, a gap of 9, and 26 cells of sprint to the far line. Seven double jumps, five dashes, three
+  slams. The clock starts at the first step onto the run and stops at the far line; five rings (brass arches over the
+  lane) give the splits. It is the old Gauntlet's clock on screen (`RigPayloads.Run`), with its medals: gold within
+  par plus a tenth and a second, silver within half again and two; par 85 s until it has been run by hand. A fall into
+  a pit puts the runner back on the last deck stood on and costs nothing. What a slam moves on the run is put back as
+  each runner comes within 44 cells of it (`Slam.again`), unless someone is in the middle of it.
+- **The far line** pays through the trial (`TrialHooks.pay`: the first time, what §71.7 says) and adds the medal's share
+  every time (6%, 3.5% or 2% of a level, as any Gauntlet's, under the `awaken:gauntlet` budget). The best time is kept
+  with the player (`GateMemory.trialBest`).
+- **The tally** (`TrialPayloads.Tally`, `gates.client.TrialTally`, in the look of the Lord's payout): the XP in the
+  middle of the view, climbing in ten steps with the game's own bell on the Lord's low walk; then "Leaper mastery · level
+  N" and its bar filling; then the time and medal in the medal's colour ("your best yet" or the best before), and the
+  counts ("Double jumps 14 · Dashes 9 · Slams 4", on two lines when one would not fit). It waits for an Unlock title
+  (one that starts while it is up stops it where it is, and it goes on after), holds 6.5 s, holds every other notice
+  while it shows, and the run's own clock leaves the time and medal to it.
+- **The way home:** an exit arch on the landing before the Long Run and one on the tally floor, besides the arch at the
+  mouth (every `PORTAL` site of a trial's land past the first gets one).
+- **Coming back:** someone who has run it before (`TrialHooks.finished`) is set down on the landing as they arrive:
+  "You've run this before, so you start at the Long Run." The gate is never marked cleared, so it stays standing.
+- **The HUD's line** goes on to "Run the Long Run" on the landing and through the run, then "The way out is open".
+- **Reach** (from the leap's own rules, sent by the rope session 11 Nov 2026 at Leaper mastery 0: sprint take-off 0.49
+  a tick, second jump +0.52, dash 0.95, the carry's drag 0.988; the carry shortened by 16/19 because a tour measured it
+  that much shorter than the rules; widest gap in cells onto a far side so much higher):
+  a plain sprint jump with the ground mantle 6.6 level, 5.9 at +1, 5.6 at +2, 4.5 at +3, nothing at +4;
+  a second jump 7.9 to 8.4 level, 6.8 to 7.4 at +2, 5.7 to 6.7 at +3;
+  a jump and a dash 8.1 to 9.0 level; a jump, a second jump and a dash 13.9 level.
+  So the first gulf (6 wide, 2 higher) cannot be made without the leap (short by 0.4) and can with it (0.8 to spare);
+  the teaching halls' other gates were cut to fit one move: "Twice"'s long gap from 11 to 7, "Through"'s two dash gaps
+  from 9 and 8 to 7. A step 3 up and a gap of 4 onto a ledge 2 higher can also be made by a jump and a mantle; they are
+  places to use the move, not gates. The Long Run keeps the plan's sizes (gaps of 9 and 10, gulfs of 12): each is
+  within a second jump and a dash together, and a gap of 9 is not certain on a dash alone.
+- *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; a check that
+  proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
+  par set from real runs. Nobody has played it.

@@ -47,9 +47,6 @@ arms waitserver 100
 wait 100
 hud off
 shot sky_dusk_00_approach
-look 0 -55
-wait 10
-shot sky_dusk_01_up_the_stair
 cmd time set 18000
 wait 40
 shot sky_dusk_02_night

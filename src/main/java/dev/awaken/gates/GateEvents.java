@@ -58,6 +58,7 @@ final class GateEvents {
         bus.addListener(GateEvents::onExplode);
         bus.addListener(GateEvents::onEntityInteract);
         RunEvents.register(bus);
+        dev.awaken.gates.realms.RealmTrial.register(bus);
     }
 
     private static void onServerTick(ServerTickEvent.Post e) {
@@ -69,6 +70,7 @@ final class GateEvents {
         Breaks.tick(server);
         GateCard.tick(server);
         dev.awaken.gates.worlds.WorldLive.tick(server);
+        dev.awaken.gates.realms.RealmTrial.tickServer(server);
         int t = server.getTickCount();
         if (t % 100 == 50) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -112,7 +114,10 @@ final class GateEvents {
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) RunEvents.onLogout(p);
+        if (e.getEntity() instanceof ServerPlayer p) {
+            RunEvents.onLogout(p);
+            dev.awaken.gates.realms.RealmTrial.left(p);
+        }
     }
 
     private static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
@@ -124,6 +129,7 @@ final class GateEvents {
     private static void onDimension(PlayerEvent.PlayerChangedDimensionEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         GatePayloads.syncBeacons(p);
+        dev.awaken.gates.realms.RealmTrial.left(p);
         Hud.send(p);
     }
 
