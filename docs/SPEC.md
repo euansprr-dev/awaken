@@ -22904,7 +22904,8 @@ one glowcap far taller than the rest, its cap 44 across and its top 54 over the 
 High Caps' hour is night as near as the Air allows it (its haze is thickest when the sun is low or gone, so the sun
 stands at 308 and plays the moon): sky light at three tenths and cyan (#9ae8f4), `sky_color`
 #2c5a78, `fog_color` #3a8a90, block light cyan, a teal grade with strong bloom, mist on the sea lit from under the
-caps, spores and stars in the air, the warped forest's sounds. Lord: the Mother of Spores.
+caps, spores and stars in the air (no particles of the biome's own: vanilla's warped spore is a dark square, and
+against a bright sky a dark square near the eye reads as a block), the warped forest's sounds. Lord: the Mother of Spores.
 
 Tests, for each land at the lowest rank it opens at (`kit/land/LandTests`): `realm_<land>_walks_to_everything` (seeds 1
 and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale`,

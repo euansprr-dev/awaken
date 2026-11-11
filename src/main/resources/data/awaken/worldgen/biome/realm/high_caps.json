@@ -29,17 +29,6 @@
         }
       }
     },
-    "minecraft:visual/ambient_particles": {
-      "modifier": "append",
-      "argument": [
-        {
-          "particle": {
-            "type": "minecraft:warped_spore"
-          },
-          "probability": 0.02
-        }
-      ]
-    },
     "minecraft:visual/sun_angle": 308.0,
     "minecraft:visual/sky_light_color": "#9ae8f4",
     "minecraft:visual/sunrise_sunset_color": "#6070a0ff",
