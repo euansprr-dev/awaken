@@ -225,18 +225,20 @@ final class AboveTests {
             int i = 0;
             for (RuinKind kind : RuinKind.values()) {
                 var holder = structures.getOrThrow(kind.structure);
-                BlockPos lane = base.offset(i++ * 160, 0, 0);
-                // Tether Spires and sky platforms keep their distance (RuinSpacing, SPEC §17.11 "Room between them"): a spot
-                // can lose to a nearer one, so walk down this kind's lane, 640 apart, to the first spot the rule keeps
-                var start = net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START;
-                int tried = 0;
-                while (!start.isValid() && tried < (RuinSpacing.spaced(kind) ? 24 : 1)) {
-                    BlockPos at = lane.offset(0, 0, tried++ * 640);
+                BlockPos at = base.offset(i++ * 160, 0, 0);
+                // like /place structure this ignores the land (b -> true), but the spacing rule asks the real biome and the
+                // neighbours (RuinSpacing, SPEC §17.11 "Room between them"), so it is set aside while the start is made;
+                // ruins_spacing tests the rule
+                net.minecraft.world.level.levelgen.structure.StructureStart start;
+                RuinSpacing.set(false);
+                try {
                     start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
                             rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
                             level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
+                } finally {
+                    RuinSpacing.set(true);
                 }
-                h.assertTrue(start.isValid(), kind.id + " start is valid (" + tried + " spots tried)");
+                h.assertTrue(start.isValid(), kind.id + " start is valid");
                 var box = start.getBoundingBox();
                 for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
                     for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
