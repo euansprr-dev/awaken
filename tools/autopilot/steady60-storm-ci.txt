@@ -30,8 +30,10 @@ wait 300
 cmd time set 4000
 cmd awaken living happen rolling_storm
 wait 200
+cmd tp @s ~120 ~40 ~
+wait 60
 cmd awaken living near 200
-wait 200
+wait 300
 cmd tp @s ^ ^150 ^-520
 cmd setblock ~ ~-1 ~ minecraft:glass
 wait 10

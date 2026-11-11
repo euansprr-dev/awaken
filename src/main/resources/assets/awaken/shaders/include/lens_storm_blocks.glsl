@@ -178,24 +178,33 @@ vec4 stormBlocks(vec3 v, float scene, out float hit) {
         if (sbSolid(floor(at / SB_GRID), b.xy, a.w)) shade += 1.0;
     }
     float open = 1.0 - shade / 3.0;
-    float face = max(dot(bn, l), 0.0);
+    float turn = dot(bn, l), face = max(turn, 0.0);
+    // an inner corner (cloud again past this face and a tier up, or straight above a side face) sits in the cell's own
+    // shade: this is what gives the turrets their depth from below, where no face looks at the sun
+    float nook = 1.0;
+    if (abs(bn.y) < 0.5) {
+        if (sbSolid(bci + bn + vec3(0.0, 1.0, 0.0), b.xy, a.w)) nook -= 0.20;
+        if (sbSolid(bci + bn * 2.0 + vec3(0.0, 2.0, 0.0), b.xy, a.w)) nook -= 0.10;
+    }
     // the sky's light on it: dark and blue-grey at the shelf, paling to the layer's own white at the dome and anvil; a
     // face looking down is the darkest thing in the sky
     vec3 over = airSky(vec3(0.0, 1.0, 0.0), f22.xyz, f16.z), edge = airSky(normalize(vec3(v.x, 0.12, v.z)), f22.xyz, f16.z);
     vec3 ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.52 * hr.x) * (0.80 + 0.14 * hr.x + 0.25 * hr.y) + vec3(0.020, 0.028, 0.050) * hr.z;
     float rise = smoothstep(0.02, 0.62, hn);
-    float look = bn.y < -0.5 ? 0.74 : (bn.y > 0.5 ? 1.0 : 0.86);
+    float look = bn.y < -0.5 ? 0.70 : (bn.y > 0.5 ? 1.0 : 0.84);
     // (each block a little its own tone, so the grid reads on a flat face; the shelf lighter toward its rim, where the
     // open sky is beside it)
     vec3 qh = (bci + 0.5) * SB_GRID;
     vec2 awh = vec2(dot(qh.xz, b.xy), dot(qh.xz, vec2(-b.y, b.x)));
     float rim = smoothstep(0.45, 1.05, length(awh - vec2(8.0, 0.0)) / SB_SHELF) * (1.0 - rise);
     float tone = (0.93 + 0.14 * sbHash(bci + 3.0)) * (1.0 + 0.45 * rim);
-    vec3 sky = ambient * mix(vec3(0.30, 0.34, 0.43), vec3(0.80, 0.83, 0.90), rise) * look * (0.72 + 0.28 * open) * tone;
-    // the sun on it: only on faces turned to it that the cell doesn't hide, strongest high on the tower
+    vec3 sky = ambient * mix(vec3(0.27, 0.31, 0.41), vec3(0.86, 0.89, 0.95), rise) * look * nook * (0.66 + 0.34 * open) * tone;
+    // the sun on it: full on a face turned to it, a share on one it grazes (light wraps a cloud), none on one turned
+    // away or hidden by the cell itself; strongest high on the tower, where it stands clear of its own base
     vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
     vec3 sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.10 : lit * (0.40 + 0.3 * hr.y)) * f14.w;
-    vec3 L = sky + sunCol * (face * open * mix(0.35, 1.15, rise));
+    float sunOn = open * (turn > -0.25 ? 0.26 + 0.74 * face : 0.0) * nook;
+    vec3 L = sky + sunCol * (sunOn * mix(0.45, 1.55, rise));
     // its lightning: the blocks round the flash glow from within, the whole cell a little
     if (c.w > 0.0) {
         vec3 d = w - c.xyz;
