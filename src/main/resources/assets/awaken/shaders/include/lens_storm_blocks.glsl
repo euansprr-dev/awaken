@@ -31,8 +31,13 @@ float sbPuff(vec3 ci) { return 0.72 * sbHash(floor(ci / 3.0) + 7.0) + 0.28 * sbH
 bool sbSolid(vec3 ci, vec2 w, float grow) {
     vec3 q = (ci + 0.5) * SB_GRID;
     float h = q.y;
-    if (h < 0.0 || h > min(STORM_H + 12.0, mix(-10.0, STORM_H + 50.0, grow))) return false;
+    if (h < -CLOUD_TIER || h > min(STORM_H + 12.0, mix(-10.0, STORM_H + 50.0, grow))) return false;
     vec2 aw = vec2(dot(q.xz, w), dot(q.xz, vec2(-w.y, w.x)));   // along the wind, across it
+    if (h < 0.0) {
+        // under the flat base some lumps hang one tier lower (a plain slab seen from below showed no blocks at all)
+        float rd2 = dot(aw - vec2(8.0, 0.0), aw - vec2(8.0, 0.0));
+        return rd2 < SB_SHELF * SB_SHELF * 0.72 && sbHash(floor(ci / vec3(2.0, 1.0, 2.0)) + 53.0) > 0.66;
+    }
     float hn = clamp(h / STORM_H, 0.0, 1.0);
     const float full = 1.16;
     bool shelf = false, body = false, flank = false, dome = false, anvil = false;
@@ -143,7 +148,7 @@ vec4 stormBlocks(vec3 v, float scene, out float hit) {
         vec3 org = vec3(-a.x, camY - a.z, -a.y);
         vec2 across = vec2(-b.y, b.x);
         for (int part = 0; part < 3; part++) {
-            vec2 span = part == 0 ? stormBand(v, a.xy + b.xy * 14.0, 168.0, a.z, a.z + STORM_H - 26.0, camY)
+            vec2 span = part == 0 ? stormBand(v, a.xy + b.xy * 14.0, 168.0, a.z - CLOUD_TIER, a.z + STORM_H - 26.0, camY)
                     : (part == 1 ? stormBand(v, a.xy - b.xy * 160.0 + across * 45.0, 114.0, a.z, a.z + SB_FLANK0.w + 10.0, camY)
                     : stormBand(v, a.xy + b.xy * 135.0, 232.0, a.z + STORM_H - 72.0, a.z + STORM_H + 14.0, camY));
             float t1 = min(span.y, min(scene, hit));
@@ -179,8 +184,14 @@ vec4 stormBlocks(vec3 v, float scene, out float hit) {
     vec3 over = airSky(vec3(0.0, 1.0, 0.0), f22.xyz, f16.z), edge = airSky(normalize(vec3(v.x, 0.12, v.z)), f22.xyz, f16.z);
     vec3 ambient = mix(mix(over, edge, 0.55), vec3(1.0), 0.52 * hr.x) * (0.80 + 0.14 * hr.x + 0.25 * hr.y) + vec3(0.020, 0.028, 0.050) * hr.z;
     float rise = smoothstep(0.02, 0.62, hn);
-    float look = bn.y < -0.5 ? 0.62 : (bn.y > 0.5 ? 1.0 : 0.84);
-    vec3 sky = ambient * mix(vec3(0.20, 0.23, 0.31), vec3(0.80, 0.83, 0.90), rise) * look * (0.72 + 0.28 * open);
+    float look = bn.y < -0.5 ? 0.74 : (bn.y > 0.5 ? 1.0 : 0.86);
+    // (each block a little its own tone, so the grid reads on a flat face; the shelf lighter toward its rim, where the
+    // open sky is beside it)
+    vec3 qh = (bci + 0.5) * SB_GRID;
+    vec2 awh = vec2(dot(qh.xz, b.xy), dot(qh.xz, vec2(-b.y, b.x)));
+    float rim = smoothstep(0.45, 1.05, length(awh - vec2(8.0, 0.0)) / SB_SHELF) * (1.0 - rise);
+    float tone = (0.93 + 0.14 * sbHash(bci + 3.0)) * (1.0 + 0.45 * rim);
+    vec3 sky = ambient * mix(vec3(0.30, 0.34, 0.43), vec3(0.80, 0.83, 0.90), rise) * look * (0.72 + 0.28 * open) * tone;
     // the sun on it: only on faces turned to it that the cell doesn't hide, strongest high on the tower
     vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
     vec3 sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.10 : lit * (0.40 + 0.3 * hr.y)) * f14.w;

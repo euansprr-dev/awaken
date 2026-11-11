@@ -30,32 +30,45 @@ wait 300
 cmd time set 4000
 cmd awaken living happen rolling_storm
 wait 200
-cmd awaken living face
-wait 300
-shot s1_from_afar
-wait 300
-shot s1_from_afar_later
 cmd awaken living near 200
 wait 200
-shot s2_tower_200
+cmd tp @s ^ ^150 ^-520
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 10
+cmd tp @s ~ ~ ~ ~ -8
+wait 300
+shot s1_far_morning
+cmd time set 7500
+wait 100
+shot s1_far_afternoon
+cmd time set 11400
+wait 150
+shot s1_far_golden
+cmd time set 18000
+wait 150
+shot s1_far_night
+cmd awaken living strike 600
+wait 2
+shotnow s1_far_strike_a
+wait 4
+shotnow s1_far_strike_b
+cmd time set 5000
+cmd awaken living near 200
+wait 200
+cmd tp @s ^ ^60 ^-200
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 10
+cmd tp @s ~ ~ ~ ~ -30
+wait 300
+shot s2_tower_400
 cmd awaken living near 60
 wait 200
-shot s3_under_shelf
-cmd awaken living near 200
+cmd tp @s ~ ~ ~ ~ -65
 wait 100
-cmd time set 11400
-wait 200
-shot s4_golden
-cmd time set 18000
-wait 200
-shot s5_night
-cmd awaken living strike 150
-wait 2
-shotnow s6_strike_a
-wait 3
-shotnow s6_strike_b
-wait 6
-shotnow s6_strike_c
+shot s3_under_shelf
+cmd tp @s ~ ~ ~ ~ -20
+wait 60
+shot s3_under_level
 lens cost
 cmd awaken living calm
 quit
