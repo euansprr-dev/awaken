@@ -35,7 +35,7 @@ public final class EncounterTests {
         AwakenTests.registerIsolated("gates_prowl_walks_its_beat", 2000, h -> {
             for (int x = 0; x <= 14; x++) for (int z = 0; z <= 4; z++) h.setBlock(x, 1, z, net.minecraft.world.level.block.Blocks.STONE);
             BlockPos a = h.absolutePos(new BlockPos(2, 2, 2)), b = h.absolutePos(new BlockPos(12, 2, 2));
-            Mob pig = h.spawn(EntityType.PIG, new BlockPos(2, 2, 2));
+            Mob pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, new BlockPos(2, 2, 2));
             Encounters.holdBeat(pig, new long[]{a.asLong(), b.asLong()});
             boolean[] stood = new boolean[2];
             h.onEachTick(() -> {
