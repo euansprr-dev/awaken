@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -106,13 +107,26 @@ final class Floaters {
         for (Kind k : bad) {
             StringBuilder cells = new StringBuilder();
             for (BlockPos p : k.cells) cells.append(cells.isEmpty() ? "" : "; ").append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ());
-            Awaken.LOG.info(String.format(Locale.ROOT, "[caves] floaters   %s: %d of %d (%d loose, %d partial; %d leaning across a chunk edge, %d on an edge column) at %s",
-                    BuiltInRegistries.BLOCK.getKey(k.block), k.bad(), k.seen, k.loose, k.partial, k.across, k.edge, cells));
+            // whose it is, for what isn't the skin's: the structure with a piece at its first cell
+            String in = CaveSkinFeature.skin(k.block) || k.cells.isEmpty() ? "" : "; the first in " + owner(level, k.cells.getFirst());
+            Awaken.LOG.info(String.format(Locale.ROOT, "[caves] floaters   %s: %d of %d (%d loose, %d partial; %d leaning across a chunk edge, %d on an edge column) at %s%s",
+                    BuiltInRegistries.BLOCK.getKey(k.block), k.bad(), k.seen, k.loose, k.partial, k.across, k.edge, cells, in));
         }
         int f = floating, o = oursBad, r = read, u = unsettled;
         src.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "Floaters: %d of %d pieces in %d settled chunks (%d ours), %d chunks not settled yet",
                 f, total, r, o, u)).withColor(f == 0 ? 0x9FE6D6 : 0xE6B89F), false);
         return look < 0 ? Math.max(1, floating) : look(src, level, from, all, look);
+    }
+
+    /** The structure with a piece at a cell (a mineshaft, a Delvers' mouth...), or "no structure". */
+    private static String owner(ServerLevel level, BlockPos at) {
+        var structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+        for (var e : level.structureManager().getAllStructuresAt(at).entrySet()) {
+            if (level.structureManager().getStructureWithPieceAt(at.getX(), at.getY(), at.getZ(), e.getKey()).isValid()) {
+                return String.valueOf(structures.getKey(e.getKey()));
+            }
+        }
+        return "no structure";
     }
 
     /** To a stand that sees the pick-th floater; the spot goes to the log. */
@@ -158,7 +172,8 @@ final class Floaters {
         LevelChunkSection[] sections = chunk.getSections();
         int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
         int[] tops = new int[256];
-        for (int i = 0; i < 256; i++) tops[i] = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, i & 15, i >> 4) - CaveSkinFeature.UNDER_GROUND;
+        // under the ground less the skin's 6: the leafless height, so a plant under a tree is not "under the ground"
+        for (int i = 0; i < 256; i++) tops[i] = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, i & 15, i >> 4) - CaveSkinFeature.UNDER_GROUND;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int si = 0; si < sections.length; si++) {
             LevelChunkSection section = sections[si];
