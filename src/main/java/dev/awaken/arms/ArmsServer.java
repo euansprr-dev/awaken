@@ -1006,7 +1006,8 @@ final class ArmsServer {
                     boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
                     stop(p, s, src, from, true, 0F, by, back);
                 } else {
-                    clash(p, s, by, ArmsRules.clashSize(kind, broke));
+                    // the biggest clash also answers a blow whose deflect left the body reeling (its phrase's last, SPEC §68.3)
+                    clash(p, s, by, ArmsRules.clashSize(kind, broke || by instanceof LivingEntity reeler && Strikes.reeling(reeler)));
                 }
             }
             case BLOCK -> {

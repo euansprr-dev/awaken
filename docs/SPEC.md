@@ -24753,7 +24753,9 @@ stance): freeze 110 / 160 / 200 ms (was 100), view kick 2.6 / 4.0 / 4.5 degrees 
 flash at the meeting, wider by size, the frame's edges for the third; sounds from Minecraft's own recordings by the boss
 weapon's material with no layer pitched above 1.2 (was an anvil at 0.45 volume pitched 1.6 over a shield block), three
 candidates a size on the local listening page; a block keeps its thud and gets no flash. The size rides in the DEFLECT
-reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third. The ring's own burst is §68.2's.
+reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third: `ArmsServer` sizes the clash
+`ArmsRules.clashSize(kind, broke || Strikes.reeling(attacker))`, so a blow whose deflect leaves the body reeling (its
+phrase's last) gets the biggest clash as a broken stance does. The ring's own burst is §68.2's.
 
 **68.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
 Execution), `opening` (the camera), `living` (the plate's words).
@@ -25000,7 +25002,7 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   on standable ground within five blocks of it), and going back in takes you to the entrance of the floor your party
   has reached, once they are clear of a fight (`Runs.rejoinFloor`; realms and the story's gates start at their start).
   The Satchel and the Fracture are the price as before.
-- The finishing blow (§68 of the boss plan, when built): either may take it; everyone in the fight sees the film.
+- The finishing blow (§68): either may take it; everyone in the fight sees the film.
 
 **70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
 One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on
