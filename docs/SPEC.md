@@ -6461,6 +6461,27 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     in a texture (Java) and is not built.
   - Checked on CI with `tools/autopilot/steady60-cover-ci.txt` (a stone room with a seven-block roof in its own
     morning shadow; views at 70, 100 and 110 degrees), before and after.
+  - **The hand** (Euan, playing, the same day, after the fix above: "When I get close to a door that's full of shade
+    ... it creates this spotlight effect in my view. And then if I move forward, the spotlight effect moves with me";
+    "Same thing when I get close to a wall ... the same issue as earlier, but for walls and for ceilings"). Three
+    rules took "within 1.25 blocks of the eye" to mean "the hand": the light pass shadowed nothing nearer, the
+    composite's light eased in from there to 1.45, and inside that reach nothing was darker than the game. A wall, a
+    door or a ceiling at arm's length is inside it too, so it stood in the game's raw light, a disc on the shaded
+    surface that moved with the camera. The hand cannot be told from a wall by the frame's depth (the game copies the
+    hand's depth over the world's, and both are a block away). But the game draws the hand and what it holds into a
+    depth of their own first (`GameRenderer.hud3DTarget`, "hud_3d_depth", cleared to 0, whenever a post effect
+    runs), and that texture still holds them when Lens's chain runs. Lens now reads it: `LensHand`
+    (`awaken:lens_hand_depth`, a view of the game's texture, never owned), pointed each frame after the world is
+    drawn at the target Pixels' own hook already receives (`PixelsHooks.handTarget()`: the shadowed field of the
+    Pixels mixin, no new mixin and no access transformer; while Pixels scales the world it is Pixels' lent texture,
+    the one the hand is really drawn into). Parameter texel 26 r says Lens has it. Then a pixel is the hand where
+    that depth is not 0, and only there: the light pass shadows every other pixel, the composite lights the world
+    right up to the eye, and "never darker than the game" holds for the hand alone. Without the hook (Pixels' mixin
+    off or failed) the three rules go by reach as before. Left by reach on purpose: the light pass's contact shadows
+    and ambient occlusion still ignore occluders nearer than 1.25 blocks, so the hand casts none on the world (a
+    wall that near casts none either, which nobody will miss). Inputs: `Hand` on the light pass and the lit
+    composite of every chain (`tools/lens/probes.py` regenerated the measuring chains). Tour:
+    `tools/autopilot/steady60-hand-ci.txt`.
 - **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
   the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
   to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the

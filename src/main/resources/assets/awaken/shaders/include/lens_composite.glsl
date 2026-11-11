@@ -15,6 +15,7 @@ uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFram
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 uniform sampler2D AirSkySampler;     // the Air's sky buffer (lens_airsky.fsh): the galaxy's light and the wisps' cover
+uniform sampler2D HandSampler;       // the hand's own depth (LensHand): 0 where there is no hand
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -282,7 +283,13 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     bool z01 = f16.x > 0.5;
     mat4 inv = frameMat(0);
     float dist = length(p);
-    float near = smoothstep(1.25, 1.45, dist);
+    // Lens's light is for the world: the hand and what it holds keep the game's (their place in the world can't be
+    // told from the depth the game draws them with). The hand is known by its own depth where Lens has it (parameter
+    // texel 26 r, HandSampler: 0 where no hand is), and then the world is lit right up to the eye. Without it the
+    // light eases in by reach, 1.25 to 1.45 blocks, and a wall, a door or a ceiling nearer than that stood unlit
+    // with the hand, in a disc that moved with the camera (Euan, playing, 11 Nov: "it creates this spotlight effect in
+    // my view ... the same issue as earlier, but for walls and for ceilings").
+    float near = P(26).r > 0.5 ? (texture(HandSampler, texCoord).r > 0.0 ? 0.0 : 1.0) : smoothstep(1.25, 1.45, dist);
     if (near <= 0.0) return c;
     vec3 m = vec3(1.0);
     float rich = 0.0;
@@ -765,7 +772,8 @@ void main() {
     // brightness back and stood out raw against the shade (Euan, playing, 11 Nov: "the bottom edge and sometimes left
     // edge of my screen has no shaders ... changes based on my pace and how I move my head").
 #ifdef LENS_LIGHT
-    float handReach = open ? 1.0e9 : length(pRel);
+    // (with the hand's own depth, parameter texel 26 r, the hand is the hand and nothing else is)
+    float handReach = P(26).r > 0.5 ? (texture(HandSampler, texCoord).r > 0.0 ? 0.0 : 1.0e9) : (open ? 1.0e9 : length(pRel));
 #else
     // Swift has no world position: the hand's own distance, by the fixed field of view the game draws the hand with
     // (tan 35 degrees), which a wider world view only lengthens

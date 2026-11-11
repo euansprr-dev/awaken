@@ -49,6 +49,9 @@ public final class LensClient {
     // storm cells) and none of the light's textures (no heightfield, block map, sun map or lit air, and none of their
     // tick work)
     static final Identifier LITE = Awaken.id("lens_lite");
+    // the hand's own depth (LensHand): which pixels are the hand and what it holds
+    static final Identifier HAND = Awaken.id("lens_hand_depth");
+    private static LensHand hand;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
@@ -576,6 +579,13 @@ public final class LensClient {
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         if (!active) return;
         if (framed && lensFrame != null) writeFrame(e);
+        // the hand is drawn next, into a depth of its own: Lens's light is for the world and stops at the hand, which
+        // it can only tell from a wall at arm's length by that depth (SPEC §22 "Reach and cover")
+        if (params != null && hand != null) {
+            var handTarget = dev.awaken.turbo.pixels.PixelsHooks.handTarget();
+            params.hand(hand.point(handTarget != null ? handTarget.getDepthTextureView() : null));
+            params.uploadIfChanged();
+        }
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
@@ -674,6 +684,8 @@ public final class LensClient {
         if (params != null) return;
         params = new LensParams();
         Minecraft.getInstance().getTextureManager().register(PARAMS, params.texture);
+        hand = new LensHand();
+        Minecraft.getInstance().getTextureManager().register(HAND, hand);
         Minecraft.getInstance().getTextureManager().register(FAR_DEPTH, dev.awaken.compat.client.FarTerrain.depthTexture());
         zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         Awaken.LOG.info("[lens] ready ({} depth)", zeroToOne ? "zero-to-one" : "minus-one-to-one");
