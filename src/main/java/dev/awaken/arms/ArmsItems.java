@@ -58,10 +58,13 @@ public final class ArmsItems {
      */
     private static DeferredItem<Item> register(ArmsData.Weapon w) {
         TagKey<Item> repair = TagKey.create(Registries.ITEM, Awaken.id(w.repair()));
+        int former = formerUses(w.tier());
         return switch (w.style()) {
-            case Arms.AXE -> ITEMS.registerItem(w.id(), Item::new, p -> p.rarity(w.rarity())
-                    .axe(new ToolMaterial(incorrectFor(w.tier()), w.durability(), mining(w.tier()), 0.0F, w.enchantability(), repair), w.damage(), w.speed()));
-            case Arms.MAUL -> ITEMS.registerItem(w.id(), MaceItem::new, p -> p.rarity(w.rarity())
+            // vanilla's axe costs two uses a blow; ours costs one, as every weapon does (SPEC §67.1). Its five seconds off a shield stay
+            case Arms.AXE -> ITEMS.registerItem(w.id(), p -> new ArmsWeaponItem(p, former), p -> p.rarity(w.rarity())
+                    .axe(new ToolMaterial(incorrectFor(w.tier()), w.durability(), mining(w.tier()), 0.0F, w.enchantability(), repair), w.damage(), w.speed())
+                    .component(DataComponents.WEAPON, new Weapon(1, AXE_DISABLES_SHIELD)));
+            case Arms.MAUL -> ITEMS.registerItem(w.id(), p -> new ArmsMaulItem(p, former), p -> p.rarity(w.rarity())
                     .durability(w.durability())
                     .component(DataComponents.TOOL, MaceItem.createToolProperties())
                     .repairable(repair)
@@ -73,9 +76,24 @@ public final class ArmsItems {
                             .build())
                     .enchantable(w.enchantability())
                     .component(DataComponents.WEAPON, new Weapon(1)));
-            default -> ITEMS.registerItem(w.id(), Item::new, p -> p.rarity(w.rarity())
+            default -> ITEMS.registerItem(w.id(), p -> new ArmsWeaponItem(p, former), p -> p.rarity(w.rarity())
                     .sword(new ToolMaterial(BlockTags.INCORRECT_FOR_WOODEN_TOOL, w.durability(), 1.0F, 0.0F, w.enchantability(), repair),
                             w.damage(), w.speed()));
+        };
+    }
+
+    /** How long a struck shield stays down after an axe's blow (vanilla's own five seconds). */
+    private static final float AXE_DISABLES_SHIELD = 5.0F;
+
+    /**
+     * The uses an E or a D weapon had until 2026-11-11 (SPEC §67.1: 220 and 500, now 900 and 1,300), so a weapon made in an
+     * Armoury under those keeps its quarter over today's ({@link dev.awaken.core.api.Lasting#formerUses}). 0: never changed.
+     */
+    static int formerUses(String tier) {
+        return switch (tier) {
+            case "E" -> 220;
+            case "D" -> 500;
+            default -> 0;
         };
     }
 

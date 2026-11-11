@@ -26,15 +26,17 @@ import java.util.Map;
  * netherite, the late-game sets. From D up every piece needs its tier's metal ({@link #metalTag}, SPEC §28.3): Gatewrought
  * matches diamond armour (20, toughness 2.0, its durability) so a diamond spent on it is never wasted, and B and A sit
  * a point above to keep the ladder climbing.
+ * E and D armour and blades hold what their rank's fights take (SPEC §67.1; the multipliers were 13 and 18, the blades 220
+ * and 500: a boss is 90 to 300 landed blows and lands 10 to 40 a minute on you).
  * Numbers are the source for the stats test and the doc; change them together.
  */
 public enum HunterTier {
     //     id             set name       rank    armour boots,legs,chest,helm  dur tough  kb     ench  sound
-    E("wildhide", "Wildhide", Rank.E, Rarity.COMMON, new Armour(1, 3, 4, 2, 13, 0.0f, 0.0f, 15, SoundEvents.ARMOR_EQUIP_LEATHER),
+    E("wildhide", "Wildhide", Rank.E, Rarity.COMMON, new Armour(1, 3, 4, 2, 24, 0.0f, 0.0f, 15, SoundEvents.ARMOR_EQUIP_LEATHER),
             //        dmg  speed  dur        melee power dur          speed  melee dur  mines below
-            new Blade(4.0f, -2.2f, 220), new Focus(2.0f, 0.06, 180), new Mattock(4.5f, 2.0f, 240, BlockTags.INCORRECT_FOR_STONE_TOOL)),
-    D("beastbound", "Beastbound", Rank.D, Rarity.UNCOMMON, new Armour(2, 5, 6, 2, 18, 0.5f, 0.0f, 12, SoundEvents.ARMOR_EQUIP_TURTLE),
-            new Blade(5.0f, -2.3f, 500), new Focus(3.0f, 0.09, 400), new Mattock(6.0f, 3.0f, 520, BlockTags.INCORRECT_FOR_IRON_TOOL)),
+            new Blade(4.0f, -2.2f, 900), new Focus(2.0f, 0.06, 180), new Mattock(4.5f, 2.0f, 240, BlockTags.INCORRECT_FOR_STONE_TOOL)),
+    D("beastbound", "Beastbound", Rank.D, Rarity.UNCOMMON, new Armour(2, 5, 6, 2, 28, 0.5f, 0.0f, 12, SoundEvents.ARMOR_EQUIP_TURTLE),
+            new Blade(5.0f, -2.3f, 1300), new Focus(3.0f, 0.09, 400), new Mattock(6.0f, 3.0f, 520, BlockTags.INCORRECT_FOR_IRON_TOOL)),
     C("gatewrought", "Gatewrought", Rank.C, Rarity.RARE, new Armour(3, 6, 8, 3, 33, 2.0f, 0.0f, 12, SoundEvents.ARMOR_EQUIP_IRON),
             new Blade(6.0f, -2.3f, 1400), new Focus(4.0f, 0.12, 1100), new Mattock(7.5f, 4.0f, 1450, BlockTags.INCORRECT_FOR_DIAMOND_TOOL)),
     B("veilwoven", "Veilwoven", Rank.B, Rarity.EPIC, new Armour(3, 7, 8, 3, 35, 2.5f, 0.05f, 15, SoundEvents.ARMOR_EQUIP_DIAMOND),
@@ -44,6 +46,21 @@ public enum HunterTier {
             new Blade(8.0f, -2.3f, 2300), new Focus(6.0f, 0.18, 2000), new Mattock(9.5f, 6.0f, 2350, BlockTags.INCORRECT_FOR_NETHERITE_TOOL)),
     S("sovereign", "Sovereign Weave", Rank.S, Rarity.EPIC, new Armour(4, 7, 9, 4, 48, 3.5f, 0.15f, 18, SoundEvents.ARMOR_EQUIP_NETHERITE),
             new Blade(9.0f, -2.2f, 2800), new Focus(7.0f, 0.22, 2500), new Mattock(11.0f, 7.0f, 2850, BlockTags.INCORRECT_FOR_NETHERITE_TOOL));
+
+    /**
+     * What a piece of this tier held before SPEC §67.1 raised E and D (so a piece that carries its own count, the Armoury's
+     * quarter, keeps its share: {@link dev.awaken.core.api.Lasting#formerUses}); 0 where nothing changed.
+     */
+    public int formerUses(Piece piece) {
+        if (piece == Piece.BLADE) return this == E ? 220 : this == D ? 500 : 0;
+        return piece.armorType != null ? formerUses(piece.armorType) : 0;
+    }
+
+    /** The same for an armour piece by its type (the forged sets wear their tier's material). */
+    public int formerUses(net.minecraft.world.item.equipment.ArmorType type) {
+        int multiplier = this == E ? 13 : this == D ? 18 : 0;
+        return multiplier > 0 ? type.getDurability(multiplier) : 0;
+    }
 
     /** Armour points per piece, the durability multiplier (vanilla style), toughness and knockback resistance per piece. */
     public record Armour(int boots, int legs, int chest, int helm, int durability, float toughness, float knockback, int enchantability,

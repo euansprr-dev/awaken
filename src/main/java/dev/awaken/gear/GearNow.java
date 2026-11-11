@@ -50,8 +50,31 @@ final class GearNow {
         if (now >= st.nowAt && now - st.nowAt < CACHE_TICKS) return st.now;
         st.nowAt = now;
         Item item = next(p);
-        st.now = item == null ? List.of() : List.of(new NowHooks.Suggestion("gear:craft/" + key(item), PRIORITY, text(item), Optional.empty()));
+        ItemStack worn = worn(p);
+        java.util.ArrayList<NowHooks.Suggestion> out = new java.util.ArrayList<>(2);
+        if (!worn.isEmpty()) out.add(new NowHooks.Suggestion("gear:mend/" + key(worn.getItem()), MEND_PRIORITY, mendText(worn), Optional.empty()));
+        if (item != null) out.add(new NowHooks.Suggestion("gear:craft/" + key(item), PRIORITY, text(item), Optional.empty()));
+        st.now = List.copyOf(out);
         return st.now;
+    }
+
+    /** Mending gear that is about to give out is a clear next step, not an idea (SPEC §67.1). */
+    static final int MEND_PRIORITY = 60;
+
+    /** The piece of ours most in need of mending: one that is worn out, else one that is nearly so; empty when none is. */
+    static ItemStack worn(ServerPlayer p) {
+        Inventory inv = p.getInventory();
+        ItemStack nearly = ItemStack.EMPTY;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack s = inv.getItem(i);
+            if (dev.awaken.core.api.Lasting.wornOut(s)) return s;
+            if (nearly.isEmpty() && dev.awaken.core.api.Lasting.nearlyWornOut(s)) nearly = s;
+        }
+        return nearly;
+    }
+
+    private static Component mendText(ItemStack s) {
+        return Component.translatable(dev.awaken.core.api.Lasting.wornOut(s) ? "awaken.gear.now.worn_out" : "awaken.gear.now.nearly", s.getHoverName());
     }
 
     private static Component text(Item item) {

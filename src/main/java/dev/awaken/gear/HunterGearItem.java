@@ -9,7 +9,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.function.Consumer;
 
 /** Every Hunter gear piece. The stats are vanilla components; the tooltip says the tier and what the piece adds. */
-public class HunterGearItem extends Item {
+public class HunterGearItem extends Item implements dev.awaken.core.api.Lasting {
     public final HunterTier tier;
     public final Piece piece;
 
@@ -22,8 +22,15 @@ public class HunterGearItem extends Item {
     static final int GREY = 0x8A93A6;
     static final int LIGHT = 0xC9D2E3;
 
+    /** The uses an E or a D blade or armour piece had until 2026-11-11 (SPEC §67.1); 0 for what never changed. */
+    @Override
+    public int formerUses() {
+        return tier.formerUses(piece);
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
+        dev.awaken.core.api.Lasting.tooltip(stack, piece == Piece.BLADE || piece == Piece.FOCUS || piece == Piece.MATTOCK, out);
         out.accept(Component.literal(tier.rank.label + "-rank " + (piece == Piece.BLADE ? "Hunter blade" : "Hunter gear") + " · " + tier.setName).withColor(tier.rank.colour));
         switch (piece) {
             case FOCUS -> {

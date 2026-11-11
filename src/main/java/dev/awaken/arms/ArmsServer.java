@@ -737,6 +737,7 @@ final class ArmsServer {
         // blow) swallowed or shrank blows at random, shown by the game and gone on the server (SPEC §25 "Weight in the Hand")
         int cooldown = t.damageCooldownTime;
         t.damageCooldownTime = 0;
+        boolean worn = dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem());
         try {
             if (speed != null) speed.addOrUpdateTransientModifier(FULL_STRENGTH_MOD);
             p.attack(t);
@@ -745,6 +746,8 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
             pendingPush = false;
         }
+        // the blow that used its last use: it is worn out from here (never destroyed, SPEC §67.1), and its owner is told once
+        if (!worn && dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem())) dev.awaken.core.api.Lasting.tell(p, p.getMainHandItem(), true);
         HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
         if (!pendingLanded) {
             // struck, and nothing took (an invulnerable body, another mod's refusal): the hands hear a dull knock, so a blow
@@ -874,6 +877,10 @@ final class ArmsServer {
             // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
             // body standing braced barely moves it, a riposte excepted (SPEC §47.3)
             int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
+            // a worn-out weapon fills a stance half as fast, as it hits half as hard (its attack damage is halved at the item)
+            if (by instanceof ServerPlayer wielder && dev.awaken.core.api.Lasting.wornOut(wielder.getMainHandItem())) {
+                posture = Math.round(posture * dev.awaken.core.api.Lasting.WORN_OUT_SHARE);
+            }
             if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }

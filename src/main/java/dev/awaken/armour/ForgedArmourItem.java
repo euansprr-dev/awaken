@@ -10,7 +10,7 @@ import net.minecraft.world.item.equipment.ArmorType;
 import java.util.function.Consumer;
 
 /** A piece of a set with items of its own (SPEC §44.3): its stats are vanilla's components; the tooltip says what the set does. */
-public class ForgedArmourItem extends Item {
+public class ForgedArmourItem extends Item implements dev.awaken.core.api.Lasting {
     public final ArmourSet set;
     public final ArmorType piece;
 
@@ -22,8 +22,15 @@ public class ForgedArmourItem extends Item {
 
     static final int GREY = 0x8A93A6, LIGHT = 0xC9D2E3;
 
+    /** What this piece held before SPEC §67.1 raised E and D armour (the Armoury's quarter keeps its share). */
+    @Override
+    public int formerUses() {
+        return set.tier().formerUses(piece);
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
+        dev.awaken.core.api.Lasting.tooltip(stack, false, out);
         out.accept(Component.literal(set.rank.label + "-rank " + set.archetype.label + " armour · " + set.setName).withColor(set.rank.colour));
         ArmourItems.Numbers n = ArmourItems.numbers(set);
         if (n.speed() > 0) out.accept(Component.literal("+" + Math.round(n.speed() * 100) + "% speed").withColor(LIGHT));
