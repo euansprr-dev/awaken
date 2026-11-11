@@ -13,7 +13,7 @@ every tier the same). Pictures are films at half the frame (arms film's downscal
     tools/tour-ci.sh tools/autopilot/arms-facing-a.txt 3600
     gh run download <run> -R euansprr-dev/awaken -n tour-arms-facing-a-clips -D run-autopilot/clips-ci/facing-a
     python3 tools/art/facing_tour.py sheet OUT_DIR run-autopilot/clips-ci/facing-a ...
-    python3 tools/art/facing_tour.py fill run-autopilot/clips-ci/facing-a ...   arms-facing-f.txt: blank shots again
+    python3 tools/art/facing_tour.py fill [--first a,b] run-autopilot/clips-ci/facing-c ...   arms-facing-f.txt: blank shots again
 """
 import csv
 import json
@@ -224,8 +224,10 @@ def _blank(clips, name):
     return ImageStat.Stat(im.crop((int(w * 0.3), int(h * 0.3), int(w * 0.7), int(h * 0.6)))).mean[0] > 170
 
 
-def fill(clip_dirs):
-    """tools/autopilot/arms-facing-f.txt: the first-person shots of tours a to d that came back blank, filmed again."""
+def fill(clip_dirs, firsts=()):
+    """tools/autopilot/arms-facing-f.txt: the first-person shots of tours a to d that came back blank, filmed again. A
+    group in {@code firsts} whose clips aren't fetched yet gives only its first weapon (the one filmed before the studio
+    was drawn on the runs before the ten seconds' settle)."""
     by = styles()
     tim = timing()
     have = {}
@@ -236,7 +238,9 @@ def fill(clip_dirs):
     for g in GROUPS:
         if g == "e":
             continue
-        for item, name, sid, moves, turns in weapons(g, by):
+        for k, (item, name, sid, moves, turns) in enumerate(weapons(g, by)):
+            if g in firsts and k > 0 and not any(n.startswith(f"fa_{name}_") for n in have):
+                continue
             films = set()
             for mv in moves:
                 if mv not in tim[sid]:
@@ -267,7 +271,7 @@ CELL = (400, 225)
 
 
 # third person: the middle of the frame, where the wielder stands (the camera behind its shoulder at fov 50)
-CROP3 = (0.23, 0.05, 0.78, 0.6)
+CROP3 = (0.05, 0.1, 0.85, 0.9)
 
 
 def _pic(clips, name, i=0, crop=None):
@@ -391,7 +395,9 @@ if __name__ == "__main__":
         for p in sheet(sys.argv[2], sys.argv[3:]):
             print(p)
     elif len(sys.argv) > 1 and sys.argv[1] == "fill":
-        path, n = fill(sys.argv[2:])
+        args = sys.argv[2:]
+        firsts = args.pop(1).split(",") if args and args[0] == "--first" else ()
+        path, n = fill(args[1:] if firsts else args, firsts)
         print(f"{path}: {n} shots" if path else "nothing to film again")
     else:
         for p in write():
