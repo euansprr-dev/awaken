@@ -6638,8 +6638,12 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   sense ... That would be inconsistent"; then: "surprise me along the lines of what we've been building ... the
   fantasy style ... I don't want the usual blue, like, flat blue style ... still feels like MC, but doesn't look at
   all like what it was before"). Under the Air, still water is drawn again by the composite, on Lite as on Cinematic
-  and Ultra (`lens_water.glsl`: `waterHere`, `airWater`). Everything is on the block's own sixteenth grid, so every
-  part of it is a pixel of the world; nothing moves the surface, bends what is under it or is simulated.
+  and Ultra (`lens_water.glsl`: `waterHere`, `airWater`). Nothing moves the surface, bends what is under it or is
+  simulated, and all of it is smooth. (The first build drew it on the block's sixteenth grid: a mirror leaning a
+  texel at a time, glints a texel square, a stepped waterline. Shown it, he said: "I'm really not a fan of the
+  pixelized reflections, though. It looks more glitchy than anything else." A stepped mirror is what a broken
+  upscale looks like. What keeps the water this game's is what it mirrors, block clouds and block shores, and the
+  place's own water colour: never a pixel grid laid over a reflection.)
   - **What is water**: a level surface at the height a still fluid stands in its block (0.8889), seen from above,
     by the pixel's own world height (within 0.004), with the composite's normal up (or none, on an edge); lava, which
     stands at the same height, is told by the game's colour. So it needs no heightfield (Lite has none) and holds
@@ -6655,21 +6659,22 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     from the camera's image under the surface, `cloudNearFrom`, block for block the sky's, to 1,240 blocks; Lite:
     a cloud's own footprint, one read where the mirrored ray meets the layer's underside); and the land over the
     far shore, read from the frame where the mirrored ray looks, into the Air's fog by its distance (true for
-    anything far off; nearer than some twenty blocks it is left to the sky). The mirror leans a texel at a time on
-    the lanes and their chop. Its share is wider than glass's (0.05 straight down to 0.86 toward the horizon), so a
+    anything far off; nearer than some twenty blocks it is left to the sky). The mirror ripples gently: three slow
+    swells and a little chop lean it, more on a lane's crest. Its share is wider than glass's (0.05 straight down to 0.86 toward the horizon), so a
     lake across the way is already sky and still keeps some of its own colour.
-  - **Lace**: thin lines of light on the lanes' crests, long along the lanes and cut into dashes, a texel wide, gone
-    before a texel is smaller than a screen pixel.
-  - **The road of the sun, and the moon's**: texels that catch the light and twinkle seven times a second, each its
-    own brightness, in the hour's own light (gold toward dusk); a few are four-pointed, their arms only where a
-    texel is small on screen. Far out the road is its own average. By night the water holds a scatter of stars.
-    None in the water's own shade (Cinematic's sun term).
+  - **Lace**: thin soft lines of light on the lanes' crests, long along the lanes and broken into dashes, gone
+    before they are finer than a screen pixel.
+  - **The road of the sun, and the moon's**: the light's own long reflection on the ripples, a wide soft glow
+    under it and a fine sparkle that comes and goes along it, laid over the water in the hour's own light (gold
+    toward dusk). By night the water holds a scatter of small soft stars. None in the water's own shade
+    (Cinematic's sun term).
   - **The waterline** (with the heightfield: Cinematic and Ultra): a pale line where water meets what stands over
-    it, its edge ragged and breathing a texel at a time, a few short dashes off it, and aqua shallows within a block
-    of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
+    it, soft-edged, breathing in and out along the shore, a faint ring off it now and then, and aqua shallows within
+    a block of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
     under a tree's crown read as a bank). A bridge overhead reads as a bank as well: the water under its edge
     ripples.
-  - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes), the sky model twice, and three reads.
+  - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes and three cosines), the sky model twice,
+    and three reads.
     Cinematic: the mirrored cloud walk and four heights more. Not measured: frame times need the Mac.
   - **Not done**: flowing water and falls, cave lakes, rain rings, a storm cell and the sun's and moon's discs in the
     mirror, the bed's real depth (the shallows are by the shore, not by how deep it is). Without the Air (`lensAir`
