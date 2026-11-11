@@ -37,9 +37,10 @@ wait 20
 hud on
 camera first
 cmd awaken ascent trial leaper
-wait 300
+# the gate builds in its own time (a slow runner took 20 s; entering before it stands leaves the pilot outside)
+wait 1200
 cmd awaken gate enter 1
-wait 200
+wait 240
 cmd awaken gate interior goto rig
 wait 100
 cmd awaken gate rig at start
