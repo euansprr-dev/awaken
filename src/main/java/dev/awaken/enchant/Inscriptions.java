@@ -69,8 +69,8 @@ public final class Inscriptions {
             e(3, "awaken:charge_ward", "Charge Ward", Family.WARD, CHARGE, "armour", "You take less Charge damage, lightning included.", "clockwork_foundry", false, false, Forces.Force.CHARGE),
             e(4, "awaken:gravity_ward", "Gravity Ward", Family.WARD, GRAVITY, "armour", "You take less Gravity damage.", "sky_archipelago", false, false, Forces.Force.GRAVITY),
             e(5, "awaken:spirit_ward", "Spirit Ward", Family.WARD, SPIRIT, "armour", "You take less Spirit damage, and less from magic.", "mirror_palace", false, false, Forces.Force.SPIRIT),
-            e(6, "minecraft:blast_protection", "Blast Protection", Family.WARD, Family.WARD.colour, "armour", "Explosions hurt you less.", "precursor_lab", false, false, null),
-            e(7, "minecraft:projectile_protection", "Projectile Protection", Family.WARD, Family.WARD.colour, "armour", "Arrows and thrown things hurt you less.", "glass_desert", false, false, null),
+            e(6, "minecraft:blast_protection", "Blast Protection", Family.WARD, Family.WARD.colour, "armour", "Explosions hurt you less.", "", true, true, null),
+            e(7, "minecraft:projectile_protection", "Projectile Protection", Family.WARD, Family.WARD.colour, "armour", "Arrows and thrown things hurt you less.", "", true, true, null),
             e(8, "minecraft:feather_falling", "Feather Falling", Family.WARD, Family.WARD.colour, "boots", "Falls hurt you less.", "", true, true, null),
             e(9, "awaken:clear_blood", "Clear Blood", Family.WARD, 0x9FE07A, "armour", "Poison, wither and spores wear off twice as fast, and three times as fast at II.", "fungal_hollow", false, false, null),
             e(10, "awaken:bane_of_the_dead", "Bane of the Dead", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder for each level on the undead and on what walks a Bell Crypt.", "bell_crypt", false, false, null),
@@ -83,11 +83,11 @@ public final class Inscriptions {
             e(17, "minecraft:efficiency", "Efficiency", Family.SPOILS, Family.SPOILS.colour, "tools", "You dig faster. It can't go on the Delver's Pick: its verses are its speed.", "", true, true, null),
             e(18, "awaken:harvest", "Harvest", Family.SPOILS, Family.SPOILS.colour, "weapons", "Wild beasts sometimes give one more hide, bone or pelt: one chance in two for each level.", "", true, false, null),
             e(19, "awaken:insight", "Insight", Family.SPOILS, Family.SPOILS.colour, "weapons and tools", "You get 15% more experience for each level from what you kill and mine.", "", true, true, null),
-            e(20, "minecraft:respiration", "Respiration", Family.CARRYING, Family.CARRYING.colour, "helmets", "You can breathe longer under water.", "drowned_archive", false, false, null),
+            e(20, "minecraft:respiration", "Respiration", Family.CARRYING, Family.CARRYING.colour, "helmets", "You can breathe longer under water.", "", true, true, null),
             e(21, "minecraft:aqua_affinity", "Aqua Affinity", Family.CARRYING, Family.CARRYING.colour, "helmets", "You dig at full speed under water.", "", true, true, null),
             e(22, "minecraft:depth_strider", "Depth Strider", Family.CARRYING, Family.CARRYING.colour, "boots", "You swim and walk faster under water.", "", true, true, null),
             e(23, "minecraft:swift_sneak", "Swift Sneak", Family.CARRYING, Family.CARRYING.colour, "leggings", "You move faster while sneaking.", "nightmare", false, false, null),
-            e(24, "minecraft:unbreaking", "Unbreaking", Family.KEEPING, Family.KEEPING.colour, "anything", "It wears out slower.", "overgrown_temple", false, false, null),
+            e(24, "minecraft:unbreaking", "Unbreaking", Family.KEEPING, Family.KEEPING.colour, "anything", "It wears out slower.", "", true, true, null),
             e(25, "minecraft:mending", "Mending", Family.KEEPING, Family.KEEPING.colour, "anything", "Experience you pick up mends it.", "abyssal_shrine", false, true, null),
             e(26, "minecraft:infinity", "Infinity", Family.KEEPING, Family.KEEPING.colour, "bows", "One arrow is enough.", "", false, true, null),
             e(27, "minecraft:loyalty", "Loyalty", Family.CARRYING, Family.CARRYING.colour, "tridents", "A thrown trident comes back to you.", "", false, true, null),
@@ -95,7 +95,14 @@ public final class Inscriptions {
             e(29, "minecraft:luck_of_the_sea", "Luck of the Sea", Family.SPOILS, Family.SPOILS.colour, "fishing rods", "You catch better things.", "", true, true, null),
             e(30, "minecraft:lure", "Lure", Family.SPOILS, Family.SPOILS.colour, "fishing rods", "Fish bite sooner.", "", true, true, null),
             // the new words (SPEC §45.16): each makes something happen that you can watch
-            e(31, "awaken:lantern", "Lantern", Family.CARRYING, Family.CARRYING.colour, "helmets", "Your helmet lights the dark around you. It is a real light, so friends see by it too.", "lantern_market", false, false, null));
+            e(31, "awaken:lantern", "Lantern", Family.CARRYING, Family.CARRYING.colour, "helmets", "Your helmet lights the dark around you. It is a real light, so friends see by it too.", "lantern_market", false, false, null),
+            // five Lords carried a vanilla name; they carry these now, and the vanilla five are sold, found in old books and
+            // carved on Word Stones. Long Arm is carved on the sky platforms' stones alone
+            e(32, "awaken:wayfarer", "Wayfarer", Family.CARRYING, Family.CARRYING.colour, "boots", "On roads and paths you run faster, and running there costs no hunger.", "glass_desert", false, false, null),
+            e(33, "awaken:gather", "Gather", Family.SPOILS, Family.SPOILS.colour, "weapons and tools", "What you break and kill with it comes straight to your pack from 8 blocks away, 12 at II.", "precursor_lab", false, false, null),
+            e(34, "awaken:regrowth", "Regrowth", Family.KEEPING, Family.KEEPING.colour, "anything", "Under open sky by day, or in rain, it slowly mends itself. It can't share a piece with Mending.", "overgrown_temple", false, false, null),
+            e(35, "awaken:remembrance", "Remembrance", Family.KEEPING, Family.KEEPING.colour, "anything", "It keeps the names of the Lords and named beasts it has brought down, twelve at most.", "drowned_archive", false, false, null),
+            e(36, "awaken:long_arm", "Long Arm", Family.CARRYING, Family.CARRYING.colour, "chestplates", "You reach a block further to break and place, two at II. It never reaches further to strike.", "", false, false, null));
 
     private static final Map<Identifier, Entry> BY_ID = new HashMap<>();
     private static final Map<String, Entry> BY_GATE = new HashMap<>();

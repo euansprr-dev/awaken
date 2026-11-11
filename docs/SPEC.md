@@ -19964,7 +19964,7 @@ inscription's look **must not distract from the armour set** but should give "a 
 and **a page must say how it is used** ("I thought the pages were like being automatically applied... say: you enchant
 this onto a weapon by doing XYZ"). What the audit found is in POLISH.md §2: across two worlds he was given six pages, read
 four, and never built the table. Built first as a pilot (the door, the desk, his three banes and Lantern); the other five
-new words of the plan wait for his play.
+new words followed the same day (§45.16), at his word that every approved plan be finished.
 
 - **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
   `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
@@ -20034,10 +20034,9 @@ new words of the plan wait for his play.
 - Dev: `/awaken admin enchant page <id>` gives a page as a door does. Tour `tools/autopilot/enchant-polish.txt`. Tests
   `enchant_glyphs`, `enchant_door`.
 
-### 45.16 Lantern, the first new word (`Lantern`, `LanternGlowBlock`)
+### 45.16 The six new words (`Lantern`, `LanternGlowBlock`, `Words`)
 - **`awaken:lantern`** (helmets, I-III, carrying): your helmet lights the dark around you. The Lantern Night Market's
-  Lord carries its page; Looting, which he carried, is sold at the market and found in old books. The Journal counts
-  thirty-one.
+  Lord carries its page; Looting, which he carried, is sold at the market and found in old books.
 - Where the wearer's head is darker than the word's own light (8, 10, 12), one `awaken:lantern_glow` stands there: a block
   with nothing to see, touch or hold that only gives light, so friends see by it too. It follows when the wearer has gone
   two blocks, sits in water as water, and goes out in daylight, by a brighter fire, when the helmet comes off, at death,
@@ -20046,6 +20045,38 @@ new words of the plan wait for his play.
   Asked every fourth tick a wearer.
 - One soft sound as it catches (`block.lantern.place`). **Its frame time on the Mac is not measured yet**: each move
   rebuilds a chunk section. Test `enchant_lantern`.
+
+**The other five** (`Words`; numbers 32 to 36 in `Inscriptions.ALL`, each with its glyph and page; thirty-six in all).
+Four Lords who carried a vanilla name carry these, and the vanilla four (Unbreaking, Respiration, Blast Protection,
+Projectile Protection) are sold at the market, found in old books and carved on Word Stones (the vaults gain Unbreaking
+and Blast Protection, the ocean lab Respiration, the sky platforms Projectile Protection).
+- **Wayfarer** (`awaken:wayfarer`, boots, I-III, carrying; the Glass Desert's Lord): on a laid road
+  (`RoadHooks.nearestRoad` within a block) or a path under the feet you move 8, 14 or 20% faster (a transient
+  `awaken:enchantment.wayfarer` on movement speed, held through a jump, gone when you land off the road), and what a
+  sprint there cost in hunger is given back (a tenth a block). Motes of its script at your heels while it works. Looked
+  at every fifth tick.
+- **Gather** (`awaken:gather`, weapons and tools, I-II, spoils; the Precursor Lab's Lord): what you break and what you
+  kill with it goes into your pack from within 8 or 12 blocks (`BlockDropsEvent`, `LivingDropsEvent`, after Harvest's
+  extra and the glints); what doesn't fit falls where it would have. Never another player's pack, and never what a Lord
+  or a named beast leaves, which lies there for everyone who fought. A gold thread from where it fell to your hand for
+  the first three, and one soft pickup.
+- **Regrowth** (`awaken:regrowth`, anything that wears, I-III, keeping; the Overgrown Temple's Lord): under open sky by
+  day, or with rain falling on you, each worn or held piece that carries it mends one use every 12, 8 or 5 seconds, a
+  green thread coming down into it. Never on a piece with Mending (the data's `exclusive_set`, and the tick skips one).
+  The boss branch's Lasting touches the same durability: whichever merges second fits to the first.
+- **Remembrance** (`awaken:remembrance`, anything that wears, one level, keeping; the Drowned Archive's Lord): when a
+  Lord, a Warden, a named beast or one of vanilla's great creatures (`EnchantEffects.spared`, never a player) falls to
+  you, the weapon in your hand and each piece you wear that carries the word keep its name: item component
+  `awaken:remembered` (schemaVersion 1, a list of names oldest first, twelve at most, saved and synced). A Lord is named
+  as the game says it ("the Bell Warden"), a named beast with its title. Chat: "Your Beastbound Maul remembers the Bell
+  Warden." (or "Your gear remembers ..." for more than one piece); the tooltip lists them under "It remembers:", three
+  a line. The notch of light on the piece's script line for each name is not built.
+- **Long Arm** (`awaken:long_arm`, chestplates, I-II, carrying): data alone, one or two blocks on
+  `minecraft:block_interaction_range`; entity reach is untouched, so it never strikes further. Found only on the sky
+  platforms' Word Stones (two of that set's six).
+- **Clear Blood** pulses green where you stand once a second while it burns poison, wither or spores off, and while
+  **Insight** is in your hand experience comes in with a gold glint (one in eight ticks, however many orbs).
+- Test `enchant_new_words`. The tour films Gather and Wayfarer.
 
 ### 45.17 Seen at work, and on the piece
 - **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of

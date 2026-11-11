@@ -203,6 +203,13 @@ public final class EnchantClient {
             if (known) lines.add(at, Component.literal("You know this one").withColor(0x8FD8A8));
             return;
         }
+        // what a piece with Remembrance has brought down, three names a line
+        var kept = s.get(dev.awaken.enchant.EnchantContent.REMEMBERED.get());
+        if (kept != null && !kept.names().isEmpty()) {
+            lines.add(Component.literal("It remembers:").withColor(0xEDE6D2));
+            for (int i = 0; i < kept.names().size(); i += 3)
+                lines.add(Component.literal(" " + String.join(", ", kept.names().subList(i, Math.min(kept.names().size(), i + 3)))).withColor(0xB9B2A0));
+        }
         if (!(s.isEnchantable() || s.isEnchanted()) || EnchantRules.room(s) <= 0) return;
         String room = EnchantRules.roomLine(s);
         int colour = room.startsWith("Room") ? 0x8AA9E6 : 0x9A8F84;
