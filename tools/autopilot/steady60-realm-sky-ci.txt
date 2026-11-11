@@ -1,0 +1,56 @@
+# A gate world's own sky under the Air (SPEC §22 "The Air in other worlds"; Euan, 11 Nov, in the first rolled gate
+# world: "Each should have its own sky and atmosphere ... a more reddish sky ... and a reddish atmosphere"). Amber
+# Reach, whose biome says an amber sky (#d5ab70) and fog (#ebcb9e): three views, each with the Air off (the land as
+# its first pictures had it), with the Air on Cinematic, and on Lite.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-realm-sky-ci.txt 2400
+# ci knobs: LENS=cinematic
+world autopilot_realm_amber creative 20261112
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+cmd awaken gate realm_enter E awaken:amber_reach
+need realm
+hud off
+lookswitch cinematic
+wait 400
+cmd awaken gate realm_at MOUTH 0 16 12 -4
+look -76 10
+wait 200
+lens air off
+wait 60
+shot r1_painting_air_off
+lens air on
+wait 60
+shot r1_painting_cinematic
+look -76 -25
+wait 60
+shot r2_sky_cinematic
+lens air off
+wait 60
+shot r2_sky_air_off
+lens air on
+cmd awaken gate realm_at VILLAGE 0 -70 28 -30
+look -60 14
+wait 300
+shot r3_village_cinematic
+lens air off
+wait 60
+shot r3_village_air_off
+lens air setting
+lookswitch lite
+wait 200
+shot r3_village_lite
+cmd awaken gate realm_at MOUTH 0 16 12 -4
+look -76 10
+wait 200
+shot r1_painting_lite
+quit
