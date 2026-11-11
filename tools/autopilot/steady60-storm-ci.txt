@@ -1,0 +1,61 @@
+# The Rolling Storm in the Air's block clouds (SPEC §22 "Storm cells", the block storm; Euan, playing, 11 Nov: "the
+# custom storm is still the old clouds ... fix that so it's the new clouds and looks great"). A storm is called, then
+# seen from where it was called, from 200 and 60 blocks off (the tower and under the shelf), at golden hour, and by
+# night with strikes. Run: tools/tour-ci.sh tools/autopilot/steady60-storm-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd tp @s 0.5 121 0.5 -90 0
+camera first
+hud on
+lookswitch cinematic
+wait 300
+cmd time set 4000
+cmd awaken living happen rolling_storm
+wait 200
+cmd awaken living face
+wait 300
+shot s1_from_afar
+wait 300
+shot s1_from_afar_later
+cmd awaken living near 200
+wait 200
+shot s2_tower_200
+cmd awaken living near 60
+wait 200
+shot s3_under_shelf
+cmd awaken living near 200
+wait 100
+cmd time set 11400
+wait 200
+shot s4_golden
+cmd time set 18000
+wait 200
+shot s5_night
+cmd awaken living strike 150
+wait 2
+shotnow s6_strike_a
+wait 3
+shotnow s6_strike_b
+wait 6
+shotnow s6_strike_c
+lens cost
+cmd awaken living calm
+quit

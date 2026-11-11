@@ -40,6 +40,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_storm_frame.glsl>
 #include <awaken:lens_air.glsl>
 #include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_storm_blocks.glsl>
 #include <awaken:lens_cloud_walk.glsl>
 #endif
 
@@ -593,11 +594,22 @@ void main() {
         if (behind) c = c * cl.a + cl.rgb;
         // the Air's near clouds over all of it: walked here, at the frame's own size and against this pixel's own
         // depth (lens_cloud_walk.glsl), so they need no such test and a tree in front of one keeps its own edge
-        if (cloudBlocks() && cp.x > 0.0) {
+        // A storm cell among them is built of the same blocks (lens_storm_blocks.glsl), walked here too: first, so the
+        // layer's clouds in front of it draw over it and the ones behind it are never walked
+        if (cloudBlocks() && (cp.x > 0.0 || storms > 0)) {
             bool beyond = sky || farTerrain;
             vec3 nv = beyond ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
-            vec4 cb = cloudNear(nv, sky ? 1.0e9 : (farTerrain ? d : length(pRel)));
-            c = c * cb.a + cb.rgb;
+            float reachTo = sky ? 1.0e9 : (farTerrain ? d : length(pRel));
+            if (storms > 0) {
+                float stormAt;
+                vec4 sb = stormBlocks(nv, reachTo, stormAt);
+                c = c * sb.a + sb.rgb;
+                if (sb.a < 0.5) reachTo = min(reachTo, stormAt);
+            }
+            if (cp.x > 0.0) {
+                vec4 cb = cloudNear(nv, reachTo);
+                c = c * cb.a + cb.rgb;
+            }
         }
     }
 #endif

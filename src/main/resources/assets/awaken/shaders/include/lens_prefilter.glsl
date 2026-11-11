@@ -10,7 +10,9 @@ uniform sampler2D CloudsSampler;   // Lens 2's clouds (lens_clouds.fsh): rgb the
 uniform sampler2D FrameSampler;    // LensFrame: texel 22 w the Air
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_air.glsl>
+#include <awaken:lens_storm_frame.glsl>
 #include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_storm_blocks.glsl>
 #include <awaken:lens_cloud_walk.glsl>
 #endif
 
@@ -40,7 +42,13 @@ void main() {
         // the Air's near clouds in front of the others: walked here at this pass's own half size (lens_cloud_walk.glsl)
         float dz = texture(DepthSampler, texCoord).r;
         vec3 pw = unproject(frameMat(0), texCoord, sky > 0.5 ? 1.0e-5 : dz, F(16).x > 0.5);
-        vec4 cb = cloudNear(normalize(pw), sky > 0.5 ? 1.0e9 : length(pw));
+        // (a storm cell's blocks first, as the composite has them: a storm in front of the sun cuts its glow and rays)
+        vec3 nv = normalize(pw);
+        float reachTo = sky > 0.5 ? 1.0e9 : length(pw), stormAt;
+        vec4 sb = stormBlocks(nv, reachTo, stormAt);
+        cl = vec4(sb.rgb + sb.a * cl.rgb, sb.a * cl.a);
+        if (sb.a < 0.5) reachTo = min(reachTo, stormAt);
+        vec4 cb = cloudNear(nv, reachTo);
         cl = vec4(cb.rgb + cb.a * cl.rgb, cb.a * cl.a);
     }
     // (the shafts read the open sky's own brightness: bright cloud tops below the camera mustn't streak into rays)
