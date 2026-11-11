@@ -24442,3 +24442,51 @@ bell): his pick decides the whole family.
   AUDIT.md are the record.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
+
+## 67. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
+
+Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was
+"jittery" and "you're not exactly sure when the ring is going to close", a perfect parry was "a very small ding, and the
+screen barely moves", and the final blow was "too boring" ("a cinematic blow ... similar to Mortal Kombat"). "Still
+challenging, obviously." For every boss. What his log, save and statistics and the code showed is in the plan (§2).
+Decisions: 1 E and D uses; 2 nothing forged is destroyed; 3 armour wears by how hard it is hit; 4 the ring on the body's
+clock at one speed, closing when the blow reaches you; 5 the parry band and "Too early" / "Too late"; 6 the ring on a boss
+without a lock; 7 the clash in three sizes, built by the weapon-feel session (SPEC §25); 8 a boss dies only to a finishing
+blow; 9 filmed from outside the body by default; 10 skipped with Sneak from the second time; 11 pilots first (the Ringer,
+the Hive Regent, the Gearwright; Longsword, Maul, Twin Blades, Daggers); 12 the autosave held while a boss fights; 13
+counter-hits not now; 14 the Journal picture later. **No window, health, damage, stance or mind number changes**: the
+simulator's table (`tools/sim/combat_sim.py`) reads none of what this section touches.
+
+**67.1 Gear that lasts (decisions 1 to 3).** Modules `arms`, `gear`, `armour`; the shared rule is `core.api.Lasting` (§12).
+- **Why.** A boss is 90 to 300 landed blows (`docs/boss-experience/harness/durability.py`: E Lords 44 to 81% of a fresh E
+  weapon at 220 uses, the Ringer 107%; his own fight 300) and a whole E gate about 500; D at 500 uses lost 20 to 47% a boss.
+  C and up lost 4 to 15% and are unchanged.
+- **Uses.** Forged weapons (`tools/art/specs/arms_weapons.py` `TIERS`, generated into `ArmsData`) and Hunter blades
+  (`HunterTier.Blade`): E 220 → **900**, D 500 → **1,300**. Armour's durability multiplier (`HunterTier.Armour`, worn by the
+  Hunter sets and every forged set of the tier): E 13 → **24**, D 18 → **28** (a Wildhide helmet 143 → 264; C stays
+  diamond's 33).
+- **One use a blow.** Axe-style weapons were built on vanilla's axe preset, whose `Weapon` component costs two uses a
+  blow; `ArmsItems` sets `Weapon(1, 5 s)` on them (the five seconds a struck shield stays down are kept).
+- **Never destroyed** (`core.api.Lasting`, an interface over NeoForge's `IItemExtension`; `ArmsWeaponItem`, `ArmsMaulItem`,
+  `HunterGearItem`, `ForgedArmourItem` implement it). `setDamage` stops one use short of breaking, so the stack is never
+  broken and nothing removes it. With no use left it is **worn out** (`Lasting.wornOut`, read off the stack's own damage:
+  nothing new is saved, and mending it by any means ends it): its attack damage, armour and toughness are halved
+  (`GearWear.onAttributes`, `ItemAttributeModifierEvent`; `WORN_OUT_SHARE` 0.5), an Arms blow with it fills a stance half as
+  fast (`ArmsServer.onIncomingDamage`), and it still parries. Its icon carries a crack (`GearClient.decorations`, an item
+  decorator on every `Lasting` item), its tooltip reads "Worn out. It hits half as hard until you mend it at an anvil." (or
+  "It protects half as well ..."), and the blow that wears it out says so once over the hotbar with the sound of it giving
+  (`Lasting.tell`). Forged picks keep their own rule (§49).
+- **Old stacks.** A stack that carries its own count of uses (the Armoury's quarter, §27.13) under the old numbers keeps
+  the same share over today's: `Lasting.getMaxDamage` reads a count under the kind's as a share over `formerUses()` (E 220
+  or 143 to 208, D 500 or 198 to 288). Nothing is rewritten.
+- **Armour wears by how hard it is hit** (`gear.GearWear`, `ArmorHurtEvent`; ours only, vanilla armour keeps vanilla's
+  rule). Vanilla takes `max(1, damage / 4)` from every piece, so a duel's many light blows cost a point a piece each; ours
+  takes `damage / 4` with no floor, the part of a point settled by chance. The blow is kept from
+  `LivingIncomingDamageEvent` and `LivingShieldBlockEvent` (both at LOWEST, the same tick and body), since the armour's
+  event carries only the floored wear.
+- **Said at home.** `GearNow`: "Your %s is nearly worn out. Mend it at an anvil." under 15% of its uses (`Lasting.NEARLY`),
+  "... is worn out ..." at none, priority 60.
+- Kept: mending at an anvil with the tier's repair tag, the War Anvil, the Armoury's quarter, enchantments.
+- Tests: `gear_lasts` (a weapon and a piece of armour of ours at their last use stay and are worn out; the worn-out
+  weapon's attack damage is halved and mending restores it; an axe costs one use a blow; an old Armoury count keeps its
+  quarter), `gear_armour_wear` (twenty light blows cost a piece about a quarter of their damage, not twenty).
