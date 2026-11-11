@@ -7870,6 +7870,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
     cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
     `arms_heavy` is still the rising cut.
+  - *The Maul's charge is held raised* (Euan 2026-11-11: "it's just holding it in front of the character instead of actually
+    like bringing it up as if you were going to hit down"). Cut into view, its overhead's draw back stopped with the haft
+    upright and leaning 29 degrees ahead of fists low in the corner: a hammer presented, not lifted. A raised head can't be
+    in view (a lifted hammer's is over your own), so the charge holds the whole draw back, the haft rising steeply out of the
+    top of the frame and turned 25 degrees toward the sword shoulder, and the weapon is carried down and in until the fists
+    sit just above the crosshair's height on the sword side (`swing_studio.RAISED_HEAVY`: the grip at ndc 0.42, -0.1, 0.6
+    blocks ahead). That is as high as the arms allow: each rises to its fist from under its own corner of the frame, and the
+    off arm, crossing from the far corner to the haft, would show its end on the bottom edge with the fists any higher (its
+    end stays 1.29 under the middle through the hold and the drive; the shipped strikes reach 1.2). The drive takes the raise
+    off on the blow's own power curve: the head crashes into view from above and meets the same hit pose as before, now at
+    207 degrees a tick against 79 (the drive is the same 1.05 ticks over a longer arc); the carry and the way home move by a
+    few hundredths of the screen. Third person already lifted the Maul over the head for its charge (its rig was solved
+    before the cut into view and was left as it is). The other overhead heavies (Longsword, Axe, Greatblade, the hand-keyed
+    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead. Filmed in the game on CI
+    (`tools/autopilot/arms-maul-charge.txt`, run 42965422512): the draw lifts the head out of the top in about ten ticks,
+    the hold keeps the haft rising out of the top-right corner with both forearms in view (as large as the other heavies'
+    held arms), and the release brings the head in from above to the hit, which the server confirmed. Held 0.75 blocks out
+    instead, the fists would sit barely higher than before for arms a fifth smaller: the lift was worth more.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
