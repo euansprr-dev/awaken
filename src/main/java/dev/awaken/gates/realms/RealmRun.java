@@ -150,6 +150,11 @@ final class RealmRun {
     /** Wandering packs sent per gate so far. Not saved: after a restart a land may get a few more. */
     private static final Map<Integer, Integer> WANDERED = new HashMap<>();
 
+    /** A server is starting: gate ids begin again in another world, so the last world's counts must not be read as this one's. */
+    static void reset() {
+        WANDERED.clear();
+    }
+
     /**
      * The right amount (SPEC §50.9): an open land is never empty between its dens. About every twenty seconds, for a player
      * who is out in the land with nothing of the gate's near them, away from the way in and from every fight the land has

@@ -67,6 +67,7 @@ public final class Realms {
     /** After a restart every standing Realm's plan goes back up before anything can ask for its chunks. */
     public static void onStarted(MinecraftServer server) {
         RealmCells.clear();
+        RealmRun.reset();
         for (GateRecord g : GateRegistry.get(server).all()) if (g.state != GateState.RELEASED && g.realm.isPresent()) publish(g);
     }
 
