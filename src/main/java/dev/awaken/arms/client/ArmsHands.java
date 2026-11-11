@@ -282,7 +282,10 @@ final class ArmsHands {
         roll = 0F;
         // the chop is the weapon in hand's own (before any strike, or after one with another weapon)
         Archetypes.Loaded inHand = Arms.styleOf(p.getMainHandItem());
-        var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : inHand;
+        // a held pose (the autopilot's arms pose) is the weapon in hand's own move: the last strike's style would pose one
+        // weapon with another's keys (with none struck yet, the Longsword's)
+        var style = preview != null ? inHand != null ? inHand : Archetypes.get(Arms.LONGSWORD)
+                : ArmsPredict.style != null ? ArmsPredict.style : inHand;
         if (style == null) return false;
         Archetype.Move m;
         float t;

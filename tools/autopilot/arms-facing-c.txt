@@ -1,0 +1,1247 @@
+# Facing, c: twinblades, glaive, scythe, gauntlets
+# Written by tools/art/facing_tour.py (SPEC §25 "One-faced heads"): every weapon a tick before the hit and on it in first person, then strike 1 into strike 2 in third person from behind its right shoulder
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfacingc creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:wildhide_twinblades
+arms waitserver 100
+camera first
+look 0 6
+wait 20
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_wildhide_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_wildhide_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_wildhide_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_wildhide_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_beastbound_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_beastbound_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_beastbound_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_beastbound_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_gatewrought_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_gatewrought_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_gatewrought_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_gatewrought_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose strike_3 0.2000
+wait 4
+arms film fa_gatewrought_twinblades_strike_3_a 1 1 3
+wait 2
+arms pose strike_3 0.3000
+wait 4
+arms film fa_gatewrought_twinblades_strike_3_b 1 1 3
+wait 2
+arms pose strike_4 0.2353
+wait 4
+arms film fa_gatewrought_twinblades_strike_4_a 1 1 3
+wait 2
+arms pose strike_4 0.2941
+wait 4
+arms film fa_gatewrought_twinblades_strike_4_b 1 1 3
+wait 2
+arms pose heavy 0.0000
+wait 4
+arms film fa_gatewrought_twinblades_heavy_a 1 1 3
+wait 2
+arms pose heavy 0.0417
+wait 4
+arms film fa_gatewrought_twinblades_heavy_b 1 1 3
+wait 2
+arms pose riposte 0.0909
+wait 4
+arms film fa_gatewrought_twinblades_riposte_a 1 1 3
+wait 2
+arms pose riposte 0.1818
+wait 4
+arms film fa_gatewrought_twinblades_riposte_b 1 1 3
+wait 2
+arms pose slipcut 0.0909
+wait 4
+arms film fa_gatewrought_twinblades_slipcut_a 1 1 3
+wait 2
+arms pose slipcut 0.1818
+wait 4
+arms film fa_gatewrought_twinblades_slipcut_b 1 1 3
+wait 2
+arms pose undercut 0.0833
+wait 4
+arms film fa_gatewrought_twinblades_undercut_a 1 1 3
+wait 2
+arms pose undercut 0.1667
+wait 4
+arms film fa_gatewrought_twinblades_undercut_b 1 1 3
+wait 2
+arms pose art 0.0952
+wait 4
+arms film fa_gatewrought_twinblades_art_a 1 1 3
+wait 2
+arms pose art 0.1429
+wait 4
+arms film fa_gatewrought_twinblades_art_b 1 1 3
+wait 2
+arms pose plunge 0.0000
+wait 4
+arms film fa_gatewrought_twinblades_plunge_a 1 1 3
+wait 2
+arms pose plunge 0.0214
+wait 4
+arms film fa_gatewrought_twinblades_plunge_b 1 1 3
+wait 2
+arms pose execution 0.0526
+wait 4
+arms film fa_gatewrought_twinblades_execution_a 1 1 3
+wait 2
+arms pose execution 0.1053
+wait 4
+arms film fa_gatewrought_twinblades_execution_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_veilwoven_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_veilwoven_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_veilwoven_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_veilwoven_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_lordscale_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_lordscale_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_lordscale_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_lordscale_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_sovereign_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_sovereign_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_sovereign_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_sovereign_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_sky_leviathan_twinblades_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.3000
+wait 4
+arms film fa_sky_leviathan_twinblades_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_sky_leviathan_twinblades_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.3000
+wait 4
+arms film fa_sky_leviathan_twinblades_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_wildhide_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_wildhide_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_wildhide_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_wildhide_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_beastbound_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_beastbound_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_beastbound_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_beastbound_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_gatewrought_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_gatewrought_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_gatewrought_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_gatewrought_glaive_strike_2_b 1 1 3
+wait 2
+arms pose strike_3 0.1579
+wait 4
+arms film fa_gatewrought_glaive_strike_3_a 1 1 3
+wait 2
+arms pose strike_3 0.2105
+wait 4
+arms film fa_gatewrought_glaive_strike_3_b 1 1 3
+wait 2
+arms pose strike_4 0.1333
+wait 4
+arms film fa_gatewrought_glaive_strike_4_a 1 1 3
+wait 2
+arms pose strike_4 0.2000
+wait 4
+arms film fa_gatewrought_glaive_strike_4_b 1 1 3
+wait 2
+arms pose heavy 0.0625
+wait 4
+arms film fa_gatewrought_glaive_heavy_a 1 1 3
+wait 2
+arms pose heavy 0.1250
+wait 4
+arms film fa_gatewrought_glaive_heavy_b 1 1 3
+wait 2
+arms pose riposte 0.0000
+wait 4
+arms film fa_gatewrought_glaive_riposte_a 1 1 3
+wait 2
+arms pose riposte 0.0833
+wait 4
+arms film fa_gatewrought_glaive_riposte_b 1 1 3
+wait 2
+arms pose slipcut 0.0000
+wait 4
+arms film fa_gatewrought_glaive_slipcut_a 1 1 3
+wait 2
+arms pose slipcut 0.1000
+wait 4
+arms film fa_gatewrought_glaive_slipcut_b 1 1 3
+wait 2
+arms pose undercut 0.0000
+wait 4
+arms film fa_gatewrought_glaive_undercut_a 1 1 3
+wait 2
+arms pose undercut 0.0909
+wait 4
+arms film fa_gatewrought_glaive_undercut_b 1 1 3
+wait 2
+arms pose art 0.1250
+wait 4
+arms film fa_gatewrought_glaive_art_a 1 1 3
+wait 2
+arms pose art 0.1667
+wait 4
+arms film fa_gatewrought_glaive_art_b 1 1 3
+wait 2
+arms pose plunge 0.0000
+wait 4
+arms film fa_gatewrought_glaive_plunge_a 1 1 3
+wait 2
+arms pose plunge 0.0714
+wait 4
+arms film fa_gatewrought_glaive_plunge_b 1 1 3
+wait 2
+arms pose execution 0.0526
+wait 4
+arms film fa_gatewrought_glaive_execution_a 1 1 3
+wait 2
+arms pose execution 0.1053
+wait 4
+arms film fa_gatewrought_glaive_execution_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_veilwoven_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_veilwoven_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_veilwoven_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_veilwoven_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_lordscale_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_lordscale_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_lordscale_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_lordscale_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_sovereign_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_sovereign_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_sovereign_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_sovereign_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_abbot_of_frost_glaive_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_abbot_of_frost_glaive_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1429
+wait 4
+arms film fa_abbot_of_frost_glaive_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2143
+wait 4
+arms film fa_abbot_of_frost_glaive_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_wildhide_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_wildhide_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_wildhide_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_wildhide_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_beastbound_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_beastbound_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_beastbound_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_beastbound_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_gatewrought_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_gatewrought_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_gatewrought_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_gatewrought_scythe_strike_2_b 1 1 3
+wait 2
+arms pose strike_3 0.2000
+wait 4
+arms film fa_gatewrought_scythe_strike_3_a 1 1 3
+wait 2
+arms pose strike_3 0.2500
+wait 4
+arms film fa_gatewrought_scythe_strike_3_b 1 1 3
+wait 2
+arms pose strike_4 0.1429
+wait 4
+arms film fa_gatewrought_scythe_strike_4_a 1 1 3
+wait 2
+arms pose strike_4 0.1905
+wait 4
+arms film fa_gatewrought_scythe_strike_4_b 1 1 3
+wait 2
+arms pose heavy 0.0000
+wait 4
+arms film fa_gatewrought_scythe_heavy_a 1 1 3
+wait 2
+arms pose heavy 0.0187
+wait 4
+arms film fa_gatewrought_scythe_heavy_b 1 1 3
+wait 2
+arms pose riposte 0.0000
+wait 4
+arms film fa_gatewrought_scythe_riposte_a 1 1 3
+wait 2
+arms pose riposte 0.0769
+wait 4
+arms film fa_gatewrought_scythe_riposte_b 1 1 3
+wait 2
+arms pose slipcut 0.0000
+wait 4
+arms film fa_gatewrought_scythe_slipcut_a 1 1 3
+wait 2
+arms pose slipcut 0.1000
+wait 4
+arms film fa_gatewrought_scythe_slipcut_b 1 1 3
+wait 2
+arms pose undercut 0.0000
+wait 4
+arms film fa_gatewrought_scythe_undercut_a 1 1 3
+wait 2
+arms pose undercut 0.0909
+wait 4
+arms film fa_gatewrought_scythe_undercut_b 1 1 3
+wait 2
+arms pose art 0.1600
+wait 4
+arms film fa_gatewrought_scythe_art_a 1 1 3
+wait 2
+arms pose art 0.2000
+wait 4
+arms film fa_gatewrought_scythe_art_b 1 1 3
+wait 2
+arms pose plunge 0.0000
+wait 4
+arms film fa_gatewrought_scythe_plunge_a 1 1 3
+wait 2
+arms pose plunge 0.0214
+wait 4
+arms film fa_gatewrought_scythe_plunge_b 1 1 3
+wait 2
+arms pose execution 0.0526
+wait 4
+arms film fa_gatewrought_scythe_execution_a 1 1 3
+wait 2
+arms pose execution 0.1053
+wait 4
+arms film fa_gatewrought_scythe_execution_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_veilwoven_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_veilwoven_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_veilwoven_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_veilwoven_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_lordscale_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_lordscale_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_lordscale_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_lordscale_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_sovereign_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_sovereign_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_sovereign_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_sovereign_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:mother_of_spores_scythe
+wait 30
+arms pose strike_1 0.1429
+wait 4
+arms film fa_mother_of_spores_scythe_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2143
+wait 4
+arms film fa_mother_of_spores_scythe_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.1333
+wait 4
+arms film fa_mother_of_spores_scythe_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_mother_of_spores_scythe_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_wildhide_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_wildhide_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_wildhide_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_wildhide_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_beastbound_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_beastbound_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_beastbound_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_beastbound_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_gatewrought_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_gatewrought_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose strike_3 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_strike_3_a 1 1 3
+wait 2
+arms pose strike_3 0.1429
+wait 4
+arms film fa_gatewrought_gauntlets_strike_3_b 1 1 3
+wait 2
+arms pose strike_4 0.0909
+wait 4
+arms film fa_gatewrought_gauntlets_strike_4_a 1 1 3
+wait 2
+arms pose strike_4 0.1818
+wait 4
+arms film fa_gatewrought_gauntlets_strike_4_b 1 1 3
+wait 2
+arms pose heavy 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_heavy_a 1 1 3
+wait 2
+arms pose heavy 0.0909
+wait 4
+arms film fa_gatewrought_gauntlets_heavy_b 1 1 3
+wait 2
+arms pose riposte 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_riposte_a 1 1 3
+wait 2
+arms pose riposte 0.1000
+wait 4
+arms film fa_gatewrought_gauntlets_riposte_b 1 1 3
+wait 2
+arms pose slipcut 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_slipcut_a 1 1 3
+wait 2
+arms pose slipcut 0.1000
+wait 4
+arms film fa_gatewrought_gauntlets_slipcut_b 1 1 3
+wait 2
+arms pose undercut 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_undercut_a 1 1 3
+wait 2
+arms pose undercut 0.0909
+wait 4
+arms film fa_gatewrought_gauntlets_undercut_b 1 1 3
+wait 2
+arms pose art 0.0500
+wait 4
+arms film fa_gatewrought_gauntlets_art_a 1 1 3
+wait 2
+arms pose art 0.1000
+wait 4
+arms film fa_gatewrought_gauntlets_art_b 1 1 3
+wait 2
+arms pose plunge 0.0000
+wait 4
+arms film fa_gatewrought_gauntlets_plunge_a 1 1 3
+wait 2
+arms pose plunge 0.0714
+wait 4
+arms film fa_gatewrought_gauntlets_plunge_b 1 1 3
+wait 2
+arms pose execution 0.0526
+wait 4
+arms film fa_gatewrought_gauntlets_execution_a 1 1 3
+wait 2
+arms pose execution 0.1053
+wait 4
+arms film fa_gatewrought_gauntlets_execution_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_veilwoven_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_veilwoven_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_veilwoven_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_veilwoven_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_lordscale_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_lordscale_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_lordscale_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_lordscale_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_sovereign_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_sovereign_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_sovereign_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_sovereign_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gearwright_colossus_gauntlets
+wait 30
+arms pose strike_1 0.0000
+wait 4
+arms film fa_gearwright_colossus_gauntlets_strike_1_a 1 1 3
+wait 2
+arms pose strike_1 0.2000
+wait 4
+arms film fa_gearwright_colossus_gauntlets_strike_1_b 1 1 3
+wait 2
+arms pose strike_2 0.0000
+wait 4
+arms film fa_gearwright_colossus_gauntlets_strike_2_a 1 1 3
+wait 2
+arms pose strike_2 0.2000
+wait 4
+arms film fa_gearwright_colossus_gauntlets_strike_2_b 1 1 3
+wait 2
+arms pose off
+camera back
+cmd awaken fx sidecam 35
+look 0 6
+wait 20
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_wildhide_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_beastbound_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_gatewrought_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_veilwoven_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_lordscale_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_sovereign_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_sky_leviathan_twinblades 21 0.5 3
+wait 1
+arms strike 2
+wait 8
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_wildhide_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_beastbound_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_gatewrought_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_veilwoven_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_lordscale_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_sovereign_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_abbot_of_frost_glaive 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_wildhide_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_beastbound_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_gatewrought_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_veilwoven_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_lordscale_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_sovereign_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:mother_of_spores_scythe
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_mother_of_spores_scythe 22 0.5 3
+wait 1
+arms strike 2
+wait 9
+arms strike 2
+wait 13
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_wildhide_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_beastbound_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_gatewrought_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_veilwoven_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_lordscale_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_sovereign_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:gearwright_colossus_gauntlets
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 10
+arms rate 2
+wait 2
+arms film fb_gearwright_colossus_gauntlets 15 0.5 3
+wait 1
+arms strike 2
+wait 4
+arms strike 2
+wait 11
+arms rate 20
+wait 10
+cmd awaken fx sidecam 0
+quit
