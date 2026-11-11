@@ -51,7 +51,14 @@ final class FamilyBrain {
         }
         long now = level.getGameTime();
         int a = b.act();
-        if ((a == FamilyPet.NUDGE && b.tickCount - b.actAt() > 40) || (a == FamilyPet.STRETCH && b.tickCount - b.actAt() > 52)) b.act(FamilyPet.IDLE);
+        if (a == FamilyPet.NUDGE || a == FamilyPet.STRETCH) {
+            // a hello or a stretch is played through where it stands (two seconds or so), then its day goes on
+            if (b.tickCount - b.actAt() <= (a == FamilyPet.STRETCH ? 52 : 40)) {
+                b.getNavigation().stop();
+                return;
+            }
+            b.act(FamilyPet.IDLE);
+        }
         // getting nowhere is counted, so one that is stuck can be put right
         if (b.position().distanceToSqr(b.lastAt) < 0.01 && !b.getNavigation().isDone()) b.stuck++;
         else b.stuck = 0;

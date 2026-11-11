@@ -24446,7 +24446,8 @@ a sister home gets no second pair.
   8 inside it in the last 15 s) and sits, and the System says once: "[Dubu wants to come. Crouch and call him and he will.]"
 - The tower's song (§43.7): he sits and howls along, she sits through it with her ears back. A raid warned or on, or a
   foe within 10 blocks: both in by the fire, low.
-- A use pets one (a hello and its sound; not while it sleeps). No food, breeding, leash or hearts. They push nothing
+- A use pets one (a hello and its sound; not while it sleeps). A hello or a stretch is played through where it stands
+  (40 and 52 ticks) before its day goes on. No food, breeding, leash or hearts. They push nothing
   and cannot be pushed.
 
 **68.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
@@ -24479,7 +24480,7 @@ person at a time.
 two its body's id, name, state (HOME, WITH, WAITING, DOOR), person, waiting spot and deadline, and whether it has
 arrived; the Hearth's arrival stage and the household's bed; and the players who have asked one along or had Dubu's hint.
 A body carries only its owner. Every fifth tick a body checks the record names it, else it removes itself; every second
-(`FamilyService.keep`) a record with no loaded body gets one made: at home once the Anchor's chunk is loaded and the body
+(`FamilyService.keep`) a record with no loaded body gets one made: at home once the Anchor stands on entity-ticking ground and the body
 has been gone 200 ticks (at once if it was sent home), behind its person when it is out with them, at its spot when it
 waits. So neither can be lost and neither can be two.
 

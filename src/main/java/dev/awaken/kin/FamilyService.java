@@ -452,13 +452,13 @@ public final class FamilyService {
                         one.id = Optional.empty();
                         world.setDirty();
                     }
-                } else if (at != null && level.hasChunkAt(at) && lost(key, now)) {
+                } else if (at != null && level.isPositionEntityTicking(at) && lost(key, now)) {
                     spawn(level, h.owner(), k, at, 0F); // it was waiting here and its body is gone: made again where it waits
                 }
             }
             default -> {
                 BlockPos a = h.anchor();
-                if (!level.hasChunkAt(a)) return;
+                if (!level.isPositionEntityTicking(a)) return; // only where bodies live and tick: elsewhere it sleeps with the land
                 // sent home from the wild (no body by design) it is there at once; a body simply gone is given a moment first
                 if (one.id.isPresent() && !lost(key, now)) return;
                 BlockPos at = FamilySpots.wander(level, a, Math.min(h.radius() - 4, 12), level.getRandom());
