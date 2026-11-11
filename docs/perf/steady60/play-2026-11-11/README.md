@@ -31,8 +31,14 @@ Each sheet has the code before the fix on the left and after it on the right, fr
   blocks, looking up it, and a doorway. Before, a disc of the game's raw light follows the camera; after, the wall is
   shaded right up to the eye and the pickaxe in the hand stays as the game lights it. (A first "after", run
   42985247494, read a checkerboard for the hand: the texture was registered under the wrong name.)
-- `glasswater.jpg` (SPEC §22 "Glasswater"; `tools/autopilot/steady60-water-ci.txt`): the Air's own water beside the
-  game's, on a pool built for it. `wip/glasswater-first-look.jpg` is the first pass he was shown.
+- Glasswater (SPEC §22; `tools/autopilot/steady60-water-ci.txt`): the Air's own water. There is no sheet of it as it
+  stands: `wip/glasswater-pixel-grid-rejected.jpg` is the first build, drawn on the block's sixteenth grid, which he
+  saw and turned down ("I'm really not a fan of the pixelized reflections ... It looks more glitchy than anything
+  else"). It was rebuilt smooth at dd769ccd5 and handed over at his word without waiting for pictures (run
+  42997552947 was in flight).
+- The Air in other worlds (SPEC §22; `tools/autopilot/steady60-realm-sky-ci.txt`): a gate world's own sky and fog
+  under the Air. Before: run 42996721809 (Amber Reach under the Air's blue). After: run 42996759340, in flight at the
+  hand-over, unread.
 
 Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
 exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
