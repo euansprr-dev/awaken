@@ -24754,9 +24754,9 @@ improving the design and experience of it"): the first look was a plank box with
   built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
   4 (height spread ×3, water ×6, road ×8, distance/6, and 2 a block where the ground astern drops more than 3 below
   the pad, so the steps reach the ground soon; a tree's trunk is not the ground). A glade of 6 round the footprint is
-  cleared of logs and leaves, and in a fringe of 6 more any leaves with no trunk left within 4 of them and 2 of their
-  height come down too (with the snow that lay on them), so a mooring in a forest stands in the open with nothing
-  left hanging. Both are guarded: breaking, placing and explosions there are refused except for
+  cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
+  within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
+  stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
   creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
   when absent) lets one of an older look be taken down and built again where it stood.
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the

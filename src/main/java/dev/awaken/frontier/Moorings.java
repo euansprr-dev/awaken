@@ -39,10 +39,11 @@ final class Moorings {
     static final int SEARCH = 20, SEARCH_STEP = 4;
     /** How far past the footprint the trees come down. */
     static final int GLADE = 6;
-    /** Past the glade, leaves with no trunk left within {@code CROWN} of them come down too, this far out. */
-    static final int FRINGE = 6, CROWN = 4;
+    /** Past the glade, this far out, leaves no longer joined to a log (through leaves, within {@code HOLD}, as the game counts) come down too. */
+    static final int FRINGE = 6, HOLD = 6;
+    private static final byte LOOSE = 100;
     /** Land this far round a mooring's spot has to be loaded before it's built (the search, the footprint, the glade and its fringe). */
-    static final int NEEDS = 47;
+    static final int NEEDS = 48;
     /** A player this near the ridge's spot gets it built. */
     static final int BUILD_NEAR = 160;
     /** The deck stands this far over the highest ground under it: the pad's top is that ground. */
@@ -183,29 +184,40 @@ final class Moorings {
                     BlockState st = level.getBlockState(p);
                     if (st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)) level.setBlock(p, air, flags);
                 }
-        // the crowns that hung past the glade's edge off trees that are gone: in a fringe round it, leaves with no trunk
-        // left within reach (and at about their own height: a neighbour's trunk well below doesn't hold them) come down
-        // too, so nothing is left hanging in the air
-        int fx = gx + FRINGE + CROWN, fz0 = gz0 - FRINGE - CROWN, fz1 = gz1 + FRINGE + CROWN, wide = 2 * fx + 1, deep = fz1 - fz0 + 1, tall = y1 - y0 + 1;
-        boolean[] trunk = new boolean[wide * deep * tall];
-        for (int x = -fx; x <= fx; x++)
-            for (int z = fz0; z <= fz1; z++) {
-                if (Math.abs(x) <= gx && z >= gz0 && z <= gz1) continue;
-                for (int y = y0; y <= y1; y++)
-                    if (level.getBlockState(Skiff.at(origin, facing, x, y, z)).is(BlockTags.LOGS)) trunk[((y - y0) * deep + z - fz0) * wide + x + fx] = true;
+        // the crowns that hung past the glade's edge off trees that are gone: a leaf holds the way the game holds it,
+        // joined through other leaves to a log within six; in a fringe round the glade every leaf that isn't comes down
+        int fx = gx + FRINGE + HOLD, fz0 = gz0 - FRINGE - HOLD, fz1 = gz1 + FRINGE + HOLD, wide = 2 * fx + 1, deep = fz1 - fz0 + 1, tall = y1 - y0 + 1;
+        byte[] held = new byte[wide * deep * tall]; // 0 neither; LOOSE a leaf not reached; else 1 + how far from a log
+        int[] queue = new int[wide * deep * tall];
+        int head = 0, tail = 0;
+        for (int y = y0; y <= y1; y++)
+            for (int z = fz0; z <= fz1; z++)
+                for (int x = -fx; x <= fx; x++) {
+                    BlockState st = level.getBlockState(Skiff.at(origin, facing, x, y, z));
+                    int i = ((y - y0) * deep + z - fz0) * wide + x + fx;
+                    if (st.is(BlockTags.LOGS)) {
+                        held[i] = 1;
+                        queue[tail++] = i;
+                    } else if (st.is(BlockTags.LEAVES)) held[i] = LOOSE;
+                }
+        int[] beside = {1, -1, wide, -wide, wide * deep, -wide * deep};
+        while (head < tail) {
+            int i = queue[head++];
+            if (held[i] > HOLD) continue; // six from a log: it holds, and holds nothing further
+            int cx = i % wide, cz = i / wide % deep, cy = i / (wide * deep);
+            for (int k = 0; k < 6; k++) {
+                if (k == 0 && cx == wide - 1 || k == 1 && cx == 0 || k == 2 && cz == deep - 1 || k == 3 && cz == 0 || k == 4 && cy == tall - 1 || k == 5 && cy == 0) continue;
+                int j = i + beside[k];
+                if (held[j] != LOOSE) continue;
+                held[j] = (byte) (held[i] + 1);
+                queue[tail++] = j;
             }
+        }
         for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
             for (int z = gz0 - FRINGE; z <= gz1 + FRINGE; z++) {
                 if (Math.abs(x) <= gx && z >= gz0 && z <= gz1) continue;
-                for (int y = y0; y <= y1; y++) {
-                    BlockPos p = Skiff.at(origin, facing, x, y, z);
-                    if (!level.getBlockState(p).is(BlockTags.LEAVES)) continue;
-                    boolean held = false;
-                    for (int dy = Math.max(y0, y - 2); dy <= Math.min(y1, y + 2) && !held; dy++)
-                        for (int dx = -CROWN; dx <= CROWN && !held; dx++)
-                            for (int dz = -CROWN; dz <= CROWN && !held; dz++) held = trunk[((dy - y0) * deep + z + dz - fz0) * wide + x + dx + fx];
-                    if (!held) level.setBlock(p, air, flags);
-                }
+                for (int y = y0; y <= y1; y++)
+                    if (held[((y - y0) * deep + z - fz0) * wide + x + fx] == LOOSE) level.setBlock(Skiff.at(origin, facing, x, y, z), air, flags);
             }
         // and the snow that lay on any of them
         for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
