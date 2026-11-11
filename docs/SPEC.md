@@ -19318,6 +19318,22 @@ that fidgets would be wrong).
   moving, a blow, death or anything opening ends it at once. It rides the Forge Song's camera (`ForgeCamera`), which
   now leaves your body drawn while Admire has it. `/awaken armour admire` runs one circle without the key.
 
+
+**44.14 One suit to a stand (Euan, 11 Nov 2026).** A Fitting Stand builds one set at a time. The first piece that stands on
+it locks it to that piece's set (`FittingStandBlockEntity.held()`: the set of what stands on it); while it is held,
+nothing of another set starts there (`ArmourForge.start` refuses, and every other set's offers carry `HELD_OTHER` and
+lose `CAN`); it is free again when the last piece is taken off. A piece of the held set can be made again over the one
+standing (the old one goes to your pack, as before). Offers of the held set say which pieces stand (`ON_STAND`).
+- **Taking:** `ArmourPayloads.TAKE` with `a` 1 to 4 takes the piece in that slot; 0 takes everything, as sneak-use on the
+  stand still does. The server then sends the stand's offers again (`HallNet.Suits`), so the Hall shows the lock gone.
+- **In the Hall:** a held stand opens on its suit (Esc steps back to the terraces). The suit carries "On this stand · n of
+  4" at its feet, the other suits step back (drawn at a third), the head reads "This stand holds Wildhide · 1 of 4", and
+  another suit's close-up says "This stand is holding Wildhide. Take it off the stand and you can build this one here."
+  with its forge button off. Pieces are taken from the suit itself: "Take it" for the piece you're on, "Take all n" for
+  the rest; a standing piece is labelled "On the stand". The line "Take the suit (n of 4)" in the terraces' corner is gone.
+- A stand left holding pieces of two sets from before this rule is held by the first of them until it is cleared.
+- Test: `armour_forge_fold_starfire` (the lock, the offers' flags, one piece taken, the stand free again).
+
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
 Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
@@ -21595,6 +21611,14 @@ a held press, the fire rising in three steps; the weapon coming down, `block.anv
 **For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
 50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
 which rite is picked, on a change only. On the sheet, text sizes snap to whole real pixels, rounding down unless the size is within .35 of a pixel of the next step (at 1.93 real pixels to a sheet pixel, size 2 stays 4 real pixels rather than falling to 3). A line can come out a few percent wider than laid out, so widths, fits and wraps all measure text at its snapped size.
+
+**Hover (Euan, 11 Nov 2026: "you don't actually see well which one you're about to click on").** On the wall and on the
+terraces the thing under the pointer has a hover state of its own, beyond the lantern and the name at the head: the
+band's corner brackets round its niche or its figure (`Stage.brackets`), warm light under it, and the thing itself drawn
+again fully lit and a touch larger (7% a suit, 10% a weapon) in its own picture (`KEY_HOVER`), redrawn only when the pointer
+moves to another. The light never gives anything away: what you haven't found stays a shape and a kind on offer stays
+plain iron. The arrow keys' cursor shows the same state. A Fitting Stand that is holding a suit: §44.14.
+
 ## 50. Powers in Full Voice (plan docs/powers-aaa/PLAN.md, page https://claude.ai/artifact/G6vDNHxaMBnyHF84e51pFg, all 43 yes 9 Nov 2026)
 
 Stage 0 is the proof: Haymaker, Shockwave, Gravity Well and Railgun rebuilt to the plan's bar, and nothing else. Later stages wait for Euan to play this one.
@@ -21817,6 +21841,7 @@ text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin
 220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
 `item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
 Every line under the panel fits inside its width, beside Undo too, so nothing reaches JEI's columns. Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
+
 
 ## 52. Made by Hand (the chill side; plan docs/made-by-hand/PLAN.md, page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88)
 
