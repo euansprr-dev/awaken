@@ -1,6 +1,7 @@
 package dev.awaken.terrain.mire;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -31,7 +32,7 @@ import java.util.List;
 public final class MireBlocks {
     private MireBlocks() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.LANDS);
 
     public static final ResourceKey<Feature> WEEPWOOD_TREE = ResourceKey.create(Registries.FEATURE, Awaken.id("lands/weepwood"));
     public static final ResourceKey<Feature> GREAT_WEEPWOOD_TREE = ResourceKey.create(Registries.FEATURE, Awaken.id("lands/great_weepwood"));

@@ -129,11 +129,8 @@ public final class AscentContent {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
-        modBus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent e) -> {
-            if (!e.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
-            e.accept(IRON_LINE.get());
-            e.accept(GOLD_REEL.get());
-            e.accept(DEEPGLASS_LINE.get());
-        });
+        // the rope's fittings with the climbing gear; the movement blocks with the courses
+        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.CLIMBING, IRON_LINE, GOLD_REEL, DEEPGLASS_LINE);
+        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.COURSES, ANCHOR_RING_ITEM, UPDRAFT_VENT_ITEM, SPIRE_CROWN_ITEM, WING_CORE_ITEM);
     }
 }

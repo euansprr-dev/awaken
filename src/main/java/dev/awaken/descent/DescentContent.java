@@ -3,7 +3,7 @@ package dev.awaken.descent;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.descent.block.ConduitBlock;
 import dev.awaken.descent.block.DescentPitBlock;
 import dev.awaken.descent.block.UseBlock;
@@ -28,7 +28,6 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -202,14 +201,8 @@ public final class DescentContent {
         BIOME_SOURCES.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
-        modBus.addListener(DescentContent::creativeTab);
+        Tabs.fill(Tabs.Shelf.DESCENT_BLOCKS, TAB);
         modBus.addListener(DescentContent::attributes);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().equals(CoreModule.TAB_KEY)) {
-            for (var item : TAB) event.accept(item.get());
-        }
     }
 
     private static void attributes(EntityAttributeCreationEvent event) {

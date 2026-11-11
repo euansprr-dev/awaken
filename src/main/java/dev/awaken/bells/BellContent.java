@@ -1,6 +1,7 @@
 package dev.awaken.bells;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.BlockItem;
@@ -126,6 +127,17 @@ public final class BellContent {
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        // what bells hang on; the hundred bells in number order (each its own kind in JEI) and the Great Belfry's two
+        // needs; the handbell with the gear
+        Tabs.fill(Tabs.Shelf.BELL_HOOKS, BELL_FRAME_ITEM, BELL_BEAM_ITEM, GREAT_BEAM_ITEM);
+        Tabs.fill(Tabs.Shelf.BELLS, (p, out) -> {
+            for (BellCatalog.Def d : BellCatalog.ALL) out.accept(BellItem.of(d.no()));
+            out.accept(HEART_CLAPPER.get());
+            out.accept(SOVEREIGN_RELIC.get());
+        });
+        Tabs.fill(Tabs.Shelf.GEAR, HANDBELL);
+        Tabs.variants(BELL, BELL_NO);
+        Tabs.icon(Tabs.Tab.RELICS, () -> BellItem.of(0));
         COMPONENTS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         SOUNDS.register(modBus);

@@ -1,5 +1,6 @@
 package dev.awaken.finds.kit;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -18,7 +19,7 @@ import java.util.List;
 public final class Props {
     private Props() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.MONUMENTS);
     private static final List<String> IDS = new ArrayList<>();
 
     /** Flat Stones. */

@@ -1,7 +1,7 @@
 package dev.awaken.gear;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,7 +18,6 @@ import net.minecraft.world.item.component.Weapon;
 import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
@@ -107,13 +106,16 @@ public final class GearItems {
 
     static void init(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(GearItems::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (HunterTier tier : HunterTier.values()) {
-            for (Piece piece : Piece.values()) event.accept(get(tier, piece));
-        }
+        // each tier's set together, tiers in order: weapons on one shelf, armour on another, the mattocks after the picks
+        Tabs.fill(Tabs.Shelf.HUNTER_WEAPONS, (p, out) -> {
+            for (HunterTier tier : HunterTier.values()) { out.accept(get(tier, Piece.BLADE)); out.accept(get(tier, Piece.FOCUS)); }
+        });
+        Tabs.fill(Tabs.Shelf.HUNTER_ARMOUR, (p, out) -> {
+            for (HunterTier tier : HunterTier.values())
+                for (Piece piece : Piece.values()) if (piece.armorType != null) out.accept(get(tier, piece));
+        });
+        Tabs.fill(Tabs.Shelf.HUNTER_TOOLS, (p, out) -> {
+            for (HunterTier tier : HunterTier.values()) out.accept(get(tier, Piece.MATTOCK));
+        });
     }
 }

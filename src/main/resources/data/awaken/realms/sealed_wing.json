@@ -8,6 +8,7 @@
     "C",
     "B"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sealed_wing",
     "water": 0

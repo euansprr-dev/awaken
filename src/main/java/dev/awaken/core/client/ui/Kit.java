@@ -83,8 +83,7 @@ public final class Kit {
         float span = Math.max(e.getBbHeight(), e.getBbWidth() * 1.5F), box = Math.min(x1 - x0, y1 - y0);
         int size = Math.max(4, Math.round(box * .74F / Math.max(.3F, span) * s.k));
         try {
-            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsAngle(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1),
-                    size, .0625F, turn, tilt, e);
+            Figure.followsAngle(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1), size, .0625F, turn, tilt, e);
         } catch (RuntimeException ex) {
             BODIES.put(type, null);
             return false;
