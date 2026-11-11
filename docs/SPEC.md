@@ -4295,11 +4295,49 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 
 ### 17.11 The Wilds: Tether Spires
 - **The site** (`RuinKind.SPIRE`, structure `awaken:precursor_tether_spire`, set `precursor_tether_spires`: random spread 24
-  chunks, separation 8): a Precursor pylon in forests, taigas, meadows, cherry groves, windswept forests and hills,
+  chunks, separation 8, then room between them, below): a Precursor pylon in forests, taigas, meadows, cherry groves, windswept forests and hills,
   stony peaks (`#awaken:has_structure/precursor_tether_spire`; with Awakened Lands also elderwood, lumen forest,
   shattered highlands, frost spires). Never jungle: its canopy hides the spire and leans into the climb. New chunks
   only; it is a landmark (`LandmarkKind.TETHER_SPIRE`, the last ordinal), the Scanner's and the Horizon's, and warded
   (`#awaken:warded`: blocks placed in it crumble).
+- **Room between them** (11 Nov 2026; Euan: "there are too many too often, and I don't like it because it means it's too
+  close to my base to be able to actually look good ... a bit more distance between each of them"; `above.ruin.RuinSpacing`).
+  The spires and the sky platforms, the blue rope sites, keep their distance. (In his world, New World V20, the two
+  nearest his fire were sky platforms, 255 and 268 blocks off and 439 apart; the nearest spire was 771 off; its made land
+  stood 9 platforms on 10 spots and 6 spires on 34.) Both sets' grids are unchanged. A spot keeps its place unless another
+  spot of its own kind whose land would take one stands nearer than **320** blocks (two spires) or **600** (two sky
+  platforms) and outranks it (a hash of the seed and the chunk); a spire also yields to a sky platform within **250**
+  that keeps its own place. A spot on land its kind never stands on takes nothing from its neighbours, so where spires are
+  few nearly every one stays, and where every spot is forest about half do. Asked while chunks are made
+  (`PrecursorRuinStructure.findGenerationPoint`: the spot's own land first, then the neighbours' that matter, each the
+  land's height and biome at the stub, exactly as generation asks it) and by the locator (`RuinLocator.near`: the same
+  samples, from the same budget), so every needle (the Way Up's, the windways, the Scanner's omens, the Horizon's markers,
+  the Observatory) names only spots that stand.
+  - **Made land keeps its own.** Only a chunk deciding its starts for the first time asks the rule. A chunk decides them
+    before any chunk within 8 of it is built, and a spire reaches 2 chunks from its start (a platform with its rig 2), so
+    no ruin is cut off where old land meets new; every spot is one today's grid already had, so nothing doubles up, and
+    two sites either side of a seam are never nearer than the old rule allowed (the extra room is promised in new land
+    only). The locator reads a spot the rule passes over from its chunk (a loaded one at once, a saved one off the server
+    thread, answered on a later call; `RuinLocator.standsFromBefore`): a start there stands from before and is named like
+    any other. Monuments (§64), wonders and dream visions read the sets' own `isStructureChunk`, which is unchanged, so
+    none of them moves in a world made before.
+  - **The numbers** (the grids' own maths over 44 km squares, seeds 4242, 4245 and Euan's; "forest land" takes every spire
+    spot, "land like Euan's" one in 5.5, a platform's 9 in 10): two spires apart, least 144 → 320, median 284 → 382;
+    from anywhere to the nearest spire, median 156 → 230, worst about 345 → 660-725 (land like Euan's: median 400 → 460-480,
+    worst 1,300-1,430 → 1,430-1,880, one within 1,500 of 99.9% of the land, so the Way Up's climb keeps its place in
+    reach); two sky platforms apart, least 274 → 601, median 537 → 695; from anywhere to a platform, median 305 → 385,
+    worst about 865 → 1,060-1,240; a spire and a platform, least 16 → 250. All the blue sites: 8.6 → 4.3 a square
+    kilometre in forest land, 3.1 → 2.0 in land like Euan's (median to the next 330 → 435). In the game's own land (the
+    census on CI, seed 4245, a 12 km square, real biomes, run 42964071307): spires 167 → 97 (2.16 → 1.25 a square
+    kilometre), apart least 187 → 320, median 339 → 420, from anywhere median 339 → 428, worst 1,637 → 1,716, one within
+    1,500 of 99.7% → 99.2% of the land; sky platforms 147 → 86, apart least 336 → 611, median 538 → 695, from anywhere
+    median 293 → 379, worst 803 → 1,110; all the blue sites 314 → 183, apart least 32 → 256, median 262 → 401.
+  - Dev: `/awaken above ruin spacing` (on or off), `... census [radius]` (both rules over a square round you, and what
+    really stands in the loaded chunks: on its grid, whole, how near the next), `... goto passed|kept` (70 east of the
+    nearest spire spot the rule passes over or keeps), `... verify <n>` (makes the starts of the n nearest spots of each
+    kind and names every one where the game disagrees with the rule its start was decided under), `... old|new` (new
+    chunks follow today's rule alone until the server stops: the seam check). `/awaken above ruin locate` names the nearest spire too. Tour `tools/autopilot/ruin-spacing.txt`.
+    Test `ruins_spacing`.
 - **The blueprint** (`RuinBuilder.spire`, 25 x 66 x 25): a plaza of panel 11 out (wide enough that trees rooted past it
   can't lean into the platforms) with a ring of light at 7 (the start line), brass lines, the outer cache and 1-3
   broken machines; a 3x3 column of plating with lit seams every 5 and a wider foot; five 3x3 platforms
@@ -4331,7 +4369,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 ### 17.12 The Wilds: windways
 Held at the edge of the land the client has (the edge hold, §28.9): a windway's carry eases down before land the client doesn't have yet.
 - **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
-  is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
+  is linked to its nearest within 1,100 (`Windways.MAX_LINK`; with the room between platforms, §17.11, the nearest is
+  600 to about 1,000 away and 99.5% of platforms still have one within 1,100); a pair has two lanes, one each way, each 10 to the
   right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
 - **A lane** (`Windways.between`): from 34 out of the first platform's centre (past its islands, 19 out), 6 under its
   deck, so a run off the deck's rim with wings open drops into it; to 5 short of the next platform's centre with the
@@ -23318,7 +23357,10 @@ flight), and the first vault's "Its line waits for a D-rank hunter" is never pai
 flight, the level road's stop at 73 and the Wings trail's second step describe the old rules. The Sovereign's form is given
 after an ending. Hours (pacing_sim, balanced): D 3.4, C 10.2, B 23.8, A 35.8, S 47.2, Sovereign 61.4. The nearest site by
 the structure sets' own spacing (median; worst seen): a vault 260 to 350 (1,140), a Tether Spire 160 to 290 (1,050), a sky
-platform 280 to 380 (1,290).
+platform 280 to 380 (1,290). (From 11 Nov the spires and platforms keep more room, §17.11 "Room between them": from
+anywhere to the nearest spire, median 230 and worst 660-725 where every spot is forest, 460-480 and 1,430-1,880 where spires
+are as few as in Euan's world; to a platform 385, worst 1,060-1,240. The climb's needle reaches 1,500, which still holds a spire for 99.9% of
+the land; past it the row is "Get to know your rope", as before.)
 
 **63.1 The rule.** A rank fight opens a rung; a place gives it; the way out of the place is the move. On a Proving's win
 the System wakes one place of the rung's kind for each winner: one in their Saved for later book (§27.1) if there is one,

@@ -37,6 +37,7 @@ final class RuinTests {
     static final int UP = 140;
 
     static void register() {
+        spacing();
         AwakenTests.registerIsolated("ruins_redesign_build_and_contracts", 400, h -> {
             ServerLevel level = h.getLevel();
             BlockPos origin = h.absolutePos(new BlockPos(-24, UP, -24));
@@ -210,5 +211,81 @@ final class RuinTests {
 
     private static <T extends Comparable<T>> String value(BlockState s, Property<T> p) {
         return p.getName(s.getValue(p));
+    }
+
+    /**
+     * Room between the blue rope sites (SPEC §17.11): on land that takes every spot, no two standing spires within 320, no
+     * two platforms within 600, no spire within 250 of a standing platform, and a fair share of each still stands; the rule
+     * off keeps every spot; the locator only names spots the rule keeps; a saved chunk's start is read as the save has it.
+     */
+    static void spacing() {
+        AwakenTests.register("ruins_spacing", 200, h -> {
+            ServerLevel level = h.getLevel();
+            RuinSpacing.Ground every = (k, c) -> Boolean.TRUE;
+            for (long seed : new long[] {level.getSeed(), 4242L, 3761469094609221698L}) {
+                RuinSpacing.Grids g = RuinSpacing.Grids.of(level.registryAccess(), seed);
+                h.assertTrue(g != null, "the spire and sky platform sets spread at random");
+                java.util.List<net.minecraft.world.level.ChunkPos> spires = new java.util.ArrayList<>(), skies = new java.util.ArrayList<>();
+                int spireSpots = 0, skySpots = 0;
+                for (int gx = -14; gx <= 14; gx++)
+                    for (int gz = -14; gz <= 14; gz++) {
+                        var c = g.spot(RuinKind.SPIRE, gx, gz);
+                        spireSpots++;
+                        if (Boolean.TRUE.equals(RuinSpacing.rule(RuinKind.SPIRE, c, g, every))) spires.add(c);
+                    }
+                for (int gx = -8; gx <= 8; gx++)
+                    for (int gz = -8; gz <= 8; gz++) {
+                        var c = g.spot(RuinKind.SKY, gx, gz);
+                        skySpots++;
+                        if (Boolean.TRUE.equals(RuinSpacing.rule(RuinKind.SKY, c, g, every))) skies.add(c);
+                    }
+                for (var a : spires) {
+                    for (var b : spires)
+                        if (a != b) h.assertTrue(RuinSpacing.distance(a, b) >= RuinSpacing.SPIRE_APART, "two spires " + (int) RuinSpacing.distance(a, b) + " apart (seed " + seed + ")");
+                    for (var b : skies)
+                        h.assertTrue(RuinSpacing.distance(a, b) >= RuinSpacing.SPIRE_FROM_SKY, "a spire " + (int) RuinSpacing.distance(a, b) + " from a platform (seed " + seed + ")");
+                }
+                for (var a : skies)
+                    for (var b : skies)
+                        if (a != b) h.assertTrue(RuinSpacing.distance(a, b) >= RuinSpacing.SKY_APART, "two platforms " + (int) RuinSpacing.distance(a, b) + " apart (seed " + seed + ")");
+                double sp = spires.size() / (double) spireSpots, sk = skies.size() / (double) skySpots;
+                h.assertTrue(sp > 0.35 && sp < 0.65, "about half the spire spots stand where every spot's land would take one: " + sp);
+                h.assertTrue(sk > 0.45 && sk < 0.75, "most sky platform spots stand: " + sk);
+                RuinSpacing.set(false);
+                try {
+                    h.assertTrue(Boolean.TRUE.equals(RuinSpacing.keeps(RuinKind.SPIRE, g.spot(RuinKind.SPIRE, 0, 0), g, every))
+                            && Boolean.TRUE.equals(RuinSpacing.keeps(RuinKind.SKY, g.spot(RuinKind.SKY, 0, 0), g, every)), "with the rule off every spot keeps its place");
+                } finally {
+                    RuinSpacing.set(true);
+                }
+            }
+            // the locator names only spots the rule keeps (in this world, with its own land)
+            RuinSpacing.Grids g = RuinSpacing.Grids.of(level.registryAccess(), level.getSeed());
+            var structures = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+            RuinSpacing.Ground land = (k, c) -> RuinSpacing.validAt(k, c, structures.getValue(k.structure), level.getChunkSource().getGenerator(),
+                    level.getChunkSource().randomState(), level, level.uncachedBiomeResolver());
+            for (RuinKind kind : java.util.List.of(RuinKind.SPIRE, RuinKind.SKY)) {
+                for (var f : RuinLocator.near(level, h.absolutePos(BlockPos.ZERO), 4000, java.util.List.of(kind), null, false, 4, 4000)) {
+                    var c = new net.minecraft.world.level.ChunkPos(f.pos().getX() >> 4, f.pos().getZ() >> 4);
+                    h.assertTrue(Boolean.TRUE.equals(RuinSpacing.rule(kind, c, g, land)) || RuinLocator.standsFromBefore(level, kind, structures.get(kind.structure).orElseThrow(), c),
+                            "the locator named a " + kind.displayName + " the rule passes over at " + c);
+                }
+            }
+            // a saved chunk: a start stands, an INVALID one (a spot that made nothing) doesn't
+            String id = RuinKind.SPIRE.structure.identifier().toString();
+            var start = new net.minecraft.nbt.CompoundTag();
+            start.putString("id", id);
+            var starts = new net.minecraft.nbt.CompoundTag();
+            starts.put(id, start);
+            var structuresTag = new net.minecraft.nbt.CompoundTag();
+            structuresTag.put("starts", starts);
+            var chunk = new net.minecraft.nbt.CompoundTag();
+            chunk.put("structures", structuresTag);
+            h.assertTrue(RuinLocator.holdsStart(chunk, id), "a saved start is read");
+            start.putString("id", "INVALID");
+            h.assertTrue(!RuinLocator.holdsStart(chunk, id), "a saved INVALID start is no start");
+            h.assertTrue(!RuinLocator.holdsStart(new net.minecraft.nbt.CompoundTag(), id), "a chunk without starts holds none");
+            h.succeed();
+        });
     }
 }
