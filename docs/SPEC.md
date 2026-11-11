@@ -24591,8 +24591,8 @@ Execution), `opening` (the camera), `living` (the plate's words).
   alone for 20 s it dies its plain death, credited to whoever beat it. What isn't a player's (a fall, the void, a
   command) kills it plainly at any time. `/awaken bosses finishing on|off` is the rule's switch.
 - **The finishing blow** is the weapon's own Execution: a heavy held and let go on the beaten body, as on any broken
-  stance (`Strikes.executing`: Arms says whether the blow now landing is one), or an Execution that takes a boss's last
-  health without the wait. That blow is the kill: the body dies as it always did, and the server says so once
+  stance (`Strikes.executing`: Arms says whether the blow now landing is one; the weapon's Art counts too, since a full
+  meter makes the Art of the same held heavy), or an Execution or Art that takes a boss's last health without the wait. That blow is the kill: the body dies as it always did, and the server says so once
   (`mobs_finish`: the body, the striker, the ticks its ending plays) to everyone within 64 blocks. The striker can't be
   hurt until the ending is over (`Finishers.safe`).
 - **As it is shown** (`mobs.client.finish.FinishClient`; one fixed sequence from that one word). For everyone: the blow's

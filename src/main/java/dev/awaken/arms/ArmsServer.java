@@ -715,7 +715,8 @@ final class ArmsServer {
         }
         pendingCap = def.bossCap();
         pendingRiposte = s.move == Archetype.Move.RIPOSTE;
-        pendingExecution = s.move == Archetype.Move.EXECUTION;
+        // a heavy held through with the meter full is the Art even on a broken stance: it ends a beaten body as the Execution does
+        pendingExecution = s.move == Archetype.Move.EXECUTION || s.move == Archetype.Move.ART;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -1362,10 +1363,13 @@ final class ArmsServer {
         }
     }
 
-    /** Whether the Arms blow now being delivered is an Execution's (set for the length of its {@code attack}). */
+    /** Whether the Arms blow now being delivered is an Execution's or the weapon's Art (set for the length of its {@code attack}). */
     private static boolean pendingExecution;
 
-    /** Whether this damage is an Execution's blow landing now: the finisher, and the one blow that ends a beaten body (SPEC §67.4). */
+    /**
+     * Whether this damage is an Execution's blow (or the Art's, which a full meter makes of the same held heavy) landing
+     * now: the finisher, and the one blow that ends a beaten body (SPEC §67.4).
+     */
     static boolean executing(DamageSource source) {
         Entity by = source.getEntity();
         return pendingExecution && by != null && by.getId() == pendingBy && source.getDirectEntity() == by;
