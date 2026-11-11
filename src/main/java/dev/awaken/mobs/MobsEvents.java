@@ -39,6 +39,7 @@ final class MobsEvents {
         // the finishing blow's truce (SPEC §67.4): a beaten body harms nobody, and its striker is safe while its ending plays
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, dev.awaken.mobs.entity.Finishers::onIncomingDamage);
         dev.awaken.mobs.entity.FightWatch.init();
+        dev.awaken.mobs.entity.FightSaves.init(); // the autosave waits while a boss fights a player (SPEC §67.5)
         dev.awaken.mobs.entity.FairGuard.init();
         // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
         // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §47.1)

@@ -414,6 +414,8 @@ public class AwakenBoss extends AwakenMob {
                 // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
                 // player it chased fallen) held its body still on their screen until the clock went stale
                 dev.awaken.mobs.net.MobsNet.fighting(this);
+                // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §67.5)
+                if (getTarget() instanceof Player || beatenTicks > 0) FightSaves.fighting(level);
             }
             if (!f.busy()) checkPhase(level);
         } else if (abilities != null && abilities.active() == null) checkPhase(level);
