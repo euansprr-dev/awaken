@@ -22,12 +22,15 @@ import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * The mark and the lock (SPEC §40.3). Every other tick the creature nearest the middle of the view is marked (25°, 24
- * blocks, seen, hostile or hunting you; the current one is sticky). The lock key locks it: the view follows it each frame
+ * blocks, seen, hostile or hunting you; the current one is sticky). The lock key locks it (with nothing marked, any
+ * creature you could strike near the middle: a sheep, a deer, a villager): the view follows it each frame
  * (eased, at most 300°/s, the mouse keeping a quarter), a flick or the wheel moves the lock to the next creature that way,
  * and it lets go on the key, after 1.5 s unseen, past 40 blocks, on a teleport, or moves on when the creature dies.
  * Client state only: the server checks every press for itself ({@link Aim#meant}).
@@ -137,8 +140,12 @@ final class Lock {
         float yaw = p.getYRot(), pitch = p.getXRot();
         int bestN = 0;
         candN = 0;
+        // locked onto a calm creature (a sheep), a switch may go to any creature you could strike; locked onto a foe, to foes
+        boolean calmLock = locked >= 0 && mc.level.getEntity(locked) instanceof LivingEntity l && !foe(l);
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le) || le == p || !foe(le)) continue;
+            if (!(e instanceof LivingEntity le) || le == p) continue;
+            boolean fights = foe(le);
+            if (!fights && !(calmLock && AimRules.strikable(p, le))) continue;
             AABB b = le.getBoundingBox();
             double dist = Aim.gap(eye, b);
             if (dist > AimRules.LOCK_RANGE) continue;
@@ -150,6 +157,7 @@ final class Lock {
                 CAND_PITCH[candN] = pitchTo(eye, c);
                 candN++;
             }
+            if (!fights) continue; // the mark is a foe's alone
             float sc = AimRules.score(off, dist, le.getId() == marked, AimRules.MARK_CONE, AimRules.MARK_RANGE);
             if (Float.isNaN(sc)) continue;
             // keep the best few, best first
@@ -197,19 +205,47 @@ final class Lock {
 
     // ---- the key, the wheel, the flick --------------------------------------------------------------------------------
 
-    /** The lock key: let go when locked, else lock the mark (or a creature under the crosshair). False: nothing to lock. */
+    /** The lock key: let go when locked, else lock the mark, else a calm creature near the middle. False: nothing to lock. */
     static boolean press(Minecraft mc) {
         if (locked >= 0) {
             release(true);
             return true;
         }
-        int t = marked;
-        if (t < 0 && mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && le.isAlive() && !Aim.body(le) && !(le instanceof Player)) {
-            t = le.getId();
-        }
+        int t = marked >= 0 ? marked : calm(mc, mc.player);
         if (t < 0) return false;
         take(t, true);
         return true;
+    }
+
+    /**
+     * With nothing marked: the creature under the crosshair, else the one you could strike nearest the middle within
+     * {@link AimRules#PRESS_CONE} and the mark's range, seen, and not behind a solid block the crosshair rests on (then the
+     * key picks that block, as it always did). Vanilla's crosshair finds creatures only within 3 blocks, so a sheep across
+     * the meadow needs this. -1 when none.
+     */
+    private static int calm(Minecraft mc, LocalPlayer p) {
+        if (mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && AimRules.strikable(p, le)) return le.getId();
+        Vec3 eye = p.getEyePosition();
+        double wall = Double.MAX_VALUE;
+        // grass, flowers and the like are no wall: a block the eye sees through doesn't hide the sheep beyond it
+        if (mc.hitResult instanceof BlockHitResult bh && bh.getType() == HitResult.Type.BLOCK
+                && !mc.level.getBlockState(bh.getBlockPos()).getCollisionShape(mc.level, bh.getBlockPos()).isEmpty()) {
+            wall = bh.getLocation().distanceTo(eye);
+        }
+        int best = -1;
+        float bestScore = Float.NaN;
+        for (Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof LivingEntity le) || !AimRules.strikable(p, le)) continue;
+            AABB b = le.getBoundingBox();
+            double dist = Aim.gap(eye, b);
+            if (dist >= wall) continue;
+            float sc = AimRules.score(Aim.offEdge(eye, b, p.getYRot(), p.getXRot()), dist, false, AimRules.PRESS_CONE, AimRules.MARK_RANGE);
+            if (AimRules.better(sc, bestScore) && Aim.sees(p, le)) {
+                bestScore = sc;
+                best = le.getId();
+            }
+        }
+        return best;
     }
 
     private static void take(int id, boolean sound) {
