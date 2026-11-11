@@ -42,8 +42,7 @@ In this session, 12 Nov 2026, on seeing today's title:
   Sounds start from Minecraft's own recordings, no synthetic dings. Layouts hold at 427 by 240 (his 4K at GUI scale 9).
   The rope-hold-swing session owns the leap's rules; the gates session owns the course.
 - **Unknowns checked here:** what he saw second by second (his log and a first-person tour); what the kit can build
-  (asked of the gates session; its answer is folded in when it comes, and until then the course is specified by what
-  each hall must make the player do, not by pieces).
+  (asked of the gates session, which answered on 12 Nov: "The gates session's answers" below).
 
 Strong, weak and unacceptable, in what can be observed:
 
@@ -321,19 +320,58 @@ screenshots: they show layout and words, not the finished look.
 4. **The gold figure's own drawing** (mine): the way in depends on it.
 5. Hall 3b when the aimed dive exists.
 
-The old course stays in the code until the new one's check passes. Effort: mine 10 to 14 hours; gates 12 to 20;
-rope-hold-swing 1 to 2 for the mask. What could move it: the kit's limits; the figure's renderer.
+The old course stays in the code until the new one's check passes. Effort: mine 10 to 14 hours; gates about one built
+land's work by its own estimate; rope-hold-swing 1 to 2 for the mask. What could move it: the kit's limits; the figure's renderer.
 
 ## 19. Decisions
 
 On the page, numbered as there.
+
+## The gates session's answers (12 Nov 2026, from its code as it stood)
+
+**Build it as a hand-laid Realm in the Stopped Works' kit** (as the Hour Crypt and the Broodwarren are; `realms/kit/crawl/
+CrawlLand`: rooms, arenas, tunnels, shafts, gulfs), not in the old Rig hall, which is rows along one axis. A Realm is its
+own cell in `awaken:realms`: hundreds of blocks each way, y 0 to 384. The depth pass, air, Lens look and sound come with
+the skin.
+
+| The plan asks for | Its answer |
+|---|---|
+| Gulf crossings | Exist (`Chasm.Kind`): PILLARS, BRIDGE with spans gone, BEAMS, LEDGES, HANGERS, STEPS, FORD, FALLING. Every jump there today is built for E-rank moves (a sprint jump of one to three, level or down, never up) |
+| A step 3 or 4 up; a gap of 7 to 9; targets far below | Easy: geometry. The check must know the moves |
+| A deck or plate only a slam breaks | Medium: a block swap and a cue it has. **It needs a call from the Ascent when a slam lands (player, where, how hard)** |
+| Constructs a slam throws | Easy: a named pack standing asleep (`RealmPacks`: cog_hound, rivet_gunner, spark_drone). Whether a slam throws them is the Ascent's |
+| Marks, doors, no clock or pit in a gift place | Yes to all in a Realm: the run is legs with ids; a door is a named block swap (`Land.change`) that can wait for the Ascent's word (one new call); the fall catch and the clock exist only inside stretches it marks |
+| The fall catch | `Land.Course`: inside a declared box a long fall puts you back on the last ledge stood on, **for 3 + 8% health**. The plan's halls want it at no cost: a change for this gate |
+| Presses, crumbling stands, falling decks | Exist as traps (`Land.TrapKind`: PRESS on the world's clock, SPIT, CRUMBLE). Nothing carries a player: no moving platforms (the plan uses none) |
+| Rings, the clock, par, medals, the ghost | In the old Rig only. **Porting them to a Realm leg is medium work** |
+| No clock on a first pass; staying open | The clock is its to gate, a stretch at a time. Staying open is easy either way: one standing gate and one Realm cell held per player, or reopened at its place on request |
+| The end | The last room can hold a cache, a Waystone, the arch home, a stand from another module, and a System window with rows for what was paid. The amounts are the Ascent's |
+| A scripted gate onto one named Realm for one player | **Missing today, small, the gates session's** (`Gates.openScripted` only makes old-style plans) |
+
+**The check.** Today's Realm walk check knows a step of one, a drop of four and a sprint jump of three. It needs the
+leap's reach as numbers at the trial's level: the second jump (height gained from standing and from the top of a sprint
+jump; distance at a sprint), the dash (distance, whether it holds height, whether it can follow a second jump, any wait),
+the slam (least height, radius, what it sets off), and what chains in one airtime. Each leg is then checked with the
+moves held at that point, and each piece that needs the leap is checked the other way too. **Those numbers are in
+rope-hold-swing's files and are changing this week**, so the plan's sizes (three up, nine across, eight down) are targets
+until the check runs on the real rules; better still, the check calls the leap's own rule functions, so the course and the
+moves cannot drift apart.
+
+**Size:** a hand-laid trial land of about ten legs is roughly one built land's work, by its own estimate.
+
+**Also found by it in the same run of his:** a press on a Rig Gauntlet was not drawn while it was up ("a wall spawns in
+front of you"), which accounts for the press throwing him back three times; fixed on its branch at 25d3239f4.
+
+**Still open after its answer:** whether the Lord's climbing count (`LordPay`, `LordLevels`) can be reused for a trial's
+pay, or the end shows the System window with rows.
 
 ## Who builds what
 
 | Piece | Who |
 |---|---|
 | `core.api.Unlocks`, the Unlock title, the ladder's titles | movement-unlocks |
-| `leap_stand`, its scene, the leap mask's memory and sync, `TrialHooks` marks, lessons, words, Tasks, K rows, the gold figure | movement-unlocks |
+| `leap_stand`, its scene, the leap mask's memory and sync, `TrialHooks` marks and its slam-landed call, lessons, words, Tasks, K rows, the gold figure | movement-unlocks |
+| The leap's reach, as numbers or as rule functions the course's check can call | rope-hold-swing |
 | The mask honoured in `AscentMoves` and `AscentServer` events; the aimed dive; the double-jump mantle | rope-hold-swing |
-| The Gauntlet's place, halls, pieces, check, clock and pit rules, crossing, HUD lines, tally floor, re-run | gates |
+| The Gauntlet as a hand-laid Realm in the Stopped Works' kit: its scripted gate, halls, pieces, check, the clock, rings and medals ported from the Rig, a fall catch that costs nothing here, crossing, HUD lines, tally floor, re-run | gates |
 | A new power, a new rank, a new stratum calling `Unlocks.show` | their modules, one line each, if decision 2 is yes |

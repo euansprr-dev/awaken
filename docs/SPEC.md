@@ -25135,7 +25135,11 @@ cannot; three stands, each followed by a hall that cannot be crossed without its
 Slam 3; no clock, no pit, a net that lifts you back); the Long Run (timed, about 85 s par, 14 leap moves, rings, a pit
 that throws back and does not hurt, medals); the tally floor (XP counted up as `LordPay` does, the mastery bar, time and
 medal on a plate, the player's counts). Proposed: half a level's XP the first time; the gate stays standing to run
-again; the look of the Stopped Works.
+again; the look of the Stopped Works. The gates session's answer (12 Nov): a hand-laid Realm in the Stopped Works' kit,
+not the Rig hall; steps, gaps, shafts, marks, doors on a word and constructs are easy there; a slam-broken deck needs a
+slam-landed call from the Ascent; rings, clock and medals must be ported from the Rig (medium); a scripted gate onto one
+named Realm is new and small; the kit's fall catch costs 3 + 8% health and would cost nothing here; its check needs the
+leap's reach from the leap's own rules.
 
 **71.5 Words.** The gate's panel and card say its point ("It holds a new way to move. No fighting."); the HUD's line
 follows the hall; the pit's toast is dropped in the trial; the Tasks row is "Run the Leaper's Gauntlet".
