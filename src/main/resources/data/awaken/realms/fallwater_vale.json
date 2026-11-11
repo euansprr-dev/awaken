@@ -35,10 +35,7 @@
   "life": {
     "herds": [],
     "predators": [],
-    "ambient": [
-      "bloom_sprite",
-      "lumen_moth"
-    ]
+    "ambient": []
   },
   "folk": {
     "kit": "none",

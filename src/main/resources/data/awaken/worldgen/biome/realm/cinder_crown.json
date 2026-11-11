@@ -8,8 +8,8 @@
     "foliage_color": "#5c5048"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#b4533a",
-    "minecraft:visual/sky_color": "#7a2e22",
+    "minecraft:visual/fog_color": "#e87c48",
+    "minecraft:visual/sky_color": "#c2482e",
     "minecraft:visual/fog_start_distance": 48.0,
     "minecraft:visual/fog_end_distance": 560.0,
     "minecraft:visual/water_fog_color": "#24100e",

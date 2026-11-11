@@ -34,9 +34,7 @@
   "life": {
     "herds": [],
     "predators": [],
-    "ambient": [
-      "lumen_moth"
-    ]
+    "ambient": []
   },
   "folk": {
     "kit": "none",

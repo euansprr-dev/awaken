@@ -1894,11 +1894,11 @@
       "haze": 0.4,
       "hazeStart": 0.28,
       "hazeTint": [
-        0.74,
-        0.3,
-        0.2
+        1.0,
+        0.44,
+        0.22
       ],
-      "hazeTintMix": 0.55,
+      "hazeTintMix": 0.5,
       "hazeDesaturate": 0.08,
       "sunsetWarmth": 0.8,
       "sunGlow": 0.9,
