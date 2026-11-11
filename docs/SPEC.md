@@ -21973,8 +21973,9 @@ rolled land is the open-sky twin of a rolled crawl: one generator rolls a whole 
 skin is) says what it is made of. Built so far, none yet `ready`: The Ascent in the Ember Mines' country (The Cinder
 Crown, `awaken:cinder_crown`, program `awaken:ember_country`, every rank from E), The Valley in the Overgrown Temple's
 (Fallwater Vale, `awaken:fallwater_vale`, `awaken:temple_country`, from E), The Basin in the Frost Monastery's (The Hush
-Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C). `land.params.landform` names the landform by its place in
-`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles); the last two are not built and fail loudly.
+Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C), The Causeway in the Glass Desert's (The Glass Sea,
+`awaken:glass_sea`, `awaken:glass_country`, from D). `land.params.landform` names the landform by its place in
+`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles); the last is not built and fails loudly.
 
 - **Each land has its own sky and atmosphere** (Euan, 11 Nov: "Each should have its own sky and atmosphere. That
   matches."). No two lands share an hour, a light colour, a grade or an air. A land's biome chooses the hour
@@ -22128,9 +22129,38 @@ is the first light of a clear winter morning: the sun at 292, a cold white light
 gold so the lamps are the only warm thing in it, a knee-deep breath of mist on the ice, fine snow in the air, wind.
 Lord: the Abbot of Frost.
 
+**The Causeway** (`kit/land/Causeway`). A flat sea to every horizon, one raised road across it, and on the skyline at
+the road's end the country's great thing on its rock. The way in is on a headland ten blocks over the sea, at its lip.
+The road leaves it by a ramp and runs out on a dyke three blocks over the surface (its banks come down in three
+blocks, so it stands as a wall out of the sea), swings west past an island, crosses back east over a breach on what
+is left of a bridge, swings past a second island and comes in from the south to a round bastion at the foot of the
+rock, where the Warden holds the gate; a stair of twelve treads goes up the rock's face to the Lord's floor (radius
+23.5), with rock behind it for the great thing. The dens are where the brief asks: a round widening of the road, then
+the two islands beside it, each a table of rock 56 across joined to the road by a bar; the first has a bar at each
+end (the way round), and from the second a bar at the sea's own level, which barely shows, runs on to a small island
+kept back. Eleven dunes and tables stand in the sea as country, none within 24 blocks of the road. 10 legs. The Lord's
+floor is 312 blocks from the way in at D, the lowest rank the desert opens at, and 12 more a rank; the road is about 440 long. A corner of the road is
+rounded by cutting it three times, with points laid in line either side of anything that has to be straight.
+
+**The Glass Desert's country** (`land/GlassCountry`). No new blocks. Its water is glass (`desert_glass`, amber over a
+bed of dark brick): the sea is somewhere to walk, with sand blown back over a third of it in long swells, a light
+under it here and there, splinters, and great shards of it standing in clumps (`Shard`, up to 24 tall, leaning, a
+tenth of their blocks lit). Whatever stands out of it is pale sand in dunes, rippled where it lies flat, dry grass in
+clumps; or sandstone in tables, a course of brick every seventh row, a streak of glass where the melting ran down.
+The road is paved in sandstone with a line of blue tile down its middle, and pillars stand beside it every ten blocks
+out of the glass, their heads all five over the road, one in four broken, one in three carrying a light. The Lord's
+door is a sheet of glass. Its great thing is the tower that did the melting, the Burning Glass (`Tower`): the Lord's
+floor a sunburst of twenty-four rays of tile and sandstone inside a wall that is glass between twelve pillars, so the
+sea is seen through it, two pylons at the gate; behind it the tower, square, 32 across at its foot and 14 at its head
+80 up, sandstone on a foot of brick, two rows of tile every sixteen, a seam of lit glass up the middle of every face;
+and on its head, in a ring of stone 44 across, a disc of lit glass 36 across facing the way in, its middle 104 over
+the floor, a shaft of its light coming down on the floor. The Glass Sea's hour is white noon: the sun at 14, a
+white-gold light (#fff6e0), `sky_color` #9ad2ff, `fog_color` #fff0cc, a hot grade (warmth 0.22, short brown shadows,
+strong bloom, heat shimmer 0.7), sand, dust and wind in the air. Lord: the Glass Serpent.
+
 Tests, for each land at the lowest rank it opens at (`kit/land/LandTests`): `realm_<land>_walks_to_everything` (seeds 1
-and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale` and
-`hush_tarn`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
+and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale`,
+`hush_tarn` and `glass_sea`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

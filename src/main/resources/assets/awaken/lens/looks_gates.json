@@ -1993,6 +1993,49 @@
       "mistHeight": 63.0,
       "fogGlow": 0.4,
       "skyGlow": 0.0
+    },
+    "biome:awaken:realm/glass_sea": {
+      "_name": "The Glass Sea: white noon over a sea of amber glass. The sun almost overhead, the sand bleached, shadows short and warm brown, the glass throwing the light back, the far end of the road swimming in the heat, and one coin of light on the skyline",
+      "exposure": 1.05,
+      "contrast": 1.14,
+      "saturation": 1.04,
+      "warmth": 0.22,
+      "shadowTint": [
+        0.62,
+        0.44,
+        0.3
+      ],
+      "highlightTint": [
+        1.0,
+        0.97,
+        0.84
+      ],
+      "splitTone": 0.35,
+      "vignette": 0.2,
+      "bloom": 1.0,
+      "bloomThreshold": 0.72,
+      "skyBloom": 0.3,
+      "shafts": 0.3,
+      "haze": 0.3,
+      "hazeStart": 0.3,
+      "hazeTint": [
+        1.0,
+        0.92,
+        0.72
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.0,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.9,
+      "light": 0.0,
+      "ao": 0.8,
+      "filmic": 1.0,
+      "mist": 0.0,
+      "mistHeight": 63.0,
+      "fogGlow": 0.6,
+      "skyGlow": 0.0,
+      "heat": 0.7,
+      "glow": 0.9
     }
   }
 }

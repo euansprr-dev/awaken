@@ -55,5 +55,7 @@ public final class LandTests {
         AwakenTests.register("realm_fallwater_vale_nothing_floats", 4800, h -> floats(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint", Rank.E));
         AwakenTests.register("realm_hush_tarn_walks_to_everything", 4800, h -> walks(h, "awaken:frost_country", "frost_monastery", Landform.Kind.BASIN, "abbot_of_frost", Rank.C));
         AwakenTests.register("realm_hush_tarn_nothing_floats", 4800, h -> floats(h, "awaken:frost_country", "frost_monastery", Landform.Kind.BASIN, "abbot_of_frost", Rank.C));
+        AwakenTests.register("realm_glass_sea_walks_to_everything", 4800, h -> walks(h, "awaken:glass_country", "glass_desert", Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D));
+        AwakenTests.register("realm_glass_sea_nothing_floats", 4800, h -> floats(h, "awaken:glass_country", "glass_desert", Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D));
     }
 }
