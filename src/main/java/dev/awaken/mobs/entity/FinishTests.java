@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /** The Whole Boss Fight's GameTests on the mobs' side (SPEC §67.2, §67.4): the last stand, and the tick a blow lands. */
-final class FinishTests {
+public final class FinishTests {
     private FinishTests() {}
 
     public static void register() {
