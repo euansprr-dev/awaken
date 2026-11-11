@@ -1,0 +1,119 @@
+{
+ "awaken:city.gull.call": [
+  {
+   "delay": 300,
+   "pitch": 0.6,
+   "sound": "awaken:city.gull.call.part1",
+   "spread": 0.05,
+   "volume": 0.5
+  },
+  {
+   "chance": 0.8,
+   "delay": 600,
+   "pitch": 0.58,
+   "sound": "awaken:city.gull.call.part1",
+   "spread": 0.05,
+   "volume": 0.45
+  },
+  {
+   "chance": 0.5,
+   "delay": 900,
+   "pitch": 0.56,
+   "sound": "awaken:city.gull.call.part1",
+   "spread": 0.05,
+   "volume": 0.4
+  }
+ ],
+ "awaken:city.pigeon.flutter": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:entity.bat.takeoff",
+   "volume": 0.26
+  },
+  {
+   "delay": 50,
+   "jitter": 50,
+   "pitch": 1.1,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 1.0
+  },
+  {
+   "delay": 150,
+   "jitter": 50,
+   "pitch": 0.9,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 1.0
+  },
+  {
+   "delay": 250,
+   "jitter": 50,
+   "pitch": 1.05,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 0.9
+  },
+  {
+   "chance": 0.7,
+   "delay": 200,
+   "pitch": 1.05,
+   "sound": "minecraft:entity.bat.takeoff",
+   "volume": 0.16
+  },
+  {
+   "chance": 0.8,
+   "delay": 400,
+   "jitter": 50,
+   "pitch": 0.85,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 0.8
+  },
+  {
+   "chance": 0.7,
+   "delay": 600,
+   "jitter": 100,
+   "pitch": 1.0,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 0.7
+  },
+  {
+   "chance": 0.5,
+   "delay": 850,
+   "jitter": 100,
+   "pitch": 0.9,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 0.5
+  }
+ ],
+ "awaken:city.songbird": [
+  {
+   "chance": 0.8,
+   "delay": 150,
+   "pitch": 1.9,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.06,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.8,
+   "delay": 350,
+   "pitch": 1.6,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.06,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.8,
+   "delay": 500,
+   "pitch": 1.8,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.06,
+   "volume": 0.6
+  }
+ ]
+}

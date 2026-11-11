@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sound audit, by ear</title>
+<style>
+:root { --bg: #f2f3f5; --panel: #fff; --ink: #15181d; --muted: #596170; --line: #d7dbe2; --soft: #e9ebef; --mark: #1f6f8b; --ok: #2c7a4b; --old: #8a5a12 }
+@media (prefers-color-scheme: dark) { :root { --bg: #0f1216; --panel: #171b21; --ink: #e7e9ed; --muted: #9aa2af; --line: #2a303a; --soft: #1e232b; --mark: #6cc0dc; --ok: #74c493; --old: #e0b060; color-scheme: dark } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 24px 16px 80px }
+main { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 20px }
+h1 { font-size: 2rem; margin: 0; letter-spacing: -0.01em } h2 { font-size: 1.1rem; margin: 0 }
+h3 { font-size: 1.25rem; margin: 22px 0 0 } p { margin: 0; max-width: 70ch } .muted { color: var(--muted) } .small { font-size: 0.88rem }
+.row { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 10px }
+.opt { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.opt.on { border-color: var(--mark); box-shadow: inset 0 0 0 1px var(--mark) }
+.opt.old b { color: var(--old) }
+.opt b { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted) }
+.opt .say { font-size: 0.9rem; flex: 1 }
+.btns { display: flex; gap: 6px; flex-wrap: wrap }
+button { font: inherit; font-size: 0.86rem; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; cursor: pointer }
+button.use[aria-pressed="true"] { background: var(--mark); border-color: var(--mark); color: var(--bg) }
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px }
+input[type=text], textarea { font: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 7px 9px }
+.bar { position: sticky; top: 0; background: var(--bg); padding: 8px 0; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--line); z-index: 2 }
+#state { color: var(--ok); font-size: 0.9rem } label { font-size: 0.9rem }
+nav { display: flex; gap: 8px; flex-wrap: wrap } nav a { color: var(--mark); font-size: 0.92rem; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--panel) }
+code { font-size: 0.82rem; color: var(--muted) }
+</style></head><body><main>
+<h1>Sound audit, by ear</h1>
+<p>Every sound that fell short of the armour and the Forged Pick has been remade from recordings the game already has. Each one here has up to three picks. <strong>Pick 1 is what the game plays now.</strong> <strong>Before</strong> is the old sound, so you can hear the change. <strong>In its moment</strong> plays the sound where the game plays it; <strong>Alone</strong> plays just the sound. Each press plays a fresh take, as the game would. Press <strong>Use this</strong> on the one you want, or <strong>None of these</strong> and say a word.</p>
+<p class="muted small">Every pick is a guess until you have heard it, and the levels are first values. This page plays the recordings from this Mac's own copy of the game<span id="asnote"></span>; it is not hosted anywhere. Your marks save as you go.</p>
+<div class="bar"><label>Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8"></label><button id="stop">Stop</button><span id="state"></span><span class="muted small" id="count"></span></div>
+<nav id="nav"></nav>
+<div id="rows"></div>
+<div class="row"><h2>Anything else</h2><textarea id="notes" rows="3" placeholder="Anything about the sounds as a whole"></textarea>
+<p class="muted small">If saving ever fails, copy this and paste it to Claude:</p><textarea id="dump" rows="6" readonly></textarea><div class="btns"><button id="copy">Copy my marks</button></div></div>
+</main>
+<script>
+var DATA = /*DATA*/;
+(function () {
+  "use strict";
+  var ctx = null, master = null, cache = {}, live = [], timers = [], marks = { rows: {}, notes: "" };
+  document.getElementById("asnote").textContent = DATA.hasAS ? " and of AmbientSounds" : " (AmbientSounds was not found on this Mac, so its real crows, gulls and owls are left out)";
+  function audio() {
+    if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.connect(ctx.destination); master.gain.value = parseFloat(document.getElementById("vol").value); }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  function buffer(url) {
+    if (!cache[url]) cache[url] = fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(function (b) { return audio().decodeAudioData(b); });
+    return cache[url];
+  }
+  function stop() { live.forEach(function (s) { try { s.stop(); } catch (e) {} }); live = []; timers.forEach(clearTimeout); timers = []; }
+  function clamp(p) { return Math.max(0.5, Math.min(2, p)); }
+  // one take of a recipe: every layer picks its recording, its pitch wanders by its spread, some stay out, as in the game
+  function gather(layers, ms, gain, into, loop) {
+    (layers || []).forEach(function (l) {
+      if (l.chance != null && l.chance < 1 && Math.random() >= l.chance) return;
+      var url, vol = l.vol, pitch = l.pitch;
+      if (l.urls) url = l.urls[Math.floor(Math.random() * l.urls.length)];
+      else {
+        var vs = DATA.events[l.e];
+        if (!vs || !vs.length) return;
+        var pick = vs[Math.floor(Math.random() * vs.length)];
+        url = pick.url; vol *= pick.vol; pitch *= pick.pitch;
+      }
+      if (l.spread) pitch *= 1 + (Math.random() * 2 - 1) * l.spread;
+      var late = l.jitter ? Math.floor(Math.random() * (l.jitter / 50 + 1)) * 50 : 0;
+      into.push({ url: url, vol: Math.min(1, vol) * gain, pitch: clamp(pitch), at: ms + (l.at || 0) + late, loop: !!loop });
+    });
+  }
+  function play(plan, len) {
+    stop();
+    var c = audio();
+    Promise.all(plan.map(function (p) { return buffer(p.url); })).then(function (bufs) {
+      var t0 = c.currentTime + 0.06;
+      plan.forEach(function (p, i) {
+        var s = c.createBufferSource(), g = c.createGain();
+        s.buffer = bufs[i]; s.playbackRate.value = p.pitch; s.loop = p.loop; g.gain.value = p.vol; s.connect(g); g.connect(master); s.start(t0 + p.at / 1000); live.push(s);
+        if (len) { g.gain.setValueAtTime(p.vol, t0 + len / 1000 - 0.4); g.gain.linearRampToValueAtTime(0, t0 + len / 1000); }
+      });
+      if (len) timers.push(setTimeout(stop, len + 200));
+    }).catch(function (e) { say("Couldn't load " + e.message, true); });
+  }
+  function alone(layers) { var plan = []; gather(layers, 0, 1, plan); play(plan, 0); }
+  function scene(row, layers) {
+    var plan = [], sc = DATA.scenes[row.scene];
+    sc.steps.forEach(function (step) {
+      var ms = step[0], what = step[1];
+      if (what === "X") gather(layers, ms, 1, plan);
+      else if (what.x) gather(layers, ms, what.x, plan);
+      else if (what.e) gather([what], ms, 1, plan);
+      else if (what.loop) gather(layers.slice(0, 1), ms, 1, plan, true);
+      else if (what.row) gather(DATA.now[what.row], ms, what.gain || 1, plan);
+      else if (what.bed) gather([{ e: what.bed, vol: 1, pitch: 1 }], ms, what.gain || 1, plan);
+    });
+    play(plan, sc.len);
+  }
+  function say(text, bad) { var el = document.getElementById("state"); el.textContent = text; el.style.color = bad ? "#c0392b" : ""; }
+  function dump() {
+    var lines = DATA.rows.map(function (r) { var m = marks.rows[r.id] || {}; return (m.pick || m.note) ? r.id + ": " + (m.pick || "-") + (m.note ? " (" + m.note + ")" : "") : null; }).filter(Boolean);
+    if (marks.notes) lines.push("notes: " + marks.notes);
+    document.getElementById("dump").value = lines.join("\n");
+    var done = DATA.rows.filter(function (r) { return (marks.rows[r.id] || {}).pick; }).length;
+    document.getElementById("count").textContent = done + " of " + DATA.rows.length + " marked";
+  }
+  var timer = null;
+  function save() {
+    dump();
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      marks.at = new Date().toISOString();
+      fetch("/picks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(marks) })
+        .then(function (r) { say(r.ok ? "Saved" : "Couldn't save: copy the marks below", !r.ok); })
+        .catch(function () { say("Couldn't save: copy the marks below", true); });
+    }, 300);
+  }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function card(r) {
+    var m = marks.rows[r.id] || (marks.rows[r.id] = {});
+    var box = el("div", "row"); box.id = "row-" + r.id;
+    box.appendChild(el("h2", null, r.name));
+    var sc = DATA.scenes[r.scene];
+    var p = el("p", "muted small"); p.textContent = r.where + (r.scene !== "alone" ? " In its moment: " + sc.says + "." : ""); box.appendChild(p);
+    var opts = el("div", "opts");
+    var all = r.picks.map(function (k, i) {
+      return { key: "pick " + (i + 1), title: "Pick " + (i + 1) + (r.inGame === i + 1 ? " (in the game now)" : ""), say: k.say + (k.code && i > 0 ? " (a change in code, not a switch)" : ""), layers: k.layers };
+    });
+    if (r.before) all.push({ key: "before", title: "Before" + (r.inGame === "before" ? " (in the game now)" : ""), say: "The sound as it was: " + r.why.charAt(0).toLowerCase() + r.why.slice(1), layers: r.before, old: true });
+    all.push({ key: "none", title: "None of these", say: "Try again with other recordings", layers: null });
+    all.forEach(function (o) {
+      var ob = el("div", "opt" + (m.pick === o.key ? " on" : "") + (o.old ? " old" : ""));
+      ob.appendChild(el("b", null, o.title)); ob.appendChild(el("div", "say", o.say));
+      var btns = el("div", "btns");
+      if (o.layers && o.layers.length) {
+        if (r.scene !== "alone") { var f = el("button", null, "In its moment"); f.type = "button"; f.onclick = function () { scene(r, o.layers); }; btns.appendChild(f); }
+        var a = el("button", null, "Alone"); a.type = "button"; a.onclick = function () { alone(o.layers); }; btns.appendChild(a);
+      }
+      var u = el("button", "use", o.key === "none" ? "None of these" : "Use this"); u.type = "button"; u.setAttribute("aria-pressed", m.pick === o.key ? "true" : "false");
+      u.onclick = function () { m.pick = m.pick === o.key ? "" : o.key; save(); var fresh = card(r); box.parentNode.replaceChild(fresh, box); };
+      btns.appendChild(u); ob.appendChild(btns); opts.appendChild(ob);
+    });
+    box.appendChild(opts);
+    var note = el("input"); note.type = "text"; note.placeholder = "A word on this one (optional)"; note.value = m.note || "";
+    note.oninput = function () { m.note = note.value; save(); };
+    box.appendChild(note);
+    var id = el("code", null, r.id); box.appendChild(id);
+    return box;
+  }
+  function build() {
+    var host = document.getElementById("rows"), nav = document.getElementById("nav");
+    host.innerHTML = ""; nav.innerHTML = "";
+    DATA.groups.forEach(function (g) {
+      var rows = DATA.rows.filter(function (r) { return r.group === g.key; });
+      if (!rows.length) return;
+      var a = el("a", null, g.title + " (" + rows.length + ")"); a.href = "#g-" + g.key; nav.appendChild(a);
+      var h = el("h3", null, g.title); h.id = "g-" + g.key; host.appendChild(h);
+      if (g.lead) host.appendChild(el("p", "muted", g.lead));
+      var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:14px;margin-top:12px";
+      rows.forEach(function (r) { wrap.appendChild(card(r)); });
+      host.appendChild(wrap);
+    });
+    dump();
+  }
+  document.getElementById("vol").oninput = function () { if (master) master.gain.value = parseFloat(this.value); };
+  document.getElementById("stop").onclick = stop;
+  document.getElementById("notes").oninput = function () { marks.notes = this.value; save(); };
+  document.getElementById("copy").onclick = function () { var d = document.getElementById("dump"); d.select(); if (navigator.clipboard) navigator.clipboard.writeText(d.value).then(function () { say("Copied"); }, function () {}); };
+  fetch("/picks").then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (j && j.rows) { marks = j; document.getElementById("notes").value = j.notes || ""; }
+    build();
+  }).catch(build);
+})();
+</script></body></html>

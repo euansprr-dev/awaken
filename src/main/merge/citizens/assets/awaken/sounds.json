@@ -48,16 +48,52 @@
     "subtitle": "subtitles.awaken.city.pigeon.flutter",
     "sounds": [
       {
-        "name": "awaken:city/pigeon_flutter1",
-        "attenuation_distance": 28
+        "name": "minecraft:mob/parrot/fly1",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
       },
       {
-        "name": "awaken:city/pigeon_flutter2",
-        "attenuation_distance": 28
+        "name": "minecraft:mob/parrot/fly2",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
       },
       {
-        "name": "awaken:city/pigeon_flutter3",
-        "attenuation_distance": 28
+        "name": "minecraft:mob/parrot/fly3",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/parrot/fly4",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/parrot/fly5",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/parrot/fly6",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/parrot/fly7",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/parrot/fly8",
+        "volume": 1.0,
+        "pitch": 0.95,
+        "attenuation_distance": 24
       }
     ]
   },
@@ -65,16 +101,52 @@
     "subtitle": "subtitles.awaken.city.pigeon.coo",
     "sounds": [
       {
-        "name": "awaken:city/pigeon_coo1",
-        "attenuation_distance": 16
+        "name": "minecraft:mob/chicken/picky/ambient1",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
       },
       {
-        "name": "awaken:city/pigeon_coo2",
-        "attenuation_distance": 16
+        "name": "minecraft:mob/chicken/picky/ambient2",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
       },
       {
-        "name": "awaken:city/pigeon_coo3",
-        "attenuation_distance": 16
+        "name": "minecraft:mob/chicken/picky/ambient3",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/chicken/picky/ambient4",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/chicken/picky/ambient5",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/chicken/picky/ambient6",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/chicken/picky/ambient7",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:mob/chicken/picky/ambient8",
+        "volume": 1.0,
+        "pitch": 0.62,
+        "attenuation_distance": 24
       }
     ]
   },
@@ -82,20 +154,16 @@
     "subtitle": "subtitles.awaken.city.gull.call",
     "sounds": [
       {
-        "name": "awaken:city/gull_call1",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/hurt1",
+        "volume": 0.5,
+        "pitch": 0.62,
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:city/gull_call2",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:city/gull_call3",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:city/gull_call4",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/hurt2",
+        "volume": 0.5,
+        "pitch": 0.62,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -213,24 +281,10 @@
     "subtitle": "subtitles.awaken.city.songbird",
     "sounds": [
       {
-        "name": "awaken:city/songbird1",
-        "attenuation_distance": 30
-      },
-      {
-        "name": "awaken:city/songbird2",
-        "attenuation_distance": 30
-      },
-      {
-        "name": "awaken:city/songbird3",
-        "attenuation_distance": 30
-      },
-      {
-        "name": "awaken:city/songbird4",
-        "attenuation_distance": 30
-      },
-      {
-        "name": "awaken:city/songbird5",
-        "attenuation_distance": 30
+        "name": "minecraft:entity.parrot.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.7
       }
     ]
   },
@@ -297,6 +351,18 @@
         "name": "awaken:city/carillon_dusk",
         "attenuation_distance": 192,
         "stream": true
+      }
+    ]
+  },
+  "city.gull.call.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/hurt1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:mob/parrot/hurt2",
+        "attenuation_distance": 48
       }
     ]
   }

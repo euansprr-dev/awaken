@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -165,7 +166,8 @@ public final class PickVerses {
         set(s, v.ordinal(), p.level().registryAccess().lookupOrThrow(Registries.BLOCK));
         // verses wake one step at a time, so the counter is the furthest verse woken
         if (v.ordinal() > best(p)) Progression.count(p, WOKEN);
-        p.level().playSound(null, p.blockPosition(), DelveContent.TRUE_STRIKE.get(), SoundSource.PLAYERS, 0.9F, 0.6F + 0.1F * v.ordinal());
+        // a verse is the pick made better: the smithing table's own sound (it was the true strike's chime; SPEC §66.4)
+        p.level().playSound(null, p.blockPosition(), SoundEvents.SMITHING_TABLE_USE, SoundSource.PLAYERS, 0.8F, 0.85F + 0.05F * v.ordinal());
         DelveNet.send(p, new DelveNet.PickWoke(v.ordinal()));
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The pick wakes: " + v.title))
                 .body(Component.literal(v.gift + "."))

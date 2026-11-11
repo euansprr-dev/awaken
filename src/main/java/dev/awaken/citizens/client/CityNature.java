@@ -93,6 +93,24 @@ public final class CityNature {
 
     static void clear() { java.util.Arrays.fill(NEXT, 0); }
 
+    /**
+     * A gull or a pigeon you can see calls: the recording of the real bird, as loud as its distance allows, on the
+     * same timers as the river's gulls and the roofs' doves so they never crowd. False without the mod: the caller
+     * then plays its own.
+     */
+    static boolean voice(boolean gull, double distance) {
+        if (!INSTALLED) return false;
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return true;
+        int slot = gull ? 0 : 2;
+        long now = level.getGameTime();
+        if (now < NEXT[slot]) return true;
+        NEXT[slot] = now + (gull ? 600 : 1400) + R.nextInt(gull ? 800 : 1400);
+        float near = (float) Math.max(0, 1 - distance / 32);
+        play(gull ? SEAGULL : DOVE, (gull ? 0.6F : 0.3F) * near);
+        return true;
+    }
+
     private static void play(Identifier sound, float volume) {
         volume *= 0.6F * CityAudio.outdoorGain();
         if (volume <= 0.02F) return;

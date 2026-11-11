@@ -23647,3 +23647,93 @@ played or heard by a person.
 
 Dev-only, for autopilot runs: the pilot's `hover <slot>` (`StationClient.devHover`: the mouse over a slot of the open
 station scene) and `clip <name>|stop` (a body clip on your own body, to film a pose in third person).
+
+## 66. Sound audit (every sound of ours against the best we have; Euan, 11 Nov 2026: "double check basically all the custom sounds we have and do a full audit and make sure they're all on par with the best sounds we have")
+
+The audit is `docs/sound-audit/AUDIT.md`: one row for every sound event of ours, what it is, where it plays, where it
+came from, a verdict and the fix as built. It is written by `python3 tools/art/sound_audit.py audit` from the same
+tables that write the game's files, so it cannot drift from the game. No approval page: the bar was already his.
+
+**66.1 The bar and the rules.**
+- The bar is the armour sounds (§44.12) and the Forged Pick (§49): Minecraft's own recordings, named in `sounds.json`.
+  His words on the pick's first try, built from CC0 impacts matched to vanilla's loudness and brightness: "super
+  synthetic", "forced and fake", "sounds like knocking on a door". Matching numbers says nothing about belonging.
+- **Rule 1, the game's recordings first.** Anything that has to belong in the world (a bird, wings, an animal, stone,
+  water, wind) starts from a recording the game already has, named in `sounds.json` as an event
+  (`"name": "minecraft:entity.parrot.fly", "type": "event"`, so it follows the game's own takes) or as a file
+  (`"minecraft:mob/parrot/fly1"`, when the sound needs its own hearing distance or only some takes). The game plays its
+  own files: nothing of Mojang's is in the repo. An event entry takes the hearing distance of the game's event (16
+  blocks); a far sound names files and sets `attenuation_distance`.
+- **Rule 2, layering in code.** `sounds.json` plays one recording an event. The rest of a recipe is added by the client
+  (66.2). No derived or processed copy of the game's audio is ever committed.
+- **Rule 3, no synthetic ding.** No narrow, steady, high tone at a sound's peak or start
+  (`docs/powers-aaa/taster/ding_check.py`; it only sees above 800 Hz, so his ear is the judge). The check is run on the
+  game's own recordings too before one is used many times a second: the game's copper, iron, chain and amethyst hits
+  ring, so a pick biting ore does not use them.
+- **Real recordings only.** Where the game has no recording of the real thing (a crow, an owl, a gull, a dove), the
+  pack's AmbientSounds has: its recordings are played by their own ids from code that has checked the mod is there
+  (as §16.0 decision 30 already did for the city), never copied, never named in `sounds.json`. Without the mod the
+  sound is the nearest of the game's own (a parrot's squawk lowered) or silence, never synthesis.
+- The game clamps pitch to 0.5..2.0 and gain to 1.0: a recipe stays inside them (`check` says when one does not).
+- A sound made by a tool that nothing plays any more is deleted, and so is its generator once every sound it made is
+  remade (`sound_audit.py prune` removes only files the audit itself replaced: armour's old files still play on its
+  own listening page).
+
+**66.2 How a recipe reaches the game.**
+- `tools/art/specs/audit_kit.py`: a row is an event, its module, where it plays, what it was, the verdict, and up to
+  three picks; a pick is a list of `E(event, volume, pitch, at ms, spread, chance, jitter)`, `F(files, ..., dist)` and
+  `A(AmbientSounds event)`. The tables are `tools/art/specs/audit_<part>.py`.
+- `tools/art/sound_audit.py build` writes each row's first recording into its module's merged `sounds.json` and the
+  rest into `assets/awaken/sound_layers/<module>.json`; a layer that names files gets a helper event
+  `<event>.part<n>` (no subtitle). `check` fails when a named recording is not in this game or the files have drifted
+  from the tables; `snapshot` keeps the events as they were (`specs/sound_audit_before.json`, with the commit they
+  came from); `prune` deletes replaced files; `listen` serves the page; `apply` takes his marks into
+  `specs/sound_audit_picks.json` (row → 1, 2, 3 or `before`). **After any audio generator that rewrites a module's
+  `sounds.json`, run `build`: it puts the audit's rows back.**
+- `core.audio.client.SoundLayers` (client): reads every `assets/awaken/sound_layers/*.json`
+  (`{"awaken:<event>": [{"sound", "volume", "pitch", "delay" ms, "jitter" ms, "spread", "chance"}]}`) and, when an
+  event with layers plays (`PlaySoundEvent`), plays each layer at the same place and source, scaled by the volume and
+  pitch the caller asked for; `spread` lets a layer's pitch wander, `chance` leaves it out some of the time, `jitter`
+  moves it a tick or two, so no two bursts are the same. A layer never brings layers of its own. Armour's own layers
+  (§44.12) stay with armour; an event is never in both.
+- The listening page (`run-autopilot/sound-audit-listen/`, gitignored, served on 127.0.0.1:8768, never hosted) plays
+  the recordings from this machine's own copy of the game and of AmbientSounds: for every row, Before (the old file,
+  taken out of git once it is deleted), the picks, each alone or in its moment (a wood's birdsong under a flush, waves
+  under a gull, the game's own digging under an ore bite), and his marks.
+
+**66.3 Birds and wings, as built** (`audit_birds.py`; all of it was `audio_wild.py` and `audio_city_life.py`
+synthesis: whistles on pitch curves, voiced formants, noise grains).
+- Wings: a small bird's flush is two of a parrot's wingbeats raised (1.3 and 1.5) over a quiet bat's take-off; large
+  wings (crow, duck, heron) three slow wingbeats lowered (0.74 to 0.66) with a soft leathery flap; a flock of pigeons
+  six or seven wingbeats tumbling over a bat's take-off.
+- Small voices: a chip is a parrot's chirp raised (1.7); a song is a phrase of them in code's time (a robin eight to
+  ten wandering notes with a breath, a tit a high and a low back and forth, a chaffinch a run downhill and a flourish,
+  a wren a fast trill), each note free to wander and drop out; the woodpecker's drum thirteen of the game's wooden
+  clicks a tick apart (20 a second, a real drum's speed), swelling and fading.
+- The crow, the owl and the gull (`WildSound.real`), the city's gulls and pigeons (`CityNature.voice`): with
+  AmbientSounds, its recording of the real bird, unplaced (its files are stereo and several seconds long), as loud as
+  the bird's distance allows, one of a kind at a time and well apart (crow 25 s, owl 15 s, gull 30 s at least), so
+  where you see crows you hear crows. Without it: the crow and gull a parrot's cry lowered, the pigeon a hen's low
+  cluck, and the owl silent (`wild.owl.hoot` is gone). The gull's cry used to play from every circling gull every
+  25 s: six gulls over a beach made one synthetic cry every four seconds.
+- Crickets (`WildSound.crickets`) only without AmbientSounds (it sings its own from recordings): the game's own night
+  insects (the firefly bush), a take every 11 to 17 s a spot. A buzzard's call is a fox's scream raised and far off;
+  a duck a hen's cluck lowered; a heron a hen's squawk dropped low; a squirrel a bat's squeaks lowered; a frog's plop
+  the fishing bobber's splash; a rustle leaf litter and grass underfoot. These are the nearest the game has, not the
+  real animal: each has other picks on the page and waits for his ear.
+
+**66.4 Mining, as built** (`audit_mining.py`; Euan, 11 Nov: "I hate the ding ding ding when mining ore, even vanilla
+sounds better"). The dings were `audio_delve.py`'s: each ore's own synthesised note on every bite (every fourth tick:
+iron, lapis, diamond and emerald 80 to 95% one held tone) and the true strike's chime, which climbed two semitones
+with each hit in a row.
+- A bite is now one of the game's own stone and mineral hits, none of them a note, quiet under the game's digging
+  sound: coal tuff, copper and iron the heavy core's dense knock, gold the game's own nether gold ore, redstone
+  cinnabar, lapis and emerald calcite, diamond deepslate raised, Deepglass dripstone with a small crack of glass now
+  and then. The last blow is deepslate splitting with a little rubble.
+- A true strike is the game's critical-hit crack with a split of stone; `StrikeFeel` asks for a small rise only
+  (pitch (0.92 + 0.02 per ore) × (1 + 0.05 per hit in a row)), never a scale. A verse earned, the pick waking and a
+  gift, which borrowed the chime, take the smithing table's and the enchanting table's own sounds.
+- The vein giving, cracks along it, the heavy strike (a crossbow drawn for the strain, its catch for "ready"), a
+  cave-in, a piton, rope paying out, Deepglass and the Deep Ear's two tells: all recipes of the game's recordings.
+  The Tuning Fork, a tone by its nature, rings with the game's own amethyst. `audio_delve.py`'s 26 files are deleted.
+  The Forged Pick's own voice (§49) is untouched.
