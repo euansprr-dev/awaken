@@ -1,0 +1,469 @@
+<title>Together, All the Way</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column (max 62rem); game-screen drawings take the full column and are always dark, like a
+   screenshot. Two people run through the page: the fighter in band blue, the rider in the thread's rose. */
+:root {
+  --bg: #f3f2f0; --panel: #ffffff; --ink: #17181c; --muted: #5d626d; --line: #d9d8d4; --soft: #eae9e5;
+  --fighter: #1f6f9c; --rider: #a8553a; --ok: #2c7a4b; --warn: #8a5a00; --bad: #ad3535;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px }
+.wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 60px }
+section, header { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.45rem, 3.5vw, 1.9rem); font-weight: 600; letter-spacing: -0.01em }
+h3 { font-size: 1.14rem; font-weight: 600; margin-top: 10px }
+h4 { font-size: 1rem; font-weight: 600 }
+p, ul, ol { margin: 0; max-width: 68ch }
+ul, ol { padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+.lead { font-size: 1.14rem; max-width: 62ch }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+q { font-style: italic }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere }
+.f { color: var(--fighter) } .r { color: var(--rider) }
+.answer { border-left: 3px solid var(--rider); padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 8px }
+.tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap }
+.tag.ok { color: var(--ok) } .tag.warn { color: var(--warn) } .tag.bad { color: var(--bad) } .tag.new { color: var(--rider) } .tag.keep { color: var(--fighter) }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line) }
+tr:last-child td { border-bottom: 0 }
+th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--soft) }
+td.num, th.num { text-align: right; white-space: nowrap }
+td.plan { color: var(--rider); font-weight: 600 }
+td strong { font-weight: 600 }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+figcaption { font-size: 0.86rem; color: var(--muted); max-width: 74ch }
+.shot { overflow-x: auto; border-radius: 8px; border: 1px solid var(--line); background: #090c11 }
+.shot svg { display: block; width: 100%; height: auto }
+.pair { display: flex; flex-direction: column; gap: 22px }
+.board { display: flex; flex-direction: column; gap: 14px }
+.beat { display: grid; grid-template-columns: 11rem repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; padding-top: 14px; border-top: 1px solid var(--line) }
+.beat-head { display: flex; flex-direction: column; gap: 4px }
+.beat-head p { font-size: 0.9rem; color: var(--muted) }
+.beat-head .num { font-size: 0.78rem; color: var(--muted) }
+.pane { position: relative; border-radius: 6px; overflow: hidden; background: #090c11; border: 1px solid var(--line) }
+.pane svg { display: block; width: 100%; height: auto }
+.who { position: absolute; top: 6px; left: 8px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; background: #0d1219; padding: 2px 6px; border-radius: 3px }
+.who.f { color: #7fd4ff } .who.r { color: #f0b79c }
+@media (max-width: 760px) { .beat { grid-template-columns: repeat(2, minmax(0, 1fr)) } .beat-head { grid-column: 1 / -1 } }
+@media (max-width: 480px) { .beat { grid-template-columns: minmax(0, 1fr) } }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+.step svg { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line) }
+@media (max-width: 860px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 480px) { .steps { grid-template-columns: minmax(0, 1fr) } }
+.finding { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 4px 14px; padding-top: 16px; border-top: 1px solid var(--line) }
+.finding .big { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--rider); line-height: 1.1 }
+.finding > div { display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.finding .ev { font-size: 0.84rem; color: var(--muted) }
+@media (max-width: 560px) { .finding { grid-template-columns: minmax(0, 1fr) } }
+.decisions { list-style: none; padding: 0; counter-reset: d; display: flex; flex-direction: column; gap: 0; max-width: none }
+.decisions li { counter-increment: d; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 4px 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start }
+.decisions li::before { content: counter(d); font-family: var(--display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.3 }
+.decisions .q { display: flex; flex-direction: column; gap: 4px }
+.decisions .q span { font-size: 0.9rem; color: var(--muted) }
+.decisions .rec { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ok); border: 1px solid currentColor; border-radius: 3px; padding: 2px 7px; white-space: nowrap; margin-top: 3px }
+@media (max-width: 560px) { .decisions li { grid-template-columns: 2rem minmax(0, 1fr) } .decisions .rec { grid-column: 2; justify-self: start } }
+a { color: var(--fighter) }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">AWAKEN · a plan for your approval · nothing here is built · 11 Nov 2026</span>
+  <h1>Together, All the Way</h1>
+  <p class="lead">Co-op from the first bell to the last, for two people who always know where the other is, are never
+  split up by a rule, and each have a full evening of things to do in the same fight, even if only one of them likes
+  fighting.</p>
+  <div class="answer">
+    <p><strong>The short answer.</strong></p>
+    <ul>
+      <li>The rules for sharing are already in the game and mostly sound. The <em>experience</em> of being two people
+      isn't: you can't see your partner, point at anything or share a home without typing a command, and a death or
+      a Reassessment splits you up.</li>
+      <li>The tag-along you asked for before exists. It's <strong>Riding Along</strong> (9 Nov): a thread of light, and
+      the rider can't go down near you. It's merged and has never been seen in a game. It makes your partner safe. It
+      doesn't give them anything to do, and it's refused at Reassessments.</li>
+      <li>This plan gives the rider a real job on that thread (eight things to do, earned across the ranks), lets a
+      Reassessment be ridden, fixes the fights for two fighters, and adds the things a couple needs around the fights.</li>
+      <li>Alone, the game plays exactly as it does today. Every part has a switch.</li>
+    </ul>
+  </div>
+  <p class="muted">The two players in the drawings are Euan and "Ana", an example name. The drawings are mockups I made
+  for this page, not screenshots.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · What you asked for, and how we'll know it worked</span>
+  <h2>My reading of your brief</h2>
+  <ul>
+    <li><strong>Everything from A to Z works with two.</strong> The story, the first boss scene, every gate, the
+    Reassessments, levels, discovery, the end.</li>
+    <li><strong>Two ways to play a gate and a Reassessment.</strong> Both fight, or one tags along: <q>can't die as much
+    as you</q>, earns less (<q>isn't as good as fighting</q>), and has <q>a ton of things to do during the fight</q>.</li>
+    <li><strong>Whatever is missing</strong> that would make co-op <q>20 times better</q> for a couple or friends,
+    <q>extremely smooth</q>.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>Your words</th><th>What it has to look like</th><th>Not good enough</th></tr>
+    <tr><td>"works in co-op"</td><td>Every step of the journey has a two-player test and a two-player picture</td><td>It runs, but one of you waits or watches</td></tr>
+    <tr><td>"dies less"</td><td>The rider goes down no more than once in ten floors; two fighters are split by a death less than once a gate</td><td>Can't fail at all, or the fight gets easier because someone came along</td></tr>
+    <tr><td>"a ton of things to do"</td><td>In a boss fight the rider does something on purpose at least every five seconds, with four or more different verbs</td><td>One button to hold</td></tr>
+    <tr><td>"isn't as good as fighting"</td><td>Half to three-quarters of a fighter's XP, and a rank that shows it was won by the thread</td><td>The same pay, or no progress at all</td></tr>
+    <tr><td>"extremely smooth"</td><td>The two screens never disagree; nothing is told to only one of you</td><td>Anything either of you would call a bug</td></tr>
+    <tr><td>"20 times better"</td><td>An evening together with no typed command, no chat, and no "where are you?"</td><td>Today</td></tr>
+  </table></div>
+  <p class="muted">Rules of yours I've held to: nothing fights for you and a support player is a person; no new key and
+  none taken over; no timing layer on everything; direction through the world, never a list; bosses are never
+  announced; plain words; one side decides anything predicted; single player unchanged.</p>
+</section>
+
+<section>
+  <span class="eyebrow">2 · What I found in the game as it is</span>
+  <h2>The rules exist. The pair doesn't.</h2>
+  <p>I read the code and the SPEC of the current build. Co-op was laid down on 24 October, before most of the game
+  existed. Each plan since added a line about "members", and none of them owned what it's like to be two.</p>
+
+  <h3>Already there, and kept</h3>
+  <div class="scroll"><table>
+    <tr><th>Piece</th><th>What it does with two today</th><th>Where</th></tr>
+    <tr><td>The opening and the first boss scene</td><td>The square holds for the group. The Ritual waits for every new player, the Seated One kills you all at once, and each of you answers "Will you accept?" alone</td><td><code>OpeningDirector</code>, <code>RitualTests</code></td></tr>
+    <tr><td>Gates</td><td>Arena doors bring your partner through. 35% more monsters and 50% more Lord health per extra fighter. A hoard and a bell each</td><td><code>Rooms.java:63-86</code></td></tr>
+    <tr><td>Kills and loot</td><td>A partner within 32 blocks shares the XP through their own budget and rolls their own loot</td><td><code>Parties.java</code></td></tr>
+    <tr><td>Reassessments</td><td>Fighters near you at the level come too; the Warden stands longer; all down and it starts over</td><td><code>Provings.java</code></td></tr>
+    <tr><td>Home, bells, the Peal</td><td>One home with members; bells hang there and ring for every member</td><td>SPEC "Together", §43</td></tr>
+    <tr><td>Monuments and finds</td><td>Everyone near when it opens is paid</td><td><code>finds/Reward.java</code></td></tr>
+    <tr><td>Powers</td><td>No power ever hurts another player</td><td><code>powers/Combat.java:42</code></td></tr>
+    <tr><td>Riding Along</td><td>The thread, the catch, 40% hits, half XP, monsters go for the fighter first</td><td>SPEC §55, 13 tests</td></tr>
+    <tr><td>The Far Landing (being built)</td><td>Everyone on the skiff's deck flies together; it runs both ways</td><td>its SPEC §67.5</td></tr>
+  </table></div>
+
+  <h3>Wrong or missing with two players</h3>
+  <div class="finding"><span class="big">1</span><div><p><strong>You can't see your partner or point at anything.</strong>
+    No health, no direction, no dot on the Atlas, no ping. The Atlas shares waypoints, and that's all.</p>
+    <p class="ev">No party HUD or ping class exists anywhere in the code; the Atlas draws no other players.</p></div></div>
+  <div class="finding"><span class="big">2</span><div><p><strong>Your party is a side effect.</strong> It's whoever shares
+    your Hearth, your gate or your thread. Sharing a Hearth is <code>/awaken hearth invite</code>. Two people walking the
+    wilds on the first day share nothing.</p><p class="ev"><code>gates/GateParty.java</code>, <code>hearth/HearthCommands.java:42-52</code></p></div></div>
+  <div class="finding"><span class="big">3</span><div><p><strong>A death in a gate sends one of you home.</strong> The one
+    who falls loses the Satchel, takes a Fracture, leaves the run and wakes at the Hearth, perhaps kilometres away,
+    while the other is still inside.</p><p class="ev"><code>gates/run/Runs.java:651-704</code></p></div></div>
+  <div class="finding"><span class="big">4</span><div><p><strong>A Reassessment leaves your partner at the bell.</strong>
+    It takes only fighters at the level, and skips a tied pair without a word. The rider, or a friend a few levels
+    short, watches you vanish into the game's best fight.</p><p class="ev"><code>hearth/trial/Provings.java:167-171</code></p></div></div>
+  <div class="finding"><span class="big">5</span><div><p><strong>The warning ring closes for the wrong person.</strong> A
+    boss's tell doesn't say who the blow is for, and the ring is drawn for whoever is locked on. With the new boss
+    plan's "Too early / Too late", your partner would be marked on a blow that was aimed at you.</p>
+    <p class="ev"><code>FightRunner.java:864,935</code>, <code>aim/client/Reticle.java:157-177</code></p></div></div>
+  <div class="finding"><span class="big">6</span><div><p><strong>Bosses flick between two fighters.</strong> They turn to
+    whoever hit them last, on every hit, and their read of you starts over each time. "Fights That Read You" ends up
+    reading nobody.</p><p class="ev"><code>AwakenMob.java:201</code>; SPEC §48.1. Read in the code, not seen in a game.</p></div></div>
+  <div class="finding"><span class="big">7</span><div><p><strong>The rider has no job.</strong> They keep their weapon and
+    powers at 40%. That's a weak fighter, not a role. Mario Galaxy's first second-player mode was called thin for the
+    same reason.</p><p class="ev">SPEC §55. And at half XP the rider is about level 40 when you reach level 100 (<code>docs/coop/harness/rider_pace.py</code>).</p></div></div>
+  <div class="finding"><span class="big">8</span><div><p><strong>A friend who joins later is alone for half an hour</strong>,
+    and can never earn a monument you've already opened. Levels far apart have no rule except the thread.</p>
+    <p class="ev"><code>OpeningDirector</code>, §67.5, <code>finds/Reward.java:39-50</code></p></div></div>
+  <div class="finding"><span class="big">9</span><div><p><strong>Nothing has been seen with two real players.</strong>
+    All 544 tour scripts are one client. The thread, the fold and the party doors are unseen.</p>
+    <p class="ev">One more to measure before believing it: a party raises a boss's health but not its stance, so two
+    fighters may break it twice as often (<code>ArmsRules.java:250</code>).</p></div></div>
+
+  <h3>The journey, step by step</h3>
+  <div class="scroll"><table>
+    <tr><th>Step</th><th>With two, today</th><th>What changes</th></tr>
+    <tr><td>The sky, the run, the square</td><td><span class="tag ok">works</span> built for a group, tested with four</td><td>Those who start together are a party without asking</td></tr>
+    <tr><td>The Ritual (first boss scene)</td><td><span class="tag ok">works</span> waits for everyone</td><td>Nothing</td></tr>
+    <tr><td>Infirmary and Registry</td><td><span class="tag ok">works</span> each on their own clock</td><td>The party strip appears when the band boots</td></tr>
+    <tr><td>Ilse's fire and the first home</td><td><span class="tag warn">clumsy</span> two coals make two homes unless one types a command</td><td class="plan">"Make this your home too?" Two keepers</td></tr>
+    <tr><td>The skiff to the far country</td><td><span class="tag ok">works</span> everyone on deck flies</td><td>Three small rules to confirm with that plan</td></tr>
+    <tr><td>Gate floors</td><td><span class="tag warn">works blind</span> shared credit, no sight of each other</td><td class="plan">Strip, pings, standing back up, the rider's job</td></tr>
+    <tr><td>The Lord</td><td><span class="tag bad">wrong</span> the ring and the target (findings 5, 6)</td><td class="plan">The right ring, a held target, a shared finishing film</td></tr>
+    <tr><td>Reassessment</td><td><span class="tag bad">splits you</span> (finding 4)</td><td class="plan">The rider comes; rank by the thread</td></tr>
+    <tr><td>Home, beasts, bells, the Peal</td><td><span class="tag ok">works</span> per home, every member</td><td>Nothing</td></tr>
+    <tr><td>Monuments, finds, dreams</td><td><span class="tag ok">works</span> for whoever is there</td><td>A partner's solo finds become leads</td></tr>
+    <tr><td>The Seed and the ending</td><td><span class="tag ok">works</span> one ending per world, told to later arrivals</td><td>Nothing</td></tr>
+    <tr><td>The homecoming</td><td><span class="tag ok">works</span> "you, and anyone beside you"</td><td>Nothing</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · The directions I weighed</span>
+  <h2>Build on the thread, and give the pair one owner</h2>
+  <div class="scroll"><table>
+    <tr><th>The support way</th><th>What your partner does</th><th>Why, or why not</th></tr>
+    <tr><td>Leave Riding Along as it is</td><td>Fights at 40%</td><td>Fails "a ton of things to do"</td></tr>
+    <tr><td class="plan">Give the rider a job on the thread</td><td>Gathers, marks, mends, binds, hauls, wards. Fights a little if they feel like it</td><td>Reuses the bond, the catch, the pay rule, the tests and the power system. Chosen at any gate door and changed at the next</td></tr>
+    <tr><td>A separate support class</td><td>Picks a healer at the start</td><td>Locks a person into a role and doubles the balance work</td></tr>
+  </table></div>
+  <p>For being together, one small module owns the party, the strip and the pings, behind the hook every system already
+  asks. The other way was patching six systems one by one, which is how today's gaps happened.</p>
+  <p class="muted">Looked at and left out: split screen, one shared level, chat features, scaling the land to the weaker
+  player (the world-moods plan owns the land's danger), two riders on one fighter.</p>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Being together</span>
+  <h2>See each other, point, share a home</h2>
+  <figure>{{M5}}<figcaption><strong>The band's Status page gets a Together section</strong> (Riding Along's section
+  moves into it). It lists who's near or shares your home, with what you can do. Every button sends the other person
+  a 30-second card. A party is up to four, saved with the world. Players who walk the opening together are one from
+  the square on, with nothing to accept. Commands stay for servers and tests.</figcaption></figure>
+  <ul>
+    <li><strong>A home for two.</strong> When one of you places the Ember near the other: "Make this your home too?"
+    A home has an owner and may have one second keeper with the same rights, so neither of a couple is a guest.</li>
+    <li><strong>The party strip</strong> (top left in the drawings below): your partner's name, health and what they're
+    doing, and an arrow on the screen's edge with the distance when they're out of view. It's hidden when you're alone.</li>
+    <li><strong>The Atlas</strong> shows your party as live dots, and "Go to Ana" is a destination that follows her.</li>
+  </ul>
+  <figure>{{M2}}<figcaption><strong>Pings, on the key you already use to lock on</strong> (middle click). On a monster it
+  locks as today, and your partner sees what you've locked. On anything else it points: a marker for eight seconds
+  with one plain line chosen by what you're looking at. A double click says "Careful here". Your binoculars' mark is
+  shared the same way. Apex Legends showed that one context button can replace a microphone.</figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Both fight</span>
+  <h2>Two fighters, one fight</h2>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>Whose blow it is</td><td>The ring closes for whoever is locked on</td><td class="plan">The full ring shows only for the one the blow is for. Their partner sees a thin ring with no verdict. A wide sweep is everyone's</td></tr>
+    <tr><td>The boss's attention</td><td>Flicks to whoever hit last</td><td class="plan">Holds one of you for a whole phrase, changes at an opening, and shows the change with a head turn. It keeps a read of each of you</td></tr>
+    <tr><td>Stance</td><td>Health grows with a party; stance doesn't</td><td class="plan">Stance grows the same way, once stage 0 has measured it</td></tr>
+    <tr><td>Falling in a gate</td><td>Out of the run, home, Satchel gone</td><td class="plan">You go down for 20 seconds. Your partner holds Use on you for 2 seconds and you're up at 30% health. Once per floor each. Nobody comes, or both down: today's death</td></tr>
+    <tr><td>After a real death</td><td>You wake at home</td><td class="plan">You wake at the gate's door, and it lets you back in at the last shrine. The Satchel and the Fracture are still the price</td></tr>
+    <tr><td>The finishing blow (boss plan)</td><td>Only the striker gets the film</td><td class="plan">Everyone in the fight sees it, both of you in the shot. Either fighter may take it</td></tr>
+  </table></div>
+  <p class="muted">Standing back up is how Minecraft Dungeons, Minecraft's own co-op game, handles it. Nothing here
+  lowers a boss's damage, health or speed.</p>
+</section>
+
+<section>
+  <span class="eyebrow">6 · One rides along</span>
+  <h2>The rider's job</h2>
+  <p>The thread, the catch, the 48-block reach and the refusals stay exactly as you approved them on 9 November.
+  What's new is the job. <strong>The fighter makes the fight shed light, and the rider turns that light into
+  help.</strong> Everything the rider does is a choice about where to be and whom to help. None of it is a reflex, and
+  none of it needs aim.</p>
+  <figure>{{M3}}<figcaption><strong>Chosen at the door, changed at the next one.</strong> One card, two ways, a yes from
+  both. Tonight's rider can fight tomorrow. It can also be set in the Together section any time you're out of a fight.</figcaption></figure>
+
+  <h3>The same second, on both screens</h3>
+  <div class="pair">
+    <figure>{{M1}}<figcaption><strong class="f">Euan fights.</strong> An amber blow is coming and the ring is his. Ana is
+    off to the right: the strip and the edge arrow say where, and the thread leaves the frame toward her.</figcaption></figure>
+    <figure>{{M4}}<figcaption><strong class="r">Ana rides.</strong> She sees him, the motes his blows have shed, her light,
+    and her five thread powers on the usual keys. The ring on the Lord is thin: this blow isn't hers.</figcaption></figure>
+  </div>
+
+  <h3>What the rider does</h3>
+  <div class="scroll"><table>
+    <tr><th>Verb</th><th>What it does</th><th>Cost</th><th>The moment for it</th><th>Earned</th></tr>
+    <tr><td><strong>Gather</strong></td><td>A monster your partner strikes sheds motes of light: one a blow, three on a stance break, six on a kill. Walk near and they come to you. Light left over when the floor is cleared is a small bonus roll for both Satchels</td><td>none</td><td>All the time. It's movement: run, vault, wall-run</td><td>First ride</td></tr>
+    <tr><td><strong>Mark</strong></td><td>What you look at glows for your partner for 8 s. Their hits on it shed double light, and the first adds a quarter more stance damage</td><td>free</td><td>The one about to cast; the one behind them</td><td>First ride</td></tr>
+    <tr><td><strong>Mend</strong> (hold)</td><td>Beads run down the thread: a heart a second, washing off fire and poison. It pauses for a second and a half whenever they're struck</td><td>1 light a half-heart</td><td>After a mistake, between phrases</td><td>First ride</td></tr>
+    <tr><td><strong>Seams</strong></td><td>You see caches behind thin walls that your partner can't, one to three a floor. Opening one pays both</td><td>none</td><td>Between fights</td><td>First Lord ridden</td></tr>
+    <tr><td><strong>Bind</strong></td><td>Ties a monster's feet for 4 s. A boss can't be held, but a Bind on a boss whose stance is broken keeps the opening a second longer</td><td>6 light</td><td>The one running at your partner's back</td><td>First Lord ridden</td></tr>
+    <tr><td><strong>Haul</strong></td><td>Pulls your partner to your side along the thread. With Sneak, pulls you to theirs, so a jump you can't make never stops you</td><td>8 light</td><td>Out of a red blow; across a gap</td><td>D Reassessment</td></tr>
+    <tr><td><strong>Ward</strong></td><td>Wraps your partner for 4 s: the next blow is halved and doesn't stagger</td><td>10 light</td><td>When red shows</td><td>C</td></tr>
+    <tr><td><strong>Hush</strong></td><td>Monsters that aren't bosses within 8 blocks of you lose interest for 5 s</td><td>12 light</td><td>When the room is too much</td><td>B</td></tr>
+    <tr><td><strong>Twin</strong></td><td>Ties two monsters: what one takes, the other feels at 30%</td><td>10 light</td><td>Two elites</td><td>B</td></tr>
+    <tr><td><strong>The last thread</strong></td><td>Once a floor, your partner's killing blow leaves them down instead, even with only you there to lift them</td><td>none</td><td>It decides itself. You still have to reach them</td><td>A</td></tr>
+  </table></div>
+  <ul>
+    <li><strong>The keys.</strong> Thread powers are a ninth power family in the system you have. The rider puts them in
+    their own five slots, beside or instead of their own powers, which still work at 40%. Same keys, same bar. They
+    cast only while tied.</li>
+    <li><strong>It stays a hard fight.</strong> Mend gives a heart a second against blows of four to eight. Ward halves
+    one blow every 15 seconds. Bind never holds a boss. The rider adds no damage of their own. They make your mistakes
+    survivable, and that's all.</li>
+    <li><strong>The rider's own risk.</strong> Blasts still hurt. A fold (the four seconds in your shadow) spills their
+    light on the floor. Past 48 blocks the protection is gone, as now.</li>
+    <li><strong>Your say as the fighter.</strong> A setting: "My partner may haul me", or "Ask first". A haul never
+    interrupts a strike or a cast that has begun.</li>
+  </ul>
+
+  <h3>Ninety seconds of a Lord fight, both screens</h3>
+  {{S1}}
+
+  <h3>What each of you takes home</h3>
+  <div class="scroll"><table>
+    <tr><th></th><th class="f">Fighting</th><th class="r">Riding along</th></tr>
+    <tr><td>XP</td><td>Full</td><td>Half, rising to three-quarters with the thread's work on that floor ("Your thread's share: 68%")</td></tr>
+    <tr><td>Loot, boss pieces, bells</td><td>Your own rolls</td><td>Your own rolls, in full (as approved 9 Nov)</td></tr>
+    <tr><td>Rank credit, records</td><td>Yes</td><td>No gate or boss counters. Rank only through a Reassessment's thread task (next section)</td></tr>
+    <tr><td>Makes the gate harder</td><td>Yes: more monsters, more health</td><td>No</td></tr>
+    <tr><td>Can go down</td><td>Yes, and can be lifted once a floor</td><td>Not within 48 blocks of a living partner</td></tr>
+    <tr><td>Grows</td><td>Level, rank, powers, weapons</td><td>All of those more slowly, and the thread's six strands, which only riding earns</td></tr>
+  </table></div>
+  <div class="scroll"><table>
+    <tr><th>Hours for you to reach</th><th class="num">D</th><th class="num">C</th><th class="num">B</th><th class="num">A</th><th class="num">S</th></tr>
+    <tr><td>Fighter</td><td class="num">4</td><td class="num">17</td><td class="num">48</td><td class="num">66</td><td class="num">82</td></tr>
+    <tr><td>The rider's level at that hour, at half pay (today)</td><td class="num">6</td><td class="num">16</td><td class="num">30</td><td class="num">35</td><td class="num">40</td></tr>
+    <tr><td>The rider's level at three-quarters</td><td class="num">8</td><td class="num">20</td><td class="num">37</td><td class="num">46</td><td class="num">60</td></tr>
+    <tr><td class="muted">Level each rank asks for</td><td class="num muted">10</td><td class="num muted">25</td><td class="num muted">45</td><td class="num muted">70</td><td class="num muted">100</td></tr>
+  </table></div>
+  <p class="muted">Worked out from the pacing numbers in the game's own rank table. A rider is always well short of the
+  level a rank asks for, which is why the next section doesn't tie a thread rank to level.</p>
+</section>
+
+<section>
+  <span class="eyebrow">7 · A Reassessment, two ways</span>
+  <h2>The rider comes too</h2>
+  <p><strong>Both fight</strong> stays as it is: each fighter at the level takes the rank, and the Warden stands longer
+  for each. <strong>One rides</strong> is new, and reverses the 9 November rule that a Reassessment can't be ridden.</p>
+  {{S2}}
+  <ul>
+    <li><strong>The thread's task</strong> is the rider's own test, the same shape for every Warden: keep the thread
+    whole (out of reach for no more than five seconds in all), go down no more than twice, and do the thread's work
+    for that rank (twelve deeds at D, four more each rank: hearts mended, marks struck, binds, wards that took a blow,
+    hauls). It shows as a row of beads filling. There's no clock.</li>
+    <li><strong>A rank won by the thread</strong> is the same letter with a thread through it. The story, the Tasks
+    page, the town, the bells and the next strand treat it as the rank. What makes the world more dangerous (the gates
+    rolled for you, the fair-damage numbers) reads only a rank you fought for, so a thread rank never puts your
+    partner in danger alone. If they reach the level later and fight the same Warden, the thread comes off the letter.</li>
+    <li><strong>A friend a few levels short</strong> may come as the rider, or wait. They're told which. Nobody is
+    skipped in silence.</li>
+    <li><strong>Losing</strong> is as today: no fail day, you wake at the door, you go again.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">8 · The rest of what makes it 20 times better</span>
+  <h2>Around the fights</h2>
+  <div class="scroll"><table>
+    <tr><th>The moment</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>"Where are you?"</td><td>Nothing on screen</td><td class="plan">The strip, the edge arrow, the Atlas dot, a ping</td></tr>
+    <tr><td>"Come here"</td><td>Walk, or go home with Homeward</td><td class="plan"><strong>The Answering Peal.</strong> Your partner rings their handbell for you. You hear it from its bearing, ring yours back, stand still five seconds, and you're beside them. Not in a fight, a gate, a trial or a dream; every ten minutes</td></tr>
+    <tr><td>A friend joins your world later</td><td>Half an hour alone, then a long walk</td><td class="plan">They still get the opening (it's theirs). You're told "Ana has arrived in Carillon". After the Registry she's offered your party, the skiff takes her out, and the Peal does the rest</td></tr>
+    <tr><td>Levels far apart</td><td>One of you is one-shot, or one-shots everything</td><td class="plan">In the stronger one's land, the weaker rides. In the weaker one's land, <strong>Match my friend</strong>: a switch, off by default, that evens your hits down to their level while you're near them</td></tr>
+    <tr><td>A monument your partner opened without you</td><td>Gone for you</td><td class="plan"><strong>Shown the way.</strong> It's a lead in your Journal. Go there with them, touch the cache, and you're paid once</td></tr>
+    <tr><td>Exploring apart</td><td>Each finds for themselves</td><td class="plan">What one of you finds alone becomes a lead for the other, never a completion. You bring each other things</td></tr>
+    <tr><td>A gap or a climb one of you can't make</td><td>Stuck, or carried by nothing</td><td class="plan">Tied, the rider hauls themselves to the fighter</td></tr>
+    <tr><td>What you did together</td><td>Not kept</td><td class="plan"><strong>Ours.</strong> One Journal page of firsts you did together, each with its day. A record, never a list of orders</td></tr>
+    <tr><td>The Tasks page</td><td>Knows only you</td><td class="plan">A step you both have open carries a small mark. One optional row when it's true: "Ana is ready for her Reassessment"</td></tr>
+    <tr><td>Lag and disagreement</td><td>Not measured with two</td><td class="plan">Thread powers are decided by the server; a haul never cuts a move that has begun; the ring knows its owner; the wire is measured before and after every stage</td></tr>
+  </table></div>
+  <p class="muted">Couples and friends differ in one thing: a couple is a party of two with one home and often one rider,
+  and the defaults are tuned for that. Three or four friends get the same strip, pings and party, and one rider per run.</p>
+</section>
+
+<section>
+  <span class="eyebrow">9 · The same evening, before and after</span>
+  <h2>Four cases</h2>
+  <div class="scroll"><table>
+    <tr><th>Case</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td><strong>Ordinary.</strong> Two fighters, a D gate</td><td>You can't see each other's health. The Lord flicks between you. One of you dies on floor 2 and wakes at home, 900 blocks away. The other finishes alone</td><td>The strip shows she's low. The Lord holds on you for a phrase. She goes down and you lift her. You both walk out</td></tr>
+    <tr><td><strong>The one you asked about.</strong> A partner who doesn't like fighting</td><td>She rides: can't go down, hits for 40%, mostly watches. At the Reading Bell she's left outside</td><td>She gathers, marks and mends from the first gate, and has ten things to do by A rank. She rides the Reassessment and her licence shows the rank with a thread through it</td></tr>
+    <tr><td><strong>Hard.</strong> Levels 8 and 35</td><td>In your land she's one-shot. In hers you kill everything before she arrives</td><td>In your land she rides. In hers you turn on Match my friend and it's a fight for both</td></tr>
+    <tr><td><strong>Something goes wrong.</strong> You fall, and she's out of light</td><td>You die, she's brought out safely with her Satchel</td><td>With the last thread (A rank) you go down instead, once a floor, and she has to reach you. Without it, as today</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">10 · How it gets tested</span>
+  <h2>Two players in every check</h2>
+  <ul>
+    <li><strong>A pair kit for the game's tests.</strong> Two real survival test players in a party, with each one's
+    network messages readable (the helper exists today, for one). About forty tests, one per mechanism, and five
+    longer ones that walk the journey as a pair: the opening to the Registry, Ilse to the landing, a whole gate with a
+    fighter and a rider, a Reassessment with a rider, a home founded by two.</li>
+    <li><strong>Tours with a partner, on GitHub.</strong> One client films while the server plays a second player from
+    a short script (go, look, strike, cast, use, fall). The client is the fighter in one tour and the rider in the
+    next, so both screens are photographed, on the same runners as today.</li>
+    <li><strong>Two real clients, once.</strong> A probe on a Linux runner: a server and two clients for five scripted
+    minutes, then the logs are read for kicks and errors. If the clients won't draw there, the probe is dropped and
+    nothing else changes. Never two clients on your Mac.</li>
+    <li><strong>The wire.</strong> Messages per player per second, alone against two, before and after each stage.
+    Budget: under 12 a second in a fight for everything in this plan.</li>
+    <li><strong>Alone plays the same.</strong> One player with every switch on gets the same numbers and the same
+    messages as today. The old-save test stays.</li>
+    <li><strong>The real test</strong> is the two of you: the opening, a gate each way, and a Reassessment with one riding.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">11 · Building it</span>
+  <h2>Six stages, each with a switch</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th class="num">Builder hours</th></tr>
+    <tr><td>0</td><td>The pair kit, the tour partner, the wire's baseline, the stance measurement, the two-client probe. Changes nothing in the game</td><td class="num">2 to 3</td></tr>
+    <tr><td>1</td><td>See and say: the party, the Together section, a home for two, the strip, Atlas dots, pings</td><td class="num">5 to 7</td></tr>
+    <tr><td>2</td><td>Two fighters: the ring's owner, the held target, stance, standing back up, the door</td><td class="num">5 to 7</td></tr>
+    <tr><td>3</td><td>The rider's first strand: gather, light, Mark, Mend, the rider's screen, pay by work, the door's card</td><td class="num">6 to 8</td></tr>
+    <tr><td>4</td><td>The rest of the thread and the Reassessment: Bind to the last thread, seams, strands, the thread's task and rank</td><td class="num">7 to 10</td></tr>
+    <tr><td>5</td><td>The joins: late friends, the Answering Peal, the skiff's rules, shown the way, leads, Ours, Match my friend, the shared finishing film</td><td class="num">5 to 8</td></tr>
+    <tr><td>6</td><td>You two play; fixes from both play logs</td><td class="num">as found</td></tr>
+  </table></div>
+  <p>About 30 to 43 builder hours, one builder, in order. Every stage's switch off is exactly today, and every saved
+  field is optional, so a world loads on a build without them.</p>
+  <h3>What could go wrong</h3>
+  <ul>
+    <li><strong>The rider's job misses.</strong> It's the part most likely to need your eye. The first strand is only
+    three verbs, the tours photograph both screens before you play, and every power is data that's cheap to change.</li>
+    <li><strong>Hauls annoy the fighter.</strong> The setting, the no-interrupt rule and a 20-second wait.</li>
+    <li><strong>A thread rank feels like being carried.</strong> The task, the mark on the letter, and danger still
+    measured by the rank you fought for.</li>
+    <li><strong>Three other plans move the same ground.</strong> The boss plan's ring, the Far Landing's skiff and the
+    pets. I've asked each session; none of their files is touched before they merge.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">12 · Yours to decide</span>
+  <h2>Nineteen decisions</h2>
+  <p>"Go with all recommendations" works, or tell me the numbers you'd change.</p>
+  <ol class="decisions">
+    <li><div class="q"><strong>Build the tag-along on Riding Along: keep its thread, catch and rules, and add a job.</strong><span>The other way is a new support class.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The rider's job is thread powers on the normal power keys, cast only while tied, beside their own powers.</strong><span>No new key. Their own powers still work at 40%.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Three verbs from the first ride, the rest earned as six strands across the ranks.</strong><span>So a new rider learns three things, not ten.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A rider's XP is half, rising to three-quarters with the thread's work.</strong><span>Loot, boss pieces and bells stay full. The other choice is a flat half, as now.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A Reassessment can be ridden.</strong><span>This reverses the 9 Nov rule. The Warden isn't made harder for the rider.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A rider who does the thread's task takes the rank by the thread.</strong><span>Marked on the licence; danger still follows the rank you fought for. The other choice is that riders never rank.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Two fighters: go down and be lifted once a floor; a real death wakes you at the gate's door.</strong><span>Gates only. Nobody comes, or both down, is today's death.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The ring shows only for the player a blow is for, and a boss keeps its target for a whole phrase.</strong><span>Worked out with the boss plan's session.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A boss's stance grows with the number of fighters, if stage 0 measures that it breaks too fast.</strong><span>Health already does.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The finishing film plays for everyone in the fight, both of you in the shot.</strong><span>Own-eyes stays each player's setting. A rider can't take the blow.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A party you form with a card on the band, up to four; those who start the story together are one already.</strong><span>A shared home alone no longer makes a party.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A home can have two keepers.</strong><span>The second has the owner's rights except ending the household.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The party strip and the Atlas dots are on by default and hidden when you're alone.</strong><span>A setting makes the strip small or turns it off.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Pings go on the lock key: a monster locks and shares your target, anything else points.</strong><span>No new key.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The Answering Peal: handbell travel to a partner who rings for you.</strong><span>From your first landing on; every ten minutes; never into a fight or a gate.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Match my friend, as a switch that's off by default.</strong><span>The stronger player chooses to be evened down near a much weaker friend.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A partner's finds become leads, a solved monument can be shown to a partner once, and the Ours page.</strong><span>Records and directions, never a list.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Test it as described: pair tests, tours with a scripted partner on GitHub, one two-client probe, then the two of you.</strong><span>Nothing with two clients on your Mac.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Build all six stages in one run and test at the end, as your rule says.</strong><span>The other choice is to stop after stage 3 so you two can try the rider's first three verbs.</span></div><span class="rec">Yes</span></li>
+  </ol>
+</section>
+
+<section>
+  <span class="eyebrow">Sources and limits</span>
+  <h2>What this rests on</h2>
+  <ul>
+    <li>Code and SPEC of <code>build/awaken-v1</code> at f47c3cff2, read on 11 Nov. File names above are where each fact was read. Nothing was run on your Mac.</li>
+    <li>Mario Galaxy's second-player mode: <a href="https://www.mariowiki.com/Co-Star_Luma">mariowiki.com/Co-Star_Luma</a>, <a href="https://www.imore.com/super-mario-3d-all-stars-how-turn-two-player-co-star-mode-super-mario-galaxy">imore.com</a>.</li>
+    <li>Apex Legends' ping, tested with microphones banned: <a href="https://gamedeveloper.com/design/respawn-played-with-muted-mics-to-get-i-apex-legends-i-smart-comms-system-just-right">gamedeveloper.com</a>, <a href="https://www.pcgamer.com/apex-legends-ping-system-is-a-tiny-miracle-for-fps-teamwork-and-communication">pcgamer.com</a>.</li>
+    <li>Minecraft Dungeons' revive and scaling: <a href="https://minecraftdungeons.wiki.fextralife.com/Multiplayer">fextralife wiki</a>, <a href="https://gamewith.net/minecraft-dungeons/article/show/18508">gamewith.net</a>.</li>
+    <li>Guild Wars 2's level matching: <a href="https://wiki.guildwars2.com/wiki/Dynamic_level_adjustment">wiki.guildwars2.com</a>.</li>
+    <li>Not known yet: whether two clients run on one CI runner; how fast stance breaks with two; whether power
+    reactions already cross between two players; what the pack ships for inviting a friend over the internet; and the
+    answers of the three sessions whose plans touch this one.</li>
+    <li>Long form: <code>docs/coop/PLAN.md</code> on branch <code>claude/coop-plan-630b2d</code>.</li>
+  </ul>
+</section>
+
+</div>

@@ -114,8 +114,8 @@ a companion that isn't a person, any change to solo balance, any change to the l
 ### 2.3 The journey, step by step
 | Step | Today with two | What changes |
 |---|---|---|
-| The sky, the run, the square | Built for a group; tested with four | Nothing. Those who start together become a company without asking (4.1) |
-| The Ritual (the first boss scene) | Waits for everyone, kills all at once; each accepts alone | Nothing in the scene. A company panel line says who is still choosing |
+| The sky, the run, the square | Built for a group; tested with four | Nothing. Those who start together become a party without asking (4.1) |
+| The Ritual (the first boss scene) | Waits for everyone, kills all at once; each accepts alone | Nothing in the scene. The Together section says who is still choosing |
 | Infirmary and Registry | Each wakes on their own clock; Bram walks the first player | The one who wakes later sees the other waiting; the party strip appears when the band boots (4.2) |
 | Ilse's fire | Each gets the coal | When one places the Ember near the other: "Make this your home too?" (4.1) |
 | The skiff | Everyone on the deck flies together | A passenger without the coal may still fly; the film plays for all (to confirm, section 8) |
@@ -155,7 +155,7 @@ only what is missing, which is a job.
 ### 3.2 Being together: two directions
 | | Patch each system | One small module that owns the pair (recommended) |
 |---|---|---|
-| Party | Keep the interim rule | A company you form with a card, saved, behind the same `PartyHooks` |
+| Party | Keep the interim rule | A party you form with a card, saved, behind the same `PartyHooks` |
 | Seeing and pointing | A HUD here, a map dot there | One strip, one ping, one state synced once |
 | Risk | Six half-features | One module to get right; everything else already asks the hook |
 
@@ -168,35 +168,35 @@ only what is missing, which is a job.
 
 ## 4. Behaviour and architecture
 
-New module `dev.awaken.together` (the SPEC section it extends is already called "Together"). It owns the company, the
+New module `dev.awaken.together` (the SPEC section it extends is already called "Together"). It owns the party, the
 party strip, pings and the pair's shared state, and installs the real `PartyHooks.Access`. `dev.awaken.riding` keeps
 the bond and grows the rider's kit. Other modules change only where the audit names a line.
 
-### 4.1 The company (who you're playing with)
+### 4.1 The party (who you're playing with)
 - **What it is.** Up to four players who chose each other. Saved per world (`together`, schema 1): members, who
-  asked, when. `PartyHooks.members` returns the company, plus, as today, anyone inside your gate run.
-  A shared Hearth no longer makes a party by itself; a company usually shares one.
+  asked, when. `PartyHooks.members` returns the party, plus, as today, anyone inside your gate run.
+  A shared Hearth no longer makes a party by itself; a party usually shares one.
 - **Forming it, never by command.** The band's Status page gets a TOGETHER section (it replaces RIDING ALONG and
   holds it): every player within 48 blocks or sharing your home, each with what you can do: `Travel together`,
   `Share my home`, `Ride along`, `Bring along`, `Leave`. Each is a 30-second card for the other. Looking at a player
   and pressing the band's key opens the section on them. Commands stay for servers and tests.
-- **Automatic.** Players who walk the opening together are a company from the square onward. Nothing to accept.
-- **A home for two.** When a company member places the Ember within 24 blocks of another member with no home: "Make
+- **Automatic.** Players who walk the opening together are a party from the square onward. Nothing to accept.
+- **A home for two.** When a party member places the Ember within 24 blocks of another member with no home: "Make
   this your home too?" One yes and they are **keepers** together. A Hearth has one owner (as saved today) and may have
   one second keeper with the owner's rights except ending the household. Members stay as they are.
-- **Leaving.** Either side, any time, out of a fight. A company of one is no company. Logging off keeps it.
+- **Leaving.** Either side, any time, out of a fight. A party of one is no party. Logging off keeps it.
 - **Failure.** A card that runs out chooses nothing. A member who leaves mid-gate keeps this run's party (the gate
   rule), so nothing changes under their feet.
 
 ### 4.2 Seeing each other and pointing (mockups M1, M2, M5)
-- **The party strip.** One row per company member, top left under the band's own line: name, health as a bar, a
+- **The party strip.** One row per party member, top left under the band's own line: name, health as a bar, a
   small state mark (in a menu, in a gate with its floor, folded, down, far), and when they are off screen an arrow on
-  the screen's edge with the distance. Hidden when you have no company or they are in another dimension with nothing
+  the screen's edge with the distance. Hidden when you have no party or they are in another dimension with nothing
   to say. Drawn in the band's look; off with the HUD; a setting to keep it small. The Tab glance lists the same people
   with level, rank and place ("Amber Reach, floor 2").
-- **The Atlas.** Company members in your dimension are live dots in their colour, with their home and, faintly, the
+- **The Atlas.** Party members in your dimension are live dots in their colour, with their home and, faintly, the
   destination they've set. `Go to <name>` is a destination that follows them.
-- **Pings, on the lock key.** Middle click on a monster locks on as today, and your company sees a small mark on
+- **Pings, on the lock key.** Middle click on a monster locks on as today, and your party sees a small mark on
   what you've locked: shared focus with no extra press. Middle click on anything else points at it: a marker in world
   light for 8 seconds, on the edge when off screen, on the Atlas, with one plain line under the pinger's name chosen
   by what it is: "Over here", "Ore here", "Let's go in" (a gate door), "Look at this" (a find, a beast, a bell), "Careful
@@ -214,14 +214,14 @@ the bond and grows the rider's kit. Other modules change only where the audit na
   did the most to it since the last change, or whoever is in front if that's close. It shows the change with the
   notice it already has (the head turn, §48.2). `FightMind` keeps a read per player instead of starting over.
   Packs already take turns (§48); nothing changes there. Riding Along's rule (fighters first) stays on top.
-- **Stance with company.** If stage 0 confirms F8, stance grows with fighters as health does (+50% each), so a
+- **Stance with two fighters.** If stage 0 confirms F8, stance grows with fighters as health does (+50% each), so a
   break means the same thing with two as with one.
-- **Standing back up (gates only).** A fighter who would die in a gate while another of the company still stands
+- **Standing back up (gates only).** A fighter who would die in a gate while another of the party still stands
   on the floor goes **down** instead: kneeling, untargetable, for 20 seconds. A partner who reaches them and holds
   Use for 2 seconds lifts them at 30% health with 2 seconds of grace. Once per fighter per floor (twice on Story).
   Nobody comes, or everyone is down: today's death, unchanged. Cheat Death still goes first. Minecraft Dungeons
   works this way (section 7).
-- **After a real death.** While your company is still inside, you wake at the gate's door in the overworld, not at
+- **After a real death.** While your party is still inside, you wake at the gate's door in the overworld, not at
   home, and the door lets you back in at the last shrine once they're out of a fight. The Satchel and the Fracture are
   the price, as today.
 - **The finishing blow** (when the boss plan is built). Either fighter may take the last stand. Everyone in the
@@ -302,7 +302,7 @@ same ladders (§36). None needs timing; each has a window of seconds.
 
 ### 4.6 Levels apart
 - **The thread is the first answer**: the weaker player rides in the stronger one's land and can't go down.
-- **Match my friend** (a switch in TOGETHER, off by default): within 32 blocks of a company member ten or more
+- **Match my friend** (a switch in TOGETHER, off by default): within 32 blocks of a party member ten or more
   levels under you, in land at their level, your hits are evened down to their level (the mechanism the story's
   Ascension tiers already use, `story/Ascension`), and you earn at your own level's rate. For the friend who wants
   to play the early game with a newcomer rather than clear it for them. Guild Wars 2 does the same by zone (7).
@@ -311,12 +311,12 @@ same ladders (§36). None needs timing; each has a window of seconds.
 
 ### 4.7 The journey's joins
 - **Joining late.** The newcomer plays the opening (it is the game's first impression and it is theirs), and the
-  host gets one line: "Ana has arrived in Carillon." After the Registry they are offered the company. The skiff takes
+  host gets one line: "Ana has arrived in Carillon." After the Registry they are offered the party. The skiff takes
   them out. From their first landing on, the **Answering Peal** works.
 - **The Answering Peal.** A partner rings their handbell for you; you hear it from its bearing wherever you are;
   ring yours back, stand still 5 seconds, and you're beside them. Both in the overworld, neither in a fight, a gate, a
   trial or a dream; every 10 minutes. It is Homeward's rule pointed at a person. No menu.
-- **The skiff.** Three rules for the Far Landing session to confirm: a company member without the coal may ride as
+- **The skiff.** Three rules for the Far Landing session to confirm: a party member without the coal may ride as
   a passenger; the film and the crossing play for everyone on the deck; a helm used while the skiff is away says so
   and brings it back.
 - **Shown the way.** A monument your partner solved without you is a lead in your Journal ("Ana opened the Tether
@@ -332,7 +332,7 @@ same ladders (§36). None needs timing; each has a window of seconds.
 ### 4.8 Data and lifecycle
 | State | Where | Schema | Notes |
 |---|---|---|---|
-| Company | saved data `awaken:together` | 1 | members, formed day; old worlds load with none |
+| Party | saved data `awaken:together` | 1 | members, formed day; old worlds load with none |
 | Second keeper | `HearthRecord` household | +1 | optional field; old Hearths load with none |
 | Down | in memory, per run | none | never saved; a logout while down is a death as today, a crash gets up |
 | Strand, light, thread rank | attachment `awaken:thread` on the player | 1 | kept through death; light is not saved |
@@ -361,7 +361,7 @@ All new fields are optional with defaults, so `together_old_saves_load_the_same`
 | Fighter dies with the last thread spent | Death; the rider is brought out as §55 | `bond_anchor_dies` (exists) |
 | Ping spam | Throttle; the fifth in two seconds is dropped silently | `pair_ping_throttle` |
 | A boss's target logs off mid-phrase | Target passes at once, with the notice | `pair_target_leaves` |
-| Company member in another dimension | Strip shows where ("in a gate", "asleep"); no arrow | `pair_strip_far` |
+| Party member in another dimension | Strip shows where ("in a gate", "asleep"); no arrow | `pair_strip_far` |
 | Thread task done but the fighter leaves by the way out | No rank for either; the task's beads are kept for the next try that day | `thread_rank_needs_win` |
 | Answering Peal into unloaded or unsafe ground | Lands on the partner's last safe standing spot | `pair_peal_safe` |
 | Old world, one player, all switches on | Exactly today | `alone_plays_the_same` |
@@ -381,10 +381,10 @@ The page carries them as drawings (they are mockups, not screenshots; nothing he
 ## 6. Evaluation and delivery
 
 ### 6.1 How co-op gets tested
-- **The pair kit** (`core.test.Pair`, stage 0): two real survival test players in a company, at a site, with each
-  one's packets readable. Every test below uses it. Naming: `pair_` (two fighters and the company), `thread_` (the
+- **The pair kit** (`core.test.Pair`, stage 0): two real survival test players in a party, at a site, with each
+  one's packets readable. Every test below uses it. Naming: `pair_` (two fighters and the party), `thread_` (the
   rider's kit), beside the existing `together_` and `bond_`.
-- **One test per mechanism** (about 40): company forms by card and by the opening; second keeper; strip state on
+- **One test per mechanism** (about 40): party forms by card and by the opening; second keeper; strip state on
   change only; ping kinds and throttle; shared focus; tell target and the ring's owner; target hold and its notice;
   per-player reads; stance with two; down, lift, both down, logout while down; the door's respawn and way back in;
   gather, light cap, leftover bonus; each thread power's rule and refusal; haul safety; ward takes one blow; mend
@@ -418,7 +418,7 @@ The page carries them as drawings (they are mockups, not screenshots; nothing he
 | Stage | What | Depends on | Builder hours (AI pace) |
 |---|---|---|---|
 | 0 | Pair kit, tour partner, wire baseline, stance measurement, two-client probe. No behaviour changes | nothing | 2 to 3 |
-| 1 | See and say: company, TOGETHER section, home for two, party strip, Atlas dots, pings, shared focus | 0 | 5 to 7 |
+| 1 | See and say: the party, the TOGETHER section, home for two, party strip, Atlas dots, pings, shared focus | 0 | 5 to 7 |
 | 2 | Two fighters: tell targets and the ring's owner, target hold, per-player reads, stance, standing back up, the door respawn | 0; the boss plan's ring if it lands first | 5 to 7 |
 | 3 | The rider's kit I: gather and light, Mark, Mend, the rider's strip, pay by work, the door's two-way card | 1 | 6 to 8 |
 | 4 | The rider's kit II and the Reassessment: Bind, Haul, Ward, Hush, Twin, the last thread, seams, strands, the thread's task and rank | 3 | 7 to 10 |
@@ -429,7 +429,7 @@ partner's pictures at each stage are the look check.
 
 ### 6.4 Rollback
 Each stage's switch off returns that stage to today. Saved fields are optional, so a world that used them loads on a
-build without them (companies and strands are ignored, never corrupt).
+build without them (parties and strands are ignored, never corrupt).
 
 ### 6.5 Risks
 - **The rider's kit misses** (the thing most likely to need his eye). Mitigation: strand I is three verbs; the
