@@ -1,13 +1,25 @@
 package dev.awaken.compat.client;
 
+import dev.awaken.Awaken;
 import dev.awaken.compat.Discovered;
 import dev.awaken.compat.WorldMaps;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.gui.CreativeTabsScreenPage;
+import net.neoforged.neoforge.common.CreativeModeTabRegistry;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Client side of the companion integrations (each loads only when its mod is present) and the Look switch. */
 public final class CompatClient {
@@ -41,6 +53,9 @@ public final class CompatClient {
                 mc.gui.setScreen(new InventoryScreen(mc.player));
                 return "inventory open";
             }
+            case "creative" -> {
+                return creativeTab(mc, rest);
+            }
             case "jei" -> {
                 return ModList.get().isLoaded("jei") ? dev.awaken.compat.client.jei.JeiHooks.autopilot(rest) : "JEI is not installed";
             }
@@ -65,6 +80,37 @@ public final class CompatClient {
                 return "unknown: " + args;
             }
         }
+    }
+
+    /**
+     * Autopilot {@code compat creative <tab>}: the creative inventory open on that tab (an id; a bare path is Awaken's),
+     * on its page, as a click on the tab would. Needs creative. Logs every tab of the menu in order on the way.
+     */
+    private static String creativeTab(Minecraft mc, String which) {
+        if (mc.player == null) return "no player";
+        if (!mc.player.hasInfiniteMaterials()) return "not in creative";
+        Identifier id = Identifier.tryParse(which.contains(":") ? which : Awaken.MODID + ":" + which);
+        CreativeModeTab tab = id == null ? null : BuiltInRegistries.CREATIVE_MODE_TAB.getValue(id);
+        var screen = new CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), mc.options.operatorItemsTab().get());
+        mc.gui.setScreen(screen);
+        // the screen's own pages, made the way it makes them: ten category tabs a page, in the sorted order
+        List<CreativeModeTab> shown = CreativeModeTabRegistry.getSortedCreativeModeTabs().stream().filter(CreativeModeTab::hasAnyItems).toList();
+        StringBuilder menu = new StringBuilder();
+        for (int i = 0; i < shown.size(); i++) {
+            menu.append(i % 10 == 0 ? (i == 0 ? "" : " | ") + "page " + (i / 10 + 1) + ": " : ", ")
+                    .append(BuiltInRegistries.CREATIVE_MODE_TAB.getKey(shown.get(i))).append(" (").append(shown.get(i).getDisplayItems().size()).append(')');
+        }
+        Awaken.LOG.info("[compat] creative menu: {}", menu);
+        int at = tab == null ? -1 : shown.indexOf(tab);
+        if (at < 0) return "no tab " + which + " in the menu";
+        var page = new CreativeTabsScreenPage(new ArrayList<>(shown.subList(at / 10 * 10, Math.min(shown.size(), at / 10 * 10 + 10))));
+        screen.setCurrentPage(page);
+        int left = (screen.width - 195) / 2, top = (screen.height - 136) / 2;
+        double x = left + 27 * page.getColumn(tab) + 13, y = page.isTop(tab) ? top - 16 : top + 136 + 16;
+        var click = new MouseButtonEvent(x, y, new MouseButtonInfo(1, 0));
+        screen.mouseClicked(click, false);
+        screen.mouseReleased(click);
+        return "creative tab " + id + " (page " + (at / 10 + 1) + ", " + tab.getDisplayItems().size() + " stacks): " + tab.getDisplayName().getString();
     }
 
     /**
