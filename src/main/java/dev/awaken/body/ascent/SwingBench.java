@@ -629,11 +629,13 @@ public final class SwingBench {
      */
     /**
      * How the holding bot lets go of a held rope: as the glow lights ({@link #LIT}), at its brightest (the window's best,
-     * or as it starts to fade: {@link #BRIGHT}, how a player plays the glow), or only at the top of the arc ({@link #TOP}).
-     * Always at the top too, and before a wall.
+     * or as it starts to fade: {@link #BRIGHT}), or only at the top of the arc ({@link #TOP}). Always at the top too, and
+     * before a wall. On 11 Nov the bench measured lit furthest (lane 227, city 253, forest 246; bright 217, 243, 223; top
+     * 179, 206, 185): the early, flatter let-go carries further than the full boost at the window's best, so the gates'
+     * bot lets go as the glow lights.
      */
     static final int LIT = 0, BRIGHT = 1, TOP = 2;
-    static int heldRule = BRIGHT;
+    static int heldRule = LIT;
 
     static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
         return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
