@@ -16,7 +16,11 @@ cmd gamerule advance_time false
 cmd weather clear 100000
 cmd time set 5500
 cmd awaken admin awaken
-wait 200
+wait 100
+# the opening holds the body on the Roost while its camera flies: without this every shot is the Roost
+cmd awaken opening skip
+wait 100
+screen close
 cmd awaken powers starter 1
 wait 20
 screen close

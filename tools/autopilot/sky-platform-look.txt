@@ -1,0 +1,161 @@
+# The sky platform's island, its arrival arch and the Wings' case (SPEC §17.9, 11 Nov 2026), at day and at dusk: the
+# approach from the air, the island from below, the top through the arch, the case close to (shut, the wings in it),
+# then a real climb up the rings by rope at day (the core must give the wings: "[ascent] the sky core at ... gives"),
+# and the gift replayed beside the case at day and at dusk (the glass sinks, the wings fold and fly to the back).
+# Views: /awaken ascent sky view <out> <up> [turn] (out along the pier's diagonal from the deck's middle, turned by
+# turn degrees, up over the deck, facing the core), in spectator.
+# Run on CI: tools/tour-ci.sh tools/autopilot/sky-platform-look.txt 2400
+world sky_platform_look survival 4246
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken admin levels 25
+wait 40
+key dismiss
+wait 10
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd tick sprint 6200
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd time set 5500
+cmd awaken ascent grant tether
+# ---- day: the views (before the climb, so the case still holds the wings for this player)
+cmd gamemode spectator
+camera first
+hud off
+cmd awaken ascent sky view 70 18
+wait 100
+shot d01_approach_far
+cmd awaken ascent sky view 42 3 -60
+wait 40
+shot d02_approach_side
+cmd awaken ascent sky view 30 -24 30
+wait 40
+shot d03_under
+cmd awaken ascent sky view 13 0.4 0
+wait 40
+shot d04_top_arch
+cmd awaken ascent sky view 3.3 0 0
+wait 40
+shot d05_case
+# ---- dusk: the same views
+cmd time set 12900
+wait 40
+cmd awaken ascent sky view 70 18
+wait 40
+shot k01_approach_far
+cmd awaken ascent sky view 42 3 -60
+wait 40
+shot k02_approach_side
+cmd awaken ascent sky view 30 -24 30
+wait 40
+shot k03_under
+cmd awaken ascent sky view 13 0.4 0
+wait 40
+shot k04_top_arch
+cmd awaken ascent sky view 3.3 0 0
+wait 40
+shot k05_case
+# ---- day: the climb by rope from under the lowest ring
+cmd time set 5500
+cmd gamemode survival
+cmd awaken ascent sky goto
+wait 80
+shot d06_climb_from_ground
+camera back
+cmd awaken ascent pilot run climb 3
+wait 60
+shotnow d07_climb_01
+wait 60
+shotnow d07_climb_02
+wait 60
+shotnow d07_climb_03
+wait 60
+shotnow d07_climb_04
+wait 60
+shotnow d07_climb_05
+wait 60
+shotnow d07_climb_06
+wait 60
+shotnow d07_climb_07
+wait 60
+shotnow d07_climb_08
+wait 60
+shotnow d07_climb_09
+wait 60
+shotnow d07_climb_10
+wait 60
+shotnow d07_climb_11
+wait 60
+shotnow d07_climb_12
+wait 200
+cmd awaken ascent pilot stop
+# ---- the gift beside the case, replayed (the glass sinks over 14 ticks, the wings leave at 10, reach the back by 34)
+cmd awaken ascent sky goto deck
+wait 40
+cmd tp @s ~ ~ ~ 90 6
+wait 20
+shot d08_case_from_deck
+cmd awaken ascent scene wings
+wait 3
+shotnow d09_gift_00
+wait 6
+shotnow d09_gift_06
+wait 6
+shotnow d09_gift_12
+wait 6
+shotnow d09_gift_18
+wait 6
+shotnow d09_gift_24
+wait 6
+shotnow d09_gift_30
+wait 10
+shotnow d09_gift_40
+wait 160
+cmd time set 12900
+wait 40
+shot k08_case_from_deck
+cmd awaken ascent scene wings
+wait 3
+shotnow k09_gift_00
+wait 6
+shotnow k09_gift_06
+wait 6
+shotnow k09_gift_12
+wait 6
+shotnow k09_gift_18
+wait 6
+shotnow k09_gift_24
+wait 6
+shotnow k09_gift_30
+wait 10
+shotnow k09_gift_40
+wait 160
+info
+quit
