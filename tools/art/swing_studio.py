@@ -260,7 +260,15 @@ HEAVY_SET = 0.75  # and a heavy's, further in: a charge holds it for as long as 
 # axe has to be seen to be one), a little further out so its chop down runs at the Maul's pace (235 degrees a tick at the
 # hit against the Maul's 227; nearer, 259). Its arm alone limits it: its end stays 1.37 under the middle in the hold and
 # 1.2 through the drive (the old hold's reached 1.14).
-RAISED_HEAVY = {"maul": dict(grip=(0.42, -0.1, -0.6), tilt=25.0), "axe": dict(grip=(0.2, -0.1, -0.75), tilt=45.0)}
+# Then the blades that strike down (Euan 2026-11-11: "It should actually charge in the direction it's about to go in"):
+# the Longsword and the Greatblade, each blade pointing back up the line its chop comes down (screen-turned by `tilt`), and
+# stood up by `pitch` (degrees the top turns back toward the eye before the turn): at their full draw back they still
+# leaned 16 and 30 degrees toward the target, a blade presented. The Longsword, one-handed and short, keeps its whole
+# blade in view up to the top right corner, leaning 8 degrees; the Greatblade, long and two-handed, rises out of the top
+# with its guard and lower blade in view, leaning 14, its off arm's end 1.27 under the middle (upright it would be 1.23).
+RAISED_HEAVY = {"maul": dict(grip=(0.42, -0.1, -0.6), tilt=25.0), "axe": dict(grip=(0.2, -0.1, -0.75), tilt=45.0),
+                "longsword": dict(grip=(0.4, 0.0, -0.7), tilt=20.0, pitch=6.0),
+                "greatblade": dict(grip=(0.3, -0.1, -0.65), tilt=30.0, pitch=18.0)}
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 FULL_SET = 0.7  # a cut's set has its blade's middle this far out on the side it comes from (of the way to the screen's edge)
 FULL_END = 0.75  # and its carry takes it this far out on the far side: edge to edge, never a half cut
@@ -951,17 +959,18 @@ def _raise(held, pose, raised):
     d, R = pose
     x, y, z = raised["grip"]
     to = np.array([x * -z / F_ * ASP, y * -z / F_, z])
-    return to - (np.array([L.HX, L.HY, L.HZ]) + d + R @ held.grip), raised["tilt"]
+    return to - (np.array([L.HX, L.HY, L.HZ]) + d + R @ held.grip), raised["tilt"], raised.get("pitch", 0.0)
 
 
 def _raised(held, pose, lift, k):
-    """The pose carried k of the way into the raised hold: its top turned toward the sword shoulder about the grip, then
-    the grip moved (authored right-handed; a left hand's view mirrors it). The pose itself without one."""
+    """The pose carried k of the way into the raised hold: its top stood back toward the eye (pitch), turned toward the
+    sword shoulder about the grip, then the grip moved (authored right-handed; a left hand's view mirrors it). The pose
+    itself without one."""
     if lift is None or k <= 0:
         return pose
     d, R = pose
-    move, tilt = lift
-    R2 = L.rz(-tilt * k) @ R
+    move, tilt, pitch = lift
+    R2 = L.rz(-tilt * k) @ (L.rx(pitch * k) @ R if pitch else R)
     return d + R @ held.grip - R2 @ held.grip + move * k, R2
 
 
