@@ -1,4 +1,11 @@
-# The whole boss fight, levelled up (plan; nothing here is built)
+# The whole boss fight, levelled up (the plan as approved)
+
+**Approved by Euan on 11 Nov 2026 ("Go with all": all fourteen decisions as recommended) and built the same day as SPEC
+§67**, which is the record of what exists: gear (§67.1), the ring (§67.2), the last stand and the finishing blow's three
+pilots (§67.4), the autosave hold (§67.5); the clash (§67.3) is the weapon-feel session's. Where the build differs from
+this plan and its page, SPEC §67.4 says how and why (the cut comes as the blow lands; the finishing move is each style's
+own charged heavy and Execution; the endings are each body's own death clip in its own light). The text below is the plan
+as it was approved.
 
 Euan, 11 Nov 2026, after fighting the Ringer on build 69fee63de with a longsword: the fight was "decent", but the
 E-rank sword broke mid-fight, the closing rings are "sometimes a bit jittery" and "you're not exactly sure when the ring
