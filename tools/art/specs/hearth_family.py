@@ -1338,8 +1338,8 @@ def page_art(outdir, films=True):
     # out with you: the player walking, Dubu trotting a little ahead, Awa at your heel with her tail up
     def out_with_you(t):
         return [(_player(walk=t / 1.04), steve, 0.9375, (0.0, 0.0), 0),
-                (pose(dub_r, "move", t), dub_t, sc_d, (0.95, -1.15), 8),
-                (pose(awa_r, "move", t * 0.84 / 1.04), awa_t, sc_a, (-0.8, 0.55), -4)]
+                (pose(dub_r, "move", t), dub_t, sc_d, (0.3, -1.5), 6),
+                (pose(awa_r, "move", t * 0.84 / 1.04), awa_t, sc_a, (1.05, 0.35), -4)]
     movie("following", out_with_you, 2.08, fps=14, size=(760, 560), px=15, yaw=58, pitch=11, ground=0.9)
     return made
 
