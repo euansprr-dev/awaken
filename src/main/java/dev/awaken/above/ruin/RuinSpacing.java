@@ -49,6 +49,20 @@ public final class RuinSpacing {
         RuinLocator.forgetOldLand();
     }
 
+    /** Dev only (the seam check): the rule each spaced spot's start was decided under since the server started (a few thousand at most). */
+    private static final Map<Long, Boolean> DECIDED = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final int DECIDED_CAP = 8192;
+
+    /** Notes the rule in force as a start chunk of this kind is decided (every spot of its set's grid comes through here once). */
+    static void noteDecided(RuinKind kind, ChunkPos chunk) {
+        if (spaced(kind) && DECIDED.size() < DECIDED_CAP) DECIDED.putIfAbsent(chunk.pack() * 31 + kind.ordinal(), on);
+    }
+
+    /** Whether the rule was on when this spot's start was decided since the server started; null if not seen. */
+    static @Nullable Boolean decidedUnder(RuinKind kind, ChunkPos chunk) {
+        return DECIDED.get(chunk.pack() * 31 + kind.ordinal());
+    }
+
     /** The kinds the rule spaces out. */
     public static boolean spaced(RuinKind kind) {
         return kind == RuinKind.SPIRE || kind == RuinKind.SKY;

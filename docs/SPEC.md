@@ -4322,11 +4322,16 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
     worst 1,300-1,430 → 1,430-1,880, one within 1,500 of 99.9% of the land, so the Way Up's climb keeps its place in
     reach); two sky platforms apart, least 274 → 601, median 537 → 695; from anywhere to a platform, median 305 → 385,
     worst about 865 → 1,060-1,240; a spire and a platform, least 16 → 250. All the blue sites: 8.6 → 4.3 a square
-    kilometre in forest land, 3.1 → 2.0 in land like Euan's (median to the next 330 → 435).
+    kilometre in forest land, 3.1 → 2.0 in land like Euan's (median to the next 330 → 435). In the game's own land (the
+    census on CI, seed 4245, a 12 km square, real biomes, run 42964071307): spires 167 → 97 (2.16 → 1.25 a square
+    kilometre), apart least 187 → 320, median 339 → 420, from anywhere median 339 → 428, worst 1,637 → 1,716, one within
+    1,500 of 99.7% → 99.2% of the land; sky platforms 147 → 86, apart least 336 → 611, median 538 → 695, from anywhere
+    median 293 → 379, worst 803 → 1,110; all the blue sites 314 → 183, apart least 32 → 256, median 262 → 401.
   - Dev: `/awaken above ruin spacing` (on or off), `... census [radius]` (both rules over a square round you, and what
     really stands in the loaded chunks: on its grid, whole, how near the next), `... goto passed|kept` (70 east of the
-    nearest spire spot the rule passes over or keeps), `... old|new` (new chunks follow today's rule alone until the server
-    stops: the seam check). `/awaken above ruin locate` names the nearest spire too. Tour `tools/autopilot/ruin-spacing.txt`.
+    nearest spire spot the rule passes over or keeps), `... verify <n>` (makes the starts of the n nearest spots of each
+    kind and names every one where the game disagrees with the rule its start was decided under), `... old|new` (new
+    chunks follow today's rule alone until the server stops: the seam check). `/awaken above ruin locate` names the nearest spire too. Tour `tools/autopilot/ruin-spacing.txt`.
     Test `ruins_spacing`.
 - **The blueprint** (`RuinBuilder.spire`, 25 x 66 x 25): a plaza of panel 11 out (wide enough that trees rooted past it
   can't lean into the platforms) with a ring of light at 7 (the start line), brass lines, the outer cache and 1-3

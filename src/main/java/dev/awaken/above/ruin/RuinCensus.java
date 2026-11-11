@@ -127,7 +127,7 @@ public final class RuinCensus {
             return s != null && RuinSpacing.validAt(k, c, s, gen, rs, level, biomes);
         });
         List<String> out = new ArrayList<>();
-        int agree = 0, total = 0, standing = 0;
+        int agree = 0, total = 0, standing = 0, now = 0, earlier = 0, unseen = 0;
         ChunkPos me = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
         for (RuinKind kind : List.of(RuinKind.SPIRE, RuinKind.SKY)) {
             Structure s = structures.getValue(kind.structure);
@@ -136,8 +136,17 @@ public final class RuinCensus {
             spots.sort(java.util.Comparator.comparingDouble(c -> RuinSpacing.distance(c, me)));
             for (ChunkPos c : spots.subList(0, Math.min(n, spots.size()))) {
                 boolean valid = ground.valid(kind, c);
-                boolean expected = valid && Boolean.TRUE.equals(RuinSpacing.keeps(kind, c, grids, ground));
+                // judged by the rule its start was decided under: made land keeps its own (asking may decide it now)
+                Boolean before = RuinSpacing.decidedUnder(kind, c);
                 var chunk = level.getChunk(c.x(), c.z(), net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS, true);
+                Boolean under = before != null ? before : RuinSpacing.decidedUnder(kind, c);
+                boolean rule = under != null ? under : RuinSpacing.on();
+                boolean expected = valid && (!rule || Boolean.TRUE.equals(RuinSpacing.rule(kind, c, grids, ground)));
+                String when = before != null ? "decided earlier with spacing " + (before ? "on" : "OFF")
+                        : under != null ? "decided by this check" : "decided before this server started";
+                if (before != null) earlier++;
+                else if (under != null) now++;
+                else unseen++;
                 StructureStart start = chunk == null ? null : chunk.getStartForStructure(s);
                 boolean stands = start != null && start.isValid();
                 total++;
@@ -149,13 +158,14 @@ public final class RuinCensus {
                 BlockPos stub = RuinSpacing.stub(kind, c, gen, rs, level);
                 String biome = biomes.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(stub.getX()), net.minecraft.core.QuartPos.fromBlock(stub.getY()),
                         net.minecraft.core.QuartPos.fromBlock(stub.getZ())).getRegisteredName();
-                out.add(String.format(Locale.ROOT, "MISMATCH: %s at chunk %s (%.0f away): expected %s (land %s), the game made %s; stub %s in %s%s",
-                        kind.displayName, c, RuinSpacing.distance(c, me), expected ? "one" : "none", valid ? "takes one" : "refuses",
+                out.add(String.format(Locale.ROOT, "MISMATCH: %s at chunk %s (%.0f away, %s): expected %s (land %s), the game made %s; stub %s in %s%s",
+                        kind.displayName, c, RuinSpacing.distance(c, me), when, expected ? "one" : "none", valid ? "takes one" : "refuses",
                         stands ? "one" : "none", stub.toShortString(), biome,
                         dev.awaken.terrain.api.CityBasin.reserved(c.getMinBlockX() + 8, c.getMinBlockZ() + 8) ? ", in the city's reserve" : ""));
             }
         }
-        out.add(0, String.format(Locale.ROOT, "verify (spacing %s): %d of %d spots agree, %d standing", RuinSpacing.on() ? "on" : "OFF", agree, total, standing));
+        out.add(0, String.format(Locale.ROOT, "verify (spacing %s): %d of %d spots agree with the rule they were decided under (%d decided by this check, %d earlier, %d before this server started), %d standing",
+                RuinSpacing.on() ? "on" : "OFF", agree, total, now, earlier, unseen, standing));
         for (String l : out) Awaken.LOG.info("[above] spacing {}", l);
         return out;
     }
