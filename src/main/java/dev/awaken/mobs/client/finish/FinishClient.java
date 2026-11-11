@@ -71,6 +71,9 @@ public final class FinishClient {
     // the ending now playing near: whose, how far through, and whether it is ours to watch
     private static int boss = -1, age, ending, glow;
     private static boolean mine, shotRunning, skippable;
+    /** Whether a blow struck by this entity is shown to you whole (the party's, set by Together); nobody's by default. */
+    public static java.util.function.Predicate<Entity> sharedWith = e -> false;
+    private static final double SHARED_REACH = 32;
     private static long flashAt;
 
     public static void init() {
@@ -107,7 +110,9 @@ public final class FinishClient {
         }
         mc.level.playLocalSound(cx, cy, cz, MobSounds.FINISH_BLOW.get(), SoundSource.HOSTILE, 1.4F, 1.0F, false);
 
-        mine = msg.striker() == p.getId();
+        // your own blow, or one your party struck while you stood in the fight (SPEC §70.3): the same film, framed from the striker
+        boolean theirs = msg.striker() != p.getId() && striker != null && sharedWith.test(striker) && p.distanceToSqr(b) <= SHARED_REACH * SHARED_REACH;
+        mine = msg.striker() == p.getId() || theirs;
         KitConfig.FinishView view = KitConfig.finishView();
         if (!mine || view == KitConfig.FinishView.OFF) {
             mine = false;
@@ -116,12 +121,12 @@ public final class FinishClient {
         boolean reduced = FirstPerson.reducedMotion.getAsBoolean();
         flashAt = System.nanoTime();
         CombatFeedback.hitstop(msg.boss(), FREEZE_MS);
-        CombatFeedback.hitstop(p.getId(), FREEZE_MS);
+        CombatFeedback.hitstop(msg.striker(), FREEZE_MS);
         CombatFeedback.hold(FREEZE_MS);
         String kind = b.def().id;
         skippable = KitConfig.endingSeen(kind);
         if (view == KitConfig.FinishView.CINEMATIC && !reduced) {
-            FinishShot shot = FinishShot.frame(mc, p, b, ending, kind);
+            FinishShot shot = FinishShot.frame(mc, p, theirs ? striker : p, b, ending, kind);
             shotAge = 0;
             skipAt = -1;
             shotLength = shot == null ? 0 : shot.length();
@@ -251,12 +256,13 @@ public final class FinishClient {
             this.kind = kind;
         }
 
-        static @Nullable FinishShot frame(Minecraft mc, LocalPlayer p, AwakenBoss b, int ending, String kind) {
+        /** {@code by}: who struck the blow, the one the shot is framed from (you, or someone of your party). */
+        static @Nullable FinishShot frame(Minecraft mc, LocalPlayer p, Entity by, AwakenBoss b, int ending, String kind) {
             Level level = p.level();
-            Vec3 feet = p.position(), at = b.position();
+            Vec3 feet = by.position(), at = b.position();
             double ax = at.x - feet.x, az = at.z - feet.z, sep = Math.sqrt(ax * ax + az * az);
             if (sep < 0.5) {
-                float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+                float yaw = by.getYRot() * Mth.DEG_TO_RAD;
                 ax = -Mth.sin(yaw);
                 az = Mth.cos(yaw);
                 sep = 0.5;

@@ -31,6 +31,14 @@ public final class TogetherConfig {
             .comment("The Answering Peal, Match my friend, shown the way, leads from a partner's finds, the Ours page.")
             .define("joins", true);
 
+    private static final ModConfigSpec.ConfigValue<String> SHARE = B
+            .comment("How a new party shares XP until its members choose on the band: equal (what one earns, all get),",
+                    "half (the others get the share below), or own (nobody shares).")
+            .defineInList("xp_share", "equal", java.util.List.of("equal", "half", "own"));
+    private static final ModConfigSpec.DoubleValue SHARE_PART = B
+            .comment("What the others get of a member's XP when a party shares by half.")
+            .defineInRange("xp_share_part", 0.5, 0.05, 0.95);
+
     static {
         B.push("gentle_numbers");
     }
@@ -119,6 +127,19 @@ public final class TogetherConfig {
     public static boolean pair() { return on(PAIR); }
     public static boolean gentle() { return on(GENTLE); }
     public static boolean joins() { return on(JOINS); }
+
+    /** A new party's XP rule: {@link SharedXp#EQUAL}, {@link SharedXp#HALF} or {@link SharedXp#OWN}. */
+    public static int share() {
+        String v;
+        try {
+            v = SHARE.get();
+        } catch (IllegalStateException e) {
+            v = SHARE.getDefault();
+        }
+        return "own".equals(v) ? SharedXp.OWN : "half".equals(v) ? SharedXp.HALF : SharedXp.EQUAL;
+    }
+
+    public static double sharePart() { return num(SHARE_PART); }
 
     public static double gentleDamage() { return num(DAMAGE); }
     public static int secondWinds() { return num(WINDS); }

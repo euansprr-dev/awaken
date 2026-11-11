@@ -79,7 +79,7 @@ DEATH_EXTRA_MIN = 8  # Fracture: a short debuff you clear by resting
 # one budget per 10 minutes while varied play is never cut.
 TAU_MIN = 10.0
 # v3: "kill" became "hunt" (0.10) and the crafts and camps got budgets of their own (SPEC 21.3, XpBudget.register).
-BUDGET = {"hunt": 0.10, "ore": 0.06, "build": 0.03, "world": 0.25,                 # JAVA
+BUDGET = {"hunt": 0.10, "ore": 0.08, "build": 0.08, "world": 0.25,                 # JAVA
           "forage": 0.012, "mine": 0.012, "fish": 0.012, "cook": 0.007, "smith": 0.007, "camp": 0.10}  # JAVA
 KILL_K = 0.03         # JAVA: share of a level per kill of an on-level hunter-role creature (before role and diff)
 ROLE_MIX = ((0.55, 1.0), (0.30, 0.5), (0.10, 0.15), (0.05, 4.0))  # JAVA roles: (share of kills, multiplier): hunter, neutral, ambient, elite
@@ -124,7 +124,7 @@ KIT_NEEDS = {"D": {"iron": 14, "gold": 1}, "C": {"diamond": 14, "gold": 2}}
 KIT_LEVEL = {"D": 13, "C": 22}  # JAVA level road: hunter_gear_d 13, hunter_gear_c 22
 # before W2, for comparison: what a gate paid in raw metal (gates/run/Loot.java's old table and the market's diamonds)
 OLD_GATE_IRON, OLD_GATE_GOLD, OLD_GATE_DIAMOND_C = 3.0, 2.0, 0.6
-BLOCK_FRAC = 0.0005   # JAVA: per block placed
+BLOCK_FRAC = 0.00075   # JAVA: per block placed
 OUTLEVEL = 10.0       # JAVA: ore and building taper 1/(1 + levels above content level 0 / 10)
 
 
@@ -429,7 +429,7 @@ def simulate(kind, rng):
         for _ in range(int(round(minutes))):
             st["t"] += 1
             budget.decay(1)
-            gain(budget.pay("ore", ORE_FRAC * mrng.randint(1, 4)) * taper(st["level"]) * xp_to_next(st["level"]))
+            gain(budget.pay("ore", ORE_FRAC * mrng.randint(1, 4)) * xp_to_next(st["level"]))  # JAVA 12 Nov: no fall-off by level on ore or building
             mine_minute(tier)
 
     def overworld(minutes, awake=True):
@@ -462,11 +462,11 @@ def simulate(kind, rng):
                     gain(budget.pay(craft, CRAFT_ACTION * rng.randint(1, 3)) * WILDS_RANK[RANKS[rank_i]] * xpn)
                     mined = mined or craft == "mine"
             if rng.random() < 0.25 * p["ores"]:
-                gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * taper(lv) * xpn)
+                gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * xpn)
                 mined = True
             if mined:
                 mine_minute()
-            gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * taper(lv) * xpn)
+            gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * xpn)
             if rng.random() < p["quest"]:
                 st["t"] += rng.uniform(2, 6)       # a Wayfarer step: talk, walk, do the thing
                 levels(QUEST_STEP * rng.uniform(0.5, 1.6))

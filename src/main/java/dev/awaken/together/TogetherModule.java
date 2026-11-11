@@ -83,6 +83,7 @@ public final class TogetherModule {
             }
         });
         Signal.onAction("together", PartyService::onAnswer);
+        dev.awaken.progression.Progression.onXpGranted(SharedXp::granted);
         dev.awaken.core.api.BellHooks.onRung(Answering::rung);
         TogetherCommands.register();
         TogetherTests.register();
@@ -96,6 +97,7 @@ public final class TogetherModule {
         bus.addListener(EventPriority.LOW, Fights::onRespawnPosition);
         bus.addListener((ServerTickEvent.Post e) -> {
             Fights.tick(e.getServer());
+            SharedXp.settle(e.getServer());
             TogetherNet.tick(e.getServer());
             TourPartner.tick(e.getServer());
             Answering.tick(e.getServer());
@@ -105,6 +107,7 @@ public final class TogetherModule {
         bus.addListener((ServerStoppingEvent e) -> TourPartner.removeAll(e.getServer()));
         bus.addListener((ServerStoppedEvent e) -> {
             Fights.forget();
+            SharedXp.forget();
             PartyService.forget();
             TogetherNet.forget();
             Answering.forget();
