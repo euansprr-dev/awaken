@@ -25099,3 +25099,48 @@ Under the Far Landing (§67): anyone who has flown once may take the helm home.
 **70.7 Tests and tours.** `core.test.Pair` (two real survival test players in a party); prefixes `pair_`, `gentle_`;
 tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
 in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.
+
+## 71. The Leaper's Gauntlet, remade, and the Unlock title (PROPOSED, nothing built; plan docs/leapers-gauntlet/PLAN.md, page https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1)
+
+**Status: proposed on 12 Nov 2026 and waiting for Euan's answers on the page (its `answers` collection, `d1` to `d12`).
+Until he answers, §17.10 and §63.2 describe what the game does.** This section is the short form; the plan record is
+the contract.
+
+Euan, 11 Nov, after playing the Gauntlet: "I had no idea that's where I got the double jump from ... I thought I already
+had it"; "it took like maybe 30 seconds ... what was the point of that gate?"; "I don't even know if I got XP". And on
+12 Nov: the title should be "the big title, and it says you just unlocked double jump. Press space in the air again to
+use it ... And maybe every time you unlock a major thing in the game, it actually shows you that as well."
+
+**71.1 What was found** (code at edc314667, his play log, CI tour `gauntlet-now` run 43008682852). The course is flat,
+31 rows, par 8.1 s, and needs the leap once. The leap is given on the last row before the chasm at a sprint
+(`TrialHooks.atEdge`); in his run that was 17:27:28.559 and the pit threw him back at 17:27:29.562, then twice more. The
+gift's title shares the screen with the clock, par, the pit's critical toast and whatever else is due. The dash and the
+slam are named on the end card and never needed. The pay is "+90 XP" in small type. The gate's own notice was filed
+unseen, its panel says "Find the Rest Shrine", and its Tasks row says "where you climbed" even when it opened by mastery.
+
+**71.2 The Unlock title** (a shared kit, `core.api.Unlocks.show(player, id)`, drawn in the System's layer beside the
+discovery title): the spaced label UNLOCKED, a line of light, the name at three times normal size, the how-line with the
+player's own key ("Double Jump" · "Press [Space] again in the air"); six seconds; the System's moment swell under
+Minecraft's `ui.toast.challenge_complete`; every tier of message and every tip held while it shows, a tip already up
+faded; never in a fight (it waits); never paced, never filed; then the how-line stays as the Lesson's pinned prompt.
+Major unlocks, if he says yes: a new way to move, a new power, a new rank, a new layer of the world.
+
+**71.3 The stand** (`awaken:leap_stand`, the Ascent's; placed by the course at a mark): Use held 20 ticks while standing
+on it gives that stand's move (saved at the stroke) and plays its title. Inside the Gauntlet the leap is unlocked a move
+at a time (double jump, dash, slam, later the aimed dive: a mask in `WayMemory` schema 2, honoured by the leap's own
+rules, which are rope-hold-swing's files); given any other way, all at once as now.
+
+**71.4 The Gauntlet** (the gates session builds it): a way in that ends at a gulf a figure of light crosses and you
+cannot; three stands, each followed by a hall that cannot be crossed without its move (Double Jump 4 uses, Air Dash 4,
+Slam 3; no clock, no pit, a net that lifts you back); the Long Run (timed, about 85 s par, 14 leap moves, rings, a pit
+that throws back and does not hurt, medals); the tally floor (XP counted up as `LordPay` does, the mastery bar, time and
+medal on a plate, the player's counts). Proposed: half a level's XP the first time; the gate stays standing to run
+again; the look of the Stopped Works.
+
+**71.5 Words.** The gate's panel and card say its point ("It holds a new way to move. No fighting."); the HUD's line
+follows the hall; the pit's toast is dropped in the trial; the Tasks row is "Run the Leaper's Gauntlet".
+
+**71.6 Who.** The Unlock title, the stand, the mask's memory, the lessons, words, Tasks, K rows and the gold figure's own
+drawing: the movement-unlocks session. The mask honoured in `AscentMoves` and `AscentServer`'s events, the aimed dive,
+the double-jump mantle: rope-hold-swing. The place, halls, check, clock and pit rules, crossing, HUD lines, tally floor
+and re-run: the gates session.
