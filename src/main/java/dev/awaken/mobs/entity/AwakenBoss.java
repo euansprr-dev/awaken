@@ -584,7 +584,7 @@ public class AwakenBoss extends AwakenMob {
         setFlag(F_BEATEN, true);
         setTarget(null);
         stagger(BEATEN_TICKS); // every move stops, and it kneels (FightRunner's broken pose)
-        Strikes.ground(this, BEATEN_TICKS);
+        bringDown(BEATEN_TICKS + 100); // a flier comes down to be finished (Strikes.ground leaves a kit flier to its script)
         Strikes.beaten(this, BEATEN_TICKS, by);
         // its helpers fall with it: the fight is over but for one blow
         for (AwakenMob m : sl.getEntitiesOfClass(AwakenMob.class, getBoundingBox().inflate(48), m -> m != this && m.isAlive())) {

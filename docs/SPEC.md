@@ -24555,7 +24555,7 @@ Execution), `opening` (the camera), `living` (the plate's words).
 - **The last stand** (`AwakenBoss.lastStand`, from `die`). A boss whose fight script says `"finish": true` (the three
   pilots: `proving_ringer`, `hive_regent`, `gearwright_colossus`; `FightScripts.Fight.finish`, default false) doesn't fall
   to a player's killing blow: it is held at one health, **beaten** (`F_BEATEN`, synced, never saved), every move and phase
-  stopped (`FightRunner.tick` only holds its kneel), a flier grounded, its helpers killed, its stance held broken for
+  stopped (`FightRunner.tick` only holds its kneel), a flier brought down (`AwakenMob.bringDown`, kit fliers too), its helpers killed, its stance held broken for
   `BEATEN_TICKS` 400 (`Strikes.beaten`, Arms' `ArmsServer.beaten`), its bar empty, a low toll. Beaten, nothing hurts it but
   the finishing blow, and it harms nobody: whatever of its is still in the air lands on no one (`mobs.entity.Finishers`,
   first of the damage listeners). The plate reads "It's beaten. Hold {attack} to finish it" (`awaken.plate.beaten`). Left

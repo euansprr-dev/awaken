@@ -376,6 +376,19 @@ public class AwakenMob extends Monster {
         return groundedTicks > 0;
     }
 
+    /**
+     * Out of the air for {@code ticks}, whatever it is: a boss beaten to its last point comes down to be finished
+     * (SPEC §67.4), where {@link #ground} leaves a kit flier to its own script.
+     */
+    protected void bringDown(int ticks) {
+        if (!def().flies()) return;
+        groundedTicks = Math.max(groundedTicks, ticks);
+        setNoGravity(false);
+        Vec3 v = getDeltaMovement();
+        setDeltaMovement(v.x * 0.3, Math.min(v.y, -0.35), v.z * 0.3);
+        needsSync = true;
+    }
+
     public MobRole.Role syncedRole() {
         int i = entityData.get(DATA_ROLE);
         MobRole.Role[] r = MobRole.Role.values();
