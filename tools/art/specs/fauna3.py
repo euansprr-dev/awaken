@@ -428,6 +428,8 @@ def otter_clips(r):
     death.pos("body", [(0, 0, 0, 0), (1.2, 0, -3, 0)])
     for nm in ("fleg_l", "fleg_r", "hleg_l", "hleg_r"):
         death.rot(nm, [(0, 0, 0, 0), (1.2, -40, 0, 0)])
+    # on its back the head lolls onto its cheek, so its ears don't hold the body off the ground (SPEC §47.12)
+    death.rot("neck", [(0, 0, 0, 0), (0.7, 10, 0, 10), (1.2, 30, 0, 30)])
 
 
 def paint_brook_otter(r, P):
@@ -1588,6 +1590,9 @@ def hushling_clips(r):
     death.pos("body", [(0, 0, 0, 0), (1.2, 0, -5, 0)])
     for nm, sg in (("hear_l", 1), ("hear_r", -1)):
         death.rot(nm, [(0, 0, 0, 0), (1.2, 50, sg * 20, 0)])
+    # the arms fall forward, the one it lands on along the ground instead of propping it up (SPEC §47.12)
+    death.rot("harm_l", [(0, 0, 0, 0), (0.5, -30, 0, 0), (1.2, -70, 0, 0)])
+    death.rot("harm_r", [(0, 0, 0, 0), (0.5, -20, 0, 0), (1.2, -40, 0, 0)])
 
 
 def paint_hushling(r, P):
@@ -1794,14 +1799,27 @@ def thousandfoot_clips(r):
     hurt.rot("seg3", [(0, 0, 0, 0), (0.06, 0, 10, 6), (0.25, 0, -4, -2), (0.45, 0, 0, 0)])
     hurt.rot("thead", [(0, 0, 0, 0), (0.06, -15, 0, 0), (0.45, 0, 0, 0)])
     death = r.clip("death", 1.8)
-    # it rolls onto its side and curls up, legs folding in
-    death.rot("seg3", [(0, 0, 0, 0), (0.6, 0, 0, 40), (1.8, 0, 0, 90)])
-    death.pos("seg3", [(0, 0, 0, 0), (1.8, 0, -2, 0)])
+    # its legs give and it sinks onto its belly, legs splayed up off the ground; it tips onto its left side, the body
+    # riding up over its edge so no corner digs in; the legs it lies on stay pointing up until it lands, then flop out
+    # flat on the ground in front of its belly, the top row drooping over; last it curls up belly in. On its side that
+    # curl lies flat on the ground (a sideways bend would stand it on end, half in the ground; SPEC §47.12)
+    roll = [(0, 0), (0.5, 0), (0.8, 30), (1.0, 55), (1.2, 78), (1.4, 90), (1.8, 90)]
+    death.rot("seg3", [(t, 0, 0, a) for t, a in roll])
+    death.pos("seg3", [(0, 0, 0, 0), (0.5, 0, -4.5, 0), (0.8, 0, -1.9, 0), (1.0, 0, -0.85, 0), (1.2, 0, -1.0, 0),
+                       (1.4, 0, -1.5, 0), (1.8, 0, -1.5, 0)])
     for k, a in ((2, 25), (1, 30), (0, 35), (4, -25), (5, -30), (6, -35)):
-        death.rot(f"seg{k}", [(0, 0, 0, 0), (1.8, 0, a, 0)])
+        death.rot(f"seg{k}", [(0, 0, 0, 0), (1.3, 0, 0, 0), (1.8, a, 0, 0)])
     for k in range(SEGMENTS):
-        for side, s_ in (("l", 1), ("r", -1)):
-            death.rot(f"tfoot{k}_{side}", [(0, 0, 0, 0), (1.8, 0, 0, s_ * 40)])
+        j = 6 if k % 2 else -4
+        # the side it lands on: splayed up, held pointing up as it rolls, then out flat past the belly
+        death.rot(f"tleg{k}_l", [(0, 0, 0, 0), (0.5, 0, 0, -45)] + [(t, 0, 0, -80 - a) for t, a in roll[2:6]]
+                  + [(1.8, 0, 0, -250 + (6 if k % 2 else 0))])
+        death.rot(f"tfoot{k}_l", [(0, 0, 0, 0), (0.5, 0, 0, -84), (1.4, 0, 0, -84), (1.8, 0, 0, -64)])
+        # the top row: splayed up, then drooping over past the belly
+        death.rot(f"tleg{k}_r", [(0, 0, 0, 0), (0.5, 0, 0, 45), (1.4, 0, 0, 45), (1.8, 0, 0, -140 - j)])
+        death.rot(f"tfoot{k}_r", [(0, 0, 0, 0), (0.5, 0, 0, 84), (1.4, 0, 0, 84), (1.8, 0, 0, 80)])
+    # the feelers it lies on swing in, off the ground
+    death.rot("tant_l", [(0, 0, 0, 0), (0.6, 0, 45, 0), (1.8, 0, 50, 0)])
 
 
 def paint_thousandfoot(r, P):
@@ -2545,7 +2563,12 @@ def pollen_grazer_clips(r):
     for nm, sg in ants:
         death.rot(nm, [(0, 0, 0, 0), (0.2, -18, 0, 0), (1.05, 62, 0, sg * 12), (1.5, 58, 0, sg * 12), (1.6, 64, 0, sg * 12), (2.4, 66, 0, sg * 12)])
     # the wings slip open and lie limp, and the last thing it does is tremble them once more
+    # (the pair it lands on lie back along the ground: opened like the top pair they went into it and propped the body up,
+    # SPEC §47.12)
     for nm, sg in wings + hinds:
+        if sg > 0:
+            death.rot(nm, [(0, 0, 0, 0), (0.75, 0, -4, 4), (1.1, 0, -10, 10), (1.8, 0, -10, 10), (1.86, 0, -10, 7), (1.94, 0, -10, 12), (2.02, 0, -10, 9), (2.2, 0, -10, 10), (2.4, 0, -10, 10)])
+            continue
         death.rot(nm, [(0, 0, 0, 0), (0.75, 0, sg * 4, sg * -8), (1.1, 0, sg * 16, sg * -30), (1.8, 0, sg * 16, sg * -30), (1.86, 0, sg * 16, sg * -36), (1.94, 0, sg * 16, sg * -28), (2.02, 0, sg * 16, sg * -33), (2.2, 0, sg * 16, sg * -30), (2.4, 0, sg * 16, sg * -30)])
 
 

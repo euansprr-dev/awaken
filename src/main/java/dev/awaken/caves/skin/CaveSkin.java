@@ -31,7 +31,9 @@ import java.util.function.Supplier;
  * mineral crust, wet streaks, the puddle and the dusty web; and the regions' own (§42.7): their rock, its ore twins, growth
  * and glow. They exist in every world (so a world opened without the caves
  * pack still reads its blocks); only the pack's feature lays them. Blockstates, models, items, loot and lang come from
- * tools/content/caves_content.py.
+ * tools/content/caves_content.py. Every piece that hangs on or stands on something carries {@link Settle#SELF}: wherever it is
+ * set in world-gen it is asked again, once the land round it is final, whether anything still holds it (SPEC §42.4, "Settled").
+ * The cave weed doesn't (it lives in a lake, and asking it would tick the water); nor does the web (it holds itself).
  */
 public final class CaveSkin {
     private CaveSkin() {}
@@ -47,18 +49,18 @@ public final class CaveSkin {
         for (SkinRock r : SkinRock.values()) {
             KITS.put(r, new Kit(
                     SET.withItem(SET.blocks.registerBlock(r.id + "_rubble", SkinBlocks.Rubble::new,
-                            p -> p.mapColor(r.color).sound(r.sound).strength(0.8F).noOcclusion().pushReaction(PushReaction.POPPED))),
+                            p -> p.mapColor(r.color).sound(r.sound).strength(0.8F).noOcclusion().pushReaction(PushReaction.POPPED).postProcess(Settle.SELF))),
                     SET.withItem(SET.blocks.registerBlock(r.id + "_pebbles", SkinBlocks.Pebbles::new,
                             p -> p.mapColor(r.color).sound(r.sound).noCollision().instabreak().replaceable()
-                                    .pushReaction(PushReaction.POPPED).offsetType(BlockBehaviour.OffsetType.XZ))),
+                                    .pushReaction(PushReaction.POPPED).offsetType(BlockBehaviour.OffsetType.XZ).postProcess(Settle.SELF))),
                     SET.withItem(SET.blocks.registerBlock("pointed_" + r.id, SkinBlocks.Formation::new,
                             p -> p.mapColor(r.color).sound(r.sound).strength(r.strength * 0.5F).noOcclusion()
-                                    .pushReaction(PushReaction.POPPED).dynamicShape()))));
+                                    .pushReaction(PushReaction.POPPED).dynamicShape().postProcess(Settle.SELF)))));
         }
     }
 
     private static BlockBehaviour.Properties overlay(BlockBehaviour.Properties p, MapColor color, SoundType sound) {
-        return p.mapColor(color).noCollision().strength(0.2F).sound(sound).replaceable().pushReaction(PushReaction.POPPED);
+        return p.mapColor(color).noCollision().strength(0.2F).sound(sound).replaceable().pushReaction(PushReaction.POPPED).postProcess(Settle.SELF);
     }
 
     public static final DeferredBlock<MultifaceBlock> LICHEN_SHALLOWS = SET.withItem(SET.blocks.registerBlock("cave_lichen_shallows",
@@ -73,7 +75,7 @@ public final class CaveSkin {
             MultifaceBlock::new, p -> overlay(p, MapColor.WATER, SoundType.MUD)));
     public static final DeferredBlock<SkinBlocks.Puddle> PUDDLE = SET.withItem(SET.blocks.registerBlock("cave_puddle",
             SkinBlocks.Puddle::new, p -> p.mapColor(MapColor.WATER).noCollision().instabreak().replaceable().sound(SoundType.MUD)
-                    .pushReaction(PushReaction.POPPED).noOcclusion()));
+                    .pushReaction(PushReaction.POPPED).noOcclusion().postProcess(Settle.SELF)));
     public static final DeferredBlock<WebBlock> DUSTY_WEB = SET.withItem(SET.blocks.registerBlock("dusty_web", WebBlock::new,
             p -> p.mapColor(MapColor.WOOL).sound(SoundType.COBWEB).forceSolidOn().noCollision().requiresCorrectToolForDrops()
                     .strength(4.0F).pushReaction(PushReaction.POPPED)));
@@ -105,10 +107,10 @@ public final class CaveSkin {
     /** The Rootways' growth: teal glowcaps on the floor (a faint light), root curtains hanging through the roof. */
     public static final DeferredBlock<SkinBlocks.Glowcap> GLOWCAP = SET.withItem(SET.blocks.registerBlock("glowcap", SkinBlocks.Glowcap::new,
             p -> p.mapColor(MapColor.COLOR_CYAN).noCollision().instabreak().sound(SoundType.FUNGUS).lightLevel(st -> 5)
-                    .offsetType(BlockBehaviour.OffsetType.XZ).pushReaction(PushReaction.POPPED)));
+                    .offsetType(BlockBehaviour.OffsetType.XZ).pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.RootCurtain> ROOT_CURTAIN = SET.withItem(SET.blocks.registerBlock("root_curtain",
             SkinBlocks.RootCurtain::new, p -> p.mapColor(MapColor.DIRT).noCollision().instabreak().replaceable().sound(SoundType.HANGING_ROOTS)
-                    .noOcclusion().pushReaction(PushReaction.POPPED)));
+                    .noOcclusion().pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     /** The Ochre Deep's walls: rust crust where it's dry, rust flowstone where it runs wet, ember lichen glowing faintly. */
     public static final DeferredBlock<MultifaceBlock> RUST_CRUST = SET.withItem(SET.blocks.registerBlock("rust_crust",
             MultifaceBlock::new, p -> overlay(p, MapColor.COLOR_ORANGE, SoundType.CALCITE)));
@@ -120,10 +122,10 @@ public final class CaveSkin {
     /** The Ochre Deep's living walls (SPEC §42.10): runs of ember vine, a real source of light, and flowstone hanging in folds. */
     public static final DeferredBlock<SkinBlocks.EmberVine> EMBER_VINE = SET.withItem(SET.blocks.registerBlock("ember_vine",
             SkinBlocks.EmberVine::new, p -> p.mapColor(MapColor.COLOR_ORANGE).noCollision().strength(0.2F).sound(SoundType.CAVE_VINES).noOcclusion()
-                    .lightLevel(st -> st.getValue(SkinBlocks.EmberVine.BLOOM) ? 12 : 6).pushReaction(PushReaction.POPPED)));
+                    .lightLevel(st -> st.getValue(SkinBlocks.EmberVine.BLOOM) ? 12 : 6).pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.RustDrape> RUST_DRAPE = SET.withItem(SET.blocks.registerBlock("rust_drape",
             SkinBlocks.RustDrape::new, p -> p.mapColor(MapColor.TERRACOTTA_ORANGE).noCollision().strength(0.4F).sound(SoundType.CALCITE).noOcclusion()
-                    .pushReaction(PushReaction.POPPED)));
+                    .pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
 
     // ---- P3 (SPEC §42.8): the other six regions' rock and twins -----------------------------------------------------
 
@@ -163,20 +165,22 @@ public final class CaveSkin {
 
     /** The Pale Halls: cave pearls in the pools, rimstone dams stepping down the floor. */
     public static final DeferredBlock<SkinBlocks.Pebbles> CAVE_PEARLS = SET.withItem(SET.blocks.registerBlock("cave_pearls", SkinBlocks.Pebbles::new,
-            p -> p.mapColor(MapColor.QUARTZ).sound(SoundType.CALCITE).noCollision().instabreak().replaceable().pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.QUARTZ).sound(SoundType.CALCITE).noCollision().instabreak().replaceable().pushReaction(PushReaction.POPPED)
+                    .postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.Drift> RIMSTONE = SET.withItem(SET.blocks.registerBlock("rimstone", p -> new SkinBlocks.Drift(p, 3),
-            p -> p.mapColor(MapColor.TERRACOTTA_WHITE).sound(SoundType.CALCITE).strength(0.8F).noOcclusion().pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.TERRACOTTA_WHITE).sound(SoundType.CALCITE).strength(0.8F).noOcclusion().pushReaction(PushReaction.POPPED)
+                    .postProcess(Settle.SELF)));
     /** The Windcleft: rime on the high ledges where the draught runs cold, old Delvers' ropes down the cracks (climbable). */
     public static final DeferredBlock<MultifaceBlock> RIME = SET.withItem(SET.blocks.registerBlock("rime",
             MultifaceBlock::new, p -> overlay(p, MapColor.ICE, SoundType.POWDER_SNOW)));
     public static final DeferredBlock<SkinBlocks.RootCurtain> OLD_ROPE = SET.withItem(SET.blocks.registerBlock("old_rope",
             SkinBlocks.RootCurtain::new, p -> p.mapColor(MapColor.WOOL).noCollision().strength(0.3F).sound(SoundType.WOOL)
-                    .noOcclusion().pushReaction(PushReaction.POPPED)));
+                    .noOcclusion().pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     /** The Drowned Galleries: silt banks, bleached driftwood, pale weed under the water, glowing algae at its edge. */
     public static final DeferredBlock<SkinBlocks.Drift> SILT = SET.withItem(SET.blocks.registerBlock("silt", p -> new SkinBlocks.Drift(p, 4),
-            p -> p.mapColor(MapColor.CLAY).sound(SoundType.MUD).strength(0.5F).pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.CLAY).sound(SoundType.MUD).strength(0.5F).pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.Driftwood> DRIFTWOOD = SET.withItem(SET.blocks.registerBlock("driftwood", SkinBlocks.Driftwood::new,
-            p -> p.mapColor(MapColor.SAND).sound(SoundType.WOOD).strength(1.0F).noOcclusion().pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.SAND).sound(SoundType.WOOD).strength(1.0F).noOcclusion().pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.CaveWeed> CAVE_WEED = SET.withItem(SET.blocks.registerBlock("cave_weed", SkinBlocks.CaveWeed::new,
             p -> p.mapColor(MapColor.WATER).noCollision().instabreak().sound(SoundType.WET_GRASS).replaceable().pushReaction(PushReaction.POPPED)));
     public static final DeferredBlock<MultifaceBlock> GLOW_ALGAE = SET.withItem(SET.blocks.registerBlock("glow_algae",
@@ -188,21 +192,22 @@ public final class CaveSkin {
             p -> new AmethystClusterBlock(7F, 10F, p), p -> crystal(p, MapColor.ICE)));
     /** The Black Vaults: ash drifted on the floors. */
     public static final DeferredBlock<SkinBlocks.Drift> ASH = SET.withItem(SET.blocks.registerBlock("ash", p -> new SkinBlocks.Drift(p, 2),
-            p -> p.mapColor(MapColor.COLOR_GRAY).sound(SoundType.SAND).strength(0.3F).pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.COLOR_GRAY).sound(SoundType.SAND).strength(0.3F).pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     /** The Violet Deep: violet growths glowing faintly, and the husks the Hollows shed. */
     public static final DeferredBlock<SkinBlocks.Glowcap> VIOLET_GROWTH = SET.withItem(SET.blocks.registerBlock("violet_growth", SkinBlocks.Glowcap::new,
             p -> p.mapColor(MapColor.COLOR_PURPLE).noCollision().instabreak().sound(SoundType.NETHER_SPROUTS).lightLevel(st -> 4)
-                    .offsetType(BlockBehaviour.OffsetType.XZ).pushReaction(PushReaction.POPPED)));
+                    .offsetType(BlockBehaviour.OffsetType.XZ).pushReaction(PushReaction.POPPED).postProcess(Settle.SELF)));
     /** Root amber (SPEC §42.9): the Rootways' find, beads of old resin under the root curtains. */
     public static final DeferredBlock<SkinBlocks.Pebbles> ROOT_AMBER = SET.withItem(SET.blocks.registerBlock("root_amber", SkinBlocks.Pebbles::new,
-            p -> p.mapColor(MapColor.COLOR_ORANGE).sound(SoundType.CALCITE).noCollision().instabreak().replaceable().pushReaction(PushReaction.POPPED)));
+            p -> p.mapColor(MapColor.COLOR_ORANGE).sound(SoundType.CALCITE).noCollision().instabreak().replaceable().pushReaction(PushReaction.POPPED)
+                    .postProcess(Settle.SELF)));
     public static final DeferredBlock<SkinBlocks.Pebbles> SHED_CHITIN = SET.withItem(SET.blocks.registerBlock("shed_chitin", SkinBlocks.Pebbles::new,
             p -> p.mapColor(MapColor.TERRACOTTA_PURPLE).sound(SoundType.BONE_BLOCK).noCollision().instabreak().replaceable()
-                    .pushReaction(PushReaction.POPPED).offsetType(BlockBehaviour.OffsetType.XZ)));
+                    .pushReaction(PushReaction.POPPED).offsetType(BlockBehaviour.OffsetType.XZ).postProcess(Settle.SELF)));
 
     private static BlockBehaviour.Properties crystal(BlockBehaviour.Properties p, MapColor color) {
         return p.mapColor(color).forceSolidOn().noOcclusion().sound(SoundType.AMETHYST_CLUSTER).strength(1.5F).lightLevel(st -> 4)
-                .pushReaction(PushReaction.POPPED);
+                .pushReaction(PushReaction.POPPED).postProcess(Settle.SELF);
     }
 
     /**

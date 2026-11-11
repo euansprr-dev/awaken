@@ -41,7 +41,8 @@ import java.util.function.Function;
  * move the server cues acted out (the wind-up stretched to the move's real length, then the strike), its own fall instead of vanilla's
  * sideways flip, and the creeper's swell. One renderer per rig; {@link FormBodies} hands it each creature's {@link FormBody}.
  */
-final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
+final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel>
+        implements dev.awaken.mobs.client.BodyRest.Posed<HeroRenderState> {
     /** The rank colours (D gold, C orange, B red, A violet, S indigo), as the plate and the old glow. */
     static final int[] RANK = {0xFFFFFF, 0xE4D063, 0xF29A48, 0xEC5656, 0xB07CFF, 0x8C7BFF};
     /** Beyond this (squared) the eye halos are not drawn (they are a few pixels there). */
@@ -191,7 +192,10 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         s.hurt = mob.hurtTime > 0 ? (10 - mob.hurtTime + partialTicks) / 20.0F : -1;
         s.dying = mob.deathTime > 0 || mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
         // a quarry's carcass lies as its fall ended, its light out (SPEC §41.6, §47.12)
-        if (dev.awaken.living.hunt.Carcass.is(mob)) s.dying = Math.max(deathLength, 1.0F) + 1.0F;
+        if (dev.awaken.living.hunt.Carcass.is(mob)) {
+            s.dying = Math.max(deathLength, 1.0F) + 1.0F;
+            s.deathTime = 20.0F; // lying, as the carcass modifier says of every other body (it isn't run for a form's state)
+        }
         fallAlongBlow(mob, b, s);
         resolveCue(mob, b, s, partialTicks);
         live(mob, b, s);
@@ -363,6 +367,16 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
     protected void setupRotations(HeroRenderState s, PoseStack pose, float bodyRot, float entityScale) {
         if (isShaking(s)) bodyRot += (float) (Math.cos(Mth.floor(s.ageInTicks) * 3.25F) * Math.PI * 0.4F);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(HeroRenderState s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 
     /** The eyes and seams (emissive, in the rank's light, flaring as a move winds up) and a soft halo round each eye. */

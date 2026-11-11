@@ -845,6 +845,9 @@ public class AwakenMob extends Monster {
         }
         super.die(source);
         if (dead && level() instanceof ServerLevel sl) {
+            // a flier killed in the air falls in its death throes and lies on the ground, never hangs there (SPEC §47.12);
+            // dead, its server step no longer turns this back on, and a kit boss's script decides its own fall
+            if (def().flies() && isNoGravity() && !isInWater() && !scriptedFight()) setNoGravity(false);
             onDied(sl, source);
             if (bar != null) bar.removeAllPlayers();
         }

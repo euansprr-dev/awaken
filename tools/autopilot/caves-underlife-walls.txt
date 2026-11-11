@@ -1,0 +1,97 @@
+# The underlife's crawlers on real rock (SPEC §42.4 "Settled"; Euan 11 Nov, two rust beetles half off an Ochre Deep ledge,
+# "floating bugs"). In the Ochre Deep on his New World (11) seed and on V20's, /awaken underlife walls sets beetles and
+# millipedes walking up the rock faces in view (ledges with a top edge first, where a body could hang over the air); after
+# ten and twenty seconds of walking, the shots, and /awaken underlife check logs any crawler, hanging bat, glow-worm curtain
+# or cricket that isn't wholly on its rock ("[caves] Underlife check: N on rock or hanging, M off it"). Night vision to see
+# the rock and the bodies plainly, then a torch under Lens Cinematic as he plays, then a step to one side to see them edge-on.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-underlife-walls.txt 2400
+world caves_underlife_walls creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+hud off
+
+# ---- 1. the Ochre Deep near his old home (the grown walls' stand) ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 400
+cmd tp @s -534.50 28.00 -2337.50 -90.0 14.6
+wait 900
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 20
+cmd awaken underlife walls
+wait 200
+shot h_walls_nv_10s
+cmd awaken underlife check
+wait 200
+shot h_walls_nv_20s
+cmd awaken underlife check
+cmd tp @s ~ ~ ~ ~25 ~
+wait 40
+shot h_walls_nv_aside
+cmd effect clear @s minecraft:night_vision
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 60
+shot h_walls_torch
+cmd awaken underlife check
+cmd item replace entity @s weapon.offhand with minecraft:air
+# the other way, a second set
+cmd tp @s -534.50 28.00 -2337.50 90.0 14.6
+wait 60
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 20
+cmd awaken underlife walls
+wait 200
+shot h_walls2_nv_10s
+cmd awaken underlife check
+wait 200
+shot h_walls2_nv_20s
+cmd awaken underlife check
+cmd effect clear @s minecraft:night_vision
+
+# ---- 2. the Ochre Deep nearest Euan's V20 spot (this seed's land there, not V20's: the beetles' rule is the same) ----
+cmd execute positioned -1408 30 -710 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 600
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 20
+cmd awaken underlife walls
+wait 200
+shot o_walls_nv_10s
+cmd awaken underlife check
+wait 200
+shot o_walls_nv_20s
+cmd awaken underlife check
+cmd tp @s ~ ~ ~ ~-25 ~
+wait 40
+shot o_walls_nv_aside
+cmd effect clear @s minecraft:night_vision
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 60
+shot o_walls_torch
+cmd awaken underlife check
+wait 20
+quit

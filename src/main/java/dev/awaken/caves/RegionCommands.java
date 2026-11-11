@@ -56,7 +56,7 @@ final class RegionCommands {
 
     private record Spot(BlockPos at, int room, float yaw) {}
 
-    private record Stand(double x, double y, double z, float yaw, float pitch) {}
+    record Stand(double x, double y, double z, float yaw, float pitch) {}
 
     /** How many chunks round the command the growth search reads. */
     private static final int GROWTH_CHUNKS = 7;
@@ -75,7 +75,21 @@ final class RegionCommands {
                                     .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), IntegerArgumentType.getInteger(c, "distance"), false)))))
                     .then(Commands.literal("heart").then(Commands.argument("pick", IntegerArgumentType.integer(0, 49))
                             .then(Commands.argument("distance", IntegerArgumentType.integer(2, 14))
-                                    .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), IntegerArgumentType.getInteger(c, "distance"), true))))));
+                                    .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), IntegerArgumentType.getInteger(c, "distance"), true)))))
+                    // SPEC §42.4 "Settled": what floats in the land round here, and the re-check run by hand
+                    .then(Commands.literal("floaters").executes(c -> Floaters.census(c.getSource(), 6, -1))
+                            .then(Commands.argument("radius", IntegerArgumentType.integer(0, Floaters.MAX_RADIUS))
+                                    .executes(c -> Floaters.census(c.getSource(), IntegerArgumentType.getInteger(c, "radius"), -1))
+                                    .then(Commands.literal("look").then(Commands.argument("pick", IntegerArgumentType.integer(0, 49))
+                                            .executes(c -> Floaters.census(c.getSource(), IntegerArgumentType.getInteger(c, "radius"),
+                                                    IntegerArgumentType.getInteger(c, "pick")))))))
+                    .then(Commands.literal("at").then(Commands.argument("x", IntegerArgumentType.integer())
+                            .then(Commands.argument("y", IntegerArgumentType.integer()).then(Commands.argument("z", IntegerArgumentType.integer())
+                                    .executes(c -> Floaters.at(c.getSource(), IntegerArgumentType.getInteger(c, "x"),
+                                            IntegerArgumentType.getInteger(c, "y"), IntegerArgumentType.getInteger(c, "z")))))))
+                    .then(Commands.literal("resettle").executes(c -> Floaters.resettle(c.getSource(), 6))
+                            .then(Commands.argument("radius", IntegerArgumentType.integer(0, Floaters.MAX_RADIUS))
+                                    .executes(c -> Floaters.resettle(c.getSource(), IntegerArgumentType.getInteger(c, "radius"))))));
         });
     }
 
@@ -176,7 +190,7 @@ final class RegionCommands {
     }
 
     /** Where to stand to see a bloom from about this far: on a floor, with nothing solid between, a little to one side if that's open. */
-    private static @Nullable Stand stand(ServerLevel level, BlockPos bloom, Direction wall, int distance) {
+    static @Nullable Stand stand(ServerLevel level, BlockPos bloom, Direction wall, int distance) {
         Direction out = wall.getOpposite();
         // the face toward the air: for a vine that's its plane, for a heart its open side
         Vec3 target = Vec3.atCenterOf(bloom).add(wall.getStepX() * (solidAt(level, bloom) ? -0.52 : 0.3), 0, wall.getStepZ() * (solidAt(level, bloom) ? -0.52 : 0.3));

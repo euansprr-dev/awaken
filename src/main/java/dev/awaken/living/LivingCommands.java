@@ -194,7 +194,8 @@ final class LivingCommands {
                         return 1;
                     })));
             l.then(Commands.literal("near").requires(AwakenCommands.admin())
-                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
+                    // (to 480: inside the 512 blocks a happening's tell reaches, far enough back to see a whole storm)
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 480))
                             .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
             l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

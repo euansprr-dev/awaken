@@ -299,6 +299,10 @@ final class CompatTests {
 
         AwakenTests.register("compat_look_tiers", 20, h -> {
             h.assertTrue(Tier.SWIFT.lens == LensLook.SWIFT && !Tier.SWIFT.irisShaders, "Swift: Lens Swift, no shaders");
+            h.assertTrue(Tier.LITE.lens == LensLook.LITE && !Tier.LITE.irisShaders && Tier.LITE.ordinal() == Tier.SWIFT.ordinal() + 1
+                    && Tier.CINEMATIC.ordinal() == Tier.LITE.ordinal() + 1, "Lite: Lens Lite, no shaders, between Swift and Cinematic");
+            h.assertTrue(Look.current(LensLook.LITE, false) == Tier.LITE && Look.dh(Tier.LITE).equals(Look.dh(Tier.SWIFT)),
+                    "the Lite setting reads back as the Lite tier, on Swift's horizon");
             h.assertTrue(Tier.CINEMATIC.lens == LensLook.CINEMATIC && !Tier.CINEMATIC.irisShaders, "Cinematic: Lens Cinematic, no shaders");
             h.assertTrue(Tier.ULTRA.lens == LensLook.ULTRA && !Tier.ULTRA.irisShaders, "Ultra: Lens Ultra, no shaders (SPEC §22)");
             h.assertTrue(Tier.VFX.lens == LensLook.VFX && !Tier.VFX.irisShaders, "VFX: ImmersiveVFX alone, no shaders");

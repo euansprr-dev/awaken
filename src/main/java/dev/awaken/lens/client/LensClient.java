@@ -45,6 +45,10 @@ public final class LensClient {
     private LensClient() {}
 
     static final Identifier SWIFT = Awaken.id("lens_swift");
+    // Lite (SPEC §22 "Lite"): the Air without Lens 2's light. It reads the frame's values (the view, the sun, the clouds,
+    // storm cells) and none of the light's textures (no heightfield, block map, sun map or lit air, and none of their
+    // tick work)
+    static final Identifier LITE = Awaken.id("lens_lite");
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
@@ -122,6 +126,8 @@ public final class LensClient {
         return rays && litAir != null ? litAir.at(x, y, z) : -1f;
     }
     private static boolean lit, sunHere;
+    // the chain reads the frame's values: Cinematic, Ultra and Lite
+    private static boolean framed;
     private static float lightStrength, rain, warmth;
     private static boolean moonLight;
     // toward the light (the sun, or the moon by night) and the sunrise colour (0xRRGGBB), for the ambient particles
@@ -245,6 +251,8 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
+        // (before the others that shape the fog's colour: the edge hold pales it, Far Sight reads it last)
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.ComputeFogColor.class, LensClient::fogColour);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
@@ -274,6 +282,7 @@ public final class LensClient {
             snap = true;
             active = false;
             lit = false;
+            framed = false;
             overrideLook = null;
             linger = 0;
             tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
@@ -295,24 +304,30 @@ public final class LensClient {
         if (linger > 0) linger--;
         boolean on = (!off || scene && !vfx && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : switch (setting) {
+            case LITE -> LITE;
             case CINEMATIC -> CINEMATIC;
             case ULTRA -> ULTRA;
             default -> SWIFT;
         };
-        if (want != null && want != SWIFT && forcedChain != null) want = forcedChain;
+        if (want != null && want != SWIFT && want != LITE && forcedChain != null) want = forcedChain;
+        // Lite is the Air and nothing else: its chain has no other sky to fall back to
+        if (want == LITE && forcedAir == null) air = true;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
         List<Identifier> effects = player.getActivePostEffects();
         if (lastForced != null && lastForced != want) effects.remove(lastForced);
         lastForced = want == forcedChain ? forcedChain : null;
         if (want != SWIFT) effects.remove(SWIFT);
+        if (want != LITE) effects.remove(LITE);
         if (want != CINEMATIC) effects.remove(CINEMATIC);
         if (want != ULTRA) effects.remove(ULTRA);
-        boolean wasLit = lit;
+        boolean wasFramed = framed;
         lit = want == CINEMATIC || want == ULTRA || want != null && want == forcedChain;
+        framed = lit || want == LITE;
         if (want != null) {
             ensureParams();
+            if (framed) ensureFrame();
             if (lit) ensureLight();
-            if (lit && !wasLit) lensFrame.reset();
+            if (framed && !wasFramed) lensFrame.reset();
             int at = effects.indexOf(want);
             if (at != 0) {
                 if (at > 0) effects.remove(at);
@@ -504,7 +519,7 @@ public final class LensClient {
      * overworld sky); otherwise their own fallback draws them (SPEC §22 "Storm cells").
      */
     public static boolean drawsStormCells() {
-        return active && lit && sunHere && lensFrame != null;
+        return active && framed && sunHere && lensFrame != null;
     }
 
     private static float rate(int fadeTicks) {
@@ -512,13 +527,19 @@ public final class LensClient {
         return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
     }
 
-    private static void ensureLight() {
+    /** The frame's values, for every chain that reads them (Lite too). */
+    private static void ensureFrame() {
         if (lensFrame != null) return;
-        // registered before the chain that reads them first loads: a post pass keeps the texture it found then
+        // registered before the chain that reads it first loads: a post pass keeps the texture it found then
         lensFrame = new LensFrame();
+        Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
+    }
+
+    private static void ensureLight() {
+        if (heightfield != null) return;
+        // registered before the chain that reads them first loads: a post pass keeps the texture it found then
         heightfield = new LensHeightfield();
         blocks = new LensBlocks();
-        Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
         litAir = new LensLit();
         sunMap = new LensSunMap();
@@ -543,7 +564,7 @@ public final class LensClient {
         }
         starBrightness = sky.starBrightness;
         // (with the Air on, Lens's clouds are part of its sky: drawn whatever the Clouds video setting says)
-        cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
+        cloudsHere = active && framed && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
                 && (air || e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF);
         if (!cloudsHere) return;
         cloudColour = state.cloudColor;
@@ -554,12 +575,12 @@ public final class LensClient {
     /** Just before the post effects: Lens 2's frame values (the exact matrices this frame drew with, the light). */
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         if (!active) return;
-        if (lit && lensFrame != null) writeFrame(e);
+        if (framed && lensFrame != null) writeFrame(e);
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
-            block.write(lit ? lensFrame : null, params);
-            if (lit && lensFrame != null && WorldProjection.ready()) {
+            block.write(framed ? lensFrame : null, params);
+            if (framed && lensFrame != null && WorldProjection.ready()) {
                 // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21)
                 var encoder = RenderSystem.getDevice().createCommandEncoder();
                 encoder.copyTextureToBuffer(WorldProjection.output(), block.buffer, 0L, LensClient::nothing, 0, 0, 0, 12, 1);
@@ -611,6 +632,44 @@ public final class LensClient {
         }
     }
 
+    private static final float[] AIR_FOG = new float[3];
+
+    /**
+     * The game's fog under the Air (SPEC §22): while Lens draws the sky, the game's own fog takes the Air's horizon colour
+     * toward where the camera looks. The game still fogs land whole by itself (the last tenth of the render distance, a
+     * chunk fading in, the edge hold's mist) in the biome's fog colour, which its own sky shares at the horizon. The
+     * Air's sky does not, so where a biome has a fog colour of its own (the Glass Steppe's is sand) that land stood as
+     * flat sand shapes on a blue sky (Euan, playing, 11 Nov: "it's like brown fog but low quality").
+     */
+    private static void fogColour(ViewportEvent.ComputeFogColor e) {
+        if (!active || !framed || !air || !sunHere) return;
+        Camera camera = e.getCamera();
+        // water, lava and powder snow keep their own fog; so do blindness and darkness, which black it out
+        if (camera.getFluidInCamera() != net.minecraft.world.level.material.FogType.NONE) return;
+        if (camera.entity() instanceof net.minecraft.world.entity.LivingEntity living
+                && (living.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) || living.hasEffect(net.minecraft.world.effect.MobEffects.DARKNESS))) return;
+        Minecraft mc = Minecraft.getInstance();
+        // (the sun as the last frame had it: this is asked before the frame's own values are worked out)
+        if (mc.level == null || sunDir.lengthSquared() < 0.5f) return;
+        var forward = camera.forwardVector();
+        float hx = forward.x(), hz = forward.z(), len = (float) Math.sqrt(hx * hx + hz * hz);
+        if (len < 1.0e-3f) {
+            // straight up or down: the way the camera is turned
+            float yaw = camera.yRot() * Mth.DEG_TO_RAD;
+            hx = -Mth.sin(yaw);
+            hz = Mth.cos(yaw);
+            len = 1f;
+        }
+        dev.awaken.lens.LensAir.horizon(hx / len, hz / len, sunDir.x, sunDir.y, sunDir.z, rain, AIR_FOG);
+        // the game's own darkening toward the void, kept (FogRenderer.computeFogColor)
+        float range = mc.level.getLevelData().voidDarknessOnsetRange();
+        float dark = Mth.clamp((range + mc.level.getMinY() - (float) camera.position().y) / range, 0f, 1f);
+        float keep = (1f - dark) * (1f - dark);
+        e.setRed(AIR_FOG[0] * keep);
+        e.setGreen(AIR_FOG[1] * keep);
+        e.setBlue(AIR_FOG[2] * keep);
+    }
+
     private static void ensureParams() {
         if (params != null) return;
         params = new LensParams();
@@ -625,7 +684,7 @@ public final class LensClient {
         if (!active || params == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        if (lit) WorldProjection.want();
+        if (framed) WorldProjection.want();
         float partial = (float) e.getPartialTick();
         // the camera's far plane, as Camera.update sets it
         float far = Math.max(mc.options.getEffectiveRenderDistance() * 16 * 4f, mc.options.cloudRange().get() * 16f);
@@ -694,7 +753,7 @@ public final class LensClient {
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(), motion, motionX, motionY,
                 FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under,
-                LensGrades.shader());
+                LensGrades.shader(), framed && !lit);
         params.uploadIfChanged();
     }
 

@@ -278,7 +278,11 @@ vec2 storm(int k, float scene) {
     int nr = clamp(int((rain.y - rain.x) / (ultra ? 16.0 : 18.0)) + 1, 3, rs);
     int nb = clamp(int((body.y - body.x) / (ultra ? 10.5 : 12.0)) + 1, 4, bs);
     int na = clamp(int((anvil.y - anvil.x) / (ultra ? 7.0 : 8.0)) + 1, 3, ans);
-    if (v.y >= 0.0) {
+    if (cloudBlocks()) {
+        // the Air: the cell itself is built of blocks and walked in the composite (lens_storm_blocks.glsl); only its
+        // rain, a soft veil under the base, is still this pass's
+        stormPiece(rain, nr, k);
+    } else if (v.y >= 0.0) {
         stormPiece(rain, nr, k);
         stormPiece(body, nb, k);
         stormPiece(anvil, na, k);

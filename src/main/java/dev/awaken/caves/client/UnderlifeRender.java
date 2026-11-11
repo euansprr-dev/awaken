@@ -16,7 +16,8 @@ import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
  * Draws the underlife (SPEC §42.5) from its own sheet (textures/entity/caves/underlife.png, tools/art/specs/deep_life.py)
  * as small bodies, the way the wild's insects are drawn: a moth's wings hinged on its body and beating; a bat's leathery
  * wings, or the bat hanging wrapped in them; beetles, millipedes and fish flat on the face they walk or the water they
- * swim under, turning as they go; a cricket side-on. Lit by the light where each one is and by the light in your hand.
+ * swim under, turning as they go; a cricket side-on. Lit by the light where each one is and by the light in your hand; a
+ * crawler is shaded by its face's way, as the rock under it is, and its whole body lies on that rock (SPEC §42.4 "Settled").
  * Camera-relative, one callback, nothing allocated per frame; about 40 bodies of 2 to 4 quads.
  */
 final class UnderlifeRender {
@@ -91,7 +92,7 @@ final class UnderlifeRender {
                         boolean crawler = beetle && look == Underlife.CRAWLER;
                         int u0 = !beetle ? 0 : look == Underlife.RUST ? 32 : 48, v0 = crawler ? 48 : beetle ? 16 : 32;
                         onFace(dx, dy, dz, Underlife.held[i] ? Direction.UP : DIRS[Underlife.face[i]], yawDeg + walk,
-                                crawler ? 0.3F : beetle ? 0.2F : 0.34F, u0, v0, u0 + 16, v0 + 16, col, light);
+                                Underlife.crawlerSize(k, look), u0, v0, u0 + 16, v0 + 16, col, light);
                     }
                     case Underlife.GLOWWORM -> threads(dx, dy, dz, yaw, ph, col, light);
                     case Underlife.FISH -> {
@@ -116,8 +117,11 @@ final class UnderlifeRender {
 
     // ---- shapes -------------------------------------------------------------------------------------------------------
 
+    /** The way the quads being drawn face: up, but a crawler's is its face's, so it is shaded as the rock it walks is. */
+    private static float nx, ny = 1F, nz;
+
     private static void v(float x, float y, float z, int col, float u, float vv, int light) {
-        vc.addVertex(x, y, z).setColor(col).setUv(u * T, vv * T).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0F, 1F, 0F);
+        vc.addVertex(x, y, z).setColor(col).setUv(u * T, vv * T).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(nx, ny, nz);
     }
 
     /** Two wings from a cell (its left edge the hinge, its top the front), opened {@code flap} degrees up. */
@@ -168,20 +172,26 @@ final class UnderlifeRender {
         float fx = (float) (UV[0] * c + UV[3] * s) * h, fy = (float) (UV[1] * c + UV[4] * s) * h, fz = (float) (UV[2] * c + UV[5] * s) * h;
         float sx = (float) (-UV[0] * s + UV[3] * c) * h, sy = (float) (-UV[1] * s + UV[4] * c) * h, sz = (float) (-UV[2] * s + UV[5] * c) * h;
         float x = (float) dx + out.getStepX() * 0.012F, y = (float) dy + out.getStepY() * 0.012F, z = (float) dz + out.getStepZ() * 0.012F;
+        nx = out.getStepX();
+        ny = out.getStepY();
+        nz = out.getStepZ();
         v(x + fx - sx, y + fy - sy, z + fz - sz, col, u0, v0, light);
         v(x - fx - sx, y - fy - sy, z - fz - sz, col, u0, v1, light);
         v(x - fx + sx, y - fy + sy, z - fz + sz, col, u1, v1, light);
         v(x + fx + sx, y + fy + sy, z + fz + sz, col, u1, v0, light);
+        nx = 0F;
+        ny = 1F;
+        nz = 0F;
     }
 
     /** A bat hanging from the roof, wrapped in its wings: two crossed quads from its feet down, swaying a little. */
     private static void hang(double dx, double dy, double dz, float yaw, float ph, int col, int light) {
-        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.05F + ph) * 0.03F, 0.38F, 0.19F, 0, 48, 16, 64, col, light);
+        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.05F + ph) * 0.03F, 0.38F, Underlife.HANG, 0, 48, 16, 64, col, light);
     }
 
     /** Glow-worm threads: a curtain of silk beaded with glowing glue, hanging from the roof, stirring slowly. */
     private static void threads(double dx, double dy, double dz, float yaw, float ph, int col, int light) {
-        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.021F + ph) * 0.05F, 0.85F, 0.42F, 0, 16, 16, 32, col, light);
+        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.021F + ph) * 0.05F, 0.85F, Underlife.THREADS, 0, 16, 16, 32, col, light);
     }
 
     /** Two crossed quads hung from a point, {@code h} down and {@code w} either side, their lower edge swayed. */
