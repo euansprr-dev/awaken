@@ -327,108 +327,92 @@ public final class AscentPilot {
 
     /** Off the tower into flight: wings, take flight, cruise, boost, bank through a turn, slow to a hover. */
     /**
-     * Up a sky platform's ladder (SPEC §17.9): look at the underside of the next anchor ring above (or, with none
-     * left, the side of the pier over the chain) and throw the rope; from each hang under a ring, let go and throw at
-     * the next. On the deck, walk round the cabin to its door and in to the core. Ends with the wings or after 2 min.
+     * Up a sky platform's stair (SPEC §17.9, the Torn Stair): forward, sprint and the rope held, the look on the ring in
+     * the next lip above; the rope slings over each lip or pulls up its wall, and a fresh press follows every landing.
+     * On the top terrace: to the bridge's end, along it through the portal to the case's rail, and wait there for the
+     * core's answer. Ends with the wings, twelve seconds after reaching the rail without them, or after 2 min.
      */
     private static void climb(LocalPlayer p) {
-        AscentState st = AscentMoves.state();
-        if (core == null && (age % 10 == 1 || p.onGround())) core = coreNear(p);
-        if (core != null && p.getY() > core.getY() - 1.5) {
-            // up: hold the rope until the pull-over sets the feet down, then walk
-            if (AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS)) {
-                Awaken.LOG.info("[ascent] pilot: the core gave wings");
-                script = "";
-            } else if (st == AscentState.NONE && p.onGround()) {
-                walkToCore(p, core);
+        if (age <= 1) {
+            ring = null;
+            climbGround = 0;
+            railAt = -1;
+        }
+        // the core is 29 from the stair's middle: looked for once the body is within a terrace of the deck's height
+        if (core == null && age % 10 == 1) {
+            net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+            int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
+            for (int dy = -3; dy <= 10 && core == null; dy++) for (int dx = -36; dx <= 36 && core == null; dx++) for (int dz = -36; dz <= 36; dz++) {
+                m.set(px + dx, py + dy, pz + dz);
+                if (p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.WING_CORE.get())) {
+                    core = m.immutable();
+                    break;
+                }
             }
+        }
+        if (AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS)) {
+            Awaken.LOG.info("[ascent] pilot: the core gave wings");
+            script = "";
             return;
         }
-        if (AscentMoves.pullTicks > 0) return;
-        net.minecraft.core.BlockPos target = null;
-        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
-        int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
-        double best = Double.MAX_VALUE;
-        // the next ring up: not the one just hung from (a few blocks over the head)
-        for (int dy = 7; dy <= 40 && target == null; dy++) {
-            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) {
-                m.set(px + dx, py + dy, pz + dz);
-                if (!p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.ANCHOR_RING.get())) continue;
-                double d = dx * dx + dz * dz;
-                if (d < best) {
-                    best = d;
-                    target = m.immutable();
+        if (age > 2400) script = "";
+        double tx, tz;
+        if (core != null && p.getY() > core.getY() - 1.5) {
+            if (!p.onGround()) return;
+            HOLD[TETHER] = 0;
+            double ox = core.getX() + 0.5, oz = core.getZ() + 0.5, rx = p.getX() - ox, rz = p.getZ() - oz, d = Math.sqrt(rx * rx + rz * rz);
+            if (d < 3.7) {
+                // at the rail: the core answers within half a second
+                if (railAt < 0) railAt = age;
+                if (age - railAt > 240) {
+                    Awaken.LOG.info("[ascent] pilot: at the case, and the core kept its wings");
+                    script = "";
                 }
-            }
-        }
-        double tx, ty, tz;
-        boolean perch = target != null && !p.level().getBlockState(target.east()).isAir() && !p.level().getBlockState(target.north()).isAir();
-        if (target != null && perch) {
-            // the top ring stands in a perch: the underside of its plate nearest the body, just in from the outer
-            // edge (the zip vaults the body over that lip)
-            int cx = target.getX() + Mth.clamp(px - target.getX(), -1, 1), cz = target.getZ() + Mth.clamp(pz - target.getZ(), -1, 1);
-            double ox = p.getX() - (cx + 0.5), oz = p.getZ() - (cz + 0.5);
-            boolean alongX = Math.abs(ox) >= Math.abs(oz);
-            tx = cx + 0.5 + (alongX ? Math.signum(ox) * 0.35 : 0);
-            ty = target.getY() - 0.02;
-            tz = cz + 0.5 + (alongX ? 0 : Math.signum(oz) * 0.35);
-        } else if (target != null) {
-            tx = target.getX() + 0.5;
-            ty = target.getY() - 0.02; // its underside
-            tz = target.getZ() + 0.5;
-        } else {
-            // the pier: the top of the chain column nearby, its +z side
-            // the nearest chain top with a block over it (the top ring's own chain under the pier's arm)
-            net.minecraft.core.BlockPos pier = null;
-            double near = Double.MAX_VALUE;
-            for (int dy = 3; dy <= 40; dy++) for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
-                m.set(px + dx, py + dy, pz + dz);
-                if (p.level().getBlockState(m).is(net.minecraft.world.level.block.Blocks.IRON_CHAIN)
-                        && !p.level().getBlockState(m.above()).is(net.minecraft.world.level.block.Blocks.IRON_CHAIN)
-                        && !p.level().getBlockState(m.above()).isAir() && dx * dx + dz * dz < near) {
-                    near = dx * dx + dz * dz;
-                    pier = m.above().immutable();
-                }
-            }
-            if (pier == null) {
-                if (st == AscentState.NONE && p.onGround() && age > 20) script = "";
                 return;
             }
-            // its face toward the body (+x when right under it)
-            double ox = p.getX() - (pier.getX() + 0.5), oz = p.getZ() - (pier.getZ() + 0.5);
-            boolean alongX = Math.abs(ox) >= Math.abs(oz) || Math.abs(ox) + Math.abs(oz) < 0.3;
-            double sx = alongX ? (ox >= 0 ? 1 : -1) : 0, sz = alongX ? 0 : (oz >= 0 ? 1 : -1);
-            tx = pier.getX() + 0.5 + sx * 0.55;
-            ty = pier.getY() + 0.5;
-            tz = pier.getZ() + 0.5 + sz * 0.55;
+            // the bridge's diagonal: the one with a deck 15 out
+            int bz = p.level().getBlockState(core.offset(-15, -1, -15)).isAir() ? 1 : -1;
+            double line = Math.abs(rx * bz + rz) / Math.sqrt(2);
+            boolean onLine = d < 12 || line < 1.1 && -rx + rz * bz > 0;
+            tx = onLine ? ox : ox - 18;
+            tz = onLine ? oz : oz + 18 * bz;
+            railAt = -1;
+        } else {
+            // the ring in the next lip above: the nearest 2 to 13 over the feet
+            if (age % 5 == 1 || ring == null) {
+                ring = null;
+                net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+                int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
+                double best = Double.MAX_VALUE;
+                for (int dy = 2; dy <= 13; dy++) for (int dx = -36; dx <= 36; dx++) for (int dz = -36; dz <= 36; dz++) {
+                    m.set(px + dx, py + dy, pz + dz);
+                    if (dx * dx + dz * dz < best && p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.ANCHOR_RING.get())) {
+                        best = dx * dx + dz * dz;
+                        ring = m.immutable();
+                    }
+                }
+            }
+            if (ring == null) {
+                if (p.onGround() && age > 60) script = "";
+                return;
+            }
+            tx = ring.getX() + 0.5;
+            tz = ring.getZ() + 0.5;
+            climbGround = p.onGround() ? climbGround + 1 : 0;
+            // held, with a fresh press a moment after every landing
+            if (climbGround % 14 == 4) HOLD[TETHER] = 0;
+            else press(TETHER, 2);
+            press(SPRINT, 2);
         }
-        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
-        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z;
+        double dx = tx - p.getX(), dz = tz - p.getZ();
         p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
         p.setYHeadRot(p.getYRot());
-        p.setXRot((float) -(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG));
-        switch (st) {
-            case NONE, CARRY -> {
-                if (age - mark > 6) {
-                    press(TETHER, 3);
-                    mark = age;
-                }
-            }
-            case TETHER -> {
-                // hanging under a ring: let go and throw again
-                if (AscentMoves.stateAge > 8) {
-                    HOLD[TETHER] = 0;
-                    mark = age - 4;
-                } else {
-                    press(TETHER, 2);
-                }
-            }
-            case ZIP -> press(TETHER, 2);
-            default -> {
-            }
-        }
-        if (age > 2400) script = "";
+        p.setXRot(-12F);
+        press(FORWARD, 2);
     }
+
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos ring;
+    private static int climbGround, railAt = -1;
 
     /**
      * Over a chasm (the Leaper's Gauntlet, SPEC §17.10): sprint straight on, jump at the edge, dash a few ticks up

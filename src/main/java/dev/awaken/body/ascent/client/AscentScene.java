@@ -42,6 +42,12 @@ final class AscentScene {
         return age >= 0;
     }
 
+    /** The wings' gift, for the case at a sky core: -2 none, -1 given and waiting to begin, else the scene's age. */
+    static int wingsGift() {
+        if (pending != 0 && age < 0 && mode == AscentPayloads.GIFT_WINGS) return -1;
+        return age >= 0 && playingMode == AscentPayloads.GIFT_WINGS ? age : -2;
+    }
+
     static void tick(LocalPlayer p) {
         Minecraft mc = Minecraft.getInstance();
         // a gift's scene holds every tip back (its own tip comes after)

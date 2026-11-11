@@ -210,16 +210,13 @@ final class AscentCommands {
                 if (!(start.getKey() instanceof dev.awaken.above.ruin.PrecursorRuinStructure prs) || prs.kind() != dev.awaken.above.ruin.RuinKind.SKY) continue;
                 var box = start.getValue().getPieces().getFirst().getBoundingBox();
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
-                if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
-                    dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
-                }
-                var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
-                var first = l.rings().getLast();
-                int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
+                if (!dev.awaken.above.ruin.SkyRig.rigged(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+                var l = dev.awaken.above.ruin.SkyRig.layout(level, cx, deckY, cz);
+                var foot = l.foot();
                 if (deck) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
-                else p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
-                dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), under its first ring {}", cx, cz, deckY,
-                        first.toShortString());
+                else p.teleportTo(level, foot.getX() + 0.5, foot.getY(), foot.getZ() + 0.5, java.util.Set.of(), l.footYaw(), -20, true);
+                dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), a stair of {} terraces, its foot at {}", cx, cz, deckY,
+                        l.tiers(), foot.toShortString());
                 return 1;
             }
         }
