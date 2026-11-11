@@ -6624,6 +6624,52 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **Shadows beyond the block map** (Euan, playing, 2026-11-11, in a jungle: "There's an issue here with the tree's
+  shadow ... it moves as I move, so the shadow isn't consistent ... it's very cut off, and then if I move, the shadow
+  moves along with my view ... if I move completely to the left of the tree, then the entire shadow of the tree
+  basically disappears. We need to double check this is fixed across the board for not just trees"). The Sun Pass
+  has two answers for "does the sun reach this point": the block map, exact, within 46 blocks of the camera, and the
+  heightfield beyond it and for the rest of a ray that leaves the map. The heightfield knows a column's top with its
+  leaves and without, not where a crown ends below, and it took the whole column under the leaves' top for leaves: a
+  curtain to the ground. So a ray that passed under a crown was shaded wherever the heightfield had the say, and lit
+  where the map did, and the line between the two, a straight edge on the ground at the map's reach toward the sun,
+  moved with the camera. Under tall trees (a jungle) that was a slab of shade that came and went.
+  - **The rule**: beyond the block map a crown shades a ray only in the top seven blocks of its column
+    (`CANOPY` in lens_light.fsh, `heightRay`), so a tree far off casts its crown's shadow and light passes under
+    it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
+    a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
+    has its say wherever the old curtain did, at the same cost.
+  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
+    giant) shade only inside the map; and a solid thing with open air under it (a bridge, an arch, a table) is a
+    solid pillar to the heightfield, so beyond 46 blocks its shadow is the pillar's and nearer it is the thing's
+    own. Telling those apart needs the underside of each column's top run in the heightfield (a third channel and
+    a scan at chunk load): not built.
+  - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
+    blocks, and from the ground).
+- **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
+  broken ... you can see really weird frames or really weird pixels ... actual artifacts in the shadows, where the
+  shadows have jagged edges or like zigzags"). Close to the eye the Air's shadows are cut in the texture's own
+  pixels: a point on a face square to the world asks for its light from the centre of its sixteenth-of-a-block
+  texel, in the light pass and again where the composite reads the light (SPEC §22 "Sunlight"). Those texels are the
+  world's, on the world's grid. A creature's side is square to the world whenever it happens to face that way, and
+  its shade was then cut along a grid that is not its skin's and does not move with it: stair-steps a texel wide
+  that crawled as it walked or breathed. Now only a block's own face is cut that way (`blockFace` in
+  lens_height.glsl: the point just behind the surface lies in its column's solid, by the heightfield); a creature,
+  a dropped item or anything else with open air behind its surface keeps the smooth shadow, the sun's small disc
+  smoothed over frames. Known gaps: under a solid roof everything reads as a block (the heightfield has one top a
+  column), so a creature indoors is cut as before; and a leaf block's face is no longer cut (the solid top is
+  without leaves), which on a leaf texture does not show. Tour:
+  `tools/autopilot/steady60-creature-shade-ci.txt`.
+- **Near lights against the sky** (Euan, playing by night, 2026-11-11: "the Firefly lights goes behind clouds. Which
+  shouldn't be the case"). A particle writes no depth, so where a firefly's glow shows against the sky its pixel is
+  sky to the composite, and the wisps and the clouds were laid over it as they are over the stars. What the frame
+  holds over the game's own sky is the sun, the moon, the stars and any light that is near; a near light is told
+  from the rest by where it is and by its colour: not within the sun's disc (some 12 degrees) or the moon's (some
+  8), and not white as the stars are (its strongest channel leads its weakest by a quarter and more). That light is
+  put back over whatever of the sky covered it (`nearGlow`, `skyCover` in lens_composite.glsl). Not while the
+  game's own sunrise glow is up, which is coloured sky: at dusk a firefly still goes behind a cloud. Not solved by
+  it: a white or grey particle (snow, smoke) against a cloud, and a near light in front of far land, which takes
+  the land's fog. No tour: fireflies come by chance at night; to be seen in play.
 - **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
   own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
   atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
@@ -6642,7 +6688,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
   - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
     share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
-  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
+  - **How much fog** stays the Air's own, by the render distance: a land's look gives the fog its tint, not its
+    amount (`haze` and `hazeStart` do not act under the Air). On Amber Reach that is hazier than the land's first
+    pictures, the far cliffs fading more. Shown the two side by side and asked whether a gate world's fog should
+    follow its look's haze strength, Euan said: "Leave it" (2026-11-11).
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite). Before, run
+    42996721809; after, 42996759340: the sky, the far fog and the clouds are the land's amber. Sheet:
+    `docs/perf/steady60/play-2026-11-11/gate-sky-before-after.jpg`.
 - **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
   like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
   that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no

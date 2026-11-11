@@ -304,7 +304,8 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     float crisp = air > 0.0 ? 1.0 - smoothstep(10.0, 18.0, dist) : 0.0;
     if (crisp > 0.0) {
         vec3 an = abs(n);
-        if (max(an.x, max(an.y, an.z)) > 0.99) {
+        // (a block's face only, as the light pass has it: a creature keeps the smooth read)
+        if (max(an.x, max(an.y, an.z)) > 0.99 && (F(15).x < 1.0 || blockFace(p + f12.xyz, n))) {
             vec3 w = p + f12.xyz;
             vec3 q = project(frameMat(4), mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - f12.xyz, z01);
             if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
@@ -541,6 +542,10 @@ void main() {
     // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
     // over its own sky colour); Lens's larger stars join them by night. Places under cover keep the game's air
     float airK = airOn();
+    // a near light on a sky pixel (a firefly, a spark: a particle writes no depth, so where it shows against the sky the
+    // pixel is "sky"), and how much of the sky's own light the wisps and the clouds have covered there
+    vec3 nearGlow = vec3(0.0);
+    float skyCover = 0.0;
     if (airK > 0.0) {
         vec3 dirA = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
         vec4 f22 = F(22), f23 = F(23);
@@ -558,7 +563,20 @@ void main() {
             vec4 slow = texture(AirSkySampler, texCoord);
             if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark + airSlowGalaxy(slow);
             s += extra * keep;
-            s = mix(s, airWispColour(dirA, f22.xyz, rainA), airSlowWisp(slow));
+            // What the frame holds over its sky is the sun, the moon, the stars, and any light that is near. A near
+            // light is not the sky's, and nothing in the sky may cover it: it went behind the clouds with the stars
+            // (Euan, playing, 11 Nov: "the Firefly lights goes behind clouds. Which shouldn't be the case"). It is told
+            // from the rest by where it is and by its colour: not at the sun's or the moon's place, and not white as
+            // the stars are. Not while the game's own sunrise glow is up (that is coloured sky): a firefly at dusk
+            // still goes behind a cloud.
+            float hiE = max(extra.r, max(extra.g, extra.b)), loE = min(extra.r, min(extra.g, extra.b));
+            float coloured = smoothstep(0.22, 0.45, (hiE - loE) / max(hiE, 1.0e-3));
+            float toSun = dot(dirA, f22.xyz);
+            float disc = max(smoothstep(0.970, 0.985, toSun), smoothstep(0.988, 0.9925, -toSun));
+            nearGlow = extra * keep * coloured * (1.0 - disc) * (1.0 - smoothstep(0.0, 0.15, p1.a)) * airK;
+            float wisp = airSlowWisp(slow);
+            s = mix(s, airWispColour(dirA, f22.xyz, rainA), wisp);
+            skyCover = wisp * airK;
             c = mix(c, s, airK);
         } else if (!farTerrain && !plate) {
             // by distance over the render distance (a far renderer's land carries on past it, so the fog thins out
@@ -619,7 +637,10 @@ void main() {
                 behind = behind || dist > max(stormEntry(cv, k, camY), 16.0);
             }
         }
-        if (behind) c = c * cl.a + cl.rgb;
+        if (behind) {
+            c = c * cl.a + cl.rgb;
+            skyCover = 1.0 - (1.0 - skyCover) * cl.a;
+        }
         // the Air's near clouds over all of it: walked here, at the frame's own size and against this pixel's own
         // depth (lens_cloud_walk.glsl), so they need no such test and a tree in front of one keeps its own edge
         // A storm cell among them is built of the same blocks (lens_storm_blocks.glsl), walked here too: first, so the
@@ -632,14 +653,18 @@ void main() {
                 float stormAt;
                 vec4 sb = stormBlocks(nv, reachTo, stormAt);
                 c = c * sb.a + sb.rgb;
+                skyCover = 1.0 - (1.0 - skyCover) * sb.a;
                 if (sb.a < 0.5) reachTo = min(reachTo, stormAt);
             }
             if (cp.x > 0.0) {
                 vec4 cb = cloudNear(nv, reachTo);
                 c = c * cb.a + cb.rgb;
+                skyCover = 1.0 - (1.0 - skyCover) * cb.a;
             }
         }
     }
+    // the near light back over whatever of the sky was laid on it
+    c += nearGlow * skyCover;
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
