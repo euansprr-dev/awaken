@@ -46,7 +46,12 @@ vec4 cloudNearFrom(vec3 v, float scene, float drop) {
     vec2 inv = 1.0 / max(abs(v.xz), vec2(1.0e-5));
     vec2 next = t0 + ((cell + max(sgn, 0.0)) * CLOUD_CELL - pxz) * sgn * inv;
     float t = t0, T = 1.0, tHit = -1.0, sunSum = 0.0, skySum = 0.0;
+#ifdef LENS_CALM
+    int axis = 2;
+    const int storms = 0;
+#else
     int axis = 2, storms = stormCount();
+#endif
     bool inside = false;
     vec3 nIn = vec3(0.0, 1.0, 0.0);
     for (int i = 0; i < 80; i++) {

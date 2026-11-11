@@ -64,6 +64,14 @@ public final class LensClient {
     // values from the uniform block alone, run while Tiles hands that block over
     static final Identifier CINEMATIC_TILES = Awaken.id("lens_cinematic_tiles");
     static final Identifier ULTRA_TILES = Awaken.id("lens_ultra_tiles");
+    // the twins' two composites, by their place in the chain (tools/lens/block.py checks them): the calm one, then the
+    // twin's own; Tiles leaves one out every frame (leftOut)
+    private static final int CALM_AT = 12, FULL_AT = 13;
+    private static final String CINEMATIC_CALM = CINEMATIC_TILES + "/" + CALM_AT, CINEMATIC_FULL = CINEMATIC_TILES + "/" + FULL_AT,
+            ULTRA_CALM = ULTRA_TILES + "/" + CALM_AT, ULTRA_FULL = ULTRA_TILES + "/" + FULL_AT;
+    // this frame's choice (afterLevel): the calm composite runs only once LensBlock has found the frame calm
+    private static String leaveCinematic = CINEMATIC_CALM, leaveUltra = ULTRA_CALM;
+    private static boolean calmLast;
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
     static final Identifier FRAME = Awaken.id("textures/effect/lens_frame.png");
     static final Identifier HEIGHT = Awaken.id("textures/effect/lens_height.png");
@@ -244,6 +252,24 @@ public final class LensClient {
     public static String twin(String arg) {
         noTwin = arg.trim().equals("off");
         return "twin " + (noTwin ? "off" : "with Tiles' block") + (dev.awaken.turbo.tiles.Tiles.blockLive() ? " (block live)" : " (block not live)");
+    }
+
+    // measurement only (autopilot `lens calm off|setting`): the twin's own composite every frame, calm or not
+    private static boolean noCalm;
+
+    /** Autopilot {@code lens calm off|setting}: the A/B switch for the twins' calm composite (SPEC §22 "Steady 60"). */
+    public static String calm(String arg) {
+        noCalm = arg.trim().equals("off");
+        return "calm composite " + (noCalm ? "off" : "on calm frames") + (calmLast ? " (last frame calm)" : " (last frame not calm)");
+    }
+
+    /**
+     * Tiles, for each post pass: whether it is left out this frame. Each Tiles twin has two composites, both drawing the
+     * whole of swap from the same inputs, and one is left out: the calm one, unless this frame's values (LensBlock.calm,
+     * read from the very block the composites read) have every path it lacks switched off; then the twin's own.
+     */
+    public static boolean leftOut(String pass) {
+        return pass.equals(leaveCinematic) || pass.equals(leaveUltra);
     }
 
     /** Autopilot {@code lens chain <name>|off}: runs awaken:lens_probe_<name> instead of the Look's chain (Cinematic or Ultra on). */
@@ -660,7 +686,10 @@ public final class LensClient {
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
-            block.write(framed ? lensFrame : null, params);
+            calmLast = block.write(framed ? lensFrame : null, params);
+            boolean calm = calmLast && !noCalm;
+            leaveCinematic = calm ? CINEMATIC_FULL : CINEMATIC_CALM;
+            leaveUltra = calm ? ULTRA_FULL : ULTRA_CALM;
             if (framed && lensFrame != null && WorldProjection.ready()) {
                 // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21, whole: a
                 // value of the frame's own must never ride in one of them)

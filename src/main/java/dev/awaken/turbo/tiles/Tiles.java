@@ -144,9 +144,14 @@ public final class Tiles {
         }
     }
 
-    /** Whether a pass is left out this frame: the copy of swap into the main target, once the composite went straight out. */
+    /**
+     * Whether a pass is left out this frame: the copy of swap into the main target, once the composite went straight out;
+     * and in Lens's Tiles twins, the one of their two composites this frame doesn't need (LensClient.leftOut; the calm
+     * one comes first, so with this hook gone both draw and the twin's own is what stays).
+     */
     public static boolean skip(String pass, Identifier output) {
-        return straightUsed && MAIN.equals(output) && tail(pass) && !failed;
+        if (failed) return false;
+        return straightUsed && MAIN.equals(output) && tail(pass) || dev.awaken.lens.client.LensClient.leftOut(pass);
     }
 
     /** Autopilot {@code lens straight on|off|setting}: the A/B switch for straight out alone. */

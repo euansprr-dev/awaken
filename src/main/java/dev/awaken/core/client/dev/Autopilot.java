@@ -718,6 +718,11 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("calm")) { // lens calm off|setting: the twins' own composite every frame, or the calm one on calm frames
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.calm(arg.trim().substring(4)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("chain")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.chain(arg.trim().substring(5)));
                     waitTicks = 20;

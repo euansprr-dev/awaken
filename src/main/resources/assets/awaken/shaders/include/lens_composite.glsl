@@ -35,9 +35,12 @@ layout(std140) uniform LensConfig {
 layout(location = 0) out vec4 fragColor;
 
 // LENS_NO_DEBUG (the Tiles twin, lens_composite_lit_tiles.fsh): without the development views (LensClient keeps today's
-// chain while one is on), whose values held registers through the whole pass. PROBE_LEAN (measurement only,
-// tools/lens/regs.py) leaves out too what is off in a clear day's frame.
-#ifdef PROBE_LEAN
+// chain while one is on), whose values held registers through the whole pass. LENS_CALM (the twin's calm composite,
+// lens_composite_lit_tiles_calm.fsh) leaves out too what is off in a calm frame: rain's wet, storm cells, heat's
+// shimmer, frost's rime, the motion smear, a holo panel's focus, the tear and the old water. LensBlock.calm reads the
+// frame's values for each of those switches; a frame where every one is off runs this composite, any other the twin's
+// own, so each draws only frames where the code it lacks would have done nothing.
+#ifdef LENS_CALM
 #define LENS_NO_DEBUG
 #endif
 
@@ -73,8 +76,8 @@ vec3 screen(vec3 a, vec3 b) { return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)
 // light. The chain runs this same composite without the light buffer, the heightfield or the far clouds' buffer (their
 // samplers are bound to stand-ins), so every read of those is behind this.
 #ifdef LENS_NOT_LITE
-// (measurement only, tools/lens/regs.py: Cinematic's and Ultra's chains never run as Lite; LensParams writes texel 25
-// as framed && !lit)
+// (the Tiles twins, lens_composite_lit_tiles.fsh: Cinematic's and Ultra's chains never run as Lite, LensParams writes
+// texel 25 as framed && !lit, so Lite's paths are left out of them; the same picture bit for bit, 0.1-0.2 ms at 4K)
 bool lensLite() { return false; }
 #else
 bool lensLite() { return P(25).r > 0.5; }
@@ -416,7 +419,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     c = max(mix(vec3(luma(c)), c, 1.0 + rich), 0.0);
     // rain wets what it falls on (open to the sky in its column; under leaves, a little): darker and a touch richer, and
     // what faces up takes a dull sheen of the sky at a glancing angle (a Rolling Storm's local rain too)
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     if (false) {
 #else
     if (f16.z > 0.0 && F(15).x > 0.0) {
@@ -431,7 +434,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         c += P(10).rgb * fres * up * wet * 0.22;
     }
     // (under the Air the water is the Air's own, drawn after this for every tier: lens_water.glsl)
-#ifndef PROBE_LEAN
+#ifndef LENS_CALM
     if (m20.r > 0.0 && air <= 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
 #endif
     return c;
@@ -495,7 +498,7 @@ void main() {
 #endif
     vec2 uvc = texCoord;
 #ifdef LENS_LIGHT
-#ifndef PROBE_LEAN
+#ifndef LENS_CALM
     vec4 m20early = P(20);
     if ((m20early.g > 0.0 || m20early.b > 0.0) && int(P(0).r * 255.0 + 0.5) != 8) uvc += distortion(texCoord, m20early.g, m20early.b, F(17).x);
 #endif
@@ -504,7 +507,7 @@ void main() {
     // toward where you're heading (sharp there, more toward the edges) with a touch of chroma at the rim; nothing at rest
     vec4 mo = P(16);
     vec3 c;
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     if (false) {
 #else
     if (mo.r > 0.004) {
@@ -621,7 +624,9 @@ void main() {
             // (the galaxy's light and the wisps' cover are noise: drawn once a frame into the small sky buffer,
             // lens_airsky.fsh, and read here)
             vec4 slow = texture(AirSkySampler, texCoord);
+#ifndef PROBE_NO_NIGHT
             if (dark > 0.0) s += airNight(dirA, f22.xyz, F(17).x) * dark + airSlowGalaxy(slow);
+#endif
             s += extra * keep;
             // What the frame holds over its sky is the sun, the moon, the stars, and any light that is near. A near
             // light is not the sky's, and nothing in the sky may cover it: it went behind the clouds with the stars
@@ -675,7 +680,7 @@ void main() {
     // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
     // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     const int storms = 0;
 #else
     int storms = stormCount();
@@ -889,7 +894,7 @@ void main() {
     // 14: an open holo panel holds the eye (UiHooks.focus): the world past arm's reach dims and cools; the panel's
     // glass writes its own depth a block or so away, so it and its text stay bright
     float focus = P(14).r;
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     if (false) {
 #else
     if (focus > 0.0) {
@@ -900,7 +905,7 @@ void main() {
 
 #ifdef LENS_LIGHT
     // frost at the frame's edge: a pale rime with fine crystal streaks over what it covers
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     if (false) {
 #else
     if (P(20).b > 0.0 && !classic) {
@@ -922,7 +927,7 @@ void main() {
     c += n / 255.0;
 
     // the tear: the black opens from the centre with a ragged, blazing edge (the awakening)
-#ifdef PROBE_LEAN
+#ifdef LENS_CALM
     if (false) {
 #else
     if (rit.r > 0.0) {
