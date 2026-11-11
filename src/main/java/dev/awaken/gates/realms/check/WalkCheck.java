@@ -155,7 +155,8 @@ public final class WalkCheck {
                     boolean stand = (cells.at(x, y - 1, z) || cells.water(x, y - 1, z) || cells.climb(x, y, z)) && !cells.at(x, y, z) && !cells.at(x, y + 1, z);
                     if (stand) {
                         if (seen.add(pack(x, y, z))) q.add(new int[]{x, y, z});
-                        stepped = true;
+                        // a long drop is a way down, not the way on: the jump over it is still tried
+                        stepped = y >= p[1] - 4;
                         break;
                     }
                     if (cells.at(x, y + 1, z) && y <= p[1]) break;

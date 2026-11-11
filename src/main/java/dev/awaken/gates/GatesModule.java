@@ -62,6 +62,7 @@ public final class GatesModule {
         r.playToClient(dev.awaken.gates.net.RigPayloads.Cue.TYPE, dev.awaken.gates.net.RigPayloads.Cue.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Run.TYPE, dev.awaken.gates.net.RigPayloads.Run.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, dev.awaken.gates.net.RigPayloads.Ghost.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.TrialPayloads.Tally.TYPE, dev.awaken.gates.net.TrialPayloads.Tally.STREAM_CODEC);
         r.playToServer(GatePayloads.WatchSpoils.TYPE, GatePayloads.WatchSpoils.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Spoils.watch(sp, msg.watching());
         });

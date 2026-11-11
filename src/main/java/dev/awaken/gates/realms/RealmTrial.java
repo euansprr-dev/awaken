@@ -1,11 +1,21 @@
 package dev.awaken.gates.realms;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenNet;
 import dev.awaken.core.api.TrialHooks;
 import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.block.GateBlocks;
+import dev.awaken.gates.net.RigPayloads;
+import dev.awaken.gates.net.TrialPayloads;
+import dev.awaken.gates.run.GateMemory;
+import dev.awaken.gates.run.RigGauntletLive;
 import dev.awaken.gates.run.Runs;
+import dev.awaken.progression.Curve;
+import dev.awaken.progression.Progression;
+import dev.awaken.signal.Signal;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
@@ -37,6 +47,9 @@ import java.util.UUID;
  * to ({@link TrialHooks#at}). The land says where everything is ({@link Land#stands}, {@link Land#rams},
  * {@link Land#slams}, {@link Land#spots}); nothing here knows one course from another.
  *
+ * <p>And its timed run ({@link Land#timed}): the clock from the first step, the rings, the far line, the medal, what the
+ * trial pays ({@link TrialHooks#pay}) and the tally sent to be shown; whoever has run it before starts at its door.
+ *
  * <p>What is open is the gate's and is saved with it ({@link RealmState#woken}: {@code stand_<move>},
  * {@code slam_<id>}); what a runner has been shown is theirs and lasts as long as they are in the gate.
  */
@@ -60,6 +73,10 @@ public final class RealmTrial {
         final BitSet told = new BitSet();
         final int[] falls = new int[64];
         int dwellAt = -1, dwell;
+        /** The timed run: when its clock began (-1: not running), the last ring passed, what of it has been put back for this run. */
+        long started = -1;
+        int ring = -1, armed;
+        boolean greeted, atRun, done;
     }
 
     private record Stroke(int gate, int stand, long from) {}
@@ -88,6 +105,7 @@ public final class RealmTrial {
     private static Run run(ServerPlayer p, GateRecord g) {
         Run r = RUNS.get(p.getUUID());
         if (r == null || r.gate != g.id) {
+            if (r != null && r.started >= 0) AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.STOP, 0, r.ring, 0, 0, 0));
             r = new Run();
             r.gate = g.id;
             RUNS.put(p.getUUID(), r);
@@ -137,6 +155,53 @@ public final class RealmTrial {
             }
         }
         if (!dwelling) run.dwellAt = -1;
+        // a way home wherever the land says one is, besides the arch at the mouth
+        List<Land.Site> portals = land.sites(Land.SiteKind.PORTAL);
+        for (int i = 1; i < portals.size(); i++) {
+            Land.Site s = portals.get(i);
+            BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
+            if (st.woken.contains("exit_set_" + i) || !level.isLoaded(at)) continue;
+            ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, land.portalAxis(), 3, 3, g.plan.rank().ordinal());
+            st.woken.add("exit_set_" + i);
+            data.setDirty();
+        }
+        Land.Timed timed = land.timed();
+        if (timed != null) {
+            if (!run.greeted) {
+                run.greeted = true;
+                // whoever has run it before starts at the Long Run's door (the plan's 9.5)
+                Land.Site mouth = land.mouth();
+                if (TrialHooks.finished(p, TrialHooks.LEAPER) && Math.abs(lx - mouth.x()) <= 12 && Math.abs(lz - mouth.z()) <= 12) {
+                    run.taken = -1;
+                    int[] d = timed.door();
+                    BlockPos at = Realms.world(ref.cell(), d[0], d[1], d[2]);
+                    p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), d[3], 0, true);
+                    Signal.toast(p, Component.literal("You've run this before, so you start at the Long Run."));
+                    Awaken.LOG.info("[trial] gate {}: {} has run it before and starts at the Long Run", g.id, p.getPlainTextName());
+                    return;
+                }
+            }
+            int[] d = timed.door();
+            boolean at = run.started >= 0 || Math.abs(lx - d[0]) <= 10 && Math.abs(lz - d[2]) <= 10 && Math.abs(ly - d[1]) <= 6;
+            if (at != run.atRun) {
+                run.atRun = at;
+                dev.awaken.gates.run.Hud.send(p);
+            }
+            // what a slam moved on the run is put back as this runner comes to it, unless someone is in the middle of it
+            if (run.started >= 0) for (int i = 0; i < land.slams().size(); i++) {
+                Land.Slam s = land.slams().get(i);
+                if (!s.again() || (run.armed & 1 << i) != 0 || Math.abs((s.x0() + s.x1()) / 2 - lx) > 44 || Math.abs((s.z0() + s.z1()) / 2 - lz) > 44) continue;
+                BlockPos lo = Realms.world(ref.cell(), s.x0(), s.y0(), s.z0()), hi = Realms.world(ref.cell(), s.x1(), s.y1(), s.z1());
+                if (!level.isLoaded(lo) || !level.isLoaded(hi)) continue;
+                run.armed |= 1 << i;
+                if (!st.woken.contains("slam_" + s.id())) continue;
+                AABB box = new AABB(lo.getX() - 1, lo.getY() - 14, lo.getZ() - 1, hi.getX() + 2, hi.getY() + 3, hi.getZ() + 2);
+                if (!level.getEntitiesOfClass(ServerPlayer.class, box, e -> e.isAlive() && !e.isSpectator()).isEmpty()) continue;
+                st.woken.remove("slam_" + s.id());
+                data.setDirty();
+                for (Land.Edit e : land.change("rearm_" + s.id())) level.setBlock(Realms.world(ref.cell(), e.x(), e.y(), e.z()), e.state(), Block.UPDATE_CLIENTS);
+            }
+        }
         if (!p.onGround()) return;
         List<Land.Spot> spots = land.spots();
         for (int i = 0; i < spots.size() && i < 64; i++) {
@@ -163,7 +228,83 @@ public final class RealmTrial {
         RealmPlan plan = Realms.plan(g);
         if (plan == null || plan.land().stands().isEmpty()) return null;
         Run run = RUNS.get(p.getUUID());
-        return run == null || run.gate != g.id || (run.taken & 1) == 0 ? "Reach the first stand" : "Cross the hall";
+        if (run == null || run.gate != g.id) return "Reach the first stand";
+        if (run.done) return "The way out is open";
+        return run.atRun ? "Run the Long Run" : (run.taken & 1) == 0 ? "Reach the first stand" : "Cross the hall";
+    }
+
+    /** A runner has left the Realm or the game: a clock still running for them stops. */
+    public static void left(ServerPlayer p) {
+        Run r = RUNS.remove(p.getUUID());
+        if (r != null && r.started >= 0) AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.STOP, 0, r.ring, 0, 0, 0));
+    }
+
+    // ---- the timed run, every tick ---------------------------------------------------------------------------------------
+
+    private static boolean in(int[] box, int x, int y, int z) {
+        return x >= box[0] && x <= box[3] && y >= box[1] && y <= box[4] && z >= box[2] && z <= box[5];
+    }
+
+    private static void timed(ServerLevel level, ServerPlayer p, GateRecord g, Land.Timed t, long now) {
+        Run run = RUNS.get(p.getUUID());
+        if (run == null || run.gate != g.id || g.realm.isEmpty() || p.isSpectator()) return;
+        RealmRef ref = g.realm.orElseThrow();
+        int lx = p.getBlockX() - RealmCells.centerX(ref.cell()), ly = p.getBlockY(), lz = p.getBlockZ() - RealmCells.centerZ(ref.cell());
+        if (run.started < 0) {
+            // the clock starts at the first step onto the run
+            if (!(p.onGround() || p.isCreative()) || !in(t.start(), lx, ly, lz)) return;
+            run.started = now;
+            run.ring = -1;
+            run.armed = 0;
+            run.done = false;
+            run.atRun = true;
+            AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.START, p.getData(GatesRegistry.MEMORY.get()).trialBest, -1, t.rings().size(), 0, t.par()));
+            BlockPos at = p.blockPosition();
+            TrialHooks.at(p, TrialHooks.LEAPER, TrialHooks.MARK_RUN, at, at);
+            level.playSound(null, p.getX(), p.getY(), p.getZ(), GatesRegistry.SND_RIG_RUN.get(), SoundSource.PLAYERS, 0.8F, 1.3F);
+            dev.awaken.gates.run.Hud.send(p);
+            return;
+        }
+        while (run.ring + 1 < t.rings().size()) {
+            int[] r = t.rings().get(run.ring + 1);
+            if (Math.abs(lx - r[0]) > 9 || Math.abs(ly - r[1]) > 14 || (r[3] < 0 ? lz > r[2] : lz < r[2])) break;
+            run.ring++;
+            AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.RING, (int) (now - run.started), run.ring, t.rings().size(), 0, t.par()));
+            level.playSound(null, p.getX(), p.getY() + 1, p.getZ(), GatesRegistry.SND_RIG_RING.get(), SoundSource.PLAYERS, 0.9F, 1F + 0.06F * run.ring);
+        }
+        if (in(t.finish(), lx, ly, lz)) finish(level, p, g, run, t, now);
+        else if (now - run.started > 20 * 60 * 20) {
+            run.started = -1;
+            AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.STOP, 0, run.ring, 0, 0, 0));
+        }
+    }
+
+    /** The far line: the clock stops, the medal is struck, the trial pays what it pays, and the tally is sent to be shown. */
+    private static void finish(ServerLevel level, ServerPlayer p, GateRecord g, Run run, Land.Timed t, long now) {
+        int ticks = (int) (now - run.started), medal = RigGauntletLive.medal(ticks, t.par());
+        run.started = -1;
+        run.done = true;
+        GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
+        int best = mem.trialBest;
+        if (best == 0 || ticks < best) mem.trialBest = ticks;
+        TrialHooks.Pay pay = TrialHooks.pay(p, TrialHooks.LEAPER, ticks, medal);
+        // the medal's share, every time, as any Gauntlet pays it
+        double share = Progression.worldXp(p, "awaken:gauntlet", medal == RigPayloads.Run.GOLD ? 0.06 : medal == RigPayloads.Run.SILVER ? 0.035 : 0.02);
+        int xp = pay.xp() + (int) Math.round(share * Curve.xpToNext(Progression.profile(p).level()));
+        if (medal == RigPayloads.Run.GOLD) Progression.count(p, "awaken:gauntlet_gold");
+        List<String> names = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
+        for (TrialHooks.Pay.Count c : pay.counts()) {
+            names.add(c.name());
+            counts.add(c.times());
+        }
+        AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.FINISH, ticks, run.ring, t.rings().size(), medal, t.par()));
+        AwakenNet.send(p, new TrialPayloads.Tally(pay.first(), xp, pay.masteryBefore(), pay.masteryAfter(), Math.round(pay.masteryFill() * 1000), ticks, medal, best, names, counts));
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), GatesRegistry.SND_RIG_MEDAL.get(), SoundSource.PLAYERS, 1F,
+                medal == RigPayloads.Run.GOLD ? 1.12F : medal == RigPayloads.Run.SILVER ? 1F : 0.89F);
+        dev.awaken.gates.run.Hud.send(p);
+        Awaken.LOG.info("[trial] gate {}: {} ran the Long Run in {} s (par {} s), medal {}, {} of {} rings{}", g.id, p.getPlainTextName(),
+                String.format("%.1f", ticks / 20.0), t.par() / 20, medal, run.ring + 1, t.rings().size(), pay.first() ? ", the first time: paid " + pay.xp() + " XP" : "");
     }
 
     /**
@@ -303,6 +444,8 @@ public final class RealmTrial {
             GateRecord g = Runs.gateOf(p);
             RealmPlan plan = g == null ? null : Realms.plan(g);
             if (plan == null || plan.land().stands().isEmpty() && plan.land().rams().isEmpty()) continue;
+            Land.Timed t = plan.land().timed();
+            if (t != null) timed(level, p, g, t, now);
             if (seen == null) seen = new java.util.HashSet<>();
             if (!seen.add(g.id)) continue;
             rams(level, g, plan.land(), now);

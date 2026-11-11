@@ -86,7 +86,7 @@ final class RigGauntletLive {
     // a press was 55% of the E reference player under Glass (SPEC §47.14); now 42%, 18% alone
     static final float PIT_DAMAGE = 3F, PIT_SHARE = 0.08F, PRESS_DAMAGE = 3F, PRESS_SHARE = 0.11F;
     /** A medal against the course's par: gold within 10% (and a second), silver within half again. */
-    static int medal(int ticks, int par) {
+    public static int medal(int ticks, int par) {
         if (ticks <= par * 1.1 + 20) return RigPayloads.Run.GOLD;
         if (ticks <= par * 1.5 + 40) return RigPayloads.Run.SILVER;
         return RigPayloads.Run.BRONZE;

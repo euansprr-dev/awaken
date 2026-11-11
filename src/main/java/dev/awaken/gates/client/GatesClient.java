@@ -52,6 +52,7 @@ public final class GatesClient {
             GateWorldClient.clear();
             WorldBed.stop();
             LordLevels.reset();
+            TrialTally.reset();
             Crossing.reset();
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
@@ -77,6 +78,7 @@ public final class GatesClient {
             RigGhost.run(msg);
         });
         e.register(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, (msg, ctx) -> RigGhost.ghost(msg));
+        e.register(dev.awaken.gates.net.TrialPayloads.Tally.TYPE, (msg, ctx) -> TrialTally.show(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, (msg, ctx) -> GateWorldClient.arrive(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, (msg, ctx) -> WorldJourney.start(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, (msg, ctx) -> GateWorldClient.atlas(msg));
@@ -107,6 +109,7 @@ public final class GatesClient {
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_journey"), WorldJourney::render);
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_card"), WorldCard::render);
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_lord_levels"), LordLevels::render);
+        e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_trial_tally"), TrialTally::render);
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_crossing_afterglow"), Crossing::afterglow);
     }
 
@@ -115,6 +118,7 @@ public final class GatesClient {
         WorldJourney.tick();
         WorldCard.tick();
         LordLevels.tick();
+        TrialTally.tick();
         WorldBed.tick();
         WorldLife.tick();
         WorldAir.tick();

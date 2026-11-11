@@ -26245,7 +26245,7 @@ and re-run: the gates session.
 
 **71.8 Built: the place (11 Nov 2026, the gates session; `gates.realms.land.LeapersGauntlet`, `gates.realms.RealmTrial`).**
 A Realm laid by hand in the Stopped Works' blocks (blueprint `awaken:leapers_gauntlet`; `Realms.choose` gives it to a
-plan with `leaperTrial` once it says it is ready, which it does not until the Long Run is laid). No monsters, no Lord.
+plan with `leaperTrial` once it says it is ready, which it does not until someone has walked it end to end). No monsters, no Lord.
 - **Halls.** A hall is a machine hall 17 wide with a way of decks 5 wide down its middle over a casting pit 18 down
   (piers every eighth cell, a beam between each pair, press heads stopped over the pit, a lit casting floor). The way in:
   a gap of 2, a step, a gap of 3, then the gulf (6 wide, the far side 2 higher) with the first stand's room off its lip.
@@ -26279,6 +26279,28 @@ plan with `leaperTrial` once it says it is ready, which it does not until the Lo
   `realm_leapers_gauntlet_needs_its_moves` (the walk reaches every leg with the stands' bars open and what a slam moves
   moved, no crossing said to need a move can be made without it, three stands with room under their presses, a place
   for every mark, a press's beat), `realm_leapers_gauntlet_nothing_floats`.
-- *Not built yet:* the Long Run with its clock, rings and medals; the tally floor and `TrialHooks.pay`; the gate left
-  standing with a way straight to the Long Run for whoever has run it; the walk check on the leap's real reach (it
-  takes the plan's sizes).
+- **The Long Run** (`Land.Timed`, run every tick by `RealmTrial`): three halls on three levels (Y 100, 90, 80), each run
+  the other way to the one before, joined by a well with a cracked deck 5 under its lip. First hall: a gap of 3, a gulf
+  of 6 with the far side 2 higher, a step 3 up, a gap of 9, a gap of 10 beside a wall, a gulf of 12. Second: a gap of 9,
+  two presses on the beat of "Through", a step 3 up, a gulf of 12, three castings in a doorway. Third: a gap of 3, a
+  gap of 10 beside a wall, a gap of 9, and 26 cells of sprint to the far line. Seven double jumps, five dashes, three
+  slams. The clock starts at the first step onto the run and stops at the far line; five rings (brass arches over the
+  lane) give the splits. It is the old Gauntlet's clock on screen (`RigPayloads.Run`), with its medals: gold within
+  par plus a tenth and a second, silver within half again and two; par 85 s until it has been run by hand. A fall into
+  a pit puts the runner back on the last deck stood on and costs nothing. What a slam moves on the run is put back as
+  each runner comes within 44 cells of it (`Slam.again`), unless someone is in the middle of it.
+- **The far line** pays through the trial (`TrialHooks.pay`: the first time, what §71.7 says) and adds the medal's share
+  every time (6%, 3.5% or 2% of a level, as any Gauntlet's, under the `awaken:gauntlet` budget). The best time is kept
+  with the player (`GateMemory.trialBest`).
+- **The tally** (`TrialPayloads.Tally`, `gates.client.TrialTally`, in the look of the Lord's payout): the XP in the
+  middle of the view, climbing in ten steps with the game's own bell on the Lord's low walk; then "Leaper mastery · level
+  N" and its bar filling; then the time and medal in the medal's colour ("your best yet" or the best before), and the
+  counts ("Double jumps 14 · Dashes 9 · Slams 4", on two lines when one would not fit). It waits for an Unlock title,
+  holds 6.5 s, and holds every other notice while it shows.
+- **The way home:** an exit arch on the landing before the Long Run and one on the tally floor, besides the arch at the
+  mouth (every `PORTAL` site of a trial's land past the first gets one).
+- **Coming back:** someone who has run it before (`TrialHooks.finished`) is set down on the landing as they arrive:
+  "You've run this before, so you start at the Long Run." The gate is never marked cleared, so it stays standing.
+- **The HUD's line** goes on to "Run the Long Run" on the landing and through the run, then "The way out is open".
+- *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; the walk check on
+  the leap's real reach (it takes the plan's sizes); par set from real runs. Nobody has played it.

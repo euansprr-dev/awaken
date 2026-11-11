@@ -151,9 +151,14 @@ public abstract class Land {
 
     /**
      * Something only a slam moves (SPEC §17.10): a slam landing inside the box applies the change {@code slam_<id>}
-     * and lifts the ram it frees, for everyone in the gate and for good, as a stand's bars open.
+     * and lifts the ram it frees, for everyone in the gate and for good, as a stand's bars open. {@code again}: it is
+     * part of the timed run, and is put back ({@code rearm_<id>}) each time a runner starts the clock.
      */
-    public record Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1) {}
+    public record Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1, boolean again) {
+        public Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+            this(id, x0, y0, z0, x1, y1, z1, false);
+        }
+    }
 
     public List<Slam> slams() {
         return List.of();
@@ -168,6 +173,19 @@ public abstract class Land {
 
     public List<Spot> spots() {
         return List.of();
+    }
+
+    /**
+     * The timed run of a trial (SPEC §17.10): the box whose first step starts the clock and the box that stops it (each
+     * x0 y0 z0 x1 y1 z1), its rings in the order they are passed (each x, y, z of the lane under it and the way the
+     * course runs there along z, -1 or 1), par in ticks, and where someone who has run it before is set down (x, y, z,
+     * yaw).
+     */
+    public record Timed(int[] start, int[] finish, List<int[]> rings, int par, int[] door) {}
+
+    /** This land's timed run, or null. */
+    public Timed timed() {
+        return null;
     }
 
     /** Whether nothing in this land hurts for falling (a trial's halls: a fall there costs nothing, SPEC §17.10). */
