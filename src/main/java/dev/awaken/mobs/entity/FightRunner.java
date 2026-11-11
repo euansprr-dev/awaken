@@ -307,6 +307,14 @@ final class FightRunner {
     private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
+        if (boss.beaten()) {
+            // beaten to its last point (SPEC §67.4): it starts nothing, no move, no phase, no answer; it kneels and waits
+            if (move >= 0) stop();
+            string.clear();
+            pendingPhase = -1;
+            boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_BROKEN);
+            return;
+        }
         if (mind != null) mind.watch(boss.getTarget(), level.getGameTime());
         if (move >= 0) {
             step(level);

@@ -998,6 +998,17 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.core.api.Strikes` additions (§67): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
+  told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
+  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
+  body held broken for its last stand, and whether a blow now landing is an Execution's).
+- `dev.awaken.core.api.Lasting` (§67.1) — an interface an item class of ours names to be never destroyed by wear:
+  `setDamage` stops a use short of breaking, `getMaxDamage` carries a stack's own count over a change of numbers
+  (`formerUses()`), `wornOut(stack)`, `nearlyWornOut(stack)`, `tooltip`, `tell`; `WORN_OUT_SHARE` 0.5.
+- `dev.awaken.core.api.Shots` (client, §67.4) — the game's one cinematic camera for any module: `Shot` (`pose(t, out)`,
+  `length()`, `tick`, `finished`), `take(shot)`, `finish(reason)`, `active()`; the opening installs its `OpeningCamera`.
 - `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
   the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
 - `dev.awaken.core.api.GroundPiece` (§28.9, §21.11) — `usesGround(WorldGenLevel, ChunkGenerator, x, z, r)`: a structure piece whose
@@ -24490,3 +24501,100 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
 - Tests: `gear_lasts` (a weapon and a piece of armour of ours at their last use stay and are worn out; the worn-out
   weapon's attack damage is halved and mending restores it; an axe costs one use a blow; an old Armoury count keeps its
   quarter), `gear_armour_wear` (twenty light blows cost a piece about a quarter of their damage, not twenty).
+
+**67.2 A ring you can read (decisions 4 to 6).** Modules `aim` (the ring), `mobs` (the clock), `arms` (the glint, the answer).
+- **Why.** The ring read a tell's count, which the server re-sends only on every fourth tick of a wind-up
+  (`FightRunner.step`, `AbilityRunner.windup`: `(t & 3) == 0`; plain melee every second) and clears on the wind-up's last
+  tick, a tick or more before the blow lands; `Reticle` drew `(count - partialTick) / total`. So it moved in four jumps with
+  a tremble and vanished a quarter open (CI run 42977120489, the Ringer's Swing: four sizes only, 377, 317, 266 and 223
+  px, still open as the bell came across). The LIGHT glint waited for a count of exactly 5, which a count stepping 16,
+  12, 8, 4 never shows.
+- **One clock** (`mobs.client.TellClock`, installed as `Strikes.Coming`). A blow's time is fixed once and counted on one
+  clock; a later count is never read for time. A kit body's move: from its synced start (`kitStart`), its move table and
+  `ServerPace.since` (a double difference; `ServerPace.now` is a float of game time and too coarse in an old world) to
+  `windup + hold + 1 + k`, `k` the first active tick whose capsules reach where you stand by the server's own rule
+  (`mobs.boss.KitReach.firstTouch`, which `FightRunner.world` and `touches` now call too). `k` is set as the move begins,
+  follows you at most half a tick a tick while you move about a sweep, and is fixed for the last 5 ticks; with no tick
+  reaching you the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
+  release) counts to its release and has no band (`Strikes.lands`). Any other body: from the count it first showed, on the
+  client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
+- **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
+  rings and closes in a straight line of time, steady in brightness, onto the lock ring as the blow lands; it lingers
+  0.6 ticks closed. A held blow's ring simply comes later.
+- **The band** (art `band3/4/5` from `tools/art/specs/aim_reticle.py`, drawn 3.2 lock rings wide): the ground the ring
+  crosses while a guard raised now turns the blow aside, for the held weapon's window (its guard's `deflect` ticks for a
+  LIGHT or HEAVY blow, its dodge's `evade` ticks for a red or violet one; no band with no style in hand). It is lit, ring
+  and band white, from `window - BAND_EARLY` 0.5 ticks down to `BAND_LATE` 0.75 ticks before the blow: the margins a
+  press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
+- **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
+  `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
+  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
+  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+- **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
+  (`boss_ring`). The out-of-view arcs brighten on the same clock.
+- **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
+  count's cue.
+- **Development count** (stage 0; development runs only): each answered blow logs `[fights] ring: DEFLECT with the ring at
+  +0.31 ticks; guard raised at 2.40 ticks (in the band)`, and leaving the world logs the totals (blows answered, the
+  ring's average and worst offset, guards raised in the band and how many of those deflected). The black box is also
+  kept under its own time, the last five (`logs/arms-blackbox-<time>.tsv`).
+- Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
+- Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
+
+**67.3 A parry that feels great (decision 7): built by the weapon-feel session in `arms`, recorded in §25.** The contract:
+three sizes of clash by what was turned aside (a LIGHT blow / a HEAVY blow / the blow that makes it reel or breaks its
+stance): freeze 110 / 160 / 200 ms (was 100), view kick 2.6 / 4.0 / 4.5 degrees of pitch with 1.6 / 2.4 / 2.8 of roll (was
+1.8 and 1.2), a shake of 4 / 6 / 8 ticks, the field of view in 4.5% / 6% / 8% (was 3.5%), sparks x2.5 and a white-gold
+flash at the meeting, wider by size, the frame's edges for the third; sounds from Minecraft's own recordings by the boss
+weapon's material with no layer pitched above 1.2 (was an anvil at 0.45 volume pitched 1.6 over a shield block), three
+candidates a size on the local listening page; a block keeps its thud and gets no flash. The size rides in the DEFLECT
+reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third. The ring's own burst is §67.2's.
+
+**67.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
+Execution), `opening` (the camera), `living` (the plate's words).
+- **The last stand** (`AwakenBoss.lastStand`, from `die`). A boss whose fight script says `"finish": true` (the three
+  pilots: `proving_ringer`, `hive_regent`, `gearwright_colossus`; `FightScripts.Fight.finish`, default false) doesn't fall
+  to a player's killing blow: it is held at one health, **beaten** (`F_BEATEN`, synced, never saved), every move and phase
+  stopped (`FightRunner.tick` only holds its kneel), a flier grounded, its helpers killed, its stance held broken for
+  `BEATEN_TICKS` 400 (`Strikes.beaten`, Arms' `ArmsServer.beaten`), its bar empty, a low toll. Beaten, nothing hurts it but
+  the finishing blow, and it harms nobody: whatever of its is still in the air lands on no one (`mobs.entity.Finishers`,
+  first of the damage listeners). The plate reads "It's beaten. Hold {attack} to finish it" (`awaken.plate.beaten`). Left
+  alone for 20 s it dies its plain death, credited to whoever beat it. What isn't a player's (a fall, the void, a
+  command) kills it plainly at any time. `/awaken bosses finishing on|off` is the rule's switch.
+- **The finishing blow** is the weapon's own Execution: a heavy held and let go on the beaten body, as on any broken
+  stance (`Strikes.executing`: Arms says whether the blow now landing is one), or an Execution that takes a boss's last
+  health without the wait. That blow is the kill: the body dies as it always did, and the server says so once
+  (`mobs_finish`: the body, the striker, the ticks its ending plays) to everyone within 64 blocks. The striker can't be
+  hurt until the ending is over (`Finishers.safe`).
+- **As it is shown** (`mobs.client.finish.FinishClient`; one fixed sequence from that one word). For everyone: the blow's
+  light (a white-gold and a body-coloured flare, sparks the way the blow went, Minecraft's heaviest impact by name,
+  `mobs.finish.blow`), then the body's own ending: its `death` clip with its light leaving it, no vanilla red flash
+  (`KitRenderer`) and no white puff (`AwakenBoss.makePoofParticles`: a last flare and its light let go). For the
+  striker: both bodies held 280 ms, one white frame, the frame's bars (11.5% each, which also begin to close while the
+  attack key is held on a beaten body in reach), and in the cinematic view the camera out of their eyes
+  (`core.api.Shots`, the opening's `OpeningCamera`): a low shot to one side of the two bodies and a little behind the
+  striker, pushing in slowly for 6 ticks and the ending (26 to 66), then 10 ticks back into their eyes; the HUD's other
+  layers are not drawn while it runs. Three framings are tried (its left, its right, high behind), each with both ends
+  of the push in open air and in sight of both bodies; none clear, or `OWN_EYES`, or reduced motion: the same beats with
+  no camera move. `finishingBlows` in `awaken-mobs-client.toml`: `CINEMATIC` (default), `OWN_EYES`, `OFF`.
+- **Skipping:** an ending watched once (`endingsSeen`, kept in the client's settings) is skipped by holding Sneak for
+  half a second; the hint shows in the lower bar.
+- **Where this differs from the approved page** (the page's storyboard assumed a new move filmed from its start): the cut
+  comes as the blow lands, since the blow is the player's own Execution through their own hands and the server's word
+  for the kill is the only trigger (one side decides; nothing is predicted). So the finishing move is each style's own
+  charged heavy and Execution, with no second beat and no slowed swing; the endings are each body's own death clip in
+  its own light, with no family's "last word" authored yet; the sequence runs about 2 to 4 s from the blow. The
+  sixteen styles' finishing moves and the authored endings are the roll-out's work, after the pilots are played.
+- Tests: `fights_last_stand` (beaten at one health; an ordinary blow does nothing; a boss without an ending dies as
+  before; what nothing withstands kills), `fights_last_stand_ends` (it waits, harms nobody, and dies after 400 ticks).
+
+**67.5 Found in passing (decision 12, and what waits).**
+- **The autosave waits while a boss fights** (`mobs.entity.FightSaves`): while a boss with a fight has a player for its
+  target (or waits beaten), each level's chunks are kept from the autosave (`ServerLevel.noSave`, only where it was on);
+  15 s after the last such tick (`AFTER` 300) they are let go and saved once. A fight over ten minutes lets a save through
+  (`MAX_HOLD`), the server stopping lets go first, and `/awaken bosses saves hold|free` is the switch. A crash in the
+  middle of a boss fight loses that fight's minutes of the world.
+- Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
+- Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
+  body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+

@@ -417,8 +417,8 @@ public class AwakenBoss extends AwakenMob {
                 // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §67.5)
                 if (getTarget() instanceof Player || beatenTicks > 0) FightSaves.fighting(level);
             }
-            if (!f.busy()) checkPhase(level);
-        } else if (abilities != null && abilities.active() == null) checkPhase(level);
+            if (!f.busy() && beatenTicks == 0) checkPhase(level); // a beaten body crosses no more thresholds
+        } else if (abilities != null && abilities.active() == null && beatenTicks == 0) checkPhase(level);
         if (tickCount % 20 == 0) arena(level);
     }
 
