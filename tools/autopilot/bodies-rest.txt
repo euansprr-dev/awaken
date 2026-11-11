@@ -1,0 +1,296 @@
+# A body rests on the ground, never in it (SPEC §47.12; Euan's playtest 2026-11-11, a Plumed Coil's carcass sunk into
+# jungle grass and shimmering). Bodies of several kinds on several grounds, close and low: each one standing, then
+# struck down by you (so a beast leaves its body to carve), mid-fall, at the end of its fall, and lying as a carcass.
+# 1. the Plumed Coil killed on the wing over jungle grass (short grass and flowers on it); 2. the Old Antler on bottom
+# slabs; 3. the Briar Sow on snow three layers deep; 4. a Frost Stag (a wild rig) on stone at the foot of a step;
+# 5. a sheep (vanilla's flip, its wool) on carpet; 6. a cow on a dirt path; 7. the Mycelord on grass; 8. a Thousandfoot
+# and a zombie (vanilla's humanoid) on slabs; 9. a Pollen Grazer and a Hushling on grass; 10. a levelled form on grass.
+world bodyrest creative 4242
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+cmd tp @s 40.5 201 0.5 0 0
+cmd forceload add -16 -16 136 16
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule max_block_modifications 1000000
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+wait 100
+# the studio: a grass floor at y 200 with the air cleared over it, twice (a fill into chunks still arriving can miss)
+cmd fill -8 200 -8 130 200 8 minecraft:grass_block
+cmd fill -8 201 -8 130 230 8 minecraft:air
+wait 40
+cmd fill -8 200 -8 130 200 8 minecraft:grass_block
+cmd fill -8 201 -8 130 230 8 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..200]
+wait 5
+# 1. jungle grass at x 0: short grass, ferns and flowers on the grass (no ground: the body lies on the grass block)
+cmd fill -3 201 -3 3 201 3 minecraft:short_grass
+cmd fill -1 201 -2 0 201 -1 minecraft:fern
+cmd setblock 1 201 1 minecraft:poppy
+cmd setblock -2 201 0 minecraft:dandelion
+cmd setblock 2 201 -2 minecraft:blue_orchid
+# 2. bottom slabs at x 12
+cmd fill 9 201 -3 15 201 3 minecraft:stone_slab[type=bottom]
+# 3. snow three layers deep at x 24
+cmd fill 21 201 -3 27 201 3 minecraft:snow[layers=3]
+# 4. stone at x 36, with a step one block high behind the middle
+cmd fill 33 200 -3 39 200 3 minecraft:stone
+cmd fill 33 201 -3 39 201 -1 minecraft:stone
+# 5. carpet at x 48
+cmd fill 45 201 -3 51 201 3 minecraft:white_carpet
+# 6. a dirt path at x 60, farmland beside it
+cmd fill 57 200 -3 63 200 3 minecraft:dirt_path
+cmd fill 62 200 -3 63 200 3 minecraft:farmland
+# 7. plain grass at x 72; 8. slabs at x 84 (oak, a second kind of slab)
+cmd fill 81 201 -3 87 201 3 minecraft:oak_slab[type=bottom]
+# 9. grass at x 96 and 108; 10. grass at x 120
+wait 40
+cmd gamemode spectator
+wait 5
+
+# ---- 1. the Plumed Coil, killed on the wing three and a half blocks over jungle grass -------------------------------
+cmd tp @s 3.5 200.2 4.5 143 2
+look 143 2
+cmd summon awaken:plumed_coil 0.5 204.5 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot coil_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 10
+shotnow coil_01_falling
+wait 14
+shotnow coil_02_landed
+wait 16
+shotnow coil_03_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot coil_04_carcass
+cmd tp @s 0.5 200.0 3.6 180 12
+look 180 12
+wait 10
+shotnow coil_05_carcass_close
+cmd tp @s -2.5 200.6 -2.5 -45 20
+look -45 20
+wait 10
+shotnow coil_06_carcass_side
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 2. the Old Antler on bottom slabs ---------------------------------------------------------------------------------
+cmd tp @s 16.5 200.6 5.5 140 4
+look 140 4
+cmd summon awaken:old_antler 12.5 201.5 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot antler_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 14
+shotnow antler_01_falling
+wait 24
+shotnow antler_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot antler_03_carcass
+cmd tp @s 12.5 200.4 4.8 180 10
+look 180 10
+wait 10
+shotnow antler_04_carcass_close
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 3. the Briar Sow on snow three layers deep ------------------------------------------------------------------------
+cmd tp @s 27.5 200.4 4.5 143 4
+look 143 4
+cmd summon awaken:briar_sow 24.5 201.4 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot sow_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 14
+shotnow sow_01_falling
+wait 24
+shotnow sow_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot sow_03_carcass
+cmd tp @s 24.5 200.2 3.8 180 12
+look 180 12
+wait 10
+shotnow sow_04_carcass_close
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 4. a Frost Stag on stone at the foot of a step --------------------------------------------------------------------
+cmd tp @s 39.5 200.3 4.5 143 2
+look 143 2
+cmd summon awaken:frost_stag 36.5 201 0.2 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot stag_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 14
+shotnow stag_01_falling
+wait 24
+shotnow stag_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot stag_03_carcass
+cmd tp @s 33.0 200.3 1.5 -90 8
+look -90 8
+wait 10
+shotnow stag_04_carcass_side
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 5. a sheep on carpet --------------------------------------------------------------------------------------------
+cmd tp @s 50.5 199.8 3.5 143 6
+look 143 6
+cmd summon minecraft:sheep 48.5 201.1 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f],Color:14}
+wait 30
+shot sheep_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 8
+shotnow sheep_01_falling
+wait 10
+shotnow sheep_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot sheep_03_carcass
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 6. a cow on a dirt path -------------------------------------------------------------------------------------------
+cmd tp @s 62.5 199.8 3.5 143 6
+look 143 6
+cmd summon minecraft:cow 60.5 201 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot cow_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 8
+shotnow cow_01_falling
+wait 10
+shotnow cow_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot cow_03_carcass
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 7. the Mycelord on grass ------------------------------------------------------------------------------------------
+cmd tp @s 77.5 200.6 6.5 143 4
+look 143 4
+cmd summon awaken:mycelord 72.5 201 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+wait 30
+shot myco_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 18
+shotnow myco_01_falling
+wait 20
+shotnow myco_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot myco_03_carcass
+cmd kill @e[tag=body]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 8. a Thousandfoot and a zombie on slabs ---------------------------------------------------------------------------
+cmd tp @s 87.5 200.4 4.5 143 4
+look 143 4
+cmd summon awaken:thousandfoot 84.5 201.5 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+cmd summon minecraft:zombie 86.5 201.5 -1.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body2"],Rotation:[90f,0f]}
+wait 30
+shot slab_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd data merge entity @e[tag=body2,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+cmd damage @e[tag=body2,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 12
+shotnow slab_01_falling
+wait 6
+shotnow slab_02_zombie_down
+wait 18
+shotnow slab_03_end
+cmd kill @e[tag=body]
+cmd kill @e[tag=body2]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 9. a Pollen Grazer and a Hushling on grass ------------------------------------------------------------------------
+cmd tp @s 99.5 200.3 4.5 143 3
+look 143 3
+cmd summon awaken:pollen_grazer 96.5 201 0.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body"],Rotation:[90f,0f]}
+cmd summon awaken:hushling 98.5 201 -1.5 {NoAI:1b,PersistenceRequired:1b,Tags:["body2"],Rotation:[90f,0f]}
+wait 30
+shot grass_00_alive
+cmd data merge entity @e[tag=body,limit=1] {NoAI:0b}
+cmd data merge entity @e[tag=body2,limit=1] {NoAI:0b}
+cmd damage @e[tag=body,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+cmd damage @e[tag=body2,limit=1] 10000 minecraft:player_attack by @a[limit=1]
+wait 20
+shotnow grass_01_falling
+wait 30
+shotnow grass_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot grass_03_carcass
+cmd kill @e[tag=body]
+cmd kill @e[tag=body2]
+cmd kill @e[type=!minecraft:player,distance=..20]
+wait 5
+
+# ---- 10. a levelled form on grass ------------------------------------------------------------------------------------
+cmd tp @s 120.5 201 -6.5 0 0
+cmd awaken living formrow pig
+wait 40
+cmd kill @e[type=!minecraft:player,type=!minecraft:pig,distance=..20]
+cmd tp @s 123.5 200.3 -2.5 143 4
+look 143 4
+wait 20
+shot form_00_alive
+cmd damage @e[type=minecraft:pig,limit=1,sort=nearest] 10000 minecraft:player_attack by @a[limit=1]
+wait 10
+shotnow form_01_falling
+wait 12
+shotnow form_02_end
+wait 40
+cmd kill @e[type=minecraft:item,distance=..200]
+wait 10
+shot form_03_carcass
+cmd awaken living formclear
+wait 20
+info
+quit
