@@ -294,6 +294,11 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         return mouthFeet;
     }
 
+    /** Whether this is a stand: one great room of waves in place of a run (SPEC §50.9). */
+    public final boolean stand() {
+        return stand;
+    }
+
     public final Size size() {
         return size;
     }
