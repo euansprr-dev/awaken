@@ -243,10 +243,16 @@ final class TogetherTests {
             h.assertFalse(Fights.down(a.getUUID()), "a partner's hand held on them lifts them");
             h.assertTrue(Math.abs(a.getHealth() - a.getMaxHealth() * (float) TogetherConfig.liftHealth()) < 0.01F, "at a third of their health");
             Fights.refillGraceForTest(a.getUUID());
-            kill(h, a);
-            if (a.isAlive() && !Fights.down(a.getUUID())) a.hurtServer(h.getLevel(), h.getLevel().damageSources().fellOutOfWorld(), 100_000F); // inside the first blow's cooldown the same blow lands nothing
-            h.assertFalse(Fights.down(a.getUUID()), "once a floor: the second killing blow is the death");
-            h.assertFalse(Runs.run(a).active(), "and it ends their run as it always did (health " + a.getHealth() + ", dying " + a.isDeadOrDying() + ")");
+            a.setInvulnerableTime(0);
+            a.damageCooldownTime = 0;
+            a.setHealth(1F);
+            var generic = h.getLevel().damageSources().generic();
+            String seen = "shielded " + Fights.shieldedForTest(a.getUUID()) + ", invulnerable to it " + a.isInvulnerableTo(h.getLevel(), generic)
+                    + ", client loaded " + a.connection.hasClientLoaded() + ", changing dimension " + a.isChangingDimension();
+            boolean landed = a.hurtServer(h.getLevel(), generic, 100_000F);
+            seen += ", landed " + landed + ", health " + a.getHealth() + ", dying " + a.isDeadOrDying() + ", down " + Fights.down(a.getUUID());
+            h.assertFalse(Fights.down(a.getUUID()), "once a floor: the second killing blow is the death (" + seen + ")");
+            h.assertFalse(Runs.run(a).active(), "and it ends their run as it always did (" + seen + ")");
         } finally {
             teardown(h, g, two);
         }

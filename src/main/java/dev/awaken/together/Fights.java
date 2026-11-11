@@ -630,4 +630,8 @@ final class Fights {
     static @Nullable Down downForTest(UUID id) {
         return DOWN.get(id);
     }
+
+    static boolean shieldedForTest(UUID id) {
+        return shielded(id);
+    }
 }
