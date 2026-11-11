@@ -21992,10 +21992,12 @@ first land is The Cinder Crown (`awaken:cinder_crown`, program `awaken:ember_cou
   middle of its cell of a hex lattice (3.4 across the flats), each cell a little higher or lower than the next, the
   joints a block lower. A cliff is never one plane. What can be seen from the side is cut rock in courses with seams
   along lines of noise (`face`); a skin's `cap` chooses the top block from what the column is (`Spot`: the way it is on,
-  how its neighbours stand, whether it burns, a slow noise for beds of one thing in another).
+  how its neighbours stand, whether it burns, whether rock stands a few blocks upwind of it, a slow noise for beds of
+  one thing in another and a slower one for whole drifts). A column's facts are worked out once, by the pass that lays
+  the ground, and read back by the pass that finishes it.
 - **What burns** (`Landform.crust`, `heat`; a skin's `crust` and `fall`): channels of it run down the land, cut a block
   into the ground between banks, and pour over every ledge in their way (the fall stands in the lower column against
-  the face of the higher). They are kept off the face the way climbs.
+  the face of the higher). None crosses a way.
 - **The run is made as the land is laid out**, as a crawl's is: every den, ambush, Warden, stretch of movement, breather
   and hidden place is a leg with its site, and the same `RouteCheck` proves it. Dens' companies come from the skin
   (`herd`, `ambushPack`, `wardenPack`), gone round so no two neighbours match; the wandering packs of "The right
@@ -22014,7 +22016,10 @@ the crown ran off the top of the view). From the spit: a beach, foothills that r
 flank at about three in five, then a crag at seven in four up to a crest, and inside the crest a crater whose floor is
 the Lord's (radius 24.5, level, open to the sky, three tiers of two blocks stepping up to the crest). Radial ridges and
 gullies, benches on the flank, crags that stand up as stacks of columns, sea stacks in clusters off the shore; all of
-it gentler within 24 blocks of a way. The run at E rank, 14 legs: the way in; two dens in the foothills, the first
+it gentler within 24 blocks of a way. Four channels run down the shoulders and the back; a fifth pours straight down
+the face beside the stair, from the crest to a pool at the knee, so that something on the mountain is seen burning
+from the way in; and a vent (a knoll of columns with a fall down the side that faces the way in) stands beside the
+approach a little past the first den, wherever there is room for it. The run at E rank, 14 legs: the way in; two dens in the foothills, the first
 about fifty blocks on; a den at the foot of the flank; then the flank in three arms between two hairpin terraces (each an ambush), with a den on a
 terrace either side of the **rift** on the long arm, crossed dead level on a broken bridge (gaps of three cells and two;
 a fall anywhere in the rift is caught); a goat track from the foot of the flank up to the first of those terraces, with
@@ -22028,15 +22033,22 @@ sixty blocks of it; the mountain itself is the same height. Wardens do not yet g
 landforms of the brief (the Valley, the Basin, the Causeway, the Isles) are not built: `land.params.landform` names one
 by its place in `Landform.Kind`, and anything but 0 fails loudly.
 
-**The Ember Mines' country** (`land/EmberCountry`). No new blocks: ash (`ember_ash`, lying in `ember_ash_drift`) over
-slag, cliffs and standing stones of `ember_basalt` in columns with smooth basalt for the dark courses and cracked basalt
-and ember ore along the seams, `magma_crust` in the channels and the rift with `ember_moltenfall` over the ledges, the
-sea plain water under a brown sky. What grows is what is left: burnt trees (`Snag`, mine timber, in stands with bare
+**The Ember Mines' country** (`land/EmberCountry`). No new blocks. The ground is dark and quiet: slag underfoot
+everywhere, black `ember_basalt` wherever the land stands steep (in columns, with beds of slag and smooth basalt and
+cracked basalt and ember ore along the seams), nothing mixed block by block. The pale ash (`ember_ash`, lying in
+`ember_ash_drift`) is what the wind left: on ledges and column tops, banked at the foot of walls, in the lee of rock,
+in a few broad drifts; and trodden along the way, which so shows as one pale line through the dark (the first walk had
+ash as the base and read as a tan patchwork: the gates session's look notes, 11 Nov). `magma_crust` in the channels
+and the rift with `ember_moltenfall` over the ledges; the sea is plain water. What grows is what is left: burnt trees (`Snag`, mine timber, in stands with bare
 ash between), stumps, ember crystals crowding whatever still burns, cinders. What was left behind: the miners' lamps
 every thirteen to seventeen blocks up the way and at every landing of the stair, the bridge, a ruined camp at every
 other den and a ring of standing stones at the rest. Five companies of the theme's own, two ambushes, the Ember Tyrant
-in the crater. Its own biome (`awaken:realm/cinder_crown`: brown sky, fog from 48 to 560 so the crown is in sight from
-the shore, a low warm sun at 58 degrees, ash falling) and Lens look. Rule: none yet.
+in the crater. Its own biome (`awaken:realm/cinder_crown`) and Lens look. Its hour is the last light: the sun at 79
+degrees, because under Lens's Air (§22, on by default in Cinematic and Ultra wherever the sky is the overworld's) a
+Realm's `sky_color`, `fog_color` and its look's haze are never seen, and the one thing a biome still chooses is where
+the sun stands; 79 puts the Air in its dusk band (gold toward the sun, violet away, long shadows). The biome's brown
+sky and fog from 48 to 560 show only with the Air off. Client air: embers, wind, smoke, dust (the `ash` kind's flakes
+draw too large near the eye; the biome's own ash particles fall instead). Rule: none yet.
 
 Tests `realm_cinder_crown_walks_to_everything` (seeds 1 and 2: the walk, the route check, the door) and
 `realm_cinder_crown_nothing_floats` (`kit/land/LandTests`). Tour `tools/autopilot/realm-cinder_crown.txt`.
