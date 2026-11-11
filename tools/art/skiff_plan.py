@@ -96,10 +96,10 @@ def skiff():
     add(0, -3, -1, TRIM)
     add(0, -3, 1, TRIM)
     # the gunwales: low, capped in gold, open at the pier's gangway (-x, z 0)
-    for z in range(-2, 4):
+    for z in range(-2, 3):
         if z != 0:
-            add(-2, 1, z, gunwale({"west"} | ({"south"} if z == 3 else set())))
-        add(2, 1, z, gunwale({"east"} | ({"south"} if z == 3 else set())))
+            add(-2, 1, z, gunwale({"west"}))
+        add(2, 1, z, gunwale({"east"}))
     for z in (4, 5):
         add(-1, 1, z, gunwale({"west"} | ({"south"} if z == 5 else set())))
         add(1, 1, z, gunwale({"east"} | ({"south"} if z == 5 else set())))
@@ -112,7 +112,7 @@ def skiff():
     # the stem, the bowsprit and the bow light, all under the helm's line of sight
     add(0, 1, 7, stair("south", False))
     add(0, 1, 8, spar("z"))
-    add(0, 1, 9, spar("z"))
+    add(0, 1, 9, spar("y"))
     add(0, 2, 9, lamp("blue"))
     # two steps up to the quarterdeck, the helm at its front edge
     add(-1, 1, -2, stair("north", False, "minecraft:spruce_stairs"))
@@ -122,10 +122,10 @@ def skiff():
     add(-1, 1, 2, "awaken:cask[orient=upright]")
     add(1, 1, 2, "awaken:cargo_crate")
     add(1, 1, 3, "awaken:sack[count=2,fill=grain]")
-    # the sternpost, the wheel's axle and the stern light
+    # the sternpost (the wheel's hub is fixed to its head) and the stern light on top of it
     add(0, 2, -6, spar("y"))
     add(0, 3, -6, spar("y"))
-    add(0, 4, -6, spar("z"))
+    add(0, 4, -6, spar("y"))
     add(0, 5, -6, lamp("blue"))
     # the wind-wheel: four canvas blades on a brass hub, the same from every quarter turn
     hx, hy, hz = HUB
@@ -143,6 +143,8 @@ def skiff():
     # the wings: a boom from a king post on each gunwale, canvas swept back from it
     span = {2: 8, 1: 7, 0: 6, -1: 5, -2: 4}
     for side, rig in ((1, WING_A), (-1, WING_B)):
+        # the wing's mount: a brass block at the hull's shoulder (it closes the gunwale there), the king post on it
+        add(side * 2, 1, 3, BRASS)
         add(side * 2, 2, 3, spar("y"))
         add(side * 2, 3, 3, spar("y"))
         for x in range(3, 9):
@@ -175,7 +177,7 @@ def jetty():
             add(-6, y, z, fence)
     for z in range(-8, -3):
         add(-8, 3, z, "awaken:slate_tile_stairs[facing=east,half=bottom]")
-        add(-7, 3, z, "awaken:slate_tile_slab[type=top]")
+        add(-7, 3, z, "awaken:slate_tiles")
         add(-6, 3, z, "awaken:slate_tile_stairs[facing=west,half=bottom]")
     add(-7, 2, -6, lamp("amber", True))
     add(-8, 1, -7, "awaken:bench[facing=east]")
@@ -197,8 +199,8 @@ def jetty():
     add(-8, 8, -3, spar("y"))
     add(-8, 9, -3, spar("y"))
     add(-8, 10, -3, lamp("amber"))
-    add(-8, 7, -4, spar("z"))
-    add(-8, 7, -2, spar("z"))
+    add(-8, 7, -4, "minecraft:stripped_spruce_log[axis=z]")
+    add(-8, 7, -2, "minecraft:stripped_spruce_log[axis=z]")
     add(-8, 6, -4, lamp("amber", True))
     add(-8, 6, -2, lamp("amber", True))
     add(-8, 9, -2, sail("fore_aft", False))
@@ -308,7 +310,7 @@ COLOURS = {
     "skiff_gunwale": ((210, 164, 60), (112, 80, 46)), "skiff_helm": ((214, 168, 62), (40, 58, 84)), "skiff_lamp": ((150, 215, 255), (200, 150, 60)),
     "spruce_stairs": ((124, 92, 54), (110, 80, 46)), "spruce_planks": ((124, 92, 54), (110, 80, 46)), "stripped_spruce_log": ((120, 92, 56), (112, 84, 50)),
     "spruce_log": ((70, 48, 28), (60, 40, 24)), "spruce_fence": ((124, 92, 54), (110, 80, 46)), "slate_tile_stairs": ((120, 126, 136), (100, 106, 116)),
-    "slate_tile_slab": ((120, 126, 136), (100, 106, 116)), "cask": ((140, 100, 60), (120, 84, 50)), "cargo_crate": ((150, 110, 66), (130, 94, 56)),
+    "slate_tiles": ((120, 126, 136), (100, 106, 116)), "cask": ((140, 100, 60), (120, 84, 50)), "cargo_crate": ((150, 110, 66), (130, 94, 56)),
     "sack": ((196, 172, 120), (180, 156, 106)), "bench": ((130, 96, 58), (110, 80, 46)), "barrel": ((132, 98, 58), (116, 84, 50)),
     "notice_board": ((150, 116, 70), (120, 90, 54)), "pad": ((132, 134, 138), (112, 114, 118)), "pad_rim": ((108, 110, 114), (92, 94, 98)),
     "ground": ((92, 150, 70), (120, 86, 60)),
@@ -337,8 +339,6 @@ def boxes(state):
         return [(6, 0, 6, 10, 9, 10), (3, 9, 5, 13, 12, 11), (5, 10, 4, 11, 16, 5)]
     if name == "skiff_lamp":
         return [(5, 6, 5, 11, 14, 11), (7, 14, 7, 9, 16, 9)] if props["hanging"] == "true" else [(5, 0, 5, 11, 9, 11)]
-    if name == "slate_tile_slab":
-        return [(0, 8, 0, 16, 16, 16)]
     if name in ("bench",):
         return [(0, 0, 4, 16, 8, 12)]
     if name == "notice_board":

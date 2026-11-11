@@ -39,6 +39,10 @@ final class Moorings {
     static final int SEARCH = 20, SEARCH_STEP = 4;
     /** How far past the footprint the trees come down. */
     static final int GLADE = 6;
+    /** Past the glade, leaves with no trunk left within {@code CROWN} of them come down too, this far out. */
+    static final int FRINGE = 6, CROWN = 4;
+    /** Land this far round a mooring's spot has to be loaded before it's built (the search, the footprint, the glade and its fringe). */
+    static final int NEEDS = 47;
     /** A player this near the ridge's spot gets it built. */
     static final int BUILD_NEAR = 160;
     /** The deck stands this far over the highest ground under it: the pad's top is that ground. */
@@ -98,7 +102,7 @@ final class Moorings {
         FrontierData.Mooring m = get(server, which);
         if (m != null && m.built() && m.look() >= LOOK) return true;
         BlockPos spot = which == Which.RIDGE ? ridgeSpot(server) : landingSpot(server);
-        if (spot == null || !loaded(level, spot, SEARCH + Skiff.FOOT_Z1 + GLADE + 12)) return false;
+        if (spot == null || !loaded(level, spot, NEEDS)) return false;
         Direction facing = facing(server, which);
         if (m != null && m.built()) {
             // an older look: nobody may be mid-flight to or from it while it's swapped
@@ -145,7 +149,13 @@ final class Moorings {
                         lo = Math.min(lo, top);
                         hi = Math.max(hi, top);
                     }
-                double score = (hi - lo) * 3.0 + wet * 6 + road * 8 + Math.hypot(ox, oz) / 6;
+                // the pier's steps go down astern: where the ground falls away there they'd be a long stair on a tall wall
+                int drop = 0;
+                for (int back = 5; back <= 9; back += 4) {
+                    BlockPos c = Skiff.at(at, facing, Skiff.STEPS_X[1], 0, Skiff.STEPS_Z - back);
+                    drop = Math.max(drop, hi - level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ()));
+                }
+                double score = (hi - lo) * 3.0 + wet * 6 + road * 8 + Math.hypot(ox, oz) / 6 + Math.max(0, drop - 3) * 2.0;
                 if (score < bestScore) {
                     bestScore = score;
                     best = at;
@@ -163,17 +173,48 @@ final class Moorings {
     static void build(ServerLevel level, BlockPos origin, Direction facing, boolean landing) {
         var rot = Skiff.rotation(facing);
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
-        // a glade: the trees round the berth come down (and the snow that lay on them), so it stands in the open
+        // a glade: the trees round the berth come down, so it stands in the open
         BlockState air = Blocks.AIR.defaultBlockState();
-        for (int pass = 0; pass < 2; pass++)
-            for (int x = -Skiff.FOOT_X - GLADE; x <= Skiff.FOOT_X + GLADE; x++)
-                for (int z = Skiff.FOOT_Z0 - GLADE; z <= Skiff.FOOT_Z1 + GLADE; z++)
-                    for (int y = Skiff.PAD - 6; y <= Skiff.CLEAR_UP + 16; y++) {
-                        BlockPos p = Skiff.at(origin, facing, x, y, z);
-                        BlockState st = level.getBlockState(p);
-                        if (pass == 0 ? st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)
-                                : st.is(Blocks.SNOW) && level.getBlockState(p.below()).isAir()) level.setBlock(p, air, flags);
+        int gx = Skiff.FOOT_X + GLADE, gz0 = Skiff.FOOT_Z0 - GLADE, gz1 = Skiff.FOOT_Z1 + GLADE, y0 = Skiff.PAD - 6, y1 = Skiff.CLEAR_UP + 16;
+        for (int x = -gx; x <= gx; x++)
+            for (int z = gz0; z <= gz1; z++)
+                for (int y = y0; y <= y1; y++) {
+                    BlockPos p = Skiff.at(origin, facing, x, y, z);
+                    BlockState st = level.getBlockState(p);
+                    if (st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)) level.setBlock(p, air, flags);
+                }
+        // the crowns that hung past the glade's edge off trees that are gone: in a fringe round it, leaves with no trunk
+        // left within reach come down too, so nothing is left hanging in the air
+        int fx = gx + FRINGE + CROWN, fz0 = gz0 - FRINGE - CROWN, fz1 = gz1 + FRINGE + CROWN, wide = 2 * fx + 1;
+        boolean[] trunk = new boolean[wide * (fz1 - fz0 + 1)];
+        for (int x = -fx; x <= fx; x++)
+            for (int z = fz0; z <= fz1; z++) {
+                if (Math.abs(x) <= gx && z >= gz0 && z <= gz1) continue;
+                for (int y = y0; y <= y1; y++)
+                    if (level.getBlockState(Skiff.at(origin, facing, x, y, z)).is(BlockTags.LOGS)) {
+                        trunk[(z - fz0) * wide + x + fx] = true;
+                        break;
                     }
+            }
+        for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
+            for (int z = gz0 - FRINGE; z <= gz1 + FRINGE; z++) {
+                if (Math.abs(x) <= gx && z >= gz0 && z <= gz1) continue;
+                boolean held = false;
+                for (int dx = -CROWN; dx <= CROWN && !held; dx++)
+                    for (int dz = -CROWN; dz <= CROWN && !held; dz++) held = trunk[(z + dz - fz0) * wide + x + dx + fx];
+                if (held) continue;
+                for (int y = y0; y <= y1; y++) {
+                    BlockPos p = Skiff.at(origin, facing, x, y, z);
+                    if (level.getBlockState(p).is(BlockTags.LEAVES)) level.setBlock(p, air, flags);
+                }
+            }
+        // and the snow that lay on any of them
+        for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
+            for (int z = gz0 - FRINGE; z <= gz1 + FRINGE; z++)
+                for (int y = y0; y <= y1 + 1; y++) {
+                    BlockPos p = Skiff.at(origin, facing, x, y, z);
+                    if (level.getBlockState(p).is(Blocks.SNOW) && level.getBlockState(p.below()).isAir()) level.setBlock(p, air, flags);
+                }
         // clear: from the keel to the clear air above, across the whole footprint
         for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
             for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)

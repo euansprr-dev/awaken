@@ -43,29 +43,29 @@ def new(w=16, h=16, fill=CLEAR):
 
 
 def strake(im, y0, y1, rnd, rivets):
-    """One lapped navy plate: a lit top edge, a body that darkens down, a shadow under its lap, a few rivets."""
+    """One lapped navy plate: a soft lit top edge, a body that darkens down, a shadow under its lap, a rivet or two.
+    Kept low in contrast so a hull of them reads as long plating, not as courses of brick."""
     for y in range(y0, y1 + 1):
         for x in range(16):
             if y == y0:
-                c = NAVY_L
+                c = NAVY_L if rnd.random() < 0.18 else NAVY_M
             elif y == y1:
                 c = NAVY_D
             else:
-                c = NAVY_M if (y - y0) <= (y1 - y0) // 2 and rnd.random() < 0.55 else NAVY
-                if rnd.random() < 0.06:
+                c = NAVY_M if (y - y0) == 1 and rnd.random() < 0.4 else NAVY
+                if rnd.random() < 0.05:
                     c = NAVY_D
             im.putpixel((x, y), c)
     for x in rivets:
-        im.putpixel((x, y0 + 2), NAVY_H)
-        im.putpixel(((x + 1) % 16, y0 + 2), NAVY_D)
+        im.putpixel((x, y0 + 2), NAVY_L)
 
 
 def hull():
     rnd = random.Random(67)
     im = new()
-    strake(im, 0, 4, rnd, (3, 11))
-    strake(im, 5, 9, rnd, (7, 15))
-    strake(im, 10, 15, rnd, (3, 11))
+    strake(im, 0, 4, rnd, (3,))
+    strake(im, 5, 9, rnd, (11,))
+    strake(im, 10, 15, rnd, (6,))
     return im
 
 
@@ -78,8 +78,8 @@ def strake_side():
         im.putpixel((x, 1), GOLD)
         im.putpixel((x, 2), GOLD_M if x % 4 else GOLD_D)
         im.putpixel((x, 3), GOLD_S)
-    strake(im, 4, 9, rnd, (5, 13))
-    strake(im, 10, 15, rnd, (1, 9))
+    strake(im, 4, 9, rnd, (5,))
+    strake(im, 10, 15, rnd, (12,))
     return im
 
 
@@ -293,11 +293,12 @@ def soft(size, seed, lumps):
 
 
 def streak():
-    im = new()
-    for x in range(16):
-        a = int(230 * math.sin(math.pi * (x + 0.5) / 16) ** 1.5)
-        im.putpixel((x, 7), (255, 255, 255, a))
-        im.putpixel((x, 8), (255, 255, 255, a // 3))
+    """A hair of wind: one texel thick on a 32 sprite, so a streak six blocks long is a fifth of a block wide."""
+    im = new(32, 32)
+    for x in range(32):
+        a = int(220 * math.sin(math.pi * (x + 0.5) / 32) ** 1.5)
+        im.putpixel((x, 15), (255, 255, 255, a))
+        im.putpixel((x, 16), (255, 255, 255, a // 4))
     return im
 
 
@@ -453,6 +454,13 @@ def main():
         sheet = Image.new("RGBA", (len(tiles) * (16 * sc + 8), 16 * sc + 8), (58, 62, 74, 255))
         for i, (name, im) in enumerate(tiles):
             big = im.resize((16 * sc, 16 * sc), Image.NEAREST)
+            if name == "skiff_hull":
+                # two by two, the way a hull shows it
+                small = im.resize((8 * sc, 8 * sc), Image.NEAREST)
+                big = Image.new("RGBA", (16 * sc, 16 * sc))
+                for ox in (0, 8 * sc):
+                    for oy in (0, 8 * sc):
+                        big.paste(small, (ox, oy))
             sheet.paste(big, (i * (16 * sc + 8) + 4, 4), big)
         sheet.save(sys.argv[1])
 

@@ -26,20 +26,21 @@ cmd effect give @s minecraft:saturation 100000 10 true
 cmd awaken frontier status
 cmd awaken frontier ready
 # the landing first, once, so its land is made and its mooring built: the flight out then times the way it does in play
-# (a new world's far land can take most of WAIT_MAX to generate on the runner, and every shot would land in the cloud)
+# (a new world's far land can take most of WAIT_MAX to generate on the runner, and every shot would land in the cloud).
+# A shot waits for the land to be drawn, which a wait on the runner doesn't: so a picture is taken to wait on.
 cmd awaken frontier goto landing
-wait 120
+shot fl_a_landing_land_loading
 cmd awaken frontier goto landing
-wait 120
+wait 40
 cmd awaken frontier goto landing
-wait 60
+shot fl_b_landing_helm_first_sight
 # the ridge: its land loads, the mooring is built, then we stand at its helm
 cmd awaken frontier goto ridge
-wait 120
+shot fl_c_ridge_land_loading
 cmd awaken frontier goto ridge
-wait 120
+wait 40
 cmd awaken frontier goto ridge
-wait 60
+wait 40
 cmd awaken frontier status
 cmd gamemode spectator
 cmd awaken frontier look ridge 0

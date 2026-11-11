@@ -68,7 +68,7 @@ final class FlightAir {
             double ahead = 26 + r.nextDouble() * 40, ang = r.nextDouble() * Math.PI * 2, rad = 3.5 + r.nextDouble() * 15;
             double a = Math.cos(ang) * rad, b = Math.sin(ang) * rad * 0.7;
             Air s = make(FrontierModule.P_STREAK.get(), ex + hx * ahead + rx * a + ux * b, ey + hy * ahead + uy * b, ez + hz * ahead + rz * a + uz * b,
-                    0, 0, 0, 0xF4FAFF, 1.4F + speed * 0.9F, 0.34F, 30);
+                    0, 0, 0, 0xF4FAFF, 2.2F + speed * 1.5F, 0.42F, 30);
             if (s != null) s.along((float) hx, (float) hy, (float) hz);
         }
         int wisps = cloud > 0.02F ? (int) (cloud * 3.2F + r.nextFloat()) : r.nextFloat() < 0.12F ? 1 : 0;
