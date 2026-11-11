@@ -76,6 +76,7 @@ final class EnchantTests {
         AwakenTests.register("enchant_glyphs", 20, EnchantTests::glyphs);
         AwakenTests.register("enchant_door", 20, EnchantTests::door);
         AwakenTests.register("enchant_lantern", 60, EnchantTests::lantern);
+        AwakenTests.register("enchant_new_words", 20, EnchantTests::newWords);
         AwakenTests.registerIsolated("enchant_inscribe", 100, EnchantTests::inscribe);
         AwakenTests.registerIsolated("enchant_tasks", 100, EnchantTests::tasks);
     }
@@ -129,12 +130,12 @@ final class EnchantTests {
      */
     private static void rule(GameTestHelper h) {
         Registry<Enchantment> reg = reg(h);
-        h.assertTrue(Inscriptions.ALL.size() == 31, "thirty-one enchantments (the thirty and Lantern)");
+        h.assertTrue(Inscriptions.ALL.size() == 36, "thirty-six enchantments (the thirty and the six new words)");
         for (int i = 0; i < Inscriptions.ALL.size(); i++) {
             Inscriptions.Entry e = Inscriptions.ALL.get(i);
             h.assertTrue(e.no() == i + 1, e.name() + " is number " + (i + 1));
             h.assertTrue(reg.get(e.key()).isPresent(), e.id() + " exists");
-            h.assertTrue(!e.gate().isEmpty() || e.market() || e.books(), e.name() + " has a way in");
+            h.assertTrue(!e.gate().isEmpty() || e.market() || e.books() || WordStones.carved(e.no()), e.name() + " has a way in");
             h.assertTrue(Marks.strokes(e.no()) >= 2 && Marks.strokes(e.no()) <= 5, e.name() + "'s glyph has 2-5 strokes");
             Enchantment en = reg.getOrThrow(e.key()).value();
             for (var bad : List.<DataComponentType<?>>of(EnchantmentEffectComponents.DAMAGE, EnchantmentEffectComponents.POST_ATTACK,
@@ -244,6 +245,49 @@ final class EnchantTests {
             h.assertTrue(h.getBlockState(at).isAir(), "a glow nobody wears clears itself: " + h.getBlockState(at));
             h.succeed();
         });
+    }
+
+    /**
+     * The other five new words (SPEC §45.16): where each goes and which Lord carries it, the vanilla five those Lords
+     * carried still having a way in, Regrowth never sharing a piece with Mending, a piece's memory (new names only,
+     * twelve at most, only on a piece that carries the word), and Gather taking what fell into the pack.
+     */
+    private static void newWords(GameTestHelper h) {
+        String[][] lords = {{"glass_desert", "wayfarer"}, {"precursor_lab", "gather"}, {"overgrown_temple", "regrowth"}, {"drowned_archive", "remembrance"}};
+        for (String[] l : lords) {
+            Inscriptions.Entry e = Inscriptions.ofGate(l[0]);
+            h.assertTrue(e != null && e.id().getPath().equals(l[1]), "the Lord of " + l[0] + " carries " + l[1] + ": " + e);
+        }
+        for (String moved : new String[]{"unbreaking", "respiration", "blast_protection", "projectile_protection"}) {
+            Inscriptions.Entry e = Inscriptions.of(Identifier.parse("minecraft:" + moved));
+            h.assertTrue(e != null && e.gate().isEmpty() && e.market() && e.books() && WordStones.carved(e.no()), moved + " is sold, found in old books and carved on a Word Stone");
+        }
+        h.assertTrue(WordStones.carved(36) && Inscriptions.ALL.get(35).id().getPath().equals("long_arm"), "Long Arm is carved on the sky platforms' stones");
+        ItemStack boots = new ItemStack(Items.IRON_BOOTS), chest = new ItemStack(Items.IRON_CHESTPLATE), pick = new ItemStack(Items.IRON_PICKAXE), sword = new ItemStack(Items.IRON_SWORD);
+        h.assertTrue(EnchantRules.fits(boots, ench(h, "awaken:wayfarer")) && !EnchantRules.fits(chest, ench(h, "awaken:wayfarer")), "Wayfarer goes on boots only");
+        h.assertTrue(EnchantRules.fits(chest, ench(h, "awaken:long_arm")) && !EnchantRules.fits(boots, ench(h, "awaken:long_arm")), "Long Arm goes on chestplates only");
+        h.assertTrue(EnchantRules.fits(pick, ench(h, "awaken:gather")) && EnchantRules.fits(sword, ench(h, "awaken:gather")) && !EnchantRules.fits(chest, ench(h, "awaken:gather")), "Gather goes on weapons and tools");
+        h.assertTrue(EnchantRules.fits(chest, ench(h, "awaken:regrowth")) && EnchantRules.fits(pick, ench(h, "awaken:remembrance")), "Regrowth and Remembrance go on anything that wears");
+        h.assertFalse(Enchantment.areCompatible(ench(h, "awaken:regrowth"), reg(h).getOrThrow(Enchantments.MENDING)), "Regrowth never shares a piece with Mending");
+        h.assertTrue(EnchantGoals.tab(Inscriptions.ALL.get(35)) == dev.awaken.core.api.Goals.Goal.ARMOUR, "Long Arm's steps sit on the Armour tab");
+
+        // a piece's memory
+        h.assertFalse(Words.remember(sword.copy(), "the Bell Warden"), "a piece without the word keeps nothing");
+        ItemStack keeps = with(new ItemStack(Items.IRON_SWORD), ench(h, "awaken:remembrance"), 1);
+        h.assertTrue(Words.remember(keeps, "the Bell Warden") && !Words.remember(keeps, "the Bell Warden"), "a name is kept once");
+        for (int i = 0; i < 14; i++) Words.remember(keeps, "Beast " + i);
+        List<String> names = keeps.get(EnchantContent.REMEMBERED.get()).names();
+        h.assertTrue(names.size() == Words.Remembered.MAX && names.getLast().equals("Beast 13") && !names.contains("the Bell Warden"), "twelve at most, the oldest going first: " + names);
+
+        // Gather: what fell goes into the pack, and leaves the ground
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        h.assertTrue(Words.gather(with(new ItemStack(Items.IRON_PICKAXE), ench(h, "awaken:gather"), 2)) == 2 && Words.gather(pick) == 0, "Gather's level is read off the tool");
+        List<net.minecraft.world.entity.item.ItemEntity> drops = new java.util.ArrayList<>();
+        drops.add(new net.minecraft.world.entity.item.ItemEntity(h.getLevel(), p.getX(), p.getY(), p.getZ(), new ItemStack(Items.COBBLESTONE, 3)));
+        int took = Words.pull(p, drops, p.getX(), p.getY(), p.getZ()), have = 0;
+        for (int i = 0; i < p.getInventory().getContainerSize(); i++) if (p.getInventory().getItem(i).is(Items.COBBLESTONE)) have += p.getInventory().getItem(i).getCount();
+        h.assertTrue(took == 1 && drops.isEmpty() && have == 3, "three cobblestone came to the pack: took " + took + ", have " + have);
+        h.succeed();
     }
 
     /** A page teaches for good and is spent; a known page stays; an old book teaches only what can still be written. */

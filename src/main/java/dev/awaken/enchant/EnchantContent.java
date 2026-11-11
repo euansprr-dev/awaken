@@ -36,6 +36,7 @@ public final class EnchantContent {
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
     static final DeferredRegister<DataComponentType<?>> EFFECTS = DeferredRegister.create(Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE, Awaken.MODID);
+    static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Awaken.MODID);
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
@@ -96,6 +97,19 @@ public final class EnchantContent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> LANTERN = EFFECTS.register("lantern",
             () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
 
+    /** The rest of the new words (SPEC §45.16, {@link Words}); Long Arm is an attribute in its data alone. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> REGROWTH = EFFECTS.register("regrowth",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> REMEMBRANCE = EFFECTS.register("remembrance",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> GATHER = EFFECTS.register("gather",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> WAYFARER = EFFECTS.register("wayfarer",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    /** The names a piece with Remembrance keeps (schemaVersion 1), saved and synced with the item. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Words.Remembered>> REMEMBERED =
+            COMPONENTS.registerComponentType("remembered", b -> b.persistent(Words.Remembered.CODEC).networkSynchronized(Words.Remembered.STREAM_CODEC));
+
     /** What you know (SPEC §45.2): kept through death, synced to you alone for the book, the Journal and Tasks. */
     public static final Supplier<AttachmentType<Known>> KNOWN = ATTACHMENTS.register("enchant_known",
             () -> AttachmentType.builder(Known::fresh).serialize(Known.CODEC).copyOnDeath()
@@ -131,6 +145,7 @@ public final class EnchantContent {
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         EFFECTS.register(modBus);
+        COMPONENTS.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);
