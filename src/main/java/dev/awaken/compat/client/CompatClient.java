@@ -103,14 +103,19 @@ public final class CompatClient {
         Awaken.LOG.info("[compat] creative menu: {}", menu);
         int at = tab == null ? -1 : shown.indexOf(tab);
         if (at < 0) return "no tab " + which + " in the menu";
+        // the tab's page by the screen's own ">" button (so its "1 / 2" reads right), then a click on the tab; the page
+        // made here only gives the tab's place on it
         var page = new CreativeTabsScreenPage(new ArrayList<>(shown.subList(at / 10 * 10, Math.min(shown.size(), at / 10 * 10 + 10))));
-        screen.setCurrentPage(page);
         int left = (screen.width - 195) / 2, top = (screen.height - 136) / 2;
-        double x = left + 27 * page.getColumn(tab) + 13, y = page.isTop(tab) ? top - 16 : top + 136 + 16;
+        for (int i = 0; i < at / 10; i++) click(screen, left + 195 - 10, top - 40);
+        click(screen, left + 27 * page.getColumn(tab) + 13, page.isTop(tab) ? top - 16 : top + 136 + 16);
+        return "creative tab " + id + " (page " + (at / 10 + 1) + ", " + tab.getDisplayItems().size() + " stacks): " + tab.getDisplayName().getString();
+    }
+
+    private static void click(CreativeModeInventoryScreen screen, double x, double y) {
         var click = new MouseButtonEvent(x, y, new MouseButtonInfo(1, 0));
         screen.mouseClicked(click, false);
         screen.mouseReleased(click);
-        return "creative tab " + id + " (page " + (at / 10 + 1) + ", " + tab.getDisplayItems().size() + " stacks): " + tab.getDisplayName().getString();
     }
 
     /**
