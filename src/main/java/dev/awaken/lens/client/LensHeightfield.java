@@ -376,6 +376,7 @@ final class LensHeightfield {
 
     /** Uploads slots x0..x1 by z0..z1 at every level (at most BOX_CHUNKS of them) and marks them clean. */
     private void send(CommandEncoder encoder, int x0, int z0, int x1, int z1) {
+        dev.awaken.turbo.pixels.Pixels.mark(16); // measurement only (the GPU timing's trace)
         long to = MemoryUtil.memAddress(stage);
         for (int k = 0; k < LEVELS; k++) {
             int n = 16 >> k, w = SIZE >> k;

@@ -1,0 +1,16 @@
+ 3:14  up 1 day,  5:28, 1 user, load averages: 4.66 4.54 4.00
+120.1 670368 /System/Library/PrivateFrameworks/MediaAnalysis.framework/Versions/A/mediaanalysisd
+ 48.7 1613888 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer) --type=renderer --user-data-dir=
+ 19.0  45184 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -daemon
+ 16.0 551392 /Users/euanspencer/Library/Application Support/Claude/claude-code/2.1.321/e6736b2d954d/claude.app/Contents/MacOS/claude --output-format stream-json
+  8.4  28080 /System/Library/ExtensionKit/Extensions/WallpaperAerialsExtension.appex/Contents/MacOS/WallpaperAerialsExtension -LaunchArguments eyJ0eXBlIjoxLCJzZ
+  8.2  33200 /System/Library/Frameworks/VideoToolbox.framework/Versions/A/XPCServices/VTDecoderXPCService.xpc/Contents/MacOS/VTDecoderXPCService
+  7.3  32880 /System/Library/Frameworks/VideoToolbox.framework/Versions/A/XPCServices/VTEncoderXPCService.xpc/Contents/MacOS/VTEncoderXPCService
+  6.3 560592 /Applications/Claude.app/Contents/MacOS/Claude
+  4.4  19488 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/ContextStoreAgent
+  3.4  56480 /System/Library/Frameworks/VideoToolbox.framework/Versions/A/XPCServices/VTDecoderXPCService.xpc/Contents/MacOS/VTDecoderXPCService
+  3.4   3760 caffeinate -dimu tools/steady60-tour.sh tools/autopilot/steady60-perf12-j.txt perf12-j 2400
+  3.3   3040 /bin/zsh -c source /Users/euanspencer/.claude/shell-snapshots/snapshot-zsh-1794421797733-4y3tab.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB N
+  2.9   9152 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/Support/fseventsd
+  2.4  18400 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mds_stores
+  2.2   4080 /usr/libexec/sysmond

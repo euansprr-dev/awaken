@@ -140,7 +140,10 @@ final class LensBlocks {
                     if (level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) instanceof LevelChunk c) chunk = c;
                     else break;
                 }
-                if (read(level, chunk, slot, k)) reads++;
+                if (read(level, chunk, slot, k)) {
+                    reads++;
+                    dev.awaken.turbo.pixels.Pixels.mark(256);
+                }
             }
         }
         // look again at what is known, for blocks placed and broken. The 27 sections round the camera in turn, three a
@@ -233,6 +236,7 @@ final class LensBlocks {
             if (!dirty[slot]) continue;
             dirty[slot] = false;
             sent++;
+            dev.awaken.turbo.pixels.Pixels.mark(32); // measurement only (the GPU timing's trace)
             staging.clear();
             // texel (x, z * 8 + k): rows run z by z, each z eight rows of sixteen columns
             for (int z = 0; z < 16; z++) {

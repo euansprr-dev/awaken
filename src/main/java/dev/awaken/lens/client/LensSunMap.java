@@ -69,12 +69,14 @@ final class LensSunMap {
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(),
                     MemoryUtil.memSlice(whole, row * SIZE * 4, ROWS_PER_TICK * SIZE * 4), 0, 0, 0, row, SIZE, ROWS_PER_TICK);
             row = (row + ROWS_PER_TICK) % SIZE;
+            dev.awaken.turbo.pixels.Pixels.mark(4); // measurement only (the GPU timing's trace)
         }
         if (++since < EVERY || state != IDLE) return;
         since = 0;
         ByteBuffer into = work;
         float maxTop = height.maxTop();
         state = WORKING;
+        dev.awaken.turbo.pixels.Pixels.mark(8);
         worker.execute(() -> {
             try {
                 long t0 = System.nanoTime();

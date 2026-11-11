@@ -356,6 +356,8 @@ public final class LensClient {
     }
 
     private static void tick() {
+        // measurement only (the GPU timing's trace): a tick ran in this frame, and whether the governor stood Lens back
+        dev.awaken.turbo.pixels.Pixels.mark(tickBudget() < 500_000L ? 128 | 64 : 128);
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
