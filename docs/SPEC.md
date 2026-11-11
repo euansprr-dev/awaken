@@ -4262,7 +4262,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   or wings". The platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
   that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real
-  wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.8 of a player's), 3.1 over
+  wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
+  so the open pair turns inside the glass), 3.2 over
   the core's floor, breathing between nearly open and open, turning once in 38 seconds, lit by themselves, their halos
   behind them and their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
   faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane

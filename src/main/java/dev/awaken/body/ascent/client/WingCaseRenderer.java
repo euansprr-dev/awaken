@@ -35,8 +35,12 @@ import org.jspecify.annotations.Nullable;
 public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlockEntity, WingCaseRenderer.State> {
     /** The pair is drawn this near; the case's glass and light a little further. */
     static final double NEAR = 80;
-    /** The pair's size beside a player's (0.94), where it hangs over the core's floor, and the glass's reach. */
-    private static final float SIZE = 0.8F, HANG = 3.1F, HALF = 2F, RAIL = 1.5F, ROOF = 5F;
+    /**
+     * The pair's size beside a player's (0.94): open, a wing reaches about 50 texels from the middle with its long
+     * feathers, and the glass is two blocks out, so the pair turns inside it. Where it hangs over the core's floor, and
+     * the glass's reach.
+     */
+    private static final float SIZE = 0.64F, HANG = 3.2F, HALF = 2F, RAIL = 1.5F, ROOF = 5F;
     /** The gift: the glass is down by this age of its scene; the pair leaves at FLY_FROM and arrives as the scene's own wings open (34). */
     private static final float OPEN_TICKS = 22, FLY_FROM = 6, FLY_TICKS = 28;
 
