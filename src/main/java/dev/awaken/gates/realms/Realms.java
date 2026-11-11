@@ -33,8 +33,15 @@ public final class Realms {
         return RealmCells.cellAt(x, z) >= 0;
     }
 
+    /**
+     * The Leaper's Gauntlet as a place of its own (SPEC §17.10, the plan of 11 Nov): the trial's gate opens onto this Realm
+     * once it is there and marked ready. Until then the trial is the old course in a Foundry floor.
+     */
+    public static final String LEAPER_TRIAL = "awaken:leapers_gauntlet";
+
     /** A blueprint for a gate being made, or empty when it should be floors. */
     public static Optional<String> choose(MinecraftServer server, GatePlan plan, boolean scripted, Set<String> seen) {
+        if (level(server) != null && plan.leaperTrial() && Blueprints.get(LEAPER_TRIAL).filter(Blueprint::ready).isPresent()) return Optional.of(LEAPER_TRIAL);
         // a twist is still a floors thing until its Realm form is built (PLAN: inner Realm, sealed Mouth, events at sites)
         if (level(server) == null || scripted || plan.ritual() || plan.leaperTrial() || plan.skybornTrial() || plan.twist() != dev.awaken.gates.content.Twist.NONE) return Optional.empty();
         String f = forced;
