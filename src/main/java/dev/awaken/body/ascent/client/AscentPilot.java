@@ -159,6 +159,7 @@ public final class AscentPilot {
                 case "boom" -> glide(p, true);
                 case "soar" -> soar(p);
                 case "climb" -> climb(p);
+                case "stair" -> stair(p);
                 case "leap" -> leap(p);
                 case "spire" -> spire(p);
                 case "rappel" -> rappel(p);
@@ -430,6 +431,133 @@ public final class AscentPilot {
             }
         }
         if (age > 2400) script = "";
+    }
+
+    /** The stair's platform (its core) once found from the ground, and the stone last stood on (-1: none yet). */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos stairCore;
+    private static int stairOn = -1, stairGround;
+
+    /**
+     * Up a sky platform's stair (SPEC §17.9) as a player plays it: find the platform overhead, then look at the next
+     * stone up (the lowest one above the feet), run and hop off each stone, hold the rope through the air and let go of
+     * a swing as its glow lights; a sling or a pull up a face is held through. With no stone left above, the deck's rim
+     * nearest. On the deck, walk in to the core. Logs each stone stood on. Ends with the wings or after 3 min.
+     */
+    private static void stair(LocalPlayer p) {
+        AscentState st = AscentMoves.state();
+        if (age == 1) {
+            stairCore = platformOver(p);
+            stairOn = -1;
+            stairGround = 0;
+            Awaken.LOG.info("[ascent] pilot stair: the core {}", stairCore == null ? "not found" : stairCore.toShortString());
+        }
+        net.minecraft.core.BlockPos c = stairCore;
+        if (c == null || age > 3600) {
+            if (age > 3600) Awaken.LOG.info("[ascent] pilot stair: out of time on stone {}", stairOn);
+            script = "";
+            return;
+        }
+        int deckY = c.getY() - 1;
+        if (p.getY() > deckY + 0.5 && Math.hypot(p.getX() - c.getX() - 0.5, p.getZ() - c.getZ() - 0.5) < 12) {
+            if (AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS)) {
+                Awaken.LOG.info("[ascent] pilot stair: on the deck after {} s; the core gave wings", age / 20);
+                script = "";
+            } else if (st == AscentState.NONE && p.onGround()) {
+                if (stairOn != 99) Awaken.LOG.info("[ascent] pilot stair: on the deck after {} s", age / 20);
+                stairOn = 99;
+                walkToCore(p, c);
+            }
+            return;
+        }
+        var helix = dev.awaken.above.ruin.SkyRig.helix(c.getX(), deckY, c.getZ(), dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, p.level().getMinY());
+        // the lowest stone above the feet that stands (its grass is there), counted from the bottom
+        double tx = Double.NaN, ty = 0, tz = 0;
+        int n = helix.size(), next = -1;
+        for (int i = n - 1; i >= 0; i--) {
+            var s = helix.get(i);
+            if (s.top() + 0.5 < p.getY() || p.level().getBlockState(new net.minecraft.core.BlockPos(s.x(), s.top(), s.z())).isAir()) continue;
+            tx = s.x() + 0.5;
+            ty = s.top() + 1;
+            tz = s.z() + 0.5;
+            next = n - 1 - i;
+            break;
+        }
+        if (Double.isNaN(tx)) {
+            // over the top stone: the deck's rim nearest
+            double ox = p.getX() - c.getX() - 0.5, oz = p.getZ() - c.getZ() - 0.5, od = Math.max(1e-3, Math.hypot(ox, oz));
+            tx = c.getX() + 0.5 + ox / od * 9;
+            ty = deckY + 1;
+            tz = c.getZ() + 0.5 + oz / od * 9;
+        }
+        if (p.onGround() && st == AscentState.NONE) {
+            // stood on a stone: which one
+            for (int i = 0; i < n; i++) {
+                var s = helix.get(i);
+                if (Math.abs(p.getY() - s.top() - 1) < 0.6 && Math.hypot(p.getX() - s.x() - 0.5, p.getZ() - s.z() - 0.5) <= s.rad() + 0.6) {
+                    int k = n - 1 - i;
+                    if (k != stairOn) Awaken.LOG.info("[ascent] pilot stair: on stone {} (top {}) at {} s", k, s.top(), age / 20);
+                    stairOn = k;
+                }
+            }
+        }
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z;
+        p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+        p.setYHeadRot(p.getYRot());
+        p.setXRot((float) -(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG));
+        press(FORWARD, 2);
+        switch (st) {
+            case NONE, CARRY -> {
+                if (p.onGround()) {
+                    press(SPRINT, 2);
+                    // a few steps, then the hop; the rope is thrown in the air
+                    if (++stairGround > 3) {
+                        press(JUMP, 2);
+                        stairGround = 0;
+                    }
+                } else if (age - mark > 3) {
+                    press(TETHER, 2);
+                }
+            }
+            case TETHER -> {
+                // a swing: let go as the glow lights (the key up a few ticks), else held
+                if (AscentMoves.windowNow > dev.awaken.body.ascent.AscentSwing.T.winFrom + 0.01 || AscentMoves.stateAge > 60) {
+                    HOLD[TETHER] = 0;
+                    mark = age;
+                    Awaken.LOG.info("[ascent] pilot stair: let go toward stone {} at y {}", next, (int) p.getY());
+                } else {
+                    press(TETHER, 2);
+                }
+            }
+            default -> press(TETHER, 2);
+        }
+    }
+
+    /**
+     * The core of the sky platform over the body: the columns round it whose top stands far overhead are the deck; the
+     * core is searched for over their middle.
+     */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos platformOver(LocalPlayer p) {
+        var level = p.level();
+        double sx = 0, sz = 0;
+        int k = 0, top = 0;
+        for (int dx = -64; dx <= 64; dx += 3) for (int dz = -64; dz <= 64; dz += 3) {
+            int x = p.getBlockX() + dx, z = p.getBlockZ() + dz;
+            int h = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z);
+            if (h < p.getY() + 150) continue;
+            sx += x;
+            sz += z;
+            top = Math.max(top, h);
+            k++;
+        }
+        if (k == 0) return null;
+        int cx = (int) Math.round(sx / k), cz = (int) Math.round(sz / k);
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (int y = top; y >= top - 30; y--) for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) {
+            m.set(cx + dx, y, cz + dz);
+            if (level.getBlockState(m).is(dev.awaken.body.ascent.AscentContent.WING_CORE.get())) return m.immutable();
+        }
+        return null;
     }
 
     /**

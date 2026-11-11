@@ -735,7 +735,15 @@ public final class SwingBench {
         String end = "out of time";
         StringBuilder tr = climbTrace;
         while (sim.t < maxTicks) {
-            int target = Math.min(reached + 1, deck);
+            // the next stone is the lowest whose top is over the feet (a player looks at the one in front of them, and a
+            // flight that carries past one goes on to the next); progress is the highest one the feet have been over
+            int target = deck;
+            for (int i = 0; i < deck; i++) {
+                if (tops.get(i)[1] + 0.5 >= b.y) {
+                    target = i;
+                    break;
+                }
+            }
             if (target != built) {
                 built = target;
                 w.clear();
@@ -781,11 +789,10 @@ public final class SwingBench {
             if (!b.onGround) air++;
             if (b.onGround && !wasGround && !sim.onRope) landings++;
             wasGround = b.onGround;
-            for (int i = reached + 1; i <= Math.min(deck, reached + 3); i++) {
+            for (int i = reached + 1; i <= deck; i++) {
                 double[] q = tops.get(i);
                 double h = Math.hypot(b.x - q[0], b.z - q[2]);
-                boolean on = i == deck ? b.onGround && h <= q[3] && b.y >= q[1] + 0.95
-                        : h <= q[3] + 0.3 && b.y >= q[1] + 0.95 && b.y <= q[1] + 5;
+                boolean on = i == deck ? b.onGround && h <= q[3] && b.y >= q[1] + 0.95 : h <= q[3] + 6 && b.y >= q[1] + 0.95;
                 if (on) {
                     reached = i;
                     lastGain = sim.t;

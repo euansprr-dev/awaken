@@ -174,7 +174,7 @@ final class AscentSwingTests {
             SwingBench.heldRule = SwingBench.LIT;
             // how far a sling's aim leans toward the heading (logged, never judged): 0 is over the top it bit, 99 on the
             // heading's line
-            for (double lean : new double[] {0, 1.5, 2.5, 4, 99}) {
+            for (double lean : new double[] {0, 1.5, 2.5, 4}) {
                 AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("slingLean", lean));
                 rows.append(String.format(java.util.Locale.ROOT, "\nlean %.1f: one tree %d/%d/%d", lean, singleTrees(0.36), singleTrees(0.6), singleTrees(1.0)));
                 for (String place : new String[] {"forest", "oak", "spruce", "roofs"}) rows.append("\n  held ").append(SwingBench.bench(place, true, true));

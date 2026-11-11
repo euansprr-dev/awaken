@@ -466,10 +466,16 @@ public final class AscentSwing {
                 double sc = gauss(ahead, 16, 9) * gauss(side, 0, 7) * (0.5 + 0.5 * gauss(rise, 5, 5));
                 // the pull goes where you look, as a swing does (11 Nov 2026, Euan: a rope that swings you on beats one
                 // that pulls you at the thing): its point over the top leans toward your heading's line at the top's
-                // distance, by at most slingLean
+                // distance, by at most slingLean, where that way is clear
+                if (sc <= best) continue;
                 double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
                 double lean = ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
-                if (sc <= best || !slingClear(s, hand, px, top + t.slingOver, pz, w)) continue;
+                if (!slingClear(s, hand, px, top + t.slingOver, pz, w)) {
+                    // that way blocked: straight over the top
+                    if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w)) continue;
+                    px = hx;
+                    pz = hz;
+                }
                 best = sc;
                 out.x = hx;
                 out.y = hy;
