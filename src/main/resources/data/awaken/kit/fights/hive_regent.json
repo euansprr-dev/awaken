@@ -3,6 +3,7 @@
  "id": "hive_regent",
  "moves": "hive_regent",
  "duel": true,
+ "finish": true,
  "mind": {
   "cooldowns": {
    "rain": 240,

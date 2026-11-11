@@ -74,6 +74,14 @@ final class MobsCommands {
                                 if (why != null) c.getSource().sendFailure(Component.literal(why));
                                 return why == null ? 1 : 0;
                             })))
+                    // the finishing blow's switch (SPEC §67.4): off, every boss dies as it did before
+                    .then(Commands.literal("finishing")
+                            .then(Commands.literal("on").executes(c -> finishing(c, true)))
+                            .then(Commands.literal("off").executes(c -> finishing(c, false))))
+                    // the autosave held while a boss fights (SPEC §67.5): free, it saves as vanilla does
+                    .then(Commands.literal("saves")
+                            .then(Commands.literal("hold").executes(c -> saves(c, true)))
+                            .then(Commands.literal("free").executes(c -> saves(c, false))))
                     // the duel on cue, for tours (SPEC §47.3): stage <boss>, play <move> [then ...], deflect, break
                     .then(Commands.literal("duel").then(Commands.argument("step", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(dev.awaken.mobs.entity.DuelDemo.STEPS, b))
@@ -87,6 +95,18 @@ final class MobsCommands {
                 return ok ? 1 : 0;
             })));
         });
+    }
+
+    private static int saves(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, boolean hold) {
+        dev.awaken.mobs.entity.FightSaves.enabled = hold;
+        c.getSource().sendSuccess(() -> Component.literal(hold ? "The autosave waits while a boss fights a player." : "The autosave runs as vanilla's does, boss fight or not."), false);
+        return 1;
+    }
+
+    private static int finishing(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, boolean on) {
+        dev.awaken.mobs.entity.AwakenBoss.finishingBlows = on;
+        c.getSource().sendSuccess(() -> Component.literal(on ? "A boss with an ending dies only to a finishing blow." : "Every boss dies as it did before: no last stand."), false);
+        return 1;
     }
 
     private static int duelDemo(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, String args) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

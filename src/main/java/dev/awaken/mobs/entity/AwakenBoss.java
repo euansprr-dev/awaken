@@ -44,6 +44,14 @@ public class AwakenBoss extends AwakenMob {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     /** The degrees a kit body leans into the blow it's making (SPEC §47.15). */
+    /**
+     * The aim a blow has committed to (SPEC §67.2), so a client can work out where the blow will be and not only where
+     * the body is now: bit 0 set once it is known, then the facing it turns to (10 bits, 360/1024 degrees), the step it
+     * takes before the blow (6 bits signed, tenths of a block), its run through the blow (6 bits, twentieths) and its dip
+     * (4 bits signed, half blocks). 0 until the move's lock.
+     */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AIM =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_KIT_LEAN =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
     /** Where a kit body leans from, as a share of its height. */
@@ -88,6 +96,7 @@ public class AwakenBoss extends AwakenMob {
         b.define(DATA_KIT, 0);
         b.define(DATA_KIT_AT, 0);
         b.define(DATA_KIT_LEAN, (byte) 0);
+        b.define(DATA_KIT_AIM, 0);
     }
 
     /** An intro or transition with no roar of its own: the boss's voice, loud and low. */
@@ -163,7 +172,7 @@ public class AwakenBoss extends AwakenMob {
         if (super.stagger(ticks)) reelTicks = Math.max(reelTicks, ticks);
     }
 
-    boolean reeling() {
+    public boolean reeling() {
         return reelTicks > 0;
     }
 
@@ -314,6 +323,45 @@ public class AwakenBoss extends AwakenMob {
         if (entityData.get(DATA_KIT) != v) entityData.set(DATA_KIT, v);
     }
 
+    /** Server: the aim this move's blow has committed to, from its lock on; {@code known} false as a move begins. */
+    void syncKitAim(boolean known, float turn, float step, float run, float dip) {
+        int v = 0;
+        if (known) {
+            int yaw = Math.round(Mth.positiveModulo(turn, 360F) * 1024F / 360F) & 0x3FF;
+            int st = Mth.clamp(Math.round(step * 10F), -32, 31) & 0x3F, rn = Mth.clamp(Math.round(run * 20F), 0, 63), dp = Mth.clamp(Math.round(dip * 2F), -8, 7) & 0xF;
+            v = 1 | yaw << 1 | st << 11 | rn << 17 | dp << 23;
+        }
+        if (entityData.get(DATA_KIT_AIM) != v) entityData.set(DATA_KIT_AIM, v);
+    }
+
+    /** An ability of any of its phases by name, or null (both sides: the bestiary is shared). */
+    public dev.awaken.mobs.def.@Nullable Ability abilityNamed(String name) {
+        for (dev.awaken.mobs.def.MobDef.Phase ph : def().phases) for (dev.awaken.mobs.def.Ability a : ph.abilities()) if (a.name().equals(name)) return a;
+        return null;
+    }
+
+    /** Whether the playing move's blow has committed to its aim (from its lock on). */
+    public boolean kitAimed() {
+        return (entityData.get(DATA_KIT_AIM) & 1) != 0;
+    }
+
+    /** The facing its blow turns to, the blocks it steps before it, its run through it and its dip (once {@link #kitAimed}). */
+    public float kitAimTurn() {
+        return ((entityData.get(DATA_KIT_AIM) >> 1) & 0x3FF) * 360F / 1024F;
+    }
+
+    public float kitAimStep() {
+        return ((entityData.get(DATA_KIT_AIM) >> 11 & 0x3F) << 26 >> 26) / 10F;
+    }
+
+    public float kitAimRun() {
+        return (entityData.get(DATA_KIT_AIM) >> 17 & 0x3F) / 20F;
+    }
+
+    public float kitAimDip() {
+        return ((entityData.get(DATA_KIT_AIM) >> 23 & 0xF) << 28 >> 28) / 2F;
+    }
+
     void syncKitLean(int degrees) {
         byte b = (byte) Mth.clamp(degrees, -60, 60);
         if (entityData.get(DATA_KIT_LEAN) != b) entityData.set(DATA_KIT_LEAN, b);
@@ -411,6 +459,16 @@ public class AwakenBoss extends AwakenMob {
 
     @Override
     protected void customServerAiStep(ServerLevel level) {
+        if (beatenTicks > 0) {
+            // it stays down; left alone too long it dies its plain death, so a fight can never be left stuck
+            breakTicks = Math.max(breakTicks, 10);
+            if (++beatenTicks > BEATEN_TICKS) {
+                finishing = true;
+                ServerPlayer by = beatenBy == null ? null : level.getServer().getPlayerList().getPlayer(beatenBy);
+                hurtServer(level, by != null ? damageSources().playerAttack(by) : damageSources().genericKill(), Float.MAX_VALUE);
+                return;
+            }
+        }
         if (breakTicks > 0) breakTicks--;
         if (reelTicks > 0) reelTicks--;
         if (shieldTicks > 0) {
@@ -429,9 +487,11 @@ public class AwakenBoss extends AwakenMob {
                 // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
                 // player it chased fallen) held its body still on their screen until the clock went stale
                 dev.awaken.mobs.net.MobsNet.fighting(this);
+                // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §67.5)
+                if (getTarget() instanceof Player || beatenTicks > 0) FightSaves.fighting(level);
             }
-            if (!f.busy()) checkPhase(level);
-        } else if (abilities != null && abilities.active() == null) checkPhase(level);
+            if (!f.busy() && beatenTicks == 0) checkPhase(level); // a beaten body crosses no more thresholds
+        } else if (abilities != null && abilities.active() == null && beatenTicks == 0) checkPhase(level);
         if (tickCount % 20 == 0) arena(level);
     }
 
@@ -553,8 +613,89 @@ public class AwakenBoss extends AwakenMob {
         if (fight != null) fight.reset();
     }
 
+    // ---- the last stand and the finishing blow (SPEC §67.4) -------------------------------------------------------------
+
+    /** How long a beaten body waits for the blow that ends it before it dies its plain death (ticks). */
+    public static final int BEATEN_TICKS = 400;
+    /** The rule's switch ({@code /awaken bosses finishing on|off}): off, every boss dies as it did before. */
+    public static volatile boolean finishingBlows = true;
+    /** Ticks it has been beaten (0: it isn't), and whether the blow that ends it is landing (its death goes through). */
+    private int beatenTicks;
+    private boolean finishing;
+    /** Who beat it: the kill is theirs even when nobody ends it and it dies its plain death. */
+    private java.util.@Nullable UUID beatenBy;
+
+    /** Beaten to its last point (both sides): it kneels, harms nobody, and only a finishing blow ends it. */
+    public boolean beaten() {
+        return flag(F_BEATEN);
+    }
+
+    /** Whether this body dies only to a finishing blow: its fight script says so, and the rule is on. */
+    private boolean finishable() {
+        var k = kit();
+        return finishingBlows && k != null && k.fight() != null && k.fight().finish();
+    }
+
+    /**
+     * A blow that would kill it (SPEC §67.4). A player's blow doesn't: it is held at its last point, beaten, and waits. The
+     * one blow that ends it is an Execution's, on it beaten or taking its last health; then it dies as it always did, and
+     * everyone near is told whose blow it was. Anything that isn't a player's (a fall, the void, a command) kills it plainly.
+     */
+    private boolean lastStand(DamageSource source) {
+        if (isRemoved() || dead || finishing || !(level() instanceof ServerLevel sl) || !finishable()) return false;
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || !(source.getEntity() instanceof ServerPlayer by)) return false;
+        if (beaten() || Strikes.executing(source)) {
+            finishing = true;
+            dev.awaken.mobs.net.MobsNet.finish(this, by, endingTicks());
+            Finishers.safe(by, sl.getGameTime() + endingTicks() + 20);
+            return false;
+        }
+        setHealth(1F);
+        damageCooldownTime = 0; // the blow that beat it set this: the one that ends it lands at once
+        beatenTicks = 1;
+        beatenBy = by.getUUID();
+        setFlag(F_BEATEN, true);
+        setTarget(null);
+        stagger(BEATEN_TICKS); // every move stops, and it kneels (FightRunner's broken pose)
+        bringDown(BEATEN_TICKS + 100); // a flier comes down to be finished (Strikes.ground leaves a kit flier to its script)
+        Strikes.beaten(this, BEATEN_TICKS, by);
+        // its helpers fall with it: the fight is over but for one blow
+        for (AwakenMob m : sl.getEntitiesOfClass(AwakenMob.class, getBoundingBox().inflate(48), m -> m != this && m.isAlive())) {
+            if (m.getPersistentData().getIntOr("awaken_summoner", -1) == getId()) m.kill(sl);
+        }
+        if (bar != null) bar.setProgress(0F);
+        playLevelSound(MobSounds.BOSS_TOLL.get(), 1.6F, 0.7F);
+        return true;
+    }
+
+    /** How long its own ending holds the body once it dies: its death clip's length, as {@link #tickDeath} keeps it. */
+    private int endingTicks() {
+        var k = kit();
+        var clip = k == null ? null : k.rig().clip("death");
+        return clip == null ? 20 : Math.min(80, Math.round(clip.length() * 20) + 6);
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        if (lastStand(source)) return;
+        super.die(source);
+    }
+
+    /** Client: how a body that fell to a finishing blow leaves (its own light, installed by the mobs client). */
+    public static java.util.function.@Nullable Consumer<AwakenBoss> vanish;
+
+    /** A body that fell to a finishing blow never leaves in vanilla's white puff. */
+    @Override
+    public void makePoofParticles() {
+        var how = vanish;
+        if (beaten() && how != null) how.accept(this);
+        else super.makePoofParticles();
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        // beaten, only the finishing blow ends it (and what nothing withstands)
+        if (beaten() && !finishing && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !Strikes.executing(source)) return false;
         if (shieldTicks > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.5, 0.5, 0.5, 0.1);
             return false;

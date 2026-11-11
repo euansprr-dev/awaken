@@ -14,6 +14,9 @@ holo plates have.
     bracket    64  one corner of the mark, drawn four times turned
     diamond    32  the System's diamond: an outline round a small solid core
     tell      128  a plain ring that closes in on the lock ring as a creature's blow comes
+    band3/4/5 128  the parry band (SPEC §67.2): the ground the closing ring crosses while a guard raised now turns the
+                   blow aside, for a weapon whose window is 3, 4 or 5 ticks. Drawn 3.2 lock rings wide (the lock ring is at
+                   40 of its 64 pixels), soft at both edges, brighter toward the inside
     edge      128x32  an arc at the screen's edge for a blow wound up out of view
     dot        16  the dot in the middle when you can mine, place or use something
     shard      16  a splinter of the ring when the locked creature dies
@@ -111,6 +114,36 @@ def tell(s=128):
     return cover(ring_d(x, y, c, c, 56.0, 1.1))
 
 
+# The ring's timing, as aim.client.Reticle draws it (keep the two alike): a ring appears APPROACH ticks before its blow at
+# 1 + SPREAD lock rings and closes to 1 in a straight line of time; a guard is a parry from EARLY ticks inside the weapon's
+# window down to LATE ticks before the blow (the margins a press needs to reach the server).
+APPROACH, SPREAD, BAND_EARLY, BAND_LATE, BAND_LOCK_PX = 12.0, 1.15, 0.5, 0.75, 40.0
+
+
+def band(window, s=128):
+    x, y = grid(s, s)
+    c = s / 2
+    rho = np.hypot(x - c, y - c)
+    inner = BAND_LOCK_PX * (1.0 + SPREAD * BAND_LATE / APPROACH)
+    outer = BAND_LOCK_PX * (1.0 + SPREAD * (window - BAND_EARLY) / APPROACH)
+    a = np.clip(rho - inner + 0.5, 0.0, 1.0) * np.clip(outer - rho + 0.5, 0.0, 1.0)
+    # brighter toward the inside, where the ring is as the blow lands
+    t = np.clip((outer - rho) / max(1e-6, outer - inner), 0.0, 1.0)
+    return a * (0.55 + 0.45 * t)
+
+
+def band3():
+    return band(3)
+
+
+def band4():
+    return band(4)
+
+
+def band5():
+    return band(5)
+
+
 def edge(w=128, h=32):
     x, y = grid(w, h)
     big = 300.0
@@ -135,7 +168,7 @@ def shard(s=16):
 
 
 SHAPES = [("ring", ring, 4.0), ("ticks", ticks, 3.0), ("bracket", bracket, 2.5), ("diamond", diamond, 2.0), ("tell", tell, 4.0),
-          ("edge", edge, 3.5), ("dot", dot, 1.6), ("shard", shard, 1.5)]
+          ("edge", edge, 3.5), ("dot", dot, 1.6), ("shard", shard, 1.5), ("band3", band3, 3.0), ("band4", band4, 3.0), ("band5", band5, 3.0)]
 
 
 def white(alpha):

@@ -476,6 +476,7 @@ FIGHT = {
     "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
+    "finish": True,  # dies only to a finishing blow: one of the three pilots (SPEC §67.4)
     # it watches you and answers (SPEC §48): a drink brings the dive, a guard kept up brings the Sting
     "mind": {
         "cooldowns": {"rain": 240, "dive": 60},

@@ -37,12 +37,18 @@ public final class AimConfig {
     static final ModConfigSpec.BooleanValue THREATS = B
             .comment("A creature winding up a blow out of your view puts an arc on that edge of the screen, in its tell's colour.")
             .define("threat_arcs", true);
+    static final ModConfigSpec.BooleanValue BOSS_RING = B
+            .comment("A boss that fights you shows the ring that closes on its blows whenever it is on screen, with no lock or mark on it.")
+            .define("boss_ring", true);
+    static final ModConfigSpec.BooleanValue WORDS = B
+            .comment("After a guard that missed, the ring says why for a moment: \"Too early\" (a block) or \"Too late\" (struck).")
+            .define("timing_words", true);
     static final ModConfigSpec.BooleanValue SOUNDS = B
             .comment("The lock's own sounds: taken, moved, released, and the ring breaking when the creature falls.")
             .define("sounds", true);
     static final ModConfigSpec SPEC = B.build();
 
-    private static volatile boolean enabled = true, flick = true, mark = true, threats = true, sounds = true;
+    private static volatile boolean enabled = true, flick = true, mark = true, threats = true, sounds = true, bossRing = true, words = true;
     private static volatile Camera camera = Camera.FOLLOW;
 
     static void register(net.neoforged.bus.api.IEventBus modBus) {
@@ -64,6 +70,8 @@ public final class AimConfig {
             mark = MARK.get();
             threats = THREATS.get();
             sounds = SOUNDS.get();
+            bossRing = BOSS_RING.get();
+            words = WORDS.get();
         } catch (RuntimeException e) {
             Awaken.LOG.warn("Lock-on settings could not be read; using defaults", e);
         }
@@ -87,6 +95,14 @@ public final class AimConfig {
 
     static boolean threats() {
         return threats;
+    }
+
+    static boolean bossRing() {
+        return bossRing;
+    }
+
+    static boolean words() {
+        return words;
     }
 
     static boolean sounds() {

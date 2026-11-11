@@ -1,0 +1,55 @@
+# The ring's look (SPEC §67.2), in a real fight with the Ringer on the duel stage, slowed to 5 ticks a second, a picture
+# a half tick, the whole ring in frame (you stand three blocks in front of it, looking at its middle):
+#   clips/ring_look_struck   the guard never raised: the band, the ring white inside it, closed as the blow lands
+#   clips/ring_look_parried  the guard raised in the middle of the band (arms parry 2.5): the burst
+# The measure of the band against the server is tools/autopilot/boss-experience.txt.
+# Run on CI: tools/tour-ci.sh tools/autopilot/boss-ring.txt
+world autopilot_boss_ring creative 20261111
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses duel stage proving_ringer
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd attribute @s minecraft:max_health base set 1000
+cmd effect give @s minecraft:instant_health 1 60 true
+cmd effect give @s minecraft:regeneration 100000 8 true
+cmd gamemode survival
+hud on
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+arms rate 5
+wait 2
+arms film ring_look_struck 135 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+arms parry 2.5
+arms film ring_look_parried 135 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-6
+wait 45
+arms parry off
+arms rate 20
+wait 10
+quit

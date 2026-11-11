@@ -64,5 +64,6 @@
   "subtitles.awaken.ambient.storm.crack": "Lightning strikes",
   "awaken.plate.stance": "Stance",
   "awaken.plate.stance.broken": "Broken! Hold {key.attack} to finish it",
-  "awaken.plate.stance.hint": "The bar under its health is its stance. Guard with {key.use} as its blows land, and strike when it stands open. Fill the bar to break it."
+  "awaken.plate.stance.hint": "The bar under its health is its stance. Guard with {key.use} as its blows land, and strike when it stands open. Fill the bar to break it.",
+  "awaken.plate.beaten": "It's beaten. Hold {key.attack} to finish it"
 }

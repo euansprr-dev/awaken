@@ -314,6 +314,14 @@ final class FightRunner {
     private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
+        if (boss.beaten()) {
+            // beaten to its last point (SPEC §67.4): it starts nothing, no move, no phase, no answer; it kneels and waits
+            if (move >= 0) stop();
+            string.clear();
+            pendingPhase = -1;
+            boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_BROKEN);
+            return;
+        }
         if (mind != null) mind.watch(boss.getTarget(), level.getGameTime());
         if (move >= 0) {
             step(level);
@@ -908,6 +916,7 @@ final class FightRunner {
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
+        boss.syncKitAim(false, 0, 0, 1, 0); // not committed yet: known from its lock (SPEC §67.2)
         if (cls != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
             // a blow that isn't aimed at one body is everyone's to answer (SPEC §70.3)
@@ -934,6 +943,8 @@ final class FightRunner {
                 aim.clear();
                 aim.turn = yaw;
             }
+            // the blow is committed: those watching can work out where it will be, and when it reaches them (SPEC §67.2)
+            boss.syncKitAim(true, aim.turn, aim.step, aim.run, aim.dip);
         }
         yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
         int left = Math.max(1, wind - lockAt);
@@ -980,6 +991,8 @@ final class FightRunner {
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
             }
             aimBlow(m, target, lockAt, wind);
+            // a blow that takes no correction (its ability does the aiming) is committed as it locks, where it stands
+            if (t == lockAt && !aimed(m) && !m.hits().isEmpty()) boss.syncKitAim(true, yaw, 0, 1, 0);
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
@@ -1139,15 +1152,8 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
-        if (aim.lean != 0) { // the body leans into the blow about its hips
-            float hip = hip(), cl = Mth.cos(aim.lean * Mth.DEG_TO_RAD), sl = Mth.sin(aim.lean * Mth.DEG_TO_RAD), up = y - hip;
-            float zw = up * sl + z * cl;
-            y = hip + up * cl - z * sl;
-            z = zw;
-        }
-        float r = yaw * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
-        // facing yaw: forward is (-sin, cos); the body's left is (cos, sin)
-        return new Vec3(boss.getX() + x * c - z * s, boss.getY() + y, boss.getZ() + x * s + z * c);
+        // one rule with the ring a client draws for this blow (KitReach, SPEC §67.2)
+        return dev.awaken.mobs.boss.KitReach.point(boss.getX(), boss.getY(), boss.getZ(), yaw, aim.lean, hip(), x, y, z);
     }
 
     /** This tick's capsules against every enemy the boss can see; each is hit once a move. */
@@ -1187,16 +1193,6 @@ final class FightRunner {
 
     /** Whether the capsule from a to b of radius r touches the box (the segment sampled every half block). */
     static boolean touches(Vec3 a, Vec3 b, float r, AABB box) {
-        double len = a.distanceTo(b);
-        int n = Math.max(1, (int) Math.ceil(len / 0.5));
-        for (int i = 0; i <= n; i++) {
-            double f = i / (double) n;
-            double x = a.x + (b.x - a.x) * f, y = a.y + (b.y - a.y) * f, z = a.z + (b.z - a.z) * f;
-            double dx = Math.max(Math.max(box.minX - x, 0), x - box.maxX);
-            double dy = Math.max(Math.max(box.minY - y, 0), y - box.maxY);
-            double dz = Math.max(Math.max(box.minZ - z, 0), z - box.maxZ);
-            if (dx * dx + dy * dy + dz * dz <= r * r) return true;
-        }
-        return false;
+        return dev.awaken.mobs.boss.KitReach.touches(a, b, r, box);
     }
 }

@@ -1,6 +1,7 @@
 package dev.awaken.arms.client;
 
 import dev.awaken.arms.Archetype;
+import dev.awaken.core.api.Strikes;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -9,6 +10,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -31,6 +34,8 @@ import java.util.Map;
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
  * arms chop &lt;ticks&gt;                   a click held that long, as vanilla mines (a log with an axe, a web with a blade)
  * arms guard on|off                   the use key held (the guard up) or let go
+ * arms parry &lt;ticks&gt; | off             the guard raised as a blow that reaches you is that many ticks off (the ring's
+ *                                     own clock, Strikes.left), held 8 ticks, for every blow until "off"
  * arms dodge left|right|back|none     the sprint key pressed with that direction for a tick
  * arms pose &lt;move&gt; &lt;0..1&gt; | off       the hands held at that point of the move (strike_1, heavy, riposte...)
  * arms state                          logs the move, rhythm, charge, dodges and Resonance
@@ -130,10 +135,19 @@ public final class ArmsAutopilot {
             }
             case "guard" -> {
                 boolean on = a.length < 2 || a[1].equals("on");
-                mc.options.keyUse.setDown(on);
-                if (on && mc.gameMode != null && !p.isUsingItem()) mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
-                if (!on && p.isUsingItem() && mc.gameMode != null) mc.gameMode.releaseUsingItem(p);
+                guard(mc, p, on);
                 return "guard " + (on ? "up" : "down");
+            }
+            case "parry" -> {
+                if (a.length < 2 || a[1].equals("off")) {
+                    parryAt = Double.NaN;
+                    if (guardUntil > 0) guard(mc, p, false);
+                    guardUntil = 0;
+                    return "parry off: the guard went up " + parried + " times";
+                }
+                parryAt = Double.parseDouble(a[1]);
+                parried = 0;
+                return "the guard goes up as a blow is " + parryAt + " ticks off";
             }
             case "dodge" -> {
                 String way = a.length > 1 ? a[1] : "none";
@@ -164,6 +178,42 @@ public final class ArmsAutopilot {
             default -> {
                 return "unknown: " + args.trim();
             }
+        }
+    }
+
+    private static void guard(Minecraft mc, LocalPlayer p, boolean on) {
+        mc.options.keyUse.setDown(on);
+        if (on && mc.gameMode != null && !p.isUsingItem()) mc.gameMode.useItem(p, InteractionHand.MAIN_HAND);
+        if (!on && p.isUsingItem() && mc.gameMode != null) mc.gameMode.releaseUsingItem(p);
+    }
+
+    // the timed guard: how many ticks off a blow is as the guard goes up (NaN: off), and the tick it comes down again
+    private static double parryAt = Double.NaN;
+    private static int guardUntil, parried;
+
+    /**
+     * The guard raised on the ring's own clock: at the first tick a deflectable blow that reaches you is within the asked
+     * time, held 8 ticks. A film's check that what the ring shows is what the server counts (SPEC §67.2).
+     */
+    private static void parry(Minecraft mc, LocalPlayer p) {
+        if (guardUntil > 0) {
+            if (ArmsPredict.ticks >= guardUntil) {
+                guard(mc, p, false);
+                guardUntil = 0;
+            }
+            return;
+        }
+        if (mc.level == null) return;
+        for (Entity e : mc.level.entitiesForRendering()) {
+            if (e == p || !(e instanceof LivingEntity) || e.distanceToSqr(p) > 32 * 32) continue;
+            double left = Strikes.left(e, 1F);
+            if (Double.isNaN(left) || left > parryAt || left <= parryAt - 1) continue;
+            if (!Strikes.comingKind(e).deflectable() || !Strikes.reaches(e) || !Strikes.lands(e)) continue;
+            guard(mc, p, true);
+            guardUntil = ArmsPredict.ticks + 8;
+            parried++;
+            dev.awaken.Awaken.LOG.info("[arms parry] guard up with the blow {} ticks off", String.format(Locale.ROOT, "%.2f", left));
+            return;
         }
     }
 
@@ -220,6 +270,10 @@ public final class ArmsAutopilot {
 
     /** Lets go of the keys whose time is up (each client tick). */
     static void tick() {
+        if (!Double.isNaN(parryAt)) {
+            Minecraft client = Minecraft.getInstance();
+            if (client.player != null) parry(client, client.player);
+        }
         if (ArmsPredict.ticks < traceUntil) {
             Minecraft mc = Minecraft.getInstance();
             ArmsHands.pose(POSE);

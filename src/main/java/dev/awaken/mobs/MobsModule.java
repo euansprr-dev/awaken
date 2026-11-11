@@ -55,6 +55,16 @@ public final class MobsModule {
             }
 
             @Override
+            public boolean atLastStand(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.beaten();
+            }
+
+            @Override
+            public boolean reeling(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.reeling();
+            }
+
+            @Override
             public boolean duelist(LivingEntity e) {
                 return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.duel();
             }

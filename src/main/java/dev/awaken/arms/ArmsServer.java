@@ -715,6 +715,8 @@ final class ArmsServer {
         }
         pendingCap = def.bossCap();
         pendingRiposte = s.move == Archetype.Move.RIPOSTE;
+        // a heavy held through with the meter full is the Art even on a broken stance: it ends a beaten body as the Execution does
+        pendingExecution = s.move == Archetype.Move.EXECUTION || s.move == Archetype.Move.ART;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -737,6 +739,7 @@ final class ArmsServer {
         // blow) swallowed or shrank blows at random, shown by the game and gone on the server (SPEC §25 "Weight in the Hand")
         int cooldown = t.damageCooldownTime;
         t.damageCooldownTime = 0;
+        boolean worn = dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem());
         try {
             if (speed != null) speed.addOrUpdateTransientModifier(FULL_STRENGTH_MOD);
             p.attack(t);
@@ -744,7 +747,10 @@ final class ArmsServer {
             if (speed != null) speed.removeModifier(FULL_STRENGTH);
             pendingBy = pendingTarget = -1;
             pendingPush = false;
+            pendingExecution = false;
         }
+        // the blow that used its last use: it is worn out from here (never destroyed, SPEC §67.1), and its owner is told once
+        if (!worn && dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem())) dev.awaken.core.api.Lasting.tell(p, p.getMainHandItem(), true);
         HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
         if (!pendingLanded) {
             // struck, and nothing took (an invulnerable body, another mod's refusal): the hands hear a dull knock, so a blow
@@ -874,6 +880,10 @@ final class ArmsServer {
             // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
             // body standing braced barely moves it, a riposte excepted (SPEC §47.3)
             int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
+            // a worn-out weapon fills a stance half as fast, as it hits half as hard (its attack damage is halved at the item)
+            if (by instanceof ServerPlayer wielder && dev.awaken.core.api.Lasting.wornOut(wielder.getMainHandItem())) {
+                posture = Math.round(posture * dev.awaken.core.api.Lasting.WORN_OUT_SHARE);
+            }
             if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }
@@ -1370,6 +1380,35 @@ final class ArmsServer {
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
         }
+    }
+
+    /** Whether the Arms blow now being delivered is an Execution's or the weapon's Art (set for the length of its {@code attack}). */
+    private static boolean pendingExecution;
+
+    /**
+     * Whether this damage is an Execution's blow (or the Art's, which a full meter makes of the same held heavy) landing
+     * now: the finisher, and the one blow that ends a beaten body (SPEC §67.4).
+     */
+    static boolean executing(DamageSource source) {
+        Entity by = source.getEntity();
+        return pendingExecution && by != null && by.getId() == pendingBy && source.getDirectEntity() == by;
+    }
+
+    /**
+     * A body beaten to its last point (SPEC §67.4): its stance is broken for {@code ticks}, whatever it held and whenever
+     * it last broke, so a heavy released on it is the Execution; {@code by} and those near are told, as for any break.
+     */
+    static void beaten(LivingEntity target, int ticks, ServerPlayer by) {
+        if (target instanceof Player) return;
+        Posture p = posture(target);
+        long now = now(target);
+        p.value = 0;
+        p.brokenUntil = now + ticks;
+        p.nextBreakAt = now + ticks + ArmsRules.BREAK_COOLDOWN;
+        stance(target, p, now);
+        sound(target, ArmsSounds.BREAK.get(), 1.0F, 0.8F);
+        AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
+        seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
     }
 
     /**

@@ -3,6 +3,7 @@
  "id": "proving_ringer",
  "moves": "proving_ringer",
  "duel": true,
+ "finish": true,
  "stance": 140,
  "intro": {
   "pose": "idle",

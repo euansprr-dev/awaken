@@ -106,6 +106,31 @@ public final class MobsNet {
         }
     }
 
+    /**
+     * A boss's finishing blow has landed (SPEC §67.4): which body fell, who struck it, and how many ticks its own ending
+     * plays before it is gone. Sent once, as it dies, to everyone near; only the striker's view is taken.
+     */
+    public record Finish(int boss, int striker, int ticks) implements CustomPacketPayload {
+        public static final Type<Finish> TYPE = new Type<>(Awaken.id("mobs_finish"));
+        public static final StreamCodec<ByteBuf, Finish> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Finish::boss, ByteBufCodecs.VAR_INT, Finish::striker, ByteBufCodecs.VAR_INT, Finish::ticks, Finish::new);
+
+        @Override
+        public Type<Finish> type() {
+            return TYPE;
+        }
+    }
+
+    /** Those within this of a boss as it falls see its ending. */
+    public static final double FINISH_RANGE = 64;
+
+    public static void finish(Entity boss, ServerPlayer striker, int ticks) {
+        Finish msg = new Finish(boss.getId(), striker.getId(), ticks);
+        for (ServerPlayer p : ((ServerLevel) boss.level()).players()) {
+            if (p.distanceToSqr(boss) <= FINISH_RANGE * FINISH_RANGE) AwakenNet.send(p, msg);
+        }
+    }
+
     /** Players this far from a fighting boss get its pace. */
     public static final double PACE_RANGE = 96;
 
@@ -123,6 +148,7 @@ public final class MobsNet {
         r.playToClient(Carrier.TYPE, Carrier.STREAM_CODEC);
         r.playToClient(CarrierEnd.TYPE, CarrierEnd.STREAM_CODEC);
         r.playToClient(Tell.TYPE, Tell.STREAM_CODEC);
+        r.playToClient(Finish.TYPE, Finish.STREAM_CODEC);
     }
 
     /** A boss with a fight ticked: players near it get the server's clock at the tick's end. */

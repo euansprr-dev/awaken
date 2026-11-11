@@ -241,6 +241,8 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.melee = -1;
         s.dying = mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
         if (s.dying >= 0) s.hasRedOverlay = mob.deathTime < 8 || mob.hurtTime > 0;
+        // a body beaten to its last point, and one that fell to a finishing blow, never flashes vanilla's red (SPEC §67.4)
+        if (mob instanceof AwakenBoss beaten && beaten.beaten()) s.hasRedOverlay = false;
         if (dev.awaken.core.api.LivingHooks.carcass(mob)) { // a carcass lies as its fall ended (SPEC §47.12)
             s.dying = 4.0F + 1.0F; // a kit body's fall is at most 80 ticks
             s.hasRedOverlay = false;
