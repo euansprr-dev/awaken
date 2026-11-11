@@ -113,6 +113,18 @@ public abstract class Land {
         traps.add(t);
     }
 
+    /**
+     * A crossing that needs a move of the leap (SPEC §17.10): from the cell feet stand in on one side to the cell they
+     * land in on the other, and which move ("double", "dash", "slam"). The walk check takes these as crossings a player
+     * with the move can make, and separately proves that none can be made without it.
+     */
+    public record Leap(String move, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    /** The crossings of this land that need a move of the leap. None, for every land but a trial of it. */
+    public List<Leap> leaps() {
+        return List.of();
+    }
+
     protected final void course(Course c) {
         courses.add(c);
     }

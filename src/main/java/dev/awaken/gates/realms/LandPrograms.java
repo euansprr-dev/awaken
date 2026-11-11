@@ -36,6 +36,7 @@ public final class LandPrograms {
             Map.entry("awaken:rime_hollows", dev.awaken.gates.realms.land.RimeHollow::new),
             Map.entry("awaken:green_dark", dev.awaken.gates.realms.land.GreenDark::new),
             Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new),
+            Map.entry("awaken:leapers_gauntlet", dev.awaken.gates.realms.land.LeapersGauntlet::new),
             Map.entry("awaken:ember_country", dev.awaken.gates.realms.land.EmberCountry::new),
             Map.entry("awaken:temple_country", dev.awaken.gates.realms.land.TempleCountry::new),
             Map.entry("awaken:frost_country", dev.awaken.gates.realms.land.FrostCountry::new),

@@ -101,6 +101,22 @@ public final class WalkCheck {
      * or down, with nothing in the way. And everything the land says is open at some time ({@code walk_open}) is open.
      */
     public static Walk walk(Land land) {
+        return walk(land, true);
+    }
+
+    /**
+     * A crossing a land says needs a move of the leap ({@link Land#leaps}) that can be made without it: the walk with no
+     * leaps at all still stood where one lands. Empty when every one of them is needed.
+     */
+    public static List<String> needless(Land land) {
+        if (land.leaps().isEmpty()) return List.of();
+        Walk plain = walk(land, false);
+        List<String> out = new ArrayList<>();
+        for (Land.Leap l : land.leaps()) if (plain.reaches(l.x1(), l.y1(), l.z1(), 0)) out.add(l.move() + " to " + l.x1() + " " + l.y1() + " " + l.z1());
+        return out;
+    }
+
+    private static Walk walk(Land land, boolean leaps) {
         Cells cells = new Cells();
         int half = land.halfSize() + 16 >> 4;
         for (int cx = -half; cx < half; cx++) for (int cz = -half; cz < half; cz++) {
@@ -125,6 +141,10 @@ public final class WalkCheck {
         int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         while (!q.isEmpty()) {
             int[] p = q.poll();
+            // a crossing that needs a move of the leap, taken by a walker who has it, from where its near lip is stood on
+            if (leaps) for (Land.Leap l : land.leaps()) {
+                if (p[1] == l.y0() && Math.abs(p[0] - l.x0()) <= 1 && Math.abs(p[2] - l.z0()) <= 1 && seen.add(pack(l.x1(), l.y1(), l.z1()))) q.add(new int[]{l.x1(), l.y1(), l.z1()});
+            }
             if (cells.climb(p[0], p[1], p[2]) && !cells.at(p[0], p[1] + 1, p[2]) && !cells.at(p[0], p[1] + 2, p[2]) && seen.add(pack(p[0], p[1] + 1, p[2])))
                 q.add(new int[]{p[0], p[1] + 1, p[2]});
             for (int[] d : dirs) {
