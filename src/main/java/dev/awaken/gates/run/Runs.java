@@ -665,7 +665,12 @@ public final class Runs {
             DirectorLog.log(p, "gate", "cheat death used in gate " + run.gateId);
             return;
         }
-        AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
+        if (g != null && dev.awaken.core.api.FightsHooks.goesDown(p)) {
+            // someone of their party still stands on this floor: down, to be lifted, not dead yet (SPEC §70.3)
+            e.setCanceled(true);
+            return;
+        }
+        AwakenConfig.Difficulty diff = dev.awaken.core.api.FightsHooks.deathCost(p); // Story's rules on Gentle (SPEC §70.4)
         if (g != null && run.riding) {
             // past the thread's reach, so nothing caught them (SPEC §55): they go home, but riders never lose the Satchel
             bankSatchel(p, g, run, "r" + label(run.area, run.floor), "recover", "You were too far from your partner for the thread to catch you. You kept what you carried.");

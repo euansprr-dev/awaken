@@ -1333,17 +1333,17 @@ final class ArmsServer {
     static Posture posture(LivingEntity e) {
         Posture p = e.getData(ArmsContent.POSTURE);
         int stance = Strikes.stance(e); // a duel boss's own size (SPEC §47.3)
-        if (stance > 0) p.max = stance;
+        if (stance > 0) p.max = (int) Math.round(stance * dev.awaken.core.api.FightsHooks.partyStance(e)); // grown for a party as its health is (SPEC §70.3)
         else if (p.max <= 0) {
             MobRole role = e.getExistingDataOrNull(CoreApi.MOB_ROLE.get());
-            p.max = ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role());
+            p.max = (int) Math.round(ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role()) * dev.awaken.core.api.FightsHooks.partyStance(e));
         }
         return p;
     }
 
     /** Fills a stance; full, it breaks: the wind-up ends, the body sags, a heavy becomes an Execution. */
     static void addPosture(LivingEntity target, int amount, ServerPlayer by) {
-        if (amount > 0 && dev.awaken.core.api.RidingHooks.rider(by)) amount = Math.max(1, Math.round(amount * dev.awaken.core.api.RidingHooks.HIT_SHARE)); // a rider's blows move a stance as they hurt (SPEC §55)
+        amount = dev.awaken.core.api.FightsHooks.stance(target, amount, by); // its back turned: a quarter more (SPEC §70.3)
         if (amount <= 0 || target instanceof Player) return;
         Posture p = posture(target);
         long now = now(target);

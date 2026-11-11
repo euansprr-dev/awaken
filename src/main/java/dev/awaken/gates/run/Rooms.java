@@ -68,10 +68,25 @@ public final class Rooms {
      * A party meets a bigger company (SPEC "Together"): +35% monsters per extra player (rounded), +1 elite per two extra
      * players (rooms with any monsters). Returns {normals, elites}.
      */
-    public static int[] partyCompany(int normals, int elites, int party) {
-        int extra = Math.max(0, Math.min(PARTY_MAX, party) - 1);
-        if (extra == 0 || normals + elites == 0) return new int[]{normals, elites};
-        return new int[]{Math.round(normals * (1 + PARTY_MOBS * extra)), elites + extra / 2};
+    public static int[] partyCompany(int normals, int elites, double party) {
+        double extra = Math.max(0, Math.min(PARTY_MAX, party) - 1);
+        if (extra <= 0 || normals + elites == 0) return new int[]{normals, elites};
+        return new int[]{(int) Math.round(normals * (1 + PARTY_MOBS * extra)), elites + (int) (extra / 2)};
+    }
+
+    /**
+     * How many fighters this gate's floor holds right now, for sizing a room or its Lord (SPEC §70.4): a player on Full
+     * is one, a player on Gentle half of one; never under one, never over {@link #PARTY_MAX}.
+     */
+    public static double fightersOnFloor(ServerLevel level, GateRecord g, FloorLayout f) {
+        double n = 0;
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = level.getServer().getPlayerList().getPlayer(u);
+            if (o == null || !o.isAlive() || o.isSpectator()) continue;
+            RunState run = Runs.run(o);
+            if (run.gateId == g.id && run.area == f.area && run.floor == f.floor) n += dev.awaken.core.api.FightsHooks.weight(o);
+        }
+        return Math.max(1.0, Math.min(PARTY_MAX, n));
     }
 
     /** Players of this gate on this floor right now (1 at least, {@link #PARTY_MAX} at most); a rider doesn't count (SPEC §55). */
@@ -129,7 +144,7 @@ public final class Rooms {
             if (e == null) return null;
         }
         if (g.scripted) firstGate(e, role);
-        else if (role == MobRole.Role.BOSS) partyLord(e, partyOnFloor(level, g, f));
+        else if (role == MobRole.Role.BOSS) partyLord(e, fightersOnFloor(level, g, f));
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         dev.awaken.gates.worlds.WorldsLive.dress(e, f, home);
         Modifiers.onSpawn(g, e);
@@ -166,13 +181,17 @@ public final class Rooms {
         return e;
     }
 
-    /** A Lord met by a party: +50% health per extra player (the hoard is already one per player). */
-    static void partyLord(LivingEntity e, int party) {
+    /**
+     * A Lord met by a party: +50% health per extra fighter (the hoard is already one per player), and its stance grown
+     * the same way, so a break means what it means alone (SPEC §70.3). A player on Gentle is half a fighter (§70.4).
+     */
+    static void partyLord(LivingEntity e, double party) {
         if (party <= 1) return;
         var h = e.getAttribute(Attributes.MAX_HEALTH);
         if (h != null) h.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_party_health"),
                 PARTY_LORD_HEALTH * (party - 1), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
         e.setHealth(e.getMaxHealth());
+        dev.awaken.core.api.FightsHooks.sizeStance(e, party);
     }
 
     /** First-gate tuning: a Lord you can beat with iron and one power (about 190 health), monsters a little softer. */
@@ -203,7 +222,7 @@ public final class Rooms {
                 normals = (normals + 1) / 2;
                 elites = Math.min(elites, 1);
             } else {
-                int[] company = partyCompany(normals, elites, partyOnFloor(level, g, f));
+                int[] company = partyCompany(normals, elites, fightersOnFloor(level, g, f));
                 normals = company[0];
                 elites = company[1];
             }
