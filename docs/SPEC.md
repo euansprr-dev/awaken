@@ -6179,7 +6179,25 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
       the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
       like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
-    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
+    - Storm cells were still marched in the small buffer as soft vapour, a tile in four with their history, until
+      Euan saw one beside the blocks (2026-11-11: "the custom storm is still the old clouds. Let's fix that so it's
+      the new clouds and looks great without costing much extra performance"). **The block storm**
+      (`lens_storm_blocks.glsl`): the same cumulonimbus, by §21.6's own numbers (the shelf, the leaning tower, three
+      flanking towers stepping down upwind, the overshooting dome, the anvil far downwind), built of the layer's own
+      cells, twelve blocks across and seven high, solid and flat-faced. The grid rides with the cell and is turned to
+      the world's axes. A turret's swell is a hash three cells across with each cell a little ragged, so the tower
+      is a cauliflower of blocks and holds its shape as it drifts (nothing boils: a block that flickered in and out
+      would read as a fault). It is walked once a ray in the composite, to the pixel and afresh every frame, and at
+      half size in the bloom prefilter so a storm in front of the sun cuts its glow and rays. Cost is kept down by
+      three tight bounds walked each on its own (shelf and tower; flanks; dome and anvil), a cell test that is
+      arithmetic and two hashes with no texture read and rejects open air before the hashes, a walk that ends at
+      the first block, and colours worked out only for a ray that met one; the soft storm's whole march leaves the
+      cloud buffer, which keeps only the rain (a soft veil under the base). Light: the sky's light by height, dark
+      blue-grey at the shelf paling to the layer's white at the dome and anvil, a face that looks down darkest; the
+      sun only on faces turned to it, less where three samples toward the sun find more of the cell in the way; the
+      lightning's glow from within, round the flash. The layer's near clouds clear round a storm (within 330 to
+      450 blocks, as the far ones always did) and those behind it are not walked. Without the Air the soft storm
+      is drawn as before. Tour: `tools/autopilot/steady60-storm-ci.txt`.
   - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
