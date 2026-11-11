@@ -22,7 +22,7 @@ final class FamilyBrain {
     private FamilyBrain() {}
 
     /** Its own day at home. */
-    static final int NONE = 0, WANDER = 1, SITTING = 2, RESTING = 3, SLEEPING = 4, SUN = 5, SHADOW = 6;
+    static final int NONE = 0, WANDER = 1, SITTING = 2, RESTING = 3, SLEEPING = 4, SUN = 5, SHADOW = 6, PLAY = 7;
     /** How far out with you each keeps before it is put behind you, and how long a wait at a door lasts. */
     static final double CATCH_UP = 28, WAIT_REACH = 64;
     static final int DOOR_TICKS = 6000;
@@ -51,9 +51,9 @@ final class FamilyBrain {
         }
         long now = level.getGameTime();
         int a = b.act();
-        if (a == FamilyPet.NUDGE || a == FamilyPet.STRETCH) {
-            // a hello or a stretch is played through where it stands (two seconds or so), then its day goes on
-            if (b.tickCount - b.actAt() <= (a == FamilyPet.STRETCH ? 52 : 40)) {
+        if (a == FamilyPet.NUDGE || a == FamilyPet.STRETCH || a == FamilyPet.SWAT) {
+            // a hello, a stretch or a swat is played through where it stands (two seconds or so), then its day goes on
+            if (b.tickCount - b.actAt() <= (a == FamilyPet.STRETCH ? 52 : a == FamilyPet.SWAT ? 28 : 40)) {
                 b.getNavigation().stop();
                 return;
             }
@@ -374,7 +374,24 @@ final class FamilyBrain {
                 return;
             }
         }
+        if (p != null && p.distanceToSqr(b) < 25 && inYourWay(level, b, p)) {
+            // it is on or against the block you are looking at: it steps aside, so it is never in the way of your hands
+            Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
+            double side = b.getRandom().nextBoolean() ? 2.2 : -2.2;
+            b.spot = FamilySpots.standable(level, b.getX() - look.z * side, b.getY(), b.getZ() + look.x * side);
+            if (b.spot != null) {
+                b.activity = WANDER;
+                b.until = now + 80;
+            }
+        }
         day(level, b, h, home, p, now);
+    }
+
+    /** Whether it stands on, in or right against the block this player is aiming at within reach. */
+    private static boolean inYourWay(ServerLevel level, FamilyPet b, ServerPlayer p) {
+        if (!(p.pick(4.5, 1F, false) instanceof net.minecraft.world.phys.BlockHitResult hit) || hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) return false;
+        BlockPos at = hit.getBlockPos(), mine = b.blockPosition();
+        return mine.equals(at) || mine.equals(at.above()) || mine.equals(at.relative(hit.getDirection()));
     }
 
     /** Its own day: something small to do, for a while, then something else. */
@@ -394,8 +411,8 @@ final class FamilyBrain {
         switch (b.activity) {
             case WANDER -> {
                 if (at == null || go(b, at, dubu ? 0.5 : 0.42, 1.3)) {
-                    b.activity = SITTING;
-                    b.until = now + 60 + rnd.nextInt(120);
+                    sitDown(b, rnd);
+                    b.until = now + 80 + rnd.nextInt(140);
                 }
             }
             case RESTING -> {
@@ -417,10 +434,27 @@ final class FamilyBrain {
                     if (FamilyService.speed(p) > 0.02) b.stillSince = now;
                 }
             }
+            case PLAY -> { // he play-bows at her; she swats the air at him, or looks the other way
+                FamilyPet her = FamilyService.body(level, home.aya);
+                if (her == null || her == b || her.act() == FamilyPet.SLEEP || her.distanceToSqr(b) > 24 * 24) b.until = now;
+                else if (go(b, her.getX(), her.getY(), her.getZ(), 0.95, 2.3)) {
+                    b.getLookControl().setLookAt(her, 30F, 30F);
+                    b.again(FamilyPet.NUDGE);
+                    FamilyService.voice(b, FamilyContent.DUBU_BARK.get(), 1.05F);
+                    if (her.act() != FamilyPet.ROLL && her.act() != FamilyPet.NUDGE && rnd.nextBoolean()) {
+                        her.getNavigation().stop();
+                        her.getLookControl().setLookAt(b, 30F, 30F);
+                        her.again(FamilyPet.SWAT);
+                    }
+                    b.activity = SITTING;
+                    b.sitPose = FamilyPet.SIT;
+                    b.until = now + 100 + rnd.nextInt(100);
+                }
+            }
             default -> {
                 b.getNavigation().stop();
-                b.act(b.activity == SITTING ? FamilyPet.SIT : FamilyPet.IDLE);
-                if (p != null && p.distanceToSqr(b) < 64) face(b, p);
+                b.act(b.activity == SITTING ? b.sitPose : FamilyPet.IDLE);
+                if (p != null && p.distanceToSqr(b) < 64 && b.sitPose == FamilyPet.SIT) face(b, p);
             }
         }
     }
@@ -432,6 +466,13 @@ final class FamilyBrain {
         b.spot = null;
         b.stillSince = now;
         if (b.act() == FamilyPet.CARRY) b.act(FamilyPet.IDLE);
+        long clock = level.getOverworldClockTime() % 24000L;
+        if (clock >= 11000 && clock < 13000) { // evening: the two of them end up by the same fire
+            b.activity = RESTING;
+            b.spot = FamilySpots.byTheFire(level, a, rnd);
+            b.until = now + 1200 + rnd.nextInt(600);
+            return;
+        }
         if (night) {
             if (roll < (dubu ? 78 : 68)) {
                 // he sleeps by the fire, she on the bed if there is one
@@ -458,8 +499,11 @@ final class FamilyBrain {
                 b.spot = FamilySpots.sun(level, a, rnd);
                 if (b.spot == null) b.activity = SITTING;
                 b.until = now + 300 + rnd.nextInt(500);
+            } else if (roll < 96 && FamilyService.body(level, home.aya) != null) {
+                b.activity = PLAY;
+                b.until = now + 300;
             } else {
-                b.activity = SITTING;
+                sitDown(b, rnd);
                 b.until = now + 100 + rnd.nextInt(200);
             }
             return;
@@ -476,7 +520,7 @@ final class FamilyBrain {
             b.until = now + 200 + rnd.nextInt(300);
         } else if (roll < 68) wander(level, b, a, h.radius(), now, rnd);
         else if (roll < 84) {
-            b.activity = SITTING;
+            sitDown(b, rnd);
             b.until = now + 160 + rnd.nextInt(300);
         } else { // a nap
             b.activity = SLEEPING;
@@ -484,6 +528,14 @@ final class FamilyBrain {
             b.spot = bed != null ? bed : FamilySpots.byTheFire(level, a, rnd);
             b.until = now + 600 + rnd.nextInt(900);
         }
+    }
+
+    /** Sits, each time in one of its ways: plainly half the time; else she grooms or gazes about, he scratches or sniffs about. */
+    private static void sitDown(FamilyPet b, RandomSource rnd) {
+        b.activity = SITTING;
+        int roll = rnd.nextInt(10);
+        if (b.kind() == FamilyKind.DUBU) b.sitPose = roll < 5 ? FamilyPet.SIT : roll < 7 ? FamilyPet.SCRATCH : FamilyPet.SNIFF;
+        else b.sitPose = roll < 5 ? FamilyPet.SIT : roll < 8 ? FamilyPet.GROOM : FamilyPet.GAZE;
     }
 
     private static void wander(ServerLevel level, FamilyPet b, BlockPos a, int radius, long now, RandomSource rnd) {

@@ -42,8 +42,10 @@ import java.util.UUID;
  */
 public class FamilyPet extends PathfinderMob implements OwnableEntity {
     /** The poses, by name, in the order of their numbers (the client picks the clip of the same name, else its idle). */
-    public static final String[] ACTS = {"idle", "sit", "rest", "sleep", "roll", "nudge", "stretch", "hide", "carry", "song"};
-    public static final int IDLE = 0, SIT = 1, REST = 2, SLEEP = 3, ROLL = 4, NUDGE = 5, STRETCH = 6, HIDE = 7, CARRY = 8, SONG = 9;
+    public static final String[] ACTS = {"idle", "sit", "rest", "sleep", "roll", "nudge", "stretch", "hide", "carry", "song",
+            "swat", "groom", "gaze", "sniff", "scratch"};
+    public static final int IDLE = 0, SIT = 1, REST = 2, SLEEP = 3, ROLL = 4, NUDGE = 5, STRETCH = 6, HIDE = 7, CARRY = 8, SONG = 9,
+            SWAT = 10, GROOM = 11, GAZE = 12, SNIFF = 13, SCRATCH = 14;
     private static final EntityDataAccessor<Integer> DATA_ACT = SynchedEntityData.defineId(FamilyPet.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_ACT_AT = SynchedEntityData.defineId(FamilyPet.class, EntityDataSerializers.INT);
 
@@ -54,6 +56,8 @@ public class FamilyPet extends PathfinderMob implements OwnableEntity {
     // ---- what it has in mind (never saved: a body that loads starts its day afresh) -------------------------------------
     /** Its own day at home: what it is doing, until when, and where. */
     public int activity;
+    /** How it sits this time: plainly, or busy with something of its own (she grooms or gazes, he scratches or sniffs about). */
+    public int sitPose = SIT;
     public long until;
     public @Nullable BlockPos spot;
     /** Who it is walking up to for the first time, and how far that has got. */

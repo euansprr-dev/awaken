@@ -24446,8 +24446,15 @@ a sister home gets no second pair.
   8 inside it in the last 15 s) and sits, and the System says once: "[Dubu wants to come. Crouch and call him and he will.]"
 - The tower's song (§43.7): he sits and howls along, she sits through it with her ears back. A raid warned or on, or a
   foe within 10 blocks: both in by the fire, low.
+- Sitting is one of three things each time: plainly (half the time), or she grooms a paw or gazes at something only she
+  can see, and he scratches behind an ear or sniffs along the ground.
+- The two of them: by day Dubu sometimes (4 in 100 of his choices, with her awake within 24 blocks) trots over and
+  play-bows at her; half the time she swats the air at him twice, ears back, never touching him, and half the time she
+  looks the other way. In the evening (clock 11,000 to 13,000) both rest by the same fire.
+- Never in the way of your hands: one that stands on, in or against the block you are aiming at within 4.5 blocks steps
+  two blocks aside.
 - A use pets one (a hello and its sound; not while it sleeps). A hello or a stretch is played through where it stands
-  (40 and 52 ticks) before its day goes on. No food, breeding, leash or hearts. They push nothing
+  (40 and 52 ticks; her swat 28) before its day goes on. No food, breeding, leash or hearts. They push nothing
   and cannot be pushed.
 
 **69.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
@@ -24502,7 +24509,8 @@ the back, 0.68 long. `family_dubu`: 15 bones (one is his giraffe, in his mouth w
 asleep), drawn at 0.5, 0.38 at the back, 0.9 long. Their coats are painted in body space (`coat(x, y, z)`), so a patch
 runs unbroken from box to box; no band is under two pixels; the chest laps a pixel into the rump a hair smaller, and the
 thighs sit inside the flank, so nothing shares a plane and no crack opens when the back bends. Poses (the synced
-`act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song.
+`act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song,
+swat, groom, gaze (hers), sniff, scratch (his).
 The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
 0.85), capped at 3.5 and 3.8 cycles a second; settling into and out of a pose blends over 10 ticks, other changes over 5.
 
@@ -24514,5 +24522,10 @@ body to look at that belongs to nobody `place|pose|walk|clear`. Tour `tools/auto
 `family_never_lost`, `family_ask_and_stay`. Budget: two entities a Hearth, decisions every fifth tick, a spot search of
 at most fourteen tries when one chooses what to do next.
 
-Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not checked by a person:
+Their sounds can be heard from the game's own files with `/Volumes/MEDIA/pets-ref/aya-dubu-sounds.html` (a local page
+outside the repo; nothing of the game's is copied).
+
+Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not built from the plan:
+real clips for sitting down, lying down, getting up and the flop (the ten-tick blends stand in for them), and coming
+from the skiff's mooring (the Far Landing is not merged). Not checked by a person:
 nothing here has been played, and no sound has been heard in place.

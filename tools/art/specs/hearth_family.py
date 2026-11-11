@@ -327,11 +327,15 @@ def _aya_clips(r):
     hold(run, "ear_r", rot=(26, 0, -10))
 
     # ---- sitting: up on her front legs, haunches down, the tail wrapped round her feet, its tip ticking
-    def sit_pose(cl, lean=0.0):
+    def sit_pose(cl, lean=0.0, free=()):
+        """Sat up on her front legs; a leg named in `free` is left for the clip to key (a paw she lifts)."""
         hold(cl, "body", pos=(0, -2.1, 1.0))
         cl.rot("body", [(0, -35 + lean, 0, 0), (cl.length, -35 + lean, 0, 0)], "lin")
         for nm in ("fleg_l", "fleg_r"):
-            hold(cl, nm, rot=(35 - lean, 0, 0), scale=(1, 1.3, 1))
+            if nm in free:
+                hold(cl, nm, scale=(1, 1.3, 1))
+            else:
+                hold(cl, nm, rot=(35 - lean, 0, 0), scale=(1, 1.3, 1))
         for nm in ("hleg_l", "hleg_r"):
             hold(cl, nm, rot=(-36, 0, 0))
 
@@ -437,6 +441,43 @@ def _aya_clips(r):
     hold(song, "tail2", rot=(-10, 58, 0))
     hold(song, "tail3", rot=(-8, 46, 0))
     cycle(song, "tail4", "rot", lambda p: (-6, 30 + 22 * max(0.0, s(p * 2)), 0), 16)
+
+    def sat_tail(cl, flick=0.0):
+        hold(cl, "tail", rot=(-20, 62, 0))
+        hold(cl, "tail2", rot=(-10, 58, 0))
+        hold(cl, "tail3", rot=(-8, 46, 0))
+        if flick:
+            cycle(cl, "tail4", "rot", lambda p: (-6, 30 + flick * max(0.0, s(p * 2)), 0), 16)
+        else:
+            hold(cl, "tail4", rot=(-6, 30, 0))
+
+    # ---- Dubu has play-bowed at her: a paw up and two quick swats at the air, ears back, never touching him
+    swat = clip_of(r, "swat", 1.4)
+    sit_pose(swat, free=("fleg_r",))
+    swat.rot("fleg_r", keys((0, 35, 0, 0), (0.22, -52, 0, -10), (0.38, -8, 0, -26), (0.56, -56, 0, -10), (0.72, -4, 0, -26),
+                            (1.05, 30, 0, 0), (1.4, 35, 0, 0)))
+    swat.rot("head", keys((0, 30, 0, 0), (0.22, 24, -12, 0), (0.72, 24, -12, 0), (1.4, 30, 0, 0)))
+    for nm, sg in (("ear_l", 1), ("ear_r", -1)):
+        swat.rot(nm, keys((0, 0, 0, 0), (0.2, 26, 0, sg * 28), (0.9, 26, 0, sg * 28), (1.4, 0, 0, 0)))
+    sat_tail(swat, 18)
+
+    # ---- washing: a front paw lifted, her head dipping to lick it, then the paw wiped over her face
+    groom = clip_of(r, "groom", 3.2, loop=True)
+    sit_pose(groom, free=("fleg_r",))
+    groom.rot("fleg_r", keys((0, -46, 0, -14), (1.9, -46, 0, -14), (2.2, -84, 0, -8), (2.5, -60, 0, -8), (2.8, -84, 0, -8),
+                             (3.2, -46, 0, -14)))
+    groom.rot("head", keys((0, 52, -10, 0), (0.25, 58, -10, 0), (0.5, 50, -10, 0), (0.75, 58, -10, 0), (1.0, 50, -10, 0), (1.25, 58, -10, 0),
+                           (1.5, 50, -10, 0), (1.9, 52, -10, 0), (2.2, 38, -6, 10), (2.5, 44, -6, -6), (2.8, 38, -6, 10), (3.2, 52, -10, 0)))
+    sat_tail(groom)
+
+    # ---- watching something only she can see: sat still, her head following it slowly, the end of her tail ticking
+    gaze = clip_of(r, "gaze", 4.4, loop=True)
+    sit_pose(gaze)
+    gaze.rot("head", keys((0, 16, -22, 0), (1.3, 12, -6, 0), (2.2, 14, 20, 0), (3.3, 18, 8, 0), (4.4, 16, -22, 0)))
+    hold(gaze, "ear_l", rot=(-8, 0, 0))
+    hold(gaze, "ear_r", rot=(-8, 0, 0))
+    sat_tail(gaze, 24)
+    cycle(gaze, "chest", "scale", lambda p: (1 + 0.02 * s(p * 2), 1 + 0.02 * s(p * 2), 1), 8)
     stubs(r)
 
 
@@ -849,6 +890,28 @@ def _dubu_clips(r):
     cycle(song, "tail", "rot", lambda p: (-58, 14 * s(p * 3), 0), 16)
     hold(song, "tail2", rot=(-30, 0, 0))
     hold(song, "tail3", rot=(-24, 0, 0))
+
+    # ---- nose to the ground, following something along it, the plume going
+    sniff = clip_of(r, "sniff", 2.0, loop=True)
+    hold(sniff, "body", rot=(7, 0, 0))
+    cycle(sniff, "head", "rot", lambda p: (40 + 4 * s(p * 4), 14 * s(p), 0), 16)
+    hold(sniff, "head", pos=(0, -1.6, -0.4))
+    cycle(sniff, "ear_l", "rot", lambda p: (0, 0, -8 * max(0.0, s(p * 4))), 16)
+    cycle(sniff, "ear_r", "rot", lambda p: (0, 0, 8 * max(0.0, s(p * 4))), 16)
+    _dubu_tail(sniff, wag=16, per=4, n=16)
+
+    # ---- sat down, a hind foot going at the back of his ear
+    scratch = clip_of(r, "scratch", 1.2, loop=True)
+    hold(scratch, "body", pos=(0, -1.0, 1.0), rot=(-26, 0, 8))
+    for nm in ("fleg_l", "fleg_r"):
+        hold(scratch, nm, rot=(26, 0, -8), scale=(1, 1.6, 1))
+    hold(scratch, "hleg_r", rot=(-34, 0, 0))
+    cycle(scratch, "hleg_l", "rot", lambda p: (-104 + 12 * s(p * 6), 0, -14), 24)
+    cycle(scratch, "head", "rot", lambda p: (6, 0, 26 + 3 * s(p * 6)), 24)
+    cycle(scratch, "ear_l", "rot", lambda p: (0, 0, -14 + 8 * s(p * 6, 0.2)), 24)
+    hold(scratch, "tail", rot=(-58, 0, 0))
+    hold(scratch, "tail2", rot=(-30, 0, 0))
+    hold(scratch, "tail3", rot=(-24, 0, 0))
     stubs(r)
     # the giraffe is in his mouth only when he carries it, and under his chin when he sleeps
     for cl in r.clips.values():
@@ -1302,6 +1365,8 @@ def page_art(outdir, films=True):
               ("aya_roll", aya_r, aya_t, sc_a, "roll", 0.9, 64, 24), ("aya_sleep", aya_r, aya_shut, sc_a, "sleep", 0.5, 150, 34),
               ("aya_hello", aya_r, aya_t, sc_a, "nudge", 0.9, 40, 14), ("aya_walk", aya_r, aya_t, sc_a, "move", 0.1, 60, 12),
               ("aya_stretch", aya_r, aya_t, sc_a, "stretch", 1.2, 62, 14), ("aya_wary", aya_r, aya_t, sc_a, "hide", 0.3, 40, 16),
+              ("aya_groom", aya_r, aya_t, sc_a, "groom", 0.6, 34, 12), ("aya_swat", aya_r, aya_t, sc_a, "swat", 0.56, 34, 12),
+              ("dubu_scratch", dub_r, dub_t, sc_d, "scratch", 0.3, 40, 12), ("dubu_sniff", dub_r, dub_t, sc_d, "sniff", 0.5, 52, 12),
               ("dubu_lie", dub_r, dub_t, sc_d, "lie", 0.4, 38, 16), ("dubu_sit", dub_r, dub_t, sc_d, "sit", 1.9, 34, 12),
               ("dubu_sleep", dub_r, dub_shut, sc_d, "sleep", 0.5, -56, 34), ("dubu_carry", dub_r, dub_t, sc_d, "carry", 0.1, 52, 12),
               ("dubu_hello", dub_r, dub_t, sc_d, "nudge", 0.55, 46, 14), ("dubu_run", dub_r, dub_t, sc_d, "run", 0.1, 60, 12),
