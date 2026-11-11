@@ -1,0 +1,48 @@
+# A Gauntlet's presses parked in the ceiling while they are up (SPEC §17.5 "Gauntlet"; Euan, 11 Nov: "the wall spawns in
+# front of you"). A Clockwork Foundry course and a Frost Monastery one: from the doorway and from the first landing before
+# the clock has started, where every press of the course must already be in sight with its marks on the floor under it;
+# then with the clock running, some down and the rest parked.
+world gauntlet_parked survival 20261025
+waitworld
+window 1440 900
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+
+# ---- Clockwork Foundry -----------------------------------------------------------------------------------------------
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken gate open B clockwork_foundry rig
+wait 320
+cmd awaken gate enter 1
+wait 200
+cmd awaken gate interior goto rig
+wait 120
+hud off
+shot parked_01_foundry_doorway
+cmd awaken gate rig at start
+wait 60
+shot parked_02_foundry_landing
+look 0 -25
+wait 10
+shot parked_03_foundry_landing_up
+cmd awaken gate rig at first
+wait 30
+shot parked_04_foundry_clock_running
+wait 24
+shot parked_05_foundry_half_a_beat_on
+cmd awaken gate rig at press
+wait 30
+shot parked_06_foundry_under_one

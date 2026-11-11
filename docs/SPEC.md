@@ -4009,7 +4009,12 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
       ratchet winds (`gate.rig.windup`); it is drawn coming down out of the ceiling for 4 ticks, then its blocks land
       (`gate.rig.press`), and whoever is under it is hit (3 + 11% of health; SPEC §47.14) and thrown back. It lifts back into the
       ceiling over 14 ticks (`gate.rig.lift`). The loop starts with the clock (a run started alone starts it fresh, so
-      its beat is the one the par was set to) and stops, putting everything back, when the room empties;
+      its beat is the one the par was set to) and stops, putting everything back, when the room empties.
+      A press that is up is drawn parked in the ceiling, and the floor under it keeps dim, steady chevrons, so every press
+      of a course can be seen from its first landing (`RigFx.parked`, `pressMarks`; the client is told each press's
+      columns, block and travel with the floor's rig scene). Nothing is there to walk into: its blocks exist only while
+      it is down. Until 11 Nov nothing at all was drawn of a press that was up (Euan, playing a Foundry course: "They're
+      invisible until you actually get super close to them... the wall spawns in front of you");
     - **wall-run**: 5 rows of open pit (6 from B) in a straight stretch, with a wall (`gate_run_wall`, dark panels ruled
       with lit grooves) beside them on one side, a row past either end, from the pit to 4 over the floor: run along it.
   - **Rings**: after every second obstacle, over a straight floor row with 8+ rows still to go, a hoop of the theme's
