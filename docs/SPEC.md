@@ -6549,17 +6549,50 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
-- **Water under the Air** (Euan 2026-11-11, told that Cinematic's water mirrored the game's old sky: "No, that
-  makes no sense. Why would it mirror the game's old sky? That would be inconsistent."). L3's water read its
-  reflection from the frame, and under the Air the frame still holds the game's sky (Lens's is drawn in the composite
-  itself), so the water showed a sky that was nowhere else on screen, and none of Lens's clouds. Now, while the Air
-  is on, `lensWater` mirrors the Air: `airSky` the way the reflected ray looks, and the block clouds walked from the
-  camera's image under the surface (`cloudNearFrom`, the same walk as the view's with its origin dropped twice the
-  eye's height over the water, so the clouds in the water are the clouds in the sky block for block, and their haze
-  is by the whole path). The mirrored walk goes the far clouds' distance too (1,240 blocks), since the far clouds'
-  buffer is the camera's view. The Fresnel, the ripples, the glint and Ultra's march of the land are as they were;
-  without the Air the frame's sky is still the one mirrored. Not mirrored: a storm cell, the stars, the sun's and
-  moon's discs (the glint stands for them). Tour: `tools/autopilot/steady60-water-ci.txt`.
+- **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
+  like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
+  that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
+  sense ... That would be inconsistent"; then: "surprise me along the lines of what we've been building ... the
+  fantasy style ... I don't want the usual blue, like, flat blue style ... still feels like MC, but doesn't look at
+  all like what it was before"). Under the Air, still water is drawn again by the composite, on Lite as on Cinematic
+  and Ultra (`lens_water.glsl`: `waterHere`, `airWater`). Everything is on the block's own sixteenth grid, so every
+  part of it is a pixel of the world; nothing moves the surface, bends what is under it or is simulated.
+  - **What is water**: a level surface at the height a still fluid stands in its block (0.8889), seen from above,
+    by the pixel's own world height (within 0.004), with the composite's normal up (or none, on an edge); lava, which
+    stands at the same height, is told by the game's colour. So it needs no heightfield (Lite has none) and holds
+    at any distance. Flowing water and falls are not level and stay the game's. Under cover (parameter texel 21 r,
+    and on Cinematic the pixel's own cover) it stays the game's too: a cave's lake has no sky to hold. It gives way
+    with the game's own fog, and by the look's `water` (0.6 is whole).
+  - **The body**: jewel tones from the place's own water colour (the hue of the game's pixel: a marsh stays dark, a
+    steppe pale), drawn toward aqua where you look down into it and toward indigo where it runs deep and far, lit
+    by the hour and by Lens's own shade (the lit and the raw pixel differ by nothing else). Near you the game's
+    picture of the bed shows through it; far out the body is all there is. Long wind lanes (about nine blocks by
+    three) drift across it, a crest a little lighter.
+  - **The mirror**: the Air's sky the way the reflected ray looks; its block clouds (Cinematic and Ultra: walked
+    from the camera's image under the surface, `cloudNearFrom`, block for block the sky's, to 1,240 blocks; Lite:
+    a cloud's own footprint, one read where the mirrored ray meets the layer's underside); and the land over the
+    far shore, read from the frame where the mirrored ray looks, into the Air's fog by its distance (true for
+    anything far off; nearer than some twenty blocks it is left to the sky). The mirror leans a texel at a time on
+    the lanes and their chop. Its share is wider than glass's (0.05 straight down to 0.86 toward the horizon), so a
+    lake across the way is already sky and still keeps some of its own colour.
+  - **Lace**: thin lines of light on the lanes' crests, long along the lanes and cut into dashes, a texel wide, gone
+    before a texel is smaller than a screen pixel.
+  - **The road of the sun, and the moon's**: texels that catch the light and twinkle seven times a second, each its
+    own brightness, in the hour's own light (gold toward dusk); a few are four-pointed, their arms only where a
+    texel is small on screen. Far out the road is its own average. By night the water holds a scatter of stars.
+    None in the water's own shade (Cinematic's sun term).
+  - **The waterline** (with the heightfield: Cinematic and Ultra): a pale line where water meets what stands over
+    it, its edge ragged and breathing a texel at a time, a few short dashes off it, and aqua shallows within a block
+    of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
+    under a tree's crown read as a bank). A bridge overhead reads as a bank as well: the water under its edge
+    ripples.
+  - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes), the sky model twice, and three reads.
+    Cinematic: the mirrored cloud walk and four heights more. Not measured: frame times need the Mac.
+  - **Not done**: flowing water and falls, cave lakes, rain rings, a storm cell and the sun's and moon's discs in the
+    mirror, the bed's real depth (the shallows are by the shore, not by how deep it is). Without the Air (`lensAir`
+    off) L3's water is as it was.
+  - Tour: `tools/autopilot/steady60-water-ci.txt` (a pool with a deep middle, a sand corner, lily pads, a pillar and
+    an island: across, down at the bank, along the shore, from above, golden hour, dusk, night; Vivid; Lite).
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
