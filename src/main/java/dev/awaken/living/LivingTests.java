@@ -942,7 +942,7 @@ final class LivingTests {
             // on a slope every column of a secret stands on its own ground, its blocks moved with it (nothing hangs off the hill)
             dev.awaken.living.wonder.Secrets.reset();
             var slope = new dev.awaken.living.wonder.Wonders.Terrain() {
-                public int ground(int x, int z) { return 70 + Math.floorDiv(x, 2); }
+                public int ground(int x, int z) { return 90 + (int) Math.round(20 * Math.sin(x / 40.0)); }
                 public int seaLevel() { return 63; }
             };
             int settled = 0;
