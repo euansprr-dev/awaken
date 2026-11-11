@@ -1,7 +1,7 @@
 # The Rolling Storm in the Air's block clouds (SPEC §22 "Storm cells", the block storm; Euan, playing, 11 Nov: "the
 # custom storm is still the old clouds ... fix that so it's the new clouds and looks great"). A storm is called, then
-# seen from where it was called, from 200 and 60 blocks off (the tower and under the shelf), at golden hour, and by
-# night with strikes. Run: tools/tour-ci.sh tools/autopilot/steady60-storm-ci.txt 2400
+# seen from 460 blocks off (the whole cell, at four hours and with strikes by night), from 230 (the tower) and from 60
+# (under the shelf). Run: tools/tour-ci.sh tools/autopilot/steady60-storm-ci.txt 2400
 # ci knobs: LENS=cinematic
 world autopilot_storm creative 20261025
 waitworld
@@ -30,14 +30,12 @@ wait 300
 cmd time set 4000
 cmd awaken living happen rolling_storm
 wait 200
-cmd tp @s ~120 ~40 ~
-wait 60
-cmd awaken living near 200
+cmd awaken living near 460
 wait 300
-cmd tp @s ^ ^150 ^-520
+cmd tp @s ~ ~25 ~
 cmd setblock ~ ~-1 ~ minecraft:glass
 wait 10
-cmd tp @s ~ ~ ~ ~ -8
+cmd tp @s ~ ~ ~ ~ -15
 wait 300
 shot s1_far_morning
 cmd time set 7500
@@ -49,22 +47,22 @@ shot s1_far_golden
 cmd time set 18000
 wait 150
 shot s1_far_night
-cmd awaken living strike 600
+cmd awaken living strike 440
 wait 2
 shotnow s1_far_strike_a
 wait 4
 shotnow s1_far_strike_b
 cmd time set 5000
-cmd awaken living near 200
-wait 200
-cmd tp @s ^ ^60 ^-200
+cmd awaken living near 230
+wait 300
+cmd tp @s ~ ~25 ~
 cmd setblock ~ ~-1 ~ minecraft:glass
 wait 10
-cmd tp @s ~ ~ ~ ~ -30
+cmd tp @s ~ ~ ~ ~ -32
 wait 300
-shot s2_tower_400
+shot s2_tower_230
 cmd awaken living near 60
-wait 200
+wait 300
 cmd tp @s ~ ~ ~ ~ -65
 wait 100
 shot s3_under_shelf
