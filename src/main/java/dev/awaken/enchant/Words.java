@@ -169,6 +169,8 @@ final class Words {
     static void onLivingDrops(LivingDropsEvent e) {
         LivingEntity dead = e.getEntity();
         if (!(e.getSource().getEntity() instanceof ServerPlayer p) || e.getDrops().isEmpty()) return;
+        // never another player's pack, and never what a Lord or a named beast leaves: that lies there for everyone who fought
+        if (dead instanceof Player || EnchantEffects.spared(dead)) return;
         int lv = gather(p.getMainHandItem());
         if (lv <= 0 || p.distanceToSqr(dead) > GATHER_REACH[lv] * GATHER_REACH[lv]) return;
         pull(p, e.getDrops(), dead.getX(), dead.getY() + dead.getBbHeight() * 0.5, dead.getZ());
