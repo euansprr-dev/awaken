@@ -55,13 +55,36 @@ final class HomeTests {
         AwakenTests.clearToSky(level, at.offset(-4, 0, -4), at.offset(4, 0, 4));
     }
 
+    /**
+     * Ground near {@code from} that no rule of the land refuses a home on: a settlement's planned ground (with room for an
+     * Anchor's 48), a holdfast's bell, Precursor stone, the city. The coal keeps those rules for players; a test lands
+     * wherever its batch puts it, so it walks out a chunk-aligned 256 at a time until it is clear (hearth_ember_founds
+     * landed inside a settlement another test had planned and was refused "inside a village").
+     */
+    static BlockPos clearGround(ServerLevel level, BlockPos from) {
+        for (int ring = 0; ring <= 6; ring++) {
+            for (int i = -ring; i <= ring; i++) {
+                for (int j = -ring; j <= ring; j++) {
+                    if (Math.max(Math.abs(i), Math.abs(j)) != ring) continue;
+                    BlockPos ground = from.offset(i * 256, 0, j * 256), at = ground.above();
+                    // the holdfasts' last: a town not found yet is looked for there and then (as the coal's own check does)
+                    if (dev.awaken.terrain.api.CityBasin.reserved(at.getX(), at.getZ()) || dev.awaken.village.api.Villages.reserved(level, at, 64)
+                            || dev.awaken.core.api.WardHooks.at(level, at).isPresent() || TheLull.holdfastHeard(level, at)) continue;
+                    if (ring > 0) dev.awaken.Awaken.LOG.info("[hearth] test ground {} is refused by the land: moved to {}", from.toShortString(), ground.toShortString());
+                    return ground;
+                }
+            }
+        }
+        return from;
+    }
+
     static void register() {
         AwakenTests.registerIsolated("hearth_ember_founds", 400, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             HearthData data = HearthData.get(level.getServer());
             BlockPos origin = h.absolutePos(BlockPos.ZERO);
-            BlockPos ground = new BlockPos((origin.getX() & ~15) + 8, origin.getY() + 100, (origin.getZ() & ~15) + 8);
+            BlockPos ground = clearGround(level, new BlockPos((origin.getX() & ~15) + 8, origin.getY() + 100, (origin.getZ() & ~15) + 8));
             ownGround(level, ground);
             level.setBlock(ground, Blocks.STONE.defaultBlockState(), 3);
             BlockPos at = ground.above();

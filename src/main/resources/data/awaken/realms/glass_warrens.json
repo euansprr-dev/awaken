@@ -6,7 +6,10 @@
   "theme": "glass_desert",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {

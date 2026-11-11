@@ -23,7 +23,7 @@ public final class ArmourPayloads {
 
     /**
      * Client → server, at a Fitting Stand. START / MEMORY: forge the piece {@code a} (set ordinal × 4 + slot), in full or
-     * from memory; TAKE: the suit into your pack; PULL: the bar out of the fire at {@code t}; STRIKE: strike {@code a} at
+     * from memory; TAKE: what stands on the stand into your pack ({@code a} 0: all of it; 1 to 4: the piece in that slot); PULL: the bar out of the fire at {@code t}; STRIKE: strike {@code a} at
      * {@code t}, {@code aim} mark radii off; QUENCH: plunged at {@code t}; CUT: the cut done, {@code aim} its score; LEAVE:
      * stepped away (the work waits); RESUME: back at it; TWIN: a helper's off-beat at {@code t}; OPEN: the stand's list again.
      */
@@ -49,6 +49,9 @@ public final class ArmourPayloads {
     /** {@link Offer#flags}: you can make it now; you can forge it from memory; you have made this set whole before; you
      * haven't found the set's pattern yet (the list shows it, and where patterns come from). */
     public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8, OWNED = 16, ABOVE = 32, AFFORD = 64;
+    /** HELD_OTHER: this stand is holding another set, so nothing of this one can be made here until that one is taken
+     * off (SPEC §44.14); ON_STAND: this piece stands on the stand now. */
+    public static final int HELD_OTHER = 128, ON_STAND = 256;
 
     /** A piece the stand offers: set ordinal × 4 + slot, what it takes, and flags. */
     public record Offer(int piece, List<Need> needs, int flags) {

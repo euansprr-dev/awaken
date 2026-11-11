@@ -1,0 +1,405 @@
+# The Whole Boss Fight as built (SPEC §68), filmed on the duel stage (/awaken bosses duel stage, SPEC §47.3) in daylight.
+# You stand in survival with health enough for the whole film, put back in front of the boss every few seconds (along its
+# own facing), and it fights as it does: its own choice of blows, its own aim. A blow played by command (duel play) is
+# no measure: it begins between two of the boss's ticks and takes no aim worth the name.
+# 1. The ring, slowed to 5 ticks a second, a picture a half tick: clips/ring_struck (the guard never raised),
+#    clips/ring_parried (the guard raised in the middle of the band).
+# 2. The band against the server: the guard raised on the ring's own clock (arms parry) at the band's early edge, its
+#    late edge, its middle, a tick too early and a tick too late, then no guard at all. The log's "[fights] ring:" and
+#    "[fights] clock:" lines and the totals are the measure: every guard the ring showed white must come back DEFLECT,
+#    and a blow that lands must find the ring at about 0.
+# 3. A worn-out blade beside a fresh one in the bag: the crack on its icon.
+# 4. The last stand and the finishing blow on the three pilots: the plate's words, a heavy held and let go, the bars,
+#    the cut out of your eyes, the white frame, its own ending, the cut back (clips/finish_ringer at half speed, a
+#    picture a tick; the Regent and the Colossus as frames), each of those two fought unguarded first for the ring's
+#    clock (the Regent's dive is a charge, the Colossus's slam a slam).
+# Run on CI: tools/tour-ci.sh tools/autopilot/boss-experience.txt 2400
+world autopilot_boss_experience creative 20261111
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd summon minecraft:marker ~ ~ ~ {Tags:["stage"]}
+cmd awaken bosses duel stage proving_ringer
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+cmd attribute @s minecraft:max_health base set 1000
+cmd effect give @s minecraft:instant_health 1 60 true
+cmd effect give @s minecraft:regeneration 100000 8 true
+cmd gamemode survival
+hud on
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+
+# --- 1. the ring, slowed ---
+arms rate 5
+wait 2
+arms film ring_struck 90 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 45
+arms parry 2.5
+arms film ring_parried 90 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 45
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 45
+arms parry off
+arms rate 20
+wait 10
+
+# --- 2. the band against the server: the guard at 3.5 ticks (early edge) ---
+arms parry 3.5
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+shot band_early_edge
+
+# --- 2. the band against the server: the guard at 1.75 ticks (late edge) ---
+arms parry 1.75
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+shot band_late_edge
+
+# --- 2. the band against the server: the guard at 2.5 ticks (middle) ---
+arms parry 2.5
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+shot band_middle
+
+# --- 2. the band against the server: the guard at 4.5 ticks (too early) ---
+arms parry 4.5
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+shot band_too_early
+
+# --- 2. the band against the server: the guard at 0.75 ticks (too late) ---
+arms parry 0.75
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+shot band_too_late
+
+# --- 2. no guard: where the ring stands as each blow lands ---
+arms parry off
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.4 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 60
+
+# --- 3. a worn-out blade beside a fresh one, in the bag (the Ringer put away first) ---
+cmd kill @e[type=awaken:proving_ringer]
+cmd tp @s @e[type=minecraft:marker,tag=stage,limit=1]
+wait 60
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword[minecraft:damage=899]
+cmd item replace entity @s hotbar.1 with awaken:wildhide_longsword
+wait 10
+holo inv open
+wait 15
+shot worn_00_bag
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd gamemode creative
+
+# --- 4a. the Ringer's last stand and its finishing blow, at half speed, a picture a tick ---
+cmd tp @s @e[type=minecraft:marker,tag=stage,limit=1]
+wait 5
+cmd awaken bosses duel stage proving_ringer
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~0.4 ~ ~3.2 180 -8
+wait 20
+shot finish_00_before
+cmd damage @e[type=awaken:proving_ringer,limit=1] 1000000 minecraft:player_attack by @s
+wait 14
+shot finish_01_beaten
+arms rate 10
+wait 2
+arms film finish_ringer 130 1 2
+wait 4
+arms heavy 12
+wait 130
+arms rate 20
+wait 20
+shot finish_99_after
+
+# --- 4b. the Hive Regent, a flier: fought unguarded (its dive is a charge), then beaten, down, and finished ---
+cmd tp @s @e[type=minecraft:marker,tag=stage,limit=1]
+wait 5
+cmd awaken bosses duel stage hive_regent
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd gamemode survival
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:hive_regent,limit=1] rotated ~ 0 run tp @s ^ ^ ^6 facing entity @e[type=awaken:hive_regent,limit=1] eyes
+wait 80
+cmd gamemode creative
+wait 10
+cmd damage @e[type=awaken:hive_regent,limit=1] 1000000 minecraft:player_attack by @s
+wait 50
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~0.3 ~ ~3.0 180 -10
+wait 12
+shot regent_01_beaten
+arms heavy 12
+shotnow regent_blow_01
+shotnow regent_blow_02
+shotnow regent_blow_03
+shotnow regent_blow_04
+shotnow regent_blow_05
+shotnow regent_blow_06
+shotnow regent_blow_07
+shotnow regent_blow_08
+shotnow regent_blow_09
+shotnow regent_blow_10
+shotnow regent_blow_11
+shotnow regent_blow_12
+shotnow regent_blow_13
+shotnow regent_blow_14
+shotnow regent_blow_15
+shotnow regent_blow_16
+shotnow regent_blow_17
+shotnow regent_blow_18
+shotnow regent_blow_19
+shotnow regent_blow_20
+shotnow regent_blow_21
+shotnow regent_blow_22
+shotnow regent_blow_23
+shotnow regent_blow_24
+shotnow regent_blow_25
+shotnow regent_blow_26
+shotnow regent_blow_27
+shotnow regent_blow_28
+shotnow regent_blow_29
+shotnow regent_blow_30
+shotnow regent_blow_31
+shotnow regent_blow_32
+shotnow regent_blow_33
+shotnow regent_blow_34
+shotnow regent_blow_35
+shotnow regent_blow_36
+shotnow regent_blow_37
+shotnow regent_blow_38
+shotnow regent_blow_39
+shotnow regent_blow_40
+shotnow regent_blow_41
+shotnow regent_blow_42
+shotnow regent_blow_43
+shotnow regent_blow_44
+shotnow regent_blow_45
+shotnow regent_blow_46
+shotnow regent_blow_47
+shotnow regent_blow_48
+shotnow regent_blow_49
+shotnow regent_blow_50
+wait 40
+
+# --- 4c. the Gearwright Colossus, the tall one: fought unguarded (its slam is a slam), then beaten and finished ---
+cmd tp @s @e[type=minecraft:marker,tag=stage,limit=1]
+wait 5
+cmd awaken bosses duel stage gearwright_colossus
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd gamemode survival
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] rotated ~ 0 run tp @s ^ ^ ^2.6 facing entity @e[type=awaken:gearwright_colossus,limit=1] eyes
+wait 80
+cmd gamemode creative
+wait 10
+cmd damage @e[type=awaken:gearwright_colossus,limit=1] 1000000 minecraft:player_attack by @s
+wait 30
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~0.3 ~ ~3.2 180 -22
+wait 12
+shot colossus_01_beaten
+arms heavy 12
+shotnow colossus_blow_01
+shotnow colossus_blow_02
+shotnow colossus_blow_03
+shotnow colossus_blow_04
+shotnow colossus_blow_05
+shotnow colossus_blow_06
+shotnow colossus_blow_07
+shotnow colossus_blow_08
+shotnow colossus_blow_09
+shotnow colossus_blow_10
+shotnow colossus_blow_11
+shotnow colossus_blow_12
+shotnow colossus_blow_13
+shotnow colossus_blow_14
+shotnow colossus_blow_15
+shotnow colossus_blow_16
+shotnow colossus_blow_17
+shotnow colossus_blow_18
+shotnow colossus_blow_19
+shotnow colossus_blow_20
+shotnow colossus_blow_21
+shotnow colossus_blow_22
+shotnow colossus_blow_23
+shotnow colossus_blow_24
+shotnow colossus_blow_25
+shotnow colossus_blow_26
+shotnow colossus_blow_27
+shotnow colossus_blow_28
+shotnow colossus_blow_29
+shotnow colossus_blow_30
+shotnow colossus_blow_31
+shotnow colossus_blow_32
+shotnow colossus_blow_33
+shotnow colossus_blow_34
+shotnow colossus_blow_35
+shotnow colossus_blow_36
+shotnow colossus_blow_37
+shotnow colossus_blow_38
+shotnow colossus_blow_39
+shotnow colossus_blow_40
+shotnow colossus_blow_41
+shotnow colossus_blow_42
+shotnow colossus_blow_43
+shotnow colossus_blow_44
+shotnow colossus_blow_45
+shotnow colossus_blow_46
+shotnow colossus_blow_47
+shotnow colossus_blow_48
+shotnow colossus_blow_49
+shotnow colossus_blow_50
+shotnow colossus_blow_51
+shotnow colossus_blow_52
+shotnow colossus_blow_53
+shotnow colossus_blow_54
+shotnow colossus_blow_55
+shotnow colossus_blow_56
+wait 40
+hud on
+quit

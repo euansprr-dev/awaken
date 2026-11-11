@@ -6,7 +6,10 @@
   "theme": "drowned_archive",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {

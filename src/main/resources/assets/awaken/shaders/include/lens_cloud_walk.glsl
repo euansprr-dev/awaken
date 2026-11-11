@@ -12,15 +12,19 @@ vec4 P(int i);  // the including pass's parameter read (texel 25 r: Lite)
 
 float cloudNearHg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
-vec4 cloudNear(vec3 v, float scene) {
+// drop: how far under the camera the walk starts (0 for the view itself). Water mirrors the sky from the camera's
+// image under its surface, twice the eye's height over the water down: the reflected ray is that eye's own line of
+// sight, so the clouds in the water are the clouds in the sky, block for block.
+vec4 cloudNearFrom(vec3 v, float scene, float drop) {
     vec4 cp = cloudParams(), f12 = F(12), f14 = F(14), f16 = F(16);
     if (!cloudBlocks() || cp.x <= 0.0 || f16.w <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
     vec3 l = f14.xyz;
-    float camY = f12.y;
+    float camY = f12.y - drop;
     // (Lite, SPEC §22 "Lite", has no far clouds' pass behind this walk, so here it goes as far as that pass does: only
     // the low band of sky between the two reaches walks farther, some twenty cells at most, and a block twelve wide is
     // still a dozen pixels at a thousand blocks)
-    bool lite = P(25).r > 0.5;
+    // (and a mirrored walk goes that far on any tier: the far clouds' buffer is the camera's view, not the water's)
+    bool lite = P(25).r > 0.5 || drop > 0.0;
     float reach = lite ? CLOUD_NEAR + 600.0 : CLOUD_NEAR;
     // the layer on this ray, as far as the near walk goes
     float oy = camY - (cp.x - cloudUnder()), thick = cloudThick(), t0 = 0.0, t1 = 0.0;
@@ -125,3 +129,5 @@ vec4 cloudNear(vec3 v, float scene) {
     T = 1.0 - (1.0 - T) * (1.0 - gone);
     return vec4(L, T);
 }
+
+vec4 cloudNear(vec3 v, float scene) { return cloudNearFrom(v, scene, 0.0); }

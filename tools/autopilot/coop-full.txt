@@ -1,0 +1,78 @@
+# Together (SPEC §70), the Full side: you on Full, and a partner the server plays ("Ana") on Gentle. The party strip
+# with her beside you, the band's Together section, the arrow on the screen's edge when she is behind you and far off,
+# her ping, and her second wind as you see it (the strip says "on a knee"; she kneels). First person, the HUD on.
+world coopfull survival 20261111
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+wait 40
+# past the opening first (it hides the HUD and holds the camera), then out of the city onto open ground
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+hud on
+camera first
+# the partner: a real second player, awakened and set to Gentle like anyone
+cmd awaken together partner spawn Ana
+wait 20
+cmd awaken as Ana opening skip
+wait 100
+cmd awaken as Ana powers starter 1
+wait 20
+cmd awaken together partner join Ana
+wait 20
+cmd awaken as Ana together fights gentle
+wait 30
+# beside you: the strip
+cmd tp Ana ^-2 ^ ^5
+wait 10
+cmd awaken together partner face Ana
+wait 30
+shot coop_full_01_strip_beside
+# the band's Together section: who you're with, and your own My fights switch
+screen band status
+wait 40
+shot coop_full_02_band_together
+screen close
+wait 20
+# behind you: an arrow on the edge
+cmd tp Ana ^ ^ ^-14
+wait 30
+shot coop_full_03_edge_arrow_behind
+# far off to one side: the arrow and the distance
+cmd tp Ana ^60 ^ ^20
+wait 40
+shot coop_full_04_edge_arrow_far
+# she points at something
+cmd tp Ana ^3 ^ ^8
+wait 10
+cmd awaken together partner face Ana
+wait 20
+cmd awaken together partner ping Ana
+wait 12
+shotnow coop_full_05_her_ping
+wait 40
+# a blow that would kill her: a second wind, as you see it
+cmd awaken together partner hurt Ana 1000
+wait 8
+shotnow coop_full_06_partner_on_a_knee
+wait 70
+shot coop_full_07_partner_up
+cmd awaken together status
+wait 10
+info
+quit

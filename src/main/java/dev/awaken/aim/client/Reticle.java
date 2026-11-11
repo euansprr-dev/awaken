@@ -27,9 +27,11 @@ import org.joml.Vector4f;
  * {@code tools/art/specs/aim_reticle.py}. The mark: four corner brackets that spring in round the creature. The lock: a
  * broken ring turning slowly, four ticks that fly in, the System's diamond over it; it springs closed with a small
  * overshoot when it takes, slides to the next creature on a switch, kicks and flashes on every blow that lands, and
- * splinters when the creature falls. A creature's tell closes in on the ring as a second ring in the tell's colour (white,
- * amber, red, violet), meeting it as the blow lands; a wind-up out of view shows as an arc at that edge. The dot in the
- * middle shows only when there is something to mine, place or use.
+ * splinters when the creature falls. A creature's blow closes in on the ring as a second ring in its class's colour (white,
+ * amber, red, violet), on the body's own clock and at one speed for every blow, meeting the ring on the tick the blow
+ * lands; the ground it crosses while a guard raised now turns the blow aside is a band that burns white (SPEC §68.2). A
+ * wind-up out of view shows as an arc at that edge. The dot in the middle shows only when there is something to mine,
+ * place or use.
  */
 final class Reticle {
     private Reticle() {}
@@ -42,6 +44,19 @@ final class Reticle {
             BRACKET = tex("bracket"), BRACKET_G = tex("bracket_glow"), DIAMOND = tex("diamond"), DIAMOND_G = tex("diamond_glow"),
             TELL = tex("tell"), TELL_G = tex("tell_glow"), EDGE = tex("edge"), EDGE_G = tex("edge_glow"), DOT = tex("dot"),
             DOT_G = tex("dot_glow"), SHARD = tex("shard"), SHARD_G = tex("shard_glow");
+    /** The parry band for a window of 3, 4 or 5 ticks (the art's own widths: tools/art/specs/aim_reticle.py). */
+    private static final Identifier[] BAND = {tex("band3"), tex("band4"), tex("band5")}, BAND_G = {tex("band3_glow"), tex("band4_glow"), tex("band5_glow")};
+
+    // ---- the closing ring's timing (SPEC §68.2; the band's art is drawn to the same numbers) ----------------------------
+    /** Every ring appears this many ticks before its blow, this many lock rings out, and closes in a straight line of time. */
+    static final float APPROACH = 12F, SPREAD = 1.15F;
+    /**
+     * The band is lit from this long inside the weapon's window until this long before the blow: what a press needs to
+     * reach the server and be counted (it sees the guard a tick after the press, and counts whole ticks).
+     */
+    static final float BAND_EARLY = 0.5F, BAND_LATE = 0.75F;
+    /** A landed blow's ring stays closed this long (ticks) while it fades. */
+    private static final float LINGER = 0.6F;
 
     private static Identifier tex(String name) {
         return Awaken.id("textures/gui/aim/" + name + ".png");
@@ -54,8 +69,12 @@ final class Reticle {
     private static long lastNanos;
     private static float dotAlpha;
 
-    // the tell being shown on the ring: whose, its first count (the ring closes over it) and its last
-    private static int tellOf = -1, tellTotal = 1, tellLast;
+    // how the guard last answered: the ring bursts on a deflect and says why a guard missed (Strikes.answered)
+    private static int burstOf = -1, wordOf = -1;
+    private static long burstAt, wordAt;
+    private static boolean wordEarly;
+    /** The duel body fighting you whose ring shows without a lock or a mark (found once a tick), or -1. */
+    private static int bossRing = -1;
     private static final float[] P = new float[2], ANCHOR = new float[3];
     private static boolean anchored;
 
@@ -111,7 +130,11 @@ final class Reticle {
 
         int id = Lock.locked >= 0 ? Lock.locked : markShown(p) ? Lock.marked : -1;
         boolean drew = false;
-        if (id >= 0 && mc.level.getEntity(id) instanceof LivingEntity le && le.isAlive()) drew = target(g, p, le, Lock.locked >= 0, pt, now, frame, w, h, reduced);
+        if (id >= 0 && mc.level.getEntity(id) instanceof LivingEntity le && le.isAlive()) drew = target(g, p, le, Lock.locked >= 0, false, pt, now, frame, w, h, reduced);
+        // a boss that fights you shows its blows' ring with no lock and no mark on it (SPEC §68.2)
+        if (!drew && bossRing >= 0 && bossRing != id && AimConfig.bossRing() && mc.level.getEntity(bossRing) instanceof LivingEntity boss && boss.isAlive()) {
+            drew = target(g, p, boss, false, true, pt, now, frame, w, h, reduced);
+        }
         if (!drew) lastId = -1;
         gone(g, now, w, h, reduced);
         if (AimConfig.threats()) threats(g, p, pt, now, w, h);
@@ -123,7 +146,7 @@ final class Reticle {
         return AimConfig.mark() && Lock.marked >= 0 && (HudState.fighting() || dev.awaken.arms.Arms.styleOf(p.getMainHandItem()) != null);
     }
 
-    private static boolean target(GuiGraphicsExtractor g, LocalPlayer p, LivingEntity le, boolean locked, float pt, long now, float frame,
+    private static boolean target(GuiGraphicsExtractor g, LocalPlayer p, LivingEntity le, boolean locked, boolean bare, float pt, long now, float frame,
                                   int w, int h, boolean reduced) {
         double x = Mth.lerp(pt, le.xo, le.getX()), z = Mth.lerp(pt, le.zo, le.getZ());
         double y = Mth.lerp(pt, le.yo, le.getY()) + le.getBbHeight() * 0.5;
@@ -153,34 +176,222 @@ final class Reticle {
         lastX = sx;
         lastY = sy;
 
-        // the tell on this creature: its class, and how far the closing ring has come
-        Strikes.Tell tell = Strikes.tell(le);
-        int tellColour = -1;
-        float tellLeft = 0;
-        if (tell != null && tell.kind() != Strikes.Kind.NONE && tell.ticks() > 0) {
-            if (tellOf != le.getId() || tell.ticks() > tellLast) tellTotal = Math.max(1, tell.ticks());
-            tellOf = le.getId();
-            tellLast = tell.ticks();
-            tellColour = colour(tell.kind());
-            tellLeft = Mth.clamp((tell.ticks() - pt) / tellTotal, 0F, 1F);
-        } else if (tellOf == le.getId()) {
-            tellOf = -1;
-        }
+        // the blow coming from this creature, on the body's own clock (Strikes.Coming: never the tell's count, SPEC §68.2)
+        double left = Strikes.left(le, pt);
+        Strikes.Kind kind = Double.isNaN(left) ? Strikes.Kind.NONE : Strikes.comingKind(le);
+        boolean coming = kind != Strikes.Kind.NONE && left <= APPROACH && left > -LINGER;
+        int tellColour = coming ? colour(kind) : -1;
+        boolean reaches = coming && Strikes.reaches(le);
+        // whose blow it is (SPEC §70.3): yours closes in full, with its band and its colour on the ring; someone else's is a
+        // thin, still ring that promises you nothing
+        boolean mine = mine(p, le, coming);
+        int window = mine && reaches && Strikes.lands(le) ? window(p, kind) : 0;
+        boolean hot = window > 0 && left <= window - BAND_EARLY && left >= BAND_LATE;
 
-        int base = tellColour >= 0 ? mix(HOLO, tellColour, 0.65F) : HOLO;
+        int base = hot ? LIGHT : tellColour >= 0 && mine ? mix(HOLO, tellColour, 0.65F) : HOLO;
         if (locked) lockRing(g, sx, sy, r, base, now, reduced);
-        else brackets(g, sx, sy, r, base, now, reduced);
-        if (tellColour >= 0) {
-            // the closing ring: from twice the ring's size down onto it as the blow lands
-            float tr = r * (1F + 1.15F * tellLeft);
-            float pulse = 0.75F + 0.25F * Mth.sin(now / 1.0E9F * 18F);
-            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * 2.3F, tr * 2.3F, 0F, tellColour, (0.45F + 0.55F * (1F - tellLeft)) * pulse);
+        else if (!bare) brackets(g, sx, sy, r, base, now, reduced);
+        if (coming) {
+            // with no lock on it there is no ring for the blow's to close onto: the mark and the bare boss get one while a blow comes
+            if (!locked) glowed(g, RING, RING_G, 128, 128, sx, sy, r * 2.45F, r * 2.45F, 0F, base, mine ? 0.6F : 0.3F);
+            // the band: where the ring is while a guard raised now turns the blow aside, white while the ring is in it
+            if (window > 0) {
+                int i = Mth.clamp(window, 3, 5) - 3;
+                band(g, BAND[i], BAND_G[i], sx, sy, r * 3.2F, hot ? LIGHT : tellColour, hot ? 0.62F : 0.22F);
+            }
+            // the closing ring: one speed for every blow, from 1 + SPREAD lock rings down onto the ring as the blow lands
+            float f = Mth.clamp((float) (left / APPROACH), 0F, 1F);
+            float tr = r * (1F + SPREAD * f);
+            float alpha = (0.5F + 0.5F * (1F - f)) * (!mine ? 0.3F : reaches ? 1F : 0.35F) * (left < 0 ? Mth.clamp((float) (1 + left / LINGER), 0F, 1F) : 1F);
+            int ring = hot ? LIGHT : tellColour;
+            float size = mine ? 2.3F : 2.1F; // someone else's blow: a thinner ring (SPEC §70.3)
+            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * size, tr * size, 0F, ring, alpha);
+            if (hot) glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * 2.3F + 2F, tr * 2.3F + 2F, 0F, LIGHT, alpha * 0.8F); // a thicker line while it is "now"
         }
+        answered(g, le.getId(), sx, sy, r, now, reduced);
         ANCHOR[0] = sx;
         ANCHOR[1] = sy;
         ANCHOR[2] = r;
         anchored = true;
         return true;
+    }
+
+    /** Bodies whose coming blow is aimed at someone else (SPEC §70.3), kept from the tell to the blow's landing. */
+    private static final int[] OTHERS = {-1, -1, -1, -1};
+
+    /**
+     * Whether this body's coming blow is yours to answer. Its tell says whom it is aimed at only while the wind-up lasts;
+     * the ring runs on to the landing (SPEC §68.2), so what the tell last said is kept until the blow is over.
+     */
+    private static boolean mine(LocalPlayer p, Entity e, boolean coming) {
+        int id = e.getId(), at = -1, free = -1;
+        for (int i = 0; i < OTHERS.length; i++) {
+            if (OTHERS[i] == id) at = i;
+            else if (OTHERS[i] < 0 && free < 0) free = i;
+        }
+        Strikes.Tell tell = Strikes.tell(e);
+        if (tell != null && tell.kind() != Strikes.Kind.NONE && tell.ticks() > 0) {
+            boolean yours = tell.aimedAt(p.getId());
+            if (!yours && at < 0 && free >= 0) OTHERS[free] = id;
+            if (yours && at >= 0) OTHERS[at] = -1;
+            return yours;
+        }
+        if (at >= 0 && !coming) OTHERS[at] = -1;
+        return at < 0;
+    }
+
+    /**
+     * The ticks in which the held weapon answers a blow of this class as it lands: its guard's deflect window for a blow
+     * that can be turned aside, its dodge's evade ticks for one that can only be got out of; 0 with no fighting style in hand.
+     */
+    private static int window(LocalPlayer p, Strikes.Kind kind) {
+        var style = dev.awaken.arms.Arms.styleOf(p.getMainHandItem());
+        if (style == null) return 0;
+        return kind.deflectable() ? style.def().guard().deflect() : kind.dodgeable() ? style.def().dodge().evade() : 0;
+    }
+
+    /** The band: a soft dark ground under it (it reads on a bright sky), then its own light. */
+    private static void band(GuiGraphicsExtractor g, Identifier core, Identifier glow, float cx, float cy, float size, int colour, float alpha) {
+        sprite(g, glow, 128, 128, cx, cy, size, size, 0F, ARGB.color(Math.round(alpha * 0.30F * 255), 0x000000));
+        sprite(g, core, 128, 128, cx, cy, size, size, 0F, ARGB.color(Math.round(alpha * 255), colour));
+    }
+
+    /** How long a deflect's burst and a miss's word last (ms). */
+    private static final float BURST_MS = 300F, WORD_MS = 650F;
+    private static final int CLASH = 0xFFF2CC;
+
+    /** The guard's answer on this creature's ring: it bursts outward on a deflect, and a miss says why under it. */
+    private static void answered(GuiGraphicsExtractor g, int id, float sx, float sy, float r, long now, boolean reduced) {
+        if (burstOf == id) {
+            float t = ms(now, burstAt) / BURST_MS;
+            if (t < 1F) {
+                float out = reduced ? 0.25F : 1F - (1F - t) * (1F - t);
+                glowed(g, TELL, TELL_G, 128, 128, sx, sy, r * (1F + 0.9F * out) * 2.3F, r * (1F + 0.9F * out) * 2.3F, 0F, CLASH, (1F - t) * (1F - t));
+                glowed(g, RING, RING_G, 128, 128, sx, sy, r * (1F + 0.45F * out) * 2.45F, r * (1F + 0.45F * out) * 2.45F, 0F, LIGHT, 0.8F * (1F - t));
+            } else burstOf = -1;
+        }
+        if (wordOf == id && AimConfig.words()) {
+            float t = ms(now, wordAt) / WORD_MS;
+            if (t < 1F) {
+                Minecraft mc = Minecraft.getInstance();
+                String word = net.minecraft.network.chat.Component.translatable(wordEarly ? "awaken.aim.too_early" : "awaken.aim.too_late").getString();
+                int a = Math.round(255 * Mth.clamp(t < 0.7F ? 1F : (1F - t) / 0.3F, 0F, 1F));
+                if (a > 8) g.centeredText(mc.font, word, Math.round(sx), Math.round(sy + r + 12F), ARGB.color(a, 0xFFFFFF));
+            } else wordOf = -1;
+        }
+    }
+
+    // ---- once a tick: the boss whose ring shows without a lock, and the guard's own moments ---------------------------------
+
+    private static boolean guardWas;
+    private static int struckBy = -1, struckTicks, pressOf = -1, pressAge;
+    private static double pressLeft;
+    private static boolean pressHot;
+    // a development run's count of what the ring promised against what the guard got (SPEC §68.2, the plan's stage 0)
+    private static final boolean DEV = !net.neoforged.fml.loading.FMLEnvironment.isProduction();
+    private static int presses, pressesHot, hotDeflected, answers;
+    private static double offSum, offMax;
+
+    static void tick(Minecraft mc) {
+        LocalPlayer p = mc.player;
+        if (p == null || mc.level == null) {
+            bossRing = -1;
+            return;
+        }
+        // the duel body nearest its blow, among those that fight within 32 blocks
+        int best = -1;
+        double bestLeft = Double.MAX_VALUE;
+        for (Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof LivingEntity le) || le == p || !le.isAlive() || le.distanceToSqr(p) > 32 * 32 || !Strikes.duelist(le)) continue;
+            double left = Strikes.left(le, 1F);
+            if (Double.isNaN(left)) {
+                if (best < 0) best = le.getId();
+            } else if (left < bestLeft) {
+                bestLeft = left;
+                best = le.getId();
+            }
+        }
+        bossRing = best;
+
+        // the guard going up: what the ring showed at that moment (a miss's word and the development count read it)
+        boolean guard = p.isUsingItem() && dev.awaken.arms.Arms.guards(p.getUseItem());
+        if (guard && !guardWas) {
+            int id = Lock.locked >= 0 ? Lock.locked : bossRing >= 0 ? bossRing : Lock.marked;
+            Entity e = id >= 0 ? mc.level.getEntity(id) : null;
+            double left = e == null ? Double.NaN : Strikes.left(e, 1F);
+            if (!Double.isNaN(left) && left <= APPROACH) {
+                Strikes.Kind kind = Strikes.comingKind(e);
+                int window = mine(p, e, true) && Strikes.reaches(e) && Strikes.lands(e) ? window(p, kind) : 0;
+                pressOf = id;
+                pressAge = 0;
+                pressLeft = left;
+                pressHot = window > 0 && left <= window - BAND_EARLY && left >= BAND_LATE;
+                presses++;
+                if (pressHot) pressesHot++;
+            }
+            // a guard that goes up just after the blow struck was too late
+            if (struckBy >= 0 && struckTicks <= 5) {
+                wordOf = struckBy;
+                wordAt = System.nanoTime();
+                wordEarly = false;
+                struckBy = -1;
+            }
+        }
+        guardWas = guard;
+        if (struckBy >= 0 && ++struckTicks > 5) struckBy = -1;
+        if (pressOf >= 0 && ++pressAge > 30) pressOf = -1;
+    }
+
+    /** Arms' client says how the guard answered a blow (Strikes.installAnswers): the ring's burst, a miss's word, the count. */
+    static void onAnswer(Strikes.Answer answer, int attackerId) {
+        long now = System.nanoTime();
+        Minecraft mc = Minecraft.getInstance();
+        switch (answer) {
+            case DEFLECT -> {
+                burstOf = attackerId;
+                burstAt = now;
+            }
+            case BLOCK, GUARD_BREAK -> {
+                wordOf = attackerId;
+                wordAt = now;
+                wordEarly = true;
+            }
+            case STRUCK -> {
+                // what a block or a broken guard let through is the same blow, already answered
+                if (wordEarly && wordOf == attackerId && now - wordAt < 150_000_000L) return;
+                struckBy = attackerId;
+                struckTicks = 0;
+            }
+        }
+        if (!DEV || mc.level == null) return;
+        Entity e = attackerId >= 0 ? mc.level.getEntity(attackerId) : null;
+        double left = e == null ? Double.NaN : Strikes.left(e, mc.getDeltaTracker().getGameTimeDeltaPartialTick(true));
+        boolean pressed = pressOf == attackerId;
+        // only a blow the ring said reaches you measures the ring: a wave or a shot of the same body lands on its own time
+        boolean said = !Double.isNaN(left) && Strikes.reaches(e);
+        if (said) {
+            answers++;
+            offSum += left;
+            offMax = Math.max(offMax, Math.abs(left));
+        }
+        if (pressed && pressHot && answer == Strikes.Answer.DEFLECT) hotDeflected++;
+        Awaken.LOG.info("[fights] ring: {} with the ring at {} ticks{}{}", answer, Double.isNaN(left) ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", left),
+                Double.isNaN(left) || said ? "" : " (the ring said this blow passes by)",
+                pressed ? String.format(java.util.Locale.ROOT, "; guard raised at %.2f ticks (%s)", pressLeft, pressHot ? "in the band" : "outside it") : "");
+        if (pressed) pressOf = -1;
+    }
+
+    /** Leaving the world: a development run's totals, then a clean slate. */
+    static void reset() {
+        if (DEV && (answers > 0 || presses > 0)) {
+            Awaken.LOG.info("[fights] ring totals: {} blows answered, the ring off by {} ticks on average (at most {}); guard raised {} times on a ring, {} in the band, {} of those deflected",
+                    answers, answers == 0 ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", offSum / answers), String.format(java.util.Locale.ROOT, "%.2f", offMax),
+                    presses, pressesHot, hotDeflected);
+        }
+        presses = pressesHot = hotDeflected = answers = 0;
+        offSum = offMax = 0;
+        bossRing = burstOf = wordOf = struckBy = pressOf = -1;
+        guardWas = false;
     }
 
     /** The lock: the ring, the ticks and the diamond, springing closed when it takes. */
@@ -278,17 +489,19 @@ final class Reticle {
             if (shown >= 4) break;
             if (!(e instanceof LivingEntity le) || le == p || !le.isAlive()) continue;
             if (le.distanceToSqr(p) > AimRules.THREAT_RANGE * AimRules.THREAT_RANGE) continue;
-            Strikes.Tell tell = Strikes.tell(le);
-            if (tell == null || tell.kind() == Strikes.Kind.NONE || tell.ticks() <= 0) continue;
+            // on the blow's own clock, as the ring is (SPEC §68.2): the arc brightens evenly and lasts until the blow lands
+            double left = Strikes.left(le, pt);
+            Strikes.Kind kind = Double.isNaN(left) ? Strikes.Kind.NONE : Strikes.comingKind(le);
+            if (kind == Strikes.Kind.NONE || left <= 0 || !mine(p, le, true)) continue; // someone else's blow is no threat to you (SPEC §70.3)
             AABB b = le.getBoundingBox();
             Vec3 c = b.getCenter();
             if (project(c.x, c.y, c.z, w, h, 0.92F)) continue; // in view: its own tell (and the ring) say it
             float rel = Mth.wrapDegrees(Lock.yawTo(eye, c) - viewYaw);
             float a = rel * Mth.DEG_TO_RAD;
-            float near = 1F - Mth.clamp(tell.ticks() / 12F, 0F, 1F);
+            float near = 1F - Mth.clamp((float) (left / APPROACH), 0F, 1F);
             float pulse = 0.8F + 0.2F * Mth.sin(now / 1.0E9F * 22F);
             float ex = w / 2F + Mth.sin(a) * rad * (w / (float) Math.min(w, h)) * 0.98F, ey = h / 2F - Mth.cos(a) * rad;
-            int col = colour(tell.kind());
+            int col = colour(kind);
             glowed(g, EDGE, EDGE_G, 128, 32, ex, ey, 64F + 18F * near, 16F + 4F * near, rel, col, (0.55F + 0.45F * near) * pulse);
             shown++;
         }

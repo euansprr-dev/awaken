@@ -49,6 +49,13 @@ public final class ArmsModule {
             @Override public void hold(net.minecraft.world.entity.LivingEntity target, boolean fighting) {
                 ArmsServer.hold(target, fighting);
             }
+            // a body at its last point is held open for the blow that ends it, and that blow is an Execution's (SPEC §68.4)
+            @Override public void beaten(net.minecraft.world.entity.LivingEntity target, int ticks, net.minecraft.world.entity.player.Player by) {
+                if (by instanceof ServerPlayer sp) ArmsServer.beaten(target, ticks, sp);
+            }
+            @Override public boolean executing(net.minecraft.world.damagesource.DamageSource source) {
+                return ArmsServer.executing(source);
+            }
         });
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {
@@ -224,6 +231,24 @@ public final class ArmsModule {
                             }
                             if (Arms.styleOf(stack) == null) return 0;
                             stack.set(ArmsContent.INSTANCE.get(), Marks.of(stack).attuned(f));
+                            return 1;
+                        })))
+                // dev: a deflect answered as a clash of a size, from the nearest creature, the guard's rules aside (tours film
+                // each size; SPEC §25 "The clash"): /awaken arms clash light|heavy|break
+                .then(Commands.literal("clash").requires(AwakenCommands.admin())
+                        .then(Commands.argument("size", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            int size = switch (com.mojang.brigadier.arguments.StringArgumentType.getString(c, "size")) {
+                                case "heavy" -> ArmsRules.CLASH_HEAVY;
+                                case "break" -> ArmsRules.CLASH_BREAK;
+                                default -> ArmsRules.CLASH_LIGHT;
+                            };
+                            net.minecraft.world.entity.LivingEntity by = null;
+                            for (net.minecraft.world.entity.LivingEntity e : p.level().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                                    p.getBoundingBox().inflate(8), o -> o != p && o.isAlive() && !(o instanceof net.minecraft.world.entity.player.Player))) {
+                                if (by == null || e.distanceToSqr(p) < by.distanceToSqr(p)) by = e;
+                            }
+                            ArmsServer.clash(p, ArmsServer.state(p), by, size);
                             return 1;
                         })))
                 // dev: a Lord-forged weapon's reveal (to the hand) or its Art letting go: /awaken arms lord <lord> reveal|art

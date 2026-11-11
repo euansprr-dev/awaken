@@ -80,7 +80,9 @@ public class AwakenMob extends Monster {
     public static final int F_HAUNTED = 1, F_FROSTED = 1 << 1, F_CHARGED = 1 << 2, F_VOLATILE = 1 << 3, F_ECHO = 1 << 4,
             F_RISEN = 1 << 5, F_FALLEN = 1 << 6, F_PHASED = 1 << 7, F_GUARDING = 1 << 8, F_CHARGING = 1 << 9,
             F_DECOY = 1 << 10, F_FUSING = 1 << 11, F_DORMANT = 1 << 12, F_DUEL = 1 << 13, F_HEAVY = 1 << 14,
-            F_SPLIT_CHILD = 1 << 15;
+            F_SPLIT_CHILD = 1 << 15,
+            /** A boss beaten to its last point: it kneels and waits for the blow that ends it (SPEC §68.4). Never saved. */
+            F_BEATEN = 1 << 16;
     /** Flags that are saved with the entity (the rest are recomputed). */
     // F_FALLEN: its rise is spent when it falls, so one saved mid-fall still has to get up (its ticks aren't saved: at once)
     private static final int SAVED_FLAGS = F_ECHO | F_RISEN | F_DECOY | F_DORMANT | F_SPLIT_CHILD | F_VOLATILE | F_HAUNTED | F_FALLEN;
@@ -90,6 +92,8 @@ public class AwakenMob extends Monster {
     private static final EntityDataAccessor<Integer> DATA_TELEGRAPH = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** The class of the blow being told (core.api.Strikes.Kind ordinal; NONE between blows), for the tell's look. */
     private static final EntityDataAccessor<Byte> DATA_TELL = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
+    /** Whom the blow being told is for: their entity id, or -1 for everyone in its way (SPEC §70.3). */
+    private static final EntityDataAccessor<Integer> DATA_TELL_FOR = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** Role ordinal (MobRole.Role) for visuals. */
     private static final EntityDataAccessor<Byte> DATA_ROLE = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
     /** Entity id of the player a MIMIC wears, -1 if none. */
@@ -211,6 +215,7 @@ public class AwakenMob extends Monster {
         b.define(DATA_FLAGS, 0);
         b.define(DATA_TELEGRAPH, 0);
         b.define(DATA_TELL, (byte) Strikes.Kind.NONE.ordinal());
+        b.define(DATA_TELL_FOR, -1);
         b.define(DATA_ROLE, (byte) 0);
         b.define(DATA_MIMIC, -1);
     }
@@ -313,6 +318,20 @@ public class AwakenMob extends Monster {
     public void setTell(int ticks, Strikes.Kind kind, boolean heavyLook) {
         setTelegraph(ticks, heavyLook);
         entityData.set(DATA_TELL, (byte) (ticks > 0 ? kind : Strikes.Kind.NONE).ordinal());
+        // a told blow is its target's to answer; whoever else is locked on sees a thin ring (SPEC §70.3)
+        LivingEntity at = getTarget();
+        int who = ticks > 0 && at != null ? at.getId() : -1;
+        if (entityData.get(DATA_TELL_FOR) != who) entityData.set(DATA_TELL_FOR, who);
+    }
+
+    /** The blow being told reaches everyone in its way (a sweep, a burst, an ability): it is everyone's to answer. */
+    public void tellAll() {
+        if (entityData.get(DATA_TELL_FOR) != -1) entityData.set(DATA_TELL_FOR, -1);
+    }
+
+    /** Whom the blow being told is for (an entity id), -1 for everyone (both sides). */
+    public int tellFor() {
+        return entityData.get(DATA_TELL_FOR);
     }
 
     /**
@@ -372,6 +391,19 @@ public class AwakenMob extends Monster {
 
     public boolean grounded() {
         return groundedTicks > 0;
+    }
+
+    /**
+     * Out of the air for {@code ticks}, whatever it is: a boss beaten to its last point comes down to be finished
+     * (SPEC §68.4), where {@link #ground} leaves a kit flier to its own script.
+     */
+    protected void bringDown(int ticks) {
+        if (!def().flies()) return;
+        groundedTicks = Math.max(groundedTicks, ticks);
+        setNoGravity(false);
+        Vec3 v = getDeltaMovement();
+        setDeltaMovement(v.x * 0.3, Math.min(v.y, -0.35), v.z * 0.3);
+        needsSync = true;
     }
 
     public MobRole.Role syncedRole() {

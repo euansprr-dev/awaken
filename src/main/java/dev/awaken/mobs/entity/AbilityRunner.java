@@ -288,7 +288,7 @@ public final class AbilityRunner {
     }
 
     /** A charge runs this many ticks; a leap is in the air at most this many. */
-    static final int CHARGE_TICKS = 14, LEAP_TICKS = 40;
+    static final int CHARGE_TICKS = dev.awaken.mobs.boss.KitReach.CHARGE_TICKS, LEAP_TICKS = 40;
 
     /**
      * Begins the named ability of this phase now (a scripted moment: the seep heart's call as a phase opens), if nothing
@@ -477,7 +477,7 @@ public final class AbilityRunner {
                 Vec3 d = scripted && t != null ? chargeRun(t) : aim.subtract(mob.position().add(0, mob.getBbHeight() * 0.5, 0));
                 if (!mob.def().flies()) d = new Vec3(d.x, 0, d.z);
                 chargeDir = d.lengthSqr() < 1.0E-4 ? mob.getLookAngle() : d.normalize();
-                double speed = mob.def().flies() ? 1.0 : 0.85;
+                double speed = chargeSpeed();
                 chargeTicks = scripted && t != null ? Math.max(4, Math.min(CHARGE_TICKS + 4, Mth.ceil(d.length() / speed))) : CHARGE_TICKS;
                 chargeDamage = Abilities.damage(mob, a);
                 chargeAbility = a;
@@ -547,7 +547,7 @@ public final class AbilityRunner {
     }
 
     /** A slam strikes this far as its blow; past it, its reach is a wave. */
-    static final float SLAM_CORE = 1.5F;
+    static final float SLAM_CORE = dev.awaken.mobs.boss.KitReach.SLAM_CORE;
     /** A step's cut lands this long after it arrives: amber, a beat to turn and parry. */
     static final int BLINK_CUT = 8;
     private net.minecraft.world.effect.@Nullable MobEffectInstance leapEffect, blinkEffect;
@@ -581,13 +581,13 @@ public final class AbilityRunner {
     }
 
     /** Blocks past you a charge carries before it's spent. */
-    static final double CHARGE_PAST = 1.5;
+    static final double CHARGE_PAST = dev.awaken.mobs.boss.KitReach.CHARGE_PAST;
 
     /** What's left of a charge's speed on the tick it's spent. */
     static final double CHARGE_BRAKE = 0.2;
 
     private double chargeSpeed() {
-        return mob.def().flies() ? 1.0 : 0.85;
+        return dev.awaken.mobs.boss.KitReach.chargeSpeed(mob.def().flies()); // one rule with the ring a client draws (SPEC §68.2)
     }
 
     /** How far past where it is a charge sends the body this tick, or null (SPEC §48.8). Its last tick is only {@link #CHARGE_BRAKE} of a stride. */
@@ -602,7 +602,7 @@ public final class AbilityRunner {
         double speed = chargeSpeed();
         Vec3 v = mob.getDeltaMovement();
         mob.setDeltaMovement(chargeDir.x * speed, mob.def().flies() ? chargeDir.y * speed : v.y, chargeDir.z * speed);
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(0.6), e -> Abilities.isEnemy(mob, e))) {
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(dev.awaken.mobs.boss.KitReach.CHARGE_GRAZE), e -> Abilities.isEnemy(mob, e))) {
             if (chargeHits.contains(e.getId())) continue;
             chargeHits.add(e.getId());
             Ability ca = chargeAbility;

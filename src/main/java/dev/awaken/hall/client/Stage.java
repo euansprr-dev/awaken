@@ -117,6 +117,21 @@ final class Stage {
         fill(x1 - t, y0 + t, x1, y1 - t, colour);
     }
 
+    /**
+     * The hover state of a thing on the wall or the terraces (Euan, 11 Nov: "you don't actually see well which one you're
+     * about to click on"): four corner brackets round its box, the band's own corners, {@code len} long and {@code t} thick.
+     */
+    void brackets(float x0, float y0, float x1, float y1, float len, int t, int colour) {
+        fill(x0, y0, x0 + len, y0 + t, colour);
+        fill(x0, y0 + t, x0 + t, y0 + len, colour);
+        fill(x1 - len, y0, x1, y0 + t, colour);
+        fill(x1 - t, y0 + t, x1, y0 + len, colour);
+        fill(x0, y1 - t, x0 + len, y1, colour);
+        fill(x0, y1 - len, x0 + t, y1 - t, colour);
+        fill(x1 - len, y1 - t, x1, y1, colour);
+        fill(x1 - t, y1 - len, x1, y1 - t, colour);
+    }
+
     /** A straight thin line between two sheet points, at any angle. */
     void ray(float x0, float y0, float x1, float y1, float t, int colour) {
         float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy);

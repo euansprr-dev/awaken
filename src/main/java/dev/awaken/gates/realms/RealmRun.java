@@ -60,15 +60,37 @@ final class RealmRun {
             boolean inside = dx * dx + dz * dz <= leg.radius() * leg.radius() && Math.abs(leg.y() - ly) <= 10;
             switch (leg.kind()) {
                 case AMBUSH -> {
+                    BlockPos at = Realms.world(ref.cell(), leg.x(), leg.y(), leg.z());
                     if (plays && inside && level.getDifficulty() != Difficulty.PEACEFUL && st.woken.add("den" + leg.site())) {
-                        BlockPos at = Realms.world(ref.cell(), leg.x(), leg.y(), leg.z());
                         apply(level, ref, land, "ambush_" + leg.id());
                         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
                         RealmPacks.den(level, g, f, at, leg.site(), leg.pack(), p);
                         level.playSound(null, at, SoundEvents.TURTLE_EGG_CRACK, SoundSource.HOSTILE, 1.6F, 0.6F);
                         data.setDirty();
                     }
-                    if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), st.woken.contains("den" + leg.site()), close);
+                    boolean woken = st.woken.contains("den" + leg.site());
+                    int waves = waves(leg);
+                    if (near && waves > 1 && woken && !st.densCleared.contains(leg.site())) {
+                        // a stand (SPEC §50.9): the next wave comes when the last is down and someone still holds the room
+                        int sent = 1;
+                        while (sent < waves && st.woken.contains("wave" + leg.site() + "_" + (sent + 1))) sent++;
+                        if (sent < waves) {
+                            if (close && plays && inside && level.getDifficulty() != Difficulty.PEACEFUL && !RealmPacks.alive(level, at, "d" + leg.site())) {
+                                st.woken.add("wave" + leg.site() + "_" + (sent + 1));
+                                FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
+                                // every other wave is the theme's own roll, so no two waves are the same company
+                                RealmPacks.den(level, g, f, at, leg.site(), sent % 2 == 1 ? List.of() : leg.pack(), p);
+                                level.playSound(null, at, SoundEvents.TURTLE_EGG_CRACK, SoundSource.HOSTILE, 1.6F, 0.6F);
+                                for (ServerPlayer q : level.players()) {
+                                    if (Runs.run(q).gateId == g.id) Signal.toast(q, Component.literal("More are coming. Wave " + (sent + 1) + " of " + waves + "."));
+                                }
+                                data.setDirty();
+                            }
+                            if (land.seals(leg.id())) doors(level, g, land, ref, st, data, leg, "d" + leg.site(), true);
+                            continue;
+                        }
+                    }
+                    if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), woken, close);
                 }
                 case FIGHT -> {
                     if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), st.woken.contains("den" + leg.site()), close);
@@ -111,6 +133,44 @@ final class RealmRun {
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
+        if (plays && !(land instanceof dev.awaken.gates.realms.kit.crawl.CrawlLand) && level.getDifficulty() != Difficulty.PEACEFUL) wander(level, p, g, land, lx, lz);
+    }
+
+    /** How many waves a leg's fight comes in: a stand's ambush says "waves:8"; anything else is one. */
+    static int waves(Land.Leg leg) {
+        String w = leg.when();
+        if (w == null || !w.startsWith("waves:")) return 1;
+        try {
+            return Math.max(1, Integer.parseInt(w.substring(6)));
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    /** Wandering packs sent per gate so far. Not saved: after a restart a land may get a few more. */
+    private static final Map<Integer, Integer> WANDERED = new HashMap<>();
+
+    /** A server is starting: gate ids begin again in another world, so the last world's counts must not be read as this one's. */
+    static void reset() {
+        WANDERED.clear();
+    }
+
+    /**
+     * The right amount (SPEC §50.9): an open land is never empty between its dens. About every twenty seconds, for a player
+     * who is out in the land with nothing of the gate's near them, away from the way in and from every fight the land has
+     * placed, one more pack stands waiting somewhere ahead. A land gets four of these and one more for every rank.
+     */
+    private static void wander(ServerLevel level, ServerPlayer p, GateRecord g, Land land, int lx, int lz) {
+        if ((p.tickCount + p.getId() * 37) % 400 >= 10) return;
+        int sent = WANDERED.getOrDefault(g.id, 0);
+        if (sent >= 4 + g.plan.rank().ordinal()) return;
+        Land.Site mouth = land.mouth();
+        if (mouth != null && Math.hypot(lx - mouth.x(), lz - mouth.z()) < 48) return;
+        for (Land.Leg leg : land.route()) {
+            if (leg.kind() != Land.LegKind.ARRIVE && Math.hypot(leg.x() - lx, leg.z() - lz) < leg.radius() + 30) return;
+        }
+        if (RealmPacks.near(level, p.blockPosition(), 44) > 2) return;
+        if (RealmPacks.wander(level, g, GateLayout.of(g.plan).floor(0, 1), p, sent) > 0) WANDERED.put(g.id, sent + 1);
     }
 
     /** A den's fight: once its pack is gone it counts as cleared (a way may open on that), and while it's on its doors are shut. */

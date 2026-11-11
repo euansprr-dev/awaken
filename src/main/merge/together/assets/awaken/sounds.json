@@ -1,0 +1,107 @@
+{
+  "together.join": {
+    "subtitle": "subtitles.awaken.together.join",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power1",
+        "pitch": 0.85,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block/beacon/power2",
+        "pitch": 0.85,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block/beacon/power3",
+        "pitch": 0.85,
+        "volume": 0.5
+      }
+    ]
+  },
+  "together.leave": {
+    "subtitle": "subtitles.awaken.together.leave",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "pitch": 1.1,
+        "volume": 0.45
+      }
+    ]
+  },
+  "together.second_wind": {
+    "subtitle": "subtitles.awaken.together.second_wind",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/deplete1",
+        "pitch": 0.9,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/deplete2",
+        "pitch": 0.9,
+        "volume": 0.8
+      }
+    ]
+  },
+  "together.up": {
+    "subtitle": "subtitles.awaken.together.up",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn1",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn2",
+        "pitch": 1.0,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn3",
+        "pitch": 1.0,
+        "volume": 0.7
+      }
+    ]
+  },
+  "together.down": {
+    "subtitle": "subtitles.awaken.together.down",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/deplete1",
+        "pitch": 0.7,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/deplete2",
+        "pitch": 0.7,
+        "volume": 0.9
+      }
+    ]
+  },
+  "together.lift": {
+    "subtitle": "subtitles.awaken.together.lift",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "pitch": 0.9,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "pitch": 0.9,
+        "volume": 0.7
+      }
+    ]
+  },
+  "together.ping": {
+    "subtitle": "subtitles.awaken.together.ping",
+    "sounds": [
+      {
+        "name": "minecraft:block/copper_bulb/toggle",
+        "pitch": 0.9,
+        "volume": 0.5
+      }
+    ]
+  }
+}

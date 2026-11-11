@@ -72,7 +72,7 @@ final class LensParams {
         packed[23] = pack(grade[4], grade[5], grade[6], grade[7]);
         packed[24] = pack(grade[8], 0f, 0f, 0f);
         // 25: r 1 on Lite (SPEC §22 "Lite"): the composite and the prefilter leave out Lens 2's light, the heightfield and
-        // the far clouds' buffer, whose samplers are stand-ins there. 26-31 free
+        // the far clouds' buffer, whose samplers are stand-ins there. 26: the hand (hand()). 27-31 free
         packed[25] = pack(lite ? 1f : 0f, 0f, 0f, 0f);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
@@ -80,6 +80,15 @@ final class LensParams {
                 break;
             }
         }
+    }
+
+    /**
+     * Texel 26 r: Lens has the hand's own depth this frame (LensHand; SPEC §22 "Reach and cover"). Set after the frame's
+     * other values, once the world is drawn and the hand's target is known; upload again after it.
+     */
+    void hand(boolean known) {
+        packed[26] = pack(known ? 1f : 0f, 0f, 0f, 0f);
+        if (packed[26] != uploaded[26]) dirty = true;
     }
 
     void uploadIfChanged() {

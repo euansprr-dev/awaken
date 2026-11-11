@@ -44,7 +44,7 @@ final class SuitView extends CloseView {
     private static final float[][] ZONE = {{838F, 196F}, {385F, 360F}, {838F, 560F}, {385F, 752F}};
     private static final float[][] ANCHOR = {{0F, -.25F, -.28F}, {0F, .32F, -.2F}, {0F, .92F, -.16F}, {0F, 1.38F, -.18F}};
     private static final float ZONE_W = 176F, ZONE_H = 64F;
-    private static final int FORGE = 0, MEMORY = 1, TRACK = 2, UNTRACK = 3, LOOKS = 4, CHOOSE = 5;
+    private static final int FORGE = 0, MEMORY = 1, TRACK = 2, UNTRACK = 3, LOOKS = 4, CHOOSE = 5, TAKE_ONE = 6, TAKE_ALL = 7;
     private static final float INLAY_SIZE = 52F, INLAY_STEP = 60F;
     /** The catalyst chosen to inlay (its Force + 1; 0 none), kept between visits. */
     private static int inlay;
@@ -89,6 +89,8 @@ final class SuitView extends CloseView {
     private boolean showInlay;
     private int modes;
     private final int[] states = new int[4];
+    /** The pieces of this suit that stand on the stand you're at (SPEC §44.14). */
+    private final boolean[] stands = new boolean[4];
     private String prevName = "", nextName = "";
 
     // what the last frame drew where
@@ -172,7 +174,10 @@ final class SuitView extends CloseView {
         modes = 0;
         for (int i = 0; i < 4; i++) {
             states[i] = SuitState.of(o, set, i);
-            int mode = states[i] == SuitState.UNFOUND || states[i] == SuitState.NONE ? Placed.SHAPE : states[i] == SuitState.SHORT || states[i] == SuitState.OVER ? Placed.DIM : Placed.FULL;
+            ArmourPayloads.Offer one = SuitState.offer(o, set, i);
+            stands[i] = one != null && (one.flags() & ArmourPayloads.ON_STAND) != 0;
+            int mode = states[i] == SuitState.UNFOUND || states[i] == SuitState.NONE ? Placed.SHAPE
+                    : !stands[i] && (states[i] == SuitState.SHORT || states[i] == SuitState.OVER) ? Placed.DIM : Placed.FULL;
             modes |= (i == slot ? mode | Placed.MARKED : mode) << i * 4;
         }
         name = Stage.blackletter(hidden ? "Unknown" : set.setName);
@@ -286,15 +291,30 @@ final class SuitView extends CloseView {
             primary = new Panel.Act("forge the " + piece, FORGE, true, can, 0);
             if (offer != null && (offer.flags() & ArmourPayloads.FROM_MEMORY) != 0)
                 subs.add(new Panel.Act("From memory", MEMORY, false, can, InputConstants.KEY_M));
+            ArmourSet held = TerraceView.held(o);
             if (busy != null) line = busy + " is forging here. Come back when the piece is done, or help at the anvil while it's shaped.";
-            else if (state == SuitState.SHORT) line = stillNeeds(offer);
+            // a stand builds one suit at a time (SPEC §44.14): while another stands on it, this one waits
+            else if (held != null && held != set) line = "This stand is holding " + held.setName + ". Take it off the stand and you can build this one here.";
+            else if (stands[slot]) {
+                line = "Your " + piece + (slot >= 2 ? " are" : " is") + " on the stand.";
+                whyColour = Stage.LANTERN;
+            } else if (state == SuitState.SHORT) line = stillNeeds(offer);
             else if (!place.isEmpty()) line = place;
         }
         if (choosing != null) {
             boolean on = choosing.chosen(set);
             subs.add(0, new Panel.Act(on ? "Your choice" : "Choose this one", CHOOSE, false, !on, InputConstants.KEY_RETURN));
         } else if (!hidden && state != SuitState.MADE) {
-            subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? UNTRACK : TRACK, false, true, dev.awaken.holo.ui.StageKeys.TRACK));
+            // with the stand's two actions beside it the row is tight: the shorter word for letting a track go
+            String stop = atStand && TerraceView.held(o) == set ? "Untrack" : "Stop tracking";
+            subs.add(0, new Panel.Act(tracked ? stop : "Track it", tracked ? UNTRACK : TRACK, false, true, dev.awaken.holo.ui.StageKeys.TRACK));
+        }
+        // what stands on the stand is taken from the suit itself: this piece, or all of it. The stand is free for another
+        // suit once the last piece is off (Euan, 11 Nov; it was a line in the corner of the terraces).
+        if (atStand && TerraceView.held(o) == set && subs.size() < 3) {
+            int n = TerraceView.stood(o);
+            if (stands[slot]) subs.add(new Panel.Act("Take it", TAKE_ONE, false, true, 0));
+            if (n > 0 && (n > 1 || !stands[slot]) && subs.size() < 3) subs.add(new Panel.Act(n == 1 ? "Take it off" : "Take all " + n, TAKE_ALL, false, true, 0));
         }
         why = line.isEmpty() ? List.of() : s.wrap(line, TEXT_W, 3F);
     }
@@ -380,14 +400,16 @@ final class SuitView extends CloseView {
             s.ray(lx, ly, ax, ay, on ? 2F : 1F, colour);
             s.fill(ax - 4F, ay - 4F, ax + 4F, ay + 4F, on ? Stage.EDGE : 0x887FC3FF);
             int title = on ? Stage.LANTERN : over ? Stage.TITLE : Stage.LABEL;
-            float wide = Math.max(s.width(PIECE[i], 3F), s.width(SuitState.word(states[i]), 2F)), boxX = left ? zx - wide - 8F : zx - 8F;
+            String word = stands[i] ? "On the stand" : SuitState.word(states[i]);
+            int wordColour = stands[i] ? Stage.LANTERN : SuitState.colour(states[i]);
+            float wide = Math.max(s.width(PIECE[i], 3F), s.width(word, 2F)), boxX = left ? zx - wide - 8F : zx - 8F;
             s.fill(boxX, zy - 6F, boxX + wide + 16F, zy + 54F, 0xB8060A12); // a wide pauldron can turn under the label
             if (left) {
                 s.right(PIECE[i], zx, zy, 3F, title);
-                s.right(SuitState.word(states[i]), zx, zy + 32F, 2F, SuitState.colour(states[i]));
+                s.right(word, zx, zy + 32F, 2F, wordColour);
             } else {
                 s.text(PIECE[i], zx, zy, 3F, title);
-                s.text(SuitState.word(states[i]), zx, zy + 32F, 2F, SuitState.colour(states[i]));
+                s.text(word, zx, zy + 32F, 2F, wordColour);
             }
         }
         g.nextStratum();
@@ -678,6 +700,12 @@ final class SuitView extends CloseView {
             case FORGE, MEMORY -> {
                 if (o == null || !o.stand()) return;
                 ForgeClient.forge(o.pos(), a.op() == FORGE ? ArmourPayloads.START : ArmourPayloads.MEMORY, set.ordinal() * 4 + slot, ForgeSong.inlays(set) ? inlay : 0);
+            }
+            case TAKE_ONE, TAKE_ALL -> {
+                if (o == null || !o.stand()) return;
+                // slot + 1 takes that piece; 0 takes everything on the stand. The server answers with what the stand offers now.
+                ForgeClient.send(o.pos(), ArmourPayloads.TAKE, a.op() == TAKE_ONE ? slot + 1 : 0, 0F, 0F);
+                dirty = true;
             }
             case TRACK -> ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.TRACK, set.id, HallClient.standPos()));
             case UNTRACK -> ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.UNTRACK, set.id, HallClient.standPos()));

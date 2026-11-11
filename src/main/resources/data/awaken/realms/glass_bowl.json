@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "name": "The Glass Bowl",
+  "line": "A bowl of fused sand with nowhere to go. They come over the rim in waves.",
+  "form": "dungeon",
+  "theme": "glass_desert",
+  "ranks": [
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:glass_warrens",
+    "water": 0,
+    "params": {
+      "stand": 1.0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/glass_warrens"
+    ],
+    "lens": "glass_warrens",
+    "air": [
+      "shaft_dust",
+      "sand",
+      "dust",
+      "wind"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "glass_serpent",
+    "seat": "under_the_dunes"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

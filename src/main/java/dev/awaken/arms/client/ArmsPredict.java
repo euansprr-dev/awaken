@@ -1060,6 +1060,7 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        ArmsAnswers.tell(r); // the ring hears how the guard answered (SPEC §68.2)
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
@@ -1110,15 +1111,20 @@ public final class ArmsPredict {
             case ArmsPayloads.DEFLECT -> {
                 deflectAt = ticks;
                 fightAt = ticks;
-                CombatFeedback.hitstop(r.entity(), 100);
-                CombatFeedback.hold(100);
-                CombatFeedback.kick(0F, -1.8F, 1.2F, 7);
-                ArmsFeel.deflected();
-                ArmsAudio.deflect(p);
-                int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
+                // the clash by the size of the blow turned aside (SPEC §25 "The clash"); the switch off is the deflect before it
+                int size = ArmsComfort.clash() ? r.aux() : -1;
+                ArmsRules.Clash c = ArmsRules.clash(size);
+                Entity by = Minecraft.getInstance().level.getEntity(r.entity());
+                ArmsFilm.event("clash " + size);
+                CombatFeedback.hitstop(r.entity(), c.freezeMs());
+                CombatFeedback.hold(c.freezeMs());
+                CombatFeedback.kick(0F, -c.kickPitch(), c.kickRoll(), c.kickTicks());
+                ArmsFeel.clash(c);
+                ArmsAudio.clash(p, by, size);
+                int yaw = yawTo(p, by);
                 ArmsHands.parry(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD));
                 ArmsBodies.jolt(p);
-                ArmsFx.guardSpark(p, yaw, true);
+                ArmsFx.clash(p, yaw, c.light());
             }
             case ArmsPayloads.BLOCK -> {
                 fightAt = ticks;
@@ -1293,7 +1299,7 @@ public final class ArmsPredict {
                 Entity e = mc.level.getEntity(s.entity());
                 if (e != null) {
                     ArmsBodies.jolt(e);
-                    ArmsFx.guardSpark(e, yawTo(e, mc.level.getEntity(s.other())), true);
+                    ArmsFx.clash(e, yawTo(e, mc.level.getEntity(s.other())), ArmsComfort.clash() ? ArmsRules.clash(s.aux()).light() : 0F);
                 }
             }
             case ArmsPayloads.SHOT -> {
