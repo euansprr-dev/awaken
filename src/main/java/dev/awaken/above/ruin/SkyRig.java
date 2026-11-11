@@ -241,7 +241,7 @@ public final class SkyRig {
                 return;
             }
             if (!level.getBlockState(new BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
-            else if (!stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
+            else if (STAIR && !stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
         }
     }
 
@@ -251,8 +251,8 @@ public final class SkyRig {
      * reading it would wait for it on the server thread.
      */
     static boolean finished(ServerLevel level, int cx, int cz) {
-        int far = STAIR_REACH;
-        for (int x = cx - far >> 4; x <= cx + far >> 4; x++) for (int z = cz - far >> 4; z <= cz + far >> 4; z++) {
+        int lo = STAIR ? -STAIR_REACH : 0, hi = STAIR ? STAIR_REACH : PIER + 5;
+        for (int x = cx + lo >> 4; x <= cx + hi >> 4; x++) for (int z = cz + lo >> 4; z <= cz + hi >> 4; z++) {
             if (level.getChunkSource().getChunkNow(x, z) == null) return false;
         }
         return true;
@@ -322,7 +322,7 @@ public final class SkyRig {
             }
             if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: {} leaves cleared under the first ring", cx, cz, opened);
         }
-        rigStair(level, cx, deckY, cz);
+        if (STAIR) rigStair(level, cx, deckY, cz);
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
                 l.rings().size(), l.chainBottom(), ground);
@@ -330,6 +330,11 @@ public final class SkyRig {
 
     /** How far round the deck's centre the stair builds (its radius and a stone's, and the canopy cleared round it). */
     static final int STAIR_REACH = 40;
+    /**
+     * Whether the rig builds the stair (with the platform's look, waiting for Euan's eye on its tour shots before any
+     * world gets it); {@code /awaken ascent sky goto stair} builds it on the platform it goes to either way.
+     */
+    public static final boolean STAIR = false;
 
     /** Whether the stair is up: its top stone's grass is there (the top one is always kept, the ground never reaches it). */
     public static boolean stairPlaced(ServerLevel level, int cx, int deckY, int cz) {

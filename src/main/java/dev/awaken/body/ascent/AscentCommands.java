@@ -214,7 +214,8 @@ final class AscentCommands {
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
                     dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
-                } else if (!dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
+                }
+                if ((where == 2 || dev.awaken.above.ruin.SkyRig.STAIR) && !dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
                     dev.awaken.above.ruin.SkyRig.rigStair(level, cx, deckY, cz);
                 }
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
