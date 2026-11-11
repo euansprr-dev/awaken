@@ -283,12 +283,20 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     public enum Shape { DELVE, PLUNGE, CLIMB, SPRAWL }
 
     private Size size;
+    /** A stand: one great room of waves in place of a run, and how many waves (SPEC §50.9). */
+    private boolean stand;
+    private int waves;
     private Shape shape;
     private int mouthFeet;
 
     /** Your feet where you arrive (the way in is at 0, 0). */
     public final int mouthFeet() {
         return mouthFeet;
+    }
+
+    /** Whether this is a stand: one great room of waves in place of a run (SPEC §50.9). */
+    public final boolean stand() {
+        return stand;
     }
 
     public final Size size() {
@@ -349,6 +357,17 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             plan.add('W');
         }
         plan.add('L');
+        // a stand (a blueprint's land.params "stand", SPEC §50.9): no run to speak of. One great room where they come at you
+        // wave after wave, six at E rank and one more for every rank above, then its Warden and the Lord
+        stand = ctx.bp().land().params().getOrDefault("stand", 0.0) > 0;
+        if (stand) {
+            size = Size.SHORT;
+            waves = 6 + ctx.rank().ordinal();
+            plan.clear();
+            plan.add('A');
+            plan.add('W');
+            plan.add('L');
+        }
 
         int feet = up ? 92 : 196; // a climb starts low and ends high; everything else starts high
         mouthFeet = feet;
@@ -391,8 +410,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 fall = 8;
             }
             int drop = up ? -fall : fall;
-            int wide = kind == 'L' ? 22 : kind == 'W' ? (wardenPillars() == 0 ? 15 : 13) : kind == 'M' ? 11 : kind == 'A' ? 13 + r.nextInt(2) : 10 + r.nextInt(4) + (shape == Shape.SPRAWL ? 2 : 0);
-            int high = kind == 'L' ? 16 : kind == 'A' ? 6 : 7 + r.nextInt(3);
+            int wide = kind == 'L' ? 22 : kind == 'W' ? (wardenPillars() == 0 ? 15 : 13) : kind == 'M' ? 11 : kind == 'A' ? 13 + r.nextInt(2) + (stand ? 5 : 0) : 10 + r.nextInt(4) + (shape == Shape.SPRAWL ? 2 : 0);
+            int high = kind == 'L' ? 16 : kind == 'A' ? (stand ? 9 : 6) : 7 + r.nextInt(3);
 
             // what this leg is cut like comes before the way to it: it decides how much room the leg needs
             Cave.Form form = Cave.Form.OVAL;
@@ -755,7 +774,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             List<String> exits = new ArrayList<>();
             for (String[] j : joins) if (j[0].equals(l[0])) exits.add(j[1]);
             @SuppressWarnings("unchecked") List<String> pack = (List<String>) l[8];
-            leg((String) l[0], (LegKind) l[1], (String) l[2], (Integer) l[3], (Integer) l[4], (Integer) l[5], (Integer) l[6], (Integer) l[7], pack, "", exits.toArray(new String[0]));
+            leg((String) l[0], (LegKind) l[1], (String) l[2], (Integer) l[3], (Integer) l[4], (Integer) l[5], (Integer) l[6], (Integer) l[7], pack,
+                    stand && l[1] == LegKind.AMBUSH ? "waves:" + waves : "", exits.toArray(new String[0]));
         }
     }
 
@@ -864,7 +884,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     private void wells(Random r) {
         for (Part p : new ArrayList<>(parts)) {
             if (!(p instanceof Cave room) || p.name.equals("root") || p.name.equals("side")) continue;
-            int want = room == lordHall ? 2 : 1;
+            // a stand's one great room is fought in for minutes: four wells, so the whole floor can be seen
+            int want = room == lordHall ? 2 : stand && room.name.equals("ambush") ? 4 : 1;
             double turn = r.nextDouble() * Math.PI * 2;
             for (int go = 0; go < 10 && want > 0; go++) {
                 double a = turn + go * 2.4, far = (0.22 + 0.06 * (go % 4)) * Math.min(room.rx, room.rz);

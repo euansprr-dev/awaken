@@ -6,7 +6,9 @@
   "theme": "frost_monastery",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {

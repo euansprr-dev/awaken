@@ -22469,6 +22469,25 @@ grows is cleared from over every stand; every stand has a light over it. A tour 
 names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
 leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
 
+**A stand** (Euan, 11 Nov: "maybe some gates that are like almost kind of like a wave system... survive 10 waves"). A blueprint whose
+`land.params` has `"stand": 1` is cut by a rolled kind's skin but is no run: the way in, one great room (an ambush leg eighteen or
+so across, nine high, its `when` reading `waves:N`), its Warden, the Lord. N is six at E rank and one more for every rank above. A
+wave comes when the last is down and someone still holds the room (`RealmRun`, markers `wave<site>_<k>` in the saved `woken` set);
+every other wave is the theme's own roll in place of the kind's herd, so no two waves are the same company; the room's doors stay
+shut until the last wave falls. A stand pays what any gate of its rank pays: its waves count as shares (`RealmLive.units`). Eight
+on 11 Nov: The Ossuary Floor, The Slag Pit, The Spore Ring, The Drowned Hall, The Glass Bowl, The Chapter House, The Night Ward,
+The Black Landing.
+
+**The right amount** (the same day: "the big worlds we've built so far... look pretty good, like with the right amount of mobs in
+them"). An open land (anything that is not a crawl) is never empty between its dens: about every twenty seconds, for a player out
+in the land with fewer than three of the gate's monsters within forty-four blocks, more than forty-eight from the way in and clear
+of every fight the land has placed, one more pack of the theme's own stands waiting thirty to forty-four blocks off
+(`RealmPacks.wander`). A land gets four such packs and one more for every rank. They pay as any kill does, on top of the gate's
+own shares: whether that stays is Euan's call.
+
+**Every rank.** Each finished blueprint lists every rank from the one its theme opens at up to S, not the two it first had. Packs
+already grow with rank (`RealmPacks.roll`, `den`, `warden`). A run's shape does not change with rank yet.
+
 **Depth.** Euan, 10 Nov, on the pictures of the new shapes: "the rooms and the setups and stuff is decent now, but the
 atmosphere itself is completely missing... a completely flat floor, completely flat walls... it's still all one block
 distances. There's no half blocks, there's no grass, there's no mushrooms... no variation in the depth of the floor or the

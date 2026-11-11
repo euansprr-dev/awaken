@@ -382,7 +382,7 @@ public final class RealmLive {
         if (plan == null) return 1;
         int n = 0;
         for (Land.Leg leg : plan.land().route()) {
-            if (leg.kind() == Land.LegKind.FIGHT || leg.kind() == Land.LegKind.AMBUSH) n += leg.pack().isEmpty() ? 5 : leg.packSize();
+            if (leg.kind() == Land.LegKind.FIGHT || leg.kind() == Land.LegKind.AMBUSH) n += (leg.pack().isEmpty() ? 5 : leg.packSize()) * RealmRun.waves(leg);
             else if (leg.kind() == Land.LegKind.WARDEN) n += 4 + (leg.pack().isEmpty() ? 3 : leg.packSize());
         }
         return Math.max(1, n);
