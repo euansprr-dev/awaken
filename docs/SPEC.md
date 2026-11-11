@@ -24802,6 +24802,10 @@ improving the design and experience of it"): the first look was a plank box with
 - **Lit by the open sky in the air.** A drawn block is lit by the world's light where it is; past three blocks from
   its berth the skiff takes the light of the open sky over that berth instead, because where it flies the land may
   not have come yet and a place with no land has no light (CI run 43001781354: the hull black early in the descent).
+- **The real far skiff stays hidden all the way down.** A mooring built while nobody was near keeps its block
+  changes until its land starts ticking and sends them then, after this client has hidden the skiff: on a first flight
+  the real one came back under the drawn one and the view passed through its wind-wheel (CI run 43014440009). While
+  it descends the client hides it again each tick, and hides it late if it only then arrives (`FlightFilm.keepHidden`).
 - **The descent is onto the mooring as built.** A far mooring that isn't built when the skiff lifts is only a spot
   (the seed's, at sea level + 8); the server's ARRIVED carries where it really stands, and the film comes down there
   (`Flight.to`). Before 11 Nov the film kept the spot, so a first flight came down beside the mooring, in whatever
