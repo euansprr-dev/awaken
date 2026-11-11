@@ -1,0 +1,63 @@
+# Who lives in an open land (SPEC 50.9 "Who lives there"), seen in Amber Reach: a herd on its ground, a pack on the prowl
+# at both ends of its beat, a lookout on its perch with its reserve behind, and the big one at home. Difficulty is normal so
+# the hostile haunts fill; the camera is creative, so nothing notices it. Each haunt is first looked at from 70 blocks, which
+# is where it fills, then from close.
+world autopilot_realm_amber_country creative 20261121
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:amber_reach
+need realm
+hud off
+wait 300
+
+cmd awaken gate realm_haunt HERD 0 70 14
+wait 200
+shot country_herd_far
+cmd awaken gate realm_haunt HERD 0 18 5
+wait 200
+shot country_herd_near
+
+cmd awaken gate realm_haunt HERD 1 70 14
+wait 120
+cmd awaken gate realm_haunt HERD 1 14 4
+wait 200
+shot country_herd_two
+
+cmd awaken gate realm_haunt PROWL 0 70 14
+wait 200
+shot country_prowl_far
+cmd awaken gate realm_haunt PROWL 0 20 6
+wait 200
+shot country_prowl_a
+wait 480
+shot country_prowl_b
+
+cmd awaken gate realm_haunt WATCH 0 70 14
+wait 200
+shot country_lookout_far
+cmd awaken gate realm_haunt WATCH 0 22 3
+wait 200
+shot country_lookout_near
+
+cmd awaken gate realm_haunt LAIR 0 70 14
+wait 200
+cmd awaken gate realm_haunt LAIR 0 18 6
+wait 200
+shot country_lair
+
+cmd awaken gate realm_haunt PROWL 1 70 14
+wait 200
+cmd awaken gate realm_haunt PROWL 1 26 9
+wait 200
+shot country_prowl_two

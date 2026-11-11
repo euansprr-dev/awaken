@@ -35,7 +35,7 @@ import java.util.Map;
  * at home are the theme's monsters, counted and paid as any other. Nothing here is saved but which hostile haunts have
  * been filled ({@link RealmState#woken}); the haunts themselves are found again from the seed.
  */
-final class RealmCountry {
+public final class RealmCountry {
     private RealmCountry() {}
 
     /** The land is read in cells this wide; each holds one haunt or nothing. */
@@ -49,10 +49,10 @@ final class RealmCountry {
     /** The run's packs come first: nothing of the country's stands while the gate holds more monsters than this. */
     private static final int ROOM = Rooms.GATE_CAP - 20;
 
-    enum Kind { NONE, HERD, SMALL, PROWL, WATCH, LAIR }
+    public enum Kind { NONE, HERD, SMALL, PROWL, WATCH, LAIR }
 
     /** One cell's haunt: what, where, a second place (a beat's far stop, a lookout's reserve), its number, and a roll of its own. */
-    record Haunt(Kind kind, int x, int y, int z, int bx, int by, int bz, int site, int roll) {}
+    public record Haunt(Kind kind, int x, int y, int z, int bx, int by, int bz, int site, int roll) {}
 
     private static final Haunt NOTHING = new Haunt(Kind.NONE, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -234,6 +234,21 @@ final class RealmCountry {
         if (kind == Kind.SMALL && level > 4) return NOTHING;
         if (b < 0) b = a;
         return new Haunt(kind, xs[a], ys[a] + 1, zs[a], xs[b], ys[b] + 1, zs[b], 1000 + ((cx & 0x7F) << 7 | cz & 0x7F), (int) (h / 10000 % 1000));
+    }
+
+    /** For tours and checks: the n-th haunt of a kind, counted outward from the way in, or null when the land has fewer. */
+    public static Haunt nth(Land land, long seed, Kind kind, int n) {
+        Land.Site mouth = land.mouth();
+        int half = land.halfSize() / CELL + 1;
+        List<Haunt> found = new java.util.ArrayList<>();
+        for (int cz = -half; cz <= half; cz++) {
+            for (int cx = -half; cx <= half; cx++) {
+                Haunt h = find(land, seed, cx, cz);
+                if (h.kind() == kind) found.add(h);
+            }
+        }
+        found.sort(java.util.Comparator.comparingDouble(h -> Math.hypot(h.x() - mouth.x(), h.z() - mouth.z())));
+        return n < found.size() ? found.get(n) : null;
     }
 
     private static int apart(int[] xs, int[] zs, int i, int j) {
