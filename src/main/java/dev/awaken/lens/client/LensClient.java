@@ -251,6 +251,8 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
+        // (before the others that shape the fog's colour: the edge hold pales it, Far Sight reads it last)
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.ComputeFogColor.class, LensClient::fogColour);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
@@ -628,6 +630,44 @@ public final class LensClient {
             encoder.copyTextureToTexture(WorldProjection.output(), lensFrame.texture.getTexture(), 0, 0, 0, 0, 0, 12, 1);
             encoder.copyTextureToTexture(WorldProjection.output(), lensFrame.texture.getTexture(), 0, LensFrame.SUN, 0, WorldProjection.SUN, 0, 1, 1);
         }
+    }
+
+    private static final float[] AIR_FOG = new float[3];
+
+    /**
+     * The game's fog under the Air (SPEC §22): while Lens draws the sky, the game's own fog takes the Air's horizon colour
+     * toward where the camera looks. The game still fogs land whole by itself (the last tenth of the render distance, a
+     * chunk fading in, the edge hold's mist) in the biome's fog colour, which its own sky shares at the horizon. The
+     * Air's sky does not, so where a biome has a fog colour of its own (the Glass Steppe's is sand) that land stood as
+     * flat sand shapes on a blue sky (Euan, playing, 11 Nov: "it's like brown fog but low quality").
+     */
+    private static void fogColour(ViewportEvent.ComputeFogColor e) {
+        if (!active || !framed || !air || !sunHere) return;
+        Camera camera = e.getCamera();
+        // water, lava and powder snow keep their own fog; so do blindness and darkness, which black it out
+        if (camera.getFluidInCamera() != net.minecraft.world.level.material.FogType.NONE) return;
+        if (camera.entity() instanceof net.minecraft.world.entity.LivingEntity living
+                && (living.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) || living.hasEffect(net.minecraft.world.effect.MobEffects.DARKNESS))) return;
+        Minecraft mc = Minecraft.getInstance();
+        // (the sun as the last frame had it: this is asked before the frame's own values are worked out)
+        if (mc.level == null || sunDir.lengthSquared() < 0.5f) return;
+        var forward = camera.forwardVector();
+        float hx = forward.x(), hz = forward.z(), len = (float) Math.sqrt(hx * hx + hz * hz);
+        if (len < 1.0e-3f) {
+            // straight up or down: the way the camera is turned
+            float yaw = camera.yRot() * Mth.DEG_TO_RAD;
+            hx = -Mth.sin(yaw);
+            hz = Mth.cos(yaw);
+            len = 1f;
+        }
+        dev.awaken.lens.LensAir.horizon(hx / len, hz / len, sunDir.x, sunDir.y, sunDir.z, rain, AIR_FOG);
+        // the game's own darkening toward the void, kept (FogRenderer.computeFogColor)
+        float range = mc.level.getLevelData().voidDarknessOnsetRange();
+        float dark = Mth.clamp((range + mc.level.getMinY() - (float) camera.position().y) / range, 0f, 1f);
+        float keep = (1f - dark) * (1f - dark);
+        e.setRed(AIR_FOG[0] * keep);
+        e.setGreen(AIR_FOG[1] * keep);
+        e.setBlue(AIR_FOG[2] * keep);
     }
 
     private static void ensureParams() {

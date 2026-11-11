@@ -6434,6 +6434,30 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
     (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
     `docs/perf/steady60/grades/`.
+- **The game's fog under the Air** (Euan, playing, 2026-11-11, at the edge of the Glass Steppe: "the start of this
+  other biome looks a bit glitchy ... it's like brown fog but low quality"). The game fogs land whole by itself in
+  places Lens's own fog does not cover: the last tenth of the render distance, a chunk fading in (the game's chunk
+  fade, which Sodium follows), and the mist the edge hold raises at the edge of the made land (§28.9), where Lens's
+  own fog stands back for the game's. Its colour is the biome's `fog_color`, which the game's own sky shares at the
+  horizon, so there fogged land melts into the sky. The Air's sky does not share it. Vanilla's fog (#c0d8ff) is close
+  to the Air's horizon by day and the seam went unseen; the Awakened Lands' biomes have fogs of their own (the Glass
+  Steppe sand #ecdcb8, Elderwood khaki, Lumen teal, the Marsh grey-green, the Highlands lilac), and there fogged land
+  stood as flat shapes of that colour on a blue sky.
+  - **The rule**: while the Air is drawn (Lite, Cinematic, Ultra; an overworld sky), the game's fog colour is the
+    Air's horizon colour toward where the camera looks. `LensClient.fogColour` on `ViewportEvent.ComputeFogColor`, at
+    priority HIGH so the edge hold's paling and Far Sight's reading of the colour come after it; the colour is
+    `LensAir.horizon`, the CPU twin of lens_air.glsl's `airSky` at the horizon (keep the two in step; test
+    `lens_air_horizon`). It is one colour a frame where the shader's fog has one a pixel: by day they are the same, at
+    dusk the screen's sides differ a little from its middle, as the game's own sunrise fog does.
+  - **Kept as the game has them**: water, lava and powder snow; blindness and darkness; the darkening toward the
+    void. Swift, which keeps the game's sky, is untouched. A biome's fog distances are untouched too: only the colour
+    changes.
+  - **Not done**: Lens's shadows still fall on land the game has fogged (they fade with the fog's end as a whole, not
+    by the pixel), and the Air has no tint of a place's own (a sandy air over the Glass Steppe would be a look to
+    choose, in the sky and the fog alike).
+  - Shown on CI by `tools/autopilot/steady60-steppe-fog-ci.txt` (the game's own frame beside Lens's in the Glass
+    Steppe at 16 chunks; the land coming back in after the render distance is pulled in; a fast glide into the edge
+    hold's mist).
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
