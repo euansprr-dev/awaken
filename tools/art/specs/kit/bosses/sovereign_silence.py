@@ -651,7 +651,7 @@ MOVE_SOUNDS = {"nosound": {"swing": "cast", "impact": ""}, "scream": {"swing": "
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 340,
+    "stance": 190,
     "intro": {"pose": "idle", "move": "wake"},  # it stands listening to something far off, and hears you
     "phases": [
         {"pool": [

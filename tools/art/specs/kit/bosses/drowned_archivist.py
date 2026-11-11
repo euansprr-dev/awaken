@@ -668,7 +668,7 @@ MOVE_SOUNDS = {"pages": {"swing": "cast"}, "cloud": {"swing": "cast", "impact": 
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 260,
+    "stance": 140,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [

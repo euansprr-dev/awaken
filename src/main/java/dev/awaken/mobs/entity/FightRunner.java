@@ -125,6 +125,15 @@ final class FightRunner {
         return move >= 0;
     }
 
+    /**
+     * It is fighting (SPEC §47.3 "Held while it fights"): a move playing, a limb coming back from a deflect, an answer
+     * noticed, reeling, kneeling, staggered, shielded for a new phase or standing in its opening. A duel body's stance
+     * doesn't drain while this holds, so stepping away from a red blow never throws away the work done.
+     */
+    boolean fighting() {
+        return move >= 0 || recoil > 0 || notice > 0 || boss.inOpening() || boss.broken() || boss.staggered() || boss.shielded();
+    }
+
     boolean duel() {
         return fight.duel();
     }

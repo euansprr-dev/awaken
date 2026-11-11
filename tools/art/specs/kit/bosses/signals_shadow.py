@@ -965,7 +965,7 @@ MOVE_SOUNDS = {"recoil": {"swing": "jet"}, "lance": {"swing": "jet"}, "step": {"
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 360,
+    "stance": 200,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor of the Seed, and rises to look you in the eye
     "phases": [
         {"pool": [

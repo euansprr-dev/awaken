@@ -3,7 +3,7 @@
  "id": "guardian_foundry",
  "moves": "guardian_foundry",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "kneel",
   "move": "wake"

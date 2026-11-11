@@ -913,7 +913,7 @@ MOVE_SOUNDS = {"gnaw": {"swing": "cast"}, "hounds": {"swing": "roar", "impact": 
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 340,
+    "stance": 190,
     "intro": {"pose": "kneel", "move": "wake"},  # he waits for you slumped on his belly, chewing, and gets up
     "phases": [
         {"pool": [

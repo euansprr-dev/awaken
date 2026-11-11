@@ -20284,15 +20284,84 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   damage, and puts 22 on the maker's stance. Amber and red shots still break on the blade.
 - **The stance.** A perfect dodge through a blow puts 10 on the attacker's stance. A break drops it to its knee as
   before (`AwakenBoss.broken`, server side), and an Execution on a Lord is the finisher: 10-15% of its health whatever
-  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%).
+  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%); on a duel body 7-10%
+  (`DUEL_FINISHER_MIN/MAX`, `capExecution`'s duel flag through `Strikes.duelist`), since it breaks twice as often
+  (below, "Held while it fights"). An Art is capped the same way.
 - **Braced.** Outside its openings a duel body stands braced: a blow that lands then fills its stance only half
   (`ArmsRules.GUARDED_POSTURE` 0.5, `hitPosture`, through `Strikes.duelist`); a riposte, the punish for a deflect,
   fills it whole and a blow in an opening 1.5 times. The stance falls to deflects, ripostes and openings, not to
   trading: in the sim 82% of the Bell Warden's stance came from plain strikes, and it broke five times a minute.
 - **Its own stance.** A duel's script names its stance size (`"stance"`, `FightScripts.Fight.stance`, 0 = a Lord's 100;
-  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 280, the Glass Serpent 200, the
-  Gearwright 260. The Provings' posture column (PLAN §4.7, 120-250) was written against the old 100 and scales with it
-  when the Wardens are tuned.
+  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 150, the Glass Serpent 110, the
+  Gearwright 140 (280, 200 and 260 until 2026-11-11, below). The Provings' posture column (PLAN §4.7, 120-250) was
+  written against the old 100 and scales with it when the Wardens are tuned.
+- **Held while it fights; breaks a fight is made of** (Euan 2026-11-11, after fighting the Ringer: more than 8 minutes
+  and not one break; "it took way too long to charge up", and its red blows put you "far from him. By the time you
+  come back, all the work you did to break the stance is already recovered"). His fight's log and black box: about 30
+  blows landed a minute (daggers, then twinblades), one riposte, every red blow walked away from. Three causes, three
+  rules, the same on all 47 duel bodies (it was the same mistake on each):
+  - **Held.** A stance drained 2 s after the last blow (`POSTURE_IDLE_TICKS` 40, then 8 a second), even while the body
+    was mid-move: the Drowned Toll's wind-up, crest and recovery, then the walk back, drained it all. Now a duel body
+    that is fighting holds its stance (`FightRunner.fighting`: a move playing, a limb coming back from a deflect, an
+    answer noticed, reeling, kneeling, staggered, shielded for a new phase or standing in its opening). `AwakenBoss`
+    tells Arms on each change (`Strikes.holdStance`, `Strikes.Postures.hold`, `ArmsServer.hold`): drained up to the
+    moment it begins, then `Posture.held` (`settle` gives nothing back); let go, the grace starts again from then
+    (`lastHitAt = max(lastHitAt, now)`). Players near get the stance with each change, `ArmsPayloads.POSTURE_HELD` while
+    held, and their clients drain it by the same rule only when it isn't held. It still drains when the body stops
+    fighting and comes to you with nothing landing for 2 s, so leaving the fight still costs the work.
+  - **A smaller stance.** The stances were tuned against sim players who pressed 80-100 blows a minute in reach 80% of
+    the time; real play lands 30-70. Every duel's stance is 0.55 of what it was, to the nearest 10 (§47.5's list):
+    the hunter below breaks the Ringer 2.3-2.7 times a minute where it broke it 1.2-1.5.
+  - **Each break worth less.** At twice the breaks and 10-15% each the fight would end in half the time; a duel's
+    Execution and Art take 7-10% (above), so a fight is as long as it was, made of twice the breaks.
+  - **Not chosen:** a longer grace (the red blow and the walk back outlast any grace that still lets a stance recover);
+    more from braced hits (`GUARDED_POSTURE` 1.0 moved the hunter 1.2 → 1.56 a minute: braced hits are a third of what
+    fills it, and a light blade's 3 × 0.75 still rounds to 2); lighter weapons filling more (the twinblades fill least,
+    7.2 a second against the longsword's 9.7, but after the two rules above the twinblades hunter breaks the Ringer 2.3
+    times a minute, in the band, so no weapon changes).
+  - **Seen.** The boss plate always shows a duel body's stance from the first time it fights, empty or not
+    (`Stances.duel`): a 4-pixel bar under the health (the health's is 5), ivory, never the health's lost amber,
+    filling from both ends to a seam in the middle, white-hot over an ember edge past three quarters; each blow's fill
+    flashes white at its fronts (`Stances.sinceRise`, 6 ticks); left alone past its grace it ebbs, dimmed and slowly
+    pulsing (`Stances.draining`). A caption row under it reads "Stance"; broken, the bar burns gold and the caption
+    reads "Broken! Hold {attack} to finish it" in the player's own key (`awaken.plate.stance.broken`). The creature
+    band's strip takes the same ivory.
+  - **One hint.** A fighter whose 20 blows have landed on a duel body (`Stances.struck`) without its stance breaking
+    gets one plain line under the plate for 9 s, once a fight, and never again in the session after they first break a
+    duel stance: "The bar under its health is its stance. Guard with {use} as its blows land, and strike when it stands
+    open. Fill the bar to break it." (`awaken.plate.stance.hint`; tips are held in fights, so it isn't a tip). It names
+    no boss and says what to do.
+  - **Sim** (`combat_sim.py`, `duel.hold` 1; two new players: the hunter, who fights well but not perfectly — deflects
+    45%, guards 40%, dodges half the blows and 70% of the red, walks away from half the red ones, a third of dodges
+    perfect, half the parrier's cadence, in reach 0.8 of the time — and Euan, from his fight's log: deflects 25%, guards
+    15%, dodges 45%, never the red, walks 70 ticks away from every red blow, in reach 0.45 of the time, which lands his
+    30 blows a minute; `--style` fights with the rank's forged weapon of any style; the sim now keeps FightMind's rule
+    that a blow isn't played twice running and its cooldowns, without which at 4.5-8 blocks the Toll was the only move
+    and looped). The Ringer, before on 20-60 seeds, now on 30, wins / time to win / breaks a minute:
+
+    | The Ringer | Longsword, before | Longsword, now | Twinblades, before | Twinblades, now |
+    |---|---|---|---|---|
+    | Hunter | 40%, 167 s, 1.4 (drained 24/min) | 50%, 161 s, 2.7 | 20%, 176 s, 1.1 | 17%, 177 s, 2.2 |
+    | Euan's play | 0%, breaks 0.00 (drained 140/min) | 0%, breaks 0.92 | 0%, 0.00 (drained 113) | 0%, 0.69 |
+    | Parrier | 100%, 115 s, 2.7 | 100%, 114 s, 4.5 | 95%, 120 s, 2.4 | 97%, 109 s, 4.0 |
+    | Expert | 100%, 98 s, 3.3 | 100%, 91 s, 5.5 | 100%, 93 s, 3.1 | 100%, 96 s, 5.1 |
+    | Tank | 0% | 0% | 0% | 0% |
+
+    Made unkillable, the hunter's fight lasts 3.0 minutes with the longsword and 3.3 with the twinblades (2.9 and 3.5
+    before), now with 2.7 and 2.3 breaks a minute; Euan's own play, unkillable, ran 10 minutes without one break before
+    and now breaks it 0.7-0.9 times a minute. The sim's hunter takes 12 health a minute and dies near 160 s whatever the
+    stance does, so its wins stay where they were; that is the Ringer's damage, not its stance, and isn't changed here.
+    Every gate Lord (longsword): the hunter's breaks 0.4-1.6 a minute → 1.1-2.9 (0.9-2.7 with the twinblades; the
+    fliers lowest, out of reach between dives), its drain 21-84 a minute → under 1 (the fliers 4-15), the parrier 73-92
+    s and the expert 63-77 s as before; the higher Provings keep their larger stances (the Last Loop's hunter breaks
+    1.3-1.6). Still open: the tank beats the Hive Regent 13% of the time with the longsword and 30% with the twinblades
+    (10-17% at its old stance on 60 seeds), its health and damage's to fix, not its stance.
+  - **The Drowned Toll, read.** A red ring that rolls out from the Ringer: you are safe inside the white ring at its
+    feet when it rings (`Carriers.wave`'s inner start), over its crest (a jump), behind a wall, or dashing through it
+    (a PERILOUS wave: a dodge whose evade ticks, 5 for the twinblades and 4 for the daggers, cover the moment the crest
+    reaches you takes none of it, and a perfect one fills its stance 10). The white ring was 14 small dots under a body
+    twice a man's height; it is now drawn twice as dense and larger (`Telegraph.safeRing`). Walking away from it is no
+    longer a loss: the stance holds.
 - **Tuned with the sim** (`combat_sim.py` learns the duel: phrases and openings, recoil and reel, habits, shots sent
   back, perfect-dodge and opening stance, the finisher's share, braced hits, the script's stance; 400 seeds, the
   rank's forged longsword; the parrier answers half of the red blows with a dodge, ASSUMED). Health alone could not
@@ -20351,8 +20420,10 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   `fights_deflect_recoil` (the sweep deflected recoils 10 ticks and the chop goes on; the chop deflected, it reels open
   and starts nothing for 34), `fights_shot_returns` (a white-gold shot sent back strikes its maker, never its sender; an
   amber one won't turn; once only), `fights_duel_stance` (the Gearwright holds its script's stance through Arms; braced
-  half, opening 1.5, a riposte whole), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
-  the Arms rules test (the finisher's 10-15%).
+  half, opening 1.5, a riposte whole), `fights_stance_held` (held past its grace, nothing drains; let go, the grace
+  starts again; left alone after that, it drains), `fights_stance_held_fighting` (a phrase playing holds it),
+  `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions), the Arms rules test (the finisher's
+  10-15%, a duel's 7-10%; a held stance never settles).
 - **On cue** (admin, tours): `/awaken bosses duel stage <boss>` builds a stage where you stand with the boss at its
   middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
@@ -20387,7 +20458,8 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
   ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
   `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
-  gift and its trophy). Theme Bell, a duel (§47.3) with stance 260; health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
+  gift and its trophy). Theme Bell, a duel (§47.3) with stance 140 (260 until 2026-11-11, when Euan's fight broke it
+  never: §47.3 "Held while it fights", where the sim's numbers are now); health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
   until its turns were made to reach, §47.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
   `PROVING_RANKS` sets its rank and level): dodger 78% in 2.7 min, parrier 96% in 1.9 min, expert 100% in 1.6 min, tank
   0% (targets 75 / 80 / 99 / at most 10), harder than every E and D Lord for the dodger (§47.6; before its turns reached:
@@ -20401,7 +20473,8 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   overhead, HEAVY, held 8 ticks); the Chain Lash (a long step and a chain thrown straight out, from afar); the Peal
   (both bells swung wide and clapped, a white-gold ring that flies at you: deflect it on the beat and it flies back,
   §47.3); the Turning Swing (behind it); the Drowned Toll (its signature: it throws its head back and rings the bell
-  in its hood, a red ring rolling out through the water: dash through it). Phase 2 at half health, opened by "The water
+  in its hood, a red ring rolling out through the water: stand in the white ring at its feet, jump its crest, or dash
+  through it; §47.3 "The Drowned Toll, read"). Phase 2 at half health, opened by "The water
   drains" (a 36-tick held clip): the Whirl (HEAVY, one full turn with both bells out), the Bell Rope (GRAB: a running
   catch with the left bell swung up behind its head), the Peal in pairs, and the strings end on the Clang or the Whirl.
   It enters by dropping from the bells into the light (`drop`).
@@ -20450,8 +20523,10 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   other). The last member out closes the run: the hall is put back 8 rows a tick and its
   cell freed after. In a Proving the hall can't be broken or built on (survival).
 - **The box stays** as practice: `/awaken admin trial dbox` (three waves, as before) until Euan has seen the Ringer.
-  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue). Tour:
-  `tools/autopilot/fights-belfry.txt` (CI).
+  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue), and
+  `/awaken admin trial break` breaks your Proving's Warden's stance through Arms, as your own blow would (tours: a heavy on
+  it next is the Execution). Tour: `tools/autopilot/fights-belfry.txt` (CI), which films three braced blows on the
+  stance, the break and an Execution.
 - Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
   server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
   win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).
@@ -20464,7 +20539,9 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   280; the Abbot of Frost, the Sleeper, Unit Zero, the Choirmaster, Shadow Regent, Ossuary King, Seed Warden, Great
   Listener and the other Nightmares 300; the Sky Leviathan, Thornback, Furnace Engine, Drowned Moon, Rootmother,
   Architect of Rooms and Sovereign of Mirrors 320; the Hollow Herald and the Sovereigns of Hunger, Silence and Sleep
-  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360.
+  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360. Since 2026-11-11 each is 0.55 of
+  that to the nearest 10 (§47.3, "Held while it fights"): 110; 130; 140; 150; 160; 180; 190; 200. The Provings: the
+  Examiner 160, the Unmade 190, the Sky Warden 210, the Keeper's Shadow 230, the Last Loop 260.
 - **Phrases.** Every opener has follow-ups (`then`), chosen so each string flows from where the last blow leaves the
   body (a lance into its slam, a sweep into its backhand); the lone blows are the behind-you blow, the signature and a
   few summons, at most 30% of what each phase starts (I8). `fights_language` checks I6-I8 on all 42.

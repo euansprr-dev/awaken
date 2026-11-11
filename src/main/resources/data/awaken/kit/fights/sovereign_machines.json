@@ -3,7 +3,7 @@
  "id": "sovereign_machines",
  "moves": "sovereign_machines",
  "duel": true,
- "stance": 360,
+ "stance": 200,
  "intro": {
   "pose": "idle",
   "move": "wake"

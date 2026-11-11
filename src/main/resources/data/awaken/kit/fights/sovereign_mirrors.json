@@ -3,7 +3,7 @@
  "id": "sovereign_mirrors",
  "moves": "sovereign_mirrors",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "idle",
   "move": "preen"

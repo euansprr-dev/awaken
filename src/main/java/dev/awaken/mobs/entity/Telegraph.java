@@ -23,6 +23,19 @@ final class Telegraph {
         if (heavy) level.sendParticles(ParticleTypes.CRIT, centre.x, centre.y + 0.2, centre.z, 4, radius * 0.4, 0.05, radius * 0.4, 0.05);
     }
 
+    /**
+     * A burst's safe ring (SPEC §47.4, the Drowned Toll): where it starts, so standing inside it at the release is safe.
+     * Twice as dense as a plain ring and larger, so it reads under a big body, not as a few dots at its feet.
+     */
+    static void safeRing(ServerLevel level, Vec3 centre, float radius) {
+        DustParticleOptions dust = new DustParticleOptions(0xFFFFFF, 1.5F);
+        int n = Math.max(16, (int) (radius * 9));
+        for (int i = 0; i < n; i++) {
+            float a = i * Mth.TWO_PI / n;
+            level.sendParticles(dust, centre.x + Mth.cos(a) * radius, centre.y + 0.12, centre.z + Mth.sin(a) * radius, 1, 0, 0, 0, 0);
+        }
+    }
+
     static void disc(ServerLevel level, Vec3 centre, float radius, int colour) {
         DustParticleOptions dust = new DustParticleOptions(colour, 1.0F);
         level.sendParticles(dust, centre.x, centre.y + 0.15, centre.z, Math.max(4, (int) (radius * radius * 2)), radius * 0.5, 0.02, radius * 0.5, 0);

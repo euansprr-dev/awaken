@@ -3,7 +3,7 @@
  "id": "guardian_inverted",
  "moves": "guardian_inverted",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "kneel",
   "move": "wake"

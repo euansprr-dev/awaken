@@ -492,6 +492,16 @@ public final class Provings {
         return true;
     }
 
+    /** Tours: your Proving's Warden's stance broken through Arms, as your own blow would break it (SPEC §47.3): it goes
+     * down on a knee and a heavy on it now is an Execution. False when no Warden is down. */
+    public static boolean breakStance(ServerPlayer sp) {
+        Run run = runOf(sp);
+        LivingEntity r = run != null ? warden(run) : null;
+        if (r == null) return false;
+        dev.awaken.core.api.Strikes.posture(r, 10_000, sp); // more than any stance
+        return true;
+    }
+
     /** Whether no hall is being put back (tests wait on it). */
     static boolean settled() {
         return RESTORING.isEmpty();

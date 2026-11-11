@@ -3,7 +3,7 @@
  "id": "proving_sky_warden",
  "moves": "proving_sky_warden",
  "duel": true,
- "stance": 380,
+ "stance": 210,
  "intro": {
   "pose": "kneel",
   "move": "descend"

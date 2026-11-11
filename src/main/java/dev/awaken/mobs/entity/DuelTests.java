@@ -35,6 +35,8 @@ public final class DuelTests {
         AwakenTests.register("fights_deflect_recoil", 240, DuelTests::deflectRecoil);
         AwakenTests.register("fights_shot_returns", 100, DuelTests::shotReturns);
         AwakenTests.register("fights_duel_stance", 60, DuelTests::duelStance);
+        AwakenTests.register("fights_stance_held", 220, DuelTests::stanceHeld);
+        AwakenTests.register("fights_stance_held_fighting", 80, DuelTests::stanceHeldFighting);
         AwakenTests.register("fights_topple", 100, DuelTests::topple);
         AwakenTests.register("fights_fang_bite", 60, DuelTests::fangBite);
         AwakenTests.register("fights_habit_read", 100, DuelTests::habitRead);
@@ -213,6 +215,50 @@ public final class DuelTests {
         boss.discard();
         live.leave();
         h.succeed();
+    }
+
+    /**
+     * Held while it fights (SPEC §47.3): a duel body's stance doesn't drain while it is held, however long; let go, the
+     * grace before draining starts again from then, so walking back from a red blow finds the work still there.
+     */
+    static void stanceHeld(GameTestHelper h) {
+        AwakenBoss boss = KitTests.spawn(h.getLevel(), h, "gearwright_colossus");
+        boss.setNoAi(true); // held and let go by hand here; the next test holds it by its own fighting
+        var live = AwakenTests.survivalPlayer(h, "stance_holder", new BlockPos(1, 1, 1));
+        int stance = boss.duelStance(), idle = dev.awaken.arms.ArmsRules.POSTURE_IDLE_TICKS;
+        Strikes.posture(boss, 40, live.player());
+        Strikes.holdStance(boss, true);
+        h.assertTrue(dev.awaken.arms.Arms.held(boss), "it holds its stance");
+        // each check fills one more, which settles first: what drained shows in the share
+        h.runAfterDelay(idle + 30, () -> Strikes.holdStance(boss, false));
+        h.runAfterDelay(idle + 30 + idle - 10, () -> {
+            Strikes.posture(boss, 1, live.player());
+            float v = dev.awaken.arms.Arms.posture(boss) * stance;
+            h.assertTrue(Math.abs(v - 41F) < 1e-3, "held past its grace and let go just now: nothing drained (" + v + " of 41)");
+        });
+        h.runAfterDelay(idle + 30 + idle - 10 + idle + 40, () -> {
+            Strikes.posture(boss, 1, live.player());
+            float v = dev.awaken.arms.Arms.posture(boss) * stance;
+            h.assertTrue(v < 41.5F, "let go and left alone past its grace, it drains (" + v + ")");
+            boss.discard();
+            live.leave();
+            h.succeed();
+        });
+    }
+
+    /** A phrase playing holds the stance, and it is let go once the phrase and its opening are over (SPEC §47.3). */
+    static void stanceHeldFighting(GameTestHelper h) {
+        AwakenBoss boss = KitTests.spawn(h.getLevel(), h, "gearwright_colossus");
+        Pig pig = pig(h, 6.5);
+        boss.setTarget(pig);
+        h.assertTrue(!dev.awaken.arms.Arms.held(boss), "standing, it isn't held");
+        h.assertTrue(boss.playKitString("sweep", List.of()), "a blow plays");
+        h.succeedWhen(() -> {
+            boss.setTarget(pig);
+            h.assertTrue(dev.awaken.arms.Arms.held(boss), "fighting, it holds its stance");
+            boss.discard();
+            pig.discard();
+        });
     }
 
     /** A big beast's broken stance puts it on its side for the break (SPEC §47.5); a short stagger and a plain animal don't. */

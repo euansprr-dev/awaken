@@ -281,6 +281,9 @@ public final class Strikes {
     public interface Postures {
         /** Fills a body's stance as a blow of {@code by}'s would (Arms: full, it breaks). */
         void add(LivingEntity target, int amount, Player by);
+
+        /** A duel body begins or stops fighting: held, its stance doesn't drain (SPEC §47.3 "Held while it fights"). */
+        default void hold(LivingEntity target, boolean fighting) {}
     }
 
     private static Postures postures = (target, amount, by) -> {};
@@ -292,5 +295,10 @@ public final class Strikes {
     /** A blow of {@code by}'s that isn't a swing (a shot sent back) fills the body's stance. */
     public static void posture(LivingEntity target, int amount, Player by) {
         postures.add(target, amount, by);
+    }
+
+    /** A duel body began ({@code true}) or stopped fighting: while it fights its stance holds (SPEC §47.3). */
+    public static void holdStance(LivingEntity target, boolean fighting) {
+        postures.hold(target, fighting);
     }
 }

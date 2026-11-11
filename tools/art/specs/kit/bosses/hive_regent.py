@@ -488,7 +488,7 @@ FIGHT = {
             {"on": "PAUSED", "moves": ["dive", "volley"], "chance": 0.9, "cooldown": 200, "then": [["cut_b"]]},
         ],
     },
-    "stance": 240,
+    "stance": 130,
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         {"pool": [
