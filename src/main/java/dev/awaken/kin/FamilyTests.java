@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 import java.util.List;
 import java.util.UUID;
 
-/** GameTests for the Hearth's family (SPEC §68): one per mechanism. CI runs them. */
+/** GameTests for the Hearth's family (SPEC §69): one per mechanism. CI runs them. */
 final class FamilyTests {
     private FamilyTests() {}
 

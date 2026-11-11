@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Draws Aya and Dubu (SPEC §68.9) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it holds picks the
+ * Draws Aya and Dubu (SPEC §69.9) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it holds picks the
  * clip of the same name, moving swaps in its walk or run, clips crossfade, and the life layer (breath, blinks, springy
  * ears and tail) goes on top. Asleep, its eyes are shut. Two things are theirs: a walk or a run is played by the ground
  * covered, a stride a cycle, so feet stay where they land (up to a cap, past which they patter as the game's own animals

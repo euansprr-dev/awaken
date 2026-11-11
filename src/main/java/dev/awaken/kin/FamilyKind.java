@@ -1,6 +1,6 @@
 package dev.awaken.kin;
 
-/** The two of the Hearth's family (SPEC §68): Aya the cat and Dubu the dog. */
+/** The two of the Hearth's family (SPEC §69): Aya the cat and Dubu the dog. */
 public enum FamilyKind {
     AYA("aya", "Aya", "Cat", "her", "she"),
     DUBU("dubu", "Dubu", "Dog", "him", "he");

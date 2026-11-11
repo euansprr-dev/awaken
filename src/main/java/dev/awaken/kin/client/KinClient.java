@@ -16,7 +16,7 @@ public final class KinClient {
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
                 KinContent.TYPES.forEach((k, t) -> e.registerEntityRenderer(t.get(), ctx -> new KinRenderer(ctx, k))));
         modBus.addListener(KinRenderer::layers);
-        // Aya and Dubu (SPEC §68)
+        // Aya and Dubu (SPEC §69)
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
             e.registerEntityRenderer(dev.awaken.kin.FamilyContent.AYA.get(), ctx -> new FamilyRenderer(ctx, "aya"));
             e.registerEntityRenderer(dev.awaken.kin.FamilyContent.DUBU.get(), ctx -> new FamilyRenderer(ctx, "dubu"));

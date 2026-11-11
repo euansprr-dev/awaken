@@ -79,7 +79,7 @@ public final class KinPlates {
     static KinNet.Bond read(ServerPlayer p, LivingEntity e) {
         String who = "", note = "";
         int tone = WARM, step = -1;
-        if (e instanceof FamilyPet f) return FamilyService.bond(p, f); // Aya or Dubu (SPEC §68.8)
+        if (e instanceof FamilyPet f) return FamilyService.bond(p, f); // Aya or Dubu (SPEC §69.8)
         if (e instanceof KinBeast b) {
             step = Kinship.of(p).step(b.kind()).ordinal();
             if (b.gnawed()) {

@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * Admin tools for the Hearth's family (SPEC §68.10), for tours and for putting things right:
+ * Admin tools for the Hearth's family (SPEC §69.10), for tours and for putting things right:
  * {@code /awaken admin family arrive} sends the two to your Hearth now; {@code use aya|dubu [sneak]} is a use on yours
  * (sneak asks it along or tells it to stay); {@code state} says where the record has them; and, for a body to look at
  * that belongs to nobody, {@code place aya|dubu <pose> <yaw>}, {@code pose aya|dubu <pose>}, {@code walk aya|dubu <blocks>

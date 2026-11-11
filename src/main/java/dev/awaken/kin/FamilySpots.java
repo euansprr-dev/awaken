@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Where Aya and Dubu can be (SPEC §68.3, §68.9): ground to stand on, a raised spot in the light for her loaf, the sun,
+ * Where Aya and Dubu can be (SPEC §69.3, §69.9): ground to stand on, a raised spot in the light for her loaf, the sun,
  * the fire's side, the bed; and where to turn up out of your sight. Each search reads a handful of blocks, at most a
  * dozen tries, and is asked for once per choice of theirs (a few times a minute), never every tick.
  */

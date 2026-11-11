@@ -32,7 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Aya the cat or Dubu the dog (SPEC §68): the Hearth's family. They walk up to a household's first Hearth, live there
+ * Aya the cat or Dubu the dog (SPEC §69): the Hearth's family. They walk up to a household's first Hearth, live there
  * doing nothing useful, come out with whoever asks them and stay when told. Nothing can hurt one, nothing can take one
  * as a target, and neither ever fights. What one is doing is a synced pose the client turns into its clips; what it
  * decides is {@link FamilyBrain}; where it belongs is the world's record ({@link FamilyWorld}), which a body obeys: a

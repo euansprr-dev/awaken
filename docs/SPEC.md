@@ -24414,7 +24414,7 @@ bell): his pick decides the whole family.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
 
-## 68. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
+## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
 
 Euan's own cat and dog, drawn from his photos (which are private and never in the repo). His words: "when you place your
 hearth for the first time, they should wander up to the house and be one of the kins, but they don't really do
@@ -24422,16 +24422,16 @@ anything... if they can come like join you on adventures too and follow you arou
 way... And you can also just make them stay... And also make them immortal." Her name is Aya, spelled A-Y-A.
 Code: `dev.awaken.kin.Family*`, client `kin.client.FamilyRenderer`, art `tools/art/specs/hearth_family.py`.
 
-**68.1 The rule.** Nothing fights for you (§43.4) holds for them without exception: neither ever attacks, blocks,
+**69.1 The rule.** Nothing fights for you (§43.4) holds for them without exception: neither ever attacks, blocks,
 distracts or warns. Nothing can hurt one, nothing can take one as its target, and neither can be lost.
 
-**68.2 Family, not kin.** They are their own type beside the kin (`FamilyPet`, entity types `awaken:family_aya` "Cat" and
+**69.2 Family, not kin.** They are their own type beside the kin (`FamilyPet`, entity types `awaken:family_aya` "Cat" and
 `awaken:family_dubu` "Dog"; their names are custom names, Aya and Dubu), not `KinKind`s. They take no nook, have no job,
 want, rumour or Kinship, and do not count for `beasts:N`, the Nook bell or any beast step. The Hundred Peal, the Kinsong,
 the Gnawed and a raid's thefts never touch them. One Aya and one Dubu per Hearth, by its owner, shared by its household;
 a sister home gets no second pair.
 
-**68.3 At home.** Each has a day of small things (`FamilyBrain.day`, a choice every few hundred ticks, by weight):
+**69.3 At home.** Each has a day of small things (`FamilyBrain.day`, a choice every few hundred ticks, by weight):
 - Aya by day: the loaf on a raised spot in good light she can step up to (never a chest's lid; a barrel is fine) 30%,
   belly up under open sky on a clear day 12%, a stroll 26%, sitting 16%, a nap 16% (on the household's bed if one of
   them has slept in it, else by the fire); a long stretch after any sleep. By night she sleeps 68%.
@@ -24450,14 +24450,14 @@ a sister home gets no second pair.
   (40 and 52 ticks) before its day goes on. No food, breeding, leash or hearts. They push nothing
   and cannot be pushed.
 
-**68.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
+**69.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
 Anchor; an old world's Hearth is first seen when its owner next plays), with one of the household in at it and no raid
 warned or on: Dubu is made 24 to 36 blocks off where a hill or wall hides him (else 12 to 20), runs in with his giraffe
 and says hello; at 14 blocks the System says "[That's Dubu. He must have followed you the whole way.]". Aya follows 220
 to 300 ticks later at a walk, sits six blocks off for 70 ticks to look, then comes to your shin: "[And Aya, taking her
 time. They live here now.]". Once per Hearth (`FamilyWorld.Home.stage`). `/awaken admin family arrive` sends them now.
 
-**68.5 Out with you.** Sneak and use on one asks it along (state WITH, its person recorded); again tells it to stay: at
+**69.5 Out with you.** Sneak and use on one asks it along (state WITH, its person recorded); again tells it to stay: at
 home that is home, away from home it waits where it is (WAITING). Only the household may ask, and it answers to one
 person at a time.
 - Manner: Dubu keeps 3.2 blocks ahead and to one side, at your side when you sneak; Aya 2.2 behind and to the other
@@ -24476,7 +24476,7 @@ person at a time.
   gone five minutes. Going home from the wild: it walks off homeward for six seconds, its body leaves, and it is at
   home when the home is next loaded.
 
-**68.6 The record comes first** (`FamilyWorld`, saved data `family`, schema 1, by the Hearth's owner): for each of the
+**69.6 The record comes first** (`FamilyWorld`, saved data `family`, schema 1, by the Hearth's owner): for each of the
 two its body's id, name, state (HOME, WITH, WAITING, DOOR), person, waiting spot and deadline, and whether it has
 arrived; the Hearth's arrival stage and the household's bed; and the players who have asked one along or had Dubu's hint.
 A body carries only its owner. Every fifth tick a body checks the record names it, else it removes itself; every second
@@ -24484,19 +24484,19 @@ A body carries only its owner. Every fifth tick a body checks the record names i
 has been gone 200 ticks (at once if it was sent home), behind its person when it is out with them, at its spot when it
 waits. So neither can be lost and neither can be two.
 
-**68.7 Immortal.** `FamilyPet.hurtServer` refuses everything but what bypasses invulnerability; falling out of the world
+**69.7 Immortal.** `FamilyPet.hurtServer` refuses everything but what bypasses invulnerability; falling out of the world
 puts it back (behind its person, else by the fire); `/kill` takes the body and the record makes it again. Fire immune,
 knockback resistance 1, no pushing either way, never leashed, never despawned. `LivingChangeTargetEvent` onto one is
 cancelled. They implement `OwnableEntity` (the Hearth's owner), so powers and sweeps already count them as yours
 (`Combat.isAlly`, `ArmsServer.foe`), and lock-on takes only hostiles.
 
-**68.8 Words.** The kin plate (§43.17): "yours" (or "Ana's"), then what it is doing ("Coming with you.", "Loafing in the
+**69.8 Words.** The kin plate (§43.17): "yours" (or "Ana's"), then what it is doing ("Coming with you.", "Loafing in the
 light.", "Lying with his chin on his paws."), with "Crouch and use to ask her along." until you have asked one along
 once. The Hearth page: their two cards first under Your beasts ("Aya · Cat"), the Hearth's owner may rename them with the
 naming card (an empty name gives its own back). Tasks, Hearth tab: one optional row until first done, "Take Aya or Dubu
 out with you" (`family/ask`). Counter `awaken:family_asked_along`.
 
-**68.9 Their look and motion.** Bodies of their own on the hero rigs with the life layer, not the game's cat and wolf
+**69.9 Their look and motion.** Bodies of their own on the hero rigs with the life layer, not the game's cat and wolf
 (a 5 by 4 pixel face cannot be hers; a wolf is not his shape). `family_aya`: 13 bones, drawn at 0.45, 0.39 blocks at
 the back, 0.68 long. `family_dubu`: 15 bones (one is his giraffe, in his mouth when he carries it and under his chin
 asleep), drawn at 0.5, 0.38 at the back, 0.9 long. Their coats are painted in body space (`coat(x, y, z)`), so a patch
@@ -24506,7 +24506,7 @@ thighs sit inside the flank, so nothing shares a plane and no crack opens when t
 The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
 0.85), capped at 3.5 and 3.8 cycles a second; settling into and out of a pose blends over 10 ticks, other changes over 5.
 
-**68.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
+**69.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
 `family.aya.purr|trill|meow` from `entity.cat.purr|purreow|ambient`, `family.dubu.bark|pant|whine|howl` from
 `entity.wolf_cute.ambient|pant|whine` (the howl is the whine at 0.75). Game rule `awaken:hearth_family` (on): off, their
 bodies leave and nothing runs; the record is kept. `/awaken admin family arrive | use aya|dubu [sneak] | state`, and for a

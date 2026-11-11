@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The Hearth's family, kept (SPEC §68): their arrival at a household's first Hearth, the record and the bodies kept in
+ * The Hearth's family, kept (SPEC §69): their arrival at a household's first Hearth, the record and the bodies kept in
  * step (a lost body is made again; one out with you that falls behind turns up out of your sight), who is asked along and
  * who is told to stay, the greeting when you come home, and their words on the plate, the Hearth page and Tasks.
  * Nothing here fights, helps a fight or can be hurt.
@@ -487,7 +487,7 @@ public final class FamilyService {
         return since != null && now - since >= LOST_AFTER;
     }
 
-    /** Nothing may take one of them as its target (SPEC §68.5). */
+    /** Nothing may take one of them as its target (SPEC §69.5). */
     static void onTarget(LivingChangeTargetEvent e) {
         if (e.getNewAboutToBeSetTarget() instanceof FamilyPet) e.setCanceled(true);
     }
@@ -564,7 +564,7 @@ public final class FamilyService {
         return true;
     }
 
-    /** One row on the Tasks page's Hearth tab, until you have once asked one of them along (SPEC §68.8). */
+    /** One row on the Tasks page's Hearth tab, until you have once asked one of them along (SPEC §69.8). */
     static List<Goals.Step> steps(ServerPlayer p) {
         if (!Progression.profile(p).awakened()) return List.of();
         MinecraftServer server = p.level().getServer();

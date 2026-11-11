@@ -232,7 +232,7 @@ def tuck(cl, legs, k=0.12):
 
 def aya():
     r = Rig("family_aya", (128, 64))
-    # a stride is the ground one cycle covers with planted feet (the renderer plays the gait by it, SPEC §68.9)
+    # a stride is the ground one cycle covers with planted feet (the renderer plays the gait by it, SPEC §69.9)
     r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.24, 0.8, (0.12, 0.26), 0.32
     body = r.bone("body", (0, 14, 1))
     body.cube("rump", -4.5, -4, 0, 9, 8, 8)

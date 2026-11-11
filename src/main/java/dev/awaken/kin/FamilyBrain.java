@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 
 /**
- * What Aya and Dubu decide (SPEC §68.3 to §68.5). At home each has a day of its own made of small things, picked from what
+ * What Aya and Dubu decide (SPEC §69.3 to §69.5). At home each has a day of its own made of small things, picked from what
  * the home really has (a raised spot in the light, a bed, the sun, the fire, whoever is in). Out with someone, Dubu
  * ranges ahead and looks back and Aya trails at the heel; when a fight starts both keep well back and watch, and come back
  * when it is over. Decisions are taken every fifth tick; the navigation does the walking in between.

@@ -22,7 +22,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The Hearth's family (SPEC §68): Aya and Dubu's entity types, their voices (the game's own cat and small-dog
+ * The Hearth's family (SPEC §69): Aya and Dubu's entity types, their voices (the game's own cat and small-dog
  * recordings, pitched for them in sounds.json) and the game rule that switches the whole thing off.
  */
 public final class FamilyContent {
@@ -66,7 +66,7 @@ public final class FamilyContent {
         bus.addListener((ServerTickEvent.Post e) -> FamilyService.tick(e.getServer()));
         bus.addListener((LivingChangeTargetEvent e) -> FamilyService.onTarget(e));
         bus.addListener((ServerStoppedEvent e) -> FamilyService.serverStopped());
-        dev.awaken.core.api.Goals.register(FamilyService::steps); // one row on Tasks until you have asked one along (SPEC §68.8)
+        dev.awaken.core.api.Goals.register(FamilyService::steps); // one row on Tasks until you have asked one along (SPEC §69.8)
         FamilyCommands.register();
         FamilyTests.register();
     }

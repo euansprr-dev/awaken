@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The Hearth's family as the world remembers it (SPEC §68.6; schema 1), by the Hearth's owner: for each of the two, its
+ * The Hearth's family as the world remembers it (SPEC §69.6; schema 1), by the Hearth's owner: for each of the two, its
  * body, its name, whether it is at home, with someone or waiting somewhere, and whether it has arrived. The record comes
  * first and the body second: a body that is lost is made again from this, and a body this does not name removes itself,
  * so neither can be lost and neither can be two.

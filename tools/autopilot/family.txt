@@ -1,4 +1,4 @@
-# Aya and Dubu at the Hearth (SPEC §68, plan docs/family/PLAN.md). A home (/awaken admin kin yard: a real Hearthfire),
+# Aya and Dubu at the Hearth (SPEC §69, plan docs/family/PLAN.md). A home (/awaken admin kin yard: a real Hearthfire),
 # then the real thing: they arrive (Dubu first, running; Aya after, at a walk), their day at home, out with you (asked
 # along, walking, stopping), a fight they keep out of, and Dubu told to wait. Then a studio of bodies that belong to
 # nobody (/awaken admin family place), each pose close up: her loaf and belly-up roll, his chin on his paws, his giraffe.
