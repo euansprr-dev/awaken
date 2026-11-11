@@ -17,6 +17,7 @@ gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
 cmd weather clear 1000000
+wait 40
 cmd awaken opening skip
 wait 400
 screen close
@@ -30,7 +31,15 @@ cmd tp @s -1533.5 69 -704.5 180 15
 opt fov 90
 camera first
 hud off
-wait 600
+# (the land out here is not made yet in a new world: the teleport is one of Awaken's passages and waits for it, a
+# minute and more on the runner with the pack's terrain, and until then the camera stands on the Roost. Runs
+# 43076232585 and 43078975963 shot the city for it. Wait the passage out, then let the place draw.)
+wait 100
+waitpassage
+wait 1600
+waitpassage
+cmd tp @s -1533.5 69 -704.5 180 15
+wait 400
 info
 cmd tp @s -1533.5 69 -726.5 0 18
 wait 260
