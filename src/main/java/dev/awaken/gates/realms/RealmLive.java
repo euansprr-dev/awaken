@@ -208,6 +208,7 @@ public final class RealmLive {
     /** Whoever comes in wakes the Lord; the way shuts behind them; the hall changes as the fight goes on; nobody left inside, it all resets. */
     private static void heart(MinecraftServer server, ServerLevel level, GateRecord g, RealmPlan plan, RealmRef ref, RealmState st, RealmData data, FloorLayout f) {
         Land land = plan.land();
+        if (land.sites(Land.SiteKind.LORD).isEmpty()) return; // a trial has no Lord and no hall of one
         Land.Site lord = land.site(Land.SiteKind.LORD);
         boolean anyInside = false, anyAtDoor = false;
         for (ServerPlayer p : level.players()) {
@@ -275,8 +276,10 @@ public final class RealmLive {
         st.heartOpen = true;
         RealmRef ref = g.realm.orElseThrow();
         change(level, ref, plan.land(), "heart_open");
-        Land.Site lord = plan.land().site(Land.SiteKind.LORD);
-        level.playSound(null, Realms.world(ref.cell(), lord.x(), lord.y(), lord.z()), SoundEvents.HONEY_BLOCK_BREAK, SoundSource.BLOCKS, 4F, 0.5F);
+        if (!plan.land().sites(Land.SiteKind.LORD).isEmpty()) {
+            Land.Site lord = plan.land().site(Land.SiteKind.LORD);
+            level.playSound(null, Realms.world(ref.cell(), lord.x(), lord.y(), lord.z()), SoundEvents.HONEY_BLOCK_BREAK, SoundSource.BLOCKS, 4F, 0.5F);
+        }
         data.setDirty();
     }
 
@@ -353,6 +356,7 @@ public final class RealmLive {
     public static void lordFell(ServerLevel level, GateRecord g) {
         RealmPlan plan = Realms.plan(g);
         if (plan == null) return;
+        if (plan.land().sites(Land.SiteKind.LORD).isEmpty()) return;
         Land.Site s = plan.land().site(Land.SiteKind.LORD);
         RealmData data = RealmData.get(level.getServer());
         RealmState st = data.state(g.id);

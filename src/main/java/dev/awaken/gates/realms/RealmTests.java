@@ -64,6 +64,11 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:wax_galleries", Rank.E, seed, 1));
     }
 
+    private static Land leapers() {
+        return LandPrograms.make(new Land.Ctx(new Blueprint(1, "t", "dungeon", "clockwork_foundry", List.of(), new Blueprint.LandSpec("awaken:leapers_gauntlet", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:leapers_gauntlet", Rank.D, 1, 1));
+    }
+
     private static Land amber(long seed) {
         return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
     }
@@ -120,6 +125,26 @@ public final class RealmTests {
             if (herds == 0 || packs == 0) h.fail("Amber Reach's country is empty: " + herds + " herds and " + packs + " packs in " + cells + " cells");
             if (quiet * 3 < cells) h.fail("no quiet stretches: only " + quiet + " of " + cells + " cells hold nothing");
             if (!RealmCountry.find(land, 2, 1, 1).equals(RealmCountry.find(land, 2, 1, 1))) h.fail("another seed gave two answers");
+            h.succeed();
+        });
+        // The Leaper's Gauntlet as a Realm (SPEC 17.10): every leg is reached by a walker who has the leap, no crossing that
+        // is said to need a move of it can be made without, and nothing floats
+        AwakenTests.register("realm_leapers_gauntlet_needs_its_moves", 2400, h -> {
+            Land land = leapers();
+            dev.awaken.gates.realms.check.WalkCheck.Walk walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
+            if (!walk.unreachable().isEmpty()) h.fail("can't reach " + walk.unreachable());
+            for (Land.Leg leg : land.route()) if (!walk.reaches(leg.x(), leg.y(), leg.z(), 4)) h.fail("the walk never stood in " + leg.id() + " (" + leg.name() + ")");
+            List<String> needless = dev.awaken.gates.realms.check.WalkCheck.needless(land);
+            if (!needless.isEmpty()) h.fail("crossed without the move it is said to need: " + needless);
+            if (land.leaps().size() < 4) h.fail("the hall Twice asks for the double jump fewer than four times");
+            for (Land.Course c : land.courses()) if (!c.free()) h.fail("a fall in " + c.leg() + " costs something");
+            h.succeed();
+        });
+        AwakenTests.register("realm_leapers_gauntlet_nothing_floats", 2400, h -> {
+            Land land = leapers();
+            int half = land.halfSize();
+            dev.awaken.gates.realms.check.FloatCheck.Report r = dev.awaken.gates.realms.check.FloatCheck.scan(land, -half, -half, half, half);
+            if (!r.clean()) h.fail(r.summary());
             h.succeed();
         });
         AwakenTests.register("realm_truelight_matches_the_shader", 20, h -> { String why = dev.awaken.gates.realms.preview.TrueLight.problem(); if (!why.isEmpty()) h.fail(why); h.succeed(); });
