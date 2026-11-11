@@ -68,6 +68,8 @@ public final class Kinds {
         if (b == Blocks.LILY_PAD || id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
         if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;
+        // an icicle and a flag hang from an eave: read as things that stand, Settle took them out from under every roof
+        if (id.endsWith("_icicles") || id.endsWith("_flags")) return HANGS;
         if (b instanceof HangingRootsBlock || id.endsWith("_drip") || id.endsWith("_vines") || id.endsWith("_vines_plant")) return HANGS;
         if (b instanceof VineBlock) return BESIDE;
         if (b instanceof BushBlock || b instanceof DoublePlantBlock || b instanceof CarpetBlock || b instanceof CropBlock
