@@ -3760,7 +3760,7 @@ listener-relative loop, louder and higher with speed. Comfort lives in `config/a
 0-7.5 (5), speedFov 0-1 (1, times vanilla's FOV-effects slider), movementShake (on; also off with Awaken's
 cameraShake), reducedMotion (off: on removes streaks, air motes, the boom flash and the tremor, and halves the roll).
 Camera Overhaul (pack, optional) is switched off through its own public settings (`Configuration.get().general
-.enabled`, never saved) while an Ascent state is airborne, and put back after (decision 6; compileOnly, the one class
+.enabled`, never saved) while an Ascent state is airborne or a scene holds the view still (§65.2), and put back after (decision 6; compileOnly, the one class
 `body.client.feel.CameraOverhaulPause`).
 
 Look (no vanilla particles or render types reused for the shapes): the rope is a ribbon of `textures/ascent/rope.png`
@@ -24401,7 +24401,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   furnace's lock). No breath in a station's own view: you are aiming.
 - **When the place is taken:** view 1 (0.66 back, 0.90 up), then view 2 (0.55, 0.72), each tried with the furnace's eight
   rays from your eyes to the place; with none clear the view is framed from your own eyes as §24 describes (the old
-  behaviour, 12 ticks in and 10 out, with its breath). A block set into the way while you work gives the view back to
+  behaviour, 12 ticks in and 10 out; it holds still while you work, §65.2). A block set into the way while you work gives the view back to
   your eyes at once and the screen stays open.
 - **Third person:** a scene is seen from the station's view whatever view you play in. Coming from third person the view
   glides from where your camera was, the game is put in first person for the scene (as the Inscribing Table does), and
@@ -24415,35 +24415,74 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   degrees from past the near edge; at seven window sizes, with and without side panels, in all three views the view is
   square to the table, every slot is inside the room and a click on its middle picks it; the glide's lengths).
 
-### 65.2 The carrying hand (`anims.client.station.StationHands`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
-- **While a stack is on your pointer and the pointer is over the station** (above the inventory strip, and its line of
-  sight meets the table's level within 0.35 of the table's sides and far edge), your main hand holds it. The stack is
-  drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as it will lie, its
-  far edge tipped 18 degrees up toward you, rolling up to 14 degrees with the pointer's speed. It has no lag, so what
-  you click is what it is over (it is drawn after the hands are posed, from the same frame's pointer). The screen draws
-  no icon on the pointer then; anywhere else it is vanilla's icon.
-- **The arm** is one straight vanilla arm (`Rig.worldArms`): the fist's middle sits `HAND_BACK` 0.11 short of the stack
-  and the arm lies back toward a point 0.45 past the table's near edge and 0.30 over its top, 0.10 to the hand's own
-  side (`StationView.carry`), kept inside what the strip covers (`acrossMost`). It is drawn at the table's scale: a fist
-  0.8 of a grid square across (`handDistance`: the hand pass's distance that gives that size), and up to 1.8 times its
-  model's length (`Rig.armStretch`, a scale along the limb about its joint) so its far end passes under the strip, which
-  the game draws over it. No elbow, no second piece, no sleeve end in view.
-- **Timing:** the hand comes in under a picked-up stack and goes back out on a 45 ms ease; set down, it dips 0.045 and
-  comes back over 150 ms; picked up, the stack rises 0.03 over 140 ms. Empty, the main hand waits just off the near edge
-  under the pointer's column only once it carries; with nothing in it, it rests off the near corner on its own side
-  (0.36 across, clear of the strip's glass), as the other hand always does. A slot you change without carrying (a shift-click, a
-  number key) gets one 190 ms pass from the nearer hand. Every move is an ease toward a target from wherever the hand is
-  (50 ms): a new target never sends it back to rest first.
-- **One side decides.** The pointer and your own clicks drive all of it (`StationClient.tick` reads slot changes within
-  6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes what lies on a square,
-  as on any container screen, and never a hand. Clocks are whole nanoseconds and differences of them.
+### 65.2 The hands at a station (`anims.client.station.StationHands`, `anims.station.StationView`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
+Rewritten after Euan played it on 11 Nov ("trembling hands, and you can see the edge of them ... the behind of them
+doesn't really look natural"). What that build did wrong is said with each rule.
+- **A hand is in the view only while it works.** Your main hand while a stack is on your pointer and the pointer is
+  over the station (above the inventory strip, its line of sight meeting the table's level within 0.35 of the table's
+  sides and far edge, or the upright plane before a furnace or a stand); either hand for the one 190 ms pass a change
+  without carrying gets (a shift-click, a number key, a blow as work is taken). Resting, **there is no hand in the
+  view**: the game's own hand and what it holds step aside for the whole scene (`Rig.noHands`). The old build rested
+  both hands off the near corners: from a station's own view, and above all in the narrow room beside JEI's panels, a
+  resting arm was its cut end and its back, two blocks at the foot of the frame.
+- **The stack** is drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as
+  it will lie, its far edge tipped 18 degrees up toward you, **steady**. It has no lag (drawn after the hands are
+  posed, from the same frame's pointer), and the world draws it exactly when the screen stops drawing the pointer's
+  icon (`StationHands.carrying`, one answer for both: it was drawn twice for two frames on the way in). It rolled up
+  to 14 degrees with the pointer's speed: gone.
+- **The arm is your own arm**: one straight vanilla arm (`Rig.worldArms`) at its own size and its own proportions (a
+  fist a quarter of a block across, the arm three times that), **never drawn longer than it is**. Two builds drew a
+  small fist (0.8 of a grid square) on an arm up to 1.8 times its length so it would reach the strip; played, the arms
+  were "way too stretched and don't look like the actual arms anymore" (Euan, 11 Nov). A real fist is 4 texels and a
+  grid square is 3 apart, so the hand is a square and a third across: what lies under it shows through (below).
+- **Its pose is a pure function of where the stack is held, the view and the layout** (`StationView.armTo`): no
+  clock, no speed, nothing remembered. The fist's middle sits `HAND_BACK` 0.18 short of the stack (the stack is at its
+  fingers). The arm takes the shortest line from the stack to the line of sight through a point under the strip
+  (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side of the stack): so on
+  screen it runs from the fist to under the strip, and in the world it lies back toward you across the table. At his
+  window (427 by 240 GUI, with or without JEI's panels) a table's farthest reach needs 0.98 of the arm's own length:
+  it is drawn at its own size. Where the strip is farther than that (a wide workstation view in the narrow room: the
+  cartography table at his window needs 1.28) the whole arm is drawn larger, up to 1.3
+  (`StationView.armGrow`, one number for the scene); where even that is too short the scene has **no arm** (a cut end
+  in the view is worse than no hand): the brewing stand at his GUI size, whose view opens to the widest there. Each
+  arm is drawn at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid
+  (0.95), so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
+  **What trembled in the arm itself:** its line leaned by up to 0.08 against the pointer's speed, a speed taken a
+  frame at a time from a real mouse (noise, times a lever of half an arm); its length was searched in twentieths, so
+  it grew and shrank in steps as the pointer moved; and the hand pass had vanilla's sway in it (below). The largest
+  cause was the view itself (below).
+- **In and out:** the hand comes in along its own line from under the strip and goes back the same way (a 45 ms ease
+  for a stack, a sine for a pass); set down, hand and stack dip 0.045 and come back over 150 ms; picked up, the stack
+  rises 0.03 over 140 ms. Nothing fades and nothing rests. When the screen shuts the hands are gone with it.
+- **Where the world has them** (`WorldBody.drawArms`, for every world arm: a station's, a touch's, a ledge's): world
+  offsets go to view space by the matrix the world is drawn with this frame (`cameraRenderState.viewRotationMatrix`),
+  and **vanilla's hand sway is undone** for them. The hand pass's stack arrives already turned by a tenth of how far
+  your look runs ahead of your body (`viewXRot - xBob`, `viewYRot - yBob`); a hand that is somewhere in the world slid
+  off its place every time you turned. The view's bob stays: the world is drawn with it too.
+- **The view holds still** (`FirstPerson.holdView`, `viewHeld`; `body.client.feel.CameraOverhaulPause`). **The largest
+  cause of the trembling**, found by the pose log on CI and then in his own pack: Camera Overhaul sways the view idly
+  whenever you stand still (`cameraSwayIntensity`), and standing still is all a scene is. With the eye fixed, the
+  look wandered by about a third of a degree, so the table slid under a stack and a hand that were pinned to the
+  pointer (and under the pointer itself: the square it was over could change). A station scene now holds the view
+  from the tick it opens until the view is home; the Feel Director pauses Camera Overhaul for any held view and for
+  any scene's own camera (`FirstPerson.cameraOwned`), through the mod's own public setting, as it already did in
+  flight, and puts it back after.
+- **One side decides, on whole clocks.** The pointer and your own clicks drive all of it (`StationClient.tick` reads
+  slot changes within 6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes
+  what lies on a square and never a hand. The hands' eases are differences of whole nanoseconds; the view's glide is
+  whole ticks since it began plus the tick's part (it was a float of the running tick count). The view itself holds
+  still while you work, from a station's own place or from your own eyes (it breathed a quarter of a degree from your
+  eyes).
 - **Nothing hidden:** a square whose middle is under the sleeve (`StationView.sleeveOver`) shows its stack on a small
-  plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm. Only squares nearer to you than the one the stack is
-  over can be under it.
-- Tests: `stations_hand_never_hides` (every slot, seven window sizes, with and without side panels, either main hand:
-  the stretch is within 1 to 1.8, the arm's far end is under the strip or off the frame, the arm never lies over the
-  result, only nearer squares are under the sleeve, never more than two). The hands' motion itself is client code and
-  is checked on film.
+  plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm.
+- Tests: `stations_hand_never_hides` (every scene, every slot, eight window sizes, with and without side panels, either
+  hand: the arm is never longer than it is and its far end is under the strip or off the frame; at his window, 427 by
+  240, every bench and the furnace have their arm and a table's is at its own size; on a table the arm never lies
+  over the result and no square farther than the stack is under the sleeve) and `stations_hand_steady` (the same held
+  place gives the same arm whatever was asked before; as the held place crosses a station in 400 steps the arm keeps
+  its length while its line and its far end on screen change a little at every step, never by a jump). On film: the pilot's `handslog on` writes a line a frame of where each arm
+  was drawn (`anims.client.HandsLog`); `tools/autopilot/hands-smooth.txt` holds a stack still in each scene and sweeps
+  the pointer across one.
 
 ### 65.3 Things with weight (`StationClient.onSubmit`, `StationScreen.extractStation`)
 - A stack **lies as a small pile**: 1 item, 2 for a count of 2 to 5, 3 up to 32, 4 above (`StationClient.pile`), each a
@@ -24541,14 +24580,16 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
 
 ### 65.7 Boxes (`anims.client.Touches`, `anims.client.LivingSlots`, `anims.station.SlotMoves`)
 The glass screen stays (§56): nothing is faster for twenty-seven slots. What is round it changes.
-- **The lid is in your hands.** A chest, ender chest, shulker box or cache: both hands under the lid's front edge, and
-  the edge they hold is the lid's own as it stands each tick (`Touches.lid`: the lid turns about a hinge a texel in
-  from the back and nine up, by vanilla's eased `getOpenNess`; a shulker's rim rises with `getProgress`), so they go up
-  with it and let go as it stands (`LID`, 13 ticks). A barrel is one hand drawing the hatch in its face (`HATCH`).
-- **Nothing waits.** A box's screen opens at once: it was held four ticks for the hands (`LID_WAIT`, gone). The glass
-  fades in over the lid moment as before (§56).
-- **Let down again.** When that screen shuts the hands take the lid's raised edge and bring it down with it (`LID_DOWN`,
-  11 ticks; both hands free, as for the lift).
+- **The lid, by one hand.** A chest, ender chest, shulker box or cache: one free hand to the lid's lip where it lies
+  shut (`Touches.lid`, a fixed place: seven texels out from a chest's middle and nine up), a lift of 0.09, and away:
+  seven ticks in all (`LID`), and the lid goes on up by itself. A barrel is one hand drawing the hatch in its face
+  (`HATCH`, seven ticks). **As played on 11 Nov** it was both hands riding the lid's own edge to the top of its swing
+  for thirteen ticks over a screen that had already opened ("the hands way too high and for way too long"); and the
+  edge they rode was read with the partial tick of an earlier frame, so it moved unevenly between ticks (the tremble
+  at a chest).
+- **Nothing waits.** A box's screen opens at once. The glass fades in over the lid moment as before (§56).
+- **Shutting plays no hand.** The lid shuts by itself, as vanilla's does. A hand let it down for eleven ticks, and
+  whoever shut a chest and turned away at once saw that hand chase the lid across the frame.
 - **Looking in.** While the screen is open the view tips toward the box by up to 4 degrees in pitch and 2 in yaw and the
   field of view narrows 4%, eased in and out at 0.3 a tick (`Touches.lookIn`); your own look is not moved. Not with
   reduced motion, and not while a station's view is away.
@@ -24627,6 +24668,10 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   work plan, fabricator and broken machine as both hands, our Word Stone, log terminal, door core, return pad, fallen
   star, well lift, monolith, pick stone and Hearthfire as a palm, our doors as a push, the ghost lever as a lever, the
   left chest as a lid. The Forge is three blows with a piece in the hand and a palm for anything else it offers.
+- **Turned away, a touch is over** (`Reaches.pose`, every quick touch): the moment the thing stands more than 37
+  degrees off the middle of the view (`COS_AWAY` 0.80) the hands stop following it; from where the view last had them
+  they go home under the frame in 120 ms, in the view's own frame, and the touch ends. A fist held to a place in the
+  world while the view swung away from it was drawn chasing it.
 - **A scene's own hands take over:** a block whose scene is about to open plays no touch over it.
 - **Every touch has a body** (`TouchKinds.Body`, to everyone tracking the player and to them, at most one every 5
   ticks): `touch_one_low`/`_mid`/`_high` (6 ticks), `touch_both_…` (8), `touch_pull` (8), `touch_strike` (6),

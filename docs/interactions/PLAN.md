@@ -453,3 +453,31 @@ old `anims_station_*` tests run against the new view (they pass); fast hands and
 **Still unseen by any run:** motion (the runner draws about two frames a second). **Section number:** this plan was
 SPEC §63 while it was built; it became §64 on 11 Nov when The Way Up took 63 in build, and §65 at the merge, when The Long World took 64.
 
+## 9. After Euan played it (11 Nov 2026)
+
+His words: "the hands are like really glitchy in most cinematics, where they're like trembling hands, and you can see
+the edge of them as well ... when you open the chest, it like opens the hands way too high and for way too long ...
+when you close the chest and you look away fast, like the hands glitch all over the place", and, of the first fix,
+"Arms are way too stretched and don't look like the actual arms anymore". SPEC §65.2, §65.7 and §65.9 are rewritten;
+each rule there names what the played build did. The causes, as found:
+
+| What he saw | Cause | Now |
+|---|---|---|
+| Trembling hands in every station scene | Camera Overhaul sways the view idly whenever you stand still, and a scene is standing still: the table slid under a stack and a hand pinned to the pointer (found by the pose log: eye fixed, look wandering a third of a degree) | A scene holds the view; the Feel Director pauses Camera Overhaul for it (`FirstPerson.viewHeld`) |
+| | The arm leaned by the pointer's speed (noise from a real mouse), its length moved in twentieths, the stack rolled with that speed | The arm is a pure function of where the stack is held; the stack lies steady |
+| | Vanilla's hand sway was in the hand pass under every world arm | Undone for world arms |
+| Their edges and backs in view | Both hands rested at the near corners; the arm's far end showed where the strip was far (the room beside JEI's panels) | No hand at rest; the far end always under the strip, which is drawn nearly solid |
+| Stretched, not real arms | A small fist drawn up to 1.8 times its length | The vanilla arm at its own size, never longer than it is |
+| Chest: too high, too long | Both hands rode the lid to the top for 13 ticks, the lid read with a stale partial tick | One hand to the lip where it lies shut, a lift of 0.09, 7 ticks |
+| Chest shut, look away: hands everywhere | A hand let the lid down for 11 ticks and followed it as the view turned | Shutting plays no hand; any touch sends its hands home in 120 ms once its thing leaves the middle of the view |
+
+**Proof.** `tools/autopilot/hands-smooth.txt` with the pose log on, read by `tools/anims/handslog.py`. Run 43012365190,
+1,106 frames: in every stretch with the pointer left on a slot (table, anvil and furnace, his layout and the wide one,
+up to 166 frames over 4 s) the fist, the arm's line, the eye and the look each moved 0.00000; in the sweeps the arm's
+line turned at most one degree in a frame and never went back on itself; a chest's hand was in the view under 0.4 s
+and never above the middle of the frame. Tests `stations_hand_never_hides` and `stations_hand_steady` cover every scene
+and both layouts. **Not judged:** how it feels under a real mouse, which only he can say.
+
+**Left for his eye:** a chest's lid is now one hand, mostly behind the screen that opens at once; shutting a box plays
+no hand; the brewing stand has no arm at his GUI size (its view is too wide for an arm to end under the strip).
+
