@@ -17,29 +17,52 @@ import java.util.EnumSet;
  * drifts. It takes no target (Encounters.mayTarget). Woken, it stops and turns toward whoever woke it for the wake beat,
  * then fights. The goal outranks every other move and look goal while it runs; it is not saved, so a reload attaches it
  * again (Encounters.onLoad). Server thread only.
+ *
+ * <p>A pack on the prowl (SPEC §50.9 "Who lives there") waits the same way but walks a beat: its spot moves from one
+ * stop to the next every {@link #STOP} ticks, by the world's clock, so a whole pack turns together with nothing shared
+ * between them, and each keeps the place in the pack it was put down in.
  */
 final class Dormant extends Goal {
     /** How far it may drift from its spot before it walks back, and how far a stroll takes it. */
     private static final double LEASH = 4, STROLL = 2.5;
 
+    /** A beat's spot moves on this often: long enough to walk thirty blocks and stand about at the end of it. */
+    static final int STOP = 20 * 24;
+
     private final Mob mob;
-    private final double homeX, homeY, homeZ;
+    private double homeX, homeY, homeZ;
+    /** The stops of its beat (block positions), or null for a monster that keeps its one spot; and where it stands in its pack. */
+    private final long @Nullable [] beat;
+    private final double offX, offZ;
     private int next, look;
     private double lookX, lookY, lookZ;
     private boolean done;
 
-    private Dormant(Mob mob, BlockPos home) {
+    private Dormant(Mob mob, BlockPos home, long @Nullable [] beat) {
         this.mob = mob;
+        this.beat = beat != null && beat.length > 1 ? beat : null;
         homeX = home.getX() + 0.5;
         homeY = home.getY();
         homeZ = home.getZ() + 0.5;
+        // its home is where it was put down beside the beat's first stop
+        offX = this.beat == null ? 0 : Math.clamp(home.getX() - BlockPos.getX(beat[0]), -8, 8);
+        offZ = this.beat == null ? 0 : Math.clamp(home.getZ() - BlockPos.getZ(beat[0]), -8, 8);
         next = 20 + mob.getRandom().nextInt(60);
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     static void attach(Mob mob, BlockPos home) {
+        attach(mob, home, null);
+    }
+
+    static void attach(Mob mob, BlockPos home, long @Nullable [] beat) {
         for (WrappedGoal w : mob.goalSelector.getAvailableGoals()) if (w.getGoal() instanceof Dormant) return;
-        mob.goalSelector.addGoal(0, new Dormant(mob, home));
+        mob.goalSelector.addGoal(0, new Dormant(mob, home, beat));
+    }
+
+    /** Which stop of a beat of {@code stops} the world's clock points at. */
+    static int stop(long gameTime, int stops) {
+        return (int) Math.floorMod(gameTime / STOP, (long) stops);
     }
 
     @Override
@@ -80,9 +103,16 @@ final class Dormant extends Goal {
 
     private void idle() {
         if (mob.getTarget() != null) mob.setTarget(null);
+        if (beat != null) {
+            long at = beat[stop(mob.level().getGameTime(), beat.length)];
+            homeX = BlockPos.getX(at) + 0.5 + offX;
+            homeY = BlockPos.getY(at);
+            homeZ = BlockPos.getZ(at) + 0.5 + offZ;
+        }
         double dx = mob.getX() - homeX, dz = mob.getZ() - homeZ;
         if (dx * dx + dz * dz > LEASH * LEASH) {
-            if (!mob.getNavigation().isInProgress()) mob.getNavigation().moveTo(homeX, homeY, homeZ, 0.8);
+            // a walk along a beat is unhurried; a far stop is reached in a few paths, each begun where the last ran out
+            if (!mob.getNavigation().isInProgress()) mob.getNavigation().moveTo(homeX, homeY, homeZ, beat != null ? 0.7 : 0.8);
             return;
         }
         if (--next <= 0) {

@@ -22,7 +22,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 public final class Encounters {
     private Encounters() {}
 
-    private static final String WAITING = "awaken_encounter_waiting", HOME = "awaken_encounter_home", WAKE = "awaken_encounter_wake";
+    private static final String WAITING = "awaken_encounter_waiting", HOME = "awaken_encounter_home", WAKE = "awaken_encounter_wake", BEAT = "awaken_encounter_beat";
     /** The wake beat, in ticks: a woken encounter turns toward you before the fight starts. */
     static final int WAKE_BEAT = 14;
     /** Allows a fight across its doorway without recruiting the rest of the floor. */
@@ -54,6 +54,7 @@ public final class Encounters {
         if (!waiting(entity)) return;
         entity.getPersistentData().remove(WAITING);
         entity.getPersistentData().remove(HOME);
+        entity.getPersistentData().remove(BEAT);
         entity.getPersistentData().putLong(WAKE, entity.level().getGameTime() + WAKE_BEAT);
     }
 
@@ -67,6 +68,17 @@ public final class Encounters {
         Dormant.attach(mob, mob.blockPosition());
     }
 
+    /** Held as {@link #holdFree}, but walking a beat while it waits: the stops in turn, a while at each (RealmPacks.prowl). */
+    static void holdBeat(Entity entity, long[] beat) {
+        if (!(entity instanceof Mob mob) || mob.isNoAi()) return;
+        entity.getPersistentData().putBoolean(WAITING, true);
+        entity.getPersistentData().putLong(HOME, mob.blockPosition().asLong());
+        entity.getPersistentData().putLongArray(BEAT, beat);
+        mob.setTarget(null);
+        mob.getNavigation().stop();
+        Dormant.attach(mob, mob.blockPosition(), beat);
+    }
+
     static void releaseFree(Entity entity) {
         release(entity);
     }
@@ -78,7 +90,7 @@ public final class Encounters {
         if (entity instanceof Mob mob && mob.isNoAi()) mob.setNoAi(false);
         if (g != null && g.floor(key.area(), key.floor()).triggered.contains(key.room())) release(entity);
         if (entity instanceof Mob mob) {
-            Dormant.attach(mob, BlockPos.of(entity.getPersistentData().getLongOr(HOME, mob.blockPosition().asLong())));
+            Dormant.attach(mob, BlockPos.of(entity.getPersistentData().getLongOr(HOME, mob.blockPosition().asLong())), entity.getPersistentData().getLongArray(BEAT).orElse(null));
         }
     }
 

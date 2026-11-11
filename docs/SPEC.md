@@ -22520,11 +22520,52 @@ on 11 Nov: The Ossuary Floor, The Slag Pit, The Spore Ring, The Drowned Hall, Th
 The Black Landing.
 
 **The right amount** (the same day: "the big worlds we've built so far... look pretty good, like with the right amount of mobs in
-them"). An open land (anything that is not a crawl) is never empty between its dens: about every twenty seconds, for a player out
-in the land with fewer than three of the gate's monsters within forty-four blocks, more than forty-eight from the way in and clear
-of every fight the land has placed, one more pack of the theme's own stands waiting thirty to forty-four blocks off
-(`RealmPacks.wander`). A land gets four such packs and one more for every rank. They pay as any kill does, on top of the gate's
-own shares: whether that stays is Euan's call.
+them"). An open land (anything that is not a crawl) is never empty between its dens. The first cut of this put one more pack
+thirty to forty-four blocks from a player every twenty seconds (`RealmPacks.wander`); it is gone, replaced the same day by:
+
+**Who lives there** (`RealmCountry`; Euan, 11 Nov, on the first rolled land: "Also think about mob and herd spawns etc to make
+these really fun and immersive"). A land under a sky (not a crawl, not under a roof) is read in cells 56 across, and each cell's
+haunt comes from the seed and the shape of the ground alone (`Land.ground`), so the same land has the same life for everyone, a
+herd is where a herd would stand, and it is all there before anyone arrives. Nine places in a cell are looked at: the most
+level, the highest, and a second level one. A cell holds one of:
+
+- **nothing**: 42 cells in a hundred, so the country has quiet stretches and nothing comes at even steps (Euan, 10 Nov: world
+  content "must feel natural, with quiet stretches");
+- **a herd** (38 in a hundred of the rest): four to seven of the land's herd animal on ground that falls no more than two blocks
+  in three, each kept within eighteen blocks of it;
+- **small creatures** (16): two to four of the land's little ones, on rougher ground;
+- **a pack on the prowl** (22): a den's worth of the theme's monsters, by herd where the theme has herds, walking a beat between
+  the cell's two level places: the spot they keep moves from one to the other every twenty-four seconds by the world's clock
+  (`Dormant.stop`), so the whole pack turns together and each keeps its place in it. They notice and fight as a den's do. You
+  can watch them go, wait them out, or meet them;
+- **a lookout** (16): one of the theme's (its marksman where it has one) on the cell's highest place, which must stand four
+  blocks or more over the level one, and three or four more (one more for every two ranks) waiting on that level ground behind
+  it. A lookout sees twenty-four blocks with a clear line, up or down a slope, where the rest see thirteen. Seen by it, you hear
+  a raid horn and everyone of its own within thirty-eight blocks wakes and comes for you. Put it down unseen and the reserve
+  never knows;
+- **the big one at home** (8): the theme's Warden kind with two of its own (three from B rank), on level ground at least 64
+  blocks from every leg and site. Nobody has to go near it. Put down, it leaves a cache where it lived.
+
+A cell that asks for something its ground cannot give takes the next gentler thing (a lookout with no perch is a pack on the
+prowl; a herd on a slope is small creatures) or nothing. Every haunt keeps 24 blocks clear of every site and 26 of every leg,
+and 56 of the way in. A land has its share of each hostile kind (packs 4 and one and a half more a rank, lookouts 2 and one more
+every two ranks, one lair, two from B); a cell past the share holds nothing. A haunt fills when someone is within 92 blocks and
+nobody within 50, as a den's pack does at 80, and a hostile one fills once (`RealmState.woken`: `haunt_<n>` when settled,
+`hauntp`, `hauntw`, `hauntl` by kind, `hauntd` once a lair's cache is out). The run comes first: nothing of the country's stands
+while the gate already holds more than twenty monsters. The country's monsters pay as any kill does, on top of the gate's own
+shares: whether that stays is Euan's call.
+
+Herds and small creatures are not monsters of the gate: they are the wide world's own wild animals (`MobHooks.spawnNamed` with
+no gate, at the gate's level), not counted, paying nothing from the pool, gone when nobody is near and back on their ground six
+minutes later if most of a herd is missing and nobody is there to see. Each theme has a kit (`RealmCountry.KITS`): the Ember
+Mines have crag rams, scree marmots and peak kites overhead; the Overgrown Temple crested basilisks, dart frogs and lumen moths;
+the Frost Monastery frost stags and frostfinches; the Glass Desert dune rays and glass scarabs; the Fungal Hollow mossbacks and
+mudskippers; the Hive pollen grazers; the Bell Crypt hollow owls; the Drowned Archive bog toads, mudskippers and bogwicks. No
+animal in a kit changes the land (none that plants, grows things or leaves a trail). A blueprint's `life.herds` names its own
+herd animals instead of the kit's, and `life.ambient` what is in its air; both may now name a wild animal as well as a Realm's
+own. Amber Reach's pollen grazers stand on grounds like every other herd. Under a roof a Realm's herds are still kept round the
+player as before (`RealmLife.herd`). The wide world's named beasts (the Stonehorn and the rest) are not used: each is one of a
+kind out there.
 
 **Every rank.** Each finished blueprint lists every rank from the one its theme opens at up to S, not the two it first had. Packs
 already grow with rank (`RealmPacks.roll`, `den`, `warden`). A run's shape does not change with rank yet.
