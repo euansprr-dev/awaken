@@ -91,6 +91,19 @@ Each sheet has the code before the fix on the left and after it on the right, fr
     far below a lane. From the rim right above a lane's start its gusts are seen end-on, a few short strokes
     beside the island.
 
+**12 Nov: the tree shadow that changed with where he stood, the real cause** (`tree-shadow-sides-before-after.jpg`;
+runs 43060864509 before, 43076043878 after; SPEC §22 "The lit air"). "On one side of the tree the shadow is perfect,
+then if I go to the other side, the shadow is gone ... its for ALL trees." The lit air's z reached the shader in a
+frame texel the world's projection rewrites every frame, so every surface more than two blocks to the camera's +z was
+judged by air some 70 blocks away, found "sure of the sun", and never walked. The sheet is one built tree on a lawn
+under a morning sun: before, its shadow is whole looking north, absent looking south, and cut along a straight line
+through the camera looking west; after, it is the same shadow from all three. The tree-shadow and roof-shadow fixes
+above answered real differences in the far model, but not this, which is what he had been reporting since 11 Nov.
+Found in one try once he could switch the parts in play (`/awaken lens rays off` brought every shadow back); the same
+old-code shots had shown it a day earlier and were read as foreshortening. He played the fix: "Yeah, this is fixed."
+Not measured here: with the shortcut working as designed more shaded pixels walk the block map, and he saw 50 to 55
+fps where he had over 60; that is a separate branch's work (`claude/lens-steady-60-perf-1de2f5`).
+
 Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
 exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
 fogged, and the sun's rays coming out hard-edged under a low sun near the cloud layer (seen in the world-moods
