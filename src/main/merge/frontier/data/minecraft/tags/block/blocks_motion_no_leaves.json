@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:skiff_brass",
+    "awaken:skiff_deck",
+    "awaken:skiff_gunwale",
+    "awaken:skiff_helm",
+    "awaken:skiff_hull",
+    "awaken:skiff_hull_stairs",
+    "awaken:skiff_spar"
+  ]
+}

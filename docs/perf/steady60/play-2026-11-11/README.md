@@ -52,9 +52,12 @@ Each sheet has the code before the fix on the left and after it on the right, fr
   `tree-shadow-before-after.jpg`: before, from 78 blocks (past the block map's 46) the crown's shadow is a dark slab
   from the trunk's foot outward, as if the air under the leaves were solid; after, it is the same square with the
   trunk's thin line that it is from 16. `tree-shadow-ground-before-after.jpg`: the same from the ground at 55.
-  **Not across the board yet**: the stone table beside it (a slab on four legs) still throws a slab's shadow from
-  its feet at 78 blocks, in both rows. A solid roof with open air under it (a bridge, an arch, a market roof) is
-  right only within 46 blocks; the heightfield holds a column's top and nothing about what is open beneath it.
+  The stone table beside it (a slab on four legs) still threw a slab's shadow from its feet at 78 blocks in both
+  of those runs: a solid roof with open air under it was right only within 46 blocks. Fixed after them
+  (a173f772f, run 43018675746): the heightfield now holds a roof's underside and the floor under it.
+  `roof-shadow-before-after.jpg`: the table from 78 blocks before (dark walls between its legs, shade under it)
+  and after (the slab's own square with the legs' thin lines, as from 16 blocks, below). Not held: a roof thicker
+  than six blocks (a floating island), air deeper than 64 under one. Tick time not measured.
 - Shade on creatures (SPEC §22; `tools/autopilot/steady60-creature-shade-ci.txt`, runs 43001737613 before and
   43001812108 after): "the shadows on animals are a bit broken ... you can see ... actual artifacts in the shadows,
   where the shadows have jagged edges or like zigzags". `creature-shade-before-after.jpg`: a pillar's shadow across a

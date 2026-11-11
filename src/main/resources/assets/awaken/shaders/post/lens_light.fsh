@@ -200,32 +200,42 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
 float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool leafy) {
     leafy = false;
     vec4 f12 = F(12), f15 = F(15);
-    // under a roof or in a cave: nothing from the sun (the composite fades its model out there). A heightmap counts a
-    // slab, a stair or a fence as its whole block, so its own column only shadows from a block above the surface
     ivec2 own = ivec2(floor(o.xz));
-    if (roof && o.y < heightAt(own, 0).g - 1.0) return 0.0;
     float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3), vis = 1.0;
-    // near: every column the ray crosses, at its lowest point over it (where it enters: it climbs), so a step's or a
-    // wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
-    // occluder near the end of its shadow, which faded it and cut it off in a stepped edge (Euan 2026-10-29)
     ivec2 c = own, dirI = ivec2(l.x >= 0.0 ? 1 : -1, l.z >= 0.0 ? 1 : -1);
     vec2 per = 1.0 / max(abs(l.xz), vec2(1.0e-5));
     vec2 next = (vec2(c) + max(vec2(dirI), 0.0) - o.xz) * vec2(dirI) * per;
+    // Under solid: in the ground, in a cave, or under a roof with open air beneath it (a bridge, an arch, a table).
+    // Only the last can see the sun, and only where the ray leaves this column still under the roof's underside;
+    // from the others nothing (the composite fades its model out there). A heightmap counts a slab, a stair or a fence
+    // as its whole block, so its own column only shadows from a block above the surface
+    if (roof) {
+        vec4 top = heightAll(own, 0);
+        if (o.y < top.g - 1.0 && !(o.y >= top.a - 1.0 && o.y + max(l.y, 0.0) * min(next.x, next.y) < top.b)) return 0.0;
+    }
+    // near: every column the ray crosses, between where it comes in and where it goes out (it climbs), so a step's or
+    // a wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
+    // occluder near the end of its shadow, which faded it and cut it off in a stepped edge (Euan 2026-10-29)
+    // A column is solid under its floor (a) and from its roof's underside up to its top (b to g): for most columns
+    // that is everything under the top. Before the heightfield held b and a, a roof with air under it was solid to
+    // the ground, and beyond the block map a bridge, an arch or a table threw a slab's shadow from its feet (the
+    // stone table of run 43001230601), right only once the camera came within 46 blocks.
     float t = 0.0;
     int nearCells = ultra ? 16 : 10;
     for (int i = 0; i < nearCells; i++) {
         if (next.x < next.y) { t = next.x; next.x += per.x; c.x += dirI.x; }
         else { t = next.y; next.y += per.y; c.y += dirI.y; }
-        float y = o.y + l.y * (l.y >= 0.0 ? t : min(next.x, next.y));
-        if (y > maxH) return vis;
+        float tOut = min(next.x, next.y);
+        float lo = o.y + l.y * (l.y >= 0.0 ? t : tOut), hi = o.y + l.y * (l.y >= 0.0 ? tOut : t);
+        if (lo > maxH) return vis;
         if (max(abs(float(c.x) + 0.5 - f12.x), abs(float(c.y) + 0.5 - f12.z)) > trust) return vis;
-        vec2 h = heightAt(c, 0);
-        if (y < h.g) return 0.0;
-        if (y < h.r) {
+        vec4 h = heightAll(c, 0);
+        if (lo < h.a || (hi >= h.b && lo < h.g)) return 0.0;
+        if (lo < h.r) {
             leafy = true;
             // (through the crown itself: where the ray, between coming in and going out, is in its top blocks)
-            if (o.y + l.y * (l.y >= 0.0 ? min(next.x, next.y) : t) > h.r - CANOPY) {
-                vis *= exp(-0.9 * (min(next.x, next.y) - t));
+            if (hi > h.r - CANOPY) {
+                vis *= exp(-0.9 * (tOut - t));
                 if (vis < 0.03) return 0.0;
             }
         }
@@ -243,11 +253,13 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool lea
         // far steps test a whole cell (the max mips), so a long stride can't step over a ridge
         int lvl = int(clamp(log2(s * horiz) + 0.5, 0.0, 4.0));
         ivec2 cell = ivec2(floor(q.xz));
-        vec2 h = heightAt(cell, lvl) - (lvl == 0 && cell == own ? 1.0 : 0.0);
-        if (q.y < h.g) return 0.0;
+        vec4 h = heightAll(cell, lvl);
+        if (lvl == 0 && cell == own) h.rga -= 1.0;
+        float up = q.y + max(l.y, 0.0) * s;
+        if (q.y < h.a || (up >= h.b && q.y < h.g)) return 0.0;
         if (q.y < h.r) {
             leafy = true;
-            if (q.y + max(l.y, 0.0) * s > h.r - CANOPY) {
+            if (up > h.r - CANOPY) {
                 vis *= exp(-0.9 * s);
                 if (vis < 0.03) return 0.0;
             }

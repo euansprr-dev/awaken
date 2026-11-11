@@ -40,6 +40,7 @@ public final class AscentClient {
             e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new);
             // the Lesson's figure of light (SPEC §71)
             e.registerEntityRenderer(AscentContent.FIGURE.get(), LessonFigureRenderer::new);
+            e.registerBlockEntityRenderer(AscentContent.WING_CORE_BE.get(), WingCaseRenderer::new);
         });
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));

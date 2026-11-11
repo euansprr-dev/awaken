@@ -218,12 +218,18 @@ final class AscentCommands {
                 if ((where == 2 || dev.awaken.above.ruin.SkyRig.STAIR) && !dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
                     dev.awaken.above.ruin.SkyRig.rigStair(level, cx, deckY, cz);
                 }
+                if (!dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigHall(level, cx, deckY, cz);
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
                 var first = l.rings().getLast();
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
                 if (where == 2) {
                     // six blocks short of the lowest stone, from where the stone below it would have stood
-                    var stones = dev.awaken.above.ruin.SkyRig.stairOn(level, cx, deckY, cz);
+                    // the stair stands by now: read back from its stones (worked out from the land again it has none)
+                    var stones = dev.awaken.above.ruin.SkyRig.stairStanding(level, cx, deckY, cz);
+                    if (stones.isEmpty()) {
+                        src.sendFailure(Component.literal("The platform at " + cx + ", " + cz + " has no stair standing"));
+                        return 0;
+                    }
                     var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
                     var low = stones.getFirst();
                     var next = helix.get(Math.min(helix.size() - 1, stones.size()));

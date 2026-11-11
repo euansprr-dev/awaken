@@ -4266,17 +4266,44 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 - **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
-- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
-  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
-  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
-  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
-  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
-  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
-  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
-  "· needs a rope or wings". It breathes a ring of light every 3 s. The
-  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The core, the rank first** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck; 11 Nov 2026, Euan
+  at a core at rank D: "it's way too early to get these... it says, like, come back when you're rank C"): twice a
+  second, a player within 4.7 (the case's rail is two out, its corners nearly three) without Wings is asked **the rank
+  first** (`WingCoreBlockEntity.RANK`, C; progression plan decision 2), however they came: below it "Come back at rank
+  C. These wings will wait for you." on the action bar with the vault's refusal (Minecraft's own recording, low), at
+  once and then at most every 10 s, and the core goes on the Tasks page (`Promises.seen`, need rank C, "A sky core's
+  wings"). At the rank the way they came is asked as before: by the line (`ArrivalHooks.byLine`) and by moving
+  (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the last 20 s in an airborne Ascent
+  state or a Runner move and no block placed), else the line's or the dark's refusal; then Wings (`Ascent.grant`, "sky
+  platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`, counter
+  `awaken:ascent_wings_core`. The Horizon's "wings" need is reached by Wings or the rope alone and reads "· needs a rope
+  or wings". The platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
+  that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real
+  wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
+  so the open pair turns inside the glass), 3.2 over
+  the core's floor, breathing between nearly open and open, turning once in 38 seconds, lit by themselves, their halos
+  behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
+  middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
+  faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
+  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
+  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  open and empty over a low light.
+  - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
+    opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
+    the player's shoulder blades, thinning out as it arrives at tick 34, when the scene's own wings open on their back
+    (`AscentScene.wingsGift`). The "UNLOCKED · Wings" title (§71.2) begins with the same scene.
+  - *The air* (`AscentFxBridge.caseTick`, within 48 blocks of a core): motes of the wings' light shed off the feathers
+    and rising; the wind as motes carried across the deck and out over the pier; the pair stirring (the wings' own
+    fold, low, every 4.6 s within 14 blocks) and a gust every 9.5 s; the core's ring of light every 3 s as before.
+- **The wings' hall** (`SkyRig.rigHall`, `hallAxis`, `hallPlaced`; laid with the rig, and on its own for platforms rigged
+  before it: its mark is the lit panel under the core, placed last; the blueprint never changes). The cabin Euan stood
+  in was "a dark tiled room". Two opposite corners are opened as **portals** four high with pillars for jambs, light
+  in the threshold and a soul lantern hung in the head; a **rail** of polished deepslate wall stands round the core two out, which the case's glass
+  rises from (nobody walks into the case), with light in the deck under its corners; a lamp every third cell down the
+  pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
+  turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
+  and the wings read from its end) and the other diagonal otherwise (a quarter turn round the deck from the pier).
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4310,7 +4337,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  logs the shapes and judges this one. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one constant
+  to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get it on
+  their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
@@ -5983,7 +6012,8 @@ magic.
     on the Mac, not on CI). Where the pipeline doesn't compile, or the bound projection isn't perspective, each user's
     CPU estimate stands, as before. Development: client command `/awaken lens projection off|on|check` (off: every
     user's CPU estimate, for A/B; check: the latest roll read back).
-- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
+- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RGBA16F since "Shadows beyond the block map"
+  (b a roof's underside, a the floor under it), mips 1-4 hold the max of their 2×2 (the min for b); about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g
   without leaves. **The heightfield sees every solid block** (`LensHeights`, Euan 2026-10-29: "in a closed room the
@@ -6718,11 +6748,26 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
     a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
     has its say wherever the old curtain did, at the same cost.
+  - **Roofs with air under them** (the same day; the tour's stone table still threw a slab's shadow from its feet at
+    78 blocks, in both runs): a solid thing with open air under it (a bridge, an arch, a market roof, a table) was
+    a solid pillar to the heightfield. The heightfield now holds two more heights a column (RGBA16F): where the
+    solid at its top has open air under it within six blocks, the underside of that solid (b) and the top of
+    whatever stands under the air, found within 64 blocks (a). Elsewhere b is far above anything (4096) and a is
+    the solid top, so one test serves every column: solid under a, and from b up to the top. `heightRay` tests a
+    ray's whole span through each near column against that, and a point under such a roof marches on if its ray
+    leaves its own column below the underside (before, anything under a solid top was simply out of the sun). The
+    coarse levels hold the least b and the most a of their columns, so a far step never lets light through where
+    one column would stop it (a leg in a 4×4 cell makes the cell a pillar: thicker than it is, never thinner).
+    - Read with the chunk (`LensHeightfield.roofs`): only when a chunk's tops changed, so the steady rescan
+      costs what it did; a new chunk costs up to six block reads a column more. A hollow dug under a roof that
+      leaves every top as it was shows when a top next changes. The texture and its mirror are twice the size
+      (11 MB each from 5.6). Tick time not measured.
+    - Not held: a roof thicker than six blocks (a floating island: still a pillar to the ground), air deeper than
+      64 under a roof (solid from there down), a third layer under the floor. The CPU's own marches (the lit
+      air, the sun map, the dust) still take a column for solid under its top; they only ever spare a walk or
+      colour the air, never shade a surface.
   - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
-    giant) shade only inside the map; and a solid thing with open air under it (a bridge, an arch, a table) is a
-    solid pillar to the heightfield, so beyond 46 blocks its shadow is the pillar's and nearer it is the thing's
-    own. Telling those apart needs the underside of each column's top run in the heightfield (a third channel and
-    a scan at chunk load): not built.
+    giant) shade only inside the map.
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
     blocks, and from the ground).
 - **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
@@ -24371,7 +24416,7 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9's (the rank is asked first; from 11 Nov the wings hang in a case at the core and the climb is the stair). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
@@ -25749,8 +25794,10 @@ charge), `aim` (the ring).
   only, and a fighter loaded from a save counts as just seen, so a pause (the server stands still), a save, a quit and a
   reload, a step out of the door and a leap never put the Lord to rest. Only when the list is empty and the door is shut
   does the Lord go back to rest, whole, the hall reset and the door open (so nobody is ever locked out), and every
-  player in the gate and every fighter just out is told: "Nobody is left in the fight. The Ember Tyrant has gone back to
-  rest, whole again. The door to its hall is open." A Lord whose fight was put to rest while its chunk was away leaves as
+  player in the gate and every fighter just out is told, in chat: "Nobody is left in the fight. The Ember Tyrant has gone
+  back to rest, whole again. The door to its hall is open.", and by a toast that says only "The Ember Tyrant has gone
+  back to rest." (a toast holds two lines of 144 px at any GUI scale, and the full sentence was cut off after "has
+  gon…"; the longest Lord's name, the Gearwright Colossus, fills 244 of the two lines' 288 px). A Lord whose fight was put to rest while its chunk was away leaves as
   it loads (`RealmLive.strayLord`, from `GateEvents.onJoin`), so a fresh one never stands beside it. The log says each
   step (`[realms] gate N: ... joined the fight`, `... is out of the fight with the Lord (fell)`, `... stood past the
   heart's line (x y z, d blocks from the Lord); the fight held` once a fighter a fight, `nobody is left fighting ...`).
