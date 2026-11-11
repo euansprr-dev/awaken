@@ -109,7 +109,9 @@ screen close
 cmd clear @s awaken:lord_heart
 wait 20
 shotnow done_09_no_room_now_card_still_ticked
-# the guide (its step ticks: the card changes), then the card says what's next, the room's step still done
+# the Heart back in the pack, then the guide (its step ticks): the home's card, 2/3, the room's step still done
+cmd give @s awaken:lord_heart 1
+wait 20
 cmd awaken hearth guide
 wait 40
 shot done_10_guide
