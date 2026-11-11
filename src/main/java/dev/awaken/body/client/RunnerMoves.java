@@ -69,6 +69,8 @@ public final class RunnerMoves {
     static boolean shimmying;
     static int shimmyDir;
     private static int regrabAt, settleAt, shimmyAt = -100;
+    /** Jump pressed during a grab's catch (its 3-tick path): the hang climbs out on its first tick (SPEC §17.32). */
+    private static boolean climbQueued;
     // path
     static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5, EAVE = 6, DROP = 7;
     static int pathKind, pathAge, pathLen, pathStart = -100;
@@ -207,6 +209,8 @@ public final class RunnerMoves {
             case PATH -> {
                 // nor on a path (a lower, a drop): held Shift would back the body off the edge it's moving past
                 in.keyPresses = ClientMoves.with(k, false, false);
+                // a jump pressed while the hands catch the lip is kept for the hang: two quick presses at a ledge climb it
+                if (jumpPressed && pathToHang && pathKind == GRAB) climbQueued = true;
                 pathTick(p, in, now);
                 return true;
             }
@@ -603,6 +607,7 @@ public final class RunnerMoves {
         chainUntil = -100;
         hangStart = now;
         shimmying = false;
+        climbQueued = false;
         ClientMoves.trace(String.format("hang (%s) top %.2f above the feet %.2f", kind == BodyPayloads.HANG_LOWER ? "lower"
                 : kind == BodyPayloads.HANG_EAVE ? "eave" : "grab", e.top(), e.top() - p.getY()));
         boolean lower = kind == BodyPayloads.HANG_LOWER;
@@ -618,6 +623,8 @@ public final class RunnerMoves {
 
     private static void hangTick(LocalPlayer p, ClientInput in, Input k, boolean jumpPressed, boolean shiftPressed, BlockGetter level,
                                  CollisionContext ctx, int now) {
+        boolean queued = climbQueued; // tried on this first tick only
+        climbQueued = false;
         if (settleAt > 0 && now >= settleAt && !shimmying) {
             settleAt = 0;
             BodyAnims.runner(p.getId(), BodyClips.HANG);
@@ -639,7 +646,8 @@ public final class RunnerMoves {
             regrabAt = now + 8;
             return;
         }
-        if (jumpPressed || FreeRun.climbFromHang()) {
+        if (jumpPressed || queued || FreeRun.climbFromHang()) {
+            if (queued && !jumpPressed) ClientMoves.trace("climb out kept from the grab's press");
             if (ledgeJump(p, k, level, ctx, e, now)) return;
         }
         int dir = (k.left() ? 1 : 0) - (k.right() ? 1 : 0);
@@ -1064,6 +1072,7 @@ public final class RunnerMoves {
         edge = null;
         pathEdge = null;
         shimmying = false;
+        climbQueued = false;
         turnLeft = 0;
         links = 0;
         wallCount = 0;

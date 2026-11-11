@@ -5207,6 +5207,12 @@ The fix: a leap is the body's own air again whenever it meets an edge, and it cl
   Everything else is the ground's: the same reach (0.6, a running crossing 1.3), checks, paths and ticks.
 - **While the Body climbs**, from the ground or the air, the Ascent stands aside as it does for a Runner move: no
   Leaper move, no wings, and the held rope doesn't throw again. The rope's own key still cuts in.
+- **Two quick presses at a lip** (found by the tour's "step back, second jump 3 ticks after" cases, 11 Nov). With forward
+  held, a jump from a step back can reach a lip in the hang's band within its first ticks, and the Runner grabs it at
+  once. A second press that lands in the grab's 3-tick catch used to be dropped: no double jump (the Runner holds the
+  body) and no climb, so the body hung. Now a jump pressed during the catch is kept (`RunnerMoves.climbQueued`, a flag,
+  not a clock) and the hang climbs out on its first tick, exactly as a press then would. A fresh grab, a reset or the
+  first hang tick clears it.
 - **Server.** The start carries `air` (`BodyPayloads.Start`). The server runs the air's probe from its own body, then
   0.3 and 0.6 above and below it (`BodyRules.AIR_LAG`), since a body moving fast up or down may be a step apart from its
   client. The checks after that are unchanged: the ledge within 0.25 high and 1.0 across of the client's, and a
