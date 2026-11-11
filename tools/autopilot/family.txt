@@ -1,0 +1,176 @@
+# Awa and Dubu at the Hearth (plan docs/family/PLAN.md): the preview bodies in the game, for the approval page. A home
+# (/awaken admin kin yard: a real Hearthfire), then the two of them in front of the fire, each close up, beside the
+# player, walking, and in the poses that came from the owner's photos (her loaf and belly-up roll; his chin on his paws,
+# his giraffe). Nothing here spawns in play: every body is placed by /awaken admin family.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/family.txt 1800
+world autopilot_family creative 11112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+window 1440 900
+info
+camera first
+hud off
+cmd clear @s
+
+# ---- a home out west: the Hearthfire, and a mown patch of grass in front of it ----
+cmd awaken city view square
+wait 200
+cmd time set 4200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~-1 ~1 ~5 ~-1 ~9 minecraft:grass_block
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~ ~1 ~5 ~4 ~9 minecraft:air
+cmd kill @e[type=item]
+wait 20
+
+# ---- 1. in front of the fire: her loaf, his chin on his paws ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1.5 ~0.1 ~2.3
+cmd awaken admin family place awa rest 18
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~0.1 ~2.5
+cmd awaken admin family place dubu rest -22
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.2 ~-0.35 ~6.4 180 6
+wait 80
+shot family_01_at_the_fire
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.5 ~-0.7 ~4.2 152 9
+wait 30
+shot family_02_awa_loaf
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.6 ~-0.7 ~4.4 -155 9
+wait 30
+shot family_03_dubu_chin_down
+
+# ---- 2. sitting and standing, close ----
+cmd awaken admin family pose awa sit
+cmd awaken admin family pose dubu sit
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.5 ~-0.6 ~4.2 152 8
+wait 40
+shot family_04_awa_sits
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.6 ~-0.6 ~4.4 -155 8
+wait 30
+shot family_05_dubu_sits
+cmd awaken admin family pose awa idle
+cmd awaken admin family pose dubu idle
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.1 ~-0.5 ~5.6 180 8
+wait 40
+shot family_06_both_standing
+
+# ---- 3. beside you: the player between them, seen from the front ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~ ~2.4 0 4
+camera front
+wait 60
+shot family_07_beside_you
+camera back
+wait 30
+shot family_08_beside_you_from_behind
+camera first
+
+# ---- 4. her own poses: belly up, the stretch, hello ----
+cmd gamemode spectator
+cmd awaken admin family pose awa roll
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.4 ~-0.5 ~4.0 150 14
+wait 40
+shot family_09_awa_belly_up
+cmd awaken admin family pose awa idle
+wait 12
+cmd awaken admin family pose awa stretch
+wait 24
+shotnow family_10_awa_stretch
+wait 40
+cmd awaken admin family pose awa nudge
+wait 18
+shotnow family_11_awa_hello
+wait 40
+cmd awaken admin family pose awa hide
+wait 30
+shotnow family_12_awa_wary
+
+# ---- 5. his: hello (the play-bow), wary ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.7 ~-0.5 ~4.6 -155 10
+cmd awaken admin family pose dubu idle
+wait 30
+cmd awaken admin family pose dubu nudge
+wait 11
+shotnow family_13_dubu_play_bow
+wait 50
+cmd awaken admin family pose dubu hide
+wait 30
+shotnow family_14_dubu_wary
+
+# ---- 6. walking past: her tail up, his giraffe in his mouth ----
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.2 ~0.1 ~4.6
+cmd awaken admin family place awa idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.2 ~0.1 ~3.4
+cmd awaken admin family place dubu carry -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~-0.55 ~8.2 180 6
+wait 40
+shot family_15_before_the_walk
+cmd awaken admin family walk awa 8.5 1.0
+cmd awaken admin family walk dubu 8.5 1.0
+wait 30
+shotnow family_16_walking_a
+wait 7
+shotnow family_17_walking_b
+wait 7
+shotnow family_18_walking_c
+wait 80
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.6 ~0.1 ~4.6
+cmd awaken admin family place awa idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.6 ~0.1 ~3.4
+cmd awaken admin family place dubu idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~-0.55 ~8.2 180 6
+wait 30
+cmd awaken admin family walk awa 9 1.9
+cmd awaken admin family walk dubu 9 1.9
+wait 14
+shotnow family_19_running_a
+wait 5
+shotnow family_20_running_b
+wait 60
+
+# ---- 7. evening: asleep by the fire, him with his giraffe ----
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1.3 ~0.1 ~2.2
+cmd awaken admin family place awa sleep 30
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~0.1 ~2.6
+cmd awaken admin family place dubu sleep -70
+cmd time set 12950
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.1 ~-0.3 ~5.6 180 10
+wait 80
+shot family_21_evening_asleep
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.2 ~1.4 ~4.6 180 38
+wait 30
+shot family_22_evening_from_above
+cmd time set 4200
+cmd gamemode creative
+quit

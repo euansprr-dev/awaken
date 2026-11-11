@@ -16,6 +16,12 @@ public final class KinClient {
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
                 KinContent.TYPES.forEach((k, t) -> e.registerEntityRenderer(t.get(), ctx -> new KinRenderer(ctx, k))));
         modBus.addListener(KinRenderer::layers);
+        // Awa and Dubu's preview bodies (plan docs/family/PLAN.md)
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
+            e.registerEntityRenderer(dev.awaken.kin.family.FamilyContent.AWA.get(), ctx -> new FamilyRenderer(ctx, "awa"));
+            e.registerEntityRenderer(dev.awaken.kin.family.FamilyContent.DUBU.get(), ctx -> new FamilyRenderer(ctx, "dubu"));
+        });
+        modBus.addListener(FamilyRenderer::layers);
         modBus.addListener((RegisterClientPayloadHandlersEvent e) -> {
             e.register(KinNet.Page.TYPE, (m, ctx) -> KinPageSection.page = m);
             e.register(KinNet.Bond.TYPE, (m, ctx) -> KinPlate.onBond(m));
