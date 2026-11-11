@@ -1,0 +1,57 @@
+# Who lives in an open land (SPEC 50.9 "Who lives there"), seen on the Quiet Barrow's moor, whose monsters are man-sized: a
+# pack on the prowl from above, three times twenty seconds apart so its walk shows; a lookout from below its perch and its
+# reserve; the big one at home. Difficulty is normal so the hostile haunts fill; the camera is creative, so nothing notices
+# it. Each haunt is first looked at from 70 blocks, which is where it fills.
+# ci knobs: RD=16
+world autopilot_realm_quiet_barrow_country creative 20261121
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:quiet_barrow
+need realm
+hud off
+wait 300
+
+cmd awaken gate realm_haunt PROWL 0 70 14
+wait 120
+cmd awaken gate realm_haunt PROWL 0 24 16
+wait 100
+shot country_prowl_1
+wait 400
+shot country_prowl_2
+wait 400
+shot country_prowl_3
+cmd awaken gate realm_haunt PROWL 0 9 3
+wait 100
+shot country_prowl_close
+
+cmd awaken gate realm_haunt WATCH 0 70 14
+wait 120
+cmd awaken gate realm_haunt WATCH 0 16 0
+wait 100
+shot country_lookout_below
+cmd awaken gate realm_haunt WATCH 0 30 14
+wait 100
+shot country_lookout_and_reserve
+
+cmd awaken gate realm_haunt LAIR 0 70 14
+wait 120
+cmd awaken gate realm_haunt LAIR 0 11 4
+wait 100
+shot country_lair
+
+cmd awaken gate realm_haunt PROWL 1 70 14
+wait 120
+cmd awaken gate realm_haunt PROWL 1 10 4
+wait 100
+shot country_prowl_two

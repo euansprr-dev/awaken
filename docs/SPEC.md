@@ -22535,7 +22535,7 @@ level, the highest, and a second level one. A cell holds one of:
   in three, each kept within eighteen blocks of it;
 - **small creatures** (26): two to four of the land's little ones, on rougher ground;
 - **a pack on the prowl** (12): a den's worth of the theme's monsters, by herd where the theme has herds, walking a beat between
-  the cell's two level places: the spot they keep moves from one to the other every twenty-four seconds by the world's clock
+  the cell's two level places: the spot they keep moves from one to the other every forty seconds by the world's clock
   (`Dormant.stop`), so the whole pack turns together and each keeps its place in it. They notice and fight as a den's do. You
   can watch them go, wait them out, or meet them;
 - **a lookout** (8): one of the theme's (its marksman where it has one) on the cell's highest place, which must stand four
@@ -22554,7 +22554,8 @@ and 56 of the way in. A land has its share of each hostile kind (packs 4 and one
 every two ranks, one lair, two from B); a cell past the share holds nothing. A haunt fills when someone is within 92 blocks and
 nobody within 50, as a den's pack does at 80, and a hostile one fills once (`RealmState.woken`: `haunt_<n>` when settled,
 `hauntp`, `hauntw`, `hauntl` by kind, `hauntd` once a lair's cache is out). The run comes first: nothing of the country's stands
-while the gate already holds more than twenty monsters. The country's monsters pay as any kill does, on top of the gate's own
+while the gate already holds more than twenty-eight monsters (its cap is forty), or where a pack already stands within
+twenty-four blocks. The country's monsters pay as any kill does, on top of the gate's own
 shares: whether that stays is Euan's call.
 
 Herds and small creatures are not monsters of the gate: they are the wide world's own wild animals (`MobHooks.spawnNamed` with
@@ -22562,7 +22563,7 @@ no gate, at the gate's level), not counted, paying nothing from the pool, gone w
 minutes later if most of a herd is missing and nobody is there to see. Each theme has a kit (`RealmCountry.KITS`): the Ember
 Mines have crag rams, scree marmots and peak kites overhead; the Overgrown Temple crested basilisks, dart frogs and lumen moths;
 the Frost Monastery frost stags and frostfinches; the Glass Desert dune rays and glass scarabs; the Fungal Hollow mossbacks and
-mudskippers; the Hive pollen grazers; the Bell Crypt hollow owls; the Drowned Archive bog toads, mudskippers and bogwicks. No
+mudskippers; the Hive pollen grazers (and its elite, the Door, as its lookout: a bee on a rock cannot be seen); the Bell Crypt hollow owls; the Drowned Archive bog toads, mudskippers and bogwicks. No
 animal in a kit changes the land (none that plants, grows things or leaves a trail). A blueprint's `life.herds` names its own
 herd animals instead of the kit's, and `life.ambient` what is in its air; both may now name a wild animal as well as a Realm's
 own. Amber Reach's pollen grazers stand on grounds like every other herd. Under a roof a Realm's herds are still kept round the

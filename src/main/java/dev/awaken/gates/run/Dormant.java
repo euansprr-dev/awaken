@@ -26,8 +26,8 @@ final class Dormant extends Goal {
     /** How far it may drift from its spot before it walks back, and how far a stroll takes it. */
     private static final double LEASH = 4, STROLL = 2.5;
 
-    /** A beat's spot moves on this often: long enough to walk thirty blocks and stand about at the end of it. */
-    static final int STOP = 20 * 24;
+    /** A beat's spot moves on this often: long enough to walk thirty blocks and stand about for as long again at the end of it. */
+    static final int STOP = 20 * 40;
 
     private final Mob mob;
     private double homeX, homeY, homeZ;

@@ -46,8 +46,8 @@ public final class RealmCountry {
     private static final int QUIET = 42;
     /** A herd's ground is looked at again this long after it was last filled, and filled again if most of the herd is gone. */
     private static final int REFILL = 20 * 60 * 6;
-    /** The run's packs come first: nothing of the country's stands while the gate holds more monsters than this. */
-    private static final int ROOM = Rooms.GATE_CAP - 20;
+    /** The run's packs come first: nothing of the country's stands while the gate holds more monsters than this, or where a pack already stands. */
+    private static final int ROOM = Rooms.GATE_CAP - 12, CROWD = 24;
 
     public enum Kind { NONE, HERD, SMALL, PROWL, WATCH, LAIR }
 
@@ -67,7 +67,8 @@ public final class RealmCountry {
             Map.entry("frost_monastery", new Kit("frost_stag", "frostfinch", "", "hail_stray")),
             Map.entry("glass_desert", new Kit("dune_ray", "glass_scarab", "", "heat_shimmer")),
             Map.entry("fungal_hollow", new Kit("mossback", "mudskipper", "lumen_moth", "")),
-            Map.entry("hive", new Kit("pollen_grazer", "", "", "drone_bee")),
+            // the Hive's ordinary monsters are too small to be seen on a rock: its elite, the Door, keeps watch
+            Map.entry("hive", new Kit("pollen_grazer", "", "", "hive_guard")),
             Map.entry("bell_crypt", new Kit("", "", "hollow_owl", "crypt_archer")),
             Map.entry("drowned_archive", new Kit("bog_toad", "mudskipper", "bogwick", "salt_stray")),
             Map.entry("clockwork_foundry", new Kit("", "", "", "rivet_gunner")),
@@ -131,7 +132,7 @@ public final class RealmCountry {
             }
             return;
         }
-        if (level.getDifficulty() == Difficulty.PEACEFUL || GateMobs.inGate(g.id) > ROOM || near(level, at, UNSEEN)) return;
+        if (level.getDifficulty() == Difficulty.PEACEFUL || GateMobs.inGate(g.id) > ROOM || near(level, at, UNSEEN) || RealmPacks.near(level, at, CROWD) > 0) return;
         int rank = g.plan.rank().ordinal();
         char letter = h.kind() == Kind.LAIR ? 'l' : h.kind() == Kind.WATCH ? 'w' : 'p';
         // each kind has its share of a land; a cell past the share holds nothing
