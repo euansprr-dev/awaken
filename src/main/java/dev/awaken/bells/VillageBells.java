@@ -166,7 +166,8 @@ final class VillageBells {
         BellWorld.Village v = w.villages.get(no);
         if (v != null) return v;
         ServerLevel ow = level.getServer().overworld();
-        BlockPos city = CityHooks.square(ow);
+        // a Far Landing world (SPEC §67): the empty villages round the landing, where the game is played
+        BlockPos city = home(ow);
         if (city == null) return null;
         Set<String> taken = new HashSet<>();
         for (BellWorld.Village o : w.villages.values()) taken.add(o.key);
@@ -176,6 +177,12 @@ final class VillageBells {
             return choose(w, no, e.key(), e.name(), e.well());
         }
         return null;
+    }
+
+    /** Where the villages are counted from and their way told: the far landing in a Far Landing world (SPEC §67), else the square. */
+    static @Nullable BlockPos home(ServerLevel ow) {
+        BlockPos l = dev.awaken.core.api.TheLull.landing(ow.getServer());
+        return l != null ? l : CityHooks.square(ow);
     }
 
     static BellWorld.Village choose(BellWorld w, int no, String key, String name, BlockPos well) {

@@ -28,6 +28,28 @@ final class StilledSpots {
     /** A spot: its id, where to start looking and how, and who sits there (with what; {@code n} -1: rolled at placement). */
     record Spot(String id, int x, int z, Where where, StilledText.Pose pose, StilledText.Look look, String carry, int n, String name, long seed) {}
 
+    /** How far round a far landing nobody sits (its mooring and the first steps off it, SPEC §67). */
+    static final int LANDING_CLEAR = 120;
+
+    /**
+     * A Far Landing world's fixed four (SPEC §67): Aldo stays on his milestone past the ridge, by the skiff; the two who
+     * walked on past him sit out from the landing instead, on the way away from the city, where the game starts.
+     */
+    static List<Spot> fixed(int cx, int cz, int ridge, int @org.jspecify.annotations.Nullable [] hamlet, long seed,
+                            int @org.jspecify.annotations.Nullable [] landing) {
+        if (landing == null) return fixed(cx, cz, ridge, hamlet, seed);
+        List<Spot> out = new ArrayList<>(3);
+        out.add(new Spot("aldo", cx + 6, cz - ridge - NORTH[0], Where.ROAD, StilledText.Pose.MILESTONE, StilledText.Look.OLD_MAN, "letter",
+                StilledText.ALDO, "Aldo", seed ^ 0xA1D0L));
+        double dx = landing[0] - cx, dz = landing[1] - cz, len = Math.max(1, Math.hypot(dx, dz));
+        double ux = dx / len, uz = dz / len;
+        out.add(new Spot("north1", landing[0] + (int) Math.round(ux * NORTH[1]), landing[1] + (int) Math.round(uz * NORTH[1]), Where.CELL,
+                StilledText.Pose.WALKING, StilledText.Look.WOMAN, "keepsake", -1, "", seed ^ 0x7031L));
+        out.add(new Spot("north2", landing[0] + (int) Math.round(ux * NORTH[2] - uz * 60), landing[1] + (int) Math.round(uz * NORTH[2] + ux * 60),
+                Where.CELL, StilledText.Pose.LOOKING_BACK, StilledText.Look.MAN, "key", -1, "", seed ^ 0x7032L));
+        return out;
+    }
+
     /** The north road's three and the first hamlet's one ({@code hamlet}: its anchor, null while unknown). */
     static List<Spot> fixed(int cx, int cz, int ridge, int @org.jspecify.annotations.Nullable [] hamlet, long seed) {
         List<Spot> out = new ArrayList<>(4);
@@ -59,6 +81,14 @@ final class StilledSpots {
      * falls in its band; a cell within 3,000 holds one two times in three, the others always.
      */
     static List<Spot> cells(int cx, int cz, int ridge, long seed, int x, int z, int reach) {
+        return cells(cx, cz, ridge, seed, x, z, reach, cx, cz, ridge);
+    }
+
+    /**
+     * The cells round a middle that may not be the city's (a far landing's, SPEC §67, cleared {@code ridge} round it),
+     * keeping clear of the city's own ridge ({@code cityX}, {@code cityZ}, {@code cityRidge}) all the same.
+     */
+    static List<Spot> cells(int cx, int cz, int ridge, long seed, int x, int z, int reach, int cityX, int cityZ, int cityRidge) {
         List<Spot> out = new ArrayList<>();
         for (int size : new int[]{1000, 2000, 3000}) {
             for (int i = Math.floorDiv(x - reach - cx, size); i <= Math.floorDiv(x + reach - cx, size); i++)
@@ -68,7 +98,8 @@ final class StilledSpots {
                     long h = mix(seed ^ (long) size * 0x9E3779B97F4A7C15L ^ (long) i * 0xC2B2AE3D27D4EB4FL ^ (long) j * 0x165667B19E3779F9L);
                     if (size == 1000 && Math.floorMod(h, 3L) == 0) continue;
                     int sx = (int) (cx + (i + 0.15 + 0.7 * unit(h >>> 3)) * size), sz = (int) (cz + (j + 0.15 + 0.7 * unit(h >>> 23)) * size);
-                    if (Math.hypot(sx - cx, sz - cz) < ridge + 40 || Math.hypot(sx - x, sz - z) > reach) continue;
+                    if (Math.hypot(sx - cx, sz - cz) < ridge + 40 || Math.hypot(sx - x, sz - z) > reach
+                            || Math.hypot(sx - cityX, sz - cityZ) < cityRidge + 40) continue;
                     out.add(roll("g" + size / 1000 + "_" + i + "_" + j, sx, sz, h));
                 }
         }
