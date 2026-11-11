@@ -408,6 +408,7 @@ public final class AscentServer {
             return;
         }
         if (msg.what() == AscentPayloads.EV_SLAM_LAND) slam(p, Math.min(3F, Math.max(0F, msg.speed())));
+        if (msg.what() == AscentPayloads.EV_DIVE_LAND) diveLand(p, msg.speed());
         // the moves that count as links, each only with the tier that has it and from a state it can come from (a
         // rope's is counted when its state lands)
         AscentState st = motion(p).state;
@@ -466,10 +467,11 @@ public final class AscentServer {
             case AscentPayloads.EV_BOOM -> {
                 if (Ascent.has(p, Ascent.Tier.WINGS) && st.wings) link(p, AscentMemory.Track.WINGS, 6);
             }
-            case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE -> {
+            case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE, AscentPayloads.EV_AIM_DIVE -> {
                 // the leap a move at a time (SPEC §71.3): one not yet taken at its stand is not counted
                 WayUp.Leap leap = msg.what() == AscentPayloads.EV_DOUBLE ? WayUp.Leap.DOUBLE
-                        : msg.what() == AscentPayloads.EV_DASH ? WayUp.Leap.DASH : WayUp.Leap.SLAM;
+                        : msg.what() == AscentPayloads.EV_DASH ? WayUp.Leap.DASH
+                        : msg.what() == AscentPayloads.EV_AIM_DIVE ? WayUp.Leap.DIVE : WayUp.Leap.SLAM;
                 if (Ascent.has(p, Ascent.Tier.LEAPER) && WayUp.canLeap(p, leap)) {
                     link(p, AscentMemory.Track.LEAPER, 2);
                     dev.awaken.core.api.TipHooks.done(p, AscentTips.LEAPER);
@@ -477,7 +479,7 @@ public final class AscentServer {
                     if (leap != WayUp.Leap.SLAM) WayUp.used(p, leap);
                 }
             }
-            case AscentPayloads.EV_SLAM_LAND -> {
+            case AscentPayloads.EV_SLAM_LAND, AscentPayloads.EV_DIVE_LAND -> {
                 if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 3);
             }
             case AscentPayloads.EV_FLAP -> {
@@ -508,6 +510,29 @@ public final class AscentServer {
         // a course may answer it (SPEC §71.4: a deck that only a slam breaks), and a timed run counts it
         dev.awaken.core.api.TrialHooks.slamLanded(p, p.getX(), p.getY(), p.getZ(), speed);
         WayUp.used(p, WayUp.Leap.SLAM);
+        shock(p, speed);
+    }
+
+    /** An aimed dive's landings come at least this far apart (ticks; the client keeps two seconds between dives' starts). */
+    static final int DIVE_LAND_GAP = 20;
+
+    /**
+     * An aimed dive lands (SPEC §17.33): the slam's shock on the slam's rule, its speed taken no higher than the dive
+     * flies, so it never hits harder than a slam. Only with the Leaper tier, out of an airborne state a moment ago, and
+     * not twice within {@link #DIVE_LAND_GAP}.
+     */
+    static void diveLand(ServerPlayer p, float speed) {
+        AscentMotion m = motion(p);
+        if (!Ascent.has(p, Ascent.Tier.LEAPER) || !(m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING)) return;
+        // the Way Up's dive (SPEC §71.3); never a course's slam (a deck only a slam breaks stays whole under a dive)
+        if (!WayUp.canLeap(p, WayUp.Leap.DIVE)) return;
+        if (now(p) - m.diveLandAt < DIVE_LAND_GAP) return;
+        m.diveLandAt = now(p);
+        shock(p, (float) Math.min(AscentRules.DIVE_SPEED, Math.max(0, speed)));
+    }
+
+    /** A landing's shock: creatures within reach hurt by how hard it came down (3 + 3 a block a tick) and thrown out. */
+    private static void shock(ServerPlayer p, float speed) {
         ServerLevel level = p.level();
         double r = AscentRules.SLAM_RADIUS;
         float damage = 3F + 3F * speed;

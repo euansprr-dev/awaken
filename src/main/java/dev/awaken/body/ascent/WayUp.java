@@ -146,13 +146,14 @@ public final class WayUp {
     }
 
     /**
-     * Whether the leap's own rules ask {@link #canLeap} before a second jump, a dash or a slam (they live in files this
-     * module's plan does not edit: {@code AscentMoves}). Until they do, a leap first given at a stand comes whole, so
-     * nothing is half-gated, and the later stands only play their titles. The commit that adds those checks sets this.
+     * Whether a leap first given at a stand comes a move at a time. The leap's own rules ask {@link #canLeap} before
+     * a second jump, a dash, a slam or an aimed dive since 11 Nov 2026 ({@code AscentMoves}, {@code AscentServer}); this
+     * stays false, so such a leap still comes whole and the later stands only play their titles, until the Gauntlet's
+     * three stands stand in a world (the gates session's course): turning it on is the manager's call.
      */
     public static final boolean LEAP_BY_PARTS = false;
-    /** Whether the aimed dive exists yet (its stand gives nothing until it does). */
-    public static final boolean DIVE_BUILT = false;
+    /** Whether the aimed dive exists yet (its stand gives nothing until it does): built 11 Nov 2026 (SPEC §17.33). */
+    public static final boolean DIVE_BUILT = true;
     /** The first finished run's XP, as a share of the level (a fifth until the plan of 11 Nov 2026, decision 8). */
     static final double GAUNTLET_XP = 0.5;
 

@@ -21,7 +21,8 @@ public final class BodyPayloads {
      * Client → server: a move started (predicted). yaw = the facing (mantle) or the slide's way; (x, y, z) = where a
      * mantle puts the feet; speed = a slide's entry speed; flag = the slide came out of a tactical sprint.
      */
-    public record Start(int move, float yaw, double x, double y, double z, float speed, boolean flag) implements CustomPacketPayload {
+    /** {@code air}: a mantle or crossing started from the air (SPEC §17.32: a leap, or a jump pressed in the air). */
+    public record Start(int move, float yaw, double x, double y, double z, float speed, boolean flag, boolean air) implements CustomPacketPayload {
         public static final Type<Start> TYPE = new Type<>(Awaken.id("body_start"));
         public static final StreamCodec<ByteBuf, Start> STREAM_CODEC = StreamCodec.of((buf, m) -> {
             ByteBufCodecs.VAR_INT.encode(buf, m.move);
@@ -31,8 +32,9 @@ public final class BodyPayloads {
             buf.writeDouble(m.z);
             buf.writeFloat(m.speed);
             buf.writeBoolean(m.flag);
+            buf.writeBoolean(m.air);
         }, buf -> new Start(ByteBufCodecs.VAR_INT.decode(buf), buf.readFloat(), buf.readDouble(), buf.readDouble(), buf.readDouble(),
-                buf.readFloat(), buf.readBoolean()));
+                buf.readFloat(), buf.readBoolean(), buf.readBoolean()));
         @Override public Type<Start> type() { return TYPE; }
     }
 

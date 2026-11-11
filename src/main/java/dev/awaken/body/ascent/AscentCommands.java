@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 final class AscentCommands {
     private AscentCommands() {}
 
-    private static final String[] GRANTS = {"all", "none", "tether", "wings", "skyborn"};
+    private static final String[] GRANTS = {"all", "none", "tether", "leaper", "wings", "skyborn"};
 
     static void register() {
         AwakenCommands.add((root, ctx) -> {
@@ -113,7 +113,17 @@ final class AscentCommands {
                     // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
                     .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), 1)))
                     // tours: on the ground short of the stair's lowest stone, facing it (SPEC §17.9)
-                    .then(Commands.literal("stair").executes(c -> skyGoto(c.getSource(), 2)))));
+                    .then(Commands.literal("stair").executes(c -> skyGoto(c.getSource(), 2))))
+                    // tours: a view of the platform, out from its middle along the pier's diagonal turned by turn
+                    // degrees, up over the deck, facing the core (set spectator first: nothing holds you there)
+                    .then(Commands.literal("view").then(Commands.argument("out", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0, 400))
+                            .then(Commands.argument("up", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(-300, 200))
+                                    .executes(c -> skyView(c.getSource(), com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "out"),
+                                            com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "up"), 0F))
+                                    .then(Commands.argument("turn", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(-360, 360))
+                                            .executes(c -> skyView(c.getSource(), com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "out"),
+                                                    com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "up"),
+                                                    com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "turn"))))))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
                             .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
@@ -188,6 +198,17 @@ final class AscentCommands {
         return t;
     }
 
+    private static double viewOut, viewUp;
+    private static float viewTurn;
+
+    /** A view of the nearest platform for a tour's shot (where 3): see the "view" command. */
+    private static int skyView(CommandSourceStack src, double out, double up, float turn) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        viewOut = out;
+        viewUp = up;
+        viewTurn = turn;
+        return skyGoto(src, 3);
+    }
+
     private static int skyGoto(CommandSourceStack src, int where) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
@@ -214,11 +235,25 @@ final class AscentCommands {
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
                     dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+                } else {
+                    // a platform rigged before the hall or the arch gets them now (the views look at both)
+                    if (!dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigHall(level, cx, deckY, cz);
+                    if (!dev.awaken.above.ruin.SkyRig.archPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigArch(level, cx, deckY, cz);
+                }
+                if (where == 3) {
+                    double a = Math.toRadians(45 + viewTurn);
+                    double vx = cx + 0.5 + Math.cos(a) * viewOut, vz = cz + 0.5 + Math.sin(a) * viewOut, vy = deckY + viewUp;
+                    double fx = cx + 0.5 - vx, fy = deckY + 2 - (vy + 1.62), fz = cz + 0.5 - vz;
+                    float yaw = (float) Math.toDegrees(Math.atan2(-fx, fz));
+                    float pitch = (float) -Math.toDegrees(Math.atan2(fy, Math.hypot(fx, fz)));
+                    p.teleportTo(level, vx, vy, vz, java.util.Set.of(), yaw, pitch, true);
+                    dev.awaken.Awaken.LOG.info("[ascent] sky view: the platform at {}, {} (deck {}) from {} out, {} up, turned {}", cx, cz, deckY,
+                            viewOut, viewUp, viewTurn);
+                    return 1;
                 }
                 if ((where == 2 || dev.awaken.above.ruin.SkyRig.STAIR) && !dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
                     dev.awaken.above.ruin.SkyRig.rigStair(level, cx, deckY, cz);
                 }
-                if (!dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigHall(level, cx, deckY, cz);
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
                 var first = l.rings().getLast();
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
@@ -447,6 +482,7 @@ final class AscentCommands {
                     | AscentPayloads.Tier.SKYBORN.bit();
             case "none" -> 0;
             case "tether" -> AscentPayloads.Tier.TETHER.bit();
+            case "leaper" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit();
             case "wings" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit();
             case "skyborn" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
                     | AscentPayloads.Tier.SKYBORN.bit();

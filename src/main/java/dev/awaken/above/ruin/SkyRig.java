@@ -35,6 +35,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * The stair (11 Nov 2026, Euan: the platforms should be built to be swung up): stones of earth the platform tore up
  * as it rose spiral up round it from the ground to under the pier, each a short sling over the last ({@link #stair}),
  * a lantern hanging under each. Placed with the rig, and on its own for platforms rigged before it.
+ * <p>
+ * The arrival (11 Nov 2026): an arch over the pier's root ({@link #archCells}), beside the wings' hall; placed with the
+ * rig, and on its own for platforms rigged before it.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -245,6 +248,7 @@ public final class SkyRig {
             else {
                 if (STAIR && !stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
                 if (!hallPlaced(level, cx, deckY, cz)) rigHall(level, cx, deckY, cz);
+                if (!archPlaced(level, cx, deckY, cz)) rigArch(level, cx, deckY, cz);
             }
         }
     }
@@ -334,8 +338,59 @@ public final class SkyRig {
         if (stair) rigStair(level, cx, deckY, cz);
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
         rigHall(level, cx, deckY, cz);
+        rigArch(level, cx, deckY, cz);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
                 l.rings().size(), l.chainBottom(), ground);
+    }
+
+    // ---- the arrival's arch (11 Nov 2026) -------------------------------------------------------------------
+
+    /** The arch's place: the pier's cells out along x and z where it crosses (a + b = 2 ARCH and one more). */
+    static final int ARCH = 7;
+
+    /**
+     * The arrival's arch (SPEC §17.29): where the pier's root meets the deck, a Precursor pillar either side of the way
+     * (2.8 off the pier's line, on the deck), a beam two cells thick across between their tops (four clear over the
+     * pier), a light in its middle, and a lantern hung under it on each side of the way, clear of the walk. Its cells,
+     * offset from the deck's centre: x, y over the deck, z, and what stands there (0 pillar, 1 its cap, 2 beam, 3 light,
+     * 4 lantern).
+     */
+    public static List<int[]> archCells() {
+        List<int[]> out = new ArrayList<>();
+        for (int s = -1; s <= 1; s += 2) {
+            int px = ARCH + 2 * s, pz = ARCH - 2 * s;
+            for (int y = 1; y <= 4; y++) out.add(new int[]{px, y, pz, y == 4 ? 1 : 0});
+            out.add(new int[]{ARCH + s, 4, ARCH - s, 4});
+        }
+        for (int a = ARCH - 2; a <= ARCH + 2; a++) {
+            for (int sum = 2 * ARCH; sum <= 2 * ARCH + 1; sum++) {
+                int b = sum - a;
+                if (b < ARCH - 2 || b > ARCH + 2) continue;
+                out.add(new int[]{a, 5, b, a == ARCH && b == ARCH ? 3 : 2});
+            }
+        }
+        return out;
+    }
+
+    /** Whether the arch stands (a platform rigged before 11 Nov has none yet): the light in its beam's middle. */
+    public static boolean archPlaced(ServerLevel level, int cx, int deckY, int cz) {
+        return level.getBlockState(new BlockPos(cx + ARCH, deckY + 5, cz + ARCH)).is(RuinBuilder.glow().getBlock());
+    }
+
+    /** The arch over the pier's root, where nothing solid stands (the light in its beam is the mark it is up). */
+    public static void rigArch(ServerLevel level, int cx, int deckY, int cz) {
+        int flags = Block.UPDATE_CLIENTS;
+        for (int[] c : archCells()) {
+            BlockPos q = new BlockPos(cx + c[0], deckY + c[1], cz + c[2]);
+            if (!level.getBlockState(q).canBeReplaced()) continue;
+            BlockState st = switch (c[3]) {
+                case 0 -> RuinBuilder.pillar();
+                case 1, 2 -> RuinBuilder.trim();
+                case 3 -> RuinBuilder.glow();
+                default -> Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true);
+            };
+            level.setBlock(q, st, flags);
+        }
     }
 
     // ---- the wings' hall (11 Nov 2026) ---------------------------------------------------------------------------

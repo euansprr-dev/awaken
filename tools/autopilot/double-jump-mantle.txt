@@ -1,0 +1,415 @@
+# The double jump into a mantle (SPEC §17.32, Euan 11 Nov: "I can't double jump into a mantle... glitchy"): five
+# lanes on a flat floor, a two-high ledge, an oak fence, a stair top (two blocks and a stair, its low half toward
+# you), a three-high ledge and a cobblestone wall, each tried six ways: from a standstill at the face (the second jump
+# pressed at the face), a step back with the second jump early, at the first jump's top and late (3, 7, 10 ticks after
+# the first), and from a sprint (second jump 5 and 9 ticks after the first). Third person, so the body shows.
+# The log says what took each: "[body] ... air catch: a ledge / a crossing / a hang", "air mantle onto", "vault ...
+# from the air", the hang's "hang (grab)"; then "[ascent] where <lane>_<case> x y z" for where the feet came to rest
+# (on top: y 202 for the two-high ledge, 203 for the stair top and the three-high; beyond a fence or wall: y 200, z past
+# 10.7).
+# Look tour: tools/tour-ci.sh tools/autopilot/double-jump-mantle.txt 1500
+world double_jump_mantle survival 4252
+waitworld
+window 1440 900
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+# the opening's sky shot, skipped early as the platform tour does (it stops at once). Skipped late, after "admin
+# awaken", it ran on to its hand-off and kept the camera on the Roost: the body went to the stair's foot and every
+# frame showed the Roost (sky-stair run 43023081609)
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 20
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant leaper
+cmd tp @s 0.5 201 0.5 0 12
+wait 100
+cmd fill -4 199 -4 32 199 22 minecraft:smooth_stone
+cmd fill -4 200 -4 32 206 22 minecraft:air
+wait 10
+# the lanes: every edge's face on the row z 10, approached going south (+z)
+cmd fill 0 200 10 2 201 16 minecraft:stone_bricks
+cmd fill 6 200 10 8 200 10 minecraft:oak_fence
+cmd fill 12 200 10 14 201 16 minecraft:stone_bricks
+cmd fill 12 202 10 14 202 10 minecraft:stone_brick_stairs[facing=south]
+cmd fill 12 202 11 14 202 16 minecraft:stone_bricks
+cmd fill 18 200 10 20 202 16 minecraft:stone_bricks
+cmd fill 24 200 10 26 200 10 minecraft:cobblestone_wall
+wait 40
+camera back
+wait 10
+
+# ---- ledge2 (face at z 10.0) ----
+cmd tp @s 1.5 200 9.3 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 6
+wait 50
+cmd awaken ascent pilot where ledge2_near
+shot ledge2_near
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 1.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 3
+wait 50
+cmd awaken ascent pilot where ledge2_back3
+shot ledge2_back3
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 1.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 50
+cmd awaken ascent pilot where ledge2_back7
+shot ledge2_back7
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 1.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 10
+wait 50
+cmd awaken ascent pilot where ledge2_back10
+shot ledge2_back10
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 1.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 5
+wait 50
+cmd awaken ascent pilot where ledge2_sprint5
+shot ledge2_sprint5
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 1.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 9
+wait 4
+shotnow ledge2_sprint9_0
+wait 4
+shotnow ledge2_sprint9_1
+wait 4
+shotnow ledge2_sprint9_2
+wait 4
+shotnow ledge2_sprint9_3
+wait 4
+shotnow ledge2_sprint9_4
+wait 4
+shotnow ledge2_sprint9_5
+wait 26
+cmd awaken ascent pilot where ledge2_sprint9
+shot ledge2_sprint9
+cmd awaken ascent pilot stop
+wait 5
+
+# ---- fence (face at z 10.375) ----
+cmd tp @s 7.5 200 9.67 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 6
+wait 50
+cmd awaken ascent pilot where fence_near
+shot fence_near
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 7.5 200 8.57 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 3
+wait 50
+cmd awaken ascent pilot where fence_back3
+shot fence_back3
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 7.5 200 8.57 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 50
+cmd awaken ascent pilot where fence_back7
+shot fence_back7
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 7.5 200 8.57 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 10
+wait 50
+cmd awaken ascent pilot where fence_back10
+shot fence_back10
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 7.5 200 3.38 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 5
+wait 50
+cmd awaken ascent pilot where fence_sprint5
+shot fence_sprint5
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 7.5 200 3.38 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 9
+wait 4
+shotnow fence_sprint9_0
+wait 4
+shotnow fence_sprint9_1
+wait 4
+shotnow fence_sprint9_2
+wait 4
+shotnow fence_sprint9_3
+wait 4
+shotnow fence_sprint9_4
+wait 4
+shotnow fence_sprint9_5
+wait 26
+cmd awaken ascent pilot where fence_sprint9
+shot fence_sprint9
+cmd awaken ascent pilot stop
+wait 5
+
+# ---- stairtop (face at z 10.0) ----
+cmd tp @s 13.5 200 9.3 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 6
+wait 50
+cmd awaken ascent pilot where stairtop_near
+shot stairtop_near
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 13.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 3
+wait 50
+cmd awaken ascent pilot where stairtop_back3
+shot stairtop_back3
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 13.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 4
+shotnow stairtop_back7_0
+wait 4
+shotnow stairtop_back7_1
+wait 4
+shotnow stairtop_back7_2
+wait 4
+shotnow stairtop_back7_3
+wait 4
+shotnow stairtop_back7_4
+wait 4
+shotnow stairtop_back7_5
+wait 26
+cmd awaken ascent pilot where stairtop_back7
+shot stairtop_back7
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 13.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 10
+wait 50
+cmd awaken ascent pilot where stairtop_back10
+shot stairtop_back10
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 13.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 5
+wait 50
+cmd awaken ascent pilot where stairtop_sprint5
+shot stairtop_sprint5
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 13.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 9
+wait 50
+cmd awaken ascent pilot where stairtop_sprint9
+shot stairtop_sprint9
+cmd awaken ascent pilot stop
+wait 5
+
+# ---- ledge3 (face at z 10.0) ----
+cmd tp @s 19.5 200 9.3 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 6
+wait 50
+cmd awaken ascent pilot where ledge3_near
+shot ledge3_near
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 19.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 3
+wait 50
+cmd awaken ascent pilot where ledge3_back3
+shot ledge3_back3
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 19.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 4
+shotnow ledge3_back7_0
+wait 4
+shotnow ledge3_back7_1
+wait 4
+shotnow ledge3_back7_2
+wait 4
+shotnow ledge3_back7_3
+wait 4
+shotnow ledge3_back7_4
+wait 4
+shotnow ledge3_back7_5
+wait 26
+cmd awaken ascent pilot where ledge3_back7
+shot ledge3_back7
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 19.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 10
+wait 50
+cmd awaken ascent pilot where ledge3_back10
+shot ledge3_back10
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 19.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 5
+wait 50
+cmd awaken ascent pilot where ledge3_sprint5
+shot ledge3_sprint5
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 19.5 200 3.0 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 9
+wait 50
+cmd awaken ascent pilot where ledge3_sprint9
+shot ledge3_sprint9
+cmd awaken ascent pilot stop
+wait 5
+
+# ---- wall (face at z 10.25) ----
+cmd tp @s 25.5 200 9.55 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 6
+wait 50
+cmd awaken ascent pilot where wall_near
+shot wall_near
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 25.5 200 8.45 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 3
+wait 50
+cmd awaken ascent pilot where wall_back3
+shot wall_back3
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 25.5 200 8.45 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 50
+cmd awaken ascent pilot where wall_back7
+shot wall_back7
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 25.5 200 8.45 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 10
+wait 50
+cmd awaken ascent pilot where wall_back10
+shot wall_back10
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 25.5 200 3.25 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 5
+wait 50
+cmd awaken ascent pilot where wall_sprint5
+shot wall_sprint5
+cmd awaken ascent pilot stop
+wait 5
+cmd tp @s 25.5 200 3.25 0 15
+wait 15
+cmd awaken ascent pilot hold forward,sprint 26
+wait 10
+cmd awaken ascent pilot double jump 9
+wait 50
+cmd awaken ascent pilot where wall_sprint9
+shot wall_sprint9
+cmd awaken ascent pilot stop
+wait 5
+
+# ---- first person: the three-high ledge from a step back, the second jump at the first's top ----
+camera first
+cmd tp @s 19.5 200 8.2 0 15
+wait 15
+cmd awaken ascent pilot hold forward 30
+cmd awaken ascent pilot double jump 7
+wait 4
+shotnow fp_ledge3_0
+wait 4
+shotnow fp_ledge3_1
+wait 4
+shotnow fp_ledge3_2
+wait 4
+shotnow fp_ledge3_3
+wait 4
+shotnow fp_ledge3_4
+wait 30
+cmd awaken ascent pilot where fp_ledge3
+shot fp_ledge3_end
+cmd awaken ascent pilot stop
+wait 10
+info
+quit

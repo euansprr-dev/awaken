@@ -87,8 +87,8 @@ final class BodyServer {
         boolean ok = switch (move) {
             case TACTICAL_SPRINT -> startTactical(p);
             case SLIDE -> startSlide(p, msg.yaw(), msg.flag());
-            case MANTLE -> startMantle(p, msg.yaw(), msg.x(), msg.y(), msg.z());
-            case VAULT -> startVault(p, msg.yaw(), msg.x(), msg.y(), msg.z(), msg.speed(), msg.flag());
+            case MANTLE -> startMantle(p, msg.yaw(), msg.x(), msg.y(), msg.z(), msg.air());
+            case VAULT -> startVault(p, msg.yaw(), msg.x(), msg.y(), msg.z(), msg.speed(), msg.flag(), msg.air());
             default -> false; // ROLL, and the Runner's Kit (its own Run payload)
         };
         if (!ok) refuse(p, move);
@@ -263,14 +263,28 @@ final class BodyServer {
     // ---- mantle -----------------------------------------------------------------------------------------------------
 
     static boolean startMantle(ServerPlayer p, float yaw, double x, double y, double z) {
+        return startMantle(p, yaw, x, y, z, false);
+    }
+
+    /**
+     * {@code air}: the client climbs from the air (a leap or a jump pressed there, SPEC §17.32): the lowest lip is the
+     * air's, and the probe runs from the body and up to {@link BodyRules#AIR_LAG} above and below it.
+     */
+    static boolean startMantle(ServerPlayer p, float yaw, double x, double y, double z, boolean air) {
         if (!Body.unlocked(p, Move.MANTLE) || off(p) || p.isInLiquid() || p.isUsingItem() || p.isBlocking()) return false;
         BodyMotion m = motion(p);
         long now = now(p);
         if (m.mantleUntil != 0 || m.slideUntil != 0) return false;
-        BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw, BodyRules.MANTLE_REACH_SERVER);
+        BodyRules.Ledge l = null;
+        for (int i = 0; i <= (air ? 4 : 0) && l == null; i++) {
+            double up = ((i + 1) / 2) * (i % 2 == 0 ? 1 : -1) * BodyRules.AIR_LAG / 2; // 0, -0.3, 0.3, -0.6, 0.6
+            BodyRules.Ledge f = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY() + up, p.getZ(), yaw,
+                    BodyRules.MANTLE_REACH_SERVER, air ? BodyRules.AIR_MANTLE_MIN : BodyRules.MANTLE_MIN);
+            if (f == null) continue;
+            double ddx = f.x() - x, ddz = f.z() - z;
+            if (Math.abs(f.y() - y) <= 0.25 && ddx * ddx + ddz * ddz <= 1.0) l = f; // the ledge the client climbed
+        }
         if (l == null) return false;
-        double ddx = l.x() - x, ddz = l.z() - z;
-        if (Math.abs(l.y() - y) > 0.25 || ddx * ddx + ddz * ddz > 1.0) return false; // not the ledge the client climbed
         m.mantleUntil = now + BodyRules.MANTLE_TICKS + 4;
         p.causeFoodExhaustion(BodyRules.MANTLE_EXHAUSTION);
         p.resetFallDistance();
@@ -286,6 +300,11 @@ final class BodyServer {
      * path's length (its move is the client's and never collides), the fall forgotten each tick.
      */
     static boolean startVault(ServerPlayer p, float yaw, double x, double y, double z, float speed, boolean run) {
+        return startVault(p, yaw, x, y, z, speed, run, false);
+    }
+
+    /** {@code air}: crossed from the air (SPEC §17.32): the air's probe, from the body and up to 0.6 above and below it. */
+    static boolean startVault(ServerPlayer p, float yaw, double x, double y, double z, float speed, boolean run, boolean air) {
         if (!Body.unlocked(p, Move.VAULT) || off(p) || p.isInLiquid() || p.isUsingItem() || p.isBlocking()) return false;
         BodyMotion m = motion(p);
         long now = now(p);
@@ -294,13 +313,17 @@ final class BodyServer {
         // its client hasn't seen the run-up's last steps yet): a crossing that ends where the client's does
         double reach = (run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK) + VaultRules.REACH_SERVER;
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
-        for (double d = 0; d <= VaultRules.LAG_MAX + 1e-6; d += 0.5) {
-            VaultRules.Vault v = VaultRules.find(p.level(), CollisionContext.of(p), p.getX() + dx * d, p.getY(), p.getZ() + dz * d, yaw, reach, run, speed);
-            if (v == null) continue;
-            double ddx = v.endX() - x, ddz = v.endZ() - z;
-            if (Math.abs(v.floor() - y) > 0.3 || ddx * ddx + ddz * ddz > VaultRules.LAND_TOL * VaultRules.LAND_TOL) continue; // not the client's
-            vaultFrom(p, m, v, yaw, now);
-            return true;
+        for (int i = 0; i <= (air ? 4 : 0); i++) {
+            double up = ((i + 1) / 2) * (i % 2 == 0 ? 1 : -1) * BodyRules.AIR_LAG / 2; // 0, -0.3, 0.3, -0.6, 0.6
+            for (double d = 0; d <= VaultRules.LAG_MAX + 1e-6; d += 0.5) {
+                VaultRules.Vault v = VaultRules.find(p.level(), CollisionContext.of(p), p.getX() + dx * d, p.getY() + up, p.getZ() + dz * d, yaw,
+                        reach, run, speed, air);
+                if (v == null) continue;
+                double ddx = v.endX() - x, ddz = v.endZ() - z;
+                if (Math.abs(v.floor() - y) > 0.3 || ddx * ddx + ddz * ddz > VaultRules.LAND_TOL * VaultRules.LAND_TOL) continue; // not the client's
+                vaultFrom(p, m, v, yaw, now);
+                return true;
+            }
         }
         return false;
     }

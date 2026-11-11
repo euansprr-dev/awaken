@@ -19,6 +19,7 @@ final class AirTests {
         AwakenTests.register("ascent_air_blink_and_aim", 20, AirTests::blinkAndAim);
         AwakenTests.register("ascent_air_moves", 20, AirTests::moves);
         AwakenTests.register("ascent_rope_strike", 40, AirTests::strike);
+        AwakenTests.register("ascent_aimed_dive", 40, AirTests::aimedDive);
         AwakenTests.register("ascent_wing_form", 20, AirTests::wingForm);
     }
 
@@ -208,6 +209,54 @@ final class AirTests {
         h.assertTrue(WingForm.lod(40 * 40) == 0 && WingForm.lod(60 * 60) == 1 && WingForm.lod(120 * 120) == 2, "the far forms begin at 48 and 96 blocks");
         h.assertTrue(WingForm.PAIRS_WINGS.length == 1 && WingForm.PAIRS_SKYBORN.length == 2 && WingForm.PAIRS_SOVEREIGN.length == 3,
                 "one pair, two for Skyborn, three for the Sovereign's form");
+        h.succeed();
+    }
+
+    /**
+     * The aimed dive (SPEC §17.33): a point only under the feet and in reach; the flight straight onto it, no faster than
+     * the dive's speed after a short ramp, then straight down; the server's shock on the slam's rule, never harder than the
+     * dive flies, and not twice within the gap.
+     */
+    private static void aimedDive(GameTestHelper h) {
+        h.assertTrue(AscentRules.diveTo(0, 3, 0, 10, 0, 4), "a point three down and eleven off is one to dive to");
+        h.assertFalse(AscentRules.diveTo(0, 3, 0, 10, 2.5, 4), "half a block under the feet is not");
+        h.assertFalse(AscentRules.diveTo(0, 3, 0, 30, 0, 0), "nor a point past the reach");
+        Kin k = new Kin().set(0, 3, 0, 0.3, 0.1, 0);
+        boolean there = false;
+        int age = 0;
+        double top = 0;
+        while (!there && age < AscentRules.DIVE_MAX_TICKS) {
+            there = AscentRules.diveStep(k, 10, 0, 4, age, false);
+            if (age == 0) h.assertTrue(near(k.speed(), AscentRules.DIVE_SPEED / AscentRules.DIVE_RAMP), "the first tick is the ramp's first step: " + k.speed());
+            if (!there) top = Math.max(top, k.speed());
+            age++;
+        }
+        h.assertTrue(there && age <= 10, "the dive reaches its point eleven blocks off in " + age + " ticks");
+        h.assertTrue(near(k.x, 10) && near(k.z, 4) && near(k.y, -0.25), "onto the point, a quarter under it for the floor to stop (" + k.x + " " + k.y + " " + k.z + ")");
+        h.assertTrue(top <= AscentRules.DIVE_SPEED + 1e-9 && near(top, AscentRules.DIVE_SPEED) && AscentRules.DIVE_SPEED < AscentRules.SLAM_SPEED,
+                "it flies at the dive's speed, under the slam's: " + top);
+        AscentRules.diveStep(k, 10, 0, 4, age, true);
+        h.assertTrue(k.vx == 0 && k.vz == 0 && near(k.vy, -AscentRules.DIVE_SPEED), "past the point, straight down");
+        // the landing, as the server answers it
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        dev.awaken.progression.Progression.awaken(p);
+        Ascent.grant(p, Ascent.Tier.LEAPER, "test");
+        var target = h.spawn(net.minecraft.world.entity.EntityTypes.IRON_GOLEM, new BlockPos(2, 2, 1));
+        target.setNoAi(true);
+        var at = h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 2, 1.5));
+        p.teleportTo(at.x, at.y, at.z);
+        AscentMotion m = AscentServer.motion(p);
+        m.state = AscentState.CARRY;
+        float full = target.getHealth();
+        AscentServer.diveLand(p, 99F);
+        float lost = full - target.getHealth();
+        h.assertTrue(lost > 0 && lost <= 3F + 3F * (float) AscentRules.DIVE_SPEED + 1e-3F,
+                "the dive's landing hurts a creature beside it on the slam's rule at the dive's speed at most: " + lost);
+        target.setInvulnerableTime(0);
+        float after = target.getHealth();
+        AscentServer.diveLand(p, 1.6F);
+        h.assertTrue(target.getHealth() == after, "a second landing straight after lands nothing");
+        m.state = AscentState.NONE;
         h.succeed();
     }
 

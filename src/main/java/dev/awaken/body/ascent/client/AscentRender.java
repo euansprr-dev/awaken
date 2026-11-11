@@ -497,6 +497,10 @@ final class AscentRender {
 
     private static void drawRings(VertexConsumer vc, PoseStack.Pose pose) {
         for (AscentFx.Shot s : AscentFx.SHOTS) {
+            if (s.kind == AscentFx.MARK) {
+                drawMark(vc, pose, s);
+                continue;
+            }
             if (s.kind != AscentFx.RING) continue;
             float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
             float radius = (float) (0.8 + 11 * Math.pow(u, 0.5)) * s.size;
@@ -526,6 +530,36 @@ final class AscentRender {
                         s.x + ox1 * r1, s.y + oy1 * r1, s.z + oz1 * r1, 1, 1,
                         s.x + ox0 * r1, s.y + oy0 * r1, s.z + oz0 * r1, 0, 1);
             }
+        }
+    }
+
+    /**
+     * The aimed dive's mark (SPEC §17.33): flat on the ground a hair over it, a thin ring closing from a block and a
+     * quarter across to a third of a block as the dive flies in, round a still point, warm white. It fades in over two
+     * ticks; it closes on the dive's whole ticks, eased by the partial one.
+     */
+    private static void drawMark(VertexConsumer vc, PoseStack.Pose pose, AscentFx.Shot s) {
+        float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
+        float in = Mth.clamp((s.age + pt) / 2F, 0, 1);
+        int a = (int) (220 * in * (1 - u * u * u));
+        if (a < 4) return;
+        double y = s.y + 0.04;
+        ringFlat(vc, pose, s.x, y, s.z, Mth.lerp(u * u, 1.25F, 0.34F), 0.07F, a, 0xFFF2D6);
+        ringFlat(vc, pose, s.x, y, s.z, 0.12F, 0.12F, (int) (a * 0.9F), 0xFFFFFF);
+    }
+
+    /** A flat ring on the ground about (x, y, z): its radius and width (blocks), its alpha and colour. */
+    private static void ringFlat(VertexConsumer vc, PoseStack.Pose pose, double x, double y, double z, float radius, float width, int a, int rgb) {
+        int seg = 32;
+        float r0 = Math.max(0, radius - width * 0.5F), r1 = radius + width * 0.5F;
+        for (int k = 0; k < seg; k++) {
+            double a0 = k * Mth.TWO_PI / seg, a1 = (k + 1) * Mth.TWO_PI / seg;
+            double c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+            quad2(vc, pose, a, rgb,
+                    x + c0 * r0, y, z + s0 * r0, 0, 0,
+                    x + c1 * r0, y, z + s1 * r0, 1, 0,
+                    x + c1 * r1, y, z + s1 * r1, 1, 1,
+                    x + c0 * r1, y, z + s0 * r1, 0, 1);
         }
     }
 

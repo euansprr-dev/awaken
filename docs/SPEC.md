@@ -1545,7 +1545,8 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   spent; Red Gates red-rimmed. The hum is two loops with a 48-block falloff, pitch by rank. Old gates and Wells are
   rebuilt in place when loaded.
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
-  version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
+  version (`RuinBuilder.style`: 2 for all, the sky platform 3 since its island, §17.9; a piece keeps building the
+  version it was started with, so an old platform's unbuilt chunks never weld a new island onto an old deck). The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
 - The Atlas shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 - Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
   vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
@@ -3850,10 +3851,11 @@ is what the Ascent decided while building it.
 
 ### 17.3 Phase 1b: the Leaper and the server's checks
 - The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
-  body that isn't on a wall or a ledge: jump in the air = a double jump (+0.52 on top of any rise; it comes before the
-  wings: a second jump opens them), sprint in the air = an air dash along the look's heading at max(0.95, 1.33 × your
-  horizontal speed) with a lift of 0.08, sneak with 4+ blocks under you = a dive slam (horizontal speed ×0.25, straight
-  down at 1.7). Each goes into the carry with the swing's momentum, so a release can chain into a dash and a slam.
+  body that isn't on a wall or a ledge (a leap that meets an edge climbs it, §17.32): jump in the air = a double jump
+  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint in the air = an air dash
+  along the look's heading at max(0.95, 1.33 × your horizontal speed) with a lift of 0.08, sneak with 4+ blocks under
+  you = a dive slam (horizontal speed ×0.25, straight down at 1.7). Each goes into the carry with the swing's momentum,
+  so a release can chain into a dash and a slam. After a double jump or a dash, attack = the aimed dive (§17.33).
   A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
   are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
   only with the Leaper tier, out of an airborne state a moment ago.
@@ -4266,18 +4268,34 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 - **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
-- **The core, the rank first** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck; 11 Nov 2026, Euan
-  at a core at rank D: "it's way too early to get these... it says, like, come back when you're rank C"): twice a
-  second, a player within 4.7 (the case's rail is two out, its corners nearly three) without Wings is asked **the rank
-  first** (`WingCoreBlockEntity.RANK`, C; progression plan decision 2), however they came: below it "Come back at rank
-  C. These wings will wait for you." on the action bar with the vault's refusal (Minecraft's own recording, low), at
-  once and then at most every 10 s, and the core goes on the Tasks page (`Promises.seen`, need rank C, "A sky core's
-  wings"). At the rank the way they came is asked as before: by the line (`ArrivalHooks.byLine`) and by moving
-  (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the last 20 s in an airborne Ascent
-  state or a Runner move and no block placed), else the line's or the dark's refusal; then Wings (`Ascent.grant`, "sky
-  platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`, counter
-  `awaken:ascent_wings_core`. The Horizon's "wings" need is reached by Wings or the rope alone and reads "· needs a rope
-  or wings". The platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The core, the rank first** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a
+  player within 4.7 (the case's rail is two out, its corners nearly three) without Wings is judged
+  (`WingCoreBlockEntity.judge`, in this order since 11 Nov 2026): **the rank first**, C or above
+  (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26; Euan at a core at rank D: "it's way too early to
+  get these... it says, like, come back when you're rank C"); then the way up, which is the platform's visit (§17.29:
+  the `#awaken:warded_sky` ward opened on the way in and kept while the player stays in it), nothing built
+  (`ArrivalHooks.byMovement`) and the rope carried them (`ArrivalHooks.byLine`). Passing all three, they are given Wings
+  (`Ascent.grant`, "sky platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`,
+  counter `awaken:ascent_wings_core`. Anyone else is told why on the action bar on arrival, then at most every 10 s for
+  each reason (`Throttle`), each in its own words, and the server log says which ("[ascent] the sky core at x, y, z
+  stays dark for Name: rank|built|line"; a gift logs too):
+  - rank (`core.rank`): "Come back at rank C. These wings will wait for you.", with the vault's refusal (Minecraft's own
+    recording, low). The core goes on the Tasks page (`Promises.seen`, key `wing_core:x,y,z`, need rank C, "A sky
+    core's wings").
+  - built (`core.built`): "The core stays dark. It won't answer anyone who built their way up here. Climb its rings
+    with your rope."
+  - line (`core.line`): "The core stays dark. It only answers someone who climbed its rings with the rope, not with a
+    pearl, a flight or bare hands."
+  Any way the rope carries a climber up the rings counts, however it ends: the sling, the zip's own let-go, the pull-up
+  tap, the double jump onto the deck. A pearl, a power's flight or a Runner hang never does. The core no longer asks
+  `Ascent.arrivedByMovement(p, 20)` (a third of the last 20 s on the rope or in a Runner move): that stopwatch turned
+  away a climber who stood looking round the deck for 14 s before walking in, with the rope's refusal. Very likely that
+  is what Euan met on 11 Nov, up the rings by rope: "The core stays dark. It only answers someone who climbed its rings
+  by rope." (then the words of both refusals; the core logged nothing then). Before 11 Nov the rank came last, so a
+  D-rank climber heard about the rope before the rank. Before 26 Oct a refusal came once a minute, on the minute, so a
+  refused player could wait 60 s in silence. The Horizon's "wings" need is reached by Wings or the rope alone (the
+  rings are a rope ladder) and reads "· needs a rope or wings". It breathes a ring of light every 3 s. The platform's
+  `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
   that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real
   wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
@@ -4304,6 +4322,26 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
   turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
   and the wings read from its end) and the other diagonal otherwise (a quarter turn round the deck from the pier).
+- **The island and the arch** (11 Nov 2026; the manager's brief: "a floating island that stops you in your tracks"):
+  - *The island* (new platforms only, blueprint `SKY_STYLE` 3, `RuinBuilder.garden`): the deck sits in the ground it
+    tore up. A ring of garden one step below the deck, from the deck's edge (11.6) out to about 13.6 along the axes and
+    12.2 along the diagonals, ragged; the rim sits on a layer of its earth. Under the ring a collar of rock (tuff,
+    andesite, stone, a little coal, iron and copper), deepest mid-ring (up to 11 down), never reaching in to the keel;
+    hanging from it glow berries (grown out, lit on about half), hanging roots and glow lichen. On it grass and moss,
+    wildflowers, ferns, bushes, azaleas and a few firefly bushes; nothing grows within 2 of a diagonal (the pier, its
+    rings and the stair come in on one). Up to eight trees at the eighths, 12 out: flowering azaleas (a trunk 4 high so
+    the crown clears a head on the rim, a lantern hung on the outer side) and now and then a tall autumn poplar; no
+    crown within 4 of a diagonal (the arch's room) or near an axis (the tethers). The four torn-up islands are bigger
+    (3 to 4.3 across the radius) and grown over: a cherry with petals where the oak stood, a poplar on the first,
+    wildflowers, glow berries under them. Everything stays inside the 49×26×49 piece and clear of `ascent_sky_rig`'s checks.
+  - *The arch* (`SkyRig.archCells`, `rigArch`, `archPlaced`: the light in its beam is its mark; old platforms get it
+    too, placed only where nothing solid stands): where
+    the pier's root meets the deck (7, 7), a Precursor pillar either side of the way (9, 5) and (5, 9), 2.8 off its line,
+    four high and capped; across their tops a beam two cells thick (a + b = 14 and 15, 5 over the deck, four clear over
+    the walk) with a light at its middle; a lantern hung under the beam on each side of the walk, at (8, 6) and (6, 8).
+  The island was built beside a case of this session's own (rope-hold-swing, 11 Nov), barriers in a 3x3 round the core and
+  sounds for its hum and shutter; build had the wings' hall and its case by then, so those were dropped in the merge and
+  the hall's case kept. The island's own wind and leaves sounds went with them (the hall's air has its gusts).
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4332,14 +4370,17 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   a keel of stone and ore under its middle, hanging roots, a lantern on two chains under the keel's tip. Under 40 over
   the land, the canopy is opened round each stone and along the way to the next. Played on the bench
   (`SwingBench.climb`: the stones' own cells, the deck, its studs, cabin, keel, pier, islands and the old chain and
-  rings; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
+  rings, and since 11 Nov the island's garden, collar and trees and the four islands as the real blueprint lays them,
+  and the arch; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
   feet, and one that only holds forward and the rope): 12 of 12 and 6 of 6 reach the deck in about 25 s, 99% of it
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one constant
-  to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get it on
-  their next load; the first rig's chain and rings stay beside it);
+  logs the shapes and judges this one. With the island in the bench's model (11 Nov, run 43022550555) the hopping bot
+  still climbs 12 of 12 (in about 28 s, no hard hit) and the key-only bot 5 of 6 (one fell from stone 14), so the
+  island costs the stair a little. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one
+  constant to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get
+  it on their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
@@ -4995,8 +5036,11 @@ manual; stop the build at the first block; the payoff answers only the line; dan
 - **The payoff answers only the line** (`ArrivalHooks.byLine`: by movement, and a LINE sample in the visit or the 20 s
   before it, nothing built): a spire's or great tree's crown, a sky platform's Wings core, a climb cache's best roll.
   A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the
-  crown says "The crown stays dark. It answers only to a line."; the core "The core stays dark. It answers only to a
-  line up its rings." (at once, then at most every 10 s). The Tether Vow is kept only at the mast by the line.
+  crown says "The crown stays dark. It answers only to a line."; the core tells a tower from a clever climb in its own
+  words (§17.9, 11 Nov 2026: rank first, then built, then the line; at once, then at most every 10 s each). The visit is
+  the whole verdict at the core, held as long as the player stays in the ward: no stopwatch on the deck. What it keeps
+  is in view from the pier: under the arch, the real wings in a glass case through the wings' hall's portal (§17.9). The Tether Vow
+  is kept only at the mast by the line.
 - **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
   table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
   (`chests/precursor_spire`, `chests/precursor_sky`) and its best roll in `…_best` (spire: 1 Power Core Shard + a
@@ -5132,6 +5176,118 @@ top), client wiring in `AscentMoves`. The server is unchanged (it still checks e
 
   The page's lane figure for the old rope (199) came from the proof's JavaScript copy of it; the real rule
   (`AscentRules`, Mth's trig) goes 165 in the same bench.
+
+### 17.32 The leap's climb (Euan's play, 2026-11-11: "It seems like I can't double jump into a mantle. So the mantle is kind of glitchy")
+**Cause.** A double jump or an air dash puts the body in the Ascent's carry. While any Ascent state holds the body,
+the Body's own moves stand aside (`ClientMoves.off`), and so do the Runner's (`RunnerMoves` stops on the same test).
+So for the whole leap nothing caught an edge: no mantle, no crossing, no hang, no edge snap. A leap into a ledge's face
+slid down it. Or it rose past the lip with its speed gone from the bump and crept over. A second jump pressed with an
+edge already in reach was spent as the double jump, not a climb. The ground's mantle and crossings also ask for the
+ground, so nothing could start one in the air at all. A jump pressed during a mantle or a crossing also started a
+double jump, which cut the climb off halfway.
+
+The fix: a leap is the body's own air again whenever it meets an edge, and it climbs the way a jump from the ground would.
+
+- **A leap that meets an edge.** This applies to a carry from a double jump or an air dash, never a slam, with forward
+  held or jump pressed. Each tick the Body reads what a jump from the ground would climb, from where the body is in
+  the air (`ClientMoves.airCatch`). On the first tick it finds something, the carry ends with its speed handed on, and
+  the Body starts the move that same tick. In order:
+  - a fence's, gate's or wall's crossing, as in §17.27: vaulted, hopped or climbed onto, by the rail and what's beyond it;
+  - else a ledge or a stair top (§17.23), mantled from 0.1 to 1.6 over the feet;
+  - else, with forward held, a lip in the hang's band (1.2-2.4), hung from by the Runner that tick.
+
+  The mantle's own path takes the body up from wherever it caught: 6 ticks, its sound, its looks.
+- **A jump pressed in the air at an edge in reach.** Any airborne body, Leaper or not: the same probe, and it climbs.
+  `AscentMoves` asks before its own Leaper moves, so the double jump is kept for later.
+- **From the air** there is no step under the legs, since vanilla steps up only on the ground:
+  - `BodyRules.findLedge(..., AIR_MANTLE_MIN 0.1)`;
+  - `VaultRules.find(..., air)`: the legs' box from 0.1 over the feet, a top from 0.1 over them (`AIR_STEP`,
+    `AIR_RISE_MIN`).
+
+  Everything else is the ground's: the same reach (0.6, a running crossing 1.3), checks, paths and ticks.
+- **While the Body climbs**, from the ground or the air, the Ascent stands aside as it does for a Runner move: no
+  Leaper move, no wings, and the held rope doesn't throw again. The rope's own key still cuts in.
+- **Two quick presses at a lip** (found by the tour's "step back, second jump 3 ticks after" cases, 11 Nov). With forward
+  held, a jump from a step back can reach a lip in the hang's band within its first ticks, and the Runner grabs it at
+  once. A second press that lands in the grab's 3-tick catch used to be dropped: no double jump (the Runner holds the
+  body) and no climb, so the body hung. Now a jump pressed during the catch is kept (`RunnerMoves.climbQueued`, a flag,
+  not a clock) and the hang climbs out on its first tick, exactly as a press then would. A fresh grab, a reset or the
+  first hang tick clears it.
+- **Server.** The start carries `air` (`BodyPayloads.Start`). The server runs the air's probe from its own body, then
+  0.3 and 0.6 above and below it (`BodyRules.AIR_LAG`), since a body moving fast up or down may be a step apart from its
+  client. The checks after that are unchanged: the ledge within 0.25 high and 1.0 across of the client's, and a
+  crossing's landing within 1.0.
+- **One side decides.** The client starts the climb and the server only checks it. No timer is kept anywhere, and the
+  catch is read fresh every tick.
+- **Tour:** `tools/autopilot/double-jump-mantle.txt`. A two-high ledge, an oak fence, a stair top (two blocks and a
+  stair), a three-high ledge and a cobblestone wall, each tried six ways:
+  - from a standstill at the face;
+  - a step back, with the second jump 3, 7 and 10 ticks after the first;
+  - from a sprint, second jump 5 and 9 ticks after the first.
+
+  The log names what took each (`air catch: ...`, `air mantle onto`, `vault ... from the air`, `hang (grab)`) and where
+  the feet came to rest (`[ascent] where`). The pilot gained `double <key> [gap]` and `where <label>`; the Ascent's
+  `grant` gained `leaper` (the rope and the Leaper, no wings).
+
+### 17.33 The aimed dive (Euan's play, 2026-11-11: "if you click like your attack button ... it pushes you down faster towards where you clicked ... so that you choose where you're gonna land")
+After a double jump or an air dash, attack sends the body down along the look to the point under the crosshair, faster
+than a fall, so you pick where you land. `AscentMoves.aimDive`, `AscentRules.diveStep`.
+
+- **When.** In a leap's carry (§17.32: after a double jump or an air dash, never a slam), when attack is pressed. It
+  goes once an airtime (the Leaper's third bit, back on landing or a rope's bite), with 2 s (`DIVE_COOL` 40 ticks)
+  from one dive's start to the next. It costs no Aether: no Leaper move spends any, since Aether is the Skyborn's
+  flight (§17.8). The wait does the Aether's job. A slam needs 4 blocks of height, which takes a rope or a long fall,
+  so it comes seldom. A dive needs only a leap, about 15 ticks round, so without the wait its shock would land on
+  every leap. With it, every second or third leap can dive. It is the Way Up's fourth move (`WayUp.Leap.DIVE`, the
+  "Dive" title, §71.7): open with the leap unless the leap is ever given a move at a time.
+- **Whose press.** The hand's first, then the rope's, then the dive's.
+  - It is the hand's in three cases: the crosshair is on anything in the hand's reach (a creature to hit, a block to
+    break); the hand means a creature near the look (the mark's creature by `Aim.meantId`, or a calm one by
+    `Aim.calm`, which a weapon's press takes without a perfect aim); or a lock is on (§40). Then there's no dive.
+  - It is the rope strike's (§62) when a creature is under the crosshair out of the hand's reach.
+  - Otherwise it is the dive's.
+
+  A weapon's own air attack, the Plunge (§25), needs a fall of 2 blocks. A leap's carry keeps the fall at nothing, so
+  a Plunge never comes up on a press here, and the dive takes nothing from it. A weapon in hand still swings at the
+  air on the same press, as it does with the rope strike, and the Ascent's hands step aside for the swing (`AscentFp`).
+  No power casts on the attack key.
+- **Where.** The look from the eye finds a block within 24 (`DIVE_REACH`), and the point is where it meets it. On a
+  floor the feet land on the point. On a side the body aims 0.4 out from the face and falls down to its foot. The
+  point must lie at least 1 block under the feet (`DIVE_DROP_MIN`): a dive goes down, and a level aim is the dash's.
+- **The fallback** is no dive: when nothing is within 24, at the sky, or at a point not under the feet, the press is
+  only the hand's swing, and the dive stays unspent for this airtime. A dive anywhere other than where you aimed would
+  undo the move's point, so the fallback is never straight down.
+- **The flight.** Straight at the point, with no gravity and no drag.
+  - Its speed is 1.6 a tick (`DIVE_SPEED`): faster than any fall from a leap's height, and under the slam's 1.7. It
+    reaches that over 3 ticks (0.53, 1.07, 1.6), so 11 blocks take 8 ticks.
+  - The last step goes onto the point and a quarter block under it, so the floor there stops the feet. If there's no
+    floor, it goes straight down from there.
+  - A wall in the way (the body stopped against it), or 30 ticks (`DIVE_MAX_TICKS`), gives the body back to the carry,
+    which falls. Since it is still a leap's carry, it can climb what it hit (§17.32).
+  - Only the rope cuts in during the flight: no jump, sprint, sneak, edge or wings. The point is fixed at the press,
+    and the crosshair after it changes nothing.
+- **The landing** comes at the speed the dive flew (the last step only closes the gap).
+  - The server lands the slam's shock by the slam's own rule (§17.3): 3 + 3 × the speed within 3.5 blocks, falling
+    off with distance, and creatures are thrown out. The speed it takes is never above 1.6, so a dive lands for at most
+    7.8 where a slam lands for 8.1 and more.
+  - Not twice within 20 ticks (`AscentServer.DIVE_LAND_GAP`), against a client that sends landings faster than its
+    dives can come.
+  - A hard landing's roll follows, as after any.
+- **Its look.** The press puts a mark on the ground at the point: a thin warm-white ring closing from 1.25 across to
+  0.34 round a still dot over the flight, gone at the landing. At the dive's speed the Ascent's own contrails stream
+  off the hands (they show over 1.15 a tick), and the fists go up (`fp_dive`). The landing has its ring on the ground
+  and the slam's shake.
+- **Its sounds** are Minecraft's own recordings: the phantom's swoop as it goes (`ascent.dive`: `entity.phantom.swoop`,
+  pitch 1.15) and the mace's ground smash where it lands (`ascent.dive_land`: `item.mace.smash_ground`, louder with
+  speed).
+- **Others** see the contrails and the landing's ring, and hear both sounds (`EV_AIM_DIVE`, `EV_DIVE_LAND`).
+- **One side decides.** The client decides the dive, its point and its flight, and the server only answers the
+  landing. The clock is whole ticks since the press, with no timer kept.
+- **Test:** `ascent_aimed_dive`: the point's rule, the flight onto it and down, and the server's shock and its gap.
+- **Tour:** `tools/autopilot/aimed-dive.txt`. Double jumps from a standstill, then attack at a gold mark 8.6 to 14.8
+  blocks off at four headings, one from a sprint, one in first person, and one aimed past the reach (the fallback).
+  The log has `aimed dive to`, `the dive lands <off> from its point` and `[ascent] where`. The pilot gained
+  `aimat <x> <y> <z> <ticks>` and `hold attack <ticks>`.
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
@@ -24309,7 +24465,8 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   this client knows has wings: yourself by tier, others once seen with them open). The body rides the beat by 1.3
   texels. Motes are shed from the tips of the large wings on a downstroke and on a flare.
 - Rungs: one pair (0.94), Skyborn two (1.18 and 0.6 under it), the Sovereign's form three gold pairs and a ring of 14
-  boxes. Others' rung is known once they are seen in flight.
+  boxes. The same first-rung pair hangs in the sky platform's glass case and flies out of it at the gift (§17.9,
+  `WingCaseRenderer`, the feather and halo pipelines). Others' rung is known once they are seen in flight.
 - Far forms: past 48 blocks every other feather, broader, no coverts or shafts (51 boxes); past 96 the three bones and
   six slabs (27).
 - Drawn in their own pipeline, depth written, both sides, unlit: vanilla's emissive type writes no depth, so 231
@@ -24438,7 +24595,9 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9's (the rank is asked first; from 11 Nov the wings hang in a case at the core and the climb is the stair). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9: the rank first, then the rope up
+  its rings (the platform's visit, no stopwatch on the deck, since 11 Nov 2026), each refusal in its own words. The
+  wings hang in a glass case at the core, and the gift opens it and sends them to the player's back (§17.9). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
@@ -26228,9 +26387,13 @@ and re-run: the gates session.
   last stood on the ground (its own position each tick, so nothing rubber-bands), so the title is not read from the pit.
 - **The leap a move at a time.** `WayUp.Leap` (DOUBLE, DASH, SLAM, DIVE); `WayMemory` schema 2 adds `stands` (taken) and
   `parts`; `canLeap` is true unless `parts` and that stand is not taken. Synced as two bytes of `ascent_way`
-  (`WayClient.canLeap`, `stand`). The server refuses the count of a move not yet open (`AscentServer.onEvent`, `slam`).
-  **`WayUp.LEAP_BY_PARTS` is false**: the leap's own rules (`AscentMoves`, rope-hold-swing's) do not ask yet, so the
-  first stand gives the leap whole and the later stands play their titles only. `DIVE_BUILT` false: its stand is dark.
+  (`WayClient.canLeap`, `stand`). The server refuses the count of a move not yet open (`AscentServer.onEvent`, `slam`,
+  `diveLand`). Since 11 Nov the leap's own rules ask too (rope-hold-swing: `AscentMoves.leaperMove` before a second
+  jump, a dash and a slam, `aimDive` before the aimed dive; the client's copy starts all open, so a late sync never
+  shuts a move). **`WayUp.LEAP_BY_PARTS` is still false**, so the first stand gives the leap whole and the later stands
+  play their titles only, until the Gauntlet's three stands stand in a world (turning it on is the manager's call).
+  `DIVE_BUILT` true since the aimed dive (§17.33): its stand gives it; a run counts its dives (`EV_AIM_DIVE`), and a
+  dive's landing is never a course's slam (`TrialHooks.slamLanded` fires only from `slam`).
 - **The stand.** `awaken:leap_stand` (a plate 4 px tall with property `move`; unbreakable, light 9; in the courses'
   shelf; `LedgerSources` never-held). Its block entity only tells the client it is near. The client lights the nearest
   one still to take with rising gold, pins "Step onto it" within 6 blocks and "Hold [Use] to take it" when stood on;

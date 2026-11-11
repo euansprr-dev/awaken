@@ -48,7 +48,7 @@
   "awaken.ascent.record": "Longest chain yet \u00b7 %s moves",
   "awaken.ascent.gift.wings": "You have wings now.",
   "awaken.ascent.gift.wings.how": "In a fall, press jump to open them.",
-  "awaken.ascent.core.dark": "The core stays dark. It only answers someone who climbed up to it by rope.",
+  "awaken.ascent.core.built": "The core stays dark. It won't answer anyone who built their way up here. Climb its rings with your rope.",
   "awaken.ascent.core.rank": "Come back at rank %s. These wings will wait for you.",
   "block.awaken.anchor_ring": "Anchor Ring",
   "block.awaken.wing_core": "Wing Core",
@@ -69,10 +69,12 @@
   "awaken.ascent.sovereign.aether": "Not yet: the Aether must be full.",
   "awaken.ascent.spire.climbed": "Tether Spire climbed%s",
   "awaken.ascent.spire.built": "The crown stays dark. It only answers someone who climbed by rope.",
-  "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed up to it by rope.",
+  "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed its rings with the rope, not with a pearl, a flight or bare hands.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown",
+  "subtitles.awaken.ascent.dive": "Someone dives",
+  "subtitles.awaken.ascent.dive_land": "A dive hits the ground",
   "block.awaken.leap_stand": "Leaper's Stand",
   "entity.awaken.lesson_figure": "Figure of Light"
 }

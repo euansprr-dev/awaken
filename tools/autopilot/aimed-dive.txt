@@ -1,0 +1,160 @@
+# The aimed dive (SPEC §17.33, Euan 11 Nov: "if you click your attack button ... it pushes you down faster towards
+# where you clicked ... so that you choose where you're gonna land"). On a flat floor, from a standstill at (0.5, 200,
+# 0.5): a double jump, then the crosshair on a gold mark and attack. Four marks at four headings: ahead at 10, left at
+# 12.0, right at 14.8, and right-ahead at 8.6 (that one from a sprint); then the first again in first person, and once
+# aimed past the reach (the fallback: no dive). Third person, so the body, the mark on the ground and the contrails show.
+# The log says "[ascent] ... aimed dive to (x, y, z), d away" at the press, "the dive lands <off> from its point" at the
+# landing, and "[ascent] where dive_<case> x y z" where the feet came to rest (on the mark: y 200, within half a block
+# of its middle).
+# Marks (their middles): A (0.5, 200, 10.5), B (8.5, 200, 9.5), C (-12.5, 200, 7.5), D (-4.5, 200, 7.5).
+# Timing: the aim is held from the ground, the double jump goes, and attack comes 4 ticks on. Each line costs about 6
+# ticks on the CI runner and a double jump from flat ground is in the air 16 ticks, so "wait 8" then "wait 2" pressed
+# attack after the landing every time (run 43030529832: no dive at all).
+# Look tour: tools/tour-ci.sh tools/autopilot/aimed-dive.txt 1200
+world aimed_dive survival 4253
+waitworld
+window 1440 900
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+# the opening's sky shot, skipped early as the platform tour does (it stops at once). Skipped late, after "admin
+# awaken", it ran on to its hand-off and kept the camera on the Roost: the body went to the stair's foot and every
+# frame showed the Roost (sky-stair run 43023081609)
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 20
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant leaper
+cmd tp @s 0.5 201 0.5 0 12
+wait 100
+cmd fill -20 199 -10 24 199 26 minecraft:smooth_stone
+cmd fill -20 200 -10 24 210 26 minecraft:air
+wait 10
+cmd setblock 0 199 10 minecraft:gold_block
+cmd setblock 8 199 9 minecraft:gold_block
+cmd setblock -13 199 7 minecraft:gold_block
+cmd setblock -5 199 7 minecraft:gold_block
+wait 40
+camera back
+wait 10
+
+# ---- A: ahead, 10 off ----
+cmd tp @s 0.5 200 0.5 0 10
+wait 20
+cmd awaken ascent pilot aimat 0.5 200 10.5 60
+wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 3
+shotnow dive_A_flight
+wait 40
+cmd awaken ascent pilot where dive_A
+shot dive_A_landed
+cmd awaken ascent pilot stop
+wait 50
+
+# ---- B: left (east), 12.0 off ----
+cmd tp @s 0.5 200 0.5 -42 10
+wait 20
+cmd awaken ascent pilot aimat 8.5 200 9.5 60
+wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 3
+shotnow dive_B_flight
+wait 40
+cmd awaken ascent pilot where dive_B
+shot dive_B_landed
+cmd awaken ascent pilot stop
+wait 50
+
+# ---- C: right (west), 14.8 off ----
+cmd tp @s 0.5 200 0.5 62 10
+wait 20
+cmd awaken ascent pilot aimat -12.5 200 7.5 60
+wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 3
+shotnow dive_C_flight
+wait 40
+cmd awaken ascent pilot where dive_C
+shot dive_C_landed
+cmd awaken ascent pilot stop
+wait 50
+
+# ---- D: from a sprint going south, the mark right-ahead (8.6 from the start) ----
+cmd tp @s 0.5 200 -4.5 0 10
+wait 20
+cmd awaken ascent pilot aimat -4.5 200 7.5 60
+cmd awaken ascent pilot hold forward,sprint 14
+wait 6
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 3
+shotnow dive_D_flight
+wait 40
+cmd awaken ascent pilot where dive_D
+shot dive_D_landed
+cmd awaken ascent pilot stop
+wait 50
+
+# ---- A again in first person: the mark from the eyes ----
+camera first
+wait 5
+cmd tp @s 0.5 200 0.5 0 10
+wait 20
+cmd awaken ascent pilot aimat 0.5 200 10.5 60
+wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 2
+shotnow dive_A_fp_flight
+wait 3
+shotnow dive_A_fp_flight2
+wait 40
+cmd awaken ascent pilot where dive_A_fp
+cmd awaken ascent pilot stop
+wait 50
+
+# ---- past the reach: the floor ends at z 26, so a look 40 off finds nothing (no dive; the leap falls on its own) ----
+camera back
+wait 5
+cmd tp @s 0.5 200 0.5 0 10
+wait 20
+cmd awaken ascent pilot aimat 0.5 200 60.5 60
+wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
+cmd awaken ascent pilot attack
+cmd awaken ascent pilot hold attack 2
+wait 40
+cmd awaken ascent pilot where dive_far
+shot dive_far_landed
+cmd awaken ascent pilot stop
+wait 20
+info
+quit

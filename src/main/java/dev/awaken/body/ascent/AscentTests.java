@@ -607,28 +607,44 @@ final class AscentTests {
         h.assertTrue(rail.is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL)
                 && rail.getValue(net.minecraft.world.level.block.WallBlock.NORTH) != net.minecraft.world.level.block.state.properties.WallSide.NONE, "the case's rail, joined");
         h.assertTrue(level.getBlockState(placed.core().offset(4, 0, 4)).isAir(), "the pier's corner of the cabin is a portal");
-        // the core: by movement, wings; by a tower, nothing
+        // the arch stands over the pier's root, clear of the walk
+        for (int[] c : dev.awaken.above.ruin.SkyRig.archCells()) {
+            h.assertTrue(c[1] >= 4 || Math.abs(c[0] - c[2]) > 1, "the arch's " + c[0] + ", " + c[1] + ", " + c[2] + " stands in the walk off the pier");
+            h.assertFalse(level.getBlockState(new BlockPos(cx + c[0], deckY + c[1], cz + c[2])).isAir(), "the arch stands at " + c[0] + ", " + c[1] + ", " + c[2]);
+        }
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.archPlaced(level, cx, deckY, cz), "the arch's light is its mark");
+        // the core (SPEC §17.9): the rank first, then the way up; each refusal its own
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
         try {
-            boolean[] moved = {false};
+            boolean[] moved = {true}, line = {true};
             dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
                 @Override
                 public boolean byMovement(net.minecraft.server.level.ServerPlayer pl) {
                     return moved[0];
                 }
+
+                @Override
+                public boolean byLine(net.minecraft.server.level.ServerPlayer pl) {
+                    return moved[0] && line[0];
+                }
             });
+            // a long look round the deck before walking in: the last 20 s all standing still
             AscentMotion m = AscentServer.motion(p);
-            for (int i = 0; i < 400; i++) m.mark(true);
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
-            moved[0] = true;
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
+            for (int i = 0; i < 400; i++) m.mark(false);
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.RANK
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "up by rope at E: the core asks for C first");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
-            // the rank is asked first, then the way: at C a tower still gets nothing
             moved[0] = false;
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower at C gets nothing");
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.BUILT
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
             moved[0] = true;
-            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
+            line[0] = false;
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.LINE
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a pearl or a flight gets nothing, told apart from a tower");
+            line[0] = true;
+            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS),
+                    "up its rings by rope at C gets wings, however long they stood on the deck");
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);

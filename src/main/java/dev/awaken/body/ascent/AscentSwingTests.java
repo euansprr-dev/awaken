@@ -561,6 +561,25 @@ final class AscentSwingTests {
         }
         for (BlockPos q : l.pier()) cells.add(new int[] {q.getX(), q.getY(), q.getZ()});
         for (BlockPos q : l.perch()) cells.add(new int[] {q.getX(), q.getY(), q.getZ()});
+        // the island the deck stands in (RuinBuilder.garden, SKY_STYLE 3), its collar, trees and the four islands as the
+        // real blueprint lays them (unturned; the ring is the same all round to within its noise), and the arch
+        java.util.Map<Long, BlockState> laid = new java.util.HashMap<>();
+        dev.awaken.above.ruin.RuinBuilder.build(dev.awaken.above.ruin.RuinKind.SKY, 7L, 1, new dev.awaken.above.ruin.RuinBuilder.Sink() {
+            @Override
+            public void set(int x, int y, int z, BlockState st) {
+                laid.put(BlockPos.asLong(x, y, z), st);
+            }
+
+            @Override
+            public void fillDown(int x, int y, int z, BlockState st, int depth) {}
+
+            @Override
+            public void chest(int x, int y, int z, net.minecraft.core.Direction facing, net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> table) {}
+        });
+        laid.forEach((k, st) -> {
+            if (st.isSolid()) cells.add(new int[] {BlockPos.getX(k) - 24, deck - 12 + BlockPos.getY(k), BlockPos.getZ(k) - 24});
+        });
+        for (int[] c : dev.awaken.above.ruin.SkyRig.archCells()) cells.add(new int[] {c[0], deck + c[1], c[2]});
         for (int[] c : new int[][] {{0, -19}, {19, 0}, {0, 19}, {-19, 0}}) {
             for (int x = c[0] - 4; x <= c[0] + 4; x++) for (int z = c[1] - 4; z <= c[1] + 4; z++) {
                 double d = Math.hypot(x - c[0], z - c[1]);

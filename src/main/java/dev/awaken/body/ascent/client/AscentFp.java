@@ -98,6 +98,11 @@ public final class AscentFp {
         play("fp_dive");
     }
 
+    /** An aimed dive that ended without its landing (a wall, its time, the rope): the fists come down. */
+    static void diveEnd() {
+        FirstPerson.stop("fp_dive");
+    }
+
     static void slamLand() {
         FirstPerson.stop("fp_dive");
         play("fp_slam_land");

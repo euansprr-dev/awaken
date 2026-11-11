@@ -64,6 +64,9 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
+    /** The aimed dive (SPEC §17.33): the phantom's swoop as it goes, the mace's smash where it lands (vanilla recordings). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DIVE = sound("ascent.dive");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DIVE_LAND = sound("ascent.dive_land");
     // the rappel and the fittings (the game's own recordings: tools/art/specs/audit_rest.py, SPEC §66.7)
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY = sound("ascent.rappel_pay");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY_GLASS = sound("ascent.rappel_pay_glass");

@@ -22,6 +22,8 @@ final class AscentMotion {
     /** The rope strike (SPEC §62): the creature the rope has (-1 none) and when it bit; the last skim and flare counted. */
     int strikeTarget = -1;
     long strikeAt = Long.MIN_VALUE / 2, skimAt = Long.MIN_VALUE / 2, flareAt = Long.MIN_VALUE / 2;
+    /** The last aimed dive's landing the server answered (SPEC §17.33). */
+    long diveLandAt = Long.MIN_VALUE / 2;
 
     // ---- how the player got here (Ascent.arrivedByMovement) ----
     /** The trail's length: 20 seconds of ticks, a bit each (moving by Ascent or Runner, or not). */
