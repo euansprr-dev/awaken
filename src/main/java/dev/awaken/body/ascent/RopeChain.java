@@ -1,30 +1,45 @@
 package dev.awaken.body.ascent;
 
 /**
- * The held rope's chain, judged one link at a time (SPEC §62, "One press, one throw"). Held, the rope throws the next
- * link by itself once the last one ends. A link that ends with the key still held stops the chain until the key is
- * pressed again when it failed (blocked, stalled, cut or refused), or when it neither arrived (a zip at its lip, a sling
- * let go at its point, a let-go or a launch off a swing) nor carried the body {@link #PROGRESS} blocks (a swing that
- * landed where it began). An arrival under {@link #NOWHERE} blocks and {@link #NOWHERE_TICKS} ticks went nowhere too.
- * A press that missed stops it as well. Without this the chain threw again two ticks after every failed link, at the
- * same top or the next one along, so one press showed three or four ropes before one held (Euan 11 Nov 2026). Pure:
- * the client's moves call it, and the GameTest drives it directly.
+ * The held rope's chain, judged one link at a time (SPEC §62, "The held chain, a link at a time"). Held, the rope
+ * carries you on: when a link ends it picks the next anchor once and throws once. What it never does is throw again at
+ * what it couldn't take:
+ * <ul>
+ * <li>a link that ends with the key held and went nowhere stops the chain until the next press. It went nowhere when
+ * it failed (blocked, stalled, cut or refused) without carrying the body {@link #PROGRESS} blocks; when it neither
+ * arrived nor carried the body that far (a swing that landed where it began); or when it arrived under
+ * {@link #NOWHERE} blocks off in under {@link #NOWHERE_TICKS} ticks;</li>
+ * <li>a link that failed after carrying the body on lets the chain go on, but its anchor is never thrown at again
+ * during that press ({@link #spent});</li>
+ * <li>a press that missed pauses the held key for {@link #MISS_PAUSE} ticks (its rope falling back), so one miss is
+ * never followed at once by a second rope at whatever came into reach a tick later.</li>
+ * </ul>
+ * Without this the chain threw again two ticks after every failed link, at the same top or the next one along, so one
+ * press showed three or four ropes before one held (Euan 11 Nov 2026). Pure: the client's moves call it, and the
+ * GameTest drives it directly.
  */
 public final class RopeChain {
-    /** A held link that didn't arrive is progress from this far on (blocks). */
+    /** A held link carried the body on from this far (blocks). */
     public static final double PROGRESS = 3.0;
     /** Under this far (blocks) and this soon (ticks) even an arrival went nowhere. */
     public static final double NOWHERE = 1.0;
     public static final int NOWHERE_TICKS = 10;
+    /** Ticks the held key throws nothing after a press that missed. */
+    public static final int MISS_PAUSE = 10;
+    /** No anchor (a link whose rope held no block). */
+    public static final long NO_ANCHOR = Long.MIN_VALUE;
 
     private boolean open, stopped;
-    private int at, throwsThisPress;
+    private int at, missedAt = Integer.MIN_VALUE / 2, throwsThisPress;
     private double fromX, fromY, fromZ;
+    private long spent = NO_ANCHOR;
     private String why = "";
 
-    /** The key pressed: the chain may throw again. */
+    /** The key pressed: the chain starts again (nothing spent, no pause). */
     public void press() {
         stopped = false;
+        spent = NO_ANCHOR;
+        missedAt = Integer.MIN_VALUE / 2;
         throwsThisPress = 0;
         why = "";
     }
@@ -39,39 +54,53 @@ public final class RopeChain {
         throwsThisPress++;
     }
 
-    /** The press's rope flew out at nothing: one miss, and the held key throws nothing more. */
-    public void missed() {
+    /** The press's rope flew out at nothing: the held key waits out {@link #MISS_PAUSE} ticks. */
+    public void missed(int tick) {
         open = false;
-        stop("the press missed");
+        missedAt = tick;
     }
 
     /**
      * The open link ended (the rope left). {@code held}: the key is still down; {@code arrived}: it got where it was
-     * thrown; {@code failed}: why it failed, or null. True when this stops the chain.
+     * thrown; {@code failed}: why it failed, or null; {@code anchor}: its block ({@link #NO_ANCHOR} when none). True when
+     * this stops the chain.
      */
-    public boolean ended(int tick, double x, double y, double z, boolean held, boolean arrived, @org.jspecify.annotations.Nullable String failed) {
+    public boolean ended(int tick, double x, double y, double z, boolean held, boolean arrived,
+            @org.jspecify.annotations.Nullable String failed, long anchor) {
         if (!open) return false;
         open = false;
         if (!held || stopped) return false;
-        if (failed != null) {
-            stop(failed);
-            return true;
-        }
         double dx = x - fromX, dy = y - fromY, dz = z - fromZ, d2 = dx * dx + dy * dy + dz * dz;
-        boolean progress = arrived ? tick - at >= NOWHERE_TICKS || d2 >= NOWHERE * NOWHERE : d2 >= PROGRESS * PROGRESS;
-        if (progress) return false;
-        stop("the link went nowhere");
+        boolean far = d2 >= PROGRESS * PROGRESS;
+        if (failed != null) {
+            if (!far) return stop(failed);
+            // it failed, but on: the chain goes on, never again to this anchor
+            spent = anchor;
+            return false;
+        }
+        boolean progress = arrived ? tick - at >= NOWHERE_TICKS || d2 >= NOWHERE * NOWHERE : far;
+        return !progress && stop("the link went nowhere");
+    }
+
+    private boolean stop(String reason) {
+        stopped = true;
+        why = reason;
         return true;
     }
 
-    private void stop(String reason) {
-        stopped = true;
-        why = reason;
-    }
-
-    /** True while the held key may not throw: the last link failed or the press missed. */
+    /** The held key may not throw: the last link went nowhere (until the next press). */
     public boolean stopped() {
         return stopped;
+    }
+
+    /** The held key waits: a press missed under {@link #MISS_PAUSE} ticks ago. */
+    public boolean paused(int tick) {
+        return tick - missedAt < MISS_PAUSE;
+    }
+
+    /** This press's chain threw at this anchor and failed there: it isn't thrown at again until the next press. */
+    public boolean spent(long anchor) {
+        return anchor != NO_ANCHOR && anchor == spent;
     }
 
     /** Why the chain stopped ("" when it hasn't). */
@@ -85,8 +114,7 @@ public final class RopeChain {
     }
 
     public void reset() {
-        open = stopped = false;
-        throwsThisPress = 0;
-        why = "";
+        open = false;
+        press();
     }
 }

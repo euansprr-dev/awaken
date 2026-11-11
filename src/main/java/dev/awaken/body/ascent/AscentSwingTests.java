@@ -123,56 +123,72 @@ final class AscentSwingTests {
     }
 
     /**
-     * One press, one throw (SPEC §62): the held rope's chain throws again only after a link that got somewhere. Held where
-     * every link fails three ticks in (the client's loop: a let-go, two ticks, the next throw), a press throws once and
-     * then nothing for the rest of the hold; where every link arrives it throws one link at a time. A press that missed
-     * throws nothing more, a link let go by the key is never judged, and a new press starts again.
+     * The held chain, a link at a time (SPEC §62): held, the rope throws the next link once the last one ends, and never
+     * again at what it couldn't take. In the client's loop (a link lasts 3 ticks, the chain waits 2, then throws at the
+     * best pick unless stopped, paused or spent), for 100 ticks after one press: where every link fails 0.4 on, one
+     * throw; where every link arrives 4 on, a link at a time; where links fail 4 on at new anchors, the chain goes on;
+     * where they fail 4 on at the same anchor, it is never thrown at again. Then each rule on its own.
      */
     private static void ropeChain(GameTestHelper h) {
-        h.assertTrue(heldFor(false) == 1, "held where every link fails: one throw, not " + heldFor(false));
-        int good = heldFor(true);
+        h.assertTrue(heldFor(0.4, false, false) == 1, "held where every link fails: one throw, not " + heldFor(0.4, false, false));
+        int good = heldFor(4, true, false);
         h.assertTrue(good >= 15, "held where every link arrives: a link at a time, " + good + " in 100 ticks");
+        int on = heldFor(4, false, false);
+        h.assertTrue(on >= 15, "held where links fail after carrying you on, each at a new anchor: it goes on, " + on);
+        h.assertTrue(heldFor(4, false, true) == 1, "never thrown again at an anchor that failed: " + heldFor(4, false, true) + " throws");
         RopeChain c = new RopeChain();
         c.press();
         c.thrown(0, 0, 64, 0);
-        c.missed();
-        h.assertTrue(c.stopped() && c.why().equals("the press missed"), "a press that missed stops the held rope: " + c.why());
+        c.missed(0);
+        h.assertTrue(c.paused(9) && !c.paused(10) && !c.stopped(), "a press that missed pauses the held key 10 ticks, no more");
         c.press();
-        h.assertTrue(!c.stopped() && c.throwsThisPress() == 0, "a new press may throw again");
+        h.assertTrue(!c.paused(1) && c.throwsThisPress() == 0, "a new press may throw at once");
         c.thrown(0, 0, 64, 0);
-        h.assertTrue(!c.ended(3, 0.2, 64, 0, false, false, "the zip was blocked") && !c.stopped(), "a link let go by the key is never judged");
+        h.assertTrue(!c.ended(3, 0.2, 64, 0, false, false, "the zip was blocked", 7) && !c.stopped() && !c.spent(7),
+                "a link let go by the key is never judged");
         c.thrown(10, 0, 64, 0);
-        h.assertTrue(c.ended(18, 1.5, 64, 0, true, false, null) && c.stopped(), "a held swing that landed 1.5 from its start went nowhere");
+        h.assertTrue(c.ended(18, 1.5, 64, 0, true, false, null, 7) && c.stopped(), "a held swing that landed 1.5 from its start went nowhere");
         c.press();
+        h.assertTrue(!c.stopped(), "a press starts the chain again");
         c.thrown(0, 0, 64, 0);
-        h.assertTrue(!c.ended(25, 5, 64, 0, true, false, null), "a held link that carried the body 5 blocks is progress");
+        h.assertTrue(!c.ended(25, 5, 64, 0, true, false, null, 7), "a held link that carried the body 5 blocks is progress");
         c.thrown(30, 5, 64, 0);
-        h.assertTrue(!c.ended(34, 5.5, 66, 0, true, true, null), "a short zip that arrived is progress");
+        h.assertTrue(!c.ended(34, 5.5, 66, 0, true, true, null, 8), "a short zip that arrived is progress");
         c.thrown(40, 5, 66, 0);
-        h.assertTrue(c.ended(43, 5.2, 66, 0, true, true, null), "an arrival 0.2 off in 3 ticks went nowhere");
-        h.assertTrue(!c.ended(50, 0, 0, 0, true, false, "the zip was blocked"), "no link open, nothing judged");
+        h.assertTrue(!c.ended(48, 9, 66, 0, true, false, "the sling's way closed", 9) && c.spent(9) && !c.stopped(),
+                "a sling whose way closed 4 on: the chain goes on, never to that top again");
+        c.thrown(50, 9, 66, 0);
+        h.assertTrue(c.ended(53, 9.2, 66, 0, true, true, null, 10), "an arrival 0.2 off in 3 ticks went nowhere");
+        h.assertTrue(!c.ended(60, 0, 0, 0, true, false, "the zip was blocked", 11), "no link open, nothing judged");
+        c.press();
+        h.assertTrue(!c.spent(9) && !c.stopped(), "a press forgets the spent anchor");
         h.succeed();
     }
 
     /**
-     * The client's held loop for 100 ticks after one press: a link lasts 3 ticks (failed: blocked, 0.4 on; arrived: 4
-     * on), the chain waits 2 ticks after it and throws again unless stopped. Returns the ropes thrown.
+     * The client's held loop for 100 ticks after one press: each link lasts 3 ticks and moves the body {@code step} on,
+     * arriving or failing; its anchor is a new one each time, or the same one ({@code same}). The chain waits 2 ticks
+     * after a link and throws at the pick unless stopped or the pick is spent. Returns the ropes thrown.
      */
-    private static int heldFor(boolean arrive) {
+    private static int heldFor(double step, boolean arrive, boolean same) {
         RopeChain c = new RopeChain();
         c.press();
         double x = 0;
         int thrown = 0, cool = 0, age = -1;
+        long anchor = 0;
         for (int t = 0; t < 100; t++) {
             if (age >= 0) {
                 if (++age < 3) continue;
-                x += arrive ? 4 : 0.4;
-                c.ended(t, x, 64, 0, true, arrive, arrive ? null : "the sling's way closed");
+                x += step;
+                c.ended(t, x, 64, 0, true, arrive, arrive ? null : "the sling's way closed", anchor);
                 age = -1;
                 cool = 2;
             } else if (cool > 0) {
                 cool--;
-            } else if (!c.stopped()) {
+            } else {
+                long pick = same ? 7 : t;
+                if (c.stopped() || c.paused(t) || c.spent(pick)) continue;
+                anchor = pick;
                 c.thrown(t, x, 64, 0);
                 thrown++;
                 age = 0;

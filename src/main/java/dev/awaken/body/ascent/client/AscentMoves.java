@@ -68,7 +68,7 @@ public final class AscentMoves {
     /** The block the last rope held, and when it was let go (the next throw passes through it for a second). */
     private static @org.jspecify.annotations.Nullable BlockPos leftAnchor;
     private static int leftAt = -100;
-    /** A line thrown for you (the vow's), or a tapped throw (SPEC §62, "One press, one throw"): held until it arrives, key or no key. */
+    /** A line thrown for you (the vow's), or a tapped throw (SPEC §62): held until it arrives, key or no key. */
     static boolean heldForYou;
     /**
      * After a zip to a ledge: ticks left vaulting onto it, the block it ends on (its centre, top and bottom), and the
@@ -148,7 +148,7 @@ public final class AscentMoves {
     private static int heldOn, fireCool;
     /** This rope was thrown by a press (a let-go within a tap of it carries the throw through), not by the chain. */
     private static boolean pressThrow;
-    /** The held rope's chain, a link at a time (SPEC §62, "One press, one throw"); why the rope now leaving failed, or null. */
+    /** The held rope's chain, a link at a time (SPEC §62); why the rope now leaving failed, or null. */
     private static final dev.awaken.body.ascent.RopeChain CHAIN = new dev.awaken.body.ascent.RopeChain();
     private static @org.jspecify.annotations.Nullable String linkFail;
     /** The rope now leaving got where it was thrown (a zip at its lip, a sling at its point, a let-go, a launch). */
@@ -348,8 +348,10 @@ public final class AscentMoves {
         if (fireCool > 0) fireCool--;
         windowNow *= 0.8F;
         // the rope held between swings throws again by itself (the chain), in the air, once the last let-go is behind;
-        // never after a link that went nowhere or a press that missed, until the next press (SPEC §62, "One press, one throw")
-        boolean chain = assist && tether && !tetherPressed && fireCool == 0 && !CHAIN.stopped() && has(AscentPayloads.Tier.TETHER);
+        // never after a link that went nowhere (until the next press), nor just after a press that missed
+        // (SPEC §62, "The held chain, a link at a time")
+        boolean chain = assist && tether && !tetherPressed && fireCool == 0 && !CHAIN.stopped() && !CHAIN.paused(ticks)
+                && has(AscentPayloads.Tier.TETHER);
         marker(p, assist, tether);
         // the aim hold (SPEC §62): on wings and in flight, with the guard or a power's key held, the flight keeps the line
         // it had and the look is free; let go, and it follows the look again over a few ticks. A hit ends the hold.
@@ -434,8 +436,8 @@ public final class AscentMoves {
                 // a tapped swing taken in hand again is a held one: the key's let-go is its let-go
                 if (tether && swinging) heldForYou = false;
                 if (!tether && swinging && pressThrow && !heldForYou && (ropeTravel > 0 || ticks - fireAt <= AscentSwing.T.tapTicks)) {
-                    // a tap, not a hold (SPEC §62, "One press, one throw"): the rope thrown bites and swings its first arc,
-                    // letting go at its top by itself; never a second rope at something else
+                    // a tap, not a hold (SPEC §62, "The held chain, a link at a time"): the rope thrown bites and swings
+                    // its first arc, letting go at its top by itself; never a second rope at something else
                     heldForYou = true;
                     trace("a tap: the swing goes on to its top");
                 }
@@ -482,8 +484,8 @@ public final class AscentMoves {
                     // a rope strike holds itself: the rope has the creature until the blow or the let-go
                     zipTick(p, yaw);
                 } else if (!tether && assist && pressThrow && !heldForYou && ticks - fireAt <= AscentSwing.T.tapTicks) {
-                    // a tap, not a hold (SPEC §62, "One press, one throw"): the zip or sling thrown goes on by itself to its
-                    // lip or its let-go; never a second rope at something else
+                    // a tap, not a hold (SPEC §62, "The held chain, a link at a time"): the zip or sling thrown goes on
+                    // by itself to its lip or its let-go; never a second rope at something else
                     heldForYou = true;
                     trace("a tap: the zip goes on by itself");
                     zipTick(p, yaw);
@@ -768,7 +770,7 @@ public final class AscentMoves {
             // a pull up a face wants a press, to be in the air already, or a face in the way: running, the held rope's hop
             // from the ground only swings or slings
             AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
-            if (pk != null && refusedLately(p, pk.x, pk.y, pk.z)) pk = null;
+            if (pk != null && (refusedLately(p, pk.x, pk.y, pk.z) || spentAnchor(p, pk.x, pk.y, pk.z))) pk = null;
             if (pk != null) {
                 fired(p);
                 pressThrow = pressed;
@@ -793,8 +795,9 @@ public final class AscentMoves {
             missY = eye.y + look.y * 18;
             missZ = eye.z + look.z * 18;
             AscentFx.miss(p, missX, missY, missZ);
-            // one miss: the key held on throws nothing more until it is pressed again (SPEC §62, "One press, one throw")
-            CHAIN.missed();
+            // one miss: the key held on waits for the missed rope to fall back before it may throw again (SPEC §62, "The
+            // held chain, a link at a time"), never a second rope at once at whatever came into reach a tick later
+            CHAIN.missed(ticks);
             trace("rope missed");
             return false;
         }
@@ -885,6 +888,12 @@ public final class AscentMoves {
     /** Moving at a run across the ground (the held rope's hop into the next rope asks for it). */
     private static boolean running(LocalPlayer p) {
         return stepX * stepX + stepZ * stepZ > 0.15 * 0.15;
+    }
+
+    /** This press's held rope failed at this point's block after carrying you on: it isn't thrown at again this press. */
+    private static boolean spentAnchor(LocalPlayer p, double x, double y, double z) {
+        BlockPos b = AscentAnchors.blockOf(p.level(), x, y, z);
+        return b != null && CHAIN.spent(b.asLong());
     }
 
     /** The server refused a rope at this point's block within the last second: it isn't thrown at again yet. */
@@ -1007,9 +1016,11 @@ public final class AscentMoves {
         SPACE.at(p.level(), p);
         if (AscentSwing.steerFree(SPACE, K, yaw, false, WORK) || !WORK.blocked) return false;
         Vec3 eye = p.getEyePosition();
-        // the zip over is a link of the chain: it waits out the chain's pause and never follows a link that went nowhere
+        // the zip over is a link of the chain: it waits out the chain's pause, never follows a link that went nowhere and
+        // never takes an anchor this press failed at
         if (mayThrow && AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK)
-                && zipOk(PICK, K.x, K.y + AscentRules.HAND_HEIGHT, K.z) && !refusedLately(p, PICK.x, PICK.y, PICK.z)) {
+                && zipOk(PICK, K.x, K.y + AscentRules.HAND_HEIGHT, K.z) && !refusedLately(p, PICK.x, PICK.y, PICK.z)
+                && !spentAnchor(p, PICK.x, PICK.y, PICK.z)) {
             fired(p);
             pressThrow = false;
             throwTo(p, PICK, yaw);
@@ -2480,15 +2491,19 @@ public final class AscentMoves {
     }
 
     /**
-     * The rope left: a link of the chain ended. With the key still held, one that failed or went nowhere stops the chain
-     * until the next press (SPEC §62, "One press, one throw"). The tick's key state is {@link #tetherWas} by now.
+     * The rope left: a link of the chain ended. With the key still held, one that went nowhere stops the chain until the
+     * next press, and one that failed after carrying you on spends its anchor for this press (SPEC §62, "The held chain, a
+     * link at a time"). The tick's key state is {@link #tetherWas} by now; {@link #anchorBlock} is still the link's.
      */
     private static void linkEnded(LocalPlayer p) {
         String failed = linkFail;
         boolean arrived = linkArrived;
         linkFail = null;
         linkArrived = false;
-        if (CHAIN.ended(ticks, p.getX(), p.getY(), p.getZ(), tetherWas, arrived, failed)) trace("the held rope stops: " + CHAIN.why());
+        BlockPos b = anchorBlock;
+        long anchor = b == null ? dev.awaken.body.ascent.RopeChain.NO_ANCHOR : b.asLong();
+        if (CHAIN.ended(ticks, p.getX(), p.getY(), p.getZ(), tetherWas, arrived, failed, anchor)) trace("the held rope stops: " + CHAIN.why());
+        else if (failed != null && tetherWas) trace("the held rope goes on past a link that failed (" + failed + "), never to that anchor again");
     }
 
     /**
