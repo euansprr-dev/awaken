@@ -308,7 +308,7 @@ final class Basin extends Landform {
         find(ku - 2, kv - 1);
         find(-7, t.z(iShore) + 6);
         find(rockU, rockV);
-        find(t.x(3) + 9, t.z(3) - 3);
+        find(-10, mouthV + 3);
         land.must(new LandPieces.StoneRing(lx(ku), li(kv), 5.6, 6, mir * t.x(iK), t.z(iK), seed + 98, land));
     }
 }
