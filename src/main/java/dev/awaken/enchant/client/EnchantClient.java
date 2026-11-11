@@ -39,6 +39,7 @@ public final class EnchantClient {
     private EnchantClient() {}
 
     public static void init(IEventBus modBus) {
+        EnchantClientConfig.register();
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(EnchantContent.TABLE_BE.get(), InscribingTableRenderer::new));
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LetterParticle::register);

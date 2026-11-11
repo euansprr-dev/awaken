@@ -49,6 +49,8 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
     /** How a piece lies: flat on its side (an icon, a weapon), on its back (a breastplate, leggings), or standing (a helm, boots). */
     static final int FLAT = 0, BACK = 1, UPRIGHT = 2;
     private static final ItemStack BURIN = new ItemStack(dev.awaken.enchant.EnchantContent.BURIN.get());
+    private static final float[] NO_FLOATS = new float[0];
+    private static final int[] NO_INTS = new int[0];
 
     private final SpriteGetter sprites;
     private final BookModel book;
@@ -71,6 +73,17 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         /** The book's turn toward the writer's side, the piece's lie, its size, its middle and its top above the slate. */
         float bookYaw, pScale = 0.5F, pcx, pcy, pcz, pTop = 0.03F;
         int lie;
+        // the writer's own desk while they choose (SPEC §45.15): their pages over the near edge, the piece's sockets behind it
+        int pages, sockets, socketHover, socketHeld;
+        float pageYaw, holding;
+        final ItemStackRenderState[] page = new ItemStackRenderState[Desk.MAX];
+        final float[] pu = new float[Desk.MAX], py = new float[Desk.MAX], pv = new float[Desk.MAX], psz = new float[Desk.MAX],
+                lean = new float[Desk.MAX], lit = new float[Desk.MAX], su = new float[Desk.MAX], sv = new float[Desk.MAX];
+        final int[] sockNo = new int[Desk.MAX], sockColour = new int[Desk.MAX];
+
+        State() {
+            for (int i = 0; i < page.length; i++) page[i] = new ItemStackRenderState();
+        }
     }
 
     @Override
@@ -115,6 +128,35 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         if (s.mine && !piece.isEmpty()) InscribeScene.pieceTop(s.pTop);
         if (s.phase == InscribingTableBlockEntity.IDLE) items.updateForTopItem(s.burin, BURIN, ItemDisplayContext.NONE, be.getLevel(), null, 0);
         else s.burin.clear();
+        s.pages = s.sockets = 0;
+        if (s.mine && !EnchantClientConfig.classic() && Desk.shown(pt)) {
+            Desk.layout(pt);
+            s.pageYaw = -d.toYRot();
+            s.pages = Desk.OFFERS.size();
+            for (int i = 0; i < s.pages; i++) {
+                items.updateForTopItem(s.page[i], Desk.stack(Desk.OFFERS.get(i)), ItemDisplayContext.NONE, be.getLevel(), null, i);
+                s.pu[i] = Desk.PU[i];
+                s.py[i] = Desk.PY[i];
+                s.pv[i] = Desk.PV[i];
+                s.psz[i] = Desk.PS[i];
+                s.lean[i] = Desk.LEAN[i];
+                s.lit[i] = Desk.LIT[i];
+            }
+            if (InscribeScene.phase == InscribeScene.BOOK) {
+                s.sockets = Desk.room;
+                for (int j = 0; j < s.sockets; j++) {
+                    Desk.On on = j < Desk.ON.size() ? Desk.ON.get(j) : null;
+                    s.su[j] = Desk.SU[j];
+                    s.sv[j] = Desk.SV[j];
+                    // 0: an empty socket; -1: something written that isn't one of ours (a plain knot)
+                    s.sockNo[j] = on == null ? 0 : on.e() == null ? -1 : on.e().no();
+                    s.sockColour[j] = on == null || on.e() == null ? 0xB9C3D2 : on.e().colour();
+                }
+                s.socketHover = Desk.socket;
+                s.socketHeld = Desk.held;
+                s.holding = Minecraft.getInstance().gui.screen() instanceof InscribeScreen scr ? Desk.holding(pt, scr.age()) : 0F;
+            }
+        }
     }
 
     /**
@@ -197,14 +239,43 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
             ps.popPose();
         }
 
+        // the writer's pages: each the real page, leaning back toward their eyes, bright; what can't go on lies dim on the slate
+        for (int i = 0; i < s.pages; i++) {
+            if (s.page[i].isEmpty() || s.psz[i] <= 0.004F) continue;
+            ps.pushPose();
+            ps.translate(0.5F + s.rx * s.pu[i] - s.fx * s.pv[i], s.py[i], 0.5F + s.rz * s.pu[i] - s.fz * s.pv[i]);
+            ps.rotateDegrees(Axis.YP, s.pageYaw);
+            ps.rotateDegrees(Axis.XP, -s.lean[i]);
+            ps.scale(s.psz[i], s.psz[i], s.psz[i]);
+            int pl = s.lit[i] >= 0.99F ? LightCoordsUtil.FULL_BRIGHT : LightCoordsUtil.pack(Math.round(15 * s.lit[i]), LightCoordsUtil.sky(s.lightCoords));
+            s.page[i].submit(ps, out, pl, OverlayTexture.NO_OVERLAY, 0);
+            ps.popPose();
+        }
+
         if (s.open <= 0.01F && !writing) return;
         final float fx = s.fx, fz = s.fz, rx = s.rx, rz = s.rz, open = s.open, age = s.age, time = s.time;
         final int phase = s.phase, no = s.no, colour = s.colour == 0 ? InscribeScene.LAPIS : s.colour;
         final boolean mine = s.mine;
+        final int sockets = s.sockets, socketHover = s.socketHover, socketHeld = s.socketHeld;
+        final float holding = s.holding;
+        // copies only while the writer's own sockets show (the state is filled again before this draws)
+        final float[] su = sockets > 0 ? s.su.clone() : NO_FLOATS, sv = sockets > 0 ? s.sv.clone() : NO_FLOATS;
+        final int[] sockNo = sockets > 0 ? s.sockNo.clone() : NO_INTS, sockColour = sockets > 0 ? s.sockColour.clone() : NO_INTS;
         final float top = Math.max(0.03F, s.pTop + 0.006F);
         out.submitCustomGeometry(ps, RenderTypes.lightning(), (pose, vc) -> {
             Geo g = new Geo(pose, vc, fx, fz, rx, rz);
             float y = SLATE + 0.003F;
+            // the piece's sockets, let into the slate behind it: a glyph for each thing written, a dim square for each free
+            for (int j = 0; j < sockets; j++) {
+                boolean over = j == socketHover;
+                float sy = SLATE + 0.004F, h = Desk.SOCKET * (over ? 1.25F : 1F);
+                if (sockNo[j] == 0) g.square(su[j], sv[j], sy, h, 0.008F, InscribeScene.argb(InscribeScene.LAPIS, over ? 0.5F : 0.22F));
+                else {
+                    g.glyph(sockNo[j], su[j], sv[j], sy, h, InscribeScene.argb(InscribeScene.hot(sockColour[j], over ? 0.5F : 0.2F), over ? 0.95F : 0.7F), 0.012F);
+                    // a held press closes a ring round it; closed, it is scraped off
+                    if (j == socketHeld && holding > 0) g.ring(su[j], sv[j], sy + 0.001F, h * 1.7F, holding, 0.012F, InscribeScene.argb(0xFF7A6A, 0.9F));
+                }
+            }
             switch (phase) {
                 case InscribingTableBlockEntity.TRACE -> {
                     // the channel fills from the front round both sides to the back as the mark is traced
@@ -280,6 +351,32 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
                     float ox1 = (rx * s[i * 2 + 2] - fx * s[i * 2 + 3]) * 0.2F, oz1 = (rz * s[i * 2 + 2] - fz * s[i * 2 + 3]) * 0.2F;
                     line(px + ox0 * c + oz0 * sn, pz - ox0 * sn + oz0 * c, px + ox1 * c + oz1 * sn, pz - ox1 * sn + oz1 * c, y, width, argb);
                 }
+            }
+        }
+
+        /** A glyph lying on the slate at (u, v), {@code half} its half size (number below 1: the plain knot). */
+        void glyph(int no, float cu, float cv, float y, float half, int argb, float width) {
+            for (float[] s : Marks.of(no)) {
+                int n = s.length / 2;
+                for (int i = 0; i + 1 < n; i++)
+                    strip(cu + s[i * 2] * half, cv + s[i * 2 + 1] * half, cu + s[i * 2 + 2] * half, cv + s[i * 2 + 3] * half, y, width, argb);
+            }
+        }
+
+        /** An empty socket: a small square of light. */
+        void square(float cu, float cv, float y, float half, float width, int argb) {
+            strip(cu - half, cv - half, cu + half, cv - half, y, width, argb);
+            strip(cu + half, cv - half, cu + half, cv + half, y, width, argb);
+            strip(cu + half, cv + half, cu - half, cv + half, y, width, argb);
+            strip(cu - half, cv + half, cu - half, cv - half, y, width, argb);
+        }
+
+        /** {@code part} of a ring, from its far side round clockwise. */
+        void ring(float cu, float cv, float y, float r, float part, float width, int argb) {
+            int steps = Math.max(1, Math.round(28 * part));
+            for (int i = 0; i < steps; i++) {
+                float a0 = Mth.TWO_PI * i / 28F, a1 = Mth.TWO_PI * (i + 1) / 28F;
+                strip(cu + Mth.sin(a0) * r, cv + Mth.cos(a0) * r, cu + Mth.sin(a1) * r, cv + Mth.cos(a1) * r, y, width, argb);
             }
         }
 

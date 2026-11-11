@@ -174,11 +174,17 @@ public final class InscribeScene {
         }
     }
 
+    /** When the scene opened (the pages rise out of the book from then). */
+    static int openedAt() {
+        return openedAt;
+    }
+
     static void done(EnchantPayloads.Done d) {
         if (!live || d.session() != session) return;
         done = d;
         no = d.no();
         phase(WAKE);
+        Desk.picked = -1;
         // the piece's chord is the server's sound at the table; the client adds nothing over it
     }
 
@@ -196,6 +202,7 @@ public final class InscribeScene {
         closedAt = ticks;
         phase = NONE;
         drawing = false;
+        Desk.reset();
         Minecraft mc = Minecraft.getInstance();
         if (before != null) {
             mc.options.setCameraType(before);
@@ -612,19 +619,29 @@ public final class InscribeScene {
                 clear = 1 - 44.0 / guiH;
             }
             case WAKE -> {
-                // the turn (6-40 ticks) held close, the piece still filling the view; only then back a little for the card
-                boolean card = ticks - phaseAt >= InscribeScreen.CARD_AT - 6;
+                // the turn (6-40 ticks) held close, the piece still filling the view; only then back a little
+                boolean card = ticks - phaseAt >= InscribeScreen.CARD_AT - 6, classic = EnchantClientConfig.classic();
                 ty += card ? 0.06 : 0.03;
                 size = card ? 0.62 : 0.56;
                 frac = card ? 0.8 : 0.78;
-                clear = card ? InscribeScreen.cardTop(guiH) : 1 - 44.0 / guiH;
+                clear = card && classic ? InscribeScreen.cardTop(guiH) : 1 - 44.0 / guiH;
             }
             default -> {
-                // the piece on the slate (its mark faint as you rest on a row) with the floating book behind, over the pages
-                ty = slateY + lift + 0.02;
-                size = 0.62;
-                frac = 0.9;
-                clear = InscribeScreen.pagesTop(guiH) - 0.02;
+                if (EnchantClientConfig.classic()) {
+                    // the piece on the slate (its mark faint as you rest on a row) with the book behind, over the pages
+                    ty = slateY + lift + 0.02;
+                    size = 0.62;
+                    frac = 0.9;
+                    clear = InscribeScreen.pagesTop(guiH) - 0.02;
+                } else {
+                    // the whole desk: the piece across the slate, your pages hanging over its near edge, nothing over them
+                    tx = pos.getX() + 0.5 + fx * 0.14;
+                    tz = pos.getZ() + 0.5 + fz * 0.14;
+                    ty = slateY + 0.1;
+                    size = 1.12;
+                    frac = 0.92;
+                    clear = 1 - 22.0 / guiH;
+                }
             }
         }
         clear = Mth.clamp(clear, 0.3, 1.0);
