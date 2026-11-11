@@ -237,14 +237,16 @@ final class StationHands {
         float hand = StationClient.ownsCamera() ? mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.hudFov : 70F;
         double lens = cam.getFov() <= 1F ? 1 : Math.tan(Math.toRadians(hand) / 2) / Math.tan(Math.toRadians(cam.getFov()) / 2);
         double scale = upright ? StationView.FIST / StationView.FURNACE_FIST : ARM_SCALE;
-        if (w >= 0.999F) grow = StationView.armGrow(s, StationView.ARM_BACK / scale, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P, T);
+        double reach = upright ? 0.13 : StationView.HAND_BACK;
+        if (w >= 0.999F) grow = StationView.armGrow(s, StationView.ARM_BACK / scale, reach, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P, T);
         double model = StationView.ARM_BACK / scale * grow, fist = StationView.FIST / scale * grow;
         double c = smooth(carry);
         for (int h = 0; h < 2; h++) {
             int side = h == 0 ? 1 : -1;
             // what asks for this hand, and how far out it is: under the stack, or on a pass to a slot
             double out = 0, tx = 0, ty = 0, tz = 0;
-            if (side == main && c > 0 && hasHit) {
+            // (on its way back out the stack has left it: it goes from where it last held it)
+            if (side == main && c > 0) {
                 out = c;
                 tx = HIT[0];
                 ty = HIT[1];
@@ -261,7 +263,7 @@ final class StationHands {
                 }
             }
             if (out <= 0.004) continue;
-            StationView.armTo(tx, ty, tz, side, model, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, ARM, T);
+            StationView.armTo(tx, ty, tz, side, model, reach * grow, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, ARM, T);
             // in and out along its own line: from under the strip to where it works
             double back = (1 - out) * (ARM[7] + 0.06);
             double fxw = ARM[0] + ARM[3] * back, fyw = ARM[1] + ARM[4] * back, fzw = ARM[2] + ARM[5] * back;

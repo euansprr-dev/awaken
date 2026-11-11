@@ -24259,14 +24259,14 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   to 14 degrees with the pointer's speed: gone.
 - **The arm** is one straight vanilla arm (`Rig.worldArms`), and **a pure function of where the stack is held, the
   view and the layout** (`StationView.armTo`): no clock, no speed, nothing remembered. The fist's middle sits
-  `HAND_BACK` 0.11 short of the stack. The far end lies on the line of sight through a point of the strip's middle
-  line (`ROOT_INSET` 34 px inside its sides, under the hand's own side of the stack), `ROOT_NEAR` 0.62 of the way out
-  to the fist, or farther along that line when the arm could not reach: so on screen the arm always runs from the fist
-  to under the strip, in any window, layout or station, and it rises toward you as an arm does. It is drawn 1 to 1.8
-  times its model's length (`Rig.armStretch`), found exactly, at a fist 0.8 of a grid square across times one number
-  for the scene (`StationView.armGrow`, 1 in the usual view, up to 1.5 where the strip is far from the station), each
-  arm at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid (0.95), so what
-  lies under it is not seen through it. No elbow, no second piece, no cut end in view.
+  `HAND_BACK` 0.11 short of the stack. The arm takes the shortest line from the stack to the line of sight through a
+  point under the strip (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side
+  of the stack): so on screen it always runs from the fist to under the strip, in any window, layout or station, and
+  in the world it lies back toward you across the table. It is drawn 1 to 1.8 times its model's length
+  (`Rig.armStretch`), found exactly, at a fist 0.8 of a grid square across (times `StationView.armGrow`, one number
+  for the scene: 1 in every usual window, his narrow room beside JEI's panels included, up to 1.5 in one too small),
+  each arm at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid (0.95),
+  so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
   **What trembled:** the arm's line leaned by up to 0.08 against the pointer's speed, a speed taken a frame at a time
   from a real mouse (noise, times a lever of half an arm); its length was searched in twentieths, so it grew and shrank
   in steps as the pointer moved; and the hand pass had vanilla's sway in it (below).
@@ -24288,8 +24288,8 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm.
 - Tests: `stations_hand_never_hides` (every scene, every slot, eight window sizes, with and without side panels, either
   hand: the stretch is 1 to 1.8 and the arm's far end is under the strip or off the frame; at his window, 427 by 240,
-  the arms never need their largest size; on a table the arm never lies over the result and only nearer squares are
-  under the sleeve) and `stations_hand_steady` (the same held place gives the same arm whatever was asked before; as
+  the arms never need their largest size; on a table the arm never lies over the result and no square farther than
+  the stack is under the sleeve) and `stations_hand_steady` (the same held place gives the same arm whatever was asked before; as
   the held place crosses a station in 400 steps the arm's length, its line and its far end on screen each change a
   little at every step, never by a jump). On film: the pilot's `handslog on` writes a line a frame of where each arm
   was drawn (`anims.client.HandsLog`); `tools/autopilot/hands-smooth.txt` holds a stack still in each scene and sweeps
