@@ -34,6 +34,8 @@ final class UnlockMoment {
 
     /** Ticks: the opening, the hold, the fade; and the rest between two titles. */
     static final int OPEN = 14, HOLD = 98, FADE = 18, REST = 14;
+    /** The most titles that wait their turn. */
+    private static final int MOST = 5;
     /** The name's size against text, stepping down for a long name on a narrow screen. */
     private static final float[] SCALES = {3F, 2.4F, 2F, 1.5F};
     private static final Pattern TOKEN = Pattern.compile("\\{(hold|key\\.[a-z0-9_.]+)}");
@@ -66,6 +68,12 @@ final class UnlockMoment {
         // the same one twice in a row is one unlock (a scene and its server both saying so)
         if (u == null || shown != null && shown.id().equals(u.id())) return;
         for (Unlocks.Unlock q : QUEUE) if (q.id().equals(u.id())) return;
+        // play never gives more than three at once (a rank, its stratum, a rung); a command that hands out everything
+        // would otherwise hold the screen and every message for minutes
+        if (QUEUE.size() >= MOST) {
+            dev.awaken.Awaken.LOG.info("[unlock] {} is not shown: {} titles are already waiting", u.id(), QUEUE.size());
+            return;
+        }
         QUEUE.addLast(u);
         dev.awaken.Awaken.LOG.info("[unlock] {} waits for its title ({} in line)", u.id(), QUEUE.size());
     }

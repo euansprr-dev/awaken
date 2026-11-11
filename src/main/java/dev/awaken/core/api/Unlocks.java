@@ -11,8 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * The Unlock title (SPEC §71.2; Euan, 2026-11-11: "the big title, and it says you just unlocked double jump. Press space
  * in the air again to use it ... And maybe every time you unlock a major thing in the game, it actually shows you that
  * as well"). One kit for every major unlock: a new way to move, a new power, a new rank, a new layer of the world.
- * A module registers what can be unlocked (on both sides, in its common init) and shows it by id; the System draws it
- * as the discovery title's bigger sibling, alone on the screen, never in a fight, never paced and never filed.
+ * A module registers what can be unlocked (on both sides, in its common init) and shows it by id, or makes one on the
+ * spot when its words depend on the moment; the System draws it as the discovery title's bigger sibling, alone on the
+ * screen, never in a fight, never paced and never filed. It replaces a plain announcement: never a window and a title.
  *
  * <p>Installed by the signal module; until then every call does nothing, so callers can wire their unlocks early.
  */
@@ -52,6 +53,8 @@ public final class Unlocks {
     public interface Server {
         /** This player has just unlocked it: its title plays as soon as they are free (out of a fight, no screen). */
         default void show(ServerPlayer player, Identifier unlock) {}
+        /** The same for an unlock made on the spot (its words depend on the moment: a power and the key it landed on). */
+        default void show(ServerPlayer player, Unlock unlock) {}
     }
 
     /** Client side (call only from client code). */
@@ -76,6 +79,11 @@ public final class Unlocks {
     }
 
     public static void show(ServerPlayer player, Identifier unlock) {
+        server.show(player, unlock);
+    }
+
+    /** Shows an unlock that is not registered: one made for this moment (a new power, a new rank, a new stratum). */
+    public static void show(ServerPlayer player, Unlock unlock) {
         server.show(player, unlock);
     }
 

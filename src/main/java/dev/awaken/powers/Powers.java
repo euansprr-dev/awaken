@@ -99,7 +99,7 @@ public final class Powers {
             int slot = autoSlot(l, type);
             Progression.markNewThing(player, "power " + type.name);
             DirectorLog.log(player, "powers", "learned " + id + " variant " + type.variant(v).name() + (slot >= 0 ? " on slot " + slot : ""));
-            if (announce) announce(player, type, v, 1, "New power", slot);
+            if (announce) unlocked(player, type, slot);
             PowerNotices.learned(player, type, v, slot);
             markDirty(player);
             return LearnResult.LEARNED;
@@ -175,6 +175,24 @@ public final class Powers {
             Fx.at(player.level(), FxKind.EVOLVE, FxStyle.of(type.family), player.position()).caster(player).aux(1).level(1).powerOf(type).send();
         }
         return true;
+    }
+
+    /**
+     * A new power is named in the Unlock title (SPEC §71.2; Euan, 2026-11-11: "every time you unlock a major thing in the
+     * game, it actually shows you that as well"), with the key it landed on. The title is the one announcement: no
+     * window beside it. What the power does stays in the Journal's notice and on the Powers page.
+     */
+    private static void unlocked(ServerPlayer player, PowerType type, int slot) {
+        String how = type.isPassive() ? "It works on its own while you have it"
+                : slot >= 0 ? "Press {" + keyOf(slot) + "} to use it"
+                : "Press {key.awaken.status} and put it on a key";
+        dev.awaken.core.api.Unlocks.show(player, new dev.awaken.core.api.Unlocks.Unlock(
+                dev.awaken.Awaken.id("unlock/power/" + type.path), "New power", type.name, how, type.family.colour));
+    }
+
+    /** The key mapping a slot is cast with (the title draws the player's own key from it). */
+    static String keyOf(int slot) {
+        return slot == Loadout.ULTIMATE ? "key.awaken.ultimate" : slot == Loadout.MOVEMENT ? "key.awaken.movement" : "key.awaken.power_" + (slot + 1);
     }
 
     private static void announce(ServerPlayer player, PowerType type, int variant, int level, String title, int slot) {

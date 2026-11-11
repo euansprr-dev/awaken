@@ -96,7 +96,10 @@ public final class DescentModule {
             DescentSync.push(player);
             int open = DescentSync.openTo(player);
             if (open > Math.max(1, before) && open <= Strata.COUNT && Strata.def(open).opensAt() == rank) {
-                Signal.toast(player, Component.literal("A new stratum opened below: " + Strata.label(open)));
+                // a new layer of the world is named in the Unlock title (SPEC §71.2), in its rank's colour, after the rank's own
+                dev.awaken.core.api.Unlocks.show(player, new dev.awaken.core.api.Unlocks.Unlock(
+                        dev.awaken.Awaken.id("unlock/stratum/" + open), "New stratum", Strata.def(open).name(),
+                        "Stratum " + open + " has opened below you", rank.colour));
             }
         });
         DescentCommands.register();

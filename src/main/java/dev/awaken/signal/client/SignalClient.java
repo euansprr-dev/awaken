@@ -95,6 +95,10 @@ public final class SignalClient {
             if (u != null) UnlockMoment.offer(u);
             else dev.awaken.Awaken.LOG.warn("[unlock] the server named an unlock this client does not know: {}", msg.id());
         });
+        event.register(SignalPayloads.UnlockMade.TYPE, (msg, ctx) -> {
+            net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(msg.id());
+            if (id != null) UnlockMoment.offer(new dev.awaken.core.api.Unlocks.Unlock(id, msg.label(), msg.name(), msg.how(), msg.colour()));
+        });
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {
