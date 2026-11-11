@@ -137,6 +137,12 @@ public final class Figure {
             mc.getEntityRenderDispatcher().submit(s.renderState(), camera, 0.0, 0.0, 0.0, poseStack, collector);
         }
 
+        /** As GuiEntityRenderer: the body's middle at the picture's middle (the base class puts the origin at its foot). */
+        @Override
+        protected float getTranslateY(int height, int guiScale) {
+            return height / 2F;
+        }
+
         @Override
         protected String getTextureLabel() {
             return "awaken figure";
