@@ -190,12 +190,12 @@ final class TogetherTests {
             var server = h.getLevel().getServer();
             TogetherNet.forget();
             TogetherNet.pass(server);
-            h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 1, "the party is sent once");
+            h.assertTrue(TogetherNet.sendsForTest(a.getUUID()) == 1, "the party is sent once");
             for (int i = 0; i < 4; i++) TogetherNet.pass(server);
-            h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 0, "and not again while nothing changes");
+            h.assertTrue(TogetherNet.sendsForTest(a.getUUID()) == 1, "and not again while nothing changes");
             b.setHealth(b.getMaxHealth() * 0.5F);
             TogetherNet.pass(server);
-            h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 1, "a partner's health changing is one more");
+            h.assertTrue(TogetherNet.sendsForTest(a.getUUID()) == 2, "a partner's health changing is one more");
         } finally {
             two.leave();
         }
@@ -244,8 +244,9 @@ final class TogetherTests {
             h.assertTrue(Math.abs(a.getHealth() - a.getMaxHealth() * (float) TogetherConfig.liftHealth()) < 0.01F, "at a third of their health");
             Fights.refillGraceForTest(a.getUUID());
             kill(h, a);
+            if (a.isAlive() && !Fights.down(a.getUUID())) a.hurtServer(h.getLevel(), h.getLevel().damageSources().fellOutOfWorld(), 100_000F); // inside the first blow's cooldown the same blow lands nothing
             h.assertFalse(Fights.down(a.getUUID()), "once a floor: the second killing blow is the death");
-            h.assertFalse(Runs.run(a).active(), "and it ends their run as it always did");
+            h.assertFalse(Runs.run(a).active(), "and it ends their run as it always did (health " + a.getHealth() + ", dying " + a.isDeadOrDying() + ")");
         } finally {
             teardown(h, g, two);
         }
@@ -492,9 +493,8 @@ final class TogetherTests {
             h.assertTrue(Math.abs(before - p.getHealth() - 6F) < 0.01F, "a blow does what it did");
             var server = h.getLevel().getServer();
             TogetherNet.forget();
-            one.sent();
             for (int i = 0; i < 6; i++) TogetherNet.pass(server);
-            h.assertTrue(Pair.count(one, TogetherNet.Party.class) <= 2, "and the wire carries their own row, then nothing but its changes");
+            h.assertTrue(TogetherNet.sendsForTest(p.getUUID()) == 1, "and the wire carries their own row once, then nothing while it doesn't change");
         } finally {
             if (z != null) z.discard();
             one.leave();

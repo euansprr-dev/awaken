@@ -31,7 +31,7 @@ with no local Java (Euan was playing): everything was compiled and tested throug
 - Match my friend; shown the way; leads from a partner's finds; the Ours page; marks on the Tasks page.
 - The finishing film for everyone (the boss plan isn't built); the helm rule for the Far Landing (not merged here).
 - Hard-feat titles and records refusing Gentle (no counter is touched yet: list them with the progression owner).
-- The two-client CI probe and the wire baseline numbers (the pair kit can count packets: `Pair.count`).
+- The two-client CI probe and the wire baseline numbers (a test player's channel takes no custom payloads, so tests count sends in `TogetherNet`).
 - Dead branches left where code still asks `RidingHooks.rider` or `run.riding` (always false now): gates, progression,
   trials. Harmless; a cleanup for whoever next touches those files.
 

@@ -173,6 +173,8 @@ public final class TogetherNet {
 
     private static boolean dirty = true;
     private static final Map<UUID, Party> SENT = new HashMap<>();
+    /** How many times each player's party has been sent this session (a test player's channel takes no payloads, so tests count here). */
+    private static final Map<UUID, Integer> SENDS = new HashMap<>();
 
     /** Something a strip draws has changed: everyone hears on the next pass. */
     static void dirty() {
@@ -181,7 +183,12 @@ public final class TogetherNet {
 
     static void forget() {
         SENT.clear();
+        SENDS.clear();
         dirty = true;
+    }
+
+    static int sendsForTest(UUID id) {
+        return SENDS.getOrDefault(id, 0);
     }
 
     static void forget(UUID id) {
@@ -217,7 +224,10 @@ public final class TogetherNet {
                 for (ServerPlayer m : PartyService.online(p)) members.add(member(p, m));
             }
             Party now = new Party(members);
-            if (!now.equals(SENT.put(p.getUUID(), now))) AwakenNet.send(p, now);
+            if (!now.equals(SENT.put(p.getUUID(), now))) {
+                SENDS.merge(p.getUUID(), 1, Integer::sum);
+                AwakenNet.send(p, now);
+            }
         }
         dirty = false;
     }

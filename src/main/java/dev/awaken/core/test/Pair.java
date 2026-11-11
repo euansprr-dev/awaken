@@ -47,13 +47,4 @@ public final class Pair {
     public static Two of(GameTestHelper h) {
         return new Two(one(h, "pair", 0), one(h, "pair", 2));
     }
-
-    /** How many of the packets sent to this player since the last look were of this class. */
-    public static int count(AwakenTests.Live live, Class<?> payload) {
-        int n = 0;
-        for (Object o : live.sent()) {
-            if (o instanceof net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket c && payload.isInstance(c.payload())) n++;
-        }
-        return n;
-    }
 }
