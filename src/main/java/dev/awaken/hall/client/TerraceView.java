@@ -140,7 +140,9 @@ final class TerraceView {
             // what you haven't found stays a shape, lit or not
             lifted = new Placed[] {Placed.suit(h.set(), h.x(), h.cy() - h.h() * .02F, 0F, h.scale() * 1.07F, YAW, PITCH, Placed.all(hidden ? Placed.SHAPE : Placed.FULL), 1F)};
         }
-        s.glow(h.x(), h.feet() - 2F, h.h() * .52F, h.h() * .13F, 0xFFCF7A, .85F);
+        s.glow(h.x(), h.feet() - 2F, h.h() * .56F, h.h() * .15F, 0xFFCF7A, .95F);
+        // a cool light behind it, so it stands out from the row it is in
+        s.glow(h.x(), h.cy(), h.h() * .52F, h.h() * .74F, 0xC4E6FF, .34F);
         s.g.submitPictureInPictureRenderState(new PicState(KEY_HOVER, 0, 0, Stage.W, Stage.H, real, liftVersion, lifted, RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, -1, s.g.pose()));
         s.g.nextStratum();
     }
@@ -169,12 +171,15 @@ final class TerraceView {
         ArmourSet held = held(o);
         if (held != null) {
             TerraceLayout.Fig f = TerraceLayout.of(held);
-            s.fill(f.x() - 26F, f.feet() + 6F, f.x() + 26F, f.feet() + 10F, Stage.LANTERN);
-            s.centre("On this stand · " + stood(o) + " of 4", f.x(), f.feet() + 16F, 2F, Stage.LANTERN);
+            // under its feet where there is room; the nearest row stands at the foot of the sheet, so there it goes over its head
+            boolean under = f.feet() + 44F < Stage.H;
+            float my = under ? f.feet() + 6F : f.feet() - f.h() * 1.12F - 12F;
+            s.fill(f.x() - 26F, my, f.x() + 26F, my + 4F, Stage.LANTERN);
+            s.centre("On this stand · " + stood(o) + " of 4", f.x(), under ? my + 10F : my - 26F, 2F, Stage.LANTERN);
         }
         // the hover state: the band's corners round the one you're about to click
         TerraceLayout.Fig h = hover;
-        if (h != null) s.brackets(h.x() - h.h() * .40F, h.feet() - h.h() * 1.12F, h.x() + h.h() * .40F, h.feet() + 8F, Math.max(14F, h.h() * .12F), 3, HOT);
+        if (h != null) s.brackets(h.x() - h.h() * .40F, h.feet() - h.h() * 1.12F, h.x() + h.h() * .40F, Math.min(Stage.H - 6F, h.feet() + 8F), Math.max(16F, h.h() * .14F), 4, HOT);
     }
 
     private void caption(Stage s, ArmourPayloads.@Nullable Offers o) {
@@ -191,7 +196,7 @@ final class TerraceView {
             hoverName = Stage.blackletter(hidden ? "Something you have not found" : h.set().setName);
         }
         s.titleCentre(hoverName, 854F, 26F, 2F, 0xFF000000 | Stage.RANK[h.tier()]);
-        s.centre(words(o, h, hidden), 854F, 92F, 3F, SuitState.count(o, h.set(), SuitState.READY) > 0 ? Stage.GOOD : Stage.LABEL);
+        WallView.words(s, words(o, h, hidden), filterX, SuitState.count(o, h.set(), SuitState.READY) > 0 ? Stage.GOOD : Stage.LABEL);
     }
 
     private static String words(ArmourPayloads.@Nullable Offers o, TerraceLayout.Fig h, boolean hidden) {
