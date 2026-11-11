@@ -389,6 +389,13 @@ styled("shieldblade", lean=3, sink=0.3)
 styled("warstaff", lean=3, sink=0.2)
 styled("precursor", lean=2)
 
+# The Axe's charge holds its own heavy's set (Euan 2026-11-11, "Yes, the Axe too", of the charge held raised; SPEC §25 "The
+# Maul's charge is held raised"): its chop's first key, the axe high over the shoulder, trembling. The shared draw held it
+# low and back to the blade side, then loosed the chop from overhead. Unrigged, so it is made here, not by arms_rig4.
+AXE_SET = CLIPS["arms_axe_heavy"].keys[0][1]
+held("arms_axe_heavy_charge", AXE_SET, [nudge(AXE_SET, ra=(2, 1, 0), rise=0.2), nudge(AXE_SET, ra=(-2, -1, 0), rise=-0.2)], 4,
+     "axe: the heavy's set held, high over the shoulder")
+
 # Third person from first person's blade (arms_rig4.py): for its styles each move's weapon follows first person's own
 # path and the body follows it (the chest turning, both hands on the grip); every other move keeps its kind's poses.
 # BASE keeps every clip as its kind made it (the rig's bodies). A rigged style plays its own slide, fall and dodge

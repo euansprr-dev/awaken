@@ -7921,12 +7921,25 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     off on the blow's own power curve: the head crashes into view from above and meets the same hit pose as before, now at
     207 degrees a tick against 79 (the drive is the same 1.05 ticks over a longer arc); the carry and the way home move by a
     few hundredths of the screen. Third person already lifted the Maul over the head for its charge (its rig was solved
-    before the cut into view and was left as it is). The other overhead heavies (Longsword, Axe, Greatblade, the hand-keyed
-    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead. Filmed in the game on CI
+    before the cut into view and was left as it is). The other overhead heavies (Longsword, Greatblade, the hand-keyed
+    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead; the Axe is raised too (next). Filmed in the game on CI
     (`tools/autopilot/arms-maul-charge.txt`, run 42965422512): the draw lifts the head out of the top in about ten ticks,
     the hold keeps the haft rising out of the top-right corner with both forearms in view (as large as the other heavies'
     held arms), and the release brings the head in from above to the hit, which the server confirmed. Held 0.75 blocks out
     instead, the fists would sit barely higher than before for arms a fifth smaller: the lift was worth more.
+  - *The Axe's charge is held raised too* (Euan 2026-11-11, "Yes, the Axe too"). Its cut-into-view set held the axe up in
+    front, the top leaning 27 degrees ahead and 36 in toward the middle. Raised the Maul's way (upright, the fist this high)
+    its head left the frame, and a one-handed axe raised has to be seen to be one, so it is drawn back over the sword
+    shoulder instead: the haft angled up to the top right corner about 45 degrees off upright with the whole head in that
+    corner, the fist at the crosshair's height on the sword side (`RAISED_HEAVY`: the grip at ndc 0.2, -0.1, 0.75 blocks
+    ahead, turned 45 degrees). Held that far out, its chop down meets the same hit at 235 degrees a tick, the Maul's pace
+    (227); nearer it would be 259. Its arm alone limits it: the arm's end stays 1.37 under the middle in the hold and 1.2
+    through the drive (the old hold's reached 1.14). The hit key is unchanged; the follow-through's first ticks run up to
+    0.15 blocks lower (the arc into them is longer), and the way home is the old one. Third person held the shared draw (the
+    blade low and back to the blade side) and then loosed the Axe's own chop from overhead, so it now holds its own: the
+    chop's first key, high over the shoulder, trembling (`arms_axe_heavy_charge`, made in `arms_moves.py` since the Axe is
+    not rigged; `ArmsClips.OWN_CHARGE`). Test: `arms_feel_rules` holds the fist on the sword side by the middle's height
+    and the hand's up tipped toward that shoulder, never ahead.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
