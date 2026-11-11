@@ -184,7 +184,12 @@ final class SwingTests {
                 h.assertTrue(at.z < -0.2F && Math.abs(x) < 2F && Math.abs(y) < 2.2F, a.id() + "'s charge keeps its hand by the frame (" + x + ", " + y + ")");
                 // the Maul's is held raised, its fist above the middle of the screen (Euan 2026-11-11: "instead of actually
                 // like bringing it up as if you were going to hit down", of the hammer held low and leaning ahead)
-                if (a.id().equals(Arms.MAUL)) h.assertTrue(y > 0F, "the Maul's charge holds it raised (" + x + ", " + y + ")");
+                if (a.id().equals(Arms.MAUL) && st.offHand() != null) {
+                    // and its haft stands up from the fists, never leaning ahead of them as a hammer presented (the old
+                    // hold's leaned 31 degrees ahead): up the haft is from the off hand to the sword hand
+                    Vector3f up = q.transform(new Vector3f(st.hand()).sub(st.offHand()), new Vector3f()).normalize();
+                    h.assertTrue(y > 0F && up.y > 0.9F && up.z > -0.05F, "the Maul's charge holds it raised (fist " + x + ", " + y + "; haft " + up + ")");
+                }
             }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,

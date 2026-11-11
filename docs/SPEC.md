@@ -7796,7 +7796,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     207 degrees a tick against 79 (the drive is the same 1.05 ticks over a longer arc); the carry and the way home move by a
     few hundredths of the screen. Third person already lifted the Maul over the head for its charge (its rig was solved
     before the cut into view and was left as it is). The other overhead heavies (Longsword, Axe, Greatblade, the hand-keyed
-    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead.
+    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead. Filmed in the game on CI
+    (`tools/autopilot/arms-maul-charge.txt`, run 42965422512): the draw lifts the head out of the top in about ten ticks,
+    the hold keeps the haft rising out of the top-right corner with both forearms in view (as large as the other heavies'
+    held arms), and the release brings the head in from above to the hit, which the server confirmed. Held 0.75 blocks out
+    instead, the fists would sit barely higher than before for arms a fifth smaller: the lift was worth more.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the

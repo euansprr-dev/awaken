@@ -1,8 +1,8 @@
 # The Maul's charge held raised (SPEC §25 "The Maul's charge is held raised"; Euan 2026-11-11: "it's just holding it in
 # front of the character instead of actually like bringing it up as if you were going to hit down"):
-#   maul_held        a still of the charge held, at the world's own speed: the fists high, the haft rising out of the top,
-#                    neither arm's end on the bottom edge
-#   clips/maul_heavy the press, the draw up, the hold, the release and the slam at 2 ticks a second, a picture a half tick
+#   clips/maul_heavy the press, the draw up, the hold (the fists high, the haft rising out of the top, neither arm's end
+#                    on the bottom edge), the release and the slam at 2 ticks a second, a picture a half tick. No still of
+#                    the Maul's hold: the runner waits for the terrain before a shot (31 s on 11 Nov), long past a hold
 #   <x>_held         the other overhead heavies' held charges, as they still are, to set beside it
 # ci knobs: PACK=perf,feel,comfort,world
 world armsmaulcharge creative 781
@@ -34,10 +34,6 @@ wait 20
 cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
 arms waitserver 20
 shot maul_rest
-arms heavy 60
-wait 32
-shot maul_held
-wait 60
 arms rate 2
 wait 2
 arms film maul_heavy 64 0.5 2
