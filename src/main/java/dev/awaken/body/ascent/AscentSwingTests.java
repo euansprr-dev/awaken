@@ -22,6 +22,7 @@ final class AscentSwingTests {
         dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, AscentSwingTests::held);
         dev.awaken.core.test.AwakenTests.register("ascent_rope_chain", 20, AscentSwingTests::ropeChain);
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_aimed", 40, AscentSwingTests::aimed);
         dev.awaken.core.test.AwakenTests.register("ascent_sky_stair", 20, AscentSwingTests::skyStair);
     }
 
@@ -415,6 +416,63 @@ final class AscentSwingTests {
             AscentSwing.guide = guide;
             AscentSwing.T = was;
             for (BlockPos q : BlockPos.betweenClosed(o.offset(-2, 0, -2), o.offset(18, 20, 50))) level.setBlock(q, air, flags);
+        }
+        h.succeed();
+    }
+
+    /**
+     * The rope goes where you look (SPEC §62), from real blocks: a floor, an oak 14 ahead (its crown 5 wide, its top 7
+     * up), and past it a stone wall 14 high. Looking at the crown from a sprint jump, the rope takes that crown, as a
+     * sling past its top (an oak gives no swing), though the flight after the crown meets the wall: the fans' rule, which
+     * wants the whole flight clear, refuses that same sling. The server takes the crown as real. Looking up at the sky
+     * the look meets nothing; looking down at the floor it meets the floor 3 or so off (where a missed rope stops), and
+     * the floor gives no sling.
+     */
+    private static void aimed(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO).atY(level.getMaxY() - 80);
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockState leaves = Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true);
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
+        boolean guide = AscentSwing.guide, hold = AscentSwing.hold;
+        AscentSwing.Tune was = AscentSwing.T;
+        AscentSwing.T = AscentSwing.Tune.JAR;
+        for (BlockPos q : BlockPos.betweenClosed(o.offset(-2, 0, -2), o.offset(18, 24, 50))) level.setBlock(q, air, flags);
+        try {
+            AscentSwing.guide = true;
+            AscentSwing.hold = true;
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(0, 0, 0), o.offset(16, 0, 48))) level.setBlock(q, stone, flags);
+            for (int y = 1; y <= 5; y++) level.setBlock(o.offset(8, y, 20), Blocks.OAK_LOG.defaultBlockState(), flags);
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 4, 18), o.offset(10, 7, 22))) {
+                if (level.getBlockState(q).isAir()) level.setBlock(q, leaves, flags);
+            }
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(0, 1, 27), o.offset(16, 14, 28))) level.setBlock(q, stone, flags);
+            LevelSpace space = new LevelSpace().at(level, null);
+            double bx = o.getX(), by = o.getY() + 1, bz = o.getZ();
+            AscentSwing.Work w = new AscentSwing.Work();
+            AscentSwing.Pick pick = new AscentSwing.Pick();
+            // off the ground in a sprint jump, heading at the tree, the eye on the middle of the crown's face
+            AscentRules.Kin hand = new AscentRules.Kin().set(bx + 8.5, by + 1 + AscentRules.HAND_HEIGHT, bz + 4.5, 0, 0.3, 0.36);
+            double ex = bx + 8.5, ey = by + 1 + 1.62, ez = bz + 4.5;
+            float pitch = (float) -Math.toDegrees(Math.atan2(by + 4.5 - ey, 18 - 4.5));
+            h.assertTrue(AscentSwing.aimed(space, hand, ex, ey, ez, 0, pitch, AscentRules.TETHER_RANGE, true, w, pick),
+                    String.format("the rope takes the crown you look at (the look met it %.1f off)", w.aimT));
+            h.assertTrue(pick.sling && !pick.zip && Math.abs(pick.top - (by + 7)) < 0.01 && pick.z - bz > 17.5 && pick.z - bz < 19.5,
+                    String.format("a sling past that crown's top: sling %b, top %.2f at z %.2f", pick.sling, pick.top - by, pick.z - bz));
+            h.assertTrue(!AscentSwing.slingClear(space, hand, pick.px, pick.py, pick.pz, w),
+                    "the fans' rule (the whole flight clear) refuses the same sling: its flight meets the wall past the crown");
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            p.snapTo(bx + 8.5, by + 1, bz + 4.5, 0, 0);
+            h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the crown as a real anchor");
+            h.assertTrue(!AscentSwing.aimed(space, hand, ex, ey, ez, 0, -60, AscentRules.TETHER_RANGE, true, w, pick) && Double.isNaN(w.aimT),
+                    "a look at the sky meets nothing");
+            h.assertTrue(!AscentSwing.aimed(space, hand, ex, ey, ez, 0, 40, AscentRules.TETHER_RANGE, true, w, pick)
+                    && w.aimT > 2 && w.aimT < 6, String.format("a look at the floor meets it %.1f off and gives no sling", w.aimT));
+        } finally {
+            AscentSwing.guide = guide;
+            AscentSwing.hold = hold;
+            AscentSwing.T = was;
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(-2, 0, -2), o.offset(18, 24, 50))) level.setBlock(q, air, flags);
         }
         h.succeed();
     }

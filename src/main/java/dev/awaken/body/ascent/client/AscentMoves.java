@@ -134,6 +134,9 @@ public final class AscentMoves {
 
     // ---- the assisted swing (SPEC §17.31) ----
     private static final LevelSpace SPACE = new LevelSpace();
+    /** The missed rope's look (it stops at the first block it meets); whether the last pick was the look's own target. */
+    private static final dev.awaken.body.ascent.SwingSpace.Hit MISS_HIT = new dev.awaken.body.ascent.SwingSpace.Hit();
+    private static boolean pickAimed;
     private static final AscentSwing.Work WORK = new AscentSwing.Work();
     private static final AscentSwing.Pick PICK = new AscentSwing.Pick();
     private static final AscentRules.Kin HAND = new AscentRules.Kin();
@@ -771,6 +774,8 @@ public final class AscentMoves {
             // from the ground only swings or slings
             AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
             if (pk != null && (refusedLately(p, pk.x, pk.y, pk.z) || spentAnchor(p, pk.x, pk.y, pk.z))) pk = null;
+            // the look met something up ahead (a tree, a roof) that the rope passed over for another: say so once
+            if (pressed && pk != null && !pickAimed && !Double.isNaN(WORK.aimT) && WORK.aim.y > HAND.y + 1) lookNotTaken(p, pk);
             if (pk != null) {
                 fired(p);
                 pressThrow = pressed;
@@ -791,9 +796,13 @@ public final class AscentMoves {
             // straight overhead is zipped to and hung from, and the marker shows that too
             missAt = ticks;
             Vec3 look = p.getLookAngle();
-            missX = eye.x + look.x * 18;
-            missY = eye.y + look.y * 18;
-            missZ = eye.z + look.z * 18;
+            // the missed rope stops at the first block it meets (SPEC §62, "The rope goes where you look"): never on
+            // through the tree you looked at
+            double far = SPACE.at(p.level(), p).ray(eye.x, eye.y, eye.z, look.x, look.y, look.z, 18, MISS_HIT) ? Math.max(1, MISS_HIT.t) : 18;
+            missX = eye.x + look.x * far;
+            missY = eye.y + look.y * far;
+            missZ = eye.z + look.z * far;
+            if (assist) lookNotTaken(p, null);
             AscentFx.miss(p, missX, missY, missZ);
             // one miss: the key held on waits for the missed rope to fall back before it may throw again (SPEC §62, "The
             // held chain, a link at a time"), never a second rope at once at whatever came into reach a tick later
@@ -844,6 +853,18 @@ public final class AscentMoves {
         return true;
     }
 
+    /**
+     * A press whose rope didn't go to what the look met: one line in the log (real play shows which trees the rope
+     * passed over and why, SPEC §62 "The rope goes where you look"). {@code took}: what it took instead, or null (a miss).
+     */
+    private static void lookNotTaken(LocalPlayer p, AscentSwing.@org.jspecify.annotations.Nullable Pick took) {
+        AscentSwing.Work w = WORK;
+        String met = Double.isNaN(w.aimT) ? String.format("nothing within %.0f", reach(p))
+                : String.format("%s %.1f off", p.level().getBlockState(new BlockPos(w.aim.bx, w.aim.by, w.aim.bz)).getBlock(), w.aimT);
+        String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling" : "a swing", took.len);
+        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which gives no swing or sling from here; the press took {}", met, what);
+    }
+
     /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */
     private static boolean overhead(double dx, double dy, double dz) {
         return dy > AscentRules.ZIP_UP_MIN_RISE && Math.sqrt(dx * dx + dz * dz) < dy * AscentRules.ZIP_UP_SLOPE;
@@ -867,12 +888,17 @@ public final class AscentMoves {
     }
 
     /**
-     * What a throw now takes: the best swing along the heading; with the guide (SPEC §62), where nothing swings, a sling
-     * past a top ahead; else ({@code lips}) the marker's lip or a lip in the look, with the guide only by a clear way; or null.
+     * What a throw now takes: what you look at, swung from or slung past ({@link AscentSwing#aimed}); else the best swing
+     * along the heading; with the guide (SPEC §62), where nothing swings, a sling past a top ahead; else ({@code lips}) the
+     * marker's lip or a lip in the look, with the guide only by a clear way; or null.
      */
     private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
         SPACE.at(p.level(), p);
         hand(p);
+        // where you look first (SPEC §62, "The rope goes where you look"): the block under the crosshair, swung from or
+        // slung past; else the best along the heading, as ever
+        pickAimed = AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, PICK);
+        if (pickAimed) return PICK;
         if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (!lips) return null;
@@ -1067,6 +1093,7 @@ public final class AscentMoves {
         hand(p);
         Vec3 eye = p.getEyePosition();
         markerOn = overheadMark(p, eye, yaw, pitch)
+                || AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, MARKER)
                 || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
