@@ -17151,7 +17151,12 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     another cell hung on it goes in the first-tick pass. The cell before it in the row, as already read, must be open
     before anything more is read, so a roof cell costs two field reads more and only a roof's open edge reads its
     neighbours. A crumb that a later chunk's lake or structure cuts round after the skin ran stays, and the census names
-    it. GameTest `caves_lone_crumb`.
+    it. GameTest `caves_lone_crumb`. Measured (CI, fresh worlds, 121 chunks a stand, tour `caves-floaters-v20-after.txt`
+    on V20's seed): 27, 17, 11, 13, 24 and 55 lone blocks at the six stands before, 2, 2, 5, 2, 2 and 9 after, each one
+    named by the census: cobblestone that lava and water make in play, a mineshaft's planks with fire round them, clay
+    and basalt at a pool's edge, a crumb a lichen still holds at a chunk's edge, a crumb in open water above the skin's
+    reach, and a seep's spire steps (`Seep.spire`, a block up each, edge to edge, to climb). Round three Delvers' places
+    on the home seed, 16 became none, save a cobblestone the fluids made while the tour stood there.
   - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
     body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
     two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
