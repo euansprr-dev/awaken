@@ -91,7 +91,7 @@ public final class AscentSwing {
         /**
          * How far (blocks) a sling's aim leans from the top it bit toward your heading's line: the pull goes where you
          * look, as a swing does, without leaving the rope's own top far to the side. With the held rope only (off, the
-         * rope is 10 Nov's exactly).
+         * rope is 10 Nov's exactly). 0: every lean tried on 11 Nov missed a bench gate by one run (SPEC §62).
          */
         public final double slingLean;
         /**
@@ -151,7 +151,7 @@ public final class AscentSwing {
             slingReach = v(o, "slingReach", 30);
             slingTicks = (int) v(o, "slingTicks", 34);
             wallZip = v(o, "wallZip", 44);
-            slingLean = v(o, "slingLean", 1.5);
+            slingLean = v(o, "slingLean", 0);
             holdPump = v(o, "holdPump", 0.008);
             holdTop = v(o, "holdTop", 80);
             holdCap = v(o, "holdCap", 88);

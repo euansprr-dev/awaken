@@ -23599,8 +23599,7 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
 - **One key, one read** (11 Nov 2026, Euan: the rope that swings you on along your look "does feel actually very
   Spider-Man-ish, but it's very not consistent ... it switches between that and sometimes pulling you directly to the
   thing"). Holding the rope carries you on along your look: a swing, or where nothing swings a sling over a top ahead
-  whose aim leans from the top it bit toward your heading's line, by at most `slingLean` blocks (1.5) where that way
-  is clear, else straight over the top (`findSling`; with the held rope only: off, the rope is 10 Nov's exactly). A pull straight at a thing happens only where the marker shows
+  over the top it bit (`findSling`; a lean of its aim toward your heading's line, `slingLean`, was tried and is 0, below). A pull straight at a thing happens only where the marker shows
   it: a pull up a face (the gold bracket), or a ring or branch straight overhead, which the marker now shows as a pull
   when you look up past 60 degrees (`AscentMoves.overheadMark`). With the assist on, a press the marker didn't show
   never zips you at the block under the crosshair any more (that was the plain rope's zip taking over when no swing,
@@ -23609,7 +23608,10 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   spruce key-only medians): on the heading's line itself, 76/60/66, roofs 266, spruce 165 (oak 176 against 198):
   leaning all the way lost the trees. Leaned where clear, else over the top: 0 gives 87/77/71, 194, 195; 1.5,
   87/78/71, 222, 201 with no hard hit anywhere; 2.5, 88/77/71, 249, 216 with one hard hit flying free in the oaks;
-  4, 87/77/71, 265, 198 with two stopped runs in the forest. 1.5 it is.
+  4, 87/77/71, 265, 198 with two stopped runs in the forest. Run through all the held rope's gates, every lean (1, 1.5,
+  2, 3) missed one by a single run (a hard hit flying free in the oaks or on the roofs, a stopped run in the city or
+  the forest), where 0 passes them all: the lean stays 0, the sling as before (a top at most 30 degrees off your look,
+  shown by its chevron). The one-key rule rests on the hidden zip gone and the overhead pull marked.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

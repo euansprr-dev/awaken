@@ -172,15 +172,8 @@ final class AscentSwingTests {
                 }
             }
             SwingBench.heldRule = SwingBench.LIT;
-            // how far a sling's aim leans toward the heading (SPEC §62, "One key, one read"): the held gates at its
-            // neighbours, logged, never judged; then at the jar's 1.5, judged
-            for (double lean : new double[] {1.0, 2.0, 3.0}) {
-                AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("slingLean", lean));
-                java.util.List<String> would = new java.util.ArrayList<>();
-                heldGates(would, new StringBuilder());
-                rows.append(String.format(java.util.Locale.ROOT, "\nlean %.1f: %d gates missed", lean, would.size()));
-                for (String w : would) rows.append(" | ").append(w, 0, Math.min(w.length(), 110));
-            }
+            // a sling's aim leaning toward the heading (SPEC §62, "One key, one read") was tried on 11 Nov: at 1, 1.5, 2
+            // and 3 blocks each missed one of these gates by a single run, so the jar's lean is 0
             AscentSwing.T = AscentSwing.Tune.JAR;
             heldGates(bad, rows);
             // the held rope off: the rope lets go by itself, as on 10 Nov
@@ -437,8 +430,8 @@ final class AscentSwingTests {
         StringBuilder rows = new StringBuilder();
         try {
             // radius, rise, run, the top stone's distance from the deck's middle and depth under it
-            double[][] shapes = {{30, 11, 18, 29, 8}, {30, 12, 18, 29, 8}, {30, 13, 18, 29, 8}, {30, 12, 20, 29, 8}, {30, 11, 20, 29, 8},
-                    {32, 12, 18, 29, 8}, {30, 13, 21, 29, 8}, {28, 12, 18, 29, 8}, {30, 11, 18, 26, 9}, {30, 12, 18, 31, 7}};
+            double[][] shapes = {{30, 12, 18, 29, 8}, {30, 12, 21, 29, 8}, {30, 13, 20, 29, 8}, {30, 11, 20, 29, 8}, {32, 12, 20, 29, 8},
+                    {30, 13, 21, 29, 8}, {28, 12, 20, 29, 8}};
             for (double[] sh : shapes) {
                 StairStats st = stairRuns(new dev.awaken.above.ruin.SkyRig.Stair(sh[0], sh[1], sh[2], 3.6, (int) sh[4], sh[3], 6));
                 rows.append("\nsweep ").append(st);
