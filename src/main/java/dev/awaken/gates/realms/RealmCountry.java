@@ -220,7 +220,8 @@ public final class RealmCountry {
             if (second < 0 || slopes[i] < slopes[second]) second = i;
         }
         int k = (int) (h / 100 % 100), level = slopes[flat], a = flat, b = second;
-        Kind kind = k < 38 ? Kind.HERD : k < 54 ? Kind.SMALL : k < 76 ? Kind.PROWL : k < 92 ? Kind.WATCH : Kind.LAIR;
+        // mostly animals: a hostile haunt is an event, not the texture of the land (the run's own dens are that)
+        Kind kind = k < 50 ? Kind.HERD : k < 76 ? Kind.SMALL : k < 88 ? Kind.PROWL : k < 96 ? Kind.WATCH : Kind.LAIR;
         if (kind == Kind.LAIR && (level > 3 || !free(land, xs[flat], zs[flat], 64))) kind = Kind.HERD;
         if (kind == Kind.WATCH) {
             // a perch is a real high point with level ground in earshot behind it; without one the cell's pack is on the prowl

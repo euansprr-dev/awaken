@@ -22531,22 +22531,24 @@ level, the highest, and a second level one. A cell holds one of:
 
 - **nothing**: 42 cells in a hundred, so the country has quiet stretches and nothing comes at even steps (Euan, 10 Nov: world
   content "must feel natural, with quiet stretches");
-- **a herd** (38 in a hundred of the rest): four to seven of the land's herd animal on ground that falls no more than two blocks
+- **a herd** (50 in a hundred of the rest): four to seven of the land's herd animal on ground that falls no more than two blocks
   in three, each kept within eighteen blocks of it;
-- **small creatures** (16): two to four of the land's little ones, on rougher ground;
-- **a pack on the prowl** (22): a den's worth of the theme's monsters, by herd where the theme has herds, walking a beat between
+- **small creatures** (26): two to four of the land's little ones, on rougher ground;
+- **a pack on the prowl** (12): a den's worth of the theme's monsters, by herd where the theme has herds, walking a beat between
   the cell's two level places: the spot they keep moves from one to the other every twenty-four seconds by the world's clock
   (`Dormant.stop`), so the whole pack turns together and each keeps its place in it. They notice and fight as a den's do. You
   can watch them go, wait them out, or meet them;
-- **a lookout** (16): one of the theme's (its marksman where it has one) on the cell's highest place, which must stand four
+- **a lookout** (8): one of the theme's (its marksman where it has one) on the cell's highest place, which must stand four
   blocks or more over the level one, and three or four more (one more for every two ranks) waiting on that level ground behind
   it. A lookout sees twenty-four blocks with a clear line, up or down a slope, where the rest see thirteen. Seen by it, you hear
   a raid horn and everyone of its own within thirty-eight blocks wakes and comes for you. Put it down unseen and the reserve
   never knows;
-- **the big one at home** (8): the theme's Warden kind with two of its own (three from B rank), on level ground at least 64
+- **the big one at home** (4): the theme's Warden kind with two of its own (three from B rank), on level ground at least 64
   blocks from every leg and site. Nobody has to go near it. Put down, it leaves a cache where it lived.
 
-A cell that asks for something its ground cannot give takes the next gentler thing (a lookout with no perch is a pack on the
+Mostly animals, on purpose: a hostile haunt is an event, not the texture of the land, which the run's own dens already are (the
+first weights, 22, 16 and 8, put 75 hostile haunts in Amber Reach's 336 cells, about eight along one walk; these put about
+four). A cell that asks for something its ground cannot give takes the next gentler thing (a lookout with no perch is a pack on the
 prowl; a herd on a slope is small creatures) or nothing. Every haunt keeps 24 blocks clear of every site and 26 of every leg,
 and 56 of the way in. A land has its share of each hostile kind (packs 4 and one and a half more a rank, lookouts 2 and one more
 every two ranks, one lair, two from B); a cell past the share holds nothing. A haunt fills when someone is within 92 blocks and
