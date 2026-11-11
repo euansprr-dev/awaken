@@ -3760,7 +3760,7 @@ listener-relative loop, louder and higher with speed. Comfort lives in `config/a
 0-7.5 (5), speedFov 0-1 (1, times vanilla's FOV-effects slider), movementShake (on; also off with Awaken's
 cameraShake), reducedMotion (off: on removes streaks, air motes, the boom flash and the tremor, and halves the roll).
 Camera Overhaul (pack, optional) is switched off through its own public settings (`Configuration.get().general
-.enabled`, never saved) while an Ascent state is airborne, and put back after (decision 6; compileOnly, the one class
+.enabled`, never saved) while an Ascent state is airborne or a scene holds the view still (§65.2), and put back after (decision 6; compileOnly, the one class
 `body.client.feel.CameraOverhaulPause`).
 
 Look (no vanilla particles or render types reused for the shapes): the rope is a ribbon of `textures/ascent/rope.png`
@@ -24279,6 +24279,14 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   and **vanilla's hand sway is undone** for them. The hand pass's stack arrives already turned by a tenth of how far
   your look runs ahead of your body (`viewXRot - xBob`, `viewYRot - yBob`); a hand that is somewhere in the world slid
   off its place every time you turned. The view's bob stays: the world is drawn with it too.
+- **The view holds still** (`FirstPerson.holdView`, `viewHeld`; `body.client.feel.CameraOverhaulPause`). **The largest
+  cause of the trembling**, found by the pose log on CI and then in his own pack: Camera Overhaul sways the view idly
+  whenever you stand still (`cameraSwayIntensity`), and standing still is all a scene is. With the eye fixed, the
+  look wandered by about a third of a degree, so the table slid under a stack and a hand that were pinned to the
+  pointer (and under the pointer itself: the square it was over could change). A station scene now holds the view
+  from the tick it opens until the view is home; the Feel Director pauses Camera Overhaul for any held view and for
+  any scene's own camera (`FirstPerson.cameraOwned`), through the mod's own public setting, as it already did in
+  flight, and puts it back after.
 - **One side decides, on whole clocks.** The pointer and your own clicks drive all of it (`StationClient.tick` reads
   slot changes within 6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes
   what lies on a square and never a hand. The hands' eases are differences of whole nanoseconds; the view's glide is

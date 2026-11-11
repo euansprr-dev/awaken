@@ -22,6 +22,14 @@ public final class HandsLog {
     private static long since;
     private static String scene = "";
 
+    /** A mark in the log (a pilot verb as it runs), with the log's own clock, so the lines round it can be told apart. */
+    public static void mark(String what) {
+        if (!on) return;
+        long now = System.nanoTime();
+        if (since == 0) since = now;
+        Awaken.LOG.info("[handslog] mark ms={} {}", (now - since) / 1_000_000L, what);
+    }
+
     /** What is being worked, for the line (a station's kind, a touch's name). */
     public static void scene(String name) {
         if (on) scene = name;
@@ -59,10 +67,7 @@ public final class HandsLog {
 
     /** The frame's line, if any arm was drawn in it. */
     static void frame(Vec3 eye, Matrix4f view, float fov) {
-        if (!on) {
-            since = 0;
-            return;
-        }
+        if (!on) return;
         long now = System.nanoTime();
         if (since == 0) since = now;
         if (HAS[0] || HAS[1]) {

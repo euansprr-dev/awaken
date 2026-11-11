@@ -111,6 +111,8 @@ public final class StationClient {
                     && Minecraft.getInstance().gui.screen() instanceof StationScreen<?>) e.setCanceled(true);
         });
         FirstPerson.world("anims_station", 200, StationClient::pose);
+        // a scene holds the view still from the tick it opens to the tick the view is home (SPEC §65.2)
+        FirstPerson.holdView(() -> table != null && weight(0F) > 0F);
     }
 
     public static void tick() {
@@ -219,6 +221,7 @@ public final class StationClient {
 
     /** Dev (the pilot's "station <slot> <button>"): a click on a slot of the open table scene, as a player's. */
     public static void devClick(int slot, int button) {
+        dev.awaken.anims.client.HandsLog.mark("click " + slot + " " + button);
         if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) s.devClick(slot, button);
     }
 
@@ -227,6 +230,7 @@ public final class StationClient {
      * station slot on the station, any other at its place on the strip), so a tour can film a carried stack over the grid.
      */
     public static void devHover(int slot) {
+        dev.awaken.anims.client.HandsLog.mark("hover " + slot);
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.gui.screen() instanceof StationScreen<?> s) || station == null || !slotGui(s, slot, SWEEP)) return;
         var w = mc.getWindow();
@@ -266,6 +270,7 @@ public final class StationClient {
         if (!(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) || station == null) return;
         if (!slotGui(s, from, SWEEP_FROM) || !slotGui(s, to, SWEEP_TO)) return;
         sweepTicks = sweepLeft = Math.max(1, ticksLong);
+        dev.awaken.anims.client.HandsLog.mark("sweep " + from + " " + to + " " + ticksLong);
     }
 
     private static void sweepTick() {

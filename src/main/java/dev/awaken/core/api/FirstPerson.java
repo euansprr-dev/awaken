@@ -164,6 +164,26 @@ public final class FirstPerson {
         return false;
     }
 
+    private static final List<java.util.function.BooleanSupplier> HELD = new CopyOnWriteArrayList<>();
+
+    /**
+     * A scene that holds the view still while you work in it (a station's scene, framed from its own place or from
+     * your eyes): while {@code holds} says so, nothing may move the view by itself. Register once at init.
+     */
+    public static void holdView(java.util.function.BooleanSupplier holds) {
+        HELD.add(holds);
+    }
+
+    /**
+     * Whether the view must hold still now: a scene holds it, or a scene's own camera is the view. Whatever sways or
+     * breathes the view on its own (Camera Overhaul's idle sway, through {@code body.client.feel}) stands down for it:
+     * a hand pinned to the pointer over a view that sways is a hand that trembles.
+     */
+    public static boolean viewHeld() {
+        for (int i = 0; i < HELD.size(); i++) if (HELD.get(i).getAsBoolean()) return true;
+        return cameraOwned();
+    }
+
     // ---- the view layer ---------------------------------------------------------------------------------------------
 
     /**
