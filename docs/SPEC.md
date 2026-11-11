@@ -1000,8 +1000,10 @@ of `AwakenConfig.Client`.
   mobs module grounds normal and elite fliers, never a kit flier).
 - `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
   told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
-  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
-  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK, PASSED}`, `Why {NONE, EARLY,
+  LATE, TOO_SOON, SIDE, UNGUARDABLE}`, `installAnswers(AnswerSink)` (`answered(answer, attackerId, why)`), `answered(answer,
+  attackerId)` and `answered(answer, attackerId, why)` (client: how the local guard answered and why a guard that was up
+  missed, told to the ring, §68.6); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
   `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
   body held broken for its last stand, and whether a blow now landing is an Execution's).
 - `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
@@ -24769,7 +24771,9 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
 - **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
   `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
-  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
+  guard that missed snaps it shut, dull grey, and says why under it: a block or a broken guard "Too early", "Too late" or
+  "Raised again too soon" (from the server's reason, §68.6 "A parry you can read"), a blow that went past a raised guard
+  "It came from the side" or "Dodge that one", and a guard raised within 5 ticks after being struck "Too late"
   (650 ms; `timing_words` in `awaken-aim-client.toml`).
 - **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
   (`boss_ring`). The out-of-view arcs brighten on the same clock.
@@ -24892,8 +24896,26 @@ charge), `aim` (the ring).
   over, so it can't be worn down from out of its reach. It now says so: the log (`[fights] ... had nobody within 38
   blocks for 30s: healed from h/max and starts over`) and a line to every player within its radius + 96: "The Ember
   Tyrant had nobody to fight for half a minute, so it has healed and the fight starts over."
+- **A parry you can read (arms, aim).** *What his log shows:* no guard of his was logged (the ring's `[fights] ring:`
+  count runs in development builds only, and the black box ended at 18:07:38, before the fight), so whether each guard
+  deflected, blocked or went unregistered can't be read back. It does show the Tyrant's blows missing him about 35
+  times (`[fights] missed`), the Maul's deflect window of 3 ticks (the tightest of all), and a build with the old,
+  jumpy ring (§68.2 is the fix for the timing read). *Added, without repeating §68.2:* every guard a creature's blow
+  meets is logged on the server in any build (`[arms] guard: BLOCK ember_tyrant's LIGHT blow, raised 5 ticks before it
+  (deflect window 3, grace 0) (early)`, with "raised again too soon after lowering it" and "from outside the guard"),
+  and a missed blow's line says whether the guard was up (`, guard up 7 ticks`). The server now says why a guard only
+  blocked or broke (`ArmsRules.missWhy`, in the BLOCK and GUARD_BREAK replies' `aux`: `MISS_EARLY`, `MISS_TOO_SOON` for a
+  guard raised again within the lockout's 8 ticks of lowering it without a deflect, `MISS_LATE` for one raised after a
+  held blow's grace), and when a blow goes past a guard that was up (`GUARD_PASS`, to the fighter only: `PASS_SIDE`, it
+  came from outside the guard's front; `PASS_UNGUARDABLE`, a red or violet blow no guard stops). The ring answers every
+  miss the same way every time: it snaps shut, dull grey, 0.3 smaller over 260 ms (`MISS` 0x8C929C), against a
+  deflect's white burst outward; the block's thud and the hurt are as before. Its words: "Too early", "Too late",
+  "Raised again too soon", "It came from the side", "Dodge that one" (`timing_words` in `awaken-aim-client.toml`). A
+  block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows, lockout and grace are unchanged:
+  nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
+  old build; the play log will now say how often).
 - Tests: `realm_fight_holds` (the rule's pure parts: who is out and why; a fighter who leaps past the heart's line, a
-  pause and a save keep the Lord, the last fighter out puts it to rest).
+  pause and a save keep the Lord, the last fighter out puts it to rest), `arms_defence_rules` (now also `missWhy`).
   Tour: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does).
 
 ## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")

@@ -52,7 +52,9 @@ public final class ArmsPayloads {
     /** What a {@link Result} or {@link Seen} reports. */
     public static final int MOVE = 0, HIT = 1, DEFLECT = 2, BLOCK = 3, GUARD_BREAK = 4, PERFECT_DODGE = 5, EVADE = 6, BREAK = 7,
             REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11, POSTURE = 12, CHARGE = 13, SHOT = 14, DULL = 15,
-            POSTURE_HELD = 16;
+            POSTURE_HELD = 16, GUARD_PASS = 17;
+    /** GUARD_PASS's aux: the blow came from outside the guard's front, or it is one no guard stops (dodge it). */
+    public static final int PASS_SIDE = 0, PASS_UNGUARDABLE = 1;
 
     /**
      * Server → the player: what their press or guard did. MOVE: the move the server runs for seq (aux = move id,
@@ -60,7 +62,9 @@ public final class ArmsPayloads {
      * PERFECT_DODGE / EVADE: entity = the attacker; BREAK: entity's stance broke; REFUSE: seq refused; RESONANCE:
      * aux = the meter; HURT: a blow landed on you (entity = who struck, aux = the yaw it came from, aux2 = damage in
      * tenths); SHOT: your guard stopped a shot (entity = who loosed it, aux = DEFLECT or BLOCK, aux2 = the world yaw
-     * it came from); DULL: the blow of seq struck entity and no damage landed (aux2 = the move's ordinal).
+     * it came from); DULL: the blow of seq struck entity and no damage landed (aux2 = the move's ordinal). BLOCK and
+     * GUARD_BREAK carry in aux why it was no deflect ({@code ArmsRules.MISS_*}); GUARD_PASS: the guard was up and
+     * entity's blow went past it (aux = {@link #PASS_SIDE} or {@link #PASS_UNGUARDABLE}), sent to the fighter only.
      */
     public record Result(int seq, int what, int entity, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Result> TYPE = new Type<>(Awaken.id("arms_result"));

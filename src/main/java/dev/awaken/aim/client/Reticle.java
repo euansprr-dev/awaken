@@ -69,10 +69,10 @@ final class Reticle {
     private static long lastNanos;
     private static float dotAlpha;
 
-    // how the guard last answered: the ring bursts on a deflect and says why a guard missed (Strikes.answered)
-    private static int burstOf = -1, wordOf = -1;
-    private static long burstAt, wordAt;
-    private static boolean wordEarly;
+    // how the guard last answered: the ring bursts on a deflect, snaps shut dull on a miss and says why (Strikes.answered)
+    private static int burstOf = -1, wordOf = -1, missOf = -1, answeredOf = -1;
+    private static long burstAt, wordAt, missAt, answeredAt;
+    private static String wordKey = "too_early";
     /** The duel body fighting you whose ring shows without a lock or a mark (found once a tick), or -1. */
     private static int bossRing = -1;
     private static final float[] P = new float[2], ANCHOR = new float[3];
@@ -256,12 +256,23 @@ final class Reticle {
         sprite(g, core, 128, 128, cx, cy, size, size, 0F, ARGB.color(Math.round(alpha * 255), colour));
     }
 
-    /** How long a deflect's burst and a miss's word last (ms). */
-    private static final float BURST_MS = 300F, WORD_MS = 650F;
-    private static final int CLASH = 0xFFF2CC;
+    /** How long a deflect's burst, a miss's snap and a miss's word last (ms). */
+    private static final float BURST_MS = 300F, MISS_MS = 260F, WORD_MS = 650F;
+    private static final int CLASH = 0xFFF2CC, MISS = 0x8C929C;
 
-    /** The guard's answer on this creature's ring: it bursts outward on a deflect, and a miss says why under it. */
+    /**
+     * The guard's answer on this creature's ring: it bursts outward on a deflect; on a miss it snaps shut, dull and grey
+     * (SPEC §68.6), and says why under it.
+     */
     private static void answered(GuiGraphicsExtractor g, int id, float sx, float sy, float r, long now, boolean reduced) {
+        if (missOf == id) {
+            float t = ms(now, missAt) / MISS_MS;
+            if (t < 1F) {
+                float in = reduced ? 0F : t * (2F - t);
+                float size = r * (1F - 0.3F * in) * 2.45F;
+                sprite(g, RING, 128, 128, sx, sy, size, size, 0F, ARGB.color(Math.round(0.85F * (1F - t) * 255), MISS));
+            } else missOf = -1;
+        }
         if (burstOf == id) {
             float t = ms(now, burstAt) / BURST_MS;
             if (t < 1F) {
@@ -270,11 +281,11 @@ final class Reticle {
                 glowed(g, RING, RING_G, 128, 128, sx, sy, r * (1F + 0.45F * out) * 2.45F, r * (1F + 0.45F * out) * 2.45F, 0F, LIGHT, 0.8F * (1F - t));
             } else burstOf = -1;
         }
-        if (wordOf == id && AimConfig.words()) {
+        if (wordOf == id) {
             float t = ms(now, wordAt) / WORD_MS;
             if (t < 1F) {
                 Minecraft mc = Minecraft.getInstance();
-                String word = net.minecraft.network.chat.Component.translatable(wordEarly ? "awaken.aim.too_early" : "awaken.aim.too_late").getString();
+                String word = net.minecraft.network.chat.Component.translatable("awaken.aim." + wordKey).getString();
                 int a = Math.round(255 * Mth.clamp(t < 0.7F ? 1F : (1F - t) / 0.3F, 0F, 1F));
                 if (a > 8) g.centeredText(mc.font, word, Math.round(sx), Math.round(sy + r + 12F), ARGB.color(a, 0xFFFFFF));
             } else wordOf = -1;
@@ -331,9 +342,7 @@ final class Reticle {
             }
             // a guard that goes up just after the blow struck was too late
             if (struckBy >= 0 && struckTicks <= 5) {
-                wordOf = struckBy;
-                wordAt = System.nanoTime();
-                wordEarly = false;
+                missed(struckBy, System.nanoTime(), "too_late");
                 struckBy = -1;
             }
         }
@@ -342,8 +351,18 @@ final class Reticle {
         if (pressOf >= 0 && ++pressAge > 30) pressOf = -1;
     }
 
-    /** Arms' client says how the guard answered a blow (Strikes.installAnswers): the ring's burst, a miss's word, the count. */
-    static void onAnswer(Strikes.Answer answer, int attackerId) {
+    /** A guard that missed: the ring's dull snap, and the word that says why. */
+    private static void missed(int id, long now, String word) {
+        missOf = id;
+        missAt = now;
+        if (!AimConfig.words()) return;
+        wordOf = id;
+        wordAt = now;
+        wordKey = word;
+    }
+
+    /** Arms' client says how the guard answered a blow (Strikes.installAnswers): the ring's burst or snap, a miss's word, the count. */
+    static void onAnswer(Strikes.Answer answer, int attackerId, Strikes.Why why) {
         long now = System.nanoTime();
         Minecraft mc = Minecraft.getInstance();
         switch (answer) {
@@ -352,13 +371,18 @@ final class Reticle {
                 burstAt = now;
             }
             case BLOCK, GUARD_BREAK -> {
-                wordOf = attackerId;
-                wordAt = now;
-                wordEarly = true;
+                missed(attackerId, now, why == Strikes.Why.LATE ? "too_late" : why == Strikes.Why.TOO_SOON ? "too_soon" : "too_early");
+                answeredOf = attackerId;
+                answeredAt = now;
+            }
+            case PASSED -> {
+                missed(attackerId, now, why == Strikes.Why.UNGUARDABLE ? "dodge_it" : "from_side");
+                answeredOf = attackerId;
+                answeredAt = now;
             }
             case STRUCK -> {
-                // what a block or a broken guard let through is the same blow, already answered
-                if (wordEarly && wordOf == attackerId && now - wordAt < 150_000_000L) return;
+                // what a block, a broken guard or a guard it went past let through is the same blow, already answered
+                if (answeredOf == attackerId && now - answeredAt < 150_000_000L) return;
                 struckBy = attackerId;
                 struckTicks = 0;
             }
@@ -375,7 +399,7 @@ final class Reticle {
             offMax = Math.max(offMax, Math.abs(left));
         }
         if (pressed && pressHot && answer == Strikes.Answer.DEFLECT) hotDeflected++;
-        Awaken.LOG.info("[fights] ring: {} with the ring at {} ticks{}{}", answer, Double.isNaN(left) ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", left),
+        Awaken.LOG.info("[fights] ring: {}{} with the ring at {} ticks{}{}", answer, why == Strikes.Why.NONE ? "" : " (" + why + ")", Double.isNaN(left) ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", left),
                 Double.isNaN(left) || said ? "" : " (the ring said this blow passes by)",
                 pressed ? String.format(java.util.Locale.ROOT, "; guard raised at %.2f ticks (%s)", pressLeft, pressHot ? "in the band" : "outside it") : "");
         if (pressed) pressOf = -1;
@@ -390,7 +414,7 @@ final class Reticle {
         }
         presses = pressesHot = hotDeflected = answers = 0;
         offSum = offMax = 0;
-        bossRing = burstOf = wordOf = struckBy = pressOf = -1;
+        bossRing = burstOf = wordOf = missOf = answeredOf = struckBy = pressOf = -1;
         guardWas = false;
     }
 

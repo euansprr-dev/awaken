@@ -220,6 +220,20 @@ public final class ArmsRules {
         return kind == Strikes.Kind.HEAVY ? Answer.GUARD_BREAK : Answer.BLOCK;
     }
 
+    /**
+     * Why a guard that met a deflectable blow only blocked it (or broke), sent in the BLOCK and GUARD_BREAK replies' aux
+     * so the ring can say so (SPEC §68.6): raised too early, raised again too soon after lowering it (the lockout), or
+     * raised after the blow as the player saw it.
+     */
+    public static final int MISS_EARLY = 0, MISS_TOO_SOON = 1, MISS_LATE = 2;
+
+    public static int missWhy(Archetype.Guard g, int sinceRaise, int held, int grace, boolean lockedOut, boolean untold) {
+        int rel = sinceRaise - held;
+        if (rel < -grace) return MISS_LATE;
+        if (lockedOut && rel < g.deflect() + (untold ? UNTOLD_DEFLECT : 0)) return MISS_TOO_SOON;
+        return MISS_EARLY;
+    }
+
     /** The latency grace for a player: half the round trip, in ticks, at most {@link #GRACE_MAX}; none on a near connection. */
     public static int grace(int latencyMs) {
         if (latencyMs < 50) return 0;

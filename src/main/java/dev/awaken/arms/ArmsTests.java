@@ -776,6 +776,11 @@ final class ArmsTests {
         // the grace: a raise that arrived after the blow, within the grace, still deflects as the player saw it
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 2, 2, false, true) == ArmsRules.Answer.DEFLECT, "held 2 ticks, grace 2: a deflect");
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 3, 2, false, true) == ArmsRules.Answer.BLOCK, "beyond the grace: a block");
+        // why a guard only blocked, for the ring's word (SPEC §68.6)
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, false, false) == ArmsRules.MISS_EARLY, "raised too early");
+        h.assertTrue(ArmsRules.missWhy(g, 1, 0, 0, true, false) == ArmsRules.MISS_TOO_SOON, "raised again too soon: the lockout");
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, true, false) == ArmsRules.MISS_EARLY, "locked out, but early anyway");
+        h.assertTrue(ArmsRules.missWhy(g, 0, 3, 2, false, false) == ArmsRules.MISS_LATE, "raised after the blow, past the grace");
         h.assertTrue(ArmsRules.grace(20) == 0 && ArmsRules.grace(150) == 2 && ArmsRules.grace(300) == 3 && ArmsRules.grace(900) == ArmsRules.GRACE_MAX,
                 "grace: none near, 2 ticks at 150 ms, capped at 3");
         Archetype.Dodge d = longsword().def().dodge();

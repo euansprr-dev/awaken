@@ -41,7 +41,8 @@ public final class AimConfig {
             .comment("A boss that fights you shows the ring that closes on its blows whenever it is on screen, with no lock or mark on it.")
             .define("boss_ring", true);
     static final ModConfigSpec.BooleanValue WORDS = B
-            .comment("After a guard that missed, the ring says why for a moment: \"Too early\" (a block) or \"Too late\" (struck).")
+            .comment("After a guard that missed, the ring says why for a moment: \"Too early\", \"Too late\", \"Raised again too soon\",",
+                    "\"It came from the side\" or \"Dodge that one\".")
             .define("timing_words", true);
     static final ModConfigSpec.BooleanValue SOUNDS = B
             .comment("The lock's own sounds: taken, moved, released, and the ring breaking when the creature falls.")
