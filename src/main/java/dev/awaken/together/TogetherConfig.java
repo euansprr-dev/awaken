@@ -34,7 +34,7 @@ public final class TogetherConfig {
     private static final ModConfigSpec.ConfigValue<String> SHARE = B
             .comment("How a new party shares XP until its members choose on the band: equal (what one earns, all get),",
                     "half (the others get the share below), or own (nobody shares).")
-            .defineInList("xp_share", "equal", java.util.List.of("equal", "half", "own"));
+            .defineInList("xp_share", "equal", java.util.Arrays.asList("equal", "half", "own")); // not List.of: the check asks it about null
     private static final ModConfigSpec.DoubleValue SHARE_PART = B
             .comment("What the others get of a member's XP when a party shares by half.")
             .defineInRange("xp_share_part", 0.5, 0.05, 0.95);
