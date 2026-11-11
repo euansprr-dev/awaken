@@ -123,6 +123,22 @@ public final class RunnerMoves {
         return tryRun(p, in, level, CollisionContext.of(p), 0, ClientMoves.ticks);
     }
 
+    /**
+     * For the Ascent (SPEC §17.32): a lip in the hang's band in front of this body in the air, which the hang takes with
+     * forward held ({@link #tryGrab}'s own probe), so a leap that meets it stands aside for the Runner.
+     */
+    public static boolean edgeAhead(LocalPlayer p) {
+        if (!dev.awaken.body.BodyConfig.runnersKit() || state != State.NONE || p.isUsingItem() || ClientMoves.ticks < regrabAt) return false;
+        float yaw = p.getYRot();
+        double fx = -Mth.sin(yaw * Mth.DEG_TO_RAD), fz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+        if (Math.max(Math.abs(fx), Math.abs(fz)) < 0.643) return false;
+        int axis = Math.abs(fx) >= Math.abs(fz) ? 0 : 2;
+        int sign = (axis == 0 ? fx : fz) > 0 ? 1 : -1;
+        BlockGetter level = WIN.begin(p.level(), p.getX(), p.getY(), p.getZ());
+        return RunnerRules.findEdge(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), axis, sign, RunnerRules.HANG_REACH,
+                RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) != null;
+    }
+
     static boolean hanging() {
         return state == State.HANG || state == State.PATH && pathToHang;
     }

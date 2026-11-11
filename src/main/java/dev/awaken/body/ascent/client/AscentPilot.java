@@ -23,10 +23,12 @@ import net.minecraft.util.Mth;
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
- * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
+ * double &lt;key&gt; [gap]         a double tap, as a player's: 2 ticks down, up, 2 down again gap ticks after the first
+ *                            (default 5; a barrel roll: double right; a double jump timed: double jump 7)
  * use | attack               one click of the use or attack key (a door, a lever, a plant: the touches, Hands P4)
  * usehold &lt;ticks&gt;            hold the use key (eating)
  * station &lt;slot&gt; [button]     a click on a slot of the open crafting-table scene (Hands P5)
+ * where &lt;label&gt;              log where the feet are (a tour's landing points)
  * stop                       let go of everything
  * </pre>
  */
@@ -38,7 +40,7 @@ public final class AscentPilot {
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
     /** A double tap in progress: the key and how far along (-1: none). */
-    private static int doubleKey = -1, doubleAge = -1;
+    private static int doubleKey = -1, doubleAge = -1, doubleGap = 5;
     /** Ticks left holding the use key ("usehold"). */
     private static int useHold;
     /** Keys were pressed last tick (released once when the holds run out). */
@@ -103,6 +105,7 @@ public final class AscentPilot {
             case "double" -> {
                 doubleKey = key(a[1]);
                 doubleAge = 0;
+                doubleGap = a.length > 2 ? Math.max(3, Integer.parseInt(a[2])) : 5;
             }
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
@@ -123,6 +126,8 @@ public final class AscentPilot {
                 if (mc.player != null) WingLayer.studio(mc.player.getId(), a[1], a.length > 2 ? a[2] : "");
             }
             case "wingset" -> WingLayer.tune(a[1], Float.parseFloat(a[2]));
+            case "where" -> Awaken.LOG.info("[ascent] where {} {} {} {} {}", a.length > 1 ? a[1] : "-", String.format("%.2f", p.getX()),
+                    String.format("%.2f", p.getY()), String.format("%.2f", p.getZ()), p.onGround() ? "on the ground" : "in the air");
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }
@@ -178,8 +183,8 @@ public final class AscentPilot {
         // in Shoulder Surfing's decoupled view the camera is the look: it follows the pilot's
         if (!script.isEmpty() || aimTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
         if (doubleAge >= 0 && doubleKey >= 0) {
-            if (doubleAge == 0 || doubleAge == 5) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
-            if (++doubleAge > 6) doubleAge = -1;
+            if (doubleAge == 0 || doubleAge == doubleGap) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
+            if (++doubleAge > doubleGap + 1) doubleAge = -1;
         }
         boolean any = false;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) any = true;

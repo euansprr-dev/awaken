@@ -3837,10 +3837,11 @@ is what the Ascent decided while building it.
 
 ### 17.3 Phase 1b: the Leaper and the server's checks
 - The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
-  body that isn't on a wall or a ledge: jump in the air = a double jump (+0.52 on top of any rise; it comes before the
-  wings: a second jump opens them), sprint in the air = an air dash along the look's heading at max(0.95, 1.33 × your
-  horizontal speed) with a lift of 0.08, sneak with 4+ blocks under you = a dive slam (horizontal speed ×0.25, straight
-  down at 1.7). Each goes into the carry with the swing's momentum, so a release can chain into a dash and a slam.
+  body that isn't on a wall or a ledge (a leap that meets an edge climbs it, §17.32): jump in the air = a double jump
+  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint in the air = an air dash
+  along the look's heading at max(0.95, 1.33 × your horizontal speed) with a lift of 0.08, sneak with 4+ blocks under
+  you = a dive slam (horizontal speed ×0.25, straight down at 1.7). Each goes into the carry with the swing's momentum,
+  so a release can chain into a dash and a slam.
   A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
   are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
   only with the Leaper tier, out of an airborne state a moment ago.
@@ -5099,6 +5100,52 @@ top), client wiring in `AscentMoves`. The server is unchanged (it still checks e
 
   The page's lane figure for the old rope (199) came from the proof's JavaScript copy of it; the real rule
   (`AscentRules`, Mth's trig) goes 165 in the same bench.
+
+### 17.32 The leap's climb (Euan's play, 2026-11-11: "It seems like I can't double jump into a mantle. So the mantle is kind of glitchy")
+**Cause.** A double jump or an air dash puts the body in the Ascent's carry. While any Ascent state holds the body,
+the Body's own moves stand aside (`ClientMoves.off`), and so do the Runner's (`RunnerMoves` stops on the same test).
+So for the whole leap nothing caught an edge: no mantle, no crossing, no hang, no edge snap. A leap into a ledge's face
+slid down it. Or it rose past the lip with its speed gone from the bump and crept over. A second jump pressed with an
+edge already in reach was spent as the double jump, not a climb. The ground's mantle and crossings also ask for the
+ground, so nothing could start one in the air at all. A jump pressed during a mantle or a crossing also started a
+double jump, which cut the climb off halfway.
+
+The fix: a leap is the body's own air again whenever it meets an edge, and it climbs the way a jump from the ground would.
+
+- **A leap that meets an edge.** This applies to a carry from a double jump or an air dash, never a slam, with forward
+  held or jump pressed. Each tick the Body reads what a jump from the ground would climb, from where the body is in
+  the air (`ClientMoves.airCatch`). On the first tick it finds something, the carry ends with its speed handed on, and
+  the Body starts the move that same tick. In order:
+  - a fence's, gate's or wall's crossing, as in §17.27: vaulted, hopped or climbed onto, by the rail and what's beyond it;
+  - else a ledge or a stair top (§17.23), mantled from 0.1 to 1.6 over the feet;
+  - else, with forward held, a lip in the hang's band (1.2-2.4), hung from by the Runner that tick.
+
+  The mantle's own path takes the body up from wherever it caught: 6 ticks, its sound, its looks.
+- **A jump pressed in the air at an edge in reach.** Any airborne body, Leaper or not: the same probe, and it climbs.
+  `AscentMoves` asks before its own Leaper moves, so the double jump is kept for later.
+- **From the air** there is no step under the legs, since vanilla steps up only on the ground:
+  - `BodyRules.findLedge(..., AIR_MANTLE_MIN 0.1)`;
+  - `VaultRules.find(..., air)`: the legs' box from 0.1 over the feet, a top from 0.1 over them (`AIR_STEP`,
+    `AIR_RISE_MIN`).
+
+  Everything else is the ground's: the same reach (0.6, a running crossing 1.3), checks, paths and ticks.
+- **While the Body climbs**, from the ground or the air, the Ascent stands aside as it does for a Runner move: no
+  Leaper move, no wings, and the held rope doesn't throw again. The rope's own key still cuts in.
+- **Server.** The start carries `air` (`BodyPayloads.Start`). The server runs the air's probe from its own body, then
+  0.3 and 0.6 above and below it (`BodyRules.AIR_LAG`), since a body moving fast up or down may be a step apart from its
+  client. The checks after that are unchanged: the ledge within 0.25 high and 1.0 across of the client's, and a
+  crossing's landing within 1.0.
+- **One side decides.** The client starts the climb and the server only checks it. No timer is kept anywhere, and the
+  catch is read fresh every tick.
+- **Tour:** `tools/autopilot/double-jump-mantle.txt`. A two-high ledge, an oak fence, a stair top (two blocks and a
+  stair), a three-high ledge and a cobblestone wall, each tried six ways:
+  - from a standstill at the face;
+  - a step back, with the second jump 3, 7 and 10 ticks after the first;
+  - from a sprint, second jump 5 and 9 ticks after the first.
+
+  The log names what took each (`air catch: ...`, `air mantle onto`, `vault ... from the air`, `hang (grab)`) and where
+  the feet came to rest (`[ascent] where`). The pilot gained `double <key> [gap]` and `where <label>`; the Ascent's
+  `grant` gained `leaper` (the rope and the Leaper, no wings).
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 

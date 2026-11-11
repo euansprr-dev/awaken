@@ -87,6 +87,11 @@ public final class AscentMoves {
     static int airMovesUsed;
     /** A dive slam is falling: its landing shakes the ground. */
     static boolean slamming;
+    /**
+     * This carry is a leap's (a double jump or an air dash, SPEC §17.32): forward held into an edge it meets, it stands
+     * aside for the body's own climb (a crossing, a mantle, the hang).
+     */
+    private static boolean leapt;
     /** This tick's keys, for the first-person stances (AscentFp). */
     static boolean keyFwd, keySprint, keyJump, keySneak;
     private static int lastJumpPress = -100;
@@ -358,8 +363,9 @@ public final class AscentMoves {
         }
         switch (state) {
             case NONE -> {
-                // a Runner move (a wall-run, a hang) holds the body: only the rope cuts in
-                boolean runner = dev.awaken.body.client.RunnerMoves.busy();
+                // a Runner move (a wall-run, a hang) or a climb (a mantle, a crossing: SPEC §17.32, a press during one
+                // never starts a leap) holds the body: only the rope cuts in
+                boolean runner = dev.awaken.body.client.RunnerMoves.busy() || dev.awaken.body.Body.isMantling(p);
                 if (p.onGround()) airMovesUsed = 0;
                 groundFor = p.onGround() ? groundFor + 1 : 0;
                 // the takeoff's crouch (SPEC §62): looking up and sneaking on the ground, the folded wings lift
@@ -386,6 +392,9 @@ public final class AscentMoves {
                     if (!fire(p, false) && TRACE && ticks % 20 == 0) trace("the held rope finds nothing to throw at from the ground");
                 } else if (runner) {
                     // the Runner's own jumps (a wall jump, a ledge jump)
+                } else if (jumpPressed && !p.onGround() && dev.awaken.body.client.ClientMoves.airCatch(p, fwd > 0)) {
+                    // a jump in the air at an edge in reach climbs it, as one from the ground would (SPEC §17.32): the Body
+                    // starts it this tick, and the double jump is still yours
                 } else if (!p.onGround() && leaperMove(p, jumpPressed, sprintPressed, sneakPressed, true)) {
                     // a double jump, an air dash or a dive slam took the body into the carry
                 } else if (jumpPressed && !p.onGround() && has(AscentPayloads.Tier.WINGS) && canDeploy(p)
@@ -451,6 +460,12 @@ public final class AscentMoves {
                     // flying free into a wall: hand the body to the Runner, which runs along it this same tick
                     p.setDeltaMovement(K.vx, K.vy, K.vz);
                     end(p, "onto a wall", true);
+                    return;
+                } else if (leapt && !slamming && (fwd > 0 || jumpPressed) && dev.awaken.body.client.ClientMoves.airCatch(p, fwd > 0)) {
+                    // a leap that meets an edge (SPEC §17.32): a ledge or stair top is mantled, a fence or wall crossed, a
+                    // higher lip hung from, the same tick, as a jump from the ground would (the leap's own climb, no dead window)
+                    p.setDeltaMovement(K.vx, K.vy, K.vz);
+                    end(p, "onto an edge", true);
                     return;
                 } else if (leaperMove(p, jumpPressed, sprintPressed, sneakPressed, false)) {
                     // the move set this tick's velocity; the carry flies it
@@ -1787,6 +1802,7 @@ public final class AscentMoves {
         boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT;
         if (!dbl && !dash && !dive) return false;
         if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
+        leapt = dbl || dash; // a slam is no leap: it never stands aside for an edge
         if (dbl) {
             airMovesUsed |= 1;
             K.vy = Math.max(K.vy, 0) + AscentRules.DOUBLE_JUMP
@@ -2271,6 +2287,7 @@ public final class AscentMoves {
         trace("ends (" + why + ")");
         if (state.rope) AscentFx.loose(p.getId(), ax, ay, az);
         state = AscentState.NONE;
+        leapt = false;
         stateAge = 0;
         sent = false;
         // a vault ends with the landing (left set, the next carry would pull toward this one's ledge)
@@ -2289,7 +2306,10 @@ public final class AscentMoves {
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
         heldForYou = false;
-        if (s != AscentState.CARRY) pullTicks = 0;
+        if (s != AscentState.CARRY) {
+            pullTicks = 0;
+            leapt = false;
+        }
         AscentState was = state;
         state = s;
         stateAge = 0;

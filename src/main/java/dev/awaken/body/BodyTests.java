@@ -112,6 +112,7 @@ final class BodyTests {
         AwakenTests.registerIsolated("body_mantle_stair_tops", 100, BodyTests::mantleStairTops);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_vault_rails", 100, BodyTests::vaultRails);
+        AwakenTests.registerIsolated("body_air_climb", 100, BodyTests::airClimb);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
         AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
         AwakenTests.registerIsolated("body_land_slide", 100, BodyTests::landSlide);
@@ -334,6 +335,50 @@ final class BodyTests {
             h.assertTrue(a.getForcedPose() == null && !Body.isMantling(a), "and stands again at its end");
             h.assertFalse(BodyServer.startVault(b, 0F, v.endX(), v.floor(), v.endZ() + 2, 0.3F, true), "a landing that isn't there is refused");
             done(h, a, b);
+        });
+    }
+
+    /**
+     * SPEC §17.32 (Euan, 11 Nov: "I can't double jump into a mantle"): from the air, what a jump from the ground would
+     * climb. A two-high ledge with the feet 2.6 up (its lip 0.4 over them) is mantled by the air's rule, never by the
+     * ground's, and a lip 0.05 over the feet is no climb; a fence with the feet 0.6 up is hopped onto the floor beyond
+     * from the air, never by the ground's rule. The server takes the air's ledge from a body half a block above the
+     * client's (its band), refuses it without the air flag, and takes the air's crossing.
+     */
+    static void airClimb(GameTestHelper h) {
+        floor(h, -1, 7, -1, 6, 6);
+        for (int z = 1; z <= 3; z++) for (int y = 1; y <= 2; y++) h.setBlock(new BlockPos(0, y, z), Blocks.STONE); // two high, three deep
+        rail(h, 3, 5, 1, 2, Blocks.OAK_FENCE.defaultBlockState());                                                  // a fence at z 2
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            CollisionContext ctx = CollisionContext.empty();
+            double top = h.absoluteVec(new Vec3(0, 3, 0)).y, floorY = h.absoluteVec(new Vec3(0, 1, 0)).y;
+            Vec3 a = h.absoluteVec(new Vec3(0.5, 2.6, 0.5));
+            BodyRules.Ledge air = BodyRules.findLedge(h.getLevel(), ctx, a.x, a.y, a.z, 0F, BodyRules.MANTLE_REACH, BodyRules.AIR_MANTLE_MIN);
+            h.assertTrue(air != null && Math.abs(air.y() - top) < 1e-6 && Math.abs(air.height() - 0.4) < 1e-3,
+                    "from the air the two-high ledge's top 0.4 over the feet is mantled: " + air);
+            h.assertTrue(BodyRules.findLedge(h.getLevel(), ctx, a.x, a.y, a.z, 0F, BodyRules.MANTLE_REACH) == null,
+                    "the ground's rule (1.1 and up) never takes a lip 0.4 over the feet");
+            Vec3 hi = h.absoluteVec(new Vec3(0.5, 2.95, 0.5));
+            h.assertTrue(BodyRules.findLedge(h.getLevel(), ctx, hi.x, hi.y, hi.z, 0F, BodyRules.MANTLE_REACH, BodyRules.AIR_MANTLE_MIN) == null,
+                    "a lip 0.05 over the feet is no climb (the body is all but over it)");
+            Vec3 f = h.absoluteVec(new Vec3(4.5, 1.6, 1.6));
+            VaultRules.Vault hop = VaultRules.find(h.getLevel(), ctx, f.x, f.y, f.z, 0F, VaultRules.REACH_WALK, false, 0.1, true);
+            double farFace = h.absoluteVec(new Vec3(0, 0, 2.625)).z;
+            h.assertTrue(hop != null && hop.kind() == VaultRules.HOP && Math.abs(hop.floor() - floorY) < 1e-6 && hop.endZ() > farFace + 0.3,
+                    "from the air (feet 0.6 up) the fence is hopped onto the floor beyond: " + hop);
+            h.assertTrue(pathFault(h, hop) == null, "the air hop's path: " + pathFault(h, hop));
+            h.assertTrue(VaultRules.find(h.getLevel(), ctx, f.x, f.y, f.z, 0F, VaultRules.REACH_WALK, false, 0.1) == null,
+                    "the ground's rule never crosses a top 0.9 over the feet (vanilla's jump clears it)");
+            // the server: the air's ledge from a body 0.5 above the client's (the band), never without the air flag
+            ServerPlayer s1 = player(h, null), s2 = player(h, null), s3 = player(h, null);
+            at(h, s1, 0.5, 3.1, 0.5, 0F);
+            at(h, s2, 0.5, 2.6, 0.5, 0F);
+            at(h, s3, 4.5, 1.6, 1.6, 0F);
+            h.assertTrue(BodyServer.startMantle(s1, 0F, air.x(), air.y(), air.z(), true), "the server takes the air's ledge from 0.5 above the client");
+            h.assertFalse(BodyServer.startMantle(s2, 0F, air.x(), air.y(), air.z(), false), "without the air flag it's the ground's rule: refused");
+            h.assertTrue(BodyServer.startVault(s3, 0F, hop.endX(), hop.floor(), hop.endZ(), 0.1F, false, true), "the server takes the air's crossing");
+            BodyServer.onEnd(s3, new dev.awaken.body.net.BodyPayloads.End(Move.VAULT.ordinal()));
+            done(h, s1, s2, s3);
         });
     }
 

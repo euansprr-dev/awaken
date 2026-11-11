@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 final class AscentCommands {
     private AscentCommands() {}
 
-    private static final String[] GRANTS = {"all", "none", "tether", "wings", "skyborn"};
+    private static final String[] GRANTS = {"all", "none", "tether", "leaper", "wings", "skyborn"};
 
     static void register() {
         AwakenCommands.add((root, ctx) -> {
@@ -473,6 +473,7 @@ final class AscentCommands {
                     | AscentPayloads.Tier.SKYBORN.bit();
             case "none" -> 0;
             case "tether" -> AscentPayloads.Tier.TETHER.bit();
+            case "leaper" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit();
             case "wings" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit();
             case "skyborn" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
                     | AscentPayloads.Tier.SKYBORN.bit();
