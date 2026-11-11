@@ -387,6 +387,7 @@ public final class KinHome {
      * tower, and at 100 they sing. Wild beasts within 48 of a song with gaps in it scatter.
      */
     public static void song(ServerLevel level, BlockPos anchor, BlockPos tower, int bells, long until) {
+        FamilyService.song(level, anchor, tower, until); // Dubu howls along, Aya puts her ears back (SPEC §68.3)
         for (KinWorld.Homed m : KinWorld.get(level.getServer()).at(anchor)) {
             if (!(level.getEntity(m.id()) instanceof KinBeast b)) continue;
             if (bells < 20) {

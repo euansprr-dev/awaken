@@ -2,11 +2,9 @@
 
 Her name is **Aya**, spelled A-Y-A (Euan, 11 Nov 2026: "it's AYA, not AWA"; the brief's "Awa" was a mishearing).
 
-Status: **waiting for Euan's approval**. Page (private, it shows his photos): https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN,
-published 11 Nov 2026. Nothing below is built into play.
-Branch `claude/hearth-pets-plan-472c8d`. What exists on it is the preview only: the two bodies, their coats and poses
-(`tools/art/specs/hearth_family.py`), two entity types that only `/awaken admin family` can place, and the look tour
-`tools/autopilot/family.txt`. Nothing spawns them and nothing changes in play.
+Status: **approved by Euan on 11 Nov 2026 ("Go ahead with the full plan"), all fourteen decisions yes; stages 1 to 3 are
+built** on `claude/hearth-pets-plan-472c8d` and recorded in SPEC §68. Page (private, it shows his photos):
+https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN. The later extras (fetch, Aya on your shoulder) are not built.
 
 Euan's words (11 Nov 2026): "when you place your hearth for the first time, they should wander up to the house and be one
 of the kins, but they don't really do anything. They just kind of walk around and like they're part of the environment

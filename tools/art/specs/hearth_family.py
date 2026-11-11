@@ -232,7 +232,8 @@ def tuck(cl, legs, k=0.12):
 
 def aya():
     r = Rig("family_aya", (128, 64))
-    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.62, 1.3, (0.12, 0.26), 0.32
+    # a stride is the ground one cycle covers with planted feet (the renderer plays the gait by it, SPEC §68.9)
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.24, 0.8, (0.12, 0.26), 0.32
     body = r.bone("body", (0, 14, 1))
     body.cube("rump", -4.5, -4, 0, 9, 8, 8)
     chest = body.bone("chest", (0, 0, 0))
@@ -425,6 +426,17 @@ def _aya_clips(r):
     for nm in AYA_TAIL[1:]:
         hold(hide, nm, scale=(1.25, 1.25, 1))
     _aya_tail(hide, ((-30, 0, 0), (-12, 0, 0), (-8, 0, 0), (0, 0, 0)), sway=16, n=8)
+
+    # ---- the tower's bells: she sits through it, ears back, the end of her tail ticking
+    song = clip_of(r, "song", 2.0, loop=True)
+    sit_pose(song)
+    hold(song, "head", rot=(34, 0, 0))
+    hold(song, "ear_l", rot=(30, 0, 34))
+    hold(song, "ear_r", rot=(30, 0, -34))
+    hold(song, "tail", rot=(-20, 62, 0))
+    hold(song, "tail2", rot=(-10, 58, 0))
+    hold(song, "tail3", rot=(-8, 46, 0))
+    cycle(song, "tail4", "rot", lambda p: (-6, 30 + 22 * max(0.0, s(p * 2)), 0), 16)
     stubs(r)
 
 
@@ -561,7 +573,7 @@ def _aya_head(r, P, T):
 
 def dubu():
     r = Rig("family_dubu", (128, 64))
-    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.6, 1.4, (0.12, 0.26), 0.36
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.31, 0.85, (0.12, 0.26), 0.36
     body = r.bone("body", (0, 15.5, 2))
     body.cube("rump", -4, -3.5, 0, 8, 7, 10)
     chest = body.bone("chest", (0, 0, 0))
@@ -818,6 +830,20 @@ def _dubu_clips(r):
     hold(hide, "tail4", rot=(-20, 0, 0))
     hold(hide, "tail5", rot=(-14, 0, 0))
     cycle(hide, "body", "scale", lambda p: (1 + 0.012 * s(p * 4), 1, 1), 16)
+
+    # ---- the tower's bells: sat down, nose to the sky, howling along
+    song = clip_of(r, "song", 2.4, loop=True)
+    hold(song, "body", pos=(0, -1.0, 1.0), rot=(-26, 0, 0))
+    for nm in ("fleg_l", "fleg_r"):
+        hold(song, nm, rot=(26, 0, 0), scale=(1, 1.6, 1))
+    for nm in ("hleg_l", "hleg_r"):
+        hold(song, nm, rot=(-34, 0, 0))
+    song.rot("head", keys((0, -8, 0, 0), (0.5, -44, 0, 0), (1.7, -50, 0, 4), (2.1, -20, 0, 0), (2.4, -8, 0, 0)))
+    song.rot("ear_l", keys((0, 0, 0, 0), (0.5, 20, 0, -8), (1.7, 24, 0, -10), (2.4, 0, 0, 0)))
+    song.rot("ear_r", keys((0, 0, 0, 0), (0.5, 20, 0, 8), (1.7, 24, 0, 10), (2.4, 0, 0, 0)))
+    cycle(song, "tail", "rot", lambda p: (-58, 14 * s(p * 3), 0), 16)
+    hold(song, "tail2", rot=(-30, 0, 0))
+    hold(song, "tail3", rot=(-24, 0, 0))
     stubs(r)
     # the giraffe is in his mouth only when he carries it, and under his chin when he sleeps
     for cl in r.clips.values():

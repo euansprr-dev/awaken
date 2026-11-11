@@ -3,7 +3,7 @@ package dev.awaken.kin.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.Awaken;
-import dev.awaken.kin.family.FamilyPet;
+import dev.awaken.kin.FamilyPet;
 import dev.awaken.mobs.client.anim.HeroRig;
 import dev.awaken.mobs.client.life.CreatureLife;
 import dev.awaken.mobs.client.life.Life;
@@ -25,9 +25,11 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Draws Aya and Dubu (plan docs/family/PLAN.md) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it
- * holds picks the clip of the same name, moving swaps in its walk or run, clips crossfade, and the life layer (breath,
- * blinks, springy ears and tail) goes on top. Asleep, its eyes are shut.
+ * Draws Aya and Dubu (SPEC §68.9) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it holds picks the
+ * clip of the same name, moving swaps in its walk or run, clips crossfade, and the life layer (breath, blinks, springy
+ * ears and tail) goes on top. Asleep, its eyes are shut. Two things are theirs: a walk or a run is played by the ground
+ * covered, a stride a cycle, so feet stay where they land (up to a cap, past which they patter as the game's own animals
+ * do); and sitting down, lying down, getting up and the flop onto her back take half a second, not a quarter.
  */
 public final class FamilyRenderer extends EntityRenderer<FamilyPet, KinRenderState> {
     private static @Nullable Map<String, HeroRig> rigs;
@@ -52,6 +54,9 @@ public final class FamilyRenderer extends EntityRenderer<FamilyPet, KinRenderSta
     private static final class Anim {
         int clip = -1, prev = -1;
         float start, prevStart, prevEnd = -100F;
+        /** Strides taken (cycles of a walk or run), and where and when it was last drawn. */
+        float phase, lastAge = -1F;
+        double lastX, lastZ;
         @Nullable Object life;
     }
 
@@ -80,8 +85,17 @@ public final class FamilyRenderer extends EntityRenderer<FamilyPet, KinRenderSta
     }
 
     /** The clip for a pose: its own, or its walk or run while it moves (the giraffe stays in a carrying mouth). */
+    private boolean gait(int clip) {
+        return clip >= 0 && (clip == model.clip("move") || clip == model.clip("run") || clip == model.clip("carry"));
+    }
+
+    /** A pose it settles into or gets up from (those blends are slower: a movement, not a pop). */
+    private boolean settles(int clip) {
+        return clip >= 0 && !gait(clip) && clip != model.clip("idle") && clip != model.clip("nudge");
+    }
+
     private int clipFor(int act, double speed) {
-        boolean moving = speed > 0.015, fast = speed > 0.12;
+        boolean moving = speed > 0.015, fast = speed > 0.15;
         String name = act >= 0 && act < FamilyPet.ACTS.length ? FamilyPet.ACTS[act] : "idle";
         if (moving) name = "carry".equals(name) ? "carry" : fast ? "run" : "move";
         int clip = model.clip(name);
@@ -111,17 +125,28 @@ public final class FamilyRenderer extends EntityRenderer<FamilyPet, KinRenderSta
             a.clip = want;
             a.start = age;
         }
+        // strides by the ground covered: a walk's cycle is one stride long, a run's one bound
+        double x = Mth.lerp(partial, e.xo, e.getX()), z = Mth.lerp(partial, e.zo, e.getZ());
+        float dt = a.lastAge < 0F ? 0F : Mth.clamp(age - a.lastAge, 0F, 3F);
+        if (dt > 0F) {
+            boolean run = a.clip == model.clip("run");
+            float stride = Math.max(0.1F, run ? model.rig().runStride : model.rig().walkStride);
+            a.phase += Math.min((float) Math.hypot(x - a.lastX, z - a.lastZ) / stride, (run ? 0.19F : 0.175F) * dt);
+        }
+        a.lastAge = age;
+        a.lastX = x;
+        a.lastZ = z;
         s.clip = a.clip;
-        s.clipTime = Math.max(0F, (age - a.start) / 20F);
+        s.clipTime = gait(a.clip) ? a.phase * model.length(a.clip) : Math.max(0F, (age - a.start) / 20F);
         s.prevClip = a.prev;
-        float since = age - a.prevEnd;
-        s.prevWeight = a.prev >= 0 && since < KinRenderer.FADE ? 1F - Mth.smoothstep(Mth.clamp(since / KinRenderer.FADE, 0F, 1F)) : 0F;
-        s.prevTime = Math.max(0F, (age - a.prevStart) / 20F);
+        float since = age - a.prevEnd, fade = settles(a.clip) || settles(a.prev) ? 10F : KinRenderer.FADE;
+        s.prevWeight = a.prev >= 0 && since < fade ? 1F - Mth.smoothstep(Mth.clamp(since / fade, 0F, 1F)) : 0F;
+        s.prevTime = gait(a.prev) ? a.phase * model.length(a.prev) : Math.max(0F, (age - a.prevStart) / 20F);
         Life life = CreatureLife.life(a.life, model.life, e.getId() * 31 + salt);
         a.life = life;
         life.walk = s.walkAnimationSpeed;
         life.airborne = false;
-        life.busy = s.clipTime < 0.2F;
+        life.busy = !gait(a.clip) && s.clipTime < 0.2F;
         CreatureLife.tick(life, s, true);
         s.life = life;
         boolean asleep = "sleep".equals(FamilyPet.ACTS[Math.max(0, Math.min(FamilyPet.ACTS.length - 1, e.act()))]);

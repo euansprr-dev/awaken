@@ -36,7 +36,8 @@ public final class KinPlates {
 
     /** Who wears the kin plate instead of a wild one (and gets no Jade card while plates are on). */
     public static boolean wears(@Nullable Entity e) {
-        return e instanceof KinBeast || e instanceof TamableAnimal t && t.isTame() || e instanceof WildMount m && m.trusted();
+        return e instanceof KinBeast || e instanceof FamilyPet f && f.owner != null || e instanceof TamableAnimal t && t.isTame()
+                || e instanceof WildMount m && m.trusted();
     }
 
     /**
@@ -78,6 +79,7 @@ public final class KinPlates {
     static KinNet.Bond read(ServerPlayer p, LivingEntity e) {
         String who = "", note = "";
         int tone = WARM, step = -1;
+        if (e instanceof FamilyPet f) return FamilyService.bond(p, f); // Aya or Dubu (SPEC §68.8)
         if (e instanceof KinBeast b) {
             step = Kinship.of(p).step(b.kind()).ordinal();
             if (b.gnawed()) {
@@ -121,7 +123,7 @@ public final class KinPlates {
         };
     }
 
-    private static String nameOf(ServerPlayer p, UUID id) {
+    static String nameOf(ServerPlayer p, UUID id) {
         ServerPlayer online = p.level().getServer().getPlayerList().getPlayer(id);
         if (online != null) return online.getScoreboardName();
         return p.level().getServer().services().nameToIdCache().get(id).map(NameAndId::name).orElse("someone");
@@ -147,6 +149,7 @@ public final class KinPlates {
         } catch (IllegalArgumentException ex) {
             return false;
         }
+        if (p.level().getEntity(uuid) instanceof FamilyPet f) return FamilyService.name(p, f, raw);
         if (!(p.level().getEntity(uuid) instanceof KinBeast b) || b.keeper == null || !b.keeper.equals(p.getUUID())) return false;
         String n = clean(raw);
         b.setCustomName(n.isEmpty() ? null : Component.literal(n));

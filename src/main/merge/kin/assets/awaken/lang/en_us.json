@@ -81,6 +81,15 @@
   "subtitles.awaken.kin.boulderback.tell": "Boulderback huffs softly",
   "subtitles.awaken.kin.boulderback.worry": "Boulderback snorts",
   "entity.awaken.kin_boulderback": "Boulderback",
-  "entity.awaken.family_aya": "Aya",
-  "entity.awaken.family_dubu": "Dubu"
+  "entity.awaken.family_aya": "Cat",
+  "entity.awaken.family_dubu": "Dog",
+  "subtitles.awaken.family.aya.purr": "Aya purrs",
+  "subtitles.awaken.family.aya.trill": "Aya trills",
+  "subtitles.awaken.family.aya.meow": "Aya meows",
+  "subtitles.awaken.family.dubu.bark": "Dubu barks",
+  "subtitles.awaken.family.dubu.pant": "Dubu pants",
+  "subtitles.awaken.family.dubu.whine": "Dubu whines",
+  "subtitles.awaken.family.dubu.howl": "Dubu howls",
+  "gamerule.awaken.hearth_family": "Aya and Dubu live at the Hearth",
+  "gamerule.awaken.hearth_family.description": "The Hearth's cat and dog. Off, their bodies leave and nothing of theirs runs; they are remembered and come back when it is on again."
 }
