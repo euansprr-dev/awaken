@@ -109,6 +109,57 @@ public final class RuinCensus {
         return null;
     }
 
+    /**
+     * Dev, for the seam check: the {@code n} nearest spots of each kind are made as far as their structure starts (a cheap
+     * step: no blocks), and what the game decided is set beside what the census expects there (its land takes one, and
+     * the rule, while it's on, keeps it). A spot made before keeps what it was made with, so run it in fresh land.
+     */
+    public static List<String> verify(ServerLevel level, BlockPos origin, int n) {
+        RuinSpacing.Grids grids = RuinSpacing.Grids.of(level.registryAccess(), level.getSeed());
+        if (grids == null) return List.of("no spire or sky platform set");
+        var structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+        var gen = level.getChunkSource().getGenerator();
+        var rs = level.getChunkSource().randomState();
+        var biomes = level.uncachedBiomeResolver();
+        Map<Long, Boolean> seen = new HashMap<>();
+        RuinSpacing.Ground ground = (k, c) -> seen.computeIfAbsent(c.pack() * 31 + k.ordinal(), key -> {
+            Structure s = structures.getValue(k.structure);
+            return s != null && RuinSpacing.validAt(k, c, s, gen, rs, level, biomes);
+        });
+        List<String> out = new ArrayList<>();
+        int agree = 0, total = 0, standing = 0;
+        ChunkPos me = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
+        for (RuinKind kind : List.of(RuinKind.SPIRE, RuinKind.SKY)) {
+            Structure s = structures.getValue(kind.structure);
+            if (s == null) continue;
+            List<ChunkPos> spots = spots(grids, kind, origin, 2400);
+            spots.sort(java.util.Comparator.comparingDouble(c -> RuinSpacing.distance(c, me)));
+            for (ChunkPos c : spots.subList(0, Math.min(n, spots.size()))) {
+                boolean valid = ground.valid(kind, c);
+                boolean expected = valid && Boolean.TRUE.equals(RuinSpacing.keeps(kind, c, grids, ground));
+                var chunk = level.getChunk(c.x(), c.z(), net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS, true);
+                StructureStart start = chunk == null ? null : chunk.getStartForStructure(s);
+                boolean stands = start != null && start.isValid();
+                total++;
+                if (stands) standing++;
+                if (stands == expected) {
+                    agree++;
+                    continue;
+                }
+                BlockPos stub = RuinSpacing.stub(kind, c, gen, rs, level);
+                String biome = biomes.getNoiseBiome(net.minecraft.core.QuartPos.fromBlock(stub.getX()), net.minecraft.core.QuartPos.fromBlock(stub.getY()),
+                        net.minecraft.core.QuartPos.fromBlock(stub.getZ())).getRegisteredName();
+                out.add(String.format(Locale.ROOT, "MISMATCH: %s at chunk %s (%.0f away): expected %s (land %s), the game made %s; stub %s in %s%s",
+                        kind.displayName, c, RuinSpacing.distance(c, me), expected ? "one" : "none", valid ? "takes one" : "refuses",
+                        stands ? "one" : "none", stub.toShortString(), biome,
+                        dev.awaken.terrain.api.CityBasin.reserved(c.getMinBlockX() + 8, c.getMinBlockZ() + 8) ? ", in the city's reserve" : ""));
+            }
+        }
+        out.add(0, String.format(Locale.ROOT, "verify (spacing %s): %d of %d spots agree, %d standing", RuinSpacing.on() ? "on" : "OFF", agree, total, standing));
+        for (String l : out) Awaken.LOG.info("[above] spacing {}", l);
+        return out;
+    }
+
     private static List<ChunkPos> both(List<ChunkPos> a, List<ChunkPos> b) {
         List<ChunkPos> out = new ArrayList<>(a);
         out.addAll(b);

@@ -68,6 +68,13 @@ final class AboveCommands {
                             .then(Commands.literal("goto")
                                     .then(Commands.literal("passed").executes(c -> spacingGoto(c.getSource(), false)))
                                     .then(Commands.literal("kept").executes(c -> spacingGoto(c.getSource(), true))))
+                            .then(Commands.literal("verify")
+                                    .then(Commands.argument("spots", IntegerArgumentType.integer(1, 60)).executes(c -> {
+                                        var lines = dev.awaken.above.ruin.RuinCensus.verify(c.getSource().getLevel(),
+                                                net.minecraft.core.BlockPos.containing(c.getSource().getPosition()), IntegerArgumentType.getInteger(c, "spots"));
+                                        for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l).withStyle(ChatFormatting.AQUA), false);
+                                        return lines.size() == 1 ? 1 : 0;
+                                    })))
                             .then(Commands.literal("old").executes(c -> spacing(c.getSource(), false)))
                             .then(Commands.literal("new").executes(c -> spacing(c.getSource(), true))))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());

@@ -29,8 +29,12 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd awaken above ruin spacing census 6000
 wait 40
 info
-# old land: today's rule alone, beside a spire spot the new rule passes over
+# old land: today's rule alone, beside a spire spot the new rule passes over; first the game is asked what it makes at
+# the thirty nearest spots of each kind ("[above] spacing verify": every spot where it disagrees with the census is named)
 cmd awaken above ruin spacing old
+wait 20
+cmd awaken above ruin spacing verify 30
+wait 100
 cmd gamemode spectator
 cmd awaken above ruin spacing goto passed
 wait 200
@@ -72,9 +76,13 @@ screen close
 # fresh land far off, all of it made with the rule: the nearest spire it keeps, whole
 cmd gamemode spectator
 cmd tp @s ~2600 ~ ~
+wait 200
+# the same question with the rule on, in land nobody has made yet
+cmd awaken above ruin spacing verify 30
 wait 100
 cmd awaken above ruin spacing goto kept
-wait 200
+# the search runs on the server thread behind the new land's chunks (23 s on the runner): the shot waits it out
+wait 900
 hud off
 shot space_05_new_rule_spire
 hud on
