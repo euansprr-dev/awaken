@@ -7956,8 +7956,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     leaned 29 degrees ahead at the right edge with its fist under the middle, the Greatblade's 30. Now each blade points
     back up the line its chop will come down (its screen way 0.97 to 1.0 against the blow), stood up by a new `pitch` in
     `RAISED_HEAVY` (degrees the top turns back toward the eye, at their full draw back they still leaned 16 and 30
-    degrees ahead) with the fist at the crosshair's height: the Longsword, one-handed and short, keeps its whole blade in
-    view up to the top right corner (grip ndc 0.4, 0, 0.7 blocks out, turned 20, pitch 6: leaning 8, 221 degrees a tick
+    degrees ahead) with the fist at the crosshair's height: the Longsword, one-handed and short, shows its pommel, guard and
+    most of its blade, the point running out of the top by the right corner (grip ndc 0.4, 0, 0.7 blocks out, turned 20, pitch 6: leaning 8, 221 degrees a tick
     at the hit); the Greatblade, long and two-handed, rises out of the top with its guard and lower blade in view (0.3,
     -0.1, 0.65, turned 30, pitch 18: leaning 14, 194 degrees a tick; upright, its off arm's end would come to 1.23 under
     the middle, so 1.27). Their hits are the same keys; the Greatblade's way home is the same to a ten-thousandth, the
@@ -7969,6 +7969,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     into its own release, but the two views disagree on the blow; its stored wrist is not what today's solver gives, 89
     degrees apart, so it was not re-solved here). Test: `arms_feel_rules` holds all four raised heavies (Longsword, Axe,
     Maul, Greatblade) to the fist on the sword side by the middle's height and the hand's up tipped toward that shoulder.
+    Filmed in the game on CI (run 42975325055, `tools/autopilot/arms-raised-blades.txt`, 2 ticks a second): both draw up
+    from the rest into the hold, keep still there, and chop down to the left across the target (the trail runs from the
+    top right to the bottom left), and the server confirmed both hits (`hit heavy rel 1`). The Greatblade's two hands sit
+    where the Maul's do, the off hand's edge just under and right of the crosshair, the crosshair and the target's head
+    clear.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
