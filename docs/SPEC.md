@@ -4337,8 +4337,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. **On in the rig** from 11 Nov with the wings' hall (`SkyRig.STAIR`, one constant
-  to turn it off; platforms rigged before it get it on their next load; the first rig's chain and rings stay beside it);
+  logs the shapes and judges this one. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one constant
+  to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get it on
+  their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 

@@ -398,11 +398,11 @@ public final class SkyRig {
     /** How far round the deck's centre the stair builds (its radius and a stone's, and the canopy cleared round it). */
     static final int STAIR_REACH = 40;
     /**
-     * Whether the rig builds the stair. On from 11 Nov 2026, with the platform's look (the wings' hall): Euan asked
-     * that day for a climb built for the rope. One constant to turn it off again; {@code /awaken ascent sky goto stair}
-     * builds it on the platform it goes to either way.
+     * Whether the rig builds the stair. Off until Euan has seen the climb filmed (11 Nov 2026): a laid stair stays in a
+     * saved world for good, and nobody has seen one yet. {@code /awaken ascent sky goto stair} builds it on the platform
+     * it goes to either way, so it can be looked at before it is turned on.
      */
-    public static final boolean STAIR = true;
+    public static final boolean STAIR = false;
 
     /** Whether the stair is up: its top stone's grass is there (the top one is always kept, the ground never reaches it). */
     public static boolean stairPlaced(ServerLevel level, int cx, int deckY, int cz) {
