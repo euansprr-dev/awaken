@@ -112,6 +112,7 @@ final class CavesTests {
         AwakenTests.register("caves_wall_growth_whole", 100, CavesTests::wallGrowthWhole);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
         AwakenTests.register("caves_settled", 100, CavesTests::settled);
+        AwakenTests.register("caves_lone_crumb", 100, CavesTests::loneCrumb);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -939,6 +940,59 @@ final class CavesTests {
         h.assertTrue(level.getBlockState(o.east()).isAir(), "the lichen with no wall goes");
         for (int k = 1; k <= 3; k++) h.assertTrue(level.getBlockState(roof.below(k)).isAir(), "the strand with no roof goes, piece " + k);
         h.assertTrue(level.getBlockState(held.east()).is(CaveSkin.LICHEN_SHALLOWS.get()), "the lichen on its wall stays");
+        h.succeed();
+    }
+
+    /**
+     * A crumb with air all round it in a cave goes as the skin dresses (SPEC §42.4 "Settled", lone blocks): a stone one and a
+     * gravel one in the middle of a room; a spur on the wall, a crumb beside water and the room's roof and floor stay.
+     */
+    private static void loneCrumb(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ChunkPos pos = new ChunkPos(-60, -60);
+        ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, LevelHeightAccessor.create(-64, 384), level.palettedContainerFactory(), null);
+        int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.CAVE_AIR.defaultBlockState();
+        for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = -64; y < 40; y++) {
+            boolean room = x >= 2 && x <= 13 && z >= 2 && z <= 13 && y >= 10 && y <= 20;
+            chunk.setBlockState(m.set(cx + x, y, cz + z), room ? air : stone, 0);
+        }
+        BlockPos crumb = new BlockPos(cx + 7, 15, cz + 7), gravel = new BlockPos(cx + 10, 13, cz + 10), spur = new BlockPos(cx + 2, 15, cz + 7),
+                wet = new BlockPos(cx + 5, 12, cz + 11);
+        chunk.setBlockState(crumb, stone, 0);
+        chunk.setBlockState(gravel, Blocks.GRAVEL.defaultBlockState(), 0);
+        chunk.setBlockState(spur, stone, 0);
+        chunk.setBlockState(wet, stone, 0);
+        chunk.setBlockState(wet.east(), Blocks.WATER.defaultBlockState(), 0);
+        CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
+            @Override
+            public BlockState get(int x, int y, int z) {
+                if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockState state) {
+                chunk.setBlockState(m.set(x, y, z), state, 0);
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return 100;
+            }
+
+            @Override
+            public int minY() {
+                return -64;
+            }
+        };
+        CaveSkinFeature.dress(cells, cx, cz, 0L, chunk);
+        h.assertTrue(cells.get(crumb.getX(), crumb.getY(), crumb.getZ()).isAir(), "the crumb of stone with air all round goes");
+        h.assertTrue(cells.get(gravel.getX(), gravel.getY(), gravel.getZ()).isAir(), "the crumb of gravel goes");
+        h.assertTrue(cells.get(spur.getX(), spur.getY(), spur.getZ()).is(Blocks.STONE), "the spur on the wall stays");
+        h.assertTrue(cells.get(wet.getX(), wet.getY(), wet.getZ()).is(Blocks.STONE), "the crumb beside water stays");
+        h.assertTrue(cells.get(cx + 7, 21, cz + 7).is(Blocks.STONE) && cells.get(cx + 7, 9, cz + 7).is(Blocks.STONE), "the roof and the floor stay");
         h.succeed();
     }
 

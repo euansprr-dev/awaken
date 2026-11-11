@@ -17068,7 +17068,8 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     deep (or to the rock), so the crossing is one ramp held by the rock at its ends (over 80 ways in a model: 739 patches,
     222 crumbs and 60 lone blocks one deep; 82 ramps, 0 crumbs and 0 lone three deep), and it cuts every bore from its higher
     end whichever way it is asked, so nothing is laid in a stretch already cut (a rising leg had laid rubble in its own
-    walking space). GameTest `delve_floored_ramp`.
+    walking space). GameTest `delve_floored_ramp`. Measured (CI, V20's seed, tour `caves-way-floor-v20.txt`): no lone cobblestone
+    at the doline's joint, nor in the 25 chunks round the hill mouth where floating-camp found one.
   - **The Delvers' dressing** (the census, the same day: a chute's lanterns hanging under a natural shaft, a mine's rails
     where its adit leaves the hill and its bridge's chains under no roof, a grotto's cave vine, all on the home seed). Once a
     cave place is built in a chunk (`CavePiece.LevelSink.settle`, worldgen and the place commands alike), every lantern,
@@ -17076,6 +17077,19 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     `canSurvive` (a hanging chain: a chain or a sturdy face over it), tops first so a chain falls with the one over it. It
     reads the chunk once everything is cut, so the order the builder wrote in doesn't matter; a lantern's, rail's, chain's,
     root's or carpet's hold is in its own column, so the chunks agree.
+    Measured (CI, home seed, 25 chunks round each, tour `caves-delve-held-home.txt`): nothing unsupported round the mine (of
+    10,794 hanging or standing pieces), the chute (of 3,218) or the grotto (of 4,986).
+  - **Lone blocks** (the census, the same day: 16 full blocks with air all round in 75 chunks round three Delvers'
+    places on the home seed, of stone, diorite, andesite, gravel, sculk and the regions' rock; in V20 a vanilla moss
+    patch's corner left over a lava lake). Two cuts leave a crumb: a noise cave and a carver, a lake from a later chunk
+    round a moss patch, a way through a hollow. As the skin walks a chunk, a cell with air under it (where it would hang
+    a roof's pieces) and nothing but air or the skin's own pieces over it and on its four sides goes, and nothing is
+    laid on it or hung from it: the host rocks and the regions', gravel, dirt, rooted dirt, clay, sand, calcite, smooth
+    basalt, dripstone, moss, magma, sculk, cobblestone, cobbled deepslate, blackstone, bedrock (its fringe at the floor)
+    and ores. A crumb beside water stays (the water would stand beside air); a lichen another cell hung on it goes in
+    the first-tick pass. The cell before it in the row, as already read, must be open before anything more is read, so a
+    roof cell costs two field reads more and only a roof's open edge reads its neighbours. A crumb that a later chunk's
+    lake or structure cuts round after the skin ran stays, and the census names it. GameTest `caves_lone_crumb`.
   - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
     body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
     two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
