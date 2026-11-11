@@ -19459,7 +19459,7 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
   piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
 
 ### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
-- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+- **`awaken:inscribing_table`**: lapis, stick (a book until §45.15), lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
   `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
   built: the recipe is always known.)
 - **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
@@ -19515,6 +19515,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   `village.Trade`.
 
 ### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+(Since §45.15 the book's two pages and the result card are the `classicTable` setting only, the table is a desk with the
+book on a rest, and the piece on the slate is the thing itself. The view, the hands, the trace and its numbers stand.)
 - **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
   you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
   where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
@@ -19696,6 +19698,104 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.
+
+### 45.15 The polish pass: the door, the desk, one script (plan docs/enchanting/POLISH.md, page https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb; Euan approved the full plan 2026-11-11: "go ahead with the full plan", with three changes)
+His changes, which override the page where they differ: **no menu** ("let's not make it a menu for enchanting. It should
+stay 3D inside of the actual world, like similar to how it is now, maybe just better, like more cinematic"); an
+inscription's look **must not distract from the armour set** but should give "a nice shine" or a small aura (§45.17);
+and **a page must say how it is used** ("I thought the pages were like being automatically applied... say: you enchant
+this onto a weapon by doing XYZ"). What the audit found is in POLISH.md §2: across two worlds he was given six pages, read
+four, and never built the table. Built first as a pilot (the door, the desk, his three banes and Lantern); the other five
+new words of the plan wait for his play.
+
+- **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
+  `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
+  `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one: chat keeps "You learned Bane of
+  Crawlers. It isn't on anything yet. To put it on a weapon, ..." and a System panel (`Pages.learnedCard`, a PANEL so nothing
+  is cut, 14 s) says what it does, "Learned: You know it for good. It isn't on anything yet.", "To use it: ... You write it
+  on there.", the piece you carry that it fits ("It fits: your Beastbound Maul") and, while you have never set a table
+  down, "The table: You can make one. It's on your Tasks page." The first one ever carries the System's line about gates
+  as the panel's foot (it was a toast, cut after "and its L"). A page held to the table is read there.
+- **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
+  of a Hive."); what it won't touch is the Journal entry's small print.
+- **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
+  stone. Tasks' `enchant/table` asks for the stick.
+- **A converted vanilla table** opens facing as the server says (`Open.facing`): the scene framed itself before the new
+  block reached the client and fell back to north.
+- **The door's log**: `[enchant] door: page given|read|table set|opened|written[ clean| from memory] <id> t=<game time>`.
+- **One script** (`Marks`, written by `tools/art/specs/_enchant_glyphs.py java`): 36 designed glyphs in place of five
+  generated templates. A glyph is its family's frame (wards a shield, banes a spear, spoils a cup, carrying a gable,
+  keeping a knot) and the enchantment's own sign, straight cuts between points of a 7 by 7 grid, 2 to 5 strokes, sampled
+  about every 0.11 of the mark with every corner a sample. `Marks.frame(no)` counts the frame's strokes; `Marks.grid(no)`
+  gives the corners. Numbers 32 to 36 are drawn for the words not built yet. A Word Stone's `word` runs 1 to 36.
+- **Every page has its own leaf**: 36 item textures (`enchantment_page_<path>`: the sign in dark ink on a parchment with a
+  band in the family's colour) chosen by the item model select `awaken:page` (`PageSelect`: the enchantment's id path).
+- **The scribe's desk** (the block's model, `tools/art/specs/enchant.py`): two trestle ends and a stretcher, an apron with
+  a brass pull, the slate (its top at 12 of 16) with the lapis channel, a rail along the back, a brass rest at the
+  writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
+  right with the burin standing in it while nobody writes. The floating book is gone. Shape and outline follow.
+- **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
+  weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
+  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (0.6), a helm or boots
+  standing (0.46). The glyph rides on the piece's top (`InscribeScene.lift`).
+- **Choosing in the world, no menu** (`Desk`; the screen only frees the pointer). The pages of what you know that fits
+  rise out of the book over 10 ticks and hang in a row over the desk's near edge, each the real page, leaning back toward
+  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, burns its glyph faintly on
+  the piece, and shows one label by it: its name and level, its line, "Up to II here, III in your Study", the price as the
+  things themselves (red when you can't pay) and "Click to write it." (the wheel changes the level; a page in memory:
+  "Click: from memory. Shift and click: trace it."). A click takes the page down onto the piece over 8 ticks while the rest
+  sink, and the trace begins. What can't go on lies flat on the slate, dim, and its label says why. What is written
+  shows as glyphs in sockets let into the slate behind the piece, a socket for each enchantment it has room for; a
+  press held on one for 16 ticks closes a ring round it and scrapes it off. A line of key caps at the foot says the rest.
+  The view frames the whole desk while you choose. The room steps back (a soft dark frame at the screen's edges).
+- **The wake** shows the enchantment's name in the Hall's blackletter over a soft light, how it came out ("A clean hand",
+  "Written", "From memory") and, at the foot, the levels that came back and "Its mark is in your memory now." with Space
+  to write another and Esc to step away. No card. It is drawn here, not through `HallMoment`, whose anvil doesn't belong
+  at a desk.
+- **`classicTable`** (`config/awaken-enchant-client.toml`, off): the old book of two pages and the result card, kept for
+  one build.
+- Dev: `/awaken admin enchant page <id>` gives a page as a door does. Tour `tools/autopilot/enchant-polish.txt`. Tests
+  `enchant_glyphs`, `enchant_door`.
+
+### 45.16 Lantern, the first new word (`Lantern`, `LanternGlowBlock`)
+- **`awaken:lantern`** (helmets, I-III, carrying): your helmet lights the dark around you. The Lantern Night Market's
+  Lord carries its page; Looting, which he carried, is sold at the market and found in old books. The Journal counts
+  thirty-one.
+- Where the wearer's head is darker than the word's own light (8, 10, 12), one `awaken:lantern_glow` stands there: a block
+  with nothing to see, touch or hold that only gives light, so friends see by it too. It follows when the wearer has gone
+  two blocks, sits in water as water, and goes out in daylight, by a brighter fire, when the helmet comes off, at death,
+  on leaving, or when left four blocks behind. What the old glow still lends a place doesn't count as light of the
+  world's own (`Lantern.dark`). A glow nobody wears clears itself on its own tick (a crash, a chunk that slept).
+  Asked every fourth tick a wearer.
+- One soft sound as it catches (`block.lantern.place`). **Its frame time on the Mac is not measured yet**: each move
+  rebuilds a chunk section. Test `enchant_lantern`.
+
+### 45.17 Seen at work, and on the piece
+- **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of
+  itself keeps its own colour (it took the enchantment's, which made the piece read as a different one). An inscribed
+  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, and a small aura,
+  the enchantment's colour held faintly at its silhouette, breathing. The letters along its edges stay, quieter.
+- **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
+  Force's colour and a white-hot core, held bright for half of 24 ticks.
+- **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it
+  moves for two seconds.
+- **A page given** flies from where it was (a fallen Lord, a lode's heart) to the one it goes to over 16 ticks, its sign
+  showing, with a page's turn and a soft pickup.
+- **Reading** (a page, an old book, a Word Stone): the glyph lifts in front of the reader, cut by cut in the order it
+  will be traced, holds, then runs down into their hand; the column of light is softer.
+- An extra drop's glint is larger.
+
+### 45.18 Sound (first picks; Euan's ear decides on `tools/art/enchant_listen.py`)
+Every beat is Minecraft's own recordings by name. A stroke seals with one recording (`enchant.seal`, an eye set into an
+End portal frame) two semitones higher each stroke, not a family's chime. The wake is `block.respawn_anchor.set_spawn`
+over a bell's resonance low (`enchant.wake_under`); the piece's chord of §45.14 (each other enchantment's note a third, a
+fifth and an octave up) is gone, since a stack of pitched chimes at the peak is the high tone he asked to be rid of.
+Reading is a page's turn and a respawn anchor's charge. The cut under the hand is grains of the burin by distance drawn
+(every 0.12 of the mark), not a one-shot played as a loop. A ward is a shield's block, a bane a trident going in, an
+extra drop gold armour put on, carrying a bucket filling. None of it has been heard in the game. The listening page
+(`python3 tools/art/enchant_listen.py serve`, http://127.0.0.1:8767) plays ten beats in their moments, today's beside
+three picks each; his marks land in `run-autopilot/enchant-listen/picks.json`.
 
 ## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
 

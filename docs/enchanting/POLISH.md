@@ -1,7 +1,8 @@
 # Inscriptions Worth Writing (the enchanting polish plan)
 
 Plan for Euan's request of 2026-11-11, written by the enchanting-polish session on branch
-`claude/enchanting-polish-plan-4cb15c`. Status: **waiting for his answer; nothing is built**. It follows
+`claude/enchanting-polish-plan-4cb15c`. Status: **approved by Euan on 2026-11-11 ("go ahead with the full plan") with
+three changes (§8); the pilot is built on this branch and recorded as SPEC §45.15 to §45.18**. It follows
 `.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md`. Approval page:
 https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb (private; source `docs/enchanting/polish/page.src.html`, built by
 `docs/enchanting/polish/build_page.py`).
@@ -381,3 +382,49 @@ Seventeen, on the page (https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb), each
 the glyph engraved on the held weapon later, running on water no. Three change something he approved on 2 Nov: the recipe (it had a
 book), the book's two pages (replaced by the pages on the desk), and the floating book (it lies on a rest). One changes
 the list he approved: thirty become thirty-six, and five Lords carry a different page.
+
+## 8. Approved, his three changes, and the pilot as built (11 Nov 2026)
+
+Euan, in the planning session: "go ahead with the full plan." All seventeen as recommended, and three changes of his own:
+
+1. **No menu.** "Let's not make it a menu for enchanting. It should stay 3D inside of the actual world, like similar to
+   how it is now, maybe just better, like more cinematic and everything, like better structures." So decision 6 is built
+   with no window at all: the pages are real things hanging over the desk in the world, pointed at there, with one
+   small label by the pointer. The mock-up's page row, its head with the piece's name and its purse are not built.
+2. **The look on gear.** "They shouldn't distract from the actual armor set or anything, but they should still maybe give
+   a nice shine or give something that makes it actually like really a bit more unique, or maybe like a small ore or
+   something... something that really looks good." Read as a shine and a small aura. Today's script line recoloured what
+   glows on the piece, which is the distraction he means: that is gone, and an inscription is a band of light crossing
+   the piece and its colour held faintly at the piece's edges.
+3. **A page must say how it is used.** "When you find a page and you actually save that page, something should actually
+   tell you that like you can use it in an enchantment... to apply it to something, you need to apply it on the table.
+   Because nothing says that now. So I thought the pages were like being automatically applied... I don't want them to be
+   automatically applied, but I wanted to actually say like... you enchant this onto a weapon... by doing XYZ." So the
+   page's own lines, the line when one is given and the card after reading all say that reading only teaches it, and how
+   it gets onto a piece.
+
+**Built (the pilot: the door, the desk, his three banes and Lantern), coded whole and compiled on GitHub at each step:**
+
+| Part | Built | Where |
+|---|---|---|
+| The door | a page's own lines, the given line, the learned card (a panel, never cut, with the piece it fits and where a table comes from), a page read at the table, the recipe's stick, the fold's facing, the door log, a page's flight and the reading beat | `Pages`, `PageItem`, `Doors`, `Inscribe`, `EnchantFx`, `EnchantFxClient` |
+| One script | 36 glyphs in `Marks` from `tools/art/specs/_enchant_glyphs.py`; 36 page icons chosen by `awaken:page` | `Marks`, `PageSelect`, the art spec |
+| The desk | the scribe's desk model, the book on its rest, the burin in the inkwell, the real piece on the slate laid by its bounds, the glyph on the piece's top | `InscribingTableRenderer`, `InscribingTableBlock`, the art spec |
+| Choosing | pages over the near edge in the world, the label, sockets, hold to scrape, the wheel for the level, key caps, the wake's blackletter and no card; `classicTable` keeps the old book | `Desk`, `InscribeScreen`, `InscribeScene`, `EnchantClientConfig` |
+| The words | Lantern (block of light, the rule, the Lantern Night Market's Lord; Looting to the market and old books); banes' lines | `Lantern`, `LanternGlowBlock`, `Inscriptions` |
+| At work | a ward's plate, a bane's brand for two seconds, a larger glint | `EnchantFxClient` |
+| On the piece | the shine and the aura in both shaders | `arms_weapon.fsh`, `armour.fsh`, `mesh_render.py` |
+| Sound | first picks in `sounds.json` and the code; the listening page | `tools/art/enchant_listen.py` |
+
+**Differs from the page, and why:**
+- No slot row, no head, no purse: his change 1.
+- The wake draws its own blackletter and light instead of calling the Hall's moment: that one plays an anvil landing.
+- The wake's chord of pitched family notes is gone (§45.18).
+- The trace's rules are untouched, but its marks are now the glyphs: straight cuts with corners.
+
+**Not built yet (waits for his play of the pilot):** Regrowth, Remembrance, Gather, Wayfarer, Long Arm; a page arriving as
+a card as well as a line (the given line is still chat; the learned card is the panel); Clear Blood's and Insight's
+moments; the hold-to-write fallback.
+
+**Not verified:** nobody has heard a sound; the trace has not been tried by a hand since the glyphs changed; Lantern's
+frame time on the Mac is unmeasured; armour pieces on the slate may lie the wrong way up until a tour shows them.
