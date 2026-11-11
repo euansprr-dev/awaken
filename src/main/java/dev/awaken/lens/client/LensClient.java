@@ -55,6 +55,9 @@ public final class LensClient {
     // checkerboard as the hand: two quarters of the screen unlit, run 42985247494)
     static final Identifier HAND = Awaken.id("textures/effect/lens_hand_depth.png");
     private static LensHand hand;
+    // light other parts of the mod draw for Lens to lay over its picture (LensGlow, SPEC §22 "Light over the Air")
+    static final Identifier GLOW = Awaken.id("textures/effect/lens_glow.png");
+    private static LensGlow glow;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
@@ -260,6 +263,8 @@ public final class LensClient {
         // (before the others that shape the fog's colour: the edge hold pales it, Far Sight reads it last)
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.ComputeFogColor.class, LensClient::fogColour);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
+        // last of all after the level: whatever drew light for Lens to lay has drawn it by now
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RenderLevelStageEvent.AfterLevel.class, e -> LensGlow.settle());
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
@@ -528,6 +533,14 @@ public final class LensClient {
         return active && framed && sunHere && lensFrame != null;
     }
 
+    /**
+     * Whether this frame's chain lays LensGlow's layer over its picture: the chains that read the frame (Lite, Cinematic,
+     * Ultra, whose last pass is lens_lay), never during a story's tear from black, which nothing may show through.
+     */
+    static boolean laysLight() {
+        return active && framed && glow != null && tear <= 0f && tearStep <= 0f;
+    }
+
     private static float rate(int fadeTicks) {
         // about 95% of the way after fadeTicks
         return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
@@ -704,6 +717,8 @@ public final class LensClient {
         Minecraft.getInstance().getTextureManager().register(PARAMS, params.texture);
         hand = new LensHand();
         Minecraft.getInstance().getTextureManager().register(HAND, hand);
+        glow = LensGlow.make();
+        Minecraft.getInstance().getTextureManager().register(GLOW, glow);
         Minecraft.getInstance().getTextureManager().register(FAR_DEPTH, dev.awaken.compat.client.FarTerrain.depthTexture());
         zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         Awaken.LOG.info("[lens] ready ({} depth)", zeroToOne ? "zero-to-one" : "minus-one-to-one");
