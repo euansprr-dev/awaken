@@ -226,6 +226,63 @@ def tuck(cl, legs, k=0.12):
         hold(cl, nm, scale=(1, k, 1))
 
 
+REST_POSE = {"rot": (0.0, 0.0, 0.0), "pos": (0.0, 0.0, 0.0), "scale": (1.0, 1.0, 1.0)}
+
+
+def _smooth(u):
+    u = min(1.0, max(0.0, u))
+    return u * u * (3 - 2 * u)
+
+
+def _passing(add, u):
+    """A passing offset (0 at both ends of the clip) at fraction u, eased between its points."""
+    pts = [(0.0, (0.0, 0.0, 0.0))] + list(add) + [(1.0, (0.0, 0.0, 0.0))]
+    for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
+        if u0 <= u <= u1:
+            f = _smooth((u - u0) / max(1e-6, u1 - u0))
+            return tuple(v0[i] + (v1[i] - v0[i]) * f for i in range(3))
+    return (0.0, 0.0, 0.0)
+
+
+def flipped(windows):
+    """The same order of parts run backwards: what went down last gets up first."""
+    return {k: (1 - b, 1 - a) for k, (a, b) in windows.items()}
+
+
+def bridge(r, name, pose, dur, windows=None, up=False, extra=None, rest=None, settle=0.05, n=12):
+    """A real clip between standing and the first frame of `pose` (down into it, or with `up` back out of it), so a
+    change of pose is acted and not a crossfade. Every part moves in its own window of the clip (fractions of its length;
+    `windows` maps a bone, a (bone, channel) or "*" to one), eased, so the body goes in an order: the legs and rump
+    first, the head after, the tail last. `extra` adds passing offsets on top (the front end going down first, a dip of
+    the head). Going down, each part runs a little past its place and settles back, which is the weight landing. It
+    starts on the standing pose and ends exactly on the pose clip's first frame (or the other way round)."""
+    src = r.clips[pose]
+    cl = clip_of(r, name, dur)
+    windows, extra, rest = windows or {}, extra or {}, rest or {}
+    for bone, ch in dict.fromkeys(list(src.tracks) + list(extra)):
+        track = src.tracks.get((bone, ch))
+        base = rest.get((bone, ch), REST_POSE[ch])
+        held = track[0][1] if track else base
+        add = extra.get((bone, ch), ())
+        if not add and all(abs(held[i] - base[i]) < 1e-6 for i in range(3)):
+            continue
+        a, b = windows.get((bone, ch), windows.get(bone, windows.get("*", (0.0, 1.0))))
+        ks = []
+        for k in range(n + 1):
+            u = k / n
+            w = (u - a) / max(1e-6, b - a)
+            if up:
+                f = 1.0 - _smooth(w)
+            elif w < 0.8:
+                f = (1 + settle) * _smooth(w / 0.8)
+            else:
+                f = 1 + settle * (1 - _smooth((w - 0.8) / 0.2))
+            off = _passing(add, u)
+            ks.append((dur * u,) + tuple(base[i] + (held[i] - base[i]) * f + off[i] for i in range(3)))
+        getattr(cl, ch)(bone, ks, "lin")
+    return cl
+
+
 # =====================================================================================================================
 # Aya
 # =====================================================================================================================
@@ -478,6 +535,50 @@ def _aya_clips(r):
     hold(gaze, "ear_r", rot=(-8, 0, 0))
     sat_tail(gaze, 24)
     cycle(gaze, "chest", "scale", lambda p: (1 + 0.02 * s(p * 2), 1 + 0.02 * s(p * 2), 1), 8)
+
+    # ---- two more ways of standing about (the game picks one each time round): a long look over her shoulder ...
+    idle_b = clip_of(r, "idle_b", 5.0, loop=True)
+    cycle(idle_b, "chest", "scale", lambda p: (1 + 0.025 * s(p * 2), 1 + 0.025 * s(p * 2), 1), 8)
+    _aya_tail(idle_b, ((-6, 0, 0), (-4, 0, 0), (0, 0, 0), (6, 0, 0)), sway=13, n=8)
+    idle_b.rot("head", keys((0, 0, 0, 0), (0.6, 0, 0, 0), (1.3, 4, 38, 6), (2.6, 4, 42, 8), (3.0, -2, -16, -4), (3.8, -2, -16, -4),
+                            (4.4, 0, 0, 0), (5, 0, 0, 0)))
+    idle_b.rot("chest", keys((0, 0, 0, 0), (0.8, 0, 0, 0), (1.4, 0, 8, 0), (2.6, 0, 9, 0), (3.1, 0, -3, 0), (4.4, 0, 0, 0), (5, 0, 0, 0)))
+    idle_b.rot("ear_l", keys((0, 0, 0, 0), (1.4, 0, 0, 0), (1.5, 0, 24, 0), (2.5, 0, 24, 0), (2.7, 0, 0, 0), (5, 0, 0, 0)))
+    idle_b.rot("ear_r", keys((0, 0, 0, 0), (3.2, 0, 0, 0), (3.3, 12, 0, -20), (3.45, 0, 0, 0), (5, 0, 0, 0)))
+
+    # ---- ... and a step she never finishes: a front paw held up, her head low and forward, the tail gone still
+    idle_c = clip_of(r, "idle_c", 4.0, loop=True)
+    cycle(idle_c, "chest", "scale", lambda p: (1 + 0.025 * s(p * 2), 1 + 0.025 * s(p * 2), 1), 8)
+    idle_c.rot("fleg_l", keys((0, 0, 0, 0), (0.7, 0, 0, 0), (1.0, -38, 0, 0), (2.6, -34, 0, 0), (2.75, -46, 0, 0), (2.9, -34, 0, 0),
+                              (3.2, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.scale("fleg_l", keys((0, 1, 1, 1), (0.7, 1, 1, 1), (1.0, 1, 0.72, 1), (2.9, 1, 0.72, 1), (3.2, 1, 1, 1), (4, 1, 1, 1)))
+    idle_c.rot("head", keys((0, 0, 0, 0), (0.7, 0, 0, 0), (1.1, 8, 10, 0), (2.9, 8, 10, 0), (3.3, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.pos("head", keys((0, 0, 0, 0), (0.7, 0, 0, 0), (1.1, 0, -0.6, -0.6), (2.9, 0, -0.6, -0.6), (3.3, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.rot("body", keys((0, 0, 0, 0), (1.0, 3, 0, -1.5), (2.9, 3, 0, -1.5), (3.3, 0, 0, 0), (4, 0, 0, 0)))
+    for nm in ("ear_l", "ear_r"):
+        idle_c.rot(nm, keys((0, 0, 0, 0), (0.9, 0, 0, 0), (1.1, -10, 0, 0), (2.9, -10, 0, 0), (3.2, 0, 0, 0), (4, 0, 0, 0)))
+    _aya_tail(idle_c, ((-10, 0, 0), (-6, 0, 0), (0, 0, 0), (8, 0, 0)), sway=3, n=8)
+
+    # ---- getting down and getting up, acted (SPEC 69.9): the haunches and legs go first, her head after, and the tail
+    # ---- wraps round last; getting up runs the other way, the tail unwrapping first
+    tails = {"tail": (0.3, 0.9), "tail2": (0.36, 0.94), "tail3": (0.42, 0.98), "tail4": (0.48, 1.0)}
+    sit_w = {"*": (0.0, 0.8), **tails}
+    bridge(r, "to_sit", "sit", 0.55, sit_w, extra={("head", "rot"): [(0.35, (7, 0, 0))]})
+    bridge(r, "from_sit", "sit", 0.45, flipped(sit_w), up=True, extra={("head", "rot"): [(0.4, (-6, 0, 0))]})
+    rest_w = {"*": (0.0, 0.75), "head": (0.3, 1.0), **tails}
+    bridge(r, "to_rest", "loaf", 0.7, rest_w, extra={("body", "rot"): [(0.4, (7, 0, 0))]})
+    bridge(r, "from_rest", "loaf", 0.5, flipped(rest_w), up=True, extra={("body", "rot"): [(0.55, (-6, 0, 0))]})
+    # curling up to sleep: down first, then her back bends round, her head comes to her tail, her ears fold
+    sleep_w = {"*": (0.0, 0.55), ("body", "rot"): (0.3, 0.9), "chest": (0.3, 0.9), "head": (0.45, 1.0), "ear_l": (0.6, 1.0),
+               "ear_r": (0.6, 1.0), "tail": (0.35, 0.85), "tail2": (0.4, 0.9), "tail3": (0.45, 0.95), "tail4": (0.5, 1.0)}
+    bridge(r, "to_sleep", "sleep", 0.9, sleep_w)
+    bridge(r, "from_sleep", "sleep", 0.6, flipped(sleep_w), up=True)
+    # the flop: down onto her chest, over onto her back, and only then the paws come up (folded on the way over)
+    fold = [(0.3, (0, -0.55, 0)), (0.62, (0, -0.55, 0))]
+    roll_w = {"*": (0.38, 1.0), ("body", "pos"): (0.0, 0.5), ("body", "rot"): (0.2, 0.9), "chest": (0.25, 0.95), "head": (0.2, 0.95),
+              "tail": (0.3, 0.9), "tail2": (0.35, 0.95), "tail3": (0.4, 1.0), "tail4": (0.45, 1.0)}
+    bridge(r, "to_roll", "roll", 0.8, roll_w, extra={(nm, "scale"): fold for nm in legs})
+    bridge(r, "from_roll", "roll", 0.6, flipped(roll_w), up=True, extra={(nm, "scale"): [(1 - u, v) for u, v in reversed(fold)] for nm in legs})
     stubs(r)
 
 
@@ -912,6 +1013,57 @@ def _dubu_clips(r):
     hold(scratch, "tail", rot=(-58, 0, 0))
     hold(scratch, "tail2", rot=(-30, 0, 0))
     hold(scratch, "tail3", rot=(-24, 0, 0))
+
+    # ---- two more ways of standing about (the game picks one each time round): the shake, head first and running
+    # ---- down him to his rump, ears flying ...
+    idle_b = clip_of(r, "idle_b", 3.6, loop=True)
+    _dubu_tail(idle_b, wag=14, per=4, n=16)
+    cycle(idle_b, "chest", "scale", lambda p: (1 + 0.025 * s(p * 4), 1 + 0.025 * s(p * 4), 1), 16)
+
+    def swing(k, amp):
+        return amp * (1 if k % 2 else -1) * math.sin(math.pi * (k + 0.5) / 12)
+
+    idle_b.rot("head", [(0, 0, 0, 0), (0.9, 0, 0, 0)] + [(1.0 + 0.075 * k, 0, 0, swing(k, 32)) for k in range(12)]
+               + [(1.95, 0, 0, 0), (2.3, -4, 6, 18), (3.0, -4, 6, 18), (3.3, 0, 0, 0), (3.6, 0, 0, 0)])
+    idle_b.rot("chest", [(0, 0, 0, 0), (0.93, 0, 0, 0)] + [(1.03 + 0.075 * k, 0, 0, swing(k, 16)) for k in range(12)]
+               + [(1.98, 0, 0, 0), (3.6, 0, 0, 0)])
+    idle_b.rot("body", [(0, 0, 0, 0), (0.96, 0, 0, 0)] + [(1.06 + 0.075 * k, 0, 0, swing(k, 11)) for k in range(12)]
+               + [(2.02, 0, 0, 0), (3.6, 0, 0, 0)])
+    idle_b.rot("ear_l", [(0, 0, 0, 0), (0.95, 0, 0, 0)] + [(1.04 + 0.075 * k, 0, 0, -18 - swing(k, 40)) for k in range(12)]
+               + [(2.0, 0, 0, 6), (2.15, 0, 0, 0), (3.6, 0, 0, 0)])
+    idle_b.rot("ear_r", [(0, 0, 0, 0), (0.95, 0, 0, 0)] + [(1.04 + 0.075 * k, 0, 0, 18 - swing(k, 40)) for k in range(12)]
+               + [(2.0, 0, 0, -6), (2.15, 0, 0, 0), (3.6, 0, 0, 0)])
+
+    # ---- ... and a paw held up, looking one way and then the other, the plume going hard: is it time yet?
+    idle_c = clip_of(r, "idle_c", 4.0, loop=True)
+    _dubu_tail(idle_c, wag=22, per=6, n=24)
+    cycle(idle_c, "chest", "scale", lambda p: (1 + 0.025 * s(p * 4), 1 + 0.025 * s(p * 4), 1), 16)
+    idle_c.rot("fleg_r", keys((0, 0, 0, 0), (0.8, 0, 0, 0), (1.1, -44, 0, 0), (2.8, -40, 0, 0), (3.1, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.scale("fleg_r", keys((0, 1, 1, 1), (0.8, 1, 1, 1), (1.1, 1, 0.7, 1), (2.8, 1, 0.7, 1), (3.1, 1, 1, 1), (4, 1, 1, 1)))
+    idle_c.rot("head", keys((0, 0, 0, 0), (0.8, 0, 0, 0), (1.1, -8, -10, -16), (1.9, -8, -10, -16), (2.1, -8, -6, 14), (2.8, -8, -6, 14),
+                            (3.2, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.rot("ear_l", keys((0, 0, 0, 0), (0.9, 0, 0, 0), (1.1, 0, 0, 10), (2.8, 0, 0, 10), (3.1, 0, 0, 0), (4, 0, 0, 0)))
+    idle_c.rot("ear_r", keys((0, 0, 0, 0), (0.9, 0, 0, 0), (1.1, 0, 0, -10), (2.8, 0, 0, -10), (3.1, 0, 0, 0), (4, 0, 0, 0)))
+
+    # ---- getting down and getting up, acted (SPEC 69.9). Sitting: rump and legs together, the plume settling last.
+    tails = {"tail": (0.3, 0.9), "tail2": (0.36, 0.95), "tail3": (0.42, 1.0)}
+    sit_w = {"*": (0.0, 0.8), **tails}
+    bridge(r, "to_sit", "sit", 0.5, sit_w, extra={("head", "rot"): [(0.35, (8, 0, 0))]})
+    bridge(r, "from_sit", "sit", 0.45, flipped(sit_w), up=True, extra={("head", "rot"): [(0.4, (-7, 0, 0))]})
+    # lying down: his front feet slide out first and his chest follows them down, then his chin comes to his paws
+    rest_w = {"*": (0.05, 0.75), "fleg_l": (0.0, 0.6), "fleg_r": (0.0, 0.6), "head": (0.45, 1.0), "ear_l": (0.5, 1.0), "ear_r": (0.5, 1.0),
+              **tails}
+    bridge(r, "to_rest", "lie", 0.7, rest_w, extra={("body", "rot"): [(0.38, (8, 0, 0))]})
+    bridge(r, "from_rest", "lie", 0.5, flipped(rest_w), up=True, extra={("body", "rot"): [(0.55, (-6, 0, 0))]})
+    # going to sleep: down, then over onto his side with a flop, legs folded on the way and stretched out after; the
+    # giraffe is under his chin once he is there
+    fold = [(0.28, (0, -0.55, 0)), (0.6, (0, -0.55, 0))]
+    toy = {("toy", "scale"): (0.001, 0.001, 0.001)}
+    sleep_w = {"*": (0.4, 1.0), ("body", "pos"): (0.0, 0.5), ("body", "rot"): (0.3, 0.92), "chest": (0.45, 1.0), "head": (0.45, 1.0),
+               "toy": (0.9, 1.0), **tails}
+    bridge(r, "to_sleep", "sleep", 0.85, sleep_w, extra={(nm, "scale"): fold for nm in legs}, rest=toy, settle=0.06)
+    bridge(r, "from_sleep", "sleep", 0.6, flipped(sleep_w), up=True,
+           extra={(nm, "scale"): [(1 - u, v) for u, v in reversed(fold)] for nm in legs}, rest=toy)
     stubs(r)
     # the giraffe is in his mouth only when he carries it, and under his chin when he sleeps
     for cl in r.clips.values():

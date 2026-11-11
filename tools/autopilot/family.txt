@@ -200,6 +200,17 @@ cmd awaken admin family pose dubu idle
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.1 ~-0.5 ~5.6 180 8
 wait 40
 shot family_06_both_standing
+# getting down and getting up, caught half way: each is a clip of its own (to_sit, to_rest, from_...), not a blend
+cmd awaken admin family pose aya sit
+cmd awaken admin family pose dubu rest
+wait 6
+shotnow family_06b_getting_down_half_way
+wait 40
+cmd awaken admin family pose aya idle
+cmd awaken admin family pose dubu idle
+wait 5
+shotnow family_06c_getting_up_half_way
+wait 30
 
 # ---- 3. beside you: the player between them, seen from the front ----
 cmd gamemode creative

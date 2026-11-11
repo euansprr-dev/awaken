@@ -95,7 +95,16 @@ final class FamilyBrain {
             return true;
         }
         int a = b.act();
-        if (a != FamilyPet.IDLE && a != FamilyPet.CARRY && a != FamilyPet.NUDGE && a != FamilyPet.STRETCH) b.act(FamilyPet.IDLE);
+        if (a != FamilyPet.IDLE && a != FamilyPet.CARRY && a != FamilyPet.NUDGE && a != FamilyPet.STRETCH) {
+            // down on the ground it gets up before it walks: the getting-up clip is half a second, a little more from
+            // asleep or from her back (crouched, sniffing or watching a fight it is on its feet already)
+            if (a != FamilyPet.HIDE && a != FamilyPet.SNIFF) b.upAt = b.tickCount + (a == FamilyPet.SLEEP || a == FamilyPet.ROLL ? 11 : 9);
+            b.act(FamilyPet.IDLE);
+        }
+        if (b.tickCount < b.upAt) {
+            b.getNavigation().stop();
+            return false;
+        }
         if (b.getNavigation().isDone() || (b.tickCount + b.getId()) % 20 == 0) b.getNavigation().moveTo(x, y, z, speed);
         return false;
     }

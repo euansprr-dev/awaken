@@ -24512,7 +24512,16 @@ thighs sit inside the flank, so nothing shares a plane and no crack opens when t
 `act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song,
 swat, groom, gaze (hers), sniff, scratch (his).
 The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
-0.85), capped at 3.5 and 3.8 cycles a second; settling into and out of a pose blends over 10 ticks, other changes over 5.
+0.85), capped at 3.5 and 3.8 cycles a second. Getting down and getting up are acted, not blended: between standing and a
+held pose the renderer plays a clip made for it once (`to_sit`, `to_rest`, `to_sleep`, her `to_roll`, and `from_` each;
+0.45 to 0.9 seconds), which starts on the standing pose and ends on the held pose's first frame. In them the parts go in
+an order (legs and rump, then the head, the tail last; his front feet slide out before his chest goes down; she goes
+down before she rolls over), each runs a little past its place and settles, and getting up runs the order backwards. A
+change of mind half way picks the other clip up at the matching moment. The server waits for it: asked to walk while
+down, one stands for half a second first (`FamilyPet.upAt`). One-shots (hello, stretch, swat) and changes between two
+held poses blend over 10 ticks, other changes over 5. Standing about is one of three clips (`idle` twice as likely as
+`idle_b`, her look over her shoulder and his shake, and `idle_c`, a paw held up), picked again each time one ends. A
+turn on the spot faster than four degrees a tick plays the walk, a full circle three strides.
 
 **69.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
 `family.aya.purr|trill|meow` from `entity.cat.purr|purreow|ambient`, `family.dubu.bark|pant|whine|howl` from
@@ -24526,6 +24535,5 @@ Their sounds can be heard from the game's own files with `/Volumes/MEDIA/pets-re
 outside the repo; nothing of the game's is copied).
 
 Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not built from the plan:
-real clips for sitting down, lying down, getting up and the flop (the ten-tick blends stand in for them), and coming
-from the skiff's mooring (the Far Landing is not merged). Not checked by a person:
+coming from the skiff's mooring (the Far Landing is not merged), and the head leading a turn. Not checked by a person:
 nothing here has been played, and no sound has been heard in place.

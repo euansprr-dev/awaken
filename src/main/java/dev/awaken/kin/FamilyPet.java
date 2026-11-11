@@ -80,6 +80,8 @@ public class FamilyPet extends PathfinderMob implements OwnableEntity {
     public long stillSince;
     /** Brain ticks without getting anywhere, and where it was last. */
     public int stuck, leaving;
+    /** Down on the ground and asked to walk: it gets up first (its own age, in ticks, when it is up). */
+    public int upAt;
     public Vec3 lastAt = Vec3.ZERO;
     /** Petting has a moment's rest between two. */
     public long pettedAt;
