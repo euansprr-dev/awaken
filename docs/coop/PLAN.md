@@ -306,6 +306,8 @@ same ladders (§36). None needs timing; each has a window of seconds.
   levels under you, in land at their level, your hits are evened down to their level (the mechanism the story's
   Ascension tiers already use, `story/Ascension`), and you earn at your own level's rate. For the friend who wants
   to play the early game with a newcomer rather than clear it for them. Guild Wars 2 does the same by zone (7).
+  It changes hits only: the land's dread look and sound stay on each player's real level, so the weaker player's
+  warning never fades because a strong friend is near (world-moods' request, section 8).
 - **Pay above your rank**: a fighter in a gate above their rank is paid what a gate of their own rank would pay,
   as riders already are (`Runs.riderReward`).
 
@@ -459,6 +461,17 @@ Asked by message on 11 Nov; answers are folded in below as they arrive.
   more than one client filming one finishing blow.
 - **Aya and Dubu** (`hearth-pets-plan`): who may ask a pet along in a shared home; pets and the skiff and gates.
 - **Danger and calm** (`world-moods-plan`): mixed levels; whether its late second Hearth is the sister home.
+  **Answered 11 Nov** (its page isn't published; nothing of it is approved):
+  - No clash on mixed levels. Land and creature levels come from the place, never from who is there. The land's mood
+    is the same for both players; the dread look stays per player by that player's own gap, so two friends side by
+    side see slightly different pictures, as today.
+  - Its one request: Match my friend must leave the dread gap on the real level (taken into 4.6).
+  - It adds no second Hearth. Sister homes (SPEC "Together") stay the one rule to describe to Euan. Its Hearth
+    proposals: a moved Hearth keeps tier, forge tier, name, bells and kin; a newly placed Hearth takes a day and a night
+    before its calm, waking point and Homeward work; an Anchor takes root only in land up to 5 levels above whoever
+    places it. For this plan that means: a home founded by two is measured on the one who places the Ember (so the
+    weaker of a pair should not be the one to place it far out, and the card says so if it's refused), a sister
+    home's Anchor obeys the same rules, and the Answering Peal is unaffected (it goes to a person, not a home).
 
 ## 9. Decisions for Euan
 On the page, each with a recommendation.
