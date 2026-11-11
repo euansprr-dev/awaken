@@ -26074,3 +26074,124 @@ takes `xp_share` from `awaken-together.toml`, default **equal**), changed by any
   awakening it is banked. Offline members get nothing. Only a formed party shares this way: people who merely stand
   in the same gate keep the old rule (`Parties.sharing`).
 
+## 71. The Leaper's Gauntlet, remade, and the Unlock title (plan docs/leapers-gauntlet/PLAN.md, page https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1; Euan approved all twelve decisions on 11 Nov 2026: "Go ahead with the full plan")
+
+**Status: approved in full by Euan on 11 Nov 2026, typed to the movement-unlocks session ("Go ahead with the full
+plan"; recorded as yes on the page, `d1` to `d12`). The movement module's part is built (71.7). The course itself
+(71.4) is the gates session's and is not built yet: until it is, the old course of §17.10 still stands, with its gift
+remade.** This section is the short form; the plan record is the contract.
+
+Euan, 11 Nov, after playing the Gauntlet: "I had no idea that's where I got the double jump from ... I thought I already
+had it"; "it took like maybe 30 seconds ... what was the point of that gate?"; "I don't even know if I got XP". And on
+11 Nov: the title should be "the big title, and it says you just unlocked double jump. Press space in the air again to
+use it ... And maybe every time you unlock a major thing in the game, it actually shows you that as well."
+
+**71.1 What was found** (code at edc314667, his play log, CI tour `gauntlet-now` run 43008682852). The course is flat,
+31 rows, par 8.1 s, and needs the leap once. The leap is given on the last row before the chasm at a sprint
+(`TrialHooks.atEdge`); in his run that was 17:27:28.559 and the pit threw him back at 17:27:29.562, then twice more. The
+gift's title shares the screen with the clock, par, the pit's critical toast and whatever else is due. The dash and the
+slam are named on the end card and never needed. The pay is "+90 XP" in small type. The gate's own notice was filed
+unseen, its panel says "Find the Rest Shrine", and its Tasks row says "where you climbed" even when it opened by mastery.
+
+**71.2 The Unlock title** (a shared kit, `core.api.Unlocks.show(player, id)`, drawn in the System's layer beside the
+discovery title): the spaced label UNLOCKED, a line of light, the name at three times normal size, the how-line with the
+player's own key ("Double Jump" · "Press [Space] again in the air"); six seconds; the System's moment swell under
+Minecraft's `ui.toast.challenge_complete`; every tier of message and every tip held while it shows, a tip already up
+faded; never in a fight (it waits); never paced, never filed; then the how-line stays as the Lesson's pinned prompt.
+Major unlocks, if he says yes: a new way to move, a new power, a new rank, a new layer of the world.
+
+**71.3 The stand** (`awaken:leap_stand`, the Ascent's; placed by the course at a mark): Use held 20 ticks while standing
+on it gives that stand's move (saved at the stroke) and plays its title. Inside the Gauntlet the leap is unlocked a move
+at a time (double jump, dash, slam, later the aimed dive: a mask in `WayMemory` schema 2, honoured by the leap's own
+rules, which are rope-hold-swing's files); given any other way, all at once as now.
+
+**71.4 The Gauntlet** (the gates session builds it): a way in that ends at a gulf a figure of light crosses and you
+cannot; three stands, each followed by a hall that cannot be crossed without its move (Double Jump 4 uses, Air Dash 4,
+Slam 3; no clock, no pit, a net that lifts you back); the Long Run (timed, about 85 s par, 14 leap moves, rings, a pit
+that throws back and does not hurt, medals); the tally floor (XP counted up as `LordPay` does, the mastery bar, time and
+medal on a plate, the player's counts). Proposed: half a level's XP the first time; the gate stays standing to run
+again; the look of the Stopped Works. The gates session's answer (11 Nov): a hand-laid Realm in the Stopped Works' kit,
+not the Rig hall; steps, gaps, shafts, marks, doors on a word and constructs are easy there; a slam-broken deck needs a
+slam-landed call from the Ascent; rings, clock and medals must be ported from the Rig (medium); a scripted gate onto one
+named Realm is new and small; the kit's fall catch costs 3 + 8% health and would cost nothing here; its check needs the
+leap's reach from the leap's own rules.
+
+**71.5 Words.** The gate's panel and card say its point ("It holds a new way to move. No fighting."); the HUD's line
+follows the hall; the pit's toast is dropped in the trial; the Tasks row is "Run the Leaper's Gauntlet".
+
+**71.6 Who.** The Unlock title, the stand, the mask's memory, the lessons, words, Tasks, K rows and the gold figure's own
+drawing: the movement-unlocks session. The mask honoured in `AscentMoves` and `AscentServer`'s events, the aimed dive,
+the double-jump mantle: rope-hold-swing. The place, halls, check, clock and pit rules, crossing, HUD lines, tally floor
+and re-run: the gates session.
+
+**71.7 Built (11 Nov 2026, `claude/movement-unlocks-b62e18`; the movement module's part).**
+- **The Unlock title.** `core.api.Unlocks` (register on both sides, `show(player, id)`, client `show`, `showing`,
+  `pending`); the System sends `signal_unlock` and draws it in `signal.client.UnlockMoment`: the spaced label in the
+  unlock's colour, a line of light out to 120 px and more, the name at 3 times text (2.4, 2, 1.5 when it would not fit
+  with 12 px either side), the how-line with `{key.x}` and `{hold}` drawn as the player's own caps (an unbound key reads
+  "Not set"), a feathered dark band behind. 14 ticks in, 98 held, 18 out; reduced motion (`FirstPerson.reducedMotion`):
+  no rise and no sweep. Sound: `ui.moment` at 0.8 under Minecraft's `ui.toast.challenge_complete` at 0.9. It starts only
+  with no screen, no choice card, no discovery up, and `SystemHud.inCombat()` false, and waits however long; the same
+  unlock twice is one. While it shows: the director and tips are held, `SystemHud.tickToasts` and `tickPanel` hold new
+  toasts (critical ones too) and info cards, and `Tips` fades a tip already up. At most five wait their turn (a
+  command that hands out everything would otherwise hold the screen for minutes; play gives three at most).
+  `/awaken signal unlock <id>` (admin) shows a registered one. *Not built:* the gates' run HUD stepping aside (asked
+  of the gates session: `showing()`).
+- **The other three kinds** (Euan's "every time you unlock a major thing"; the title replaces the plain announcement,
+  never a window and a title). Each is made on the spot with `Unlocks.show(player, new Unlock(id, label, name, how,
+  colour))`, sent whole as `signal_unlock_made`:
+  - *A new power* (`Powers.learnOrLevel`, in place of the "New power" window): NEW POWER, the power's name in its
+    family's colour, and "Press [its key] to use it" with the key it landed on (`Powers.keyOf`), or "It works on its
+    own while you have it" for a passive, or "Press [K] and put it on a key" when no key was free. The Journal's
+    "Power learned" notice still keeps what it does. A changed variant keeps its window.
+  - *A new rank* (`Progression.passReassessment`, in place of the Reassessment window): RANK UP, "C-rank" in the
+    rank's colour, "C-rank gates will start to appear for you". The rank-up sound and the Journal's notice stay.
+  - *A new stratum* (`DescentModule`, in place of the toast): NEW STRATUM, the stratum's name in its rank's colour,
+    "Stratum 3 has opened below you". It follows the rank's title.
+- **The ladder's titles** (`body.ascent.AscentUnlocks`): Rope, Double Jump, Air Dash, Slam, Dive, Wings, Flight, The
+  Sovereign's Form. With `wayUp` on a gift's scene keeps its light and swell and draws no words (`AscentScene.render`);
+  `WayClient.sceneBegan` shows the title: the old course's edge → Double Jump, its far landing → Air Dash then Slam, a
+  core's gift and wings-first at the sky's edge → Wings, the Sky Warden's fall → Flight, the last rank fight → the
+  form; the Vow's line → Rope, as the rope pulls you up (`VowScene`), and its "That's it. The rope is yours." is now a
+  small line. A lesson or a card of keys that follows a gift waits until no title is pending. A rung handed down gets
+  its title 9 s after the one asked for (`WayUp.onGranted`; a handed-down leap's is Double Jump).
+- **The old edge, until the new course replaces it:** at `LEAP_EDGE` the client holds the body for 100 ticks where it
+  last stood on the ground (its own position each tick, so nothing rubber-bands), so the title is not read from the pit.
+- **The leap a move at a time.** `WayUp.Leap` (DOUBLE, DASH, SLAM, DIVE); `WayMemory` schema 2 adds `stands` (taken) and
+  `parts`; `canLeap` is true unless `parts` and that stand is not taken. Synced as two bytes of `ascent_way`
+  (`WayClient.canLeap`, `stand`). The server refuses the count of a move not yet open (`AscentServer.onEvent`, `slam`).
+  **`WayUp.LEAP_BY_PARTS` is false**: the leap's own rules (`AscentMoves`, rope-hold-swing's) do not ask yet, so the
+  first stand gives the leap whole and the later stands play their titles only. `DIVE_BUILT` false: its stand is dark.
+- **The stand.** `awaken:leap_stand` (a plate 4 px tall with property `move`; unbreakable, light 9; in the courses'
+  shelf; `LedgerSources` never-held). Its block entity only tells the client it is near. The client lights the nearest
+  one still to take with rising gold, pins "Step onto it" within 6 blocks and "Hold [Use] to take it" when stood on;
+  Use held 20 ticks while standing still sends `ascent_take` (the Use key's own action is cancelled there). The server
+  checks again (on the ground, within 1.6, not taken) in `WayUp.take`: the leap if not held, the stand's bit, saved, then
+  `ascent_stroke`, `TrialHooks.standTaken` for the course's door, Minecraft's anvil at 0.62. The client holds the body 40
+  ticks, light climbs the legs, and the title shows 12 ticks in.
+- **The course's hooks** (`core.api.TrialHooks`, additions): `at(player, trial, mark, from, to)` with marks `reach`,
+  `use/<move>/<n>`, `miss` or `miss/<move>`, `run` (`from` and `to` are the cells feet stand in, not the floor; a
+  `miss` comes once for every three falls at one spot); `pay(...)` returning `Pay` (first, XP, mastery before and
+  after, its fill, counts by name: the course shows them and works out nothing itself); `finished`; `onSlam` /
+  `slamLanded` (fired from `AscentServer.slam`); `onStand` / `standTaken` (once, on the tick a stand is taken; the
+  course answers with its press stroke and the door). As agreed with the gates session on 11 Nov: a door is real
+  blocks, so it opens for everyone in the gate once anyone has taken its stand, and the hall past it is what asks for
+  the move; every runner still takes each stand for themselves.
+  The Ascent's side: `WayUp.mark` (sends `ascent_spot`; `run` starts a count), `WayUp.used`, `WayUp.pay` (the first
+  time: the flag, 10 mastery, half a level, the leap made whole; always: the counts and one log line, "[gauntlet] run
+  by … : 14 double jumps, …").
+- **Lessons** (`Lesson`): REACH (the figure crossing the gulf every 4 s, no words), STAND_NEAR, STAND_ON (a gold line
+  filling under it), LEAP_SPOT, DASH_SPOT, SLAM_SPOT (pinned over a hall's first spot for each move, and again after a
+  `miss`; each ends at the tick its move is made, the slam's when it lands).
+- **The road.** The leap waits until the Gauntlet is run (`LEAPER_TRIAL_DONE`), not only until it is held: its gate
+  stays on the road and the Tasks row reads "Run the Leaper's Gauntlet" ("It holds a new way to move. No fighting.",
+  or for someone already holding the leap, "It is a course for the leap, and it pays the first time you finish it.");
+  the gate opens for a rope-holder whose Gauntlet is not run, whatever they hold. The panel says its point. The old
+  course's far landing pays half a level too.
+- **The figure of light.** `awaken:lesson_figure` (`LessonFigure`: no mind, no weight, made by a client for itself, never
+  summoned, sent or saved; discarded if a server ever ticks one) drawn by `LessonFigureRenderer`: the player's body
+  shape in one pale gold (`textures/entity/ascent/lesson_figure.png`, from `tools/art/ascent_figure.py`), emissive,
+  about 70% there, no shadow. The Gauntlet's ghost is no longer used by the Lesson.
+- **K, Powers:** while the leap is held by parts, a line a move taken and "◆ Another move waits further into the
+  Gauntlet."
+- **Tests:** `way_up_stands` (new), `way_up_road` (the gate stays until the run is paid; paid once).

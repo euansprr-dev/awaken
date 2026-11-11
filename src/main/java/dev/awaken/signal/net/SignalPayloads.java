@@ -40,6 +40,28 @@ public final class SignalPayloads {
         @Override public Type<Toast> type() { return TYPE; }
     }
 
+    /** Server → client: something major was unlocked (SPEC §71.2, core.api.Unlocks): its title plays when the player is free. */
+    public record Unlock(String id) implements CustomPacketPayload {
+        public static final Type<Unlock> TYPE = new Type<>(Awaken.id("signal_unlock"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Unlock> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, Unlock::id,
+                Unlock::new);
+        @Override public Type<Unlock> type() { return TYPE; }
+    }
+
+    /** Server → client: an unlock made on the spot (a power on its key, a rank, a stratum): the whole title's words. */
+    public record UnlockMade(String id, String label, String name, String how, int colour) implements CustomPacketPayload {
+        public static final Type<UnlockMade> TYPE = new Type<>(Awaken.id("signal_unlock_made"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, UnlockMade> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, UnlockMade::id,
+                ByteBufCodecs.STRING_UTF8, UnlockMade::label,
+                ByteBufCodecs.STRING_UTF8, UnlockMade::name,
+                ByteBufCodecs.STRING_UTF8, UnlockMade::how,
+                ByteBufCodecs.INT, UnlockMade::colour,
+                UnlockMade::new);
+        @Override public Type<UnlockMade> type() { return TYPE; }
+    }
+
     /** Server → client: a tip's context came up ({@code offer}) or the player did what it teaches (SPEC §27.7). */
     public record Tip(String id, boolean offer) implements CustomPacketPayload {
         public static final Type<Tip> TYPE = new Type<>(Awaken.id("signal_tip"));

@@ -1,0 +1,77 @@
+# The Unlock title (SPEC §71.2) at the GUI size Euan plays at: 427 x 240 (his 4K at scale 9; here an 854 x 480 window on
+# the runner's Retina display at auto scale 4). A new power (the starter), three of the ladder's (a hold cap, the one he
+# asked for, the longest name), then two new ranks and the stratum each opens.
+#   /awaken signal unlock <id>     show a registered title
+#   "[unlock] ... shows" in latest.log names each title as it begins.
+# Run on CI: tools/tour-ci.sh tools/autopilot/unlock-titles.txt 1500
+world unlock_titles survival 20261025
+waitworld
+gui 0
+window 854 480
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+# the opening's flight over the city holds the camera and hides the HUD for its first half minute: a title waits for
+# the HUD, so nothing is asked for until the opening has handed over
+wait 900
+hud on
+camera first
+wait 10
+# ---- a new power: the starter ----
+cmd awaken powers starter 1
+wait 20
+screen close
+hud on
+camera first
+wait 8
+shotnow ut_01_power_opening
+wait 30
+shotnow ut_02_power
+wait 60
+shotnow ut_02b_power_held
+wait 120
+# ---- the ladder's: a hold cap, the one he asked for, the longest name ----
+cmd awaken signal unlock awaken:unlock/rope
+wait 40
+shotnow ut_03_rope
+wait 120
+cmd awaken signal unlock awaken:unlock/double_jump
+wait 6
+shotnow ut_04a_double_jump_opening
+wait 34
+shotnow ut_04_double_jump
+wait 86
+shotnow ut_04c_double_jump_fading
+wait 40
+cmd awaken signal unlock awaken:unlock/sovereign_form
+wait 40
+shotnow ut_05_sovereign_form
+wait 120
+# ---- a new rank, then the stratum it opens (two titles, one after the other) ----
+cmd awaken admin rankup
+wait 40
+shotnow ut_06_rank_d
+wait 150
+shotnow ut_07_after_rank_d
+wait 150
+cmd awaken admin rankup
+wait 40
+shotnow ut_08_rank_c
+wait 150
+shotnow ut_09_after_rank_c
+wait 150
+# ---- two at once with a toast behind them: the toast waits its turn ----
+cmd awaken signal unlock awaken:unlock/air_dash
+cmd awaken signal unlock awaken:unlock/slam
+cmd awaken signal demo toast
+wait 40
+shotnow ut_10_air_dash
+wait 144
+shotnow ut_11_slam
+wait 150
+shotnow ut_12_toast_after
+info
+quit

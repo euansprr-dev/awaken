@@ -72,5 +72,7 @@
   "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed up to it by rope.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
-  "block.awaken.spire_crown": "Spire Crown"
+  "block.awaken.spire_crown": "Spire Crown",
+  "block.awaken.leap_stand": "Leaper's Stand",
+  "entity.awaken.lesson_figure": "Figure of Light"
 }

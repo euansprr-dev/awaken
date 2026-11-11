@@ -80,6 +80,8 @@ public final class RigRunHud {
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gui.hud.isHidden()) return;
+        // an Unlock title has the upper middle to itself (SPEC §71.2): the clock steps aside while it shows, and keeps running
+        if (dev.awaken.core.api.Unlocks.client().showing()) return;
         long now = mc.level.getGameTime();
         float pt = dt.getGameTimeDeltaPartialTick(false);
         boolean result = !running && now - shownAt < HOLD;
