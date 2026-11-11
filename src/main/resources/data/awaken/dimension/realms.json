@@ -46,7 +46,12 @@
         "awaken:realm/sleepless_ward",
         "awaken:realm/unlit_stair",
         "awaken:realm/rime_hollows",
-        "awaken:realm/green_dark"
+        "awaken:realm/green_dark",
+        "awaken:realm/cinder_crown",
+        "awaken:realm/fallwater_vale",
+        "awaken:realm/hush_tarn",
+        "awaken:realm/glass_sea",
+        "awaken:realm/high_caps"
       ]
     }
   }

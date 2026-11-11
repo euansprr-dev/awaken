@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "name": "The Cinder Crown",
+  "line": "The mine roads up this mountain were left the day it woke. It has been quiet for a long time since.",
+  "form": "land",
+  "theme": "ember_mines",
+  "ranks": [
+    "E",
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "land": {
+    "program": "awaken:ember_country",
+    "water": 62,
+    "params": {
+      "landform": 0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/cinder_crown"
+    ],
+    "lens": "cinder_crown",
+    "air": [
+      "embers",
+      "wind",
+      "smoke",
+      "dust"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 6
+  },
+  "heart": {
+    "lord": "ember_tyrant",
+    "seat": "the_crown"
+  },
+  "moods": [
+    "last_light"
+  ]
+}
