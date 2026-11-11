@@ -25794,8 +25794,10 @@ charge), `aim` (the ring).
   only, and a fighter loaded from a save counts as just seen, so a pause (the server stands still), a save, a quit and a
   reload, a step out of the door and a leap never put the Lord to rest. Only when the list is empty and the door is shut
   does the Lord go back to rest, whole, the hall reset and the door open (so nobody is ever locked out), and every
-  player in the gate and every fighter just out is told: "Nobody is left in the fight. The Ember Tyrant has gone back to
-  rest, whole again. The door to its hall is open." A Lord whose fight was put to rest while its chunk was away leaves as
+  player in the gate and every fighter just out is told, in chat: "Nobody is left in the fight. The Ember Tyrant has gone
+  back to rest, whole again. The door to its hall is open.", and by a toast that says only "The Ember Tyrant has gone
+  back to rest." (a toast holds two lines of 144 px at any GUI scale, and the full sentence was cut off after "has
+  gon…"; the longest Lord's name, the Gearwright Colossus, fills 244 of the two lines' 288 px). A Lord whose fight was put to rest while its chunk was away leaves as
   it loads (`RealmLive.strayLord`, from `GateEvents.onJoin`), so a fresh one never stands beside it. The log says each
   step (`[realms] gate N: ... joined the fight`, `... is out of the fight with the Lord (fell)`, `... stood past the
   heart's line (x y z, d blocks from the Lord); the fight held` once a fighter a fight, `nobody is left fighting ...`).
