@@ -1,5 +1,6 @@
 package dev.awaken.ground;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.ground.cover.PebblesBlock;
 import dev.awaken.ground.cover.TwigsBlock;
 import dev.awaken.terrain.block.BlockSet;
@@ -18,7 +19,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 public final class GroundCover {
     private GroundCover() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.GROUND);
 
     private static BlockBehaviour.Properties small(BlockBehaviour.Properties p, MapColor color, SoundType sound) {
         return p.mapColor(color).noCollision().instabreak().replaceable().sound(sound).pushReaction(PushReaction.POPPED)

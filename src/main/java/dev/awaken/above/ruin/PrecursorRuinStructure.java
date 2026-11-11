@@ -39,8 +39,11 @@ public class PrecursorRuinStructure extends Structure {
     @Override
     protected Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext ctx) {
         ChunkPos chunk = ctx.chunkPos();
+        RuinSpacing.noteDecided(kind, chunk);
         // the city keeps its basin (Carillon; terrain's city reserve)
         if (dev.awaken.terrain.api.CityBasin.reserved(chunk.getMinBlockX() + 8, chunk.getMinBlockZ() + 8)) return Optional.empty();
+        // the blue rope sites keep their distance (SPEC §17.11 "Room between them"): only new chunks ask, so made land keeps its own
+        if (!RuinSpacing.keepsWhileMade(kind, ctx)) return Optional.empty();
         RuinBuilder.Size size = RuinBuilder.size(kind);
         WorldgenRandom random = ctx.random();
         long seed = random.nextLong();

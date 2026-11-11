@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenCommands;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -45,6 +46,7 @@ public final class BinocularsModule {
 
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.GEAR, BINOCULARS);
         BinocularsSounds.register(modBus);
         modBus.addListener(BinocularsNet::register);
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> {

@@ -10,6 +10,7 @@ import dev.awaken.caves.life.UnderSites;
 import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.SkinBlocks;
+import dev.awaken.caves.skin.Settle;
 import dev.awaken.caves.skin.SkinRock;
 import dev.awaken.caves.skin.WallGrowth;
 import dev.awaken.core.test.AwakenTests;
@@ -110,6 +111,8 @@ final class CavesTests {
         AwakenTests.register("caves_region_edge", 400, CavesTests::regionEdge);
         AwakenTests.register("caves_wall_growth_whole", 100, CavesTests::wallGrowthWhole);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
+        AwakenTests.register("caves_settled", 100, CavesTests::settled);
+        AwakenTests.register("caves_lone_crumb", 100, CavesTests::loneCrumb);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -879,8 +882,124 @@ final class CavesTests {
         h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 0.01, o.getZ() + 0.5, Direction.UP), "on the floor");
         h.assertFalse(UnderSites.onSurface(level, m, o.getX() - 2.5, o.getY() + 0.01, o.getZ() - 2.5, Direction.UP), "on the pool");
         h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 6.99, o.getZ() + 0.5, Direction.DOWN), "on the roof");
+        // the whole body on its face (SPEC §42.4 "Settled"): not sunk into the roof, not hanging under a lip's edge into the air
+        double wx = o.getX() - 4 + 0.01, lx = o.getX() + 3 - 0.01, cz = o.getZ() + 0.5;
+        h.assertTrue(UnderSites.bodyOnSurface(level, m, wx, o.getY() + 3.5, cz, Direction.EAST, 0.14), "a body on the west wall");
+        h.assertFalse(UnderSites.bodyOnSurface(level, m, wx, o.getY() + 6.95, cz, Direction.EAST, 0.14), "a body into the roof");
+        h.assertTrue(UnderSites.bodyOnSurface(level, m, lx, o.getY() + 2.5, cz, Direction.WEST, 0.14), "a body on the lip's face");
+        h.assertFalse(UnderSites.bodyOnSurface(level, m, lx, o.getY() + 2.05, cz, Direction.WEST, 0.14), "a body over the lip's edge");
+        // a curtain wholly under its roof: not into the wall, not past the lip
+        h.assertTrue(UnderSites.hangs(level, m, o.getX() + 0.5, o.getY() + 6.98, cz, 0.42), "a curtain under the roof");
+        h.assertFalse(UnderSites.hangs(level, m, o.getX() - 4 + 0.3, o.getY() + 6.98, cz, 0.42), "a curtain into the wall");
+        h.assertTrue(UnderSites.hangs(level, m, o.getX() + 3.5, o.getY() + 1.98, cz, 0.42), "a curtain under the alcove's roof");
+        h.assertFalse(UnderSites.hangs(level, m, o.getX() + 3.1, o.getY() + 1.98, cz, 0.42), "a curtain past the lip");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.TORCH)) == 14, "a torch gives 14");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.STONE)) == 0, "stone gives none");
+        h.succeed();
+    }
+
+    /**
+     * Nothing in a cave floats (SPEC §42.4 "Settled"): every piece the skin lays that hangs on or stands on something asks for the
+     * world-gen re-check, and the re-check takes off what nothing holds: a lichen whose wall was cut away, a root strand whose roof
+     * was (asked from its tip first, as the pass meets a strand across a section line); a lichen on its rock stays.
+     */
+    private static void settled(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        int pieces = 0;
+        for (Block b : BuiltInRegistries.BLOCK) {
+            BlockState s = b.defaultBlockState();
+            if (!Settle.settles(s)) continue;
+            pieces++;
+            h.assertTrue(s.getPostProcessPos(level, BlockPos.ZERO) != null, BuiltInRegistries.BLOCK.getKey(b) + " is never re-checked");
+        }
+        h.assertTrue(pieces >= 30, "the skin's settling pieces: " + pieces);
+        BlockPos o = h.absolutePos(new BlockPos(1, 2, 1)), held = o.south(2), roof = o.offset(3, 4, 0);
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockState lichen = CaveSkin.LICHEN_SHALLOWS.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.WEST), true);
+        level.setBlock(o, stone, Block.UPDATE_CLIENTS);
+        level.setBlock(o.east(), lichen, Block.UPDATE_CLIENTS);
+        level.setBlock(held, stone, Block.UPDATE_CLIENTS);
+        level.setBlock(held.east(), lichen, Block.UPDATE_CLIENTS);
+        level.setBlock(roof, stone, Block.UPDATE_CLIENTS);
+        for (int k = 1; k <= 3; k++) {
+            level.setBlock(roof.below(k), CaveSkin.ROOT_CURTAIN.get().defaultBlockState().setValue(SkinBlocks.RootCurtain.TIP, k == 3), Block.UPDATE_CLIENTS);
+        }
+        // the first wall and the roof cut away with no word to their neighbours, as a neighbour chunk's mineshaft cuts them
+        level.setBlock(o, air, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        level.setBlock(roof, air, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        h.assertTrue(Floaters.verdict(level, o.east(), level.getBlockState(o.east())) == Floaters.LOOSE, "the cut leaves the lichen floating");
+        // the pass, as when the chunk first ticks: the strand's tip asked first
+        java.util.Set<net.minecraft.world.level.chunk.LevelChunk> chunks = new java.util.LinkedHashSet<>();
+        for (BlockPos p : List.of(roof.below(3), roof.below(2), roof.below(1), o.east(), held.east())) {
+            var chunk = level.getChunkAt(p);
+            net.minecraft.world.level.chunk.ChunkAccess.getOrCreateOffsetList(chunk.getPostProcessing(), chunk.getSectionIndex(p.getY()))
+                    .add(ProtoChunk.packOffsetCoordinates(p));
+            chunks.add(chunk);
+        }
+        for (var chunk : chunks) chunk.postProcessGeneration(level);
+        h.assertTrue(level.getBlockState(o.east()).isAir(), "the lichen with no wall goes");
+        for (int k = 1; k <= 3; k++) h.assertTrue(level.getBlockState(roof.below(k)).isAir(), "the strand with no roof goes, piece " + k);
+        h.assertTrue(level.getBlockState(held.east()).is(CaveSkin.LICHEN_SHALLOWS.get()), "the lichen on its wall stays");
+        h.succeed();
+    }
+
+    /**
+     * A crumb with air all round it in a cave goes as the skin dresses (SPEC §42.4 "Settled", lone blocks): a stone one and a
+     * gravel one in the middle of a room, and one wholly in water turns to water; a spur on the wall, a crumb beside water and
+     * the room's roof and floor stay.
+     */
+    private static void loneCrumb(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ChunkPos pos = new ChunkPos(-60, -60);
+        ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, LevelHeightAccessor.create(-64, 384), level.palettedContainerFactory(), null);
+        int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.CAVE_AIR.defaultBlockState();
+        for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = -64; y < 40; y++) {
+            boolean room = x >= 2 && x <= 13 && z >= 2 && z <= 13 && y >= 10 && y <= 20;
+            chunk.setBlockState(m.set(cx + x, y, cz + z), room ? air : stone, 0);
+        }
+        BlockPos crumb = new BlockPos(cx + 7, 15, cz + 7), gravel = new BlockPos(cx + 10, 13, cz + 10), spur = new BlockPos(cx + 2, 15, cz + 7),
+                wet = new BlockPos(cx + 5, 12, cz + 11);
+        chunk.setBlockState(crumb, stone, 0);
+        chunk.setBlockState(gravel, Blocks.GRAVEL.defaultBlockState(), 0);
+        chunk.setBlockState(spur, stone, 0);
+        chunk.setBlockState(wet, stone, 0);
+        chunk.setBlockState(wet.east(), Blocks.WATER.defaultBlockState(), 0);
+        BlockPos drowned = new BlockPos(cx + 10, 17, cz + 5);
+        for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++) {
+            chunk.setBlockState(drowned.offset(x, y, z), Blocks.WATER.defaultBlockState(), 0);
+        }
+        chunk.setBlockState(drowned, stone, 0);
+        CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
+            @Override
+            public BlockState get(int x, int y, int z) {
+                if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockState state) {
+                chunk.setBlockState(m.set(x, y, z), state, 0);
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return 100;
+            }
+
+            @Override
+            public int minY() {
+                return -64;
+            }
+        };
+        CaveSkinFeature.dress(cells, cx, cz, 0L, chunk);
+        h.assertTrue(cells.get(crumb.getX(), crumb.getY(), crumb.getZ()).isAir(), "the crumb of stone with air all round goes");
+        h.assertTrue(cells.get(gravel.getX(), gravel.getY(), gravel.getZ()).isAir(), "the crumb of gravel goes");
+        h.assertTrue(cells.get(spur.getX(), spur.getY(), spur.getZ()).is(Blocks.STONE), "the spur on the wall stays");
+        h.assertTrue(cells.get(wet.getX(), wet.getY(), wet.getZ()).is(Blocks.STONE), "the crumb beside water stays");
+        h.assertTrue(cells.get(drowned.getX(), drowned.getY(), drowned.getZ()).is(Blocks.WATER), "the crumb wholly in water turns to water");
+        h.assertTrue(cells.get(cx + 7, 21, cz + 7).is(Blocks.STONE) && cells.get(cx + 7, 9, cz + 7).is(Blocks.STONE), "the roof and the floor stay");
         h.succeed();
     }
 

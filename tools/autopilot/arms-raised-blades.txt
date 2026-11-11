@@ -1,0 +1,61 @@
+# The Longsword's and the Greatblade's charges held raised (SPEC §25 "A charge goes the way its blow will"; Euan
+# 2026-11-11: "It should actually charge in the direction it's about to go in"):
+#   clips/longsword_heavy the press, the draw up, the hold (the blade stood up in the top right, its whole length in view,
+#                         the fist at the crosshair's height), the release and the chop down, at 2 ticks a second, a
+#                         picture a half tick
+#   clips/greatblade_heavy the same for the Greatblade: the blade rising out of the top, guard and lower blade in view,
+#                         neither arm's end on the bottom edge, then the chop
+# ci knobs: PACK=perf,feel,comfort,world
+world armsraisedblades creative 781
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+shot longsword_rest
+arms rate 2
+wait 2
+arms film longsword_heavy 64 0.5 2
+wait 3
+arms heavy 22
+wait 36
+arms rate 20
+wait 30
+arms studio awaken:gatewrought_greatblade
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+shot greatblade_rest
+arms rate 2
+wait 2
+arms film greatblade_heavy 64 0.5 2
+wait 3
+arms heavy 22
+wait 36
+arms rate 20
+wait 30
+quit

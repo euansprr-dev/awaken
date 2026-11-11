@@ -19,6 +19,9 @@ public final class Look {
 
     public enum Tier {
         SWIFT("SWIFT", "Horizon and soft light. Built for 120 fps.", LensLook.SWIFT, false, 1000f / 110f, 16f),
+        // Lite (SPEC §22 "Lite"): Lens's sky, fog, clouds and sun rays with none of its shadow work, for a laptop. The
+        // budget is the 60 fps it is built to hold there
+        LITE("LITE", "Lens's own sky, far fog, clouds and sun rays, with no shadows. Built for a laptop.", LensLook.LITE, false, 1000f / 60f, 25f),
         CINEMATIC("CINEMATIC", "Sun shadows, warm light, light shafts, a wider horizon. 90+ fps.", LensLook.CINEMATIC, false, 1000f / 90f, 20f),
         // Lens 2's Ultra (SPEC §22): AWAKEN's own light at full quality, on Vulkan and OpenGL alike; no Iris (OpenGL only)
         ULTRA("ULTRA", "Cinematic at full quality: longer, finer shadows and light. 60+ fps.", LensLook.ULTRA, false, 1000f / 60f, 25f),
@@ -50,6 +53,7 @@ public final class Look {
         if (shadersOn) return null;
         return switch (lens) {
             case SWIFT -> Tier.SWIFT;
+            case LITE -> Tier.LITE;
             case CINEMATIC -> Tier.CINEMATIC;
             case ULTRA -> Tier.ULTRA;
             case VFX -> Tier.VFX;
@@ -123,9 +127,12 @@ public final class Look {
             new DhSetting(VERTICAL_QUALITY, "MEDIUM"), new DhSetting(HORIZONTAL_QUALITY, "MEDIUM"), new DhSetting(SSAO, true),
             new DhSetting(TEXTURED_LODS, true), new DhSetting(ANTI_ALIASING, true));
 
-    /** The tier's Distant Horizons values, in {@link #DH_KEYS} order. Ultra uses Cinematic's horizon (Iris draws it). */
+    /**
+     * The tier's Distant Horizons values, in {@link #DH_KEYS} order. Ultra uses Cinematic's horizon (Iris draws it);
+     * Lite keeps Swift's, the cheaper one.
+     */
     public static List<DhSetting> dh(Tier tier) {
-        return tier == Tier.SWIFT ? DH_SWIFT : DH_CINEMATIC;
+        return tier == Tier.SWIFT || tier == Tier.LITE ? DH_SWIFT : DH_CINEMATIC;
     }
 
     /**

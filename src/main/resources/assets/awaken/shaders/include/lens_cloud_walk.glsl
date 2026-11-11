@@ -5,9 +5,11 @@
 // What keeps it cheap: ground and anything nearer than the layer is out at once, a ray crosses four or five cells on
 // average, a cell is one read, the clouds are solid so the walk ends at the first one, and their colours are worked out
 // only for a ray that met one.
-// Needs lens_frame.glsl, lens_air.glsl and lens_clouds.glsl before it. v the ray (unit), scene the distance to what
+// Needs lens_frame.glsl, lens_air.glsl, lens_cloud_cells.glsl and lens_storm_blocks.glsl (stormClearing) before it. v the ray (unit), scene the distance to what
 // the pixel shows (1e9 for sky). Returns rgb the light the clouds send this way (premultiplied), a how much of what is
 // behind still shows.
+vec4 P(int i);  // the including pass's parameter read (texel 25 r: Lite)
+
 float cloudNearHg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
 vec4 cloudNear(vec3 v, float scene) {
@@ -15,6 +17,11 @@ vec4 cloudNear(vec3 v, float scene) {
     if (!cloudBlocks() || cp.x <= 0.0 || f16.w <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
     vec3 l = f14.xyz;
     float camY = f12.y;
+    // (Lite, SPEC §22 "Lite", has no far clouds' pass behind this walk, so here it goes as far as that pass does: only
+    // the low band of sky between the two reaches walks farther, some twenty cells at most, and a block twelve wide is
+    // still a dozen pixels at a thousand blocks)
+    bool lite = P(25).r > 0.5;
+    float reach = lite ? CLOUD_NEAR + 600.0 : CLOUD_NEAR;
     // the layer on this ray, as far as the near walk goes
     float oy = camY - (cp.x - cloudUnder()), thick = cloudThick(), t0 = 0.0, t1 = 0.0;
     if (abs(v.y) > 1.0e-4) {
@@ -22,9 +29,9 @@ vec4 cloudNear(vec3 v, float scene) {
         t0 = max(min(a, b), 0.0);
         t1 = max(a, b);
     } else if (oy > 0.0 && oy < thick) {
-        t1 = CLOUD_NEAR;
+        t1 = reach;
     }
-    t1 = min(min(t1, scene), CLOUD_NEAR);
+    t1 = min(min(t1, scene), reach);
     if (t1 <= t0) return vec4(0.0, 0.0, 0.0, 1.0);
 
     // the walk (lens_clouds.fsh's blockPiece, with the light kept as two sums until a cloud is met)
@@ -35,13 +42,15 @@ vec4 cloudNear(vec3 v, float scene) {
     vec2 inv = 1.0 / max(abs(v.xz), vec2(1.0e-5));
     vec2 next = t0 + ((cell + max(sgn, 0.0)) * CLOUD_CELL - pxz) * sgn * inv;
     float t = t0, T = 1.0, tHit = -1.0, sunSum = 0.0, skySum = 0.0;
-    int axis = 2;
+    int axis = 2, storms = stormCount();
     bool inside = false;
     vec3 nIn = vec3(0.0, 1.0, 0.0);
     for (int i = 0; i < 80; i++) {
         if (t >= t1 || T < 0.02) break;
         float tExit = min(min(next.x, next.y), t1);
         float val = cloudCell(cell, cp.y);
+        // (a storm clears the sky about it, as the far clouds do in lens_clouds.fsh: no white blocks through its tower)
+        if (val > 0.0 && storms > 0 && stormClearing((cell + 0.5) * CLOUD_CELL - cp.zw) < 0.5) val = 0.0;
         if (val > 0.0) {
             float top = CLOUD_TIER * (1.0 + floor(min(val / 0.055, 2.0)));
             float ta = t, tb = tExit;
@@ -110,6 +119,8 @@ vec4 cloudNear(vec3 v, float scene) {
     // into the haze with distance, as the far ones go
     float at = tHit > 0.0 ? tHit : t0;
     float far = smoothstep(260.0, 1500.0, at), gone = smoothstep(520.0, 1500.0, at) * 0.6;
+    // (and in Lite the last of them go before the walk's end, where the layer would stop at a line across the sky)
+    if (lite) gone = max(gone, smoothstep(reach - 280.0, reach - 20.0, at));
     L = mix(L, airFog(v, f22.xyz, f16.z) * (1.0 - T), far * 0.9) * (1.0 - gone);
     T = 1.0 - (1.0 - T) * (1.0 - gone);
     return vec4(L, T);

@@ -868,7 +868,7 @@ final class ArmsServer {
         if (by != null && by.getId() == pendingBy && victim.getId() == pendingTarget && src.getDirectEntity() == by) {
             float amount = e.getAmount() * pendingMotion;
             Posture post = posture(victim);
-            amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max));
+            amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max), Strikes.duelist(victim));
             e.setAmount(amount);
             pendingLanded = true;
             // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
@@ -1353,10 +1353,30 @@ final class ArmsServer {
         }
     }
 
+    /**
+     * A duel body begins or stops fighting (SPEC §47.3 "Held while it fights"): drained up to the moment it begins, then
+     * held; let go, the grace before draining starts again, so walking away from a red blow keeps the work done.
+     */
+    static void hold(LivingEntity target, boolean fighting) {
+        if (target instanceof Player) return;
+        Posture p = posture(target);
+        if (p.held == fighting) return;
+        long now = now(target);
+        if (fighting) {
+            p.settle(now, ArmsRules.lordly(p.max));
+            p.held = true;
+        } else {
+            p.held = false;
+            p.lastHitAt = Math.max(p.lastHitAt, now);
+        }
+        stance(target, p, now); // the clients near stop (or start) draining it, and a duel body's plate shows it from now
+    }
+
     /** Everyone near the creature (the fighter too) gets its stance on every change; their clients drain it themselves. */
     private static void stance(LivingEntity target, Posture p, long now) {
         int broken = (int) Math.max(0, p.brokenUntil - now);
-        ArmsPayloads.Seen msg = new ArmsPayloads.Seen(target.getId(), ArmsPayloads.POSTURE, broken, Math.round(p.value * 10), p.max);
+        ArmsPayloads.Seen msg = new ArmsPayloads.Seen(target.getId(), p.held ? ArmsPayloads.POSTURE_HELD : ArmsPayloads.POSTURE, broken,
+                Math.round(p.value * 10), p.max);
         if (!(target.level() instanceof ServerLevel level)) return;
         for (ServerPlayer o : level.players()) if (o.distanceToSqr(target) < 48 * 48) AwakenNet.send(o, msg);
     }

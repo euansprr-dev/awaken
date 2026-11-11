@@ -1,5 +1,6 @@
 package dev.awaken.finds.kit;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -25,7 +26,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 public final class Olden {
     private Olden() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.MONUMENTS);
     private static final java.util.List<String> IDS = new java.util.ArrayList<>();
 
     private static String id(String id) {

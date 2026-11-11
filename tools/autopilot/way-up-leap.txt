@@ -1,7 +1,8 @@
 # The Way Up (SPEC 63), the leap's place: a Tether Spire climbed by rope, a step to the middle of its crown (the crown
 # watches within 2.6 of its block; the pilot stops on the rim), and the Leaper's Gauntlet opening at the spire's foot:
 # its panel, the gate seen from the crown and from the plaza, and its row on Tasks.
-# Seed 4245: the spire at 188, -356 (plaza 61, crown 120).
+# Seed 4245: the spire at -724, -756 (plaza 61, crown 120). (Until 11 Nov it was 188, -356; the room between spires,
+# SPEC §17.11, passes that spot over.)
 # Run on CI: tools/tour-ci.sh tools/autopilot/way-up-leap.txt 1200
 world autopilot_way_up_leap survival 4245
 waitworld
@@ -40,7 +41,7 @@ shotnow leap_00_on_the_rim
 cmd awaken ascent pilot stop
 camera first
 # to the middle of the crown, looking out and down at where the gate will stand
-cmd tp @s 189.5 120.2 -355.5 facing 198 62 -356
+cmd tp @s -722.5 120.2 -755.5 facing -714 62 -756
 wait 30
 shotnow leap_01_gate_told
 wait 60
@@ -49,7 +50,7 @@ screen band tasks
 wait 30
 shotnow leap_03_tasks_gate_row
 screen close
-cmd tp @s 191 62 -349 facing 198 63 -356
+cmd tp @s -721 62 -749 facing -714 63 -756
 wait 60
 shot leap_04_gate_at_foot
 cmd awaken ascent way

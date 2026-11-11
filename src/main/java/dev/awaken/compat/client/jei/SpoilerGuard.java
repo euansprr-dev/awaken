@@ -136,21 +136,25 @@ final class SpoilerGuard {
         Map<Object, Guarded> others = new IdentityHashMap<>();
         List<Guarded> found = new ArrayList<>();
         for (var e : STACKS.entrySet()) {
-            IFocus<ItemStack> focus = focuses.createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, e.getValue().getFirst());
-            List<IRecipeCategory<?>> cats = rm.createRecipeCategoryLookup().limitFocus(List.of(focus)).includeHidden().get().toList();
-            for (IRecipeCategory<?> cat : cats) {
-                IRecipeType<?> type = cat.getRecipeType();
-                if (own.contains(type)) continue;
-                List<?> recipes = rm.createRecipeLookup(type).limitFocus(List.of(focus)).includeHidden().get().toList();
-                for (Object r : recipes) {
-                    if (type == RecipeTypes.CRAFTING && MOVED.contains(r)) continue;
-                    Guarded g = others.get(r);
-                    if (g == null) {
-                        g = new Guarded(type, r, new ArrayList<>(2));
-                        others.put(r, g);
-                        found.add(g);
+            // every kind of the item (a bell of each number, a page of each inscription: JEI tells them apart, so a
+            // recipe for one kind is found only through that kind)
+            for (ItemStack kind : e.getValue()) {
+                IFocus<ItemStack> focus = focuses.createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, kind);
+                List<IRecipeCategory<?>> cats = rm.createRecipeCategoryLookup().limitFocus(List.of(focus)).includeHidden().get().toList();
+                for (IRecipeCategory<?> cat : cats) {
+                    IRecipeType<?> type = cat.getRecipeType();
+                    if (own.contains(type)) continue;
+                    List<?> recipes = rm.createRecipeLookup(type).limitFocus(List.of(focus)).includeHidden().get().toList();
+                    for (Object r : recipes) {
+                        if (type == RecipeTypes.CRAFTING && MOVED.contains(r)) continue;
+                        Guarded g = others.get(r);
+                        if (g == null) {
+                            g = new Guarded(type, r, new ArrayList<>(2));
+                            others.put(r, g);
+                            found.add(g);
+                        }
+                        if (!g.keys().contains(e.getKey())) g.keys().add(e.getKey());
                     }
-                    if (!g.keys().contains(e.getKey())) g.keys().add(e.getKey());
                 }
             }
         }

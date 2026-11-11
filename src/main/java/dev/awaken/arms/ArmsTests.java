@@ -641,6 +641,10 @@ final class ArmsTests {
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "the server's settle is the same rule");
         p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS + 20, false);
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "and never drains the same time twice");
+        float was = p.value;
+        p.held = true;
+        p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS * 20, false);
+        h.assertTrue(p.value == was, "held (a duel body fighting), none drains however long (SPEC §47.3)");
         h.assertTrue(ArmsRules.lookedAt(170, -170) && !ArmsRules.lookedAt(90, 0), "the focus is looked at within 60 degrees, across the wrap");
         h.succeed();
     }
@@ -784,8 +788,10 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
-                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, false) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true, false) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, true) == 100 && ArmsRules.capExecution(20, 1000, 0.08F, true, true) == 70,
+                "and 7-10% of a duel body, which breaks twice as often (SPEC §47.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }

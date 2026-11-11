@@ -1,8 +1,8 @@
 package dev.awaken.hearth.kit;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
 import dev.awaken.core.api.CityHooks;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.hearth.Later;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.ChatFormatting;
@@ -30,7 +30,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -99,20 +98,16 @@ public final class HomeKit {
 
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(HomeKit::creativeTab);
+        // each piece once, the window box in every bloom (JEI lists each bloom as its own)
+        Tabs.fill(Tabs.Shelf.HOME_KIT, (p, out) -> {
+            for (Piece piece : ALL) {
+                if (piece == Piece.FLOWER_BOX) for (String bloom : BLOOMS) out.accept(box(bloom));
+                else out.accept(ITEM.get(piece).get());
+            }
+        });
+        Tabs.variants(ITEM.get(Piece.FLOWER_BOX), () -> DataComponents.BLOCK_STATE);
         NeoForge.EVENT_BUS.addListener(HomeKit::onDrops);
         HomeKitTests.register();
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (Piece p : ALL) {
-            if (p == Piece.FLOWER_BOX) {
-                for (String bloom : BLOOMS) e.accept(box(bloom));
-            } else {
-                e.accept(ITEM.get(p).get());
-            }
-        }
     }
 
     /** A window box with this bloom (the bloom rides on the item as a block state, which placing applies). */

@@ -4,7 +4,7 @@
  "moves": "proving_examiner",
  "duel": true,
  "mirrors": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "idle",
   "move": "emerge"

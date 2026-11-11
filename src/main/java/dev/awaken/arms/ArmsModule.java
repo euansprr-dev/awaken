@@ -41,9 +41,14 @@ public final class ArmsModule {
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
-        // a shot sent back fills the stance it strikes (SPEC §47.3)
-        dev.awaken.core.api.Strikes.installPostures((target, amount, by) -> {
-            if (by instanceof ServerPlayer sp) ArmsServer.addPosture(target, amount, sp);
+        // a shot sent back fills the stance it strikes; a duel body fighting holds it (SPEC §47.3)
+        dev.awaken.core.api.Strikes.installPostures(new dev.awaken.core.api.Strikes.Postures() {
+            @Override public void add(net.minecraft.world.entity.LivingEntity target, int amount, net.minecraft.world.entity.player.Player by) {
+                if (by instanceof ServerPlayer sp) ArmsServer.addPosture(target, amount, sp);
+            }
+            @Override public void hold(net.minecraft.world.entity.LivingEntity target, boolean fighting) {
+                ArmsServer.hold(target, fighting);
+            }
         });
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {

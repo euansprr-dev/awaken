@@ -389,7 +389,7 @@ MOVE_SOUNDS = {"wake": {"swing": "roar"}, "night": {"swing": "roar"}, "close": {
 FIGHT = {
     # a duel (SPEC §47.3): phrases of four to six, the blade's reach covering the ground round it
     "duel": True,
-    "stance": 470,  # tuned with the sim (SPEC §47.10)
+    "stance": 260,  # tuned with the sim (SPEC §47.10)
     "intro": {"pose": "stand", "move": "wake"},
     "phases": [
         # the antechamber: the blade in fours, the Fall, Signal, Full Circle, the Rush, the Line

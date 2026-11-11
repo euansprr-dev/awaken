@@ -3,7 +3,7 @@
  "id": "proving_last_loop",
  "moves": "proving_last_loop",
  "duel": true,
- "stance": 470,
+ "stance": 260,
  "intro": {
   "pose": "stand",
   "move": "wake"

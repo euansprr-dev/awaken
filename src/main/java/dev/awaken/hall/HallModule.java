@@ -44,6 +44,13 @@ public final class HallModule {
                                     IntegerArgumentType.getInteger(c, "slot")));
                             return 1;
                         }))))
+                // dev: a piece stood on the nearest Fitting Stand, as a finished forge would leave it (the one-suit rule, SPEC §44.14)
+                .then(Commands.literal("fit").then(Commands.argument("set", StringArgumentType.word())
+                        .then(Commands.argument("slot", IntegerArgumentType.integer(0, 3)).executes(c -> {
+                            var set = dev.awaken.armour.ArmourSet.byId(StringArgumentType.getString(c, "set"));
+                            return set != null && dev.awaken.armour.ArmourForge.fitForTour(c.getSource().getPlayerOrException(), set,
+                                    IntegerArgumentType.getInteger(c, "slot")) ? 1 : 0;
+                        }))))
                 .then(Commands.literal("view").then(Commands.argument("what", StringArgumentType.word())
                         .then(Commands.argument("n", IntegerArgumentType.integer(0, 9)).executes(c -> {
                             AwakenNet.send(c.getSource().getPlayerOrException(), new HallNet.Show(StringArgumentType.getString(c, "what"),

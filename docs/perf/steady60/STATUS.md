@@ -52,6 +52,17 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   between you and the fog"; then clouds too see-through (sections showed), rays wanted, shadows with more weight, no
   shadows under particles, "really surprise me" with the sky, the night above all.
 
+- **His first play, 11 Nov** (Cinematic, Vivid, 16 chunks; pictures and runs in `docs/perf/steady60/play-2026-11-11/`):
+  - The screen's edges losing their shade, the cave mouth, the held torch's pool: fixed, in build since 1791215d8.
+  - "Brown fog but low quality" at the start of a dry biome: the game's own fog in the biome's colour against the
+    Air's sky. Under the Air the game's fog now takes the Air's horizon colour (SPEC §22 "The game's fog under the
+    Air"; `LensClient.fogColour`, `LensAir`). Before and after on CI: runs 42959640767, 42959804603.
+  - "The custom storm is still the old clouds": the **block storm** (`lens_storm_blocks.glsl`), walked in the
+    composite beside the layer's blocks. Run 42959983512. Its frame time is not measured.
+  - **Lite**, a tier between Swift and Cinematic for a laptop: the Air's sky, fog, clouds, storm and rays, none of
+    Lens 2's light, no tick work (SPEC §22 "Lite"; `lens_lite.json`). Run 42960037101. Its pace on an M1 is not
+    measured, and the five-card Look page (with ImmersiveVFX) is unseen.
+
 ## Numbers (the Dell, his settings; SPEC §22 has them all, data in `docs/perf/steady60/data/`)
 - First pass, quiet Mac (dell-6): 11.2 ms GPU, 78 fps uncapped; as played 98.6% on time standing, 98.9% turning, 95.2%
   flying.
@@ -66,6 +77,10 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   Air at 92.2 to 95.6%. The late frames are the game's own chunk work on the render thread.
 
 ## To do, in order
+0. **Owed from 11 Nov**: his eye on the block storm, Lite (and its five-card Look page) and the steppe's air; frame
+   times of the storm and of Lite on a quiet Mac (and Lite on an M1, if one can be had); a strike caught at its
+   brightest. Open in the light: the ground under a slide or crawl (the hand's own depth), exact light under cover
+   (the game's light in a texture), shadows on land the game has already fogged.
 1. **Flying to 98% on time**: about 95% now over loaded land with Chunk pacing, 77 to 84% over land never seen.
    Left, in order: the pass-by-pass trim below (every millisecond of GPU time is a millisecond of spare for the CPU's
    spikes), the game's client light engine (it copies its section maps each frame that changed any), Sodium's rebuild

@@ -36,6 +36,26 @@ final class LensTests {
                 h.fail("the Vivid grade did not read: " + ex.getMessage());
             }
         });
+        // the Air's horizon on the CPU against lens_air.glsl's own numbers (SPEC §22 "The game's fog under the Air")
+        AwakenTests.register("lens_air_horizon", 20, h -> {
+            float[] c = new float[3];
+            // noon, looking away from the sun: dayH, no glow
+            LensAir.horizon(0f, 1f, 0f, 1f, 0f, 0f, c);
+            h.assertTrue(Math.abs(c[0] - 0.83f) < 1.0e-3f && Math.abs(c[1] - 0.86f) < 1.0e-3f && Math.abs(c[2] - 0.98f) < 1.0e-3f, "noon is dayH");
+            // midnight: nightH
+            LensAir.horizon(0f, 1f, 0f, -1f, 0f, 0f, c);
+            h.assertTrue(Math.abs(c[0] - 0.050f) < 1.0e-3f && Math.abs(c[1] - 0.076f) < 1.0e-3f && Math.abs(c[2] - 0.155f) < 1.0e-3f, "midnight is nightH");
+            // the sun on the horizon: gold toward it, violet away
+            float[] away = new float[3];
+            LensAir.horizon(1f, 0f, 1f, 0f, 0f, 0f, c);
+            LensAir.horizon(-1f, 0f, 1f, 0f, 0f, 0f, away);
+            h.assertTrue(c[0] > c[2] && away[2] > away[0], "dusk: warm at the sun, violet away from it");
+            // rain greys it and never brightens it
+            float[] wet = new float[3];
+            LensAir.horizon(0f, 1f, 0f, 1f, 0f, 1f, wet);
+            h.assertTrue(wet[2] < 0.98f && Math.abs(wet[0] - wet[2]) < 0.12f, "rain: a cool grey");
+            h.succeed();
+        });
         AwakenTests.register("lens_rain_texture", 20, h -> {
             try (var stream = LensTests.class.getResourceAsStream("/assets/minecraft/textures/environment/rain.png")) {
                 h.assertTrue(stream != null, "the weather texture is packaged at vanilla's rain path");

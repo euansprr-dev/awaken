@@ -12,6 +12,7 @@ import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.WeaponMesh;
 import dev.awaken.arms.anvil.AnvilContent;
 import dev.awaken.arms.anvil.WeaponForged;
+import dev.awaken.core.client.ui.Figure;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -121,13 +122,20 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
      */
     static void halos(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, float energy, float flash) {
         var camera = Minecraft.getInstance().gameRenderer.mainCamera();
+        // a figure in a screen is drawn in its picture's own space, which faces you square on, not the world's camera
+        boolean figure = Figure.drawing();
         float t = (Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime() % 24000) / 20F;
         float scale = pose.pose().getScale(SCALE).x;
         for (WeaponMesh.Anchor a : mesh.anchors()) {
             pose.pose().transformPosition(a.x(), a.y(), a.z(), AT);
             float r = a.radius() * scale * (1 + 0.35F * energy + 0.5F * flash);
-            camera.leftVector().mul(-r, RIGHT);
-            camera.upVector().mul(r, UP);
+            if (figure) {
+                RIGHT.set(r, 0, 0);
+                UP.set(0, r, 0);
+            } else {
+                camera.leftVector().mul(-r, RIGHT);
+                camera.upVector().mul(r, UP);
+            }
             float k = Math.min(1F, 0.30F + 0.08F * (float) Math.sin(t * 1.7 + a.x() * 9) + 0.45F * energy + 0.5F * flash);
             int cr = a.rgb() >> 16 & 255, cg = a.rgb() >> 8 & 255, cb = a.rgb() & 255, ca = Math.round(k * 255);
             for (int i = 0; i < HALO_SIDES; i++) {
@@ -207,7 +215,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         return LINE;
     }
 
-    private static @Nullable State last;
+    /** The fighter's own blade as last read: [0] seen from outside (third person, a figure in a screen), [1] in first person. */
+    private static final State[] LAST = new State[2];
     private static final State[] OTHERS = new State[8];
 
     /** The fighter's own main-hand blade carries the fight; anyone else's (and one in a frame) is at rest. */
@@ -264,7 +273,9 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return null;
-        boolean hand = mc.options.getCameraType().isFirstPerson();
+        // your own hands only in first person, and never on a figure in a screen (it stands in front of you, whatever the
+        // camera: a gauntlet there would grow its first-person sleeve)
+        boolean hand = mc.options.getCameraType().isFirstPerson() && !Figure.drawing();
         if (stack != p.getMainHandItem()) {
             // the off hand's twin (a pair, the Daggers): it lays its own ribbon while it strikes, alone or with the main
             if (stack == ArmsOffHand.twinOf(p)) return ArmsHands.twinStrikes() ? twin(p, hand, glow) : null;
@@ -277,18 +288,22 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             energy = charge >= 0 ? Math.round(charge * 255) : ArmsPredict.resonance >= ArmsRules.RESONANCE_MAX ? 150 : 0;
             flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
         }
-        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != wielder || last.glow() != glow) {
-            last = new State(energy, flash, hand, wielder, 0, -1, false, glow);
+        // one kept for each way of seeing it, so the hands and a figure drawn in the same frame don't make one each time
+        int k = hand ? 1 : 0;
+        State last = LAST[k];
+        if (last == null || last.energy() != energy || last.flash() != flash || last.wielder() != wielder || last.glow() != glow) {
+            LAST[k] = last = new State(energy, flash, hand, wielder, 0, -1, false, glow);
         }
         return last;
     }
 
-    private static @Nullable State twinState;
+    private static final State[] TWIN = new State[2];
 
     private static State twin(LocalPlayer p, boolean hand, int glow) {
-        if (twinState == null || twinState.hand() != hand || twinState.wielder() != p.getId() || twinState.glow() != glow)
-            twinState = new State(0, 0, hand, p.getId(), 0, -1, true, glow);
-        return twinState;
+        int k = hand ? 1 : 0;
+        State s = TWIN[k];
+        if (s == null || s.wielder() != p.getId() || s.glow() != glow) TWIN[k] = s = new State(0, 0, hand, p.getId(), 0, -1, true, glow);
+        return s;
     }
 
     /** Someone else's blade: at rest, but its holder known, so its blows trace (a few kept, nothing made per frame). */

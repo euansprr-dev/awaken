@@ -8,6 +8,7 @@ import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.api.NowHooks;
 import dev.awaken.core.api.OpeningHooks;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.core.audio.Intensity;
 import dev.awaken.core.audio.MusicLayers;
 import dev.awaken.opening.net.OpeningPayloads;
@@ -89,6 +90,7 @@ public final class OpeningModule {
     public static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, LICENCE);
         RULES.register(modBus);
         modBus.addListener(OpeningModule::payloads);
         var bus = NeoForge.EVENT_BUS;

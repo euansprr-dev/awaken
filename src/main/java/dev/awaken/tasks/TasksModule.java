@@ -232,7 +232,8 @@ public final class TasksModule {
         if (rows.isEmpty()) rows.add(new Checklist.Row(s.title(), "", false, 0, 0, at, null));
         else if (at != null) rows.add(new Checklist.Row(s.title(), "", false, 0, 0, at, ""));
         Goals.Choice c = chosen(TaskState.of(p), s);
-        return new Checklist.Task("tasks:" + s.key(), c == null ? s.title() : s.title() + ": " + c.title(), rows);
+        // its rows are the step's needs as they hold now; the step itself leaves the page when done (SPEC §27.14)
+        return Checklist.Task.live("tasks:" + s.key(), c == null ? s.title() : s.title() + ": " + c.title(), rows);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

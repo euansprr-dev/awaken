@@ -58,8 +58,13 @@ public final class Carriers {
         }
     }
 
-    /** A wave's crest: feet higher than this over its ground clear it (a jump's arc is over it for 7 ticks). */
-    public static final float CREST = 0.75F;
+    /**
+     * A wave's crest, drawn and judged alike: feet higher than this over its ground clear it. A jump is over it from its
+     * first tick (0.42) to its tenth, half a second, so a jump pressed as the crest reaches you clears it. At 0.75 the
+     * feet passed it only on a jump's second tick and the server reads you a tick late: you had to jump 0.15 s before it
+     * touched you, and a jump as it arrived was hit on the way up (Euan, 11 Nov). A slab's top is over it too.
+     */
+    public static final float CREST = 0.4F;
     /** A wave rolls this fast (blocks a tick): from 8 blocks it shows coming for 0.6-0.9 s. */
     public static final float WAVE_SPEED = 0.55F;
     /** A volley's ring is never wider than this (a dash is 2.6), and falls this long after it shows. */

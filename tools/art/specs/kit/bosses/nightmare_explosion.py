@@ -881,7 +881,7 @@ MOVE_SOUNDS = {"lines": {"swing": "cast"}, "shorter": {"swing": "roar", "impact"
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 280,
+    "stance": 150,
     "intro": {"pose": "idle", "move": "wake"},  # the box shut; the crank ticks; it pops
     "phases": [
         {"pool": [

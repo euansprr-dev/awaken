@@ -1,0 +1,69 @@
+# The Delvers' dressing holds (SPEC §42.4 "Settled", the Delvers' dressing). On Euan's New World (11) seed the census found,
+# with the fix for the skin in, only the Delvers' own pieces in the air: a mine's rails and bridge chains (awaken:delve/mine),
+# a chute's lanterns (awaken:delve/chute) and a grotto's cave vine (awaken:delve/grotto). Each place now drops what nothing
+# holds once it's built in a chunk. At each spot: the census round it (/awaken caves floaters 2, lone blocks too) and a
+# picture of the nearest floater, if any is left.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-delve-held-home.txt 2400
+world caves_delve_held_home creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+hud off
+
+# mine: a mine's rails where its adit leaves the hill (9 at -459 115 -2288..-2283) and its bridge's chains (-478 105 -2273, -475 105 -2273)
+cmd awaken caves at -459 116 -2288
+wait 20
+waitpassage
+wait 600
+cmd execute positioned -459 115 -2286 run awaken caves floaters 2
+wait 40
+cmd execute positioned -459 115 -2286 run awaken caves floaters 2 look 0
+wait 80
+shot mine_look0
+
+# chute: a chute's lanterns every 16 (-516 25, -500 17, -484 9 -2080)
+cmd awaken caves at -500 18 -2080
+wait 20
+waitpassage
+wait 600
+cmd execute positioned -500 17 -2080 run awaken caves floaters 2
+wait 40
+cmd execute positioned -500 17 -2080 run awaken caves floaters 2 look 0
+wait 80
+shot chute_look0
+
+# grotto: a grotto's cave vine (-433 41 -2435)
+cmd awaken caves at -433 42 -2435
+wait 20
+waitpassage
+wait 600
+cmd execute positioned -433 41 -2435 run awaken caves floaters 2
+wait 40
+cmd execute positioned -433 41 -2435 run awaken caves floaters 2 look 0
+wait 80
+shot grotto_look0
+
+quit

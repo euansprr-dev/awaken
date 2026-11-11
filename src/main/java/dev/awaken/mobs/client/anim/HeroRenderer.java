@@ -34,7 +34,8 @@ import java.util.List;
  * the move fires; the strike follows from the wind-up's last pose; a wind-up cut short fades out instead of popping.
  * Beasts fall over their own death clip rather than vanilla's sideways flip.
  */
-public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, HeroModel> {
+public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, HeroModel>
+        implements dev.awaken.mobs.client.BodyRest.Posed<HeroRenderState> {
     /** Seconds a held wind-up waits for its strike before it fades, and how long the fade takes. */
     private static final float HOLD = 1.0F, FADE = 0.3F;
 
@@ -241,6 +242,16 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         if (isShaking(s)) bodyRot += (float) (Math.cos(Mth.floor(s.ageInTicks) * 3.25F) * Math.PI * 0.4F);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
         dev.awaken.mobs.client.ToppleView.roll(s, pose, entityScale); // a broken stance puts a big beast on its side
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(HeroRenderState s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 
     private static AwLook look(HeroRenderState s) {

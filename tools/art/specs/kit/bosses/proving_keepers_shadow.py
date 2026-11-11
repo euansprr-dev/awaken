@@ -409,7 +409,7 @@ MOVE_SOUNDS = {"emerge": {"swing": "roar"}, "doors": {"swing": "roar"}, "darkfal
 FIGHT = {
     # a duel (SPEC §47.3): phrases of four and five, the key's reach covering the ground round it
     "duel": True,
-    "stance": 420,  # tuned with the sim (SPEC §47.9)
+    "stance": 230,  # tuned with the sim (SPEC §47.9)
     "intro": {"pose": "stand", "move": "emerge"},
     "phases": [
         # the court: the key in fours, the Lock, Keyhole, the Turnabout, Shut the Door

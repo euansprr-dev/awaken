@@ -67,6 +67,13 @@ public final class ProgressionModule {
             .sync((holder, to) -> holder == to, PromiseBook.STREAM_CODEC)
             .build());
 
+    /** The task card's rows this player has seen ticked, which stay ticked (SPEC §27.14): saved, kept through death, never synced. */
+    public static final Supplier<AttachmentType<Ticked>> TICKED = ATTACHMENTS.register("ticked", () -> AttachmentType
+            .builder(Ticked::new)
+            .serialize(Ticked.MAP_CODEC, t -> !t.isEmpty())
+            .copyOnDeath()
+            .build());
+
     /** Fraction of stats lost to the Strain of climbing (set by the Descent, decays over time). */
     public static final Supplier<AttachmentType<Double>> STRAIN = ATTACHMENTS.register("strain", () -> AttachmentType
             .builder(() -> 0.0)

@@ -251,6 +251,13 @@ public final class Goals {
         }
     }
 
+    /**
+     * A module's steps for this player now. A step that is done never comes back, and one that isn't done stays until it
+     * is, or the story moves past it (SPEC §27.14; Euan 2026-11-11: "tasks are never removed, and a task can never not be
+     * completed if it actually is completed"): a source decides done from what it remembers (a counter, a saved set, what a home has had), never from a
+     * live read that can come and go, such as a scan of land half unloaded or an entity out of range. Live reads belong in
+     * a step's needs, which tick and untick as they hold.
+     */
     @FunctionalInterface
     public interface Source {
         List<Step> steps(ServerPlayer p);

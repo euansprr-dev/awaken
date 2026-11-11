@@ -11,6 +11,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -23,7 +24,8 @@ import java.util.UUID;
 /**
  * One player's Hearth. Saved in {@link HearthData}. Tier 0 is the Hearthfire an Ember founds (radius 24, no town); Tier I
  * is the Anchor. The rooms the last scan read are saved with it (schema 3, without their cells), so a restart doesn't
- * re-read every home at once; their cells come back with the next scan.
+ * re-read every home at once; their cells come back with the next scan. Since schema 4 it also remembers every kind of
+ * room it has had ({@link #had}): a step a room finished stays done, whatever a later scan reads (SPEC §27.14).
  */
 public final class HearthRecord {
     public static final int MAX_TIER = 5;
@@ -66,6 +68,14 @@ public final class HearthRecord {
     public int land;
     /** (W6) The people of this Hearth: who the household knows, who lives here, their beds and work (saved, schema 1). */
     public dev.awaken.hearth.settle.Folk folk = new dev.awaken.hearth.settle.Folk();
+    /**
+     * (SPEC §27.14; Euan 2026-11-11: "a task can never not be completed if it actually is completed") Whether this home has
+     * ever had a room, and every kind of room it has had. Only ever grows: the steps a room finishes ("Build a room near
+     * your fire", the Armoury, "Add to your home") read this, never the last scan, so a room lost to a bad read or knocked
+     * down later leaves them done. What's there now ({@link #rooms}) still says why a room isn't counted. Saved (Home schema 4).
+     */
+    private boolean everRoom;
+    private final EnumSet<RoomType> everKinds = EnumSet.noneOf(RoomType.class);
 
     // ---- runtime only (rooms are saved, but not their cells) ---------------------------------------------------------
     /** (W6) Where the land's work is (fields, gates, beasts), from the last scan. */
@@ -85,6 +95,8 @@ public final class HearthRecord {
     /** Rooms aren't announced on the first scan after a server start (they were already known), only after placing. */
     public boolean scannedOnce;
     public boolean announceFirstScan;
+    /** Scan checks (every 10 ticks) this home has waited, due, with its fire's chunk loaded but not all of its land. */
+    public int landWait;
 
     public record BreakState(String gateId, long counterAtBreak, boolean counted, BlockPos gatePos) {
         public static final Codec<BreakState> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -154,17 +166,22 @@ public final class HearthRecord {
         ).apply(i, Household::new));
     }
 
-    /** Schema 3 (W1): the Hearth's name and the last reading of its rooms, Comfort, Style and land. */
-    private record Home(int schema, String name, List<Room> rooms, int comfort, String style, int land) {
-        static final int SCHEMA = 3;
-        static final Home NONE = new Home(SCHEMA, "", List.of(), 0, "", 0);
+    /**
+     * Schema 3 (W1): the Hearth's name and the last reading of its rooms, Comfort, Style and land. Schema 4 (SPEC §27.14):
+     * whether it has ever had a room and the kinds it has had; a schema 3 save loads them from its saved rooms.
+     */
+    private record Home(int schema, String name, List<Room> rooms, int comfort, String style, int land, boolean everRoom, List<String> everKinds) {
+        static final int SCHEMA = 4;
+        static final Home NONE = new Home(SCHEMA, "", List.of(), 0, "", 0, false, List.of());
         static final Codec<Home> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Home::schema),
                 Codec.STRING.optionalFieldOf("name", "").forGetter(Home::name),
                 Room.CODEC.listOf().optionalFieldOf("rooms", List.of()).forGetter(Home::rooms),
                 Codec.INT.optionalFieldOf("comfort", 0).forGetter(Home::comfort),
                 Codec.STRING.optionalFieldOf("style", "").forGetter(Home::style),
-                Codec.INT.optionalFieldOf("land", 0).forGetter(Home::land)
+                Codec.INT.optionalFieldOf("land", 0).forGetter(Home::land),
+                Codec.BOOL.optionalFieldOf("ever_room", false).forGetter(Home::everRoom),
+                Codec.STRING.listOf().optionalFieldOf("ever_kinds", List.of()).forGetter(Home::everKinds)
         ).apply(i, Home::new));
     }
 
@@ -204,7 +221,9 @@ public final class HearthRecord {
     }
 
     private Home home() {
-        return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land);
+        List<String> kinds = new ArrayList<>(everKinds.size());
+        for (RoomType t : everKinds) kinds.add(t.name());
+        return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land, everRoom, kinds);
     }
 
     private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk,
@@ -223,6 +242,15 @@ public final class HearthRecord {
             r.lastScan = -1;
             r.scannedOnce = true;
         }
+        for (String k : home.everKinds) {
+            try {
+                r.everKinds.add(RoomType.valueOf(k));
+            } catch (IllegalArgumentException ignored) {
+                // a kind this build doesn't know
+            }
+        }
+        r.remember(home.rooms); // a schema 3 save: what it had is what it saved (and a schema 4 one loses nothing by it)
+        r.everRoom |= home.everRoom;
         for (Member m : h.members) if (!m.id().equals(r.owner)) r.members.put(m.id(), m.name());
         r.foundedFrom = h.foundedFrom.orElse(null);
         for (Cheer ch : h.cheers) if (r.members.containsKey(ch.id())) r.memberCelebrations.put(ch.id(), ch.rank());
@@ -305,6 +333,24 @@ public final class HearthRecord {
     public boolean hasRoom(RoomType type) {
         for (Room room : rooms) if (room.types().contains(type)) return true;
         return false;
+    }
+
+    /** (SPEC §27.14) Whether this home has ever had a room, read now or before: the first room's step stays done. */
+    public boolean hadRoom() {
+        return everRoom || !rooms.isEmpty();
+    }
+
+    /** (SPEC §27.14) Whether this home has ever had a room of this kind, read now or before. */
+    public boolean had(RoomType type) {
+        return everKinds.contains(type) || hasRoom(type);
+    }
+
+    /** Adds what these rooms are to what the home has had; true when that grew (the record wants saving). */
+    public boolean remember(List<Room> read) {
+        boolean grew = !read.isEmpty() && !everRoom;
+        everRoom |= !read.isEmpty();
+        for (Room room : read) grew |= everKinds.addAll(room.types());
+        return grew;
     }
 
     public Optional<Room> roomAt(BlockPos p, RoomType type) {

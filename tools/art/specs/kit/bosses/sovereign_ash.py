@@ -1140,7 +1140,7 @@ MOVE_SOUNDS = {"cinders": {"swing": "spit", "impact": ""}, "cloud": {"swing": "f
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 360,
+    "stance": 200,
     "intro": {"pose": "idle", "move": "arrive"},  # it lies burnt out, wakes, shakes off the ash and spreads its wings
     "phases": [
         {"pool": [

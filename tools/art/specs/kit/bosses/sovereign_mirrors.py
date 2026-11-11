@@ -830,7 +830,7 @@ MOVE_SOUNDS = {"parry": {"swing": "cast", "impact": ""}, "hall": {"swing": "cast
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 320,
+    "stance": 180,
     "intro": {"pose": "idle", "move": "preen"},  # it raises its mirrors round its face, one after another
     "phases": [
         {"pool": [

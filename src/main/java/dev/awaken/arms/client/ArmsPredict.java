@@ -169,7 +169,7 @@ public final class ArmsPredict {
     static void press(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
         if (st == null) return;
-        int target = pressTarget(mc);
+        int target = pressTarget(mc, p, st);
         int s = nextSeq();
         ArmsFilm.event("press seq " + s + " target " + target);
         aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
@@ -244,11 +244,15 @@ public final class ArmsPredict {
         playedAt = ticks;
     }
 
-    /** The creature a press means (SPEC §40.1): the lock, else what the crosshair is on, else the mark; the server checks it. */
-    private static int pressTarget(Minecraft mc) {
+    /**
+     * The creature a press means (SPEC §40.1, §40.3): the lock, else what the crosshair is on, else the mark, else the calm
+     * creature of the wild nearest the look within the weapon's reach (no mark shows it); the server checks it.
+     */
+    private static int pressTarget(Minecraft mc, LocalPlayer p, Archetypes.Loaded st) {
         int aim = dev.awaken.core.api.Aim.target();
         if (dev.awaken.core.api.Aim.locked()) return pressed = aim;
-        return pressed = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : aim;
+        if (mc.hitResult instanceof EntityHitResult ehr) return pressed = ehr.getEntity().getId();
+        return pressed = aim >= 0 ? aim : dev.awaken.core.api.Aim.calm(p, p.getYRot(), p.getXRot(), ArmsRules.markReach(st));
     }
 
     /** Whether a press at {@code target} means a fight ({@link ArmsRules#meansFight}): locked, under the crosshair, or the mark in reach. */
@@ -650,7 +654,7 @@ public final class ArmsPredict {
         charging = false;
         ArmsFilm.event("release");
         float drawn = drawnNow();
-        int target = pressTarget(mc);
+        int target = pressTarget(mc, p, st);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         if (target >= 0) aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
         int held = c.min() + (ticks - chargeStart);
@@ -1299,7 +1303,8 @@ public final class ArmsPredict {
                     ArmsFx.guardSpark(e, s.aux2(), s.aux() == ArmsPayloads.DEFLECT);
                 }
             }
-            case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
+            case ArmsPayloads.POSTURE, ArmsPayloads.POSTURE_HELD -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other(),
+                    s.what() == ArmsPayloads.POSTURE_HELD);
             default -> { }
         }
     }
