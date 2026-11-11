@@ -4224,35 +4224,70 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   round trip put taps 11 ticks apart.)
 
 ### 17.9 Phase 2: Wings, the sky platform's way up and its core
-- **The rig** (`above.ruin.SkyRig`): placed once on each sky platform the first time its start chunk loads (queued on
-  `ChunkEvent.Load`, built on a later server tick once every chunk it reads or builds in, the core out to 17 along x
-  and z with `groundUnder`'s columns, is loaded and finished, never one still generating, which the server thread
-  would wait for (§28.9); done when the core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
-  cz): a pier of trim three cells wide on the (+x, +z) diagonal from 7 to 12 out (local a, b in 7..12, |a - b| <= 1),
-  the rim's trim studs on it cleared; a chain from under its end (12, 12) down to the lowest ring. The diagonal: the
-  blueprint's four torn-up islands hang 19 out on each side (up to 3 off the line, 3.8 wide) with their tether chains
-  along that line back to the rim, in any turn; the first rig ran out along +x, under the east island and its tether,
-  which cut ropes, blocked zips and left no room to stand on the pier. `ascent_sky_rig` checks every rig cell is 3+
-  clear of any island's edge and under no tether.
-- **Rings** (`awaken:anchor_ring`, unbreakable, light 12): from 9 under the deck down to 26 over the ground under the
-  chain (the lowest of four columns 5 out diagonally), evenly spaced at most 22 apart, each 3 off the chain a quarter
-  turn round from the last (+z, +x, -z, -x), joined to it by a chain stub. Each is nearly overhead from a hang under the
-  one below it (a vertical zip, below). Over water the lowest ring gets a 5x5 buoy at the surface to stand and throw from
-  (the Ascent stands aside while swimming).
-- **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
-  under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
-  of the pier's end (7 up) pulls the body onto the pier.
-- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
-  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
-  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
-  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
-  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
-  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
-  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
-  "· needs a rope or wings". It breathes a ring of light every 3 s. The
-  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The Torn Stair, the wings on show and the rank first** (11 Nov 2026; Euan at a core at rank D: "it's way too early
+  to get these... it says, like, come back when you're rank C... put the wings themselves inside of a glass case... really
+  improve the atmosphere of a floating island... make those buildings actually built in a way that's satisfying to climb
+  using the system that we built"). This replaces the first rig (a chain under the pier's end, a ring every 22 blocks,
+  a perch: nine zips straight up and a hang under each, which he found "so difficult and glitchy").
+- **The rig** (`above.ruin.SkyRig`): laid on each sky platform once every chunk within 35 blocks of its centre is loaded
+  and finished (queued on `ChunkEvent.Load`; never a chunk still generating, §28.9), 700 blocks a tick, so a stair is
+  whole about half a second after its land is. The mark is the lit panel under the core, placed last: a platform
+  without it is laid (again, if the server stopped part-way; every block is put only where it belongs), and a platform
+  with the first rig has its chain, rings and perch taken away first. The blueprint never changes.
+- **The stair**: the ground the disc tore up as it rose, strung out under it in a spiral. Terraces 8 wide (25 to 33
+  from the deck's centre: outside the four torn islands, which reach 23.4) and 24 long down their middle, each 8 above
+  the one below, 7.6 to a turn (a turn is 61 blocks of height, so nothing hangs over a run). A terrace is turf with the
+  old paving showing down its middle, stone under it (deepest in the middle, hanging roots here and there), grass and
+  flowers only at its edges, a lantern on two links of chain under its middle. Its last 2.2 blocks are a **wall** of
+  plate down to the terrace below, brass at its sides, with a lit **anchor ring** in its lip and two lamps down its face:
+  by night the rings and lamps are a spiral of lights from the ground to the disc. The top terrace is level with the
+  deck; the lowest stands no more than 8 over the highest ground before its wall (its wall goes into the ground); where
+  that ground is water a **dock** of plate lies at the surface before it. Near the ground (the lowest three terraces)
+  leaves, logs and vines over the run are cleared.
+- **Why this shape** (SPEC §62's held rope): a sling takes a top 6 to 30 ahead and above the hand, no steeper than 1.2
+  a block with its aim 3.3 over the top, and was tuned on tops 6 to 9 high; it sets the body down about ten blocks
+  past the lip. So: a lip 8 up, a terrace long enough to land a third of the way along and still be 13 short of the next
+  lip (a 37 degree sling), wide enough that ten blocks flown straight on a curve of radius 29 stay on it (1.8 of drift
+  in 8). A refused sling leaves a wall to pull up (the rope's own pull up a face); there is no gap anywhere, so a
+  missed throw is a walk to the wall, never a fall, and a fall off a side is the only way down. About 25 terraces from
+  ordinary ground: 25 slings where there were nine hangs.
+- **The axis**: from the top terrace a **bridge** three wide (brass either side, a line of light down its middle) runs
+  in along a diagonal to the deck through a **gate** (two pillars, a lamp on each, a lintel); the cabin's corner facing
+  it is opened as a **portal** (pillars for jambs, light in the threshold) and so is the corner opposite; between them
+  stands the case; beyond is the **pier** (the first rig's, now lit the same way), where the first flight begins
+  (`WayUp.firstFlight`: the pier runs out along +x and +z). The blueprint keeps its chest and its stand in two opposite
+  corners of the cabin whichever way it was turned, so `SkyRig.axis` takes the pier's diagonal when its corners are
+  empty (the bridge at -x, -z: stair, gate, case and pier in one line) and the other otherwise (the bridge at -x, +z,
+  the pier a quarter turn round the deck).
+- **The case**: a rail of polished deepslate wall round the core two out (a player can't walk into it), light in the
+  deck under its corners, and over it the client's `WingCaseRenderer`: four panes of light glass from the rail to the
+  roof (a faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing
+  one pane after another every ten seconds) and inside them **the real wings** (§62's `WingForm` pair drawn by
+  `WingFeathers` in `WingPipelines`' own types, 0.8 of a player's), hung 3.1 over the core's floor, breathing between
+  nearly open and open, turning once in 38 seconds, lit by themselves, their halos behind them and their light on the
+  core's top. One pair, drawn within 80 blocks (the far forms past 48 and 96), nothing allocated in a frame. What a
+  player sees is their own truth: without wings, the case shut and the pair inside; with them, the case open and empty
+  over a low light.
+- **The gift at the case**: as the gift's scene begins the glass sinks into the rail (22 ticks, the vault's shutter
+  opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between the
+  player's shoulder blades, thinning out as it arrives at tick 34, when the scene's own wings open on their back.
+- **The air** (`AscentFxBridge.caseTick`, within 48 blocks of a core): motes of the wings' light shed off the feathers
+  and rising; the wind as motes carried across the deck from the bridge's side and out over the pier's; the pair
+  stirring (the wings' own fold, low, every 4.6 s within 14 blocks) and a gust every 9.5 s; the core's ring of light
+  every 3 s as before.
+- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within
+  4.7 (the rail is two out, its corners nearly three) without Wings is asked **the rank first**
+  (`WingCoreBlockEntity.RANK`, C; progression plan decision 2), however they came: below it "Come back at rank C. These
+  wings will wait for you." on the action bar with the vault's refusal (Minecraft's own, low), at once and then at most
+  every 10 s, and the core goes on the Tasks page (`Promises.seen`, need rank C, "A sky core's wings"). At the rank the
+  way they came is asked as before: by the line (`ArrivalHooks.byLine`) and by moving (`ArrivalHooks.byMovement` and
+  `Ascent.arrivedByMovement(p, 20)`: a third of the last 20 s in an airborne Ascent state or a Runner move and no block
+  placed), else the line's or the dark's refusal; then Wings (`Ascent.grant`, "sky platform core") with the gift's
+  scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`, counter `awaken:ascent_wings_core`. **Open, the rope
+  session's:** from the last sling to the rail is about 32 blocks on foot (six seconds at a sprint, longer for anyone
+  who stops to look), so a 20 second window can refuse a real climb; the arrival should be judged by the visit.
+  The Horizon's "wings" need is reached by Wings or the rope alone and reads "· needs a rope or wings". The platform's
+  `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4266,12 +4301,16 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   - *Pass-through*: for 20 ticks after letting go of a rope, a throw passes through the block it held (you throw past
     the ring you hung under to the next one up).
   - *Zip stall*: a zip pressed against something, moving under 0.05 a tick for 10 ticks, lets go (never pinned).
-- Dev: `/awaken ascent sky goto` (the nearest platform that really generated, by vanilla's own search; rigs it if not
-  yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
-  round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
-  at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
-- Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
-  ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
+- Dev: `/awaken ascent sky goto` (the nearest platform that really generated, by vanilla's own search; lays its rig at
+  once if it has none; puts you at the stair's foot, a run short of the lowest wall, facing along it), `... goto view`
+  (on the ground 105 out past the foot, looking up the stair), `... goto bridge` (on the bridge facing the case),
+  `... goto deck`. A laid stair is read back from its rings (`SkyRig.layout(level, ...)`: the land's heights hold the
+  stair once it stands). Pilot `run climb`: forward, sprint and the rope held with a fresh press after each landing, the
+  look on the ring in the next lip; on the top terrace to the bridge's end, along it to the rail; ends with the wings or
+  twelve seconds after reaching the rail without them. Tours `tools/autopilot/sky-stair-day.txt` (the approach, the
+  case from the bridge and the pier, a climb below rank C and the core's answer) and `sky-stair-dusk.txt` (dusk and
+  night from the ground, the case, a rank C climb and the gift); `ascent-sky.txt` and `unlock-wings.txt` run the same
+  pilot. GameTest `ascent_sky_rig`.
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) at **D-rank** and have swung enough to
@@ -23742,7 +23781,7 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9's (the rank is asked first; from 11 Nov the climb is the Torn Stair and the wings hang in a case at the core). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds

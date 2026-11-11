@@ -112,7 +112,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
             float size = Mth.lerp(s.fly, SIZE, 0.94F), at = s.fly;
             pose.pushPose();
             pose.translate(0.5F + s.tx * at, HANG + s.ty * at + 0.06F * Mth.sin(time / 23F) * (1 - at), 0.5F + s.tz * at);
-            pose.mulPose(TURN.rotationY(time / 760F * Mth.TWO_PI));
+            pose.rotate(TURN.rotationY(time / 760F * Mth.TWO_PI));
             // the wings' own space is a body's back: x to its left, y down, z behind, from the neck (the roots 3 down, 4 behind)
             pose.scale(-size, -size, size);
             pose.translate(0, -WingFeathers.ROOT_Y / 16F, -WingFeathers.ROOT_Z / 16F);

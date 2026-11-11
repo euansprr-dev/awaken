@@ -169,7 +169,7 @@ public final class SkyRig {
         }
         List<BlockPos> rings = new ArrayList<>();
         for (int k = 0; k <= last; k++) {
-            double a = top - (k + 1) * TURN + 0.6 / R_MID;
+            double a = top - (k + 1) * TURN + 1.2 / R_MID;
             rings.add(new BlockPos(cell(cx, R_MID, Math.cos(a)), deckY - RISE * k, cell(cz, R_MID, Math.sin(a))));
         }
         // the foot: a run short of the lowest wall, facing along the stair (the way up is the way the angle grows)
@@ -228,7 +228,10 @@ public final class SkyRig {
                     int bottom = k < last ? y - RISE - 2 : Math.max(y - 14, (dock ? l.dockY() : Math.min(l.footY(), y)) - 2);
                     out.add(new Put(new BlockPos(x, y, z), RuinBuilder.panel(), How.FREE));
                     for (int yy = y - 1; yy >= bottom; yy--) {
-                        out.add(new Put(new BlockPos(x, yy, z), edge ? RuinBuilder.trim() : (hash(x, yy, z) % 7 == 0 ? RuinBuilder.cracked() : RuinBuilder.plating()), How.FREE));
+                        // two lamps of the ring's light down the wall's middle: by night the stair is a spiral of them
+                        boolean lamp = off < 0.75 && (yy == y - 2 || yy == y - 3);
+                        out.add(new Put(new BlockPos(x, yy, z), lamp ? RuinBuilder.glow() : edge ? RuinBuilder.trim()
+                                : (hash(x, yy, z) % 7 == 0 ? RuinBuilder.cracked() : RuinBuilder.plating()), How.FREE));
                     }
                 } else {
                     // torn ground: old paving down the middle, turf either side, stone under it, deepest in the middle
@@ -256,13 +259,11 @@ public final class SkyRig {
                 if (k >= last - 2) for (int up = 1; up <= 7; up++) out.add(new Put(new BlockPos(x, y + up, z), air, How.CLEAR_GREEN));
             }
         }
-        // a ring alight in each lip, a lamp of its light in the wall under it, a lantern hung under each terrace's middle
+        // a ring alight in each lip (a block in from its edge), a lantern hung under each terrace's middle
         BlockState chain = Blocks.IRON_CHAIN.defaultBlockState().setValue(BlockStateProperties.AXIS, Direction.Axis.Y);
         for (int k = 0; k < l.tiers(); k++) {
             BlockPos ring = l.rings().get(k);
             out.add(new Put(ring, AscentContent.ANCHOR_RING.get().defaultBlockState(), How.FORCE));
-            out.add(new Put(ring.below(2), RuinBuilder.glow(), How.FORCE));
-            out.add(new Put(ring.below(3), RuinBuilder.glow(), How.FORCE));
             double a = l.top() - (k + 0.45) * TURN;
             BlockPos mid = new BlockPos(cell(cx, R_MID, Math.cos(a)), l.y(k), cell(cz, R_MID, Math.sin(a)));
             for (int d = 1; d <= 5; d++) out.add(new Put(mid.below(d), Blocks.STONE.defaultBlockState(), How.FREE));

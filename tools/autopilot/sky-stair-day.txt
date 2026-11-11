@@ -1,0 +1,105 @@
+# The Torn Stair by day (SPEC §17.9): the approach from the ground, a climb with forward and the rope held, the top, the
+# case through the portal, and the core's answer below rank C ("Come back at rank C. These wings will wait for you.").
+# Run on CI: tools/tour-ci.sh tools/autopilot/sky-stair-day.txt 1500
+world sky_stair_day survival 4246
+waitworld
+window 1708 960
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 100
+cmd awaken ascent sky goto view
+wait 100
+hud off
+shot stair_day_00_approach
+cmd awaken ascent sky goto bridge
+wait 60
+shot stair_day_01_bridge_case
+cmd awaken ascent pier
+wait 40
+look 135 -4
+wait 10
+shot stair_day_02_from_pier
+cmd awaken ascent sky goto
+wait 60
+camera back
+hud on
+shot stair_day_03_foot
+cmd awaken ascent pilot run climb
+wait 50
+shotnow stair_day_04_climb
+wait 50
+shotnow stair_day_05_climb
+wait 50
+shotnow stair_day_06_climb
+wait 50
+shotnow stair_day_07_climb
+wait 50
+shotnow stair_day_08_climb
+wait 50
+shotnow stair_day_09_climb
+wait 50
+shotnow stair_day_10_climb
+wait 50
+shotnow stair_day_11_climb
+wait 50
+shotnow stair_day_12_climb
+wait 50
+shotnow stair_day_13_climb
+wait 50
+shotnow stair_day_14_climb
+wait 50
+shotnow stair_day_15_climb
+wait 50
+shotnow stair_day_16_climb
+wait 50
+shotnow stair_day_17_climb
+wait 50
+shotnow stair_day_18_climb
+wait 50
+shotnow stair_day_19_climb
+wait 50
+shotnow stair_day_20_climb
+wait 50
+shotnow stair_day_21_climb
+wait 50
+shotnow stair_day_22_climb
+wait 50
+shotnow stair_day_23_climb
+wait 50
+shotnow stair_day_24_climb
+wait 50
+shotnow stair_day_25_climb
+wait 50
+shotnow stair_day_26_climb
+wait 50
+shotnow stair_day_27_climb
+wait 50
+shotnow stair_day_28_climb
+wait 50
+shotnow stair_day_29_climb
+wait 100
+shotnow stair_day_30_rail
+wait 60
+shotnow stair_day_31_rail
+wait 60
+shotnow stair_day_32_rail
+cmd awaken ascent pilot stop
+camera first
+wait 20
+shotnow stair_day_33_case_first
+info
+quit

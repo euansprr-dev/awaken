@@ -1,0 +1,155 @@
+# The Torn Stair at dusk and by night (SPEC §17.9): the stair's lights from the ground, the case from the bridge and the
+# pier, then a rank C hunter's climb with the rope held and the core's gift: the case opens and the wings come across.
+# Run on CI: tools/tour-ci.sh tools/autopilot/sky-stair-dusk.txt 1800
+world sky_stair_dusk survival 4246
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken admin levels 25
+wait 40
+key dismiss
+wait 10
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd tick sprint 6200
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd time set 12700
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 100
+cmd awaken ascent sky goto view
+wait 100
+hud off
+shot stair_dusk_00_approach
+cmd time set 18000
+wait 40
+shot stair_dusk_01_night
+cmd awaken ascent sky goto bridge
+wait 60
+shot stair_dusk_02_bridge_case_night
+cmd time set 12700
+wait 40
+shot stair_dusk_03_bridge_case
+cmd awaken ascent pier
+wait 40
+look 135 -4
+wait 10
+shot stair_dusk_04_from_pier
+cmd awaken ascent sky goto
+wait 60
+camera back
+hud on
+shot stair_dusk_05_foot
+cmd awaken ascent pilot run climb
+wait 50
+shotnow stair_dusk_06_climb
+wait 50
+shotnow stair_dusk_07_climb
+wait 50
+shotnow stair_dusk_08_climb
+wait 50
+shotnow stair_dusk_09_climb
+wait 50
+shotnow stair_dusk_10_climb
+wait 50
+shotnow stair_dusk_11_climb
+wait 50
+shotnow stair_dusk_12_climb
+wait 50
+shotnow stair_dusk_13_climb
+wait 50
+shotnow stair_dusk_14_climb
+wait 50
+shotnow stair_dusk_15_climb
+wait 50
+shotnow stair_dusk_16_climb
+wait 50
+shotnow stair_dusk_17_climb
+wait 50
+shotnow stair_dusk_18_climb
+wait 50
+shotnow stair_dusk_19_climb
+wait 50
+shotnow stair_dusk_20_climb
+wait 50
+shotnow stair_dusk_21_climb
+wait 50
+shotnow stair_dusk_22_climb
+wait 50
+shotnow stair_dusk_23_climb
+wait 50
+shotnow stair_dusk_24_climb
+wait 50
+shotnow stair_dusk_25_climb
+wait 50
+shotnow stair_dusk_26_climb
+wait 50
+shotnow stair_dusk_27_climb
+wait 50
+shotnow stair_dusk_28_climb
+wait 50
+shotnow stair_dusk_29_climb
+wait 20
+shotnow stair_dusk_30_top
+wait 20
+shotnow stair_dusk_31_top
+wait 20
+shotnow stair_dusk_32_top
+wait 20
+shotnow stair_dusk_33_top
+wait 20
+shotnow stair_dusk_34_top
+wait 20
+shotnow stair_dusk_35_top
+wait 20
+shotnow stair_dusk_36_top
+wait 20
+shotnow stair_dusk_37_top
+wait 20
+shotnow stair_dusk_38_top
+wait 20
+shotnow stair_dusk_39_top
+wait 20
+shotnow stair_dusk_40_top
+wait 20
+shotnow stair_dusk_41_top
+wait 20
+shotnow stair_dusk_42_top
+wait 20
+shotnow stair_dusk_43_top
+wait 20
+shotnow stair_dusk_44_top
+wait 20
+shotnow stair_dusk_45_top
+cmd awaken ascent pilot stop
+key dismiss
+wait 10
+screen close
+info
+quit

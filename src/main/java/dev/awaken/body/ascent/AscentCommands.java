@@ -109,9 +109,12 @@ final class AscentCommands {
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
-            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), false))
+            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), 0))
+                    // tours: the approach from the ground far out, and the bridge looking down the axis at the case
+                    .then(Commands.literal("view").executes(c -> skyGoto(c.getSource(), 2)))
+                    .then(Commands.literal("bridge").executes(c -> skyGoto(c.getSource(), 3)))
                     // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
-                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), true)))));
+                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), 1)))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
                             .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
@@ -186,7 +189,7 @@ final class AscentCommands {
         return t;
     }
 
-    private static int skyGoto(CommandSourceStack src, boolean deck) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int skyGoto(CommandSourceStack src, int where) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         // vanilla's own search: only starts that really generated
@@ -213,8 +216,23 @@ final class AscentCommands {
                 if (!dev.awaken.above.ruin.SkyRig.rigged(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
                 var l = dev.awaken.above.ruin.SkyRig.layout(level, cx, deckY, cz);
                 var foot = l.foot();
-                if (deck) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
-                else p.teleportTo(level, foot.getX() + 0.5, foot.getY(), foot.getZ() + 0.5, java.util.Set.of(), l.footYaw(), -20, true);
+                if (where == 1) {
+                    p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
+                } else if (where == 2) {
+                    // out past the foot, on the ground, looking up the whole stair at the platform
+                    double fx = foot.getX() - cx, fz = foot.getZ() - cz, fl = Math.max(1, Math.sqrt(fx * fx + fz * fz));
+                    int vx = cx + (int) (fx / fl * 105), vz = cz + (int) (fz / fl * 105);
+                    level.getChunk(vx >> 4, vz >> 4);
+                    int vy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, vx, vz);
+                    float yaw = (float) Math.toDegrees(Math.atan2(vx - cx, cz - vz));
+                    float pitch = (float) -Math.toDegrees(Math.atan2((deckY - vy) * 0.55, 105));
+                    p.teleportTo(level, vx + 0.5, vy, vz + 0.5, java.util.Set.of(), yaw, pitch, true);
+                } else if (where == 3) {
+                    float yaw = (float) Math.toDegrees(Math.atan2(l.bx(), -l.bz()));
+                    p.teleportTo(level, cx + l.bx() * 14 + 0.5, deckY + 1, cz + l.bz() * 14 + 0.5, java.util.Set.of(), yaw, -6, true);
+                } else {
+                    p.teleportTo(level, foot.getX() + 0.5, foot.getY(), foot.getZ() + 0.5, java.util.Set.of(), l.footYaw(), -20, true);
+                }
                 dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), a stair of {} terraces, its foot at {}", cx, cz, deckY,
                         l.tiers(), foot.toShortString());
                 return 1;

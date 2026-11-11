@@ -631,7 +631,7 @@ final class AscentTests {
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
-            for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+            for (BlockPos q : BlockPos.betweenClosed(cx - 35, deckY - 48, cz - 35, cx + 35, deckY + 8, cz + 35)) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }
