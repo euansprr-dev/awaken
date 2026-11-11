@@ -34,6 +34,7 @@ final class ArmsHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
         lowHealth(g, dt.getGameTimeDeltaPartialTick(true));
+        clashEdge(g, dt.getGameTimeDeltaPartialTick(true));
         hurtShard(g, mc, dt.getGameTimeDeltaPartialTick(true));
         boolean fights = ArmsPredict.fights(mc.player);
         float charge = ArmsPredict.charge();
@@ -85,6 +86,16 @@ final class ArmsHud {
         float a = Mth.clamp(e * (0.82F + 0.18F * ArmsFeel.pulse), 0, 0.95F);
         int w = g.guiWidth(), h = g.guiHeight();
         g.blit(RenderPipelines.GUI_TEXTURED, EDGE, 0, 0, 0F, 0F, w, h, 256, 256, 256, 256, ARGB.color(Math.round(a * 255), COLD));
+    }
+
+    private static final int CLASH_LIGHT = 0xFFE3A0;
+
+    /** The clash that broke a stance (SPEC §25 "The clash"): the same falloff from the corners, white-gold, gone in seven ticks. */
+    private static void clashEdge(GuiGraphicsExtractor g, float partial) {
+        float f = ArmsFeel.flashWas + (ArmsFeel.flash - ArmsFeel.flashWas) * partial;
+        if (f < 0.01F) return;
+        float a = Mth.clamp(f * f * 0.85F, 0, 0.85F);
+        g.blit(RenderPipelines.GUI_TEXTURED, EDGE, 0, 0, 0F, 0F, g.guiWidth(), g.guiHeight(), 256, 256, 256, 256, ARGB.color(Math.round(a * 255), CLASH_LIGHT));
     }
 
     /** Seven dots across about 30° of a ring, toward the blow (up = ahead), brightest at the middle, fading out. */

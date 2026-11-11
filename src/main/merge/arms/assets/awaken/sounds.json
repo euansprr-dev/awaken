@@ -1188,5 +1188,58 @@
         "type": "event"
       }
     ]
+  },
+  "fight.trident_ground": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.hit_ground",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.mace_ground": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.heavy_core": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:block.heavy_core.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.bone": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:block.bone_block.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "fight.bell": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/bell_use01",
+        "volume": 0.55,
+        "pitch": 0.95,
+        "attenuation_distance": 32
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "volume": 0.55,
+        "pitch": 0.95,
+        "attenuation_distance": 32
+      }
+    ]
   }
 }

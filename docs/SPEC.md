@@ -7974,6 +7974,43 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     top right to the bottom left), and the server confirmed both hits (`hit heavy rel 1`). The Greatblade's two hands sit
     where the Maul's do, the off hand's edge just under and right of the crosshair, the crosshair and the target's head
     clear.
+  - *The clash* (Euan 2026-11-11, after the Ringer: "Sometimes I parry perfectly and it's a very small ding, and the
+    screen barely moves"; the boss plan's part three, approved with the rest, "Go with all", 11 Nov, built here from its
+    numbers, `docs/boss-experience/PLAN.md` 4.3 on `claude/boss-experience-plan-3bdfa8`). A deflect is answered by the
+    size of the blow it turned aside, sent in the answer's aux (`ArmsRules.clashSize`, `ArmsServer.clash`): 0 a light
+    blow, 1 a heavy one, 2 the deflect that broke its stance (the posture's broken-until moved by this deflect's own
+    share). The boss plan adds "it reels" (`Strikes.reeling`, mobs side) to size 2; until it is in build, size 2 is the
+    break alone. Today's deflect stays as `ArmsRules.TODAY` for the switch.
+    | | Today | Light | Heavy | Breaks its stance |
+    |---|---|---|---|---|
+    | Freeze (hands and the body) | 100 ms | 110 | 160 | 200 |
+    | View kick, up / roll (degrees), settling over | 1.8 / 1.2, 7 ticks | 2.6 / 1.6, 7 | 4.0 / 2.4, 8 | 4.5 / 2.8, 9 |
+    | View shake (degrees, ticks) | none | 0.35, 4 | 0.55, 6 | 0.75, 8 |
+    | Field of view | -3.5%, 9 ticks | -4.5%, 9 | -6%, 11 | -8%, 14 |
+    | White-gold light (`FxClient.guardSpark` size) | none | 1.9 | 2.4 | 2.4, and the frame's edges flash |
+    The settle grows with the kick so a bigger kick never moves faster; the shake is two sines (23 and 31 Hz, the yaw at
+    0.7 of the pitch) on the feel's clock, eased out by the square of what is left, so a slowed film shakes as many ticks
+    as play (both the plan left open). Light: the deflect's spark in the weapon's own light stays, and over it a white-gold
+    (0xFFE3A0) spark of the size above: its flash where the weapons met and 21 more sparks at size 1.9 (2.5 times
+    today's 14), 25 thrown faster (wider) at 2.4; they go the way the turned blow went: on past the guard and across it,
+    away from the side it came from (met head-on, out past the sword hand), a little up. The break flashes the frame's
+    edges white-gold (the low-health falloff, at most 0.85, gone in 7 ticks). Those near see the light by its size.
+    Sound, first picks: our steel by size, lower and longer as it grows (light: a trident striking the ground, an anvil
+    landing at 1.15, the shield's knock; heavy: the anvil at 0.9, the mace on the ground, the shield at 0.95; the break:
+    the anvil at 0.8, the mace's heaviest ground blow, the shield at 0.85), and over it what met the blade, lower by size
+    (1, 0.9, 0.85), by `ArmsSounds.edge`: a bell-armed body (`#awaken:clash_bell`: the Ringer, the Bell Warden, the
+    Toller) a bell (its recordings at 0.55, not the block's carry of 12); a held weapon by its make (`wooden_` wood,
+    `stone_` stone, else steel); else the body (plate an iron golem struck, stone a heavy core with stone, bone a bone
+    block, wood wood, a spirit a breeze turning a shot, flesh and slime the knockback hit). No layer above 1.2
+    (`guard.steel`'s recordings already play at 1.2, so its voice stays at 1 or under). The break also draws the body's
+    own voice (`Mob.playAmbientSound` from the server). Those near hear the same mix from the server. Listening page rows
+    `clash_light`, `clash_heavy`, `clash_break`, `clash_bell` (`tools/art/weapon_listen.py`, each after the boss's own
+    whoosh at the fight's rhythm; pick 1 is in the game, his marks replace it). A block is unchanged: its thud, no
+    flash. Switch: `clashSizes` (comfort, on; off: every deflect is today's, its sound included); each layer also obeys
+    the freeze, view kick and camera shake, moments and recorded sounds switches. Dev: `/awaken arms clash
+    light|heavy|break` answers one from the nearest creature, the guard's rules aside. Test `arms_clash` (sizes from
+    three real deflects, each size bigger than the last, today kept, what met the blade, no layer over 1.2). Film
+    `tools/autopilot/arms-clash.txt`.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
