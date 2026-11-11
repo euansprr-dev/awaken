@@ -52,9 +52,13 @@ cmd give @s minecraft:lapis_lazuli 32
 cmd tp @s 0.5 201 0.5 0 10
 wait 40
 # ---- the first touch: a page flies to you from where a Lord fell, then lies in the hand as its own leaf ----
-cmd summon minecraft:zombie 0.5 201 3.0 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Health:1f}
+cmd awaken admin enchant page bane_of_crawlers
+wait 4
+shotnow polish_00_a_page_flying_a
+wait 5
+shotnow polish_00_a_page_flying_b
+wait 30
 cmd item replace entity @s weapon.mainhand with awaken:enchantment_page[stored_enchantments={"awaken:bane_of_crawlers":1},custom_data={awaken_where:"From the Hive Regent, the Lord of the Hive"}]
-cmd kill @e[type=minecraft:zombie]
 wait 30
 shot polish_01_a_page_in_the_hand
 use
