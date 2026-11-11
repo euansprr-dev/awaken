@@ -10,7 +10,7 @@ import net.minecraft.util.Mth;
  * strokes a trace has. A stroke is a polyline in the mark's own square (x along the piece, y across it, both -1..1),
  * sampled evenly along its length with every corner a sample.
  *
- * <p>The table below is written by {@code docs/enchanting/polish/mock/glyphs.py} (grid points, x right, y down, 0-6); it
+ * <p>The table below is written by {@code tools/art/specs/_enchant_glyphs.py java} (grid points, x right, y down, 0-6); it
  * replaced five generated family templates whose marks read as one within a family (three banes, one arrow).
  */
 public final class Marks {

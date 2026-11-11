@@ -100,6 +100,16 @@ public final class InscribeScene {
     static double fx, fz = 1, rx = 1, rz;
     static Vec3 centre = Vec3.ZERO;
     static double slateY;
+    /**
+     * How far above the slate the mark lies: on the top of the piece, whatever its build (a blade a few hundredths, a
+     * breastplate a quarter of a block). The table's renderer measures the piece it draws and says ({@link #pieceTop}).
+     */
+    static double lift = 0.036;
+
+    /** The writer's own piece, as the table drew it this frame: its top above the slate. */
+    static void pieceTop(double top) {
+        lift = Math.max(0.03, top + 0.006);
+    }
 
     // the view: last tick's and this tick's yaw, pitch and field of view, eased toward the phase's frame
     private static final float[] VIEW = new float[3], VIEW_O = new float[3];
@@ -285,7 +295,7 @@ public final class InscribeScene {
         double dx = fw.x() - left.x() * nx * tan * aspect + up.x() * ny * tan;
         double dy = fw.y() - left.y() * nx * tan * aspect + up.y() * ny * tan;
         double dz = fw.z() - left.z() * nx * tan * aspect + up.z() * ny * tan;
-        double planeY = slateY + 0.035;
+        double planeY = slateY + lift;
         if (dy > -1e-4) return;
         double t = (planeY - o.y) / dy;
         if (t <= 0 || t > 8) return;
@@ -561,7 +571,7 @@ public final class InscribeScene {
         fz = d.getStepZ();
         rx = fz;
         rz = -fx;
-        slateY = pos.getY() + 13 / 16.0;
+        slateY = pos.getY() + InscribingTableRenderer.SLATE;
         centre = new Vec3(pos.getX() + 0.5 + fx * 0.08, slateY, pos.getZ() + 0.5 + fz * 0.08);
     }
 
@@ -593,7 +603,7 @@ public final class InscribeScene {
         Minecraft mc = Minecraft.getInstance();
         double base = mc.options.fov().get();
         int guiH = Math.max(1, mc.getWindow().getGuiScaledHeight());
-        double tx = centre.x, ty = slateY + 0.03, tz = centre.z, size, frac, clear;
+        double tx = centre.x, ty = slateY + lift, tz = centre.z, size, frac, clear;
         switch (phase) {
             case TRACE, MEMORY -> {
                 // leaning in to write: the mark fills most of the view
@@ -611,7 +621,7 @@ public final class InscribeScene {
             }
             default -> {
                 // the piece on the slate (its mark faint as you rest on a row) with the floating book behind, over the pages
-                ty = slateY + 0.05;
+                ty = slateY + lift + 0.02;
                 size = 0.62;
                 frac = 0.9;
                 clear = InscribeScreen.pagesTop(guiH) - 0.02;
@@ -793,7 +803,7 @@ public final class InscribeScene {
             lift = 0;
         }
         TIP[0] = wx(u, v);
-        TIP[1] = slateY + 0.035 + lift;
+        TIP[1] = slateY + InscribeScene.lift + lift;
         TIP[2] = wz(u, v);
         return TIP;
     }
@@ -839,11 +849,11 @@ public final class InscribeScene {
             // the mark scored into the piece, dark either side of each line, before any of it is cut
             float scored = 0.6F * Mth.clamp((t - phaseAt) / 15F, 0F, 1F);
             e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.debugQuads(), (pose, vc) -> {
-                for (float[] s : m) groove(pose, vc, s, slateY + 0.0355, 0.007, 0.012, argb(0x0B0706, scored));
+                for (float[] s : m) groove(pose, vc, s, slateY + lift - 0.0005, 0.007, 0.012, argb(0x0B0706, scored));
             });
         }
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
-            double y = slateY + 0.036;
+            double y = slateY + lift;
             switch (ph) {
                 case BOOK -> {
                     // the book open at it: its mark, barely there, where it would go
@@ -975,7 +985,7 @@ public final class InscribeScene {
         float[][] m = Marks.of(scrapedNo);
         float crumble = Mth.clamp((a - 3F) / 12F, 0F, 1F);
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
-            double y = slateY + 0.036;
+            double y = slateY + lift;
             for (float[] s : m) {
                 int n = s.length / 2, from = Math.round(crumble * (n - 1));
                 if (from >= n - 1) continue;

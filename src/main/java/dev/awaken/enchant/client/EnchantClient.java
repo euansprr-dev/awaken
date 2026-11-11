@@ -45,6 +45,8 @@ public final class EnchantClient {
         // a Word Stone's carving glows in its enchantment's colour (SPEC §45.14)
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.BlockTintSources.class,
                 e -> e.register(java.util.List.of(new WordTint()), EnchantContent.WORD_STONE.get()));
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent.class,
+                e -> e.register(dev.awaken.Awaken.id("page"), PageSelect.TYPE));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(EnchantPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.open(msg)));
             e.register(EnchantPayloads.State.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.state(msg)));

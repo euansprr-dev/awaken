@@ -70,7 +70,7 @@ public final class EnchantContent {
     /** The light a Lantern helmet sheds (SPEC §45.16): nothing to see, touch or hold; it only gives light. */
     public static final DeferredBlock<LanternGlowBlock> LANTERN_GLOW = BLOCKS.registerBlock("lantern_glow", LanternGlowBlock::new,
             p -> p.replaceable().noCollision().noLootTable().noOcclusion().instabreak()
-                    .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.POPPED)
                     .lightLevel(s -> Lantern.LIGHT[s.getValue(LanternGlowBlock.LEVEL)]));
 
     /** One enchantment, held in vanilla's {@code stored_enchantments} so every tooltip and JEI read it; used, it teaches. */

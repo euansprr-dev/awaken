@@ -34,16 +34,21 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Inscribing Table as everyone sees it (SPEC §45.10): the leather book floating over the brass stand at the back,
- * opening toward whoever's near and turning its pages as the writer looks through it; the writer's piece lying flat on
- * the slate; the lapis channel round the slate's edge, which wakes faintly when someone comes close, fills with the
- * enchantment's colour while its mark is traced and flares when the piece wakes; and, for watchers, the mark itself
- * burning faintly on the piece (the writer's own client draws theirs brighter, see {@link InscribeScene}).
+ * The Inscribing Table as everyone sees it (SPEC §45.10, §45.15): the leather book lying on its brass rest at the back,
+ * opening when someone comes near and turning its pages as the writer looks through what they know; the burin standing
+ * in the inkwell while nobody writes; the writer's piece on the slate as the thing it is (a sculpted weapon or armour
+ * piece is its own mesh, not its icon), sized to the slate; the lapis channel round the slate's edge, which wakes faintly
+ * when someone comes close, fills with the enchantment's colour while its glyph is traced and flares when the piece
+ * wakes; and, for watchers, the glyph itself burning faintly on the piece (the writer's own client draws theirs
+ * brighter, see {@link InscribeScene}).
  */
 public final class InscribingTableRenderer implements BlockEntityRenderer<InscribingTableBlockEntity, InscribingTableRenderer.State> {
     static final SpriteId BOOK = new SpriteId(TextureAtlas.LOCATION_BLOCKS, Awaken.id("block/inscribing_book"));
     /** The slate's top, and the channel's square (half its side, from the block's centre). */
-    static final float SLATE = 13 / 16F, CHANNEL = 7 / 16F;
+    static final float SLATE = 12 / 16F, CHANNEL = 7 / 16F;
+    /** How a piece lies: flat on its side (an icon, a weapon), on its back (a breastplate, leggings), or standing (a helm, boots). */
+    static final int FLAT = 0, BACK = 1, UPRIGHT = 2;
+    private static final ItemStack BURIN = new ItemStack(dev.awaken.enchant.EnchantContent.BURIN.get());
 
     private final SpriteGetter sprites;
     private final BookModel book;
@@ -61,6 +66,11 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         int phase, no, colour;
         boolean armour, mine;
         final ItemStackRenderState piece = new ItemStackRenderState();
+        /** The burin in the inkwell (empty while someone writes: it is in their hand). */
+        final ItemStackRenderState burin = new ItemStackRenderState();
+        /** The book's turn toward the writer's side, the piece's lie, its size, its middle and its top above the slate. */
+        float bookYaw, pScale = 0.5F, pcx, pcy, pcz, pTop = 0.03F;
+        int lie;
     }
 
     @Override
@@ -78,6 +88,7 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         s.rx = s.fz;
         s.rz = -s.fx;
         s.yaw = 180F - d.toYRot();
+        s.bookYaw = -d.getClockWise().toYRot();
         s.open = Mth.lerp(pt, be.oOpen, be.open);
         s.flip = Mth.lerp(pt, be.oTurn, be.turn);
         s.time = be.time + pt;
@@ -96,7 +107,43 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         ItemStack piece = be.piece();
         s.armour = EnchantRules.armour(piece);
         if (piece.isEmpty() || (s.mine && InscribeScene.laying(pt))) s.piece.clear();
-        else items.updateForTopItem(s.piece, be.shownPiece(), ItemDisplayContext.FIXED, be.getLevel(), null, (int) be.getBlockPos().asLong());
+        else {
+            // NONE: a sculpted weapon or armour piece draws as its own mesh there, with no hand's or frame's turn on it
+            items.updateForTopItem(s.piece, be.shownPiece(), ItemDisplayContext.NONE, be.getLevel(), null, (int) be.getBlockPos().asLong());
+            lay(s, piece);
+        }
+        if (s.mine && !piece.isEmpty()) InscribeScene.pieceTop(s.pTop);
+        if (s.phase == InscribingTableBlockEntity.IDLE) items.updateForTopItem(s.burin, BURIN, ItemDisplayContext.NONE, be.getLevel(), null, 0);
+        else s.burin.clear();
+    }
+
+    /**
+     * How the piece lies on the slate and how large, from the bounds of what will be drawn: a flat icon or a weapon on
+     * its side, its length across the slate; a breastplate or leggings on their back; a helm or boots standing. Each is
+     * scaled so it spans most of the slate, whatever its own size (it was always the 16 pixel icon at half a block).
+     */
+    private static void lay(State s, ItemStack piece) {
+        AABB b = s.piece.getModelBoundingBox();
+        double w = b.getXsize(), h = b.getYsize(), deep = b.getZsize();
+        s.pcx = (float) ((b.minX + b.maxX) / 2);
+        s.pcy = (float) ((b.minY + b.maxY) / 2);
+        s.pcz = (float) ((b.minZ + b.maxZ) / 2);
+        // an icon is a sixteenth thick; a mesh has a body
+        boolean mesh = deep > 0.09;
+        var eq = piece.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+        if (mesh && s.armour && eq != null) {
+            boolean stands = eq.slot() == net.minecraft.world.entity.EquipmentSlot.HEAD || eq.slot() == net.minecraft.world.entity.EquipmentSlot.FEET;
+            s.lie = stands ? UPRIGHT : BACK;
+            double span = stands ? Math.max(w, deep) : Math.max(w, h);
+            s.pScale = (float) Mth.clamp((stands ? 0.46 : 0.6) / Math.max(0.05, span), 0.25, 1.1);
+            s.pTop = (float) ((stands ? h : deep) * s.pScale);
+        } else {
+            s.lie = FLAT;
+            // a weapon or tool lies along its own diagonal; an armour icon sits square
+            double span = s.armour ? Math.max(w, h) : Math.hypot(w, h);
+            s.pScale = (float) Mth.clamp((s.armour ? 0.5 : 0.8) / Math.max(0.05, span), 0.25, 1.1);
+            s.pTop = (float) (Math.max(deep, 1 / 16.0) * s.pScale);
+        }
     }
 
     @Override
@@ -105,24 +152,47 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         // the book catches the channel's light while someone writes
         int light = writing ? LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(s.lightCoords), 11), LightCoordsUtil.sky(s.lightCoords)) : s.lightCoords;
 
+        // the book on its brass rest, a little to the writer's left at the back: shut when nobody is near, open as they come
         ps.pushPose();
-        ps.translate(0.5F - s.fx * 0.3F, 0.98F + Mth.sin(s.time * 0.1F) * 0.012F, 0.5F - s.fz * 0.3F);
-        ps.rotate(Axis.YP, -s.yRot);
-        ps.rotateDegrees(Axis.ZP, 80F);
+        float bu = -0.175F, bv = 0.35F;
+        ps.translate(0.5F + s.rx * bu - s.fx * bv, 17.4F / 16F + 0.06F, 0.5F + s.rz * bu - s.fz * bv);
+        ps.rotateDegrees(Axis.YP, s.bookYaw);
+        ps.rotateDegrees(Axis.ZP, 74F);
+        ps.scale(0.62F, 0.62F, 0.62F);
+        ps.translate(0F, -0.125F, 0F);
         float ff1 = Mth.frac(s.flip + 0.25F) * 1.6F - 0.3F, ff2 = Mth.frac(s.flip + 0.75F) * 1.6F - 0.3F;
-        BookModel.State bs = BookModel.State.forAnimation(s.time, Mth.clamp(ff1, 0F, 1F), Mth.clamp(ff2, 0F, 1F), s.open);
+        BookModel.State bs = BookModel.State.forAnimation(s.time, Mth.clamp(ff1, 0F, 1F), Mth.clamp(ff2, 0F, 1F), 0.2F + 0.8F * s.open);
         out.submitModel(book, bs, ps, light, OverlayTexture.NO_OVERLAY, -1, BOOK, sprites, 0);
         ps.popPose();
+
+        // the burin standing in the inkwell at the writer's right, its point down in the lapis
+        if (!s.burin.isEmpty()) {
+            ps.pushPose();
+            float iu = 0.306F, iv = 0.275F;
+            ps.translate(0.5F + s.rx * iu - s.fx * iv, 14.2F / 16F + 0.19F, 0.5F + s.rz * iu - s.fz * iv);
+            ps.rotateDegrees(Axis.YP, s.yaw);
+            ps.rotateDegrees(Axis.ZP, 215F);
+            ps.scale(0.42F, 0.42F, 0.42F);
+            s.burin.submit(ps, out, s.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            ps.popPose();
+        }
 
         float lift = wakeLift(s.phase, s.age);
         if (!s.piece.isEmpty()) {
             ps.pushPose();
-            ps.translate(0.5F + s.fx * 0.08F, SLATE + 0.017F + lift, 0.5F + s.fz * 0.08F);
+            ps.translate(0.5F + s.fx * 0.08F, SLATE + 0.004F + lift + s.pTop / 2F, 0.5F + s.fz * 0.08F);
             ps.rotateDegrees(Axis.YP, s.yaw + (float) Math.toDegrees(wakeSpin(s.phase == InscribingTableBlockEntity.WAKE ? s.age : 0)));
-            ps.rotateDegrees(Axis.XP, 90F);
-            // a weapon or tool lies across the slate, its length along the writer's left and right
-            if (!s.armour) ps.rotateDegrees(Axis.ZP, 45F);
-            ps.scale(0.5F, 0.5F, 0.5F);
+            switch (s.lie) {
+                case BACK -> ps.rotateDegrees(Axis.XP, -90F);
+                case UPRIGHT -> {}
+                default -> {
+                    ps.rotateDegrees(Axis.XP, 90F);
+                    // a weapon or tool lies across the slate, its length along the writer's left and right
+                    if (!s.armour) ps.rotateDegrees(Axis.ZP, 45F);
+                }
+            }
+            ps.scale(s.pScale, s.pScale, s.pScale);
+            ps.translate(-s.pcx, -s.pcy, -s.pcz);
             s.piece.submit(ps, out, light, OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();
         }
@@ -131,6 +201,7 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         final float fx = s.fx, fz = s.fz, rx = s.rx, rz = s.rz, open = s.open, age = s.age, time = s.time;
         final int phase = s.phase, no = s.no, colour = s.colour == 0 ? InscribeScene.LAPIS : s.colour;
         final boolean mine = s.mine;
+        final float top = Math.max(0.03F, s.pTop + 0.006F);
         out.submitCustomGeometry(ps, RenderTypes.lightning(), (pose, vc) -> {
             Geo g = new Geo(pose, vc, fx, fz, rx, rz);
             float y = SLATE + 0.003F;
@@ -140,12 +211,12 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
                     float fill = Mth.clamp(age / 40F, 0F, 1F);
                     g.channel(y, 1F, InscribeScene.argb(InscribeScene.LAPIS, 0.12F));
                     g.channel(y + 0.0005F, fill, InscribeScene.argb(colour, 0.55F + 0.1F * Mth.sin(time * 0.2F)));
-                    if (!mine) g.mark(no, SLATE + 0.036F, InscribeScene.argb(colour, 0.22F + 0.1F * Mth.sin(time * 0.25F)), 0.03F, 0);
+                    if (!mine) g.mark(no, SLATE + top, InscribeScene.argb(colour, 0.22F + 0.1F * Mth.sin(time * 0.25F)), 0.03F, 0);
                 }
                 case InscribingTableBlockEntity.WAKE -> {
                     float k = Mth.clamp(age / 50F, 0F, 1F);
                     g.channel(y, 1F, InscribeScene.argb(InscribeScene.hot(colour, 0.5F * (1 - k)), 0.9F - 0.5F * k));
-                    if (!mine) g.mark(no, SLATE + 0.036F + lift, InscribeScene.argb(InscribeScene.hot(colour, 0.6F * (1 - k)), 0.85F - 0.4F * k), 0.05F, wakeSpin(age));
+                    if (!mine) g.mark(no, SLATE + top + lift, InscribeScene.argb(InscribeScene.hot(colour, 0.6F * (1 - k)), 0.85F - 0.4F * k), 0.05F, wakeSpin(age));
                 }
                 default -> g.channel(y, 1F, InscribeScene.argb(InscribeScene.LAPIS, (writing ? 0.24F : 0.14F) * open * (0.8F + 0.2F * Mth.sin(time * 0.07F))));
             }
