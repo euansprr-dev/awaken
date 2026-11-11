@@ -78,6 +78,8 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         public boolean crust, columns, wet;
         /** Whether rock stands a few blocks upwind (the wind is from the west): where what the wind carries comes to rest. */
         public boolean lee;
+        /** Whether this column is part of something built (a temple's tiers, a causeway): masonry, not ground. */
+        public boolean built;
         /** 0 to 1: how near what burns (a channel, a rift) is. */
         public double heat;
         /** A slow noise, -1 to 1, for beds of one thing in another; a slower, smoother one for whole drifts; and this column's own number, 0 to 1. */
@@ -194,9 +196,10 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         return cap == dress.soil() ? dress.soil() : dress.stone();
     }
 
-    /** A cell of rock where it can be seen from the side: courses, and what shows along a line in them. */
-    protected BlockState face(int x, int y, int z) {
+    /** A cell of rock where it can be seen from the side, in the column {@code s} says: courses, and what shows along a line in them. */
+    protected BlockState face(Spot s, int y) {
         Dress d = dress;
+        int x = s.x, z = s.z;
         double line = Math.abs(vein.get(x / 11.0 + y / 23.0, y / 6.0, z / 11.0 - y / 29.0));
         if (line < 0.035) return N.rnd(x * 31L + y, z, seed + 11) < 0.35 ? d.ore() : d.seam();
         // courses: mostly the rock itself, with beds of the firm ground's stone and of the dark stone lying in it
@@ -327,6 +330,11 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         if (y <= WATER || form.heat(x, z) > 0.3 || form.columns(x, z) > 0.2) return false;
         for (int[] d : SIDES) if (Math.abs(ground(x + d[0] * r, z + d[1] * r) - y) > steps) return false;
         return true;
+    }
+
+    /** Whether a column is part of something built that the ground carries (a temple's tiers): nothing grows a tree there. */
+    public final boolean built(int x, int z) {
+        return form.built(x, z);
     }
 
     public final List<double[]> wayPoints() {
@@ -518,6 +526,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
             s.crust = (q.flags[i] & 1) != 0;
             s.columns = (q.flags[i] & 2) != 0;
             s.lee = (q.flags[i] & 4) != 0;
+            s.built = (q.flags[i] & 8) != 0;
             s.heat = q.heat[i];
             s.patch = q.patch[i];
             s.drift = q.drift[i];
@@ -536,12 +545,13 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         s.crust = s.way == 0 && form.crust(x, z);
         s.columns = s.off >= 1.5F && form.columns(x, z) > 0.5;
         s.lee = !s.columns && !s.wet && (form.columns(x - 5, z) > 0.5 || form.columns(x - 10, z) > 0.5);
+        s.built = form.built(x, z);
         s.patch = N.fbm(patch, x, z, 1 / 14.0, 2);
         s.drift = slow.get(x / 26.0, z / 26.0);
         s.roll = N.rnd(N.hash(x, z, seed + 9), z, seed + 10);
         q.rise[i] = (byte) Math.min(127, s.rise);
         q.drop[i] = (byte) Math.min(127, s.drop);
-        q.flags[i] = (byte) ((s.crust ? 1 : 0) | (s.columns ? 2 : 0) | (s.lee ? 4 : 0));
+        q.flags[i] = (byte) ((s.crust ? 1 : 0) | (s.columns ? 2 : 0) | (s.lee ? 4 : 0) | (s.built ? 8 : 0));
         q.heat[i] = (float) s.heat;
         q.patch[i] = (float) s.patch;
         q.drift[i] = (float) s.drift;
@@ -558,10 +568,10 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         BlockState cap = cap(s), body = under(s, cap);
         v.set(x, 0, z, m.bedrock);
         // what can be seen from the side is cut rock; under that is the land's inside, which nobody sees
-        boolean cliff = s.drop >= 2 || s.columns;
+        boolean cliff = s.drop >= 2 || s.columns || s.built;
         int seen = Math.max(1, y - Math.max(4, s.drop + 2));
         for (int k = 1; k < seen; k++) v.set(x, k, z, STONE);
-        for (int k = seen; k < y; k++) v.set(x, k, z, cliff ? face(x, k, z) : body);
+        for (int k = seen; k < y; k++) v.set(x, k, z, cliff ? face(s, k) : body);
         BlockState top = null;
         if (s.way == STAIR) cap = Build.stair(d.rockStairs(), Direction.from2DDataValue(sd[q.idx[i]]));
         else if (y >= WATER && !s.crust) {

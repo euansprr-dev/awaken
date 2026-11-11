@@ -1911,6 +1911,47 @@
       "skyGlow": 0.0,
       "heat": 0.35,
       "glow": 0.9
+    },
+    "biome:awaken:realm/fallwater_vale": {
+      "_name": "Fallwater Vale: the morning after rain in a green valley. A high clear sun, every leaf lit yellow-green, the shade under the trees a deep teal, mist lying on the river and the fall white at the far end",
+      "exposure": 1.02,
+      "contrast": 1.12,
+      "saturation": 1.2,
+      "warmth": -0.06,
+      "shadowTint": [
+        0.16,
+        0.42,
+        0.36
+      ],
+      "highlightTint": [
+        0.86,
+        1.0,
+        0.6
+      ],
+      "splitTone": 0.4,
+      "vignette": 0.24,
+      "bloom": 0.8,
+      "bloomThreshold": 0.7,
+      "skyBloom": 0.2,
+      "shafts": 1.0,
+      "haze": 0.4,
+      "hazeStart": 0.26,
+      "hazeTint": [
+        0.7,
+        0.86,
+        0.62
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.06,
+      "sunsetWarmth": 0.2,
+      "sunGlow": 0.6,
+      "light": 0.0,
+      "ao": 0.9,
+      "filmic": 1.0,
+      "mist": 0.6,
+      "mistHeight": 66.0,
+      "fogGlow": 0.5,
+      "skyGlow": 0.0
     }
   }
 }

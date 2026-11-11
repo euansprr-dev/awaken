@@ -39,6 +39,7 @@ public abstract class Landform {
 
     static Landform make(Kind kind, GeneratedLand land) {
         if (kind == Kind.ASCENT) return new Ascent(land);
+        if (kind == Kind.VALLEY) return new Valley(land);
         throw new IllegalArgumentException("the " + kind + " landform is not built yet");
     }
 
@@ -163,6 +164,11 @@ public abstract class Landform {
 
     double heat(double x, double z) {
         return 0;
+    }
+
+    /** Whether a column is part of something built that the ground itself carries (a temple's tiers). */
+    boolean built(double x, double z) {
+        return false;
     }
 
     abstract double edge(int x, int z);

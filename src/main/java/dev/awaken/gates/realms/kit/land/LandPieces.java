@@ -295,17 +295,23 @@ public final class LandPieces {
         }
     }
 
-    /** A gate: two pillars of the land's rock, a beam between them, a lantern on a chain. It runs along z. */
+    /** A gate: two pillars of the land's rock, a beam between them, a lantern on a chain. It runs along z, or along x. */
     public static final class Gate extends Piece<Kit> {
-        final int x, z, h;
+        final int x, z, h, ax, az;
         final GeneratedLand land;
 
         Gate(int x, int z, int h, GeneratedLand land) {
+            this(x, z, h, false, land);
+        }
+
+        Gate(int x, int z, int h, boolean alongX, GeneratedLand land) {
             this.x = x;
             this.z = z;
             this.h = h;
             this.land = land;
-            box(x, z, 2, 7);
+            ax = alongX ? 1 : 0;
+            az = alongX ? 0 : 1;
+            box(x, z, 2 + 5 * ax, 2 + 5 * az);
             mayOverlap = true;
             startsWay = true;
             label = "a gate";
@@ -315,28 +321,32 @@ public final class LandPieces {
         public void draw(V v, Kit m) {
             Dress d = land.dress();
             // both heads at one height, whatever the ground does under each foot: the beam has to meet them both
-            int top = Math.max(land.ground(x, z - 5), land.ground(x, z + 5)) + h;
+            int top = Math.max(land.ground(x - 5 * ax, z - 5 * az), land.ground(x + 5 * ax, z + 5 * az)) + h;
             for (int side = -1; side <= 1; side += 2) {
-                int pz = z + side * 5, gy = land.ground(x, pz);
+                int px = x + side * 5 * ax, pz = z + side * 5 * az, gy = land.ground(px, pz);
                 for (int a = -1; a <= 1; a++) for (int c = -1; c <= 1; c++) {
                     boolean corner = a != 0 && c != 0, mid = a == 0 && c == 0;
-                    v.foot(x + a, gy, pz + c, d.rock());
-                    v.set(x + a, gy + 1, pz + c, d.dark());
+                    v.foot(px + a, gy, pz + c, d.rock());
+                    v.set(px + a, gy + 1, pz + c, d.dark());
                     if (corner) {
-                        v.set(x + a, gy + 2, pz + c, d.rockSlab());
+                        v.set(px + a, gy + 2, pz + c, d.rockSlab());
                         continue;
                     }
                     for (int y = gy + 2; y <= top; y++) {
                         if (!mid && y == top - 1) continue; // the shaft narrows under its head
-                        v.set(x + a, y, pz + c, y == top ? (mid ? d.seam() : d.rockSlab()) : y == top - 2 ? d.ore() : y % 5 == 2 && mid ? d.seam() : y % 5 == 0 ? d.dark() : d.rock());
+                        v.set(px + a, y, pz + c, y == top ? (mid ? d.seam() : d.rockSlab()) : y == top - 2 ? d.ore() : y % 5 == 2 && mid ? d.seam() : y % 5 == 0 ? d.dark() : d.rock());
                     }
                 }
-                v.set(x, top + 1, pz, d.lamp());
+                v.set(px, top + 1, pz, d.lamp());
             }
-            BlockState beam = along(d.post(), Direction.Axis.Z);
-            for (int c = -4; c <= 4; c++) v.set(x, top - 3, z + c, beam);
+            BlockState beam = along(d.post(), alongAxis());
+            for (int c = -4; c <= 4; c++) v.set(x + c * ax, top - 3, z + c * az, beam);
             v.set(x, top - 4, z, d.chain());
             v.set(x, top - 5, z, m.hung);
+        }
+
+        private Direction.Axis alongAxis() {
+            return ax == 1 ? Direction.Axis.X : Direction.Axis.Z;
         }
     }
 
@@ -456,5 +466,127 @@ public final class LandPieces {
                 v.set(x, y, z, b);
             }
         }
+    }
+    /**
+     * One of the great builders: what dresses a stepped temple whose tiers the ground itself carries. Every riser gets a
+     * pilaster every six blocks with a hanging cornice over it, a lit niche in the bay between, a broken parapet along the
+     * edge above; every terrace a lamp at each corner; the stair a lit plinth either side at every tier; and round the top
+     * a colonnade with half its columns down.
+     */
+    public static final class Temple extends Piece<Kit> {
+        final int cx, cz, base, tiers, tierH, run;
+        final double top;
+        final long salt;
+        final GeneratedLand land;
+
+        Temple(int cx, int cz, int base, int tiers, int tierH, int run, double top, long salt, GeneratedLand land) {
+            this.cx = cx;
+            this.cz = cz;
+            this.base = base;
+            this.tiers = tiers;
+            this.tierH = tierH;
+            this.run = run;
+            this.top = top;
+            this.salt = salt;
+            this.land = land;
+            int half = (int) Math.ceil(top + tiers * run) + 2;
+            box(cx, cz, half, half);
+            mayOverlap = true;
+            startsWay = true;
+            label = "the temple";
+        }
+
+        @Override
+        public void draw(V v, Kit m) {
+            Dress d = land.dress();
+            int roof = base + tiers * tierH;
+            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
+                int dx = x - cx, dz = z - cz, far = Math.max(Math.abs(dx), Math.abs(dz)), along = Math.abs(dx) >= Math.abs(dz) ? dz : dx;
+                boolean corner = Math.abs(dx) == Math.abs(dz), stair = Math.abs(dx) <= 6 && dz > 0;
+                // how far out from the foot of the riser behind it this column stands (1 right against it), and which terrace it is on
+                double outFromTop = far - top;
+                if (outFromTop <= 0) {
+                    colonnade(v, d, x, z, dx, dz, far, roof);
+                    continue;
+                }
+                int tier = (int) Math.ceil(outFromTop / run), step = (int) Math.ceil(outFromTop) - (tier - 1) * run, floor = roof - tier * tierH;
+                if (tier > tiers || v.get(x, floor - 1, z) == null || v.get(x, floor, z) != null) continue; // the stair, or something built there
+                int bay = Math.floorMod(along, 6);
+                Direction back = Math.abs(dx) >= Math.abs(dz) ? (dx > 0 ? Direction.WEST : Direction.EAST) : (dz > 0 ? Direction.NORTH : Direction.SOUTH);
+                if (step == 1 && !corner && !stair) {
+                    if (bay == 0) {
+                        // a pilaster against the riser, the cornice hung from the terrace above it
+                        for (int y = floor; y < floor + tierH - 1; y++) v.set(x, y, z, y == floor ? d.dark() : d.rock());
+                        v.set(x, floor + tierH - 1, z, Build.under(d.rockStairs(), back));
+                    } else if (bay == 3) {
+                        // a niche: the riser itself is lit two courses up, with a sill under it
+                        int bx = x + back.getStepX(), bz = z + back.getStepZ();
+                        if (V.holds(v.get(bx, floor + 2, bz))) {
+                            v.set(bx, floor + 2, bz, d.seam());
+                            v.set(bx, floor + 1, bz, d.seam());
+                            v.set(x, floor, z, d.rockSlab());
+                        }
+                    }
+                } else if (step == run && !stair) {
+                    // the edge of the terrace: a parapet with pieces gone, a lamp on a post at each corner
+                    if (corner) {
+                        v.set(x, floor, z, d.rock());
+                        v.set(x, floor + 1, z, d.lamp());
+                    } else if (N.rnd(x, z, salt) < 0.62) v.set(x, floor, z, bay % 3 == 0 ? d.rock() : d.rockSlab());
+                }
+                if (Math.abs(dx) == 6 && dz > 0 && step == 2) {
+                    // either side of the stair at every tier: a plinth and its lamp
+                    v.set(x, floor, z, d.dark());
+                    v.set(x, floor + 1, z, d.rock());
+                    v.set(x, floor + 2, z, d.lamp());
+                }
+            }
+        }
+
+        private void colonnade(V v, Dress d, int x, int z, int dx, int dz, int far, int roof) {
+            if (far != (int) top - 2 || v.get(x, roof - 1, z) == null) return;
+            int along = Math.abs(dx) >= Math.abs(dz) ? dz : dx;
+            if (Math.floorMod(along, 6) != 0 || Math.abs(dx) <= 3 && dz > 0) return;
+            int h = N.rnd(x, z, salt + 1) < 0.5 ? 7 : 1 + (int) (N.rnd(x, z, salt + 2) * 4);
+            for (int y = roof; y < roof + h; y++) v.set(x, y, z, y == roof ? d.dark() : y == roof + 6 ? d.ore() : d.rock());
+            if (h == 7) v.set(x, roof + 7, z, d.rockSlab());
+        }
+    }
+
+    /** A fall down a sheer wall: a sheet of the skin's falling water, standing on the bank at the wall's foot and rising to its lip. */
+    public static final class Falls extends Piece<Kit> {
+        final int xa, xb, z;
+        final GeneratedLand land;
+
+        /** @param z the row at the foot of the wall; the wall is the row north of it */
+        Falls(int xa, int xb, int z, GeneratedLand land) {
+            this.xa = xa;
+            this.xb = xb;
+            this.z = z;
+            this.land = land;
+            x0 = xa;
+            x1 = xb;
+            z0 = z - 1;
+            z1 = z + 1;
+            mayOverlap = true;
+            label = "the fall";
+        }
+
+        @Override
+        public void draw(V v, Kit m) {
+            Dress d = land.dress();
+            if (d.fall() == null) return;
+            for (int x = Math.max(xa, v.x0 - 1); x <= Math.min(xb, v.x0 + 16); x++) {
+                int foot = land.ground(x, z), lip = land.ground(x, z - 1);
+                // it stands on rock, never on the water: a stone under it where the pool comes this far
+                if (foot < WATER_LINE) {
+                    v.foot(x, WATER_LINE, z, d.rock());
+                    foot = WATER_LINE;
+                }
+                for (int y = foot + 1; y <= lip + 1; y++) if (!V.holds(v.get(x, y, z))) v.set(x, y, z, d.fall());
+            }
+        }
+
+        private static final int WATER_LINE = GeneratedLand.WATER;
     }
 }

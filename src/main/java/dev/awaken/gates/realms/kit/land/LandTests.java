@@ -51,5 +51,7 @@ public final class LandTests {
     public static void register() {
         AwakenTests.register("realm_cinder_crown_walks_to_everything", 4800, h -> walks(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant"));
         AwakenTests.register("realm_cinder_crown_nothing_floats", 4800, h -> floats(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant"));
+        AwakenTests.register("realm_fallwater_vale_walks_to_everything", 4800, h -> walks(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint"));
+        AwakenTests.register("realm_fallwater_vale_nothing_floats", 4800, h -> floats(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint"));
     }
 }
