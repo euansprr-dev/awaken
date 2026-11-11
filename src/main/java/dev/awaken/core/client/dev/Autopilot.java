@@ -65,7 +65,7 @@ import java.util.Map;
  * lens chain <probe>|off                       measurement: awaken:lens_probe_<probe> (tools/lens/probes.py) in place of the Look's chain
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookpreset performance|close_up|balanced|vista  the Look page's presets (Look, Far Sight, render distance, 4K scale, steady)
- * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
+ * lookswitch swift|lite|cinematic|ultra         picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
  * pixels gpu on|off|reset|&lt;label&gt;              GPU time of the world pass and the upscale (timestamps), logged per label

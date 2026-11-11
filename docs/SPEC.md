@@ -2049,7 +2049,8 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render distance 16: depth read, far terrain
   intact, haze across the vanilla edge within ~0.03 of itself away from silhouettes; logs/lens-dh-sheet.jpg). Params
   texels: 13 the ritual, 14 Holo.
-- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers (four with ImmersiveVFX installed, below), and one choice
+- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): four tiers (five with ImmersiveVFX installed, below; Lite,
+  between Swift and Cinematic, joined on 2026-11-11 and owns Swift's keys with `lens = LITE`, §22 "Lite"), and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
@@ -2069,10 +2070,10 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   | Iris shaders switch | off | off | off (was on; Lens 2's Ultra replaced Iris, §22) |
   | Sodium, vanilla options | none | none | none |
 
-  VFX, the fourth tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
+  VFX, the last tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
   stays off, story scenes included, while ImmersiveVFX draws. Offered only with that mod installed; a saved VFX without
   it reads as Swift. No frame-time budget is promised. The mod has no off switch and a jar can't be unloaded, so the
-  three Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
+  Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
   FML's `ModConfigs` by key, so no compile dependency): every on/off setting false, the choices in `Look.VFX_ASLEEP`,
   then `spec.save()`, which writes the file and fires the reload the mod listens for, as its menu does. What the player
   had waits in config/awaken-immersivevfx-kept.json (`schemaVersion`) and comes back with VFX. The first client tick
@@ -6264,7 +6265,31 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       carried from the frame before. Before, all of them lived in that buffer, a tile in four refreshed each frame and
       the rest carried along: stretched 3.6 times they were soft and stair-stepped, and they crawled ("they don't look
       like clouds", Euan 2026-11-10). The drift (0.04 blocks a tick) follows the frame's own share of the tick.
-    - Storm cells are still marched in the small buffer as before, a tile in four with their history.
+    - Storm cells were still marched in the small buffer as soft vapour, a tile in four with their history, until
+      Euan saw one beside the blocks (2026-11-11: "the custom storm is still the old clouds. Let's fix that so it's
+      the new clouds and looks great without costing much extra performance"). **The block storm**
+      (`lens_storm_blocks.glsl`): the same cumulonimbus, by §21.6's own numbers (the shelf, the leaning tower, three
+      flanking towers stepping down upwind, the overshooting dome, the anvil far downwind), built of the layer's own
+      cells, twelve blocks across and seven high, solid and flat-faced. The grid rides with the cell and is turned to
+      the world's axes. A turret's swell is a hash three cells across with each cell a little ragged, so the tower
+      is a cauliflower of blocks and holds its shape as it drifts (nothing boils: a block that flickered in and out
+      would read as a fault). It is walked once a ray in the composite, to the pixel and afresh every frame, and at
+      half size in the bloom prefilter so a storm in front of the sun cuts its glow and rays. Cost is kept down by
+      three tight bounds walked each on its own (shelf and tower; flanks; dome and anvil), a cell test that is
+      arithmetic and two hashes with no texture read and rejects open air before the hashes, a walk that ends at
+      the first block, and colours worked out only for a ray that met one; the soft storm's whole march leaves the
+      cloud buffer, which keeps only the rain (a soft veil under the base). Light: the sky's light by height, dark
+      blue-grey at the shelf paling to the layer's white at the dome and anvil, a face that looks down darkest; the
+      sun only on faces turned to it, less where three samples toward the sun find more of the cell in the way; the
+      lightning's glow from within, round the flash. The layer's near clouds clear round a storm (within 330 to
+      450 blocks, as the far ones always did) and those behind it are not walked. Without the Air the soft storm
+      is drawn as before. A sunlit face is kept under white with its hue (a soft knee from 0.84): past white the
+      tower was paper at golden hour and its blocks ran together. Under Lite the blocks are the whole storm: the soft
+      rain belongs to the cloud buffer Lite leaves out. Tour: `tools/autopilot/steady60-storm-ci.txt` (the cell from
+      460 blocks at three hours and by night with a strike, from 230, and from under the shelf; `living near` goes to
+      480 for it, inside the 512 a happening's tell reaches). Last run 42959983512; sheet
+      `docs/perf/steady60/play-2026-11-11/storm-blocks.jpg`. Not measured: its frame time, which needs the Mac; and
+      no shot has caught a strike at its brightest.
   - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
@@ -6500,6 +6525,68 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
     (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
     `docs/perf/steady60/grades/`.
+- **The game's fog under the Air** (Euan, playing, 2026-11-11, at the edge of the Glass Steppe: "the start of this
+  other biome looks a bit glitchy ... it's like brown fog but low quality"). The game fogs land whole by itself in
+  places Lens's own fog does not cover: the last tenth of the render distance, a chunk fading in (the game's chunk
+  fade, which Sodium follows), and the mist the edge hold raises at the edge of the made land (§28.9), where Lens's
+  own fog stands back for the game's. Its colour is the biome's `fog_color`, which the game's own sky shares at the
+  horizon, so there fogged land melts into the sky. The Air's sky does not share it. Vanilla's fog (#c0d8ff) is close
+  to the Air's horizon by day and the seam went unseen; the Awakened Lands' biomes have fogs of their own (the Glass
+  Steppe sand #ecdcb8, Elderwood khaki, Lumen teal, the Marsh grey-green, the Highlands lilac), and there fogged land
+  stood as flat shapes of that colour on a blue sky.
+  - **The rule**: while the Air is drawn (Lite, Cinematic, Ultra; an overworld sky), the game's fog colour is the
+    Air's horizon colour toward where the camera looks. `LensClient.fogColour` on `ViewportEvent.ComputeFogColor`, at
+    priority HIGH so the edge hold's paling and Far Sight's reading of the colour come after it; the colour is
+    `LensAir.horizon`, the CPU twin of lens_air.glsl's `airSky` at the horizon (keep the two in step; test
+    `lens_air_horizon`). It is one colour a frame where the shader's fog has one a pixel: by day they are the same, at
+    dusk the screen's sides differ a little from its middle, as the game's own sunrise fog does.
+  - **Kept as the game has them**: water, lava and powder snow; blindness and darkness; the darkening toward the
+    void. Swift, which keeps the game's sky, is untouched. A biome's fog distances are untouched too: only the colour
+    changes.
+  - **Not done**: Lens's shadows still fall on land the game has fogged (they fade with the fog's end as a whole, not
+    by the pixel), and the Air has no tint of a place's own (a sandy air over the Glass Steppe would be a look to
+    choose, in the sky and the fog alike).
+  - Shown on CI by `tools/autopilot/steady60-steppe-fog-ci.txt` (the game's own frame beside Lens's in the Glass
+    Steppe at 16 chunks; the land coming back in after the render distance is pulled in; a fast glide into the edge
+    hold's mist): run 42959640767 before, 42959804603 after. Before, the game's frame fogs its far land sand and
+    Lens's carries a cream band between land and sky; after, both fade into the sky's horizon colour. Sheet:
+    `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
+    stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
+    was being made, which is a reading and not a measurement.
+- **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
+  atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
+  MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
+  Swift"). A fourth Lens tier, `lens = LITE`, second on the Look page (Cinematic, Ultra and VFX move one key along).
+  It is the Air with none of Lens 2's light: the sky and the air are Cinematic's, the land is lit as the game lights
+  it.
+  - **What it keeps**: the Air's sky (the day's colours, sunrise and sunset, the night and its stars), the far fog
+    that fades the land into that sky, the block clouds, the block storm with its lightning, the sun's rays across
+    the screen (the shafts pass), bloom, the place's look (exposure, tints, contrast), the grades, a story moment's
+    look, and Swift's cave rule (under a roof the game's own darks stand).
+  - **What it leaves out**: everything that reads the world a second time. Sun shadows, contact shadows, ambient
+    occlusion, the warm and cool light, wet ground, water reflections, the lit air's mist and its beams between
+    trees, the light's motes (`LensParticles`), and the far clouds' pass with the soft rain it draws under a storm.
+    The clouds keep their reach all the same: with no far pass behind it, Lite's walk of the blocks (`cloudNear`) goes
+    1,240 blocks where Cinematic's goes 640 and hands over, so the horizon keeps its band of cloud (the first tour, run
+    42955395926, ended them at 620 and the horizon stood empty beside Cinematic's). Only the low band of sky between
+    the two reaches walks farther, and the last of them fade before the walk's end.
+  - **How**: `lens_lite.json` is ten passes where Cinematic's is fourteen and Swift's eight: the far probe and its
+    copy, the Air's sky, the bloom prefilter (with the cloud walk at half size), three blur steps, the shafts, the
+    composite, the copy out (which straight out skips, "The trim"). It runs Cinematic's own prefilter and composite
+    programs, so there is no second shader to keep in step and none more to compile; parameter texel 25 r tells them
+    it is Lite, and they skip `lensLight`, the mist and every read of the light buffer, the heightfield and the far
+    clouds, whose samplers are bound to small stand-ins. In `LensClient` two flags part what was one: `framed` (the
+    chain reads the frame's values: Lite, Cinematic, Ultra) and `lit` (Lens 2's light: Cinematic, Ultra). Lite never
+    creates the heightfield, the block map, the sun map or the lit air, and does none of their tick work
+    (`lens cost` counts no ticks under it). It always has the Air, whatever `lensAir` says: its chain has no other
+    sky. Distant Horizons takes Swift's values.
+  - **The Look page**: five cards with ImmersiveVFX installed, so the page is 414 wide then (396 with four), each
+    card's two lines are broken by hand (what it is, its pace), and on a narrow card the chosen tier's dot gives way
+    before its name runs under the key's number. Keys 1 to 5.
+  - **Not measured**: its pace on an M1. There is none here and CI's runners have no real GPU, so the 60 fps on its
+    card (budget 16.7 / 25 ms) is what it is built for, not a reading. Seen on CI beside Swift and Cinematic:
+    `tools/autopilot/steady60-lite-ci.txt` (run 42960037101; under Lite `lens cost` counted no ticks). Test:
+    `compat_look_tiers`. The five-card Look page (with ImmersiveVFX) has not been seen: the runners have no such mod.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.
