@@ -75,13 +75,20 @@ final class LensFrame {
         stars = starBrightness;
     }
 
-    // the Sun Pass's block map: how far from the camera it can be trusted (0: none), and its lowest y
+    // the Sun Pass's block map: how far from the camera it can be trusted (0: none), its lowest y, and its window's
+    // lowest x and z in the world
     private float blocksReach, blocksMinY;
+    private int blocksX, blocksZ;
 
-    /** This frame's block map (LensBlocks): its trusted reach in blocks (0: not used) and its lowest y. */
-    void blocks(float reach, float minY) {
+    /**
+     * This frame's block map (LensBlocks): its trusted reach in blocks (0: not used), its lowest y, and its window's
+     * lowest block x and z (the walk goes to the window's own rim: texels 28 and 29, w, from the camera).
+     */
+    void blocks(float reach, float minY, int originX, int originZ) {
         blocksReach = reach;
         blocksMinY = minY;
+        blocksX = originX;
+        blocksZ = originZ;
     }
 
     // the lit air (LensLit): its volume's corner in the world, and whether the texture holds one
@@ -180,10 +187,13 @@ final class LensFrame {
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;
-            // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share)
+            // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share;
+            // 28 and 29 the block map's window, its lowest x and z from the camera)
             put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, k == 0 ? landR : k == 1 ? landK : 0f);
-            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, k == 0 ? landG : 0f);
-            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, k == 0 ? landB : 0f);
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f,
+                    k == 0 ? landG : k == 1 ? (float) (blocksX - x) : 0f);
+            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f,
+                    k == 0 ? landB : k == 1 ? (float) (blocksZ - z) : 0f);
         }
         // 42-47: up to two storm cells, three texels each (layout in lens_storm_frame.glsl)
         for (int k = 0; k < dev.awaken.living.client.StormSky.MAX; k++) {

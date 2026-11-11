@@ -651,7 +651,8 @@ public final class LensClient {
         float tintMix = graded[Look.HAZE_TINT_MIX];
         lensFrame.land(fogR + (graded[Look.HAZE_TINT] - fogR) * tintMix, fogG + (graded[Look.HAZE_TINT + 1] - fogG) * tintMix,
                 fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
-        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
+        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f,
+                blocks != null ? blocks.originX() : 0, blocks != null ? blocks.originZ() : 0);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,

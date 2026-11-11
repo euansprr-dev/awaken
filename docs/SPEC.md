@@ -6927,8 +6927,25 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       64 under a roof (solid from there down), a third layer under the floor. The CPU's own marches (the lit
       air, the sun map, the dust) still take a column for solid under its top; they only ever spare a walk or
       colour the air, never shade a surface.
-  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
-    giant) shade only inside the map.
+  - **His own tree, the same evening** ("Same exact glitch with the tree shadow changing based on where I stand
+    ... on one side of the tree the shadow is perfect, then if I go to the other side, the shadow is gone"; a tall
+    jungle tree, a morning sun 30 degrees up). The first fix was shown on a tree built for the tour, a thin crown
+    on a bare trunk; his is the real thing. Three things stood between the two answers agreeing there:
+    - The walk stopped after 72 blocks. Under a sun 30 degrees up that is 26 blocks of height, short of a tall
+      crown, so even on ground at the camera's feet the heightfield had the say. It walks 144 now (`WALK`); a
+      texel holds sixteen blocks of one column and is read once a column, so the reads are about what they were.
+    - The walk went by a fixed 46 blocks round the camera, the least the map's window ever reaches. Ground 20
+      blocks toward the sun had 26 blocks of walk left, 15 of height. It goes to the window's own rim now (48 to
+      79 blocks, by where the camera stands in its chunk; frame texels 28 and 29, w, the window's corner from the
+      camera), and a section at the rim not read yet says so, as before.
+    - Past the walk, a crown was its top seven blocks. A mega jungle tree's is a dozen deep, an oak's four: the
+      one's lower leaves were lit from far and shaded from near, the other the reverse. The heightfield now holds
+      each column's own depth (the leaves at its top, down through gaps of up to two blocks, at most 30; kept in
+      b over 4096, four a block, where the column has no roof), read with the roofs.
+  - **What still differs with distance**: a second mass of leaves under a gap of three blocks and more (a jungle
+    giant's side boughs, a bush under it) shades only inside the map's walk.
+  - Tour in his world: `tools/autopilot/steady60-playtree-ci.txt` (his seed, pack, spot and hour; from four sides and
+    from above; each view with the walk on and off).
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
     blocks, and from the ground).
 - **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit

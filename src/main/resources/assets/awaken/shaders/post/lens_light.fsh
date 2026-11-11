@@ -53,10 +53,25 @@ vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, iv
 // is the block's own shape. Returns what gets through; status 0 when the walk settled it (a block stopped the sun), 1
 // when the ray left the map in the open at tOut (the heightfield carries on from there), 2 where the map isn't read
 // yet (the heightfield's own answer stands).
+// The map's window this frame: its lowest x and z from the camera (frame texels 28 and 29, w; 128 blocks across).
+// The walk had gone by a fixed 46 blocks round the camera, the least the window ever reaches; the window itself is
+// 48 to 79 on each side, and a section at its rim not read yet says so (status 2)
+vec2 mapCorner() { return vec2(F(28).w, F(29).w); }
+
+// How many blocks a walk may cross. It was 72, which under a morning sun 30 degrees up is 26 blocks of height: short
+// of a tall tree's crown, so the heightfield, which knows a crown only roughly, had the say on the ground at its
+// foot, differently on either side of the map's edge (Euan, playing, 11 Nov, after the first fix: "on one side of the
+// tree the shadow is perfect, then if I go to the other side, the shadow is gone"). A texel holds sixteen blocks of
+// one column and is read once, so twice the blocks is about the same reads
+const int WALK = 144;
+
 float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     vec4 f17 = F(17);
     vec3 cam = F(12).xyz;
-    float reach = f17.z, yMin = f17.w;
+    float yMin = f17.w;
+    vec2 corner = mapCorner();
+    ivec3 held = ivec3(-2147483647);
+    uint bits = 0u;
     ivec3 c = ivec3(floor(o));
     ivec3 stp = ivec3(l.x < 0.0 ? -1 : 1, l.y < 0.0 ? -1 : 1, l.z < 0.0 ? -1 : 1);
     vec3 inv = 1.0 / max(abs(l), vec3(1.0e-5));
@@ -64,7 +79,7 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     float t = 0.0;
     status = 1;
     tOut = 0.0;
-    for (int i = 0; i < 72; i++) {
+    for (int i = 0; i < WALK; i++) {
         // into the next block the ray crosses (never the one it starts in: a stair's own step, a slab's own top)
         if (next.x < next.y && next.x < next.z) {
             t = next.x;
@@ -80,9 +95,14 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
             c.z += stp.z;
         }
         tOut = t;
-        if (abs(float(c.x) + 0.5 - cam.x) > reach || abs(float(c.z) + 0.5 - cam.z) > reach || float(c.y) < yMin || float(c.y) >= yMin + 128.0) return 1.0;
-        vec4 raw = texelFetch(BlocksSampler, ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7)), 0);
-        uint bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        vec2 q = vec2(float(c.x) + 0.5 - cam.x, float(c.z) + 0.5 - cam.z) - corner;
+        if (q.x < 1.0 || q.y < 1.0 || q.x > 127.0 || q.y > 127.0 || float(c.y) < yMin || float(c.y) >= yMin + 128.0) return 1.0;
+        ivec3 key = ivec3(c.x, c.z, c.y >> 4);
+        if (key != held) {
+            held = key;
+            vec4 raw = texelFetch(BlocksSampler, ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7)), 0);
+            bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        }
         if (bits == 0xFFFFFFFFu) {
             status = 2;
             return 1.0;
@@ -143,21 +163,25 @@ float litSure(vec3 a) {
 // leafy: whether the ray passes anywhere under a column's leaves (so inside the block map the walk must have its say)
 float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool leafy);
 
-// how deep a crown is taken to be where only its top is known (the heightfield): leaves shade a ray in the top
-// seven blocks of their column and no lower
+// How deep the leaves at a column's top go. The heightfield holds it for every column with no roof (b = 4096 + four
+// times the depth, LensHeightfield.roofs): a mega jungle tree's crown is a dozen blocks deep, an oak's four, and a
+// guess of seven for all of them lit the ground under the one and shaded it under the other, beyond the block map
+// only. Under a roof (b its underside) the depth is not held: seven
 const float CANOPY = 7.0;
+float crownDepth(vec4 h) { return h.b >= 4096.0 ? (h.b - 4096.0) * 0.25 : CANOPY; }
 
-// where the block map's walk would stop for a ray that meets nothing: the edge of the map's trusted box round the
-// camera, or 72 blocks' worth of cells, as a distance along l (o in the world's ring). The lit air's sure pixels go on
+// where the block map's walk would stop for a ray that meets nothing: the rim of the map's window, or WALK blocks'
+// worth of cells, as a distance along l (o in the world's ring). The lit air's sure pixels go on
 // from the same place the walked ones do, so the two can never differ
 float walkEnd(vec3 o, vec3 l) {
     vec4 f12 = F(12);
-    float reach = F(17).z, yMin = F(17).w;
+    float yMin = F(17).w;
+    vec2 corner = mapCorner();
     vec3 e = vec3(1.0e9);
-    if (abs(l.x) > 1.0e-4) e.x = (f12.x + (l.x > 0.0 ? reach : -reach) - o.x) / l.x;
+    if (abs(l.x) > 1.0e-4) e.x = (f12.x + corner.x + (l.x > 0.0 ? 127.0 : 1.0) - o.x) / l.x;
     if (abs(l.y) > 1.0e-4) e.y = ((l.y > 0.0 ? yMin + 128.0 : yMin) - o.y) / l.y;
-    if (abs(l.z) > 1.0e-4) e.z = (f12.z + (l.z > 0.0 ? reach : -reach) - o.z) / l.z;
-    return max(min(min(e.x, min(e.y, e.z)), 72.0 / (abs(l.x) + abs(l.y) + abs(l.z))), 0.0);
+    if (abs(l.z) > 1.0e-4) e.z = (f12.z + corner.y + (l.z > 0.0 ? 127.0 : 1.0) - o.z) / l.z;
+    return max(min(min(e.x, min(e.y, e.z)), float(WALK) / (abs(l.x) + abs(l.y) + abs(l.z))), 0.0);
 }
 
 // how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
@@ -169,7 +193,8 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     bool leafy, more;
     float vis = heightRay(o, l, noise, ultra, true, leafy);
     if (F(17).z <= 0.0) return vis;
-    if (max(abs(o.x - f12.x), abs(o.z - f12.z)) > F(17).z - 1.0) return vis;
+    vec2 inMap = o.xz - f12.xz - mapCorner();
+    if (inMap.x < 2.0 || inMap.y < 2.0 || inMap.x > 126.0 || inMap.y > 126.0) return vis;
     // inside the map: lit only if nothing at all stands over the ray, leaves at any height included (the walk knows
     // where they really are)
     if (vis > 0.97 && !leafy) return vis;
@@ -234,7 +259,7 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool lea
         if (lo < h.r) {
             leafy = true;
             // (through the crown itself: where the ray, between coming in and going out, is in its top blocks)
-            if (hi > h.r - CANOPY) {
+            if (hi > h.r - crownDepth(h)) {
                 vis *= exp(-0.9 * (tOut - t));
                 if (vis < 0.03) return 0.0;
             }
@@ -259,7 +284,7 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool lea
         if (q.y < h.a || (up >= h.b && q.y < h.g)) return 0.0;
         if (q.y < h.r) {
             leafy = true;
-            if (up > h.r - CANOPY) {
+            if (up > h.r - crownDepth(h)) {
                 vis *= exp(-0.9 * s);
                 if (vis < 0.03) return 0.0;
             }

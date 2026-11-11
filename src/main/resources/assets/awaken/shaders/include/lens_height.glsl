@@ -9,8 +9,9 @@ vec2 heightAt(ivec2 c, int lvl) {
 }
 
 // All four. Where open air lies under the solid top (a bridge, an arch, a roof on posts): b the underside of that
-// solid, a the top of whatever stands under the air. Elsewhere b is far above anything and a is g. Either way a column
-// is solid under a, and from b up to g.
+// solid, a the top of whatever stands under the air. Elsewhere b is far above anything (4096 and up) and a is g.
+// Either way a column is solid under a, and from b up to g. Where there is no roof, what b is over 4096 is the depth
+// of the leaves at the column's top, four a block (lens_light.fsh, crownDepth).
 vec4 heightAll(ivec2 c, int lvl) {
     return texelFetch(HeightSampler, (c & 1023) >> lvl, lvl);
 }
