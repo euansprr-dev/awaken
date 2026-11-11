@@ -258,6 +258,19 @@ final class ArmsHands {
         return far;
     }
 
+    // a one-faced weapon's turn in the fist (FpSwings.turn): this frame's, carried across a change of source like the hands
+    private static float roll;
+    private static final SwingBlend.Vec ROLL_B = new SwingBlend.Vec();
+    private static final org.joml.Vector3f ROLL = new org.joml.Vector3f(), ROLL_V = new org.joml.Vector3f();
+
+    /**
+     * The main hand's one-faced weapon (FpSwings.faced3, the Toll) turned about its own length in the fist now, half turns
+     * (WeaponRenderer turns it; 0 for every other weapon's moves, whose turn curves are empty).
+     */
+    static float roll() {
+        return roll;
+    }
+
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
      * through the target under the crosshair on the hit tick. A press changes nothing until it has outlasted a click; then
@@ -266,6 +279,7 @@ final class ArmsHands {
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v, float partial) {
         far = false;
+        roll = 0F;
         // the chop is the weapon in hand's own (before any strike, or after one with another weapon)
         Archetypes.Loaded inHand = Arms.styleOf(p.getMainHandItem());
         var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : inHand;
@@ -349,6 +363,9 @@ final class ArmsHands {
             OFF_REST_D.set(REST_D);
             OFF_REST_Q.set(REST_Q);
         }
+        // the main hand's one-faced weapon turned into a blow its style's keys land with the other face (the Toll's bell):
+        // on the keys' own clock, so it is whole as they reach the hit
+        float turn = mainMoves && !cutting ? FpSwings.turn(st, m, t) : 0F;
         // a change of source (a chained strike, a move ended or refused, a press starting its draw, a tap's launch, the
         // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and
         // the charge held after it are one source, so the charge's mark changes nothing on the hands
@@ -369,7 +386,12 @@ final class ArmsHands {
                     mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
             OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? OFF_REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? OFF_REST_Q : ID,
                     offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
+            float rate = launch > 0 ? ArmsPredict.launchRate() : 1F;
+            ROLL_V.set(mainMoves && !drawn && !cutting ? (FpSwings.turn(st, m, t + 0.1F) - turn) * rate / 0.1F : 0F, 0F, 0F);
+            ROLL_B.begin(now, ROLL.set(turn, 0F, 0F), ROLL_V, ticks);
         }
+        ROLL_B.apply(now, ROLL.set(turn, 0F, 0F));
+        roll = ROLL.x;
         // the living hold (SwingWeight): a held weapon breathes, so it is shown even when nothing else moves it
         float breath = preview == null && ArmsComfort.livingHold() ? SwingWeight.breath(ArmsFeel.nanos()) : 0F;
         boolean pair = breath != 0F && !ArmsOffHand.shownTwin(p).isEmpty();
@@ -604,6 +626,8 @@ final class ArmsHands {
         STOPS.clear();
         MAIN_B.reset();
         OFF_B.reset();
+        ROLL_B.reset();
+        roll = 0F;
     }
 
     /** Ticks since a move of the hands' clock (hit-stop holds pause it, the tick rate scales it). */

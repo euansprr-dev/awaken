@@ -62,7 +62,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         WeaponMesh mesh = WeaponMeshes.get(weapon);
         if (mesh == null) return;
         // third person: the wrist turns the weapon about its grip, its working side into the blow and out of the body
-        boolean turn = state != null && state.arm() != 0 && ArmsWrist.turn(state.holder(), state.arm() == 2, WRIST);
+        boolean faced = FpSwings.faced3(weapon);
+        boolean turn = state != null && state.arm() != 0 && ArmsWrist.turn(state.holder(), state.arm() == 2, faced, WRIST);
         if (turn) {
             // baked in the forged weapon's frame: one turned over in its hold takes it turned over too
             if (FpSwings.flipped3(weapon)) WRIST.premul(FLIP).mul(FLIP);
@@ -71,6 +72,14 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             if (g == null) poseStack.rotateAround(WRIST, GRIP, GRIP, 0.5F);
             else poseStack.rotateAround(WRIST, g.x, g.y, g.z);
         }
+        // first person, a one-faced head (the Toll's bell): turned in the fist about its own length into a blow its
+        // style's keys land with the other face, on the hands' own clock (ArmsHands.roll); the hand and arm never turn
+        float roll = faced && state != null && state.hand() && !state.twin() ? ArmsHands.roll() : 0F;
+        if (roll != 0F) {
+            if (!turn) poseStack.pushPose();
+            poseStack.rotateAround(ROLL.fromAxisAngleRad(Mth.SQRT_OF_TWO / 2, Mth.SQRT_OF_TWO / 2, 0F, Mth.PI * roll), GRIP, GRIP, 0.5F);
+        }
+        boolean pushed = turn || roll != 0F;
         boolean ours = WeaponPipelines.ok();
         int packed = ours ? pack(state, foil) : overlay;
         collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
@@ -104,12 +113,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
             collector.submitCustomGeometry(poseStack, WeaponPipelines.glow(), (pose, buffer) -> halos(mesh, pose, buffer, energy, flash));
         }
-        if (turn) poseStack.popPose();
+        if (pushed) poseStack.popPose();
     }
 
     /** Where the hand closes on every weapon (arms_weapons.HAND: along the item's diagonal, item space). */
     private static final float GRIP = 3F / 16F;
-    private static final Quaternionf WRIST = new Quaternionf();
+    private static final Quaternionf WRIST = new Quaternionf(), ROLL = new Quaternionf();
     /** Half round about the item's diagonal (arms_holds.third_person's turn-over). */
     private static final Quaternionf FLIP = new Quaternionf(Mth.SQRT_OF_TWO / 2, Mth.SQRT_OF_TWO / 2, 0F, 0F);
 

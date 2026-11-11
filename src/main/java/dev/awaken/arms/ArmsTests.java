@@ -463,13 +463,23 @@ final class ArmsTests {
                 boolean carried = st.stance() != null && i > 0;
                 for (boolean left : new boolean[]{false, true}) {
                     for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
-                        for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
-                            if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
-                                h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
-                                        + (straight ? " (straight arms)" : ""));
+                        for (boolean faced : new boolean[]{false, true}) { // and a one-faced weapon's turned keys
+                            for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
+                                if (FpSwings.wrist(st, e.getKey(), left, straight, faced, t, q)) {
+                                    h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
+                                            + (straight ? " (straight arms)" : "") + (faced ? " (one-faced)" : ""));
+                                }
                             }
                         }
                     }
+                }
+                // first person, a one-faced weapon's turn in the fist (WeaponRenderer): at most a half turn, home by the end
+                FpSwings.Clip clip = st.moves().get(e.getKey());
+                if (clip != null && clip.turn().length > 0) {
+                    h.assertTrue(clip.turn().length == clip.size(), a.id() + " " + e.getKey() + " has a turn a key");
+                    for (float u : clip.turn()) h.assertTrue(Math.abs(u) <= 1.0001F, a.id() + " " + e.getKey() + " turns at most half round");
+                    h.assertTrue(Math.abs(FpSwings.turn(st, e.getKey(), 0)) < 1e-3F && Math.abs(FpSwings.turn(st, e.getKey(), def.total() + 1)) < 1e-3F,
+                            a.id() + " " + e.getKey() + "'s turn in the fist starts and ends square");
                 }
             }
             if (a.id().equals("spear")) { // a haft is held down it in third person: the wrist turns it there (arms_holds.grip3)
@@ -486,6 +496,21 @@ final class ArmsTests {
                 float turned = (float) Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w))));
                 h.assertTrue(turned > 15F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
             }
+        }
+        // a one-faced head (SPEC §25 "Working parts"; Euan 2026-11-11, the Toll "facing the wrong way and hitting with the
+        // wrong end"): its own turns, turned over in third person's hold like a weapon whose working side is its style's
+        // other, and the Toll's bell mouth (its design's -x, the item's upper left) away from the eye in either first-person
+        // hand, as the engine applies the hold (ItemTransform.apply: rotationXYZ, a left hand's y and z turned back)
+        h.assertTrue(FpSwings.faced3("bell_warden_maul"), "the Toll strikes with its bell's one face (fp_swings faced3)");
+        for (String wid : FpSwings.current().faced()) h.assertTrue(FpSwings.flipped3(wid), wid + " is one-faced: turned over in third person too");
+        com.google.gson.JsonObject display = json("/assets/awaken/models/item/bell_warden_maul_in_hand.json").getAsJsonObject("display");
+        for (String side : new String[]{"firstperson_righthand", "firstperson_lefthand"}) {
+            com.google.gson.JsonArray r = display.getAsJsonObject(side).getAsJsonArray("rotation");
+            float k = side.endsWith("lefthand") ? -1F : 1F;
+            org.joml.Vector3f mouth = new org.joml.Quaternionf().rotationXYZ((float) Math.toRadians(r.get(0).getAsFloat()),
+                    k * (float) Math.toRadians(r.get(1).getAsFloat()), k * (float) Math.toRadians(r.get(2).getAsFloat()))
+                    .transform(new org.joml.Vector3f(-1F, 1F, 0F).normalize());
+            h.assertTrue(mouth.z < -0.5F, "the Toll's bell mouth faces away from the eye in " + side + " (" + mouth + ")");
         }
         float[] m = new float[6];
         float[] old = new float[6];

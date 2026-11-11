@@ -10,6 +10,7 @@ the swing's path; 0: the flat face leads, a wave).
     python3 tools/art/anim_lab.py all OUT_DIR [--model old|new]       the review set: longsword, daggers, greatblade, maul
     python3 tools/art/anim_lab.py third OUT.png STYLE                 third person: the body's clips with the blade in hand
     python3 tools/art/anim_lab.py bake                                writes data/awaken/arms/fp_swings.json (the new model)
+    python3 tools/art/anim_lab.py faced                               the turned-over and one-faced weapons alone (both views)
     python3 tools/art/anim_lab.py audit                               every move's working part at the hit, every weapon, both hands,
                                                                       first person and third
     python3 tools/art/anim_lab.py strip OUT.png STYLE MOVE             one move frame by frame (a turn in the hand shows)
@@ -226,6 +227,9 @@ class Held:
         along = (pommel - c) @ axis + 0.14 * ((self.tip - pommel) @ axis)
         self.grip = c + axis * along
         self.length = float((self.tip - self.grip) @ axis)
+        # the item's grip (arms_weapons.HAND, on its diagonal), the point a turn of the weapon in the fist is about
+        # (WeaponRenderer, faced1)
+        self.pivot = (np.array([3 / 16, 3 / 16, 0.5]) - 0.5) * sc @ R.T + np.asarray(t) / 16.0
 
 
 def place(held, d, R):
@@ -284,7 +288,7 @@ def held_frame(held):
     from its outline (a katana's tip curves back toward its spine, a glaive's fluke weighs down its back)."""
     import arms_holds as AH
     F = np.stack([held.axis, np.cross(held.axis, held.face), held.face], axis=1)
-    return F, AH.cut_side(held.wid.rsplit("_", 1)[-1], TIERS.get(held.wid.split("_")[0]))
+    return F, AH.cut_side(held.wid.rsplit("_", 1)[-1], TIERS.get(held.wid.split("_")[0]), held.wid)
 
 
 def frame_to(r, t, side, F):
@@ -918,7 +922,7 @@ def bake(out=SWINGS, solve=False, round_=None):
     if round_ is None:
         round_ = max([before.get("round", 0)] + [SS.feel(s).get("round", 0) for s in table()])
     flipped3 = sorted(r[0] for r in AW.CATALOG
-                      if AH.flipped3(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2])))
+                      if AH.flipped3(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2], r[0])))
     styles = {}
     for sid, st in table().items():
         held = Held("gatewrought_" + sid)
@@ -991,9 +995,9 @@ def bake(out=SWINGS, solve=False, round_=None):
     for sid, st in before.get("styles", {}).items():
         if st.get("by"):
             styles[sid] = st
-    json.dump({"schemaVersion": 7, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
-               "wristDt": WRIST_DT, "flipped3": flipped3, "grip3": grips3(), "styles": styles},
-              open(out, "w"), separators=(",", ":"))
+    data = faced({"schemaVersion": 7, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
+                   "wristDt": WRIST_DT, "flipped3": flipped3, "grip3": grips3(), "styles": styles})
+    json.dump(data, open(out, "w"), separators=(",", ":"))
     return out
 
 
@@ -1020,6 +1024,7 @@ def splice(names):
         row["swish"] = SS.swish_of(sid, mv, m)[0]
         if mv.startswith("strike_"):
             row["set"] = SS.set_of(st, mv, held)
+    faced(data)  # a one-faced weapon's turns follow the keys
     with open(SWINGS, "w") as f:
         f.write(json.dumps(data, separators=(",", ":")))
     return SWINGS
@@ -1037,6 +1042,10 @@ def rerig(names):
         row.pop("wrist3", None)
         row.pop("wrist3s", None)
         row.update(rig4_wrists(done[sid][mv]))
+    import importlib
+    import arms_moves
+    importlib.reload(arms_moves)  # its clips are the rig's, just written
+    faced(data)
     with open(SWINGS, "w") as f:
         f.write(json.dumps(data, separators=(",", ":")))
     return SWINGS
@@ -1051,6 +1060,184 @@ def rig4_wrists(r):
         if any(abs(k[3]) < 0.99995 for k in keys):
             out[key] = {"right": keys}
     return out
+
+
+def refresh_faced(out=SWINGS):
+    """Third person's turned-over weapons (flipped3) and the one-faced weapons' turns (faced1, faced3) written into the
+    baked swings as they stand, every other byte as it was: after a weapon's working side changes (arms_holds.EDGES)."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    raw = open(out).read()
+    data = json.loads(raw)
+    if json.dumps(data, separators=(",", ":")) != raw:
+        raise SystemExit("fp_swings.json is not in the lab's compact form: nothing written")
+    data["flipped3"] = sorted(r[0] for r in AW.CATALOG
+                              if AH.flipped3(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2], r[0])))
+    faced(data)
+    with open(out, "w") as f:
+        f.write(json.dumps(data, separators=(",", ":")))
+    return out
+
+
+def faced_weapons():
+    """The one-faced weapons of the styles whose forged weapons strike with either face (arms_holds.FACES; the Toll)."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    return sorted(r[0] for r in AW.CATALOG if r[8] in AH.FACES and AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2], r[0]))
+
+
+def wrists_3p(row, wid=None):
+    """A move's third-person wrist keys for a weapon as FpSwings.wrist reads them: the bent clip's and the straight
+    one's (the bent clip's where it has none of its own), a one-faced weapon's turned ones where the move has them."""
+    turned = wid is not None and "wrist3t" in row and wid in faced_weapons()
+    wk = row.get("wrist3t" if turned else "wrist3", {})
+    return wk, row.get("wrist3st" if turned else "wrist3s", wk)
+
+
+def face_turn(m, wt, t):
+    """How far (0..1 of a half turn) a one-faced weapon is turned about its length at t ticks of a move whose blow the
+    carry onto the body lands with the other face (faced3): in from the move's start, whole just before the hit, out as
+    third person comes home (arms_rig4.ramp's way out)."""
+    c, hit, ea, fe, total = phases(m, wt)
+    w_in = ease_in_out_sine(min(1.0, t / max(0.25, hit - 0.25)))
+    w_out = 1.0 if t <= fe else 1.0 - ease_in_out_sine(min(1.0, (t - fe) / max(1e-6, total - fe)))
+    return w_in * w_out
+
+
+def faced3(data):
+    """Third person for a one-faced weapon of a two-faced style (arms_holds.FACES; Euan 2026-11-11, the Toll: "hitting
+    with the wrong end"). The style's wrists were solved for weapons that strike with either face, and the carry from
+    first person's blade onto the body (arms_rig4) lands some blows with the other one (four of the Maul's eleven: a
+    head that drags behind the hands in first person leads when the body's shorter lever swings it). For those moves
+    the one-faced weapon turns half round about its length on the way into the blow and back as it comes home: wrist3t
+    and wrist3st, the forged weapon's own keys turned so. data["faced3"] names the weapons that take them (and are
+    turned over in their hold, flipped3, so the style's other blows land with their face too)."""
+    import arms_holds as AH
+    import arms_moves as A
+    import power_casts as PC
+    data["faced3"] = faced_weapons()
+    tab = table()
+    for sid, face in AH.FACES.items():
+        st = tab[sid]
+        wid0 = "gatewrought_" + sid
+        Ln, g3 = held_length_item(wid0), AH.grip3(sid)
+        wt = WEIGHTS[WEIGHT_OF.get(sid, "blade")]
+        for mv, row in data["styles"].get(sid, {}).get("moves", {}).items():
+            row.pop("wrist3t", None)
+            row.pop("wrist3st", None)
+            m, c_ = st["moves"].get(mv), clip_of(sid, mv)
+            if not data["faced3"] or m is None or "swing" not in m or c_ is None or "wrist3" not in row:
+                continue
+            part = part_3p(sid, form_of(m)[0])
+            if part in ("point", "knuckles", "shield"):
+                continue
+            hit = clip_beats(m)[1]
+            variants = {"wrist3t": (A.CLIPS[c_.name + "_bent"], True, row["wrist3"]),
+                        "wrist3st": (c_, False, row.get("wrist3s", row["wrist3"]))}
+            wrong = {}
+            for key, (clip, lower, keys) in variants.items():
+                worst = 1.0
+                for arm in arms_3p(sid, mv, m):
+                    f0, f1 = (PC.part_frames(clip.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25))
+                    disp = display_3p(wid0, arm)
+                    x = lead_3p(hand_3p(f0, arm, disp, wrist_now(keys.get(arm), max(0.0, hit - 0.25)), lower=lower, grip=g3),
+                                hand_3p(f1, arm, disp, wrist_now(keys.get(arm), hit + 0.25), lower=lower, grip=g3), part, face, Ln)
+                    worst = min(worst, x if not math.isnan(x) else 1.0)
+                wrong[key] = worst < 0
+            if not any(wrong.values()):
+                continue
+            for key, (clip, lower, keys) in variants.items():
+                out = {}
+                for arm, ks in keys.items():
+                    prev, turned = None, []
+                    for i, q in enumerate(ks):
+                        psi = 180.0 * face_turn(m, wt, i * WRIST_DT) if wrong[key] else 0.0
+                        q2 = mat_quat(quat_mat(np.array(q)) @ axis_rot(AH.AXIS_ITEM, psi))
+                        if prev is not None and q2 @ prev < 0:
+                            q2 = -q2  # one way round, key to key
+                        prev = q2
+                        turned.append([round(float(v), 4) for v in q2])
+                    out[arm] = turned
+                row[key] = out
+    return data
+
+
+def faced(data):
+    """A one-faced weapon's turns in the fist, first person's and third's, for the keys as they stand."""
+    faced1(data)
+    return faced3(data)
+
+
+def keys_at(keys, t):
+    """(d, R) of baked first-person keys ([t, dx, dy, dz, qx, qy, qz, qw, ...]) at t ticks, as FpSwings.sample blends them."""
+    ts = [k[0] for k in keys]
+    i = max(0, min(len(keys) - 2, int(np.searchsorted(ts, t, side="right")) - 1))
+    a, b = keys[i], keys[i + 1]
+    u = min(1.0, max(0.0, (t - a[0]) / max(1e-9, b[0] - a[0])))
+    d = np.array(a[1:4]) * (1 - u) + np.array(b[1:4]) * u
+    qa, qb = np.array(a[4:8]), np.array(b[4:8])
+    if qa @ qb < 0:
+        qb = -qb
+    q = qa * (1 - u) + qb * u
+    return d, quat_mat(q / np.linalg.norm(q))
+
+
+def turn_at(row, t):
+    """A move's first-person turn of a one-faced weapon at t ticks (half turns, signed; 0 where it has none)."""
+    tn = row.get("turn")
+    return 0.0 if not tn else float(np.interp(t, [k[0] for k in row["keys"]], tn))
+
+
+def roll_pose(held, d, R, psi):
+    """A pose with the weapon turned psi degrees about its own length in the fist: about its item's diagonal through the
+    item's grip, as WeaponRenderer turns it (in the item frame; JOML's turn and this one both right-handed)."""
+    if not psi:
+        return d, R
+    Rh = axis_rot(held.axis, psi)
+    return d + R @ (held.pivot - Rh @ held.pivot), R @ Rh
+
+
+def faced1(data):
+    """First person for a one-faced weapon of a two-faced style (arms_holds.FACES; Euan 2026-11-11, the Toll: "hitting
+    with the wrong end"). The style's keys are its forged weapon's, which strikes with either face, and its backhand
+    blows land with the face its hold turns away (five of the Maul's eleven). For those moves the one-faced weapon turns
+    half round about its length in the fist on the way into the blow and back as it comes home: "turn", one value a key
+    (half turns, signed: the way round that keeps its head farther from the eye), played by WeaponRenderer on the hands'
+    own clock (ArmsHands.roll). The hand and the arm never turn with it."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    tab = table()
+    faced = faced_weapons()
+    for sid in AH.FACES:
+        st = tab[sid]
+        own = [Held(r[0]) for r in AW.CATALOG if r[8] == sid and r[0] in faced]
+        wt = WEIGHTS[WEIGHT_OF.get(sid, "blade")]
+        for mv, row in data["styles"].get(sid, {}).get("moves", {}).items():
+            row.pop("turn", None)
+            m = st["moves"].get(mv)
+            if not own or m is None or "swing" not in m or not row.get("keys"):
+                continue
+            part = working(sid, form_of(m)[0])
+            if part in ("point", "knuckles", "shield"):
+                continue
+            hit = hit_tick(m)
+            (d0, R0), (d1, R1) = keys_at(row["keys"], max(0.0, hit - 0.25)), keys_at(row["keys"], hit + 0.25)
+            if all(lead_at(h, AH.edge_of(sid, None, h.wid), part, d0, R0, d1, R1) >= 0 for h in own):
+                continue
+            # the way round: the head's nearest point at the half-way of the turn in and of the turn out, farther wins
+            mids = [t for t in (k[0] for k in row["keys"]) if 0.3 < face_turn(m, wt, t) < 0.7] or [hit * 0.5]
+            near = {}
+            for sgn in (1, -1):
+                worst = -1e9
+                for h in own:
+                    head = (h.P - h.grip) @ h.axis > 0.7 * h.length
+                    for t in mids:
+                        d, R = roll_pose(h, *keys_at(row["keys"], t), sgn * 180.0 * face_turn(m, wt, t))
+                        worst = max(worst, float((h.P[head] @ R.T + np.array([HX, HY, HZ]) + d)[:, 2].max()))
+                near[sgn] = worst
+            sgn = 1 if near[1] <= near[-1] else -1
+            row["turn"] = [round(sgn * face_turn(m, wt, k[0]), 4) + 0.0 for k in row["keys"]]
+    return data
 
 
 def grips3():
@@ -1074,6 +1261,7 @@ def rig4_inject(out=SWINGS):
             mv_row.pop("wrist3s", None)
             mv_row.update(rig4_wrists(r))
     data["grip3"] = grips3()
+    faced(data)
     json.dump(data, open(out, "w"), separators=(",", ":"))
     return out
 
@@ -1081,8 +1269,8 @@ def rig4_inject(out=SWINGS):
 # ---- the working-part audit (Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting. When it's a
 # dagger, it's the sharp end that's stabbing. When it's the hammer, it's that end") ----------------------------------
 # What each style strikes with: a blade's edge (a single-edged one's own side, arms_holds.EDGES), an axe's bit, a
-# hammer's faces (never the flat its emblem is on), a staff's ends, a scythe's inner edge (drawn back through, a pull),
-# and for a thrust the point, a fist's knuckles, a shield's face. Each is held to every move at its hit: the share of
+# hammer's faces (never the flat its emblem is on; a one-faced head, the Toll's bell, only its own), a staff's ends, a
+# scythe's inner edge (drawn back through, a pull), and for a thrust the point, a fist's knuckles, a shield's face. Each is held to every move at its hit: the share of
 # the working part's motion that drives that part into the target (1: square on; under the bar: something else lands).
 WORK = {"axe": "bit", "maul": "face", "warstaff": "end", "scythe": "inner", "gauntlets": "knuckles"}
 LEAD_MIN = {"edge": 0.7, "bit": 0.7, "face": 0.7, "end": 0.6, "inner": 0.3, "point": 0.8, "knuckles": 0.8, "shield": 0.7}
@@ -1122,7 +1310,9 @@ def lead_at(held, side, part, d0, R0, d1, R1):
     if m < 1e-5:
         return float("nan")
     lead = float(vp @ e) / m
-    return lead * side if side and part != "face" and part != "end" else abs(lead)
+    # a hammer strikes with either face, a staff with either end; a one-faced head (arms_holds.EDGES: the Toll) only
+    # with its own
+    return lead * side if side and part != "end" else abs(lead)
 
 
 def audit():
@@ -1158,11 +1348,12 @@ def audit_tiers():
     import arms_weapons as AW
     M = np.diag([-1.0, 1.0, 1.0])
     bad = []
+    baked, faced = json.load(open(SWINGS))["styles"], faced_weapons()
     for sid, st in table().items():
         ref = Held("gatewrought_" + sid)
         for row in [r for r in AW.CATALOG if r[8] == sid]:
             wid, lord = row[0], row[0] in AW.LORD_COLOUR
-            e = AH.edge_of(sid, None if lord else row[2])
+            e = AH.edge_of(sid, None if lord else row[2], wid)
             right = Held(wid)
             fp = json.load(open(os.path.join(MR.RES, "assets/awaken/models/item", wid + "_in_hand.json")))["display"]["firstperson_lefthand"]
             (rx, ry, rz), (tx, ty, tz) = fp["rotation"], fp["translation"]
@@ -1178,6 +1369,10 @@ def audit_tiers():
                 d0, R0 = rig_pose(st, m, ref, max(0.0, hit - 0.25))
                 d1, R1 = rig_pose(st, m, ref, hit + 0.25)
                 hands = {"main": ["main"], "off": ["off"], "both": ["main", "off"]}[hand]
+                if wid in faced:  # a one-faced weapon turned in the fist into the blow (faced1)
+                    brow = baked.get(sid, {}).get("moves", {}).get(mv, {})
+                    d0, R0 = roll_pose(right, d0, R0, 180.0 * turn_at(brow, max(0.0, hit - 0.25)))
+                    d1, R1 = roll_pose(right, d1, R1, 180.0 * turn_at(brow, hit + 0.25))
                 for h in hands:
                     if h == "main":
                         lead = lead_at(right, e, part, d0, R0, d1, R1)
@@ -1502,7 +1697,7 @@ def lead_3p(f0, f1, part, side, L):
     if k < 1e-6:
         return float("nan")
     lead = float(vp @ e) / k
-    return lead * side if side and part not in ("face", "end") else abs(lead)
+    return lead * side if side and part != "end" else abs(lead)  # as lead_at: a one-faced head with its own face
 
 
 def wrist_at(f0, f1, part, side, L):
@@ -1579,13 +1774,12 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
     if name not in A.CLIPS:
         return 0.0, "", 0.0, "", ""
     row = load_swings().get(style, {}).get("moves", {}).get(mv, {})
-    wk = row.get("wrist3", {}) if wrist else {}
-    wks = row.get("wrist3s", wk) if wrist else {}  # the straight clip's own, where its arms were solved straight
+    keys = {}  # each weapon's (bent, straight): the straight clip's own where its arms were solved straight
     arms = ["right", "left"] if style in ("daggers", "gauntlets") else ["right"]
     rows = [r for r in AW.CATALOG if r[8] == style]
     weapons = []
     for r in rows:
-        e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2])
+        e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2], r[0])
         weapons.append((r[0], weapon_points(r[0]), AH.flipped3(style, e)))
     worst = (0.0, "", 0.0, "", "")
     through_body.worn = style == "gauntlets"  # worn on the arm: its cuff lies along it
@@ -1596,8 +1790,10 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
             for pitch in pitches:
                 fr = PC.part_frames(clip.sample(float(t), pitch), pitch)
                 for arm in arms:
-                    W = wrist_now((wk if lower else wks).get(arm), float(t))
                     for wid, pts, fl in weapons:
+                        if wid not in keys:
+                            keys[wid] = wrists_3p(row, wid) if wrist else ({}, {})
+                        W = wrist_now(keys[wid][0 if lower else 1].get(arm), float(t))
                         g3 = AH.grip3(style)
                         d, part = through_body(fr, hand_3p(fr, arm, display_3p(wid, arm), W, lower=lower, flipped=fl, grip=g3), pts, arm, g3)
                         if d > worst[0]:
@@ -1707,7 +1903,7 @@ def style_weapons(style):
     rows = [r for r in AW.CATALOG if r[8] == style]
     groups = {}
     for r in rows:
-        e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2])
+        e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2], r[0])
         groups.setdefault(AH.flipped3(style, e), []).append(r[0])
     out = []
     for flipped, ids in sorted(groups.items()):
@@ -1933,13 +2129,12 @@ def audit_3p(verbose=True):
             pair = {False: tuple(PC.part_frames(c_.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25)),
                     True: tuple(PC.part_frames(bent.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25))}
             row = swings.get(sid, {}).get("moves", {}).get(mv, {})
-            wk = row.get("wrist3", {})
-            wks = row.get("wrist3s", wk)  # the straight clip's own (a rig that solved its arms straight)
             worst = None
             for arm in arms_3p(sid, mv, m):
-                rolls = {lw: (wrist_now(k.get(arm), max(0.0, hit - 0.25)), wrist_now(k.get(arm), hit + 0.25)) for lw, k in ((True, wk), (False, wks))}
                 for r in rows:
-                    e = AH.edge_of(sid, None if r[0] in AW.LORD_COLOUR else r[2])
+                    wk, wks = wrists_3p(row, r[0])  # the straight clip's own (a rig that solved its arms straight)
+                    rolls = {lw: (wrist_now(k.get(arm), max(0.0, hit - 0.25)), wrist_now(k.get(arm), hit + 0.25)) for lw, k in ((True, wk), (False, wks))}
+                    e = AH.edge_of(sid, None if r[0] in AW.LORD_COLOUR else r[2], r[0])
                     disp = display_3p(r[0], arm)
                     fl = AH.flipped3(sid, e)
                     # the bent clip (Bendable Cuboids, in the pack) at the bar; the straight one (without it) at least
@@ -2128,7 +2323,7 @@ def flipped_3p(wid):
     import arms_holds as AH
     import arms_weapons as AW
     r = next(r for r in AW.CATALOG if r[0] == wid)
-    return AH.flipped3(r[8], AH.edge_of(r[8], None if wid in AW.LORD_COLOUR else r[2]))
+    return AH.flipped3(r[8], AH.edge_of(r[8], None if wid in AW.LORD_COLOUR else r[2], wid))
 
 
 def figure_3p(c_, t, weapons, yaw, pitch, px, bounds, lower=False):
@@ -2170,12 +2365,12 @@ def wrist_sheet(out, picks, yaw=-35.0, pitch=10.0, px=6.0, bent=True):
         if bent:
             c_ = A.CLIPS[c_.name + "_bent"]
         c, hit, ea, hold, end = clip_beats(m)
-        wk = swings[sid]["moves"][mv].get("wrist3", {})
+        wk = wrists_3p(swings[sid]["moves"][mv], wid)[0 if bent else 1]
         arms = arms_3p(sid, mv, m)
         both = "left" in arms or sid in ("daggers", "gauntlets")
         bounds = PC.strip_bounds([c_], yaw, pitch)
         bounds = (bounds[0] - 14, bounds[1] + 14, bounds[2] - 14, bounds[3] + 8)
-        e = AH.edge_of(sid, None if not wid.split("_")[0] in TIERS else TIERS[wid.split("_")[0]])
+        e = AH.edge_of(sid, None if not wid.split("_")[0] in TIERS else TIERS[wid.split("_")[0]], wid)
         part = part_3p(sid, form_of(m)[0])
         Ln = held_length_item(wid)
 
@@ -2325,6 +2520,9 @@ def main(argv):
         return 0
     if argv[0] == "rerig":  # style:move ...   third person solved again for those moves
         print(rerig(argv[1:]))
+        return 0
+    if argv[0] in ("faced", "faced3"):  # the one-faced weapons' turns and lists (flipped3, faced3) refreshed alone
+        print(refresh_faced())
         return 0
     if argv[0] == "bake":  # [--solve] third person's wrists solved again; [--round N]; [--out PATH] (a tuning folder)
         out = argv[argv.index("--out") + 1] if "--out" in argv else SWINGS

@@ -85,25 +85,45 @@ EDGES = {
     ("daggers", "E"): 1,     # the skinning knife, its straight back to -x
     ("daggers", "D"): -1,    # the boar's tusk, honed along its inside (it curves to -x)
     ("daggers", "B"): 1,     # the talon, curving forward to +x, cutting on its inside
+    # one weapon's own, by its id: a head that works one way in a style whose forged weapons work both ways (Euan
+    # 2026-11-11, the Toll: "facing the wrong way and hitting with the wrong end"; arms_weapons.check holds each design to it)
+    "bell_warden_maul": -1,  # the bell's mouth, its one striking face; its crown and hanging loop to +x
 }
 
+# The face a style's one-faced weapons are held with, where its forged weapons strike with either (a hammer's two
+# faces), in design terms: the Maul's +x, the face its hold turns to the front, which most of its baked blows land with
+# (its backhands land with -x: strike_2, strike_4, riposte, slipcut, undercut in first person; anim_lab.py audit). A
+# one-faced weapon of the style (its own entry in EDGES) is turned in both holds so its face is that one, and turned
+# half round about its length in the fist through each blow that lands with the other (anim_lab.faced: first person's
+# turn, third person's turned wrists).
+FACES = {"maul": 1}
 
-def edge_of(style, tier=None):
-    """A weapon's working side (EDGES): its forged tier's own, else its style's; None for the tier: a Lord-forged one."""
+
+def edge_of(style, tier=None, wid=None):
+    """A weapon's working side (EDGES): its own by id, else its forged tier's, else its style's; None for the tier: a
+    Lord-forged one."""
+    if wid in EDGES:
+        return EDGES[wid]
     e = EDGES.get((style, tier)) if tier else None
     return EDGES.get(style, 0) if e is None else e
 
 
-def cut_side(style, tier=None):
+def cut_side(style, tier=None, wid=None):
     """The side every cut of a style leads with, for its weapon of {@code tier}, in that weapon's design terms: its own
     working side; a double-edged one of a style with single-edged tiers (a hold with a cut) leads with the side those
     tiers' edges are turned to, so one baked swing cuts with every tier's edge."""
-    e = edge_of(style, tier)
+    e = edge_of(style, tier, wid)
     h = HOLDS.get(style, {})
     if e or "cut" not in h:
         return e
     T = frame(h["yaw"], h["pitch"], h.get("roll", 0.0))
     return 1 if T[:, 1] @ np.asarray(h["cut"], dtype=float) > 0 else -1
+
+
+def lead_of(style):
+    """The side a style's blows lead with, in its forged weapons' design terms: its cut side, else the face its baked
+    blows land with (FACES); 0 when either side does."""
+    return cut_side(style, "C") or FACES.get(style, 0)
 
 
 def side_of(pos):
@@ -119,13 +139,17 @@ def side_of(pos):
     return 0 if abs(bias) < 0.04 else (1 if bias > 0 else -1)
 
 
-def solve(pos, hold, edge=None):
+def solve(pos, hold, edge=None, lead=0):
     """(rotation, translation, scale) of the display transform for a mesh (item space, 0..1) held as {@code hold}, its
-    working side {@code edge} (EDGES; None: guessed from the mesh)."""
+    working side {@code edge} (EDGES; None: guessed from the mesh); {@code lead}: the side its style's blows land with
+    (lead_of), for a hold without a cut."""
     T = frame(hold["yaw"], hold["pitch"], hold.get("roll", 0.0))
     side = side_of(pos) if edge is None else edge
-    if hold.get("cut") is not None and side != 0:
-        want = np.asarray(hold["cut"], dtype=float)
+    want = hold.get("cut")
+    if want is None and lead:  # a one-faced weapon of a two-faced style: its face where the style's blows land
+        want = T[:, 1] * lead
+    if want is not None and side != 0:
+        want = np.asarray(want, dtype=float)
         if (T[:, 1] @ want) * side < 0:  # turn the weapon about its length so its working side faces the cut
             T = np.stack([T[:, 0], -T[:, 1], -T[:, 2]], axis=1)
     F = np.stack([AXIS_ITEM, np.cross(AXIS_ITEM, FACE_ITEM), FACE_ITEM], axis=1)
@@ -182,8 +206,8 @@ def grip3(style):
 
 def flipped3(style, edge):
     """Whether a weapon is turned over in its third-person hold: its single edge on the other side from the one its
-    style's swings lead with (cut_side of its forged weapon)."""
-    lead = cut_side(style, "C")
+    style's swings lead with (lead_of: the cut side of its forged weapon, or the face its blows land with)."""
+    lead = lead_of(style)
     return bool(edge and lead and edge != lead)
 
 
@@ -312,7 +336,7 @@ def hold_for(style, pos, edge=None):
     """The display transform for a weapon of {@code style} with mesh corners {@code pos} (item space) and working side
     {@code edge} (EDGES), or None to keep the style's own (the gauntlets)."""
     h = HOLDS.get(style)
-    return None if h is None else solve(pos, h, edge)
+    return None if h is None else solve(pos, h, edge, lead_of(style))
 
 
 def report():
