@@ -212,10 +212,11 @@ final class EnchantTests {
         Known.save(p, Known.fresh());
         p.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
         var card = Pages.learnedCard(p, Known.of(p), bane, true);
-        String rows = card.rows().stream().map(r -> r.label().getString() + ": " + r.value().getString()).toList().toString();
-        h.assertTrue(rows.contains("It isn't on anything yet") && rows.contains("use an Inscribing Table") && rows.contains("your Iron Sword")
-                && rows.contains("Tasks page"), "the learned card says how it gets onto a piece: " + rows);
-        h.assertTrue(card.footer().isPresent(), "and the first one carries the System's line whole");
+        String rows = card.rows().stream().map(r -> r.label().getString()).toList().toString();
+        h.assertTrue(rows.contains("It isn't on anything yet") && rows.contains("use an Inscribing Table"), "the learned card says how it gets onto a piece: " + rows);
+        // a panel shows a title and three lines; a body, a fourth row or a foot is cut or folded away
+        h.assertTrue(card.rows().size() == 3 && card.body().isEmpty() && card.footer().isEmpty(), "and all of it fits a panel: " + rows);
+        h.assertTrue(card.rows().stream().allMatch(r -> r.value().getString().isEmpty() && r.label().getString().length() <= 35), "each line a full-width row short enough for it");
         h.succeed();
     }
 

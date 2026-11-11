@@ -45,6 +45,19 @@ cmd fill -29 201 13 -8 203 15 minecraft:air
 cmd setblock -2 201 5 minecraft:lantern
 cmd setblock 2 201 5 minecraft:lantern
 cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
+wait 100
+# again: on a slow runner the first pass ran before every chunk was in, and two walls and the roof were left out
+cmd fill -6 200 -4 6 200 8 minecraft:polished_deepslate
+cmd fill -6 201 8 6 204 8 minecraft:bookshelf
+cmd fill -6 201 -4 -6 204 8 minecraft:spruce_planks
+cmd fill 6 201 -4 6 204 8 minecraft:spruce_planks
+cmd fill -6 205 -4 6 205 8 minecraft:dark_oak_planks
+cmd fill -6 201 -4 6 204 -4 minecraft:spruce_planks
+cmd fill -30 200 12 -8 205 16 minecraft:deepslate_bricks
+cmd fill -29 201 13 -8 203 15 minecraft:air
+cmd setblock -2 201 5 minecraft:lantern
+cmd setblock 2 201 5 minecraft:lantern
+cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
 wait 40
 cmd gamemode survival
 cmd xp add @s 40 levels
@@ -71,7 +84,9 @@ wait 10
 shotnow polish_04_reading_c
 wait 30
 shotnow polish_05_the_card_after
-wait 260
+wait 150
+shotnow polish_05_b_the_card_for_reading
+wait 200
 key dismiss
 screen close
 # ---- the desk in the room ----

@@ -124,30 +124,34 @@ public final class Pages {
         p.level().playSound(null, p.blockPosition(), EnchantContent.LEARN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         for (Inscriptions.Entry e : learned) {
             door(p, "read", e);
-            // chat keeps the record short; the card says what it does and how it gets onto a piece
+            // chat holds all of it (it wraps); the card says the three lines that matter, in the room a panel has
+            ItemStack fit = fits(p, e);
             p.sendSystemMessage(Component.literal("You learned " + e.name() + ". ").withColor(e.colour())
-                    .append(Component.literal("It isn't on anything yet. " + e.howTo()).withColor(0xC9D2E0)), false);
+                    .append(Component.literal("It isn't on anything yet. " + e.howTo()
+                            + (fit.isEmpty() ? "" : " It fits your " + fit.getHoverName().getString() + ".")
+                            + (k.hadTable() ? "" : " You can make a table: it's on your Tasks page.")).withColor(0xC9D2E0)), false);
             dev.awaken.signal.Signal.send(p, learnedCard(p, k, e, first && e == learned.getFirst()));
         }
+        // the System's line about gates, the first time: in chat, whole (as a toast it was cut after "and its L", and a
+        // panel's foot is one line too)
+        if (first) p.sendSystemMessage(Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page.").withColor(0x9FB4D8), false);
         EnchantFx.learned(p, learned.getFirst());
         return learned;
     }
 
     /**
-     * The card a learned enchantment gets (a panel, so nothing is cut): what it does, that it is on nothing yet, how it
-     * gets onto a piece, the piece you carry that it fits, and where a table comes from while you have none. The first
-     * one ever also carries the System's line about gates (it was a toast, and was cut after "and its L").
+     * The card a learned enchantment gets. A panel holds a title and three lines of 188 pixels at the size Euan plays at
+     * (anything more is cut with "..." or folded behind "Press K to see 2 more": the first cut had a body and four rows,
+     * and the how-to was the part hidden). So it says only what he asked for, each line a row with no value, which the
+     * panel draws at full width: it is on nothing yet, and how it gets onto a piece. What it does, the piece it fits
+     * and where a table comes from are in chat and on the page.
      */
     static dev.awaken.signal.SignalWindow learnedCard(ServerPlayer p, Known k, Inscriptions.Entry e, boolean first) {
-        var w = dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal(e.name()).withColor(e.colour()))
-                .body(Component.literal(e.line()))
-                .row("Learned", "You know it for good. It isn't on anything yet.")
-                .row("To use it", e.howTo() + " You write it on there.");
-        ItemStack fit = fits(p, e);
-        if (!fit.isEmpty()) w.row("It fits", "your " + fit.getHoverName().getString());
-        if (!k.hadTable()) w.row("The table", "You can make one. It's on your Tasks page.");
-        if (first) w.footer(Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page."));
-        return w.presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(k)).topic("enchant").ttl(20 * 14).build();
+        return dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal("Learned: " + e.name()).withColor(e.colour()))
+                .row("It isn't on anything yet.", "")
+                .row("To write it on, hold the piece", "")
+                .row("and use an Inscribing Table.", "")
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(k)).topic("enchant").ttl(20 * 12).build();
     }
 
     /**
@@ -162,15 +166,16 @@ public final class Pages {
 
     /**
      * The card a page gets as it reaches you (chat alone was missed: Euan read a page's arrival as the enchantment
-     * already being his gear's). It says the two steps: read it, then write it on at a table.
+     * already being his gear's). Three lines, as {@link #learnedCard}: it is not on your gear, read it, then write it on
+     * at a table. Short, so a page read at once isn't kept waiting long behind it for its own card.
      */
     static void givenCard(ServerPlayer p, Inscriptions.Entry e) {
         dev.awaken.signal.Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
                         Component.literal("Page of " + e.name()).withColor(e.colour()))
-                .body(Component.literal(e.line()))
-                .row("First", "Use the page to learn it.")
-                .row("Then", e.howTo())
-                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(Known.of(p))).topic("enchant").ttl(20 * 10).build());
+                .row("It isn't on your gear yet.", "")
+                .row("Use the page to learn it. Then", "")
+                .row("write it on at an Inscribing Table.", "")
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(Known.of(p))).topic("enchant").ttl(20 * 7).build());
     }
 
     /** A piece the player carries that this enchantment fits (worn first, then the hands, then the pack), or empty. */

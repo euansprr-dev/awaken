@@ -797,10 +797,15 @@ public final class InscribeScene {
                 x = tip[0] + (left.x() * BURIN_RIGHT - up.x() * BURIN_UP) * k;
                 y = tip[1] + (left.y() * BURIN_RIGHT - up.y() * BURIN_UP) * k;
                 z = tip[2] + (left.z() * BURIN_RIGHT - up.z() * BURIN_UP) * k;
-                // out of the view while you choose; up from under the desk's edge with the burin once you have
+                // out of the view while you choose, low by your side and behind what the eye takes in; up with the
+                // burin once you have. The rig keeps the arm all the while: at no weight the game's own hand came
+                // back into the corner, still holding the piece that lies on the slate
                 float in = ease(Mth.lerp(pt, burinInO, burinIn));
-                y -= (1 - in) * 0.45;
-                hw = w * in;
+                if (in < 1F) {
+                    x = Mth.lerp(in, eye.x + bx * side * 0.5 - inX * 0.3, x);
+                    y = Mth.lerp(in, eye.y - 0.85, y);
+                    z = Mth.lerp(in, eye.z + bz * side * 0.5 - inZ * 0.3, z);
+                }
             }
             y += wake * 0.08;
             x -= inX * wake * 0.08;

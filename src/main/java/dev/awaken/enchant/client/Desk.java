@@ -70,7 +70,7 @@ final class Desk {
     static int held = -1, heldAt;
 
     /** A page's size, the row's height over the slate, how far toward the writer it hangs, and a socket's half size. */
-    static final float PAGE = 0.15F, ROW_Y = 0.13F, ROW_V = -0.43F, SOCKET = 0.046F;
+    static final float PAGE = 0.15F, ROW_Y = 0.13F, ROW_V = -0.43F, SOCKET = 0.055F;
     /**
      * Where the sockets run: down the slate's left side from the back, clear of the piece and of the writer's hand.
      * (They were a row behind the piece: a longsword's point lay over the one it had, and nobody could have found it.)

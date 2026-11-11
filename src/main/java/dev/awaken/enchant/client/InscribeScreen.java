@@ -254,7 +254,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         List<FormattedCharSequence> body = on == null ? font.split(Component.literal("Room for one more."), inner)
                 : on.e() == null ? font.split(Component.literal("It was on this piece before, and can't be written any more."), inner)
                 : font.split(Component.literal(on.e().line()), inner);
-        int lh = (on == null ? 6 : 18) + body.size() * 10 + (on == null ? 6 : 16);
+        List<FormattedCharSequence> how = on == null ? List.of() : font.split(Component.literal("Hold to scrape it off. Nothing comes back."), inner);
+        int lh = (on == null ? 6 : 18) + body.size() * 10 + 6 + how.size() * 10;
         int x = Mth.clamp(Math.round(ax - ar - 8 - lw), 4, Math.max(4, width - lw - 4));
         int y = Mth.clamp(Math.round(Desk.screenY(false, j) - lh / 2F), 4, Math.max(4, height - lh - 18));
         int colour = on == null ? InscribeScene.LAPIS : on.e() == null ? 0xB9C3D2 : brighten(on.e().colour());
@@ -269,7 +270,10 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             g.text(font, l, x + 7, ly, alpha << 24 | 0xDDE4EE, false);
             ly += 10;
         }
-        if (on != null) g.text(font, "Hold to scrape it off. Nothing comes back.", x + 7, ly, (alpha * 3 / 4) << 24 | 0xFFB0A6, false);
+        for (FormattedCharSequence l : how) {
+            g.text(font, l, x + 7, ly, (alpha * 3 / 4) << 24 | 0xFFB0A6, false);
+            ly += 10;
+        }
     }
 
     /** The Hall's blackletter (its bitmap font; 24 pixels tall at size 1) and its soft round light. */

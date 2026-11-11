@@ -19711,16 +19711,19 @@ new words of the plan wait for his play.
 - **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
   `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
   `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
-  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`), with a System panel ("Page of Bane of
-  Crawlers", its line, "First: Use the page to learn it.", "Then: To put it on a weapon, ...": `Pages.givenCard`). Reading one: chat keeps "You learned Bane of
-  Crawlers. It isn't on anything yet. To put it on a weapon, ..." and a System panel (`Pages.learnedCard`, a PANEL so nothing
-  is cut, 14 s) says what it does, "Learned: You know it for good. It isn't on anything yet.", "To use it: ... You write it
-  on there.", the piece you carry that it fits ("It fits: your Beastbound Maul") and, while you have never set a table
-  down, "The table: You can make one. It's on your Tasks page." The first one ever carries the System's line about gates
-  as the panel's foot (it was a toast, cut after "and its L"). A page held to the table is read there. Until you have
-  written your first enchantment both panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`:
-  paced, the first filmed run showed neither, a new world being quiet for its first five minutes); after that they are
-  paced like any notice.
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says all of it: "You learned
+  Bane of Crawlers. It isn't on anything yet. To put it on a weapon, hold the piece and use an Inscribing Table. It fits
+  your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold), and the
+  first time ever the System's line about gates follows it there, whole (it was a toast, cut after "and its L").
+  **Two System panels** say the same in the room a panel has, which is a title and three lines of 188 pixels at the size
+  he plays at (the first cut had a body and rows: the body was cut with "..." and the how-to folded behind "Press K to
+  see 2 more"). Each line is a row with no value, which a panel draws at full width. Given (`Pages.givenCard`, 7 s):
+  "Page of Bane of Crawlers" / "It isn't on your gear yet." / "Use the page to learn it. Then" / "write it on at an
+  Inscribing Table." Read (`Pages.learnedCard`, 12 s): "Learned: Bane of Crawlers" / "It isn't on anything yet." / "To
+  write it on, hold the piece" / "and use an Inscribing Table." Until you have written your first enchantment both
+  panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`: paced, the first filmed run showed
+  neither, a new world being quiet for its first five minutes); after that they are paced like any notice. A page held
+  to the table is read there.
 - **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
   of a Hive."); what it won't touch is the Journal entry's small print.
 - **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
@@ -19740,7 +19743,8 @@ new words of the plan wait for his play.
   writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
   right with the burin standing in it while nobody writes and while its writer still chooses: the hand takes it up as
   the chosen page comes down (`InscribeScene.burinOut`; held through the choosing, the fist lay over the right-hand
-  pages). The floating book is gone. Shape and outline follow.
+  pages). While you choose the arm rig still holds that arm, low by your side and out of the view: left to the game, its
+  own hand came back into the corner still holding the piece. The floating book is gone. Shape and outline follow.
 - **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
   weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
   across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (half a block across), a

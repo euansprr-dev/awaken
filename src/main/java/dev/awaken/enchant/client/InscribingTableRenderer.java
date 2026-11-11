@@ -273,10 +273,11 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         if (!s.burin.isEmpty()) {
             ps.pushPose();
             float iu = 0.306F, iv = 0.275F;
-            ps.translate(0.5F + s.rx * iu - s.fx * iv, 14.2F / 16F + 0.19F, 0.5F + s.rz * iu - s.fz * iv);
+            // the size it is in the hand: at 0.42 it stood most of a block tall, out of the top of the writer's view
+            ps.translate(0.5F + s.rx * iu - s.fx * iv, 14.2F / 16F + 0.115F, 0.5F + s.rz * iu - s.fz * iv);
             ps.rotateDegrees(Axis.YP, s.yaw);
             ps.rotateDegrees(Axis.ZP, 215F);
-            ps.scale(0.42F, 0.42F, 0.42F);
+            ps.scale(0.27F, 0.27F, 0.27F);
             s.burin.submit(ps, out, s.lightCoords, OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();
         }
