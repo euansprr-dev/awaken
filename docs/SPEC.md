@@ -24774,7 +24774,14 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   guard that missed snaps it shut, dull grey, and says why under it: a block or a broken guard "Too early", "Too late" or
   "Raised again too soon" (from the server's reason, §68.6 "A parry you can read"), a blow that went past a raised guard
   "It came from the side" or "Dodge that one", and a guard raised within 5 ticks after being struck "Too late"
-  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+  (650 ms). The words teach, then go quiet: each shows its first `AimConfig.TAUGHT` 3 times only, counted per word in
+  `timing_words_seen` in `awaken-aim-client.toml`, so the count holds through restarts (empty it to be taught again).
+  Why 3, and per word: Euan 11 Nov, "I definitely don't want that to be every single time ... just the first few
+  times, so you understand, you need to like time it better"; each word names a different mistake (early, late, the
+  lockout, the side, an unguardable blow), so each gets its own few, and three is enough to tie a word to the feel of
+  the miss without becoming the thing the eye waits for. After that the ring's white burst and its dull grey snap
+  (every time) carry the timing. `timing_words` is `FIRST_FEW` (the default), `ALWAYS` (every time, for good) or `OFF`
+  (never, from the start); an old `true` / `false` from before is read as `FIRST_FEW`.
 - **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
   (`boss_ring`). The out-of-view arcs brighten on the same clock.
 - **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
@@ -24910,7 +24917,7 @@ charge), `aim` (the ring).
   came from outside the guard's front; `PASS_UNGUARDABLE`, a red or violet blow no guard stops). The ring answers every
   miss the same way every time: it snaps shut, dull grey, 0.3 smaller over 260 ms (`MISS` 0x8C929C), against a
   deflect's white burst outward; the block's thud and the hurt are as before. Its words: "Too early", "Too late",
-  "Raised again too soon", "It came from the side", "Dodge that one" (`timing_words` in `awaken-aim-client.toml`). A
+  "Raised again too soon", "It came from the side", "Dodge that one", each its first 3 times only (§68.2). A
   block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows, lockout and grace are unchanged:
   nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
   old build; the play log will now say how often).

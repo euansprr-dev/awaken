@@ -261,8 +261,8 @@ final class Reticle {
     private static final int CLASH = 0xFFF2CC, MISS = 0x8C929C;
 
     /**
-     * The guard's answer on this creature's ring: it bursts outward on a deflect; on a miss it snaps shut, dull and grey
-     * (SPEC §68.6), and says why under it.
+     * The guard's answer on this creature's ring: it bursts outward on a deflect; on a miss it snaps shut, dull and grey,
+     * every time (SPEC §68.6), and the first few times says why under it (§68.2).
      */
     private static void answered(GuiGraphicsExtractor g, int id, float sx, float sy, float r, long now, boolean reduced) {
         if (missOf == id) {
@@ -351,11 +351,11 @@ final class Reticle {
         if (pressOf >= 0 && ++pressAge > 30) pressOf = -1;
     }
 
-    /** A guard that missed: the ring's dull snap, and the word that says why. */
+    /** A guard that missed: the ring's dull snap every time, and the word that says why while it is still being taught. */
     private static void missed(int id, long now, String word) {
         missOf = id;
         missAt = now;
-        if (!AimConfig.words()) return;
+        if (!AimConfig.teach(word)) return;
         wordOf = id;
         wordAt = now;
         wordKey = word;
