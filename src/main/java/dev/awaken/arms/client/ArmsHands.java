@@ -43,6 +43,7 @@ final class ArmsHands {
     static void view(float partial, FirstPerson.View v) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
+        roll = 0F; // set again by this frame's swing (lab), so a turn never outlives the fight that drew it
         if (p == null || !ArmsPredict.fights(p)) {
             FirstPerson.lagReach = FirstPerson.lagRate = 1F;
             return;
@@ -264,8 +265,8 @@ final class ArmsHands {
     private static final org.joml.Vector3f ROLL = new org.joml.Vector3f(), ROLL_V = new org.joml.Vector3f();
 
     /**
-     * The main hand's one-faced weapon (FpSwings.faced3, the Toll) turned about its own length in the fist now, half turns
-     * (WeaponRenderer turns it; 0 for every other weapon's moves, whose turn curves are empty).
+     * The main hand's one-faced weapon (FpSwings.faced3: the Toll, a Chainblade's hook) turned about its own length in the
+     * fist this frame, half turns (WeaponRenderer turns it; 0 for every other weapon's moves, whose turn curves are empty).
      */
     static float roll() {
         return roll;
@@ -279,7 +280,6 @@ final class ArmsHands {
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v, float partial) {
         far = false;
-        roll = 0F;
         // the chop is the weapon in hand's own (before any strike, or after one with another weapon)
         Archetypes.Loaded inHand = Arms.styleOf(p.getMainHandItem());
         // a held pose (the autopilot's arms pose) is the weapon in hand's own move: the last strike's style would pose one
@@ -366,8 +366,8 @@ final class ArmsHands {
             OFF_REST_D.set(REST_D);
             OFF_REST_Q.set(REST_Q);
         }
-        // the main hand's one-faced weapon turned into a blow its style's keys land with the other face (the Toll's bell):
-        // on the keys' own clock, so it is whole as they reach the hit
+        // the main hand's one-faced weapon turned into a blow its style's keys land with the other face (the Toll's bell, a
+        // hook): on the keys' own clock, so it is whole as they reach the hit
         float turn = mainMoves && !cutting ? FpSwings.turn(st, m, t) : 0F;
         // a change of source (a chained strike, a move ended or refused, a press starting its draw, a tap's launch, the
         // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and

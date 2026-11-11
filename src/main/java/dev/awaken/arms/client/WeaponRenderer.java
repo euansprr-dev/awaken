@@ -72,7 +72,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             if (g == null) poseStack.rotateAround(WRIST, GRIP, GRIP, 0.5F);
             else poseStack.rotateAround(WRIST, g.x, g.y, g.z);
         }
-        // first person, a one-faced head (the Toll's bell): turned in the fist about its own length into a blow its
+        // first person, a one-faced head (the Toll's bell, a hook): turned in the fist about its own length into a blow its
         // style's keys land with the other face, on the hands' own clock (ArmsHands.roll); the hand and arm never turn
         float roll = faced && state != null && state.hand() && !state.twin() ? ArmsHands.roll() : 0F;
         if (roll != 0F) {

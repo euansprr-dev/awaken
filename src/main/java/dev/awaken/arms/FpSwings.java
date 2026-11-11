@@ -58,10 +58,11 @@ public final class FpSwings {
      * {@code kick} (schema 7, a hand-keyed move; null: the row's from/to): the view's kick on a hit [yaw, pitch], a unit
      * from the blade the keys draw (SPEC §25 "Hand-keyed moves": a stab nods the view in, a cut kicks along it).
      * {@code lands} (a hand-keyed move's own {@code hit}; else -1): the clip tick its blow reaches what it strikes.
-     * A one-faced weapon of a style whose forged weapons strike with either face ({@link #faced3}; the Toll), on a blow
-     * those keys land with its other face (SPEC §25 "Working parts"): {@code turn} its half turn about its own length in
-     * the fist in first person, one value a key (half turns, signed, 0 at both ends; empty for none), and {@code turnRight}
-     * .. {@code turnStraightLeft} third person's wrist keys with that turn in them (empty: the move's own wrist).
+     * A one-faced weapon of a style whose forged weapons strike with either face ({@link #faced3}: the Toll, the hooked
+     * Chainblades), on a blow those keys land with its other face (SPEC §25 "One-faced heads"): {@code turn} its half turn
+     * about its own length in the fist in first person, one value a key (half turns, signed, 0 at both ends; empty for
+     * none), and {@code turnRight} .. {@code turnStraightLeft} third person's wrist keys with that turn in them (empty: the
+     * move's own wrist).
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
                        float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set,
@@ -428,7 +429,7 @@ public final class FpSwings {
 
     /**
      * Whether a weapon strikes with one face of a head its style's forged weapons strike with either face of (the Toll's
-     * bell): its moves' turns ({@link Clip#turn}, the turned wrists) are its own.
+     * bell, a Chainblade's hook): its moves' turns ({@link Clip#turn}, the turned wrists) are its own.
      */
     public static boolean faced3(String weapon) {
         return data.faced().contains(weapon);
