@@ -19,7 +19,8 @@ import java.util.List;
 /**
  * Admin tools for the Hearth's family (SPEC §69.10), for tours and for putting things right:
  * {@code /awaken admin family arrive} sends the two to your Hearth now; {@code use aya|dubu [sneak]} is a use on yours
- * (sneak asks it along or tells it to stay); {@code state} says where the record has them; and, for a body to look at
+ * (sneak asks it along or tells it to stay); {@code play} has Dubu ask Aya to play; {@code state} says where the record
+ * has them; and, for a body to look at
  * that belongs to nobody, {@code place aya|dubu <pose> <yaw>}, {@code pose aya|dubu <pose>}, {@code walk aya|dubu <blocks>
  * <speed>} and {@code clear} (those within 64 blocks).
  */
@@ -49,6 +50,15 @@ final class FamilyCommands {
                     .then(Commands.literal("arrive").executes(c -> FamilyService.arriveNow(c.getSource().getPlayerOrException()) ? 1 : 0))
                     .then(Commands.literal("use").then(who().executes(c -> use(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "who"), false))
                             .then(Commands.literal("sneak").executes(c -> use(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "who"), true)))))
+                    .then(Commands.literal("play").executes(c -> {
+                        // for a tour: Dubu goes and asks Aya to play now
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        FamilyPet dubu = mine(p, "dubu");
+                        if (dubu == null) return 0;
+                        dubu.activity = FamilyBrain.PLAY;
+                        dubu.until = p.level().getGameTime() + 300;
+                        return 1;
+                    }))
                     .then(Commands.literal("state").executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         Hearth.HearthInfo h = Hearth.home(p).orElse(null);

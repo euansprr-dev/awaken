@@ -90,6 +90,16 @@ cmd tick sprint 900
 wait 200
 cmd awaken admin family state
 shot family_b2_at_home_later
+cmd awaken admin family play
+wait 110
+cmd awaken admin family state
+shotnow family_b4_dubu_asks_aya_to_play
+wait 60
+cmd time set 11400
+cmd tick sprint 2200
+wait 240
+cmd awaken admin family state
+shot family_b5_evening_by_the_fire
 cmd time set 15500
 cmd tick sprint 600
 wait 200
