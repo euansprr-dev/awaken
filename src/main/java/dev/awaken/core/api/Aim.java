@@ -3,6 +3,11 @@ package dev.awaken.core.api;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.golem.AbstractGolem;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
@@ -29,6 +34,8 @@ public final class Aim {
     public static final float PRESS_SLACK = 0.6F;
     /** A flier brought down by a stance break or a deflected dive stays on the ground this long (2.5 s). */
     public static final int GROUNDED_TICKS = 50;
+    /** A strike takes a calm creature of the wild this far from its look (degrees to its box's edge): the mark's cone. */
+    public static final float CALM_CONE = 25F;
 
     /**
      * The step a chain's first strike or a heavy takes toward the meant creature (blocks): light weapons step further,
@@ -67,6 +74,55 @@ public final class Aim {
      */
     public static boolean body(Entity e) {
         return LivingHooks.carcass(e) || (e instanceof LivingEntity l && l.isDeadOrDying());
+    }
+
+    /**
+     * Whether {@code p} could strike {@code e}, calm or not: the lock key takes these when nothing hostile is marked (SPEC
+     * §40.3). Never a person, a body, an armour stand, something that can't be hit, one's own pet or beast, or what one rides.
+     */
+    public static boolean strikable(Player p, LivingEntity e) {
+        if (e == p || e instanceof Player || e instanceof ArmorStand || !e.isAlive() || body(e)) return false;
+        if (!e.isPickable() || !e.isAttackable() || e.isInvulnerable()) return false;
+        if (e instanceof OwnableEntity o && o.getOwner() == p) return false;
+        return e.getRootVehicle() != p.getRootVehicle();
+    }
+
+    /**
+     * Whether a strike near {@code e} may take it without a perfect aim, as it takes a hostile one (SPEC §40.3): a calm
+     * animal or creature of the wild (vanilla's animals; the wild's passive, neutral and ambient creatures and its beasts).
+     * Never a person, a villager or a traveller, a golem, anyone's pet, a kin beast or a story's figure: only the
+     * crosshair strikes those.
+     */
+    public static boolean wild(Player p, LivingEntity e) {
+        if (!strikable(p, e) || e instanceof Npc || e instanceof AbstractGolem) return false;
+        if (e instanceof OwnableEntity o && o.getOwnerReference() != null) return false;
+        if (e instanceof Animal) return true;
+        CreatureTag.Kind k = CreatureTag.of(e).kind();
+        return k == CreatureTag.Kind.PASSIVE || k == CreatureTag.Kind.AMBIENT || k == CreatureTag.Kind.NEUTRAL || k == CreatureTag.Kind.BEAST;
+    }
+
+    /**
+     * The calm creature a strike at ({@code yaw}, {@code pitch}) means when nothing is locked, marked or under the
+     * crosshair (client, at the press): the {@link #wild} one nearest the look within {@link #CALM_CONE} and {@code reach}
+     * of the eye, seen, scored as the mark is (degrees off + 0.35 a block). Nothing shows it. -1 when none.
+     */
+    public static int calm(Player p, float yaw, float pitch, double reach) {
+        Vec3 eye = p.getEyePosition();
+        int best = -1;
+        float bestScore = Float.MAX_VALUE;
+        for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(reach + 1))) {
+            if (!wild(p, e)) continue;
+            AABB b = e.getBoundingBox();
+            double d = gap(eye, b);
+            float off = offEdge(eye, b, yaw, pitch);
+            if (d > reach || off > CALM_CONE) continue;
+            float sc = off + (float) d * 0.35F;
+            if (sc < bestScore && sees(p, e)) {
+                bestScore = sc;
+                best = e.getId();
+            }
+        }
+        return best;
     }
 
     /** The id {@link #meant} lets through, or -1. */
