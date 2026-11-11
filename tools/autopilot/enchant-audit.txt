@@ -1,0 +1,236 @@
+# Enchanting, the polish audit (docs/enchanting/POLISH.md): what enchant-table.txt leaves out. The first touch (a page
+# in the hand, reading it, the Tasks row it leads to), a vanilla table turning into ours, a piece with no room, a mark
+# written from memory, the writing filmed every few ticks from the choice to the card, the block seen close, and each
+# enchantment at work (a ward, a bane, a Harvest drop, Mending, Feather Falling).
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/enchant-audit.txt 1500
+world autopilot_enchant_audit creative 20261111
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd time set 12600
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 20
+cmd forceload add -16 -16 16 16
+wait 300
+# ---- the same small study as enchant-table.txt, without its table (the first touch comes before one) ----
+cmd fill -6 200 -4 6 200 8 minecraft:polished_deepslate
+cmd fill -6 201 8 6 204 8 minecraft:bookshelf
+cmd fill -6 201 -4 -6 204 8 minecraft:spruce_planks
+cmd fill 6 201 -4 6 204 8 minecraft:spruce_planks
+cmd fill -6 205 -4 6 205 8 minecraft:dark_oak_planks
+cmd setblock -2 201 5 minecraft:lantern
+cmd setblock 2 201 5 minecraft:lantern
+wait 40
+cmd gamemode survival
+cmd xp add @s 40 levels
+cmd tp @s 0.5 201 0.5 0 10
+wait 40
+# ---- the first touch: a Lord's page in the hand, then read ----
+cmd item replace entity @s weapon.mainhand with awaken:enchantment_page[stored_enchantments={"awaken:bane_of_crawlers":1},custom_data={awaken_where:"From the Hive Regent, the Lord of the Hive"}]
+wait 30
+shot audit_01_a_page_in_the_hand
+use
+wait 3
+shotnow audit_02_reading_it_a
+wait 8
+shotnow audit_03_reading_it_b
+wait 12
+shotnow audit_04_reading_it_c
+wait 30
+shotnow audit_05_what_it_says_after
+# ---- the Tasks page after the first page: the row that asks for a table ----
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 20
+screen tasks
+wait 10
+tasks weapons
+wait 30
+shot audit_06_tasks_weapons
+screen close
+wait 10
+# ---- a vanilla enchanting table: used, it turns into ours ----
+cmd setblock 3 201 2 minecraft:enchanting_table
+cmd tp @s 1.2 201 2.5 -90 30
+wait 40
+shot audit_07_a_vanilla_table
+use
+wait 2
+shotnow audit_08_it_turns_a
+wait 6
+shotnow audit_09_it_turns_b
+wait 10
+shotnow audit_10_it_turns_c
+wait 40
+shot audit_11_it_opened_as_ours
+screenkey esc
+wait 30
+cmd setblock 3 201 2 minecraft:air
+# ---- our table, seen close as a thing in the room ----
+cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
+cmd tp @s 1.9 201 2.2 28 30
+wait 60
+shot audit_12_the_table_close
+cmd tp @s 0.5 202.2 2.9 0 62
+wait 30
+shot audit_13_the_slate_from_above
+# ---- a piece with no room: one enchantment on a one-room piece ----
+cmd awaken admin enchant learn all
+cmd give @s minecraft:lapis_lazuli 32
+cmd item replace entity @s weapon.mainhand with minecraft:leather_chestplate[enchantments={"minecraft:unbreaking":1}]
+cmd tp @s 0.5 201 2.6 0 34
+wait 30
+use
+wait 50
+shot audit_14_no_room_left
+screenkey esc
+wait 30
+# ---- the writing, filmed every few ticks: an armour piece this time (a ward on a sculpted chestplate) ----
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_chestplate
+wait 10
+use
+wait 50
+shot audit_15_the_book_for_armour
+cmd awaken enchant pilot hover 1
+wait 20
+shot audit_16_resting_on_heat_ward
+cmd awaken enchant pilot choose 1
+wait 12
+shotnow audit_17_w00
+cmd awaken enchant pilot trace
+wait 8
+shotnow audit_17_w01
+wait 8
+shotnow audit_17_w02
+wait 8
+shotnow audit_17_w03
+wait 8
+shotnow audit_17_w04
+wait 8
+shotnow audit_17_w05
+wait 8
+shotnow audit_17_w06
+wait 8
+shotnow audit_17_w07
+wait 8
+shotnow audit_17_w08
+wait 8
+shotnow audit_17_w09
+wait 8
+shotnow audit_17_w10
+wait 8
+shotnow audit_17_w11
+wait 8
+shotnow audit_17_w12
+wait 8
+shotnow audit_17_w13
+wait 8
+shotnow audit_17_w14
+wait 8
+shotnow audit_17_w15
+wait 8
+shotnow audit_17_w16
+wait 8
+shotnow audit_17_w17
+wait 40
+shot audit_18_the_card_for_armour
+# ---- from memory: a mark the hand already knows, written on the sword in one stroke ----
+cmd awaken enchant pilot close
+wait 30
+cmd awaken admin enchant remember all
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 10
+use
+wait 50
+shot audit_19_the_book_with_memory
+cmd awaken enchant pilot memory 10
+wait 10
+shotnow audit_20_from_memory_a
+wait 16
+shotnow audit_21_from_memory_b
+wait 20
+shotnow audit_22_from_memory_c
+wait 60
+shot audit_23_from_memory_card
+cmd awaken enchant pilot close
+wait 30
+# ---- at work: a ward takes some of a Heat blow (seen from the front) ----
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate[enchantments={"awaken:heat_ward":3}]
+cmd item replace entity @s armor.legs with awaken:lordscale_leggings[enchantments={"awaken:heat_ward":3}]
+cmd effect give @s minecraft:night_vision 600 0 true
+cmd tp @s 0.5 201 0.5 180 0
+camera front
+wait 30
+cmd damage @s 3 awaken:heat at 0.5 202 -3.5
+wait 2
+shotnow audit_24_a_ward_a
+wait 5
+shotnow audit_25_a_ward_b
+wait 6
+shotnow audit_26_a_ward_c
+camera first
+wait 20
+# ---- at work: a bane bites one of the dead ----
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword[enchantments={"awaken:bane_of_the_dead":3}]
+cmd summon minecraft:zombie 0.5 201 -1.6 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Health:40f,Rotation:[0f,0f]}
+cmd tp @s 0.5 201 0.5 180 6
+wait 30
+shot audit_27_before_the_bane
+cmd damage @e[type=minecraft:zombie,limit=1,sort=nearest] 4 minecraft:player_attack by @s
+wait 2
+shotnow audit_28_a_bane_a
+wait 5
+shotnow audit_29_a_bane_b
+wait 6
+shotnow audit_30_a_bane_c
+cmd kill @e[type=minecraft:zombie]
+wait 20
+# ---- at work: Harvest's extra hide ----
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword[enchantments={"awaken:harvest":3}]
+cmd summon minecraft:cow 0.5 201 -1.6 {NoAI:1b,Silent:1b}
+wait 20
+cmd damage @e[type=minecraft:cow,limit=1,sort=nearest] 100 minecraft:player_attack by @s
+wait 12
+shotnow audit_31_harvest_a
+wait 10
+shotnow audit_32_harvest_b
+wait 20
+cmd kill @e[type=minecraft:item]
+# ---- at work: Mending's thread ----
+cmd item replace entity @s weapon.mainhand with minecraft:iron_sword[damage=120,enchantments={"minecraft:mending":1}]
+cmd summon minecraft:experience_orb 0.5 201.5 -1.5 {Value:12}
+cmd summon minecraft:experience_orb 1.2 201.5 -1.2 {Value:12}
+wait 8
+shotnow audit_33_mending_a
+wait 6
+shotnow audit_34_mending_b
+wait 30
+# ---- at work: Feather Falling's ring (seen from behind) ----
+cmd item replace entity @s armor.feet with awaken:lordscale_boots[enchantments={"minecraft:feather_falling":4}]
+camera back
+cmd tp @s 0.5 204 0.5 180 20
+wait 9
+shotnow audit_35_feather_falling_a
+wait 5
+shotnow audit_36_feather_falling_b
+camera first
+wait 20
+quit
