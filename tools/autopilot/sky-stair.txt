@@ -1,0 +1,45 @@
+# The sky stair (SPEC §17.9, 11 Nov 2026): with only the rope, from the ground short of the lowest stone up the spiral
+# of earth stones round a sky platform, onto the deck and in to the core, which should give wings (arrived by
+# movement). Third person. The pilot logs each stone stood on ("[ascent] pilot stair: on stone k"), each let-go, and
+# the time to the deck; the [ascent] trace has the rope's every throw.
+# Look tour: tools/tour-ci.sh tools/autopilot/sky-stair.txt 1800
+world sky_stair survival 4251
+waitworld
+window 960 600
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant none
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto stair
+arms waitserver 100
+wait 100
+camera back
+hud on
+shotnow stair_0_foot
+cmd awaken ascent pilot rec stair_tp 2400 20
+cmd awaken ascent pilot run stair
+wait 600
+shotnow stair_1_30s
+wait 600
+shotnow stair_2_60s
+wait 600
+shotnow stair_3_90s
+wait 600
+shotnow stair_4_120s
+cmd awaken ascent pilot stop
+info
+quit

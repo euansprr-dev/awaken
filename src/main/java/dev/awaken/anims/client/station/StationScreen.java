@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * inventory key or Esc leave.
  */
 final class StationScreen<M extends AbstractContainerMenu> extends AbstractContainerScreen<M> {
-    private static final int GLASS = 0xC80F1724, EDGE = 0xFF7FC3FF, HINT = 0xFFB9C7D9, FIRE = 0xFFFFB45A;
+    private static final int GLASS = 0xF20F1724, EDGE = 0xFF7FC3FF, HINT = 0xFFB9C7D9, FIRE = 0xFFFFB45A;
     private static final ItemStack BOTTLE = new ItemStack(net.minecraft.world.item.Items.EXPERIENCE_BOTTLE);
     /** The station slots: the first {@code n} of the menu. */
     final int n;
@@ -57,7 +57,7 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
     protected void init() {
         super.init();
         // JEI's list and bookmarks sit at the sides of the screen's area: leave them the sides
-        boolean sides = ModList.get().isLoaded("jei");
+        boolean sides = ModList.get().isLoaded("jei") || StationClient.devSides;
         StationView.Layout l = StationView.layout(width, height, 1, sides);
         hint = font.split(Component.translatable(kind.hint), l.rx1() - l.rx0());
         layout = StationView.layout(width, height, hint.size(), sides);

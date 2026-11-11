@@ -25,7 +25,7 @@ public enum Trial {
             "Jump at a wall holding forward to run up it. Walk into a pipe or a ribbon and hold forward to climb it."),
     ROPE("rope", Kind.RUN, "The rope", "Get to the door at the end before the dream fades.",
             "This dream remembers the rope.", "rope", "TETHER", 0,
-            "Throw the rope at an anchor and swing. Let go at the top of the swing to fly further."),
+            "Hold the rope key to swing from an anchor. Let go of it as the rope glows on the way up, and you fly the furthest."),
     LEAP("leap", Kind.RUN, "The leap", "Get to the door at the end before the dream fades.",
             "This dream remembers the leap.", "leap", "LEAPER", 0,
             "Jump again in the air to leap higher, and dash forward before you land."),

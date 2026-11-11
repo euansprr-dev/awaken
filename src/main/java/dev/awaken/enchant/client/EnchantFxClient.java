@@ -30,8 +30,8 @@ public final class EnchantFxClient {
     private EnchantFxClient() {}
 
     private static final int MAX = 48;
-    /** Ticks each kind lasts: ward, bane, spoils, learn, flare, silk, mend, puff, wake. */
-    private static final int[] LIFE = {18, 16, 34, 44, 30, 20, 14, 20, 24};
+    /** Ticks each kind lasts: ward, bane, spoils, learn, flare, silk, mend, puff, wake, a page's flight. */
+    private static final int[] LIFE = {24, 44, 34, 34, 30, 20, 14, 20, 24, 16};
     private static final int[] KIND = new int[MAX], ENTITY = new int[MAX], COLOUR = new int[MAX], BORN = new int[MAX], NO = new int[MAX];
     private static final double[] X = new double[MAX], Y = new double[MAX], Z = new double[MAX];
     private static final float[] STRENGTH = new float[MAX], SEED = new float[MAX], DIR = new float[MAX];
@@ -148,14 +148,15 @@ public final class EnchantFxClient {
                         float a = (1 - k) * (0.55F + 0.45F * s);
                         double r = 1.1 - 0.5 * ease(k);
                         if (NO[i] > 0 && !Float.isNaN(DIR[i])) {
-                            // the ward's mark where the blow landed, standing between you and it, white-hot, then its
-                            // colour; a ripple spreading out of it, and a faint ring round you
+                            // the ward's glyph standing as a plate of light between you and the blow, most of a block
+                            // across, held bright for half its life (it was a thin mark fading from its first tick, lost
+                            // under the hurt flash: SPEC §45.17); a ripple out of it, and a faint ring round you
                             double ox = Math.cos(DIR[i]), oz = Math.sin(DIR[i]), reach = wide / 2 + 0.3;
                             double px = x + ox * reach, py = y + hgt * 0.55, pz = z + oz * reach;
-                            double size = 0.3 + 0.12 * ease(Math.min(1F, k * 2F));
-                            int ink = InscribeScene.hot(col, Math.max(0F, 1F - k * 2.5F));
-                            mark(pose, vc, NO[i], px, py, pz, -oz, 0, ox, size, 0.075, argb(ink, a));
-                            circle(pose, vc, px, py, pz, -oz, 0, ox, 0.22 + 0.55 * ease(k), 0.07, argb(col, a * 0.55F));
+                            double size = 0.4 + 0.08 * ease(Math.min(1F, k * 2F));
+                            float held = k < 0.5F ? 1F : (1F - k) / 0.5F;
+                            brand(pose, vc, NO[i], px, py, pz, -oz, 0, ox, size, col, Math.max(0F, 1F - k * 2.2F), held * (0.6F + 0.4F * s));
+                            circle(pose, vc, px, py, pz, -oz, 0, ox, 0.3 + 0.6 * ease(k), 0.09, argb(col, a * 0.6F));
                             ring(pose, vc, x, y + hgt * 0.55, z, r, 0.08, argb(col, a * 0.3F));
                         } else {
                             // from nowhere in particular: a ring closing in round you at the chest, a fainter one above
@@ -167,12 +168,15 @@ public final class EnchantFxClient {
                         float a = (1 - k) * s;
                         // the bane's mark burning on the side the blow came from (facing you when there's no telling)
                         if (NO[i] > 0) {
+                            // the bane's glyph branded on the side the blow came from: white-hot as it lands, then
+                            // glowing on the creature for two seconds as it moves (SPEC §45.17)
                             double d = Float.isNaN(DIR[i]) ? Math.atan2(cz - z, cx - x) : DIR[i];
                             double ox = Math.cos(d), oz = Math.sin(d), reach = wide / 2 + 0.08;
-                            int ink = InscribeScene.hot(col, Math.max(0F, 0.7F - k * 1.6F));
-                            mark(pose, vc, NO[i], x + ox * reach, y + hgt * 0.6, z + oz * reach, -oz, 0, ox,
-                                    0.26 + 0.06 * (1 - k), 0.065, argb(ink, a));
+                            float glow = age < 8F ? 1F : k > 0.8F ? 0.55F * (1F - k) / 0.2F : 0.55F;
+                            brand(pose, vc, NO[i], x + ox * reach, y + hgt * 0.6, z + oz * reach, -oz, 0, ox,
+                                    Math.min(0.42, 0.28 + wide * 0.16), col, Math.max(0F, 0.9F - age / 7F), glow * s);
                         }
+                        a = Mth.clamp(1F - age / 14F, 0F, 1F) * s;
                         // and three spears of light driving into it
                         for (int j = 0; j < 3; j++) {
                             float ang = SEED[i] + j * Mth.TWO_PI / 3;
@@ -188,7 +192,7 @@ public final class EnchantFxClient {
                         float a = (k < 0.12F ? k / 0.12F : 1F - (k - 0.12F) / 0.88F) * s;
                         double iy = y + (en != null ? 0.22 : 0);
                         Vec3 v = en != null ? en.getDeltaMovement() : Vec3.ZERO;
-                        star(pose, vc, x, iy, z, 0.16 + 0.07 * Mth.sin(age * 0.9F), argb(InscribeScene.hot(col, 0.5F), a));
+                        star(pose, vc, x, iy, z, 0.26 + 0.09 * Mth.sin(age * 0.9F), argb(InscribeScene.hot(col, 0.5F), a));
                         for (int j = 1; j <= 3; j++)
                             star(pose, vc, x - v.x * j * 2.5, iy - v.y * j * 2.5 + 0.04 * j, z - v.z * j * 2.5, 0.09 - 0.018 * j,
                                     argb(InscribeScene.hot(col, 0.3F), a * (1 - j * 0.25F)));
@@ -198,9 +202,36 @@ public final class EnchantFxClient {
                                     argb(col, a * (1 - f) * 0.8F));
                         }
                     }
+                    case EnchantPayloads.FX_PAGE -> {
+                        // a page on its way to the one it goes to: its sign in light, arcing from where it was
+                        if (en == null) break;
+                        float f = ease(k);
+                        double tx = x, ty = y + hgt * 0.62, tz = z;
+                        double px = Mth.lerp(f, X[i], tx), pz = Mth.lerp(f, Z[i], tz), py = Mth.lerp(f, Y[i], ty) + 0.9 * Mth.sin(f * Mth.PI);
+                        double vx = cx - px, vz = cz - pz, vl = Math.max(1e-4, Math.sqrt(vx * vx + vz * vz));
+                        brand(pose, vc, NO[i], px, py, pz, -vz / vl, 0, vx / vl, 0.2 * (1 - 0.5 * f), col, 0.4F, Mth.sin(Math.min(1F, k * 1.2F) * Mth.PI) * 0.9F + 0.1F);
+                        for (int j = 1; j <= 4; j++) {
+                            float fb = ease(Math.max(0F, k - j * 0.05F));
+                            star(pose, vc, Mth.lerp(fb, X[i], tx), Mth.lerp(fb, Y[i], ty) + 0.9 * Mth.sin(fb * Mth.PI), Mth.lerp(fb, Z[i], tz),
+                                    0.09 - 0.015 * j, argb(col, (1 - k) * (1 - j * 0.2F)));
+                        }
+                    }
                     case EnchantPayloads.FX_LEARN -> {
-                        // a column of light round you, rings climbing it
-                        float a = Mth.sin(Math.min(1F, k * 1.4F) * Mth.PI) * s;
+                        if (NO[i] > 0 && en != null) {
+                            // the reading (SPEC §45.15): the glyph lifts off the page in front of the reader, cut by cut in
+                            // the order it will be traced, holds, then runs down into their hand
+                            Vec3 look = en.getViewVector(pt), eye = en.getEyePosition(pt);
+                            double lx = look.x, lz = look.z, ll = Math.max(1e-4, Math.sqrt(lx * lx + lz * lz));
+                            float drawn = Mth.clamp(age / 14F, 0F, 1F), gone = ease(Mth.clamp((age - 22F) / 10F, 0F, 1F));
+                            double gx = eye.x + look.x * 0.95, gy = eye.y + look.y * 0.95 - 0.08 - 0.55 * gone, gz = eye.z + look.z * 0.95;
+                            gx -= look.x * 0.35 * gone;
+                            gz -= look.z * 0.35 * gone;
+                            partial = drawn;
+                            brand(pose, vc, NO[i], gx, gy, gz, lz / ll, 0, -lx / ll, 0.2 * (1 - 0.7 * gone), col, 0.6F * (1F - drawn) + 0.3F, 1F - gone);
+                            partial = 1F;
+                        }
+                        // a column of light round you, rings climbing it (softer now that the glyph is the event)
+                        float a = Mth.sin(Math.min(1F, k * 1.4F) * Mth.PI) * s * (NO[i] > 0 ? 0.45F : 1F);
                         for (int j = 0; j < 4; j++) {
                             float f = (k * 1.5F + j * 0.25F) % 1F;
                             ring(pose, vc, x, y + f * (hgt + 0.6), z, 0.55 + 0.1 * Mth.sin(f * Mth.PI), 0.1, argb(col, a * (1 - f) * 0.9F));
@@ -273,6 +304,22 @@ public final class EnchantFxClient {
         return 0.5;
     }
 
+    /** How much of a glyph {@link #mark} draws, by length along its strokes in order (1: all of it). */
+    private static float partial = 1F;
+
+    /**
+     * A glyph as a lit shape seen across a fight (SPEC §45.17): a wide soft halo, a body in its colour and a white-hot
+     * core, {@code heat} of the way to white, {@code a} its strength.
+     */
+    private static void brand(PoseStack.Pose pose, VertexConsumer vc, int no, double x, double y, double z, double rx, double ry, double rz,
+                              double size, int colour, float heat, float a) {
+        if (a <= 0.01F) return;
+        double w = size * 0.3;
+        mark(pose, vc, no, x, y, z, rx, ry, rz, size, w * 2.4, argb(colour, a * 0.3F));
+        mark(pose, vc, no, x, y, z, rx, ry, rz, size, w, argb(InscribeScene.hot(colour, 0.25F + 0.5F * heat), a * 0.9F));
+        mark(pose, vc, no, x, y, z, rx, ry, rz, size, w * 0.42, argb(InscribeScene.hot(colour, 0.75F + 0.25F * heat), a));
+    }
+
     /**
      * An enchantment's mark standing in a plane at (x, y, z): its strokes as soft lines, {@code size} blocks from the middle
      * to the edge, the plane's right along (rx, ry, rz) and its up straight up.
@@ -280,9 +327,16 @@ public final class EnchantFxClient {
     private static void mark(PoseStack.Pose pose, VertexConsumer vc, int no, double x, double y, double z, double rx, double ry, double rz,
                              double size, double w, int argb) {
         int rim = argb & 0xFFFFFF;
-        for (float[] st : Marks.of(no)) {
+        float[][] strokes = Marks.of(no);
+        int total = 0, upto = Integer.MAX_VALUE, at = 0;
+        if (partial < 1F) {
+            for (float[] st : strokes) total += st.length / 2 - 1;
+            upto = Math.round(total * partial);
+        }
+        for (float[] st : strokes) {
             int n = st.length / 2;
             for (int i = 0; i + 1 < n; i++) {
+                if (at++ >= upto) return;
                 double a0 = st[i * 2], b0 = st[i * 2 + 1], a1 = st[i * 2 + 2], b1 = st[i * 2 + 3];
                 double da = a1 - a0, db = b1 - b0, l = Math.sqrt(da * da + db * db);
                 if (l < 1e-6) continue;

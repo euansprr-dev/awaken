@@ -65,6 +65,11 @@ public final class FeelConfig {
                     "ahead; a held rope lets go while it still goes forward and carries on through a landing. Off: the assisted swing",
                     "exactly as it was. Needs ropeAssist.")
             .define("ropeGuide", true);
+    public static final ModConfigSpec.BooleanValue ROPE_HOLD = B
+            .comment("The held rope (SPEC §62): the rope never lets go by itself. It swings you back and forth like a real rope until",
+                    "you let go of the key; forward pumps the swing, back slows it to a hang. Off: the rope lets go at the top of its arc",
+                    "and before a wall by itself, as it did before. Needs ropeAssist.")
+            .define("ropeHold", true);
     public static final ModConfigSpec.BooleanValue WINGS_FEATHERS = B
             .comment("Wings of feathers (SPEC §62): each wing is feathers of light in boxes, with a look for each rung of the ladder.",
                     "Off: the single sheet the wings were before.")
@@ -137,6 +142,15 @@ public final class FeelConfig {
     public static boolean ropeAssist() {
         try {
             return !SPEC.isLoaded() || ROPE_ASSIST.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** The held rope (SPEC §62): letting go of the key is the only let-go of a swing. */
+    public static boolean ropeHold() {
+        try {
+            return !SPEC.isLoaded() || ROPE_HOLD.get();
         } catch (RuntimeException e) {
             return true;
         }
