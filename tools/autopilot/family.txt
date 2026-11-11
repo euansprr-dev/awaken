@@ -91,9 +91,12 @@ wait 200
 cmd awaken admin family state
 shot family_b2_at_home_later
 cmd awaken admin family play
-wait 110
-cmd awaken admin family state
+wait 30
 shotnow family_b4_dubu_asks_aya_to_play
+wait 30
+shotnow family_b4b_dubu_asks_aya_to_play
+wait 50
+cmd awaken admin family state
 wait 60
 cmd time set 11400
 cmd tick sprint 2200

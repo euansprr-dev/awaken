@@ -105,7 +105,9 @@ final class FamilyBrain {
             b.getNavigation().stop();
             return false;
         }
-        if (b.getNavigation().isDone() || (b.tickCount + b.getId()) % 20 == 0) b.getNavigation().moveTo(x, y, z, speed);
+        // (reach 0: onto the very block. The game's plain moveTo is content to stop a block short, which left them standing
+        // beside a spot they never reached, so they never lay down on it; CI run 42991175852's log)
+        if (b.getNavigation().isDone() || (b.tickCount + b.getId()) % 20 == 0) b.getNavigation().moveTo(x, y, z, 0, speed);
         return false;
     }
 
