@@ -19,7 +19,13 @@ import org.jspecify.annotations.Nullable;
  */
 final class WallView {
     private static final Identifier DARK = Awaken.id("textures/gui/hall/wall_dark.png"), LIT = Awaken.id("textures/gui/hall/wall_lit.png");
-    private static final int KEY_DARK = 1, KEY_LIT = 2;
+    private static final int KEY_DARK = 1, KEY_LIT = 2, KEY_HOVER = 12;
+    private static final int HOT = 0xFFC4E6FF;
+    /** The weapon under the pointer, drawn again lit and a little larger (its own picture, redrawn only when the pointer moves on). */
+    private Placed[] lifted = new Placed[0];
+    private HallLayout.@Nullable Cell liftedFor;
+    private int liftedState = -1;
+    private long liftVersion;
     static final int ALL = 0, READY = 1, TRACKED = 2;
     static final String[] FILTERS = {"Everything", "Ready now", "Tracked"};
     private final float[] filterX = new float[FILTERS.length];
@@ -119,7 +125,29 @@ final class WallView {
                 shaded ? HallPipelines.LANTERN_PIC : RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, shaded ? lamp : -1, g.pose()));
         g.nextStratum();
         s.glow(854F, tide, 830F, 5F, 0xFFCF7A, .9F);
+        lift(s, w, real);
         g.pose().popMatrix();
+    }
+
+    /** The hover state: light in the niche you point at, and its weapon again, fully lit and a touch larger. */
+    private void lift(Stage s, HallNet.Wall w, float real) {
+        HallLayout.Cell h = hover;
+        if (h == null) return;
+        int state = w.at(h.col(), h.tier());
+        if (h != liftedFor || state != liftedState) {
+            liftedFor = h;
+            liftedState = state;
+            liftVersion++;
+            String id = weaponId(h.col(), h.tier());
+            Meshes.Up up = Meshes.up(id);
+            // what you haven't found stays a shape, and a kind on offer stays plain iron: the light shows it, it doesn't give it away
+            int mode = state == HallNet.SHAPE ? Placed.SHAPE : state == HallNet.OFFER ? Placed.IRON : Placed.FULL;
+            lifted = up == null ? new Placed[0] : new Placed[] {new Placed(id, h.x(), h.cy(), HallLayout.portrait(up, h.height()) * 1.1F, -24F, 6F, 0F, mode, 1F)};
+        }
+        s.glow(h.x(), h.cy(), h.w() * .62F, (h.y1() - h.y0()) * .58F, 0xFFCF7A, .55F);
+        if (lifted.length == 0) return;
+        s.g.submitPictureInPictureRenderState(new PicState(KEY_HOVER, 0, 0, Stage.W, Stage.H, real, liftVersion, lifted, RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA, -1, s.g.pose()));
+        s.g.nextStratum();
     }
 
     /** Everything that names the wall: tabs, caption, purse, seals, ranks and bays. */
@@ -135,6 +163,9 @@ final class WallView {
             s.text(Integer.toString(ArmsArmoury.LEVEL[i]), x + 6F, mid + 20F, 2F, i <= you ? Stage.LABEL : Stage.DIM, true);
         }
         for (int i = 0; i < HallLayout.FAMILY.length; i++) s.centre(HallLayout.FAMILY[i], HallLayout.BAY_X[i], 930F, 3F, Stage.LABEL);
+        // the hover state: the band's corners round the niche you're about to click
+        HallLayout.Cell hc = hover;
+        if (hc != null) s.brackets(hc.x() - hc.w() / 2F + 2F, hc.y0() + 2F, hc.x() + hc.w() / 2F - 2F, hc.y1() - 2F, Math.max(10F, hc.w() * .16F), 3, HOT);
         s.right("You, level " + w.level(), 1684F, tide - 30F, 3F, Stage.LANTERN);
         // the tracked weapon's niche carries a blue mark
         if (v != null && !v.tracked().isEmpty()) {
