@@ -28,8 +28,8 @@ tier adds a twist through its set bonus, and the late two change your silhouette
 | S | **Sovereign Weave** (Crown, Regalia, Legwraps, Striders, Oathblade, Sceptre, Mattock) | past netherite | 4/9/7/4 = 24, 3.5, kb 0.15 | 10 dmg, 1.8/s | +22% | netherite pick, 11 |
 
 Blades hit exactly like the vanilla sword of their twin but swing a little faster (they're hunters' knives); armour
-durability multipliers 24/28/33/35/40/48 (E and D were 13 and 18 until SPEC §67.1: their rank's fights wear more; Gatewrought's raised to diamond's with its armour, W2, so a diamond spent on
-it beats a diamond chestplate; Veilwoven and Lordscale a point of armour up to keep the ladder climbing); blades 900/1300/1400/1900/2300/2800 (E and D were 220 and 500, SPEC §67.1; no piece is ever destroyed by wear: `core.api.Lasting`); foci 180/400/1100/1600/2000/2500;
+durability multipliers 24/28/33/35/40/48 (E and D were 13 and 18 until SPEC §68.1: their rank's fights wear more; Gatewrought's raised to diamond's with its armour, W2, so a diamond spent on
+it beats a diamond chestplate; Veilwoven and Lordscale a point of armour up to keep the ladder climbing); blades 900/1300/1400/1900/2300/2800 (E and D were 220 and 500, SPEC §68.1; no piece is ever destroyed by wear: `core.api.Lasting`); foci 180/400/1100/1600/2000/2500;
 mattocks 240/520/1450/1950/2350/2850; melee of foci 3/4/5/6/7/8 and mattocks 3/4/5/6/7/8 (with the base 1). A and S
 equip with netherite's sound; S stays under the armour attribute's cap of 30.
 The mattock (from D up it needs its tier's metal, like every piece) mines like its vanilla twin: a D mattock mines

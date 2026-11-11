@@ -2,7 +2,7 @@ package dev.awaken.core.api;
 
 /**
  * The game's one cinematic camera, for any module that needs the view to leave the player's eyes for a moment (client;
- * SPEC §16.4, §67.4). The opening owns the camera itself (a client-only body the view follows, the hands and the
+ * SPEC §16.4, §68.4). The opening owns the camera itself (a client-only body the view follows, the hands and the
  * controls held while a shot runs, one way back whatever interrupts it) and installs it here; a module hands it a
  * {@link Shot}. Until installed, {@link #take} refuses and nothing moves.
  */

@@ -14,7 +14,7 @@ holo plates have.
     bracket    64  one corner of the mark, drawn four times turned
     diamond    32  the System's diamond: an outline round a small solid core
     tell      128  a plain ring that closes in on the lock ring as a creature's blow comes
-    band3/4/5 128  the parry band (SPEC §67.2): the ground the closing ring crosses while a guard raised now turns the
+    band3/4/5 128  the parry band (SPEC §68.2): the ground the closing ring crosses while a guard raised now turns the
                    blow aside, for a weapon whose window is 3, 4 or 5 ticks. Drawn 3.2 lock rings wide (the lock ring is at
                    40 of its 64 pixels), soft at both edges, brighter toward the inside
     edge      128x32  an arc at the screen's edge for a blow wound up out of view

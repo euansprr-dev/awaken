@@ -22,7 +22,7 @@ public class HunterGearItem extends Item implements dev.awaken.core.api.Lasting 
     static final int GREY = 0x8A93A6;
     static final int LIGHT = 0xC9D2E3;
 
-    /** The uses an E or a D blade or armour piece had until 2026-11-11 (SPEC §67.1); 0 for what never changed. */
+    /** The uses an E or a D blade or armour piece had until 2026-11-11 (SPEC §68.1); 0 for what never changed. */
     @Override
     public int formerUses() {
         return tier.formerUses(piece);

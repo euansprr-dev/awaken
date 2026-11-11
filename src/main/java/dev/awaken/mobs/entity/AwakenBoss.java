@@ -45,7 +45,7 @@ public class AwakenBoss extends AwakenMob {
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     /** The degrees a kit body leans into the blow it's making (SPEC §47.15). */
     /**
-     * The aim a blow has committed to (SPEC §67.2), so a client can work out where the blow will be and not only where
+     * The aim a blow has committed to (SPEC §68.2), so a client can work out where the blow will be and not only where
      * the body is now: bit 0 set once it is known, then the facing it turns to (10 bits, 360/1024 degrees), the step it
      * takes before the blow (6 bits signed, tenths of a block), its run through the blow (6 bits, twentieths) and its dip
      * (4 bits signed, half blocks). 0 until the move's lock.
@@ -487,7 +487,7 @@ public class AwakenBoss extends AwakenMob {
                 // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
                 // player it chased fallen) held its body still on their screen until the clock went stale
                 dev.awaken.mobs.net.MobsNet.fighting(this);
-                // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §67.5)
+                // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §68.5)
                 if (getTarget() instanceof Player || beatenTicks > 0) FightSaves.fighting(level);
             }
             if (!f.busy() && beatenTicks == 0) checkPhase(level); // a beaten body crosses no more thresholds
@@ -613,7 +613,7 @@ public class AwakenBoss extends AwakenMob {
         if (fight != null) fight.reset();
     }
 
-    // ---- the last stand and the finishing blow (SPEC §67.4) -------------------------------------------------------------
+    // ---- the last stand and the finishing blow (SPEC §68.4) -------------------------------------------------------------
 
     /** How long a beaten body waits for the blow that ends it before it dies its plain death (ticks). */
     public static final int BEATEN_TICKS = 400;
@@ -637,7 +637,7 @@ public class AwakenBoss extends AwakenMob {
     }
 
     /**
-     * A blow that would kill it (SPEC §67.4). A player's blow doesn't: it is held at its last point, beaten, and waits. The
+     * A blow that would kill it (SPEC §68.4). A player's blow doesn't: it is held at its last point, beaten, and waits. The
      * one blow that ends it is an Execution's, on it beaten or taking its last health; then it dies as it always did, and
      * everyone near is told whose blow it was. Anything that isn't a player's (a fall, the void, a command) kills it plainly.
      */

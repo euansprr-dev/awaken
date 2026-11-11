@@ -81,7 +81,7 @@ public class AwakenMob extends Monster {
             F_RISEN = 1 << 5, F_FALLEN = 1 << 6, F_PHASED = 1 << 7, F_GUARDING = 1 << 8, F_CHARGING = 1 << 9,
             F_DECOY = 1 << 10, F_FUSING = 1 << 11, F_DORMANT = 1 << 12, F_DUEL = 1 << 13, F_HEAVY = 1 << 14,
             F_SPLIT_CHILD = 1 << 15,
-            /** A boss beaten to its last point: it kneels and waits for the blow that ends it (SPEC §67.4). Never saved. */
+            /** A boss beaten to its last point: it kneels and waits for the blow that ends it (SPEC §68.4). Never saved. */
             F_BEATEN = 1 << 16;
     /** Flags that are saved with the entity (the rest are recomputed). */
     // F_FALLEN: its rise is spent when it falls, so one saved mid-fall still has to get up (its ticks aren't saved: at once)
@@ -395,7 +395,7 @@ public class AwakenMob extends Monster {
 
     /**
      * Out of the air for {@code ticks}, whatever it is: a boss beaten to its last point comes down to be finished
-     * (SPEC §67.4), where {@link #ground} leaves a kit flier to its own script.
+     * (SPEC §68.4), where {@link #ground} leaves a kit flier to its own script.
      */
     protected void bringDown(int ticks) {
         if (!def().flies()) return;

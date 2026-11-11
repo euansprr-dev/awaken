@@ -141,7 +141,7 @@ public final class Strikes {
         return tells.tell(e);
     }
 
-    // ---- the blow that is coming, on one clock (client, SPEC §67.2) ---------------------------------------------------
+    // ---- the blow that is coming, on one clock (client, SPEC §68.2) ---------------------------------------------------
 
     /**
      * When a told blow will reach the one watching, for what is drawn about it (the ring that closes on it, the glint on
@@ -193,7 +193,7 @@ public final class Strikes {
         return coming.lands(e);
     }
 
-    // ---- how a guard answered (client, SPEC §67.2) --------------------------------------------------------------------
+    // ---- how a guard answered (client, SPEC §68.2) --------------------------------------------------------------------
 
     /** What became of a blow at the local player's guard: turned aside, blocked, the guard broken, or struck. */
     public enum Answer { DEFLECT, BLOCK, GUARD_BREAK, STRUCK }
@@ -292,12 +292,12 @@ public final class Strikes {
             return false;
         }
 
-        /** Whether the body is beaten to its last point and waits for the blow that ends it (both sides, SPEC §67.4). */
+        /** Whether the body is beaten to its last point and waits for the blow that ends it (both sides, SPEC §68.4). */
         default boolean atLastStand(LivingEntity e) {
             return false;
         }
 
-        /** Whether the body is reeling: its phrase's last blow was turned aside (the biggest clash, SPEC §67.3). */
+        /** Whether the body is reeling: its phrase's last blow was turned aside (the biggest clash, SPEC §68.3). */
         default boolean reeling(LivingEntity e) {
             return false;
         }
@@ -384,7 +384,7 @@ public final class Strikes {
         void add(LivingEntity target, int amount, Player by);
 
         /**
-         * A body beaten to its last point (SPEC §67.4): its stance is broken for {@code ticks}, whatever it held, so the
+         * A body beaten to its last point (SPEC §68.4): its stance is broken for {@code ticks}, whatever it held, so the
          * blow that ends it is the finisher on a broken stance, and {@code by} and those near are told it is open.
          */
         default void beaten(LivingEntity target, int ticks, Player by) {}
@@ -409,12 +409,12 @@ public final class Strikes {
         postures.add(target, amount, by);
     }
 
-    /** A body beaten to its last point is held open for the blow that ends it (SPEC §67.4). */
+    /** A body beaten to its last point is held open for the blow that ends it (SPEC §68.4). */
     public static void beaten(LivingEntity target, int ticks, Player by) {
         postures.beaten(target, ticks, by);
     }
 
-    /** Whether this damage is an Execution's blow landing now: the one blow that ends a beaten body (SPEC §67.4). */
+    /** Whether this damage is an Execution's blow landing now: the one blow that ends a beaten body (SPEC §68.4). */
     public static boolean executing(DamageSource source) {
         return postures.executing(source);
     }

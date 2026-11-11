@@ -1,4 +1,4 @@
-# The Whole Boss Fight as built (SPEC §67), filmed on the duel stage (/awaken bosses duel stage, SPEC §47.3) in daylight.
+# The Whole Boss Fight as built (SPEC §68), filmed on the duel stage (/awaken bosses duel stage, SPEC §47.3) in daylight.
 # You stand in survival with health enough for the whole film, put back in front of the boss every few seconds (along its
 # own facing), and it fights as it does: its own choice of blows, its own aim. A blow played by command (duel play) is
 # no measure: it begins between two of the boss's ticks and takes no aim worth the name.

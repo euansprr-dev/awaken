@@ -193,7 +193,7 @@ public final class ArmsAutopilot {
 
     /**
      * The guard raised on the ring's own clock: at the first tick a deflectable blow that reaches you is within the asked
-     * time, held 8 ticks. A film's check that what the ring shows is what the server counts (SPEC §67.2).
+     * time, held 8 ticks. A film's check that what the ring shows is what the server counts (SPEC §68.2).
      */
     private static void parry(Minecraft mc, LocalPlayer p) {
         if (guardUntil > 0) {

@@ -28,7 +28,7 @@ final class ArmsTells {
     private static final double RANGE = 32;
     private static final int SLOTS = 48;
     private static final int[] ID = new int[SLOTS], KIND = new int[SLOTS], LEFT = new int[SLOTS];
-    /** Whether this tell's glint has shown (it shows once, as the ring enters the parry band: SPEC §67.2). */
+    /** Whether this tell's glint has shown (it shows once, as the ring enters the parry band: SPEC §68.2). */
     private static final boolean[] GLINTED = new boolean[SLOTS];
     /** How long inside the weapon's window the glint (and the ring's band) lights: aim.client.Reticle.BAND_EARLY's own number. */
     private static final float BAND_EARLY = 0.5F;
@@ -65,7 +65,7 @@ final class ArmsTells {
         float size = Mth.clamp(e.getBbWidth() * 0.55F, 0.35F, 1.6F);
         switch (t.kind()) {
             case LIGHT -> {
-                // the cue to raise the guard, on the blow's own clock: as the ring enters the parry band (SPEC §67.2). The
+                // the cue to raise the guard, on the blow's own clock: as the ring enters the parry band (SPEC §68.2). The
                 // tell's count is sent only every second or fourth tick, so a cue set to one count (5) mostly never came
                 double left = Strikes.left(e, 1F);
                 boolean cue;

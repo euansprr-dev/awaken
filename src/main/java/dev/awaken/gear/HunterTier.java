@@ -26,7 +26,7 @@ import java.util.Map;
  * netherite, the late-game sets. From D up every piece needs its tier's metal ({@link #metalTag}, SPEC §28.3): Gatewrought
  * matches diamond armour (20, toughness 2.0, its durability) so a diamond spent on it is never wasted, and B and A sit
  * a point above to keep the ladder climbing.
- * E and D armour and blades hold what their rank's fights take (SPEC §67.1; the multipliers were 13 and 18, the blades 220
+ * E and D armour and blades hold what their rank's fights take (SPEC §68.1; the multipliers were 13 and 18, the blades 220
  * and 500: a boss is 90 to 300 landed blows and lands 10 to 40 a minute on you).
  * Numbers are the source for the stats test and the doc; change them together.
  */
@@ -48,7 +48,7 @@ public enum HunterTier {
             new Blade(9.0f, -2.2f, 2800), new Focus(7.0f, 0.22, 2500), new Mattock(11.0f, 7.0f, 2850, BlockTags.INCORRECT_FOR_NETHERITE_TOOL));
 
     /**
-     * What a piece of this tier held before SPEC §67.1 raised E and D (so a piece that carries its own count, the Armoury's
+     * What a piece of this tier held before SPEC §68.1 raised E and D (so a piece that carries its own count, the Armoury's
      * quarter, keeps its share: {@link dev.awaken.core.api.Lasting#formerUses}); 0 where nothing changed.
      */
     public int formerUses(Piece piece) {

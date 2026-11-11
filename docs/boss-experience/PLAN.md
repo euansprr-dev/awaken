@@ -1,9 +1,9 @@
 # The whole boss fight, levelled up (the plan as approved)
 
 **Approved by Euan on 11 Nov 2026 ("Go with all": all fourteen decisions as recommended) and built the same day as SPEC
-§67**, which is the record of what exists: gear (§67.1), the ring (§67.2), the last stand and the finishing blow's three
-pilots (§67.4), the autosave hold (§67.5); the clash (§67.3) is the weapon-feel session's. Where the build differs from
-this plan and its page, SPEC §67.4 says how and why (the cut comes as the blow lands; the finishing move is each style's
+§68**, which is the record of what exists: gear (§68.1), the ring (§68.2), the last stand and the finishing blow's three
+pilots (§68.4), the autosave hold (§68.5); the clash (§68.3) is the weapon-feel session's. Where the build differs from
+this plan and its page, SPEC §68.4 says how and why (the cut comes as the blow lands; the finishing move is each style's
 own charged heavy and Execution; the endings are each body's own death clip in its own light). The text below is the plan
 as it was approved.
 

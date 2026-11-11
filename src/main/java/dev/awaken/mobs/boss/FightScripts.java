@@ -110,7 +110,7 @@ public final class FightScripts {
      * {@code mind}: it watches you and answers (SPEC §48); a fight without one plays as it did.
      */
     /**
-     * {@code finish}: this body dies only to a finishing blow (SPEC §67.4): at its last point it kneels, beaten, and waits
+     * {@code finish}: this body dies only to a finishing blow (SPEC §68.4): at its last point it kneels, beaten, and waits
      * for it. False (the default) until its ending has been made and seen: the pilots first.
      */
     public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death, boolean duel,

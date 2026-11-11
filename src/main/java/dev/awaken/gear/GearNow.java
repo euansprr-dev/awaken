@@ -58,7 +58,7 @@ final class GearNow {
         return st.now;
     }
 
-    /** Mending gear that is about to give out is a clear next step, not an idea (SPEC §67.1). */
+    /** Mending gear that is about to give out is a clear next step, not an idea (SPEC §68.1). */
     static final int MEND_PRIORITY = 60;
 
     /** The piece of ours most in need of mending: one that is worn out, else one that is nearly so; empty when none is. */

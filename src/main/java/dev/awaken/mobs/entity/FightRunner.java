@@ -315,7 +315,7 @@ final class FightRunner {
 
     void tick(ServerLevel level) {
         if (boss.beaten()) {
-            // beaten to its last point (SPEC §67.4): it starts nothing, no move, no phase, no answer; it kneels and waits
+            // beaten to its last point (SPEC §68.4): it starts nothing, no move, no phase, no answer; it kneels and waits
             if (move >= 0) stop();
             string.clear();
             pendingPhase = -1;
@@ -916,7 +916,7 @@ final class FightRunner {
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
-        boss.syncKitAim(false, 0, 0, 1, 0); // not committed yet: known from its lock (SPEC §67.2)
+        boss.syncKitAim(false, 0, 0, 1, 0); // not committed yet: known from its lock (SPEC §68.2)
         if (cls != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
             // a blow that isn't aimed at one body is everyone's to answer (SPEC §70.3)
@@ -943,7 +943,7 @@ final class FightRunner {
                 aim.clear();
                 aim.turn = yaw;
             }
-            // the blow is committed: those watching can work out where it will be, and when it reaches them (SPEC §67.2)
+            // the blow is committed: those watching can work out where it will be, and when it reaches them (SPEC §68.2)
             boss.syncKitAim(true, aim.turn, aim.step, aim.run, aim.dip);
         }
         yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
@@ -1152,7 +1152,7 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
-        // one rule with the ring a client draws for this blow (KitReach, SPEC §67.2)
+        // one rule with the ring a client draws for this blow (KitReach, SPEC §68.2)
         return dev.awaken.mobs.boss.KitReach.point(boss.getX(), boss.getY(), boss.getZ(), yaw, aim.lean, hip(), x, y, z);
     }
 

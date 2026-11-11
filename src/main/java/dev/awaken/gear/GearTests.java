@@ -641,7 +641,7 @@ final class GearTests {
         h.succeed();
     }
 
-    // ---- gear that lasts (SPEC §67.1) -------------------------------------------------------------------------------------
+    // ---- gear that lasts (SPEC §68.1) -------------------------------------------------------------------------------------
 
     private static Item item(String id) {
         return BuiltInRegistries.ITEM.getValue(Awaken.id(id));

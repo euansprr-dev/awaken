@@ -10,7 +10,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.function.Consumer;
 
-/** A Maul: vanilla's mace (its smash, Density and Wind Burst), never destroyed by wear ({@link Lasting}, SPEC §67.1). */
+/** A Maul: vanilla's mace (its smash, Density and Wind Burst), never destroyed by wear ({@link Lasting}, SPEC §68.1). */
 public class ArmsMaulItem extends MaceItem implements Lasting {
     private final int formerUses;
 

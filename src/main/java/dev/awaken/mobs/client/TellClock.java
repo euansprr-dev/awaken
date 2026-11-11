@@ -13,7 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 /**
- * One clock for every told blow (SPEC §67.2, {@link Strikes.Coming}): how long until it reaches you, as a number that
+ * One clock for every told blow (SPEC §68.2, {@link Strikes.Coming}): how long until it reaches you, as a number that
  * glides and ends on the tick the blow lands.
  * <p>
  * The tell a body shows is a count the server sends again only every second or fourth tick and clears as its wind-up

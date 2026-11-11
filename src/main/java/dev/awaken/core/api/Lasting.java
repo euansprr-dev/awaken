@@ -12,7 +12,7 @@ import net.neoforged.neoforge.common.extensions.IItemExtension;
 import java.util.function.Consumer;
 
 /**
- * Gear that is never destroyed (SPEC §67.1): an item of ours that implements this stops one use short of breaking and
+ * Gear that is never destroyed (SPEC §68.1): an item of ours that implements this stops one use short of breaking and
  * is <b>worn out</b> there: it stays where it is, at half its strength, until it is mended. The item's class only names
  * the interface ({@code class X extends Item implements Lasting}); the rule is here, so every module's gear keeps it
  * alike. Worn out is read off the stack's own damage, so nothing new is saved and mending it by any means ends it.

@@ -749,7 +749,7 @@ final class ArmsServer {
             pendingPush = false;
             pendingExecution = false;
         }
-        // the blow that used its last use: it is worn out from here (never destroyed, SPEC §67.1), and its owner is told once
+        // the blow that used its last use: it is worn out from here (never destroyed, SPEC §68.1), and its owner is told once
         if (!worn && dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem())) dev.awaken.core.api.Lasting.tell(p, p.getMainHandItem(), true);
         HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
         if (!pendingLanded) {
@@ -1387,7 +1387,7 @@ final class ArmsServer {
 
     /**
      * Whether this damage is an Execution's blow (or the Art's, which a full meter makes of the same held heavy) landing
-     * now: the finisher, and the one blow that ends a beaten body (SPEC §67.4).
+     * now: the finisher, and the one blow that ends a beaten body (SPEC §68.4).
      */
     static boolean executing(DamageSource source) {
         Entity by = source.getEntity();
@@ -1395,7 +1395,7 @@ final class ArmsServer {
     }
 
     /**
-     * A body beaten to its last point (SPEC §67.4): its stance is broken for {@code ticks}, whatever it held and whenever
+     * A body beaten to its last point (SPEC §68.4): its stance is broken for {@code ticks}, whatever it held and whenever
      * it last broke, so a heavy released on it is the Execution; {@code by} and those near are told, as for any break.
      */
     static void beaten(LivingEntity target, int ticks, ServerPlayer by) {

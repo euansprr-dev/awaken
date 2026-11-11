@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The finishing blow's truce (SPEC §67.4, server). A body beaten to its last point harms nobody: whatever of its is still
+ * The finishing blow's truce (SPEC §68.4, server). A body beaten to its last point harms nobody: whatever of its is still
  * in the air (a wave, a field, a shot, a fang) lands on no one. And the one who struck the finishing blow can't be hurt
  * while its ending plays: their view may be elsewhere, and nothing should spoil the moment.
  */

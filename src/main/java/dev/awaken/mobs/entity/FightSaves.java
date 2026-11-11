@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The world's autosave is held while a boss fights a player (SPEC §67.5). An autosave stalls the server for a tenth of a
+ * The world's autosave is held while a boss fights a player (SPEC §68.5). An autosave stalls the server for a tenth of a
  * second (Euan's Ringer fight, 2026-11-11: one tick of 101 ms, "an autosave"), and a boss's body and the ring that closes
  * on its blow hold still with it. While a boss has a player for its target, each level's chunks are kept from the
  * autosave ({@code ServerLevel.noSave}, the flag {@code /save-off} sets); {@link #AFTER} ticks after the last such tick

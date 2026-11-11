@@ -107,7 +107,7 @@ public final class MobsNet {
     }
 
     /**
-     * A boss's finishing blow has landed (SPEC §67.4): which body fell, who struck it, and how many ticks its own ending
+     * A boss's finishing blow has landed (SPEC §68.4): which body fell, who struck it, and how many ticks its own ending
      * plays before it is gone. Sent once, as it dies, to everyone near; only the striker's view is taken.
      */
     public record Finish(int boss, int striker, int ticks) implements CustomPacketPayload {
