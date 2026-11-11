@@ -44,6 +44,14 @@ public class AwakenBoss extends AwakenMob {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     /** The degrees a kit body leans into the blow it's making (SPEC §47.15). */
+    /**
+     * The aim a blow has committed to (SPEC §67.2), so a client can work out where the blow will be and not only where
+     * the body is now: bit 0 set once it is known, then the facing it turns to (10 bits, 360/1024 degrees), the step it
+     * takes before the blow (6 bits signed, tenths of a block), its run through the blow (6 bits, twentieths) and its dip
+     * (4 bits signed, half blocks). 0 until the move's lock.
+     */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AIM =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_KIT_LEAN =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
     /** Where a kit body leans from, as a share of its height. */
@@ -88,6 +96,7 @@ public class AwakenBoss extends AwakenMob {
         b.define(DATA_KIT, 0);
         b.define(DATA_KIT_AT, 0);
         b.define(DATA_KIT_LEAN, (byte) 0);
+        b.define(DATA_KIT_AIM, 0);
     }
 
     /** An intro or transition with no roar of its own: the boss's voice, loud and low. */
@@ -287,6 +296,39 @@ public class AwakenBoss extends AwakenMob {
         }
         int v = (pose & 0xF) << 16 | kitSerial << 20;
         if (entityData.get(DATA_KIT) != v) entityData.set(DATA_KIT, v);
+    }
+
+    /** Server: the aim this move's blow has committed to, from its lock on; {@code known} false as a move begins. */
+    void syncKitAim(boolean known, float turn, float step, float run, float dip) {
+        int v = 0;
+        if (known) {
+            int yaw = Math.round(Mth.positiveModulo(turn, 360F) * 1024F / 360F) & 0x3FF;
+            int st = Mth.clamp(Math.round(step * 10F), -32, 31) & 0x3F, rn = Mth.clamp(Math.round(run * 20F), 0, 63), dp = Mth.clamp(Math.round(dip * 2F), -8, 7) & 0xF;
+            v = 1 | yaw << 1 | st << 11 | rn << 17 | dp << 23;
+        }
+        if (entityData.get(DATA_KIT_AIM) != v) entityData.set(DATA_KIT_AIM, v);
+    }
+
+    /** Whether the playing move's blow has committed to its aim (from its lock on). */
+    public boolean kitAimed() {
+        return (entityData.get(DATA_KIT_AIM) & 1) != 0;
+    }
+
+    /** The facing its blow turns to, the blocks it steps before it, its run through it and its dip (once {@link #kitAimed}). */
+    public float kitAimTurn() {
+        return ((entityData.get(DATA_KIT_AIM) >> 1) & 0x3FF) * 360F / 1024F;
+    }
+
+    public float kitAimStep() {
+        return ((entityData.get(DATA_KIT_AIM) >> 11 & 0x3F) << 26 >> 26) / 10F;
+    }
+
+    public float kitAimRun() {
+        return (entityData.get(DATA_KIT_AIM) >> 17 & 0x3F) / 20F;
+    }
+
+    public float kitAimDip() {
+        return ((entityData.get(DATA_KIT_AIM) >> 23 & 0xF) << 28 >> 28) / 2F;
     }
 
     void syncKitLean(int degrees) {

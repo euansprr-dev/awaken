@@ -868,6 +868,7 @@ final class FightRunner {
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
+        boss.syncKitAim(false, 0, 0, 1, 0); // not committed yet: known from its lock (SPEC §67.2)
         if (cls != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
             // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
@@ -891,6 +892,8 @@ final class FightRunner {
                 aim.clear();
                 aim.turn = yaw;
             }
+            // the blow is committed: those watching can work out where it will be, and when it reaches them (SPEC §67.2)
+            boss.syncKitAim(true, aim.turn, aim.step, aim.run, aim.dip);
         }
         yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
         int left = Math.max(1, wind - lockAt);
@@ -937,6 +940,8 @@ final class FightRunner {
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
             }
             aimBlow(m, target, lockAt, wind);
+            // a blow that takes no correction (its ability does the aiming) is committed as it locks, where it stands
+            if (t == lockAt && !aimed(m) && !m.hits().isEmpty()) boss.syncKitAim(true, yaw, 0, 1, 0);
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);

@@ -71,8 +71,8 @@ public final class FinishTests {
 
     /**
      * The ring a client draws closes on the tick the blow lands (SPEC §67.2): for the Ringer's Swing at a still body in
-     * its reach, the rule the client asks ({@link KitReach#firstTouch}) five ticks before the blow names the active tick
-     * the server then strikes on. The test begins the move between two of the boss's ticks, so the strike may come a tick
+     * its reach, the rule the client asks ({@link KitReach#firstTouch}) of the pose the blow commits to at its lock (the
+     * synced aim) names the active tick the server then strikes on. The test begins the move between two of the boss's ticks, so the strike may come a tick
      * sooner than in play, never later.
      */
     static void ringLands(GameTestHelper h) {
@@ -92,11 +92,23 @@ public final class FinishTests {
         KitMoves.Move move = kit.moves().get(kit.moves().index("swing_a"));
         KitMoves.Played played = KitMoves.played(move, boss.kitSpeed(), boss.kitHold());
         int wind = played.windup() + played.hold();
-        h.runAfterDelay(Math.max(1, wind - 5), () -> {
+        double[] stood = new double[3];
+        h.onEachTick(() -> {
             boss.setTarget(pig);
-            int k = KitReach.firstTouch(move, played.active(), boss.getX(), boss.getY(), boss.getZ(), boss.yBodyRot, boss.kitLean(),
-                    boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP, move.motion().advance(), move.motion().rise(), pig.getBoundingBox());
-            h.assertTrue(k >= 0, "the rule says the Swing reaches a body " + String.format("%.1f", boss.distanceTo(pig)) + " blocks off");
+            // as a client does: the blow's committed pose, from where the body stands as its aim is first known
+            if (said[0] != Integer.MIN_VALUE || !boss.kitAimed()) {
+                if (!boss.kitAimed()) {
+                    stood[0] = boss.getX();
+                    stood[1] = boss.getY();
+                    stood[2] = boss.getZ();
+                }
+                return;
+            }
+            float yaw = boss.kitAimTurn(), r = yaw * net.minecraft.util.Mth.DEG_TO_RAD, step = boss.kitAimStep();
+            int k = KitReach.firstTouch(move, played.active(), stood[0] - net.minecraft.util.Mth.sin(r) * step, stood[1] + boss.kitAimDip(),
+                    stood[2] + net.minecraft.util.Mth.cos(r) * step, yaw, boss.kitLean(), boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP,
+                    move.motion().advance() * boss.kitAimRun(), move.motion().rise(), pig.getBoundingBox());
+            h.assertTrue(k >= 0, "the rule says the committed Swing reaches a body " + String.format("%.1f", boss.distanceTo(pig)) + " blocks off");
             said[0] = wind + 1 + k;
         });
         h.succeedWhen(() -> {

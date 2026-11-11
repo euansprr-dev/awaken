@@ -24538,9 +24538,13 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   clock; a later count is never read for time. A kit body's move: from its synced start (`kitStart`), its move table and
   `ServerPace.since` (a double difference; `ServerPace.now` is a float of game time and too coarse in an old world) to
   `windup + hold + 1 + k`, `k` the first active tick whose capsules reach where you stand by the server's own rule
-  (`mobs.boss.KitReach.firstTouch`, which `FightRunner.world` and `touches` now call too). `k` is set as the move begins,
-  follows you at most half a tick a tick while you move about a sweep, and is fixed for the last 5 ticks; with no tick
-  reaching you the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
+  (`mobs.boss.KitReach.firstTouch`, which `FightRunner.world` and `touches` now call too), asked of the pose the blow
+  has committed to and not of where the body is now: as a move locks the server syncs its aim (`AwakenBoss.DATA_KIT_AIM`,
+  `syncKitAim`: the facing it turns to, the step it takes, its run through the blow and its dip, beside the lean already
+  synced; a blow whose ability does the aiming is committed where it stands), and the client adds the step to where the
+  body stands at that moment. Until the aim is known the blow is taken to land on its first tick. `k` is set as the
+  blow commits (eased over that tick), then follows you at most a tick a tick while you move about a sweep, and is fixed
+  for the last 4 ticks; when the committed blow reaches no tick the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
   release) counts to its release and has no band (`Strikes.lands`). Any other body: from the count it first showed, on the
   client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
 - **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
