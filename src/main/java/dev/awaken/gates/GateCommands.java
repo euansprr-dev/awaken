@@ -162,10 +162,16 @@ final class GateCommands {
             // tours: a trial's stand as if taken (SPEC 17.10), so the bars past it open
             gate.then(Commands.literal("realm_stand").requires(AwakenCommands.admin())
                     .then(Commands.argument("move", StringArgumentType.word()).executes(c -> {
-                        if (dev.awaken.gates.realms.RealmLive.trialStand(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "move"))) return 1;
+                        if (dev.awaken.gates.realms.RealmTrial.take(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "move"))) return 1;
                         c.getSource().sendFailure(Component.literal("No stand of that move here."));
                         return 0;
                     })));
+            // tours: a slam as if one had landed where you stand (SPEC 17.10), so what only a slam moves can be walked past
+            gate.then(Commands.literal("realm_slam").requires(AwakenCommands.admin()).executes(c -> {
+                net.minecraft.server.level.ServerPlayer p = c.getSource().getPlayerOrException();
+                dev.awaken.gates.realms.RealmTrial.slam(p, p.getX(), p.getY(), p.getZ());
+                return 1;
+            }));
             // tours: stand on the Lord hall's floor just past the heart's line (SPEC §50.8), where one look of the old rule ended the fight
             gate.then(Commands.literal("realm_edge").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

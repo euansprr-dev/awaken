@@ -58,6 +58,7 @@ final class GateEvents {
         bus.addListener(GateEvents::onExplode);
         bus.addListener(GateEvents::onEntityInteract);
         RunEvents.register(bus);
+        dev.awaken.gates.realms.RealmTrial.register(bus);
     }
 
     private static void onServerTick(ServerTickEvent.Post e) {
@@ -69,6 +70,7 @@ final class GateEvents {
         Breaks.tick(server);
         GateCard.tick(server);
         dev.awaken.gates.worlds.WorldLive.tick(server);
+        dev.awaken.gates.realms.RealmTrial.tickServer(server);
         int t = server.getTickCount();
         if (t % 100 == 50) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
