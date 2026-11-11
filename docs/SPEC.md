@@ -22008,20 +22008,21 @@ first land is The Cinder Crown (`awaken:cinder_crown`, program `awaken:ember_cou
   trestle down to the ground), a gate (two pillars, a beam, a lantern on a chain), a court's paving, and the first of
   the great builders: a crown of horns round a crater.
 
-**The Ascent** (`kit/land/Ascent`). One mountain standing in a sea, the way in on the shore due south of it, the summit
-in sight from the first step. From the shore: a beach, foothills that roll (fifteen blocks up however far they run), a
+**The Ascent** (`kit/land/Ascent`). One mountain standing in a sea, the way in at the tip of a spit that runs ninety
+blocks out from its south shore, so the whole mountain, crown and all, stands in the first look (from the shore itself
+the crown ran off the top of the view). From the spit: a beach, foothills that roll (fifteen blocks up however far they run), a
 flank at about three in five, then a crag at seven in four up to a crest, and inside the crest a crater whose floor is
 the Lord's (radius 24.5, level, open to the sky, three tiers of two blocks stepping up to the crest). Radial ridges and
-gullies, benches on the flank, crags that stand up as stacks of columns, sea stacks off the shore; all of it gentler
-within 24 blocks of a way. The run at E rank, 14 legs: the way in; a den in the foothills about fifty blocks on; a den
-at the foot of the flank; then the flank in three arms between two hairpin terraces (each an ambush), with a den on a
+gullies, benches on the flank, crags that stand up as stacks of columns, sea stacks in clusters off the shore; all of
+it gentler within 24 blocks of a way. The run at E rank, 14 legs: the way in; two dens in the foothills, the first
+about fifty blocks on; a den at the foot of the flank; then the flank in three arms between two hairpin terraces (each an ambush), with a den on a
 terrace either side of the **rift** on the long arm, crossed dead level on a broken bridge (gaps of three cells and two;
 a fall anywhere in the rift is caught); a goat track from the foot of the flank up to the first of those terraces, with
 a ledge and a cache half way (the way round); a hidden place sunk into the hill beyond the far hairpin, behind two
 standing stones; a court at the knee of the mountain where the Warden stands, with a gate where the way comes in and a
 Waystone; a stair of five flights of fourteen treads cut along the crag's face, turning on a landing at each end, a
 balcony with a cache off the middle one; a notch through the crest, the Lord's door across it; the crater. About 120
-blocks of climb and 400 of way. A seed turns east to west, bends the way in, moves the dens and re-rolls every surface.
+blocks of climb and 500 of way. A seed turns east to west, bends the way in, moves the dens and re-rolls every surface.
 A higher rank widens the island by 64 a rank (246 to the water at E) and so lengthens the way in, with a den every
 sixty blocks of it; the mountain itself is the same height. Wardens do not yet grow with rank, and the four other
 landforms of the brief (the Valley, the Basin, the Causeway, the Isles) are not built: `land.params.landform` names one

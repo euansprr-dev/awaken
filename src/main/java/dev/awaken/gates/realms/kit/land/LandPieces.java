@@ -49,7 +49,7 @@ public final class LandPieces {
             this.feet = feet;
             this.cz = cz;
             this.land = land;
-            box(cx, cz, 13, 13);
+            box(cx, cz, 16, 18);
             startsWay = true;
             mayOverlap = true;
             label = "the way in";
@@ -70,8 +70,8 @@ public final class LandPieces {
                 if (far > 5.5 && Math.abs(x - cx) > 2 && N.rnd(x, z, 302) < 0.45) v.set(x, feet, z, d.rockSlab());
             }
             arch(v, d);
-            pillar(v, d, cx - 9, cz - 9, 12, 303);
-            pillar(v, d, cx + 9, cz - 10, 8, 304);
+            pillar(v, d, cx - 12, cz - 13, 12, 303);
+            pillar(v, d, cx + 13, cz - 15, 8, 304);
         }
 
         /** The arch home, three deep: jambs on stepped feet, a lit keystone, a coping, and the opening the arch's light stands in. */
@@ -315,7 +315,7 @@ public final class LandPieces {
                     }
                     for (int y = gy + 2; y <= top; y++) {
                         if (!mid && y == top - 1) continue; // the shaft narrows under its head
-                        v.set(x + a, y, pz + c, y == top ? (mid ? d.seam() : d.rockSlab()) : y % 4 == 1 ? d.ore() : y % 4 == 3 && mid ? d.seam() : d.rock());
+                        v.set(x + a, y, pz + c, y == top ? (mid ? d.seam() : d.rockSlab()) : y == top - 2 ? d.ore() : y % 5 == 2 && mid ? d.seam() : y % 5 == 0 ? d.dark() : d.rock());
                     }
                 }
                 v.set(x, top + 1, pz, d.lamp());
@@ -382,8 +382,8 @@ public final class LandPieces {
             horns = new double[count][];
             for (int i = 0; i < count; i++) {
                 double a = open + Math.PI * 2 * (i + 0.5) / count, bx = cx + Math.cos(a) * ring, bz = cz + Math.sin(a) * ring;
-                double tall = (i % 2 == 0 ? 40 : 28) + N.rnd(i, salt, 1) * 12;
-                horns[i] = new double[]{bx, bz, land.ground((int) Math.round(bx), (int) Math.round(bz)), tall, 4.8 + N.rnd(i, salt, 2) * 1.4, 6 + N.rnd(i, salt, 3) * 4};
+                double tall = (i % 2 == 0 ? 52 : 36) + N.rnd(i, salt, 1) * 12;
+                horns[i] = new double[]{bx, bz, land.ground((int) Math.round(bx), (int) Math.round(bz)), tall, 5.4 + N.rnd(i, salt, 2) * 1.6, 8 + N.rnd(i, salt, 3) * 5};
             }
             box(cx, cz, (int) ring + 9, (int) ring + 9);
             mayOverlap = true;
@@ -437,7 +437,7 @@ public final class LandPieces {
                 }
                 BlockState b;
                 if (y >= gy + tall - 2) b = d.seam();
-                else if (Math.floorMod(y + i * 3, 9) == 0) b = d.ore();
+                else if (Math.floorMod(y + i * 3, 13) == 0) b = d.ore();
                 else if (N.rnd(x * 7L + y, z, salt + i) < 0.05 + 0.1 * t) b = d.seam();
                 else b = Math.floorMod(y, 5) == 2 ? d.dark() : d.rock();
                 v.set(x, y, z, b);

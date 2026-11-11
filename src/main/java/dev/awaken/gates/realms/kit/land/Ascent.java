@@ -33,9 +33,11 @@ final class Ascent extends Landform {
     private static final double FOOT = 150, FACE = 1.75;
     private static final int TREADS = 14, ROW = 8;
     private static final double ARENA = 24.5, TIERS = 31;
+    /** The spit the way in stands on: where it leaves the foothills, how far it runs out past the shore, how wide it is. */
+    private static final double SPIT_FROM = FOOT + 20, SPIT = 90, SPIT_WIDE = 46;
 
     private final int mir;
-    /** The radius of the waterline on a round island; lobes push it out and pull it in by a tenth. */
+    /** The radius of the waterline on a round island; lobes push it out and pull it in by a seventh. */
     private final double R;
     private double[] prof;
     private final SimplexNoise nLobe, nRidge, nCrag, nDune, nBench, nFine;
@@ -103,8 +105,14 @@ final class Ascent extends Landform {
     /** A point's distance from the middle as the mountain's shape counts it: the island is not round. */
     private double rho(double u, double v, double r) {
         if (r < 100) return r;
-        double lobe = N.fbm(nLobe, u / r * 1.7, v / r * 1.7, 1, 2);
-        return r / (1 + 0.1 * lobe * N.smooth(100, 175, r));
+        double lobe = N.fbm(nLobe, u / r * 1.7, v / r * 1.7, 1, 2), p = r / (1 + 0.15 * lobe * N.smooth(100, 175, r));
+        // due south the foothills run on into the sea as one long tongue, and the way in is at its tip: far enough off that the
+        // whole mountain stands in the first look, crown and all
+        if (v > 0 && p > SPIT_FROM) {
+            double w = N.smooth(SPIT_WIDE, SPIT_WIDE * 0.3, Math.abs(u));
+            if (w > 0) p = SPIT_FROM + (p - SPIT_FROM) * (R - SPIT_FROM) / (R - SPIT_FROM + SPIT * w);
+        }
+        return p;
     }
 
     /** The big shape alone: what a way follows. */
@@ -126,9 +134,11 @@ final class Ascent extends Landform {
     /** The top of a sea stack standing on this spot, or 0 where there is only sea. */
     private double stack(double u, double v, double p) {
         if (p < R + 18 || p > R + 120) return 0;
+        // in a few clusters off the shore, never a ring of them
+        if (nDune.get(u / 140 + 9, v / 140) < 0.15) return 0;
         Hex h = N.hex(u, v, 6.5);
         double k = N.rnd(h.q(), h.r(), seed + 31);
-        return k < 0.05 && h.edge() < 0.9 ? WATER + 6 + N.rnd(h.q(), h.r(), seed + 32) * 22 : 0;
+        return k < 0.08 && h.edge() < 0.9 ? WATER + 6 + N.rnd(h.q(), h.r(), seed + 32) * 22 : 0;
     }
 
     private static double wrap(double a) {
@@ -233,7 +243,9 @@ final class Ascent extends Landform {
 
     @Override
     int half() {
-        return ((int) Math.ceil((R + 34) * 1.1 + 44) + 15) / 16 * 16;
+        // out to where the wind turns you back, on the roundest lobe and off the spit's tip, and a little sea beyond
+        double tip = SPIT_FROM + (R + 34 - SPIT_FROM) * (R - SPIT_FROM + SPIT) / (R - SPIT_FROM);
+        return ((int) Math.ceil(Math.max((R + 34) * 1.15, tip) + 44) + 15) / 16 * 16;
     }
 
     @Override
@@ -294,9 +306,9 @@ final class Ascent extends Landform {
     @Override
     void lay() {
         List<String> none = List.of();
-        // the way in: on the shore due south, where the land has climbed seven or so over the sea
+        // the way in: at the tip of the spit due south, where the land is still six or so over the sea
         double vm = FOOT;
-        while (bs(0, vm) > WATER + 8.4) vm += 0.5;
+        while (bs(0, vm) > WATER + 6.4) vm += 0.5;
         mouthV = (int) Math.round(vm);
         mouthFeet = (int) Math.round(bs(0, mouthV)) + 1;
 
