@@ -1080,7 +1080,8 @@ def refresh_faced(out=SWINGS):
 
 
 def faced_weapons():
-    """The one-faced weapons of the styles whose forged weapons strike with either face (arms_holds.FACES; the Toll)."""
+    """The one-faced weapons of the styles whose forged weapons strike with either face (arms_holds.FACES: the Toll, the
+    Chainblade's three hooks)."""
     import arms_holds as AH
     import arms_weapons as AW
     return sorted(r[0] for r in AW.CATALOG if r[8] in AH.FACES and AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2], r[0]))
@@ -1108,10 +1109,11 @@ def faced3(data):
     """Third person for a one-faced weapon of a two-faced style (arms_holds.FACES; Euan 2026-11-11, the Toll: "hitting
     with the wrong end"). The style's wrists were solved for weapons that strike with either face, and the carry from
     first person's blade onto the body (arms_rig4) lands some blows with the other one (four of the Maul's eleven: a
-    head that drags behind the hands in first person leads when the body's shorter lever swings it). For those moves
-    the one-faced weapon turns half round about its length on the way into the blow and back as it comes home: wrist3t
-    and wrist3st, the forged weapon's own keys turned so. data["faced3"] names the weapons that take them (and are
-    turned over in their hold, flipped3, so the style's other blows land with their face too)."""
+    head that drags behind the hands in first person leads when the body's shorter lever swings it; the Chainblade's
+    three chain strikes and riposte for its hooks). For those moves the one-faced weapon turns half round about its
+    length on the way into the blow and back as it comes home: wrist3t and wrist3st, the forged weapon's own keys turned
+    so. data["faced3"] names the weapons that take them; one whose side is the other from its style's FACES is also
+    turned over in its hold (flipped3: the Toll), so the style's other blows land with its face too."""
     import arms_holds as AH
     import arms_moves as A
     import power_casts as PC
@@ -1200,7 +1202,8 @@ def roll_pose(held, d, R, psi):
 def faced1(data):
     """First person for a one-faced weapon of a two-faced style (arms_holds.FACES; Euan 2026-11-11, the Toll: "hitting
     with the wrong end"). The style's keys are its forged weapon's, which strikes with either face, and its backhand
-    blows land with the face its hold turns away (five of the Maul's eleven). For those moves the one-faced weapon turns
+    blows land with the face its hold turns away (five of the Maul's eleven; the Chainblade's plunge and execution for
+    its hooks). For those moves the one-faced weapon turns
     half round about its length in the fist on the way into the blow and back as it comes home: "turn", one value a key
     (half turns, signed: the way round that keeps its head farther from the eye), played by WeaponRenderer on the hands'
     own clock (ArmsHands.roll). The hand and the arm never turn with it."""
@@ -1270,8 +1273,9 @@ def rig4_inject(out=SWINGS):
 # dagger, it's the sharp end that's stabbing. When it's the hammer, it's that end") ----------------------------------
 # What each style strikes with: a blade's edge (a single-edged one's own side, arms_holds.EDGES), an axe's bit, a
 # hammer's faces (never the flat its emblem is on; a one-faced head, the Toll's bell, only its own), a staff's ends, a
-# scythe's inner edge (drawn back through, a pull), and for a thrust the point, a fist's knuckles, a shield's face. Each is held to every move at its hit: the share of
-# the working part's motion that drives that part into the target (1: square on; under the bar: something else lands).
+# scythe's inner edge (drawn back through, a pull), and for a thrust the point, a fist's knuckles, a shield's face. Each
+# is held to every move at its hit: the share of the working part's motion that drives that part into the target (1:
+# square on; under the bar: something else lands).
 WORK = {"axe": "bit", "maul": "face", "warstaff": "end", "scythe": "inner", "gauntlets": "knuckles"}
 LEAD_MIN = {"edge": 0.7, "bit": 0.7, "face": 0.7, "end": 0.6, "inner": 0.3, "point": 0.8, "knuckles": 0.8, "shield": 0.7}
 
