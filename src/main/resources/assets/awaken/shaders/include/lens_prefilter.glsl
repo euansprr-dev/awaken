@@ -27,7 +27,11 @@ layout(location = 0) out vec4 fragColor;
 
 #include <awaken:lens_block.glsl>
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 void main() {
     // four bilinear taps, each the mean of a 2x2 block: a cheap box filter that keeps small lights from flickering

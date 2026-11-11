@@ -38,7 +38,11 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 float hg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 

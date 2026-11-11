@@ -45,7 +45,11 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 // The Sun Pass (SPEC §22 "Steady Light"; frame texel 17: z the block map's trusted reach in blocks, 0 without one;
 // w its lowest y): from o toward the light through the block map, block by block. Where the heightfield has one top
