@@ -50,6 +50,8 @@ public final class FloatCheck {
      */
     private static final class Chunk {
         final BitSet a = new BitSet(16 * 16 * V.H), b = new BitSet(16 * 16 * V.H), c = new BitSet(16 * 16 * V.H);
+        /** Bodies whose top is lower than their cell's ({@link Kinds#low}): they carry bodies, not small things. */
+        final BitSet low = new BitSet();
         final long[] unreached = new long[16 * 16 * V.H >> 6];
 
         void put(int i, int kind) {
@@ -173,14 +175,17 @@ public final class FloatCheck {
             // a column is mostly runs of one block: ask the table only when the block changes
             BlockState last = null;
             int lastKind = AIR;
+            boolean lastLow = false;
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = 0; y < V.H; y++) {
                 BlockState s = v.get(ox + x, y, oz + z);
                 if (s == null) continue;
                 if (s != last) {
                     last = s;
                     lastKind = Kinds.of(s);
+                    lastLow = lastKind == BODY && Kinds.low(s);
                 }
                 if (lastKind != AIR) c.put(idx(x, y, z), lastKind);
+                if (lastLow) c.low.set(idx(x, y, z));
             }
             grid.chunks[n] = c;
         });
@@ -212,6 +217,10 @@ public final class FloatCheck {
                     Floater fl = floater(grid, q, wx, y, wz);
                     if (fl != null) out.add(fl);
                 } else if (k == ON_GROUND) {
+                    if (y > 0 && c.low.get(idx(x, y - 1, z))) {
+                        out.add(new Floater(wx, y, wz, 1, "a plant or small thing half a block over a low slab or stair (" + named(land, wx, y, wz) + ")"));
+                        continue;
+                    }
                     if (held(grid, wx, y - 1, wz) || below(grid, wx, y - 1, wz, ON_GROUND)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a plant or small thing with nothing under it (" + named(land, wx, y, wz) + ")"));
                 } else if (k == AFLOAT) {

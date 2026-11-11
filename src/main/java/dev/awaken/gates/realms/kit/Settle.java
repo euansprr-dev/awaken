@@ -157,7 +157,8 @@ public final class Settle {
                 for (int y = 0; y < V.H; y++) {
                     if (k[base + y] != Kinds.ON_GROUND) continue;
                     int below = y > 0 ? k[base + y - 1] : Kinds.AIR;
-                    if (!holds(below) && below != Kinds.ON_GROUND) drop(a, y, c);
+                    // nothing under it, or a slab laid low: either way there is air under its foot
+                    if (!holds(below) && below != Kinds.ON_GROUND || below == Kinds.BODY && Kinds.low(v.b[base + y - 1])) drop(a, y, c);
                 }
             }
             for (int a = 1; a <= 16; a++) for (int c = 1; c <= 16; c++) {

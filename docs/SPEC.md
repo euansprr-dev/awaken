@@ -22164,6 +22164,12 @@ Euan caught fence posts standing in the air beside a road in the proof, and aske
    way, except a piece marked `mayOverlap` (a spire on its plinth) or `startsWay` (the ring a road starts from). The first full run
    found what no eye had: the pavilion's roof sat four blocks above its columns, every hut's finial stood over a hole in its dome, and
    a lamp cut the pavilion's middle post in two.
+4. **Half a block of air is air** (11 Nov; Euan, in the Cinder Workings: "There are some floating things here... we need to make
+   sure that never happens in any gates"). A slab laid low and a stair the right way up carry people and other bodies, but their
+   top is lower than their cell's, so a plant, a crystal, a candle or a drift set in the cell above stands half a block up
+   (`Kinds.low`). The float check reports it as a floater, `Settle` takes it out and counts it, and the rolled dungeons' small
+   things (`GeneratedCrawl.detail`) are set only where the floor is a whole block: until now they were set over the half steps the
+   depth pass had laid, which is what he saw. A cache a pack leaves makes the slab under it whole (`RealmRun.spoils`).
 
 ### 50.7 Realms (the foundation)
 

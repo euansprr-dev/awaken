@@ -170,7 +170,12 @@ final class RealmRun {
         for (int dy : new int[]{0, 1, -1, 2, -2, 3, -3}) {
             BlockPos at = center.above(dy);
             var here = level.getBlockState(at);
-            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || level.getBlockState(at.below()).getCollisionShape(level, at.below()).isEmpty()) continue;
+            var under = level.getBlockState(at.below());
+            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || under.getCollisionShape(level, at.below()).isEmpty()) continue;
+            // a floor that steps in half blocks: the slab under a cache is made whole, or the cache stands half a block up
+            if (under.getBlock() instanceof net.minecraft.world.level.block.SlabBlock && under.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM) {
+                level.setBlock(at.below(), under.setValue(net.minecraft.world.level.block.SlabBlock.TYPE, net.minecraft.world.level.block.state.properties.SlabType.DOUBLE), Block.UPDATE_CLIENTS);
+            }
             level.setBlock(at, GatesRegistry.CACHE.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             level.playSound(null, at, GatesRegistry.SND_CACHE.get(), SoundSource.BLOCKS, 1F, 1F);
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 24, 0.4, 0.5, 0.4, 0.03);
