@@ -24264,7 +24264,8 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   of the stack): so on screen it always runs from the fist to under the strip, in any window, layout or station, and
   in the world it lies back toward you across the table. It is drawn 1 to 1.8 times its model's length
   (`Rig.armStretch`), found exactly, at a fist 0.8 of a grid square across (times `StationView.armGrow`, one number
-  for the scene: 1 in every usual window, his narrow room beside JEI's panels included, up to 1.5 in one too small),
+  for the scene: 1 at a bench in every usual window, his narrow room beside JEI's panels included; about 1.5 at a
+  brewing stand at his GUI size, whose view opens to the widest there; 1.6 at most),
   each arm at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid (0.95),
   so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
   **What trembled:** the arm's line leaned by up to 0.08 against the pointer's speed, a speed taken a frame at a time

@@ -328,8 +328,12 @@ public final class StationView {
      * strip and {@link #ROOT_INSET} inside its sides, so the arm's cut end and all of its width there are under the strip.
      */
     public static final int ROOT_INSET = 34, ROOT_DROP = 24;
-    /** A station's arm may be drawn this much larger than a fist of {@link #FIST_SQUARES} to reach the strip in a small window. */
-    public static final double GROW_MOST = 1.5;
+    /**
+     * A station's arm may be drawn this much larger than its usual fist to reach the strip. A bench never needs it in a
+     * usual window. A brewing stand does at a small GUI (its view opens to the widest there, and the strip's line of
+     * sight falls almost under the eye): its arm is then about the size of your own, a fist a quarter of a block across.
+     */
+    public static final double GROW_MOST = 1.6;
 
     /** The screen x the far end of an arm is aimed at, for a hand of this {@code side} holding at screen x {@code sx}. */
     private static double rootX(Layout l, double sx, int side) {
