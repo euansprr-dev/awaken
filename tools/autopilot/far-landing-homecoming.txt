@@ -1,0 +1,95 @@
+# The Far Landing's post and homecoming (SPEC §67.6-67.10): out at the landing, the Tasks page with the skiff's row, a
+# city bell rung from afar with Kestrel's invitation, then a walk into Carillon to hear it (Kestrel and Hale). Then the
+# homecoming: the skiff comes down where you stand, lifts you home to the ridge (the city's bells from far off, Ilse),
+# and in Carillon every bell rings and six people thank you.
+# Seed 4245, a new world (rules 4). Run on CI: tools/tour-ci.sh tools/autopilot/far-landing-homecoming.txt 1500
+world autopilot_far_home survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken frontier ready
+# the Tasks page before the flight: the skiff is the next thing on the main path
+screen holo tasks
+tasks now
+wait 40
+shot fh_01_tasks_skiff_row
+screen close
+# straight to the landing (its land loads, its mooring is built)
+cmd awaken frontier goto landing
+wait 120
+cmd awaken frontier goto landing
+wait 120
+cmd awaken frontier goto landing
+wait 60
+cmd awaken frontier status
+wait 60
+# a city bell rung for you while you're out here: Kestrel's letter asks you to come and hear it
+cmd awaken frontier invite roost
+wait 15
+shotnow fh_02_kestrel_invites_you
+wait 200
+screen holo tasks
+tasks now
+wait 40
+shot fh_03_tasks_invited_row
+screen close
+# the second of its round is a plain letter
+cmd awaken frontier invite square
+wait 15
+shotnow fh_04_the_choirs_letter
+wait 200
+# into Carillon: the bell rings out over you, Kestrel and Hale come
+cmd awaken city view square
+wait 200
+shot fh_05_heard_in_the_city
+wait 60
+shot fh_06_hale_new_rack
+wait 160
+# the homecoming: back out to the landing, then the skiff comes for you where you stand
+cmd awaken frontier goto landing
+wait 100
+# off the mooring and onto open ground: dropped from above, so the walk never ends inside a hillside
+cmd tp @s ~24 ~40 ~24
+wait 140
+cmd awaken frontier homecoming
+wait 8
+shotnow fh_07a_skiff_came_for_you
+wait 22
+shotnow fh_07_at_its_helm
+wait 45
+shotnow fh_08_lifted_from_home
+wait 70
+shotnow fh_09_home_on_the_wind
+wait 40
+shotnow fh_10_carillon_name
+wait 360
+shot fh_11_set_down_at_the_ridge
+wait 120
+shot fh_12_bells_from_the_ridge_ilse
+wait 160
+# into the city: every bell, and their thanks
+cmd awaken city view square
+wait 200
+shot fh_13_every_bell_rings
+wait 80
+shot fh_14_bram_thanks_you
+wait 140
+shot fh_15_thanks_go_on
+wait 140
+shot fh_16_ilse_walked_down
+quit

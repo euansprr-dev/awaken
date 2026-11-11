@@ -21,19 +21,40 @@ with no local Java (Euan was playing): everything was compiled and tested throug
 | A home for two | The Hearth's invitation from the band, and made for you when a home is founded beside a partner with none | `HomeForTwo` |
 | Arrival | Awakened players are told when someone who hasn't awakened logs in | `TogetherModule` |
 | Riding Along (§55) | Retired: the package is gone; `RidingHooks` answers "nobody rides"; `folded` now means on a knee | `core/api/RidingHooks` |
+| Shared XP (12 Nov) | The party's setting: Equal (default), Half, Each their own; on the band and by command. Home and world XP is passed on wherever the others are; gate XP only to members who weren't in that gate (each has their own Satchel and Lord's pay). Firsts and errands stay your own | `SharedXp`, `Progression.grantShared` |
+| At the bell (12 Nov) | Party members near get a 30 s card, Come along or Stay here; the bell rings when they've answered | `Provings.open` |
+| At the gate (12 Nov) | The entry card's Fights row: "You: Full. Ana: Gentle." | `Runs.enter` |
+| The finishing film (12 Nov) | A blow your party strikes within 32 blocks of you plays the same film for you, framed from the striker | `FinishClient.sharedWith` |
+| Pings on the Atlas (12 Nov) | What the party points at shows on the Atlas while it shows on screen | `TogetherClient` |
 | Tests | `core.test.Pair`; `pair_` and `gentle_` tests, `alone_plays_the_same` | `TogetherTests` |
 | Tours | A server-played partner (`/awaken together partner ...`); `coop-full.txt`, `coop-gentle.txt` | `TourPartner`, `tools/autopilot` |
 
 ## Not built yet (each is named "not built yet" in SPEC §70)
 - The second keeper of a Hearth (owner's rights for one member): needs the Hearth's owner checks opened one by one.
-- `Go to <name>` as a destination that follows; pings on the Atlas; shared binocular marks.
+- `Go to <name>` as a destination that follows; shared binocular marks.
 - A read per player in `FightMind` (it still starts again on a new target; with the hold that is once a phrase).
 - Match my friend; shown the way; leads from a partner's finds; the Ours page; marks on the Tasks page.
-- The finishing film for everyone (the boss plan isn't built); the helm rule for the Far Landing (not merged here).
+- The helm rule for the Far Landing (held for the skiff redesign, not in build).
 - Hard-feat titles and records refusing Gentle (no counter is touched yet: list them with the progression owner).
 - The two-client CI probe and the wire baseline numbers (a test player's channel takes no custom payloads, so tests count sends in `TogetherNet`).
 - Dead branches left where code still asks `RidingHooks.rider` or `run.riding` (always false now): gates, progression,
   trials. Harmless; a cleanup for whoever next touches those files.
+
+## XP for builders and miners (12 Nov)
+Only kills fall off with level now; blocks and ores pay the same at any level, with higher ceilings (SPEC 4.3's note).
+One pool across everything outside gates is not built: the simulator swings by several hours between runs, so the
+exact numbers want a longer look than one hour gave.
+
+## Checked on CI (12 Nov, the second hand-back)
+- `pair_`, `gentle_`, `alone_`, `together_`, `progression_`, `proving_`, `gate_run`, `hearth_`, `descent_`: all 129
+  pass (run 43016268810 at f0e32e038). The new ones: `pair_shared_xp`, `pair_shared_xp_never_twice`,
+  `together_payloads_over_the_wire`.
+- The first run stopped the server at load: `defineInList` was given `List.of`, which throws when the config's own
+  check asks it about a missing value. Fixed (`Arrays.asList`); nothing else in the mod uses `defineInList` that way.
+- The full suite was not run here (the manager's, at merge).
+- Not proven by any of it: a real second client. Tests use two server-side players and tours a server-played
+  partner. A single-player game never writes its payloads, so only Together's own were read back through their
+  codecs; the rest of the mod's payloads meet a real wire for the first time when a second person joins.
 
 ## Checked on CI (11 Nov)
 - Compiles: `tools/check-ci.sh` runs on the branch from ccec4082f on.

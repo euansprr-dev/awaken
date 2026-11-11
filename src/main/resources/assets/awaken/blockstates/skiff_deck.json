@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/skiff_deck"
+    },
+    "axis=z": {
+      "model": "awaken:block/skiff_deck"
+    },
+    "axis=x": {
+      "model": "awaken:block/skiff_deck",
+      "y": 90
+    }
+  }
+}

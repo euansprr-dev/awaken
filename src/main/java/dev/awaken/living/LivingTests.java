@@ -413,7 +413,7 @@ final class LivingTests {
             // SPEC §21.12, the wide world (rules 3): bigger regions, ranks rolled by odds that shift with distance, calm ways everywhere
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain, 3);
-            h.assertTrue(RegionMap.RULES == 3 && map.pitch() == 1600, "a new world's regions are 1,600 apart: " + map.pitch());
+            h.assertTrue(RegionMap.RULES >= 3 && map.pitch() == 1600, "a new world's regions are 1,600 apart: " + map.pitch());
             h.assertTrue(map.levelAt(0, 0) == 1 && map.levelAt(240, 0) == 1, "the Commons' ramp starts at 1");
             int worstNear = 0, lowest800 = 99;
             for (int k = 0; k < 24; k++) {
