@@ -20,7 +20,7 @@ public final class MobsClient {
         dev.awaken.mobs.client.kit.KitConfig.register();
         // one clock for every told blow: what the ring and the glint are drawn from (SPEC §67.2)
         dev.awaken.core.api.Strikes.installComing(TellClock.INSTANCE);
-        dev.awaken.mobs.client.finish.FinishClient.init(modBus); // a boss's finishing blow, as it is shown (SPEC §67.4)
+        dev.awaken.mobs.client.finish.FinishClient.init(); // a boss's finishing blow, as it is shown (SPEC §67.4)
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);

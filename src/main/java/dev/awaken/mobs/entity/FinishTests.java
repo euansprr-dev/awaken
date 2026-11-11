@@ -1,20 +1,26 @@
 package dev.awaken.mobs.entity;
 
+import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.boss.KitMoves;
 import dev.awaken.mobs.boss.KitReach;
+import dev.awaken.mobs.boss.Kits;
+import dev.awaken.mobs.def.Bestiary;
+import dev.awaken.mobs.def.MobDef;
+import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.pig.Pig;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /** The Whole Boss Fight's GameTests on the mobs' side (SPEC §67.2, §67.4): the last stand, and the tick a blow lands. */
 public final class FinishTests {
@@ -23,7 +29,7 @@ public final class FinishTests {
     public static void register() {
         AwakenTests.register("fights_last_stand", 60, FinishTests::lastStand);
         AwakenTests.register("fights_last_stand_ends", AwakenBoss.BEATEN_TICKS + 80, FinishTests::lastStandEnds);
-        AwakenTests.register("fights_ring_lands", 200, FinishTests::ringLands);
+        AwakenTests.registerIsolated("fights_ring_lands", 200, FinishTests::ringLands);
     }
 
     /**
@@ -70,55 +76,64 @@ public final class FinishTests {
     }
 
     /**
-     * The ring a client draws closes on the tick the blow lands (SPEC §67.2): for the Ringer's Swing at a still body in
+     * The ring a client draws closes on the tick the blow lands (SPEC §67.2): for the Ringer's Swing at a still player in
      * its reach, the rule the client asks ({@link KitReach#firstTouch}) of the pose the blow commits to at its lock (the
-     * synced aim) names the active tick the server then strikes on. The test begins the move between two of the boss's ticks, so the strike may come a tick
-     * sooner than in play, never later.
+     * synced aim) names the active tick the server then strikes on. Counted as a client counts, from the move's own synced
+     * start; the test begins the move between two of the boss's ticks, so the strike may come a tick sooner than in play,
+     * never later.
      */
     static void ringLands(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        AwakenBoss boss = KitTests.spawn(level, h, "proving_ringer");
-        Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
-        pig.setPos(h.absoluteVec(new Vec3(4.5, 1, 7.0)));
-        pig.setNoAi(true);
-        pig.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);
-        pig.setHealth(1000);
-        level.addFreshEntity(pig);
-        boss.setTarget(pig);
-        h.assertTrue(boss.playKitString("swing_a", List.of()), "the Swing plays");
-        long began = level.getGameTime();
-        int[] said = {Integer.MIN_VALUE};
-        var kit = boss.kit();
-        KitMoves.Move move = kit.moves().get(kit.moves().index("swing_a"));
-        KitMoves.Played played = KitMoves.played(move, boss.kitSpeed(), boss.kitHold());
-        int wind = played.windup() + played.hold();
+        for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        p.setYRot(180F);
+        p.setYHeadRot(180F);
+        p.setYBodyRot(180F);
+        MobDef def = Bestiary.get("proving_ringer");
+        KitMoves.Table table = Kits.all().get("proving_ringer").moves();
+        KitMoves.Move move = table.get(table.index("swing_a"));
+        double back = (move.minRange() + move.maxRange()) * 0.5 + def.width * def.scale * 0.5 + 0.3;
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - back)), 10,
+                new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        int[] stage = {0}, said = {Integer.MIN_VALUE}, wind = {0}, active = {0};
+        long[] from = {0};
         double[] stood = new double[3];
         h.onEachTick(() -> {
-            boss.setTarget(pig);
-            // as a client does: the blow's committed pose, from where the body stands as its aim is first known
-            if (said[0] != Integer.MIN_VALUE || !boss.kitAimed()) {
-                if (!boss.kitAimed()) {
-                    stood[0] = boss.getX();
-                    stood[1] = boss.getY();
-                    stood[2] = boss.getZ();
-                }
+            boss.setTarget(p);
+            if (stage[0] == 0) {
+                FairTests.pool(p);
+                h.assertTrue(boss.playKitString("swing_a", List.of()), "the Swing plays");
+                KitMoves.Played played = KitMoves.played(move, boss.kitSpeed(), boss.kitHold());
+                wind[0] = played.windup() + played.hold();
+                active[0] = played.active();
+                long now = level.getGameTime();
+                from[0] = now + (boss.kitStart() - (int) now);
+                stage[0] = 1;
                 return;
             }
-            float yaw = boss.kitAimTurn(), r = yaw * net.minecraft.util.Mth.DEG_TO_RAD, step = boss.kitAimStep();
-            int k = KitReach.firstTouch(move, played.active(), stood[0] - net.minecraft.util.Mth.sin(r) * step, stood[1] + boss.kitAimDip(),
-                    stood[2] + net.minecraft.util.Mth.cos(r) * step, yaw, boss.kitLean(), boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP,
-                    move.motion().advance() * boss.kitAimRun(), move.motion().rise(), pig.getBoundingBox());
-            h.assertTrue(k >= 0, "the rule says the committed Swing reaches a body " + String.format("%.1f", boss.distanceTo(pig)) + " blocks off");
-            said[0] = wind + 1 + k;
-        });
-        h.succeedWhen(() -> {
-            boss.setTarget(pig);
-            h.assertTrue(pig.hurtTime > 0 || pig.getHealth() < 1000, "the bell lands");
-            long landed = level.getGameTime() - began;
-            h.assertTrue(said[0] != Integer.MIN_VALUE && landed - said[0] >= -1 && landed - said[0] <= 0,
-                    "the ring said tick " + said[0] + " and the blow landed on tick " + landed);
-            boss.discard();
-            pig.discard();
+            if (stage[0] != 1) return;
+            if (!boss.kitAimed()) {
+                stood[0] = boss.getX();
+                stood[1] = boss.getY();
+                stood[2] = boss.getZ();
+            } else if (said[0] == Integer.MIN_VALUE) {
+                // as a client does: the blow's committed pose, from where the body stood as its aim was first known
+                float yaw = boss.kitAimTurn(), r = yaw * net.minecraft.util.Mth.DEG_TO_RAD, step = boss.kitAimStep();
+                int k = KitReach.firstTouch(move, active[0], stood[0] - net.minecraft.util.Mth.sin(r) * step, stood[1] + boss.kitAimDip(),
+                        stood[2] + net.minecraft.util.Mth.cos(r) * step, yaw, boss.kitLean(), boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP,
+                        move.motion().advance() * boss.kitAimRun(), move.motion().rise(), p.getBoundingBox());
+                said[0] = k >= 0 ? wind[0] + 1 + k : -1;
+            }
+            String rule = said[0] == Integer.MIN_VALUE ? "its aim never came" : said[0] < 0 ? "the rule said it passes by" : "the rule said tick " + said[0];
+            if (FairTests.share(p) > 1.0E-3F) {
+                long landed = level.getGameTime() - from[0];
+                h.assertTrue(said[0] >= 0 && landed - said[0] >= -1 && landed - said[0] <= 0, "the Swing landed on tick " + landed + "; " + rule);
+                boss.discard();
+                stage[0] = 2;
+                h.succeed();
+            } else if (boss.kitPlaying() == null) {
+                h.assertTrue(false, "the Swing never landed on a still player " + String.format("%.1f", boss.distanceTo(p)) + " blocks off; " + rule);
+            }
         });
     }
 }

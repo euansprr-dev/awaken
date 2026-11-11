@@ -1,12 +1,14 @@
 # The Whole Boss Fight as built (SPEC §67), filmed on the duel stage (/awaken bosses duel stage, SPEC §47.3) in daylight.
-# 1. The ring on the blow's own clock: a frame a client tick through the Ringer's Swing and its Clang, standing where
-#    the blow reaches (the band, the ring white inside it, closed as the bell lands).
-# 2. A guard raised into the Swing in survival: the ring's burst on a deflect, or the word a miss gets.
-# 3. A worn-out blade's cracked icon on the hotbar.
-# 4. The last stand and the finishing blow: beaten at its last point (the plate's words), a heavy held and let go on it,
-#    the bars, the cut out of your eyes, the white frame, its own ending, the way back.
-# 5. The Hive Regent beaten: a flier comes down to be finished.
-# Run on CI: tools/tour-ci.sh tools/autopilot/boss-experience.txt
+# 1. The ring in a real fight, slowed to 5 ticks a second, a picture a half tick (clips/ring_struck: the guard never
+#    raised, the ring closes onto the blow; clips/ring_parried: the guard raised in the middle of the band).
+# 2. The band against the server: the guard raised on the ring's own clock (arms parry) at the band's early edge, its
+#    late edge, a tick too early and a tick too late. The log's "[fights] ring:" lines and its totals are the measure:
+#    every guard the ring showed white must come back DEFLECT.
+# 3. A worn-out blade beside a fresh one in the bag: the crack on its icon.
+# 4. The last stand and the finishing blow on the three pilots: the plate's words, a heavy held and let go, the bars,
+#    the cut out of your eyes, the white frame, its own ending, the cut back (clips/finish_ringer at half speed, a
+#    picture a tick; the Regent and the Colossus as frames).
+# Run on CI: tools/tour-ci.sh tools/autopilot/boss-experience.txt 2400
 world autopilot_boss_experience creative 20261111
 waitworld
 cmd gamerule send_command_feedback false
@@ -26,125 +28,60 @@ wait 20
 cmd kill @e[type=!minecraft:player,distance=..60]
 cmd awaken bosses duel stage proving_ringer
 wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
 
-# --- 1. the ring: you stand beside the stand-in, where the bell comes across, a longsword in hand ---
+# --- 1. the ring in a real fight, slowed: you stand in front of the Ringer in survival and it fights as it does ---
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
-cmd execute at @e[type=minecraft:pig,limit=1,sort=nearest] run tp @s ~0.7 ~ ~0.3 180 -12
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+cmd effect give @s minecraft:regeneration 100000 6 true
+cmd effect give @s minecraft:resistance 100000 3 true
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ ~ ~3.0 180 -10
 cmd gamemode survival
-wait 3
-cmd gamemode creative
-wait 20
 hud on
-shot ring_00_standing
-cmd awaken bosses duel play swing_a
-shotnow ring_swing_01
-shotnow ring_swing_02
-shotnow ring_swing_03
-shotnow ring_swing_04
-shotnow ring_swing_05
-shotnow ring_swing_06
-shotnow ring_swing_07
-shotnow ring_swing_08
-shotnow ring_swing_09
-shotnow ring_swing_10
-shotnow ring_swing_11
-shotnow ring_swing_12
-shotnow ring_swing_13
-shotnow ring_swing_14
-shotnow ring_swing_15
-shotnow ring_swing_16
-shotnow ring_swing_17
-shotnow ring_swing_18
-shotnow ring_swing_19
-shotnow ring_swing_20
-shotnow ring_swing_21
-shotnow ring_swing_22
-shotnow ring_swing_23
-shotnow ring_swing_24
-shotnow ring_swing_25
-shotnow ring_swing_26
-wait 70
-cmd awaken bosses duel play clang
-shotnow ring_clang_01
-shotnow ring_clang_02
-shotnow ring_clang_03
-shotnow ring_clang_04
-shotnow ring_clang_05
-shotnow ring_clang_06
-shotnow ring_clang_07
-shotnow ring_clang_08
-shotnow ring_clang_09
-shotnow ring_clang_10
-shotnow ring_clang_11
-shotnow ring_clang_12
-shotnow ring_clang_13
-shotnow ring_clang_14
-shotnow ring_clang_15
-shotnow ring_clang_16
-shotnow ring_clang_17
-shotnow ring_clang_18
-shotnow ring_clang_19
-shotnow ring_clang_20
-shotnow ring_clang_21
-shotnow ring_clang_22
-shotnow ring_clang_23
-shotnow ring_clang_24
-shotnow ring_clang_25
-shotnow ring_clang_26
-shotnow ring_clang_27
-shotnow ring_clang_28
-shotnow ring_clang_29
-shotnow ring_clang_30
-shotnow ring_clang_31
-shotnow ring_clang_32
-wait 90
-
-# --- 2. a guard raised into the Swing, in survival (the blow has to be able to land for the guard to answer it) ---
-cmd gamemode survival
-cmd effect give @s minecraft:regeneration 600 4 true
+wait 30
+shot ring_00_fight
+arms rate 5
+wait 2
+arms film ring_struck 70 0.5 2
+wait 74
+arms parry 2.5
+arms film ring_parried 80 0.5 2
+wait 84
+arms rate 20
 wait 10
-cmd awaken bosses duel play swing_a
-shotnow ring_parry_01
-shotnow ring_parry_02
-shotnow ring_parry_03
-shotnow ring_parry_04
-shotnow ring_parry_05
-shotnow ring_parry_06
-shotnow ring_parry_07
-shotnow ring_parry_08
-shotnow ring_parry_09
-shotnow ring_parry_10
-shotnow ring_parry_11
-shotnow ring_parry_12
-arms guard on
-shotnow ring_parry_13
-shotnow ring_parry_14
-shotnow ring_parry_15
-shotnow ring_parry_16
-shotnow ring_parry_17
-shotnow ring_parry_18
-shotnow ring_parry_19
-shotnow ring_parry_20
-shotnow ring_parry_21
-shotnow ring_parry_22
-shotnow ring_parry_23
-shotnow ring_parry_24
-shotnow ring_parry_25
-shotnow ring_parry_26
-shotnow ring_parry_27
-shotnow ring_parry_28
-shotnow ring_parry_29
-shotnow ring_parry_30
-arms guard off
-wait 60
 
-# --- 3. a worn-out blade: the crack on its icon ---
+# --- 2. the band against the server, at full speed: early edge, late edge, a tick early, a tick late ---
+arms parry 3.5
+wait 500
+shot band_00_early_edge
+arms parry 1.75
+wait 500
+shot band_01_late_edge
+arms parry 4.5
+wait 400
+shot band_02_too_early
+arms parry 0.75
+wait 400
+shot band_03_too_late
+arms parry off
 cmd gamemode creative
-cmd item replace entity @s hotbar.1 with awaken:wildhide_longsword[minecraft:damage=899]
 wait 10
-shot worn_00_hotbar
 
-# --- 4. the last stand and the finishing blow: a fresh Ringer, you three blocks in front of it ---
+# --- 3. a worn-out blade beside a fresh one, in the bag ---
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword[minecraft:damage=899]
+cmd item replace entity @s weapon.offhand with awaken:wildhide_longsword
+wait 10
+holo inv open
+wait 15
+shot worn_00_bag
+screen close
+wait 5
+cmd item replace entity @s weapon.offhand with minecraft:air
+
+# --- 4a. the Ringer's last stand and its finishing blow, at half speed, a picture a tick ---
 cmd awaken bosses duel stage proving_ringer
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
@@ -153,88 +90,151 @@ cmd gamemode survival
 wait 3
 cmd gamemode creative
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
-cmd item replace entity @s armor.head with awaken:wildhide_helmet
-cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
-cmd item replace entity @s armor.legs with awaken:wildhide_leggings
-cmd item replace entity @s armor.feet with awaken:wildhide_boots
 wait 20
 shot finish_00_before
 cmd damage @e[type=awaken:proving_ringer,limit=1] 1000000 minecraft:player_attack by @s
 wait 14
 shot finish_01_beaten
+arms rate 10
+wait 2
+arms film finish_ringer 130 1 2
+wait 4
 arms heavy 12
-shotnow finish_blow_01
-shotnow finish_blow_02
-shotnow finish_blow_03
-shotnow finish_blow_04
-shotnow finish_blow_05
-shotnow finish_blow_06
-shotnow finish_blow_07
-shotnow finish_blow_08
-shotnow finish_blow_09
-shotnow finish_blow_10
-shotnow finish_blow_11
-shotnow finish_blow_12
-shotnow finish_blow_13
-shotnow finish_blow_14
-shotnow finish_blow_15
-shotnow finish_blow_16
-shotnow finish_blow_17
-shotnow finish_blow_18
-shotnow finish_blow_19
-shotnow finish_blow_20
-shotnow finish_blow_21
-shotnow finish_blow_22
-shotnow finish_blow_23
-shotnow finish_blow_24
-shotnow finish_blow_25
-shotnow finish_blow_26
-shotnow finish_blow_27
-shotnow finish_blow_28
-shotnow finish_blow_29
-shotnow finish_blow_30
-shotnow finish_blow_31
-shotnow finish_blow_32
-shotnow finish_blow_33
-shotnow finish_blow_34
-shotnow finish_blow_35
-shotnow finish_blow_36
-shotnow finish_blow_37
-shotnow finish_blow_38
-shotnow finish_blow_39
-shotnow finish_blow_40
-shotnow finish_blow_41
-shotnow finish_blow_42
-shotnow finish_blow_43
-shotnow finish_blow_44
-shotnow finish_blow_45
-shotnow finish_blow_46
-shotnow finish_blow_47
-shotnow finish_blow_48
-shotnow finish_blow_49
-shotnow finish_blow_50
-shotnow finish_blow_51
-shotnow finish_blow_52
-shotnow finish_blow_53
-shotnow finish_blow_54
-shotnow finish_blow_55
-shotnow finish_blow_56
-shotnow finish_blow_57
-shotnow finish_blow_58
-shotnow finish_blow_59
-shotnow finish_blow_60
-wait 60
+wait 130
+arms rate 20
+wait 20
 shot finish_99_after
 
-# --- 5. the Hive Regent, a flier, beaten: it comes down ---
+# --- 4b. the Hive Regent, a flier: it comes down, and its finishing blow at full speed ---
 cmd awaken bosses duel stage hive_regent
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
-cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~0.4 ~ ~4.0 180 -14
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~0.4 ~ ~3.4 180 -14
 wait 20
 shot regent_00_before
 cmd damage @e[type=awaken:hive_regent,limit=1] 1000000 minecraft:player_attack by @s
 wait 30
 shot regent_01_beaten
+arms heavy 12
+shotnow regent_blow_01
+shotnow regent_blow_02
+shotnow regent_blow_03
+shotnow regent_blow_04
+shotnow regent_blow_05
+shotnow regent_blow_06
+shotnow regent_blow_07
+shotnow regent_blow_08
+shotnow regent_blow_09
+shotnow regent_blow_10
+shotnow regent_blow_11
+shotnow regent_blow_12
+shotnow regent_blow_13
+shotnow regent_blow_14
+shotnow regent_blow_15
+shotnow regent_blow_16
+shotnow regent_blow_17
+shotnow regent_blow_18
+shotnow regent_blow_19
+shotnow regent_blow_20
+shotnow regent_blow_21
+shotnow regent_blow_22
+shotnow regent_blow_23
+shotnow regent_blow_24
+shotnow regent_blow_25
+shotnow regent_blow_26
+shotnow regent_blow_27
+shotnow regent_blow_28
+shotnow regent_blow_29
+shotnow regent_blow_30
+shotnow regent_blow_31
+shotnow regent_blow_32
+shotnow regent_blow_33
+shotnow regent_blow_34
+shotnow regent_blow_35
+shotnow regent_blow_36
+shotnow regent_blow_37
+shotnow regent_blow_38
+shotnow regent_blow_39
+shotnow regent_blow_40
+shotnow regent_blow_41
+shotnow regent_blow_42
+shotnow regent_blow_43
+shotnow regent_blow_44
+shotnow regent_blow_45
+shotnow regent_blow_46
+shotnow regent_blow_47
+shotnow regent_blow_48
+shotnow regent_blow_49
+shotnow regent_blow_50
+wait 40
+
+# --- 4c. the Gearwright Colossus, the tall one: the same shot has to hold it ---
+cmd awaken bosses duel stage gearwright_colossus
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~0.4 ~ ~4.4 180 -18
+wait 20
+shot colossus_00_before
+cmd damage @e[type=awaken:gearwright_colossus,limit=1] 1000000 minecraft:player_attack by @s
+wait 30
+shot colossus_01_beaten
+arms heavy 12
+shotnow colossus_blow_01
+shotnow colossus_blow_02
+shotnow colossus_blow_03
+shotnow colossus_blow_04
+shotnow colossus_blow_05
+shotnow colossus_blow_06
+shotnow colossus_blow_07
+shotnow colossus_blow_08
+shotnow colossus_blow_09
+shotnow colossus_blow_10
+shotnow colossus_blow_11
+shotnow colossus_blow_12
+shotnow colossus_blow_13
+shotnow colossus_blow_14
+shotnow colossus_blow_15
+shotnow colossus_blow_16
+shotnow colossus_blow_17
+shotnow colossus_blow_18
+shotnow colossus_blow_19
+shotnow colossus_blow_20
+shotnow colossus_blow_21
+shotnow colossus_blow_22
+shotnow colossus_blow_23
+shotnow colossus_blow_24
+shotnow colossus_blow_25
+shotnow colossus_blow_26
+shotnow colossus_blow_27
+shotnow colossus_blow_28
+shotnow colossus_blow_29
+shotnow colossus_blow_30
+shotnow colossus_blow_31
+shotnow colossus_blow_32
+shotnow colossus_blow_33
+shotnow colossus_blow_34
+shotnow colossus_blow_35
+shotnow colossus_blow_36
+shotnow colossus_blow_37
+shotnow colossus_blow_38
+shotnow colossus_blow_39
+shotnow colossus_blow_40
+shotnow colossus_blow_41
+shotnow colossus_blow_42
+shotnow colossus_blow_43
+shotnow colossus_blow_44
+shotnow colossus_blow_45
+shotnow colossus_blow_46
+shotnow colossus_blow_47
+shotnow colossus_blow_48
+shotnow colossus_blow_49
+shotnow colossus_blow_50
+shotnow colossus_blow_51
+shotnow colossus_blow_52
+shotnow colossus_blow_53
+shotnow colossus_blow_54
+shotnow colossus_blow_55
+shotnow colossus_blow_56
+wait 40
 hud on
 quit
