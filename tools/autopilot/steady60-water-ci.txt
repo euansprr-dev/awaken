@@ -1,0 +1,69 @@
+# Water under the Air (Euan, 11 Nov, told that Cinematic's water mirrored the game's old sky: "that makes no sense
+# ... That would be inconsistent"). A pool forty-nine blocks square, seen across at a low angle where water is a mirror:
+# the morning with the sky and its block clouds over it, golden hour toward the sun, the night. Each view as the game's
+# own frame (lensdebug 1) and as Lens draws it. SPEC §22 "Water under the Air".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-water-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 0 10
+cmd forceload add -32 -32 32 64
+wait 200
+cmd fill -30 120 -6 30 120 64 minecraft:grass_block
+cmd fill -24 119 10 24 119 58 minecraft:stone
+cmd fill -24 120 10 24 120 58 minecraft:water
+cmd fill -3 121 59 3 126 59 minecraft:stone_bricks
+cmd fill 26 121 30 26 127 36 minecraft:oak_log
+cmd tp @s 0.5 121 7.5 0 6
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 3000
+look 0 6
+wait 200
+lensdebug 1
+shot w1_morning_across_game
+lensdebug 0
+shot w1_morning_across_lens
+look -40 9
+wait 60
+shot w2_morning_east_lens
+cmd tp @s 0.5 128 4.5 0 22
+cmd setblock 0 127 4 minecraft:glass
+wait 100
+look 0 22
+wait 60
+shot w3_morning_above_lens
+cmd tp @s 23.5 121 34.5 90 5
+wait 100
+cmd time set 11500
+look 90 5
+wait 200
+lensdebug 1
+shot w4_golden_sun_game
+lensdebug 0
+shot w4_golden_sun_lens
+cmd time set 12700
+wait 200
+shot w5_dusk_sun_lens
+cmd time set 18000
+look -90 6
+cmd tp @s -23.5 121 34.5 -90 6
+wait 200
+shot w6_night_lens
+quit
