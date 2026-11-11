@@ -32,6 +32,8 @@ final class FlightAir {
     private FlightAir() {}
 
     static final int WISP = 0, STREAK = 1, MOTE = 2;
+    /** A streak whose line passes nearer the eye than this isn't drawn; from here to {@link #CLEAR} it fades in. */
+    static final float NEAR = 2F, CLEAR = 5F;
 
     static void register(RegisterParticleProvidersEvent e) {
         e.registerSpriteSet(FrontierModule.P_WISP.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, WISP));
@@ -165,10 +167,15 @@ final class FlightAir {
             Vector3f along = new Vector3f(ax, ay, az).normalize();
             Vector3f toEye = new Vector3f((float) (cam.x - x), (float) (cam.y - y), (float) (cam.z - z));
             toEye.sub(new Vector3f(along).mul(toEye.dot(along)));
-            if (toEye.lengthSquared() < 1.0E-6F) return;
+            // a streak whose line passes close by the eye would fill the view as a pale band: it fades out inside five blocks
+            float off = toEye.length();
+            if (off < NEAR) return;
             toEye.normalize();
             Vector3f up = new Vector3f(toEye).cross(along);
+            float full = alpha;
+            alpha = full * Mth.clamp((off - NEAR) / (CLEAR - NEAR), 0F, 1F);
             extractRotatedQuad(state, camera, new Quaternionf().setFromNormalized(new Matrix3f(along, up, toEye)), partialTick);
+            alpha = full;
         }
 
         @Override
