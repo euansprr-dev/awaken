@@ -1,0 +1,40 @@
+# The Ossuary Floor (SPEC 50.9, "A stand"): one great room of waves, its Warden, the Lord. The camera is in creative, so no wave comes;
+# the walk shows the room.
+world autopilot_realm_ossuary_floor creative 20261113
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the Mouth: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:ossuary_floor 144
+need realm
+hud off
+wait 30
+wait 300
+look 0 -8
+cmd awaken gate realm_at MOUTH 0 0 0 3
+look 0 10
+wait 200
+shot ossuary_floor_mouth
+cmd awaken gate realm_leg AMBUSH 0 8 4
+wait 200
+shot ossuary_floor_stand
+cmd awaken gate realm_leg AMBUSH 0 -8 5
+wait 200
+shot ossuary_floor_stand_back
+cmd awaken gate realm_leg WARDEN 0 7 3
+wait 200
+shot ossuary_floor_warden
+cmd awaken gate realm_leg LORD 0 9 4
+wait 200
+shot ossuary_floor_lord
+quit

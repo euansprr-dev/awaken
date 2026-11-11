@@ -753,6 +753,28 @@ final class ArmourTests {
         h.assertTrue(be.work() == null && f != null && f.set().equals("starfall") && f.quality() >= ForgeSong.Quality.MASTERWORK.ordinal(),
                 "fitted, every verb done well, got " + f);
 
+        // a stand builds one suit at a time (SPEC §44.14): with the Starfall cuirass standing on it, nothing of Dreamsteel
+        // starts here, every other set's offers say the stand is held, and it is free again once the last piece is off
+        act(p, pos, ArmourPayloads.START, ArmourSet.DREAMSTEEL.ordinal() * 4 + 3, 0F, 0F);
+        h.assertTrue(be.work() == null && be.held() == ArmourSet.STARFALL && be.standing() == 1, "the stand holds Starfall: Dreamsteel doesn't start on it");
+        var locked = ArmourForge.offers(p, be);
+        h.assertTrue(locked.offers().stream().allMatch(o -> ArmourSet.values()[o.piece() / 4] == ArmourSet.STARFALL
+                        ? (o.flags() & ArmourPayloads.HELD_OTHER) == 0
+                        : (o.flags() & (ArmourPayloads.HELD_OTHER | ArmourPayloads.CAN)) == ArmourPayloads.HELD_OTHER),
+                "every other set's pieces say the stand is held, and none of them can be made");
+        h.assertTrue(locked.offers().stream().filter(o -> (o.flags() & ArmourPayloads.ON_STAND) != 0).count() == 1
+                        && locked.offers().stream().anyMatch(o -> o.piece() == ArmourSet.STARFALL.ordinal() * 4 + 1 && (o.flags() & ArmourPayloads.ON_STAND) != 0),
+                "the cuirass, and only it, stands on the stand");
+        act(p, pos, ArmourPayloads.TAKE, 1, 0F, 0F); // the helm's slot: nothing stands there
+        h.assertTrue(be.standing() == 1, "taking an empty slot takes nothing");
+        act(p, pos, ArmourPayloads.TAKE, 2, 0F, 0F); // the cuirass alone
+        h.assertTrue(be.held() == null && be.standing() == 0 && p.getInventory().hasAnyMatching(st -> {
+            Forged mine = st.get(ArmourContent.FORGED.get());
+            return mine != null && mine.set().equals("starfall");
+        }), "the last piece off and in your pack: the stand is free");
+        h.assertTrue(ArmourForge.offers(p, be).offers().stream().noneMatch(o -> (o.flags() & (ArmourPayloads.HELD_OTHER | ArmourPayloads.ON_STAND)) != 0),
+                "and nothing says held any more");
+
         act(p, pos, ArmourPayloads.START, ArmourSet.DREAMSTEEL.ordinal() * 4 + 3, 0F, 0F);
         w = be.work();
         w.stageStart = level.getGameTime() - (long) gold;

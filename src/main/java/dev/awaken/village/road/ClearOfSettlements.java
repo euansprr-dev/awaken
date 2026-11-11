@@ -38,7 +38,7 @@ public record ClearOfSettlements(int reach) implements PlacementModifier {
     public static final MapCodec<ClearOfSettlements> CODEC = Codec.intRange(0, 16).fieldOf("reach").xmap(ClearOfSettlements::new, ClearOfSettlements::reach);
 
     /** How far past its band a road's banks can grade ({@link RoadBanks#WIDTH}, rounded up). */
-    static final int BANKS = 8;
+    public static final int BANKS = 8;
 
     /**
      * What the region decorating a chunk holds round it (vanilla's pyramid): references only out to {@link #REFERENCES}
@@ -107,7 +107,7 @@ public record ClearOfSettlements(int reach) implements PlacementModifier {
      * Whether the layout uses any land within {@code r} of (x, z), in the world. Every other block is enough: nothing it
      * paints is one wide. A layout is asked in its own plan coordinates (offsets from its origin), as the painter asks it.
      */
-    static boolean touches(SettlementPaint.Layout layout, int x, int z, int r) {
+    public static boolean touches(SettlementPaint.Layout layout, int x, int z, int r) {
         int px = x - layout.originX(), pz = z - layout.originZ();
         for (int dx = -r; dx <= r; dx += 2) {
             for (int dz = -r; dz <= r; dz += 2) {

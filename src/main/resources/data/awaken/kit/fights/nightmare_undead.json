@@ -3,7 +3,7 @@
  "id": "nightmare_undead",
  "moves": "nightmare_undead",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "idle",
   "move": "wake"

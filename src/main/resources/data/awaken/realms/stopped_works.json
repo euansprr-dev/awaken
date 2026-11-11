@@ -6,7 +6,10 @@
   "theme": "clockwork_foundry",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {

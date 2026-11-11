@@ -330,7 +330,8 @@ def sow_clips(r):
     death = r.clip("death", 1.8)
     death.rot("body", [(0, 0, 0, 0), (0.25, -8, 0, 0), (0.7, 18, 0, 10), (1.2, 8, 0, 78), (1.8, 6, 0, 84)])
     death.pos("body", [(0, 0, 0, 0), (0.25, 0, 1, 0), (0.7, 0, -4, 0), (1.2, 0, -6, 0), (1.8, 0, -7, 0)])
-    death.rot("head", [(0, 0, 0, 0), (0.25, -30, 0, 0), (0.7, 20, 0, 0), (1.3, 30, 0, -10), (1.8, 32, 0, -12)])
+    # the head lolls level as it lands: pitched down it buried chin and tusks and propped the body off the ground
+    death.rot("head", [(0, 0, 0, 0), (0.25, -30, 0, 0), (0.7, 16, 0, 0), (1.3, 4, 0, -10), (1.8, 0, 0, -12)])
     death.rot("jaw", [(0, 0, 0, 0), (0.25, 30, 0, 0), (1.0, 18, 0, 0), (1.8, 22, 0, 0)])
     for nm in ("fl", "fr"):
         death.rot("leg_" + nm, [(0, 0, 0, 0), (0.7, -60, 0, 0), (1.8, -50, 0, 0)])
@@ -880,12 +881,26 @@ def coil_clips(r):
     hurt.rot("head", [(0, 0, 0, 0), (0.06, -22, -16, 0), (0.25, 5, 5, 0), (0.45, 0, 0, 0)])
     for k, sg in enumerate(segs[:5]):
         hurt.rot(sg, [(0, 0, 0, 0), (0.07 + 0.03 * k, 0, (18 if k % 2 else -18), 0), (0.45, 0, 0, 0)])
+    # it rears, drops out of the air and lies belly down, its curve flat on the ground (SPEC §47.12): the head is the root
+    # of the whole coil, so it only drops (5.5 px puts the neck's 7 px on the ground), leans and lifts its snout off the
+    # ground (the jaw hangs open against it); at the end seg0 takes the head's turn back, so the coil lies flat
     death = r.clip("death", 1.8)
-    death.pos("head", [(0, 0, 0, 0), (0.3, 0, 3, 0), (1.2, 0, -9, 0), (1.8, 0, -9.5, 0)])
-    death.rot("head", [(0, 0, 0, 0), (0.3, -36, 0, 0), (1.1, 14, 0, -50), (1.8, 10, 0, -80)])
-    death.rot("jaw", [(0, 0, 0, 0), (0.3, 44, 0, 0), (1.8, 30, 0, 0)])
-    for k, sg in enumerate(segs):
-        death.rot(sg, [(0, 0, 0, 0), (0.4, 6, (12 if k % 2 else -12), 0), (1.2, 2, (34 if k % 2 else -30), 0), (1.8, 0, (30 if k % 2 else -28), 0)])
+    death.pos("head", [(0, 0, 0, 0), (0.3, 0, 3, 0), (1.2, 0, -5.5, 0), (1.8, 0, -5.5, 0)])
+    death.rot("head", [(0, 0, 0, 0), (0.3, -36, 0, 0), (1.1, -8, 0, -10), (1.8, -7, 0, -14)])
+    death.rot("seg0", [(0, 0, 0, 0), (0.4, 6, -12, 0), (1.2, 8, -26, 12), (1.8, 7, -28, 14)])
+    death.rot("jaw", [(0, 0, 0, 0), (0.3, 44, 0, 0), (1.1, 10, 0, 0), (1.8, 6, 0, 0)])
+    # the coil thins toward the tail: from seg2 its middle slopes down 3 degrees, so the tail lies on the ground too
+    for k, sg in enumerate(segs[1:], start=1):
+        side = 30 if k % 2 else -28
+        sag = -3 if k == 2 else 0
+        death.rot(sg, [(0, 0, 0, 0), (0.4, 6, (12 if k % 2 else -12), 0), (1.2, sag, side + 4 * (1 if k % 2 else -1), 0), (1.8, sag, side, 0)])
+    for wg, drop in (("wing2_l", 54), ("wing2_r", -62), ("wing5_l", 50), ("wing5_r", -54)):
+        death.rot(wg, [(0, 0, 0, 0), (0.5, 0, 0, -drop * 0.3), (1.3, 0, 0, drop * 1.05), (1.8, 0, 0, drop)])
+    for k in range(3):
+        death.rot(f"streamer{k}", [(0, 0, 0, 0), (1.3, -8, 0, 0), (1.8, -5, 0, 0)])
+    # the crest lies back along the neck, clear of the ground
+    for k in range(4):
+        death.rot(f"plume{k}", [(0, 0, 0, 0), (1.8, 16, 0, 0)])
     for rf in ruffs:
         death.rot(rf, [(0, 0, 0, 0), (1.8, 30, 0, 0)])
 
@@ -1183,8 +1198,9 @@ def antler_clips(r):
     death = r.clip("death", 1.8)
     death.rot("body", [(0, 0, 0, 0), (0.3, -10, 0, 0), (0.75, 14, 0, 6), (1.25, 6, 0, 80), (1.8, 4, 0, 86)])
     death.pos("body", [(0, 0, 0, 0), (0.3, 0, 2, 0), (0.75, 0, -6, 0), (1.25, 0, -10, 0), (1.8, 0, -11, 0)])
-    death.rot("neck", [(0, 0, 0, 0), (0.3, -24, 0, 0), (0.9, 40, 0, 0), (1.8, 50, 0, 10)])
-    death.rot("head", [(0, 0, 0, 0), (0.3, -30, 0, 0), (1.2, 20, 0, 0), (1.8, 24, 0, 0)])
+    # the head comes down turned, so the lower antler lies along the ground beside it, never into it (SPEC §47.12)
+    death.rot("neck", [(0, 0, 0, 0), (0.3, -24, 0, 0), (0.9, 40, 8, 0), (1.8, 55, 20, 10)])
+    death.rot("head", [(0, 0, 0, 0), (0.3, -30, 0, 0), (1.2, 26, 0, -6), (1.8, 32, 0, -10)])
     for nm in ("fl", "fr"):
         death.rot("leg_" + nm, [(0, 0, 0, 0), (0.75, -70, 0, 0), (1.8, -40, 0, 0)])
         death.rot("shin_" + nm, [(0, 0, 0, 0), (0.75, 90, 0, 0), (1.8, 60, 0, 0)])
@@ -1474,7 +1490,11 @@ def mire_clips(r):
         hurt.pos(nm, [(0, 0, 0, 0), (0.04, 0, -2.5, 0), (0.3, 0, -2.5, 0), (0.4, 0, 0, 0)], interp="lin")
     death = r.clip("death", 1.8)
     death.rot("body", [(0, 0, 0, 0), (0.3, -10, 0, 0), (1.0, 6, 0, 30), (1.5, 2, 0, 160), (1.8, 0, 0, 178)])
-    death.pos("body", [(0, 0, 0, 0), (0.3, 0, 3, 0), (1.0, 0, 0, 0), (1.5, 0, 4, 0), (1.8, 0, 6, 0)])
+    death.pos("body", [(0, 0, 0, 0), (0.3, 0, 3, 0), (1.0, 0, 0, 0), (1.5, 0, 3, 0), (1.8, 0, 4, 0)])
+    # on her back she crushes her bog's reeds flat under her and lies on the mud and her eyes (SPEC §47.12)
+    for k in range(5):
+        bend = -82 if k % 2 == 0 else 82
+        death.rot(f"reed{k}", [(0, 0, 0, 0), (1.2, 0, 0, 0), (1.6, bend * 0.85, 0, 0), (1.8, bend, 0, 0)])
     death.rot("jaw", [(0, 0, 0, 0), (0.3, 30, 0, 0), (1.8, 14, 0, 0)])
     death.scale("sac", [(0, 1, 1, 1), (0.3, 1.4, 2.6, 1.4), (1.0, 0.8, 0.6, 0.8), (1.8, 0.8, 0.6, 0.8)])
     for nm in ("arm_l", "arm_r", "thigh_l", "thigh_r"):
@@ -2023,7 +2043,9 @@ def moth_clips(r):
     hurt.rot("body", [(0, 0, 0, 0), (0.06, -10, 8, 10), (0.25, 4, -3, -4), (0.45, 0, 0, 0)])
     death = r.clip("death", 1.8)
     for wb, side, lag in WINGS:
-        death.rot(wb, [(0, 0, 0, side * -14), (0.3, 0, 0, side * -60), (0.9, 0, 0, side * 20), (1.4, 0, side * 10, side * 70), (1.8, 0, side * 10, side * 80)])
+        # it falls on its left side: those wings close a little further, to lie on the ground, not in it (SPEC §47.12)
+        shut = 90 if side > 0 else 80
+        death.rot(wb, [(0, 0, 0, side * -14), (0.3, 0, 0, side * -60), (0.9, 0, 0, side * 20), (1.4, 0, side * 10, side * (shut - 10)), (1.8, 0, side * 10, side * shut)])
     death.rot("body", [(0, 0, 0, 0), (0.4, -20, 0, 20), (1.2, 30, 0, 70), (1.8, 20, 0, 90)])
     death.pos("body", [(0, 0, 0, 0), (0.4, 0, 2, 0), (1.4, 0, -8, 0), (1.8, 0, -9, 0)])
     death.rot("abdomen", [(0, 0, 0, 0), (1.8, 30, 0, 0)])
@@ -2497,7 +2519,9 @@ def mycelord_clips(r):
     death = r.clip("death", 1.8)
     death.rot("body", [(0, 0, 0, 0), (0.4, 8, 0, 0), (1.3, -86, 0, 6), (1.8, -88, 0, 8)])
     death.pos("body", [(0, 0, 0, 0), (0.4, 0, -1, 0), (1.3, 0, -8, 0), (1.8, 0, -9, 0)])
-    death.rot("cap", [(0, 0, 0, 0), (1.3, -10, 0, 0), (1.6, 6, 0, 0), (1.8, 4, 0, 0)])
+    # the cap hits the ground first and tips back onto its rim, top up, so it never stands on edge in the ground like a
+    # wheel (SPEC §47.12)
+    death.rot("cap", [(0, 0, 0, 0), (1.0, -8, 0, 0), (1.3, 40, 0, 0), (1.55, 66, 0, 0), (1.8, 62, 0, 0)])
     for nm, sg in (("arm_l", 1), ("arm_r", -1)):
         death.rot(nm, [(0, 0, 0, 0), (0.4, -30, 0, sg * -20), (1.3, -100, 0, sg * -50), (1.8, -100, 0, sg * -60)])
     death.scale("cap", [(0, 1, 1, 1), (1.8, 1.02, 0.85, 1.02)])
@@ -2673,9 +2697,10 @@ def owl_clips(r):
         hurt.rot(nm, [(0, 0, 0, 0), (0.06, 0, 0, sg * -40), (0.3, 0, 0, 0)])
     death = r.clip("death", 1.0)
     death.rot("body", [(0, 0, 0, 0), (0.25, -16, 0, 0), (0.7, 0, 0, 88), (1.0, 0, 0, 90)])
-    death.pos("body", [(0, 0, 0, 0), (0.25, 0, 1, 0), (0.7, 0, -2.5, 0), (1.0, 0, -2.5, 0)])
-    for nm, sg in (("wing_l", 1), ("wing_r", -1)):
-        death.rot(nm, [(0, 0, 0, 0), (0.5, 0, 0, sg * -70), (1.0, 0, 0, sg * -50)])
+    death.pos("body", [(0, 0, 0, 0), (0.25, 0, 1.5, 0), (0.7, 0, 0.5, 0), (1.0, 0, 1, 0)])
+    # it falls on its left side: that wing folds in under it as it goes over, the right one stays spread (SPEC §47.12)
+    death.rot("wing_l", [(0, 0, 0, 0), (0.2, 0, 0, -36), (0.45, 0, 0, 12), (0.7, 0, 0, 26), (1.0, 0, 0, 30)])
+    death.rot("wing_r", [(0, 0, 0, 0), (0.5, 0, 0, 70), (1.0, 0, 0, 50)])
     death.rot("head", [(0, 0, 0, 0), (0.7, 20, 0, 0), (1.0, 24, 0, 0)])
     death.scale("disc", [(0, 1, 1, 1), (0.8, 1, 1, 1), (1.0, 1, 0.3, 1)])
 

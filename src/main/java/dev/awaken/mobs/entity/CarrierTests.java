@@ -189,8 +189,8 @@ public final class CarrierTests {
             Carriers.wave(level, owner, waveAt, 1F, 6F, 4F, BoltKind.PLAIN, null, 0);
         });
         h.onEachTick(() -> {
-            // a jump's arc, held: over the crest for the whole pass
-            if (jumper.isAlive()) jumper.setPos(h.absoluteVec(new Vec3(11.5, 2.1, 4.5)));
+            // a jump's first tick, held (0.45 over the ground): already over the crest, so a jump as it reaches you clears it
+            if (jumper.isAlive()) jumper.setPos(h.absoluteVec(new Vec3(11.5, 1.45, 4.5)));
         });
         h.runAfterDelay(Carriers.VOLLEY_FALL + 2 + 14, () -> {
             h.assertTrue(jumper.getHealth() == hp, "a wave jumped over leaves you unhurt");

@@ -1,0 +1,7 @@
+{
+  "values": [
+    {"id": "awaken:proving_ringer", "required": false},
+    {"id": "awaken:bell_warden", "required": false},
+    {"id": "awaken:toll_ghoul", "required": false}
+  ]
+}

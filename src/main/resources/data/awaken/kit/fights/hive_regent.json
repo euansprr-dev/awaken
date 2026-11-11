@@ -78,7 +78,7 @@
    }
   ]
  },
- "stance": 240,
+ "stance": 130,
  "intro": {
   "pose": "idle",
   "move": "emerge"

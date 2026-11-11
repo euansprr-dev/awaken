@@ -1,0 +1,51 @@
+# The second doline (-1672 79 -248) and the cleft over the lake (-2472 70 -280) from floating-doline.txt, on their own:
+# the runner's GPU hung on the way to them twice (VK_TIMEOUT Lost VkDevice, runs 42952822036 and 42952822218).
+# No night vision here. Look for: no moss over the hole, no sheet of scree a block under the cleft's lip over the lake.
+# ci knobs: PACK=perf,world TECTONIC=awakened RD=10
+#   tools/tour-ci.sh tools/autopilot/floating-cleft.txt 2400
+world floating_cleft creative 3761469094609221698
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud off
+opt fov 70
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamemode spectator
+wait 40
+
+# ---- the doline at -1672 79 -248 (its carpet at -1674 64 -250) ----
+cmd tp @s -1672 150 -248
+wait 2400
+cmd tp @s -1672 84 -238 180 55
+wait 200
+shot doline2_above
+cmd tp @s -1670 66 -246 135 30
+wait 100
+shot doline2_floor
+# ---- the cleft at -2472 70 -280 over the lake (its lip at y 69, z -279..-272) ----
+cmd tp @s -2472 150 -262
+wait 900
+cmd tp @s -2470 66 -252 180 -8
+wait 200
+shot cleft_lake_north
+cmd tp @s -2486 73 -270 -110 18
+wait 100
+shot cleft_lake_side
+quit

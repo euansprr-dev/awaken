@@ -245,6 +245,30 @@ CHAIN_MARGIN = 0.85  # a leading strike's blade middle stays this far inside the
 CHAIN_TIP_Y = 0.4  # and its tip (a maul's head) this near the middle of the screen's height: read, not a sliver
 CHAIN_SET = 0.9  # and a chained strike's set
 HEAVY_SET = 0.75  # and a heavy's, further in: a charge holds it for as long as the press lasts
+# An overhead heavy held raised instead (Euan 2026-11-11, the Maul's charge: "it's just holding it in front of the character
+# instead of actually like bringing it up as if you were going to hit down"). Kept in view by HEAVY_SET, its draw back
+# stopped with the haft upright, leaning ahead of low fists: a weapon presented, not lifted. Raised, the charge holds the
+# whole draw back, the haft rising steeply out of the top of the frame as a lifted hammer's does (its head is over your
+# own), and the weapon is carried down and in so the fists sit high in view: `grip` their place on the screen (ndc x, y)
+# and depth (blocks ahead, negative), `tilt` the haft's top turned toward the sword shoulder (degrees). As high as the arms
+# allow: each rises to its fist from under its own corner of the frame (WorldBody.drawFist), and the off arm, crossing from
+# the far corner to a two-handed haft, would show its end on the bottom edge with the fists any higher (its end stays 1.29
+# under the middle through the hold and the drive; the shipped strikes reach 1.2). The drive takes the move off on the
+# blow's own power curve, so the hit and everything after it are the cut's own.
+# The Axe too (Euan 2026-11-11, "Yes, the Axe too"): one-handed, it is drawn back over the sword shoulder, the haft angled
+# up to the top right corner with the whole head in it (upright with the fist this high its head left the frame: a raised
+# axe has to be seen to be one), a little further out so its chop down runs at the Maul's pace (235 degrees a tick at the
+# hit against the Maul's 227; nearer, 259). Its arm alone limits it: its end stays 1.37 under the middle in the hold and
+# 1.2 through the drive (the old hold's reached 1.14).
+# Then the blades that strike down (Euan 2026-11-11: "It should actually charge in the direction it's about to go in"):
+# the Longsword and the Greatblade, each blade pointing back up the line its chop comes down (screen-turned by `tilt`), and
+# stood up by `pitch` (degrees the top turns back toward the eye before the turn): at their full draw back they still
+# leaned 16 and 30 degrees toward the target, a blade presented. The Longsword, one-handed and short, keeps its whole
+# blade in view up to the top right corner, leaning 8 degrees; the Greatblade, long and two-handed, rises out of the top
+# with its guard and lower blade in view, leaning 14, its off arm's end 1.27 under the middle (upright it would be 1.23).
+RAISED_HEAVY = {"maul": dict(grip=(0.42, -0.1, -0.6), tilt=25.0), "axe": dict(grip=(0.2, -0.1, -0.75), tilt=45.0),
+                "longsword": dict(grip=(0.4, 0.0, -0.7), tilt=20.0, pitch=6.0),
+                "greatblade": dict(grip=(0.3, -0.1, -0.65), tilt=30.0, pitch=18.0)}
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 FULL_SET = 0.7  # a cut's set has its blade's middle this far out on the side it comes from (of the way to the screen's edge)
 FULL_END = 0.75  # and its carry takes it this far out on the far side: edge to edge, never a half cut
@@ -762,10 +786,11 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     # the last of a chain carries on out of the frame, unless the other hand waits over there (the daggers' strike 5)
     pre, stop = _full_arc(held, at, u, pre, stop, lag, roll0, drop, nxt is None and not _gives_room(st, mv),
                           form in ("chop", "slam", "rise"))
-    if chained(st, mv) or mv == "heavy":
+    raised = RAISED_HEAVY.get(sid) if mv == "heavy" else None
+    if chained(st, mv) or (mv == "heavy" and raised is None):
         # a chained strike's set stays in view too: a shorter draw back from where the last one ended, never a dip
         # out of the frame and a blade that reappears only on the hit. A heavy's set is what a charge holds for as long
-        # as the press lasts, overheads included (Euan 2026-11-09: "you can't even see the blade anymore")
+        # as the press lasts (Euan 2026-11-09: "you can't even see the blade anymore"), unless it is held raised
         pre = _on_screen_set(held, at, pre, kn["creep"], lag, roll0, HEAVY_SET if mv == "heavy" else CHAIN_SET)
     if nxt is not None:
         # a strike that leads on: its follow-through ends on the screen (the next strike starts from there, in view)
@@ -774,6 +799,8 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
                                                        nxt[0] if nxt else None)
     lag0 = lag * 0.6
     cocked = at(-pre, lag0, roll0 * 0.85)
+    # held raised: the move from the lever's own set (where a charge waits) to the raised hold
+    held_up = _raise(held, at(-pre - kn["creep"], lag, roll0), raised) if raised else None
     # the figure-eight (round 5): a far strike is the lever's path with the weapon end for end; a strike whose next one
     # leads with the other end carries on round off the hit, half a turn by the next press, so the other end comes over
     # to lead it (and a strike left there turns on round as it goes home)
@@ -828,12 +855,12 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         return out(L.lerp_pose(start, cocked, k))
     if t < c:  # the set: held there, a hair further back, the spring loaded
         k = L.ease_out_sine((t - reach) / max(1e-6, c - reach)) if reach > 0 else 1.0
-        return out(at(-pre - kn["creep"] * k, lag0 + (lag - lag0) * k, roll0 * (0.85 + 0.15 * k)))
+        return out(_raised(held, at(-pre - kn["creep"] * k, lag0 + (lag - lag0) * k, roll0 * (0.85 + 0.15 * k)), held_up, 1.0))
     th0 = -pre - kn["creep"]
     if t < hit:  # the drive: slow out of the set, explosive into the hit, the wrist whipping the blade square
         x = (t - c) / max(1e-6, hit - c)
         p = x ** kn["power"]
-        return out(at(th0 * (1 - p), lag * (1 - x) ** 1.5, roll0 * (1 - x) ** 1.6, x))
+        return out(_raised(held, at(th0 * (1 - p), lag * (1 - x) ** 1.5, roll0 * (1 - x) ** 1.6, x), held_up, 1 - p))
     # the twirl: from the hit, the blow whirling straight on and slowing (1 - (1 - x)^2), round by the next press (from
     # the bite's end the cut stopped dead and the turn set off again: a stop and go; eased in, a second peak past the hit)
     spun = 0.0
@@ -925,6 +952,26 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     # up from below, easing out of its speed along the path as seen (rise_home)
     k = seen_k(held, far, seen_out, lowered, rest, L.ease_out_sine((x - share) / (1 - share)))
     return out(L.lerp_pose(lowered, rest, k), spun)
+
+
+def _raise(held, pose, raised):
+    """A heavy's raised hold (RAISED_HEAVY) from the lever's set: (the grip's move in view space, the haft's tilt)."""
+    d, R = pose
+    x, y, z = raised["grip"]
+    to = np.array([x * -z / F_ * ASP, y * -z / F_, z])
+    return to - (np.array([L.HX, L.HY, L.HZ]) + d + R @ held.grip), raised["tilt"], raised.get("pitch", 0.0)
+
+
+def _raised(held, pose, lift, k):
+    """The pose carried k of the way into the raised hold: its top stood back toward the eye (pitch), turned toward the
+    sword shoulder about the grip, then the grip moved (authored right-handed; a left hand's view mirrors it). The pose
+    itself without one."""
+    if lift is None or k <= 0:
+        return pose
+    d, R = pose
+    move, tilt, pitch = lift
+    R2 = L.rz(-tilt * k) @ (L.rx(pitch * k) @ R if pitch else R)
+    return d + R @ held.grip - R2 @ held.grip + move * k, R2
 
 
 def _lifted(held, pose):

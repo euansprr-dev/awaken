@@ -3,7 +3,7 @@
  "id": "nightmare_arthropod",
  "moves": "nightmare_arthropod",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "idle",
   "move": "wake"

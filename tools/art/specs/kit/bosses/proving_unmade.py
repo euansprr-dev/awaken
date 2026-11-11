@@ -268,7 +268,7 @@ MOVE_SOUNDS = {"rise": {"swing": "roar"}, "give": {"swing": "impact"}, "dark": {
 FIGHT = {
     # a duel (SPEC §47.3): phrases of three and four, its long arms covering the ground round it
     "duel": True,
-    "stance": 340,  # tuned with the sim (SPEC §47.7)
+    "stance": 190,  # tuned with the sim (SPEC §47.7)
     "intro": {"pose": "kneel", "move": "rise"},
     "phases": [
         # on the whole bastion: the swats in twos and threes, the Keystone, the Stamp, Pier Run, the Fall

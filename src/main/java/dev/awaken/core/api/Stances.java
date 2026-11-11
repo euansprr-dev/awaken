@@ -23,6 +23,26 @@ public final class Stances {
         default boolean focused(Entity e) {
             return false;
         }
+
+        /** A duel body (SPEC §47.3): its stance shows from the first time it fights, empty or not. */
+        default boolean duel(Entity e) {
+            return false;
+        }
+
+        /** Its stance is going back down now (left alone past its grace, not fighting). */
+        default boolean draining(Entity e) {
+            return false;
+        }
+
+        /** The local fighter's blows that have landed on it. */
+        default int struck(Entity e) {
+            return 0;
+        }
+
+        /** Client ticks since a blow last filled it (huge when none has). */
+        default int sinceRise(Entity e) {
+            return Integer.MAX_VALUE;
+        }
     }
 
     private static Source source = new Source() {};
@@ -41,5 +61,21 @@ public final class Stances {
 
     public static boolean focused(Entity e) {
         return source.focused(e);
+    }
+
+    public static boolean duel(Entity e) {
+        return source.duel(e);
+    }
+
+    public static boolean draining(Entity e) {
+        return source.draining(e);
+    }
+
+    public static int struck(Entity e) {
+        return source.struck(e);
+    }
+
+    public static int sinceRise(Entity e) {
+        return source.sinceRise(e);
     }
 }

@@ -55,6 +55,25 @@ public class FittingStandBlockEntity extends BlockEntity {
         changed();
     }
 
+    /**
+     * The set this stand is holding: the set of the pieces standing on it (SPEC §44.14). A stand builds one set at a time;
+     * the first piece set on it locks it to that set, and it is free again when the last piece is taken off. Null: bare.
+     */
+    public @Nullable ArmourSet held() {
+        for (ItemStack s : suit) {
+            ArmourLooks.Look look = ArmourLooks.of(s);
+            if (look != null) return look.set();
+        }
+        return null;
+    }
+
+    /** How many pieces stand on it. */
+    public int standing() {
+        int n = 0;
+        for (ItemStack s : suit) if (!s.isEmpty()) n++;
+        return n;
+    }
+
     /** The set all four pieces on the stand share, or null. */
     public @Nullable ArmourSet wholeSet() {
         ArmourSet set = null;

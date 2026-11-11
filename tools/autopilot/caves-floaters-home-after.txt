@@ -1,0 +1,100 @@
+# Nothing floats in a cave (SPEC §42.4 "Settled"): the after pictures. caves-floaters-home.txt on the code before the fix
+# (run 42948506726) stood at each spot below to see a floating skin piece; this stands at the same spots, with the same view, in a
+# world made fresh with the fix, so each pair of pictures is the same rock before and after. Then the census round each spot.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-floaters-home-after.txt 3000
+world caves_floaters_home_after creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+hud off
+
+# h_look0: the Ochre Deep's first: cave_lichen_middle at -476 105 -2353 before the fix
+cmd awaken caves at -473 102 -2348
+wait 20
+waitpassage
+wait 600
+cmd tp @s -473.50 102.00 -2348.50 155.1 -21.6
+wait 120
+shot h_look0_after
+cmd execute positioned -476 105 -2353 run awaken caves floaters 5
+wait 40
+
+# h_look1: cave_lichen_middle (a sprawl over an alcove's open side) at -481 102 -2263 before the fix
+cmd awaken caves at -476 101 -2264
+wait 20
+waitpassage
+wait 600
+cmd tp @s -476.50 101.00 -2264.50 65.1 1.4
+wait 120
+shot h_look1_after
+cmd execute positioned -481 102 -2263 run awaken caves floaters 5
+wait 40
+
+# h_look2: cave_lichen_middle at -603 125 -2321 before the fix
+cmd awaken caves at -606 126 -2322
+wait 20
+waitpassage
+wait 600
+cmd tp @s -606.50 126.00 -2322.50 -65.1 24.1
+wait 120
+shot h_look2_after
+cmd execute positioned -603 125 -2321 run awaken caves floaters 5
+wait 40
+
+# d_look0: a Delvers' mouth's cave: wet_streaks at -464 77 -2139 before the fix
+cmd awaken caves at -465 76 -2134
+wait 20
+waitpassage
+wait 600
+cmd tp @s -465.50 76.00 -2134.50 -155.1 1.4
+wait 120
+shot d_look0_after
+cmd execute positioned -464 77 -2139 run awaken caves floaters 5
+wait 40
+
+# r_rootways: the Rootways: wet_streaks at -433 46 -2017 before the fix
+cmd awaken caves at -431 45 -2019
+wait 20
+waitpassage
+wait 600
+cmd tp @s -431.50 45.00 -2019.50 16.9 2.0
+wait 120
+shot r_rootways_after
+cmd execute positioned -433 46 -2017 run awaken caves floaters 5
+wait 40
+
+# r_pale_halls: the Pale Halls: wet_streaks at -261 84 -1857 before the fix
+cmd awaken caves at -262 86 -1852
+wait 20
+waitpassage
+wait 600
+cmd tp @s -262.50 86.00 -1852.50 -155.1 33.3
+wait 120
+shot r_pale_halls_after
+cmd execute positioned -261 84 -1857 run awaken caves floaters 5
+wait 40
+
+quit

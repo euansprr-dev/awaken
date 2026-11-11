@@ -1023,7 +1023,7 @@ MOVE_SOUNDS = {"more": {"swing": "cast", "impact": ""}, "closer": {"swing": "roa
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 300,
+    "stance": 160,
     "intro": {"pose": "idle", "move": "wake"},  # it stands with every head bowed, and they lift one by one
     "phases": [
         {"pool": [

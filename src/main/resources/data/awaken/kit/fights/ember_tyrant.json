@@ -3,7 +3,7 @@
  "id": "ember_tyrant",
  "moves": "ember_tyrant",
  "duel": true,
- "stance": 240,
+ "stance": 130,
  "intro": {
   "pose": "idle",
   "move": "roar"

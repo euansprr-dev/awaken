@@ -732,7 +732,7 @@ MOVE_SOUNDS = {"fall": {"impact": "slam"}, "drop": {"swing": "roar", "impact": "
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 300,
+    "stance": 160,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor as if dropped there, and gets up on its fingers
     "phases": [
         {"pool": [

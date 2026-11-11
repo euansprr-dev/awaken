@@ -40,6 +40,11 @@ public final class ArmsRules {
     public static final float GUARDED_POSTURE = 0.5F;
     /** A finisher (an Execution) on a broken Lord: at least this share of its health, at most that one. */
     public static final float LORD_FINISHER_MIN = 0.10F, LORD_FINISHER_MAX = 0.15F;
+    /**
+     * The same on a duel body (SPEC §47.3 "Breaks a fight is made of"): its stance breaks two or three times a minute in a
+     * fight of three or four, so each break takes a smaller share and the fight stays its length.
+     */
+    public static final float DUEL_FINISHER_MIN = 0.07F, DUEL_FINISHER_MAX = 0.10F;
     /** The latency hold on a guardable hit is at most this many ticks. */
     public static final int GRACE_MAX = 3;
     /** Soft focus: how far a strike may turn toward its target; looking further than this away for so long drops it. */
@@ -239,6 +244,36 @@ public final class ArmsRules {
         return d.distance() * (1 - tick / n) / sum;
     }
 
+    // ---- the clash (SPEC §25 "The clash"; the boss plan's part three) -----------------------------------------------
+
+    /** A deflect's size, sent in its answer's aux: a light blow turned aside, a heavy one, the one that broke its stance. */
+    public static final int CLASH_LIGHT = 0, CLASH_HEAVY = 1, CLASH_BREAK = 2;
+
+    /**
+     * What a deflect of each size does to the fighter (client): the freeze on the hands and the struck body (ms), the
+     * view's kick (degrees up and of roll, settling over {@code kickTicks}), the view's shake (degrees, over
+     * {@code shakeTicks}), the field of view's snap (a fraction, over {@code fovTicks}), the white-gold light's size (0:
+     * none) and the frame's edges flashing. {@link #TODAY} is the deflect before it, kept for the switch.
+     */
+    public record Clash(int freezeMs, float kickPitch, float kickRoll, int kickTicks, float shake, int shakeTicks, float fov, int fovTicks,
+                        float light, boolean edges) {}
+
+    public static final Clash TODAY = new Clash(100, 1.8F, 1.2F, 7, 0F, 0, -0.035F, 9, 0F, false);
+    private static final Clash[] CLASHES = {
+            new Clash(110, 2.6F, 1.6F, 7, 0.35F, 4, -0.045F, 9, 1.9F, false),
+            new Clash(160, 4.0F, 2.4F, 8, 0.55F, 6, -0.06F, 11, 2.4F, false),
+            new Clash(200, 4.5F, 2.8F, 9, 0.75F, 8, -0.08F, 14, 2.4F, true)};
+
+    /** The clash of this size (CLASH_*); anything else is {@link #TODAY}. */
+    public static Clash clash(int size) {
+        return size >= 0 && size < CLASHES.length ? CLASHES[size] : TODAY;
+    }
+
+    /** The size of a deflect: the blow that broke its stance outranks a heavy, a heavy outranks a light. */
+    public static int clashSize(Strikes.Kind kind, boolean broke) {
+        return broke ? CLASH_BREAK : kind == Strikes.Kind.HEAVY ? CLASH_HEAVY : CLASH_LIGHT;
+    }
+
     // ---- posture -----------------------------------------------------------------------------------------------------
 
     /** What a creature's stance holds, by what the band says it is. */
@@ -329,10 +364,13 @@ public final class ArmsRules {
 
     /**
      * An Execution on a Lord (a move with a bossCap) is the finisher (SPEC §47.3): between {@link #LORD_FINISHER_MIN} and
-     * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight.
+     * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight;
+     * on a duel body, which breaks twice as often, {@link #DUEL_FINISHER_MIN} to {@link #DUEL_FINISHER_MAX}.
      */
-    public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord) {
-        return lord && bossCap > 0 ? Mth.clamp(damage, maxHealth * LORD_FINISHER_MIN, maxHealth * LORD_FINISHER_MAX) : damage;
+    public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord, boolean duel) {
+        if (!lord || bossCap <= 0) return damage;
+        return duel ? Mth.clamp(damage, maxHealth * DUEL_FINISHER_MIN, maxHealth * DUEL_FINISHER_MAX)
+                : Mth.clamp(damage, maxHealth * LORD_FINISHER_MIN, maxHealth * LORD_FINISHER_MAX);
     }
 
     /** Whether a strike may turn toward its focus: the turn needed, clamped, in degrees (0 when beyond the help). */

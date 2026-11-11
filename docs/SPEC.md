@@ -998,6 +998,10 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
+  the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
+- `dev.awaken.core.api.GroundPiece` (§28.9, §21.11) — `usesGround(WorldGenLevel, ChunkGenerator, x, z, r)`: a structure piece whose
+  box is coarser than its land (road legs, settlements) says whether it paints, clears or grades any land within r of (x, z).
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
   (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
   underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
@@ -4291,11 +4295,49 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 
 ### 17.11 The Wilds: Tether Spires
 - **The site** (`RuinKind.SPIRE`, structure `awaken:precursor_tether_spire`, set `precursor_tether_spires`: random spread 24
-  chunks, separation 8): a Precursor pylon in forests, taigas, meadows, cherry groves, windswept forests and hills,
+  chunks, separation 8, then room between them, below): a Precursor pylon in forests, taigas, meadows, cherry groves, windswept forests and hills,
   stony peaks (`#awaken:has_structure/precursor_tether_spire`; with Awakened Lands also elderwood, lumen forest,
   shattered highlands, frost spires). Never jungle: its canopy hides the spire and leans into the climb. New chunks
   only; it is a landmark (`LandmarkKind.TETHER_SPIRE`, the last ordinal), the Scanner's and the Horizon's, and warded
   (`#awaken:warded`: blocks placed in it crumble).
+- **Room between them** (11 Nov 2026; Euan: "there are too many too often, and I don't like it because it means it's too
+  close to my base to be able to actually look good ... a bit more distance between each of them"; `above.ruin.RuinSpacing`).
+  The spires and the sky platforms, the blue rope sites, keep their distance. (In his world, New World V20, the two
+  nearest his fire were sky platforms, 255 and 268 blocks off and 439 apart; the nearest spire was 771 off; its made land
+  stood 9 platforms on 10 spots and 6 spires on 34.) Both sets' grids are unchanged. A spot keeps its place unless another
+  spot of its own kind whose land would take one stands nearer than **320** blocks (two spires) or **600** (two sky
+  platforms) and outranks it (a hash of the seed and the chunk); a spire also yields to a sky platform within **250**
+  that keeps its own place. A spot on land its kind never stands on takes nothing from its neighbours, so where spires are
+  few nearly every one stays, and where every spot is forest about half do. Asked while chunks are made
+  (`PrecursorRuinStructure.findGenerationPoint`: the spot's own land first, then the neighbours' that matter, each the
+  land's height and biome at the stub, exactly as generation asks it) and by the locator (`RuinLocator.near`: the same
+  samples, from the same budget), so every needle (the Way Up's, the windways, the Scanner's omens, the Horizon's markers,
+  the Observatory) names only spots that stand.
+  - **Made land keeps its own.** Only a chunk deciding its starts for the first time asks the rule. A chunk decides them
+    before any chunk within 8 of it is built, and a spire reaches 2 chunks from its start (a platform with its rig 2), so
+    no ruin is cut off where old land meets new; every spot is one today's grid already had, so nothing doubles up, and
+    two sites either side of a seam are never nearer than the old rule allowed (the extra room is promised in new land
+    only). The locator reads a spot the rule passes over from its chunk (a loaded one at once, a saved one off the server
+    thread, answered on a later call; `RuinLocator.standsFromBefore`): a start there stands from before and is named like
+    any other. Monuments (§64), wonders and dream visions read the sets' own `isStructureChunk`, which is unchanged, so
+    none of them moves in a world made before.
+  - **The numbers** (the grids' own maths over 44 km squares, seeds 4242, 4245 and Euan's; "forest land" takes every spire
+    spot, "land like Euan's" one in 5.5, a platform's 9 in 10): two spires apart, least 144 → 320, median 284 → 382;
+    from anywhere to the nearest spire, median 156 → 230, worst about 345 → 660-725 (land like Euan's: median 400 → 460-480,
+    worst 1,300-1,430 → 1,430-1,880, one within 1,500 of 99.9% of the land, so the Way Up's climb keeps its place in
+    reach); two sky platforms apart, least 274 → 601, median 537 → 695; from anywhere to a platform, median 305 → 385,
+    worst about 865 → 1,060-1,240; a spire and a platform, least 16 → 250. All the blue sites: 8.6 → 4.3 a square
+    kilometre in forest land, 3.1 → 2.0 in land like Euan's (median to the next 330 → 435). In the game's own land (the
+    census on CI, seed 4245, a 12 km square, real biomes, run 42964071307): spires 167 → 97 (2.16 → 1.25 a square
+    kilometre), apart least 187 → 320, median 339 → 420, from anywhere median 339 → 428, worst 1,637 → 1,716, one within
+    1,500 of 99.7% → 99.2% of the land; sky platforms 147 → 86, apart least 336 → 611, median 538 → 695, from anywhere
+    median 293 → 379, worst 803 → 1,110; all the blue sites 314 → 183, apart least 32 → 256, median 262 → 401.
+  - Dev: `/awaken above ruin spacing` (on or off), `... census [radius]` (both rules over a square round you, and what
+    really stands in the loaded chunks: on its grid, whole, how near the next), `... goto passed|kept` (70 east of the
+    nearest spire spot the rule passes over or keeps), `... verify <n>` (makes the starts of the n nearest spots of each
+    kind and names every one where the game disagrees with the rule its start was decided under), `... old|new` (new
+    chunks follow today's rule alone until the server stops: the seam check). `/awaken above ruin locate` names the nearest spire too. Tour `tools/autopilot/ruin-spacing.txt`.
+    Test `ruins_spacing`.
 - **The blueprint** (`RuinBuilder.spire`, 25 x 66 x 25): a plaza of panel 11 out (wide enough that trees rooted past it
   can't lean into the platforms) with a ring of light at 7 (the start line), brass lines, the outer cache and 1-3
   broken machines; a 3x3 column of plating with lit seams every 5 and a wider foot; five 3x3 platforms
@@ -4327,7 +4369,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 ### 17.12 The Wilds: windways
 Held at the edge of the land the client has (the edge hold, §28.9): a windway's carry eases down before land the client doesn't have yet.
 - **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
-  is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
+  is linked to its nearest within 1,100 (`Windways.MAX_LINK`; with the room between platforms, §17.11, the nearest is
+  600 to about 1,000 away and 99.5% of platforms still have one within 1,100); a pair has two lanes, one each way, each 10 to the
   right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
 - **A lane** (`Windways.between`): from 34 out of the first platform's centre (past its islands, 19 out), 6 under its
   deck, so a run off the deck's rim with wings open drops into it; to 5 short of the next platform's centre with the
@@ -5618,6 +5661,27 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
 - Review of the first real-generation tour (CI 40458312323): wonders generate through the feature as intended (statues, ring stones, a black house with graves, found by walking up with the toast); it showed a wonder on a Precursor ruin's floor and one on stilts
   at a cliff, so a wonder's site keeps three chunks clear of any structure that may start (`Terrain.structureNear`, from the generator state's structure sets), a secret one chunk, a column whose real ground is more than three blocks from the
   heart's level is left out, the foot is built up at most four blocks, and what grows through a wonder's ground (leaves, logs, tall grass: `Kind.clear` blocks round the heart) is cleared. Not handled: a road passing through a wonder.
+- **Ground others stand on** (Euan's playtest 11 Nov, build 5c930ea6d: "a camp here that is broken... a ton of things are floating"): a cold camp at (-1543, 77, -584) in
+  his New World V20 stood at the noise's ground over a hillside a delve mouth had already cut away (the mouth is a structure at `underground_structures`, before
+  any surface feature), and a cairn at (-1031, 67, -648) over a carver's pit. The noise still says ground where a cave place, a carver, a road or a settlement
+  has changed it or will. So:
+  - A **secret** stands on the ground of each of its columns: every column's own noise ground, no more than 2 over or under the heart's (steeper gives the spot
+    up for the next attempt), its blocks and cache moved with it (`Plan.foot`, `columns`). And it is written whole or not at all: `SecretFeature.keepsOff` is
+    asked by every chunk under it and reads only what each of them holds alike (a secret is 13 blocks wide at most, so its chunks lie beside each other), and
+    keeps it off when (1) a wonder's ground is within reach (38 + 2) of it; (2) any structure referenced from its chunks (or those beside its blocks within 2,
+    that all of them hold) has a piece whose box crosses its blocks plus 2, from 6 under its lowest block to 12 over its highest; a piece that says which land it
+    uses (`core.api.GroundPiece`: road legs and settlements, whose boxes are their whole rasters) is asked that instead, with a road's 8 of banks; (3) a start
+    one of its chunks can't read (past the 8 chunks the FEATURES step holds) is named; (4) a column's ground block is air, water or ice, or not a whole
+    block, or the block under it is air or water (a carver's pit, a pond: carving is part of the terrain step, done in every chunk beside). One that kept off is
+    simply not there: `WonderWatch` counts a secret found only when at least half its plan's blocks stand in the world.
+  - A **wonder** keeps off a cave place open to the sky (a mouth, a sinkhole, a mine's adit) whose box crosses its footprint and cleared ground plus 3, from 6
+    under to 12 over its ground: `Terrain.cut`, through `delve.api.CaveGround` (§34.1, each nearby candidate start's own site search), and tries its next
+    spot. Its sites are a full terrain's (`WonderFeature.terrain`, worldgen and the server); `quickTerrain` (no probes) is for a census and a command's first
+    look, cached apart (`Terrain.seesCuts`). The server thread asks `Wonders.near(..., wait false)`: a region not worked out yet is worked out on a background
+    thread and counts from the next ask (the ward and finding start a second later), so a region's first look never stalls a tick. `wonder list|goto` pick
+    regions by the quick look, nearest first, then ask each as worldgen does.
+  - New chunks only: a secret or wonder an old world already holds stays as written; one whose site moves under the new rule may be written in part where
+    the old and the new land meet. Not handled: a road passing through a wonder (as before), and a carver's pit under a wonder (its columns are left out, as before).
 - Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
   is one piece standing on the ground in all three families), `living_secret_sites`.
 - **Chains** (Build 6, the part done): five more for the lands the first nine skip (`data/awaken/awaken/quest/`): Silk on the Road (band 2, Pell, spiders on a road), Iron in the Ranks (band 2, Gus, zombies in scrap iron), Ash on the Wind
@@ -7910,6 +7974,112 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
     cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
     `arms_heavy` is still the rising cut.
+  - *The Maul's charge is held raised* (Euan 2026-11-11: "it's just holding it in front of the character instead of actually
+    like bringing it up as if you were going to hit down"). Cut into view, its overhead's draw back stopped with the haft
+    upright and leaning 29 degrees ahead of fists low in the corner: a hammer presented, not lifted. A raised head can't be
+    in view (a lifted hammer's is over your own), so the charge holds the whole draw back, the haft rising steeply out of the
+    top of the frame and turned 25 degrees toward the sword shoulder, and the weapon is carried down and in until the fists
+    sit just above the crosshair's height on the sword side (`swing_studio.RAISED_HEAVY`: the grip at ndc 0.42, -0.1, 0.6
+    blocks ahead). That is as high as the arms allow: each rises to its fist from under its own corner of the frame, and the
+    off arm, crossing from the far corner to the haft, would show its end on the bottom edge with the fists any higher (its
+    end stays 1.29 under the middle through the hold and the drive; the shipped strikes reach 1.2). The drive takes the raise
+    off on the blow's own power curve: the head crashes into view from above and meets the same hit pose as before, now at
+    207 degrees a tick against 79 (the drive is the same 1.05 ticks over a longer arc); the carry and the way home move by a
+    few hundredths of the screen. Third person already lifted the Maul over the head for its charge (its rig was solved
+    before the cut into view and was left as it is). The Axe, the Longsword and the Greatblade are raised too (next two
+    entries). Filmed in the game on CI
+    (`tools/autopilot/arms-maul-charge.txt`, run 42965422512): the draw lifts the head out of the top in about ten ticks,
+    the hold keeps the haft rising out of the top-right corner with both forearms in view (as large as the other heavies'
+    held arms), and the release brings the head in from above to the hit, which the server confirmed. Held 0.75 blocks out
+    instead, the fists would sit barely higher than before for arms a fifth smaller: the lift was worth more.
+  - *The Axe's charge is held raised too* (Euan 2026-11-11, "Yes, the Axe too"). Its cut-into-view set held the axe up in
+    front, the top leaning 27 degrees ahead and 36 in toward the middle. Raised the Maul's way (upright, the fist this high)
+    its head left the frame, and a one-handed axe raised has to be seen to be one, so it is drawn back over the sword
+    shoulder instead: the haft angled up to the top right corner about 45 degrees off upright with the whole head in that
+    corner, the fist at the crosshair's height on the sword side (`RAISED_HEAVY`: the grip at ndc 0.2, -0.1, 0.75 blocks
+    ahead, turned 45 degrees). Held that far out, its chop down meets the same hit at 235 degrees a tick, the Maul's pace
+    (227); nearer it would be 259. Its arm alone limits it: the arm's end stays 1.37 under the middle in the hold and 1.2
+    through the drive (the old hold's reached 1.14). The hit key is unchanged; the follow-through's first ticks run up to
+    0.15 blocks lower (the arc into them is longer), and the way home is the old one. Third person held the shared draw (the
+    blade low and back to the blade side) and then loosed the Axe's own chop from overhead, so it now holds its own: the
+    chop's first key, high over the shoulder, trembling (`arms_axe_heavy_charge`, made in `arms_moves.py` since the Axe is
+    not rigged; `ArmsClips.OWN_CHARGE`). Test: `arms_feel_rules` holds the fist on the sword side by the middle's height
+    and the hand's up tipped toward that shoulder, never ahead. Filmed in the game on CI (same tour, run 42970162115): the
+    draw carries the head up into the top right corner in about nine ticks; the hold keeps the haft angled up to that corner
+    with the head in it (its top just cut by the edge), the fist and forearm in the lower right and no arm end on the
+    bottom edge; the release brings the axe in from the corner to the hit, which the server confirmed. From behind, the
+    charge holds the arm up with the axe dropped back over the shoulder (the heavy's own wrist, `ArmsWrist.charge`) and
+    chops from there with no snap.
+  - *A charge goes the way its blow will* (Euan 2026-11-11, of the other heavies that come down: "If they go in that
+    direction when doing a charged hit then yeah. It should actually charge in the direction it's about to go in"). Every
+    heavy's hold was measured against its blow (`archetypes.json` `blow`, the screen way the baked blade crosses the hit).
+    The side cuts (Katana, Glaive, Precursor) were already held out on the side they sweep from, the release running
+    along the blow (0.96 to 1.0 of the way); the thrusts (Spear, Rapier, Daggers, Chainblade, Gauntlets) were drawn back,
+    their grips 0.15 to 0.5 blocks nearer the eye than at the hit; the Shieldblade's bash holds the shield out to the side
+    before it drives in; the War-staff's heavy is a whole spin whose head comes over the top, and its low hold is where the
+    spin starts. Those are unchanged. The ones that chop down were held upright and presented: the Longsword's blade
+    leaned 29 degrees ahead at the right edge with its fist under the middle, the Greatblade's 30. Now each blade points
+    back up the line its chop will come down (its screen way 0.97 to 1.0 against the blow), stood up by a new `pitch` in
+    `RAISED_HEAVY` (degrees the top turns back toward the eye, at their full draw back they still leaned 16 and 30
+    degrees ahead) with the fist at the crosshair's height: the Longsword, one-handed and short, shows its pommel, guard and
+    most of its blade, the point running out of the top by the right corner (grip ndc 0.4, 0, 0.7 blocks out, turned 20, pitch 6: leaning 8, 221 degrees a tick
+    at the hit); the Greatblade, long and two-handed, rises out of the top with its guard and lower blade in view (0.3,
+    -0.1, 0.65, turned 30, pitch 18: leaning 14, 194 degrees a tick; upright, its off arm's end would come to 1.23 under
+    the middle, so 1.27). Their hits are the same keys; the Greatblade's way home is the same to a ten-thousandth, the
+    Longsword's changes only while its blade is under the frame. The Scythe is hand-keyed and already charged raised
+    (the snath up from the corner, the blade over the top and its point just above the crosshair, hooked straight down on
+    the release); stood up further its blade's head left the frame and its off arm's end came up toward the bottom edge,
+    so it is left as written. Third person: the Greatblade's rigged charge already holds both hands high by the head and
+    chops from there; the Longsword's third-person heavy is still the shared rising cut from a low draw (its charge leads
+    into its own release, but the two views disagree on the blow; its stored wrist is not what today's solver gives, 89
+    degrees apart, so it was not re-solved here). Test: `arms_feel_rules` holds all four raised heavies (Longsword, Axe,
+    Maul, Greatblade) to the fist on the sword side by the middle's height and the hand's up tipped toward that shoulder.
+    Filmed in the game on CI (run 42975325055, `tools/autopilot/arms-raised-blades.txt`, 2 ticks a second): both draw up
+    from the rest into the hold, keep still there, and chop down to the left across the target (the trail runs from the
+    top right to the bottom left), and the server confirmed both hits (`hit heavy rel 1`). The Greatblade's two hands sit
+    where the Maul's do, the off hand's edge just under and right of the crosshair, the crosshair and the target's head
+    clear.
+  - *The clash* (Euan 2026-11-11, after the Ringer: "Sometimes I parry perfectly and it's a very small ding, and the
+    screen barely moves"; the boss plan's part three, approved with the rest, "Go with all", 11 Nov, built here from its
+    numbers, `docs/boss-experience/PLAN.md` 4.3 on `claude/boss-experience-plan-3bdfa8`). A deflect is answered by the
+    size of the blow it turned aside, sent in the answer's aux (`ArmsRules.clashSize`, `ArmsServer.clash`): 0 a light
+    blow, 1 a heavy one, 2 the deflect that broke its stance (the posture's broken-until moved by this deflect's own
+    share). The boss plan adds "it reels" (`Strikes.reeling`, mobs side) to size 2; until it is in build, size 2 is the
+    break alone. Today's deflect stays as `ArmsRules.TODAY` for the switch.
+    | | Today | Light | Heavy | Breaks its stance |
+    |---|---|---|---|---|
+    | Freeze (hands and the body) | 100 ms | 110 | 160 | 200 |
+    | View kick, up / roll (degrees), settling over | 1.8 / 1.2, 7 ticks | 2.6 / 1.6, 7 | 4.0 / 2.4, 8 | 4.5 / 2.8, 9 |
+    | View shake (degrees, ticks) | none | 0.35, 4 | 0.55, 6 | 0.75, 8 |
+    | Field of view | -3.5%, 9 ticks | -4.5%, 9 | -6%, 11 | -8%, 14 |
+    | White-gold light (`FxClient.guardSpark` size) | none | 1.9 | 2.4 | 2.4, and the frame's edges flash |
+    The settle grows with the kick so a bigger kick never moves faster; the shake is two sines (23 and 31 Hz, the yaw at
+    0.7 of the pitch) on the feel's clock, eased out by the square of what is left, so a slowed film shakes as many ticks
+    as play (both the plan left open). Light: the deflect's spark in the weapon's own light stays, and over it a white-gold
+    (0xFFE3A0) spark of the size above: its flash where the weapons met and 21 more sparks at size 1.9 (2.5 times
+    today's 14), 25 thrown faster (wider) at 2.4; they go the way the turned blow went: on past the guard and across it,
+    away from the side it came from (met head-on, out past the sword hand), a little up. The break flashes the frame's
+    edges white-gold (the low-health falloff, at most 0.55, gone in 6 ticks). Those near see the light by its size.
+    Sound, first picks: our steel by size, lower and longer as it grows (light: a trident striking the ground, an anvil
+    landing at 1.15, the shield's knock; heavy: the anvil at 0.9, the mace on the ground, the shield at 0.95; the break:
+    the anvil at 0.8, the mace's heaviest ground blow, the shield at 0.85), and over it what met the blade, lower by size
+    (1, 0.9, 0.85), by `ArmsSounds.edge`: a bell-armed body (`#awaken:clash_bell`: the Ringer, the Bell Warden, the
+    Toller) a bell (its recordings at 0.55, not the block's carry of 12); a held weapon by its make (`wooden_` wood,
+    `stone_` stone, else steel); else the body (plate an iron golem struck, stone a heavy core with stone, bone a bone
+    block, wood wood, a spirit a breeze turning a shot, flesh and slime the knockback hit). No layer above 1.2
+    (`guard.steel`'s recordings already play at 1.2, so its voice stays at 1 or under). The break also draws the body's
+    own voice (`Mob.playAmbientSound` from the server). Those near hear the same mix from the server. Listening page rows
+    `clash_light`, `clash_heavy`, `clash_break`, `clash_bell` (`tools/art/weapon_listen.py`, each after the boss's own
+    whoosh at the fight's rhythm; pick 1 is in the game, his marks replace it). A block is unchanged: its thud, no
+    flash. Switch: `clashSizes` (comfort, on; off: every deflect is today's, its sound included); each layer also obeys
+    the freeze, view kick and camera shake, moments and recorded sounds switches. Dev: `/awaken arms clash
+    light|heavy|break` answers one from the nearest creature, the guard's rules aside. Test `arms_clash` (sizes from
+    three real deflects, each size bigger than the last, today kept, what met the blade, no layer over 1.2). Film
+    `tools/autopilot/arms-clash.txt`: on CI (run 42984078674, 2 ticks a second) all three sizes reached the hands
+    (`clash 0`, `1`, `2`); the light kicks and throws thin white-gold sparks up and across from the guard, the heavy
+    kicks harder and throws them twice as far, the break leans in furthest and flashes the edges; from behind, the
+    sparks show before the body. The edge flash was filmed at 0.85 and washed half the frame cream, so it is 0.55 over
+    6 ticks (not filmed again).
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
@@ -9745,6 +9915,43 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   outside doesn't), `progression_truths_by_themselves`, `progression_first_job`, `trail_steps_on_tasks`, and the kin
   sweep (`kin_done_never_shows`) checks a met kind is named and a read want is the step.
 
+### 27.14 A done step stays done (Euan's play, 2026-11-11)
+"I already had that thing completed of building like a somewhere with walls and etc. Near my fire ... and I'm literally
+in the room right now as well. But after the gate, for some reason, that is not completed anymore. So tasks are never
+removed, and a task can never not be completed if it actually is completed." (His screen: inside his timber room, bed
+beside him, "YOUR HOME 1/3" with "Build a room near your fire: walls, a roof and a door" unticked and its compass on the
+fire 7 m away, on the card and in the Tab glance.) The cause was a scan of his home run while half its land was
+unloaded (§28.2, "Read whole"); the rule holds whatever the cause:
+- **A step once done stays done**, whatever a later check finds. What is there now can still say what's next and why a
+  room isn't counted ("Your Bedroom isn't a room yet: ..."), but it never unticks a step or brings a done one back.
+- **A step on the list stays until it is done**, or the story moves past it (the Anchor replacing the fire's first
+  steps); never because a live read flickered.
+- **The task card and the Tab glance** (`progression.Checklist.now`, which both draw from): every row sent ticked is
+  remembered under its task's id (`progression.Ticked`, player attachment `awaken:ticked`, saved with `schema` 1, kept
+  through death, never synced, at most 1024 rows, the oldest first). A row remembered and now unticked goes out ticked,
+  its count full and its place dropped, so nothing points at a done step. A card made with `Checklist.Task.live` is left
+  as it is: its rows are what holds now, not steps done (the weapon you're making: what's in the pack, `arms:track`; a
+  pinned step's needs, `tasks:<key>`).
+- **The Tasks page** (`core.api.Goals`): what a step says is done is the source's call, and a source decides it from
+  what it remembers (a counter, a saved set, what a home has had), never from a live read that can come and go (land half
+  unloaded, an entity out of range). Live reads belong in a step's needs, which tick and untick as they hold. Every
+  source was read against it: the Hearth's were the ones that read the last scan.
+- **The Hearth remembers what it has had** (`HearthRecord.hadRoom()`, `had(RoomType)`; saved in the record's `home` as
+  `ever_room` and `ever_kinds`, Home schema 4; a schema 3 save fills them from the rooms it saved, so an old world keeps
+  what it had). Every step a room finishes reads it, never the last scan: "Build a room near your fire" (`HearthTask`; its
+  card id is now `hearth:first@<the home's place>`, so the card's memory is that home's and a new fire starts afresh), the
+  Now line's `hearth:shelter`, the Armoury, the Forge, the Forge's tiers, the Bedroom's Sanctuary and "Add to your home"
+  (`HearthGoals`), and the next room on the card and the Now line (`HearthNow.nextRoom`: a kind the home has had is never
+  suggested again; if it isn't a room now, the why-line says why). The toasts for a room kind ("First shelter", "Kitchen
+  recognised") come only the first time a home has that kind. What rooms do (rest, the Study's depth, the Armoury's
+  gift, the Hearth page's list) still reads what stands now.
+- **The fire never lifts once a room was read**: an empty hand on your fire lifts the coal only while the home has never
+  had a room (`Embers`), since after it the card says to right-click the fire for the guide. Breaking it still returns
+  the coal.
+- Test `tasks_done_stays_done` (a row ticked once stays ticked on the card when its source unticks it, a live card's row
+  doesn't; a home that lost its rooms to a scan keeps its first room's step and its Armoury done, and a partial scan
+  keeps a room it couldn't see), for the final suite.
+
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
 Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
@@ -9860,7 +10067,7 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
 - No home: what you carry says how to make one, one row: "Place your Ember on the ground where you want your home", else
   "Place your Hearth Anchor on the ground where you want your home", else (a Lord's Heart) "Craft a Hearth Anchor: the
   Lord's Heart, 4 stone bricks and 4 copper ingots".
-- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read), then "Right-click your campfire
+- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read, ever, §27.14), then "Right-click your campfire
   to see what your home needs" (done: the guide opened, `guide_seen`; it waits for the room because an empty hand on a
   roomless fire lifts the coal), then, holding a Lord's Heart, "Hold the Lord's Heart and right-click your campfire to
   make it an Anchor". An Anchor: "Right-click your Anchor to see what your home needs".
@@ -9876,6 +10083,24 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
   heal your Fracture".
 - Test `hearth_task_steps` (no home and nothing carried: no card; the Ember's row; a fire at home: room then guide, a
   hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
+
+**Read whole** (Euan 2026-11-11, back from a gate: his room near the fire no longer counted while he stood in it). His
+room stands in the chunk west of his fire's (fire at -1534, room -1541 to -1537, the chunk line at -1536). The rescan
+came due while he was in the gate (every 5 minutes) and waited only for the fire's own chunk; coming home from the gate's
+mouth about 340 blocks east, that chunk came into range first, and the scan ran with the room's chunk still unloaded. The
+sweep skips an unloaded chunk without a word, so no room was read, and "Build a room near your fire" unticked; a later
+rescan found it again. Now:
+- A due scan waits for its home's whole land (`HearthService.landReady`): every chunk the sweep covers loaded whole
+  (`getChunkNow`). A home whose fire is loaded but not the rest waits 30 checks (15 s, `LAND_WAIT`), then is read anyway
+  (a tiny view distance may never load it all).
+- The scanner says when it met unloaded land (`Scan.whole`: a chunk of the radius it couldn't sweep, a fill or a solid
+  seed's side that ran into one). A partial scan adds what it read and keeps every room it knew that nothing it read
+  stands over, keeps the misses, land and Style it had, takes the most of each piece of furniture, and tries a whole
+  scan again in a minute (`onRoomsScanned`, `keepUnseen`). Only a whole scan forgets a room. `scanNow` (the command, the
+  tests) takes what it reads as whole.
+- And the steps a room finished stay done whatever any scan reads (§27.14). His world needs nothing: its saved record
+  holds the room again (a later rescan found it), and on loading it the Hearth remembers it has had a Shelter, a Bedroom
+  and an Armoury.
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
 (`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate that stands within 64 (`GateHooks.near`; one still
@@ -9896,7 +10121,7 @@ later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimmi
 holm, wick, cote, ley, by, worth, combe, field, hearth, burn, or apart: Rest, Hollow, End, Green, Hearth; deterministic per
 place and owner); the name is cleaned (letters, digits, spaces, ' and -, 24 at most). Walking onto your land: a place
 caption, the name spaced over "your hearth" (IMPORTANT, topic `hearth_place`, filed after 200 ticks). Fireflies over your
-land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while no room is read → the record ends
+land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while the home has never had a room (§27.14) → the record ends
 (its household kept), the coal comes back, `hearth.lift`. Breaking it (owner) or losing it any other way returns the coal
 (to an owner within 16, else dropped there). **Tier I**: a Lord's Heart or the Anchor used on your fire, or the guide's
 button with a Heart in your pack, sets the Anchor block in place, tier 1, and runs what an Anchor placed runs
@@ -10987,7 +11212,9 @@ chunks (a road leg reaching 8 chunks from its lattice start, named from the chun
 than being read (reading it crashed world generation, CI tour 10 Nov: "Requested chunk unavailable during world
 generation"). A layout is asked in its own plan coordinates (offsets from its origin, as the painter asks it); asked in
 the world's, the first version saw no real road or settlement. Tests: `village_tall_things_keep_off`,
-`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin). The carriageway is a two-track country road in the land's own ground: a crown grown over
+`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin).
+**Ground others stand on** (11 Nov, §21.11): `RoadPiece` and `VillagePiece` are `core.api.GroundPiece`s, answering
+`usesGround` with the same layout test plus the banks, so a surface secret asks the land they use rather than their boxes. The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
@@ -13804,6 +14031,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
   and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
   stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
+- **Ground others stand on** (11 Nov, §21.11): a cave place is cut at `underground_structures`, before anything at the
+  surface, so the noise still says ground where a mouth, a sinkhole or an adit has opened the hill, and a thing set there
+  hung over the hole (a Living Wilds camp, Euan's V20). `delve.api.CaveGround.cuts(level, x0, z0, x1, z1, y0, y1)`
+  (`cave.CaveCuts`) says whether one's box crosses a box, from the seed: every candidate start within 8 chunks (a place
+  fits within 8 of its start) of the mouth, sinkhole (and the first sinkhole) and mine sets has its own site search run
+  (`CaveLocate.site`, without the stub's biome check, so it errs toward a cut), remembered per start (20,000, then
+  refilled). Wonders ask it before taking a spot; secrets read the references of their own chunks instead.
 - **The joint, since 9 Nov** (Euan's playtest 9 Nov, "maybe 10 blocks deep, and then it just stops"): the joint must be a
   real cave. Until then any floor with three of air over it counted, so open ground did: the tunnel of his mouth at -472
   181 -2424 came back out on the hillside 20 blocks round, with a real cave 4 blocks under its floor. In his save 16 of
@@ -13823,7 +14057,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
     over the last cuts away its floor, and it can't be climbed: 12 of 54 ways stuck that way). Each bend
     opens into a small landing. The way is read every 4 blocks on the noise's cells, turning either way, and must keep rock over its bore (3 + `ROOF`), ground under it (a drop of 2 at most, `WAY_DROP`, one a body can climb back, until the last 5 of its fall, already in the cave) and stay dry, or
     that floor is passed over. So a tunnel can't break out of the hill or end high on the wall of a natural hall, the first
-    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width, so a way is always a floor to walk on. The piece's box holds the bends.
+    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width and down to 3 deep (§42.4 "Settled", a way's floor), so a way is always a floor to walk on. The piece's box holds the bends.
   - `delve_mouth_joint` holds this on real noise on his seed and walks every fifth way there and back with the real ground
     round it (53 of 53), `delve_cave_routes` walks a staged winding way both ways,
     and `/awaken delve way` walks the last `goto`'s mouth on the world's real blocks and says how much cave lies past
@@ -13837,6 +14071,22 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
   over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
   joint to natural cave air is required.
+- **Nothing hangs** (11 Nov; Euan's V20, "floating blocks at a cave entrance again, exactly like the camp", by The Capped
+  Well): the hill mouth's rule asks for its rise 16 in, so on a gentle slope the hill at the lip stands a block or two over
+  the floor and an arch 11 high is open to the sky. Its brow (two courses of rock at arch top + 1 and + 2 out over the
+  lip, the new look's collar) was laid anyway and hung 12 over the grass (his mouth at -1656 88 -136). Now each brow
+  column at lz -1 is laid only where the hill itself stands at the brow's top course (`h + 2`) in that column, the outer
+  course (lz -2) only in front of an inner one; the vines down the face hang only under it (or, in the old look, under
+  the hill there), the top one hung from the block over it. The approach's shelf fills a dip of one and no more (where
+  the slope falls further the land's own slope is the way up), and an adit's spoil stones lie only on ground. (The old
+  shelf, filled over any drop and then worn to scree by the fan, hung as sheets and single stones a block under the lip
+  of 6 hill and cleft mouths in V20 where the land fell away, worst a cleft over a lake at -2472 70 -280.) A doline's
+  ledge runs right out to the rock at every turn: it stopped at R + 0.8 while the rough edge stands up to a block past
+  that, so stones stood off the wall in the air (-1564 58 -803). After the joint, a column of the hole whose floor the
+  bore took loses what lay on it (-drop to -drop + 2): the winding way passes under the hole and broke up through the
+  floor under moss carpets and the ledge's last stones at 4 dolines (-1563 50 -809). Every test reads only the column it
+  writes, which the mouth leaves alone until then, so the chunks of one mouth agree. New land only: a mouth already
+  written keeps its brow, shelf and ledge.
 - **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
 - **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
   level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip
@@ -17219,7 +17469,8 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   Deep's deepglass; their logs, planks, dirt and slabs come in through `#logs`, `#planks`, `#dirt` and `#slabs`): it is the
   only Awaken file in that tag, and without them the heightmaps looked straight through those blocks.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
-  at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
+  at `top_layer_modification`, so it comes after every structure and feature in its own chunk; the chunks round it are only
+  carved, and theirs come later: see **Settled**): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
   - A **floor** (air on rock): rubble against a wall at **0.18**, pebbles in the open at **0.045**; in a dry place (the wet
     field under **-0.3**) a dusty web in a dead end (rock on three sides and over it) at **0.2**. The two cells over a
@@ -17237,6 +17488,86 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   and throws `awaken:cave_splash` where it lands.
 - **Moved to the regions**: drawn light (glow-worm fields, caustics, mica glints, lava's heat) is the regions' own (Pale
   Halls, Drowned Galleries, Windcleft, Black Vaults) and comes with them in P3; plain caves stay dark (decision 4).
+- **Settled** (Euan's playtest, 11 Nov 2026: a Shallows lichen hanging in the air in his New World V20, "All should be placed
+  intentionally"): nothing in a cave floats. A wall piece sits on a wall, a hanging piece hangs from a roof, a floor piece
+  stands on a floor; nothing hangs in the air or sticks out of a face that was cut away.
+  - **The cause.** The skin dresses a chunk while the eight round it are only carved (26.3 has no carver step of its own:
+    TERRAIN is noise, surface and carvers, and FEATURES needs its neighbours at TERRAIN), so a piece at a chunk's edge may lean
+    on the next chunk's rock, and that chunk's own structures and features cut the rock later: a mineshaft (cave air) or a
+    Delvers' mouth (air). Whether a piece was left floating hung on which chunk was made first. In V20 all 339 floating or
+    half-floating skin overlays in 841 chunks round his spot leaned across a chunk edge onto rock a mineshaft or a mouth had
+    cut (4 amber crystals the same way); outside the skin only a moss carpet over a mouth's carve, and surface vines.
+  - **The rule.** Every skin piece that hangs on or stands on something (every overlay, rubble, pebbles, formations,
+    puddles, glowcaps, root curtains, old rope, ember vines, rust drapes, the regions' floor pieces and crystals; not the
+    dusty web, which holds itself, nor the cave weed in its lake) carries vanilla's own post-process on itself (`Settle.SELF`,
+    as mushrooms do): the world-gen region marks each one where it is set, and when the chunk first ticks (every neighbour
+    FULL by then, before it is sent) the game asks its shape again. A face with no rock behind it comes off (a lichen with
+    none left goes); a heap with no floor, or a formation, root or rope with no rock at the root of its column, goes.
+    Formations, roots and ropes look along their whole column (up to 64) for that rock, so the pass may meet a column's
+    pieces in any order. The same pass catches anything that cuts the skin's rock after it ran, in its chunk or the next.
+  - A stalagmite's puddle lands on its own chunk's side of the foot.
+  - **Old land** is repaired as it loads: the skin marks every chunk it dresses (`awaken:cave_settled`, schemaVersion 1); a
+    chunk that loads without the mark has every settling piece in it put on its post-process list once (the same pass runs
+    as it starts ticking), then takes the mark. A section with none is passed over on its palette.
+  - **The check**: `/awaken caves floaters [r]` (admin) counts every hanging or standing piece under the ground (the ground
+    less 6) that nothing holds, in chunks that tick, by the game's own rule (`canSurvive`; a lichen's faces each, a web or a
+    hanging chain touching nothing), and logs each kind with cells and how many lean across a chunk edge, and any full block
+    with air or water on all six sides (a lone block); what is not the skin's is logged with the structure that has a piece
+    at its first cell (its owner); `look <n>` stands the player where it can see one. `/awaken caves resettle [r]` runs the re-check by hand (sent to the players);
+    `/awaken caves at x y z` goes to a cell through the passage. Tours `caves-floaters-v20.txt` (Euan's spot, a deep
+    mineshaft, two mouths, eight regions on V20's seed), `caves-floaters-home.txt` (his New World (11)) and
+    `caves-floaters-home-after.txt` (the same rock as the home tour's before pictures); GameTest `caves_settled`.
+  - **Measured** (CI, fresh worlds; a census is 121 chunks round a spot): before the fix, Euan's spot on V20's seed had 68
+    floating skin pieces of 10,848 (his own lichen among them, at -1409 39 -711), the Pale Halls 63 of 14,681, the home
+    seed's Ochre Deep 48 of 12,989; every one leaned across a chunk edge, and the re-check run by hand took every spot to 0.
+    With the fix, a world made fresh had 0 at every spot (home seed: Ochre Deep 0 of 13,268, a mouth's cave 0 of 12,642,
+    Rootways 0 of 13,399, Pale Halls 0 of 11,841, Black Vaults 0 of 20,415), and the re-check by hand found nothing left
+    to change.
+  - **A way's floor** (floating-camp's find in V20, the same day: lone cobblestones in a doline's joint over its waterfall
+    hollow). Where a Delvers' way crosses natural air, `Carve.tunnel`'s `floored` laid rubble one deep under each step of the
+    bore; on a slope each step's floor is a crescent the next step cuts, so across a hollow the stair was treads touching only
+    at their corners: about nine separate patches a way, crumbs and lone blocks among them. It now lays rubble down to 3
+    deep (or to the rock), so the crossing is one ramp held by the rock at its ends (over 80 ways in a model: 739 patches,
+    222 crumbs and 60 lone blocks one deep; 82 ramps, 0 crumbs and 0 lone three deep), and it cuts every bore from its higher
+    end whichever way it is asked, so nothing is laid in a stretch already cut (a rising leg had laid rubble in its own
+    walking space). GameTest `delve_floored_ramp`. Measured (CI, V20's seed, tour `caves-way-floor-v20.txt`): no lone cobblestone
+    at the doline's joint, nor in the 25 chunks round the hill mouth where floating-camp found one.
+  - **The Delvers' dressing** (the census, the same day: a chute's lanterns hanging under a natural shaft, a mine's rails
+    where its adit leaves the hill and its bridge's chains under no roof, a grotto's cave vine, all on the home seed). Once a
+    cave place is built in a chunk (`CavePiece.LevelSink.settle`, worldgen and the place commands alike), every lantern,
+    rail, chain, vine, cave vine, hanging root, lichen, carpet or torch it set that nothing holds goes, by the game's own
+    `canSurvive` (a hanging chain: a chain or a sturdy face over it), tops first so a chain falls with the one over it. It
+    reads the chunk once everything is cut, so the order the builder wrote in doesn't matter; a lantern's, rail's, chain's,
+    root's or carpet's hold is in its own column, so the chunks agree.
+    Measured (CI, home seed, 25 chunks round each, tour `caves-delve-held-home.txt`): nothing unsupported round the mine (of
+    10,794 hanging or standing pieces), the chute (of 3,218) or the grotto (of 4,986).
+  - **Lone blocks** (the census, the same day: 16 full blocks with air all round in 75 chunks round three Delvers'
+    places on the home seed, of stone, diorite, andesite, gravel, sculk and the regions' rock; in V20 a vanilla moss
+    patch's corner left over a lava lake). Two cuts leave a crumb: a noise cave and a carver, a lake from a later chunk
+    round a moss patch, a way through a hollow. As the skin walks a chunk, a cell with air under it (where it would hang
+    a roof's pieces) and nothing but air or the skin's own pieces over it and on its four sides goes, and nothing is
+    laid on it or hung from it: the host rocks and the regions', gravel, dirt, rooted dirt, clay, sand, calcite, smooth
+    basalt, dripstone, moss, magma, sculk, cobblestone, cobbled deepslate, blackstone, bedrock (its fringe at the floor)
+    and ores. A crumb wholly in a flooded cave's still water or lava (the same source over it, under it and on its four
+    sides) turns to that water or lava. A crumb beside water and air stays (the water would stand beside air); a lichen
+    another cell hung on it goes in the first-tick pass. The cell before it in the row, as already read, must be open
+    before anything more is read, so a roof cell costs two field reads more and only a roof's open edge reads its
+    neighbours. A crumb that a later chunk's lake or structure cuts round after the skin ran stays, and the census names
+    it. GameTest `caves_lone_crumb`. Measured (CI, fresh worlds, 121 chunks a stand, tour `caves-floaters-v20-after.txt`
+    on V20's seed): 27, 17, 11, 13, 24 and 55 lone blocks at the six stands before, 2, 2, 5, 2, 2 and 9 after, each one
+    named by the census: cobblestone that lava and water make in play, a mineshaft's planks with fire round them, clay
+    and basalt at a pool's edge, a crumb a lichen still holds at a chunk's edge, a crumb in open water above the skin's
+    reach, and a seep's spire steps (`Seep.spire`, a block up each, edge to edge, to climb). Round three Delvers' places
+    on the home seed, 16 became none, save a cobblestone the fluids made while the tour stood there.
+  - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
+    body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
+    two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
+    edge and never sinks into a face it meets. A glow-worm curtain and a hanging bat hang wholly under their roof (rock over
+    every corner of their width, open under it). Every crawler, resting bat, curtain and resting cricket is checked against
+    its rock each tick and goes when the rock does (a bat's roost lets go). A crawler is drawn with its face's own normal, so
+    it takes the light its rock takes: it was drawn lit as if facing up, brighter than the wall it stood on. Client only:
+    `/awaken underlife walls` (crawlers set walking up the faces in view, ledges first) and `/awaken underlife check` (any off
+    their rock, to the log); tour `caves-underlife-walls.txt`; the rules in `caves_underlife_sites`.
 
 ### 42.5 The underlife (P1; client only)
 `caves.client.Underlife` (simulation, flat arrays, nothing allocated after start), `UnderlifeRender` (quads from
@@ -19093,6 +19424,22 @@ that fidgets would be wrong).
   moving, a blow, death or anything opening ends it at once. It rides the Forge Song's camera (`ForgeCamera`), which
   now leaves your body drawn while Admire has it. `/awaken armour admire` runs one circle without the key.
 
+
+**44.14 One suit to a stand (Euan, 11 Nov 2026).** A Fitting Stand builds one set at a time. The first piece that stands on
+it locks it to that piece's set (`FittingStandBlockEntity.held()`: the set of what stands on it); while it is held,
+nothing of another set starts there (`ArmourForge.start` refuses, and every other set's offers carry `HELD_OTHER` and
+lose `CAN`); it is free again when the last piece is taken off. A piece of the held set can be made again over the one
+standing (the old one goes to your pack, as before). Offers of the held set say which pieces stand (`ON_STAND`).
+- **Taking:** `ArmourPayloads.TAKE` with `a` 1 to 4 takes the piece in that slot; 0 takes everything, as sneak-use on the
+  stand still does. The server then sends the stand's offers again (`HallNet.Suits`), so the Hall shows the lock gone.
+- **In the Hall:** a held stand opens on its suit (Esc steps back to the terraces). The suit carries "On this stand · n of
+  4" at its feet, the other suits step back (drawn at a third), the head reads "This stand holds Wildhide · 1 of 4", and
+  another suit's close-up says "This stand is holding Wildhide. Take it off the stand and you can build this one here."
+  with its forge button off. Pieces are taken from the suit itself: "Take it" for the piece you're on, "Take all n" for
+  the rest; a standing piece is labelled "On the stand". The line "Take the suit (n of 4)" in the terraces' corner is gone.
+- A stand left holding pieces of two sets from before this rule is held by the first of them until it is cleared.
+- Test: `armour_forge_fold_starfire` (the lock, the offers' flags, one piece taken, the stand free again).
+
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
 Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
@@ -20032,8 +20379,12 @@ at once; stage 2 adds phrases and the payoff on the pilots.
   sides, so the client draws exactly where the server judges. At most 24 alive for one creature; allocation per
   carrier, never per tick.
   - *Wave*: a ring rolling out along the ground at 0.55 blocks a tick from its inner radius to its outer. It strikes
-    whoever's feet are under its crest as it passes, once; feet more than 0.75 over its ground (a jump), a wall between,
-    or standing inside its start ring escapes it. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
+    whoever's feet are under its crest as it passes, once; feet more than 0.4 over its ground (a jump, from its first
+    tick to its tenth, or a slab's top), a wall between, or standing inside its start ring escapes it. The crest is
+    drawn as high as it is judged (`Carriers.CREST`). It was 0.75 until 11 Nov: a jump's feet passed that only on its
+    second tick, and the server reads you a tick late, so you had to jump 0.15 s before the crest touched you and a jump
+    as it arrived was hit on the way up (Euan: "very, very difficult to actually jump"). The window is about as long
+    (8 ticks → 10), now where you press. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
     (knock 1 + 1.5 x power), auras' pulses, darkness, the seep heart's pulse and burst all roll as waves.
   - *Volley*: pods thrown up from the body, falling 16 ticks later on rings placed where you stood at the throw, each
     ring at most 2.2 blocks (a dash is 2.6). Rains and lifts; a lobbed cloud is a volley of one ring of 1 block that
@@ -20106,15 +20457,86 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   damage, and puts 22 on the maker's stance. Amber and red shots still break on the blade.
 - **The stance.** A perfect dodge through a blow puts 10 on the attacker's stance. A break drops it to its knee as
   before (`AwakenBoss.broken`, server side), and an Execution on a Lord is the finisher: 10-15% of its health whatever
-  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%).
+  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%); on a duel body 7-10%
+  (`DUEL_FINISHER_MIN/MAX`, `capExecution`'s duel flag through `Strikes.duelist`), since it breaks twice as often
+  (below, "Held while it fights"). An Art is capped the same way.
 - **Braced.** Outside its openings a duel body stands braced: a blow that lands then fills its stance only half
   (`ArmsRules.GUARDED_POSTURE` 0.5, `hitPosture`, through `Strikes.duelist`); a riposte, the punish for a deflect,
   fills it whole and a blow in an opening 1.5 times. The stance falls to deflects, ripostes and openings, not to
   trading: in the sim 82% of the Bell Warden's stance came from plain strikes, and it broke five times a minute.
 - **Its own stance.** A duel's script names its stance size (`"stance"`, `FightScripts.Fight.stance`, 0 = a Lord's 100;
-  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 280, the Glass Serpent 200, the
-  Gearwright 260. The Provings' posture column (PLAN §4.7, 120-250) was written against the old 100 and scales with it
-  when the Wardens are tuned.
+  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 150, the Glass Serpent 110, the
+  Gearwright 140 (280, 200 and 260 until 2026-11-11, below). The Provings' posture column (PLAN §4.7, 120-250) was
+  written against the old 100 and scales with it when the Wardens are tuned.
+- **Held while it fights; breaks a fight is made of** (Euan 2026-11-11, after fighting the Ringer: more than 8 minutes
+  and not one break; "it took way too long to charge up", and its red blows put you "far from him. By the time you
+  come back, all the work you did to break the stance is already recovered"). His fight's log and black box: about 30
+  blows landed a minute (daggers, then twinblades), one riposte, every red blow walked away from. Three causes, three
+  rules, the same on all 47 duel bodies (it was the same mistake on each):
+  - **Held.** A stance drained 2 s after the last blow (`POSTURE_IDLE_TICKS` 40, then 8 a second), even while the body
+    was mid-move: the Drowned Toll's wind-up, crest and recovery, then the walk back, drained it all. Now a duel body
+    that is fighting holds its stance (`FightRunner.fighting`: a move playing, a limb coming back from a deflect, an
+    answer noticed, reeling, kneeling, staggered, shielded for a new phase or standing in its opening). `AwakenBoss`
+    tells Arms on each change (`Strikes.holdStance`, `Strikes.Postures.hold`, `ArmsServer.hold`): drained up to the
+    moment it begins, then `Posture.held` (`settle` gives nothing back); let go, the grace starts again from then
+    (`lastHitAt = max(lastHitAt, now)`). Players near get the stance with each change, `ArmsPayloads.POSTURE_HELD` while
+    held, and their clients drain it by the same rule only when it isn't held. It still drains when the body stops
+    fighting and comes to you with nothing landing for 2 s, so leaving the fight still costs the work.
+  - **A smaller stance.** The stances were tuned against sim players who pressed 80-100 blows a minute in reach 80% of
+    the time; real play lands 30-70. Every duel's stance is 0.55 of what it was, to the nearest 10 (§47.5's list):
+    the hunter below breaks the Ringer 2.3-2.7 times a minute where it broke it 1.2-1.5.
+  - **Each break worth less.** At twice the breaks and 10-15% each the fight would end in half the time; a duel's
+    Execution and Art take 7-10% (above), so a fight is as long as it was, made of twice the breaks.
+  - **Not chosen:** a longer grace (the red blow and the walk back outlast any grace that still lets a stance recover);
+    more from braced hits (`GUARDED_POSTURE` 1.0 moved the hunter 1.2 → 1.56 a minute: braced hits are a third of what
+    fills it, and a light blade's 3 × 0.75 still rounds to 2); lighter weapons filling more (the twinblades fill least,
+    7.2 a second against the longsword's 9.7, but after the two rules above the twinblades hunter breaks the Ringer 2.3
+    times a minute, in the band, so no weapon changes).
+  - **Seen.** The boss plate always shows a duel body's stance from the first time it fights, empty or not
+    (`Stances.duel`): a 4-pixel bar under the health (the health's is 5), ivory, never the health's lost amber,
+    filling from both ends to a seam in the middle, white-hot over an ember edge past three quarters; each blow's fill
+    flashes white at its fronts (`Stances.sinceRise`, 6 ticks); left alone past its grace it ebbs, dimmed and slowly
+    pulsing (`Stances.draining`). A caption row under it reads "Stance"; broken, the bar burns gold and the caption
+    reads "Broken! Hold {attack} to finish it" in the player's own key (`awaken.plate.stance.broken`). The creature
+    band's strip takes the same ivory.
+  - **One hint.** A fighter whose 20 blows have landed on a duel body (`Stances.struck`) without its stance breaking
+    gets one plain line under the plate for 9 s, once a fight, and never again in the session after they first break a
+    duel stance: "The bar under its health is its stance. Guard with {use} as its blows land, and strike when it stands
+    open. Fill the bar to break it." (`awaken.plate.stance.hint`; tips are held in fights, so it isn't a tip). It names
+    no boss and says what to do.
+  - **Sim** (`combat_sim.py`, `duel.hold` 1; two new players: the hunter, who fights well but not perfectly — deflects
+    45%, guards 40%, dodges half the blows and 70% of the red, walks away from half the red ones, a third of dodges
+    perfect, half the parrier's cadence, in reach 0.8 of the time — and Euan, from his fight's log: deflects 25%, guards
+    15%, dodges 45%, never the red, walks 70 ticks away from every red blow, in reach 0.45 of the time, which lands his
+    30 blows a minute; `--style` fights with the rank's forged weapon of any style; the sim now keeps FightMind's rule
+    that a blow isn't played twice running and its cooldowns, without which at 4.5-8 blocks the Toll was the only move
+    and looped). The Ringer, before on 20-60 seeds, now on 30, wins / time to win / breaks a minute:
+
+    | The Ringer | Longsword, before | Longsword, now | Twinblades, before | Twinblades, now |
+    |---|---|---|---|---|
+    | Hunter | 40%, 167 s, 1.4 (drained 24/min) | 50%, 161 s, 2.7 | 20%, 176 s, 1.1 | 17%, 177 s, 2.2 |
+    | Euan's play | 0%, breaks 0.00 (drained 140/min) | 0%, breaks 0.92 | 0%, 0.00 (drained 113) | 0%, 0.69 |
+    | Parrier | 100%, 115 s, 2.7 | 100%, 114 s, 4.5 | 95%, 120 s, 2.4 | 97%, 109 s, 4.0 |
+    | Expert | 100%, 98 s, 3.3 | 100%, 91 s, 5.5 | 100%, 93 s, 3.1 | 100%, 96 s, 5.1 |
+    | Tank | 0% | 0% | 0% | 0% |
+
+    Made unkillable, the hunter's fight lasts 3.0 minutes with the longsword and 3.3 with the twinblades (2.9 and 3.5
+    before), now with 2.7 and 2.3 breaks a minute; Euan's own play, unkillable, ran 10 minutes without one break before
+    and now breaks it 0.7-0.9 times a minute. The sim's hunter takes 12 health a minute and dies near 160 s whatever the
+    stance does, so its wins stay where they were; that is the Ringer's damage, not its stance, and isn't changed here.
+    Every gate Lord (longsword): the hunter's breaks 0.4-1.6 a minute → 1.1-2.9 (0.9-2.7 with the twinblades; the
+    fliers lowest, out of reach between dives), its drain 21-84 a minute → under 1 (the fliers 4-15), the parrier 73-92
+    s and the expert 63-77 s as before; the higher Provings keep their larger stances (the Last Loop's hunter breaks
+    1.3-1.6). Still open: the tank beats the Hive Regent 13% of the time with the longsword and 30% with the twinblades
+    (10-17% at its old stance on 60 seeds), its health and damage's to fix, not its stance.
+  - **The Drowned Toll, read.** A red ring that rolls out from the Ringer: you are safe inside the white ring at its
+    feet when it rings (`Carriers.wave`'s inner start), over its crest (a jump as it reaches you; its crest is 0.4 since
+    11 Nov), behind a wall, or dashing through it
+    (a PERILOUS wave: a dodge whose evade ticks, 5 for the twinblades and 4 for the daggers, cover the moment the crest
+    reaches you takes none of it, and a perfect one fills its stance 10). The white ring was 14 small dots under a body
+    twice a man's height; it is now drawn twice as dense and larger (`Telegraph.safeRing`). Walking away from it is no
+    longer a loss: the stance holds. Off the chancel, in the aisles' water a block lower, it can't be jumped (its crest
+    rolls at the chancel's height, and a jump in water is a swim): there the dash or the white ring answers it.
 - **Tuned with the sim** (`combat_sim.py` learns the duel: phrases and openings, recoil and reel, habits, shots sent
   back, perfect-dodge and opening stance, the finisher's share, braced hits, the script's stance; 400 seeds, the
   rank's forged longsword; the parrier answers half of the red blows with a dodge, ASSUMED). Health alone could not
@@ -20173,8 +20595,10 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   `fights_deflect_recoil` (the sweep deflected recoils 10 ticks and the chop goes on; the chop deflected, it reels open
   and starts nothing for 34), `fights_shot_returns` (a white-gold shot sent back strikes its maker, never its sender; an
   amber one won't turn; once only), `fights_duel_stance` (the Gearwright holds its script's stance through Arms; braced
-  half, opening 1.5, a riposte whole), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
-  the Arms rules test (the finisher's 10-15%).
+  half, opening 1.5, a riposte whole), `fights_stance_held` (held past its grace, nothing drains; let go, the grace
+  starts again; left alone after that, it drains), `fights_stance_held_fighting` (a phrase playing holds it),
+  `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions), the Arms rules test (the finisher's
+  10-15%, a duel's 7-10%; a held stance never settles).
 - **On cue** (admin, tours): `/awaken bosses duel stage <boss>` builds a stage where you stand with the boss at its
   middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
@@ -20209,7 +20633,8 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
   ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
   `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
-  gift and its trophy). Theme Bell, a duel (§47.3) with stance 260; health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
+  gift and its trophy). Theme Bell, a duel (§47.3) with stance 140 (260 until 2026-11-11, when Euan's fight broke it
+  never: §47.3 "Held while it fights", where the sim's numbers are now); health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
   until its turns were made to reach, §47.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
   `PROVING_RANKS` sets its rank and level): dodger 78% in 2.7 min, parrier 96% in 1.9 min, expert 100% in 1.6 min, tank
   0% (targets 75 / 80 / 99 / at most 10), harder than every E and D Lord for the dodger (§47.6; before its turns reached:
@@ -20223,7 +20648,8 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   overhead, HEAVY, held 8 ticks); the Chain Lash (a long step and a chain thrown straight out, from afar); the Peal
   (both bells swung wide and clapped, a white-gold ring that flies at you: deflect it on the beat and it flies back,
   §47.3); the Turning Swing (behind it); the Drowned Toll (its signature: it throws its head back and rings the bell
-  in its hood, a red ring rolling out through the water: dash through it). Phase 2 at half health, opened by "The water
+  in its hood, a red ring rolling out through the water: stand in the white ring at its feet, jump its crest, or dash
+  through it; §47.3 "The Drowned Toll, read"). Phase 2 at half health, opened by "The water
   drains" (a 36-tick held clip): the Whirl (HEAVY, one full turn with both bells out), the Bell Rope (GRAB: a running
   catch with the left bell swung up behind its head), the Peal in pairs, and the strings end on the Clang or the Whirl.
   It enters by dropping from the bells into the light (`drop`).
@@ -20272,8 +20698,10 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   other). The last member out closes the run: the hall is put back 8 rows a tick and its
   cell freed after. In a Proving the hall can't be broken or built on (survival).
 - **The box stays** as practice: `/awaken admin trial dbox` (three waves, as before) until Euan has seen the Ringer.
-  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue). Tour:
-  `tools/autopilot/fights-belfry.txt` (CI).
+  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue), and
+  `/awaken admin trial break` breaks your Proving's Warden's stance through Arms, as your own blow would (tours: a heavy on
+  it next is the Execution). Tour: `tools/autopilot/fights-belfry.txt` (CI), which films three braced blows on the
+  stance, the break and an Execution.
 - Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
   server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
   win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).
@@ -20286,7 +20714,9 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   280; the Abbot of Frost, the Sleeper, Unit Zero, the Choirmaster, Shadow Regent, Ossuary King, Seed Warden, Great
   Listener and the other Nightmares 300; the Sky Leviathan, Thornback, Furnace Engine, Drowned Moon, Rootmother,
   Architect of Rooms and Sovereign of Mirrors 320; the Hollow Herald and the Sovereigns of Hunger, Silence and Sleep
-  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360.
+  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360. Since 2026-11-11 each is 0.55 of
+  that to the nearest 10 (§47.3, "Held while it fights"): 110; 130; 140; 150; 160; 180; 190; 200. The Provings: the
+  Examiner 160, the Unmade 190, the Sky Warden 210, the Keeper's Shadow 230, the Last Loop 260.
 - **Phrases.** Every opener has follow-ups (`then`), chosen so each string flows from where the last blow leaves the
   body (a lance into its slam, a sweep into its backhand); the lone blows are the behind-you blow, the signature and a
   few summons, at most 30% of what each phase starts (I8). `fights_language` checks I6-I8 on all 42.
@@ -20906,6 +21336,49 @@ both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings 
   of Jade's ray trace (`JadeClient.body`), the mark and the lock (`Lock.foe`, and the creature under the crosshair) and the
   server's check of a press (`Aim.meant`). You can still use it to carve it. A creature lying fallen that will get up is
   alive: it keeps its card and its lock. Test `aim_bodies`.
+- A body rests on the ground, never in it (Euan's playtest 2026-11-11, a Plumed Coil's carcass on jungle grass: "the body
+  of a beast fell through the floor here and is also glitchy visually, like the texture is shimmering"). Three causes.
+  Vanilla's sideways flip (and the life layer's topple, which replaced it for our creature renderer) turns a body about
+  the middle of its feet, so half its width went under the ground; several of our death clips ended low (the Coil's
+  dropped its head 9.5 px and rolled it 80 degrees, so the coil stood on end into the ground, 27 of its cubes below it);
+  and a flier killed on the wing kept its no-gravity while it died and its carcass was laid where it hung (a carcass has
+  no mind, so nothing brings it down). The shimmer was the ground's own face cutting through the sunken body, and the
+  body's flat plumes and faces lying in or across it.
+  - `mobs.client.BodyRest`: every dying or lying body (`deathTime` above 0: a fall, a carcass, a fallen or toppled
+    creature) within 64 blocks is measured each frame as it will be drawn: its renderer's own chain (`BodyRest.Posed` on
+    the hero, wild, kit, creature, humanoid, skinned and forms' renderers; vanilla's flip for vanilla's, 180 degrees for
+    spiders, silverfish and endermites; cube mobs, fish, squid, phantoms, shulkers, the wither and armour stands are left as
+    they are), posed and drawn into a probe that keeps every vertex. It is leaned along the lie of the land under it (read
+    at half its size each way from the feet, at most 20 degrees, eased in over half a second; read where it lies, not where
+    its pose reaches, so the lean never jumps), then raised until its lowest point lies 1/64 block above the ground under
+    that point, plus a sheep's wool (1.75 px) or worn armour (1 px). Its middle (the middle half of its spread each way)
+    rests on the ground; a part outside it (a weapon, an antler, a wing, a pole, a feeler) holds the middle up at most
+    3/16 block times its size, and past that goes into the ground, so a duelist's blade or a lamplighter's pole never
+    stands the body on end. It may be let down at most half a block onto ground it floats above (never in water). The
+    ground is the top of the first block down each column from 9/16 above the feet to
+    2 below, where it stops a body or, if its outline spans the whole block, where it is seen (snow layers, soul sand,
+    mud); grass and flowers are no ground; ground higher than a step is a wall and holds nothing; and within a quarter
+    block of a higher column the ground rises to meet it, so a body sweeping onto a step rises, never jumps. Nothing under
+    it in reach (in the air, mid-water): its lowest point stays at least at its feet. Eased in over its first three ticks.
+    It pushes in `RenderLivingEvent.Pre` at the lowest priority and pops in `Post` at the highest; a renderer whose model
+    can't be measured is left as drawn from then on.
+  - A flier killed in the air (not in water, not a kit boss's scripted fight) falls through its death throes
+    (`AwakenMob.die`: gravity back on; dead, its server step no longer turns it off). A carcass whose fall ended off the
+    ground is laid on the ground under it, or on water it would fall into, at most 64 blocks down (`Carcass.restY`). A
+    cave creature hanging from the roof already lets go when struck.
+  - The death clips that ended in the ground were re-authored so the body itself lies on it, measured with the rule
+    above (`tools/art/specs`): the Plumed Coil lies in a flat S on its side, head on its cheek, jaw slack, plumes and
+    streamers lying back, its wings folding over it; the Old Antler goes down on its side with its neck stretched
+    along the ground instead of its antlers dug in; the Mire Mother's reeds fold flat both ways; the Hollow Owl's
+    under wing folds under its body and the other sprawls; the Empress Moth's wings close over its back; the
+    Thousandfoot's legs give, it sinks onto its belly, tips onto its side with its body riding up over its edge, the
+    legs it lies on held up until it lands and then flopping out flat past its belly, and it curls belly in, flat on the
+    ground (its old sideways curl stood it on end); the Mycelord's cap hits first and tips back onto its rim, top up,
+    instead of standing in the ground like a wheel (a body on a cap that size rests on rim and root, its stem a little
+    above the ground); the Briar Sow's head lolls level instead of burying chin and tusks; the Brook Otter on its back
+    rests its head on its cheek; the Hushling's arms fall forward; the Pollen Grazer's under wings lie back along the
+    ground. The Weaver Queen still kneels, as authored; water creatures (Lantern Maw, Tidesteed, Breathbell,
+    Glimmerfin) mostly die in water and keep their clips.
 
 **47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
 for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing
@@ -21244,6 +21717,14 @@ a held press, the fire rising in three steps; the weapon coming down, `block.anv
 **For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
 50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
 which rite is picked, on a change only. On the sheet, text sizes snap to whole real pixels, rounding down unless the size is within .35 of a pixel of the next step (at 1.93 real pixels to a sheet pixel, size 2 stays 4 real pixels rather than falling to 3). A line can come out a few percent wider than laid out, so widths, fits and wraps all measure text at its snapped size.
+
+**Hover (Euan, 11 Nov 2026: "you don't actually see well which one you're about to click on").** On the wall and on the
+terraces the thing under the pointer has a hover state of its own, beyond the lantern and the name at the head: the
+band's corner brackets round its niche or its figure (`Stage.brackets`), warm light under it, and the thing itself drawn
+again fully lit and a touch larger (7% a suit, 10% a weapon) in its own picture (`KEY_HOVER`), redrawn only when the pointer
+moves to another. The light never gives anything away: what you haven't found stays a shape and a kind on offer stays
+plain iron. The arrow keys' cursor shows the same state. A Fitting Stand that is holding a suit: §44.14.
+
 ## 50. Powers in Full Voice (plan docs/powers-aaa/PLAN.md, page https://claude.ai/artifact/G6vDNHxaMBnyHF84e51pFg, all 43 yes 9 Nov 2026)
 
 Stage 0 is the proof: Haymaker, Shockwave, Gravity Well and Railgun rebuilt to the plan's bar, and nothing else. Later stages wait for Euan to play this one.
@@ -21466,6 +21947,7 @@ text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin
 220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
 `item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
 Every line under the panel fits inside its width, beside Undo too, so nothing reaches JEI's columns. Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
+
 
 ## 52. Made by Hand (the chill side; plan docs/made-by-hand/PLAN.md, page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88)
 
@@ -22092,6 +22574,25 @@ step of one; what was built (`wild()` under a half) stands square to the compass
 grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
 names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
 leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
+**A stand** (Euan, 11 Nov: "maybe some gates that are like almost kind of like a wave system... survive 10 waves"). A blueprint whose
+`land.params` has `"stand": 1` is cut by a rolled kind's skin but is no run: the way in, one great room (an ambush leg eighteen or
+so across, nine high, its `when` reading `waves:N`), its Warden, the Lord. N is six at E rank and one more for every rank above. A
+wave comes when the last is down and someone still holds the room (`RealmRun`, markers `wave<site>_<k>` in the saved `woken` set);
+every other wave is the theme's own roll in place of the kind's herd, so no two waves are the same company; the room's doors stay
+shut until the last wave falls. A stand pays what any gate of its rank pays: its waves count as shares (`RealmLive.units`). Eight
+on 11 Nov: The Ossuary Floor, The Slag Pit, The Spore Ring, The Drowned Hall, The Glass Bowl, The Chapter House, The Night Ward,
+The Black Landing.
+
+**The right amount** (the same day: "the big worlds we've built so far... look pretty good, like with the right amount of mobs in
+them"). An open land (anything that is not a crawl) is never empty between its dens: about every twenty seconds, for a player out
+in the land with fewer than three of the gate's monsters within forty-four blocks, more than forty-eight from the way in and clear
+of every fight the land has placed, one more pack of the theme's own stands waiting thirty to forty-four blocks off
+(`RealmPacks.wander`). A land gets four such packs and one more for every rank. They pay as any kill does, on top of the gate's
+own shares: whether that stays is Euan's call.
+
+**Every rank.** Each finished blueprint lists every rank from the one its theme opens at up to S, not the two it first had. Packs
+already grow with rank (`RealmPacks.roll`, `den`, `warden`). A run's shape does not change with rank yet.
 
 **Depth.** Euan, 10 Nov, on the pictures of the new shapes: "the rooms and the setups and stuff is decent now, but the
 atmosphere itself is completely missing... a completely flat floor, completely flat walls... it's still all one block
@@ -23136,7 +23637,10 @@ flight), and the first vault's "Its line waits for a D-rank hunter" is never pai
 flight, the level road's stop at 73 and the Wings trail's second step describe the old rules. The Sovereign's form is given
 after an ending. Hours (pacing_sim, balanced): D 3.4, C 10.2, B 23.8, A 35.8, S 47.2, Sovereign 61.4. The nearest site by
 the structure sets' own spacing (median; worst seen): a vault 260 to 350 (1,140), a Tether Spire 160 to 290 (1,050), a sky
-platform 280 to 380 (1,290).
+platform 280 to 380 (1,290). (From 11 Nov the spires and platforms keep more room, §17.11 "Room between them": from
+anywhere to the nearest spire, median 230 and worst 660-725 where every spot is forest, 460-480 and 1,430-1,880 where spires
+are as few as in Euan's world; to a platform 385, worst 1,060-1,240. The climb's needle reaches 1,500, which still holds a spire for 99.9% of
+the land; past it the row is "Get to know your rope", as before.)
 
 **63.1 The rule.** A rank fight opens a rung; a place gives it; the way out of the place is the move. On a Proving's win
 the System wakes one place of the rung's kind for each winner: one in their Saved for later book (§27.1) if there is one,

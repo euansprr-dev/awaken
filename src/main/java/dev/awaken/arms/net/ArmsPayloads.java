@@ -51,7 +51,8 @@ public final class ArmsPayloads {
 
     /** What a {@link Result} or {@link Seen} reports. */
     public static final int MOVE = 0, HIT = 1, DEFLECT = 2, BLOCK = 3, GUARD_BREAK = 4, PERFECT_DODGE = 5, EVADE = 6, BREAK = 7,
-            REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11, POSTURE = 12, CHARGE = 13, SHOT = 14, DULL = 15;
+            REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11, POSTURE = 12, CHARGE = 13, SHOT = 14, DULL = 15,
+            POSTURE_HELD = 16;
 
     /**
      * Server → the player: what their press or guard did. MOVE: the move the server runs for seq (aux = move id,
@@ -73,8 +74,8 @@ public final class ArmsPayloads {
      * Server → players near: a fighter did something worth seeing. MOVE (aux = archetype index, aux2 = move id),
      * DODGE (aux = yaw of the way), DEFLECT / BLOCK / GUARD_BREAK (other = the attacker), BREAK (entity = whose stance),
      * HIT (entity = struck, other = the fighter, aux = hit-stop ms, aux2 = the move), POSTURE (entity's stance changed:
-     * other = broken ticks left, aux = value in tenths, aux2 = its hold; also sent to the fighter), CHARGE (a heavy is
-     * being held).
+     * other = broken ticks left, aux = value in tenths, aux2 = its hold; also sent to the fighter), POSTURE_HELD (the
+     * same, held: a duel body fighting, it doesn't drain, SPEC §47.3), CHARGE (a heavy is being held).
      */
     /** Server → the fighter: every Weave they have woven (ids), on joining and after each new one (the Codex reads it). */
     public record Woven(java.util.List<String> weaves) implements CustomPacketPayload {

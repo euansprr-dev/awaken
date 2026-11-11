@@ -73,6 +73,7 @@ final class ArmsTests {
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
+        AwakenTests.register("arms_clash", 60, ArmsTests::clash);
         AwakenTests.register("arms_shots", 80, ArmsTests::shots);
         AwakenTests.register("arms_sources", 20, ArmsTests::sources);
     }
@@ -641,6 +642,10 @@ final class ArmsTests {
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "the server's settle is the same rule");
         p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS + 20, false);
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "and never drains the same time twice");
+        float was = p.value;
+        p.held = true;
+        p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS * 20, false);
+        h.assertTrue(p.value == was, "held (a duel body fighting), none drains however long (SPEC §47.3)");
         h.assertTrue(ArmsRules.lookedAt(170, -170) && !ArmsRules.lookedAt(90, 0), "the focus is looked at within 60 degrees, across the wrap");
         h.succeed();
     }
@@ -784,8 +789,10 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
-                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, false) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true, false) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, true) == 100 && ArmsRules.capExecution(20, 1000, 0.08F, true, true) == 70,
+                "and 7-10% of a duel body, which breaks twice as often (SPEC §47.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }
@@ -1064,6 +1071,69 @@ final class ArmsTests {
         h.assertTrue(toldGain > 0 && Math.abs(untoldGain - toldGain * ArmsRules.UNTOLD_REWARD) < 1e-3,
                 "an untold deflect pays " + ArmsRules.UNTOLD_REWARD + " of a told one: " + untoldGain + " vs " + toldGain);
         done(h, p, q);
+    }
+
+    /**
+     * The clash (SPEC §25 "The clash"): a deflect is answered by the size of the blow it turned aside (a light one, a heavy
+     * one, the one that broke its stance), each size bigger than the last and the deflect before it kept for the switch;
+     * its metal by what met the blade, no layer pitched above 1.2 (Euan 2026-11-11: "a very small ding").
+     */
+    static void clash(GameTestHelper h) {
+        h.assertTrue(ArmsRules.clashSize(Strikes.Kind.LIGHT, false) == ArmsRules.CLASH_LIGHT && ArmsRules.clashSize(Strikes.Kind.HEAVY, false) == ArmsRules.CLASH_HEAVY
+                && ArmsRules.clashSize(Strikes.Kind.LIGHT, true) == ArmsRules.CLASH_BREAK && ArmsRules.clashSize(Strikes.Kind.HEAVY, true) == ArmsRules.CLASH_BREAK,
+                "a broken stance outranks a heavy, a heavy a light");
+        ArmsRules.Clash was = ArmsRules.TODAY;
+        h.assertTrue(was.freezeMs() == 100 && was.kickPitch() == 1.8F && was.kickRoll() == 1.2F && was.fov() == -0.035F && was.fovTicks() == 9
+                && was.light() == 0F && was.shakeTicks() == 0 && ArmsRules.clash(-1) == was, "the switch off keeps the deflect before it");
+        for (int z = ArmsRules.CLASH_LIGHT; z <= ArmsRules.CLASH_BREAK; z++) {
+            ArmsRules.Clash c = ArmsRules.clash(z);
+            h.assertTrue(c.freezeMs() > was.freezeMs() && c.kickPitch() > was.kickPitch() && c.fov() < was.fov() && c.shakeTicks() > was.shakeTicks()
+                    && c.light() >= was.light(), "size " + z + " is bigger than the one before: " + c);
+            h.assertTrue(c.edges() == (z == ArmsRules.CLASH_BREAK), "only a broken stance flashes the frame's edges");
+            for (ArmsSounds.Edge e : ArmsSounds.Edge.values()) {
+                ArmsSounds.Voice[] v = ArmsSounds.clash(z, e);
+                h.assertTrue(v != null && v.length >= 3, "size " + z + " on " + e + " has its metal and what it met");
+                for (ArmsSounds.Voice one : v) {
+                    // guard.steel's own recordings already play at 1.2
+                    float max = one.sound() == ArmsSounds.BLOCK_STEEL ? 1F : ArmsSounds.CLASH_PITCH_MAX;
+                    h.assertTrue(one.pitch() <= max, "size " + z + " on " + e + ": a layer pitched to " + one.pitch());
+                }
+            }
+            was = c;
+        }
+        // what met the blade
+        Mob bare = put(h, EntityTypes.ZOMBIE, -2.5, 4.5, 60);
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.BEAST, "a bare zombie's blow is a body's");
+        bare.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.STEEL, "with an iron sword it is steel");
+        bare.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_AXE));
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.WOOD, "with a wooden axe, wood");
+        h.assertTrue(ArmsSounds.edge(put(h, EntityTypes.IRON_GOLEM, -2.5, 2.5, 100)) == ArmsSounds.Edge.STONE, "an iron golem's fist rings as its body");
+        Identifier ringer = Awaken.id("proving_ringer");
+        h.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(ringer) && BuiltInRegistries.ENTITY_TYPE.getValue(ringer).builtInRegistryHolder().is(ArmsSounds.CLASH_BELL),
+                "the Ringer strikes with a bell (#awaken:clash_bell)");
+        // three real deflects: a light blow, a heavy one, and a light one on a stance one short of breaking
+        ServerPlayer light = fighter(h, 1.5, 0.5, 0F), heavy = fighter(h, 3.5, 0.5, 0F), breaker = fighter(h, 5.5, 0.5, 0F);
+        Mob zl = put(h, EntityTypes.ZOMBIE, 1.5, 1.9, 60), zh = put(h, EntityTypes.ZOMBIE, 3.5, 1.9, 60), zb = put(h, EntityTypes.ZOMBIE, 5.5, 1.9, 60);
+        Posture stance = ArmsServer.posture(zb);
+        stance.value = stance.max - 1;
+        stance.lastHitAt = ArmsServer.now(zb); // just struck: nothing drains before the deflect
+        deflectBy(h, light, zl, Strikes.Kind.LIGHT);
+        deflectBy(h, heavy, zh, Strikes.Kind.HEAVY);
+        deflectBy(h, breaker, zb, Strikes.Kind.LIGHT);
+        h.assertTrue(ArmsServer.state(light).lastClash == ArmsRules.CLASH_LIGHT, "a light blow turned aside is the light clash: " + ArmsServer.state(light).lastClash);
+        h.assertTrue(ArmsServer.state(heavy).lastClash == ArmsRules.CLASH_HEAVY, "a heavy one is the heavy clash: " + ArmsServer.state(heavy).lastClash);
+        h.assertTrue(ArmsServer.posture(zb).broken(ArmsServer.now(breaker)) && ArmsServer.state(breaker).lastClash == ArmsRules.CLASH_BREAK,
+                "the deflect that broke its stance is the biggest: " + ArmsServer.state(breaker).lastClash);
+        done(h, light, heavy, breaker);
+    }
+
+    /** Raises p's guard and lets {@code by} strike it on the raise's first tick with a blow of {@code kind}: it is deflected. */
+    private static void deflectBy(GameTestHelper h, ServerPlayer p, Mob by, Strikes.Kind kind) {
+        raise(p);
+        float hp = p.getHealth();
+        Strikes.deliver(by, kind, () -> by.doHurtTarget(h.getLevel(), p));
+        h.assertTrue(ArmsServer.state(p).raiseDeflected && p.getHealth() == hp, kind + " blow on the raise is deflected");
     }
 
     /** Raises p's guard, lets {@code by} strike it on the raise's first tick, and returns the Resonance the deflect paid. */

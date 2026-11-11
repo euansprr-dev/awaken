@@ -1,0 +1,144 @@
+# Nothing floats in a cave (SPEC §42.4 "Settled"), on a second seed: Euan's New World (11) with the pack's terrain, the Ochre Deep
+# near his old home (where the grown walls were shot) and four more regions and a Delvers' mouth round it. As caves-floaters-v20.txt:
+# the census (/awaken caves floaters 5), the nearest floaters (look N), each again after the re-check round it (resettle), and the
+# census after the re-check over the whole spot.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-floaters-home.txt 3600
+world caves_floaters_home creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+hud off
+
+# ---- 1. the Ochre Deep near his old home ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 400
+cmd tp @s -534.50 28.00 -2337.50 -90.0 14.6
+wait 900
+cmd execute positioned -534 28 -2337 run awaken caves floaters 5
+wait 40
+shot h_ochre_stand
+cmd execute positioned -534 28 -2337 run awaken caves floaters 5 look 0
+wait 80
+shot h_look0
+cmd awaken caves resettle 1
+wait 40
+shot h_look0_settled
+cmd execute positioned -534 28 -2337 run awaken caves floaters 5 look 0
+wait 80
+shot h_look1
+cmd awaken caves resettle 1
+wait 40
+shot h_look1_settled
+cmd execute positioned -534 28 -2337 run awaken caves floaters 5 look 0
+wait 80
+shot h_look2
+cmd execute positioned -534 28 -2337 run awaken caves resettle 5
+wait 40
+shot h_look2_settled
+cmd execute positioned -534 28 -2337 run awaken caves floaters 5
+wait 40
+
+# ---- 2. a Delvers' mouth near his home, down in its cave ----
+cmd tp @s -504 220 -2088
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve place go throat goal
+wait 400
+cmd awaken caves floaters 5
+wait 40
+cmd awaken caves floaters 5 look 0
+wait 80
+shot d_look0
+cmd awaken caves resettle 1
+wait 40
+shot d_look0_settled
+cmd awaken caves floaters 5
+wait 40
+
+# ---- 3. four regions round his home ----
+cmd execute positioned -605 40 -2323 run awaken caves goto rootways 0
+wait 20
+waitpassage
+wait 600
+cmd awaken caves floaters 5
+wait 40
+cmd awaken caves floaters 5 look 0
+wait 80
+shot r_rootways
+cmd awaken caves resettle 5
+wait 40
+shot r_rootways_settled
+cmd awaken caves floaters 5
+wait 40
+
+cmd execute positioned -605 40 -2323 run awaken caves goto pale_halls 0
+wait 20
+waitpassage
+wait 600
+cmd awaken caves floaters 5
+wait 40
+cmd awaken caves floaters 5 look 0
+wait 80
+shot r_pale_halls
+cmd awaken caves resettle 5
+wait 40
+shot r_pale_halls_settled
+cmd awaken caves floaters 5
+wait 40
+
+cmd execute positioned -605 30 -2323 run awaken caves goto glimmer_hollows 0
+wait 20
+waitpassage
+wait 600
+cmd awaken caves floaters 5
+wait 40
+cmd awaken caves floaters 5 look 0
+wait 80
+shot r_glimmer
+cmd awaken caves resettle 5
+wait 40
+shot r_glimmer_settled
+cmd awaken caves floaters 5
+wait 40
+
+cmd execute positioned -605 -20 -2323 run awaken caves goto black_vaults 0
+wait 20
+waitpassage
+wait 600
+cmd awaken caves floaters 5
+wait 40
+cmd awaken caves floaters 5 look 0
+wait 80
+shot r_black_vaults
+cmd awaken caves resettle 5
+wait 40
+shot r_black_vaults_settled
+cmd awaken caves floaters 5
+wait 40
+quit

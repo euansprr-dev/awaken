@@ -1,5 +1,6 @@
 package dev.awaken.mobs.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.core.client.skin.SkinRenderState;
 import dev.awaken.core.client.skin.SkinnedMobRenderer;
 import dev.awaken.mobs.def.MobDef;
@@ -21,7 +22,8 @@ import org.jspecify.annotations.Nullable;
  * vanilla texture, until it has one), at that skin's arm width. Same armour, theme skin and glow layers and the same
  * look (tint, see-through, hit flash) as {@link AwHumanoidRenderer}.
  */
-final class AwSkinRenderer extends SkinnedMobRenderer<AwakenMob, SkinRenderState> {
+final class AwSkinRenderer extends SkinnedMobRenderer<AwakenMob, SkinRenderState>
+        implements BodyRest.Posed<SkinRenderState> {
     private final boolean mimic;
     private final Identifier own;
 
@@ -68,5 +70,15 @@ final class AwSkinRenderer extends SkinnedMobRenderer<AwakenMob, SkinRenderState
     @Override
     public boolean isEntityUpsideDown(AwakenMob mob) {
         return mob.def().has(Trait.UPSIDE_DOWN) || super.isEntityUpsideDown(mob);
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(SkinRenderState s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 }

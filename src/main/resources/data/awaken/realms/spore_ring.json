@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "name": "The Spore Ring",
+  "line": "A ring of caps and one way in. They come out of the dark a wave at a time.",
+  "form": "dungeon",
+  "theme": "fungal_hollow",
+  "ranks": [
+    "E",
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:sporewells",
+    "water": 0,
+    "params": {
+      "stand": 1.0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/sporewells"
+    ],
+    "lens": "sporewells",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "spores",
+      "fireflies",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "mother_of_spores",
+    "seat": "under_the_wells"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

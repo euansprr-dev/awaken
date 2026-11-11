@@ -6,7 +6,11 @@
   "theme": "fungal_hollow",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {
