@@ -1,0 +1,691 @@
+<title>The Whole Boss Fight</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column (max 62rem); figures take the full column. "Today" is steel, "the plan" is bell bronze.
+   The four tell colours are the game's own (white-gold, amber, red, violet) and only appear where a tell is drawn. */
+:root {
+  --bg: #f2f3f5; --panel: #ffffff; --ink: #15181d; --muted: #596170; --line: #d7dbe2; --soft: #e9ebef;
+  --steel: #2f6388; --bronze: #a35a12; --ok: #2c7a4b; --warn: #8f5d00; --bad: #ad3535;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1216; --panel: #171b21; --ink: #e7e9ed; --muted: #9aa2af; --line: #2a303a; --soft: #1e232b;
+  --steel: #86b6d6; --bronze: #eba45a; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1216; --panel: #171b21; --ink: #e7e9ed; --muted: #9aa2af; --line: #2a303a; --soft: #1e232b;
+  --steel: #86b6d6; --bronze: #eba45a; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px }
+.wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 60px }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.45rem, 3.5vw, 1.9rem); font-weight: 600; letter-spacing: -0.01em }
+h3 { font-size: 1.12rem; font-weight: 600 }
+p, ul, ol { margin: 0; max-width: 68ch }
+ul, ol { padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+.lead { font-size: 1.14rem; max-width: 62ch }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+q { font-style: italic }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--soft); padding: 1px 5px; border-radius: 3px }
+header { display: flex; flex-direction: column; gap: 16px }
+.answer { border-left: 3px solid var(--bronze); padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 8px }
+.answer li { max-width: 64ch }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap }
+.tag.ok { color: var(--ok) } .tag.warn { color: var(--warn) } .tag.bad { color: var(--bad) } .tag.steel { color: var(--steel) } .tag.bronze { color: var(--bronze) }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line) }
+tr:last-child td { border-bottom: 0 }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--soft) }
+td.num, th.num { text-align: right; white-space: nowrap }
+td.plan { color: var(--bronze); font-weight: 600 }
+.finding { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); gap: 4px 14px; padding-top: 18px; border-top: 1px solid var(--line) }
+.finding .big { font-family: var(--display); font-weight: 700; font-size: 1.9rem; color: var(--bronze); line-height: 1 }
+.finding > div { display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.change { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px }
+dl.rows { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 8px 16px; margin: 0 }
+dl.rows dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px }
+dl.rows dd { margin: 0; max-width: 64ch }
+@media (max-width: 560px) { dl.rows { grid-template-columns: 1fr; gap: 2px 0 } dl.rows dd { margin-bottom: 8px } .finding { grid-template-columns: 1fr } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; color: var(--muted) }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px }
+.legend .t { background: var(--steel) } .legend .p { background: var(--bronze) } .legend .w { background: color-mix(in srgb, var(--ok) 35%, var(--panel)) } .legend .x { background: var(--bad) }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+figcaption { font-size: 0.86rem; color: var(--muted); max-width: 72ch }
+figure img { border-radius: 6px; border: 1px solid var(--line); display: block; width: 100% }
+.frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.frames figure img { border-radius: 4px }
+.frames figcaption { font-family: var(--mono); font-size: 0.7rem }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px }
+@media (max-width: 700px) { .pair { grid-template-columns: 1fr } }
+svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted) }
+svg .axis { stroke: var(--line); stroke-width: 1; fill: none }
+svg .today { stroke: var(--steel); fill: none; stroke-width: 2 }
+svg .plan { stroke: var(--bronze); fill: none; stroke-width: 2.5 }
+svg .win { fill: color-mix(in srgb, var(--ok) 22%, transparent) }
+svg .hit { stroke: var(--bad); stroke-width: 1.5; fill: none }
+svg .bar { fill: var(--steel) } svg .bar.after { fill: color-mix(in srgb, var(--steel) 55%, var(--panel)) }
+svg .gap { fill: color-mix(in srgb, var(--bad) 20%, transparent) }
+svg .mk-e { fill: var(--bronze) } svg .mk-r { fill: var(--ok) } svg .mk-a { fill: var(--muted) }
+svg .lbl { fill: var(--ink) }
+/* durability bars: widths are shares of a fresh weapon, on one scale (0 to 140%) */
+.dur { display: flex; flex-direction: column; gap: 3px; font-size: 0.88rem }
+.dur .row { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr) 6.4rem; gap: 10px; align-items: center }
+.dur .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.dur .name small { color: var(--muted); font-family: var(--mono); margin-right: 6px }
+.dur .track { position: relative; height: 18px; background: var(--soft); border-radius: 3px }
+.dur .track i { position: absolute; left: 0; height: 8px; border-radius: 2px }
+.dur .track i.t { top: 1px; background: var(--steel) } .dur .track i.p { top: 9px; background: var(--bronze) }
+.dur .track .full { position: absolute; left: 71.43%; top: -2px; bottom: -2px; width: 2px; background: var(--bad) }
+.dur .val { font-family: var(--mono); font-size: 0.74rem; text-align: right; white-space: nowrap; color: var(--muted) }
+.dur .row.you .name { font-weight: 600 }
+.dur .grp { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 8px }
+@media (max-width: 620px) { .dur .row { grid-template-columns: 7.2rem minmax(0, 1fr) 5.2rem } }
+/* the ring bench */
+.bench { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 12px }
+.bench canvas { width: 100%; height: auto; display: block; border-radius: 6px; background: #0b0d10; touch-action: manipulation; cursor: pointer }
+.bench canvas:focus-visible, .seg button:focus-visible, .bench button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px }
+.ctl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex-wrap: wrap }
+.seg button { font: inherit; font-size: 0.88rem; padding: 6px 12px; background: var(--panel); color: var(--ink); border: 0; border-right: 1px solid var(--line); cursor: pointer }
+.seg button:last-child { border-right: 0 }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.bench .guard { font: inherit; font-weight: 600; padding: 9px 18px; border-radius: 6px; border: 1px solid var(--bronze); background: var(--bronze); color: var(--bg); cursor: pointer }
+.bench .say { font-size: 0.98rem; min-height: 1.6em }
+.bench .tally { font-family: var(--mono); font-size: 0.8rem; color: var(--muted) }
+.ctl label { font-size: 0.8rem; color: var(--muted); font-family: var(--mono); letter-spacing: 0.04em; text-transform: uppercase }
+/* the finishing blow's timeline: widths are seconds */
+.tl { display: flex; flex-direction: column; gap: 6px }
+.tl .barrow { display: flex; height: 46px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line) }
+.tl .barrow div { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.68rem; min-width: 0; overflow: hidden; white-space: nowrap; border-right: 1px solid var(--bg); color: var(--ink) }
+.tl .b0 { background: var(--soft) } .tl .b1 { background: color-mix(in srgb, var(--steel) 26%, var(--panel)) }
+.tl .b2 { background: color-mix(in srgb, var(--steel) 50%, var(--panel)) } .tl .b3 { background: var(--bronze); color: var(--bg) !important }
+.tl .b4 { background: color-mix(in srgb, var(--bronze) 40%, var(--panel)) } .tl .b5 { background: var(--soft) }
+.tl .ruler { display: flex; font-family: var(--mono); font-size: 0.66rem; color: var(--muted) }
+.tl .ruler span { flex: 1 1 0; border-left: 1px solid var(--line); padding-left: 3px; min-width: 0 }
+.decide { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--panel) }
+.decide > div { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 6px 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); align-items: start }
+.decide > div:last-child { border-bottom: 0 }
+.decide .n { font-family: var(--display); font-weight: 700; font-size: 1.2rem; color: var(--bronze) }
+.decide p { max-width: 62ch }
+@media (max-width: 620px) { .decide > div { grid-template-columns: 2rem minmax(0, 1fr) } .decide .tag { grid-column: 2; justify-self: start } }
+.note { font-size: 0.9rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 6px; padding: 10px 14px; max-width: none }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Plan for approval · 11 Nov 2026 · nothing here is built</span>
+  <h1>The Whole Boss Fight</h1>
+  <p class="lead">You fought the Ringer today and named four things: the sword broke, the ring can't be trusted, a perfect parry feels small, and the win has no moment. I read your log, your save and the code. All four have a plain cause, and the same causes sit on all 47 bosses.</p>
+  <div class="answer">
+    <strong>What I propose, in five lines</strong>
+    <ul>
+      <li><strong>Gear that lasts.</strong> An E weapon holds 900 blows, where it holds 220. Nothing you forged is ever destroyed: at zero it is worn out until you mend it.</li>
+      <li><strong>A ring you can read.</strong> It runs on the same clock as the boss's body, closes at one speed, and closes when the blow reaches you. It turns white for exactly as long as a parry will work.</li>
+      <li><strong>A parry that feels great.</strong> A clash in three sizes, the ring bursting outward, a sound you choose by ear. No pitched-up ding.</li>
+      <li><strong>A final blow worth remembering.</strong> A boss can only die to a finishing blow. At zero it kneels, you finish it, and four seconds of camera, slowed time and its own ending follow.</li>
+      <li><strong>Every boss, no easier.</strong> No window, health, damage or stance number changes. Three pilots first, as before.</li>
+    </ul>
+  </div>
+</header>
+
+<section>
+  <span class="eyebrow">1 · What I took from your words</span>
+  <h2>The job, and how we'll know it worked</h2>
+  <p>You want a boss fight to be the best five minutes of a session: smooth, readable, satisfying, and exactly as hard as it is now. I checked my reading of the dictation: <q>par</q> and <q>powering</q> are parry and parrying, and <q>the rings closing in</q> is the ring that closes on the lock or mark when a blow is coming.</p>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>A strong result</th><th>Not acceptable</th></tr>
+    <tr><td>Gear</td><td>A fresh weapon of your rank finishes any boss of that rank and has most of its life left.</td><td>A weapon or armour piece vanishing in a fight.</td></tr>
+    <tr><td>Ring</td><td>It glides. You can say out loud when to press, and pressing then works.</td><td>A ring that is wrong even once.</td></tr>
+    <tr><td>Parry</td><td>You feel the clash in the sound, the screen and the boss.</td><td>A fight made easier to make it feel good.</td></tr>
+    <tr><td>Final blow</td><td>The thing you remember and want to show someone.</td><td>A camera that clips a wall, gets stuck, or shows one thing while the server did another.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">2 · Evidence</span>
+  <h2>What your fight showed</h2>
+  <p>The fight ran from 13:43 to 13:48 on build 69fee63de. Your log holds every strike your hands played. Your save holds the wear on what you carry now, and your statistics count the sword that broke.</p>
+  <figure>
+    <svg id="fightfig" viewBox="0 0 760 210" role="img" aria-label="Strike moves in each ten seconds of the fight, with ripostes, Arts and Executions marked, and the gap where the sword broke"></svg>
+    <figcaption>Your strike moves in each ten seconds. Markers above: an Execution, a riposte, an Art. The shaded gap is 21 seconds with no strike, which is when the log shows you going to creative for five seconds and coming back. Two shorter gaps earlier are a pause and a walk.</figcaption>
+  </figure>
+  <div class="legend"><span><i class="t"></i>strike moves</span><span><i style="background:color-mix(in srgb, var(--steel) 55%, var(--panel))"></i>with the second sword</span><span><i class="p"></i>Execution (5)</span><span><i style="background:var(--ok)"></i>riposte (10)</span><span><i style="background:var(--muted)"></i>Art (5)</span><span><i style="background:color-mix(in srgb, var(--bad) 30%, var(--panel))"></i>the sword is gone</span></div>
+
+  <div class="finding"><span class="big">1</span><div>
+    <h3>The fight took about 300 landed blows. The sword holds 220.</h3>
+    <p>Your first Wildhide Longsword broke after 239 strike moves. Your statistics record one broken longsword. The second one stands at 78 worn from 83 more moves, so nearly every move lands and each landing costs one use. The fight needed 322 moves in all.</p>
+    <p>It is the same on every low boss. The simulator, which reads the game's own numbers, puts an E Lord at 44 to 81% of a fresh E weapon and the Ringer at over 100%. Your morning's hive gate was 93 creatures and the Regent, about 500 blows: more than two E weapons. From C up there is no problem (4 to 15% a boss).</p>
+    <p>Two more things I found while counting. Axe-style weapons lose two uses a blow, because they are built on Minecraft's axe, so an E axe lasts 110 blows. And your four Wildhide armour pieces each stand at 126 worn after one morning; the helmet holds 179. Armour loses a point for every blow that touches it, however light, and the duels were retuned to many light blows.</p>
+  </div></div>
+
+  <div class="finding"><span class="big">2</span><div>
+    <h3>The ring moves in four jumps, trembles between them, and is gone before the blow lands.</h3>
+    <p>The ring reads a countdown the server sends. The server only sends it on every fourth tick. The ring then subtracts your own frame clock from that stale number, so in each tick it creeps in and snaps back. For the Ringer's Swing it sits at four sizes for a fifth of a second each, shaking, and jumps between them.</p>
+    <p>The countdown is cleared on the last tick of the wind-up. The bell lands one to four ticks after that. So the ring disappears a quarter open, and the right moment to raise your guard is just after it has vanished. The last ring you can see is the wrong moment: a guard raised there is a block, not a parry.</p>
+    <p>The white glint on the striking hand, which was meant to be the cue for a light blow, is set to show when the countdown reads five. It reads 16, 12, 8, 4. It never shows. All of this is in the shared code, so it is true of every boss and every creature.</p>
+    <figure>
+      <svg id="ringfig" viewBox="0 0 760 280" role="img" aria-label="Ring size against time for the Ringer's Swing, today and as planned"></svg>
+      <figcaption>The ring's size through the Swing, worked from the game's own formula at your frame rate (54 a second). Today's line is the steel one: four steps with a tremble, ending early. The bronze line is the plan. The green band is the 200 milliseconds in which a longsword's guard is a parry.</figcaption>
+    </figure>
+    <div class="legend"><span><i class="t"></i>today</span><span><i class="p"></i>the plan</span><span><i class="w"></i>a guard raised here is a parry</span><span><i class="x"></i>the bell lands</span></div>
+    <!--FRAMES:ring-->
+  </div></div>
+
+  <div class="finding"><span class="big">3</span><div>
+    <h3>A parry's answer is small, and it is the same whatever you turned aside.</h3>
+    <p>On a parry the game freezes the blow for a tenth of a second, tips the view 1.8 degrees, and narrows it 3.5%. The sound is a shield block with an anvil over it at under half volume, pitched up by 60%. That is your <q>very small ding</q>. A light blow, a heavy one, and the last blow of a string that makes the boss reel all get this same answer.</p>
+    <p>Some of the parries that felt perfect were probably blocks, because the ring gave you no way to tell. A block has a thud and no ring.</p>
+  </div></div>
+
+  <div class="finding"><span class="big">4</span><div>
+    <h3>The kill was an ordinary third strike.</h3>
+    <p>Your last three entries in the log are strike 1, 2, 3. The game adds a slightly longer freeze and a kill sound, and the body plays its own fall. Nothing else marks the win.</p>
+    <p>The pieces of a real moment already exist. Every boss has a kneel and a death of its own. Every weapon has an Execution, in first person and on your body. The opening has a camera that can leave your eyes and come back. The plate already says <q>Broken! Hold Left Button to finish it</q>.</p>
+    <div class="pair">
+      <figure><img alt="The Ringer on one knee with its stance broken, seen in first person, the plate reading Broken, hold Left Button to finish it" src="{{IMG:today_broken.jpg}}"><figcaption>Today: a broken stance. Real frame, CI run 42969849415.</figcaption></figure>
+      <figure><img alt="The Execution landing on the Ringer in first person: the whole body flashes red and the blade leaves an arc" src="{{IMG:today_execution.jpg}}"><figcaption>Today: the Execution. The whole body flashes Minecraft's red.</figcaption></figure>
+    </div>
+    <!--FRAMES:death-->
+  </div></div>
+
+  <p class="note">What I could not see: the frame-by-frame record of your fight was overwritten six minutes later by your next session, so I have no film of the ring in your own play. The cause above is read from the code and shown tick by tick on CI. Also, your log says your hands played 91 blows "at once" while about 300 landed. That may only be the server's answer being held until the blade arrives. I measure it before calling it a fault.</p>
+</section>
+
+<section>
+  <span class="eyebrow">3 · Directions</span>
+  <h2>Three ways to do each part, and the one I recommend</h2>
+  <div class="scroll"><table>
+    <tr><th></th><th>Small repair</th><th>Recommended</th><th>More ambitious</th></tr>
+    <tr><td><strong>Gear</strong></td><td>Raise the E and D numbers.</td><td class="plan">Raise them, one use a blow for every weapon, armour wears by how hard it is hit, and nothing forged is ever destroyed.</td><td>No wear in fights at all.</td></tr>
+    <tr><td><strong>Ring</strong></td><td>Send the countdown every tick.</td><td class="plan">The ring reads the body's own clock, closes at one speed, closes when the blow reaches you, and shows the parry window.</td><td>Your game decides the parry and the server takes its word.</td></tr>
+    <tr><td><strong>Parry</strong></td><td>Louder sound, bigger tip of the view.</td><td class="plan">Three sizes of clash by what you turned aside, tied to the ring, with a block that reads as a block.</td><td>Slow motion on every parry.</td></tr>
+    <tr><td><strong>Final blow</strong></td><td>A longer freeze and a flash on whatever blow kills.</td><td class="plan">A boss can only die to a finishing blow, filmed from outside your body, with each weapon's own move and each boss's own ending.</td><td>A hand-made fatality for every boss and weapon pair (752).</td></tr>
+  </table></div>
+  <p>The small repairs leave the cause in place. A countdown sent every tick still ends before the blow. A longer freeze is still an ordinary strike. The ambitious options cost a lot before you have played the middle one, and two of them change how hard the game is. I would hold them back and decide after the pilots.</p>
+</section>
+
+<section>
+  <span class="eyebrow">4 · The design · part one</span>
+  <h2>Gear that lasts a whole fight</h2>
+  <figure>
+    <div class="dur" id="durfig"></div>
+    <figcaption>How much of a fresh weapon one boss costs, for the simulator's hardest-working player, today and as planned. The red line is the whole weapon. Your own fight is the first row.</figcaption>
+  </figure>
+  <div class="legend"><span><i class="t"></i>today</span><span><i class="p"></i>the plan</span><span><i class="x"></i>the weapon breaks</span></div>
+  <div class="change">
+    <dl class="rows">
+      <dt>Uses</dt><dd>E weapons 220 → <strong>900</strong>. D weapons 500 → <strong>1,300</strong>. C, B, A and S stay (1,700 to 2,800). A whole E gate and its Lord then costs a little over half an E weapon.</dd>
+      <dt>One a blow</dt><dd>Every weapon loses one use for a blow that lands. Axes lose two today.</dd>
+      <dt>Armour</dt><dd>A piece wears by how hard the blow was, with no flat point for a scratch. E and D armour hold more (E helmet 143 → 264).</dd>
+      <dt>Never gone</dt><dd>At zero, a weapon or armour piece of ours is <strong>worn out</strong>. It stays in your hand. A worn-out weapon hits half as hard and still parries. Worn-out armour protects half as well. The icon cracks and the tooltip says: <q>Worn out. It hits half as hard until you mend it at an anvil.</q> Your Marks, inscriptions and Lord-forged weapons can't be lost to wear.</dd>
+      <dt>Stays</dt><dd>Mending at an anvil with your rank's material, the War Anvil, the Armoury's extra quarter. Wear is still a cost. You pay it at home every gate or two, not in the middle of a boss.</dd>
+      <dt>Trade-off</dt><dd>E gear stops being a reason to rush to D. I think that's right: the reason to reach D should be the gear itself.</dd>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">4 · The design · part two</span>
+  <h2>A ring you can read</h2>
+  <p>Try it. The picture behind is a real frame of the Ringer. The bronze dot stands in for its bell, since a still can't swing. Press when you think a parry will work. The judging is the game's real rule for a longsword: your guard must go up in the 200 milliseconds before the bell lands. Switch between today's ring and the planned one.</p>
+  <div class="bench" id="bench">
+    <div class="ctl">
+      <span class="seg" role="group" aria-label="Which ring">
+        <button type="button" id="m-today" aria-pressed="false">Today's ring</button>
+        <button type="button" id="m-plan" aria-pressed="true">The planned ring</button>
+      </span>
+      <span class="seg" role="group" aria-label="Which blow">
+        <button type="button" id="b-swing" aria-pressed="true">Swing</button>
+        <button type="button" id="b-clang" aria-pressed="false">Clang</button>
+        <button type="button" id="b-held" aria-pressed="false">Clang, held</button>
+        <button type="button" id="b-whirl" aria-pressed="false">Whirl</button>
+      </span>
+      <span class="seg" role="group" aria-label="Speed">
+        <button type="button" id="s-real" aria-pressed="true">Real speed</button>
+        <button type="button" id="s-half" aria-pressed="false">Half speed</button>
+      </span>
+    </div>
+    <canvas id="ringcv" width="1100" height="618" tabindex="0" aria-label="Ring timing bench. Press Space or click to raise your guard."></canvas>
+    <div class="ctl">
+      <button type="button" class="guard" id="guardbtn">Raise guard (Space)</button>
+      <button type="button" class="seg" id="pausebtn" style="padding:8px 14px;font:inherit;font-size:.88rem;background:var(--panel);color:var(--ink);cursor:pointer">Pause</button>
+      <span class="say" id="say" aria-live="polite">Watch one, then press.</span>
+    </div>
+    <div class="tally" id="tally">Today's ring: 0 parries of 0 tries · The planned ring: 0 of 0</div>
+  </div>
+  <p class="muted">This bench is a model I wrote from the game's code, with the game's numbers. It is here so you can judge the idea. It is no proof that the built ring will feel right, which only your play can say. The clash you see after a parry uses today's numbers on today's ring and the planned ones on the planned ring. There is no sound on this page.</p>
+  <div class="change">
+    <dl class="rows">
+      <dt>One clock</dt><dd>The ring reads the same clock that moves the boss's body. Ring and bell can't disagree, because they are one number. No countdown from the server is read for time again.</dd>
+      <dt>One speed</dt><dd>Every ring, on every boss and creature, takes 0.6 seconds to close. A longer wind-up shows its flare and glow first and the ring later. A held blow's ring just comes later. You learn one rhythm for the whole game.</dd>
+      <dt>Closes on you</dt><dd>It closes when the blow reaches where you stand, worked out from the same shapes the server strikes with. A Whirl that reaches you late closes late. A blow that will miss you draws its ring dim.</dd>
+      <dt>The band</dt><dd>The lock ring grows a band as wide as your weapon's parry window. While the ring is inside it, both burn white. That is <q>now</q>, and it lasts as long as a parry will work: wider for a rapier, narrower for a maul. Red and violet blows use the same ring with your dodge's window.</dd>
+      <dt>After</dt><dd>Parried: the rings burst outward. Guard up too soon: <q>Too early</q> under the ring for half a second. Struck: <q>Too late</q>. You can switch the words off.</dd>
+      <dt>No lock needed</dt><dd>In a boss fight the ring shows on the boss whenever it is on screen.</dd>
+      <dt>Also fixed</dt><dd>The white glint on the striking hand fires as the band lights, so the world and the ring say the same thing.</dd>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">4 · The design · part three</span>
+  <h2>A parry that feels great</h2>
+  <p>The rule stays the server's and the window stays as it is. What changes is the answer you get, and that it grows with what you turned aside.</p>
+  <div class="scroll"><table>
+    <tr><th></th><th>Today</th><th>A light blow</th><th>A heavy blow</th><th>The blow that makes it reel, or breaks its stance</th></tr>
+    <tr><td>The freeze</td><td class="num">100 ms</td><td class="num plan">110 ms</td><td class="num plan">160 ms</td><td class="num plan">200 ms</td></tr>
+    <tr><td>The view tips</td><td class="num">1.8°</td><td class="num plan">2.6°</td><td class="num plan">4.0°</td><td class="num plan">4.5°</td></tr>
+    <tr><td>The view shakes</td><td>no</td><td class="plan">a fifth of a second</td><td class="plan">longer</td><td class="plan">longest</td></tr>
+    <tr><td>The view leans in</td><td class="num">3.5%</td><td class="num plan">4.5%</td><td class="num plan">6%</td><td class="num plan">8%</td></tr>
+    <tr><td>Light</td><td>a small spark</td><td class="plan">a white-gold flash where the weapons meet, sparks thrown the way the blow went</td><td class="plan">wider</td><td class="plan">and the edges of the frame flash</td></tr>
+    <tr><td>The ring</td><td>nothing</td><td class="plan" colspan="3">bursts outward; the stance bar's new piece lands a beat later</td></tr>
+    <tr><td>Sound</td><td>shield block, quiet anvil pitched up 60%</td><td class="plan">metal on metal, by what the boss's weapon is made of</td><td class="plan">lower and longer</td><td class="plan">the heavy one, and the boss's own voice</td></tr>
+    <tr><td>A block</td><td>a thud</td><td colspan="3">A thud, no flash, and <q>Too early</q>. You always know which one you got.</td></tr>
+  </table></div>
+  <ul>
+    <li><strong>Sound is yours to pick.</strong> I'll put three candidates for each clash on a local listening page, built from Minecraft's own recordings by name (anvil, mace, iron golem, trident on stone, chain, copper, and a bell for bodies that swing bells). Each plays after the boss's own whoosh, at the fight's rhythm. No layer is pitched above 1.2.</li>
+    <li><strong>Who builds it.</strong> The parry's sound and weight live in the weapon-feel session's files. It has agreed to build this part from these numbers, so two sessions don't edit the same code.</li>
+    <li><strong>Comfort.</strong> Every layer sits behind the switches that already exist for shake, freeze and view moves.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">4 · The design · part four</span>
+  <h2>A final blow worth remembering</h2>
+  <p><strong>The rule:</strong> a boss can only die to a finishing blow. When its health is gone it does not fall. It stops, its helpers drop, anything it threw fades, and it goes to its knee. The plate turns gold and says <q>It's beaten. Hold Left Button to finish it.</q> It can't hurt you and nothing but you can end it. If you walk away for twenty seconds it dies the plain way, so a fight can never get stuck.</p>
+  <p>Then you hold attack, and this plays:</p>
+  <div class="tl" role="img" aria-label="The finishing blow's timeline, four seconds">
+    <div class="barrow">
+      <div class="b0" style="flex:0.2">in</div>
+      <div class="b1" style="flex:1.3">your weapon's finishing move</div>
+      <div class="b3" style="flex:0.3">the blow</div>
+      <div class="b4" style="flex:1.6">its own ending</div>
+      <div class="b5" style="flex:0.6">back to you</div>
+    </div>
+    <div class="ruler"><span>0 s</span><span>1</span><span>2</span><span>3</span><span>4</span></div>
+  </div>
+  <ol>
+    <li><strong>In.</strong> Sound ducks, black bars slide in, the HUD goes. The view leaves your eyes for a low shot of you and the kneeling boss.</li>
+    <li><strong>Your weapon's finishing move.</strong> Your body plays it, in your armour, with your weapon. Each of the sixteen styles has its own.</li>
+    <li><strong>The blow.</strong> The last swing slows to a third. On contact: a quarter-second freeze, one white frame, and the sound of what the boss is made of.</li>
+    <li><strong>Its own ending.</strong> Each boss falls its own way and has a last word. The Ringer's bells drop and toll once. A forge goes dark. Glass breaks along its whole length.</li>
+    <li><strong>Back to you.</strong> The view returns to your eyes. The reward follows as it does today.</li>
+  </ol>
+  <!--FRAMES:finisher-->
+  <div class="change">
+    <dl class="rows">
+      <dt>Your arm</dt><dd>The camera films your whole body from outside, so the first-person arm is never asked to do more than it does today. Your rule about the straight vanilla arm holds.</dd>
+      <dt>Own eyes</dt><dd>A setting: <q>Finishing blows: cinematic camera, through your own eyes, or off.</q> Through your own eyes plays the same beats with no camera move, using the Execution your arm already has. It is also what plays if there is no room for the camera.</dd>
+      <dt>By weapon</dt><dd>Longsword: a rising cut, then both hands overhead. Maul: one full wind and the crush. Daggers: in close, a flurry, both blades out together. Twin Blades: a crossing pair, then both points down. Katana: one drawn cut past it, and it falls behind you. The other eleven follow the same way.</dd>
+      <dt>By boss</dt><dd>Six kinds of ending for six kinds of body (two-legged, beast, serpent, flier, machine, growth), each in the boss's own material and sound. The six Wardens, the eight Sovereigns and the Signal's Shadow get hand-made endings after the pilots.</dd>
+      <dt>Skipping</dt><dd>The first time you see a boss's ending it plays whole. After that, holding Sneak ends it at once.</dd>
+      <dt>With others</dt><dd>Only the one who struck gets the camera. Everyone else sees your body make the move and the boss fall, in real time. You can't be hurt or pushed while it plays.</dd>
+    </dl>
+  </div>
+  <h3>How it stays smooth</h3>
+  <ul>
+    <li><strong>One side decides.</strong> The server commits the finishing blow once: who, which weapon, which tick. From that tick the boss is dead by rule and the reward's timers run. Your game plays a fixed four seconds. No answer from the server can change it part-way.</li>
+    <li><strong>A known start.</strong> The boss is kneeling and the server stands you on a clear spot in front of it. With no clear spot, it plays through your own eyes.</li>
+    <li><strong>A camera that checks.</strong> Three shots are tried, each tested for a clear path and a clear view on every frame. If none is clear, it plays through your own eyes.</li>
+    <li><strong>One way back.</strong> A pause, a disconnect, a change of world, or anything else taking the camera all run the same clean return. The opening's camera already works this way.</li>
+    <li><strong>Read every frame.</strong> Each weapon and each kind of ending is filmed on CI from both views before you see it.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Difficulty</span>
+  <h2>How it stays as hard as it is</h2>
+  <ul>
+    <li>Nothing a fight is judged by changes: the parry and dodge windows, health, damage, stances, the bosses' minds and strings.</li>
+    <li>The ring shows the real window. It does not widen it. You will parry more, because you can finally see when. That moves you toward the player these fights were tuned for, who parries six blows in ten and wins the Ringer most of the time. Someone who only blocks still loses nine fights in ten.</li>
+    <li>The finishing blow does no damage. It starts only when the health is already gone.</li>
+    <li>A worn-out weapon makes a fight slower, never easier.</li>
+    <li><strong>The check:</strong> the simulator's table for all 15 Lords and 6 Wardens must come out identical before and after. If your own log later shows you parrying more than three blows in four, the answer is the shorter tells already planned for later Wardens. The ring stays honest.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">6 · When things go wrong</span>
+  <h2>States and failures I've planned for</h2>
+  <div class="scroll"><table>
+    <tr><th>If</th><th>Then</th></tr>
+    <tr><td>The boss is staggered or its blow is cut short mid wind-up</td><td>The ring fades out with no "now". It never snaps.</td></tr>
+    <tr><td>The server stalls for a moment</td><td>Body and ring hold together, because they share a clock. I'd also hold the world's autosave while a boss fights: an autosave froze your fight for a tenth of a second.</td></tr>
+    <tr><td>Two creatures wind up at once</td><td>The ring shows the blow that will reach you first. The edge arcs for off-screen blows stay as they are.</td></tr>
+    <tr><td>You parry with a worn-out weapon</td><td>It still parries. Only its damage halves.</td></tr>
+    <tr><td>The boss is beaten in the air, in water, on a ledge or against a wall</td><td>A flier is brought down first. With no clear ground or no clear shot, the finishing blow plays through your own eyes.</td></tr>
+    <tr><td>You die, quit or lose connection during the finishing blow</td><td>The boss was already dead by rule at the commit. The reward still comes. The camera returns the one clean way.</td></tr>
+    <tr><td>Another player lands the last hit</td><td>They get the finishing blow. You watch it happen in the world.</td></tr>
+    <tr><td>Camera motion bothers you</td><td>Reduced motion, or the setting, gives the own-eyes version with no camera move and no shake.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">7 · Checked from four sides</span>
+  <h2>A structured review, not a playtest</h2>
+  <ul>
+    <li><strong>Someone new.</strong> One ring, one speed, one colour change to learn. The existing one-time stance hint gains a line: <q>Raise your guard when the ring turns white.</q></li>
+    <li><strong>Someone expert.</strong> Nothing is slower. The band shows your weapon's true window, so a rapier's wider window and a maul's narrower one are visible for the first time. The finishing blow can be skipped after the first time.</li>
+    <li><strong>Comfort and access.</strong> The ring's "now" is a change of brightness and thickness as well as colour. The words can replace or join it. Shake, freeze and camera each have a switch. No sound is the only cue for anything.</li>
+    <li><strong>The engineer.</strong> The riskiest piece is the camera's shot test in tight rooms, so own-eyes mode is the fallback everywhere. The ring's rule for when a blow reaches you is one shared function that both sides call, tested against all 47 move tables. Every part has its own switch, and the old ring and the plain death stay in the code until you've played the pilots.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">8 · Build</span>
+  <h2>Order, pilots and proof</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th>Proof before you see it</th></tr>
+    <tr><td>0 · Truth</td><td>Log lines only: when the ring said a blow would land against when it did, every guard press with the ring's state and the server's answer, the wear each fight cost. The last five fights' frame records are kept. The local listening page.</td><td>Nothing a player sees changes.</td></tr>
+    <tr><td>1 · Gear</td><td>The numbers, one use a blow, armour by how hard, worn out and never gone.</td><td>A fresh weapon survives the simulator's worst fight three times. Nothing of ours can break.</td></tr>
+    <tr><td>2 · The ring</td><td>For every boss and creature at once.</td><td>The ring's landing tick equals the server's on every damaging move of all 47 bosses.</td></tr>
+    <tr><td>3 · The clash</td><td>Three sizes, built with the weapon-feel session, after your picks on the listening page.</td><td>Filmed on CI, every frame read.</td></tr>
+    <tr><td>4 · The finishing blow, pilots</td><td>The Ringer, the Hive Regent and the Gearwright Colossus, with the Longsword, Maul, Twin Blades and Daggers (what you've used this week).</td><td>Filmed from both views in an open hall and against a wall.</td></tr>
+    <tr><td><strong>You play</strong></td><td colspan="2">Stages 1 to 4, once. From your own log: no weapon of your rank under half after a boss; at least 99 in 100 presses made in the white band answered as parries; ring and blow within one tick on 95 blows in 100. And your verdict.</td></tr>
+    <tr><td>5 · Everyone</td><td>The other 12 weapons and 44 bosses by kind. Hand-made endings for the Wardens and Sovereigns.</td><td>The same films.</td></tr>
+  </table></div>
+  <p>At this project's pace, stages 0 to 4 are about one long session, stage 5 another, and the hand-made endings a third. The camera is the part most likely to grow.</p>
+</section>
+
+<section>
+  <span class="eyebrow">9 · Your call</span>
+  <h2>Decisions</h2>
+  <div class="decide">
+    <div><span class="n">1</span><p><strong>E weapons hold 900 blows and D weapons 1,300</strong>, and every weapon loses one use a blow (axes lose two today).</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">2</span><p><strong>Nothing you forged is ever destroyed.</strong> At zero it is worn out, at half strength, until you mend it.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">3</span><p><strong>Armour wears by how hard it is hit</strong>, and E and D armour hold more.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">4</span><p><strong>The ring runs on the boss's own clock, at one speed for every blow (0.6 seconds), and closes when the blow reaches you.</strong></p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">5</span><p><strong>The band that burns white while a parry will work</strong>, with <q>Too early</q> and <q>Too late</q> after a miss (the words can be switched off).</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">6</span><p><strong>In a boss fight the ring shows on the boss without locking on.</strong></p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">7</span><p><strong>The clash in three sizes</strong>, its sounds picked by you on a local listening page, built by the weapon-feel session.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">8</span><p><strong>A boss can only die to a finishing blow.</strong> At zero it kneels and waits for you.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">9</span><p><strong>The finishing blow is filmed from outside your body by default</strong>, about four seconds, with <q>through your own eyes</q> and <q>off</q> in settings.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">10</span><p><strong>It can be skipped by holding Sneak from the second time</strong> you see that boss's ending.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">11</span><p><strong>Pilots first:</strong> the Ringer, the Hive Regent and the Gearwright Colossus, with four weapons. You play them before the other 44.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">12</span><p><strong>Hold the world's autosave while a boss fights</strong> and save the moment it ends. If the game crashed mid-fight you would lose that fight's minutes of world changes.</p><span class="tag ok">Recommend yes</span></div>
+    <div><span class="n">13</span><p><strong>Counter-hits</strong> (a blow landed during a wind-up fills the stance faster; you approved it on 28 Oct and it was never built). It changes how hard fights are.</p><span class="tag warn">Recommend not now</span></div>
+    <div><span class="n">14</span><p><strong>Keep the frame of your finishing blow as a picture</strong> on that boss's Journal page.</p><span class="tag steel">Recommend later</span></div>
+  </div>
+  <p class="muted">A plain "go with all recommendations" covers the list. Nothing is built until you say so.</p>
+</section>
+
+</div>
+
+<img id="backdrop" alt="" hidden src="{{IMG:today_facing.jpg}}">
+
+<script>
+/*DATA*/
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ---- the fight strip (his own strike moves, ten seconds a bar) ----
+  (function () {
+    var svg = document.getElementById('fightfig'); if (!svg || !FIGHT) return;
+    var L = 40, R = 750, T = 46, B = 170, n = FIGHT.bins.length, max = 20;
+    var x = function (s) { return L + (R - L) * s / (n * FIGHT.bin_s); };
+    var y = function (v) { return B - (B - T) * v / max; };
+    svg.appendChild(el('rect', { x: x(FIGHT.gap[0]), y: T - 30, width: x(FIGHT.gap[1]) - x(FIGHT.gap[0]), height: B - T + 30, 'class': 'gap' }));
+    [0, 10, 20].forEach(function (v) {
+      svg.appendChild(el('line', { x1: L, x2: R, y1: y(v), y2: y(v), 'class': 'axis' }));
+      svg.appendChild(el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end' }, String(v)));
+    });
+    FIGHT.bins.forEach(function (v, i) {
+      if (!v) return;
+      var s0 = i * FIGHT.bin_s;
+      svg.appendChild(el('rect', { x: x(s0) + 1.5, y: y(v), width: x(s0 + FIGHT.bin_s) - x(s0) - 3, height: B - y(v), rx: 1.5, 'class': 'bar' + (s0 >= FIGHT.gap[1] - 5 ? ' after' : '') }));
+    });
+    FIGHT.marks.forEach(function (m) {
+      var cx = x(m.t);
+      if (m.k === 'execution') svg.appendChild(el('rect', { x: cx - 4, y: T - 26, width: 8, height: 8, 'class': 'mk-e', transform: 'rotate(45 ' + cx + ' ' + (T - 22) + ')' }));
+      else if (m.k === 'riposte') svg.appendChild(el('circle', { cx: cx, cy: T - 10, r: 3.2, 'class': 'mk-r' }));
+      else svg.appendChild(el('rect', { x: cx - 2.5, y: T - 13, width: 5, height: 5, 'class': 'mk-a' }));
+    });
+    for (var s = 0; s <= 300; s += 60) svg.appendChild(el('text', { x: x(s), y: B + 16, 'text-anchor': s === 300 ? 'end' : s === 0 ? 'start' : 'middle' }, (s / 60) + ' min'));
+    var gx = (x(FIGHT.gap[0]) + x(FIGHT.gap[1])) / 2;
+    svg.appendChild(el('text', { x: gx, y: B + 34, 'text-anchor': 'middle', 'class': 'lbl' }, 'the first sword breaks after ' + FIGHT.before_swap + ' moves'));
+    svg.appendChild(el('text', { x: R, y: 12, 'text-anchor': 'end' }, FIGHT.total_moves + ' strike moves in ' + Math.round(FIGHT.length_s) + ' s'));
+  })();
+
+  // ---- the ring's maths, as the game computes it today and as planned ----
+  var BLOWS = {
+    swing: { name: 'Swing', wind: 16, k: 0, kind: 'light', col: '#FFF2CC', say: 'Swing: a light blow, told for 0.8 seconds.' },
+    clang: { name: 'Clang', wind: 20, k: 0, kind: 'heavy', col: '#FFA63A', say: 'Clang: a heavy blow, told for a second.' },
+    held: { name: 'Clang, held', wind: 28, k: 0, kind: 'heavy', col: '#FFA63A', say: 'Clang, held: it waits 0.4 seconds longer before it falls.' },
+    whirl: { name: 'Whirl', wind: 16, k: 5, kind: 'heavy', col: '#FFA63A', say: 'Whirl: a full turn. The bell reaches you a quarter of a second into it.' }
+  };
+  var WINDOW = 4, APPROACH = 12;
+  function contactOf(b) { return b.wind + 1 + b.k; }
+  // today: the count is sent every 4th tick, cleared at the wind-up's end; the client subtracts its own part-tick
+  function todayRing(b, tau, phi) {
+    var s = Math.floor(tau);
+    var goneAt = b.wind % 4 === 0 ? b.wind : b.wind + 1;
+    if (tau < 0 || s >= goneAt) return null;
+    var count = b.wind - 4 * Math.floor(s / 4);
+    var pt = (tau + phi) - Math.floor(tau + phi);
+    var left = Math.max(0, Math.min(1, (count - pt) / b.wind));
+    return { f: 0.939 * (1 + 1.15 * left), near: 1 - left, hot: false };
+  }
+  function planRing(b, tau) {
+    var left = contactOf(b) - tau;
+    if (left > APPROACH || left < 0) return null;
+    return { f: 1 + 1.15 * left / APPROACH, near: 1 - left / APPROACH, hot: left <= WINDOW };
+  }
+
+  // ---- the static chart: ring size against time for the Swing ----
+  (function () {
+    var svg = document.getElementById('ringfig'); if (!svg) return;
+    var b = BLOWS.swing, c = contactOf(b), L = 46, R = 744, T = 16, B = 232;
+    var x = function (t) { return L + (R - L) * (t + 18) / 21; };       // ticks relative to the landing, -18 .. +3
+    var y = function (f) { return B - (B - T) * (f - 0.9) / 1.35; };
+    svg.appendChild(el('rect', { x: x(-WINDOW), y: T, width: x(0) - x(-WINDOW), height: B - T, 'class': 'win' }));
+    [1, 1.5, 2].forEach(function (f) {
+      svg.appendChild(el('line', { x1: L, x2: R, y1: y(f), y2: y(f), 'class': 'axis' }));
+      svg.appendChild(el('text', { x: L - 6, y: y(f) + 4, 'text-anchor': 'end' }, f === 1 ? 'closed' : f + 'x'));
+    });
+    for (var ms = -800; ms <= 100; ms += 200) svg.appendChild(el('text', { x: x(ms / 50), y: B + 16, 'text-anchor': 'middle' }, ms === 0 ? 'lands' : ms + ' ms'));
+    svg.appendChild(el('line', { x1: x(0), x2: x(0), y1: T, y2: B, 'class': 'hit' }));
+    var d = '', last = null, phi = 0.4;
+    for (var i = 0; i <= c * 54 / 20 + 4; i++) {        // one point a frame at 54 frames a second
+      var tau = i * 20 / 54, r = todayRing(b, tau, phi);
+      if (!r) break;
+      d += (d ? 'L' : 'M') + x(tau - c).toFixed(1) + ' ' + y(r.f).toFixed(1);
+      last = [x(tau - c), y(r.f)];
+    }
+    svg.appendChild(el('path', { d: d, 'class': 'today' }));
+    if (last) {
+      svg.appendChild(el('circle', { cx: last[0], cy: last[1], r: 4, fill: 'none', 'class': 'today' }));
+      svg.appendChild(el('text', { x: last[0] - 8, y: last[1] + 26, 'text-anchor': 'end', 'class': 'lbl' }, "today's ring vanishes here"));
+    }
+    svg.appendChild(el('path', { d: 'M' + x(-APPROACH) + ' ' + y(2.15) + 'L' + x(0) + ' ' + y(1), 'class': 'plan' }));
+    svg.appendChild(el('text', { x: x(-APPROACH) + 6, y: y(2.15) - 4, 'class': 'lbl' }, 'the planned ring appears'));
+    svg.appendChild(el('text', { x: x(-WINDOW) + 4, y: T + 12 }, 'parry'));
+    svg.appendChild(el('text', { x: L, y: B + 34 }, 'ring size, in lock rings'));
+  })();
+
+  // ---- the durability bars ----
+  (function () {
+    var box = document.getElementById('durfig'); if (!box || !DUR) return;
+    var names = { bell_warden: 'Bell Warden', ember_tyrant: 'Ember Tyrant', hive_regent: 'Hive Regent', mother_of_spores: 'Mother of Spores', root_saint: 'Root Saint',
+      drowned_archivist: 'Drowned Archivist', gearwright_colossus: 'Gearwright Colossus', glass_serpent: 'Glass Serpent', lantern_broker: 'Lantern Broker',
+      abbot_of_frost: 'Abbot of Frost', mirror_knight: 'Mirror Knight', the_sleeper: 'The Sleeper', unit_zero: 'Unit Zero', sky_leviathan: 'Sky Leviathan', hollow_herald: 'Hollow Herald',
+      proving_ringer: 'The Ringer', proving_examiner: 'The Examiner', proving_unmade: 'The Unmade', proving_sky_warden: 'The Sky Warden', proving_keepers_shadow: "The Keeper's Shadow", proving_last_loop: 'The Last Loop' };
+    function row(rank, name, blows, t, p, you) {
+      var r = document.createElement('div'); r.className = 'row' + (you ? ' you' : '');
+      var w = function (v) { return Math.min(100, v / 1.4 * 100).toFixed(1) + '%'; };
+      r.innerHTML = '<span class="name"><small>' + rank + '</small>' + name + '</span>' +
+        '<span class="track"><i class="t" style="width:' + w(t) + '"></i><i class="p" style="width:' + w(p) + '"></i><span class="full"></span></span>' +
+        '<span class="val">' + Math.round(t * 100) + '% → ' + Math.round(p * 100) + '%</span>';
+      r.title = name + ': about ' + blows + ' landed blows';
+      box.appendChild(r);
+    }
+    function grp(t) { var g = document.createElement('div'); g.className = 'grp'; g.textContent = t; box.appendChild(g); }
+    grp('Your fight today');
+    row('E', 'The Ringer, as you fought it', 300, 300 / DUR.uses_today.E, 300 / DUR.proposed.E, true);
+    grp('The Wardens (the simulator)');
+    DUR.bosses.filter(function (b) { return b.id.indexOf('proving_') === 0; }).forEach(function (b) { row(b.rank, names[b.id] || b.id, b.worst_blows, b.share_today, b.share_proposed); });
+    grp('Gate Lords (the simulator)');
+    DUR.bosses.filter(function (b) { return b.id.indexOf('proving_') !== 0; }).forEach(function (b) { row(b.rank, names[b.id] || b.id, b.worst_blows, b.share_today, b.share_proposed); });
+  })();
+
+  // ---- the ring bench ----
+  (function () {
+    var cv = document.getElementById('ringcv'); if (!cv) return;
+    var g = cv.getContext('2d'), W = cv.width, H = cv.height, img = document.getElementById('backdrop');
+    var mode = 'plan', blowKey = 'swing', slow = 1, paused = false;
+    var cycleStart = 0, phi = 0.4, pressAt = null, result = null, resultAt = 0, clock = 0, lastReal = 0;
+    var tally = { today: [0, 0], plan: [0, 0] };
+    var say = document.getElementById('say'), tallyEl = document.getElementById('tally');
+    var LEAD = 18, TAIL = 26;                         // ticks before the blow begins and after it lands
+    var cx = W / 2, cy = H / 2, RLOCK = 135;          // the lock ring on the 1100-wide frame
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function setPressed(ids, on) { ids.forEach(function (id) { document.getElementById(id).setAttribute('aria-pressed', id === on ? 'true' : 'false'); }); }
+    function restart() { cycleStart = clock; phi = Math.random(); pressAt = null; result = null; }
+    function pick(kind, value, ids, on) {
+      if (kind === 'mode') mode = value; else if (kind === 'blow') blowKey = value; else slow = value;
+      setPressed(ids, on); restart();
+      if (kind === 'blow') say.textContent = BLOWS[blowKey].say;
+    }
+    [['m-today', 'mode', 'today'], ['m-plan', 'mode', 'plan']].forEach(function (a) {
+      document.getElementById(a[0]).addEventListener('click', function () { pick(a[1], a[2], ['m-today', 'm-plan'], a[0]); }); });
+    [['b-swing', 'swing'], ['b-clang', 'clang'], ['b-held', 'held'], ['b-whirl', 'whirl']].forEach(function (a) {
+      document.getElementById(a[0]).addEventListener('click', function () { pick('blow', a[1], ['b-swing', 'b-clang', 'b-held', 'b-whirl'], a[0]); }); });
+    [['s-real', 1], ['s-half', 2]].forEach(function (a) {
+      document.getElementById(a[0]).addEventListener('click', function () { pick('speed', a[1], ['s-real', 's-half'], a[0]); }); });
+    var pauseBtn = document.getElementById('pausebtn');
+    function setPaused(p) { paused = p; pauseBtn.textContent = p ? 'Play' : 'Pause'; }
+    pauseBtn.addEventListener('click', function () { setPaused(!paused); });
+
+    function tauNow() { return (clock - cycleStart) / (50 * slow) - LEAD; }   // ticks since the blow began
+    function press() {
+      if (paused) { setPaused(false); return; }
+      var tau = tauNow(), b = BLOWS[blowKey];
+      if (pressAt != null || result || tau < -6) return;
+      pressAt = tau;
+      if (tau >= contactOf(b)) judge();
+    }
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); cv.focus({ preventScroll: true }); press(); });
+    document.getElementById('guardbtn').addEventListener('click', press);
+    document.getElementById('bench').addEventListener('keydown', function (e) {
+      if (e.code === 'Space' || e.key === ' ') { if (e.target.tagName === 'BUTTON' && e.target.id !== 'guardbtn') return; e.preventDefault(); press(); }
+    });
+
+    // the game's rule: the server sees the guard on the tick after the press; a parry if it has been up under WINDOW ticks
+    function judge() {
+      var b = BLOWS[blowKey], c = contactOf(b), out;
+      if (pressAt == null || pressAt >= c) out = { what: 'struck', late: pressAt != null };
+      else {
+        var since = c - Math.ceil(pressAt);
+        out = since < WINDOW ? { what: 'parry' } : { what: b.kind === 'heavy' ? 'broken' : 'block', early: Math.round((c - pressAt - WINDOW) * 50) };
+      }
+      result = out; resultAt = clock;
+      if (pressAt != null) { tally[mode][1]++; if (out.what === 'parry') tally[mode][0]++; }
+      var t = out.what === 'parry' ? 'Parried.' : out.what === 'block' ? 'Blocked, not parried: your guard went up ' + out.early + ' ms too early.'
+        : out.what === 'broken' ? 'Guard broken: it went up ' + out.early + ' ms too early for a heavy blow.'
+        : out.late ? 'Struck: too late.' : 'Struck: no guard.';
+      say.textContent = t;
+      tallyEl.textContent = "Today's ring: " + tally.today[0] + ' parries of ' + tally.today[1] + ' tries · The planned ring: ' + tally.plan[0] + ' of ' + tally.plan[1];
+    }
+
+    function ring(r, col, alpha, width, dash) {
+      g.save(); g.globalAlpha = Math.max(0, Math.min(1, alpha)); g.strokeStyle = col; g.lineWidth = width;
+      if (dash) g.setLineDash(dash);
+      g.shadowColor = col; g.shadowBlur = 14; g.beginPath(); g.arc(cx, cy, Math.max(1, r), 0, Math.PI * 2); g.stroke(); g.restore();
+    }
+    function draw() {
+      var b = BLOWS[blowKey], c = contactOf(b), tau = tauNow();
+      if (!result && tau >= c) judge();
+      // the clash: today's numbers on today's ring, the planned ones on the planned ring
+      var kick = 0, shake = 0, flash = 0, burst = -1, hold = 0;
+      if (result) {
+        var ms = (clock - resultAt) / slow, heavy = b.kind === 'heavy';
+        if (result.what === 'parry') {
+          var deg = mode === 'today' ? 1.8 : heavy ? 4.0 : 2.6;
+          kick = -deg * (H / 70) * Math.exp(-ms / 110) * Math.cos(ms / 95);
+          if (mode === 'plan') {
+            var dur = heavy ? 300 : 200;
+            if (ms < dur) shake = (heavy ? 9 : 5) * (1 - ms / dur);
+            flash = Math.max(0, 1 - ms / 140) * (heavy ? 0.5 : 0.36);
+            burst = ms / 420;
+          }
+          hold = mode === 'today' ? 100 : heavy ? 160 : 110;
+        } else if (result.what === 'struck') { flash = -Math.max(0, 1 - ms / 260) * 0.45; kick = 9 * Math.exp(-ms / 120); }
+        else { kick = 5 * Math.exp(-ms / 100); }
+      }
+      g.save();
+      g.clearRect(0, 0, W, H);
+      g.translate(shake ? (Math.random() - 0.5) * 2 * shake : 0, kick + (shake ? (Math.random() - 0.5) * 2 * shake : 0));
+      if (img && img.complete && img.naturalWidth) g.drawImage(img, -20, -30, W + 40, H + 60);
+      else { g.fillStyle = '#12161b'; g.fillRect(0, 0, W, H); }
+      g.fillStyle = 'rgba(6,8,11,0.28)'; g.fillRect(-20, -30, W + 40, H + 60);
+      g.restore();
+
+      // the bell: a stand-in for the body's swing, landing on the tick the blow does
+      var u = Math.max(0, Math.min(1, tau / c)), e = u * u * u, bx, by;
+      var sx = cx - 380, sy = cy - 215;
+      if (result && result.what === 'parry') {
+        var back = Math.min(1, ((clock - resultAt) / slow - hold) / 260); back = back < 0 ? 0 : 1 - (1 - back) * (1 - back);
+        bx = cx - 26 - back * 210; by = cy - 8 - back * 150;
+      } else if (tau >= c) { var o = Math.min(1, (tau - c) / 6); bx = cx - 26 + o * 250; by = cy - 8 + o * 170; }
+      else { bx = sx + (cx - 26 - sx) * e; by = sy + (cy - 8 - sy) * e - Math.sin(Math.PI * e) * 46; }
+      if (tau > -LEAD + 2) {
+        g.save(); g.fillStyle = '#b8752b'; g.strokeStyle = '#f0c079'; g.lineWidth = 3; g.shadowColor = b.col; g.shadowBlur = tau > 0 && tau < c ? 18 : 0;
+        g.beginPath(); g.arc(bx, by, 27, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore();
+      }
+
+      // the lock ring, and in the plan its band
+      var live = tau >= 0 && tau < c && !result;
+      var pr = mode === 'plan' ? planRing(b, tau) : null, tr = mode === 'today' ? todayRing(b, tau, phi) : null;
+      var hot = !!(pr && pr.hot && live);
+      if (mode === 'plan') {
+        var bw = RLOCK * 1.15 * WINDOW / APPROACH;
+        g.save(); g.globalAlpha = hot ? 0.5 : live && pr ? 0.2 : 0.1; g.strokeStyle = hot ? '#ffffff' : '#7FE3FF'; g.lineWidth = bw;
+        g.beginPath(); g.arc(cx, cy, RLOCK + bw / 2, 0, Math.PI * 2); g.stroke(); g.restore();
+      }
+      ring(RLOCK, hot ? '#ffffff' : '#7FE3FF', 0.9, hot ? 4 : 2.5, hot ? null : [38, 10]);
+      if (live && tr) ring(RLOCK * tr.f, b.col, 0.45 + 0.55 * tr.near, 3.5);
+      if (live && pr) ring(RLOCK * pr.f, hot ? '#ffffff' : b.col, 0.55 + 0.45 * pr.near, hot ? 6 : 4);
+      if (burst >= 0 && burst < 1) { ring(RLOCK * (1 + 1.6 * burst), '#FFF2CC', 1 - burst, 7 * (1 - burst) + 1); ring(RLOCK * (1 + 0.8 * burst), '#ffffff', 0.8 * (1 - burst), 3); }
+      if (flash > 0) { g.fillStyle = 'rgba(255,244,214,' + flash.toFixed(3) + ')'; g.fillRect(0, 0, W, H); }
+      if (flash < 0) { g.fillStyle = 'rgba(190,30,30,' + (-flash).toFixed(3) + ')'; g.fillRect(0, 0, W, H); }
+
+      // the words under the ring (the plan only)
+      if (mode === 'plan' && result && result.what !== 'parry' && (clock - resultAt) / slow < 900) {
+        g.save(); g.font = '600 30px "Space Grotesk", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ffffff'; g.shadowColor = '#000'; g.shadowBlur = 8;
+        g.fillText(result.what === 'struck' ? (result.late ? 'Too late' : '') : 'Too early', cx, cy + RLOCK + 64); g.restore();
+      }
+      g.save(); g.font = '600 20px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(255,255,255,0.86)'; g.shadowColor = '#000'; g.shadowBlur = 6;
+      g.fillText((mode === 'today' ? "TODAY'S RING" : 'THE PLANNED RING') + ' · ' + b.name.toUpperCase(), 22, H - 22); g.restore();
+      if (paused) {
+        g.save(); g.fillStyle = 'rgba(6,8,11,0.5)'; g.fillRect(0, 0, W, H); g.font = '600 34px "Space Grotesk", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff';
+        g.fillText('Press Play, then press when a parry will work', cx, cy + 12); g.restore();
+      }
+      if (tau > c + TAIL) restart();
+    }
+    function frame(now) {
+      var dt = lastReal ? Math.min(80, now - lastReal) : 0; lastReal = now;
+      if (!paused) clock += dt;
+      draw();
+      requestAnimationFrame(frame);
+    }
+    if (reduced) setPaused(true);
+    if (img && !img.complete) img.addEventListener('load', draw);
+    restart(); requestAnimationFrame(frame);
+  })();
+})();
+</script>

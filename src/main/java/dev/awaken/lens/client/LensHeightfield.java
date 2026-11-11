@@ -209,8 +209,10 @@ final class LensHeightfield {
                 LensHeights.column(chunk, has, x, z, col);
                 int a = col[0], s = col[1];
                 all[x + z * 16] = a;
-                // open water on top: its column's solid top drops to base + 0.75, the shaders' water mark
-                boolean water = a == s && chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
+                // water on top: its column's solid top drops to base + 0.75, the shaders' water mark. Under leaves
+                // too (it was open water only: the Air's waterline took every column under a tree's crown for a
+                // bank, and drew a lattice of foam round an island's tree, run 42986127640)
+                boolean water = chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
                 solid[x + z * 16] = water ? s - 0.25f : s;
                 high = Math.max(high, a);
                 h = (h ^ (a * 4099L + s * 2L + (water ? 1L : 0L))) * 1099511628211L;

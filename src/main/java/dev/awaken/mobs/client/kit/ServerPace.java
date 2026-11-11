@@ -36,6 +36,18 @@ public final class ServerPace {
         return tick + Math.min(1F, since / per);
     }
 
+    /**
+     * Ticks on the server's clock since game tick {@code from}, with the frame's fraction, as a double: a difference
+     * taken before anything is rounded, so it stays smooth however old the world is ({@link #now} is a float of the game
+     * time itself, good to a hundredth of a tick only in a young world). For what must glide (SPEC §68.2, the ring).
+     */
+    public static double since(Level l, long from, float partialTicks) {
+        long ago = System.nanoTime() - at;
+        if (tick == Long.MIN_VALUE || l != level || ago > STALE) return (l.getGameTime() - from) + (double) partialTicks;
+        double per = l.tickRateManager().nanosecondsPerTick();
+        return (tick - from) + Math.min(1.0, ago / per);
+    }
+
     public static void reset() {
         tick = Long.MIN_VALUE;
         level = null;

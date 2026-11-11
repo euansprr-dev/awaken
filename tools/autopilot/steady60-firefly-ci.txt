@@ -1,0 +1,67 @@
+# Fireflies against the clouds (Euan, playing by night, 11 Nov: "the Firefly lights goes behind clouds. Which shouldn't
+# be the case"). A lawn at night under the Air, the eye a foot off the grass and looking a little up, so the fireflies
+# that wander low over the ground show against the sky and its block clouds. They come by chance: a run of shots, to
+# look through for a glow that crosses a cloud. SPEC §22 "Near lights against the sky".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-firefly-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 15000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 20.5 0 -10
+cmd forceload add -32 -16 32 64
+wait 200
+cmd fill -30 120 -6 30 120 64 minecraft:grass_block
+cmd gamemode spectator
+cmd tp @s 0.5 121.4 20.5 0 -16
+camera first
+hud off
+lookswitch cinematic
+wait 500
+wait 45
+shotnow f01_fireflies
+wait 45
+shotnow f02_fireflies
+wait 45
+shotnow f03_fireflies
+wait 45
+shotnow f04_fireflies
+wait 45
+shotnow f05_fireflies
+wait 45
+shotnow f06_fireflies
+wait 45
+shotnow f07_fireflies
+wait 45
+shotnow f08_fireflies
+wait 45
+shotnow f09_fireflies
+wait 45
+shotnow f10_fireflies
+cmd tp @s 0.5 121.4 20.5 90 -22
+wait 100
+wait 45
+shotnow f11_fireflies
+wait 45
+shotnow f12_fireflies
+wait 45
+shotnow f13_fireflies
+wait 45
+shotnow f14_fireflies
+wait 45
+shotnow f15_fireflies
+wait 45
+shotnow f16_fireflies
+quit

@@ -24,6 +24,7 @@ public final class KinModule {
         modBus.addListener((EntityAttributeCreationEvent e) -> KinContent.TYPES.forEach((k, t) -> e.put(t.get(), KinBeast.attributes(k).build())));
         modBus.addListener(KinNet::register);
         dev.awaken.kin.works.WorksModule.init(modBus);
+        FamilyContent.init(modBus); // Aya and Dubu, the Hearth's family (SPEC §69)
         var bus = NeoForge.EVENT_BUS;
         bus.addListener((BlockEvent.EntityPlaceEvent e) -> KinHelp.placed(e));
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> KinHelp.used(e));

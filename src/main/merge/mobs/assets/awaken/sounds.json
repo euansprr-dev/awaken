@@ -123,5 +123,14 @@
         "volume": 0.8
       }
     ]
+  },
+  "mobs.finish.blow": {
+    "subtitle": "subtitles.awaken.mobs.finish_blow",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground_heavy",
+        "type": "event"
+      }
+    ]
   }
 }

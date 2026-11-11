@@ -1,0 +1,143 @@
+# The boss experience plan's "before" pictures (docs/boss-experience/PLAN.md): the game as it is on build 69fee63de.
+# 1. The tell's closing ring on the mark, one frame a client tick through the Ringer's Swing (wind-up 16 ticks, the blow
+#    in the 4 after): how the ring moves and where it is when the bell lands.
+# 2. The same through its Clang (wind-up 20, HEAVY).
+# 3. A boss's death as it plays today: one frame every 5 ticks from the killing blow.
+# On the duel stage (/awaken bosses duel stage, SPEC §47.3) the Ringer swings at a still stand-in, so nothing here
+# depends on being hit. Run on CI: tools/tour-ci.sh tools/autopilot/boss-before.txt
+world autopilot_boss_before creative 20261111
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses duel stage proving_ringer
+wait 80
+
+# --- you, a longsword in hand, to the Ringer's front left, the crosshair on it: the mark's brackets show ---
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~3.5 ~ ~7.5 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
+wait 30
+hud on
+shot before_00_mark
+
+# --- the Swing: 26 frames, a client tick apart, from the tick after the order ---
+cmd awaken bosses duel play swing_a
+shotnow ring_swing_01
+shotnow ring_swing_02
+shotnow ring_swing_03
+shotnow ring_swing_04
+shotnow ring_swing_05
+shotnow ring_swing_06
+shotnow ring_swing_07
+shotnow ring_swing_08
+shotnow ring_swing_09
+shotnow ring_swing_10
+shotnow ring_swing_11
+shotnow ring_swing_12
+shotnow ring_swing_13
+shotnow ring_swing_14
+shotnow ring_swing_15
+shotnow ring_swing_16
+shotnow ring_swing_17
+shotnow ring_swing_18
+shotnow ring_swing_19
+shotnow ring_swing_20
+shotnow ring_swing_21
+shotnow ring_swing_22
+shotnow ring_swing_23
+shotnow ring_swing_24
+shotnow ring_swing_25
+shotnow ring_swing_26
+wait 80
+
+# --- the Clang (HEAVY, amber): 32 frames ---
+cmd awaken bosses duel play clang
+shotnow ring_clang_01
+shotnow ring_clang_02
+shotnow ring_clang_03
+shotnow ring_clang_04
+shotnow ring_clang_05
+shotnow ring_clang_06
+shotnow ring_clang_07
+shotnow ring_clang_08
+shotnow ring_clang_09
+shotnow ring_clang_10
+shotnow ring_clang_11
+shotnow ring_clang_12
+shotnow ring_clang_13
+shotnow ring_clang_14
+shotnow ring_clang_15
+shotnow ring_clang_16
+shotnow ring_clang_17
+shotnow ring_clang_18
+shotnow ring_clang_19
+shotnow ring_clang_20
+shotnow ring_clang_21
+shotnow ring_clang_22
+shotnow ring_clang_23
+shotnow ring_clang_24
+shotnow ring_clang_25
+shotnow ring_clang_26
+shotnow ring_clang_27
+shotnow ring_clang_28
+shotnow ring_clang_29
+shotnow ring_clang_30
+shotnow ring_clang_31
+shotnow ring_clang_32
+wait 100
+
+# --- its death today: the blow that kills it, then a frame every 5 ticks ---
+cmd damage @e[type=awaken:proving_ringer,limit=1] 1000000 minecraft:player_attack by @s
+shotnow death_00
+wait 4
+shotnow death_05
+wait 4
+shotnow death_10
+wait 4
+shotnow death_15
+wait 4
+shotnow death_20
+wait 4
+shotnow death_25
+wait 4
+shotnow death_30
+wait 4
+shotnow death_35
+wait 4
+shotnow death_40
+wait 4
+shotnow death_45
+wait 4
+shotnow death_50
+wait 4
+shotnow death_55
+wait 4
+shotnow death_60
+wait 4
+shotnow death_65
+wait 4
+shotnow death_70
+wait 4
+shotnow death_75
+wait 4
+shotnow death_80
+wait 4
+shotnow death_85
+wait 4
+shotnow death_90
+wait 20
+shot before_99_after
+hud on
+quit

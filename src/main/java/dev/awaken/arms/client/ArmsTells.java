@@ -28,6 +28,10 @@ final class ArmsTells {
     private static final double RANGE = 32;
     private static final int SLOTS = 48;
     private static final int[] ID = new int[SLOTS], KIND = new int[SLOTS], LEFT = new int[SLOTS];
+    /** Whether this tell's glint has shown (it shows once, as the ring enters the parry band: SPEC §68.2). */
+    private static final boolean[] GLINTED = new boolean[SLOTS];
+    /** How long inside the weapon's window the glint (and the ring's band) lights: aim.client.Reticle.BAND_EARLY's own number. */
+    private static final float BAND_EARLY = 0.5F;
 
     static {
         java.util.Arrays.fill(ID, Integer.MIN_VALUE);
@@ -51,16 +55,28 @@ final class ArmsTells {
             boolean fresh = KIND[slot] != t.kind().ordinal() || t.ticks() > LEFT[slot];
             KIND[slot] = t.kind().ordinal();
             LEFT[slot] = t.ticks();
-            mark(e, t, fresh);
+            if (fresh) GLINTED[slot] = false;
+            mark(e, t, fresh, slot);
         }
     }
 
-    private static void mark(Entity e, Strikes.Tell t, boolean fresh) {
+    private static void mark(Entity e, Strikes.Tell t, boolean fresh, int slot) {
         double hx = handX(e), hy = e.getY() + e.getBbHeight() * 0.62, hz = handZ(e);
         float size = Mth.clamp(e.getBbWidth() * 0.55F, 0.35F, 1.6F);
         switch (t.kind()) {
             case LIGHT -> {
-                if (t.ticks() == GLINT_AT || fresh && t.ticks() < GLINT_AT) FxClient.tellMark(FxClient.TELL_GLINT, hx, hy, hz, LIGHT, size * 1.1F, 5);
+                // the cue to raise the guard, on the blow's own clock: as the ring enters the parry band (SPEC §68.2). The
+                // tell's count is sent only every second or fourth tick, so a cue set to one count (5) mostly never came
+                double left = Strikes.left(e, 1F);
+                boolean cue;
+                if (Double.isNaN(left)) cue = t.ticks() == GLINT_AT || fresh && t.ticks() < GLINT_AT;
+                else cue = !GLINTED[slot] && left <= window() - BAND_EARLY;
+                if (cue) {
+                    GLINTED[slot] = true;
+                    // the cue to guard is for whoever the blow is aimed at (SPEC §70.3)
+                    var me = net.minecraft.client.Minecraft.getInstance().player;
+                    if (me == null || t.aimedAt(me.getId())) FxClient.tellMark(FxClient.TELL_GLINT, hx, hy, hz, LIGHT, size * 1.1F, 5);
+                }
             }
             case HEAVY -> {
                 if (fresh) FxClient.tellMark(FxClient.TELL_FLARE, hx, hy, hz, HEAVY, size * 1.2F, 8);
@@ -79,6 +95,13 @@ final class ArmsTells {
             }
             default -> { }
         }
+    }
+
+    /** The held weapon's deflect window in ticks (the Longsword's 4 with nothing of ours in hand). */
+    private static int window() {
+        Minecraft mc = Minecraft.getInstance();
+        var style = mc.player == null ? null : dev.awaken.arms.Arms.styleOf(mc.player.getMainHandItem());
+        return style == null ? 4 : style.def().guard().deflect();
     }
 
     /** The striking hand: ahead of the body at its reach, toward its main arm. */

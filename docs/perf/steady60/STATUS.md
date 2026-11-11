@@ -63,6 +63,13 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
     Lens 2's light, no tick work (SPEC §22 "Lite"; `lens_lite.json`). Run 42960037101. Its pace on an M1 is not
     measured, and the five-card Look page (with ImmersiveVFX) is unseen.
 
+  - Later the same day: **the spotlight at arm's length** (a wall, a door or a ceiling within 1.25 blocks stood in
+    the game's raw light, a disc that moved with him): Lens now tells the hand by the game's own hand depth
+    (`LensHand`, `PixelsHooks.handTarget()`), runs 42985161194 before and 42988235690 after. **Glasswater**, the
+    Air's own water on Lite and Cinematic (`lens_water.glsl`): first drawn on a pixel grid, which he turned down as
+    glitchy; rebuilt smooth at dd769ccd5, unseen. **The Air in other worlds**: every world but the overworld keeps
+    its own sky and fog colours under the Air (`airLand`), for the gate worlds; its run was unread at the hand-over.
+
 ## Numbers (the Dell, his settings; SPEC §22 has them all, data in `docs/perf/steady60/data/`)
 - First pass, quiet Mac (dell-6): 11.2 ms GPU, 78 fps uncapped; as played 98.6% on time standing, 98.9% turning, 95.2%
   flying.
@@ -77,7 +84,11 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   Air at 92.2 to 95.6%. The late frames are the game's own chunk work on the render thread.
 
 ## To do, in order
-0. **Owed from 11 Nov**: his eye on the block storm, Lite (and its five-card Look page) and the steppe's air; frame
+0. **Owed from the second half of 11 Nov**: his eye on the smooth water (and a real lake or sea: it was only ever
+   pictured on a built pool), on a gate world's sky (Cinder Crown red, Amber Reach amber), and on the spotlight fix
+   in his own house; the water's frame time; the sun's rays coming out hard-edged under a low sun near the cloud
+   layer (the world-moods planner's dusk shot).
+0b. **Owed from 11 Nov**: his eye on the block storm, Lite (and its five-card Look page) and the steppe's air; frame
    times of the storm and of Lite on a quiet Mac (and Lite on an M1, if one can be had); a strike caught at its
    brightest. Open in the light: the ground under a slide or crawl (the hand's own depth), exact light under cover
    (the game's light in a texture), shadows on land the game has already fogged.

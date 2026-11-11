@@ -264,6 +264,18 @@ public final class Gates {
         return true;
     }
 
+    /** Everyone inside the gate this player is running, themselves included; empty outside a run (SPEC §70.1). */
+    public static java.util.Set<java.util.UUID> inside(ServerPlayer p) {
+        GateRecord g = Runs.gateOf(p);
+        return g == null ? java.util.Set.of() : java.util.Set.copyOf(g.inside);
+    }
+
+    /** The overworld block of the gate this player is running (its door), if any (SPEC §70.3: waking at the door). */
+    public static Optional<BlockPos> doorOf(ServerPlayer p) {
+        GateRecord g = Runs.gateOf(p);
+        return g == null ? Optional.empty() : Optional.of(g.pos);
+    }
+
     // ---- Riding Along (SPEC §55) ----------------------------------------------------------------------------------------
 
     /** Marks the player's run as ridden or not; no run, no change. */

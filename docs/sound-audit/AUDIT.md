@@ -12,7 +12,7 @@ ore, even vanilla sounds better".
 world, and has no narrow steady high tone at its peak (`docs/powers-aaa/taster/ding_check.py`). A sound built by
 synthesis (sine partials, filtered noise, voiced formants) is below it, however well its loudness and brightness match.
 
-**The count.** 1890 events: 1002 at the bar, 439 remade in this audit, 449 left as they are (each row says why).
+**The count.** 1897 events: 1009 at the bar, 439 remade in this audit, 449 left as they are (each row says why).
 
 **How to read a row.** *Source before* is where the sound came from before the audit. *Fix, as built* is the recipe the
 game plays now: each recording by its name in the game, `×` its volume and `@` its pitch, `+ms` when it starts late.
@@ -1219,6 +1219,13 @@ A gate room's moving floor, mirrors and presses; and the bells, kept as built wi
 | `kin.boulderback.call` | Boulderback rumbles | `kin`: a kin's call, tell and worry; a work finished | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `kin.boulderback.tell` | Boulderback huffs softly | `kin`: a kin's call, tell and worry; a work finished | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `kin.boulderback.worry` | Boulderback snorts | `kin`: a kin's call, tell and worry; a work finished | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.aya.purr` | Aya purrs | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.aya.trill` | Aya trills | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.aya.meow` | Aya meows | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.dubu.bark` | Dubu barks | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.dubu.pant` | Dubu pants | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.dubu.whine` | Dubu whines | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
+| `family.dubu.howl` | Dubu howls | `kin/FamilyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 
 ## The Living Wilds
 

@@ -69,6 +69,8 @@ final class GearTests {
 
     static void register() {
         AwakenTests.register("gear_registry_and_hooks", 20, GearTests::registryAndHooks);
+        AwakenTests.register("gear_lasts", 20, GearTests::lasts);
+        AwakenTests.register("gear_armour_wear", 60, GearTests::armourWear);
         AwakenTests.register("gear_recipes_resolve", 20, GearTests::recipesResolve);
         AwakenTests.register("gear_e_tier_from_first_hour_drops", 20, GearTests::firstHour);
         AwakenTests.register("gear_recipes_unlock", 60, GearTests::recipesUnlock);
@@ -636,6 +638,80 @@ final class GearTests {
         h.assertTrue(next == GearItems.get(HunterTier.E, Piece.FOCUS), "bone, sinew and essence: the focus, not the blade, got " + next);
         var lines = GearNow.suggest(sp);
         h.assertTrue(lines.size() <= 1 && lines.stream().allMatch(s -> s.priority() == GearNow.PRIORITY), "one low-priority line at most");
+        h.succeed();
+    }
+
+    // ---- gear that lasts (SPEC §68.1) -------------------------------------------------------------------------------------
+
+    private static Item item(String id) {
+        return BuiltInRegistries.ITEM.getValue(Awaken.id(id));
+    }
+
+    private static double modifier(ItemStack stack, EquipmentSlot slot, Holder<Attribute> attribute) {
+        double[] sum = {0};
+        stack.forEachModifier(slot, (a, m) -> {
+            if (a.equals(attribute)) sum[0] += m.amount();
+        });
+        return sum[0];
+    }
+
+    /**
+     * Nothing of ours is destroyed by wear: at its last use it stays, worn out and worth half, until it is mended. E and D
+     * hold what their rank's fights take, an axe costs one use a blow, and a count given under the old numbers keeps its share.
+     */
+    static void lasts(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ItemStack sword = new ItemStack(item("wildhide_longsword"));
+        h.assertTrue(sword.getMaxDamage() == 900 && new ItemStack(item("beastbound_longsword")).getMaxDamage() == 1300,
+                "E weapons hold 900 uses and D 1,300 (" + sword.getMaxDamage() + ")");
+        h.assertTrue(new ItemStack(item("wildhide_blade")).getMaxDamage() == 900, "the Hunter blade with them");
+        double fresh = modifier(sword, EquipmentSlot.MAINHAND, Attributes.ATTACK_DAMAGE);
+        sword.setDamageValue(sword.getMaxDamage() - 2);
+        boolean[] broke = {false};
+        sword.hurtAndBreak(5, level, (ServerPlayer) null, i -> broke[0] = true);
+        h.assertTrue(!sword.isEmpty() && !broke[0] && sword.getDamageValue() == sword.getMaxDamage() - 1 && dev.awaken.core.api.Lasting.wornOut(sword),
+                "at its last use it stays and is worn out (damage " + sword.getDamageValue() + " of " + sword.getMaxDamage() + ")");
+        double worn = modifier(sword, EquipmentSlot.MAINHAND, Attributes.ATTACK_DAMAGE);
+        h.assertTrue(fresh > 0 && Math.abs(worn - fresh * 0.5) < 1e-6, "worn out, it hits half as hard (" + worn + " of " + fresh + ")");
+        sword.setDamageValue(0);
+        h.assertTrue(!dev.awaken.core.api.Lasting.wornOut(sword) && Math.abs(modifier(sword, EquipmentSlot.MAINHAND, Attributes.ATTACK_DAMAGE) - fresh) < 1e-6,
+                "mended, it is whole again");
+        var axe = new ItemStack(item("wildhide_axe")).get(DataComponents.WEAPON);
+        h.assertTrue(axe != null && axe.itemDamagePerAttack() == 1, "an axe costs one use a blow");
+        ItemStack helm = new ItemStack(item("wildhide_helmet"));
+        h.assertTrue(helm.getMaxDamage() == 264, "a Wildhide helmet holds 264 (" + helm.getMaxDamage() + ")");
+        double whole = modifier(helm, EquipmentSlot.HEAD, Attributes.ARMOR);
+        helm.setDamageValue(helm.getMaxDamage() - 1);
+        h.assertTrue(dev.awaken.core.api.Lasting.wornOut(helm) && Math.abs(modifier(helm, EquipmentSlot.HEAD, Attributes.ARMOR) - whole * 0.5) < 1e-6,
+                "worn-out armour protects half as well");
+        ItemStack old = new ItemStack(item("wildhide_helmet"));
+        old.set(DataComponents.MAX_DAMAGE, 179); // the Armoury's quarter over the old 143
+        h.assertTrue(old.getMaxDamage() == Math.round(264 * (179 / 143F)), "an old Armoury count keeps its quarter over today's (" + old.getMaxDamage() + ")");
+        h.succeed();
+    }
+
+    /** Armour of ours wears by how hard it is hit: twenty light blows cost a piece about a quarter of their damage, not twenty. */
+    static void armourWear(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var live = AwakenTests.survivalPlayer(h, "armour_wear", new BlockPos(1, 1, 1));
+        ServerPlayer p = live.player();
+        ItemStack helm = new ItemStack(item("wildhide_helmet"));
+        p.setItemSlot(EquipmentSlot.HEAD, helm);
+        // a cactus's prick: stopped by armour like a blow, and never scaled by the world's difficulty
+        DamageSource bite = level.damageSources().cactus();
+        for (int i = 0; i < 20; i++) {
+            p.damageCooldownTime = 0;
+            p.setHealth(p.getMaxHealth());
+            p.hurtServer(level, bite, 1.0F);
+        }
+        int light = p.getItemBySlot(EquipmentSlot.HEAD).getDamageValue();
+        h.assertTrue(light <= 12, "twenty light blows wear a piece about five, never twenty (" + light + ")");
+        p.damageCooldownTime = 0;
+        p.setHealth(p.getMaxHealth());
+        p.hurtServer(level, bite, 16.0F);
+        int heavy = p.getItemBySlot(EquipmentSlot.HEAD).getDamageValue() - light;
+        h.assertTrue(heavy == 4, "a blow of 16 wears it 4, vanilla's quarter (" + heavy + ")");
+        live.leave();
         h.succeed();
     }
 }

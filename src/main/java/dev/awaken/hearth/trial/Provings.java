@@ -167,8 +167,11 @@ public final class Provings {
         for (UUID u : PartyHooks.members(sp)) {
             ServerPlayer m = server.getPlayerList().getPlayer(u);
             if (m == null || m == sp || m.level() != sp.level() || m.distanceToSqr(sp) > PARTY_RADIUS * PARTY_RADIUS) continue;
-            if (Trials.inTrial(m) || GateHooks.inGate(m) || Progression.profile(m).level() < target.levelRequired) continue;
-            if (dev.awaken.core.api.RidingHooks.bonded(m)) continue; // Reassessments can't be ridden (SPEC §55)
+            if (Trials.inTrial(m) || GateHooks.inGate(m) || !Progression.profile(m).awakened()) continue;
+            // nobody is skipped in silence (SPEC §70.5): short of the level they come, and are told it doesn't count yet
+            if (Progression.profile(m).level() < target.levelRequired) {
+                Signal.toast(m, Component.literal("You're coming along, but this Reassessment doesn't count for you yet. Yours opens at level " + target.levelRequired + "."));
+            }
             who.add(m);
         }
         w.before(run, sp);
@@ -282,12 +285,14 @@ public final class Provings {
         LivingEntity b = Trials.bossOrStandIn(run.level, w.mob, BlockPos.containing(at), run.target.levelRequired, "trial:" + run.leader);
         if (b == null) return;
         b.snapTo(at.x, at.y, at.z, w.arriveYaw(run), 0F);
-        int party = Math.max(1, here.size());
+        // a player on Gentle is half a fighter (SPEC §70.4); stance grows as health does (§70.3)
+        double party = dev.awaken.core.api.FightsHooks.fighters(here);
         if (party > 1) {
             var hp = b.getAttribute(Attributes.MAX_HEALTH);
             if (hp != null) hp.addOrReplacePermanentModifier(new AttributeModifier(Awaken.id("proving_party"), PARTY_HEALTH * (party - 1),
                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             b.setHealth(b.getMaxHealth());
+            dev.awaken.core.api.FightsHooks.sizeStance(b, party);
         }
         if (b instanceof Mob mob) {
             mob.setPersistenceRequired();

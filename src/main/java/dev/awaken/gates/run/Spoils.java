@@ -224,7 +224,7 @@ public final class Spoils {
     static int deathLine(ServerPlayer p, GateRecord g) {
         if (g.scripted) return SpoilsView.DEATH_FIRST;
         if (dev.awaken.above.Above.cloneSaveAvailable(p)) return SpoilsView.DEATH_CLONE;
-        return AwakenConfig.DIFFICULTY.get() == AwakenConfig.Difficulty.STORY ? SpoilsView.DEATH_HALF : SpoilsView.DEATH_ALL;
+        return dev.awaken.core.api.FightsHooks.deathCost(p) == AwakenConfig.Difficulty.STORY ? SpoilsView.DEATH_HALF : SpoilsView.DEATH_ALL;
     }
 
     private static List<ItemStack> copies(List<ItemStack> list) {
