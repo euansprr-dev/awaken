@@ -218,7 +218,7 @@ public final class FloatCheck {
                     if (fl != null) out.add(fl);
                 } else if (k == ON_GROUND) {
                     if (y > 0 && c.low.get(idx(x, y - 1, z))) {
-                        out.add(new Floater(wx, y, wz, 1, "a plant or small thing half a block over a low slab or stair (" + named(land, wx, y, wz) + ")"));
+                        out.add(new Floater(wx, y, wz, 1, "a plant or small thing half a block over a slab laid low (" + named(land, wx, y, wz) + ")"));
                         continue;
                     }
                     if (held(grid, wx, y - 1, wz) || below(grid, wx, y - 1, wz, ON_GROUND)) continue;

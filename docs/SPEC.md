@@ -22165,11 +22165,14 @@ Euan caught fence posts standing in the air beside a road in the proof, and aske
    found what no eye had: the pavilion's roof sat four blocks above its columns, every hut's finial stood over a hole in its dome, and
    a lamp cut the pavilion's middle post in two.
 4. **Half a block of air is air** (11 Nov; Euan, in the Cinder Workings: "There are some floating things here... we need to make
-   sure that never happens in any gates"). A slab laid low and a stair the right way up carry people and other bodies, but their
-   top is lower than their cell's, so a plant, a crystal, a candle or a drift set in the cell above stands half a block up
-   (`Kinds.low`). The float check reports it as a floater, `Settle` takes it out and counts it, and the rolled dungeons' small
+   sure that never happens in any gates"). A slab laid low carries people and other bodies, but its top is lower than its cell's,
+   so a plant, a crystal, a candle or a drift set in the cell above stands half a block up (`Kinds.low`). A stair is not counted:
+   half its top is whole, and Amber Reach's candles down a flight of steps stand on it. The float check reports it as a floater, `Settle` takes it out and counts it, and the rolled dungeons' small
    things (`GeneratedCrawl.detail`) are set only where the floor is a whole block: until now they were set over the half steps the
-   depth pass had laid, which is what he saw. A cache a pack leaves makes the slab under it whole (`RealmRun.spoils`).
+   depth pass had laid, which is what he saw. A cache a pack leaves makes the slab under it whole (`RealmRun.spoils`). The first
+   run of the stricter check over every land found 96 more in three hand-built lands that are never settled (Kingsroot Keep 79,
+   the Vine Seat 13, Saltcomb Flats 4: grass, ferns, drifts and a dead bush on pale slabs); each now takes them out as it draws
+   (`Settle.overSlabs`).
 
 ### 50.7 Realms (the foundation)
 

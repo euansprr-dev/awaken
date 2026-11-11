@@ -12,11 +12,9 @@ import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.HangingRootsBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,16 +43,14 @@ public final class Kinds {
     }
 
     /**
-     * A body whose top is lower than its cell's: a slab laid low, a stair the right way up. It carries people and other
-     * bodies, but a plant, a crystal, a candle or a drift set over it stands in the cell above with half a block of air
-     * under it. The floors that step in half blocks (SPEC §50.9 "Depth") made these common; Euan, 11 Nov, in the Cinder
-     * Workings: "There are some floating things here... we need to make sure that never happens in any gates."
+     * A body whose top is lower than its cell's: a slab laid low. It carries people and other bodies, but a plant, a
+     * crystal, a candle or a drift set over it stands in the cell above with half a block of air under it. The floors
+     * that step in half blocks (SPEC §50.9 "Depth") made these common; Euan, 11 Nov, in the Cinder Workings: "There are
+     * some floating things here... we need to make sure that never happens in any gates." A stair is not one: half its
+     * top is whole, and candles down a flight of steps (Amber Reach's) stand on it.
      */
     public static boolean low(BlockState s) {
-        if (s == null) return false;
-        Block b = s.getBlock();
-        if (b instanceof SlabBlock) return s.getValue(SlabBlock.TYPE) == SlabType.BOTTOM;
-        return b instanceof StairBlock && s.getValue(StairBlock.HALF) == Half.BOTTOM;
+        return s != null && s.getBlock() instanceof SlabBlock && s.getValue(SlabBlock.TYPE) == SlabType.BOTTOM;
     }
 
     private static int classify(BlockState s) {
