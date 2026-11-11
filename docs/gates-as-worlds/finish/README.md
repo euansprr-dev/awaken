@@ -17,6 +17,24 @@ every gate of the Lantern Night Market or the Sky Archipelago, is still the old 
 either: a run's length and shape come from the seed alone, and only the monsters' levels and the pay follow the rank. Brief 01 fixes
 both.
 
+## 11 Nov, later the same day: the plan changes
+
+Euan read the briefs and said: "I don't think we should build all the 88 gates by hand... It would take weeks. What about some
+kind of really well built procedural worlds?... a few hand built ones, and then based on what we hand built, those procedurally
+generated worlds, they all feel very different and still feel just as immersive... the big worlds we've built so far... I don't
+see why we couldn't use them right now... they're still ready enough... come up with a creative way to build very high quality
+worlds and gates without having to take weeks."
+
+So:
+
+- **The hand-built wave stops at what exists.** No D wave, no C to S roster. Briefs 05 and 06 are not started unless he asks.
+- **Done the same day by the gates session** (tip `3f2d4ecf3`): every finished Realm opened to every rank its theme reaches; the
+  five part-built worlds marked ready; eight wave stands on the rolled kinds' skins; wandering packs in the open lands; and brief
+  00 itself (`tools/check-ci.sh`, on the GameTests workflow).
+- **The new piece is brief 07, rolled lands**: one generator that rolls a whole outdoor world from a seed, as `GeneratedCrawl`
+  does for dungeons, with a skin per theme. That is how every rank gets many different worlds without weeks of hand work.
+- Briefs 01 to 04 still stand (rank changes the run and two new kinds; the way in from the world; light in the air; polish).
+
 ## What "finished" means
 
 1. **Every gate you can find is a new one.** For every rank from E to S and every theme open at that rank there are at least three
@@ -55,6 +73,7 @@ both.
 | 04 | `04-rolled-polish.md` | spitters' own spray, stairs for two kinds, honest tour cameras, lit crossings | 00 | medium |
 | 05 | `05-e-wave-in-build.md` | five part-built E gates become runs at the bar | 00 | large |
 | 06 | `06-e-wave-old-branches.md` | five E gates ported from the old branches, and The Flooded Ossuary | 00, and 05's first hand-back | large |
+| 07 | `07-rolled-lands.md` | procedural open worlds: five landforms, a skin per theme, a run through each | 00 (done) | large |
 
 After these, written by the gates session wave by wave, because each sheet has to describe its great thing in sculptural detail and
 be written after looking at the last wave's pictures:
