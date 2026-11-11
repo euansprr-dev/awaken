@@ -20223,8 +20223,12 @@ at once; stage 2 adds phrases and the payoff on the pilots.
   sides, so the client draws exactly where the server judges. At most 24 alive for one creature; allocation per
   carrier, never per tick.
   - *Wave*: a ring rolling out along the ground at 0.55 blocks a tick from its inner radius to its outer. It strikes
-    whoever's feet are under its crest as it passes, once; feet more than 0.75 over its ground (a jump), a wall between,
-    or standing inside its start ring escapes it. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
+    whoever's feet are under its crest as it passes, once; feet more than 0.4 over its ground (a jump, from its first
+    tick to its tenth, or a slab's top), a wall between, or standing inside its start ring escapes it. The crest is
+    drawn as high as it is judged (`Carriers.CREST`). It was 0.75 until 11 Nov: a jump's feet passed that only on its
+    second tick, and the server reads you a tick late, so you had to jump 0.15 s before the crest touched you and a jump
+    as it arrived was hit on the way up (Euan: "very, very difficult to actually jump"). The window is about as long
+    (8 ticks → 10), now where you press. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
     (knock 1 + 1.5 x power), auras' pulses, darkness, the seep heart's pulse and burst all roll as waves.
   - *Volley*: pods thrown up from the body, falling 16 ticks later on rings placed where you stood at the throw, each
     ring at most 2.2 blocks (a dash is 2.6). Rains and lifts; a lobbed cloud is a volley of one ring of 1 block that
@@ -20370,11 +20374,13 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
     1.3-1.6). Still open: the tank beats the Hive Regent 13% of the time with the longsword and 30% with the twinblades
     (10-17% at its old stance on 60 seeds), its health and damage's to fix, not its stance.
   - **The Drowned Toll, read.** A red ring that rolls out from the Ringer: you are safe inside the white ring at its
-    feet when it rings (`Carriers.wave`'s inner start), over its crest (a jump), behind a wall, or dashing through it
+    feet when it rings (`Carriers.wave`'s inner start), over its crest (a jump as it reaches you; its crest is 0.4 since
+    11 Nov), behind a wall, or dashing through it
     (a PERILOUS wave: a dodge whose evade ticks, 5 for the twinblades and 4 for the daggers, cover the moment the crest
     reaches you takes none of it, and a perfect one fills its stance 10). The white ring was 14 small dots under a body
     twice a man's height; it is now drawn twice as dense and larger (`Telegraph.safeRing`). Walking away from it is no
-    longer a loss: the stance holds.
+    longer a loss: the stance holds. Off the chancel, in the aisles' water a block lower, it can't be jumped (its crest
+    rolls at the chancel's height, and a jump in water is a swim): there the dash or the white ring answers it.
 - **Tuned with the sim** (`combat_sim.py` learns the duel: phrases and openings, recoil and reel, habits, shots sent
   back, perfect-dodge and opening stance, the finisher's share, braced hits, the script's stance; 400 seeds, the
   rank's forged longsword; the parrier answers half of the red blows with a dodge, ASSUMED). Health alone could not
