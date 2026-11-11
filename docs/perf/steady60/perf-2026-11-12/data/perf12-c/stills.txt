@@ -1,0 +1,16 @@
+s_own
+  ref 1 vs ref 2 (noise)           mean 13.34  p99 129  p99.9 227  over5 37.509%  max 255
+  ref 2 vs ref 3 (noise)           mean 17.58  p99 143  p99.9 253  over5 46.436%  max 255
+  new 1 vs new 2 (noise)           mean 14.83  p99 136  p99.9 236  over5 39.690%  max 255
+  ref 1 vs new 1 (across, one step) mean 17.48  p99 151  p99.9 253  over5 44.543%  max 255
+  new 1 vs ref 2 (across, one step) mean 14.55  p99 140  p99.9 252  over5 38.563%  max 255
+  ref 2 vs new 2 (across, one step) mean 13.53  p99 126  p99.9 236  over5 38.475%  max 255
+  new 2 vs ref 3 (across, one step) mean 16.35  p99 144  p99.9 252  over5 43.508%  max 255
+s_tree
+  ref 1 vs ref 2 (noise)           mean 23.47  p99 204  p99.9 253  over5 61.944%  max 255
+  ref 2 vs ref 3 (noise)           mean 15.07  p99 188  p99.9 243  over5 32.946%  max 255
+  new 1 vs new 2 (noise)           mean 21.90  p99 211  p99.9 253  over5 49.193%  max 255
+  ref 1 vs new 1 (across, one step) mean 17.66  p99 182  p99.9 240  over5 51.014%  max 255
+  new 1 vs ref 2 (across, one step) mean 21.00  p99 204  p99.9 253  over5 46.406%  max 255
+  ref 2 vs new 2 (across, one step) mean 14.24  p99 173  p99.9 247  over5 33.491%  max 255
+  new 2 vs ref 3 (across, one step) mean 14.46  p99 177  p99.9 240  over5 34.496%  max 255

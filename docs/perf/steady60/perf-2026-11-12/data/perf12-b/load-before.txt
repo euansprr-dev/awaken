@@ -1,0 +1,16 @@
+ 1:44  up 1 day,  3:58, 1 user, load averages: 15.08 5.94 4.81
+ 50.7 1709552 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer) --type=renderer --user-data-dir=
+ 45.1  24416 /System/Library/PrivateFrameworks/StorageManagement.framework/PlugIns/DeveloperStorageExtension.appex/Contents/MacOS/DeveloperStorageExtension -App
+ 37.7  64752 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -daemon
+ 30.5  29312 /System/Library/PrivateFrameworks/StorageManagement.framework/PlugIns/ApplicationsStorageExtension.appex/Contents/MacOS/ApplicationsStorageExtensio
+ 20.6  68144 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper --type=gpu-process --user-data-dir=/Users/euanspencer/L
+ 14.5 409968 /Users/euanspencer/Library/Application Support/Claude/claude-code/2.1.321/e6736b2d954d/claude.app/Contents/MacOS/claude --output-format stream-json
+  6.1  23584 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/ContextStoreAgent
+  5.3 361328 /Applications/Claude.app/Contents/MacOS/Claude
+  5.1   3040 /bin/zsh -c source /Users/euanspencer/.claude/shell-snapshots/snapshot-zsh-1794421797733-4y3tab.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB N
+  3.9   3712 caffeinate -dimu tools/steady60-tour.sh tools/autopilot/steady60-perf12-b.txt perf12-b 1800
+  3.2   3296 /usr/libexec/sysmond
+  3.0  62096 /System/Library/PrivateFrameworks/SiriInference.framework/Versions/A/siriinferenced
+  2.1  10320 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/contextstored
+  1.9  47216 /usr/libexec/mobileassetd
+  1.5  16208 /usr/libexec/triald

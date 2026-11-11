@@ -6539,6 +6539,11 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     step of 8 bits, but for one pixel in two of the views), the compiler's last-bit ordering again, a hundredth of
     what the twin itself shows. In rain the frame is not calm and the twin's own composite runs (`lens calm` says
     which the last frame was).
+  - Steady 60, measured (12 Nov, his world, pack and settings on the Dell at 4K, borderless; tour steady60-perf12-i;
+    docs/perf/steady60/perf-2026-11-12): the chain as written against the twin with its calm composite, GPU world pass:
+    where he stood 18.66 → 13.7 ms (49 → 60 fps, the cap), the tree 18.24 → 12.83, turning 19.62 → 14.45 (47 → 59.8
+    fps), running 19.98 → 14.99 (45 → 57.5 fps; the terrain itself costs 0.6 ms more running). What is left would cost
+    quality and is not applied (the report's list: Pixels 0.80 or 0.75, the Sun Pass off).
 - **Together, measured** (GPU world pass, old path → new; frame p50):
 
   | Look | GPU world pass | frame p50 |

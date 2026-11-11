@@ -1,0 +1,8 @@
+[02:12:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL: on DELL U2725QE
+[02:12:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL
+[02:12:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL: on DELL U2725QE, fullscreen
+[02:12:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] display DELL fullscreen
+[02:12:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=DELL_U2725QE fb=1708x960 window=854x480 rd=16 sd=10 heapMax=8192MB gc=ZGC Minor Cycles,ZGC Minor Pauses,ZGC Major Cycles,ZGC Major Pauses mods=entity_model_features,minecraft,entity_texture_features,ambientsounds,mousetweaks,jade,shouldersurfing,creativecore,lithostitched,lithium,apollib,trender,notenoughanimations,controlling,neoforge,awaken,searchables,dynamic_fps_common,entityculling,immersivevfx,midnightlib,immediatelyfast,architectury,appleskin,ferritecore,conditional_mixin,transition,dynamic_fps,sodium,moreculling,player_animation_library,cameraoverhaul,skinlayers3d,cloth_config,sound_physics_remastered,mezz_config,jei,bendable_cuboids,tectonic,smooth_steps
+[02:12:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[02:12:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on: gpu timing on
+[02:12:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu on
