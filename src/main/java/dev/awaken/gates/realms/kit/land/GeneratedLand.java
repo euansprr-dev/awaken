@@ -76,10 +76,12 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         /** How far the highest neighbour stands over this column, and how far the lowest lies under it. */
         public int rise, drop;
         public boolean crust, columns, wet;
+        /** Whether rock stands a few blocks upwind (the wind is from the west): where what the wind carries comes to rest. */
+        public boolean lee;
         /** 0 to 1: how near what burns (a channel, a rift) is. */
         public double heat;
-        /** A slow noise, -1 to 1, for beds of one thing in another; and this column's own number, 0 to 1. */
-        public double patch, roll;
+        /** A slow noise, -1 to 1, for beds of one thing in another; a slower, smoother one for whole drifts; and this column's own number, 0 to 1. */
+        public double patch, drift, roll;
     }
 
     private static final class Near {
@@ -93,6 +95,9 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         final byte[] way = new byte[G * G];
         final float[] off = new float[G * G], mid = new float[G * G];
         final BlockState[] cap = new BlockState[G * G], top = new BlockState[G * G];
+        // what bones worked out about each column, kept for the finish: the noise is not asked twice
+        final byte[] rise = new byte[G * G], drop = new byte[G * G], flags = new byte[G * G];
+        final float[] heat = new float[G * G], patch = new float[G * G], drift = new float[G * G], roll = new float[G * G];
         final Near near = new Near();
         final Spot spot = new Spot();
     }
@@ -116,7 +121,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
     private int[][] grid;
     private int gx0, gz0, gw, gd;
 
-    private final SimplexNoise fine, patch, strata, vein;
+    private final SimplexNoise fine, patch, strata, vein, slow;
     protected Dress dress;
     Landform form;
     private final List<Edit> heartOpen = new ArrayList<>(), heartShut = new ArrayList<>();
@@ -130,6 +135,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         patch = N.noise(seed + 7002);
         strata = N.noise(seed + 7003);
         vein = N.noise(seed + 7004);
+        slow = N.noise(seed + 7005);
     }
 
     // ---- the skin -----------------------------------------------------------------------------------------------------------
@@ -495,13 +501,9 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         for (int a = 2; a < G - 2; a++) for (int c = 2; c < G - 2; c++) finish(v, m, q, a, c);
     }
 
-    private Spot spot(Scratch q, int a, int c, int x, int z) {
-        int i = a * G + c, y = (q.h2[i] >> 1) - 1, hi = y, lo = y;
-        for (int[] d : SIDES) {
-            int t = (q.h2[(a + d[0]) * G + c + d[1]] >> 1) - 1;
-            hi = Math.max(hi, t);
-            lo = Math.min(lo, t);
-        }
+    /** What a skin is told of a column. Worked out once, by the bones ({@code fresh}); the finish reads it back. */
+    private Spot spot(Scratch q, int a, int c, int x, int z, boolean fresh) {
+        int i = a * G + c, y = (q.h2[i] >> 1) - 1;
         Spot s = q.spot;
         s.x = x;
         s.y = y;
@@ -509,21 +511,48 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         s.way = q.way[i];
         s.off = q.off[i];
         s.mid = q.mid[i];
+        s.wet = y < WATER;
+        if (!fresh) {
+            s.rise = q.rise[i];
+            s.drop = q.drop[i];
+            s.crust = (q.flags[i] & 1) != 0;
+            s.columns = (q.flags[i] & 2) != 0;
+            s.lee = (q.flags[i] & 4) != 0;
+            s.heat = q.heat[i];
+            s.patch = q.patch[i];
+            s.drift = q.drift[i];
+            s.roll = q.roll[i];
+            return s;
+        }
+        int hi = y, lo = y;
+        for (int[] d : SIDES) {
+            int t = (q.h2[(a + d[0]) * G + c + d[1]] >> 1) - 1;
+            hi = Math.max(hi, t);
+            lo = Math.min(lo, t);
+        }
         s.rise = hi - y;
         s.drop = y - lo;
-        s.wet = y < WATER;
         s.heat = form.heat(x, z);
         s.crust = s.way == 0 && form.crust(x, z);
         s.columns = s.off >= 1.5F && form.columns(x, z) > 0.5;
+        s.lee = !s.columns && !s.wet && (form.columns(x - 5, z) > 0.5 || form.columns(x - 10, z) > 0.5);
         s.patch = N.fbm(patch, x, z, 1 / 14.0, 2);
+        s.drift = slow.get(x / 26.0, z / 26.0);
         s.roll = N.rnd(N.hash(x, z, seed + 9), z, seed + 10);
+        q.rise[i] = (byte) Math.min(127, s.rise);
+        q.drop[i] = (byte) Math.min(127, s.drop);
+        q.flags[i] = (byte) ((s.crust ? 1 : 0) | (s.columns ? 2 : 0) | (s.lee ? 4 : 0));
+        q.heat[i] = (float) s.heat;
+        q.patch[i] = (float) s.patch;
+        q.drift[i] = (float) s.drift;
+        q.roll[i] = (float) s.roll;
         return s;
     }
 
     /** One column of ground: everything under it, its top block, and the half step or the layers that finish it. */
     private void bones(V v, Kit m, Scratch q, int a, int c) {
         int x = v.x0 - 2 + a, z = v.z0 - 2 + c, i = a * G + c;
-        Spot s = spot(q, a, c, x, z);
+        Spot s = spot(q, a, c, x, z, true);
         int y = s.y;
         Dress d = dress;
         BlockState cap = cap(s), body = under(s, cap);
@@ -539,8 +568,10 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
             double over = q.s[i] - (y + 1);
             boolean odd = (q.h2[i] & 1) != 0;
             if (cap == d.soil() && d.drift() != null) {
-                // loose ground lies in layers an eighth deep; on a way it only ever dusts the ground or makes the half step
-                int layers = s.way != 0 ? (odd ? 4 : 0) : Math.max(0, Math.min(6, (int) Math.round(over * 8)));
+                // loose ground lies in layers an eighth deep, and banks up against any wall it lies at the foot of; on a way it
+                // only ever makes the half step (five layers stand half a block high, as a slab does)
+                int layers = s.way != 0 ? (odd ? 5 : 0) : Math.max(0, Math.min(6, (int) Math.round(over * 8)));
+                if (s.way == 0 && s.rise >= 2 && s.drop == 0) layers = Math.max(layers, 3 + (int) (s.roll * 4));
                 if (layers > 0) top = d.drift().setValue(DepthBlocks.Drift.LAYERS, layers);
             } else if (odd) top = cap == d.stone() || cap == d.soil() ? d.stoneSlab() : d.rockSlab();
         }
@@ -557,7 +588,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         if (y < WATER || v.get(x, y, z) != q.cap[i]) return;
         BlockState over = v.get(x, y + 1, z);
         if (over != q.top[i]) return; // something was built here
-        Spot s = spot(q, a, c, x, z);
+        Spot s = spot(q, a, c, x, z, false);
         Dress d = dress;
         if (s.crust) {
             // it pours over every ledge in its way: the fall stands in the lower column, against the face of the higher
@@ -571,7 +602,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
             return;
         }
         if (over != null) return;
-        if (s.way == 0 && s.off >= 1 && s.rise >= 2 && s.drop <= 1 && s.roll < 0.42) {
+        if (s.way == 0 && s.off >= 1 && s.rise >= 2 && s.drop <= 1 && s.roll < 0.42 && q.cap[i] != d.soil()) {
             // rubble at the foot of a wall: a stair with its back to the rock, or half a block of it
             int best = 0, at = -1;
             for (int k = 0; k < 4; k++) {
@@ -581,7 +612,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
                     at = k;
                 }
             }
-            boolean hard = q.cap[i] != d.soil();
+            boolean hard = q.cap[i] != d.stone();
             if (at >= 0) v.set(x, y + 1, z, s.roll < 0.26 ? Build.stair(hard ? d.rockStairs() : d.stoneStairs(), SIDE_DIR[at]) : hard ? d.rockSlab() : d.stoneSlab());
             return;
         }

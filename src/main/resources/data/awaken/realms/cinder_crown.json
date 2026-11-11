@@ -25,11 +25,9 @@
     ],
     "lens": "cinder_crown",
     "air": [
-      "ash",
       "embers",
-      "smoke",
-      "steam",
       "wind",
+      "smoke",
       "dust"
     ]
   },
@@ -58,6 +56,6 @@
     "seat": "the_crown"
   },
   "moods": [
-    "ashfall"
+    "last_light"
   ]
 }

@@ -93,14 +93,34 @@ public final class EmberCountry extends GeneratedLand {
     }
 
     /**
-     * Ash lies on every ledge. The top of a column or a cliff is ash wherever the ashfall reached (most places) and bare
-     * black rock where it didn't, so a crag reads by its ledges; anything close to what burns is bare and cracked.
+     * Burnt country is dark: slag underfoot everywhere, black rock wherever it stands steep, and nothing mixed block by
+     * block. The pale ash is what the wind left, and it lies only where ash would: on ledges and the tops of columns, banked
+     * at the foot of walls, in the lee of any rock, and in a few broad drifts across the open ground. The way is trodden
+     * ash, so it shows as one pale line through the dark. Anything close to what burns is bare and cracked.
      */
     @Override
     protected BlockState cap(Spot s) {
         Dress d = dress;
-        if (s.way == 0 && !s.crust && !s.wet && s.heat < 0.4 && (s.columns || s.drop >= 3) && s.patch > -0.25) return d.soil();
-        return super.cap(s);
+        if (s.crust) return d.crust();
+        if (s.wet) return d.stone();
+        switch (s.way) {
+            case STAIR:
+                return d.rock();
+            case TRAIL:
+                return s.mid < 1.4F ? d.soil() : d.stone();
+            case PAD:
+                return s.drift > 0.25 ? d.soil() : d.stone();
+            case SPUR:
+            case FLOOR:
+                return d.stone();
+            default:
+        }
+        if (s.heat > 0.5) return s.roll < 0.3 ? d.seam() : d.rock();
+        boolean cliff = s.columns || s.drop >= 3 || s.rise >= 4 && s.drop >= 1;
+        if (cliff) return s.drift > -0.15 ? d.soil() : d.rock();
+        // the edge of a drift is ragged for a block or two, never a ruled line
+        boolean broad = s.drop <= 1 && s.drift > 0.42 - 0.08 * s.roll;
+        return broad || s.rise >= 2 && s.drop == 0 || s.lee && s.drift > -0.3 ? d.soil() : d.stone();
     }
 
     /** A den's place: a ring of standing stones, or the camp the miners left, turn about. */
@@ -154,7 +174,7 @@ public final class EmberCountry extends GeneratedLand {
         Own o = own();
         BlockState on = v.get(s.x, y - 1, s.z);
         if (s.way == TRAIL || s.way == SPUR) {
-            if (s.mid > 1.6F && s.roll < 0.05) v.set(s.x, y, s.z, o.cinders);
+            if (s.mid > 1.6F && s.roll < 0.08) v.set(s.x, y, s.z, o.cinders);
             return;
         }
         double clump = N.rnd(Math.floorDiv(s.x, 5), Math.floorDiv(s.z, 5), seed + 21);

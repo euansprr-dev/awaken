@@ -55,6 +55,9 @@ final class Ascent extends Landform {
     /** The fall down the face: its bearing, and the pool at the knee it ends in. */
     private static final double FALL = Math.PI / 2 - 0.5;
     private double poolU, poolV, poolY;
+    /** A vent beside the approach: a knoll of columns with a fall down the side that faces the way in, or none where there was no room. */
+    private double ventU, ventV;
+    private boolean vent;
 
     Ascent(GeneratedLand land) {
         super(land, 0xA5CE27L);
@@ -165,6 +168,11 @@ final class Ascent extends Landform {
         // and one straight down the face beside the stair, from the crest to a pool at the knee: what you see burning from the shore
         // (a little narrower in the count than it lies, so it comes out a block wider than the rest)
         if (r < kneeR + 13) best = Math.min(best, Math.abs(wrap(a - FALL)) * r - 0.8);
+        if (vent) {
+            // from the vent's top down the side toward the way in, and the little pool it runs out into
+            if (v > ventV - 1.5 && v < ventV + 15) best = Math.min(best, Math.abs(u - ventU) + 1.0);
+            best = Math.min(best, Math.hypot(u - ventU, v - ventV - 16) - 2.4);
+        }
         return Math.min(best, Math.hypot(u - poolU, v - poolV) - 4.5);
     }
 
@@ -210,6 +218,10 @@ final class Ascent extends Landform {
         // the pool at the foot of the fall lies in a hollow of its own
         double pool = laid ? Math.hypot(u - poolU, v - poolV) : 99;
         if (pool < 10) y = N.lerp(y, poolY, N.smooth(10, 6, pool));
+        if (vent) {
+            double d = Math.hypot(u - ventU, v - ventV);
+            if (d < 9) y += 9 * N.smooth(9, 2.5, d);
+        }
         double ch = channel(u, v, r, p);
         if (ch < 8) {
             double w = channelWide(r);
@@ -234,6 +246,7 @@ final class Ascent extends Landform {
         if (p > R + 14) return stack(u, v, p) > 0 ? 1 : 0;
         double m = laid && r > TIERS + 0.5 ? N.smooth(kneeR + 5, kneeR - 1, p) : 0;
         if (p < R - 22 && p > kneeR) m = Math.max(m, N.smooth(0.42, 0.56, N.fbm(nCrag, u, v, 1 / 27.0, 3)));
+        if (vent) m = Math.max(m, N.smooth(9.5, 7, Math.hypot(u - ventU, v - ventV)));
         return m;
     }
 
@@ -377,6 +390,17 @@ final class Ascent extends Landform {
         t.level(iH2 - 7, iH2 + 7);
         t.level(iC - 12, iC);
         t.settle(mouthFeet, 0.42);
+        // the vent: a little past the first den and well to one side of the way (the side nearer the spit's middle, so it is
+        // never in the sea), wherever nothing of the way comes within sixteen blocks of it
+        int iV = early.get(0) + 18;
+        if (iV < iA - 12) {
+            double[] vh = t.heading(iV);
+            double au0 = t.x(iV) - vh[1] * 24, av0 = t.z(iV) + vh[0] * 24, bu0 = t.x(iV) + vh[1] * 24, bv0 = t.z(iV) - vh[0] * 24;
+            ventU = Math.abs(au0) < Math.abs(bu0) ? au0 : bu0;
+            ventV = Math.abs(au0) < Math.abs(bu0) ? av0 : bv0;
+            vent = true;
+            for (int i = 0; i <= t.last() && vent; i++) if (Math.hypot(t.x(i) - ventU, t.z(i) - ventV) < 16 || Math.hypot(t.x(i) - ventU, t.z(i) - ventV - 16) < 9) vent = false;
+        }
         deckFeet = (int) Math.round(t.feet(iBridge));
         riftMid = riftV + 1;
         rift = true;

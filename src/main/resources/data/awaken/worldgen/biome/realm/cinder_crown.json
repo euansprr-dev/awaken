@@ -36,13 +36,13 @@
           "particle": {
             "type": "minecraft:ash"
           },
-          "probability": 0.012
+          "probability": 0.02
         },
         {
           "particle": {
             "type": "minecraft:white_ash"
           },
-          "probability": 0.006
+          "probability": 0.008
         }
       ]
     },
@@ -67,11 +67,11 @@
       }
     },
     "minecraft:visual/block_light_tint": "#ff9a50",
-    "minecraft:visual/ambient_light_color": "#3a3230",
-    "minecraft:visual/sun_angle": 58.0,
-    "minecraft:visual/sky_light_color": "#ffc79c",
+    "minecraft:visual/ambient_light_color": "#423a3c",
+    "minecraft:visual/sun_angle": 79.0,
+    "minecraft:visual/sky_light_color": "#ffd4ac",
     "minecraft:visual/sunrise_sunset_color": "#a0ff7038",
-    "minecraft:visual/sky_light_factor": 0.94
+    "minecraft:visual/sky_light_factor": 1.0
   },
   "carvers": [],
   "features": []

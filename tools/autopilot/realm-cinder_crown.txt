@@ -93,12 +93,13 @@ cmd awaken gate realm_at LORD 0 0 8 44
 look 0 18
 wait 200
 shot cinder_crown_looking_back
-# the Lord's door, shut and then open, and the crater
-cmd awaken gate realm_at LORD 0 0 12 44
-look 180 24
+# the Lord's door from the notch outside it, shut and then open, and the crater
+cmd awaken gate realm_leg LORD 0 42 2
 wait 200
 shot cinder_crown_door
 cmd awaken gate realm_heart
+wait 40
+shot cinder_crown_door_open
 cmd awaken gate realm_at LORD 0 0 3 21
 look 180 -14
 wait 200
