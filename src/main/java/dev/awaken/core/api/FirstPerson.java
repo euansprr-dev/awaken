@@ -58,6 +58,11 @@ public final class FirstPerson {
         public boolean worldArms;
         /** With {@link #worldArms}: how much longer than its model each arm is drawn (right, left; 1 for as it is). */
         public final float[] armStretch = {1F, 1F};
+        /**
+         * With {@link #worldArms}: each arm's own distance in the hand pass (right, left; 0 for {@link #handDistance}),
+         * so two arms at different depths are each drawn at their own size.
+         */
+        public final float[] armDistance = {0F, 0F};
         /** Warm light on the arms from a fire they reach toward (0..1), added to the block light they are drawn in. */
         public float fireLight;
         /**
@@ -73,6 +78,7 @@ public final class FirstPerson {
             glow = 0;
             worldArms = false;
             armStretch[0] = armStretch[1] = 1F;
+            armDistance[0] = armDistance[1] = 0F;
             fireLight = 0;
             noHands = false;
         }

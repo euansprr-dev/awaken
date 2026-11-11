@@ -309,8 +309,6 @@ public final class StationView {
 
     /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */
     public static final double HOVER = 0.07, HAND_BACK = 0.11;
-    /** The arm lies back toward a point this far past the table's near edge, this far over its top, leaning to its side. */
-    public static final double ARM_BEYOND = 0.45, ARM_RISE = 0.30, ARM_LEAN = 0.10;
     /** A fist is this much of a grid square across on screen, and an arm may be drawn this much longer than its model. */
     public static final double FIST_SQUARES = 0.8, STRETCH_MOST = 1.8;
     /** The arm's model: a fist 4 texels across; from the fist's middle back to the arm's far end, in blocks. */
@@ -326,61 +324,100 @@ public final class StationView {
     }
 
     /**
-     * The carrying arm for a stack held at {@code (px, py, pz)} over a table: the fist's middle into {@code out[0..2]},
-     * a unit vector along the arm from the fist back toward you into {@code out[3..5]}. {@code side}: 1 a right hand,
-     * -1 a left. {@code most}: how far to either side of the table's middle the arm's far end may lie and still be under
-     * the inventory strip ({@link #acrossMost}).
+     * Where the carrying arm's far end is aimed on screen: the middle line of the inventory strip, kept this far inside
+     * its sides (gui pixels), so the arm's cut end and all of its width there are under the strip's glass.
      */
-    public static void carry(Station s, double px, double py, double pz, int side, double most, double[] out) {
-        BlockPos b = s.pos();
-        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5;
-        double u = (px - cx) * s.rx() + (pz - cz) * s.rz();
-        double across = Mth.clamp(u + side * ARM_LEAN, -most, most), back = 0.5 + ARM_BEYOND;
-        double ax = cx + s.rx() * across - s.fx() * back - px, ay = s.top() + ARM_RISE - py, az = cz + s.rz() * across - s.fz() * back - pz;
-        double al = Math.sqrt(ax * ax + ay * ay + az * az);
-        if (al < 1e-6) {
-            ax = -s.fx();
-            ay = 0;
-            az = -s.fz();
-            al = 1;
-        }
-        out[3] = ax / al;
-        out[4] = ay / al;
-        out[5] = az / al;
-        out[0] = px + out[3] * HAND_BACK;
-        out[1] = py + out[4] * HAND_BACK;
-        out[2] = pz + out[5] * HAND_BACK;
+    public static final int ROOT_INSET = 34;
+    /** The far end stands this much of the fist's distance from the eye: nearer you than the fist (the arm comes from you). */
+    public static final double ROOT_NEAR = 0.62;
+    /** A station's arm may be drawn this much larger than a fist of {@link #FIST_SQUARES} to reach the strip in a wide view. */
+    public static final double GROW_MOST = 1.5;
+
+    /** The screen point the far end of an arm is aimed at, for a hand of this {@code side} holding at screen x {@code sx}. */
+    private static double rootX(Layout l, double sx, int side) {
+        double lo = l.px0() + ROOT_INSET, hi = l.px1() - ROOT_INSET;
+        return lo <= hi ? Mth.clamp(sx + side * 6, lo, hi) : (l.px0() + l.px1()) / 2.0;
     }
 
     /**
-     * How far to either side of a table's middle an arm's far end may lie and still pass under the inventory strip: the
-     * strip's top corners, seen through the view, on the level the arm's far end is at, less the arm's own half width.
+     * The carrying arm for a stack held at {@code (hx, hy, hz)}, as a pure function of where it is held, the view and
+     * the layout (no clock, no speed, nothing remembered: held still, it is still). The far end lies on the line of
+     * sight through a point of the strip's middle line, {@link #ROOT_NEAR} of the way out to the fist (farther along it
+     * when the arm could not reach), so on screen the arm runs from the fist to under the strip, whatever the window,
+     * the layout or the station. Into {@code out}: the fist's middle [0..2], a unit vector along the arm from the fist
+     * back toward you [3..5], how much longer than its model it is drawn [6] ({@code 1} to {@link #STRETCH_MOST}, without
+     * steps), and its drawn length back from the fist's middle [7]. {@code model}: the arm's own length at the size it is
+     * drawn (world blocks, the fist's middle to its far end). {@code t}: three numbers of scratch.
      */
-    public static double acrossMost(Station s, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect, int guiW, int guiH,
-                                    double[] p) {
-        BlockPos b = s.pos();
-        double cx = b.getX() + 0.5, cz = b.getZ() + 0.5, y = s.top() + ARM_RISE * 0.75, most = 0.36;
-        for (int k = 0; k < 2; k++) {
-            if (!onPlane(ex, ey, ez, rot, fov, aspect, k == 0 ? l.px0() + 3 : l.px1() - 3, l.py0() + 3, guiW, guiH, y, p)) continue;
-            most = Math.min(most, Math.abs((p[0] - cx) * s.rx() + (p[2] - cz) * s.rz()) - 0.1);
+    public static void armTo(double hx, double hy, double hz, int side, double model, Layout l, double ex, double ey, double ez, Quaternionfc rot,
+                             float fov, float aspect, int guiW, int guiH, double[] out, double[] t) {
+        double vx = hx - ex, vy = hy - ey, vz = hz - ez, dw = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        double sx = project(hx, hy, hz, ex, ey, ez, rot, fov, aspect, guiW, guiH, t) ? t[0] : guiW / 2.0;
+        // the far end's line of sight (a unit vector from the eye)
+        along(ex, ey, ez, rot, fov, aspect, rootX(l, sx, side), (l.py0() + l.py1()) / 2.0, guiW, guiH, 1, t);
+        double dx = t[0] - ex, dy = t[1] - ey, dz = t[2] - ez;
+        double most = model * STRETCH_MOST - HAND_BACK;
+        // how far along it: ROOT_NEAR of the fist's distance, or as far as the arm's most length needs
+        double k = dw * ROOT_NEAR, dv = dx * vx + dy * vy + dz * vz;
+        double rx = dx * k - vx, ry = dy * k - vy, rz = dz * k - vz;
+        if (rx * rx + ry * ry + rz * rz > most * most) {
+            // the first place along the line the arm's most length reaches, coming from where it would have stood (so
+            // the far end never jumps as the hand moves); where it reaches nowhere, the line's nearest point
+            double disc = dv * dv - (dw * dw - most * most);
+            k = disc < 0 ? dv : k <= dv ? dv - Math.sqrt(disc) : dv + Math.sqrt(disc);
+            rx = dx * k - vx;
+            ry = dy * k - vy;
+            rz = dz * k - vz;
         }
-        return Math.max(0.04, most);
+        double rl = Math.sqrt(rx * rx + ry * ry + rz * rz);
+        if (rl < 1e-6) {
+            rx = -vx / Math.max(1e-6, dw);
+            ry = -vy / Math.max(1e-6, dw);
+            rz = -vz / Math.max(1e-6, dw);
+            rl = 1;
+        } else {
+            rx /= rl;
+            ry /= rl;
+            rz /= rl;
+        }
+        out[3] = rx;
+        out[4] = ry;
+        out[5] = rz;
+        out[0] = hx + rx * HAND_BACK;
+        out[1] = hy + ry * HAND_BACK;
+        out[2] = hz + rz * HAND_BACK;
+        double stretch = Mth.clamp((rl - HAND_BACK) / model, 1, STRETCH_MOST);
+        out[6] = stretch;
+        out[7] = model * stretch;
     }
 
     /**
-     * How much longer than its model the arm must be drawn for its far end to pass under the inventory strip (or off
-     * the frame), so no sleeve end is ever in view: {@code 1} to {@link #STRETCH_MOST}. {@code arm}: {@link #carry}'s six
-     * numbers; {@code scale}: world blocks to the hand's own (hand distance over the fist's distance from the eye).
+     * The shortest an arm can be and still run from a stack held at {@code (hx, hy, hz)} to under the strip: the held
+     * point's distance from the far end's line of sight, and the fist's own reach back from what it holds (world blocks).
      */
-    public static float stretch(double[] arm, double scale, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect,
-                                int guiW, int guiH, double[] q) {
-        double model = ARM_BACK / scale;
-        for (double k = 1; k <= STRETCH_MOST + 1e-6; k += 0.05) {
-            double len = model * k;
-            if (!project(arm[0] + arm[3] * len, arm[1] + arm[4] * len, arm[2] + arm[5] * len, ex, ey, ez, rot, fov, aspect, guiW, guiH, q)) return (float) k;
-            if (hidden(l, q[0], q[1], guiW, guiH)) return (float) k;
+    public static double armNeed(double hx, double hy, double hz, int side, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov,
+                                 float aspect, int guiW, int guiH, double[] t) {
+        double vx = hx - ex, vy = hy - ey, vz = hz - ez, dw2 = vx * vx + vy * vy + vz * vz;
+        double sx = project(hx, hy, hz, ex, ey, ez, rot, fov, aspect, guiW, guiH, t) ? t[0] : guiW / 2.0;
+        along(ex, ey, ez, rot, fov, aspect, rootX(l, sx, side), (l.py0() + l.py1()) / 2.0, guiW, guiH, 1, t);
+        double dx = t[0] - ex, dy = t[1] - ey, dz = t[2] - ez, dv = dx * vx + dy * vy + dz * vz;
+        return Math.sqrt(Math.max(0, dw2 - dv * dv)) + HAND_BACK;
+    }
+
+    /**
+     * How much larger than a fist of {@link #FIST_SQUARES} a station's arms are drawn in this view so the longest reach
+     * (to its farthest slot, by either hand) still ends under the strip: 1 in the usual view, up to {@link #GROW_MOST}
+     * where the strip is far from the station (a narrow room beside side panels). One number for the whole scene.
+     */
+    public static double armGrow(Station s, double model, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect,
+                                 int guiW, int guiH, double[] p, double[] t) {
+        double need = 0;
+        for (int i = 0; i < s.kind().slots; i++) {
+            spot(s, i, p, 0);
+            double hy = p[1] + (s.kind().upright ? 0 : HOVER);
+            for (int side = -1; side <= 1; side += 2) need = Math.max(need, armNeed(p[0], hy, p[2], side, l, ex, ey, ez, rot, fov, aspect, guiW, guiH, t));
         }
-        return (float) STRETCH_MOST;
+        return Mth.clamp(need / (model * STRETCH_MOST) * 1.04, 1, GROW_MOST);
     }
 
     /** A point of the screen the arm's far end may be at: under the strip, or off the frame. */

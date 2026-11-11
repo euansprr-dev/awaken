@@ -124,14 +124,14 @@ final class Touches {
     static final Touch PET = t(AnimsClips.PET, rest(0), at(4, 0, 0, 0.03F), at(7, 0.15F, 0.02F, 0.03F), at(10, -0.1F, 0, 0.03F),
             at(13, 0.12F, 0.02F, 0.03F), rest(17));
     /**
-     * A chest, ender chest, shulker box or cache: both hands under the lid's front edge, going up with it as it really
-     * opens (the anchor is the lid's own edge, frame by frame), letting go as it stands.
+     * A chest, ender chest, shulker box or cache: one free hand to the lid's lip where it lies shut, a short lift, and
+     * away (seven ticks in all; the lid goes on up by itself). It was both hands riding the lid's own edge to the top
+     * of its swing for thirteen ticks: played, the hands went far too high for far too long, over a screen that had
+     * already opened (Euan, 11 Nov).
      */
-    static final Touch LID = t(AnimsClips.LID, 0.3F, -1, -1, -1, -1, rest(0), at(2, 0, -0.02F, 0.05F), at(7, 0, 0, 0.04F), at(9, 0, 0.03F, 0.1F), rest(13));
-    /** The same lid let down again as you leave: the hands take its raised edge and bring it down. */
-    static final Touch LID_DOWN = t(AnimsClips.LID, 0.3F, -1, -1, -1, -1, rest(0), at(2, 0, 0.02F, 0.08F), at(8, 0, -0.01F, 0.04F), rest(11));
+    static final Touch LID = t(AnimsClips.LID, rest(0), at(2, 0, 0, 0.04F), at(4, 0, 0.09F, 0.07F), rest(7));
     /** A barrel: one hand to the hatch in its face, drawing it open. */
-    static final Touch HATCH = t(AnimsClips.LID, rest(0), at(3, 0, 0, 0.03F), at(6, 0.06F, 0, 0.12F), rest(10));
+    static final Touch HATCH = t(AnimsClips.LID, rest(0), at(2, 0, 0, 0.03F), at(4, 0.05F, 0, 0.1F), rest(7));
     /** A stone: the palm pressed flat and held while the light answers (the hand lit by it). */
     static final Touch PALM = t(AnimsClips.PALM, 0, -1, -1, 5, 17, rest(0), at(3, 0, 0, 0.06F), at(5, 0, 0, -0.01F),
             at(12, 0, 0, -0.02F), rest(17));
@@ -369,24 +369,22 @@ final class Touches {
     }
 
     /**
-     * A lid's front edge, where the hands hold it: for a chest or an ender chest the lip of the lid as it really stands
-     * this frame (the lid turns about a hinge a texel in from the back, nine up; its lip is fourteen out from the hinge);
-     * for a shulker box the shell's rim as it rises; for anything else the face toward you, just under the top.
+     * A lid's lip where it lies shut, where the hand takes it: for a chest or an ender chest the front edge of the lid
+     * (seven texels out from the middle, nine up); for anything else the face toward you, just under the top. A fixed
+     * place: the hand does not ride the lid. (It read the lid's own openness with the partial tick of whatever frame
+     * came before the tick that asked, so the place it rode moved unevenly between ticks: one of the causes of the
+     * trembling hands of 11 Nov.)
      */
     private static Reaches.Anchor lid(Level level, BlockPos pos) {
         return out -> {
             BlockState s = level.getBlockState(pos);
             if (s.isAir()) return false;
-            float pt = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
             var be = level.getBlockEntity(pos);
-            if (be instanceof net.minecraft.world.level.block.entity.LidBlockEntity lidded && s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+            if (be instanceof net.minecraft.world.level.block.entity.LidBlockEntity && s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
                 var front = s.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
-                // vanilla eases the lid: 1 - (1 - open)^3 of a quarter turn
-                float open = lidded.getOpenNess(pt), k = 1 - (1 - open) * (1 - open) * (1 - open);
-                double turn = k * Math.PI / 2, along = Math.cos(turn) * 0.875 - 0.4375, up = Math.sin(turn) * 0.875;
-                out[0] = pos.getX() + 0.5 + front.getStepX() * along;
-                out[1] = pos.getY() + 0.5625 + up;
-                out[2] = pos.getZ() + 0.5 + front.getStepZ() * along;
+                out[0] = pos.getX() + 0.5 + front.getStepX() * 0.4375;
+                out[1] = pos.getY() + 0.5625;
+                out[2] = pos.getZ() + 0.5 + front.getStepZ() * 0.4375;
                 return true;
             }
             AABB b = shapeBox(s.getShape(level, pos), pos);
@@ -400,23 +398,18 @@ final class Touches {
                 out[2] = dz > 0 ? b.maxZ : b.minZ;
             }
             out[1] = b.maxY - 0.06;
-            if (be instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity shell) out[1] = pos.getY() + 1 - 0.06 + shell.getProgress(pt) * 0.5;
             return true;
         };
     }
 
-    /** The box's screen is shutting: the hands take the lid and let it down (both free), and the view comes back. */
+    /**
+     * The box's screen is shutting: the view comes back. No hand plays here: a hand let the lid down for eleven ticks,
+     * and whoever shut a chest and turned away at once saw it chase the lid across the frame (Euan, 11 Nov). The lid
+     * shuts by itself, as vanilla's does.
+     */
     static void screenClosing(ScreenEvent.Closing e) {
         if (!boxOpen || !(e.getScreen() instanceof AbstractContainerScreen<?>)) return;
         boxOpen = false;
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer p = mc.player;
-        BlockPos at = box;
-        if (p == null || at == null || mc.level == null || !on(p)) return;
-        BlockState s = mc.level.getBlockState(at);
-        if (forUse(s) != LID) return;
-        lastAt = -100;
-        play(p, LID_DOWN, lid(mc.level, at));
     }
 
     /**

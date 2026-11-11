@@ -104,6 +104,12 @@ public final class AscentPilot {
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
             case "hover" -> dev.awaken.anims.client.station.StationClient.devHover(Integer.parseInt(a[1]));
+            // sweep <from> <to> <ticks>: the pointer from one slot of the open station scene to another, a step a tick;
+            // handslog on|off: a line a frame of where the world arms are drawn; sides on|off: scenes laid out as beside
+            // JEI's panels (SPEC §65.2: the proof that a hand held still is still)
+            case "sweep" -> dev.awaken.anims.client.station.StationClient.devSweep(Integer.parseInt(a[1]), Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+            case "handslog" -> dev.awaken.anims.client.HandsLog.on = a[1].equals("on");
+            case "sides" -> dev.awaken.anims.client.station.StationClient.devSides = a[1].equals("on");
             // clip <name>|stop: a body clip on your own body, so a tour can film a pose in third person (SPEC §65.5)
             case "clip" -> {
                 if (a[1].equals("stop")) dev.awaken.core.api.PlayerClips.stop(p.getId());
