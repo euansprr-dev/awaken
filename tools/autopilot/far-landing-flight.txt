@@ -51,6 +51,10 @@ frontier moved
 wait 60
 cmd awaken frontier goto ridge
 wait 40
+# the ridge's mooring is built within two seconds of its land being there: the picture views need it built
+wait 300
+cmd awaken frontier goto ridge
+wait 40
 cmd awaken frontier status
 cmd gamemode spectator
 hud off

@@ -178,12 +178,15 @@ final class SkiffFx {
         float wingY = Skiff.WING_Y + 0.5F, hubX = Skiff.HUB.getX(), hubY = Skiff.HUB.getY() + 0.5F, hubZ = Skiff.HUB.getZ();
         double bx = berth.getX() + 0.5 + s[0], by = berth.getY() + s[1], bz = berth.getZ() + 0.5 + s[2];
         Holder<Biome> biome = level.getBiome(berth);
+        // At its berth it's lit by where each block is. In the air it's lit by the open sky over its berth: where it's
+        // drawn the land may not have come yet, and a place with no land has no light (the hull went black on the way down).
+        boolean aloft = s[0] * s[0] + s[1] * s[1] + s[2] * s[2] > 9F;
+        BlockPos sky = new BlockPos(berth.getX(), level.getMaxY() - 1, berth.getZ());
         for (FlightFilm.Snap b : snap) {
-            // lit by where its place on the hull is now (near enough for the parts that move on it)
             LIGHT.transform(V.set(b.dx(), b.dy() + 0.5F, b.dz()));
             MovingBlockRenderState mb = new MovingBlockRenderState();
             mb.blockState = b.state();
-            mb.blockPos = BlockPos.containing(bx + V.x, by + V.y, bz + V.z);
+            mb.blockPos = aloft ? sky : BlockPos.containing(bx + V.x, by + V.y, bz + V.z);
             mb.randomSeedPos = berth.offset(b.dx(), b.dy(), b.dz());
             mb.lightEngine = level.getLightEngine();
             mb.cardinalLighting = level.cardinalLighting();

@@ -24562,6 +24562,9 @@ improving the design and experience of it"): the first look was a plank box with
   ear that follow the skiff's speed and go close and quiet inside the cloud.
 - Watchers within 160 of a mooring see the skiff wake and lift away with its party (their bodies hidden once it
   lifts); it comes back empty to its berth 15 s later, wings and wheel moving the same way.
+- **Lit by the open sky in the air.** A drawn block is lit by the world's light where it is; past three blocks from
+  its berth the skiff takes the light of the open sky over that berth instead, because where it flies the land may
+  not have come yet and a place with no land has no light (CI run 43001781354: the hull black early in the descent).
 - **The descent is onto the mooring as built.** A far mooring that isn't built when the skiff lifts is only a spot
   (the seed's, at sea level + 8); the server's ARRIVED carries where it really stands, and the film comes down there
   (`Flight.to`). Before 11 Nov the film kept the spot, so a first flight came down beside the mooring, in whatever
