@@ -34,6 +34,8 @@ public final class SkinBlocks {
     private SkinBlocks() {}
 
     public static final IntegerProperty VARIANT = IntegerProperty.create("variant", 0, 2);
+    /** The longest column a formation, root or rope looks down (or up) to find what holds it: far past any the skin lays. */
+    static final int MAX_CHAIN = 64;
 
     /**
      * Broken rock heaped where a floor meets a wall, its high side to the wall ({@link #FACING} points at it). A half
@@ -311,12 +313,21 @@ public final class SkinBlocks {
             };
         }
 
+        /**
+         * Held by the rock at the root of its column, however many pieces lie between: a column asked from its tip first (the
+         * world-gen re-check goes section by section, bottom up, so a stalactite across a section line is) still goes whole
+         * when its root has gone (SPEC §42.4, "Settled").
+         */
         @Override
         protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
             Direction toward = state.getValue(DIRECTION).getOpposite();      // the side it grows from
-            BlockPos behind = pos.relative(toward);
-            BlockState b = level.getBlockState(behind);
-            return b.is(this) && b.getValue(DIRECTION) == state.getValue(DIRECTION) || b.isFaceSturdy(level, behind, toward.getOpposite());
+            BlockPos.MutableBlockPos behind = pos.mutable();
+            for (int k = 0; k < MAX_CHAIN; k++) {
+                BlockState b = level.getBlockState(behind.move(toward));
+                if (b.is(this) && b.getValue(DIRECTION) == state.getValue(DIRECTION)) continue;
+                return b.isFaceSturdy(level, behind, toward.getOpposite());
+            }
+            return false;
         }
 
         @Override
@@ -393,10 +404,16 @@ public final class SkinBlocks {
             return Shapes.empty();
         }
 
+        /** Held by the rock over the top of its strand, however long (as a formation is). */
         @Override
         protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-            BlockState above = level.getBlockState(pos.above());
-            return above.is(this) || above.isFaceSturdy(level, pos.above(), Direction.DOWN);
+            BlockPos.MutableBlockPos above = pos.mutable();
+            for (int k = 0; k < MAX_CHAIN; k++) {
+                BlockState b = level.getBlockState(above.move(Direction.UP));
+                if (b.is(this)) continue;
+                return b.isFaceSturdy(level, above, Direction.DOWN);
+            }
+            return false;
         }
 
         @Override

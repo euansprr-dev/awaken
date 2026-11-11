@@ -24,8 +24,8 @@ import java.util.List;
 
 /**
  * The Living Deep on the client (SPEC §42): the puddle takes the cave's water colour; the drips' particles; the regions'
- * air and sound ({@link RegionClient}) and drawn light ({@link DrawnLight}); the underlife and {@code /awaken underlife [on|off|count|lineup|clear]} (client:
- * what lives round you; a line-up for tours).
+ * air and sound ({@link RegionClient}) and drawn light ({@link DrawnLight}); the underlife and {@code /awaken underlife [on|off|count|lineup|walls|check|clear]}
+ * (client: what lives round you; for tours a line-up, crawlers set walking on the walls in view, and a check that each is on its rock).
  */
 public final class CavesClient {
     private CavesClient() {}
@@ -68,6 +68,14 @@ public final class CavesClient {
                         .then(Commands.literal("lineup").executes(c -> {
                             var level = Minecraft.getInstance().level;
                             return say(level == null ? "Underlife: no world" : "Underlife line-up: " + Underlife.lineup(level) + " bodies");
+                        }))
+                        .then(Commands.literal("walls").executes(c -> {
+                            var level = Minecraft.getInstance().level;
+                            return say(level == null ? "Underlife: no world" : "Underlife on the walls: " + Underlife.walls(level) + " crawlers");
+                        }))
+                        .then(Commands.literal("check").executes(c -> {
+                            var level = Minecraft.getInstance().level;
+                            return say(level == null ? "Underlife: no world" : Underlife.check(level));
                         })))));
     }
 
