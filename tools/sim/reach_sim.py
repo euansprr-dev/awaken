@@ -303,7 +303,7 @@ def judge_after(kind, cls, windup, lock, radius, inner, count, dist, told):
             return 0, strike, True, True, "outside its reach"
         delay = 20 if kind == "PULL" else 0
         arrive = strike + delay + max(0.0, dist - start) / WAVE_SPEED
-        # a wave can't be outrun: it is jumped (its crest is lower than a jump for 7 ticks) or dashed through, timed on the
+        # a wave can't be outrun: it is jumped (its crest is lower than a jump for 10 ticks) or dashed through, timed on the
         # crest you see rolling at you (and a step inside its safe ring when it starts out from a ring)
         return arrive - strike, arrive, True, True, f"a wave rolls out ({WAVE_SPEED} blocks a tick): jump it or dash through"
     if kind == "FANGS_RING":
