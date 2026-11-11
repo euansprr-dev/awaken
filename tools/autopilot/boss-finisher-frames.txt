@@ -1,7 +1,8 @@
 # The boss experience plan's storyboard frames (docs/boss-experience/PLAN.md), from the game as it is on build
-# 69fee63de: what a finishing blow has to work with today. In a practice Proving (/awaken admin trial D), armed and
-# armoured in front of the Ringer, seen over your own shoulder (vanilla's third person):
-# 1. its stance broken, down on a knee; 2. the Execution on it, a frame a tick; 3. its death, a frame every 5 ticks.
+# 69fee63de: what a finishing blow has to work with today, seen over your own shoulder (vanilla's third person) in
+# daylight on the duel stage (/awaken bosses duel stage, SPEC §47.3): 1. the Ringer's stance broken, down on a knee;
+# 2. your Execution on it, a frame a client tick; 3. its death, a frame every 5 ticks.
+# (The first try stood in the Drowned Belfry: too dark, and the Ringer had walked off to one side.)
 # Run on CI: tools/tour-ci.sh tools/autopilot/boss-finisher-frames.txt
 world autopilot_boss_finisher creative 20261111
 waitworld
@@ -17,45 +18,39 @@ screen close
 cmd awaken powers starter 1
 wait 20
 screen close
-cmd awaken admin trial D
-wait 200
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses duel stage proving_ringer
+wait 80
 hud off
 
-# --- onto the chancel (as fights-belfry does): it drops into the light ---
-cmd gamemode spectator
-cmd tp @s ~ ~2 ~-12 0 5
-wait 10
-cmd tp @s ~ ~20 ~6 180 30
-wait 10
-cmd tp @s ~ ~-14 ~-56 180 -12
-wait 10
-cmd tp @s ~24 ~-6 ~12 180 8
-wait 10
-cmd tp @s ~-24 ~ ~8 180 0
-wait 80
-
-# --- you, in Wildhide with a longsword, three blocks in front of it (creative: it never turns on you) ---
+# --- the stand-in goes; you stand in Wildhide with a longsword in front of the Ringer, on your feet (a tick of
+# survival ends the stage camera's flying: Arms starts no move in flight) ---
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~-0.9 ~ ~3.3 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
 cmd gamemode survival
+wait 3
 cmd gamemode creative
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
 cmd item replace entity @s armor.head with awaken:wildhide_helmet
 cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
 cmd item replace entity @s armor.legs with awaken:wildhide_leggings
 cmd item replace entity @s armor.feet with awaken:wildhide_boots
-cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated as @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.4 ~180 -6
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~-0.9 ~ ~3.3 facing entity @e[type=awaken:proving_ringer,limit=1] eyes
 wait 20
 camera back
 wait 10
 shot finisher_00_facing
 
 # --- its stance broken: down on a knee ---
-cmd awaken admin trial break
+cmd awaken bosses duel break
 wait 8
 shotnow finisher_01_kneel
 wait 2
 shotnow finisher_02_kneel
 
-# --- the Execution, a frame a client tick from the press (held 12 ticks, as fights-belfry does) ---
+# --- the Execution: a heavy held 12 ticks and let go on it, a frame a client tick from the press ---
 arms heavy 12
 shotnow finisher_exec_01
 shotnow finisher_exec_02
@@ -89,10 +84,6 @@ shotnow finisher_exec_29
 shotnow finisher_exec_30
 shotnow finisher_exec_31
 shotnow finisher_exec_32
-shotnow finisher_exec_33
-shotnow finisher_exec_34
-shotnow finisher_exec_35
-shotnow finisher_exec_36
 wait 30
 shot finisher_03_after
 
@@ -127,16 +118,7 @@ wait 4
 shotnow finisher_death_65
 wait 4
 shotnow finisher_death_70
-wait 4
-shotnow finisher_death_75
-wait 4
-shotnow finisher_death_80
-wait 4
-shotnow finisher_death_85
-wait 4
-shotnow finisher_death_90
-wait 40
-shot finisher_99_chain
+wait 20
 camera first
 hud on
 quit
