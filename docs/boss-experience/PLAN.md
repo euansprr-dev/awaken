@@ -36,7 +36,7 @@ Sources: his `latest.log`, his save's player file and statistics (read from copi
 | Finding | Evidence | Consequence |
 |---|---|---|
 | The fight took about 300 landed blows; the sword holds 220. | The first Wildhide Longsword broke after 239 strike moves (statistics: one broken; uses 335). He went to creative for five seconds at 13:47:33 and came back with a new one, which then took 78 wear from 83 more strike moves. The fight ran 13:43:27 to 13:48:37. | A fresh E weapon cannot finish the first Proving at his pace. |
-| Every boss costs 90 to 300 blows; E holds 220, D 500. | `harness/durability.py`: E Lords 44 to 80% of a fresh E weapon, the Ringer 107%, the Examiner 47% of a D weapon; C and up 4 to 15%. | The problem is the E and D rows, not the ladder above. |
+| Every boss costs 90 to 300 blows; E holds 220, D 500. | `harness/durability.py`: E Lords 44 to 81% of a fresh E weapon, the Ringer 107%, the Examiner 47% of a D weapon; C and up 4 to 15%. | The problem is the E and D rows, not the ladder above. |
 | A whole E gate is about 500 blows. | His morning: 93 hive creatures and the Regent killed; on-level creatures take a median of 4 blows. | More than two E weapons a gate. |
 | Axe-style weapons wear twice as fast. | `ArmsItems` builds them with vanilla's axe preset: `Weapon(2)`, two uses a blow; every other style one. | An E axe lasts 110 blows. |
 | Armour wears a point a blow whatever the blow. | Vanilla `max(1, damage / 4)` per piece; the duels were retuned to many light blows. His four Wildhide pieces each stood at 126 worn after one morning; the helmet holds 179. | Armour is one bad fight from gone. |
@@ -51,9 +51,13 @@ Sources: his `latest.log`, his save's player file and statistics (read from copi
 | Three server stalls in five minutes. | `[fights] slow tick` 51, 88 and 101 ms (the last an autosave). | The body and ring hold for that long each time. |
 | His frame rate was 54 a second. | The black box written six minutes later: median 18.4 ms a frame. | 2.7 frames a tick: the tremble is visible. |
 
+Seen on CI (`boss-before`, run 42977120489, frames on consecutive client ticks through one Swing): the ring shows four
+sizes only, 377, 317, 266 and 223 px (the formula gives 372, 323, 273, 223), is still at the fourth as the bell comes
+across, and is gone in the next frame. The same run's death frames: vanilla's red flash, a two-second fold, vanilla's
+white puff.
+
 Not proven: his black box of the fight was overwritten by the next session's six minutes later, so there is no
-frame-by-frame record of the ring in his play; the cause above is read from the code and shown tick by tick on CI
-(`boss-before`). His log says 91 blows were "played at once" by the hands against about 300 landed; whether that is the
+frame-by-frame record of the ring in his own play. His log says 91 blows were "played at once" by the hands against about 300 landed; whether that is the
 server's HIT being held for the blade or a prediction gap on big bodies is not known (stage 0 measures it).
 
 ## 3. Directions compared
