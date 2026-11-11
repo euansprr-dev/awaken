@@ -25,7 +25,7 @@ import java.util.Map;
  * should stay 3D inside of the actual world"). The pages of what you know that fits your piece rise out of the book and
  * hang in a row over the desk's near edge, each the real page with its own sign. Pointing at one lifts it and burns its
  * glyph faintly on the piece; a click takes it down onto the piece and the trace begins. What can't go on lies flat on
- * the slate, dim. What is already on the piece shows as glyphs let into the slate behind it, one socket for each
+ * the slate, dim. What is already on the piece shows as glyphs let into the slate beside it, one socket for each
  * enchantment the piece has room for; a press held on one scrapes it off. Nothing here is a window: the screen only
  * frees the pointer and draws one small label by it.
  *
@@ -68,7 +68,12 @@ final class Desk {
     static int held = -1, heldAt;
 
     /** A page's size, the row's height over the slate, how far toward the writer it hangs, and a socket's half size. */
-    static final float PAGE = 0.15F, ROW_Y = 0.13F, ROW_V = -0.43F, SOCKET = 0.042F, SOCKET_V = 0.31F;
+    static final float PAGE = 0.15F, ROW_Y = 0.13F, ROW_V = -0.43F, SOCKET = 0.046F;
+    /**
+     * Where the sockets run: down the slate's left side from the back, clear of the piece and of the writer's hand.
+     * (They were a row behind the piece: a longsword's point lay over the one it had, and nobody could have found it.)
+     */
+    static final float SOCKET_U = -0.34F, SOCKET_V = 0.25F, SOCKET_STEP = 0.125F;
     /** Ticks a page takes from the book to its place, from its place to the piece, and a held press to scrape. */
     static final int RISE = 10, FALL = 8, HOLD = 16;
 
@@ -143,7 +148,7 @@ final class Desk {
     /**
      * Lays the row out for this frame: each page rises out of the book to its place over the near edge, the one pointed
      * at lifts and grows a little, the chosen one comes down onto the piece while the rest sink, and what can't go on
-     * lies flat on the slate. The sockets sit in a row let into the slate behind the piece.
+     * lies flat on the slate. The sockets run down the slate's left side.
      */
     static void layout(float pt) {
         int n = OFFERS.size();
@@ -195,9 +200,10 @@ final class Desk {
             LEAN[i] = lean;
             LIT[i] = lit;
         }
+        float gap = Math.min(SOCKET_STEP, 0.5F / Math.max(1, room - 1));
         for (int j = 0; j < room; j++) {
-            SU[j] = (j - (room - 1) / 2F) * 0.125F;
-            SV[j] = SOCKET_V;
+            SU[j] = SOCKET_U;
+            SV[j] = SOCKET_V - j * gap;
         }
     }
 

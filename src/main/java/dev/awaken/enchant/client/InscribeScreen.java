@@ -188,18 +188,24 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         }
     }
 
-    /** The label's place: beside what it speaks of, on whichever side has room, never over the piece's middle if it can help it. */
-    private int[] labelAt(float ax, float ay, float ar, int lw, int lh) {
-        int x = Math.round(ax + ar + 8);
-        if (x + lw > width - 4) x = Math.round(ax - ar - 8 - lw);
+    /**
+     * A page's label: over the row, on the page's own side of the piece. Beside the page it lay over its neighbours (and
+     * over the page itself, at the row's left end); in the middle it would lie over the piece and the mark shown on it.
+     */
+    private int[] pageLabelAt(float ax, float ay, float ar, int lw, int lh, int gap) {
+        int mid = width / 2, centred = Math.round(ax - lw / 2F);
+        int x = ax < mid ? Math.min(centred, mid - gap - lw) : Math.max(centred, mid + gap);
         x = Mth.clamp(x, 4, Math.max(4, width - lw - 4));
-        int y = Mth.clamp(Math.round(ay - lh / 2F), 4, Math.max(4, height - lh - 18));
+        int y = Math.max(4, Math.round(ay - ar - 6 - lh));
         return new int[]{x, y};
     }
 
     /** The one label: the page pointed at. Its name and level, what it does, how deep it goes here and what it costs, or why not. */
     private void pageLabel(GuiGraphicsExtractor g, Desk.Offer o, int alpha) {
-        int lw = Math.min(176, width - 12), inner = lw - 14;
+        // clear of the piece in the middle: a weapon is narrow, armour half the slate across
+        LocalPlayer me = Minecraft.getInstance().player;
+        int gap = me != null && dev.awaken.enchant.EnchantRules.armour(me.getMainHandItem()) ? 44 : 20;
+        int lw = Mth.clamp(width / 2 - gap - 6, 96, 176), inner = lw - 14;
         int top = Inscriptions.top(o.h());
         List<FormattedCharSequence> body = font.split(Component.literal(o.e().line()), inner);
         boolean ok = o.ok();
@@ -211,7 +217,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         List<FormattedCharSequence> why = ok ? List.of() : font.split(Component.literal(o.why()), inner);
         int rows = body.size() + why.size() + (ok ? (deep.isEmpty() ? 1 : 2) + 1 : 0);
         int lh = 18 + rows * 10 + 6;
-        int[] at = labelAt(Desk.screenX(true, Desk.hover), Desk.screenY(true, Desk.hover), Desk.screenR(true, Desk.hover), lw, lh);
+        int[] at = pageLabelAt(Desk.screenX(true, Desk.hover), Desk.screenY(true, Desk.hover), Desk.screenR(true, Desk.hover), lw, lh, gap);
         int x = at[0], y = at[1], colour = brighten(o.e().colour());
         dev.awaken.signal.client.Glass.panel(g, x, y, lw, lh, colour, alpha / 255F);
         mark(g, o.e().no(), x + 11, y + 10, 6, alpha << 24 | colour, 1F);
@@ -242,13 +248,16 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
     /** A socket pointed at: what is written there and how it comes off, or that there is room. */
     private void socketLabel(GuiGraphicsExtractor g, int j, int alpha) {
         Desk.On on = j < Desk.ON.size() ? Desk.ON.get(j) : null;
-        int lw = Math.min(170, width - 12), inner = lw - 14;
+        // to its left, the side away from the piece (the sockets run down the slate's left side)
+        float ax = Desk.screenX(false, j), ar = Desk.screenR(false, j);
+        int lw = Mth.clamp(Math.round(ax - ar - 12), 96, 170), inner = lw - 14;
         List<FormattedCharSequence> body = on == null ? font.split(Component.literal("Room for one more."), inner)
                 : on.e() == null ? font.split(Component.literal("It was on this piece before, and can't be written any more."), inner)
                 : font.split(Component.literal(on.e().line()), inner);
         int lh = (on == null ? 6 : 18) + body.size() * 10 + (on == null ? 6 : 16);
-        int[] at = labelAt(Desk.screenX(false, j), Desk.screenY(false, j), Desk.screenR(false, j), lw, lh);
-        int x = at[0], y = at[1], colour = on == null ? InscribeScene.LAPIS : on.e() == null ? 0xB9C3D2 : brighten(on.e().colour());
+        int x = Mth.clamp(Math.round(ax - ar - 8 - lw), 4, Math.max(4, width - lw - 4));
+        int y = Mth.clamp(Math.round(Desk.screenY(false, j) - lh / 2F), 4, Math.max(4, height - lh - 18));
+        int colour = on == null ? InscribeScene.LAPIS : on.e() == null ? 0xB9C3D2 : brighten(on.e().colour());
         dev.awaken.signal.client.Glass.panel(g, x, y, lw, lh, colour, alpha / 255F);
         int ly = y + 6;
         if (on != null) {

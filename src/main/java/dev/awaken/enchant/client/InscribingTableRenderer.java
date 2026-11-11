@@ -127,7 +127,10 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
             lay(s, piece);
         }
         if (s.mine && !piece.isEmpty()) InscribeScene.pieceTop(s.pTop);
-        if (s.phase == InscribingTableBlockEntity.IDLE) {
+        // in its inkwell while nobody writes and while the writer still chooses; in their hand from the choice on
+        boolean inWell = s.phase == InscribingTableBlockEntity.IDLE
+                || s.phase == InscribingTableBlockEntity.BOOK && !(s.mine && InscribeScene.burinOut());
+        if (inWell) {
             if (burin.isEmpty()) burin = new ItemStack(dev.awaken.enchant.EnchantContent.BURIN.get());
             items.updateForTopItem(s.burin, burin, ItemDisplayContext.NONE, be.getLevel(), null, 0);
         } else s.burin.clear();
@@ -177,10 +180,21 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         boolean mesh = deep > 0.09;
         var eq = piece.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
         if (mesh && s.armour && eq != null) {
+            // a sculpted piece's item says only "a block" (it is fitted into one, wings and crests and all): its real
+            // shape comes from its meshes. Taken as the block, a breastplate floated a third of a block over the slate
+            // and its mark stood so high that the view to it went flat
+            float[] real = shape(piece);
+            if (real != null) {
+                w = real[0];
+                h = real[1];
+                deep = real[2];
+            }
             boolean stands = eq.slot() == net.minecraft.world.entity.EquipmentSlot.HEAD || eq.slot() == net.minecraft.world.entity.EquipmentSlot.FEET;
             s.lie = stands ? UPRIGHT : BACK;
-            double span = stands ? Math.max(w, deep) : Math.max(w, h);
-            s.pScale = (float) Mth.clamp((stands ? 0.46 : 0.6) / Math.max(0.05, span), 0.25, 1.1);
+            // a helm or boots stand, no taller than a third of a block (the mark is cut over the top of the piece, and
+            // you look down at it from a block away); a breastplate or leggings lie on their back, half the slate across
+            double scale = stands ? Math.min(0.42 / Math.max(0.05, Math.max(w, deep)), 0.32 / Math.max(0.05, h)) : 0.5 / Math.max(0.05, Math.max(w, h));
+            s.pScale = (float) Mth.clamp(scale, 0.2, 1.1);
             s.pTop = (float) ((stands ? h : deep) * s.pScale);
         } else {
             s.lie = FLAT;
@@ -189,6 +203,51 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
             s.pScale = (float) Mth.clamp((s.armour ? 0.5 : 0.8) / Math.max(0.05, span), 0.25, 1.1);
             s.pTop = (float) (Math.max(deep, 1 / 16.0) * s.pScale);
         }
+    }
+
+    /** A sculpted armour piece's meshes and the shape measured from them (measured again when a reload brings new ones). */
+    private record Shape(Object meshes, float[] size) {}
+
+    private static final java.util.Map<net.minecraft.world.item.Item, Shape> SHAPES = new java.util.IdentityHashMap<>();
+
+    /**
+     * A sculpted armour piece's width, height and depth inside the block its item fills, or null where the piece isn't
+     * one: measured from its meshes at rest with the cape left off, as the armour's own item renderer fits it (the
+     * longest side to 0.96 of a block, the piece in the block's middle).
+     */
+    private static float @Nullable [] shape(ItemStack piece) {
+        if (!(piece.getItem() instanceof dev.awaken.armour.ForgedArmourItem a)) return null;
+        dev.awaken.armour.client.ArmourMesh[] bones = dev.awaken.armour.client.ArmourMeshes.piece(a.set, a.piece);
+        if (bones == null) return null;
+        Shape kept = SHAPES.get(a);
+        if (kept != null && kept.meshes == bones) return kept.size;
+        float x0 = Float.MAX_VALUE, y0 = x0, z0 = x0, x1 = -x0, y1 = -x0, z1 = -x0;
+        PoseStack ps = new PoseStack();
+        org.joml.Vector3f at = new org.joml.Vector3f();
+        for (dev.awaken.armour.client.ArmourMeshes.Bone b : dev.awaken.armour.client.ArmourMeshes.BONES) {
+            dev.awaken.armour.client.ArmourMesh mesh = bones[b.ordinal()];
+            if (mesh == null || b.name().startsWith("CAPE")) continue;
+            ps.pushPose();
+            dev.awaken.armour.client.FittingStandRenderer.rest(ps, b);
+            float[] p = mesh.pos();
+            for (int i = 0; i + 2 < p.length; i += 3) {
+                ps.last().pose().transformPosition(p[i], p[i + 1], p[i + 2], at);
+                x0 = Math.min(x0, at.x);
+                x1 = Math.max(x1, at.x);
+                y0 = Math.min(y0, at.y);
+                y1 = Math.max(y1, at.y);
+                z0 = Math.min(z0, at.z);
+                z1 = Math.max(z1, at.z);
+            }
+            ps.popPose();
+        }
+        float[] size = null;
+        if (x1 >= x0) {
+            float fit = 0.96F / Math.max(0.25F, Math.max(x1 - x0, Math.max(y1 - y0, z1 - z0)));
+            size = new float[]{(x1 - x0) * fit, (y1 - y0) * fit, (z1 - z0) * fit};
+        }
+        SHAPES.put(a, new Shape(bones, size));
+        return size;
     }
 
     @Override
@@ -268,13 +327,15 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         out.submitCustomGeometry(ps, RenderTypes.lightning(), (pose, vc) -> {
             Geo g = new Geo(pose, vc, fx, fz, rx, rz);
             float y = SLATE + 0.003F;
-            // the piece's sockets, let into the slate behind it: a glyph for each thing written, a dim square for each free
+            // the piece's sockets, let into the slate down its left side: a glyph in its frame for each thing written, an
+            // empty frame for each free
             for (int j = 0; j < sockets; j++) {
                 boolean over = j == socketHover;
                 float sy = SLATE + 0.004F, h = Desk.SOCKET * (over ? 1.25F : 1F);
-                if (sockNo[j] == 0) g.square(su[j], sv[j], sy, h, 0.008F, InscribeScene.argb(InscribeScene.LAPIS, over ? 0.5F : 0.22F));
+                if (sockNo[j] == 0) g.square(su[j], sv[j], sy, h, 0.01F, InscribeScene.argb(InscribeScene.LAPIS, over ? 0.7F : 0.42F));
                 else {
-                    g.glyph(sockNo[j], su[j], sv[j], sy, h, InscribeScene.argb(InscribeScene.hot(sockColour[j], over ? 0.5F : 0.2F), over ? 0.95F : 0.7F), 0.012F);
+                    g.square(su[j], sv[j], sy, h * 1.25F, 0.008F, InscribeScene.argb(sockColour[j], over ? 0.6F : 0.35F));
+                    g.glyph(sockNo[j], su[j], sv[j], sy + 0.0005F, h, InscribeScene.argb(InscribeScene.hot(sockColour[j], over ? 0.5F : 0.25F), over ? 1F : 0.92F), 0.014F);
                     // a held press closes a ring round it; closed, it is scraped off
                     if (j == socketHeld && holding > 0) g.ring(su[j], sv[j], sy + 0.001F, h * 1.7F, holding, 0.012F, InscribeScene.argb(0xFF7A6A, 0.9F));
                 }

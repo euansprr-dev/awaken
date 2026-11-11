@@ -95,14 +95,18 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
         letter = ((h > 0.2) & (f > 0.12) & (f < 0.3 + 0.6 * h)).astype(float)[:, None]
         x = np.clip(((1 - np.clip(n_view @ V, 0, 1)) ** 2 - 0.4) / 0.4, 0, 1)
         edge = (x * x * (3 - 2 * x))[:, None]
-        wave = (0.45 + 0.55 * (0.5 + 0.5 * np.sin((along * 2.5 - t * 0.7) * 2 * math.pi)) ** 2)[:, None]
-        # the shine and the small aura (SPEC §45.17): what glows of itself keeps its own colour
+        # the shine and the small aura (SPEC §45.17): what glows of itself keeps its own colour; the script shows only
+        # in the band's wake, and the colour is held faintly on the faces turned furthest away
         crossing = (t % 1.0) * 4.0 - 0.4
         band = np.exp(-((along - crossing) * 8.0) ** 2)[:, None]
+        behind = crossing - along
+        wake = (smoothstep(0.0, 0.1, behind) * np.exp(-np.maximum(behind, 0.0) * 3.5))[:, None]
         shine = band * (0.3 + 0.7 * metal) * (1.0 - emit)
-        aura = edge * (0.55 + 0.45 * math.sin(t * 0.9 * 2 * math.pi))
+        x = np.clip(((1 - np.clip(n_view @ V, 0, 1)) ** 2 - 0.62) / 0.34, 0, 1)
+        turned = (x * x * (3 - 2 * x))[:, None]
+        aura = turned * (0.6 + 0.4 * math.sin(t * 0.9 * 2 * math.pi))
         col = col + (np.array([1.0, 0.98, 0.94]) * 0.6 + ink * 0.4)[None] * shine * 0.6
-        col = col + ink[None] * (aura * 0.3 + letter * edge * wave * 0.7 * lit)
+        col = col + ink[None] * (aura * 0.1 + letter * (0.3 + 0.7 * edge) * wake * 0.3 * lit)
     elif foil:
         g = np.sin((along * 9.0 + n_view[:, 0] * 2.0) - time * 240.0 * 2 * math.pi * 0.35) * 0.5 + 0.5
         col = col + np.array([0.55, 0.32, 1.0])[None] * (g ** 6)[:, None] * 0.45

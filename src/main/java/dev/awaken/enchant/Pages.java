@@ -147,7 +147,17 @@ public final class Pages {
         if (!fit.isEmpty()) w.row("It fits", "your " + fit.getHoverName().getString());
         if (!k.hadTable()) w.row("The table", "You can make one. It's on your Tasks page.");
         if (first) w.footer(Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page."));
-        return w.presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).topic("enchant").ttl(20 * 14).build();
+        return w.presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(k)).topic("enchant").ttl(20 * 14).build();
+    }
+
+    /**
+     * How loud the door's two cards are. Until you have written your first enchantment they skip the System's pacing:
+     * they are the one thing that says a page is not yet on your gear, and a paced notice waits out a world's first
+     * minutes and the gaps between messages (the first filmed run showed neither card). After that they are paced like
+     * any other notice.
+     */
+    static dev.awaken.core.api.Notices.Tier doorTier(Known k) {
+        return k.written() == 0 ? dev.awaken.core.api.Notices.Tier.CRITICAL : dev.awaken.core.api.Notices.Tier.IMPORTANT;
     }
 
     /**
@@ -160,7 +170,7 @@ public final class Pages {
                 .body(Component.literal(e.line()))
                 .row("First", "Use the page to learn it.")
                 .row("Then", e.howTo())
-                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).topic("enchant").ttl(20 * 10).build());
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(Known.of(p))).topic("enchant").ttl(20 * 10).build());
     }
 
     /** A piece the player carries that this enchantment fits (worn first, then the hands, then the pack), or empty. */

@@ -19717,7 +19717,10 @@ new words of the plan wait for his play.
   is cut, 14 s) says what it does, "Learned: You know it for good. It isn't on anything yet.", "To use it: ... You write it
   on there.", the piece you carry that it fits ("It fits: your Beastbound Maul") and, while you have never set a table
   down, "The table: You can make one. It's on your Tasks page." The first one ever carries the System's line about gates
-  as the panel's foot (it was a toast, cut after "and its L"). A page held to the table is read there.
+  as the panel's foot (it was a toast, cut after "and its L"). A page held to the table is read there. Until you have
+  written your first enchantment both panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`:
+  paced, the first filmed run showed neither, a new world being quiet for its first five minutes); after that they are
+  paced like any notice.
 - **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
   of a Hive."); what it won't touch is the Journal entry's small print.
 - **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
@@ -19735,20 +19738,28 @@ new words of the plan wait for his play.
 - **The scribe's desk** (the block's model, `tools/art/specs/enchant.py`): two trestle ends and a stretcher, an apron with
   a brass pull, the slate (its top at 12 of 16) with the lapis channel, a rail along the back, a brass rest at the
   writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
-  right with the burin standing in it while nobody writes. The floating book is gone. Shape and outline follow.
+  right with the burin standing in it while nobody writes and while its writer still chooses: the hand takes it up as
+  the chosen page comes down (`InscribeScene.burinOut`; held through the choosing, the fist lay over the right-hand
+  pages). The floating book is gone. Shape and outline follow.
 - **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
   weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
-  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (0.6), a helm or boots
-  standing (0.46). The glyph rides on the piece's top (`InscribeScene.lift`).
+  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (half a block across), a
+  helm or boots standing (0.42 across and never taller than 0.32). A sculpted armour piece's item says only that it
+  fills a block, so its real width, height and depth are measured from its meshes as the armour's item renderer fits it
+  (`InscribingTableRenderer.shape`; taken as the block, a breastplate floated a third of a block over the slate and the
+  view to its mark went flat). The glyph rides on the piece's top (`InscribeScene.lift`).
 - **Choosing in the world, no menu** (`Desk`; the screen only frees the pointer). The pages of what you know that fits
   rise out of the book over 10 ticks and hang in a row over the desk's near edge, each the real page, leaning back toward
-  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, burns its glyph faintly on
-  the piece, and shows one label by it: its name and level, its line, "Up to II here, III in your Study", the price as the
+  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, shows its glyph on the
+  piece, and shows one label over the row on the page's own side of the piece, so it covers neither the row nor the
+  piece: its name and level, its line, "Up to II here, III in your Study", the price as the
   things themselves (red when you can't pay) and "Click to write it." (the wheel changes the level; a page in memory:
   "Click: from memory. Shift and click: trace it."). A click takes the page down onto the piece over 8 ticks while the rest
   sink, and the trace begins. What can't go on lies flat on the slate, dim, and its label says why. What is written
-  shows as glyphs in sockets let into the slate behind the piece, a socket for each enchantment it has room for; a
-  press held on one for 16 ticks closes a ring round it and scrapes it off. A line of key caps at the foot says the rest.
+  shows as glyphs in sockets let into the slate down its left side (behind the piece, a longsword's point lay over the
+  one it had), a framed glyph for each thing written and an empty frame for each it still has room for; a press held
+  on one for 16 ticks closes a ring round it and scrapes it off, its label to its left. A line of key caps at the foot
+  says the rest.
   The view frames the whole desk while you choose. The room steps back (a soft dark frame at the screen's edges).
 - **The wake** shows the enchantment's name in the Hall's blackletter over a soft light, how it came out ("A clean hand",
   "Written", "From memory") and, at the foot, the levels that came back and "Its mark is in your memory now." with Space
@@ -19775,8 +19786,11 @@ new words of the plan wait for his play.
 ### 45.17 Seen at work, and on the piece
 - **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of
   itself keeps its own colour (it took the enchantment's, which made the piece read as a different one). An inscribed
-  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, and a small aura,
-  the enchantment's colour held faintly at its silhouette, breathing. The letters along its edges stay, quieter.
+  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, with its script
+  showing for a moment in the band's wake and a few pixels catching it, and a small aura, the enchantment's colour held
+  faintly (a tenth) on the faces turned furthest from you, breathing. Between crossings the piece is itself. Nothing
+  here may be bright for long: in the hand nearly every face of a blade is turned away, and the first cut, with the
+  letters and the aura always on, striped the whole blade in the enchantment's colour.
 - **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
   Force's colour and a white-hot core, held bright for half of 24 ticks.
 - **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it

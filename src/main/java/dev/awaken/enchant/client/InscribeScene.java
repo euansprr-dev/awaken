@@ -563,6 +563,8 @@ public final class InscribeScene {
         // once the piece is down the off hand has nothing to do, and over the slate it would hide the piece or its mark
         boolean writing = live && ticks - openedAt >= LAY_TICKS;
         drawBack += ((writing ? 1F : 0F) - drawBack) * 0.3F;
+        burinInO = burinIn;
+        burinIn += ((burinOut() ? 1F : 0F) - burinIn) * 0.3F;
         VIEW_O[0] = VIEW[0];
         VIEW_O[1] = VIEW[1];
         VIEW_O[2] = VIEW[2];
@@ -719,6 +721,17 @@ public final class InscribeScene {
     private static ItemStack burin = ItemStack.EMPTY;
     /** How far the off hand has drawn back (0..1), this tick and last. */
     private static float drawBack, drawBackO;
+    /**
+     * How far the main hand has come in with the burin (0..1), this tick and last. While you choose on the desk it stays
+     * out and the burin stands in its inkwell: the first frames had the fist over the right-hand pages, and over a
+     * helm it filled a third of the view. It takes the burin up as the chosen page comes down.
+     */
+    private static float burinIn, burinInO;
+
+    /** Whether the writer's burin is in their hand (the table then leaves the inkwell empty). */
+    static boolean burinOut() {
+        return live && (EnchantClientConfig.classic() || phase != BOOK);
+    }
 
     /**
      * Where the burin's point sits from the fist that holds it, on screen (half screen heights, right and up): it's drawn
@@ -784,6 +797,10 @@ public final class InscribeScene {
                 x = tip[0] + (left.x() * BURIN_RIGHT - up.x() * BURIN_UP) * k;
                 y = tip[1] + (left.y() * BURIN_RIGHT - up.y() * BURIN_UP) * k;
                 z = tip[2] + (left.z() * BURIN_RIGHT - up.z() * BURIN_UP) * k;
+                // out of the view while you choose; up from under the desk's edge with the burin once you have
+                float in = ease(Mth.lerp(pt, burinInO, burinIn));
+                y -= (1 - in) * 0.45;
+                hw = w * in;
             }
             y += wake * 0.08;
             x -= inX * wake * 0.08;
@@ -876,9 +893,12 @@ public final class InscribeScene {
             double y = slateY + lift;
             switch (ph) {
                 case BOOK -> {
-                    // the book open at it: its mark, barely there, where it would go
-                    float a = 0.12F + 0.05F * Mth.sin(t * 0.15F);
-                    for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y, 0.016, argb(colour, a));
+                    // the page pointed at: its mark where it would go. In the book's day it was barely there under a
+                    // page of text; from the whole desk's distance it has to carry on its own
+                    boolean classic = EnchantClientConfig.classic();
+                    float a = (classic ? 0.12F : 0.5F) + 0.05F * Mth.sin(t * 0.15F);
+                    if (!classic) for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y, 0.055, argb(colour, 0.16F));
+                    for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y + 0.0005, classic ? 0.016 : 0.02, argb(classic ? colour : hot(colour, 0.3F), a));
                 }
                 case TRACE -> {
                     float burn = Mth.clamp((t - phaseAt) / 15F, 0F, 1F);
