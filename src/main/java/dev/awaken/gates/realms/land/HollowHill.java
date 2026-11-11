@@ -194,7 +194,7 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xa8b8d8, 0.6F);
         if (lord != null) air.mist(lord.feet + 1, 4, 0x5a6a60, 0.45F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a barrow: round chambers, a ring round a standing core, a ledge of earth along one side. */
@@ -202,5 +202,18 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.OVAL, Cave.Form.RING, Cave.Form.TERRACE, Cave.Form.OVAL), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
                 List.of(Arena.Plan.RING, Arena.Plan.TIERS), List.of(Chasm.Kind.PILLARS, Chasm.Kind.FORD, Chasm.Kind.STEPS, Chasm.Kind.LEDGES), false, 2.0, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): heather and bent grass have got in, roots hang from the earth roof, dust and bones lie along the walls. */
+    @Override
+    protected Trim trim(QuietBarrow.M m) {
+        return new Trim(named("knell_stone_stairs"), named("knell_stone_stairs"), named("crypt_dust"), named("crypt_bones"),
+                namedAll("barrow_heather", "barrow_heather_pale", "barrow_bent", "barrow_bent"), namedAll("minecraft:hanging_roots"), 1.2);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xcfe0c8;
     }
 }

@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/olden_stone"
+      },
+      {
+        "model": "awaken:block/olden_stone_b"
+      },
+      {
+        "model": "awaken:block/olden_stone_c"
+      }
+    ]
+  }
+}

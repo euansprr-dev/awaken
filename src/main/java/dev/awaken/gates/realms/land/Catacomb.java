@@ -172,7 +172,7 @@ public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0x9fb8e8, 0.75F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x3a4a6a, 0.5F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): roads cut for the dead: long vaults, crossings, piers, and bridges the masons left. */
@@ -180,5 +180,18 @@ public final class Catacomb extends GeneratedCrawl<HourCrypt.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.PIERS, Cave.Form.HALL), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
                 List.of(Arena.Plan.NAVE, Arena.Plan.CROSS), List.of(Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.LEDGES, Chasm.Kind.STEPS), true, 2.2, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): worn stone at the foot of the walls, dust in the corners, bones underfoot, webs under the vaults. */
+    @Override
+    protected Trim trim(HourCrypt.M m) {
+        return new Trim(named("knell_stone_stairs"), named("knell_stone_stairs"), named("crypt_dust"), named("crypt_bones"),
+                List.of(), namedAll("minecraft:cobweb"), 0.6);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffd9a0;
     }
 }

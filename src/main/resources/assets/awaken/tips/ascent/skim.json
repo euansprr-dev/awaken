@@ -1,0 +1,10 @@
+{
+  "text": "Fly low and fast on your wings, close to the ground, the water or a wall. The air under you carries you much further there.",
+  "short": "Glide low and fast",
+  "priority": 50,
+  "show_for": 200,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

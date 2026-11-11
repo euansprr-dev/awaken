@@ -1,4 +1,19 @@
 {
-  "screen.awaken.table.hint": "Works just like a crafting grid. Sneak as you open it for the usual screen.",
-  "screen.awaken.furnace.hint": "Cook on the left, add fuel below, and take finished items on the right. Sneak as you open it for the usual screen."
+  "screen.awaken.table.hint": "Lay it out on the table. Take what you make from the right. Sneak as you open it for the usual screen.",
+  "screen.awaken.furnace.hint": "Cook on the left, add fuel below, and take finished items on the right. Sneak as you open it for the usual screen.",
+  "screen.awaken.anvil.hint": "Lay the piece on the anvil and what mends it beside it. Click the line to name it. Take it from the right.",
+  "screen.awaken.smithing.hint": "Lay the template, the piece and the material in a row. Take the finished piece from the right.",
+  "screen.awaken.grindstone.hint": "Lay a piece on the stone to grind its enchantments off, or two of a kind to mend one. Take it from the near side.",
+  "screen.awaken.stonecutter.hint": "Lay the block on the left, pick a cut below, and take it from the right.",
+  "screen.awaken.cartography.hint": "Lay the map on the left and paper or glass beside it. Take the new map from the right.",
+  "screen.awaken.brewing.hint": "Stand a bottle on each arm, put what brews them on top, and blaze powder at the foot.",
+  "subtitles.awaken.station.lay": "Something is set down",
+  "subtitles.awaken.station.lift": "Something is picked up",
+  "subtitles.awaken.station.result": "Something is made",
+  "subtitles.awaken.station.take": "Something is taken",
+  "subtitles.awaken.station.fuel": "Fuel lands on the coals",
+  "subtitles.awaken.station.flare": "A fire flares",
+  "subtitles.awaken.station.kneel": "Someone kneels",
+  "subtitles.awaken.touch.palm": "A hand is pressed to stone",
+  "subtitles.awaken.touch.set": "Hands are set to work"
 }

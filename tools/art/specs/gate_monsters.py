@@ -732,11 +732,12 @@ wait 20
 """
 
 
-def film(per=8, shrink=4, only=None):
+def film(per=8, shrink=2, only=None, name="pick"):
     """Writes tools/autopilot/monsters-film-<n>.txt, `per` monsters to a reel, and removes reels left from an earlier
     cast. The camera stands side-on at a distance set by the body's size, so each fills about a third of the frame's
-    height; a flier is given more room above it. `shrink`: the recorder's downscale (4: 854x480 on CI).
-    only: monster ids; then just those are filmed, as one reel, monsters-film-pick.txt (the numbered reels are left)."""
+    height; a flier is given more room above it. `shrink`: the recorder's downscale of the 1708x960 frame (2: 854x480;
+    4: 427x240, which is too small to judge a pose by; it only takes divisors of both sides, so 8 falls back to 4).
+    only: monster ids; then just those are filmed, as one reel, monsters-film-<name>.txt (the numbered reels are left)."""
     import glob
     ms = monsters()
     defs = bestiary()
@@ -746,10 +747,10 @@ def film(per=8, shrink=4, only=None):
         missing = [i for i in only if i not in by]
         if missing:
             raise SystemExit("no such monster: " + ", ".join(missing))
-        reels = {"pick": [by[i] for i in only]}
+        reels = {name: [by[i] for i in only]}
     else:
-        for old in glob.glob(os.path.join(folder, "monsters-film-*.txt")) + glob.glob(os.path.join(folder, "monsters-motion-*.txt")):
-            os.remove(old)
+        for old in glob.glob(os.path.join(folder, "monsters-film-[0-9]*.txt")) + glob.glob(os.path.join(folder, "monsters-motion-*.txt")):
+            os.remove(old)      # (the numbered reels of an earlier cast; a named reel is left alone)
         reels = {str(k + 1): ms[i:i + per] for k, i in enumerate(range(0, len(ms), per))}
     for n, reel in reels.items():
         out = [FILM_HEAD.format(n=n, of=len(reels), names=", ".join(m.id for m in reel)).rstrip("\n")]
@@ -761,11 +762,27 @@ def film(per=8, shrink=4, only=None):
             # a flier hangs two to five blocks over its target between dives: the camera stands back, higher, and looks up a little
             eye = 203.2 if flies else 201.0 + h * 0.55
             pitch = -6 if flies else 4
+            # a shooter that keeps its range backs away from anything nearer than five blocks (and out of the frame):
+            # its dummy stands eight off, and the camera further back to hold them both
+            if flies:
+                # it circles its target between dives, 3.5 blocks + its width out (7 if it shoots): the camera stands
+                # outside that ring, or a big flier fills the picture with one side of itself (the Swarm Mind did)
+                # (its drawn body reaches well past its box: twice its larger side, and four blocks of air)
+                ring = (7.0 if "RANGED" in defs[m.id]["line"] else 3.5 + w) + 2.0 * max(w, h) + 4.0
+                dist = max(dist, ring)
+            ranged = "RANGED" in defs[m.id]["line"] and not flies
+            far = 8.5 if ranged else 4.8
+            if ranged:
+                dist += 3.0
             moves_n = len(defs[m.id]["abilities"])
-            out += [f"# {m.id} ({m.name})", "cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 4", "cmd kill @e[type=item]",
-                    "cmd kill @e[type=awaken:gel_sample]", "cmd kill @e[type=minecraft:experience_orb]",
-                    f"cmd tp @s {-dist + 0.5:.1f} {eye - 1.62:.2f} 2.6 -90 {pitch}", f"look -90 {pitch}", "wait 6",
-                    'cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,'
+            # the stage is cleared of everything but the camera before each monster, and again once what was killed has
+            # finished falling (44 ticks: the longest fall is 40) to take what it dropped. A summoner's brood and a
+            # Warden's copies are not the monster the script summoned, and left alone they fought the next four monsters'
+            # dummies on film (the Waking's Night Terrors, all through the Sky Archipelago's reel)
+            out += [f"# {m.id} ({m.name})", "cmd kill @e[type=!minecraft:player,distance=..160]", "wait 44",
+                    "cmd kill @e[type=!minecraft:player,distance=..160]", "wait 4",
+                    f"cmd tp @s {-dist + 0.5:.1f} {eye - 1.62:.2f} {(0.5 + far) / 2:.1f} -90 {pitch}", f"look -90 {pitch}", "wait 6",
+                    f'cmd summon minecraft:husk 0.5 201 {far} {{NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,'
                     'attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}',
                     f'cmd summon awaken:{m.id} 0.5 201.0 0.5 {{PersistenceRequired:1b,Tags:["p"],Rotation:[0f,0f]}}', "wait 12",
                     f"cmd awaken ascent pilot rec {m.id}_idle 30 {shrink}", "wait 34", "cmd awaken admin monster target",
@@ -773,17 +790,21 @@ def film(per=8, shrink=4, only=None):
             for k in range(moves_n):
                 out += [f"cmd awaken admin monster act {k}", f"cmd awaken ascent pilot rec {m.id}_m{k} 76 {shrink}", "wait 80"]
             out += ["cmd kill @e[tag=p]", f"cmd awaken ascent pilot rec {m.id}_death 50 {shrink}", "wait 54"]
-        out += ["cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 10", "cmd gamemode creative", "info", "quit"]
+        out += ["cmd kill @e[type=!minecraft:player,distance=..160]", "wait 10", "cmd gamemode creative", "info", "quit"]
         with open(os.path.join(folder, f"monsters-film-{n}.txt"), "w") as f:
             f.write("\n".join(out) + "\n")
-    print("tools/autopilot/monsters-film-pick.txt" if only else
+    print(f"tools/autopilot/monsters-film-{name}.txt" if only else
           f"{len(reels)} reels of up to {per}: tools/autopilot/monsters-film-1.txt .. monsters-film-{len(reels)}.txt")
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if args and args[0] == "film":
-        film(only=args[1:] or None)
+    if args and args[0] == "film":      # film [--as name] [id ...]
+        rest = args[1:]
+        as_ = "pick"
+        if rest[:1] == ["--as"]:
+            as_, rest = rest[1], rest[2:]
+        film(only=rest or None, name=as_)
         sys.exit(0)
     if args and args[0] == "check":
         ps = check(monsters(args[1:] or None))

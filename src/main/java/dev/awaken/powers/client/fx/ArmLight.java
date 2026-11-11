@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.anims.client.ArmLayers;
 import dev.awaken.core.api.FirstPerson;
+import dev.awaken.core.client.FirstPersonDress;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxStyle;
@@ -124,10 +125,14 @@ final class ArmLight implements ArmLayers.Layer {
         for (int i = 0; i < RING.length; i++) RING[i] = new Draw();
     }
 
-    @Override
-    public void draw(ArmLayers.Arm arm, PoseStack ps, SubmitNodeCollector out) {
-        if (!PowerFxConfig.animations()) return;
-        float now = FxWorld.ticks + arm.partialTick;
+    /** What lights this arm now ({@link #lit}): its style, seed, how far the light has run and how hot it is. */
+    private static FxStyle litStyle = FxStyle.ENERGY;
+    private static boolean litAwake;
+    private static int litSeed;
+    private static float litCharge, litHeat;
+
+    /** Works out what lights this arm now, into the {@code lit} fields; false when nothing does. */
+    private static boolean lit(ArmLayers.Arm arm, float now) {
         FxStyle style;
         boolean awake;
         int seed;
@@ -161,12 +166,45 @@ final class ArmLight implements ArmLayers.Layer {
             charge = in;
             heat = auraStrength * Math.min(in, outK) * (0.72f + 0.1f * Mth.sin(now * 0.35f));
         } else {
-            return;
+            return false;
         }
-        if (heat <= 0.02f || charge <= 0.01f) return;
-        if (awake) style = style.awakened();
-        submit(ps, out, arm, style, awake, seed, charge, heat, now, false);
-        submit(ps, out, arm, style, awake, seed, charge, heat, now, true);
+        if (heat <= 0.02f || charge <= 0.01f) return false;
+        litStyle = awake ? style.awakened() : style;
+        litAwake = awake;
+        litSeed = seed;
+        litCharge = charge;
+        litHeat = heat;
+        return true;
+    }
+
+    /**
+     * Before the arm is dressed: what it wears is told the light on it, so a sleeve or a plate can answer in its own
+     * materials (the armour's edges and what glows of itself take the type's colour: SPEC §32.N, "The light on what you wear").
+     */
+    @Override
+    public void prepare(ArmLayers.Arm arm) {
+        if (!PowerFxConfig.animations() || !lit(arm, FxWorld.ticks + arm.partialTick)) return;
+        // a small steady amount, so the piece's own edge light takes the type's colour; the piece only flares at a release
+        // (the second film: a flare all through a cast, and all through a Barrier, washed the whole arm in the type's colour)
+        FirstPersonDress.glow(litStyle.mid, 0.12f * Math.min(1f, litHeat) + 1.2f * Math.max(0f, Math.min(1.6f, litHeat) - 0.9f));
+    }
+
+    @Override
+    public void draw(ArmLayers.Arm arm, PoseStack ps, SubmitNodeCollector out) {
+        if (!PowerFxConfig.animations()) return;
+        float now = FxWorld.ticks + arm.partialTick;
+        if (!lit(arm, now)) return;
+        if (arm.dressed) {
+            // the arm wears something: the light is laid on that, on its own shapes, and not on the skin under it
+            FirstPersonDress.Surface worn = FirstPersonDress.surface(arm.right ? FirstPersonDress.Limb.RIGHT_ARM : FirstPersonDress.Limb.LEFT_ARM);
+            ArmourLight.Cells cells = worn == null ? null : ArmourLight.of(worn);
+            if (cells != null) {
+                ArmourLight.draw(ps, out, cells, litStyle, litAwake, litSeed, litCharge, litHeat, now);
+                return;
+            }
+        }
+        submit(ps, out, arm, litStyle, litAwake, litSeed, litCharge, litHeat, now, false);
+        submit(ps, out, arm, litStyle, litAwake, litSeed, litCharge, litHeat, now, true);
     }
 
     private static void submit(PoseStack ps, SubmitNodeCollector out, ArmLayers.Arm arm, FxStyle style, boolean awake, int seed, float charge,
@@ -188,9 +226,9 @@ final class ArmLight implements ArmLayers.Layer {
 
     private static final float PX = 1f / 16f, LIFT = 0.004f;
     /**
-     * An arm that wears something (the armour's sleeve or plate, drawn over the skin): its light is drawn this much nearer
-     * your eye, along the line of sight, so it lies on the plate where it lay on the skin. Along the line of sight nothing
-     * moves on the screen; a plate thicker than this covers it, and anything further in front (the other arm, a weapon) too.
+     * An arm that wears something whose shape nobody gives ({@code FirstPersonDress.surface} has none: a dresser that is
+     * not the armour): its light is drawn this much nearer your eye, along the line of sight, so it lies over the sleeve
+     * where it lay on the skin. A stopgap; the armour's own pieces take the light on their shapes ({@link ArmourLight}).
      */
     private static final float OVER_PLATE = 0.16f;
     private static float pull;

@@ -1,0 +1,177 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#iron"
+        },
+        "east": {
+          "texture": "#iron"
+        },
+        "north": {
+          "texture": "#iron"
+        },
+        "south": {
+          "texture": "#iron"
+        },
+        "up": {
+          "texture": "#iron"
+        },
+        "west": {
+          "texture": "#iron"
+        }
+      },
+      "from": [
+        7.5,
+        0,
+        7.5
+      ],
+      "to": [
+        8.5,
+        12,
+        8.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#rust"
+        },
+        "east": {
+          "texture": "#rust"
+        },
+        "north": {
+          "texture": "#rust"
+        },
+        "south": {
+          "texture": "#rust"
+        },
+        "up": {
+          "texture": "#rust"
+        },
+        "west": {
+          "texture": "#rust"
+        }
+      },
+      "from": [
+        7.6,
+        12,
+        0
+      ],
+      "to": [
+        8.4,
+        14,
+        16
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#rust"
+        },
+        "east": {
+          "texture": "#rust"
+        },
+        "north": {
+          "texture": "#rust"
+        },
+        "south": {
+          "texture": "#rust"
+        },
+        "up": {
+          "texture": "#rust"
+        },
+        "west": {
+          "texture": "#rust"
+        }
+      },
+      "from": [
+        7.6,
+        11,
+        12
+      ],
+      "to": [
+        8.4,
+        16,
+        16
+      ]
+    }
+  ],
+  "textures": {
+    "iron": "minecraft:block/anvil",
+    "particle": "minecraft:block/anvil",
+    "rust": "minecraft:block/exposed_copper"
+  }
+}

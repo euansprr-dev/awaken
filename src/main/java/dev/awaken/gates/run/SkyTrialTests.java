@@ -44,6 +44,8 @@ public final class SkyTrialTests {
                 g.transition(GateState.ACTIVE);
                 p = GateLiveTests.player(h);
                 h.assertTrue(Runs.enter(p, g), "entered");
+                // the trial's own rule: its taker holds wings (without them The Way Up gives wings first, flight two seconds on)
+                Ascent.grant(p, Ascent.Tier.WINGS, "test");
                 h.assertFalse(Ascent.has(p, Ascent.Tier.SKYBORN), "no flight yet");
                 Rooms.enter(level, p, g, f, arena, arena.centerX(), arena.centerZ());
                 h.assertTrue(Ascent.has(p, Ascent.Tier.SKYBORN), "at the open sky the sky remembers you: Skyborn");

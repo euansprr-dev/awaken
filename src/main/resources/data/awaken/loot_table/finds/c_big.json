@@ -1,0 +1,122 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 5,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:gold_ingot",
+          "type": "minecraft:item",
+          "weight": 6
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 6,
+                "min": 3,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:emerald",
+          "type": "minecraft:item",
+          "weight": 5
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 4,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:experience_bottle",
+          "type": "minecraft:item",
+          "weight": 4
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 9,
+                "min": 4,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:lapis_lazuli",
+          "type": "minecraft:item",
+          "weight": 4
+        },
+        {
+          "name": "minecraft:diamond",
+          "type": "minecraft:item",
+          "weight": 2
+        }
+      ],
+      "rolls": 3
+    },
+    {
+      "conditions": [
+        {
+          "chance": 0.3,
+          "condition": "minecraft:random_chance"
+        }
+      ],
+      "entries": [
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 2,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:diamond",
+          "type": "minecraft:item",
+          "weight": 3
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 2,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:golden_apple",
+          "type": "minecraft:item",
+          "weight": 2
+        },
+        {
+          "name": "minecraft:totem_of_undying",
+          "type": "minecraft:item",
+          "weight": 1
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:finds/c_big",
+  "type": "minecraft:chest"
+}

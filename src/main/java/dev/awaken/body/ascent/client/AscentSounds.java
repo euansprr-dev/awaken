@@ -33,6 +33,15 @@ public final class AscentSounds {
         mc.level.playLocalSound(x, y, z, sound, SoundSource.PLAYERS, volume, pitch, false);
     }
 
+    /**
+     * One of the new moves' own sounds (SPEC §62: sling, spring, flare, skim, takeoff, strike, beat): its score, or with
+     * the scores off the old sound nearest to it ({@code classic}, null for none).
+     */
+    public static void move(Entity e, String score, @org.jspecify.annotations.Nullable SoundEvent classic, float volume, float pitch) {
+        if (AscentScores.play(score, e.getX(), e.getY() + 1, e.getZ(), volume, pitch)) return;
+        if (classic != null) local(e, classic, volume, pitch);
+    }
+
     /** The wind drops out for this many ticks (a boom's silence before its crack). */
     public static void duck(int ticks) {
         duck = Math.max(duck, ticks);
@@ -47,6 +56,11 @@ public final class AscentSounds {
             wind = new Wind();
             mc.getSoundManager().play(wind);
         }
+        // the rope's hum through the let-go window (SPEC §62): the moment can be heard as well as seen
+        if (AscentScores.on() && AscentMoves.windowNow > 0.05F && mc.player != null && (hum == null || hum.isStopped())) {
+            hum = new Hum();
+            mc.getSoundManager().play(hum);
+        }
         // the rope paying out through the hand: its own loop for each line (a rasp of bites; the Deepglass line's glassy run)
         boolean glass = AscentMoves.smoothLine();
         if (AscentMoves.payNow > 0 && mc.player != null && (pay == null || pay.isStopped() || pay.glass != glass)) {
@@ -57,6 +71,36 @@ public final class AscentSounds {
     }
 
     private static Pay pay;
+    private static Hum hum;
+
+    /** The taut rope singing in the air as a swing comes into its let-go window: higher and nearer as the moment nears. */
+    static final class Hum extends AbstractTickableSoundInstance {
+        private float level;
+
+        Hum() {
+            super(net.minecraft.sounds.SoundEvent.createVariableRangeEvent(AscentScores.loop("hum")), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+            this.looping = true;
+            this.delay = 0;
+            this.volume = 0.001F;
+            this.relative = true;
+            this.attenuation = SoundInstance.Attenuation.NONE;
+            this.x = this.y = this.z = 0;
+        }
+
+        @Override
+        public boolean canStartSilent() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            float w = AscentMoves.state() == dev.awaken.body.ascent.AscentState.TETHER ? AscentMoves.windowNow : 0;
+            level += (w - level) * (w > level ? 0.45F : 0.2F);
+            volume = Math.max(0.0005F, 0.5F * level);
+            pitch = 1.45F + 0.5F * level;
+            if (level < 0.01F && w <= 0.01F) stop();
+        }
+    }
 
     /** The rope running out through the hand while it pays out, at the hand, fading a moment after it stops. */
     static final class Pay extends AbstractTickableSoundInstance {
@@ -104,7 +148,9 @@ public final class AscentSounds {
         private float level;
 
         Wind() {
-            super(AscentContent.WIND.get(), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+            // with the scores on, the air's own loop (the game's recording of it) instead of the built one
+            super(AscentScores.on() ? net.minecraft.sounds.SoundEvent.createVariableRangeEvent(AscentScores.loop("wind")) : AscentContent.WIND.get(),
+                    SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
             this.looping = true;
             this.delay = 0;
             this.volume = 0.001F;

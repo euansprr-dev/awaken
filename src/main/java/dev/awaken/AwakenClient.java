@@ -78,5 +78,6 @@ public final class AwakenClient {
         dev.awaken.storage.client.StorageClient.init(modBus);
         dev.awaken.shaping.client.ShapingClient.init(modBus);
         dev.awaken.riding.client.RidingClient.init(modBus);
+        dev.awaken.finds.client.FindsClient.init(modBus);
     }
 }

@@ -11,11 +11,18 @@ import java.util.List;
  * own functions) and the assisted swing ({@link AscentSwing}). Each place runs 40 seeded starts of 15 s per rope; the
  * GameTest {@code ascent_swing_bench} holds the assisted rope to the plan's gates. The same places and seeds as the
  * proof (docs/rope-swing/proof), so its numbers line up with the plan's page.
+ * <p>
+ * Rope and Wings (SPEC §62) adds the places the world mostly is ({@link #WOODS}: an oak and birch wood and a spruce wood
+ * at Minecraft's own tree sizes, rolling hills, a street of low roofs), where §17.31's rope never fired, and a second bot,
+ * the one a player really is: it only <b>holds</b> the key ({@code hold}), never letting go by hand. The first bot, which
+ * lets go in the window, is what §17.31's table measured.
  */
 public final class SwingBench {
     private SwingBench() {}
 
     public static final String[] PLACES = {"lane", "city", "forest", "cliff", "plains", "spire"};
+    /** Real-sized places (SPEC §62): trunks 4-7 under 5-wide crowns, spruces 5-8, hills 4-9 high, roofs 5-9 high. */
+    public static final String[] WOODS = {"oak", "spruce", "hills", "roofs"};
 
     /** A hit at least this fast (blocks a tick of horizontal speed lost at once) counts; a hard one at 1. */
     public static final double HIT = 0.45, HARD = 1.0;
@@ -79,6 +86,56 @@ public final class SwingBench {
                         b.add(fx - 3, h - 2, z - 3, fx + 4, h + 3, z + 4, true);
                     }
                 }
+            }
+            case "oak" -> {
+                Rng r = new Rng(21);
+                for (double z = 8; z < 320; z += 4 + Math.floor(r.next() * 4)) {
+                    for (int k = 0; k < 2; k++) {
+                        double x = (r.next() - 0.5) * 34, h = 4 + Math.floor(r.next() * 4);
+                        if (Math.abs(x) < 1.5 && z < 14) continue;
+                        double fx = Math.floor(x);
+                        b.add(fx, 0, z, fx + 1, h, z + 1, false);
+                        b.add(fx - 2, h - 2, z - 2, fx + 3, h + 2, z + 3, true);
+                    }
+                }
+            }
+            case "spruce" -> {
+                Rng r = new Rng(23);
+                for (double z = 8; z < 320; z += 4 + Math.floor(r.next() * 4)) {
+                    for (int k = 0; k < 2; k++) {
+                        double x = (r.next() - 0.5) * 34, h = 5 + Math.floor(r.next() * 4);
+                        if (Math.abs(x) < 1.5 && z < 14) continue;
+                        double fx = Math.floor(x);
+                        b.add(fx, 0, z, fx + 1, h, z + 1, false);
+                        b.add(fx - 2, 2, z - 2, fx + 3, h - 1, z + 3, true);
+                        b.add(fx - 1, h - 1, z - 1, fx + 2, h + 2, z + 2, true);
+                    }
+                }
+            }
+            case "hills" -> {
+                // stepped mounds either side of the way and across it: crests to sling over, slopes to land on
+                Rng r = new Rng(27);
+                for (double z = 40; z < 320; z += 30 + Math.floor(r.next() * 12)) {
+                    double x = (r.next() - 0.5) * 30, h = 4 + Math.floor(r.next() * 6), w = 3 + Math.floor(r.next() * 3);
+                    for (int k = 0; k < h; k++) {
+                        double g = w + (h - k) * 1.5;
+                        b.add(x - g, k, z - g, x + g, k + 1, z + g, false);
+                    }
+                }
+            }
+            case "roofs" -> {
+                // a village street: houses 5-9 high either side of a 7-wide way, an arch across it
+                Rng r = new Rng(29);
+                for (int side : new int[] {-1, 1}) {
+                    double z = 10;
+                    while (z < 320) {
+                        double len = 7 + Math.floor(r.next() * 6), h = 5 + Math.floor(r.next() * 5), deep = 6 + Math.floor(r.next() * 4);
+                        if (side < 0) b.add(-3.5 - deep, 0, z, -3.5, h, z + len, false);
+                        else b.add(3.5, 0, z, 3.5 + deep, h, z + len, false);
+                        z += len + 2 + Math.floor(r.next() * 5);
+                    }
+                }
+                b.add(-3.5, 5, 120, 3.5, 6, 122, false);
             }
             case "cliff" -> {
                 b.add(-80, 0, 60, 80, 30, 200, false);
@@ -212,11 +269,22 @@ public final class SwingBench {
         final AscentSwing.Pick pick = new AscentSwing.Pick(), marker = new AscentSwing.Pick();
         final SwingSpace.Hit hit = new SwingSpace.Hit();
         final double[] s = new double[3], a = new double[3];
-        final double z0;
-        boolean onRope, zip, wasDown, markerOn;
+        double z0;
+        boolean onRope, zip, sling, wasDown, markerOn;
+        /** The sling's aim (a point over the top it bit) and its age. */
+        double sx, sy, sz;
+        int slingAge;
         // the old rope's: its anchor, length and the length it reels to
         double tax, tay, taz, tlen, ttarget;
-        int t, travel, held, ropeStart, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        int t, travel, held, ropeStart = -100, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        /**
+         * The bot that only holds forward and the rope, never jump (how the game is played with one thumb): the rope may
+         * throw from the ground, by the game's own rule (AscentMoves: a press, or three ticks down at a run ten ticks
+         * after the last throw), with the hop the game gives a throw from the ground, and never a pull up a face.
+         */
+        boolean keyOnly;
+        private boolean groundThrow, blocked;
+        int groundFor;
         double lastZ, pullTop, pullNx, pullNz;
         final Run run = new Run();
 
@@ -264,14 +332,33 @@ public final class SwingBench {
                 travel = (int) clamp(Math.ceil(dist / 16), 1, 3);
             } else {
                 // the marker shows where a press would bite; the press itself looks again from here
-                AscentSwing.Pick p = AscentSwing.find(w, k, yaw, AscentRules.TETHER_RANGE, work, pick) ? pick : markerOn && marker.zip ? marker : null;
+                AscentSwing.Pick p = AscentSwing.find(w, k, yaw, AscentRules.TETHER_RANGE, work, pick) ? pick : null;
+                // nothing swings: a sling past a top ahead (SPEC §62), before any pull up a wall
+                if (p == null && AscentSwing.guide && AscentSwing.findSling(w, k, yaw, AscentRules.TETHER_RANGE, work, pick)) {
+                    sling = true;
+                    zip = false;
+                    sx = pick.px;
+                    sy = pick.py;
+                    sz = pick.pz;
+                    slingAge = 0;
+                    travel = 1;
+                    onRope = true;
+                    run.ropes++;
+                    ropeStart = t;
+                    return true;
+                }
+                sling = false;
+                // a pull up a face only with a clear, short way to it (SPEC §62)
+                if (p == null && !groundThrow && markerOn && marker.zip && (!AscentSwing.guide || marker.len <= AscentSwing.T.wallZip
+                        && AscentSwing.zipClear(w, hx, hy, hz, marker))) p = marker;
                 if (p != null && !p.zip) {
                     rope.set(p.x, p.y, p.z, p.len, p.fitLen);
                     zip = false;
                     travel = AscentSwing.travel(p.len);
                     AscentSwing.entry(k, yaw);
                 } else {
-                    if (p == null && !AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)) return false;
+                    if (p == null && (groundThrow || !AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)
+                            || AscentSwing.guide && (pick.len > AscentSwing.T.wallZip || !AscentSwing.zipClear(w, hx, hy, hz, pick)))) return false;
                     AscentSwing.Pick z = p != null ? p : pick;
                     tax = z.x;
                     tay = z.y;
@@ -306,8 +393,10 @@ public final class SwingBench {
             if (!onRope) {
                 if (b.onGround) {
                     double hx = AscentSwing.fx(yaw), hz = AscentSwing.fz(yaw);
-                    b.vx = hx * 0.36 * Math.max(0.3, fwd);
-                    b.vz = hz * 0.36 * Math.max(0.3, fwd);
+                    // a sprint on the ground is 0.28; the hopping bots sprint-jump at 0.36
+                    double run = keyOnly ? 0.28 : 0.36;
+                    b.vx = hx * run * Math.max(0.3, fwd);
+                    b.vz = hz * run * Math.max(0.3, fwd);
                     if (jump) b.vy = 0.42;
                 } else {
                     b.vy -= AscentRules.G;
@@ -328,6 +417,7 @@ public final class SwingBench {
                 }
                 double lost = move(w, b, b.vx, b.vy, b.vz);
                 hitBy(lost);
+                blocked = lost > 0 && b.onGround;
                 if (lost > 0 && b.y - w.floorUnder(b.x, b.y + 0.01, b.z) < 3) {
                     // a bot against a trunk or a boulder low down steps round it, as a player would
                     for (double sx : SIDESTEP) {
@@ -344,7 +434,9 @@ public final class SwingBench {
                         b.vx = k.vx;
                         b.vy = k.vy;
                         b.vz = k.vz;
-                    } else if (work.blocked && AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, marker)) {
+                    } else if (work.blocked && AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, marker)
+                            && (!AscentSwing.guide || marker.len <= AscentSwing.T.wallZip
+                            && AscentSwing.zipClear(w, b.x, b.y + AscentRules.HAND_HEIGHT, b.z, marker))) {
                         markerOn = true;
                         fire(yaw, pitch);
                         t++;
@@ -352,6 +444,10 @@ public final class SwingBench {
                     } else if (work.blocked && AscentSwing.steerFree(w, k, yaw, true, work)) {
                         b.vx = k.vx;
                         b.vy = k.vy;
+                        b.vz = k.vz;
+                    } else if (work.blocked && AscentSwing.guide) {
+                        AscentSwing.brake(k);
+                        b.vx = k.vx;
                         b.vz = k.vz;
                     }
                 }
@@ -361,8 +457,20 @@ public final class SwingBench {
                     if (!markerOn && AscentSwing.zipTo(w, b.x, b.y + 1.62, b.z, yaw, pitch, AscentRules.TETHER_RANGE, work, marker)) markerOn = true;
                 }
                 boolean wants = assist ? ropeKey : pressed;
+                groundFor = b.onGround ? groundFor + 1 : 0;
                 if (wants && cooldown == 0 && b.y > 0.2 && (!b.onGround || !assist)) {
                     if (!fire(yaw, pitch) && assist) cooldown = 2;
+                } else if (keyOnly && assist && AscentSwing.guide && wants && cooldown == 0 && b.onGround
+                        && (pressed || groundFor >= 3 && t - ropeStart >= 10 && b.vx * b.vx + b.vz * b.vz > 0.15 * 0.15)) {
+                    double vy = b.vy;
+                    b.vy = Math.max(b.vy, 0.5);
+                    // running, only a swing or a sling; stopped against a face, the pull up it too (the game's rule)
+                    groundThrow = !blocked && !pressed;
+                    if (!fire(yaw, pitch)) {
+                        b.vy = vy;
+                        cooldown = 2;
+                    }
+                    groundThrow = false;
                 }
             } else {
                 // a let-go into something just ahead waits a moment (the rope holds on)
@@ -392,7 +500,7 @@ public final class SwingBench {
                     k.x += k.vx;
                     k.y += k.vy;
                     k.z += k.vz;
-                    if (travel == 0 && !zip) {
+                    if (travel == 0 && !zip && !sling) {
                         if (assist) {
                             double r = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
                             rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, r));
@@ -401,6 +509,14 @@ public final class SwingBench {
                             tlen = Math.max(AscentRules.TETHER_MIN, Math.min(tlen, r));
                             yank(yaw);
                         }
+                    }
+                } else if (sling) {
+                    if (AscentSwing.slingBlocked(w, k, sx, sy, sz, slingAge, work)) {
+                        // something in the pull's way after all: let go early with a hop
+                        AscentSwing.wallHop(k);
+                        go = true;
+                    } else if (AscentSwing.slingStep(k, sx, sy, sz, ++slingAge)) {
+                        go = true;
                     }
                 } else if (zip) {
                     double dx = tax - k.x, dy = tay - k.y, dz = taz - k.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -427,7 +543,8 @@ public final class SwingBench {
                 } else {
                     int why = AscentSwing.tick(w, k, rope, yaw, fwd, work);
                     if (why == AscentSwing.WALL) {
-                        if (AscentSwing.zipTo(w, k.x, k.y - AscentRules.HAND_HEIGHT + 1.62, k.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)) {
+                        if (AscentSwing.zipTo(w, k.x, k.y - AscentRules.HAND_HEIGHT + 1.62, k.z, yaw, pitch, AscentRules.TETHER_RANGE, work, pick)
+                                && (!AscentSwing.guide || pick.len <= AscentSwing.T.wallZip && AscentSwing.zipClear(w, k.x, k.y, k.z, pick))) {
                             // a wall nothing bends round: up it and over, on a new rope
                             run.ropes++;
                             tax = pick.x;
@@ -494,21 +611,42 @@ public final class SwingBench {
      * it holds the rope and lets go in the window.
      */
     static Run play(String place, boolean assist, double x0, double zOff, double pitch, double speed, int ticks) {
+        return play(place, assist, false, x0, zOff, pitch, speed, ticks);
+    }
+
+    /** {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. */
+    static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
+        return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
+    }
+
+    /**
+     * {@code keyOnly}: forward and the rope held from the first tick, jump never pressed, starting on the ground past any
+     * launch tower: the player Euan is (the rope on one key, jump on another, one thumb).
+     */
+    static Run play(String place, boolean assist, boolean hold, boolean keyOnly, double x0, double zOff, double pitch, double speed, int ticks) {
         Sim sim = new Sim(place(place), assist, x0, zOff, speed);
         Body b = sim.b;
+        sim.keyOnly = keyOnly;
+        if (keyOnly) {
+            b.y = 0;
+            b.z += 8;
+            b.vz = 0.28;
+            sim.z0 = b.z;
+        }
         while (sim.t < ticks) {
             double yaw = clamp(b.x * 2.5, -15, 15);
             boolean jump = false, rope;
             if (b.onGround && !sim.onRope) {
                 sim.ground++;
-                jump = sim.t < 2 || sim.ground > 4;
+                // the key-only bot never presses jump; the game's own auto-jump (on by default) hops a block in its way
+                jump = keyOnly ? sim.blocked : sim.t < 2 || sim.ground > 4;
                 if (jump) sim.ground = 0;
             }
             if (!sim.onRope) {
-                rope = assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10;
+                rope = keyOnly || (assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10);
             } else {
                 rope = true;
-                if (sim.travel == 0 && !sim.zip) {
+                if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
                     double q = assist ? AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work)
                             : AscentRules.releaseQuality(sim.k, sim.tax, sim.tay, sim.taz);
                     if (q > 0.85) rope = false;
@@ -526,6 +664,59 @@ public final class SwingBench {
         return r;
     }
 
+    /**
+     * A held swing across a gap over nothing, as a dream's Run has them and its solver plays them (lucidium's
+     * {@code AirProofs.swing}): roads one block thick 80 up, {@code len} of open air between them, a lantern {@code up}
+     * over the near road and {@code ahead} along the gap, the far road {@code road} long; a sprint jump off the edge, the
+     * rope thrown {@code throwAt} ticks into it and held until it lets go by itself. Returns how far past the gap's far
+     * edge the feet come down to the roads' height (NaN if the rope finds nothing or never lets go). With
+     * {@code groundUnder}, the same over a floor ten blocks down: there the guide's early let-go is free to throw far.
+     */
+    static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder) {
+        int y = 80, z = 100;
+        SwingSpace.Boxes space = new SwingSpace.Boxes();
+        space.add(-1, y - 1, z - 12, 2, y, z, false);
+        space.add(-1, y - 1, z + len, 2, y, z + len + road, false);
+        space.add(-1, y + up, z + ahead - 1, 2, y + up + 2, z + ahead + 2, false);
+        if (groundUnder) space.add(-8, y - 11, z - 12, 9, y - 10, z + len + 80, false);
+        // a sprint jump holding forward (vanilla's): up 0.42, along 0.40, the air's pull and drag
+        double by = y, bz = z - 0.2, vy = 0.42, vz = 0.40;
+        for (int t = 0; t < throwAt; t++) {
+            vz += 0.026;
+            bz += vz;
+            by += vy;
+            vy = (vy - AscentRules.G) * 0.98;
+            vz *= 0.91;
+        }
+        AscentRules.Kin k = new AscentRules.Kin().set(0.5, by + AscentRules.HAND_HEIGHT, bz, 0, vy, vz);
+        AscentSwing.Work w = new AscentSwing.Work();
+        AscentSwing.Pick pick = new AscentSwing.Pick();
+        if (!AscentSwing.find(space, k, 0, AscentRules.TETHER_RANGE, w, pick) || pick.zip) return Double.NaN;
+        AscentSwing.Rope rope = new AscentSwing.Rope().set(pick.x, pick.y, pick.z, pick.len, pick.fitLen);
+        AscentSwing.entry(k, 0);
+        double[] sc = new double[3];
+        for (int travel = AscentSwing.travel(pick.len); travel > 0; travel--) AscentRules.carryStep(k, 0f, 0.5, 0, sc);
+        double d = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
+        rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, d));
+        rope.fitLen = Math.min(rope.fitLen, rope.len);
+        for (int i = 0, held = 0; ; i++) {
+            if (i > 300) return Double.NaN;
+            int how = AscentSwing.tick(space, k, rope, 0, 1, w);
+            if (how == AscentSwing.WALL) return Double.NaN;
+            if (how == AscentSwing.TOP) {
+                if (held >= AscentSwing.T.holdOn || AscentSwing.letGoClear(space, k, rope, 0, w)) break;
+                held++;
+            }
+        }
+        AscentSwing.letGo(k, rope, 0, w);
+        k.y -= AscentRules.HAND_HEIGHT;
+        for (int i = 0; i < 300; i++) {
+            AscentRules.carryStep(k, 0f, 1, 0, sc);
+            if (k.vy < 0 && k.y <= y) return k.z - (z + len);
+        }
+        return Double.NaN;
+    }
+
     /** A place's 40 runs on one rope, summed up. */
     public record Row(String place, boolean assist, double medianDistance, double hitsPerMinute, int hardRuns, int stuckRuns,
                       int hardOnRope, int hardFree, double ropesPerRun, double windowShare) {
@@ -537,11 +728,25 @@ public final class SwingBench {
     }
 
     public static Row bench(String place, boolean assist) {
+        return bench(place, assist, false);
+    }
+
+    /** {@code hold}: with the bot that only holds the key. */
+    public static Row bench(String place, boolean assist, boolean hold) {
+        return bench(place, assist, hold, false);
+    }
+
+    /** The key-only bot (forward and the rope held from the ground, never jump): {@link Sim#keyOnly}. */
+    public static Row benchKey(String place) {
+        return bench(place, true, true, true);
+    }
+
+    private static Row bench(String place, boolean assist, boolean hold, boolean keyOnly) {
         Rng rnd = new Rng(99);
         List<Run> runs = new ArrayList<>();
         for (int i = 0; i < 40; i++) {
             double x0 = (rnd.next() - 0.5) * 8, zOff = rnd.next() * 6, pitch = -(10 + rnd.next() * 25), speed = 0.85 + rnd.next() * 0.4;
-            runs.add(play(place, assist, x0, zOff, pitch, speed, 300));
+            runs.add(play(place, assist, hold, keyOnly, x0, zOff, pitch, speed, 300));
         }
         double[] d = runs.stream().mapToDouble(r -> r.distance).toArray();
         Arrays.sort(d);
@@ -560,11 +765,26 @@ public final class SwingBench {
                 ropes / (double) runs.size(), ropes > 0 ? win / (double) ropes : 0);
     }
 
-    /** {@code java ... dev.awaken.body.ascent.SwingBench}: every place on both ropes. */
+    /**
+     * {@code java ... dev.awaken.body.ascent.SwingBench [classic]}: every place on the old rope, on today's with a bot that
+     * lets go by hand, and with one that only holds the key. {@code classic}: the guide off (the rope as §17.31 has it).
+     */
     public static void main(String[] args) {
-        for (String p : PLACES) {
-            System.out.println(bench(p, false));
-            System.out.println(bench(p, true));
+        AscentSwing.guide = args.length == 0 || !args[0].equals("classic");
+        // -Dtune=slingPull=0.15,apexHeld=60: numbers to try, by their names in AscentSwing.Tune
+        String tune = System.getProperty("tune");
+        if (tune != null) {
+            java.util.Map<String, Double> m = new java.util.HashMap<>();
+            for (String kv : tune.split(",")) m.put(kv.substring(0, kv.indexOf('=')), Double.parseDouble(kv.substring(kv.indexOf('=') + 1)));
+            AscentSwing.T = new AscentSwing.Tune(m);
+        }
+        for (String[] set : new String[][] {PLACES, WOODS}) {
+            for (String p : set) {
+                System.out.println(bench(p, false));
+                System.out.println(bench(p, true));
+                System.out.println("hold   " + bench(p, true, true));
+                System.out.println("key    " + benchKey(p));
+            }
         }
     }
 }

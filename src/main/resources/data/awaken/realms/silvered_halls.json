@@ -14,17 +14,13 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_mirror_palace"
+      "awaken:realm/silvered_halls"
     ],
     "lens": "silvered_halls",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
       "dust",
-      "drips",
-      "bats",
-      "rats"
+      "stars"
     ]
   },
   "life": {

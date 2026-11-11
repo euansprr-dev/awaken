@@ -251,7 +251,7 @@ public final class SleeplessWard extends GeneratedCrawl<SleeplessWard.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xd8d0ff, 0.6F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x5a4a80, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0xffe090, 18, 0.8F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a house a dream remembers: corridors that are rooms, a landing along one side, boards that give, a stairwell. */
@@ -259,5 +259,18 @@ public final class SleeplessWard extends GeneratedCrawl<SleeplessWard.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.CROSS, Cave.Form.TERRACE, Cave.Form.HALL), List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE),
                 List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE), List.of(Chasm.Kind.FALLING, Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.BRIDGE), true, 2.2, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): a skirting and a cove of dark wood, plush drifted in corners, feathers, candles someone left, motes. */
+    @Override
+    protected Trim trim(SleeplessWard.M m) {
+        return new Trim(named("dream_wood_stairs"), named("dream_wood_stairs"), named("dream_plush_drift"), named("dream_feathers"),
+                namedAll("dream_candle"), namedAll("dream_motes"), 0.7);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffe9a0;
     }
 }

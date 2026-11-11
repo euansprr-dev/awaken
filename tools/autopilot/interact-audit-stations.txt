@@ -1,0 +1,266 @@
+# Interactions audit A (docs/interactions/PLAN.md): today's crafting table and furnace scenes, as built (SPEC 24), filmed
+# from three distances and in both views. Mid: the lean in, a stack carried on the pointer over the grid, two laid, the
+# result taken, leaving. Then three clicks six ticks apart (a fast crafter), the same table from right against it, from
+# four blocks back and from a corner, and in third person. The furnace the same way. Shots a_*, clips a_*.
+# Run on CI: tools/tour-ci.sh tools/autopilot/interact-audit-stations.txt 1500
+# ci knobs: PACK=feel
+world interact_audit_a survival 4301
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+screen close
+gui 0
+window 1708 960
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+key dismiss
+wait 10
+screen close
+cmd effect give @s minecraft:slow_falling 30 1 true
+cmd tp @s 0.5 201 0.5 0 0
+wait 200
+cmd fill -6 199 -6 14 199 8 minecraft:smooth_stone
+cmd fill -6 200 -6 14 206 8 minecraft:air
+cmd fill -6 200 5 14 203 5 minecraft:spruce_planks
+cmd setblock 1 200 3 minecraft:crafting_table
+cmd setblock 8 200 3 minecraft:furnace[facing=north]
+cmd clear @s
+cmd give @s minecraft:oak_planks 16
+camera first
+wait 20
+
+# ---- the table from two blocks: lean in, carry, lay, take, leave ----
+cmd tp @s 1.5 200 1.6 0 30
+wait 20
+shotnow a_table_before
+cmd awaken ascent pilot rec a_table_in 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_table_mid
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot hover 5
+wait 6
+shotnow a_table_carry_mid
+cmd awaken ascent pilot hover 3
+wait 6
+shotnow a_table_carry_far_corner
+cmd awaken ascent pilot hover 9
+wait 6
+shotnow a_table_carry_near_corner
+cmd awaken ascent pilot hover 5
+wait 4
+cmd awaken ascent pilot rec a_table_lay 44 3
+cmd awaken ascent pilot station 5 1
+wait 14
+cmd awaken ascent pilot hover 2
+wait 4
+cmd awaken ascent pilot station 2 1
+wait 14
+shotnow a_table_laid
+cmd awaken ascent pilot station 37 0
+wait 10
+cmd awaken ascent pilot hover 0
+wait 6
+shotnow a_table_result
+cmd awaken ascent pilot rec a_table_take 26 3
+cmd awaken ascent pilot station 0 0
+wait 8
+shotnow a_table_take
+wait 20
+cmd awaken ascent pilot rec a_table_out 18 3
+screen close
+wait 24
+
+# ---- a fast crafter: three squares of one column, a click every six ticks (the hand restarts on each) ----
+cmd awaken ascent pilot use
+wait 30
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot rec a_table_fast 30 3
+cmd awaken ascent pilot station 3 1
+wait 1
+cmd awaken ascent pilot station 6 1
+wait 1
+cmd awaken ascent pilot station 9 1
+wait 30
+shotnow a_table_fast
+screen close
+wait 20
+
+# ---- right against the table ----
+cmd clear @s
+cmd give @s minecraft:oak_planks 16
+cmd tp @s 1.5 200 2.5 0 50
+wait 20
+cmd awaken ascent pilot rec a_table_near_in 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_table_near
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot hover 5
+wait 6
+shotnow a_table_near_carry
+cmd awaken ascent pilot station 5 1
+wait 14
+shotnow a_table_near_laid
+cmd awaken ascent pilot station 37 0
+wait 6
+screen close
+wait 20
+
+# ---- four blocks back ----
+cmd tp @s 1.5 200 -0.4 0 14
+wait 20
+cmd awaken ascent pilot rec a_table_far_in 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_table_far
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot hover 5
+wait 6
+shotnow a_table_far_carry
+cmd awaken ascent pilot station 5 1
+wait 14
+shotnow a_table_far_laid
+cmd awaken ascent pilot station 37 0
+wait 6
+screen close
+wait 20
+
+# ---- from a corner (the way in snaps to an axis) ----
+cmd tp @s -0.3 200 1.7 -45 32
+wait 20
+cmd awaken ascent pilot use
+wait 30
+shotnow a_table_corner
+screen close
+wait 20
+
+# ---- third person: the plain screen, and what the body does ----
+camera back
+wait 10
+cmd tp @s 1.5 200 1.6 0 30
+wait 20
+shotnow a_table_3p_before
+cmd awaken ascent pilot rec a_table_3p 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_table_3p
+screen close
+wait 10
+camera front
+wait 10
+cmd awaken ascent pilot rec a_table_3p_front 26 3
+use
+wait 3
+screen close
+wait 2
+screen close
+wait 24
+camera first
+wait 10
+
+# ---- the furnace from two blocks: the crouch, beef and coal laid, lit, the cooked beef taken ----
+cmd clear @s
+cmd give @s minecraft:beef 4
+cmd give @s minecraft:coal 2
+cmd tp @s 8.5 200 1.6 0 30
+wait 20
+shotnow a_furnace_before
+cmd awaken ascent pilot rec a_furnace_in 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_furnace_mid
+cmd awaken ascent pilot station 30 0
+wait 6
+cmd awaken ascent pilot hover 0
+wait 6
+shotnow a_furnace_carry
+cmd awaken ascent pilot rec a_furnace_lay 40 3
+cmd awaken ascent pilot station 0 1
+wait 14
+cmd awaken ascent pilot station 30 0
+wait 6
+cmd awaken ascent pilot station 31 0
+wait 6
+cmd awaken ascent pilot hover 1
+wait 4
+cmd awaken ascent pilot station 1 1
+wait 14
+shotnow a_furnace_lit
+cmd awaken ascent pilot station 31 0
+wait 6
+wait 200
+cmd awaken ascent pilot hover 2
+wait 6
+shotnow a_furnace_cooked
+cmd awaken ascent pilot rec a_furnace_take 26 3
+cmd awaken ascent pilot station 2 0
+wait 30
+cmd awaken ascent pilot rec a_furnace_out 18 3
+screen close
+wait 24
+
+# ---- right against it, four blocks back, from the side (the plain screen) ----
+cmd tp @s 8.5 200 2.5 0 40
+wait 20
+cmd awaken ascent pilot use
+wait 30
+shotnow a_furnace_near
+screen close
+wait 20
+cmd tp @s 8.5 200 -0.4 0 14
+wait 20
+cmd awaken ascent pilot rec a_furnace_far_in 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_furnace_far
+screen close
+wait 20
+cmd tp @s 6.4 200 3.5 -90 30
+wait 20
+cmd awaken ascent pilot use
+wait 30
+shotnow a_furnace_side
+screen close
+wait 20
+
+# ---- the furnace in third person ----
+camera back
+wait 10
+cmd tp @s 8.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot rec a_furnace_3p 26 3
+cmd awaken ascent pilot use
+wait 30
+shotnow a_furnace_3p
+screen close
+wait 10
+camera front
+wait 10
+cmd awaken ascent pilot rec a_furnace_3p_front 26 3
+use
+wait 3
+screen close
+wait 2
+screen close
+wait 24
+camera first
+wait 10
+info
+quit

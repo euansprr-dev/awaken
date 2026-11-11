@@ -42,6 +42,12 @@ public final class Notices {
 
         /** Holds every paced message while any owner holds (a scene, a scripted camera); release with false. */
         default void hold(Object owner, boolean held) {}
+
+        /**
+         * True while the director's own big card (a first find's moment) is on screen, in the upper third: a scene that
+         * can't wait draws its words lower so the two never sit on each other (SPEC §63.8).
+         */
+        default boolean showing() { return false; }
     }
 
     private static Client client = new Client() {};

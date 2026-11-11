@@ -32,12 +32,20 @@ public final class AnimsClient {
         bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, Touches::entityInteract);
         bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, Touches::screenOpening);
+        // boxes (SPEC §65.7): the lid let down as its screen shuts, the view looking in while it is open, living slots
+        bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Closing.class, Touches::screenClosing);
+        bus.addListener(EventPriority.LOW, net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class, Touches::lookIn);
+        bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Foreground.class, Touches::glassRise);
+        LivingSlots.init(bus);
+        dev.awaken.anims.client.glass.GlassScreens.init(bus);
         FirstPerson.view(Touches::viewPose);
         // the hands meet what they touch (P4.1); the view leans in a touch while one is out
         FirstPerson.world("anims_touch", 200, Reaches::pose);
         bus.addListener(net.neoforged.neoforge.client.event.ComputeFovModifierEvent.class, e -> {
             float lean = Reaches.lean(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
             if (lean > 0 && !FirstPerson.reducedMotion.getAsBoolean()) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.05F * lean));
+            float in = Touches.look(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            if (in > 0 && !FirstPerson.reducedMotion.getAsBoolean()) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.04F * in));
         });
         // station scenes (P5): the crafting table worked by hand
         dev.awaken.anims.client.station.StationClient.init(bus, modBus);

@@ -10,7 +10,10 @@ public final class AnimsModule {
     private AnimsModule() {}
 
     public static void init(IEventBus modBus) {
+        AnimsSounds.init(modBus);
         dev.awaken.anims.station.FurnaceContents.init(modBus);
+        dev.awaken.anims.station.StationPresence.init(modBus);
+        dev.awaken.anims.station.TouchKinds.init(modBus);
         AnimsTests.register();
         dev.awaken.anims.station.StationTests.register();
         dev.awaken.anims.station.FurnaceTests.register();

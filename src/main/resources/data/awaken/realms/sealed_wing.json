@@ -14,11 +14,12 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_precursor_lab"
+      "awaken:realm/sealed_wing"
     ],
     "lens": "sealed_wing",
     "air": [
       "shaft_dust",
+      "steam",
       "dust"
     ]
   },

@@ -1,0 +1,526 @@
+<title>The Way Up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column; the road as a time strip in hours; each rung a pair, today beside proposed. */
+:root{
+  --bg:#F2F5FA;--surface:#FFFFFF;--sunk:#E8EDF5;--ink:#0E1726;--muted:#55627A;--line:#D3DBE8;
+  --signal:#1565C0;--signal-soft:#DCEBFB;--gold:#8A6100;--gold-soft:#F6EBCB;--warn:#B3261E;--warn-soft:#FBE4E1;--good:#1E7B46;
+  --rk-d:#1E8A4C;--rk-c:#2A63D6;--rk-b:#6E45C4;--rk-a:#A85F00;--rk-s:#B93232;--rk-v:#8A6100;
+  --ghost:#C99A1E;
+  --display:"Chakra Petch","Avenir Next Condensed","Arial Narrow",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pixel:"Silkscreen","Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#090E18;--surface:#111929;--sunk:#0D1422;--ink:#E7EEF9;--muted:#93A1B8;--line:#243049;
+  --signal:#7FC3FF;--signal-soft:#12283F;--gold:#F0C766;--gold-soft:#2C2410;--warn:#FF8A80;--warn-soft:#3A1614;--good:#6FD79A;
+  --rk-d:#5FD38C;--rk-c:#78AEFF;--rk-b:#B79CFF;--rk-a:#FFB84D;--rk-s:#FF8585;--rk-v:#F0C766;
+  --ghost:#F0C766;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#090E18;--surface:#111929;--sunk:#0D1422;--ink:#E7EEF9;--muted:#93A1B8;--line:#243049;
+  --signal:#7FC3FF;--signal-soft:#12283F;--gold:#F0C766;--gold-soft:#2C2410;--warn:#FF8A80;--warn-soft:#3A1614;--good:#6FD79A;
+  --rk-d:#5FD38C;--rk-c:#78AEFF;--rk-b:#B79CFF;--rk-a:#FFB84D;--rk-s:#FF8585;--rk-v:#F0C766;
+  --ghost:#F0C766;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding-block:36px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px;overflow-wrap:break-word}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(34px,6vw,56px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(24px,3.4vw,32px);font-weight:600}
+h3{font-size:19px;font-weight:600}
+p{margin:0;max-width:68ch}
+.muted{color:var(--muted)}.small{font-size:13.5px}
+.eyebrow{font:500 12.5px/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+a{color:var(--signal)}
+.status.ok{color:var(--good);background:var(--signal-soft)}
+.status{display:inline-block;max-width:100%;font-size:13.5px;color:var(--warn);background:var(--warn-soft);padding:6px 12px;border-radius:4px;align-self:flex-start}
+blockquote{margin:0;padding:18px 20px;background:var(--surface);border-left:3px solid var(--signal);font-size:15.5px;color:var(--ink)}
+blockquote footer{margin-top:10px;color:var(--muted);font-size:13.5px}
+.rule{font-family:var(--display);font-size:clamp(21px,3vw,29px);font-weight:600;line-height:1.3;max-width:26ch}
+.rule b{color:var(--signal);font-weight:700}
+.lede{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:760px){.lede{grid-template-columns:minmax(0,1fr)}}
+kbd.cap{font:400 11px/1 var(--pixel);display:inline-block;padding:5px 7px 4px;border:1.5px solid currentColor;border-bottom-width:3px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+.chip{font:400 11px/1 var(--pixel);display:inline-block;padding:5px 7px 4px;border-radius:3px;color:var(--surface);white-space:nowrap}
+.chip.d{background:var(--rk-d)}.chip.c{background:var(--rk-c)}.chip.b{background:var(--rk-b)}.chip.a{background:var(--rk-a)}.chip.s{background:var(--rk-s)}.chip.v{background:var(--rk-v)}.chip.e{background:var(--muted)}
+/* the road */
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.road{display:block;min-width:820px;width:100%;height:auto}
+.road text{font-family:var(--body);fill:var(--ink);font-size:12.5px}
+.road .t-m{fill:var(--muted)}.road .t-h{font-family:var(--display);font-weight:600;font-size:14px}
+.road .axis{stroke:var(--line);stroke-width:1}.road .lane{stroke:var(--muted);stroke-width:2;fill:none}
+.road .dash{stroke:var(--warn);stroke-width:3;stroke-dasharray:3 6;fill:none;stroke-linecap:round}
+.road .dot{fill:var(--surface);stroke-width:3}
+.road .d{stroke:var(--rk-d)}.road .c{stroke:var(--rk-c)}.road .b{stroke:var(--rk-b)}.road .a{stroke:var(--rk-a)}.road .s{stroke:var(--rk-s)}.road .v{stroke:var(--rk-v)}.road .n{stroke:var(--muted)}
+.road .fd{fill:var(--rk-d)}.road .fc{fill:var(--rk-c)}.road .fb{fill:var(--rk-b)}.road .fa{fill:var(--rk-a)}.road .fs{fill:var(--rk-s)}.road .fv{fill:var(--rk-v)}
+.road .t-w{fill:var(--warn)}.road .place{fill:var(--signal)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--muted);vertical-align:middle;margin-right:6px}
+.legend i.w{border-top:3px dotted var(--warn)}.legend i.p{width:10px;height:10px;border:0;background:var(--signal);transform:rotate(45deg)}
+/* rungs */
+.rung{display:flex;flex-direction:column;gap:14px;padding-top:22px;border-top:1px solid var(--line)}
+.rung header{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:baseline}
+.rung header .when{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:820px){.pair{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.side>.eyebrow{display:flex;gap:8px;align-items:center}
+.side.now>.eyebrow::before,.side.next>.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.side.next>.eyebrow::before{background:var(--signal)}
+figure{margin:0;display:flex;flex-direction:column;gap:6px}
+figure img,.shot{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;background:var(--sunk);max-width:100%}
+figcaption{font-size:13.5px;color:var(--muted)}
+.facts{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;font-size:14.5px}
+.facts dt{color:var(--muted)}.facts dd{margin:0}
+.stuck{color:var(--warn)}
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+ol.steps li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:12px;font-size:14.5px}
+ol.steps li>b{font:600 13px/1.5 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--signal)}
+.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:1px 7px;border-radius:99px;white-space:nowrap}
+.tag.built{color:var(--good);border-color:var(--good)}.tag.new{color:var(--signal);border-color:var(--signal)}
+/* the mock-up: a real screenshot with the proposed overlay drawn on it */
+.mock{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:linear-gradient(160deg,#16233a,#0a111d);max-width:100%;container-type:inline-size}
+.mock img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mock .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,9,16,.05) 40%,rgba(5,9,16,.62))}
+.mock .pin{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:0;color:#EAF7FF;text-shadow:0 1px 2px #000}
+.mock .pin .lab{display:flex;gap:8px;align-items:center;background:rgba(9,16,28,.78);border:1px solid rgba(127,195,255,.65);padding:5px 9px;border-radius:3px;font-size:clamp(9px,2.3cqw,13.5px);white-space:nowrap}
+.mock .pin .lab kbd{font-size:clamp(7px,1.8cqw,11px)}
+.mock .pin .stem{width:1.5px;height:clamp(14px,5cqw,34px);background:rgba(127,195,255,.9)}
+.mock .pin .ring{width:clamp(10px,2.6cqw,16px);height:clamp(10px,2.6cqw,16px);border:2px solid #7FC3FF;border-radius:50%;box-shadow:0 0 10px #7FC3FF}
+.mock .ghost{position:absolute;width:2.6%;aspect-ratio:1/2.1;background:rgba(240,199,102,.55);box-shadow:0 0 14px rgba(240,199,102,.9);border-radius:1px}
+.mock .trail{position:absolute;height:0;border-top:2px dotted rgba(240,199,102,.85);transform-origin:left center}
+.mock .card{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;align-items:center;background:rgba(9,16,28,.82);border:1px solid rgba(127,195,255,.5);padding:7px 12px;border-radius:3px;color:#EAF7FF;font-size:clamp(8.5px,2.1cqw,13px);max-width:92%}
+.mock .card b{font-family:var(--display);font-size:1.15em}
+.mock .card kbd{font-size:clamp(7px,1.7cqw,10.5px)}
+.mock .line{position:absolute;left:50%;top:26%;transform:translateX(-50%);color:#EAF7FF;font:600 clamp(11px,3.2cqw,22px)/1.2 var(--display);text-shadow:0 0 12px rgba(127,195,255,.9),0 1px 2px #000;white-space:nowrap}
+.mock .now{position:absolute;right:2.5%;top:5%;background:rgba(9,16,28,.8);border:1px solid rgba(127,195,255,.5);color:#EAF7FF;padding:6px 10px;border-radius:3px;font-size:clamp(8px,2cqw,12.5px);max-width:60%}
+.mock .now span{color:#7FC3FF}
+.mock .beam{position:absolute;width:.5%;background:linear-gradient(180deg,rgba(127,195,255,0),rgba(127,195,255,.95));box-shadow:0 0 16px #7FC3FF}
+.mocknote{font-size:12.5px;color:var(--muted)}
+/* lists and tables */
+ol.find{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;max-width:74ch}
+ol.find li::marker{font-family:var(--display);font-weight:600;color:var(--muted)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px 9px 0;border-bottom:1px solid var(--line)}
+th{font:500 12.5px/1.3 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:820px){.three{grid-template-columns:minmax(0,1fr)}}
+.opt{min-width:0;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.opt.pick{border-color:var(--signal);box-shadow:inset 0 0 0 1px var(--signal)}
+.opt .eyebrow{color:var(--signal)}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.kit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:820px){.kit{grid-template-columns:minmax(0,1fr)}}
+/* the K rows mock */
+.krows{background:#0B1320;border:1px solid #24334D;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;color:#E7EEF9;font-size:13.5px}
+.krow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px 14px;align-items:center;padding:8px 10px;background:#111C2E;border-radius:3px}
+.krow.dark{opacity:.55}
+.krow b{font-family:var(--display)}
+.krow .keys{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;color:#B9C7DB}
+.krow kbd{color:#EAF7FF}
+.pips{display:flex;gap:3px;margin-top:5px}
+.pips i{width:9px;height:5px;background:#2A3A57}.pips i.on{background:#7FC3FF}.pips i.gem{background:transparent;border:1.5px solid #F0C766;transform:rotate(45deg);width:7px;height:7px;margin:-1px 1px 0}
+.task{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;background:#111C2E;border-radius:3px;border-left:3px solid #5FD38C}
+.task .dia{width:14px;height:14px;background:#0A0F18;border:1.5px solid #7FC3FF;transform:rotate(45deg);margin-left:6px}
+.task small{display:block;color:#93A1B8}
+.task .needle{color:#7FC3FF;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* decisions */
+.tally{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-size:14.5px}
+button{font:500 14px/1 var(--body);padding:9px 14px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){border-color:var(--signal)}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:var(--bg)}
+button:disabled{opacity:.5;cursor:default}
+.cards{display:flex;flex-direction:column;gap:14px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.dcard h3{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;font-size:17px;line-height:1.35}
+.dcard h3 small{font:600 15px/1.35 var(--display);color:var(--muted)}
+.dcard .rec{font-size:14.5px;color:var(--muted);max-width:none}
+.dcard .rec b{color:var(--ink)}
+.ans{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.st{font-size:13px;color:var(--muted)}
+textarea{font:400 14px/1.5 var(--body);width:100%;padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+@media (prefers-reduced-motion:no-preference){.mock .pin .ring{animation:pulse 1.6s ease-in-out infinite}}
+@keyframes pulse{50%{box-shadow:0 0 18px 3px #7FC3FF}}
+</style>
+
+<div class="wrap">
+
+<section>
+  <span class="status ok">Approved on 10 November ("Go with all recommendations"). Built on 11 November and merged into the build. Not yet played.</span>
+  <h1>The Way Up</h1>
+  <p class="muted">How a player earns each move, from the first wall-run to the Sovereign's form. An audit of the road as it is today, and one road to replace it. 10 November 2026.</p>
+  <blockquote>"the progression system for all of the movement and how that gets unlocked. We need to make sure that it's actually like natural to get to that point, and that it feels like easy to, well, not easy, like it should still be difficult to get to like the final point, but like it should be kind of a natural progression, and you shouldn't have to like, basically it shouldn't be impossible to unlock the future movement. Like maybe we make it unlock more with like maybe some of the rank assessments. I think that would be pretty interesting, where it's like based on rank assessments, and then that unlocks somewhere that you discovered that you can go and unlock that item, and then it actually shows you how to use it and stuff with like kind of AAA tooltips, visuals, like similar to some others we have maybe. And yeah, just make sure that that whole progression is actually clear inside of the K menu. Or that it's clear. Actually, it doesn't have to be clear in the K menu, actually. It's more so it's like it has to be clear the moment that you unlock it, or it has to have a moment that's natural progression where you unlock it."<footer>Euan, 10 November 2026</footer></blockquote>
+</section>
+
+<section>
+  <div class="lede">
+    <div class="side">
+      <span class="eyebrow">The short answer</span>
+      <p>Your idea is half built already. The rope comes from the D rank fight and flight comes from the A rank fight. Those two can't be missed.</p>
+      <p>The two rungs between them are the problem. The leap waits on a count of 400 that the game never shows. Wings wait on a sky platform that nothing points at. Neither has a row on the Tasks page. The top rung arrives after the story is over. And every unlock, when it comes, is a title and one line of text.</p>
+      <p>So I recommend one rule for the whole ladder:</p>
+    </div>
+    <div class="side">
+      <p class="rule">A rank fight <b>opens</b> a rung. A place <b>gives</b> it. The way out of the place <b>is the move</b>.</p>
+      <p class="muted">Most of the places are already in the game: the vault that pulls you up its pylon, the course with a gap no jump can cross, the sky platform with a windway off its pier. Today new worlds can't reach the first of those at all.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>The road, in hours of play</h2>
+  <p class="muted">Hours are from the game's own pacing simulator for a balanced player. A careful player takes about a third longer.</p>
+  <div class="scroll">
+  <svg class="road" viewBox="-20 0 1020 330" role="img" aria-label="Two roads on one time axis from 0 to 66 hours. Before: the rope at 3.4 hours, the leap and wings at no known time, flight at 35.8 hours, the Sovereign after the ending. As built: the rope at 3.4 hours then a vault, the leap at the first crown reached by rope, wings at 10.2 hours then a sky platform, flight at 35.8 hours, the Sovereign at 61.4 hours.">
+    <!-- x = 60 + hours * 13.4 -->
+    <line class="axis" x1="60" y1="292" x2="960" y2="292"/>
+    <g class="t-m" text-anchor="middle">
+      <line class="axis" x1="60" y1="40" x2="60" y2="292"/><text x="60" y="310">0 h</text>
+      <line class="axis" x1="105.6" y1="40" x2="105.6" y2="292"/><text x="105.6" y="310">3.4</text>
+      <line class="axis" x1="196.7" y1="40" x2="196.7" y2="292"/><text x="196.7" y="310">10.2</text>
+      <line class="axis" x1="379.2" y1="40" x2="379.2" y2="292"/><text x="379.2" y="310">23.8</text>
+      <line class="axis" x1="539.7" y1="40" x2="539.7" y2="292"/><text x="539.7" y="310">35.8</text>
+      <line class="axis" x1="692.5" y1="40" x2="692.5" y2="292"/><text x="692.5" y="310">47.2</text>
+      <line class="axis" x1="882.8" y1="40" x2="882.8" y2="292"/><text x="882.8" y="310">61.4 h</text>
+    </g>
+    <g text-anchor="middle" font-family="Silkscreen, monospace" font-size="11">
+      <rect class="fd" x="87.6" y="16" width="36" height="18" rx="3"/><text x="105.6" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">D</text>
+      <rect class="fc" x="178.7" y="16" width="36" height="18" rx="3"/><text x="196.7" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">C</text>
+      <rect class="fb" x="361.2" y="16" width="36" height="18" rx="3"/><text x="379.2" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">B</text>
+      <rect class="fa" x="521.7" y="16" width="36" height="18" rx="3"/><text x="539.7" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">A</text>
+      <rect class="fs" x="674.5" y="16" width="36" height="18" rx="3"/><text x="692.5" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">S</text>
+      <rect class="fv" x="840.8" y="16" width="84" height="18" rx="3"/><text x="882.8" y="29" style="fill:var(--surface);font-family:var(--pixel);font-size:11px">SOVEREIGN</text>
+    </g>
+    <!-- today -->
+    <text class="t-h" x="320" y="62">Before</text>
+    <line class="lane" x1="60" y1="104" x2="960" y2="104"/>
+    <circle class="dot n" cx="60" cy="104" r="6"/><text x="50" y="108" text-anchor="end">Runner</text>
+    <circle class="dot d" cx="105.6" cy="104" r="7"/><text x="105.6" y="88" text-anchor="middle">Rope</text>
+    <path class="dash" d="M118 124 H330"/><text class="t-w" x="118" y="143">The leap: after 400 hidden points. No one can say when.</text>
+    <path class="dash" d="M206 160 H532"/><text class="t-w" x="206" y="179">Wings: when you happen to find a sky platform. If you never do, handed over at A.</text>
+    <circle class="dot a" cx="539.7" cy="104" r="7"/><text x="548" y="88">Flight</text>
+    <circle class="dot v" cx="936" cy="104" r="7"/><text x="936" y="88" text-anchor="end">Sovereign, after the ending</text>
+    <!-- proposed -->
+    <text class="t-h" x="400" y="206">As built</text>
+    <line class="lane" x1="60" y1="254" x2="960" y2="254"/>
+    <circle class="dot n" cx="60" cy="254" r="6"/><text x="50" y="258" text-anchor="end">Runner</text>
+    <circle class="dot d" cx="105.6" cy="254" r="7"/><rect class="place" x="116" y="250" width="8" height="8" transform="rotate(45 120 254)"/><line class="axis" x1="105.6" y1="246" x2="105.6" y2="226"/><text x="111" y="230">Rope, at a vault</text>
+    <circle class="dot d" cx="150" cy="254" r="7"/><rect class="place" x="160" y="250" width="8" height="8" transform="rotate(45 164 254)"/><line class="axis" x1="150" y1="262" x2="150" y2="276"/><text x="156" y="282">Leap, from your first crown by rope</text>
+    <circle class="dot c" cx="196.7" cy="254" r="7"/><rect class="place" x="207" y="250" width="8" height="8" transform="rotate(45 211 254)"/><line class="axis" x1="196.7" y1="246" x2="196.7" y2="206"/><text x="202" y="210">Wings, at a sky platform</text>
+    <circle class="dot a" cx="539.7" cy="254" r="7"/><text x="548" y="238">Flight, inside the fight</text>
+    <circle class="dot v" cx="882.8" cy="254" r="7"/><text x="874" y="238" text-anchor="end">Sovereign, at the last rank fight</text>
+  </svg>
+  </div>
+  <div class="legend"><span><i></i>A rung, coloured by the rank fight that opens it</span><span><i class="w"></i>Waits on something the game never shows</span><span><i class="p"></i>&nbsp;A place wakes and goes on your Tasks page</span></div>
+</section>
+
+<section>
+  <h2>Built on 11 November</h2>
+  <p>All twelve decisions are coded on the branch <code>claude/movement-unlocks-b62e18</code>, behind one world option, <code>wayUp</code>, which is on. Switch it off and every old rule is back exactly. It is merged into the build. You have not played it.</p>
+  <div class="kit">
+    <div class="side">
+      <span class="eyebrow">Different from the plan</span>
+      <ol class="find">
+        <li><b>The lit place is a thin beam,</b> not brighter rings on the platform.</li>
+        <li><b>The gold figure follows a path worked out on the spot</b> (a swing to the mast, two hops, a run off the pier), not a recorded run.</li>
+        <li><b>The K rows are text and a bar,</b> not key caps and ten pips. That page can only draw text and bars.</li>
+        <li><b>A soft landing after the wings' gift works anywhere for a minute,</b> not only on the platform. A first glide leaves the platform.</li>
+      </ol>
+    </div>
+    <div class="side">
+      <span class="eyebrow">Found by looking at it built</span>
+      <ol class="find">
+        <li><b>Wings need two presses.</b> Once you hold the leap, the first press in the air is the double jump. The prompt, the card and the K row now say "twice".</li>
+        <li><b>The line that tells you a place lit up could be filed away unseen.</b> The game files any ordinary message that has waited 45 seconds, and a rank-up is crowded. It is now told twenty seconds after the rank and cannot be filed.</li>
+        <li><b>The game's ruin finder names vaults inside Carillon,</b> where none can exist. The road skips them.</li>
+        <li><b>A first visit to a vault is also a discovery,</b> and its big card sat over the rope's words. The rope's title now moves below it.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Added on 11 November: a lesson for each of the six new moves</h2>
+  <p>Rope and Wings added six moves. Each one now has the same kind of lesson, shown where the move can be done. A prompt shows at most four times in a session, at least a minute apart, and never again once you have made the move. The first time you make a move, its name and keys show once.</p>
+  <div class="tw"><table>
+    <tr><th>Move</th><th>You have it</th><th>Its lesson shows</th><th>What it says</th></tr>
+    <tr><td><b>Sling</b></td><td>With the rope</td><td>On foot or in the air, where nothing is tall enough to swing from and there is a top ahead. Your key sits on that top.</td><td>Hold, rope key: "It throws you up and over"</td></tr>
+    <tr><td><b>Spring</b></td><td>Rope mastery 3</td><td>While the rope is pulling you up onto a top.</td><td>Hold, forward: "Spring off the top"</td></tr>
+    <tr><td><b>Rope strike</b></td><td>Rope mastery 5</td><td>On the rope or just off it, looking at a creature out of reach. Your key sits on the creature.</td><td>Attack key: "Your rope pulls you into it"</td></tr>
+    <tr><td><b>Flare</b></td><td>With wings</td><td>Gliding down with the ground close, and after a hard landing on wings.</td><td>"Level out just before you land"</td></tr>
+    <tr><td><b>Skim</b></td><td>Wings mastery 3</td><td>Gliding fast, a little too high to skim.</td><td>"Drop lower and skim the ground"</td></tr>
+    <tr><td><b>Takeoff</b></td><td>With flight</td><td>The first time you stand outdoors after the Sky Warden, which is at home. Also whenever you look up from the ground.</td><td>Hold, sneak, then jump: "while you look up"</td></tr>
+  </table></div>
+  @@FIG:moves_strip@@
+  <p class="small muted">The pictures are from a tour that built a stone floor in the sky and was given flight by command. The spring, the rope strike and the skim need mastery the tour does not have. They are coded and their rule is tested, but they are not pictured. Also fixed: a climb that stops on a spire's rim now opens the gate.</p>
+  <p><b>One part is not at the bar yet: the gold figure.</b> These tours were the first to photograph it clearly. It shows the move, but it draws as a solid copy of your own skin with a shadow, tinted amber, not as a figure of light. To look like light it needs its own drawing code. That is not built. It is the same figure at the vault, the chasm and the pier.</p>
+</section>
+
+<section>
+  <h2>Rung by rung: before, and as built</h2>
+  <p class="muted">Every picture is the real game, taken by tours on GitHub's machines. On the left, before this plan. On the right, the same moment as built.</p>
+
+  <div class="rung" id="rope">
+    <header><span class="chip d">D-RANK</span><h3>The rope</h3><span class="when">3.4 hours in</span></header>
+    <div class="pair">
+      <div class="side now"><span class="eyebrow">Before</span>
+        @@FIG:tether_now@@
+        <dl class="facts">
+          <dt>Earned by</dt><dd>Winning the D rank fight. The Ringer's chain is the rope.</dd>
+          <dt>Tells you</dt><dd>A toast, then a text tip. Twelve seconds later you are sent home.</dd>
+          <dt>Stuck?</dt><dd>No. But nothing asks you to use it, and the first vault's promise from hour one ("Its line waits for a D-rank hunter") is never paid.</dd>
+        </dl>
+      </div>
+      <div class="side next"><span class="eyebrow">Built</span>
+        @@FIG:built_rope@@
+        <ol class="steps">
+          <li><b>Opened</b><span>The Ringer falls. Its chain is at your feet, as now. It is cold iron until a vault wakes it.</span></li>
+          <li><b>A place</b><span>Twenty seconds after you are home: "A vault has lit up for the chain you're carrying. It's 310 blocks east of here." One you have already found, if it is near. Any vault will do.</span></li>
+          <li><b>Given</b><span>You step under its pylons. The vault takes the chain, the rope throws itself and pulls you up the pylon. Then your own key sits on the mast until you throw it yourself.</span></li>
+        </ol>
+      </div>
+    </div>
+    @@FIG:vow_strip@@
+  </div>
+
+  <div class="rung" id="leap">
+    <header><span class="chip d">AFTER D</span><h3>The leap</h3><span class="when">double jump, air dash, slam</span></header>
+    <div class="pair">
+      <div class="side now"><span class="eyebrow">Before</span>
+        @@FIG:leap_now@@
+        <dl class="facts">
+          <dt>Earned by</dt><dd>400 points of rope use that are shown nowhere: 2 a throw, 3 a jump off it. About 200 throws for hands that only hold the key. Then a gate opens 20 blocks ahead, once.</dd>
+          <dt>Tells you</dt><dd>One toast when the gate opens. The gate is on no list.</dd>
+          <dt>Stuck?</dt><dd class="stuck">Yes, twice. Swing too little and nothing ever says so. Walk on from the toast and the gate is somewhere behind you for good.</dd>
+        </dl>
+      </div>
+      <div class="side next"><span class="eyebrow">Built</span>
+        @@FIG:built_leap@@
+        <ol class="steps">
+          <li><b>Opened</b><span>By what the rope is for: the first crown you reach by rope, on a Tether Spire or a great tree. The hidden count stays as a second way in, for worlds with no spire near.</span></li>
+          <li><b>A place</b><span>The course's gate opens at the foot of what you climbed, and stays on your Tasks page until you have run it. If it is ever lost it opens again.</span></li>
+          <li><b>Given</b><span>At the gap no running jump can cross: your key under the crosshair, a gold figure of you jumping it once, then the card of the leap's three keys.</span></li>
+        </ol>
+      </div>
+    </div>
+    @@FIG:leap_strip@@
+  </div>
+
+  <div class="rung" id="wings">
+    <header><span class="chip c">C-RANK</span><h3>Wings</h3><span class="when">10.2 hours in</span></header>
+    <div class="pair">
+      <div class="side now"><span class="eyebrow">Before</span>
+        @@FIG:wings_now@@
+        <dl class="facts">
+          <dt>Earned by</dt><dd>C-rank, and reaching a sky platform's core by rope up its rings.</dd>
+          <dt>Tells you</dt><dd>Nothing, unless you had already met a platform. The line that used to tease them has been off since 27 October.</dd>
+          <dt>Stuck?</dt><dd class="stuck">Yes, softly. Nobody says to look up. The nearest platform is usually 280 to 380 blocks away, about 1,300 at worst.</dd>
+        </dl>
+      </div>
+      <div class="side next"><span class="eyebrow">Built</span>
+        @@FIG:built_wings@@
+        <ol class="steps">
+          <li><b>Opened</b><span>By the C rank fight. The core's own rule stays: C-rank, up its rings by rope.</span></li>
+          <li><b>A place</b><span>The nearest sky platform lights up: a thin beam, a line that says how far and which way, and one row on Tasks.</span></li>
+          <li><b>Given</b><span>The core gives wings. Then the way down is the lesson: a line of rings runs off the pier, with "Run off the end, then press twice". Twice, because once you hold the leap the first press in the air is the double jump. A fall is a soft landing for a minute.</span></li>
+        </ol>
+      </div>
+    </div>
+    @@FIG:wings_strip@@
+  </div>
+
+  <div class="rung" id="flight">
+    <header><span class="chip a">A-RANK</span><h3>The open sky</h3><span class="when">35.8 hours in</span></header>
+    <div class="pair">
+      <div class="side now"><span class="eyebrow">Before</span>
+        @@FIG:sky_now@@
+        <dl class="facts">
+          <dt>Earned by</dt><dd>The A rank fight. At a third of the Sky Warden's health the roof lifts and flight is given.</dd>
+          <dt>Tells you</dt><dd>A title and a line, while the boss is still swinging.</dd>
+          <dt>Stuck?</dt><dd>No. The separate Sky Leviathan trial can no longer be reached, and three texts still send you to it.</dd>
+        </dl>
+      </div>
+      <div class="side next"><span class="eyebrow">Built</span>
+        @@FIG:built_sky@@
+        <ol class="steps">
+          <li><b>Kept</b><span>This one already is the rule. The fight is the place, and its last third needs the move. <span class="tag built">built</span></span></li>
+          <li><b>Changed</b><span>The moment becomes a strip of your keys in place of a sentence. If you never earned wings they come two seconds earlier with their own beat, so three gifts don't land at once.</span></li>
+          <li><b>Retired</b><span>The Sky Leviathan's separate trial, and the three texts that still point at it.</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="rung" id="sovereign">
+    <header><span class="chip v">SOVEREIGN</span><h3>The Sovereign's form</h3><span class="when">61.4 hours in</span></header>
+    <div class="pair">
+      <div class="side now"><span class="eyebrow">Before</span>
+        @@FIG:sov_now@@
+        <dl class="facts">
+          <dt>Earned by</dt><dd>Any ending of the story. So it comes after the last fight.</dd>
+          <dt>Tells you</dt><dd>"Sovereign." and one line.</dd>
+          <dt>Stuck?</dt><dd>No. But the hardest rung to earn arrives when there is nothing left to use it on.</dd>
+        </dl>
+      </div>
+      <div class="side next"><span class="eyebrow">Built</span>
+        @@FIG:built_form@@
+        <ol class="steps">
+          <li><b>Opened</b><span>By the last rank fight, the one that makes you Sovereign rank and opens the Seed. The hardest fight in the game pays the last rung.</span></li>
+          <li><b>Used</b><span>You carry the form into the Seed and the final fight. An ending still gives it to any save that lacks it.</span></li>
+          <li><b>One fix</b><span>Today the form makes every enemy within 24 blocks run away, bosses too. Bosses will stand their ground. Your half again on every hit stays.</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What the audit found</h2>
+  <ol class="find">
+    <li><b>Two rungs already come from rank fights</b> and can't be missed: the rope at D, flight at A.</li>
+    <li><b>The two between them wait on things the game never shows.</b> The leap on a hidden count. Wings on a platform nobody points at. The movement code puts no row on the Tasks page at all.</li>
+    <li><b>The leap's gate is offered once, by one toast, and is tracked nowhere.</b></li>
+    <li><b>A higher rung hands you the lower ones in silence.</b> A sky core gives the leap without its course. The Sky Warden's roof can give wings, the leap and flight in one go, mid-fight, to someone who has never glided. That is why nothing is truly impossible today. It is also why nothing gets taught.</li>
+    <li><b>Three built things can't happen in a new world any more.</b> The vault's rope scene, the Sky Leviathan's trial, and the first vault's promise. The Tasks page still asks for the first of them: a card reads "Keep the Tether Vow", and it can never be done.</li>
+    <li><b>The K menu's page about the ladder is wrong in two of five rows,</b> and so are the level road at 73 and the Wings trail.</li>
+    <li><b>The top rung is given after the story ends.</b></li>
+    <li><b>Every unlock is a title and one line.</b> Six seconds of rising light, then words such as "In the air: jump again · sprint to dash · sneak high up to slam." Nothing asks you to do the move. Three of the titles are riddles by your own plain-speech rule.</li>
+    <li><b>The moment can be buried.</b> The vault's scene does not hold other messages back, as the other gifts' scene does. In today's tour of the vault, where the player was moved there by command, its words were drawn underneath the vault's own discovery card and neither could be read.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>The moment itself: one kit for every unlock</h2>
+  <p>You asked for it to be clear the moment you unlock it. So the moment is built once and used for every rung, and for the six new moves in Rope and Wings. It is made from parts the game already has.</p>
+  <div class="kit">
+    <div class="tw"><table>
+      <tr><th>Part</th><th>What you see</th><th>Made from</th></tr>
+      <tr><td><b>The gift</b></td><td>Rising light, one plain sentence, two and a half seconds. Never over a fight, and nothing else is shown over it: other messages wait their turn.</td><td>Today's scene, the message director</td></tr>
+      <tr><td><b>Your key, on the thing</b></td><td>Your own binding as a key cap, with up to seven words, pinned to what you should aim at. Off screen it sits at the edge with an arrow.</td><td>The K menu's key caps, the rope's marker</td></tr>
+      <tr><td><b>The gold figure</b></td><td>A pale gold you does the move once, ahead of you. Again after 12 seconds if you haven't.</td><td>The Gauntlet's ghost</td></tr>
+      <tr><td><b>Do it once</b></td><td>The prompt leaves at the tick you do it.</td><td>The tips' own check</td></tr>
+      <tr><td><b>The card</b></td><td>Four seconds, bottom centre: the move's name and its keys. No sentence. The same row then lives in K, Powers.</td><td>The K menu's kit</td></tr>
+    </table></div>
+    <div class="side">
+      @@FIG:built_k@@
+      @@FIG:built_tasks@@
+      <p class="small muted">One row at a time, never a list. It says the kind of place. It never says what the move is, and it never names a fight.</p>
+    </div>
+  </div>
+  <div class="tw"><table>
+    <tr><th>Today's words</th><th>Proposed, in plain speech</th></tr>
+    <tr><td>"The vault knows you."</td><td>"The vault has recognised the chain."</td></tr>
+    <tr><td>"Your legs remember the air." · "Jump. In the air, jump again."</td><td>"You can jump again in the air now." · <kbd class="cap">Space</kbd> Press again in the air</td></tr>
+    <tr><td>"The leap is yours." · "In the air: jump again · sprint to dash · sneak high up to slam."</td><td>"That was the leap. It's yours." and the card of three keys</td></tr>
+    <tr><td>"Wings of light." · "In the air: jump, then jump again to open them."</td><td>"You have wings now." · at the pier: <kbd class="cap">Space</kbd> Run off the end and press this in the air</td></tr>
+    <tr><td>"Sovereign." · "Aether full, press U: thirty seconds as the sky's own…"</td><td>"You can take the Sovereign's form now." · <kbd class="cap">U</kbd> Press when the gold line is full</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Never stuck</h2>
+  <div class="tw"><table>
+    <tr><th>If…</th><th>Then</th></tr>
+    <tr><td>You never go to the place</td><td>The row stays for good. The next rank fight hands the rung down as it does today, and its lesson is owed to you the next time you are free. No more silent hand-me-downs.</td></tr>
+    <tr><td>The place that lit up is gone or far</td><td>Any place of that kind will do. The spawn vault is in every world, 240 to 360 blocks from where you started.</td></tr>
+    <tr><td>There is no spire near you</td><td>The second way opens the leap: enough rope. With the new sling that is a few minutes of swinging, not 200 hidden throws.</td></tr>
+    <tr><td>You fall during a lesson</td><td>Caught as a soft landing. It costs a climb, never your pack.</td></tr>
+    <tr><td>You log out halfway</td><td>The lesson plays again. A rung given is never taken back.</td></tr>
+    <tr><td>You fly or build up to a core or a crown</td><td>Refused, as today. It answers only to the rope.</td></tr>
+  </table></div>
+  <p class="small muted">Measured from the worlds' own placement rules: the nearest vault is a median 260 to 350 blocks away, the nearest Tether Spire 160 to 290, the nearest sky platform 280 to 380.</p>
+</section>
+
+<section>
+  <h2>Three ways to do it</h2>
+  <div class="three">
+    <div class="opt"><span class="eyebrow" style="color:var(--muted)">A · Repair in place</span><p>Keep every rule. Add a Tasks row for the leap and for wings, track the leap's gate, fix the stale texts.</p><p class="muted">3 to 5 hours. The hidden count, the silent hand-me-downs and the title-and-a-line all stay.</p></div>
+    <div class="opt pick"><span class="eyebrow">B · One road · recommended</span><p>A rank fight opens a rung, a place gives it, the way out is the move. Built from the fights, the vault, the course, the platform and the windways that exist.</p><p class="muted">16 to 24 hours. It is your own sentence, and it gives the world's places a reason again.</p></div>
+    <div class="opt"><span class="eyebrow" style="color:var(--muted)">C · All inside the rank fights</span><p>D the rope, C the leap, B wings, A flight, Sovereign the form, each handed over mid-fight.</p><p class="muted">Nothing can be missed and nothing is found. Wings move from 10 hours to 24, and every move is taught while a boss hits you.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Proof, order and cost</h2>
+  <p>Coded whole and tested once at the end, by your rule of today. One switch, <code>wayUp</code>, puts every rule back exactly as it is now.</p>
+  <div class="tw"><table>
+    <tr><th>Stage</th><th>What</th><th>Hours of building</th></tr>
+    <tr><td class="n">0</td><td>A test that walks a fresh player up the ladder and fails on today's gaps. The stale texts.</td><td class="n">1 to 2</td></tr>
+    <tr><td class="n">1</td><td>The rule: a place wakes, the one Tasks row, the "lesson owed" flag.</td><td class="n">3 to 4</td></tr>
+    <tr><td class="n">2</td><td>The moment's kit: the key on the thing, the gold figure, the card, the K rows.</td><td class="n">4 to 6</td></tr>
+    <tr><td class="n">3</td><td>The five places: vault, crown and course, platform and first flight, the Sky Warden's roof, the last fight.</td><td class="n">4 to 6</td></tr>
+    <tr><td class="n">4</td><td>The same lesson for the six new moves, once Rope and Wings is merged.</td><td class="n">2 to 3</td></tr>
+    <tr><td class="n">5</td><td>Words, the one test pass on GitHub, one look tour.</td><td class="n">2 to 3</td></tr>
+    <tr><td></td><td><b>One session</b></td><td class="n"><b>16 to 24</b></td></tr>
+  </table></div>
+  <p class="small muted">Sized from this project's own history: the vault's rope scene with its test and tour was one commit on 25 October, and the whole progression plan was built in a day on 26 October. What could move it: your first play of the vault.</p>
+</section>
+
+<section id="decide">
+  <h2>What you decide</h2>
+  <p class="muted">Yes or no on each, with a note if you want something changed. Your answers save as you click.</p>
+  <div class="tally"><span id="tally">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to everything left</button></div>
+  <div class="cards" id="cards"></div>
+</section>
+
+</div>
+
+<script>
+const DECISIONS=[
+ ["The rule for the whole ladder: a rank fight opens a rung, a place gives it, and the way out of the place is the move.","Yes. It is what you described, and most of it is already built."],
+ ["The rope: the Ringer's chain stays cold until a vault wakes it, with the scene that pulls you up the pylon.","Yes. It pays the first vault's promise and gives the rope a real first use. Say no and the chain works the second the Ringer falls, as now, and the vault only teaches."],
+ ["The leap: opened by the first crown you reach by rope (a Tether Spire or a great tree), with enough rope as a second way. Its gate stands where you climbed and stays on Tasks.","Yes. A thing you can see replaces a count you can't."],
+ ["Wings: the C rank fight lights up the nearest sky platform, with a needle and a distance. The core's rule stays.","Yes. Today nothing tells you to look up."],
+ ["The first flight: after the core, a line of light off the pier and the windway carry your first glide.","Yes. The way down becomes the lesson."],
+ ["The open sky stays inside the A rank fight, and the Sky Leviathan's separate trial is retired.","Yes. It can't be reached today, and three texts still send you to it."],
+ ["The Sovereign's form is given by the last rank fight, before the Seed, and bosses no longer run from it.","Yes. The hardest fight pays the last rung, and you get to use it in the finale. Say no to keep it after an ending."],
+ ["One kit for every unlock: your key on the thing, a gold figure doing it once, do it once, then a card of keys. No scene during a fight.","Yes."],
+ ["The plain-speech words in the table, in place of today's titles.","Yes. Mark any line you would say differently."],
+ ["One row on Tasks under Gates and rank, saying the kind of place and how far. It never says what the move is or names a fight.","Yes."],
+ ["A rung handed down by a later fight still owes you its lesson, played the next time you are free.","Yes. This is what keeps the safety net from being silent."],
+ ["Build all of it in one session, about 16 to 24 hours, then one test pass, then your play from a fresh world to the vault.","Yes, in that order."]
+];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cardsEl=document.getElementById("cards"),tally=document.getElementById("tally"),allYes=document.getElementById("allyes");
+let db=null,dbReady=false,canWrite=true,answers={};
+cardsEl.innerHTML=DECISIONS.map((d,i)=>{const id="d"+(i+1);return `<div class="dcard" id="card-${id}"><h3><small>${i+1}</small><span>${esc(d[0])}</span></h3><p class="rec"><b>My recommendation:</b> ${esc(d[1])}</p><div class="ans"><button type="button" id="${id}-yes" data-id="${id}" data-v="yes" aria-pressed="false">Yes</button><button type="button" id="${id}-no" data-id="${id}" data-v="no" aria-pressed="false">No</button><span class="st" id="${id}-st"></span></div><textarea id="${id}-note" data-id="${id}" rows="1" placeholder="Anything to change? (optional)" aria-label="Note on decision ${i+1}"></textarea></div>`}).join("");
+function renderAns(){
+  let yes=0,no=0;
+  DECISIONS.forEach((d,i)=>{const id="d"+(i+1),a=answers[id]||{};
+    if(a.answer==="yes")yes++;if(a.answer==="no")no++;
+    const y=document.getElementById(id+"-yes"),n=document.getElementById(id+"-no"),t=document.getElementById(id+"-note");
+    y.setAttribute("aria-pressed",a.answer==="yes");n.setAttribute("aria-pressed",a.answer==="no");
+    y.disabled=n.disabled=t.disabled=!canWrite||!db;
+    if(document.activeElement!==t&&(a.note||"")!==t.value)t.value=a.note||"";
+  });
+  const left=DECISIONS.length-yes-no;
+  tally.textContent=!dbReady?"Loading your answers…":!db?"Answers can't be saved in this view. Open the page while signed in.":`${yes} yes · ${no} no · ${left} to answer`;
+  allYes.hidden=!(db&&canWrite&&left>0);
+}
+async function save(id,patch){
+  if(!db)return;
+  const st=document.getElementById(id+"-st");
+  const next=Object.assign({answer:null,note:""},answers[id],patch,{at:new Date().toISOString()});
+  answers[id]=next;renderAns();st.textContent="saving…";
+  try{await db.doc("answers/"+id).set(next);st.textContent="saved";}
+  catch(e){if(e&&(e.code==="permission_denied"||e.code==="not_granted"||e.code==="invalid_argument")){canWrite=false;st.textContent="only Euan can answer";renderAns();}else st.textContent="not saved, try again";}
+}
+cardsEl.addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b){const id=b.dataset.id,cur=answers[id]&&answers[id].answer;save(id,{answer:cur===b.dataset.v?null:b.dataset.v});}});
+cardsEl.addEventListener("change",e=>{if(e.target.matches("textarea"))save(e.target.dataset.id,{note:e.target.value.trim()});});
+allYes.addEventListener("click",async()=>{for(let i=1;i<=DECISIONS.length;i++){const id="d"+i;if(!(answers[id]&&answers[id].answer))await save(id,{answer:"yes"});}});
+renderAns();
+(async()=>{
+  try{db=window.claude&&window.claude.use?await window.claude.use("db"):null;}catch(e){db=null;}
+  dbReady=true;
+  if(!db){renderAns();return;}
+  try{const user=await window.claude.use("user");if(user&&(await user.can("data.write"))===false)canWrite=false;}catch(e){}
+  const timer=setTimeout(renderAns,10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);for(const d of snap.docs)if(d.exists)answers[d.id]=Object.assign({},d.data());renderAns();},()=>{clearTimeout(timer);renderAns();});
+  renderAns();
+})();
+</script>

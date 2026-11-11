@@ -1,0 +1,107 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 4,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:gold_ingot",
+          "type": "minecraft:item",
+          "weight": 5
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 4,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:emerald",
+          "type": "minecraft:item",
+          "weight": 5
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 3,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:experience_bottle",
+          "type": "minecraft:item",
+          "weight": 5
+        },
+        {
+          "name": "minecraft:diamond",
+          "type": "minecraft:item",
+          "weight": 2
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 2,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:ender_pearl",
+          "type": "minecraft:item",
+          "weight": 3
+        }
+      ],
+      "rolls": 2
+    },
+    {
+      "conditions": [
+        {
+          "chance": 0.15,
+          "condition": "minecraft:random_chance"
+        }
+      ],
+      "entries": [
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 2,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:diamond",
+          "type": "minecraft:item",
+          "weight": 3
+        },
+        {
+          "name": "minecraft:golden_apple",
+          "type": "minecraft:item",
+          "weight": 2
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:finds/b_small",
+  "type": "minecraft:chest"
+}

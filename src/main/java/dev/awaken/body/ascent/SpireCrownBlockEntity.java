@@ -37,6 +37,11 @@ public class SpireCrownBlockEntity extends BlockEntity {
     static final int SCHEMA = 2, KEEP = 5;
     /** The deck: within this of the crown block's centre. The plaza: within this of the column's foot (a hero tree's ground). */
     static final double DECK = 2.6, PLAZA = 7.0, HERO_PLAZA = 22.0;
+    /**
+     * The deck's rim, corners and all (the deck is five blocks square, its corners 3.5 from the crown): a climb that ends
+     * standing there has reached the crown as far as The Way Up cares (SPEC §63.8), though the record's watch is the deck.
+     */
+    static final double RIM = 3.9;
     /** Which site it crowns (SPEC §17.11, §17.16): a Tether Spire, the Elder Colossus, the Lumen Spire. */
     public static final int SITE_SPIRE = 0, SITE_COLOSSUS = 1, SITE_LUMEN = 2;
     private int site = SITE_SPIRE, ground = Integer.MIN_VALUE;
@@ -114,6 +119,9 @@ public class SpireCrownBlockEntity extends BlockEntity {
             double lo = be.site == SITE_SPIRE ? 0.5 : -1.5, hi = be.site == SITE_SPIRE ? 3.5 : 4.5;
             if (h <= be.plaza() && p.getY() >= floor + lo && p.getY() < floor + hi) be.leftPlaza.put(p.getUUID(), now);
             else if (h <= DECK && Math.abs(p.getY() - pos.getY()) < 1.5) be.reached(p, now);
+            // The Way Up: a climber who stops on the rim (a mantle's end, a corner) never walks into the deck's watch,
+            // and the leap must not hang on two more steps; standing there is the crown reached
+            else if (h <= RIM && p.onGround() && Math.abs(p.getY() - pos.getY()) < 1.5) WayUp.crownReached(p, pos, floor);
         }
     }
 
@@ -126,6 +134,11 @@ public class SpireCrownBlockEntity extends BlockEntity {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
         }
+        // The Way Up (SPEC §63.2): the first crown reached by rope opens the Leaper's Gauntlet at its foot. By the line is
+        // enough (it asks that itself): the crown's own record below also wants a third of the last 20 s spent in the
+        // air, which a careful climber who stops on each platform to aim does not have, and the leap must not hang on a
+        // stopwatch
+        WayUp.crownReached(p, worldPosition, plazaY());
         if (!ArrivalHooks.byMovement(p) || !Ascent.arrivedByMovement(p, 20)) {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;

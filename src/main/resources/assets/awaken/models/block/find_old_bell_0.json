@@ -1,0 +1,209 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "up": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      },
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        3,
+        12
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "up": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      },
+      "from": [
+        5,
+        3,
+        5
+      ],
+      "to": [
+        11,
+        9,
+        11
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#verdigris"
+        },
+        "east": {
+          "texture": "#verdigris"
+        },
+        "north": {
+          "texture": "#verdigris"
+        },
+        "south": {
+          "texture": "#verdigris"
+        },
+        "up": {
+          "texture": "#verdigris"
+        },
+        "west": {
+          "texture": "#verdigris"
+        }
+      },
+      "from": [
+        6,
+        9,
+        6
+      ],
+      "to": [
+        10,
+        12,
+        10
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "up": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      },
+      "from": [
+        7,
+        12,
+        7
+      ],
+      "to": [
+        9,
+        14,
+        9
+      ]
+    }
+  ],
+  "textures": {
+    "bronze": "minecraft:block/weathered_copper",
+    "particle": "minecraft:block/weathered_copper",
+    "verdigris": "minecraft:block/oxidized_copper"
+  }
+}

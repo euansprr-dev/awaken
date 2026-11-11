@@ -234,7 +234,7 @@ public final class StoppedWorks extends GeneratedCrawl<StoppedWorks.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffd8a0, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x6a4a2a, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0xffb050, 18, 0.9F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a foundry: machine halls, a casting pit, a gantry along one wall, and everything that hung from the roof still hanging. */
@@ -242,5 +242,18 @@ public final class StoppedWorks extends GeneratedCrawl<StoppedWorks.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.PIT, Cave.Form.TERRACE), List.of(Arena.Plan.SQUARE, Arena.Plan.RING),
                 List.of(Arena.Plan.SQUARE, Arena.Plan.NAVE), List.of(Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.BRIDGE, Chasm.Kind.FALLING), true, 3.0, 5);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): brick footings, iron under the roof steps, shavings on the plate, cables hanging. */
+    @Override
+    protected Trim trim(StoppedWorks.M m) {
+        return new Trim(named("foundry_brick_stairs"), named("foundry_iron_stairs"), null, named("foundry_shavings"),
+                List.of(), namedAll("foundry_cables"), 0.6);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xffc070;
     }
 }

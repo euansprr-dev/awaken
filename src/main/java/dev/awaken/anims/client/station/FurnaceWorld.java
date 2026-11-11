@@ -46,7 +46,10 @@ final class FurnaceWorld {
 
     static void init(IEventBus modBus) {
         FurnaceModels.init(modBus);
-        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(FurnaceContents.Update.TYPE, (m, ctx) -> accept(m)));
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
+            e.register(FurnaceContents.Update.TYPE, (m, ctx) -> accept(m));
+            e.register(dev.awaken.anims.station.TouchKinds.Body.TYPE, (m, ctx) -> StationBodies.touched(m));
+        });
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, FurnaceWorld::render);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> clear());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
@@ -125,12 +128,30 @@ final class FurnaceWorld {
             StationView.spot(station, slot, POINT, 0);
             ItemStackRenderState model = view.items[slot];
             mc.getItemModelResolver().updateForTopItem(model, item, ItemDisplayContext.FIXED, mc.level, null, slot);
-            pose.pushPose();
-            pose.translate(POINT[0] - camera.x, POINT[1] - camera.y, POINT[2] - camera.z);
-            pose.rotateDegrees(Axis.YP, 180 - yaw);
-            pose.scale(.24F, .24F, .24F);
-            model.submit(pose, event.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
-            pose.popPose();
+            // while you work it (SPEC §65.6): a stack your hand just set down goes in from where it was held, and what
+            // cooks draws in and trembles through the last third of its cooking
+            double in = 0, shake = 0;
+            float size = .24F;
+            if (screen != null) {
+                in = StationClient.unsettled(slot) * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD);
+                if (slot == 0 && screen.getMenu() instanceof net.minecraft.world.inventory.AbstractFurnaceMenu f && f.getBurnProgress() > 0.67F) {
+                    float k = (f.getBurnProgress() - 0.67F) / 0.33F;
+                    size *= 1F - 0.07F * k;
+                    shake = 0.004 * k * Math.sin((System.nanoTime() % 1_000_000_000L) / 1e9 * Math.PI * 2 * 11);
+                }
+            }
+            // a stack sits as a few, one behind the next (SPEC §65.3)
+            int n = screen == null ? 1 : StationClient.pile(item.getCount());
+            for (int k = 0; k < n; k++) {
+                pose.pushPose();
+                pose.translate(POINT[0] - fx * in + station.rx() * (0.03 * k + shake) - camera.x, POINT[1] + 0.012 * k - camera.y,
+                        POINT[2] - fz * in + station.rz() * (0.03 * k + shake) - camera.z);
+                pose.translate(fx * 0.02 * k, 0, fz * 0.02 * k);
+                pose.rotateDegrees(Axis.YP, 180 - yaw);
+                pose.scale(size, size, size);
+                model.submit(pose, event.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
+                pose.popPose();
+            }
         }
     }
 }

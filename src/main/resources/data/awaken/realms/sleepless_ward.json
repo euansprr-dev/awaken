@@ -14,13 +14,15 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_nightmare"
+      "awaken:realm/sleepless_ward"
     ],
     "lens": "sleepless_ward",
     "air": [
+      "shaft_dust",
       "mist",
       "dust",
-      "moths"
+      "moths",
+      "procession"
     ]
   },
   "life": {

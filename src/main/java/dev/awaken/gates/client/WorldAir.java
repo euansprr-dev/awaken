@@ -136,7 +136,8 @@ final class WorldAir {
     /** Motes turning slowly in the light shafts near you. */
     private static void shaftDust(ClientLevel level, Player pl, FloorAir air, BlockPos o, RandomSource r) {
         if (air.shafts().isEmpty()) return;
-        for (int t = 0; t < 2; t++) {
+        // as many tries as a third of the shafts, so one shaft among twenty is as full as one among five
+        for (int t = 0, n = Math.max(2, Math.min(8, air.shafts().size() / 3)); t < n; t++) {
             FloorAir.Shaft s = air.shafts().get(r.nextInt(air.shafts().size()));
             double f = r.nextDouble();
             Vec3 p = at(o, s.x0() + (s.x1() - s.x0()) * f + 0.5, s.y0() + (s.y1() - s.y0()) * f + 0.5, s.z0() + (s.z1() - s.z0()) * f + 0.5)
