@@ -51,8 +51,9 @@ public final class LensGlow extends AbstractTexture {
 
     private LensGlow() {
         var device = RenderSystem.getDevice();
+        // (a clear needs the texture to be both a render attachment and a copy's destination)
         placeholder = device.createTexture(() -> "awaken lens glow placeholder",
-                GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, 1, 1, 1, 1);
+                GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, 1, 1, 1, 1);
         placeholderView = device.createTextureView(placeholder);
         // a new texture's contents are whatever the memory held: this one must read as "no light"
         device.createCommandEncoder().clearColorTexture(placeholder, CLEAR.get());
