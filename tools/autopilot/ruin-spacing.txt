@@ -1,0 +1,84 @@
+# Room between the blue rope sites (SPEC §17.11 "Room between them"): the census both ways from the seed and the land's
+# own biomes, then the seam. A Tether Spire spot that today's rule makes and the new one passes over is made under
+# today's rule (old land), the rule is switched on and new land is made beside it; the old spire must still stand whole,
+# the census of what really stands must find nothing off the grid or cut off, and the Way Up's needle for the climb must
+# still name the old spire (the locator reads its saved start). Then fresh land far off: a spire the rule keeps.
+# The numbers are in latest.log ("[above] spacing census", "[above] spacing goto", "Way up:").
+# Seed 4245 (way-up-leap.txt's world). Run on CI: tools/tour-ci.sh tools/autopilot/ruin-spacing.txt 1500
+world autopilot_ruin_spacing survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 1000000
+cmd time set 5500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# the numbers both ways, twelve kilometres square round the start (no chunk made)
+cmd awaken above ruin spacing census 6000
+wait 40
+info
+# old land: today's rule alone, beside a spire spot the new rule passes over
+cmd awaken above ruin spacing old
+cmd gamemode spectator
+cmd awaken above ruin spacing goto passed
+wait 200
+hud off
+shot space_01_old_rule_spire
+hud on
+# new land beside it, with the rule
+cmd awaken above ruin spacing new
+cmd tp @s ~600 ~ ~
+wait 200
+hud off
+shot space_02_new_land_beside
+hud on
+# back: made land keeps what stands in it
+cmd tp @s ~-600 ~ ~
+wait 200
+hud off
+shot space_03_old_spire_still_whole
+hud on
+cmd awaken above ruin spacing census 1800
+wait 40
+# the Way Up's climb (D-rank with the rope, no leap yet) must point at the old spire
+cmd gamemode survival
+cmd awaken admin rankup
+wait 200
+key dismiss
+wait 10
+screen close
+cmd awaken ascent grant tether
+wait 120
+cmd awaken ascent way
+wait 120
+cmd awaken ascent way
+wait 20
+screen band tasks
+wait 30
+shotnow space_04_tasks_climb_row
+screen close
+# fresh land far off, all of it made with the rule: the nearest spire it keeps, whole
+cmd gamemode spectator
+cmd tp @s ~2600 ~ ~
+wait 100
+cmd awaken above ruin spacing goto kept
+wait 200
+hud off
+shot space_05_new_rule_spire
+hud on
+cmd awaken above ruin spacing census 1800
+wait 40
+info
+quit
