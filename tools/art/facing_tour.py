@@ -6,7 +6,8 @@ Every weapon at the hit in first person (the pose just before the hit and on it,
 mid-combo in third person (strike 1 into strike 2, filmed at a tenth of play's speed, from behind its right shoulder),
 so a sheet shows the part that meets the husk: a blade's edge, an axe's bit, a hammer's face, a point. Each style's
 forged (C) weapon and the Toll play every move in first person. The forged picks dig (a pick's hold is one per form,
-every tier the same). Pictures are filmed small (arms film, a third of the frame) so five tours fit one fetch.
+every tier the same). Pictures are films at half the frame (arms film's downscale 3 falls to 2 on the runner's 2560 x
+1440); third person narrows the view to fov 50 so the weapon reads.
 
     python3 tools/art/facing_tour.py                      writes tools/autopilot/arms-facing-{a..e}.txt
     tools/tour-ci.sh tools/autopilot/arms-facing-a.txt 3600
@@ -90,7 +91,8 @@ def timing():
 
 
 def fp_lines(item, name, sid, moves, tim, turns=None):
-    """First person: the weapon posed a tick before each move's hit and on it, each a one-picture film."""
+    """First person: the weapon posed a tick before each move's hit and on it, each a short film of the held pose (a
+    film of one tick ends in the tick it starts, before a frame is drawn)."""
     out = [f"cmd item replace entity @s weapon.mainhand with {item}", "wait 30"]
     for mv in moves:
         if mv not in tim[sid]:
@@ -100,7 +102,7 @@ def fp_lines(item, name, sid, moves, tim, turns=None):
         if turns and mv in turns:  # a one-faced head half way through its turn into the blow
             marks.insert(0, ("t", turns[mv]))
         for tag, t in marks:
-            out += [f"arms pose {mv} {t / total:.4f}", "wait 4", f"arms film fa_{name}_{mv}_{tag} 1 1 3", "wait 2"]
+            out += [f"arms pose {mv} {t / total:.4f}", "wait 4", f"arms film fa_{name}_{mv}_{tag} 3 1 3", "wait 4"]
     out.append("arms pose off")
     return out
 
@@ -162,14 +164,14 @@ def picks_tour():
               "cmd fill -8 201 9 8 205 9 minecraft:stone", "cmd fill 2 201 8 7 204 8 minecraft:dirt",
               "cmd fill -7 201 8 -2 204 8 minecraft:stone", "wait 20"]
     for cam in ("first", "back"):
-        lines += [f"camera {cam}", "wait 4"]
+        lines += [f"camera {cam}", f"opt fov {70 if cam == 'first' else 50}", "wait 4"]
         for form in PICKS:
             for ground, x in (("stone", -4.5), ("dirt", 4.5)):
                 if ground == "dirt" and form != "mattock":
                     continue
                 name = f"fp_{form}_{ground}_{'1p' if cam == 'first' else '3p'}"
                 lines += [f"cmd tp @s {x} 201 6.5 0 12", f"cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_{form}",
-                          "wait 30", f"arms film {name}_rest 1 1 3", "wait 3", f"arms film {name} 16 0.5 3", "wait 1",
+                          "wait 30", f"arms film {name}_rest 3 1 3", "wait 4", f"arms film {name} 16 0.5 3", "wait 1",
                           "cmd awaken delve demo strike", "wait 17"]
     lines.append("quit")
     return lines
@@ -191,10 +193,10 @@ def write():
             lines += ["arms waitserver 40", f"arms studio {first}", "arms waitserver 100", "camera first", "look 0 6", "wait 20"]
             for item, name, sid, moves, turns in ws:
                 lines += fp_lines(item, name, sid, moves, tim, turns)
-            lines += ["camera back", "cmd awaken fx sidecam 35", "look 0 6", "wait 20"]
+            lines += ["camera back", "cmd awaken fx sidecam 35", "opt fov 50", "look 0 6", "wait 20"]
             for item, name, sid, moves, turns in ws:
                 lines += tp_lines(item, name, sid, tim)
-            lines += ["cmd awaken fx sidecam 0", "quit"]
+            lines += ["cmd awaken fx sidecam 0", "opt fov 70", "quit"]
         path = os.path.join(TOURS, f"arms-facing-{g}.txt")
         with open(path, "w") as f:
             f.write("\n".join(lines) + "\n")
