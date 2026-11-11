@@ -50,7 +50,10 @@ public final class LensClient {
     // tick work)
     static final Identifier LITE = Awaken.id("lens_lite");
     // the hand's own depth (LensHand): which pixels are the hand and what it holds
-    static final Identifier HAND = Awaken.id("lens_hand_depth");
+    // (a chain's "awaken:lens_hand_depth" is this path: the game reads a chain's textures from textures/effect/. The
+    // first build registered the bare name, the chain found nothing there and read the game's missing-texture
+    // checkerboard as the hand: two quarters of the screen unlit, run 42985247494)
+    static final Identifier HAND = Awaken.id("textures/effect/lens_hand_depth.png");
     private static LensHand hand;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");

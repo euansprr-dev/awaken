@@ -73,7 +73,7 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     // how much of a mirror it is: little straight down, nearly all toward the horizon (a wider curve than glass's, so
     // a lake across the way is already sky)
     float cosv = max(-V.y, 0.0);
-    float fres = mix(0.05, 1.0, pow(1.0 - cosv, 2.6));
+    float fres = mix(0.05, 0.86, pow(1.0 - cosv, 2.6));
 
     // --- the mirror: the Air's sky, its clouds, the land over the far shore
     vec3 refl = airSky(Rs, f22.xyz, rain);
@@ -146,7 +146,7 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     // the light on it: the hour's, Lens's own shade (the same picture lit and unlit differ by nothing else), the
     // darker water a dark place's own
     float shade = clamp(luma(c) / max(luma(raw), 0.02), 0.25, 1.6);
-    float hour = (0.10 + 0.74 * hr.x + 0.22 * hr.y) * (1.0 - 0.35 * rain);
+    float hour = (0.17 + 0.67 * hr.x + 0.22 * hr.y) * (1.0 - 0.35 * rain);
     float murk = clamp(max(raw.r, max(raw.g, raw.b)) * 2.2, 0.25, 1.0);
     vec3 body = mix(clear * 0.80, deep, far) * hour * shade * murk;
     // wind lanes read on the body too: a crest a little lighter
@@ -162,7 +162,7 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
         float lv = waterNoise(q * 0.9 + vec2(t * 0.060, t * 0.045)) + 0.5 * waterNoise(q * 2.3 - vec2(t * 0.050, -t * 0.070));
         float line = 1.0 - smoothstep(0.02, 0.07, abs(fract(lv * 2.0) - 0.5));
         float crest = smoothstep(0.50, 0.78, lane);
-        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * crest * fine * 0.34 * shade;
+        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * crest * fine * 0.44 * shade;
     }
 
     // --- the road of the sun, or the moon: texels that catch it and twinkle. Far out they are their own average
@@ -172,7 +172,8 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     if (road * light > 0.002) {
         float beat = floor(t * 7.0);
         float dice = waterHash(tx + beat * 13.7);
-        float catches = mix(road * 0.55, step(1.0 - road * 0.9, dice), fine);
+        // (each catching texel its own brightness: a field of equal white squares read as a floor of tiles)
+        float catches = mix(road * 0.40, step(1.0 - road * 0.62, dice) * (0.45 + 0.55 * waterHash(tx * 0.71 + beat)), fine);
         // a few are four-pointed: a seed texel and the four beside it
         float star = 0.0;
         if (fine > 0.3) {
@@ -181,23 +182,25 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
             star = 2.2 * waterSeed(tx, beat2, rate) + waterSeed(tx + vec2(1.0, 0.0), beat2, rate) + waterSeed(tx - vec2(1.0, 0.0), beat2, rate)
                     + waterSeed(tx + vec2(0.0, 1.0), beat2, rate) + waterSeed(tx - vec2(0.0, 1.0), beat2, rate);
         }
-        col += lightCol * (catches * 1.5 + star * 1.2) * light * (0.35 + 0.65 * fres);
+        col += lightCol * (catches * 1.25 + star * 1.1) * light * (0.35 + 0.65 * fres);
     }
     // by night the water holds a scatter of stars
     float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rain);
     if (dark > 0.0 && fine > 0.3) {
         float beat3 = floor(t * 2.0);
-        float s = 2.0 * waterSeed(tx + 31.0, beat3, 0.0016) + waterSeed(tx + vec2(32.0, 31.0), beat3, 0.0016) + waterSeed(tx + vec2(30.0, 31.0), beat3, 0.0016)
-                + waterSeed(tx + vec2(31.0, 32.0), beat3, 0.0016) + waterSeed(tx + vec2(31.0, 30.0), beat3, 0.0016);
-        col += vec3(0.62, 0.74, 1.0) * s * 0.55 * dark * fres;
+        float s = 2.0 * waterSeed(tx + 31.0, beat3, 0.004) + waterSeed(tx + vec2(32.0, 31.0), beat3, 0.004) + waterSeed(tx + vec2(30.0, 31.0), beat3, 0.004)
+                + waterSeed(tx + vec2(31.0, 32.0), beat3, 0.004) + waterSeed(tx + vec2(31.0, 30.0), beat3, 0.004);
+        col += vec3(0.62, 0.74, 1.0) * s * 0.60 * dark * (0.3 + 0.7 * fres);
     }
 
     // --- the waterline: a pale line that breathes a texel at a time, a thin ring off it, aqua shallows
     if (shore < 2.0) {
-        float breath = sin(t * 0.9 + waterHash(floor(w.xz)) * 6.2832);
-        float width = (1.5 + floor(1.5 + 1.4 * breath)) / 16.0;
+        // (its edge is ragged, a texel or two by a slow noise along the shore, and the ring is short dashes that come
+        // and go: a ruled band with a dashed line beside it read as a road's edge, run 42986127640)
+        float breath = sin(t * 0.9 + waterNoise(q * 0.7) * 6.2832);
+        float width = (0.5 + floor(1.0 + 1.2 * breath + 2.4 * waterNoise(q * 3.1 + vec2(t * 0.11, 0.0)))) / 16.0;
         float foam = 1.0 - step(width, shore);
-        float ring = step(abs(shore - (0.42 + 0.10 * breath)), 0.5 / 16.0) * 0.40 * step(0.4, waterHash(tx + floor(t * 2.0)));
+        float ring = step(abs(shore - (0.44 + 0.12 * breath)), 0.5 / 16.0) * 0.30 * step(0.72, waterNoise(q * 2.2 + vec2(0.0, t * 0.35)));
         vec3 pale = (vec3(0.90, 0.98, 1.0) * hour + lightCol * 0.2 * light) * shade;
         col = mix(col, pale, max(foam * 0.78, ring) * (0.4 + 0.6 * fine));
     }
