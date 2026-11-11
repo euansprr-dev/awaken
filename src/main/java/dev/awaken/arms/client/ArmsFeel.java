@@ -186,9 +186,9 @@ final class ArmsFeel implements CombatFeedback.Sink {
     private static float shakeAmp, shakeTotal;
     private static long shakeFrom;
     private static final float SHAKE_HZ_A = 23F, SHAKE_HZ_B = 31F;
-    /** The frame's edges flashing white-gold (0..1, fading over seven ticks), for {@link ArmsHud}. */
+    /** The frame's edges flashing white-gold (0..1, fading over six ticks), for {@link ArmsHud}. */
     static float flash, flashWas;
-    private static final float FLASH_FADE = 1F / 7F;
+    private static final float FLASH_FADE = 1F / 6F;
 
     private static void shake(ViewportEvent.ComputeCameraAngles e) {
         if (shakeAmp <= 0) return;

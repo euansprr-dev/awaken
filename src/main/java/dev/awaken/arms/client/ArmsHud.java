@@ -90,11 +90,14 @@ final class ArmsHud {
 
     private static final int CLASH_LIGHT = 0xFFE3A0;
 
-    /** The clash that broke a stance (SPEC §25 "The clash"): the same falloff from the corners, white-gold, gone in seven ticks. */
+    /**
+     * The clash that broke a stance (SPEC §25 "The clash"): the same falloff from the corners, white-gold, gone in six
+     * ticks; at most 0.55 (filmed at 0.85 it washed half the frame cream).
+     */
     private static void clashEdge(GuiGraphicsExtractor g, float partial) {
         float f = ArmsFeel.flashWas + (ArmsFeel.flash - ArmsFeel.flashWas) * partial;
         if (f < 0.01F) return;
-        float a = Mth.clamp(f * f * 0.85F, 0, 0.85F);
+        float a = Mth.clamp(f * f * 0.55F, 0, 0.55F);
         g.blit(RenderPipelines.GUI_TEXTURED, EDGE, 0, 0, 0F, 0F, g.guiWidth(), g.guiHeight(), 256, 256, 256, 256, ARGB.color(Math.round(a * 255), CLASH_LIGHT));
     }
 

@@ -7994,7 +7994,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     (0xFFE3A0) spark of the size above: its flash where the weapons met and 21 more sparks at size 1.9 (2.5 times
     today's 14), 25 thrown faster (wider) at 2.4; they go the way the turned blow went: on past the guard and across it,
     away from the side it came from (met head-on, out past the sword hand), a little up. The break flashes the frame's
-    edges white-gold (the low-health falloff, at most 0.85, gone in 7 ticks). Those near see the light by its size.
+    edges white-gold (the low-health falloff, at most 0.55, gone in 6 ticks). Those near see the light by its size.
     Sound, first picks: our steel by size, lower and longer as it grows (light: a trident striking the ground, an anvil
     landing at 1.15, the shield's knock; heavy: the anvil at 0.9, the mace on the ground, the shield at 0.95; the break:
     the anvil at 0.8, the mace's heaviest ground blow, the shield at 0.85), and over it what met the blade, lower by size
@@ -8010,7 +8010,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     the freeze, view kick and camera shake, moments and recorded sounds switches. Dev: `/awaken arms clash
     light|heavy|break` answers one from the nearest creature, the guard's rules aside. Test `arms_clash` (sizes from
     three real deflects, each size bigger than the last, today kept, what met the blade, no layer over 1.2). Film
-    `tools/autopilot/arms-clash.txt`.
+    `tools/autopilot/arms-clash.txt`: on CI (run 42984078674, 2 ticks a second) all three sizes reached the hands
+    (`clash 0`, `1`, `2`); the light kicks and throws thin white-gold sparks up and across from the guard, the heavy
+    kicks harder and throws them twice as far, the break leans in furthest and flashes the edges; from behind, the
+    sparks show before the body. The edge flash was filmed at 0.85 and washed half the frame cream, so it is 0.55 over
+    6 ticks (not filmed again).
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
