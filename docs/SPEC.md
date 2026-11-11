@@ -13580,7 +13580,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
     over the last cuts away its floor, and it can't be climbed: 12 of 54 ways stuck that way). Each bend
     opens into a small landing. The way is read every 4 blocks on the noise's cells, turning either way, and must keep rock over its bore (3 + `ROOF`), ground under it (a drop of 2 at most, `WAY_DROP`, one a body can climb back, until the last 5 of its fall, already in the cave) and stay dry, or
     that floor is passed over. So a tunnel can't break out of the hill or end high on the wall of a natural hall, the first
-    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width, so a way is always a floor to walk on. The piece's box holds the bends.
+    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width and down to 3 deep (§42.4 "Settled", a way's floor), so a way is always a floor to walk on. The piece's box holds the bends.
   - `delve_mouth_joint` holds this on real noise on his seed and walks every fifth way there and back with the real ground
     round it (53 of 53), `delve_cave_routes` walks a staged winding way both ways,
     and `/awaken delve way` walks the last `goto`'s mouth on the world's real blocks and says how much cave lies past
@@ -16998,11 +16998,26 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     as it starts ticking), then takes the mark. A section with none is passed over on its palette.
   - **The check**: `/awaken caves floaters [r]` (admin) counts every hanging or standing piece under the ground (the ground
     less 6) that nothing holds, in chunks that tick, by the game's own rule (`canSurvive`; a lichen's faces each, a web or a
-    hanging chain touching nothing), and logs each kind with cells and how many lean across a chunk edge; `look <n>` stands
-    the player where it can see one. `/awaken caves resettle [r]` runs the re-check by hand (sent to the players);
+    hanging chain touching nothing), and logs each kind with cells and how many lean across a chunk edge, and any full block
+    with air or water on all six sides (a lone block); what is not the skin's is logged with the structure that has a piece
+    at its first cell (its owner); `look <n>` stands the player where it can see one. `/awaken caves resettle [r]` runs the re-check by hand (sent to the players);
     `/awaken caves at x y z` goes to a cell through the passage. Tours `caves-floaters-v20.txt` (Euan's spot, a deep
-    mineshaft, two mouths, eight regions on V20's seed) and `caves-floaters-home.txt` (his New World (11)); GameTest
-    `caves_settled`.
+    mineshaft, two mouths, eight regions on V20's seed), `caves-floaters-home.txt` (his New World (11)) and
+    `caves-floaters-home-after.txt` (the same rock as the home tour's before pictures); GameTest `caves_settled`.
+  - **Measured** (CI, fresh worlds; a census is 121 chunks round a spot): before the fix, Euan's spot on V20's seed had 68
+    floating skin pieces of 10,848 (his own lichen among them, at -1409 39 -711), the Pale Halls 63 of 14,681, the home
+    seed's Ochre Deep 48 of 12,989; every one leaned across a chunk edge, and the re-check run by hand took every spot to 0.
+    With the fix, a world made fresh had 0 at every spot (home seed: Ochre Deep 0 of 13,268, a mouth's cave 0 of 12,642,
+    Rootways 0 of 13,399, Pale Halls 0 of 11,841, Black Vaults 0 of 20,415), and the re-check by hand found nothing left
+    to change.
+  - **A way's floor** (floating-camp's find in V20, the same day: lone cobblestones in a doline's joint over its waterfall
+    hollow). Where a Delvers' way crosses natural air, `Carve.tunnel`'s `floored` laid rubble one deep under each step of the
+    bore; on a slope each step's floor is a crescent the next step cuts, so across a hollow the stair was treads touching only
+    at their corners: about nine separate patches a way, crumbs and lone blocks among them. It now lays rubble down to 3
+    deep (or to the rock), so the crossing is one ramp held by the rock at its ends (over 80 ways in a model: 739 patches,
+    222 crumbs and 60 lone blocks one deep; 82 ramps, 0 crumbs and 0 lone three deep), and it cuts every bore from its higher
+    end whichever way it is asked, so nothing is laid in a stretch already cut (a rising leg had laid rubble in its own
+    walking space). GameTest `delve_floored_ramp`.
   - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
     body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
     two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an

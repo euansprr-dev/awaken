@@ -20,6 +20,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * The cave places' GameTests (SPEC §28.5), one per mechanism: every place has a route that needs no rope, both ways
@@ -34,6 +35,7 @@ final class CaveTests {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.register("delve_mouth_density", 200, CaveTests::mouthDensity);
         AwakenTests.register("delve_mouth_joint", 200, CaveTests::mouthJoint);
+        AwakenTests.register("delve_floored_ramp", 100, CaveTests::flooredRamp);
         AwakenTests.register("delve_sinkhole_rope", 200, CaveTests::sinkholeRope);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
@@ -303,6 +305,51 @@ final class CaveTests {
         for (CaveSites.Why w : CaveSites.Why.values()) if (why[w.ordinal()] > 0 && w != CaveSites.Why.MOUTH) out.append("; ").append(why[w.ordinal()]).append(' ').append(w.words);
         dev.awaken.Awaken.LOG.info("[delve] mouth density (vanilla overworld): {}", out);
         h.assertTrue(every <= MOUTH_EVERY, "a mouth at least every " + Math.round(MOUTH_EVERY) + " m of dry land: " + out);
+        h.succeed();
+    }
+
+    /**
+     * SPEC §42.4 "Settled": a floored way across a hollow lays one ramp of rubble held by the rock at its ends, cut down or
+     * up alike; never treads that touch only at their corners, a crumb, or a block with air on all six sides (V20's doline
+     * joint over its waterfall: lone cobblestones). A diagonal way, as the steps of a winding one go.
+     */
+    private static void flooredRamp(GameTestHelper h) {
+        BlockState air = Blocks.AIR.defaultBlockState();
+        Set<Long> first = null;
+        for (int way = 0; way < 2; way++) {
+            Grid g = new Grid(-4, -8, -4, 44, 44, 44);
+            for (int x = 12; x <= 28; x++) for (int y = -6; y <= 30; y++) for (int z = -4; z <= 44; z++) g.set(x, y, z, air);
+            double ax = 0.5, ay = 34, az = 30.5, bx = 40.5, by = 16, bz = 8.5;
+            if (way == 0) Carve.tunnel(g, ax, ay, az, bx, by, bz, 1.5, 0, 77L, true);
+            else Carve.tunnel(g, bx, by, bz, ax, ay, az, 1.5, 0, 77L, true);
+            Set<Long> rubble = new java.util.HashSet<>();
+            for (int x = -4; x <= 44; x++) for (int y = -8; y <= 44; y++) for (int z = -4; z <= 44; z++)
+                if (g.get(x, y, z).is(Blocks.COBBLESTONE) || g.get(x, y, z).is(Blocks.COBBLED_DEEPSLATE)) rubble.add(BlockPos.asLong(x, y, z));
+            h.assertTrue(rubble.size() > 40, "the way lays a floor across the hollow: " + rubble.size() + " rubble");
+            // face-joined groups: each must touch the rock, and there is one
+            Set<Long> seen = new java.util.HashSet<>();
+            List<String> groups = new ArrayList<>();
+            for (long start : rubble) {
+                if (!seen.add(start)) continue;
+                java.util.ArrayDeque<Long> todo = new java.util.ArrayDeque<>(List.of(start));
+                int n = 0;
+                boolean held = false;
+                while (!todo.isEmpty()) {
+                    BlockPos p = BlockPos.of(todo.pop());
+                    n++;
+                    for (Direction d : Direction.values()) {
+                        long q = p.relative(d).asLong();
+                        if (rubble.contains(q)) {
+                            if (seen.add(q)) todo.push(q);
+                        } else if (!g.get(p.getX() + d.getStepX(), p.getY() + d.getStepY(), p.getZ() + d.getStepZ()).isAir()) held = true;
+                    }
+                }
+                groups.add(n + (held ? "" : " in the air"));
+            }
+            h.assertTrue(groups.size() == 1 && !groups.getFirst().endsWith("air"), (way == 0 ? "cut down" : "cut up") + ": one ramp held by the rock, not " + groups);
+            if (first == null) first = rubble;
+            else h.assertTrue(first.equals(rubble), "the same floor cut down or up: " + first.size() + " and " + rubble.size() + " rubble");
+        }
         h.succeed();
     }
 
