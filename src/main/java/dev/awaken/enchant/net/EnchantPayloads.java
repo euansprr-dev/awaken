@@ -78,7 +78,7 @@ public final class EnchantPayloads {
      * Strider), which the client makes itself and is never sent.
      */
     public static final int FX_WARD = 0, FX_BANE = 1, FX_SPOILS = 2, FX_LEARN = 3, FX_FLARE = 4, FX_SILK = 5, FX_MEND = 6,
-            FX_PUFF = 7, FX_WAKE = 8;
+            FX_PUFF = 7, FX_WAKE = 8, FX_PAGE = 9;
 
     /**
      * Server → everyone near: an enchantment at work, in its colour, at an entity (or a place: a block's centre, an orb).

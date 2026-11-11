@@ -149,9 +149,15 @@ final class EnchantFx {
                 p.getX(), p.getY(), p.getZ(), Family.WARD.colour, (float) Math.min(1, e.getDistance() / 12), 8, Float.NaN));
     }
 
-    /** A page learned. */
+    /** A page learned: its glyph lifts in front of the reader, cut by cut, and runs into them. */
     static void learned(ServerPlayer p, Inscriptions.Entry e) {
-        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F);
+        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F, e.no(), Float.NaN);
+    }
+
+    /** A page given: it flies from where it was (a fallen Lord, a lode's heart) to the one it goes to, its sign showing. */
+    static void page(ServerPlayer p, Inscriptions.Entry e, @Nullable Vec3 from) {
+        if (from == null || !(p.level() instanceof ServerLevel level)) return;
+        near(level, p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PAGE, p.getId(), from.x, from.y, from.z, e.colour(), 1F, e.no(), Float.NaN));
     }
 
     /** An old enchanting table turned into an Inscribing Table. */

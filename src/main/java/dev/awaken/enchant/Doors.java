@@ -37,13 +37,13 @@ final class Doors {
         if (tag.kind() == CreatureTag.Kind.BEAST) {
             String who = tag.title().isEmpty() ? "the beast" : tag.title();
             give(p, level, BANE_OF_BEASTS, "hunt:beast", "From " + who + ", brought down",
-                    "A page of Bane of Beasts was caught in " + who + "'s hide.");
+                    "A page of Bane of Beasts was caught in " + who + "'s hide.", at(dead));
         } else if (Hunts.alpha(dead)) {
             give(p, level, HARVEST, "hunt:leader", "From a herd's leader, brought down",
-                    "A page of Harvest was caught in the leader's hide.");
+                    "A page of Harvest was caught in the leader's hide.", at(dead));
         } else if (tag.elite() && dead instanceof Enemy && !EnchantEffects.spared(dead) && deep(p, dead)) {
             give(p, level, BANE_OF_THE_DEEP, "deep:bane", "From an elite of the Deep",
-                    "A page of Bane of the Deep fell from it as it died.");
+                    "A page of Bane of the Deep fell from it as it died.", at(dead));
         }
     }
 
@@ -59,9 +59,9 @@ final class Doors {
         boolean deepBand = Bands.of(e.getPos().getY()) == Bands.Band.DEEP;
         if (deepBand && (!Known.of(p).gatePaid("deep:silk") || level.getRandom().nextBoolean()))
             give(p, level, SILK_TOUCH, "deep:silk", "From a lode's heart in the Deep",
-                    "A page of Silk Touch was pressed into the lode's heart.");
+                    "A page of Silk Touch was pressed into the lode's heart.", net.minecraft.world.phys.Vec3.atCenterOf(e.getPos()));
         else give(p, level, FORTUNE, "deep:fortune", "From a lode's heart",
-                "A page of Fortune was pressed into the lode's heart.");
+                "A page of Fortune was pressed into the lode's heart.", net.minecraft.world.phys.Vec3.atCenterOf(e.getPos()));
     }
 
     /** The delve's lode heart blocks, one for each ore ({@code awaken:<ore>_lode_heart}). */
@@ -77,6 +77,16 @@ final class Doors {
 
     /** The page, the first time this door opens for you, and a spare one time in five after. */
     static boolean give(ServerPlayer p, ServerLevel level, Identifier id, String door, String from, String said) {
+        return give(p, level, id, door, from, said, null);
+    }
+
+    private static net.minecraft.world.phys.Vec3 at(LivingEntity dead) {
+        return dead.position().add(0, dead.getBbHeight() * 0.5, 0);
+    }
+
+    /** {@code where}: the place the page flies from to the one it goes to (null: it only appears in the pack). */
+    static boolean give(ServerPlayer p, ServerLevel level, Identifier id, String door, String from, String said,
+                        net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 where) {
         Known k = Known.of(p);
         boolean first = !k.gatePaid(door);
         if (!first && level.getRandom().nextInt(Pages.SPARE_ONE_IN) != 0) return false;
@@ -89,6 +99,7 @@ final class Doors {
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
         Inscriptions.Entry entry = Inscriptions.of(id);
         Pages.door(p, "page given", entry);
+        if (entry != null) EnchantFx.page(p, entry, where);
         p.sendSystemMessage(Component.literal(said + (entry == null ? " Use it to learn it." : " " + Pages.then(entry)))
                 .withColor(entry == null ? 0xC9B8FF : entry.colour()), false);
         return true;

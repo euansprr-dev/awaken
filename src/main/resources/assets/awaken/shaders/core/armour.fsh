@@ -165,7 +165,16 @@ void main() {
         float wave = 0.45 + 0.55 * pow(0.5 + 0.5 * sin((along * 2.5 - t * 0.7) * TAU), 2.0);
         vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
         float twinkle = fract(sin(dot(px + floor(t * 6.0), vec2(12.9898, 78.233))) * 43758.5453) > 0.988 ? 0.3 + metal : 0.0;
-        col += ink * (letter * edge * wave * 1.1 + emit * pulse * 0.9 + rim * 0.22 + twinkle * 0.8) * lit;
+        // what glows of itself keeps its own colour (it took the enchantment's, which read as a different piece: Euan,
+        // 2026-11-11, "they shouldn't distract from the actual armor set"). The enchantment shows as a shine and a small
+        // aura instead: a clean band of light crossing the piece every five seconds on its metal, and its colour held
+        // faintly at the silhouette, breathing; the letters stay, quieter (SPEC §45.17)
+        float crossing = fract(t) * 4.0 - 0.4;
+        float band = exp(-pow((along - crossing) * 8.0, 2.0));
+        float shine = band * (0.3 + 0.7 * metal) * (1.0 - emit);
+        float aura = edge * (0.55 + 0.45 * sin(t * 0.9 * TAU));
+        col += mix(vec3(1.0, 0.98, 0.94), ink, 0.4) * shine * 0.6;
+        col += ink * (aura * 0.3 + (letter * edge * wave * 0.7 + twinkle * 0.5) * lit);
     } else if (foil > 0.5) {
         float g = sin((along * 9.0 + nv.x * 2.0) - GameTime * 240.0 * TAU * 0.35) * 0.5 + 0.5;
         col += vec3(0.55, 0.32, 1.0) * pow(g, 6.0) * 0.45;

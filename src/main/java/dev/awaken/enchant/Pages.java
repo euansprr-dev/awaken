@@ -211,7 +211,7 @@ public final class Pages {
         if (theme.equals("lantern_night_market")) theme = "lantern_market";
         for (ServerPlayer p : level.players()) {
             if (!p.isAlive() || p.isSpectator() || p.distanceToSqr(dead) > LORD_REACH * LORD_REACH) continue;
-            give(p, level, entry, theme);
+            if (give(p, level, entry, theme)) EnchantFx.page(p, entry, dead.position().add(0, dead.getBbHeight() * 0.5, 0));
         }
     }
 
