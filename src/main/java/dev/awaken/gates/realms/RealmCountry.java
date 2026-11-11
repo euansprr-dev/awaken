@@ -147,6 +147,8 @@ public final class RealmCountry {
                 default -> RealmPacks.prowl(level, g, f, at, h.site(), Herds.of(plan.bp().theme(), h.site(), plan.seed(), false), new long[]{at.asLong(), second.asLong()});
             };
         }
+        // said once in the log, so a run that felt empty or crowded can be read back afterwards
+        dev.awaken.Awaken.LOG.info("[country] gate {}: {} at {} {} {} (haunt {}): {} stood", g.id, h.kind(), at.getX(), at.getY(), at.getZ(), h.site(), made);
         // nothing could stand there, or the land has had its share: either way the cell is settled and never asked again
         st.woken.add(done);
         if (made > 0) st.woken.add("haunt" + letter + h.site());
@@ -169,14 +171,16 @@ public final class RealmCountry {
         int want = h.kind() == Kind.HERD ? 4 + h.roll() % 4 : 2 + h.roll() % 3, have = RealmLife.count(level, at, id, 40);
         if (have * 2 >= want) return;
         Land land = plan.land();
-        int lv = Progression.contentLevel(g.plan.rank()), spread = h.kind() == Kind.HERD ? 6 : 4;
+        int lv = Progression.contentLevel(g.plan.rank()), spread = h.kind() == Kind.HERD ? 6 : 4, made = 0;
         RandomSource r = level.getRandom();
         for (int i = have; i < want; i++) {
             BlockPos spot = RealmLife.open(level, land, ref, h.x() - spread + r.nextInt(spread * 2 + 1), h.z() - spread + r.nextInt(spread * 2 + 1));
             if (spot == null) continue;
             LivingEntity e = RealmLife.creature(level, g, id, spot, lv);
             if (e instanceof Mob m) m.setHomeTo(at, 18); // a herd keeps to its ground
+            if (e != null) made++;
         }
+        dev.awaken.Awaken.LOG.info("[country] gate {}: {} of {} at {} {} {}: {} of {} came", g.id, h.kind(), id, at.getX(), at.getY(), at.getZ(), made, want - have);
     }
 
     private static boolean near(ServerLevel level, BlockPos at, int reach) {

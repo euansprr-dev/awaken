@@ -1,7 +1,7 @@
-# Who lives in an open land (SPEC 50.9 "Who lives there"), seen on the Quiet Barrow's moor, whose monsters are man-sized: a
-# pack on the prowl from above, three times twenty seconds apart so its walk shows; a lookout from below its perch and its
-# reserve; the big one at home. Difficulty is normal so the hostile haunts fill; the camera is creative, so nothing notices
-# it. Each haunt is first looked at from 70 blocks, which is where it fills.
+# Who lives in an open land (SPEC 50.9 "Who lives there"), seen on the Quiet Barrow's moor: its herd of stags on their
+# ground, and a pack on the prowl from above, twice, forty seconds apart, so its walk shows. This land's seed has no perch
+# and nowhere far enough from its run for a lair. Difficulty is normal so the pack comes; the camera is creative, so nothing
+# notices it. Each haunt is first looked at from 70 blocks, which is where it fills. What filled is in the log: "[country]".
 # ci knobs: RD=16
 world autopilot_realm_quiet_barrow_country creative 20261121
 waitworld
@@ -22,38 +22,26 @@ need realm
 hud off
 wait 300
 
+cmd awaken gate realm_haunt HERD 0 70 14
+wait 100
+cmd awaken gate realm_haunt HERD 0 14 4
+wait 80
+shot country_stags
+cmd awaken gate realm_haunt HERD 0 30 2
+wait 60
+shot country_stags_on_the_skyline
+
 cmd awaken gate realm_haunt PROWL 0 70 14
-wait 120
-cmd awaken gate realm_haunt PROWL 0 24 16
 wait 100
+cmd awaken gate realm_haunt PROWL 0 22 18
+wait 60
 shot country_prowl_1
-wait 400
+cmd awaken gate realm_haunt PROWL 0 60 30
+wait 700
+cmd awaken gate realm_haunt PROWL 0 22 18
+wait 60
 shot country_prowl_2
-wait 400
-shot country_prowl_3
 cmd awaken gate realm_haunt PROWL 0 9 3
-wait 100
+wait 60
 shot country_prowl_close
-
-cmd awaken gate realm_haunt WATCH 0 70 14
-wait 120
-cmd awaken gate realm_haunt WATCH 0 16 0
-wait 100
-shot country_lookout_below
-cmd awaken gate realm_haunt WATCH 0 30 14
-wait 100
-shot country_lookout_and_reserve
-
-cmd awaken gate realm_haunt LAIR 0 70 14
-wait 120
-cmd awaken gate realm_haunt LAIR 0 11 4
-wait 100
-shot country_lair
-
-cmd awaken gate realm_haunt PROWL 1 70 14
-wait 120
-cmd awaken gate realm_haunt PROWL 1 10 4
-wait 100
-shot country_prowl_two
-
 quit

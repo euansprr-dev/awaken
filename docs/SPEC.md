@@ -22585,7 +22585,10 @@ the Frost Monastery frost stags and frostfinches; the Glass Desert dune rays and
 mudskippers; the Hive pollen grazers (and its elite, the Door, as its lookout: a bee on a rock cannot be seen); the Bell Crypt hollow owls; the Drowned Archive bog toads, mudskippers and bogwicks. No
 animal in a kit changes the land (none that plants, grows things or leaves a trail). A blueprint's `life.herds` names its own
 herd animals instead of the kit's, and `life.ambient` what is in its air; both may now name a wild animal as well as a Realm's
-own. Amber Reach's pollen grazers stand on grounds like every other herd. Under a roof a Realm's herds are still kept round the
+own. Only a peaceful animal comes (`MobHooks.peaceful`: one that is never hostile, or only fights back): a night hunter or a
+named beast named in a sheet gives nothing. The Quiet Barrow's sheet had named the Old Antler as its herd, which gave nothing
+for as long as only a Realm's own creatures could be named and then, on the country's first walk, five of him on the moor; its
+herd is frost stags now. Amber Reach's pollen grazers stand on grounds like every other herd. Under a roof a Realm's herds are still kept round the
 player as before (`RealmLife.herd`). The wide world's named beasts (the Stonehorn and the rest) are not used: each is one of a
 kind out there.
 

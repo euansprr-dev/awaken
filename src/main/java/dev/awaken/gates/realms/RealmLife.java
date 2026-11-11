@@ -164,13 +164,16 @@ public final class RealmLife {
     /**
      * One of a Realm's peaceful creatures: its own (the Reach's grazers and flies), or one of the wide world's wild animals
      * at the gate's level. Never a monster of the gate: it is not counted, it pays nothing from the gate's pool, and it
-     * goes when nobody is near. A name that is no animal at all gives nothing.
+     * goes when nobody is near. A name that is no animal at all gives nothing, and neither does one that is no peaceful
+     * animal: a night hunter, or one of the wide world's named beasts, each of which is one of a kind out there (the
+     * Quiet Barrow's sheet named the Old Antler as its herd, and the first walk of the country stood five of him on the
+     * moor).
      */
     static LivingEntity creature(ServerLevel level, GateRecord g, String id, BlockPos at, int lv) {
         LivingEntity e = MobHooks.spawnCreature(level, id, at, 0, g.key());
         if (e != null) return e;
         e = MobHooks.spawnNamed(level, id, at, lv, java.util.Set.of(), "");
-        if (e != null && !(e instanceof FaunaMob)) {
+        if (e != null && !MobHooks.peaceful(e)) {
             e.discard();
             return null;
         }
