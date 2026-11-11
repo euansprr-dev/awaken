@@ -7921,8 +7921,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     off on the blow's own power curve: the head crashes into view from above and meets the same hit pose as before, now at
     207 degrees a tick against 79 (the drive is the same 1.05 ticks over a longer arc); the carry and the way home move by a
     few hundredths of the screen. Third person already lifted the Maul over the head for its charge (its rig was solved
-    before the cut into view and was left as it is). The other overhead heavies (Longsword, Greatblade, the hand-keyed
-    Scythe) still hold the cut-into-view set, leaning about 30 degrees ahead; the Axe is raised too (next). Filmed in the game on CI
+    before the cut into view and was left as it is). The Axe, the Longsword and the Greatblade are raised too (next two
+    entries). Filmed in the game on CI
     (`tools/autopilot/arms-maul-charge.txt`, run 42965422512): the draw lifts the head out of the top in about ten ticks,
     the hold keeps the haft rising out of the top-right corner with both forearms in view (as large as the other heavies'
     held arms), and the release brings the head in from above to the hit, which the server confirmed. Held 0.75 blocks out
@@ -7945,6 +7945,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     bottom edge; the release brings the axe in from the corner to the hit, which the server confirmed. From behind, the
     charge holds the arm up with the axe dropped back over the shoulder (the heavy's own wrist, `ArmsWrist.charge`) and
     chops from there with no snap.
+  - *A charge goes the way its blow will* (Euan 2026-11-11, of the other heavies that come down: "If they go in that
+    direction when doing a charged hit then yeah. It should actually charge in the direction it's about to go in"). Every
+    heavy's hold was measured against its blow (`archetypes.json` `blow`, the screen way the baked blade crosses the hit).
+    The side cuts (Katana, Glaive, Precursor) were already held out on the side they sweep from, the release running
+    along the blow (0.96 to 1.0 of the way); the thrusts (Spear, Rapier, Daggers, Chainblade, Gauntlets) were drawn back,
+    their grips 0.15 to 0.5 blocks nearer the eye than at the hit; the Shieldblade's bash holds the shield out to the side
+    before it drives in; the War-staff's heavy is a whole spin whose head comes over the top, and its low hold is where the
+    spin starts. Those are unchanged. The ones that chop down were held upright and presented: the Longsword's blade
+    leaned 29 degrees ahead at the right edge with its fist under the middle, the Greatblade's 30. Now each blade points
+    back up the line its chop will come down (its screen way 0.97 to 1.0 against the blow), stood up by a new `pitch` in
+    `RAISED_HEAVY` (degrees the top turns back toward the eye, at their full draw back they still leaned 16 and 30
+    degrees ahead) with the fist at the crosshair's height: the Longsword, one-handed and short, keeps its whole blade in
+    view up to the top right corner (grip ndc 0.4, 0, 0.7 blocks out, turned 20, pitch 6: leaning 8, 221 degrees a tick
+    at the hit); the Greatblade, long and two-handed, rises out of the top with its guard and lower blade in view (0.3,
+    -0.1, 0.65, turned 30, pitch 18: leaning 14, 194 degrees a tick; upright, its off arm's end would come to 1.23 under
+    the middle, so 1.27). Their hits are the same keys; the Greatblade's way home is the same to a ten-thousandth, the
+    Longsword's changes only while its blade is under the frame. The Scythe is hand-keyed and already charged raised
+    (the snath up from the corner, the blade over the top and its point just above the crosshair, hooked straight down on
+    the release); stood up further its blade's head left the frame and its off arm's end came up toward the bottom edge,
+    so it is left as written. Third person: the Greatblade's rigged charge already holds both hands high by the head and
+    chops from there; the Longsword's third-person heavy is still the shared rising cut from a low draw (its charge leads
+    into its own release, but the two views disagree on the blow; its stored wrist is not what today's solver gives, 89
+    degrees apart, so it was not re-solved here). Test: `arms_feel_rules` holds all four raised heavies (Longsword, Axe,
+    Maul, Greatblade) to the fist on the sword side by the middle's height and the hand's up tipped toward that shoulder.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
