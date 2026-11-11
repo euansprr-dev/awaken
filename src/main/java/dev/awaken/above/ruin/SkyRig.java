@@ -468,7 +468,21 @@ public final class SkyRig {
                 stones.isEmpty() ? "-" : stones.getFirst().top());
     }
 
-    /** The stair's stones on the land as it is under them, bottom first ({@link #stair}). */
+    /**
+     * The stair's stones as they stand, bottom first: a laid stair can't be worked out from the land again (the land's
+     * heights are the stones' own tops now, so {@link #stairOn} finds none), but it can be read back, the helix from
+     * the top down for as long as a column's height is its stone's top.
+     */
+    public static List<Stone> stairStanding(ServerLevel level, int cx, int deckY, int cz) {
+        List<Stone> kept = new ArrayList<>();
+        for (Stone s : helix(cx, deckY, cz, Stair.DEFAULT, level.getMinY())) {
+            if (level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, s.x(), s.z()) != s.top() + 1) break;
+            kept.add(s);
+        }
+        return kept.reversed();
+    }
+
+    /** The stair's stones on the land as it is under them, bottom first ({@link #stair}): only before it is laid. */
     public static List<Stone> stairOn(ServerLevel level, int cx, int deckY, int cz) {
         return stair(cx, deckY, cz, Stair.DEFAULT, (x, z) -> level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z),
                 (x, z) -> !level.getFluidState(new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z)).isEmpty());
