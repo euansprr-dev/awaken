@@ -668,7 +668,7 @@ FIGHT = {
             {"on": "PAUSED", "moves": ["stride", "halo"], "chance": 0.9, "cooldown": 200},
         ],
     },
-    "stance": 260,  # its stance size, tuned with the sim (SPEC §47.3)
+    "stance": 140,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "idle", "move": "chime"},
     "phases": [
         {"pool": [

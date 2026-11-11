@@ -954,7 +954,7 @@ MOVE_SOUNDS = {"howl": {"swing": "roar", "impact": ""}, "spears": {"swing": "bar
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 360,
+    "stance": 200,
     "intro": {"pose": "idle", "move": "arrive"},  # it stands listening, and the wind it outran catches up with it
     "phases": [
         {"pool": [

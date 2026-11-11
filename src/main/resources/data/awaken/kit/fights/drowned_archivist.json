@@ -3,7 +3,7 @@
  "id": "drowned_archivist",
  "moves": "drowned_archivist",
  "duel": true,
- "stance": 260,
+ "stance": 140,
  "intro": {
   "pose": "idle",
   "move": "wake"

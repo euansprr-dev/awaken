@@ -370,6 +370,20 @@ public class AwakenBoss extends AwakenMob {
         shieldTicks = Math.max(shieldTicks, ticks);
     }
 
+    boolean shielded() {
+        return shieldTicks > 0;
+    }
+
+    /** Whether Arms holds its stance now (SPEC §47.3 "Held while it fights"), as it was last told. */
+    private boolean stanceHeld;
+
+    /** A duel body tells Arms when it begins and stops fighting: while it fights, its stance doesn't drain. */
+    private void holdStance(boolean fighting) {
+        if (fighting == stanceHeld) return;
+        stanceHeld = fighting;
+        dev.awaken.core.api.Strikes.holdStance(this, fighting);
+    }
+
     @Override
     protected void customServerAiStep(ServerLevel level) {
         if (breakTicks > 0) breakTicks--;
@@ -385,6 +399,7 @@ public class AwakenBoss extends AwakenMob {
             if (isAlive()) {
                 long t0 = System.nanoTime();
                 f.tick(level);
+                if (f.duel()) holdStance(f.fighting());
                 FightWatch.kit(System.nanoTime() - t0);
                 // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
                 // player it chased fallen) held its body still on their screen until the clock went stale

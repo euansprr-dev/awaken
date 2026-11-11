@@ -823,7 +823,7 @@ MOVE_SOUNDS = {"gale": {"swing": "cast"}, "spray": {"swing": "roar"}, "lurkers":
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 320,
+    "stance": 180,
     "intro": {"pose": "kneel", "move": "wake"},  # it waits for you rolled up in its ball, and unrolls
     "phases": [
         {"pool": [

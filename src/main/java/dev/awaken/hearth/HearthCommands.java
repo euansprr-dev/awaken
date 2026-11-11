@@ -54,7 +54,7 @@ final class HearthCommands {
                             .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
-                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "S", "sbox", "SOVEREIGN", "half", "third", "penalty"), b))
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "S", "sbox", "SOVEREIGN", "half", "third", "break", "penalty"), b))
                     .executes(HearthCommands::trial)));
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
@@ -376,6 +376,12 @@ final class HearthCommands {
             // (SPEC §47.4, §47.6 to §47.10)
             float to = arg.equals("HALF") ? 0.45F : arg.equals("THIRD") ? 0.3F : Integer.parseInt(arg) / 100F;
             boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, to);
+            if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
+            return ok ? 1 : 0;
+        }
+        if (arg.equals("BREAK")) {
+            // tours: your Proving's Warden's stance broken, so a heavy on it is the Execution (SPEC §47.3, §47.4)
+            boolean ok = dev.awaken.hearth.trial.Provings.breakStance(sp);
             if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
             return ok ? 1 : 0;
         }

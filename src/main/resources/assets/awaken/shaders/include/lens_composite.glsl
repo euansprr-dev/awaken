@@ -40,6 +40,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_storm_frame.glsl>
 #include <awaken:lens_air.glsl>
 #include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_storm_blocks.glsl>
 #include <awaken:lens_cloud_walk.glsl>
 #endif
 
@@ -53,6 +54,11 @@ vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, iv
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
 vec3 screen(vec3 a, vec3 b) { return 1.0 - (1.0 - a) * (1.0 - clamp(b, 0.0, 1.0)); }
+
+// Lite (SPEC §22 "Lite"; parameter texel 25 r): the Air's sky, fog, clouds and rays and the grade, with none of Lens 2's
+// light. The chain runs this same composite without the light buffer, the heightfield or the far clouds' buffer (their
+// samplers are bound to stand-ins), so every read of those is behind this.
+bool lensLite() { return P(25).r > 0.5; }
 
 // The player's grade (SPEC §22 "Grades"; LensGrades): its own step at the end of the colour stage, on the finished
 // colour, the same on every tier. a: vibrance, dark colour, rise, punch; b: azure, leaf, gold, split (parameter texels
@@ -511,7 +517,7 @@ void main() {
         float qm = max(qa.x, max(qa.y, qa.z));
         if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
     }
-    if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    if (!open && !classic && !plate && !lensLite()) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
     // the Air (Steady Light): Lens's own sky, and a far fog of the sky's own horizon colour that takes the land into it,
     // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
@@ -556,7 +562,8 @@ void main() {
             // itself under cover, looking at something under cover, is in a cave's air (parameter texel 21 r). (Leaving
             // out every covered point left the ground under each ledge and the mouth of each cave as a dark hole in
             // the haze.)
-            float inside = P(21).r * (1.0 - lensOpen);
+            // (Lite has no cover by the pixel: a camera under cover keeps the game's air for all it sees)
+            float inside = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
             float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - inside) * airK;
             vec3 fc = airFog(dirA, f22.xyz, rainA);
             c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
@@ -573,7 +580,10 @@ void main() {
 #else
     if ((cp.x > 0.0 || storms > 0) && !classic) {
 #endif
-        vec4 cl = texture(CloudsSampler, texCoord);
+        // (Lite draws no far clouds' buffer: the layer's blocks fade out at the near walk's end, a storm keeps its blocks
+        // and loses its soft rain)
+        bool noFar = lensLite();
+        vec4 cl = noFar ? vec4(0.0, 0.0, 0.0, 1.0) : texture(CloudsSampler, texCoord);
         bool behind = sky;
         if (!sky) {
             vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
@@ -593,11 +603,22 @@ void main() {
         if (behind) c = c * cl.a + cl.rgb;
         // the Air's near clouds over all of it: walked here, at the frame's own size and against this pixel's own
         // depth (lens_cloud_walk.glsl), so they need no such test and a tree in front of one keeps its own edge
-        if (cloudBlocks() && cp.x > 0.0) {
+        // A storm cell among them is built of the same blocks (lens_storm_blocks.glsl), walked here too: first, so the
+        // layer's clouds in front of it draw over it and the ones behind it are never walked
+        if (cloudBlocks() && (cp.x > 0.0 || storms > 0)) {
             bool beyond = sky || farTerrain;
             vec3 nv = beyond ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
-            vec4 cb = cloudNear(nv, sky ? 1.0e9 : (farTerrain ? d : length(pRel)));
-            c = c * cb.a + cb.rgb;
+            float reachTo = sky ? 1.0e9 : (farTerrain ? d : length(pRel));
+            if (storms > 0) {
+                float stormAt;
+                vec4 sb = stormBlocks(nv, reachTo, stormAt);
+                c = c * sb.a + sb.rgb;
+                if (sb.a < 0.5) reachTo = min(reachTo, stormAt);
+            }
+            if (cp.x > 0.0) {
+                vec4 cb = cloudNear(nv, reachTo);
+                c = c * cb.a + cb.rgb;
+            }
         }
     }
 #endif
@@ -677,7 +698,7 @@ void main() {
 #else
         if (!classic) {
 #endif
-            float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
+            float vol = lensLite() ? 0.0 : (!open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b);
             // (the Air: the sunlit mist is stronger, so beams stand in the air between the trees)
             c = screen(c, lightColour(p1, sunset) * (vol * mix(1.6, 3.4, airOn())) + texture(ShaftsSampler, texCoord).r * sunColor * mix(0.35, 0.95, airOn()));
         } else
@@ -717,6 +738,8 @@ void main() {
         vec3 hw = pRel * (1.0 - 0.3 / max(length(pRel), 0.3)) + F(12).xyz;
         under = smoothstep(0.5, 1.5, heightAt(ivec2(floor(hw.xz)), 0).g - hw.y);
     }
+    // (Lite: by the camera, as Swift does)
+    if (lensLite()) under = sky ? 0.0 : P(21).r;
 #else
     float under = sky ? 0.0 : P(21).r;
 #endif

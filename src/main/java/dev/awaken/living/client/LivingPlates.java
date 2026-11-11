@@ -37,8 +37,11 @@ final class LivingPlates {
     private static final HoloWorld.Content WRITE = LivingPlates::write;
 
     static final int PAD = 6, ROW = 5, BAR_H = 4, STANCE_H = 2;
-    /** The focused creature's rim; the stance's amber, white-hot as it nears breaking; a broken stance's gold. */
-    private static final int FOCUS = 0xDDF2FF, STANCE = 0xF2A541, STANCE_HOT = 0xFFE6B0, BROKEN = 0xFFD060;
+    /**
+     * The focused creature's rim; the stance's ivory (the boss plate's, never the health's lost amber), white-hot as it
+     * nears breaking; a broken stance's gold.
+     */
+    private static final int FOCUS = 0xDDF2FF, STANCE = 0xEDE4CC, STANCE_HOT = 0xFFF8EA, BROKEN = 0xFFD060;
 
     /** A stance under strain or broken shows a thin strip under the health bar (Arms, SPEC §24). */
     static boolean stanceShown(LivingEntity e) {

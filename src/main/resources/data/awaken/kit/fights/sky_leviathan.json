@@ -3,7 +3,7 @@
  "id": "sky_leviathan",
  "moves": "sky_leviathan",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "kneel",
   "move": "unfurl"

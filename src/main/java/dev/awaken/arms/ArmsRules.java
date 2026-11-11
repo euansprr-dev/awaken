@@ -40,6 +40,11 @@ public final class ArmsRules {
     public static final float GUARDED_POSTURE = 0.5F;
     /** A finisher (an Execution) on a broken Lord: at least this share of its health, at most that one. */
     public static final float LORD_FINISHER_MIN = 0.10F, LORD_FINISHER_MAX = 0.15F;
+    /**
+     * The same on a duel body (SPEC §47.3 "Breaks a fight is made of"): its stance breaks two or three times a minute in a
+     * fight of three or four, so each break takes a smaller share and the fight stays its length.
+     */
+    public static final float DUEL_FINISHER_MIN = 0.07F, DUEL_FINISHER_MAX = 0.10F;
     /** The latency hold on a guardable hit is at most this many ticks. */
     public static final int GRACE_MAX = 3;
     /** Soft focus: how far a strike may turn toward its target; looking further than this away for so long drops it. */
@@ -329,10 +334,13 @@ public final class ArmsRules {
 
     /**
      * An Execution on a Lord (a move with a bossCap) is the finisher (SPEC §47.3): between {@link #LORD_FINISHER_MIN} and
-     * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight.
+     * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight;
+     * on a duel body, which breaks twice as often, {@link #DUEL_FINISHER_MIN} to {@link #DUEL_FINISHER_MAX}.
      */
-    public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord) {
-        return lord && bossCap > 0 ? Mth.clamp(damage, maxHealth * LORD_FINISHER_MIN, maxHealth * LORD_FINISHER_MAX) : damage;
+    public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord, boolean duel) {
+        if (!lord || bossCap <= 0) return damage;
+        return duel ? Mth.clamp(damage, maxHealth * DUEL_FINISHER_MIN, maxHealth * DUEL_FINISHER_MAX)
+                : Mth.clamp(damage, maxHealth * LORD_FINISHER_MIN, maxHealth * LORD_FINISHER_MAX);
     }
 
     /** Whether a strike may turn toward its focus: the turn needed, clamped, in degrees (0 when beyond the help). */

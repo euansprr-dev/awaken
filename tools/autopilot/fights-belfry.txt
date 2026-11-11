@@ -1,8 +1,10 @@
 # Fights stage 3, the first Proving (SPEC §47.4): the Drowned Belfry and the Ringer, in a practice Proving
 # (/awaken admin trial D). You wake knee-deep inside the door; then, as a spectator (never its target): the door and the
 # stair out, the nave from above, the Tenor over the sealed pit, a drowned aisle, the Ringer dropped into the light when
-# you stand on the chancel, the water draining at half its health (/awaken admin trial half), the floor over the pit
-# given way, and its chain at your feet. Every spot until the drop is off the chancel, so it drops on cue.
+# you stand on the chancel; then armed in front of it (creative), three blows on its stance, the stance broken
+# (/awaken admin trial break) and an Execution on it; then the water draining at half its health (/awaken admin trial
+# half), the floor over the pit given way, and its chain at your feet. Every spot until the drop is off the chancel, so
+# it drops on cue.
 # Run on CI: tools/tour-ci.sh tools/autopilot/fights-belfry.txt
 world autopilot_fights_belfry creative 20261102
 waitworld
@@ -52,6 +54,47 @@ shot belfry_05_aisle
 cmd tp @s ~-24 ~ ~8 180 0
 wait 60
 shot belfry_06_ringer
+cmd summon minecraft:marker ~ ~ ~ {Tags:["belfry_chancel"]}
+
+# --- you, armed, in front of it (creative, so it never turns on you), looking straight back along its facing: three
+# blows land braced, and the stance under its health shows them (SPEC §47.3, "Seen"). A shot stalls the client while
+# the server ticks on, so each is taken with the server frozen (the broken window is 40 server ticks). Arms starts no
+# move in flight, and creative keeps a spectator's flying: a tick of survival puts you on your feet first ---
+cmd gamemode survival
+cmd gamemode creative
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated as @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3 ~180 3
+wait 20
+hud on
+arms strike
+wait 12
+arms strike
+wait 12
+arms strike
+wait 10
+cmd tick freeze
+shot belfry_06b_stance
+cmd tick unfreeze
+
+# --- its stance broken (/awaken admin trial break): down on a knee, and the plate says how to finish it ---
+cmd awaken admin trial break
+wait 6
+cmd tick freeze
+shot belfry_06c_broken
+cmd tick unfreeze
+
+# --- a heavy held 12 ticks and let go on it: the Execution, and the 7-10% of its health it takes ---
+arms heavy 12
+wait 15
+cmd tick freeze
+shotnow belfry_06d_execution
+cmd tick unfreeze
+wait 30
+shot belfry_06e_executed
+hud off
+cmd gamemode spectator
+cmd execute at @e[type=minecraft:marker,tag=belfry_chancel,limit=1] run tp @s ~ ~ ~ 180 0
+wait 10
 
 # --- at half its health the water runs off north toward the pit ---
 cmd awaken admin trial half

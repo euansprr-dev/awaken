@@ -3,7 +3,7 @@
  "id": "nightmare_explosion",
  "moves": "nightmare_explosion",
  "duel": true,
- "stance": 280,
+ "stance": 150,
  "intro": {
   "pose": "idle",
   "move": "wake"

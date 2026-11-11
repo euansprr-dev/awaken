@@ -3,7 +3,7 @@
  "id": "mother_of_spores",
  "moves": "mother_of_spores",
  "duel": true,
- "stance": 240,
+ "stance": 130,
  "intro": {
   "pose": "idle",
   "move": "unfurl"

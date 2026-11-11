@@ -154,6 +154,11 @@ def parse_archetype():
     raise SystemExit("combat_sim: no longsword row in " + P_ARCH)
 
 
+def parse_archetypes():
+    """Every style's row (--style picks one; the Lord tables are tuned with the longsword)."""
+    return {a["id"]: a for a in json.loads(_read(P_ARCH))["archetypes"]}
+
+
 def parse_rules():
     """ArmsRules' named numbers (public static final ...)."""
     out = {}
@@ -316,7 +321,7 @@ def parse_scaling():
 def parse_told_melee():
     src = _read(P_GOALS)
     boss = int(re.search(r"case BOSS, BREAK, WARDEN, NIGHTMARE -> (\d+);", src).group(1))
-    normal = int(re.search(r"default -> (\d+);\s*\};\s*return kind == Strikes\.Kind\.HEAVY", src).group(1))
+    normal = int(re.search(r"rankTell\(AwakenMob mob\).*?default -> (\d+);", src, re.S).group(1))
     heavy_extra = int(re.search(r"Strikes\.Kind\.HEAVY \? base \+ (\d+)", src).group(1))
     every = int(re.search(r"\+\+swings % (\d+) == 0", src).group(1))
     mult = float(re.search(r"HAYMAKER, ([\d.]+),", src).group(1))
@@ -369,7 +374,7 @@ def kit_reach(m, half):
 
 def load_world():
     meta = parse_ability_meta()
-    return {"arch": parse_archetype(), "rules": parse_rules(), "weapons": parse_weapons(), "tiers": parse_tiers(),
+    return {"arch": parse_archetype(), "archs": parse_archetypes(), "rules": parse_rules(), "weapons": parse_weapons(), "tiers": parse_tiers(),
             "ranks": parse_ranks(), "themes": parse_themes(), "models": parse_models(), "bolts": parse_bolts(),
             "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee(), "kits": parse_kits(),
             "duel": parse_duel(), "burn_s": parse_burn()}
@@ -391,7 +396,8 @@ def default_config(W):
         # the Mother of Spores floats above that filter between dives (a ghast 3 wide), 0.15.
         lords[d["id"]] = {"hp": d["hp"], "dmg": d["dmg"], "uptime": -1.0, "flies": flies, "stance": 0}  # stance 0: the fight's  # uptime < 0: the group's
     return {
-        "longsword": copy.deepcopy(W["arch"]),
+        "longsword": copy.deepcopy(W["arch"]),  # the style fought with (--style swaps the row; the key keeps its old name)
+        "style": "longsword",
         "rules": dict(W["rules"]),
         "lord": dict(W["scaling"], **{
             "global_cd": 14,        # AbilityRunner.java:193 (bosses)
@@ -432,6 +438,20 @@ def default_config(W):
             # ASSUMED (SPEC §47.2): red is the one colour that says dodge, so a parrier dodges half of them
             "parrier": {"deflect": 0.60, "dodge_any": 0.0, "dodge_perilous": 0.5, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
             "expert": {"deflect": 0.85, "dodge_any": 0.0, "dodge_perilous": 0.90, "perfect": 1 / 3, "cadence": 0.95, "detour": 1, "keep": 0.8, "art": 1},
+            # optional keys: guard (share of white-gold and amber blows met with the guard, the rest left to dodge_any;
+            # 1 when deflect > 0), reach (x the Lord's reach uptime), flee_red (share of red and violet blows run from
+            # instead of dashed: out of reach from the tell for flee_back ticks after it lands, never struck)
+            # ASSUMED: a hunter of the rank who came as they were and fights well, not perfectly (the bar for the
+            # Provings, Euan 2026-11-11): turns a third of what can be turned aside, dodges half of the rest, dashes
+            # through most reds, presses less than the four above (reach 0.8)
+            "hunter": {"deflect": 0.45, "guard": 0.4, "dodge_any": 0.5, "dodge_perilous": 0.7, "flee_red": 0.5, "flee_back": 50,
+                       "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1, "reach": 0.8},
+            # MEASURED (Euan's first Proving, 2026-11-11, logs/latest.log and arms-blackbox.tsv: 8 min, rank E, level 11,
+            # Wildhide Twinblades): about 30 blows landed a minute (174 in 343 s), one riposte, 27 Clangs that met
+            # nobody 1.4-9.5 blocks off; he ran from every red ("you have to dodge backwards and go far from him").
+            # reach 0.45 lands his 30 a minute with the twinblades; deflect, guard and dodge_any ASSUMED from one riposte
+            "euan": {"deflect": 0.25, "guard": 0.15, "dodge_any": 0.45, "dodge_perilous": 0.0, "flee_red": 1.0, "flee_back": 70,
+                     "perfect": 1 / 4, "cadence": 0.4, "detour": 1, "keep": 0.5, "art": 1, "reach": 0.45},
         },
         # what-ifs for the bugs (0 = as built)
         "fix": {
@@ -442,13 +462,16 @@ def default_config(W):
         },
         # the duel (SPEC §47.3; FightRunner, AwBolt, ArmsRules as parsed): on 0 fights a duel script the old way.
         # ASSUMED: you back off rarely enough that its gap-closer habit is left out (the sim has no positions over time)
-        "duel": {"on": 1},
+        # hold: a duel body's stance doesn't drain while it fights (a move playing, a recoil, a reel, its opening), only
+        # while it walks or waits; the grace runs from the later of the last fill and the moment it stopped (SPEC §47.3
+        # "Held while it fights"; 0 = the old rule, the grace from the last fill whatever it was doing)
+        "duel": {"on": 1, "hold": 1},
         "item_level": {"on": 0, "per_level": 0.075},  # PowerMath.java:42-44 levelScale, mirrored on the weapon
         # the Creature Kit (SPEC §34.3): a kit Lord fights by its fight script and move table (on: 0 = the old way, to
         # compare). ASSUMED geometry, since the sim has no positions: in reach you stand 0.3-2.0 blocks from its edge
         # and behind it this often; out of reach 3-12 blocks. A kit flier orbits low (MobGoals.FlyHunt.scripted) 1 block
         # from your edge, or 6 when it drifts out (1 retarget in 4): in reach about as often as it sits close.
-        "kit": {"on": 1, "near": [0.3, 2.0], "far": [3.0, 12.0], "behind": 0.15, "flier_uptime": 0.6,
+        "kit": {"on": 1, "mind": 1, "near": [0.3, 2.0], "far": [3.0, 12.0], "behind": 0.15, "flier_uptime": 0.6,
                 "flier_near": [0.6, 1.4], "flier_far": [4.0, 8.0],
                 "damage": 1.0},  # damage: what-if, every move's damage x this
         "abilities": {},  # ability.<lord>.<phase>.<index>.<field>=value (phase and index from 0, as in GateBestiary)
@@ -594,6 +617,7 @@ class Fight:
             self.uptime = cfg["kit"]["flier_uptime"]
         else:
             self.uptime = RC.get(ld["id"], RC["flier"] if self.flies else RC["ground"])
+        self.uptime *= self.prof.get("reach", 1.0)  # a profile that presses less than the four (hunter, euan)
         self.mean_out = RC["out_flier"] if self.flies else RC["out_ground"]
         self.MC = cfg["mobs"]
         self.l_max = lc["hp"] * (1 + LC["health_per_level"] * lv) * LC["role_health"] * LC["extra_health"]
@@ -657,6 +681,10 @@ class Fight:
         self.open_until = -1
         self.k_reel_until = -1
         self.k_deflects, self.k_deflect_at = 0, -10 ** 6
+        # the fight's mind (FightMind, SPEC §48): no blow twice running, each move's cooldown, both waived once it has
+        # waited long enough with nothing to start (its answers to what you do are not modelled)
+        self.m_mind = self.kit["fight"].get("mind") if self.kit is not None and cfg["kit"].get("mind", 1) else None
+        self.m_last, self.m_ready, self.m_wanting = None, {}, -1
         # a fight that reads you (SPEC §47.6, the Examiner): what it counted through its first phase, and what it read
         self.mirrors = bool(self.duel and self.kit["fight"].get("mirrors"))
         self.h_guards, self.h_slips, self.h_read = 0, 0, None
@@ -666,6 +694,9 @@ class Fight:
             self.pmax = lc.get("stance", 0) or self.kit["fight"]["stance"]  # a duel's own stance size (Strikes.stance)
         self.pval = 0.0
         self.p_last = -10 ** 6
+        self.p_held = False  # held while it fights (cfg duel.hold, SPEC §47.3)
+        self.regen = self.R["POSTURE_REGEN_DUEL"] if self.duel and "POSTURE_REGEN_DUEL" in self.R else self.R["POSTURE_REGEN_LORD"]
+        self.hold_on = bool(self.duel and cfg["duel"].get("hold", 0))
         self.broken_until = -1
         self.next_break = -1
         # player state
@@ -726,7 +757,9 @@ class Fight:
         self.st = {"in_reach": 0, "ticks": 0, "deflects": 0, "blocks": 0, "breaks_guard": 0, "evades": 0, "perfect": 0,
                    "breaks": 0, "executions": 0, "arts": 0, "ripostes": 0, "slipcuts": 0, "strikes": 0, "whiffs": 0,
                    "dmg_by_move": {}, "taken_by": {}, "death_by": None, "phase_ticks": [0, 0, 0], "broken_ticks": 0,
-                   "minions_spawned": 0, "heals": 0, "kit_moves": {},
+                   "minions_spawned": 0, "heals": 0, "kit_moves": {}, "landed": 0, "fled": 0,
+                   # where its stance came from, and what drained away (ArmsServer.addPosture; Posture.settle)
+                   "pin": {}, "drained": 0.0,
                    # the kit's cadence (docs/bosses/REWORK.md R0): ticks told or striking, recovering, between moves,
                    # in a NONE move (intro, transition, summon), opened (broken or staggered); the longest spell between
                    # moves; the blows thrown; each phrase's length (a pool pick and the string it carried)
@@ -775,22 +808,34 @@ class Fight:
             return
         dd = self.dodge_d
         evade, perfect = int(dd["evade"]), int(dd["perfect"])
-        if told in (LIGHT, HEAVY) and pr["deflect"] > 0:
+        red = told in (PERILOUS, GRAB)
+        if told in (LIGHT, HEAVY) and pr["deflect"] > 0 and (pr.get("guard") is None or rng.random() < pr["guard"]):
             b.plan = "guard"
             if rng.random() < pr["deflect"]:
                 b.plan_t = b.est - rng.randrange(self.deflect_ticks)
             else:  # raised a little early: it blocks (PLAN §6.1 "holding guard otherwise")
                 b.plan_t = b.est - (self.deflect_ticks + 1 + rng.randrange(4))
+        elif red and pr["dodge_perilous"] <= 0 and pr.get("flee_red", 0) > 0:
+            if rng.random() < pr["flee_red"]:  # runs from every red it doesn't stand in (euan)
+                self.flee(b)
+            return
         elif (pr["dodge_any"] > 0 and rng.random() < pr["dodge_any"]) or \
-                (told in (PERILOUS, GRAB) and pr["dodge_perilous"] > 0 and rng.random() < pr["dodge_perilous"]):
+                (red and pr["dodge_perilous"] > 0 and rng.random() < pr["dodge_perilous"]):
             b.plan = "dodge"
             if rng.random() < pr["perfect"]:
                 b.plan_t = b.est - rng.randrange(perfect)
             else:
                 b.plan_t = b.est - (perfect + rng.randrange(max(1, evade - perfect)))
         else:
+            if red and pr.get("flee_red", 0) > 0 and rng.random() < pr["flee_red"]:
+                self.flee(b)  # a red it didn't dash through: it runs (hunter)
             return
         self.plans.append(b)
+
+    def flee(self, b):
+        """Runs from a red blow at its tell: out of reach until flee_back ticks after it lands, and never struck by it."""
+        b.plan = "flee"
+        self.forced_out = max(self.forced_out, b.est + int(self.prof.get("flee_back", 60)))
 
     def next_defence(self, t):
         best = 10 ** 9
@@ -1061,12 +1106,30 @@ class Fight:
         m = self.kit["moves"].get(e["move"])
         if m is None or not (m["range"][0] <= d <= m["range"][1]):
             return False
+        if self.m_mind is not None and not self.mind_allows(e["move"], m, t):
+            return False
         if m.get("ability"):
             a = self.kit_ability(m["ability"])
             if a is not None and a["kind"] in ("SUMMON", "DECOY", "HEAL") and not self.usable(a, t):
                 return False  # AbilityRunner.room
         w = e.get("when", "ANY")
         return {"ANY": True, "NEAR": d <= 4, "FAR": d >= 8, "BEHIND": behind, "AIR": False}.get(w, True)
+
+    def mind_allows(self, mid, m, t):
+        """FightMind.allowed: REPEAT_AFTER (200) before a blow follows itself, STALE_TICKS (40) past a cooldown."""
+        waited = 0 if self.m_wanting < 0 else t - self.m_wanting
+        blow = m["class"] != NONE
+        if mid == self.m_last:
+            return blow and waited > 200
+        return t >= self.m_ready.get(mid, -1) or (blow and waited > 40)
+
+    def mind_began(self, mid, m, t):
+        """FightMind.began: its own cooldown, else its class's (LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, NONE 240)."""
+        self.m_last, self.m_wanting = mid, -1
+        cd = self.m_mind.get("cooldowns", {}).get(mid)
+        if cd is None:
+            cd = {LIGHT: 0, HEAVY: 30, PERILOUS: 80, GRAB: 80}.get(m["class"], 240)
+        self.m_ready[mid] = t + cd
 
     def kit_ability(self, name):
         for ph in self.ld["phases"]:
@@ -1100,8 +1163,15 @@ class Fight:
             c["phrases"][c["phrase"]] = c["phrases"].get(c["phrase"], 0) + 1
         c["phrase"] = 0
 
+    def kit_fighting(self, t):
+        """FightRunner.fighting: a move playing, a limb coming back, reeling, kneeling or standing in its opening (the
+        game also counts an answer's notice and a new phase's shield, which the sim doesn't play)."""
+        return self.k_move is not None or self.k_recoil > 0 or self.stagger > 0 or t < self.open_until or t < self.k_reel_until
+
     def kit_tick(self, t):
         self.kit_cadence(t)
+        if self.hold_on:
+            self.hold_stance(self.kit_fighting(t), t)
         if self.k_move is not None:
             self.kit_step(t)
             return
@@ -1128,6 +1198,8 @@ class Fight:
             self.k_recoil -= 1
             return
         d, behind = self.kit_where(t)
+        while self.m_mind is not None and self.k_string and self.k_string[0] == self.m_last:
+            self.k_string.pop(0)  # FightRunner.dropRepeats
         if self.k_string:
             nxt = self.k_string.pop(0)
             m = self.kit["moves"].get(nxt)
@@ -1144,6 +1216,8 @@ class Fight:
             return
         pool = [e for e in F["phases"][min(self.phase, len(F["phases"]) - 1)]["pool"] if self.kit_usable(e, d, behind, t)]
         if not pool:
+            if self.m_mind is not None and self.m_wanting < 0:
+                self.m_wanting = t  # FightMind.nothingToStart
             # it walks in to where its close moves reach and looks again (FightRunner.approach, every 10 ticks)
             if self.in_reach(t):
                 self.k_d = min(self.k_d, self.kit_stop())
@@ -1196,6 +1270,8 @@ class Fight:
         least = 1 if cls == NONE else {LIGHT: 8, HEAVY: 12, GRAB: 12, PERILOUS: 14}.get(cls, 6)  # KitMoves.minWindup
         w = min(ti["windup"], max(least, int(math.floor(ti["windup"] / sp + 0.5))))
         self.k_move, self.k_t = m, 0
+        if self.m_mind is not None:
+            self.mind_began(mid, m, t)
         self.k_w, self.k_act, self.k_rec = w + hold, max(1, ti["active"]), max(1, int(math.floor(ti["recover"] / sp + 0.5)))
         # where a string's next blow links on (KitMoves.played, SPEC §35.10): its link, scaled with the recovery
         ln = ti.get("link", 0)
@@ -1509,6 +1585,10 @@ class Fight:
 
     def land_blow(self, b, t):
         rng = self.rng
+        if b.plan == "flee":
+            self.st["fled"] += 1
+            self.habit_slip(b)
+            return
         amount = b.factor * (self.lord_attack() if b.lord else b.minion["dmg"] if b.minion else 0.0)
         if b.flat > 0:
             amount = b.flat
@@ -1549,14 +1629,14 @@ class Fight:
                 self.gain(self.R["RESONANCE_PERFECT_DODGE"])
                 if b.lord:
                     self.slowed_until = t + int(self.dodge_d["slow"])
-                    self.add_posture(self.R.get("PERFECT_DODGE_POSTURE", 0), t)  # through a blow: its stance gives (SPEC §47.3)
+                    self.add_posture(self.R.get("PERFECT_DODGE_POSTURE", 0), t, "perfect dodge")  # through a blow: its stance gives (SPEC §47.3)
         elif outcome == "deflect":
             self.st["deflects"] += 1
             self.raise_deflected = True
             self.deflect_at = t
             self.gain(self.R["RESONANCE_DEFLECT"])
             if b.lord and b.posture_ok:
-                self.add_posture(self.R["DEFLECT_POSTURE_HEAVY"] if b.landed == HEAVY else self.R["DEFLECT_POSTURE_LIGHT"], t)
+                self.add_posture(self.R["DEFLECT_POSTURE_HEAVY"] if b.landed == HEAVY else self.R["DEFLECT_POSTURE_LIGHT"], t, "deflect")
             if b.lord and self.duel:
                 if b.shot and b.landed == LIGHT:
                     # a white-gold shot flies back at its maker: its own blow and 22 on its stance (AwBolt.sendBack)
@@ -1564,7 +1644,7 @@ class Fight:
                     self.l_hp -= back
                     dm = self.st["dmg_by_move"]
                     dm["shot sent back"] = dm.get("shot sent back", 0.0) + back
-                    self.add_posture(self.D["RETURNED_POSTURE"], t)
+                    self.add_posture(self.D["RETURNED_POSTURE"], t, "shot sent back")
                 elif b in self.k_blows or b in self.k_ab_blows:
                     self.kit_deflected(t)
         if apply_fx:
@@ -1640,16 +1720,37 @@ class Fight:
 
     # ---- posture (ArmsServer.addPosture, ArmsServer.java:619-645; Posture.java) -----------------------------------
 
-    def add_posture(self, amount, t):
+    def settle(self, t):
+        """Posture.settle: what draining gave back since the last touch (nothing while held)."""
+        R = self.R
+        if self.p_held or t - self.p_last <= R["POSTURE_IDLE_TICKS"]:
+            return
+        idle = t - self.p_last - R["POSTURE_IDLE_TICKS"]
+        was = self.pval
+        self.pval = max(0.0, self.pval - idle * self.regen)
+        self.st["drained"] += was - self.pval
+        self.p_last = t - R["POSTURE_IDLE_TICKS"]
+
+    def hold_stance(self, fighting, t):
+        """ArmsServer.hold (SPEC §47.3 "Held while it fights"): drained up to the moment it begins; the grace from when it stops."""
+        if fighting == self.p_held:
+            return
+        if fighting:
+            self.settle(t)
+            self.p_held = True
+        else:
+            self.p_held = False
+            self.p_last = max(self.p_last, t)
+
+    def add_posture(self, amount, t, src="other"):
         if amount <= 0 or self.l_hp <= 0:
             return
         R = self.R
-        if t - self.p_last > R["POSTURE_IDLE_TICKS"]:
-            idle = t - self.p_last - R["POSTURE_IDLE_TICKS"]
-            self.pval = max(0.0, self.pval - idle * R["POSTURE_REGEN_LORD"])
-            self.p_last = t - R["POSTURE_IDLE_TICKS"]
+        self.settle(t)
         if t < self.broken_until:
             return
+        pin = self.st["pin"]
+        pin[src] = pin.get(src, 0) + min(amount, self.pmax - self.pval)
         self.pval = min(self.pmax, self.pval + amount)
         self.p_last = t
         if self.pval >= self.pmax and t >= self.next_break:
@@ -1658,6 +1759,8 @@ class Fight:
             self.next_break = t + int(R["BREAK_COOLDOWN"])
             self.pval = 0.0
             self.st["breaks"] += 1
+            if self.st.get("first_break") is None:
+                self.st["first_break"] = t / 20.0
             # Strikes.stagger -> AwakenMob.stagger (AwakenMob.java:313-320): the wind-up ends, the body stands still
             self.interrupt(t)
             self.stagger = max(self.stagger, ticks)
@@ -1732,6 +1835,7 @@ class Fight:
         if not ok:
             self.st["whiffs"] += 1
             return
+        self.st["landed"] += 1
         self.cleave(mv, t)
         if self.shield > 0:
             return  # the roar of a new phase: invulnerable (AwakenBoss.java:136-141)
@@ -1752,8 +1856,10 @@ class Fight:
             counter = True
         dmg *= mv.motion
         if mv.cap > 0:
-            # ArmsRules.capExecution: on a Lord the finisher takes 10-15% of its health, whatever the weapon (SPEC §47.3)
-            lo, hi = self.R.get("LORD_FINISHER_MIN"), self.R.get("LORD_FINISHER_MAX")
+            # ArmsRules.capExecution: on a Lord the finisher takes 10-15% of its health, whatever the weapon; on a duel body,
+            # which breaks twice as often, 7-10% (SPEC §47.3)
+            k = "DUEL_FINISHER" if self.duel and "DUEL_FINISHER_MIN" in self.R else "LORD_FINISHER"
+            lo, hi = self.R.get(k + "_MIN"), self.R.get(k + "_MAX")
             dmg = min(max(dmg, self.l_max * lo), self.l_max * hi) if lo is not None else min(dmg, self.l_max * mv.cap)
         dmg = armor_after(dmg, self.l_armor, 0.0)
         self.l_hp -= dmg
@@ -1762,12 +1868,12 @@ class Fight:
         # a blow in an opening breaks its stance faster (ArmsRules.OPENING_POSTURE); in a duel one it stands braced for
         # barely moves it, a riposte excepted (ArmsRules.GUARDED_POSTURE, SPEC §47.3)
         if self.in_opening(t):
-            pm = self.R.get("OPENING_POSTURE", 1.0)
+            pm, src = self.R.get("OPENING_POSTURE", 1.0), "opening"
         elif self.duel and name != "riposte":
-            pm = self.R.get("GUARDED_POSTURE", 1.0)
+            pm, src = self.R.get("GUARDED_POSTURE", 1.0), "braced"
         else:
-            pm = 1.0
-        self.add_posture(int(round(mv.posture * pm)), t)
+            pm, src = 1.0, "riposte" if name == "riposte" else "hit"
+        self.add_posture(int(math.floor(mv.posture * pm + 0.5)), t, src)
         if mv.finisher:
             self.gain(self.R["RESONANCE_FINISHER"])
         if counter:
@@ -2013,11 +2119,11 @@ def lords_of(W, only=None):
     return out
 
 
-def forged_for(W, rank):
+def forged_for(W, rank, style="longsword"):
     for w in W["weapons"].values():
-        if w["tier"] == rank and w["style"] == "longsword":
+        if w["tier"] == rank and w["style"] == style:
             return w
-    raise SystemExit("combat_sim: no forged longsword for rank " + rank)
+    raise SystemExit(f"combat_sim: no forged {style} for rank {rank}")
 
 
 _W_CACHE = {}
@@ -2075,8 +2181,17 @@ def summarise(res, P):
     out["uptime"] = sum(r["st"]["in_reach"] for r in res) / tick
     out["broken_share"] = sum(r["st"]["broken_ticks"] for r in res) / tick
     per_min = lambda k: sum(r["st"][k] for r in res) / (tick / 1200.0)
-    for k in ("deflects", "blocks", "breaks_guard", "evades", "perfect", "breaks", "executions", "arts", "ripostes", "slipcuts", "strikes", "whiffs", "heals"):
+    for k in ("deflects", "blocks", "breaks_guard", "evades", "perfect", "breaks", "executions", "arts", "ripostes", "slipcuts", "strikes", "whiffs", "heals",
+              "landed", "fled", "drained"):
         out[k + "_per_min"] = per_min(k)
+    pin = {}
+    for r in res:
+        for k, v in r["st"]["pin"].items():
+            pin[k] = pin.get(k, 0) + v
+    out["stance_per_min"] = {k: v / (tick / 1200.0) for k, v in sorted(pin.items(), key=lambda kv: -kv[1])}
+    wins_t = [r["t"] for r in wins]
+    out["first_break_s"] = float(np.median([r["st"]["first_break"] for r in res if r["st"].get("first_break") is not None])) \
+        if any(r["st"].get("first_break") is not None for r in res) else None
     dm, tb, deaths = {}, {}, {}
     for r in res:
         for k, v in r["st"]["dmg_by_move"].items():
@@ -2119,11 +2234,25 @@ TARGETS = {  # PLAN §6.1 (PROPOSAL values)
     "parrier": "win >= 80%, TTK 80-120 s",
     "expert": "win >= 98%, TTK <= 75 s, >= 50% health left",
     "diamond": "win >= 70%, TTK <= 140 s",
+    # the Provings' bar (Euan 2026-11-11, the Ringer): a hunter who fights well breaks the stance 2-3 times a minute in a
+    # fight of 3-4 minutes (its wins are the boss's damage, which this bar doesn't judge: the hunter takes 12 health a
+    # minute and dies near 160 s whatever the stance does); Euan's own play (he walked from every red) breaks it at all
+    "hunter": "2-3 breaks a minute, TTK 150-270 s",
+    "euan": "breaks >= 0.5 a minute",
 }
 
 
 def judge(profile, s):
     w, ttk, hp = s["win"], s["ttk"], s["hp_left"]
+    if profile == "hunter":
+        bad = []
+        if not (2.0 <= s["breaks_per_min"] <= 3.2):
+            bad.append("breaks")
+        if ttk is None or not (150 <= ttk <= 270):
+            bad.append("ttk")
+        return not bad, ",".join(bad)
+    if profile == "euan":
+        return s["breaks_per_min"] >= 0.5, "" if s["breaks_per_min"] >= 0.5 else "breaks"
     if profile == "tank":
         return w <= 0.10, "win" if w > 0.10 else ""
     if profile == "dodger":
@@ -2170,13 +2299,15 @@ def normal_hits(W, cfg, item_level_on):
         mobs = [d for d in W["mobs"].values() if d["tier"] == "NORMAL" and d["theme"] in themes]
         if not mobs:
             continue
-        w = forged_for(W, rank)
+        w = forged_for(W, rank, cfg["style"])
         P = player_at(W, cfg, rank, w["damage"])
         lv = P["level"]
         LC = cfg["lord"]
         base = P["attack"] * (1 + P["str"]) * (1 + P["item_level"]) * (1 + 0.6 * P["crit"])
-        # expected motion per chain strike with rhythm p: strike 2 at E[c]=p, strike 3 at E[c]=p(1+p)
-        cad = [0.0, p, p * (1 + p)]
+        # expected motion per chain strike with rhythm p: strike 2 at E[c]=p, strike 3 at E[c]=p(1+p), and on
+        cad = [0.0]
+        for _ in arch["chain"][1:]:
+            cad.append(min(R["CADENCE_MAX"], p * (1 + cad[-1])))
         motions = [arch["moves"][m]["motion"] * (1 + R["CADENCE_DAMAGE"] * cad[i]) for i, m in enumerate(arch["chain"])]
         hits = []
         for d in mobs:
@@ -2204,7 +2335,7 @@ def build_jobs(W, cfg, args):
     profiles = [p.strip() for p in args.profiles.split(",")] if args.profiles else PROFILE_ORDER
     for d in lords:
         rank = home(W, d)
-        w = forged_for(W, rank)
+        w = forged_for(W, rank, cfg["style"])
         for prof in profiles:
             jobs.append({"lord": d["id"], "profile": prof, "weapon": w["id"], "weapon_damage": w["damage"],
                          "seeds": args.seeds, "seed": args.seed, "cfg": cfg, "row": "forged"})
@@ -2258,7 +2389,9 @@ def main(argv=None):
     ap.add_argument("--seeds", type=int, default=400)
     ap.add_argument("--seed", type=int, default=20261026)
     ap.add_argument("--lord", default=None, help="one Gate Lord id (e.g. bell_warden)")
-    ap.add_argument("--profiles", default=None, help="comma list of tank,dodger,parrier,expert")
+    ap.add_argument("--profiles", default=None, help="comma list of tank,dodger,parrier,expert (also hunter, euan)")
+    ap.add_argument("--style", default="longsword", help="the style fought with, the rank's forged one (twinblades, daggers, ...)")
+    ap.add_argument("--stance", action="store_true", help="where each cell's stance came from: breaks, sources and drain a minute")
     ap.add_argument("--item-level", choices=("off", "on"), default="off",
                     help="on: melee x (1 + 0.075 x item level), the item level = the Lord's content level (PowerMath.levelScale)")
     ap.add_argument("--override", action="append", default=[], metavar="PATH=VALUE")
@@ -2274,6 +2407,11 @@ def main(argv=None):
     t0 = time.time()
     W = load_world()
     cfg = default_config(W)
+    if args.style != "longsword":
+        if args.style not in W["archs"]:
+            raise SystemExit(f"combat_sim: no style {args.style!r}; pick from {sorted(W['archs'])}")
+        cfg["longsword"] = copy.deepcopy(W["archs"][args.style])
+        cfg["style"] = args.style
     if args.item_level == "on":
         cfg["item_level"]["on"] = 1
     for o in (PRESETS[args.preset] if args.preset else []) + args.override:
@@ -2291,9 +2429,9 @@ def main(argv=None):
         return
 
     if args.profiles:
-        bad = [p for p in args.profiles.split(",") if p.strip() not in PROFILE_ORDER]
+        bad = [p for p in args.profiles.split(",") if p.strip() not in cfg["profiles"]]
         if bad:
-            raise SystemExit(f"combat_sim: unknown profile(s) {bad}; pick from {PROFILE_ORDER}")
+            raise SystemExit(f"combat_sim: unknown profile(s) {bad}; pick from {sorted(cfg['profiles'])}")
     jobs = build_jobs(W, cfg, args)
     results = []
     if args.jobs > 1 and len(jobs) > 1:
@@ -2313,7 +2451,7 @@ def main(argv=None):
     lords = lords_of(W, args.lord)
     profiles = [p.strip() for p in args.profiles.split(",")] if args.profiles else PROFILE_ORDER
     lines = []
-    head = f"AWAKEN combat sim: Arms as built, {args.seeds} seeds a cell, item level {args.item_level}"
+    head = f"AWAKEN combat sim: Arms as built, {args.seeds} seeds a cell, item level {args.item_level}, {cfg['style']}"
     if args.preset:
         head += f", preset {args.preset}"
     if args.override:
@@ -2383,6 +2521,19 @@ def main(argv=None):
         lines.append(f"  {p:8} {TARGETS[p]:46} {passes[p]:>2}/{len(lords)}")
     if n_diamond:
         lines.append(f"  {'diamond':8} {TARGETS['diamond']:46} {passes['diamond']:>2}/{n_diamond}")
+    if args.stance:
+        lines.append("")
+        lines.append("Stance (a minute: breaks, landed blows, where the stance came from, what drained away; median first break, s):")
+        for d in lords:
+            for p in profiles:
+                s = cells.get((d["id"], p, "forged"))
+                if not s:
+                    continue
+                src = " ".join(f"{k} {v:.0f}" for k, v in s["stance_per_min"].items())
+                fb = "-" if s["first_break_s"] is None else f"{s['first_break_s']:.0f}"
+                lines.append(f"  {d['name'][:22]:22} {p:8} breaks {s['breaks_per_min']:4.2f}  landed {s['landed_per_min']:5.1f}  "
+                             f"deflects {s['deflects_per_min']:4.1f}  arts {s['arts_per_min']:4.2f}  first {fb:>4}  "
+                             f"drained {s['drained_per_min']:5.1f}  in: {src}")
     if args.cadence:
         lines.append("")
         lines.append("Cadence of the kit Lords (share of the fight: told or striking / recovering / between moves / NONE moves / opened;")

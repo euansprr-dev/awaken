@@ -3,7 +3,7 @@
  "id": "guardian_gardens",
  "moves": "guardian_gardens",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "kneel",
   "move": "wake"

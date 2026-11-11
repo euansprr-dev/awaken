@@ -1,0 +1,164 @@
+# Lite beside Swift and Cinematic on CI (SPEC §22 "Lite"; Euan, 11 Nov: "a new version between Swift and Cinematic ...
+# all the best stuff, like the atmosphere ... but it's really optimized for performance"). The same views of wild land
+# under each of the three: the morning toward and away from the sun, the sky, golden hour, dusk, night, rain, the land
+# from the ground, a stone room. Then a Rolling Storm under Lite, the Look page with its Lite card, and Lens's tick
+# work under Lite (none: the report counts no ticks).
+# Run: tools/tour-ci.sh tools/autopilot/steady60-lite-ci.txt 3000
+# ci knobs: LENS=cinematic
+world autopilot_storm creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 3000
+cmd gamemode creative
+cmd awaken admin levels 12
+cmd awaken living goto greenwild
+wait 200
+cmd tp @s ~300 ~45 ~300
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 200
+camera first
+hud on
+# --- the morning, toward the sun
+look -90 4
+lookswitch swift
+wait 80
+shot l1_morning_sun_swift
+lookswitch lite
+wait 80
+shot l1_morning_sun_lite
+lookswitch cinematic
+wait 300
+shot l1_morning_sun_cinematic
+# --- the morning, the land with the sun behind
+look 100 14
+wait 60
+shot l2_morning_land_cinematic
+lookswitch lite
+wait 80
+shot l2_morning_land_lite
+lookswitch swift
+wait 80
+shot l2_morning_land_swift
+# --- the sky
+look 20 -32
+wait 60
+shot l3_sky_swift
+lookswitch lite
+wait 80
+shot l3_sky_lite
+lookswitch cinematic
+wait 200
+shot l3_sky_cinematic
+# --- golden hour, toward the sun
+cmd time set 11400
+look 90 2
+wait 200
+shot l4_golden_cinematic
+lookswitch lite
+wait 80
+shot l4_golden_lite
+lookswitch swift
+wait 80
+shot l4_golden_swift
+# --- dusk
+cmd time set 12700
+look 90 -4
+wait 200
+shot l5_dusk_swift
+lookswitch lite
+wait 80
+shot l5_dusk_lite
+lookswitch cinematic
+wait 200
+shot l5_dusk_cinematic
+# --- night
+cmd time set 18000
+look -60 -14
+wait 200
+shot l6_night_cinematic
+lookswitch lite
+wait 80
+shot l6_night_lite
+lookswitch swift
+wait 80
+shot l6_night_swift
+# --- rain
+cmd time set 5000
+cmd weather rain 1000000
+look 100 8
+wait 400
+shot l7_rain_swift
+lookswitch lite
+wait 80
+shot l7_rain_lite
+lookswitch cinematic
+wait 200
+shot l7_rain_cinematic
+cmd weather clear 1000000
+# --- from the ground
+cmd time set 3000
+cmd setblock ~ ~-1 ~ minecraft:air
+wait 160
+look 100 2
+wait 200
+shot l8_ground_cinematic
+lookswitch lite
+wait 80
+shot l8_ground_lite
+lookswitch swift
+wait 80
+shot l8_ground_swift
+# --- a stone room with a doorway, a torch inside
+cmd fill ~-4 ~ ~-4 ~4 ~5 ~4 minecraft:stone hollow
+cmd fill ~-4 ~ ~-1 ~-4 ~2 ~1 minecraft:air
+cmd setblock ~3 ~1 ~3 minecraft:torch
+cmd tp @s ~2 ~1 ~ 90 6
+wait 200
+shot l9_room_swift
+lookswitch lite
+wait 80
+shot l9_room_lite
+lookswitch cinematic
+wait 300
+shot l9_room_cinematic
+# --- a Rolling Storm under Lite and under Cinematic
+cmd tp @s ~-12 ~ ~
+cmd time set 4000
+cmd awaken living happen rolling_storm
+wait 200
+cmd tp @s ~120 ~40 ~
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 60
+cmd awaken living near 200
+wait 300
+cmd tp @s ^ ^60 ^-200
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 10
+cmd tp @s ~ ~ ~ ~ -28
+wait 300
+shot l10_storm_cinematic
+lookswitch lite
+wait 120
+shot l10_storm_lite
+cmd awaken living calm
+# --- the Look page, and what Lens's tick work costs under Lite
+wait 100
+lens cost
+wait 200
+lens cost
+screen look
+wait 40
+shot l11_look_page
+screen close
+quit

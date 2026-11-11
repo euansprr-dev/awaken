@@ -13,27 +13,45 @@ import java.util.Map;
 /**
  * Creatures' stances as this client knows them (SPEC §25), installed as {@link Stances} for the plates: the server's
  * snapshot on every change, drained here by the server's own rule ({@link ArmsRules#drained}), so nothing is sent
- * while a stance only recovers. The focus is the creature this fighter last struck, held by the server's rule too
- * (it lets go after a second of looking well away).
+ * while a stance only recovers; a held one (a duel body fighting, SPEC §47.3) doesn't drain until the next snapshot
+ * lets it go. The focus is the creature this fighter last struck, held by the server's rule too (it lets go after a
+ * second of looking well away).
  */
 final class ArmsStances implements Stances.Source {
     static final ArmsStances INSTANCE = new ArmsStances();
 
-    /** A stance as last sent: its value, its hold, and the client tick it arrived. */
+    /**
+     * A stance as last sent: its value, its hold, the client tick it arrived, the tick it last rose, whether it is held
+     * now, and whether it ever was (a duel body: its plate shows the stance from its first blow, SPEC §47.3).
+     */
     private static final class Snap {
         float value;
-        int max, at;
+        int max, at, rose = -100_000;
+        boolean held, duel;
+
+        float now() {
+            return held ? value : ArmsRules.drained(value, ArmsPredict.ticks - at, ArmsRules.lordly(max));
+        }
+
+        boolean draining() {
+            return !held && value > 0 && ArmsPredict.ticks - at > ArmsRules.POSTURE_IDLE_TICKS && now() > 0;
+        }
     }
 
     private static final Map<Integer, Snap> SNAPS = new HashMap<>();
+    /** Our blows that landed on each creature (the plate's one hint reads it, SPEC §47.3). */
+    private static final Map<Integer, Integer> STRUCK = new HashMap<>();
     static int focus = -1;
     private static int focusSeenAt;
 
-    static void onSnapshot(int entity, float value, int max, int brokenTicks) {
+    static void onSnapshot(int entity, float value, int max, int brokenTicks, boolean held) {
         Snap s = SNAPS.computeIfAbsent(entity, k -> new Snap());
+        if (value > s.now() + 0.5F) s.rose = ArmsPredict.ticks; // the plate flashes what a blow put in
         s.value = value;
         s.max = Math.max(1, max);
         s.at = ArmsPredict.ticks;
+        s.held = held;
+        if (held) s.duel = true;
         if (brokenTicks > 0) ArmsPredict.BROKEN.put(entity, ArmsPredict.ticks + brokenTicks);
     }
 
@@ -41,14 +59,37 @@ final class ArmsStances implements Stances.Source {
     static void struck(int entity) {
         focus = entity;
         focusSeenAt = ArmsPredict.ticks;
+        STRUCK.merge(entity, 1, Integer::sum);
     }
 
     @Override
     public float share(Entity e) {
         if (broken(e)) return 1;
         Snap s = SNAPS.get(e.getId());
-        if (s == null) return 0;
-        return ArmsRules.drained(s.value, ArmsPredict.ticks - s.at, ArmsRules.lordly(s.max)) / s.max;
+        return s == null ? 0 : s.now() / s.max;
+    }
+
+    @Override
+    public boolean duel(Entity e) {
+        Snap s = SNAPS.get(e.getId());
+        return s != null && s.duel;
+    }
+
+    @Override
+    public boolean draining(Entity e) {
+        Snap s = SNAPS.get(e.getId());
+        return s != null && s.draining();
+    }
+
+    @Override
+    public int struck(Entity e) {
+        return STRUCK.getOrDefault(e.getId(), 0);
+    }
+
+    @Override
+    public int sinceRise(Entity e) {
+        Snap s = SNAPS.get(e.getId());
+        return s == null ? Integer.MAX_VALUE : ArmsPredict.ticks - s.rose;
     }
 
     @Override
@@ -74,15 +115,18 @@ final class ArmsStances implements Stances.Source {
                 else if (ArmsPredict.ticks - focusSeenAt >= ArmsRules.FOCUS_DROP_TICKS) focus = -1;
             }
         }
-        // a stance drained back to nothing is forgotten
-        if (!SNAPS.isEmpty() && (ArmsPredict.ticks & 63) == 0) {
-            SNAPS.entrySet().removeIf(en -> ArmsRules.drained(en.getValue().value, ArmsPredict.ticks - en.getValue().at, true) <= 0
-                    && ArmsPredict.ticks - en.getValue().at > 40);
+        // a stance drained back to nothing is forgotten; a duel body's stays while it is here (its plate shows it empty)
+        if ((ArmsPredict.ticks & 63) == 0 && p != null && p.level() != null) {
+            var level = p.level();
+            SNAPS.entrySet().removeIf(en -> en.getValue().duel ? level.getEntity(en.getKey()) == null
+                    : !en.getValue().held && en.getValue().now() <= 0 && ArmsPredict.ticks - en.getValue().at > 40);
+            STRUCK.keySet().removeIf(id -> level.getEntity(id) == null);
         }
     }
 
     static void reset() {
         SNAPS.clear();
+        STRUCK.clear();
         focus = -1;
     }
 }

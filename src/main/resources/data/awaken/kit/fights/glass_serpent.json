@@ -3,7 +3,7 @@
  "id": "glass_serpent",
  "moves": "glass_serpent",
  "duel": true,
- "stance": 200,
+ "stance": 110,
  "intro": {
   "pose": "kneel",
   "move": "wake"

@@ -3,7 +3,7 @@
  "id": "guardian_dreaming",
  "moves": "guardian_dreaming",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "kneel",
   "move": "wake"

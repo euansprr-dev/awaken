@@ -3,7 +3,7 @@
  "id": "nightmare_falling",
  "moves": "nightmare_falling",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "kneel",
   "move": "arrive"
