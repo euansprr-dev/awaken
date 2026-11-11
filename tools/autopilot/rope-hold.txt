@@ -2,6 +2,8 @@
 # third person so the rope shows: (1) the key held 12 s with no other key, the swing going back and forth and dying
 # down, then the key let go; (2) the key and forward held 15 s, forward pumping the swing up to its cap, then let go;
 # (3) four swings let go as the rope glows, each next rope thrown at once (never two ropes on screen).
+# Each scene waits for the server first (a run on 11 Nov filmed nothing: the sandbox's build held the server while
+# the client's script ran on, so the pilot's keys all arrived after the last shot).
 # The log's [ascent] trace has the speed every tick: "swing <b/t> at <angle>" on the rope, "air <b/t>, up <b/t>" for
 # 60 ticks after each let-go (the flight should fall off smoothly, no slow beat).
 # Look tour: tools/tour-ci.sh tools/autopilot/rope-hold.txt 1800
@@ -35,13 +37,16 @@ cmd awaken ascent grant tether
 wait 10
 cmd awaken ascent sandbox
 wait 200
+# the sandbox's build holds the server for seconds (its far chunks): every scene starts once the server has caught up
+arms waitserver 100
 screen close
 camera back
 wait 10
 
 # ---- 1: held 12 s, no other key: back and forth, dying down, then let go ----
 cmd tp @s 0.5 151 5.5 0 -10
-wait 40
+arms waitserver 40
+wait 20
 shotnow rh_1_start
 cmd awaken ascent pilot hold forward,sprint 16
 wait 10
@@ -82,7 +87,8 @@ wait 60
 
 # ---- 2: the key and forward held 15 s: forward pumps it up, then let go ----
 cmd tp @s 0.5 151 5.5 0 -10
-wait 40
+arms waitserver 40
+wait 20
 cmd awaken ascent pilot hold forward,sprint 16
 wait 10
 cmd awaken ascent pilot hold jump 2
@@ -104,7 +110,8 @@ wait 70
 
 # ---- 3: four swings let go as the rope glows, the next rope thrown each time ----
 cmd tp @s 0.5 151 5.5 0 -10
-wait 40
+arms waitserver 40
+wait 20
 cmd awaken ascent pilot run swing 4
 wait 10
 shotnow rh_3_chain_00

@@ -279,6 +279,8 @@ public final class SwingBench {
         int t, travel, held, ropeStart = -100, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
         /** Ticks the bot has waited at a held rope's let-go point because letting go would throw it into something. */
         int waited;
+        /** The window's quality last tick (the held bot lets go as it stops rising: the glow at its brightest). */
+        double lastQ;
         /**
          * The bot that only holds forward and the rope, never jump (how the game is played with one thumb): the rope may
          * throw from the ground, by the game's own rule (AscentMoves: a press, or three ticks down at a run ten ticks
@@ -386,6 +388,7 @@ public final class SwingBench {
             cooldown = 2;
             groundTicks = 0;
             waited = 0;
+            lastQ = 0;
             work.ahead = -1;
         }
 
@@ -624,6 +627,14 @@ public final class SwingBench {
      * the held rope ({@link AscentSwing#hold}) the rope never lets go by itself, so this bot lets go of the key where the
      * rope used to let go: as the window lights (where the guide's held rope let go), else at the top of the arc.
      */
+    /**
+     * How the holding bot lets go of a held rope: as the glow lights ({@link #LIT}), at its brightest (the window's best,
+     * or as it starts to fade: {@link #BRIGHT}, how a player plays the glow), or only at the top of the arc ({@link #TOP}).
+     * Always at the top too, and before a wall.
+     */
+    static final int LIT = 0, BRIGHT = 1, TOP = 2;
+    static int heldRule = BRIGHT;
+
     static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
         return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
     }
@@ -661,8 +672,13 @@ public final class SwingBench {
                     // brakes for it, where the rope used to let go by itself); a few ticks later if that would throw the
                     // bot into something just ahead (a player sees the crown coming), as the rope's own let-go waited before
                     double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
-                    boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5;
-                    if (q > (hold ? AscentSwing.T.winFrom + 0.01 : 0.85) || sim.rope.swung || wall) {
+                    boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5, lit = switch (heldRule) {
+                        case LIT -> q > AscentSwing.T.winFrom + 0.01;
+                        case TOP -> false;
+                        default -> q > 0.97 || sim.lastQ > AscentSwing.T.winFrom && q < sim.lastQ;
+                    };
+                    sim.lastQ = q;
+                    if ((hold ? lit : q > 0.85) || sim.rope.swung || wall) {
                         if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) rope = false;
                         else sim.waited++;
                     }

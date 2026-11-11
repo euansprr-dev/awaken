@@ -161,6 +161,16 @@ final class AscentSwingTests {
         try {
             AscentSwing.guide = true;
             AscentSwing.hold = true;
+            // how the holding bot lets go of a held rope, three ways (logged, never judged): as the glow lights, at its
+            // brightest (the gates' bot: how a player plays the glow), only at the top of the arc
+            String[] rules = {"lit", "bright", "top"};
+            for (int rule = 0; rule < rules.length; rule++) {
+                SwingBench.heldRule = rule;
+                for (String place : new String[] {"lane", "city", "forest", "oak", "roofs"}) {
+                    rows.append('\n').append(rules[rule]).append(' ').append(SwingBench.bench(place, true, true));
+                }
+            }
+            SwingBench.heldRule = SwingBench.BRIGHT;
             int free = 0;
             for (String place : SwingBench.PLACES) {
                 SwingBench.Row today = SwingBench.bench(place, false), held = SwingBench.bench(place, true, true);
@@ -224,6 +234,7 @@ final class AscentSwingTests {
             AscentSwing.T = was;
             AscentSwing.guide = guide;
             AscentSwing.hold = holdWas;
+            SwingBench.heldRule = SwingBench.BRIGHT;
         }
         dev.awaken.Awaken.LOG.info("[ascent] swing bench:{}", rows);
         h.assertTrue(bad.isEmpty(), String.join("; ", bad));
