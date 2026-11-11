@@ -7,6 +7,13 @@
 
 float airOn() { return F(22).w; }
 
+// A land with a sky of its own (SPEC §22 "The Air in other worlds"): every world but the overworld says its sky's and
+// its fog's colours in its biomes, and there the Air draws those and not its own model. Frame texels 24, 25, 26 w
+// (the spare of the Holo plates' texels): the land's horizon (its fog colour as the game has it now, the look's haze
+// tint over it); 27 w: how far the sky is the land's (0 the Air's own, 1 the land's). Its zenith is texel 23's sky
+// colour, the game's.
+vec4 airLand() { return vec4(F(24).w, F(25).w, F(26).w, F(27).w); }
+
 // the hour by the sun's height: x day, y dusk or dawn (it peaks as the sun crosses the horizon), z night
 vec3 airHour(float sy) {
     float day = smoothstep(-0.06, 0.30, sy);
@@ -42,7 +49,18 @@ vec3 airSky(vec3 dir, vec3 sun, float rain) {
     c += vec3(0.020, 0.030, 0.055) * pow(max(dot(dir, -sun), 0.0), 6.0) * hr.z;
     // rain and storm: toward a cool grey as bright as the sky was
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    return mix(c, vec3(l) * vec3(0.90, 0.95, 1.02) * 0.82, rain * 0.85);
+    c = mix(c, vec3(l) * vec3(0.90, 0.95, 1.02) * 0.82, rain * 0.85);
+    // a land's own sky: its sky colour overhead (a little deeper at the top), its horizon below, in the model's own
+    // shape, with the sun's glow in its air. The game's colours already carry the land's hour and weather
+    vec4 land = airLand();
+    if (land.a > 0.0) {
+        vec3 lz = F(23).rgb;
+        vec3 cl = mix(lz * 0.80, lz, smoothstep(0.0, 1.0, pow(up, 1.5)));
+        cl = mix(cl, land.rgb, pow(up, 4.0));
+        cl += glowC * glow * 0.6 * (1.0 - cl);
+        c = mix(c, cl, land.a);
+    }
+    return c;
 }
 
 // the fog's colour for land seen in a direction: the sky that stands behind it there (the horizon's, for land seen

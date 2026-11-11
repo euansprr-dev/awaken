@@ -1,0 +1,116 @@
+# Glasswater: the Air's water (SPEC §22; Euan, 11 Nov: "I don't want the usual blue, like, flat blue style ... still
+# feels like MC, but doesn't look at all like what it was before"). A pool forty-nine blocks square with a deep
+# middle, a sand corner, lily pads, a pillar and a small island: across it in the morning (the game's own frame
+# beside Lens's), down into it at the bank, along the shore, from above; golden hour and dusk toward the sun; the
+# night. Then the same three views on Lite, and two with Vivid.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-water-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 0 10
+cmd forceload add -32 -32 32 64
+wait 200
+cmd fill -30 120 -6 30 120 64 minecraft:grass_block
+cmd fill -24 114 10 24 119 58 minecraft:stone
+cmd fill -24 120 10 24 120 58 minecraft:water
+cmd fill -12 115 22 12 119 46 minecraft:water
+cmd fill -24 119 10 -14 119 20 minecraft:sand
+cmd fill -3 121 59 3 126 59 minecraft:stone_bricks
+cmd fill 26 121 30 26 127 36 minecraft:oak_log
+cmd fill 8 120 14 9 120 15 minecraft:grass_block
+cmd fill 8 121 14 8 124 14 minecraft:birch_log
+cmd fill 6 124 12 10 126 16 minecraft:birch_leaves[persistent=true]
+cmd fill 8 121 14 8 124 14 minecraft:birch_log
+cmd fill -6 120 16 -6 123 16 minecraft:stone_bricks
+cmd setblock -2 121 13 minecraft:lily_pad
+cmd setblock -1 121 14 minecraft:lily_pad
+cmd setblock -3 121 15 minecraft:lily_pad
+cmd tp @s 0.5 121 7.5 0 6
+camera first
+hud on
+opt fov 80
+lookswitch cinematic
+wait 400
+cmd time set 3000
+look 0 6
+wait 200
+lensdebug 1
+shot w1_morning_across_game
+lensdebug 0
+shot w1_morning_across_lens
+cmd tp @s 0.5 121 9.4 0 55
+wait 60
+look 0 55
+wait 60
+shot w2_down_at_the_bank
+look -70 22
+wait 60
+shot w3_along_the_shore
+look 40 14
+wait 60
+shot w3_island_and_pads
+cmd tp @s 0.5 128 4.5 0 22
+cmd setblock 0 127 4 minecraft:glass
+wait 100
+look 0 22
+wait 60
+shot w4_from_above
+cmd tp @s 23.5 121 34.5 90 5
+wait 100
+cmd time set 11500
+look 90 5
+wait 200
+lensdebug 1
+shot w5_golden_sun_game
+lensdebug 0
+shot w5_golden_sun_lens
+cmd time set 12700
+wait 200
+shot w6_dusk_sun_lens
+cmd time set 18000
+cmd tp @s -23.5 121 34.5 -90 6
+wait 60
+look -90 6
+wait 200
+shot w7_night_lens
+cmd time set 3000
+cmd tp @s 0.5 121 7.5 0 6
+wait 100
+lens grade vivid
+look 0 6
+wait 200
+shot w8_morning_across_vivid
+look 40 14
+wait 60
+shot w8_island_and_pads_vivid
+lens grade awaken
+lookswitch lite
+wait 200
+look 0 6
+wait 60
+shot w9_lite_across
+look 40 14
+wait 60
+shot w9_lite_island_and_pads
+cmd time set 12700
+cmd tp @s 23.5 121 34.5 90 5
+wait 60
+look 90 5
+wait 200
+shot w9_lite_dusk
+lens grade setting
+quit

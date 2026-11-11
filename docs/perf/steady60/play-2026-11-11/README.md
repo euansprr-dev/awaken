@@ -25,6 +25,23 @@ Each sheet has the code before the fix on the left and after it on the right, fr
 - `lite-beside-swift-and-cinematic.jpg` (SPEC §22 "Lite"; `tools/autopilot/steady60-lite-ci.txt`, run 42960037101):
   the new tier between the two it sits between, the same views: morning, from the ground, dusk, night.
 
-Not fixed here: the ground under a slide or a crawl (needs the hand's own depth), exact light under cover (needs the
-game's light data in a texture), and Lens's shadows on land the game has already fogged. (The flat tan mass was first
-put down to Far Sight's far land; his Far Sight was off, and it was the game's own fog.)
+- `spotlight-before-after.jpg` (SPEC §22 "Reach and cover", the hand; `tools/autopilot/steady60-hand-ci.txt`, runs
+  42985161194 and 42988235690, a 90 degree view): "When I get close to a door that's full of shade ... it creates this
+  spotlight effect"; "Same thing when I get close to a wall ... and for ceilings". A shaded oak wall from 2.5 and 0.8
+  blocks, looking up it, and a doorway. Before, a disc of the game's raw light follows the camera; after, the wall is
+  shaded right up to the eye and the pickaxe in the hand stays as the game lights it. (A first "after", run
+  42985247494, read a checkerboard for the hand: the texture was registered under the wrong name.)
+- Glasswater (SPEC §22; `tools/autopilot/steady60-water-ci.txt`): the Air's own water. There is no sheet of it as it
+  stands: `wip/glasswater-pixel-grid-rejected.jpg` is the first build, drawn on the block's sixteenth grid, which he
+  saw and turned down ("I'm really not a fan of the pixelized reflections ... It looks more glitchy than anything
+  else"). It was rebuilt smooth at dd769ccd5 and handed over at his word without waiting for pictures (run
+  42997552947 was in flight).
+- The Air in other worlds (SPEC §22; `tools/autopilot/steady60-realm-sky-ci.txt`): a gate world's own sky and fog
+  under the Air. Before: run 42996721809 (Amber Reach under the Air's blue). After: run 42996759340, in flight at the
+  hand-over, unread.
+
+Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
+exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
+fogged, and the sun's rays coming out hard-edged under a low sun near the cloud layer (seen in the world-moods
+planner's dusk shot). (The flat tan mass was first put down to Far Sight's far land; his Far Sight was off, and it was
+the game's own fog.)

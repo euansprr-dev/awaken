@@ -2732,6 +2732,12 @@
           "sampler_name": "AirSky",
           "target": "awaken:lens_airsky",
           "bilinear": true
+        },
+        {
+          "sampler_name": "Hand",
+          "location": "awaken:lens_hand_depth",
+          "width": 1,
+          "height": 1
         }
       ],
       "output": "swap",

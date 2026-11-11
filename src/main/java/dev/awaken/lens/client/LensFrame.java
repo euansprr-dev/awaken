@@ -52,6 +52,16 @@ final class LensFrame {
     // the Air (SPEC §22 "Steady Light"): the sun's own direction (under the horizon by night), how much of the Air is on,
     // the game's sky colour this frame and its stars' brightness
     private float airSunX, airSunY = 1f, airSunZ, airOn, skyR, skyG, skyB, stars;
+    // a land with a sky of its own (lens_air.glsl, airLand): its horizon's colour, and how far the sky is the land's
+    private float landR, landG, landB, landK;
+
+    /** This frame's land (SPEC §22 "The Air in other worlds"): its horizon's colour, and 1 where the Air draws the land's own sky. */
+    void land(float r, float g, float b, float k) {
+        landR = r;
+        landG = g;
+        landB = b;
+        landK = k;
+    }
 
     /** This frame's Air: toward the sun, its strength (0: off), the game's sky colour and star brightness. */
     void air(float sunX, float sunY, float sunZ, float on, float r, float g, float b, float starBrightness) {
@@ -170,9 +180,10 @@ final class LensFrame {
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;
-            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, 0f);
-            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, 0f);
-            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, 0f);
+            // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share)
+            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, k == 0 ? landR : k == 1 ? landK : 0f);
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, k == 0 ? landG : 0f);
+            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, k == 0 ? landB : 0f);
         }
         // 42-47: up to two storm cells, three texels each (layout in lens_storm_frame.glsl)
         for (int k = 0; k < dev.awaken.living.client.StormSky.MAX; k++) {

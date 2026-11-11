@@ -6525,6 +6525,27 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     in a texture (Java) and is not built.
   - Checked on CI with `tools/autopilot/steady60-cover-ci.txt` (a stone room with a seven-block roof in its own
     morning shadow; views at 70, 100 and 110 degrees), before and after.
+  - **The hand** (Euan, playing, the same day, after the fix above: "When I get close to a door that's full of shade
+    ... it creates this spotlight effect in my view. And then if I move forward, the spotlight effect moves with me";
+    "Same thing when I get close to a wall ... the same issue as earlier, but for walls and for ceilings"). Three
+    rules took "within 1.25 blocks of the eye" to mean "the hand": the light pass shadowed nothing nearer, the
+    composite's light eased in from there to 1.45, and inside that reach nothing was darker than the game. A wall, a
+    door or a ceiling at arm's length is inside it too, so it stood in the game's raw light, a disc on the shaded
+    surface that moved with the camera. The hand cannot be told from a wall by the frame's depth (the game copies the
+    hand's depth over the world's, and both are a block away). But the game draws the hand and what it holds into a
+    depth of their own first (`GameRenderer.hud3DTarget`, "hud_3d_depth", cleared to 0, whenever a post effect
+    runs), and that texture still holds them when Lens's chain runs. Lens now reads it: `LensHand`
+    (`awaken:lens_hand_depth`, a view of the game's texture, never owned), pointed each frame after the world is
+    drawn at the target Pixels' own hook already receives (`PixelsHooks.handTarget()`: the shadowed field of the
+    Pixels mixin, no new mixin and no access transformer; while Pixels scales the world it is Pixels' lent texture,
+    the one the hand is really drawn into). Parameter texel 26 r says Lens has it. Then a pixel is the hand where
+    that depth is not 0, and only there: the light pass shadows every other pixel, the composite lights the world
+    right up to the eye, and "never darker than the game" holds for the hand alone. Without the hook (Pixels' mixin
+    off or failed) the three rules go by reach as before. Left by reach on purpose: the light pass's contact shadows
+    and ambient occlusion still ignore occluders nearer than 1.25 blocks, so the hand casts none on the world (a
+    wall that near casts none either, which nobody will miss). Inputs: `Hand` on the light pass and the lit
+    composite of every chain (`tools/lens/probes.py` regenerated the measuring chains). Tour:
+    `tools/autopilot/steady60-hand-ci.txt`.
 - **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
   the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
   to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
@@ -6592,6 +6613,74 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
+  own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
+  atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
+  Realms among them): its own blue model, and since "The game's fog under the Air" its horizon colour as the game's
+  fog too, so a Realm biome's `sky_color` and `fog_color` never showed on Lite, Cinematic or Ultra, and with the
+  Air on the look's haze tint did nothing.
+  - **The rule**: in every world but the overworld the sky is the land's own. The Air keeps its shape (a deeper
+    zenith, the horizon rising a little way, the sun's glow, the night's stars and galaxy, wisps, block clouds lit
+    by that sky, the far fog that takes the land into the horizon) and takes its colours from the land: overhead
+    the game's sky colour as it is this frame (the biome's `sky_color` with the land's hour and weather), at the
+    horizon the game's fog colour (`fog_color`) with the look's `hazeTint` laid over it by `hazeTintMix`. The far
+    fog is the same horizon colour, so the land still fades into exactly the sky behind it, and far land greys by
+    the look's `hazeDesaturate`. There the game's fog keeps the land's colour (the overworld's rule is not applied).
+  - **For a land's maker**: set the biome's `minecraft:visual/sky_color` and `fog_color` (the zenith and the
+    horizon), and in the land's look `hazeTint` with `hazeTintMix` (to draw the horizon and the far fog toward a
+    colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
+  - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
+    share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
+- **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
+  like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
+  that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
+  sense ... That would be inconsistent"; then: "surprise me along the lines of what we've been building ... the
+  fantasy style ... I don't want the usual blue, like, flat blue style ... still feels like MC, but doesn't look at
+  all like what it was before"). Under the Air, still water is drawn again by the composite, on Lite as on Cinematic
+  and Ultra (`lens_water.glsl`: `waterHere`, `airWater`). Nothing moves the surface, bends what is under it or is
+  simulated, and all of it is smooth. (The first build drew it on the block's sixteenth grid: a mirror leaning a
+  texel at a time, glints a texel square, a stepped waterline. Shown it, he said: "I'm really not a fan of the
+  pixelized reflections, though. It looks more glitchy than anything else." A stepped mirror is what a broken
+  upscale looks like. What keeps the water this game's is what it mirrors, block clouds and block shores, and the
+  place's own water colour: never a pixel grid laid over a reflection.)
+  - **What is water**: a level surface at the height a still fluid stands in its block (0.8889), seen from above,
+    by the pixel's own world height (within 0.004), with the composite's normal up (or none, on an edge); lava, which
+    stands at the same height, is told by the game's colour. So it needs no heightfield (Lite has none) and holds
+    at any distance. Flowing water and falls are not level and stay the game's. Under cover (parameter texel 21 r,
+    and on Cinematic the pixel's own cover) it stays the game's too: a cave's lake has no sky to hold. It gives way
+    with the game's own fog, and by the look's `water` (0.6 is whole).
+  - **The body**: jewel tones from the place's own water colour (the hue of the game's pixel: a marsh stays dark, a
+    steppe pale), drawn toward aqua where you look down into it and toward indigo where it runs deep and far, lit
+    by the hour and by Lens's own shade (the lit and the raw pixel differ by nothing else). Near you the game's
+    picture of the bed shows through it; far out the body is all there is. Long wind lanes (about nine blocks by
+    three) drift across it, a crest a little lighter.
+  - **The mirror**: the Air's sky the way the reflected ray looks; its block clouds (Cinematic and Ultra: walked
+    from the camera's image under the surface, `cloudNearFrom`, block for block the sky's, to 1,240 blocks; Lite:
+    a cloud's own footprint, one read where the mirrored ray meets the layer's underside); and the land over the
+    far shore, read from the frame where the mirrored ray looks, into the Air's fog by its distance (true for
+    anything far off; nearer than some twenty blocks it is left to the sky). The mirror ripples gently: three slow
+    swells and a little chop lean it, more on a lane's crest. Its share is wider than glass's (0.05 straight down to 0.86 toward the horizon), so a
+    lake across the way is already sky and still keeps some of its own colour.
+  - **Lace**: thin soft lines of light on the lanes' crests, long along the lanes and broken into dashes, gone
+    before they are finer than a screen pixel.
+  - **The road of the sun, and the moon's**: the light's own long reflection on the ripples, a wide soft glow
+    under it and a fine sparkle that comes and goes along it, laid over the water in the hour's own light (gold
+    toward dusk). By night the water holds a scatter of small soft stars. None in the water's own shade
+    (Cinematic's sun term).
+  - **The waterline** (with the heightfield: Cinematic and Ultra): a pale line where water meets what stands over
+    it, soft-edged, breathing in and out along the shore, a faint ring off it now and then, and aqua shallows within
+    a block of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
+    under a tree's crown read as a bank). A bridge overhead reads as a bank as well: the water under its edge
+    ripples.
+  - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes and three cosines), the sky model twice,
+    and three reads.
+    Cinematic: the mirrored cloud walk and four heights more. Not measured: frame times need the Mac.
+  - **Not done**: flowing water and falls, cave lakes, rain rings, a storm cell and the sun's and moon's discs in the
+    mirror, the bed's real depth (the shallows are by the shore, not by how deep it is). Without the Air (`lensAir`
+    off) L3's water is as it was.
+  - Tour: `tools/autopilot/steady60-water-ci.txt` (a pool with a deep middle, a sand corner, lily pads, a pillar and
+    an island: across, down at the bank, along the shore, from above, golden hour, dusk, night; Vivid; Lite).
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use

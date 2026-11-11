@@ -15,6 +15,7 @@ uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFram
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
 uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 uniform sampler2D AirSkySampler;     // the Air's sky buffer (lens_airsky.fsh): the galaxy's light and the wisps' cover
+uniform sampler2D HandSampler;       // the hand's own depth (LensHand): 0 where there is no hand
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -231,6 +232,8 @@ bool lrHave = false;
 // how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
 float lensOpen = 1.0;
 
+#include <awaken:lens_water.glsl>
+
 // The sky's light under a roof, from beside it (SPEC §22 "Steady Light", cover): how much of the open sky a point
 // under solid cover still has from the side, 1 at the roof's edge falling to nothing six blocks in, as the game's own
 // sky light falls off into a cave. Along the four compass lines from the point: the nearest column each way that
@@ -270,7 +273,13 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     bool z01 = f16.x > 0.5;
     mat4 inv = frameMat(0);
     float dist = length(p);
-    float near = smoothstep(1.25, 1.45, dist);
+    // Lens's light is for the world: the hand and what it holds keep the game's (their place in the world can't be
+    // told from the depth the game draws them with). The hand is known by its own depth where Lens has it (parameter
+    // texel 26 r, HandSampler: 0 where no hand is), and then the world is lit right up to the eye. Without it the
+    // light eases in by reach, 1.25 to 1.45 blocks, and a wall, a door or a ceiling nearer than that stood unlit
+    // with the hand, in a disc that moved with the camera (Euan, playing, 11 Nov: "it creates this spotlight effect in
+    // my view ... the same issue as earlier, but for walls and for ceilings").
+    float near = P(26).r > 0.5 ? (texture(HandSampler, texCoord).r > 0.0 ? 0.0 : 1.0) : smoothstep(1.25, 1.45, dist);
     if (near <= 0.0) return c;
     vec3 m = vec3(1.0);
     float rich = 0.0;
@@ -389,7 +398,8 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float up = smoothstep(0.6, 0.95, n.y), fres = pow(1.0 - clamp(dot(-p / dist, n), 0.0, 1.0), 4.0);
         c += P(10).rgb * fres * up * wet * 0.22;
     }
-    if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
+    // (under the Air the water is the Air's own, drawn after this for every tier: lens_water.glsl)
+    if (m20.r > 0.0 && air <= 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }
 
@@ -519,6 +529,14 @@ void main() {
     }
     if (!open && !classic && !plate && !lensLite()) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
+    // the Air's water (lens_water.glsl, SPEC §22 "Glasswater"): still water drawn again on its own texel grid, on Lite
+    // too. Not under cover (a cave's lake has no sky to hold: it stays the game's), and it gives way with the game's
+    // own fog
+    if (airOn() > 0.0 && !open && !classic && !plate && waterHere(pRel, quick, game)) {
+        float cover = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
+        float wk = clamp(P(20).r / 0.6, 0.0, 1.0) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - cover);
+        if (wk > 0.0) c = airWater(c, game, pRel, max(length(dpx.xz), length(dpy.xz)), lrHave ? lrKept.r : 1.0, rdEnd, wk);
+    }
     // the Air (Steady Light): Lens's own sky, and a far fog of the sky's own horizon colour that takes the land into it,
     // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
     // over its own sky colour); Lens's larger stars join them by night. Places under cover keep the game's air
@@ -566,7 +584,8 @@ void main() {
             float inside = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
             float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - inside) * airK;
             vec3 fc = airFog(dirA, f22.xyz, rainA);
-            c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
+            // (how grey far land goes: the Air's own share, or in a land with its own sky the look's `hazeDesaturate`)
+            c = mix(c, mix(c, vec3(luma(c)), mix(0.3, h.a, airLand().a)), fog);
             c = mix(c, fc, fog);
         }
     }
@@ -753,7 +772,8 @@ void main() {
     // brightness back and stood out raw against the shade (Euan, playing, 11 Nov: "the bottom edge and sometimes left
     // edge of my screen has no shaders ... changes based on my pace and how I move my head").
 #ifdef LENS_LIGHT
-    float handReach = open ? 1.0e9 : length(pRel);
+    // (with the hand's own depth, parameter texel 26 r, the hand is the hand and nothing else is)
+    float handReach = P(26).r > 0.5 ? (texture(HandSampler, texCoord).r > 0.0 ? 0.0 : 1.0e9) : (open ? 1.0e9 : length(pRel));
 #else
     // Swift has no world position: the hand's own distance, by the fixed field of view the game draws the hand with
     // (tan 35 degrees), which a wider world view only lengthens
