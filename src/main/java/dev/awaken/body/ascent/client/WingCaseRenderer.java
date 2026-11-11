@@ -46,16 +46,30 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     private static final float OPEN_TICKS = 22, FLY_FROM = 6, FLY_TICKS = 28;
 
     public static final class State extends BlockEntityRenderState {
-        float time, open, fly, tx, ty, tz, camX, camZ;
+        float partial, open, fly, tx, ty, tz, camX, camZ;
         boolean pair, near;
-        int lod;
+        int lod, ticks;
     }
 
     // this frame's case (the geometry runs after every submit; platforms stand hundreds of blocks apart, so one is in view)
     private static final float[] POSE = new float[WingForm.N], PAIR = {1F, 0F, 0F};
     private static final Quaternionf TURN = new Quaternionf();
-    private static float alpha, glow, open, time, camX, camZ, column;
-    private static int lod;
+    private static float alpha, glow, open, partial, camX, camZ, column;
+    private static int lod, ticks;
+
+    // every motion here is a cycle of whole ticks, so nothing drifts or steps however long the session has run (a
+    // float of time loses its fine steps after a few hours): the turn, the breath, the sway, the bob, the sheen
+    private static final int TURN_TICKS = 760, BREATH_TICKS = 289, SWAY_TICKS = 195, BOB_TICKS = 145, SHEEN_TICKS = 200;
+
+    /** How far through a cycle of {@code period} ticks this frame is, 0 to 1. */
+    private static float phase(int period) {
+        return (ticks % period + partial) / period;
+    }
+
+    /** A cycle of {@code period} ticks as a wave, -1 to 1. */
+    private static float wave(int period) {
+        return Mth.sin(phase(period) * Mth.TWO_PI);
+    }
     private static final SubmitNodeCollector.CustomGeometryRenderer FEATHERS =
             (pose, vc) -> WingFeathers.pair(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT, alpha, lod, false);
     private static final SubmitNodeCollector.CustomGeometryRenderer HALOS = (pose, vc) -> {
@@ -76,7 +90,8 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         BlockEntityRenderer.super.extractRenderState(be, s, partialTicks, camera, crumbling);
         BlockPos p = be.getBlockPos();
         double dx = camera.x - (p.getX() + 0.5), dy = camera.y - (p.getY() + HANG), dz = camera.z - (p.getZ() + 0.5), d2 = dx * dx + dy * dy + dz * dz;
-        s.time = AscentMoves.ticks + partialTicks;
+        s.ticks = AscentMoves.ticks;
+        s.partial = partialTicks;
         s.camX = (float) dx;
         s.camZ = (float) dz;
         s.near = d2 < NEAR * NEAR;
@@ -104,7 +119,8 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
         if (!s.near) return;
-        time = s.time;
+        ticks = s.ticks;
+        partial = s.partial;
         open = s.open;
         lod = s.lod;
         camX = s.camX;
@@ -113,17 +129,17 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         column = s.pair ? 1 - s.fly : 0;
         if (s.pair) {
             // breathing between nearly open and open; opened right out as it leaves the case
-            float k = Mth.lerp(s.fly, 0.86F + 0.1F * Mth.sin(time / 46F), 1F);
+            float k = Mth.lerp(s.fly, 0.86F + 0.1F * wave(BREATH_TICKS), 1F);
             WingForm.mix(WingForm.FOLD, WingForm.OPEN, k, POSE);
             POSE[WingForm.CASC] = 1;
-            POSE[WingForm.P0] += 3F * Mth.sin(time / 31F) * (1 - s.fly);
+            POSE[WingForm.P0] += 3F * wave(SWAY_TICKS) * (1 - s.fly);
             // thinning out over the last of the way across: the scene's own wings open where it arrives
             alpha = 1 - WingForm.ease((s.fly - 0.8F) / 0.2F);
-            glow = 0.75F + 0.25F * Mth.sin(time / 46F);
+            glow = 0.75F + 0.25F * wave(BREATH_TICKS);
             float size = Mth.lerp(s.fly, SIZE, 0.94F), at = s.fly;
             pose.pushPose();
-            pose.translate(0.5F + s.tx * at, HANG + s.ty * at + 0.06F * Mth.sin(time / 23F) * (1 - at), 0.5F + s.tz * at);
-            pose.rotate(TURN.rotationY(time / 760F * Mth.TWO_PI));
+            pose.translate(0.5F + s.tx * at, HANG + s.ty * at + 0.06F * wave(BOB_TICKS) * (1 - at), 0.5F + s.tz * at);
+            pose.rotate(TURN.rotationY(phase(TURN_TICKS) * Mth.TWO_PI));
             // the wings' own space is a body's back: x to its left, y down, z behind, from the neck (the roots 3 down, 4 behind)
             pose.scale(-size, -size, size);
             pose.translate(0, -WingFeathers.ROOT_Y / 16F, -WingFeathers.ROOT_Z / 16F);
@@ -174,7 +190,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
                 quad(pose, vc, ax, RAIL, az, ax + ux * w, RAIL, az + uz * w, ax + ux * w, top, az + uz * w, ax, top, az, line, none, none, line);
                 quad(pose, vc, ax, top - w, az, bx, top - w, bz, bx, top, bz, ax, top, az, none, none, line, line);
                 // the sheen: a soft band leaning across the pane, its turn a quarter of the cycle
-                float cycle = (time / 200F + side * 0.25F) % 1F;
+                float cycle = (phase(SHEEN_TICKS) + side * 0.25F) % 1F;
                 if (cycle < 0.3F) {
                     float m = -0.2F + cycle / 0.3F * 1.4F, half = 0.22F, lean = 0.35F;
                     int mid = a(0.13F, EDGE);
@@ -192,13 +208,13 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         // down its middle and at its foot, breathing with the pair (it is what reads from the pier and the stair)
         float cl = (float) Math.sqrt(camX * camX + camZ * camZ);
         if (column > 0.01F && cl > 0.05F) {
-            float wide = 1.25F, sx = -camZ / cl * wide, sz = camX / cl * wide, breath = 0.85F + 0.15F * Mth.sin(time / 46F);
+            float wide = 1.25F, sx = -camZ / cl * wide, sz = camX / cl * wide, breath = 0.85F + 0.15F * wave(BREATH_TICKS);
             int low = a(0.2F * column * breath, TINT), high = a(0.07F * column * breath, TINT), off = a(0, TINT);
             quad(pose, vc, c - sx, 1.02F, c - sz, c, 1.02F, c, c, ROOF, c, c - sx, ROOF, c - sz, off, low, high, off);
             quad(pose, vc, c, 1.02F, c, c + sx, 1.02F, c + sz, c + sx, ROOF, c + sz, c, ROOF, c, low, off, off, high);
         }
         // the light on the core's top
-        float y = 1.03F, r = 1.7F, strength = (0.16F + 0.05F * Mth.sin(time / 46F)) * (1 - 0.55F * open);
+        float y = 1.03F, r = 1.7F, strength = (0.16F + 0.05F * wave(BREATH_TICKS)) * (1 - 0.55F * open);
         int mid = a(strength, TINT), rim = a(0, TINT);
         for (int i = 0; i < 8; i++) {
             float a0 = i / 8F * Mth.TWO_PI, a1 = (i + 1) / 8F * Mth.TWO_PI;

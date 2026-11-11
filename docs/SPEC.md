@@ -4286,6 +4286,10 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
     with your rope."
   - line (`core.line`): "The core stays dark. It only answers someone who climbed its rings with the rope, not with a
     pearl, a flight or bare hands."
+  **A core is never used up** (Euan, 11 Nov 2026, asked whether a second player should have to find a second
+  platform: "let's leave it as is"): the core keeps no record, so every player takes their wings from the same core,
+  each by their own rank and their own climb, and each sees their own case; a partner below the rank is told to come
+  back while the other's case opens (`ascent_sky_rig` holds it with two hunters).
   Any way the rope carries a climber up the rings counts, however it ends: the sling, the zip's own let-go, the pull-up
   tap, the double jump onto the deck. A pearl, a power's flight or a Runner hang never does. The core no longer asks
   `Ascent.arrivedByMovement(p, 20)` (a third of the last 20 s on the rope or in a Runner move): that stopwatch turned
@@ -4304,8 +4308,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
   middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
   faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
-  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
-  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  after another every ten seconds). Every motion is a cycle of whole ticks (the turn 760, the breath 289, the sway 195,
+  the bob 145, the sheen 200), never a float of time. One pair, drawn within 80 blocks (the far forms past 48), nothing
+  allocated in a frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
   open and empty over a low light.
   - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
     opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
