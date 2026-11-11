@@ -88,6 +88,16 @@ public final class AscentContent {
             BLOCK_ENTITIES.register("wing_core", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(WingCoreBlockEntity::new,
                     WING_CORE.get()));
 
+    /** A stand of the Leaper's Gauntlet (SPEC §71.3): a low plate that gives one of the leap's moves; unbreakable, alight. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<LeapStandBlock> LEAP_STAND = BLOCKS.registerBlock("leap_stand",
+            LeapStandBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_ORANGE).strength(-1F, 3600000F)
+                    .sound(net.minecraft.world.level.block.SoundType.COPPER).lightLevel(s -> 9).noOcclusion().noLootTable());
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> LEAP_STAND_ITEM =
+            ITEMS.registerSimpleBlockItem(LEAP_STAND);
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<LeapStandBlockEntity>> LEAP_STAND_BE =
+            BLOCK_ENTITIES.register("leap_stand", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(LeapStandBlockEntity::new,
+                    LEAP_STAND.get()));
+
     /** A Tether Spire's crown: it times the climb and keeps the spire's records (SPEC §17.11); unbreakable, alight. */
     public static final net.neoforged.neoforge.registries.DeferredBlock<SpireCrownBlock> SPIRE_CROWN = BLOCKS.registerBlock("spire_crown",
             SpireCrownBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(-1F, 3600000F)

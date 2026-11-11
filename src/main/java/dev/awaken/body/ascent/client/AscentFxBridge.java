@@ -31,6 +31,11 @@ public final class AscentFxBridge {
         }
     }
 
+    /** A Gauntlet stand near enough to tick says so (SPEC §71.3): the Lesson lights it and pins its prompt if it is still to take. */
+    public static void stand(BlockPos pos, int leap) {
+        WayClient.standSeen(pos, leap);
+    }
+
     /** A sky platform's core breathing a ring of light. */
     public static void coreRing(BlockPos pos) {
         AscentFx.ring(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, new Vec3(0, 1, 0), 0.45F);

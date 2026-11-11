@@ -50,6 +50,22 @@ final class AscentTrials {
                     else DirectorLog.log(p, "ascent", "the Ringer's chain is theirs: a vault will wake it");
                 }
             }
+
+            // the Leaper's Gauntlet as a place of stands and halls (SPEC §71.4): its marks, its pay, whether it was run
+            @Override
+            public void at(ServerPlayer p, String trial, String mark, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos to) {
+                if (TrialHooks.LEAPER.equals(trial)) WayUp.mark(p, mark, from, to);
+            }
+
+            @Override
+            public TrialHooks.Pay pay(ServerPlayer p, String trial, int ticks, int medal) {
+                return TrialHooks.LEAPER.equals(trial) ? WayUp.pay(p, ticks, medal) : TrialHooks.Pay.NONE;
+            }
+
+            @Override
+            public boolean finished(ServerPlayer p, String trial) {
+                return TrialHooks.LEAPER.equals(trial) && WayUp.gauntletRun(p);
+            }
         });
     }
 
@@ -138,7 +154,8 @@ final class AscentTrials {
         return p.level().dimension() == Level.OVERWORLD && p.onGround() && !p.isSpectator() && !p.isPassenger()
                 && Progression.profile(p).awakened() && dev.awaken.body.BodyConfig.ascent()
                 && Progression.rank(p).ordinal() >= LEAPER_RANK.ordinal()
-                && Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER)
+                && Ascent.has(p, Ascent.Tier.TETHER)
+                && (dev.awaken.body.BodyConfig.wayUp() ? !WayUp.gauntletRun(p) : !Ascent.has(p, Ascent.Tier.LEAPER))
                 && (mem.flags() & AscentMemory.LEAPER_TRIAL) == 0 && mem.level(AscentMemory.Track.TETHER) >= LEAPER_FROM
                 && !TetherVow.running(p);
     }
@@ -170,8 +187,12 @@ final class AscentTrials {
             WayUp.gateOpened(p, id, at);
         }
         // with The Way Up it answers the climber's own deed, so it is said at once (a paced line can be filed unseen)
-        if (way) WayUp.say(p, "A gate has opened for you", near != null ? "It stands at the foot of what you climbed. It is a course, not a fight."
-                : "It stands in front of you. It is a course, not a fight.");
+        // and it says its point (Euan, 2026-11-11: "what was the point of that gate?"): the kind of thing, never which
+        if (way) {
+            WayUp.say(p, "A gate has opened for you", (near != null ? "It stands at the foot of what you climbed. " : "It stands in front of you. ")
+                    + (Ascent.has(p, Ascent.Tier.LEAPER) ? "It's the Leaper's Gauntlet, a course for the leap. No fighting."
+                    : "It's the Leaper's Gauntlet. It holds a new way to move. No fighting."));
+        }
         else Signal.toast(p, Component.translatable("awaken.ascent.trial.leaper.open"));
         DirectorLog.log(p, "ascent", "the Leaper's Gauntlet opens (gate " + id + ")");
         return id;
@@ -197,7 +218,7 @@ final class AscentTrials {
         AscentServer.show(p, new AscentPayloads.SeenEvent(p.getId(), AscentPayloads.EV_REMEMBER, 0));
         AscentServer.link(p, AscentMemory.Track.LEAPER, 10);
         double toNext = dev.awaken.progression.Curve.xpToNext(Progression.profile(p).level());
-        Progression.grantXp(p, toNext * 0.2, Progression.XpSource.DISCOVERY);
+        Progression.grantXp(p, toNext * (dev.awaken.body.BodyConfig.wayUp() ? WayUp.GAUNTLET_XP : 0.2), Progression.XpSource.DISCOVERY);
         Progression.count(p, "awaken:ascent_leaper_trial");
         DirectorLog.log(p, "ascent", String.format("the Leaper's Gauntlet is run (%.1f s, medal %d): the leap is yours", ticks / 20.0, medal));
     }

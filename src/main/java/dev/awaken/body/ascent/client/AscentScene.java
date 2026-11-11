@@ -111,7 +111,9 @@ final class AscentScene {
         // The Way Up (SPEC §63.3): in a fight there is no scene, only the Lesson's strip of keys; and no gift carries a
         // line of clipped words any more (its Lesson or its card of keys says how)
         boolean way = dev.awaken.body.BodyConfig.wayUp();
-        if (way && playingMode == AscentPayloads.SKY_EDGE) return;
+        // and since SPEC §71.2 a gift's words are the Unlock title's (WayClient.sceneBegan): the scene keeps its light and
+        // its swell, and draws no line of its own. Only an old world's first load ("Your body remembers") still does.
+        if (way && playingMode != AscentPayloads.REMEMBER) return;
         float a1 = edge ? env(t, 2, 10, 46, 62) : env(t, 8, 22, 100, 122), a2 = edge ? env(t, 12, 20, 50, 64)
                 : env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
         if (way && playingMode != AscentPayloads.REMEMBER) a2 = 0;

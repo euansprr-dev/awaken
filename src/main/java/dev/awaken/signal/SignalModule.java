@@ -49,6 +49,12 @@ public final class SignalModule {
         SignalCommands.register();
         SignalTests.register();
         NoticeHistoryTests.register();
+        // the Unlock title (SPEC §71.2): the server only names what was unlocked; the client shows it when the player is free
+        dev.awaken.core.api.Unlocks.install(new dev.awaken.core.api.Unlocks.Server() {
+            @Override public void show(net.minecraft.server.level.ServerPlayer p, net.minecraft.resources.Identifier unlock) {
+                dev.awaken.core.AwakenNet.send(p, new SignalPayloads.Unlock(unlock.toString()));
+            }
+        });
         // tips (SPEC §27.7): the server's side only says a context came up or the move was done; the client decides
         dev.awaken.core.api.TipHooks.install(new dev.awaken.core.api.TipHooks.Server() {
             @Override public void offer(net.minecraft.server.level.ServerPlayer p, net.minecraft.resources.Identifier tip) {
@@ -72,6 +78,7 @@ public final class SignalModule {
         r.playToClient(SignalPayloads.Now.TYPE, SignalPayloads.Now.STREAM_CODEC);
         r.playToClient(SignalPayloads.Horizon.TYPE, SignalPayloads.Horizon.STREAM_CODEC);
         r.playToClient(SignalPayloads.Tip.TYPE, SignalPayloads.Tip.STREAM_CODEC);
+        r.playToClient(SignalPayloads.Unlock.TYPE, SignalPayloads.Unlock.STREAM_CODEC);
         r.playToClient(SignalPayloads.Task.TYPE, SignalPayloads.Task.STREAM_CODEC);
         r.playToClient(SignalPayloads.Destination.TYPE, SignalPayloads.Destination.STREAM_CODEC);
         r.playToServer(SignalPayloads.SetDestination.TYPE, SignalPayloads.SetDestination.STREAM_CODEC, (msg, ctx) -> {

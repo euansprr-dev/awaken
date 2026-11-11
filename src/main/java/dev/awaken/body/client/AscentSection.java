@@ -66,7 +66,7 @@ final class AscentSection extends UiSection {
                     : rank < Rank.D.ordinal() ? "A vault keeps it. It waits for a hunter of a higher rank."
                     : "A vault has lit up for the chain you're carrying. Stand between its two pylons.";
             case LEAP -> !way ? "Get to know your rope, and a gate will open for you."
-                    : WayClient.gateOpen() ? "A gate has opened where you climbed. It is a course, not a fight."
+                    : WayClient.gateOpen() ? "The Leaper's Gauntlet has opened for you. It holds a new way to move."
                     : "It waits for a hunter who climbs something tall by rope: a Tether Spire, a great tree.";
             case WINGS -> rank < Rank.C.ordinal() ? "A sky platform keeps it. It waits for a hunter of a higher rank."
                     : "A sky platform has lit up for you. Its rings climb to it by rope.";
@@ -84,7 +84,17 @@ final class AscentSection extends UiSection {
                 int level = AscentMoves.level(r.track());
                 ui.pair(r.name(), "Mastery " + level + " of 10", Glass.a(Glass.TITLE, 1F), Glass.a(Glass.LABEL, 0.8F));
                 ui.bar(level / 10.0, Glass.a(Glass.EDGE, 0.9F), 80);
-                ui.text(KeyText.resolve(r.keys()), Glass.a(Glass.LABEL, 0.9F));
+                // the leap a move at a time (SPEC §71.3): a line a move taken at its stand, and that another waits
+                boolean parts = r.rung() == WayUp.Rung.LEAP && !(WayClient.canLeap(WayUp.Leap.DOUBLE) && WayClient.canLeap(WayUp.Leap.DASH)
+                        && WayClient.canLeap(WayUp.Leap.SLAM));
+                if (parts) {
+                    if (WayClient.canLeap(WayUp.Leap.DOUBLE)) ui.text(KeyText.resolve("Double Jump: [{key.jump}] again in the air."), Glass.a(Glass.LABEL, 0.9F));
+                    if (WayClient.canLeap(WayUp.Leap.DASH)) ui.text(KeyText.resolve("Air Dash: [{key.sprint}] in the air."), Glass.a(Glass.LABEL, 0.9F));
+                    if (WayClient.canLeap(WayUp.Leap.SLAM)) ui.text(KeyText.resolve("Slam: [{key.sneak}] in the air, from high up."), Glass.a(Glass.LABEL, 0.9F));
+                    ui.text("◆ Another move waits further into the Gauntlet.", Glass.a(Glass.HORIZON, 0.85F));
+                } else {
+                    ui.text(KeyText.resolve(r.keys()), Glass.a(Glass.LABEL, 0.9F));
+                }
                 int more = 0;
                 for (Extra x : r.extras()) {
                     if (level >= x.level()) {

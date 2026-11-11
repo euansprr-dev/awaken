@@ -67,7 +67,17 @@ final class Lesson {
         /** Fast on open wings with the ground a little too far under you. */
         SKIM(WayUp.Move.SKIM, false, "Drop lower and skim the ground"),
         /** At home after the Sky Warden: standing outdoors with flight; and whenever you look up from the ground. */
-        TAKEOFF(WayUp.Move.TAKEOFF, true, "while you look up");
+        TAKEOFF(WayUp.Move.TAKEOFF, true, "while you look up"),
+        // the Leaper's Gauntlet (SPEC §71)
+        /** Before the first stand: a figure of light crosses the gulf, again and again. Nothing to press yet, so no words. */
+        REACH(WayUp.Rung.LEAP, false, ""),
+        /** A stand still to take, in reach; and standing on it (WayClient keeps these two alive each tick). */
+        STAND_NEAR(WayUp.Rung.LEAP, false, "Step onto it"),
+        STAND_ON(WayUp.Rung.LEAP, true, "to take it"),
+        /** A hall's first spot for each of the leap's moves, pinned over the spot; and again where a spot was missed. */
+        LEAP_SPOT(WayUp.Rung.LEAP, false, "again in the air"),
+        DASH_SPOT(WayUp.Rung.LEAP, false, "in the air: dash"),
+        SLAM_SPOT(WayUp.Rung.LEAP, false, "in the air: slam it");
 
         final WayUp.Rung rung;
         /** One of Rope and Wings' six moves, or null for a rung's own lesson. */
@@ -113,6 +123,8 @@ final class Lesson {
     private static final int MOVE_SHOWS = 4, MOVE_REST = 1200, HOME_REST = 3600, MOVE_LONGEST = 300;
     private static final int[] moveShown = new int[WayUp.Move.VALUES.length], moveNext = new int[WayUp.Move.VALUES.length];
     private static int moveSeen, follow = -1, madeNow, homeNext;
+    /** How far a held stand has come, 0 to 1 (drawn as a line filling under its prompt). */
+    static float progress;
 
     // ---- beginning and ending ---------------------------------------------------------------------------------------
 
@@ -258,8 +270,25 @@ final class Lesson {
         return true;
     }
 
+    /** The thing a kept-alive prompt (a stand's) belongs to is still there: called each tick it is. */
+    static void keep() {
+        moveSeen = clock;
+    }
+
+    /** The prompt goes now, with its fade. */
+    static void fade() {
+        if (kind != null && doneAt < 0) doneAt = age;
+    }
+
     /** The client made a move (AscentMoves.event): its prompt leaves; the first time ever, its card shows. */
     static void moved(int what) {
+        // a Gauntlet spot's prompt leaves at the tick its move is made (the slam's when it lands)
+        Kind at = kind;
+        if (at != null && doneAt < 0 && (at == Kind.LEAP_SPOT && what == dev.awaken.body.ascent.AscentPayloads.EV_DOUBLE
+                || at == Kind.DASH_SPOT && what == dev.awaken.body.ascent.AscentPayloads.EV_DASH
+                || at == Kind.SLAM_SPOT && what == dev.awaken.body.ascent.AscentPayloads.EV_SLAM_LAND)) {
+            doneAt = age;
+        }
         WayUp.Move mv = switch (what) {
             case dev.awaken.body.ascent.AscentPayloads.EV_SLING -> WayUp.Move.SLING;
             case dev.awaken.body.ascent.AscentPayloads.EV_SPRING -> WayUp.Move.SPRING;
@@ -428,6 +457,16 @@ final class Lesson {
                 if (SovereignClient.ASCEND.isDown() && AscentMoves.aether >= 0.9F) end(false);
                 else if (age > 20 * 30) rest();
             }
+            case REACH -> {
+                // until the first stand is taken, or the gulf is left behind
+                if (age > 20 * 90 || WayClient.stand(WayUp.Leap.DOUBLE) || target != null && p.position().distanceToSqr(target) > 48 * 48) doneAt = age;
+            }
+            case STAND_NEAR, STAND_ON -> {
+                if (clock - moveSeen > 6) doneAt = age;
+            }
+            case LEAP_SPOT, DASH_SPOT, SLAM_SPOT -> {
+                if (age > 20 * 60 || target != null && p.position().distanceToSqr(target) > 48 * 48) doneAt = age;
+            }
             case SLING, SPRING, STRIKE, FLARE, SKIM, TAKEOFF -> {
                 // the move itself ends it (moved); else it goes when its moment has passed
                 if (kind == Kind.TAKEOFF && p.onGround() && !AscentMoves.active()) moveSeen = clock;
@@ -441,7 +480,16 @@ final class Lesson {
         }
         jumpWas = jump;
         // the figure shows it again for someone who has not moved yet
-        if (kind != null && doneAt < 0 && ghost == null && path != null && age % GHOST_AGAIN == 0) ghostBegin(path);
+        if (kind != null && doneAt < 0 && ghost == null && path != null && age % again(kind) == 0) ghostBegin(path);
+    }
+
+    /** How often the figure shows a move again: the gulf's every four seconds (it is all there is to see), a spot's every six. */
+    private static int again(Kind k) {
+        return switch (k) {
+            case REACH -> 80;
+            case LEAP_SPOT, DASH_SPOT, SLAM_SPOT -> 120;
+            default -> GHOST_AGAIN;
+        };
     }
 
     /** The moment passed without the move: the prompt goes quietly; a lesson still owed comes back later. */
@@ -489,6 +537,48 @@ final class Lesson {
             double y = t < 0.2 ? 0 : t < 0.55 ? 1.25 * Math.sin((t - 0.2) / 0.35 * Math.PI * 0.5)
                     : 1.25 + 1.1 * Math.sin((t - 0.55) / 0.45 * Math.PI) - 2.35 * Math.max(0, (t - 0.8) / 0.2);
             out[i] = o.add(look.scale(t * far)).add(0, Math.max(0, y), 0);
+        }
+        return out;
+    }
+
+    /** A jump and a second one from its top, from a take-off to a landing: the double jump, shown where it is needed. */
+    static Vec3[] leapPath(Vec3 from, Vec3 to) {
+        int n = 16;
+        Vec3[] out = new Vec3[n];
+        double dy = to.y - from.y;
+        for (int i = 0; i < n; i++) {
+            double t = i / (double) (n - 1);
+            double y = t < 0.3 ? 1.25 * Math.sin(t / 0.3 * Math.PI * 0.5) : t < 0.65 ? 1.25 + 1.6 * Math.sin((t - 0.3) / 0.35 * Math.PI * 0.5)
+                    : 2.85 + (dy - 2.85) * Math.pow((t - 0.65) / 0.35, 1.6);
+            out[i] = new Vec3(Mth.lerp(t, from.x, to.x), from.y + y, Mth.lerp(t, from.z, to.z));
+        }
+        return out;
+    }
+
+    /** A jump, then flat and fast to the far side: the dash, shown. */
+    static Vec3[] dashPath(Vec3 from, Vec3 to) {
+        int n = 12;
+        Vec3[] out = new Vec3[n];
+        double dy = to.y - from.y;
+        for (int i = 0; i < n; i++) {
+            double t = i / (double) (n - 1);
+            // a quarter of the way on the jump, the rest in a third of the time
+            double along = t < 0.4 ? t / 0.4 * 0.25 : 0.25 + (t - 0.4) / 0.6 * 0.75;
+            double y = t < 0.4 ? 1.25 * Math.sin(t / 0.4 * Math.PI * 0.5) : 1.25 + (dy - 1.25) * Math.pow((t - 0.4) / 0.6, 2.2);
+            out[i] = new Vec3(Mth.lerp(along, from.x, to.x), from.y + y, Mth.lerp(along, from.z, to.z));
+        }
+        return out;
+    }
+
+    /** A hop off the lip and straight down onto the thing below: the slam, shown. */
+    static Vec3[] slamPath(Vec3 from, Vec3 to) {
+        int n = 10;
+        Vec3[] out = new Vec3[n];
+        for (int i = 0; i < n; i++) {
+            double t = i / (double) (n - 1);
+            double along = Math.min(1, t / 0.45);
+            double y = t < 0.45 ? from.y + 1.1 * Math.sin(t / 0.45 * Math.PI * 0.5) : Mth.lerp(Math.pow((t - 0.45) / 0.55, 0.7), from.y + 1.1, to.y);
+            out[i] = new Vec3(Mth.lerp(along, from.x, to.x), y, Mth.lerp(along, from.z, to.z));
         }
         return out;
     }
@@ -601,7 +691,7 @@ final class Lesson {
             float a = doneAt >= 0 ? 1F - Mth.clamp((age + pt - doneAt) / FADE, 0, 1) : Mth.clamp((age + pt) / FADE, 0, 1);
             if (a > 0.01F) {
                 if (k == Kind.SKY_STRIP) strip(g, font, skyHints(mc), w / 2, (int) (h * 0.08F), a);
-                else prompt(g, font, mc, k, w, h, a, pt);
+                else if (k != Kind.REACH) prompt(g, font, mc, k, w, h, a, pt);
             }
         }
         if (cardAge >= 0 && cardName != null) {
@@ -619,8 +709,10 @@ final class Lesson {
             case FORM -> name(SovereignClient.ASCEND);
             case SPRING -> name(mc.options.keyUp);
             case STRIKE -> name(mc.options.keyAttack);
-            case TAKEOFF -> name(mc.options.keyShift);
-            case FLARE, SKIM -> null;
+            case TAKEOFF, SLAM_SPOT -> name(mc.options.keyShift);
+            case STAND_ON -> name(mc.options.keyUse);
+            case DASH_SPOT -> name(mc.options.keySprint);
+            case FLARE, SKIM, STAND_NEAR -> null;
             default -> name(mc.options.keyJump);
         };
         String then = k == Kind.TAKEOFF ? name(mc.options.keyJump) : null;
@@ -671,6 +763,8 @@ final class Lesson {
             x += Kit.cap(g, font, then, x, y0, a, false) + 5;
         }
         g.text(font, k.words, x, y0, Glass.a(Glass.TITLE, a), false);
+        // a held stand: a line of gold filling under the prompt
+        if (k == Kind.STAND_ON && progress > 0) g.fill(left, y0 + 14, left + Math.round((right - left) * Mth.clamp(progress, 0F, 1F)), y0 + 16, Sheet.argb(0xF0C766, a));
         if (target == null) return;
         if (pinned && !off) {
             // a stem down to the thing, and a ring on it that breathes
