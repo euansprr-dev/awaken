@@ -4162,9 +4162,12 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
 - **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
   3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
-  (the strongest counts). Drawn as 24 soft filaments of pale air rising up the column (6-10 long, 0.3 a tick), turned
-  to face you, over a faint haze its width, both fading where the lift fades (additive: strength in the colour, not
-  alpha; one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  (the strongest counts). Drawn as fourteen gusts rising up the column (7-13 long, 0.3-0.5 a tick), each a soft
+  line that tapers to nothing at both ends and winds round the column as it climbs, fading in over the vent and out
+  where the lift fades, seen from 160. They are the windways' gusts, drawn in the same pass after the level (§17.12
+  "The look"): the first build's filaments and its sheet of haze went through the level's own passes on a type that
+  writes depth, and stood as a dark slab against Lens's night sky. Heard as a soft rising rush every 2.5-4 s near it
+  (`ascent.updraft`).
   Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
   one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
@@ -4438,17 +4441,55 @@ Held at the edge of the land the client has (the edge hold, §28.9): a windway's
   samples a scan; cached, so later scans finish the search) are linked; the lanes of pairs seen in the last 5 min are the
   server's, and the ones within 900 of a player (at most 64) go to them (`AscentPayloads.Lanes`) when that set changes.
   Nothing saved; forgotten when the server stops.
-- **The look** (`WindwayRenderer`): along each lane within 280 of the camera, curls of pale mint-white air (5-11 long,
-  one every 3.2 with a fifth missing) flow at 1.25 b/t, each wavering as it goes and turned to face you, fading with
-  distance and at the lane's ends; a faint sheet of light down its heart shows the line from a deck's edge (gone within
-  10 of you). Brighter round you while it holds you; a rush of air as it takes you, its breath every 3.5 s while it carries you.
+- **The look** (`WindwayRenderer`; rebuilt 2026-11-11, Euan playing by night: "I really don't like these wind flows
+  ... they look very bad ... they look glitchy basically, as you can see, like they kind of cut off. Near the actual
+  island as well ... rebuild something that kind of looks like wind gusts or something that actually look good. And
+  they don't use much performance"). **Gusts**: long thin lines of pale air that taper to nothing at both ends, flow
+  down the lane, waver, and come and go. No sheet of haze, no texture, no edge anywhere.
+  - What was wrong: the curls and the faint sheet down the lane's heart were drawn through the level's passes on
+    `RenderTypes.energySwirl`, which writes depth. Lens tells sky from land by depth, so every quad read as
+    something solid and Lens left the game's own sky showing behind it: by night two hard-edged near-black slabs
+    with square ends, beginning at full width beside the islands.
+  - Three streams a lane within 320 of the camera, each sliding along at its own pace with a gust in most slots
+    (18% are gaps), every gust keeping its slot and so its look as it goes: the body (1.25 b/t, a slot every 8,
+    16-30 long, 0.5-3.6 from the lane's heart), slower and fainter ones round the outside (0.95 b/t, every 12.5,
+    22-40 long, 2.6-5.3 out), and short quick darts through all of it (1.65 b/t, every 19, 9-15 long). A gust winds
+    slowly round the lane's heart, wavers, drifts a little against its neighbours, and fades in and out as it
+    travels (visible a little over half the way). About a quarter of the body's gusts and an eighth of the outer
+    ones **curl**: over a few blocks the line runs on ahead, rises, comes back over itself and carries on (a loop
+    two to three and a half blocks tall). Brighter round you while the lane holds you (1.3 times, within 40).
+  - A gust is a ribbon turned to face you. Across its width its strength falls from the middle to nothing (seven
+    columns of vertices within 44 blocks, five beyond), so it has no edge; its width and strength taper to nothing
+    at its tail and its head; it is a third to two thirds of a block wide, wider with distance so a far gust stays
+    a line. Two tones across: a pale core and a soft blue-grey flank. Pale air has to read on a blue sky, which the
+    core does, and on white haze and cloud, where a white line is no line at all (the first build's streaks showed
+    by day only where its slab stood behind them): there the flank carries it, and on the blue sky the flank is lost.
+    Seen along a lane's own way (from its heart, or from the rim above its start) its gusts are short strokes
+    heading for one point: there they stay thin and straight and half as strong (no widening for distance, the
+    curl flattened out), from straight along to 25 degrees off; widened and curled they were a litter of ticks round
+    that point. Close by a gust is finer (0.4 of its width at the eye, whole from 22 blocks): a ribbon a block wide
+    was a bar across the view. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
+    at an island), with distance from 176 to 320, and within 5 blocks of the eye, so none smears across the view.
+    The core is pale mint-white by day (244, 255, 250), a dimmer sea-green by night (138, 198, 192) where white
+    lines would glare; the flank (104, 146, 204) by day, a faint teal glow by night (48, 90, 106).
+  - Drawn after the level in one pass of its own (`RenderLevelStageEvent.AfterLevel`, as the gate pillars are):
+    the game's plain position-and-colour quads, alpha-blended, tested against the world's depth and writing none,
+    no fog (they fade themselves). With the updrafts' columns (§17.6) in the same pass. Under Lite, Cinematic and
+    Ultra the pass goes into Lens's layer for light, laid over the finished picture (§22 "Light over the Air");
+    otherwise straight onto the frame. No lane or vent near: no buffer mapped, no pass. Cost: the vertices are
+    written straight into a mapped buffer (16 bytes each, at most 12,288 quads, 0.8 MB; a lane in full view is
+    some 2,000), nothing allocated per frame; the pass itself is a load and store of the frame's depth, as a gate
+    pillar's is. Frame times not measured yet (the Mac is his while he plays).
+  - A rush of air as a lane takes you, its breath every 3.5 s while it carries you (unchanged).
 - Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the
   platform the nearest lane starts from, at its rim on the lane's side, facing along it; checks the deck's height
   against the seed's); `tools/autopilot/ascent-windway.txt` (Wings, the pilot's `glide` off the rim). Test:
   `ascent_windway` (the lane's ends; carried the whole way and set down slowly looking along it, 15° under or 15° over;
   a look 45° away breaks out; AirHooks hears the server's lanes).
   Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
-  b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
+  b/t 7 over the next deck. (Of the first look: from a deck in daylight the lane read faintly; inside it, plainly.)
+  Look tour: `tools/autopilot/steady60-windway-ci.txt` (the lane from the rim, the side, inside and back at its
+  start, by day, dusk and night under Cinematic; by night under Lite and Swift; an updraft).
 - Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
 
 ### 17.13 The feel pass, part 1: the action camera
@@ -6708,6 +6749,33 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   game's own sunrise glow is up, which is coloured sky: at dusk a firefly still goes behind a cloud. Not solved by
   it: a white or grey particle (snow, smoke) against a cloud, and a near light in front of far land, which takes
   the land's fog. No tour: fireflies come by chance at night; to be seen in play.
+- **Light over the Air** (`LensGlow`, `lens_lay.fsh`; 2026-11-11, for the windways, §17.12). Soft light that
+  belongs to the world and not to a surface (a windway's gusts, an updraft's) has no right place in the frame Lens
+  is given. If it writes depth, Lens takes it for something solid and leaves the game's own sky behind every quad
+  (the windways' dark slabs). If it writes none, it is part of whatever is behind it: on land it takes that land's
+  fog and goes under any cloud laid over that land; on the sky it survives only as what the frame holds over the
+  game's sky colour ("Near lights against the sky"), which a daylight sky clips to a tint. So it is not put in
+  the frame at all. `LensGlow.open(label, mainTarget)` gives a caller a render pass after the level
+  (`RenderLevelStageEvent.AfterLevel`): its colour is a layer of Lens's own, the size and format of the main
+  target, cleared as the first pass of a frame opens; its depth is the world's, tested and never written. The
+  caller draws alpha-blended (`BlendFunction.TRANSLUCENT`), which leaves colour premultiplied in rgb and cover in
+  alpha. The chain's last pass, once a plain copy of the picture into the main target, is `lens_lay`: the picture,
+  with the layer laid over it. So that light is in front of Lens's sky, fog and clouds always (a lane behind a
+  cloud shows through it: the price, and for a line that guides you no loss), and it is as bright by day as by
+  night.
+  - Laid after the composite's colour, so the light is the colour it was drawn, as it is with Lens off; what the
+    composite does to the whole picture afterwards is done to it too (an open panel's dimming, the vignette), and
+    it stays behind the hand (the hand's own depth, "Reach and cover"). Not laid in a development view. During a
+    story's tear from black `open` gives the main target instead, as it does whenever no chain will lay the layer
+    (Lens off, Swift, VFX): the same draw there gives the same picture on the game's own sky.
+  - Why the last pass and not the composite: the composite reads sixteen textures, which is all one shader stage
+    may have on Apple's GPUs without argument buffers; a seventeenth could cost the whole chain there.
+  - Cost: the copy it replaces, plus two texture reads a pixel. The layer is 33 MB at 4K, made the first time
+    something draws into it and given back ten seconds after the last; on a frame nothing drew, the pass reads one
+    clear texel. Straight out ("The trim") skips the last pass; on a frame with light to lay Tiles lets the
+    composite draw into swap as written, so the last pass runs: the copy back is paid only while a gust is in view.
+  - Order: `LensGlow.settle` runs last of all after the level (LOWEST), so whichever order the listeners come in,
+    the chain reads this frame's light or none.
 - **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
   own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
   atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the

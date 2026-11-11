@@ -1,0 +1,103 @@
+# The windways and an updraft, seen (SPEC §17.12; Euan, playing by night, 11 Nov: "I really don't like these wind
+# flows ... they look very bad ... they look glitchy basically, as you can see, like they kind of cut off. Near the
+# actual island as well ... rebuild something that kind of looks like wind gusts"). From the rim of a sky platform
+# looking along its lane, from the side, from inside the lane and looking back at the platform it leaves: by day, at
+# dusk and by night under Cinematic, then by night under Lite and under Swift (where Lens lays no light: the gusts are
+# drawn straight onto the frame). Last, an updraft vent on the deck by night.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-windway-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steady_wind creative 4246
+waitworld
+window 1440 900
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 5500
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamemode creative
+# the server links the sky platforms near a player every five seconds
+wait 200
+cmd awaken ascent windway
+wait 20
+cmd awaken ascent windway goto
+wait 160
+cmd awaken ascent windway goto
+wait 100
+cmd awaken ascent windway
+cmd gamemode spectator
+camera first
+hud off
+wait 100
+# --- from the rim, along the lane
+cmd tp @s ~ ~2 ~ ~ 8
+wait 60
+shot w1_rim_day
+cmd time set 12700
+wait 120
+shot w1_rim_dusk
+cmd time set 18000
+wait 120
+shot w1_rim_night
+# --- from the side: forty blocks to the left of the lane, sixty along, looking across it
+cmd tp @s ^40 ^ ^60
+cmd tp @s ~ ~ ~ ~90 6
+wait 100
+shot w2_side_night
+cmd time set 12700
+wait 120
+shot w2_side_dusk
+cmd time set 5500
+wait 120
+shot w2_side_day
+# --- inside the lane, on its heart, looking along it (the rim spot is 2 to the left of the lane and 10 over it)
+cmd tp @s ~ ~ ~ ~-90 0
+cmd tp @s ^-42 ^-1 ^40
+wait 100
+shot w3_inside_day
+cmd time set 12700
+wait 120
+shot w3_inside_dusk
+cmd time set 18000
+wait 120
+shot w3_inside_night
+# --- and back at the platform it leaves (the lane's start by its islands)
+cmd tp @s ~ ~ ~ ~180 -4
+wait 100
+shot w4_start_night
+cmd time set 5500
+wait 120
+shot w4_start_day
+# --- by night under Lite and under Swift, from the side again
+cmd tp @s ~ ~ ~ ~180 0
+cmd tp @s ^42 ^1 ^
+cmd tp @s ~ ~ ~ ~90 6
+cmd time set 18000
+lookswitch lite
+wait 160
+shot w5_side_night_lite
+lookswitch swift
+wait 120
+shot w5_side_night_swift
+cmd time set 5500
+wait 120
+shot w5_side_day_swift
+lookswitch cinematic
+wait 200
+# --- an updraft vent on a pillar out in the open air, by night and by day
+cmd tp @s ^ ^ ^-30
+cmd setblock ~ ~-12 ~ awaken:updraft_vent
+cmd tp @s ^ ^-6 ^-22
+wait 100
+shot w6_updraft_day
+cmd time set 18000
+wait 120
+shot w6_updraft_night
+quit
