@@ -1,0 +1,180 @@
+{
+ "awaken:fauna.briar_sow.roar": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:entity.ravager.roar",
+   "volume": 0.3
+  }
+ ],
+ "awaken:fauna.chime_cricket.ambient": [
+  {
+   "delay": 0,
+   "pitch": 1.2,
+   "sound": "minecraft:block.firefly_bush.idle",
+   "volume": 2.0
+  }
+ ],
+ "awaken:fauna.drip_lurker.hurt": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:entity.silverfish.hurt",
+   "volume": 0.4
+  }
+ ],
+ "awaken:fauna.empress_moth.roar": [
+  {
+   "delay": 0,
+   "pitch": 1.4,
+   "sound": "minecraft:entity.phantom.flap",
+   "volume": 0.6
+  }
+ ],
+ "awaken:fauna.lantern_maw.roar": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:entity.ravager.roar",
+   "volume": 0.3
+  }
+ ],
+ "awaken:fauna.mire_mother.roar": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:entity.ravager.roar",
+   "volume": 0.35
+  }
+ ],
+ "awaken:fauna.mount_whistle": [
+  {
+   "delay": 200,
+   "pitch": 1.25,
+   "sound": "awaken:fauna.mount_whistle.part1",
+   "volume": 0.6
+  }
+ ],
+ "awaken:fauna.mycelord.hurt": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:entity.creaking.sway",
+   "volume": 0.6
+  }
+ ],
+ "awaken:fauna.mycelord.roar": [
+  {
+   "delay": 200,
+   "pitch": 0.5,
+   "sound": "minecraft:block.wood.break",
+   "volume": 0.6
+  }
+ ],
+ "awaken:fauna.plumed_coil.roar": [
+  {
+   "delay": 100,
+   "pitch": 1.6,
+   "sound": "minecraft:entity.skeleton.ambient",
+   "volume": 0.8
+  },
+  {
+   "delay": 150,
+   "pitch": 0.55,
+   "sound": "minecraft:entity.cat.hiss",
+   "volume": 0.6
+  },
+  {
+   "delay": 250,
+   "pitch": 1.5,
+   "sound": "minecraft:entity.skeleton.ambient",
+   "volume": 0.7
+  }
+ ],
+ "awaken:fauna.seep_heart.death": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:block.conduit.deactivate",
+   "volume": 0.8
+  },
+  {
+   "delay": 150,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.warden.death",
+   "volume": 0.5
+  }
+ ],
+ "awaken:fauna.seep_heart.hurt": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:block.stone.hit",
+   "volume": 0.8
+  }
+ ],
+ "awaken:fauna.seep_heart.roots": [
+  {
+   "delay": 100,
+   "pitch": 0.8,
+   "sound": "minecraft:block.sculk.spread",
+   "volume": 0.7
+  }
+ ],
+ "awaken:fauna.seep_heart.shards": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:block.amethyst_cluster.break",
+   "volume": 0.7
+  }
+ ],
+ "awaken:fauna.stonehorn.roar": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.ravager.roar",
+   "volume": 0.4
+  }
+ ],
+ "awaken:fauna.thousandfoot.ambient": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:entity.silverfish.step",
+   "volume": 0.5
+  }
+ ],
+ "awaken:fauna.thousandfoot.roar": [
+  {
+   "delay": 100,
+   "pitch": 0.5,
+   "sound": "minecraft:entity.silverfish.ambient",
+   "volume": 0.6
+  }
+ ],
+ "awaken:fauna.thousandfoot.step": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.amethyst_block.step",
+   "volume": 0.3
+  }
+ ],
+ "awaken:fauna.weaver_queen.roar": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.fox.screech",
+   "volume": 0.5
+  }
+ ],
+ "awaken:fauna.wickling.death": [
+  {
+   "delay": 100,
+   "pitch": 1.0,
+   "sound": "minecraft:block.candle.extinguish",
+   "volume": 0.6
+  }
+ ]
+}
