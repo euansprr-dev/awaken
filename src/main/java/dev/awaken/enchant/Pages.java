@@ -120,6 +120,7 @@ public final class Pages {
         if (learned.isEmpty()) return learned;
         boolean first = k.tell();
         Known.save(p, k);
+        p.level().playSound(null, p.blockPosition(), EnchantContent.PAGE_TURN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         p.level().playSound(null, p.blockPosition(), EnchantContent.LEARN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         for (Inscriptions.Entry e : learned) {
             door(p, "read", e);

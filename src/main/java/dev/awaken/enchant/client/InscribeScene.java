@@ -436,9 +436,11 @@ public final class InscribeScene {
             sparkRun = 0;
             spark(u, v, 0.02F + 0.025F * (float) Math.random(), 0.006F + 0.008F * (float) Math.random());
         }
-        if (tickRun >= 0.3F) {
+        // the cut under the hand: a grain of the burin every eighth of the mark's width drawn, so it runs with the hand and
+        // stops with it (it was a one-shot played as a loop, with a seam every time round: SPEC §45.18)
+        if (tickRun >= 0.12F) {
             tickRun = 0;
-            play(burinSound(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
+            play(burinSound(), 0.2F, 1.0F + 0.25F * progress / (float) Math.max(1, n - 1) + 0.08F * (float) Math.random());
         }
     }
 
@@ -474,7 +476,8 @@ public final class InscribeScene {
         // each stroke rings its family's note, a step higher each time; one that wandered scratches dully
         Inscriptions.Entry e = entry();
         if (e != null) {
-            if (share >= 0.6F) play(EnchantContent.note(e.family()), 0.55F, 0.84F + 0.12F * stroke);
+            // a sealed stroke: one recording, a step higher each time (it rang its family's chime)
+            if (share >= 0.6F) play(EnchantContent.SEAL.get(), 0.8F, (float) Math.pow(1.0594631, 2 * stroke));
             else play(EnchantContent.SCRATCH.get(), 0.45F, 0.7F);
         }
         if (share >= 0.6F) {

@@ -108,7 +108,9 @@ public final class EnchantContent {
             CUT_METAL = sound("cut_metal"), CUT_LEATHER = sound("cut_leather"),
             NOTE_WARD = sound("note_ward"), NOTE_BANE = sound("note_bane"), NOTE_SPOILS = sound("note_spoils"),
             NOTE_CARRY = sound("note_carry"), NOTE_KEEP = sound("note_keep"), WAKE = sound("wake"), LEARN = sound("learn"),
-            FLARE = sound("flare"), DRIFT = sound("drift"), SCRAPE = sound("scrape");
+            FLARE = sound("flare"), DRIFT = sound("drift"), SCRAPE = sound("scrape"),
+            // a stroke sealing (it rang its family's note, a chime pitched up a step each time), and the low bell under the wake
+            SEAL = sound("seal"), WAKE_UNDER = sound("wake_under");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register("enchant." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("enchant." + name)));
