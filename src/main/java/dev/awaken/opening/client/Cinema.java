@@ -28,6 +28,11 @@ public final class Cinema {
         OpeningCamera.finish(reason);
     }
 
+    /** A GUI layer of a film's own (registered by its module): it stays drawn over a shot, where the HUD steps aside. */
+    public static void keepLayer(net.minecraft.resources.Identifier id) {
+        OpeningHud.KEEP.add(id);
+    }
+
     /** The letterbox in or out (it eases). */
     public static void bars(boolean on) {
         OpeningHud.barsTarget = on ? 1 : 0;

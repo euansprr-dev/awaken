@@ -141,6 +141,16 @@ public final class Runs {
         return floor > 1 && fighting ? -1 : floor;
     }
 
+    /** With a party online: how each of you fights in here ("You: Full. Ana: Gentle."), else null (SPEC §70.4). */
+    private static @org.jspecify.annotations.Nullable String partyFights(ServerPlayer p) {
+        StringBuilder out = new StringBuilder();
+        for (java.util.UUID id : dev.awaken.core.api.PartyHooks.members(p)) {
+            ServerPlayer m = id.equals(p.getUUID()) ? null : p.level().getServer().getPlayerList().getPlayer(id);
+            if (m != null) out.append(' ').append(m.getGameProfile().name()).append(dev.awaken.core.api.FightsHooks.gentle(m) ? ": Gentle." : ": Full.");
+        }
+        return out.isEmpty() ? null : "You: " + (dev.awaken.core.api.FightsHooks.gentle(p) ? "Gentle." : "Full.") + out;
+    }
+
     public static boolean enter(ServerPlayer p, GateRecord g) {
         MinecraftServer server = p.level().getServer();
         dev.awaken.core.api.TipHooks.done(p, dev.awaken.Awaken.id("first/gate"));
@@ -228,6 +238,8 @@ public final class Runs {
             if (echoLine != null) body.append(Component.literal((twistLine != null ? " " : "") + echoLine).withStyle(ChatFormatting.WHITE));
             w.body(body);
         }
+        String fights = partyFights(p);
+        if (fights != null) w.row("Fights", fights);
         w.footer(Component.literal(plan.friendly() ? "No one here wants to fight you." : "Find the Rest Shrine."));
         Signal.send(p, w.priority(4).ttl(20 * 8).build());
         DirectorLog.log(p, "gate", "entered gate " + g.id + " (run " + run.runIndex + ")");

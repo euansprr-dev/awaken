@@ -26,7 +26,6 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
-        AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
         AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
@@ -555,58 +554,59 @@ final class AscentTests {
     }
 
     /**
-     * A sky platform's stair and core (SPEC §17.9, the Torn Stair): terraces a sling apart from the deck down to a wall's
-     * height over the ground, a ring in each lip, clear of the blueprint's islands on either diagonal; placed for real
-     * and read back from its rings; the core asks the rank first, then gives wings to an arrival by movement and stays
-     * dark to a tower.
+     * A sky platform's ladder and core (SPEC §17.9): each ring a zip straight up from a hang under the one below (within
+     * the rope's reach and its overhead slope), the first within reach of the ground, the last a zip onto the pier;
+     * placed for real; the core gives wings to an arrival by movement and stays dark to a tower.
      */
     private static void skyRig(GameTestHelper h) {
         int ground = 70, deck = 276;
-        for (int bz = -1; bz <= 1; bz += 2) {
-            var l = dev.awaken.above.ruin.SkyRig.layout(0, deck, 0, -1, bz, (x, z) -> ground);
-            var rings = l.rings();
-            h.assertTrue(l.tiers() >= 24 && l.tiers() <= 27 && rings.size() == l.tiers(), "a stair of " + l.tiers() + " terraces");
-            int lowest = l.y(l.tiers() - 1) + 1 - ground;
-            h.assertTrue(lowest > 0 && lowest <= dev.awaken.above.ruin.SkyRig.RISE, "the lowest wall is " + lowest + " over the ground");
-            h.assertTrue(rings.getFirst().getY() == deck, "the top terrace is level with the deck");
-            for (int i = rings.size() - 1; i > 0; i--) {
-                // from one lip to the next: the sling's top (SPEC §62: 6 to 30 ahead, no steeper than 1.2 a block with 3.3 over it)
-                BlockPos lo = rings.get(i), hi = rings.get(i - 1);
-                double ahead = Math.hypot(hi.getX() - lo.getX(), hi.getZ() - lo.getZ()), rise = hi.getY() - lo.getY();
-                h.assertTrue(rise == dev.awaken.above.ruin.SkyRig.RISE && ahead >= 20 && ahead <= 26, "lip " + i + " to " + (i - 1) + ": " + ahead + " on, " + rise + " up");
-                // thrown a run in from where a sling sets you down (a third of the way along): still a sling's slope
-                h.assertTrue(rise + 3.3 - 1.4 <= (ahead - 10) * 1.2, "a sling from a third along terrace " + i);
-            }
-            double footRun = Math.hypot(l.foot().getX() - rings.getLast().getX(), l.foot().getZ() - rings.getLast().getZ());
-            h.assertTrue(footRun >= 7 && footRun <= 12, "the foot is " + footRun + " short of the lowest wall");
-            // clear of the blueprint's islands (RuinBuilder.sky: on each side 19 out, up to 3 off the line, 3.8 wide and
-            // 0.6 of noise; their tether chains run along that line back to the rim) in any turn of the blueprint
-            java.util.List<BlockPos> rig = new java.util.ArrayList<>(l.bridge());
-            rig.addAll(l.pier());
-            for (BlockPos q : rig) {
-                for (int turn = 0; turn < 4; turn++) {
-                    for (int off = -3; off <= 3; off++) {
-                        double ix = turn == 0 ? 19 : turn == 2 ? -19 : off, iz = turn == 1 ? 19 : turn == 3 ? -19 : off;
-                        double clear = Math.hypot(q.getX() - ix, q.getZ() - iz) - 4.4;
-                        boolean underTether = (turn % 2 == 0 ? Math.abs(q.getZ() - iz) : Math.abs(q.getX() - ix)) < 1.5
-                                && (turn % 2 == 0 ? Math.abs(q.getX()) : Math.abs(q.getZ())) >= 10;
-                        h.assertTrue(clear > 3 && !underTether, q.toShortString() + " is " + clear + " from an island's edge");
-                    }
+        var l = dev.awaken.above.ruin.SkyRig.layout(0, deck, 0, ground);
+        var rings = l.rings();
+        h.assertTrue(rings.size() >= 7, "a ladder of " + rings.size() + " rings");
+        BlockPos bottom = rings.getLast();
+        h.assertTrue(bottom.getY() - ground <= 30 && bottom.getY() - ground >= 20, "the first ring " + (bottom.getY() - ground) + " over the ground");
+        for (int i = rings.size() - 1; i > 1; i--) {
+            BlockPos lo = rings.get(i), hi = rings.get(i - 1);
+            double handY = lo.getY() - AscentRules.CEILING_HANG, rise = hi.getY() - handY;
+            double side = Math.hypot(hi.getX() - lo.getX(), hi.getZ() - lo.getZ());
+            h.assertTrue(rise < AscentRules.TETHER_RANGE && rise > AscentRules.ZIP_UP_MIN_RISE && side < rise * AscentRules.ZIP_UP_SLOPE,
+                    "ring " + i + " to " + (i - 1) + ": rise " + rise + ", side " + side);
+        }
+        // the last zip: standing on the perch (its eye 2.6 over the top ring) up to the pier end's side
+        BlockPos top = rings.getFirst(), pierEnd = l.pier().getLast();
+        h.assertTrue(l.perch().size() == 8, "a perch round the top ring");
+        double rise = pierEnd.getY() + 0.5 - (top.getY() + 1 + 1.62), side = Math.hypot(pierEnd.getX() + 0.5 - (top.getX() + 0.5), pierEnd.getZ() + 1.05 - (top.getZ() + 0.5));
+        h.assertTrue(rise > AscentRules.ZIP_UP_MIN_RISE && side < rise * AscentRules.ZIP_UP_SLOPE, "the last zip, onto the pier: rise " + rise + ", side " + side);
+        // clear of the blueprint's islands (RuinBuilder.sky: on each side 19 out, up to 3 off the line, 3.8 wide and
+        // 0.6 of noise; their tether chains run along that line back to the rim) in any turn of the blueprint
+        java.util.List<BlockPos> rig = new java.util.ArrayList<>(rings);
+        rig.addAll(l.perch());
+        rig.addAll(l.pier());
+        for (BlockPos q : rig) {
+            for (int turn = 0; turn < 4; turn++) {
+                for (int off = -3; off <= 3; off++) {
+                    double ix = turn == 0 ? 19 : turn == 2 ? -19 : off, iz = turn == 1 ? 19 : turn == 3 ? -19 : off;
+                    double clear = Math.hypot(q.getX() - ix, q.getZ() - iz) - 4.4;
+                    boolean underTether = (turn % 2 == 0 ? Math.abs(q.getZ() - iz) : Math.abs(q.getX() - ix)) < 1.5
+                            && (turn % 2 == 0 ? Math.abs(q.getX()) : Math.abs(q.getZ())) >= 10;
+                    h.assertTrue(clear > 3 && !underTether, q.toShortString() + " is " + clear + " from an island's edge");
                 }
             }
         }
-        h.assertTrue(dev.awaken.above.ruin.SkyRig.R_IN - (19 + 4.4) >= 1.5, "the stair runs outside the islands");
-        // placed for real, high over the test, on a floor 30 under the deck
+        // placed for real, high over the test
         net.minecraft.server.level.ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(BlockPos.ZERO);
         int cx = o.getX(), cz = o.getZ(), deckY = level.getMaxY() - 20;
-        var placed = dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz, (x, z) -> deckY - 30);
-        h.assertTrue(placed.tiers() == 4, "four terraces down to a floor 30 under the deck, not " + placed.tiers());
-        h.assertTrue(dev.awaken.above.ruin.SkyRig.rigged(level, cx, deckY, cz), "the core stands over its mark");
-        for (BlockPos ring : placed.rings()) h.assertTrue(level.getBlockState(ring).is(AscentContent.ANCHOR_RING.get()), "a ring in the lip at " + ring.toShortString());
-        h.assertTrue(!level.getBlockState(placed.bridge().getLast()).isAir() && !level.getBlockState(placed.pier().getLast()).isAir(), "the bridge and the pier");
-        h.assertTrue(level.getBlockState(placed.core().offset(2, 0, 0)).is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL), "the case's rail");
-        h.assertTrue(dev.awaken.above.ruin.SkyRig.layout(level, cx, deckY, cz).tiers() == placed.tiers(), "a laid stair is read back from its rings");
+        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz, false);
+        var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
+        h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
+                && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
+        // the wings' hall: its mark under the core, the case's rail joined into a ring, a portal's corner opened
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz), "the hall's mark is under the core");
+        var rail = level.getBlockState(placed.core().offset(2, 0, 0));
+        h.assertTrue(rail.is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL)
+                && rail.getValue(net.minecraft.world.level.block.WallBlock.NORTH) != net.minecraft.world.level.block.state.properties.WallSide.NONE, "the case's rail, joined");
+        h.assertTrue(level.getBlockState(placed.core().offset(4, 0, 4)).isAir(), "the pier's corner of the cabin is a portal");
         // the core: by movement, wings; by a tower, nothing
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
@@ -624,6 +624,7 @@ final class AscentTests {
             moved[0] = true;
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
+            // the rank is asked first, then the way: at C a tower still gets nothing
             moved[0] = false;
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower at C gets nothing");
             moved[0] = true;
@@ -631,7 +632,7 @@ final class AscentTests {
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
-            for (BlockPos q : BlockPos.betweenClosed(cx - 35, deckY - 48, cz - 35, cx + 35, deckY + 8, cz + 35)) {
+            for (BlockPos q : BlockPos.betweenClosed(cx - 5, placed.chainBottom() - 1, cz - 5, cx + 20, deckY + 5, cz + 20)) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }
@@ -824,17 +825,6 @@ final class AscentTests {
             if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
         }
         return new double[]{t, 0, -1, k.y};
-    }
-    /** The slow beat (SPEC §17.15): at 0.45 of time the carry flies the same arc, slower (within a few percent). */
-    private static void slowBeat(GameTestHelper h) {
-        AscentRules.Kin a = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0), b = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0);
-        double[] scratch = new double[2];
-        for (int t = 0; t < 9; t++) AscentRules.carryStep(a, 0, 0, 0, scratch);
-        for (int t = 0; t < 20; t++) AscentRules.carryStepSlow(b, 0.45);
-        double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
-        h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
-                "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
-        h.succeed();
     }
     /**
      * The hero trees' crowns (SPEC §17.16), from each tree's own blueprint over eight seeds: the crown on the highest

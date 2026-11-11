@@ -479,6 +479,11 @@ public final class Autopilot {
                 if (said == null) return false;
                 Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), said);
             }
+            case "frontier" -> { // null: not ready (a line that waits on the skiff's flight or on a move), the same line next tick
+                String said = dev.awaken.frontier.client.FrontierClient.autopilot(arg);
+                if (said == null) return false;
+                Awaken.LOG.info("[autopilot] frontier {}: {}", arg.trim(), said);
+            }
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;

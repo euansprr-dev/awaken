@@ -32,9 +32,11 @@ public final class XpBudget {
         if (registered != null) return registered;
         return switch (source) {
             case KILL -> 0.15;
-            case ORE -> 0.06;
-            case BUILD -> 0.03;
-            case DEEP -> 0.08;
+            // building and mining pay about half a level an hour each on their own, at any level (SPEC 4.3, 12 Nov: they
+            // were 0.03 and 0.06 and fell off with level, so a builder at level 50 earned a hundredth of a gate-runner)
+            case ORE -> 0.08;
+            case BUILD -> 0.08;
+            case DEEP -> 0.10;
             default -> 0.25;
         };
     }

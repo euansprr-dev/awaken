@@ -28,6 +28,33 @@ public final class Inscriptions {
             return ResourceKey.create(Registries.ENCHANTMENT, id);
         }
 
+        /** What it goes on, as you'd say it to someone holding one: "a weapon", "your boots", "a piece of armour". */
+        public String piece() {
+            return switch (fits) {
+                case "armour" -> "a piece of armour";
+                case "boots" -> "your boots";
+                case "helmets" -> "a helmet";
+                case "leggings" -> "your leggings";
+                case "chestplates" -> "a chestplate";
+                case "weapons" -> "a weapon";
+                case "tools" -> "a tool";
+                case "weapons and tools" -> "a weapon or a tool";
+                case "bows" -> "a bow";
+                case "tridents" -> "a trident";
+                case "fishing rods" -> "a fishing rod";
+                default -> "a weapon, a tool or a piece of armour";
+            };
+        }
+
+        /**
+         * How a learned enchantment gets onto a piece (Euan, 2026-11-11: "I thought the pages were being automatically
+         * applied... say: you enchant this onto a weapon by doing XYZ"). Said on the page, when one is given and when
+         * one is read.
+         */
+        public String howTo() {
+            return "To put it on " + piece() + ", hold the piece and use an Inscribing Table.";
+        }
+
         /** Mending and Silk Touch cost more: one level of either is worth a lot. */
         public boolean dear() {
             return id.getPath().equals("mending") || id.getPath().equals("silk_touch");
@@ -46,11 +73,11 @@ public final class Inscriptions {
             e(7, "minecraft:projectile_protection", "Projectile Protection", Family.WARD, Family.WARD.colour, "armour", "Arrows and thrown things hurt you less.", "glass_desert", false, false, null),
             e(8, "minecraft:feather_falling", "Feather Falling", Family.WARD, Family.WARD.colour, "boots", "Falls hurt you less.", "", true, true, null),
             e(9, "awaken:clear_blood", "Clear Blood", Family.WARD, 0x9FE07A, "armour", "Poison, wither and spores wear off twice as fast, and three times as fast at II.", "fungal_hollow", false, false, null),
-            e(10, "awaken:bane_of_the_dead", "Bane of the Dead", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder on the undead for each level. It never works on a Lord.", "bell_crypt", false, false, null),
-            e(11, "awaken:bane_of_crawlers", "Bane of Crawlers", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder on spiders, bees and other crawlers for each level. It never works on a Lord.", "hive", false, false, null),
-            e(12, "awaken:bane_of_beasts", "Bane of Beasts", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder on wild herds, packs and hunted quarry for each level. Never on your own beasts or a named one.", "", true, false, null),
-            e(13, "awaken:bane_of_the_deep", "Bane of the Deep", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder on the creatures of the Deep for each level. It never works on a Lord.", "", true, true, null),
-            e(14, "minecraft:looting", "Looting", Family.SPOILS, Family.SPOILS.colour, "weapons", "Creatures drop more when you kill them.", "lantern_market", false, false, null),
+            e(10, "awaken:bane_of_the_dead", "Bane of the Dead", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder for each level on the undead and on what walks a Bell Crypt.", "bell_crypt", false, false, null),
+            e(11, "awaken:bane_of_crawlers", "Bane of Crawlers", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder for each level on spiders, bees and the creatures of a Hive.", "hive", false, false, null),
+            e(12, "awaken:bane_of_beasts", "Bane of Beasts", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder for each level on wild herds, packs and hunted quarry.", "", true, false, null),
+            e(13, "awaken:bane_of_the_deep", "Bane of the Deep", Family.BANE, Family.BANE.colour, "weapons", "Your hits land 8% harder for each level on the creatures of the Deep.", "", true, true, null),
+            e(14, "minecraft:looting", "Looting", Family.SPOILS, Family.SPOILS.colour, "weapons", "Creatures drop more when you kill them.", "", true, true, null),
             e(15, "minecraft:fortune", "Fortune", Family.SPOILS, Family.SPOILS.colour, "tools", "Ores give more when you break them.", "", false, true, null),
             e(16, "minecraft:silk_touch", "Silk Touch", Family.SPOILS, Family.SPOILS.colour, "tools", "Blocks come away whole.", "", false, true, null),
             e(17, "minecraft:efficiency", "Efficiency", Family.SPOILS, Family.SPOILS.colour, "tools", "You dig faster. It can't go on the Delver's Pick: its verses are its speed.", "", true, true, null),
@@ -66,7 +93,9 @@ public final class Inscriptions {
             e(27, "minecraft:loyalty", "Loyalty", Family.CARRYING, Family.CARRYING.colour, "tridents", "A thrown trident comes back to you.", "", false, true, null),
             e(28, "minecraft:riptide", "Riptide", Family.CARRYING, Family.CARRYING.colour, "tridents", "A thrown trident pulls you along in water and rain.", "", false, true, null),
             e(29, "minecraft:luck_of_the_sea", "Luck of the Sea", Family.SPOILS, Family.SPOILS.colour, "fishing rods", "You catch better things.", "", true, true, null),
-            e(30, "minecraft:lure", "Lure", Family.SPOILS, Family.SPOILS.colour, "fishing rods", "Fish bite sooner.", "", true, true, null));
+            e(30, "minecraft:lure", "Lure", Family.SPOILS, Family.SPOILS.colour, "fishing rods", "Fish bite sooner.", "", true, true, null),
+            // the new words (SPEC §45.16): each makes something happen that you can watch
+            e(31, "awaken:lantern", "Lantern", Family.CARRYING, Family.CARRYING.colour, "helmets", "Your helmet lights the dark around you. It is a real light, so friends see by it too.", "lantern_market", false, false, null));
 
     private static final Map<Identifier, Entry> BY_ID = new HashMap<>();
     private static final Map<String, Entry> BY_GATE = new HashMap<>();

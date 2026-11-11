@@ -331,7 +331,8 @@ final class FoundBells {
             BellWorld w = BellWorld.get(level.getServer());
             w.home(h.pos).yard.put(d.no(), at);
             w.setDirty();
-            Bells.say(p, "[The Registry's wagon left " + d.name().replaceFirst("^The ", "the ") + " in your yard. It needs a Great Beam, 12 or more blocks above your fire.]");
+            Bells.say(p, "[The Registry's wagon left " + d.name().replaceFirst("^The ", "the ") + " in your yard."
+                    + (d.source() == BellCatalog.Source.PROVING ? " It needs a Great Beam, 12 or more blocks above your fire.]" : " Hang it by your fire.]"));
             Awaken.LOG.info("[bells] the wagon left {} {} for {} at {}", d.number(), d.id(), p.getName().getString(), at.toShortString());
         }
     }

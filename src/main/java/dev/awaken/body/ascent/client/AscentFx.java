@@ -74,6 +74,17 @@ final class AscentFx {
         return best;
     }
 
+    /**
+     * One rope per body (SPEC §62): a rope let go or missed ends any earlier one of the same body still falling away or
+     * flying out, so a body never shows two (the renderer also hides them while the body has a live rope).
+     */
+    private static Shot ropeShot(int kind, int life, int entity) {
+        for (Shot s : SHOTS) if ((s.kind == LOOSE || s.kind == MISS) && s.entity == entity) s.kind = -1;
+        Shot s = shot(kind, life);
+        s.entity = entity;
+        return s;
+    }
+
     // ---- moments --------------------------------------------------------------------------------------------------
 
     /** Where a rope bites: a flash and a spray of sparks off the face. */
@@ -133,8 +144,7 @@ final class AscentFx {
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(entityId);
         if (e == null) return;
-        Shot s = shot(LOOSE, 9);
-        s.entity = entityId;
+        Shot s = ropeShot(LOOSE, 9, entityId);
         AscentRemote.Slot slot = e == mc.player ? null : AscentRemote.of(entityId);
         s.line = e == mc.player ? AscentMoves.kitLine : slot == null ? 0 : slot.kit & 3;
         s.x = ax;
@@ -147,8 +157,7 @@ final class AscentFx {
 
     /** A rope that found nothing: out to where it flew, then falling back. */
     static void miss(Entity who, double x, double y, double z) {
-        Shot s = shot(MISS, 10);
-        s.entity = who.getId();
+        Shot s = ropeShot(MISS, 10, who.getId());
         s.x = x;
         s.y = y;
         s.z = z;

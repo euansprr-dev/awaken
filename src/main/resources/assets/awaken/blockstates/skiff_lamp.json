@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "glass=blue,hanging=false": {
+      "model": "awaken:block/skiff_lamp_blue"
+    },
+    "glass=blue,hanging=true": {
+      "model": "awaken:block/skiff_lamp_blue_hanging"
+    },
+    "glass=amber,hanging=false": {
+      "model": "awaken:block/skiff_lamp_amber"
+    },
+    "glass=amber,hanging=true": {
+      "model": "awaken:block/skiff_lamp_amber_hanging"
+    }
+  }
+}

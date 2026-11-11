@@ -1,0 +1,207 @@
+# The Far Landing's flight (SPEC §67.4-67.5): the ridge mooring and its wind-skiff from six sides and at the helm, a flight
+# out (the skiff waking, watched from off its bow; the lift, the climb and the turn at the helm; the cloud crossing with
+# the painting and the name; the descent onto the landing's mooring), the landing's mooring by day and at dusk with its
+# hold and board and the land round it, then the flight home straight into the cloud.
+# The numbers are in latest.log ("[frontier]").
+# Seed 4245, a new world (rules 4). Run on CI: tools/tour-ci.sh tools/autopilot/far-landing-flight.txt 1500
+world autopilot_far_landing survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken frontier status
+cmd awaken frontier ready
+# A runner's server can be far behind its client, so nothing here trusts a count of ticks to mean a command has landed:
+# "frontier mark" then "frontier moved" waits until the player has been put somewhere else, "frontier descent" until the
+# skiff on screen is coming down, "frontier down" until the flight is over.
+# The landing first, once, so its land is made and its mooring built before the flight out. (If the runner's server
+# is too far behind for that, the flight out is a first flight to a mooring not built yet, which is what a player gets.)
+frontier mark
+cmd awaken frontier goto landing
+frontier moved
+wait 200
+frontier mark
+cmd awaken frontier goto landing
+frontier moved
+wait 60
+cmd awaken frontier goto landing
+wait 40
+# the ridge: its land loads, the mooring is built, then we stand at its helm
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 200
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 60
+cmd awaken frontier goto ridge
+wait 40
+# the ridge's mooring is built within two seconds of its land being there: the picture views need it built
+wait 300
+cmd awaken frontier goto ridge
+wait 40
+cmd awaken frontier status
+cmd gamemode spectator
+hud off
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 60
+shot fl_01_ridge_bow_quarter
+frontier mark
+cmd awaken frontier look ridge 1
+frontier moved
+wait 24
+shot fl_02_ridge_stern_and_pier
+frontier mark
+cmd awaken frontier look ridge 2
+frontier moved
+wait 24
+shot fl_03_ridge_from_above
+frontier mark
+cmd awaken frontier look ridge 3
+frontier moved
+wait 24
+shot fl_04_ridge_under_the_wing
+frontier mark
+cmd awaken frontier look ridge 4
+frontier moved
+wait 24
+shot fl_05_ridge_from_the_steps
+frontier mark
+cmd awaken frontier look ridge 5
+frontier moved
+wait 24
+shot fl_06_ridge_from_ahead
+cmd gamemode survival
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 30
+shot fl_07_at_the_helm
+hud on
+# out: the wake watched from off the bow (40 ticks), the lift at the helm (to 120), the cloud closing over (from 98),
+# the name in the cloud; then, whenever the far land is there, the cloud parts and the skiff comes down (110 ticks)
+cmd awaken frontier fly
+wait 14
+shotnow fl_08_waking
+wait 18
+shotnow fl_09_awake
+wait 20
+shotnow fl_10_lift_off
+wait 22
+shotnow fl_11_climbing
+wait 18
+shotnow fl_12_into_the_cloud
+wait 22
+shotnow fl_13_cloud_closing
+wait 22
+shotnow fl_14_crossing_name
+wait 25
+shotnow fl_15_crossing_held
+frontier descent
+wait 8
+shotnow fl_16_cloud_parting
+wait 20
+shotnow fl_17_descent_early
+wait 20
+shotnow fl_18_descent_mid
+wait 20
+shotnow fl_19_descent_flare
+wait 18
+shotnow fl_20_descent_late
+wait 14
+shotnow fl_21_settling
+frontier down
+wait 40
+shot fl_22_set_down
+cmd awaken frontier status
+# the landing's mooring and the land round it
+cmd gamemode spectator
+hud off
+frontier mark
+cmd awaken frontier look landing 0
+frontier moved
+wait 60
+shot fl_24_landing_bow_quarter
+frontier mark
+cmd awaken frontier look landing 1
+frontier moved
+wait 24
+shot fl_25_landing_stern_and_pier
+frontier mark
+cmd awaken frontier look landing 2
+frontier moved
+wait 24
+shot fl_26_landing_from_above
+frontier mark
+cmd awaken frontier look landing 3
+frontier moved
+wait 24
+shot fl_27_landing_under_the_wing
+frontier mark
+cmd awaken frontier look landing 4
+frontier moved
+wait 24
+shot fl_28_landing_from_the_steps
+# dusk: the lamps and the core
+cmd time set 13200
+wait 40
+frontier mark
+cmd awaken frontier look landing 0
+frontier moved
+wait 40
+shot fl_29_landing_at_dusk
+frontier mark
+cmd awaken frontier look landing 1
+frontier moved
+wait 24
+shot fl_30_landing_at_dusk_pier
+cmd time set 1500
+wait 40
+frontier mark
+cmd tp @s ~ ~90 ~ ~ 20
+frontier moved
+wait 100
+shot fl_31_the_land_round_it
+hud on
+cmd gamemode survival
+frontier mark
+cmd awaken frontier goto landing
+frontier moved
+wait 40
+cmd awaken frontier letter
+wait 30
+shot fl_32_a_letter
+wait 200
+# home, straight into the cloud (a sneak-use after the first flight)
+cmd awaken frontier fly quick
+wait 12
+shotnow fl_33_home_quick_lift
+wait 30
+shotnow fl_34_home_crossing
+wait 40
+shotnow fl_35_home_crossing_name
+frontier descent
+wait 24
+shotnow fl_36_home_coming_down
+frontier down
+wait 40
+shot fl_37_home_at_the_ridge
+cmd awaken frontier status
+quit

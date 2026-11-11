@@ -1,0 +1,20 @@
+{
+  "subtitles.awaken.frontier.skiff.cast_off": "The skiff's mooring is let go",
+  "subtitles.awaken.frontier.skiff.core_wake": "The skiff's core wakes",
+  "subtitles.awaken.frontier.skiff.core_hum": "The skiff's core hums",
+  "subtitles.awaken.frontier.skiff.core_rest": "The skiff's core goes quiet",
+  "subtitles.awaken.frontier.skiff.sail": "Canvas fills with wind",
+  "subtitles.awaken.frontier.skiff.bell": "The skiff's bell rings",
+  "subtitles.awaken.frontier.skiff.creak": "The skiff's timbers creak",
+  "subtitles.awaken.frontier.skiff.wind": "Wind rushes past the skiff",
+  "subtitles.awaken.frontier.skiff.set_down": "The skiff settles on its cradle",
+  "block.awaken.skiff_hull": "Skiff Plating",
+  "block.awaken.skiff_hull_stairs": "Skiff Plating Stairs",
+  "block.awaken.skiff_deck": "Skiff Deck",
+  "block.awaken.skiff_brass": "Skiff Brass",
+  "block.awaken.skiff_spar": "Skiff Spar",
+  "block.awaken.skiff_sail": "Skiff Canvas",
+  "block.awaken.skiff_gunwale": "Skiff Gunwale",
+  "block.awaken.skiff_helm": "Skiff Helm",
+  "block.awaken.skiff_lamp": "Skiff Lamp"
+}

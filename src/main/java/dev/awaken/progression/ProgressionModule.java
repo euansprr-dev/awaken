@@ -249,13 +249,14 @@ public final class ProgressionModule {
      * when you've out-levelled the thing (vanilla mobs and blocks are content level 0). Before awakening it's banked.
      */
     static void homeXp(ServerPlayer player, String source, double fractionOfLevel, int contentLevel) {
-        double taper = XpBudget.taper(Progression.profile(player).level(), contentLevel);
+        // only a fight can be out-levelled: a wall or a seam is the same work at level 60 as at level 6 (SPEC 4.3, 12 Nov)
+        double taper = XpBudget.KILL.equals(source) ? XpBudget.taper(Progression.profile(player).level(), contentLevel) : 1.0;
         double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime()) * taper;
         if (paid > 0) Progression.grantLevels(player, paid, Progression.XpSource.HOME);
     }
 
     /** Full-value world XP per kill of a 20-HP mob (× min(2, max health / 20)), mined ore (× its {@link OreXp} weight) and placed block. */
-    static final double KILL_XP = 0.04, ORE_XP = 0.01, BLOCK_XP = 0.0005;
+    static final double KILL_XP = 0.04, ORE_XP = 0.01, BLOCK_XP = 0.00075;
     /** The first of each ore is a discovery (SPEC §28.3): this share of a level, once. */
     static final double ORE_DISCOVERY = 0.1;
 

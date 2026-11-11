@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The book's two pages at an Inscribing Table (SPEC §45.10), laid over the lower half of the view while the table shows
+ * The screen at an Inscribing Table. Since the polish pass (SPEC §45.15) it is no window at all: it frees the pointer,
+ * reads it against the pages hanging over the desk and the sockets behind the piece ({@link Desk}), and draws one small
+ * label by it, the trace's pips and a line of key caps. With {@code classicTable} set it is the old book:
+ *
+ * <p>The book's two pages at an Inscribing Table (SPEC §45.10), laid over the lower half of the view while the table shows
  * above them. The left page is your piece: its name and rank, its room, what's on it (scrape one off with two clicks)
  * and how deep this table lets you write. The right page is what you know that fits it, each with its mark, how deep it
  * can go here and its price, or plainly why not. Choose one and the book closes down out of the way while you trace its
@@ -51,9 +55,16 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
     private int scrapeId = -1, scrapeAt;
     private final List<int[]> onIt = new ArrayList<>();
     private int traceSeen;
+    /** The old book of two pages and the result card ({@code classicTable}); else choosing happens on the desk itself. */
+    private final boolean classic = EnchantClientConfig.classic();
 
     InscribeScreen() {
         super(Component.literal("Inscribing Table"));
+    }
+
+    /** Ticks this screen has been up (a held press on a socket is counted in them). */
+    int age() {
+        return age;
     }
 
     @Override
@@ -63,6 +74,19 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
 
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
+        if (!classic) {
+            // no window: the room only steps back a little round the desk, darkest at the corners
+            float w = InscribeScene.weight(a);
+            int edge = (int) (w * 0x9C) << 24 | 0x05060A, side = Math.max(1, width / 5), band = Math.max(1, height / 4);
+            g.fillGradient(0, 0, width, band, edge, 0x0005060A);
+            g.fillGradient(0, height - band, width, height, 0x0005060A, edge);
+            for (int i = 0; i < side; i += 2) {
+                int al = (int) (w * 0x70 * (1F - i / (float) side) * (1F - i / (float) side)) << 24 | 0x05060A;
+                g.fill(i, 0, i + 2, height, al);
+                g.fill(width - i - 2, 0, width - i, height, al);
+            }
+            return;
+        }
         // no blur and no dark: the table is the background
         float open = bookShown(a);
         if (open > 0) g.fillGradient(0, height / 2, width, height, 0, ((int) (open * 0x90) << 24) | 0x07050A);
@@ -73,6 +97,10 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         age++;
         if (InscribeScene.phase == InscribeScene.TRACE && traceSeen == 0) traceSeen = age;
         if (InscribeScene.phase != InscribeScene.TRACE) traceSeen = 0;
+        if (!classic) {
+            deskTick();
+            return;
+        }
         // the book turns to what you're looking at (others see it), once you've rested on it a moment
         if (InscribeScene.phase == InscribeScene.BOOK && hover >= 0 && hover < rows.size() && age - hoverSince >= 4) {
             int no = rows.get(hover).e.no();
@@ -81,6 +109,258 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 InscribeScene.act(EnchantPayloads.LOOK, no, 0, 0F);
             }
         }
+    }
+
+    // ---- choosing on the desk itself (SPEC §45.15) ----------------------------------------------------------------------
+
+    private void deskTick() {
+        if (InscribeScene.phase != InscribeScene.BOOK) return;
+        // the book turns to what you point at (others see it), once you've rested on it a moment
+        if (Desk.hover >= 0 && Desk.hover < Desk.OFFERS.size() && InscribeScene.ticks - Desk.hoverSince >= 4) {
+            int no = Desk.OFFERS.get(Desk.hover).e().no();
+            if (no != lookSent) {
+                lookSent = no;
+                InscribeScene.act(EnchantPayloads.LOOK, no, 0, 0F);
+            }
+        }
+        // a press held on a socket for most of a second scrapes what is written there
+        if (Desk.held >= 0 && Desk.held < Desk.ON.size() && age - Desk.heldAt >= Desk.HOLD && !InscribeScene.waiting) {
+            Desk.On on = Desk.ON.get(Desk.held);
+            Desk.held = -1;
+            InscribeScene.act(EnchantPayloads.SCRAPE, on.id(), 0, 0F);
+            InscribeScene.play(dev.awaken.enchant.EnchantContent.BURIN_METAL.get(), 0.5F, 0.7F);
+            if (on.e() != null) InscribeScene.scraped(on.e().no());
+        }
+    }
+
+    private void desk(GuiGraphicsExtractor g, int mx, int my, float a) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        if (p == null) return;
+        if (!InscribeScene.pilot && (InscribeScene.phase == InscribeScene.TRACE || InscribeScene.phase == InscribeScene.MEMORY))
+            InscribeScene.pen(mx, my, width, height);
+        float in = InscribeScene.weight(a);
+        int alpha = (int) (255 * in);
+        switch (InscribeScene.phase) {
+            case InscribeScene.BOOK -> {
+                Desk.build(p, p.getMainHandItem());
+                Desk.point(mx, my, width, height, a, pilotHover, age);
+                InscribeScene.hoverNo = Desk.hoverNo();
+                if (alpha < 24) break;
+                if (Desk.OFFERS.isEmpty() && Desk.ON.isEmpty())
+                    g.centeredText(font, "You don't know anything that fits this piece yet.", width / 2, height / 2, alpha << 24 | 0xE8DCC8);
+                if (Desk.hover >= 0 && Desk.hover < Desk.OFFERS.size()) pageLabel(g, Desk.OFFERS.get(Desk.hover), alpha);
+                else if (Desk.socket >= 0) socketLabel(g, Desk.socket, alpha);
+                if (Desk.OFFERS.isEmpty()) caps(g, alpha, "Hold", "a mark on the piece to scrape it off", "Esc", "step away");
+                else caps(g, alpha, "Click", "a page to write it", "Hold", "a mark to scrape it", "Esc", "step away");
+            }
+            case InscribeScene.TRACE -> {
+                traceUi(g, a);
+                caps(g, alpha, "Drag", "each cut from its glowing end", "Esc", "step back, your levels come back");
+            }
+            case InscribeScene.MEMORY -> memoryUi(g, a);
+            case InscribeScene.WAKE -> woke(g, a);
+            default -> {}
+        }
+        if (!InscribeScene.line.isEmpty() && InscribeScene.ticks - InscribeScene.lineAt < 80) {
+            int la = (int) (255 * Mth.clamp((80 - (InscribeScene.ticks - InscribeScene.lineAt)) / 15F, 0F, 1F));
+            Component c = Component.literal(InscribeScene.line);
+            int tw = font.width(c), y = height - 44;
+            g.fill(width / 2 - tw / 2 - 6, y - 4, width / 2 + tw / 2 + 6, y + 12, (la * 3 / 4) << 24 | 0x120A06);
+            g.centeredText(font, c, width / 2, y, la << 24 | 0xF2D6B0);
+        }
+    }
+
+    /** One line of key caps along the foot: each a key in a box and what it does. */
+    private void caps(GuiGraphicsExtractor g, int alpha, String... pairs) {
+        if (alpha < 24) return;
+        int total = 0;
+        for (int i = 0; i < pairs.length; i += 2) total += font.width(pairs[i]) + 8 + font.width(pairs[i + 1]) + 12;
+        int x = (width - total + 12) / 2, y = height - 13;
+        for (int i = 0; i < pairs.length; i += 2) {
+            int kw = font.width(pairs[i]) + 6;
+            g.fill(x, y - 2, x + kw, y + 10, (alpha / 2) << 24 | 0x0A0E18);
+            g.outline(x, y - 2, kw, 12, (alpha * 3 / 4) << 24 | 0xC9D2E0);
+            g.text(font, pairs[i], x + 3, y, alpha << 24 | 0xF2F4F8, false);
+            x += kw + 3;
+            g.text(font, pairs[i + 1], x, y, (alpha * 3 / 4) << 24 | 0xC9D2E0, true);
+            x += font.width(pairs[i + 1]) + 11;
+        }
+    }
+
+    /**
+     * A page's label: over the row, on the page's own side of the piece. Beside the page it lay over its neighbours (and
+     * over the page itself, at the row's left end); in the middle it would lie over the piece and the mark shown on it.
+     */
+    private int[] pageLabelAt(float ax, float ay, float ar, int lw, int lh, int gap) {
+        int mid = width / 2, centred = Math.round(ax - lw / 2F);
+        int x = ax < mid ? Math.min(centred, mid - gap - lw) : Math.max(centred, mid + gap);
+        x = Mth.clamp(x, 4, Math.max(4, width - lw - 4));
+        int y = Math.max(4, Math.round(ay - ar - 6 - lh));
+        return new int[]{x, y};
+    }
+
+    /** The one label: the page pointed at. Its name and level, what it does, how deep it goes here and what it costs, or why not. */
+    private void pageLabel(GuiGraphicsExtractor g, Desk.Offer o, int alpha) {
+        // clear of the piece in the middle: a weapon is narrow, armour half the slate across
+        LocalPlayer me = Minecraft.getInstance().player;
+        int gap = me != null && dev.awaken.enchant.EnchantRules.armour(me.getMainHandItem()) ? 44 : 20;
+        int lw = Mth.clamp(width / 2 - gap - 6, 96, 176), inner = lw - 14;
+        int top = Inscriptions.top(o.h());
+        List<FormattedCharSequence> body = font.split(Component.literal(o.e().line()), inner);
+        boolean ok = o.ok();
+        String deep = "";
+        if (ok && top > 1) {
+            int hi = Math.min(top, o.deepest());
+            deep = "Up to " + Inscriptions.numeral(hi) + " here" + (!InscribeScene.study && o.anywhere() > o.deepest() ? ", " + Inscriptions.numeral(o.anywhere()) + " in your Study" : "");
+        }
+        List<FormattedCharSequence> why = ok ? List.of() : font.split(Component.literal(o.why()), inner);
+        int rows = body.size() + why.size() + (ok ? (deep.isEmpty() ? 1 : 2) + 1 : 0);
+        int lh = 18 + rows * 10 + 6;
+        int[] at = pageLabelAt(Desk.screenX(true, Desk.hover), Desk.screenY(true, Desk.hover), Desk.screenR(true, Desk.hover), lw, lh, gap);
+        int x = at[0], y = at[1], colour = brighten(o.e().colour());
+        dev.awaken.signal.client.Glass.panel(g, x, y, lw, lh, colour, alpha / 255F);
+        mark(g, o.e().no(), x + 11, y + 10, 6, alpha << 24 | colour, 1F);
+        g.text(font, o.e().name() + (top > 1 ? " " + Inscriptions.numeral(o.to()) : ""), x + 22, y + 6, alpha << 24 | colour, false);
+        int ly = y + 20;
+        for (FormattedCharSequence l : body) {
+            g.text(font, l, x + 7, ly, alpha << 24 | 0xDDE4EE, false);
+            ly += 10;
+        }
+        if (!ok) {
+            for (FormattedCharSequence l : why) {
+                g.text(font, l, x + 7, ly, alpha << 24 | 0xFFB0A6, false);
+                ly += 10;
+            }
+            return;
+        }
+        if (!deep.isEmpty()) {
+            dev.awaken.signal.client.Ui.fitted(g, font, deep, x + 7, ly, inner, 1, (alpha * 3 / 4) << 24 | 0xBCCDE3, false);
+            ly += 10;
+        }
+        // what it costs, as the things themselves; red when you can't pay
+        price(g, o.price(), x + 7, ly, alpha << 24 | (o.afford() ? 0xF2F4F8 : 0xFF8A7A));
+        ly += 10;
+        String how = o.memory() ? "Click: from memory. Shift and click: trace it." : top > 1 && Math.min(top, o.deepest()) > o.now() + 1 ? "Click to write it. Wheel: its level." : "Click to write it.";
+        dev.awaken.signal.client.Ui.fitted(g, font, how, x + 7, ly, inner, 1, (alpha * 3 / 4) << 24 | 0xBCCDE3, false);
+    }
+
+    /** A socket pointed at: what is written there and how it comes off, or that there is room. */
+    private void socketLabel(GuiGraphicsExtractor g, int j, int alpha) {
+        Desk.On on = j < Desk.ON.size() ? Desk.ON.get(j) : null;
+        // to its left, the side away from the piece (the sockets run down the slate's left side)
+        float ax = Desk.screenX(false, j), ar = Desk.screenR(false, j);
+        int lw = Mth.clamp(Math.round(ax - ar - 12), 96, 170), inner = lw - 14;
+        List<FormattedCharSequence> body = on == null ? font.split(Component.literal("Room for one more."), inner)
+                : on.e() == null ? font.split(Component.literal("It was on this piece before, and can't be written any more."), inner)
+                : font.split(Component.literal(on.e().line()), inner);
+        List<FormattedCharSequence> how = on == null ? List.of() : font.split(Component.literal("Hold to scrape it off. Nothing comes back."), inner);
+        int lh = (on == null ? 6 : 18) + body.size() * 10 + 6 + how.size() * 10;
+        int x = Mth.clamp(Math.round(ax - ar - 8 - lw), 4, Math.max(4, width - lw - 4));
+        int y = Mth.clamp(Math.round(Desk.screenY(false, j) - lh / 2F), 4, Math.max(4, height - lh - 18));
+        int colour = on == null ? InscribeScene.LAPIS : on.e() == null ? 0xB9C3D2 : brighten(on.e().colour());
+        dev.awaken.signal.client.Glass.panel(g, x, y, lw, lh, colour, alpha / 255F);
+        int ly = y + 6;
+        if (on != null) {
+            if (on.e() != null) mark(g, on.e().no(), x + 11, y + 10, 6, alpha << 24 | colour, 1F);
+            g.text(font, on.name() + (on.level() > 1 || on.e() != null && maxLevel(on.e()) > 1 ? " " + Inscriptions.numeral(on.level()) : ""), x + 22, y + 6, alpha << 24 | colour, false);
+            ly = y + 20;
+        }
+        for (FormattedCharSequence l : body) {
+            g.text(font, l, x + 7, ly, alpha << 24 | 0xDDE4EE, false);
+            ly += 10;
+        }
+        for (FormattedCharSequence l : how) {
+            g.text(font, l, x + 7, ly, (alpha * 3 / 4) << 24 | 0xFFB0A6, false);
+            ly += 10;
+        }
+    }
+
+    /** The Hall's blackletter (its bitmap font; 24 pixels tall at size 1) and its soft round light. */
+    private static final net.minecraft.network.chat.Style BLACKLETTER =
+            net.minecraft.network.chat.Style.EMPTY.withFont(new net.minecraft.network.chat.FontDescription.Resource(dev.awaken.Awaken.id("hall_title")));
+    private static final net.minecraft.resources.Identifier GLOW = dev.awaken.Awaken.id("textures/gui/hall/glow.png");
+
+    /**
+     * The wake, in the Hall's own words for a thing made (SPEC §52 "The moment it's made"), without its anvil: a hit of
+     * light as the last stroke seals, then the enchantment's name in blackletter and how it came out; then what came
+     * back and the two ways on. No card.
+     */
+    private void woke(GuiGraphicsExtractor g, float a) {
+        EnchantPayloads.Done d = InscribeScene.done;
+        Inscriptions.Entry e = InscribeScene.entry();
+        if (d == null || e == null) return;
+        float t = InscribeScene.now(a) - InscribeScene.phaseAt;
+        Minecraft mc = Minecraft.getInstance();
+        if (t < 5F && !mc.options.hideLightningFlash().get()) {
+            float hit = 1F - t / 5F;
+            g.fill(0, 0, width, height, (int) (hit * hit * 0.5F * 255F) << 24 | 0xFFE9C8);
+        }
+        float in = ease(Mth.clamp((t - 6F) / 5F, 0F, 1F));
+        if (in > 0.02F) {
+            int colour = brighten(e.colour()), na = (int) (255 * in);
+            Component name = Component.literal(e.name() + (maxLevel(e) > 1 ? " " + Inscriptions.numeral(d.level()) : "")).withStyle(BLACKLETTER);
+            float size = Math.min(1F, (width - 24F) / Math.max(1, font.width(name)));
+            int tw = Math.round(font.width(name) * size), y = Math.round(16 + (1F - in) * (1F - in) * 8F);
+            g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, GLOW, width / 2 - tw / 2 - 40, y - 12, 0F, 0F, tw + 80, Math.round(24 * size) + 30,
+                    512, 512, 512, 512, (int) (in * 0.5F * 255F) << 24 | colour);
+            g.pose().pushMatrix();
+            g.pose().translate(width / 2F - tw / 2F, y + 11F * size);
+            g.pose().scale(size, size);
+            g.text(font, name, 0, 0, na << 24 | 0xF4F6FB, false);
+            g.pose().popMatrix();
+            String how = d.clean() ? "A clean hand" : d.card().contains("from memory") ? "From memory" : "Written";
+            g.centeredText(font, how, width / 2, y + Math.round(26 * size) + 4, na << 24 | colour);
+        }
+        int alpha = (int) (255 * ease(Mth.clamp((t - 30) / 10F, 0F, 1F)));
+        if (alpha < 24) return;
+        int y = height - 30;
+        if (d.refund() > 0) {
+            String s = "+" + d.refund();
+            int w0 = font.width(s) + 12 + font.width("back");
+            int x = width / 2 - w0 / 2 - (d.remembered() ? 70 : 0);
+            g.text(font, s, x, y, alpha << 24 | 0xF2E6CF, true);
+            g.pose().pushMatrix();
+            g.pose().translate(x + font.width(s) + 1, y - 1);
+            g.pose().scale(.5625F, .5625F);
+            g.item(LEVELS, 0, 0);
+            g.pose().popMatrix();
+            g.text(font, "back", x + font.width(s) + 12, y, alpha << 24 | 0xF2E6CF, true);
+        }
+        if (d.remembered()) g.centeredText(font, "Its mark is in your memory now.", width / 2 + (d.refund() > 0 ? 40 : 0), y, alpha << 24 | 0xBFD0FF);
+        caps(g, alpha, "Space", "write another", "Esc", "done");
+    }
+
+    private boolean deskClick(MouseButtonEvent e) {
+        if (InscribeScene.waiting) return true;
+        if (Desk.socket >= 0) {
+            if (Desk.socket < Desk.ON.size()) {
+                Desk.held = Desk.socket;
+                Desk.heldAt = age;
+            }
+            return true;
+        }
+        if (Desk.hover < 0 || Desk.hover >= Desk.OFFERS.size()) return true;
+        Desk.Offer o = Desk.OFFERS.get(Desk.hover);
+        if (!o.ok()) {
+            InscribeScene.say(o.why());
+            return true;
+        }
+        if (!o.afford()) {
+            InscribeScene.say("You need " + EnchantRules.priceLine(o.price()) + ".");
+            return true;
+        }
+        deskChoose(Desk.hover, o.memory() && !e.hasShiftDown());
+        return true;
+    }
+
+    /** The page leaves the row for the piece, and the server is asked. */
+    private void deskChoose(int i, boolean memory) {
+        Desk.Offer o = Desk.OFFERS.get(i);
+        Desk.picked = i;
+        Desk.pickedAt = InscribeScene.ticks;
+        InscribeScene.play(dev.awaken.enchant.EnchantContent.PAGE_TURN.get(), 0.7F, 0.9F);
+        InscribeScene.choose(o.e(), o.to(), memory);
     }
 
     @Override
@@ -148,6 +428,10 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float a) {
+        if (!classic) {
+            desk(g, mx, my, a);
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
@@ -422,7 +706,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             g.fill(bx, y, bx + (int) (bw * share), y + 2, alpha << 24 | (share >= 0.8F ? brighten(e.colour()) : 0xC08060));
         }
         int hintAge = traceSeen == 0 ? 0 : age - traceSeen;
-        if (InscribeScene.stroke == 0 && hintAge < 400) {
+        if (classic && InscribeScene.stroke == 0 && hintAge < 400) {
             g.centeredText(font, "Draw each stroke from its glowing end. Stay on the line for a clean hand.", cx, 14, alpha << 24 | 0xE8DCC8);
             g.centeredText(font, "Esc steps back, and your levels come back too.", cx, 26, (alpha * 2 / 3) << 24 | 0xB8AC98);
         }
@@ -526,6 +810,15 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
 
     /** The pilot chooses enchantment {@code no} as a click on its row would (at its default level); false when it isn't there. */
     boolean pilotChoose(int no, boolean memory) {
+        if (!classic) {
+            for (int i = 0; i < Desk.OFFERS.size(); i++) {
+                Desk.Offer o = Desk.OFFERS.get(i);
+                if (o.e().no() != no || !o.ok()) continue;
+                deskChoose(i, memory && o.memory());
+                return true;
+            }
+            return false;
+        }
         for (Row r : rows) {
             if (r.e.no() != no || !r.why.isEmpty()) continue;
             InscribeScene.choose(r.e, r.to, memory && r.memory);
@@ -547,6 +840,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 return true;
             }
             case InscribeScene.WAKE -> {
+                if (!classic) return true;
                 int[] b = InscribeScene.ticks - InscribeScene.phaseAt < CARD_AT ? new int[0] : cardButtons();
                 if (b.length > 0 && my >= b[1] && my < b[1] + 12) {
                     if (mx >= b[0] && mx < b[2]) {
@@ -561,7 +855,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 return true;
             }
             case InscribeScene.BOOK -> {
-                return bookClick(mx, my);
+                return classic ? bookClick(mx, my) : deskClick(e);
             }
             default -> {
                 return true;
@@ -639,12 +933,26 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
 
     @Override
     public boolean mouseReleased(MouseButtonEvent e) {
+        Desk.held = -1;
         InscribeScene.release();
         return super.mouseReleased(e);
     }
 
     @Override
     public boolean mouseScrolled(double x, double y, double sx, double sy) {
+        if (InscribeScene.phase == InscribeScene.BOOK && !classic) {
+            // the wheel over a page: a shallower or deeper level, between one above what's on it and the deepest here
+            if (Desk.hover >= 0 && Desk.hover < Desk.OFFERS.size()) {
+                Desk.Offer o = Desk.OFFERS.get(Desk.hover);
+                int lo = o.now() + 1, hi = Math.min(Inscriptions.top(o.h()), o.deepest());
+                int to = Mth.clamp(o.to() + (int) Math.signum(sy), lo, Math.max(lo, hi));
+                if (o.ok() && to != o.to()) {
+                    Desk.TARGETS.put(o.e().no(), to);
+                    InscribeScene.play(dev.awaken.enchant.EnchantContent.PAGE_TURN.get(), 0.3F, to > o.to() ? 1.5F : 1.4F);
+                }
+            }
+            return true;
+        }
         if (InscribeScene.phase == InscribeScene.BOOK) {
             scroll -= (int) Math.signum(sy);
             return true;

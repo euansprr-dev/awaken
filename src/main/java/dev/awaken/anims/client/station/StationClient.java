@@ -111,6 +111,8 @@ public final class StationClient {
                     && Minecraft.getInstance().gui.screen() instanceof StationScreen<?>) e.setCanceled(true);
         });
         FirstPerson.world("anims_station", 200, StationClient::pose);
+        // a scene holds the view still from the tick it opens to the tick the view is home (SPEC §65.2)
+        FirstPerson.holdView(() -> table != null && weight(0F) > 0F);
     }
 
     public static void tick() {
@@ -137,6 +139,7 @@ public final class StationClient {
             return;
         }
         reframe(s);
+        sweepTick();
         // a brewing stand at work: a bubble in each bottle, every third tick (SPEC §65.8)
         if (kind == Kind.BREWING && ticks % 3 == 0 && s.getMenu() instanceof net.minecraft.world.inventory.BrewingStandMenu brew && brew.getBrewingTicks() > 0
                 && !FirstPerson.reducedMotion.getAsBoolean()) {
@@ -218,6 +221,7 @@ public final class StationClient {
 
     /** Dev (the pilot's "station <slot> <button>"): a click on a slot of the open table scene, as a player's. */
     public static void devClick(int slot, int button) {
+        dev.awaken.anims.client.HandsLog.mark("click " + slot + " " + button);
         if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) s.devClick(slot, button);
     }
 
@@ -226,25 +230,57 @@ public final class StationClient {
      * station slot on the station, any other at its place on the strip), so a tour can film a carried stack over the grid.
      */
     public static void devHover(int slot) {
+        dev.awaken.anims.client.HandsLog.mark("hover " + slot);
         Minecraft mc = Minecraft.getInstance();
-        if (!(mc.gui.screen() instanceof StationScreen<?> s) || station == null) return;
-        double gx, gy;
+        if (!(mc.gui.screen() instanceof StationScreen<?> s) || station == null || !slotGui(s, slot, SWEEP)) return;
+        var w = mc.getWindow();
+        mc.mouseHandler.onMove(w.handle(), SWEEP[0] * w.getScreenWidth() / w.getGuiScaledWidth(), SWEEP[1] * w.getScreenHeight() / w.getGuiScaledHeight(), 0, 0);
+    }
+
+    /** Where a slot of the open scene is on screen (gui pixels): a station slot where the view shows it, any other on the strip. */
+    private static boolean slotGui(StationScreen<?> s, int slot, double[] out) {
+        Minecraft mc = Minecraft.getInstance();
         if (slot < kind.slots) {
-            double[] at = new double[3], out = new double[2];
+            double[] at = new double[3];
             spot(slot, at, 0);
             var cam = mc.gameRenderer.mainCamera();
             Vec3 o = cam.position();
             float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
-            if (!StationView.project(at[0], at[1], at[2], o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect, s.width, s.height, out)) return;
-            gx = out[0];
-            gy = out[1];
-        } else {
-            var sl = s.getMenu().getSlot(slot);
-            gx = s.slotLeft() + sl.x + 8;
-            gy = s.slotTop() + sl.y + 8;
+            return StationView.project(at[0], at[1], at[2], o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect, s.width, s.height, out);
         }
+        var sl = s.getMenu().getSlot(slot);
+        out[0] = s.slotLeft() + sl.x + 8;
+        out[1] = s.slotTop() + sl.y + 8;
+        return true;
+    }
+
+    /** Dev (the pilot's "sides on|off"): lay scenes out as beside JEI's panels, the narrow room, without JEI installed. */
+    public static volatile boolean devSides;
+
+    /** A sweep in progress (dev): the pointer's two ends on screen (gui pixels), how long it takes and how much is left (ticks). */
+    private static final double[] SWEEP = new double[2], SWEEP_FROM = new double[2], SWEEP_TO = new double[2];
+    private static int sweepTicks, sweepLeft;
+
+    /**
+     * Dev (the pilot's "sweep <from> <to> <ticks>"): the pointer carried from one slot of the open scene to another in a
+     * straight line over that many ticks, a step each tick, as a hand moving a mouse does, so a tour's pose log can show
+     * an arm moving without steps or shake.
+     */
+    public static void devSweep(int from, int to, int ticksLong) {
+        if (!(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) || station == null) return;
+        if (!slotGui(s, from, SWEEP_FROM) || !slotGui(s, to, SWEEP_TO)) return;
+        sweepTicks = sweepLeft = Math.max(1, ticksLong);
+        dev.awaken.anims.client.HandsLog.mark("sweep " + from + " " + to + " " + ticksLong);
+    }
+
+    private static void sweepTick() {
+        if (sweepLeft <= 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        sweepLeft--;
+        double u = 1 - sweepLeft / (double) sweepTicks;
         var w = mc.getWindow();
-        mc.mouseHandler.onMove(w.handle(), gx * w.getScreenWidth() / w.getGuiScaledWidth(), gy * w.getScreenHeight() / w.getGuiScaledHeight(), 0, 0);
+        mc.mouseHandler.onMove(w.handle(), Mth.lerp(u, SWEEP_FROM[0], SWEEP_TO[0]) * w.getScreenWidth() / w.getGuiScaledWidth(),
+                Mth.lerp(u, SWEEP_FROM[1], SWEEP_TO[1]) * w.getScreenHeight() / w.getGuiScaledHeight(), 0, 0);
     }
 
     private static int mainSide() {
@@ -390,17 +426,17 @@ public final class StationClient {
 
     /** How far in the scene is (0 out, 1 in): eased in over this visit's glide, and out. */
     static float weight(float pt) {
-        float t = ticks + pt;
-        float in = Ease.at(Ease.OUT_CUBIC, (t - openedAt) / (float) inTicks);
+        // ticks since it opened or shut, as whole numbers, then the part of a tick: never a float of the running count
+        // (an hour into a session that count has fewer bits left for the part, and a glide moves in steps)
+        float in = Ease.at(Ease.OUT_CUBIC, ((ticks - openedAt) + pt) / inTicks);
         if (open) return in;
-        return Math.min(in, 1 - Ease.at(Ease.IN_OUT_SINE, (t - closedAt) / (float) outTicks));
+        return Math.min(in, 1 - Ease.at(Ease.IN_OUT_SINE, ((ticks - closedAt) + pt) / outTicks));
     }
 
     /** How far through its glide the view is, uneased (0 out, 1 in). */
     private static float progress(float pt) {
-        float t = ticks + pt;
-        float in = Mth.clamp((t - openedAt) / (float) inTicks, 0F, 1F);
-        return open ? in : Math.min(in, 1 - Mth.clamp((t - closedAt) / (float) outTicks, 0F, 1F));
+        float in = Mth.clamp(((ticks - openedAt) + pt) / inTicks, 0F, 1F);
+        return open ? in : Math.min(in, 1 - Mth.clamp(((ticks - closedAt) + pt) / outTicks, 0F, 1F));
     }
 
     // ---- the slots on the station -----------------------------------------------------------------------------------
@@ -464,8 +500,8 @@ public final class StationClient {
         float fromPitch = own && player != null ? player.getViewXRot(e.getPartialTick()) : e.getPitch();
         e.setYaw(fromYaw + Mth.wrapDegrees(yaw - fromYaw) * w);
         e.setPitch(Mth.lerp(w, fromPitch, pitch));
-        // from your own eyes, the slightest breath while you work; a station's own view holds still (you are aiming)
-        if (!own) e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
+        // the view holds still while you work, from a station's own place or from your own eyes (it breathed a quarter
+        // of a degree from your eyes: under hands that must not move, that was one more thing moving)
         if (!own) return;
         if (kind != Kind.FURNACE) {
             StationCamera.place(w, w, (float) e.getPartialTick(), e.getYaw(), e.getPitch(), 0);
@@ -477,7 +513,7 @@ public final class StationClient {
         float down = 1 - (1 - u) * (1 - u) * (1 - u) * (1 - u), across = Ease.at(Ease.IN_OUT_SINE, u);
         boolean still = FirstPerson.reducedMotion.getAsBoolean();
         if (!still) e.setPitch(e.getPitch() + 5F * Mth.sin(Mth.PI * Mth.clamp(u / 0.6F, 0F, 1F)) * (1 - u));
-        float since = ticks + (float) e.getPartialTick() - openedAt - inTicks * 0.8F;
+        float since = (ticks - openedAt) + (float) e.getPartialTick() - inTicks * 0.8F;
         double settle = open && !still && since > 0 && since < 5 ? 0.03 * Math.sin(Math.PI * since / 5.0) : 0;
         StationCamera.place(across, down, (float) e.getPartialTick(), e.getYaw(), e.getPitch(), settle);
     }
@@ -534,7 +570,8 @@ public final class StationClient {
         // lit by the air over the table (a furnace's own items are FurnaceWorld's, in its mouth, open or shut)
         BlockPos above = table.above();
         int light = LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, above), mc.level.getBrightness(LightLayer.SKY, above));
-        float t = ticks + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        // the result's slow turn: a full turn every 240 ticks, counted within the turn (not a float of the running count)
+        float t = (ticks % 240) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float yaw = (float) (Mth.atan2(-fx, fz) * Mth.RAD_TO_DEG);
         ItemStack carried = s.carriedShown(s.getMenu().getCarried());
         long now = System.nanoTime();
@@ -613,19 +650,18 @@ public final class StationClient {
                 ps.popPose();
             }
         }
-        // the stack in your hand: exactly on the pointer's own line, flat as it will lie, its far edge tipped up to you,
-        // rolling a little with the pointer's speed
+        // the stack in your hand: exactly on the pointer's own line, flat as it will lie, its far edge tipped up to you.
+        // It lies steady: it rolled with the pointer's speed, and a speed taken from a real mouse a frame at a time is
+        // noise (played, it read as a trembling hand)
         if (!furnace && !carried.isEmpty() && StationHands.hit(HELD)) {
             ItemStack shown = carried;
             {
                 mc.getItemModelResolver().updateForTopItem(CARRIED, shown, ItemDisplayContext.FIXED, mc.level, null, 99);
-                float roll = Mth.clamp((float) StationHands.speedX() * 9F, -14F, 14F);
                 int n = pile(shown.getCount());
                 for (int k = 0; k < n; k++) {
                     ps.pushPose();
                     ps.translate(HELD[0] + (rx * 0.012 - fx * 0.012) * k - cam.x, HELD[1] + 0.007 * k - cam.y, HELD[2] + (rz * 0.012 - fz * 0.012) * k - cam.z);
                     if (!kind.upright) ps.rotate(TILT.rotationAxis(18F * Mth.DEG_TO_RAD, (float) rx, 0F, (float) rz));
-                    ps.rotate(TILT.rotationAxis(-roll * Mth.DEG_TO_RAD, (float) fx, 0F, (float) fz));
                     ps.rotateDegrees(Axis.YP, 180F - yaw);
                     if (!kind.upright) ps.rotateDegrees(Axis.XP, 90F);
                     float held = kind == Kind.TABLE ? 0.16F : kind.size * 0.94F;
@@ -639,12 +675,10 @@ public final class StationClient {
         // be seen), facing you as it will sit in the mouth
         if (furnace && !carried.isEmpty() && StationHands.hit(HELD)) {
             mc.getItemModelResolver().updateForTopItem(CARRIED, carried, ItemDisplayContext.FIXED, mc.level, null, 99);
-            float roll = Mth.clamp((float) StationHands.speedX() * 9F, -14F, 14F);
             int n = pile(carried.getCount());
             for (int k = 0; k < n; k++) {
                 ps.pushPose();
                 ps.translate(HELD[0] + rx * 0.02 * k - fx * 0.012 * k - cam.x, HELD[1] + 0.012 * k - cam.y, HELD[2] + rz * 0.02 * k - fz * 0.012 * k - cam.z);
-                ps.rotate(TILT.rotationAxis(-roll * Mth.DEG_TO_RAD, (float) fx, 0F, (float) fz));
                 ps.rotateDegrees(Axis.YP, 180F - yaw);
                 ps.scale(0.22F, 0.22F, 0.22F);
                 CARRIED.submit(ps, e.getSubmitNodeCollector(), LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), 8)), OverlayTexture.NO_OVERLAY, 0);

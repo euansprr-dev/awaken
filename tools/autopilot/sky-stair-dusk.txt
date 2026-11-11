@@ -1,7 +1,7 @@
-# The Torn Stair at dusk and by night (SPEC §17.9): the stair's lights from the ground, the case from the bridge and the
-# pier, then a rank C hunter's climb with the rope held and the core's gift: the case opens and the wings come across.
+# The sky platform at dusk and by night (SPEC §17.9): the stair's lanterns from the ground, the case from the pier, then
+# a rank C hunter's climb with the rope and the core's gift: the case opens and the wings come across.
 # Run on CI: tools/tour-ci.sh tools/autopilot/sky-stair-dusk.txt 1800
-world sky_stair_dusk survival 4246
+world sky_stair_dusk survival 4251
 waitworld
 gui 0
 window 1708 960
@@ -40,113 +40,103 @@ wait 2400
 cmd tick sprint stop
 wait 40
 cmd time set 12700
+cmd awaken ascent grant none
 cmd awaken ascent grant tether
-cmd awaken ascent sky goto
-wait 100
-cmd awaken ascent sky goto view
+cmd awaken ascent sky goto stair
+arms waitserver 100
 wait 100
 hud off
-shot stair_dusk_00_approach
+shot sky_dusk_00_approach
+look 0 -55
+wait 10
+shot sky_dusk_01_up_the_stair
 cmd time set 18000
 wait 40
-shot stair_dusk_01_night
-cmd awaken ascent sky goto bridge
+shot sky_dusk_02_night
+cmd awaken ascent sky goto deck
 wait 60
-shot stair_dusk_02_bridge_case_night
-cmd time set 12700
-wait 40
-shot stair_dusk_03_bridge_case
 cmd awaken ascent pier
 wait 40
 look 135 -4
 wait 10
-shot stair_dusk_04_from_pier
-cmd awaken ascent sky goto
-wait 60
+shot sky_dusk_03_case_from_pier_night
+cmd time set 12700
+wait 40
+shot sky_dusk_04_case_from_pier
+cmd awaken ascent sky goto stair
+wait 80
 camera back
 hud on
-shot stair_dusk_05_foot
-cmd awaken ascent pilot run climb
-wait 50
-shotnow stair_dusk_06_climb
-wait 50
-shotnow stair_dusk_07_climb
-wait 50
-shotnow stair_dusk_08_climb
-wait 50
-shotnow stair_dusk_09_climb
-wait 50
-shotnow stair_dusk_10_climb
-wait 50
-shotnow stair_dusk_11_climb
-wait 50
-shotnow stair_dusk_12_climb
-wait 50
-shotnow stair_dusk_13_climb
-wait 50
-shotnow stair_dusk_14_climb
-wait 50
-shotnow stair_dusk_15_climb
-wait 50
-shotnow stair_dusk_16_climb
-wait 50
-shotnow stair_dusk_17_climb
-wait 50
-shotnow stair_dusk_18_climb
-wait 50
-shotnow stair_dusk_19_climb
-wait 50
-shotnow stair_dusk_20_climb
-wait 50
-shotnow stair_dusk_21_climb
-wait 50
-shotnow stair_dusk_22_climb
-wait 50
-shotnow stair_dusk_23_climb
-wait 50
-shotnow stair_dusk_24_climb
-wait 50
-shotnow stair_dusk_25_climb
-wait 50
-shotnow stair_dusk_26_climb
-wait 50
-shotnow stair_dusk_27_climb
-wait 50
-shotnow stair_dusk_28_climb
-wait 50
-shotnow stair_dusk_29_climb
-wait 20
-shotnow stair_dusk_30_top
-wait 20
-shotnow stair_dusk_31_top
-wait 20
-shotnow stair_dusk_32_top
-wait 20
-shotnow stair_dusk_33_top
-wait 20
-shotnow stair_dusk_34_top
-wait 20
-shotnow stair_dusk_35_top
-wait 20
-shotnow stair_dusk_36_top
-wait 20
-shotnow stair_dusk_37_top
-wait 20
-shotnow stair_dusk_38_top
-wait 20
-shotnow stair_dusk_39_top
-wait 20
-shotnow stair_dusk_40_top
-wait 20
-shotnow stair_dusk_41_top
-wait 20
-shotnow stair_dusk_42_top
-wait 20
-shotnow stair_dusk_43_top
-wait 20
-shotnow stair_dusk_44_top
-wait 20
-shotnow stair_dusk_45_top
+shot sky_dusk_05_foot
+cmd awaken ascent pilot run stair
+wait 40
+shotnow sky_dusk_06_climb
+wait 40
+shotnow sky_dusk_07_climb
+wait 40
+shotnow sky_dusk_08_climb
+wait 40
+shotnow sky_dusk_09_climb
+wait 40
+shotnow sky_dusk_10_climb
+wait 40
+shotnow sky_dusk_11_climb
+wait 40
+shotnow sky_dusk_12_climb
+wait 40
+shotnow sky_dusk_13_climb
+wait 40
+shotnow sky_dusk_14_climb
+wait 40
+shotnow sky_dusk_15_climb
+wait 40
+shotnow sky_dusk_16_climb
+wait 40
+shotnow sky_dusk_17_climb
+wait 40
+shotnow sky_dusk_18_climb
+wait 40
+shotnow sky_dusk_19_climb
+wait 40
+shotnow sky_dusk_20_climb
+wait 40
+shotnow sky_dusk_21_climb
+wait 15
+shotnow sky_dusk_22_gift
+wait 15
+shotnow sky_dusk_23_gift
+wait 15
+shotnow sky_dusk_24_gift
+wait 15
+shotnow sky_dusk_25_gift
+wait 15
+shotnow sky_dusk_26_gift
+wait 15
+shotnow sky_dusk_27_gift
+wait 15
+shotnow sky_dusk_28_gift
+wait 15
+shotnow sky_dusk_29_gift
+wait 15
+shotnow sky_dusk_30_gift
+wait 15
+shotnow sky_dusk_31_gift
+wait 15
+shotnow sky_dusk_32_gift
+wait 15
+shotnow sky_dusk_33_gift
+wait 15
+shotnow sky_dusk_34_gift
+wait 15
+shotnow sky_dusk_35_gift
+wait 15
+shotnow sky_dusk_36_gift
+wait 15
+shotnow sky_dusk_37_gift
+wait 15
+shotnow sky_dusk_38_gift
+wait 15
+shotnow sky_dusk_39_gift
 cmd awaken ascent pilot stop
 key dismiss
 wait 10

@@ -207,7 +207,8 @@ final class AscentRender {
             }
         }
         for (AscentRemote.Slot r : AscentRemote.SLOTS) {
-            if (r.entity < 0 || !r.state.rope || ropes >= MAX_ROPES) continue;
+            // the local player's rope is its own prediction's alone: one owner, never a second line from a reply
+            if (r.entity < 0 || !r.state.rope || ropes >= MAX_ROPES || me != null && r.entity == me.getId()) continue;
             Entity e = mc.level.getEntity(r.entity);
             if (e == null) continue;
             bodyHand(e, RH, ropes * 3);
@@ -222,6 +223,8 @@ final class AscentRender {
         }
         for (AscentFx.Shot s : AscentFx.SHOTS) {
             if (ropes >= MAX_ROPES) break;
+            // one rope per body (SPEC §62): a body with a live rope shows no rope it let go or missed
+            if ((s.kind == AscentFx.LOOSE || s.kind == AscentFx.MISS) && ropeLive(mc, s.entity)) continue;
             if (s.kind == AscentFx.LOOSE) {
                 float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
                 // the free end falls and swings in toward the anchor
@@ -244,6 +247,13 @@ final class AscentRender {
     }
 
     private static final double[] TMP = new double[3];
+
+    /** Whether this entity has a live rope now: the local player's by its prediction, anyone else's by what was seen. */
+    private static boolean ropeLive(Minecraft mc, int entity) {
+        if (mc.player != null && entity == mc.player.getId()) return AscentMoves.state().rope;
+        AscentRemote.Slot r = AscentRemote.of(entity);
+        return r != null && r.state.rope;
+    }
 
     /**
      * A rappel's rope below the guiding hand at (hx, hy, hz): down to the brake hand (in TMP), then its tail hanging

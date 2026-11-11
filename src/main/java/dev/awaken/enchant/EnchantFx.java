@@ -84,19 +84,19 @@ final class EnchantFx {
     /** A ward took {@code share} (0-0.3) off a blow of this Force that came from {@code from} (null: from nowhere in particular). */
     static void warded(ServerPlayer p, Forces.Force force, float share, @Nullable Vec3 from) {
         send(p, EnchantPayloads.FX_WARD, colour(force), share, wardNo(force), toward(p.position(), from));
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.NOTE_WARD.get(), SoundSource.PLAYERS, 0.35F + share, 1.15F);
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.NOTE_WARD.get(), SoundSource.PLAYERS, 0.55F + share, 1F);
     }
 
     /** A bane (numbered {@code no}) bit this creature: its mark burns on the side the blow came from. */
     static void baned(ServerPlayer p, LivingEntity target, int no) {
         send(target, EnchantPayloads.FX_BANE, Family.BANE.colour, 1F, no, toward(target.position(), p.position()));
-        p.level().playSound(null, target.getX(), target.getY(), target.getZ(), EnchantContent.NOTE_BANE.get(), SoundSource.PLAYERS, 0.45F, 1.3F);
+        p.level().playSound(null, target.getX(), target.getY(), target.getZ(), EnchantContent.NOTE_BANE.get(), SoundSource.PLAYERS, 0.8F, 1F);
     }
 
     /** Harvest's extra drop. */
     static void spoils(ServerLevel level, Entity drop) {
         send(drop, EnchantPayloads.FX_SPOILS, Family.SPOILS.colour, 1F);
-        level.playSound(null, drop.getX(), drop.getY(), drop.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.5F, 1.4F);
+        level.playSound(null, drop.getX(), drop.getY(), drop.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.8F, 1F);
     }
 
     /** Looting's and Fortune's extra: the first one or two drops a stack richer than one glint as they fall. */
@@ -105,7 +105,7 @@ final class EnchantFx {
         for (ItemEntity d : drops) {
             if (d.getItem().getCount() < 2) continue;
             send(d, EnchantPayloads.FX_SPOILS, Family.SPOILS.colour, 0.8F);
-            if (n++ == 0) level.playSound(null, d.getX(), d.getY(), d.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.3F, 1.5F);
+            if (n++ == 0) level.playSound(null, d.getX(), d.getY(), d.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.6F, 1.05F);
             if (n == 2) return;
         }
     }
@@ -149,9 +149,17 @@ final class EnchantFx {
                 p.getX(), p.getY(), p.getZ(), Family.WARD.colour, (float) Math.min(1, e.getDistance() / 12), 8, Float.NaN));
     }
 
-    /** A page learned. */
+    /** A page learned: its glyph lifts in front of the reader, cut by cut, and runs into them. */
     static void learned(ServerPlayer p, Inscriptions.Entry e) {
-        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F);
+        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F, e.no(), Float.NaN);
+    }
+
+    /** A page given: it flies from where it was (a fallen Lord, a lode's heart) to the one it goes to, its sign showing. */
+    static void page(ServerPlayer p, Inscriptions.Entry e, @Nullable Vec3 from) {
+        if (from == null || !(p.level() instanceof ServerLevel level)) return;
+        near(level, p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PAGE, p.getId(), from.x, from.y, from.z, e.colour(), 1F, e.no(), Float.NaN));
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.PAGE_TURN.get(), SoundSource.PLAYERS, 0.9F, 1F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), net.minecraft.sounds.SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.3F, 0.8F);
     }
 
     /** An old enchanting table turned into an Inscribing Table. */

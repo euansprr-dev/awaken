@@ -31,13 +31,25 @@ public final class RegionService extends SavedData {
             Codec.BOOL.optionalFieldOf("fixed", false).forGetter(r -> r.fixed),
             Codec.INT.optionalFieldOf("centre_x", 0).forGetter(r -> r.centreX),
             Codec.INT.optionalFieldOf("centre_z", 0).forGetter(r -> r.centreZ),
-            Codec.INT.optionalFieldOf("rules", 1).forGetter(r -> r.rules)
-    ).apply(i, (schema, fixed, x, z, rules) -> new RegionService(fixed, x, z, rules)));
+            Codec.INT.optionalFieldOf("rules", 1).forGetter(r -> r.rules),
+            Codec.BOOL.optionalFieldOf("landing", false).forGetter(r -> r.landing),
+            Codec.INT.optionalFieldOf("landing_x", 0).forGetter(r -> r.landingX),
+            Codec.INT.optionalFieldOf("landing_z", 0).forGetter(r -> r.landingZ)
+    ).apply(i, (schema, fixed, x, z, rules, landing, lx, lz) -> {
+        RegionService r = new RegionService(fixed, x, z, rules);
+        r.landing = landing;
+        r.landingX = lx;
+        r.landingZ = lz;
+        return r;
+    }));
 
     public static final SavedDataType<RegionService> TYPE = new SavedDataType<>(Awaken.id("living_regions"), RegionService::new, CODEC);
 
     private boolean fixed;
     private int centreX, centreZ;
+    /** A Far Landing world's landing (SPEC §67), fixed with the centre the first time the map is made under rules 4. */
+    private boolean landing;
+    private int landingX, landingZ;
     private int rules = RegionMap.RULES;
     /** True for a record made just now (a new world): its rules are chosen for this server on first use. */
     private transient boolean fresh;
@@ -93,9 +105,20 @@ public final class RegionService extends SavedData {
                     s.setDirty();
                     Awaken.LOG.info("[living] region map centred at {} {} ({})", s.centreX, s.centreZ, site.isPresent() ? "Carillon" : "world spawn");
                 }
+                ServerLevel level = server.overworld();
+                if (!s.landing && s.rules >= 4 && CityBasin.site(server).isPresent()) {
+                    // the Far Landing (SPEC §67): found once from the seed (the roads found it first, at the server's start)
+                    int[] l = landingFor(server, level.getSeed(), s.centreX, s.centreZ);
+                    s.landing = true;
+                    s.landingX = l[0];
+                    s.landingZ = l[1];
+                    s.setDirty();
+                    Awaken.LOG.info("[living] the far landing at {} {} ({} blocks from the city)", l[0], l[1],
+                            (int) Math.hypot(l[0] - s.centreX, l[1] - s.centreZ));
+                }
                 if (s.map == null) {
-                    ServerLevel level = server.overworld();
-                    s.map = new RegionMap(level.getSeed(), s.centreX, s.centreZ, (x, z) -> land(level, x, z), s.rules);
+                    s.map = s.landing ? new RegionMap(level.getSeed(), s.centreX, s.centreZ, (x, z) -> land(level, x, z), s.rules, s.landingX, s.landingZ)
+                            : new RegionMap(level.getSeed(), s.centreX, s.centreZ, (x, z) -> land(level, x, z), s.rules);
                 }
                 current = s;
                 currentServer = server;
@@ -118,6 +141,57 @@ public final class RegionService extends SavedData {
         } catch (Exception e) {
             Awaken.LOG.warn("[living] could not read the region record's rules, keeping the old names: {}", e.toString());
             return 1;
+        }
+    }
+
+    /**
+     * The far landing for a seed and city (SPEC §67): the session's, if the roads already found it, else found now from the
+     * overworld's own generator (the same answer: the finder is pure).
+     */
+    static int[] landingFor(MinecraftServer server, long seed, int cx, int cz) {
+        int[] l = dev.awaken.core.api.FarLanding.cached(seed, cx, cz);
+        if (l != null) return l;
+        ServerLevel level = server.overworld();
+        var gen = level.getChunkSource().getGenerator();
+        var rs = level.getChunkSource().randomState();
+        return dev.awaken.core.api.FarLanding.of(seed, cx, cz, new dev.awaken.core.api.FarLanding.Sampler() {
+            @Override
+            public String biome(int x, int z) {
+                return path(level.getUncachedNoiseBiome(x >> 2, 63 >> 2, z >> 2));
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return gen.getBaseHeight(x, z, net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, level, rs);
+            }
+
+            @Override
+            public int seaLevel() {
+                return gen.getSeaLevel();
+            }
+        });
+    }
+
+    /** A biome's vanilla name, the way the region map reads it (an Awaken biome by its archetype's). */
+    public static String path(Holder<Biome> b) {
+        ResourceKey<Biome> archetype = BiomeTable.archetype(b);
+        return archetype != null ? archetype.identifier().getPath() : b.unwrapKey().map(k -> k.identifier().getPath()).orElse("plains");
+    }
+
+    /**
+     * The landing saved in this world's region record, read before the overworld loads (the roads' world opens that
+     * early): null when there is none yet (a new world: the roads find it themselves) or in a world without one.
+     */
+    public static int @Nullable [] landingOnDisk(MinecraftServer server) {
+        try {
+            java.nio.file.Path f = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATA).getParent()
+                    .resolve("dimensions/minecraft/overworld/data/awaken/living_regions.dat");
+            if (!java.nio.file.Files.exists(f)) return null;
+            var data = net.minecraft.nbt.NbtIo.readCompressed(f, net.minecraft.nbt.NbtAccounter.unlimitedHeap()).getCompoundOrEmpty("data");
+            return data.getBooleanOr("landing", false) ? new int[]{data.getIntOr("landing_x", 0), data.getIntOr("landing_z", 0)} : null;
+        } catch (Exception e) {
+            Awaken.LOG.warn("[living] could not read the region record's landing: {}", e.toString());
+            return null;
         }
     }
 
