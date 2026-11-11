@@ -277,6 +277,10 @@ public final class SwingBench {
         // the old rope's: its anchor, length and the length it reels to
         double tax, tay, taz, tlen, ttarget;
         int t, travel, held, ropeStart = -100, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        /** Ticks the bot has waited at a held rope's let-go point because letting go would throw it into something. */
+        int waited;
+        /** The window's quality last tick (the held bot lets go as it stops rising: the glow at its brightest). */
+        double lastQ;
         /**
          * The bot that only holds forward and the rope, never jump (how the game is played with one thumb): the rope may
          * throw from the ground, by the game's own rule (AscentMoves: a press, or three ticks down at a run ten ticks
@@ -306,6 +310,10 @@ public final class SwingBench {
             if (lost >= HARD) {
                 if (onRope) run.hardOnRope++;
                 else run.hardFree++;
+                if (climbTrace != null && climbTrace.length() < 1500) {
+                    climbTrace.append(String.format(java.util.Locale.ROOT, " HARD %.2f %s%s at %.0f %.0f %.0f", lost, onRope ? "on the " : "free",
+                            onRope ? sling ? "sling" : zip ? "zip" : "swing" : "", b.x, b.y, b.z));
+                }
             }
         }
 
@@ -383,6 +391,9 @@ public final class SwingBench {
             onRope = false;
             cooldown = 2;
             groundTicks = 0;
+            waited = 0;
+            lastQ = 0;
+            work.ahead = -1;
         }
 
         /** One tick with the bot's keys. */
@@ -473,8 +484,9 @@ public final class SwingBench {
                     groundThrow = false;
                 }
             } else {
-                // a let-go into something just ahead waits a moment (the rope holds on)
-                boolean hold = !ropeKey && travel == 0 && assist && !zip && held < AscentSwing.T.holdOn && !AscentSwing.letGoClear(w, k, rope, yaw, work);
+                // a let-go into something just ahead waits a moment (the rope holds on; the held rope never does)
+                boolean hold = !ropeKey && travel == 0 && assist && !zip && !AscentSwing.hold && held < AscentSwing.T.holdOn
+                        && !AscentSwing.letGoClear(w, k, rope, yaw, work);
                 held = hold ? held + 1 : 0;
                 if (!ropeKey && travel == 0 && !hold) {
                     if (!assist) {
@@ -614,7 +626,21 @@ public final class SwingBench {
         return play(place, assist, false, x0, zOff, pitch, speed, ticks);
     }
 
-    /** {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. */
+    /**
+     * {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. With
+     * the held rope ({@link AscentSwing#hold}) the rope never lets go by itself, so this bot lets go of the key where the
+     * rope used to let go: as the window lights (where the guide's held rope let go), else at the top of the arc.
+     */
+    /**
+     * How the holding bot lets go of a held rope: as the glow lights ({@link #LIT}), at its brightest (the window's best,
+     * or as it starts to fade: {@link #BRIGHT}), or only at the top of the arc ({@link #TOP}). Always at the top too, and
+     * before a wall. On 11 Nov the bench measured lit furthest (lane 227, city 253, forest 246; bright 217, 243, 223; top
+     * 179, 206, 185): the early, flatter let-go carries further than the full boost at the window's best, so the gates'
+     * bot lets go as the glow lights.
+     */
+    static final int LIT = 0, BRIGHT = 1, TOP = 2;
+    static int heldRule = LIT;
+
     static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
         return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
     }
@@ -646,7 +672,23 @@ public final class SwingBench {
                 rope = keyOnly || (assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10);
             } else {
                 rope = true;
-                if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
+                if (sim.travel == 0 && !sim.zip && !sim.sling && assist && AscentSwing.hold) {
+                    // the held rope lets go only by the key (SPEC §62): by hand at the window's best, holding as it lights,
+                    // else at the top of the arc, or as a wall comes up ahead (a player sees it coming, before the rope
+                    // brakes for it, where the rope used to let go by itself); a few ticks later if that would throw the
+                    // bot into something just ahead (a player sees the crown coming), as the rope's own let-go waited before
+                    double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
+                    boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5, lit = switch (heldRule) {
+                        case LIT -> q > AscentSwing.T.winFrom + 0.01;
+                        case TOP -> false;
+                        default -> q > 0.97 || sim.lastQ > AscentSwing.T.winFrom && q < sim.lastQ;
+                    };
+                    sim.lastQ = q;
+                    if ((hold ? lit : q > 0.85) || sim.rope.swung || wall) {
+                        if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) rope = false;
+                        else sim.waited++;
+                    }
+                } else if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
                     double q = assist ? AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work)
                             : AscentRules.releaseQuality(sim.k, sim.tax, sim.tay, sim.taz);
                     if (q > 0.85) rope = false;
@@ -664,6 +706,142 @@ public final class SwingBench {
         return r;
     }
 
+    // ---- a climb up the sky stair (SPEC §17.9) -----------------------------------------------------------------------
+
+    /** One climb: up (on the deck), the last stone reached of how many (the deck last), ticks, ropes and slings thrown,
+     *  hard hits, landings, ticks off the ground, and how it ended. */
+    public record Climb(boolean up, int reached, int of, int ticks, int ropes, int slings, int hard, int landings, int air, String end) {}
+
+    /**
+     * A climb up a stair to a deck (SPEC §17.9): {@code tops} bottom first, each {x, top, z, rad} (its top block at
+     * {@code top}, feet on it at top + 1), the deck last ({x, deck, z, reach}: feet on it within reach of its middle);
+     * {@code pieces} each one's boxes in the same order, {@code always} the boxes there the whole way (a chain down the
+     * height). The space holds the pieces from three below the next stone to two above it (a rope reaches 44, a step is
+     * some 22: the rest are out of reach), so a long stair stays cheap. The body starts on the ground at (sx, sz) running
+     * at the first stone. The bot looks at the next stone's middle and holds forward; hopping on each landing (or, key
+     * only, never jumping: the game's own throw from the ground), it holds the rope whenever it is off the ground and
+     * lets go of a swing as {@link #play}'s holding bot does. It ends on the deck, when it falls well under the last
+     * stone it reached, after 400 ticks with no stone gained, or after {@code maxTicks}.
+     */
+    public static Climb climb(List<double[]> tops, List<List<double[]>> pieces, List<double[]> always, double sx, double sz, double speed,
+                              boolean keyOnly, int maxTicks) {
+        SwingSpace.Boxes w = new SwingSpace.Boxes();
+        int n = tops.size(), deck = n - 1, built = -99;
+        Sim sim = new Sim(new Place(w, sx, 0, sz, false), true, 0, 0, speed);
+        sim.keyOnly = keyOnly;
+        Body b = sim.b;
+        double[] first = tops.getFirst();
+        double fd = Math.max(1e-6, Math.hypot(first[0] - sx, first[2] - sz)), run = (keyOnly ? 0.28 : 0.36) * speed;
+        b.vx = (first[0] - sx) / fd * run;
+        b.vz = (first[2] - sz) / fd * run;
+        int reached = -1, lastGain = 0, landings = 0, air = 0, slings = 0;
+        boolean wasGround = true, wasSling = false, up = false;
+        String end = "out of time";
+        StringBuilder tr = climbTrace;
+        while (sim.t < maxTicks) {
+            // the next stone is the lowest whose top is over the feet (a player looks at the one in front of them, and a
+            // flight that carries past one goes on to the next); progress is the highest one the feet have been over
+            int target = deck;
+            for (int i = 0; i < deck; i++) {
+                if (tops.get(i)[1] + 0.5 >= b.y) {
+                    target = i;
+                    break;
+                }
+            }
+            if (target != built) {
+                built = target;
+                w.clear();
+                for (double[] q : always) w.add(q[0], q[1], q[2], q[3], q[4], q[5], false);
+                for (int i = Math.max(0, target - 3); i <= Math.min(deck, target + 2); i++) {
+                    for (double[] q : pieces.get(i)) w.add(q[0], q[1], q[2], q[3], q[4], q[5], false);
+                }
+            }
+            double[] tg = tops.get(target);
+            double dx = tg[0] - b.x, dz = tg[2] - b.z, hd = Math.hypot(dx, dz);
+            double yaw = Math.toDegrees(Math.atan2(-dx, dz));
+            double pitch = -Math.toDegrees(Math.atan2(tg[1] + 1 - (b.y + 1.62), Math.max(0.5, hd)));
+            boolean jump = false, rope;
+            if (b.onGround && !sim.onRope) {
+                sim.ground++;
+                jump = keyOnly ? sim.blocked : sim.ground > 3;
+                if (jump) sim.ground = 0;
+            }
+            if (!sim.onRope) rope = keyOnly || !b.onGround;
+            else rope = !(sim.travel == 0 && !sim.zip && !sim.sling && AscentSwing.hold && heldLetGo(sim, yaw));
+            boolean wasRope = sim.onRope;
+            sim.step(rope, 1, yaw, pitch, jump);
+            if (tr != null && tr.length() < 1500) {
+                double top = tg[1];
+                if (!wasRope && sim.onRope) {
+                    double ay = sim.sling ? sim.sy : sim.zip ? sim.tay : sim.rope.ay;
+                    tr.append(String.format(java.util.Locale.ROOT, " t%d>%d %s y%+.0f h%.0f a%+.0f", sim.t, target,
+                            sim.sling ? "sling" : sim.zip ? "zip" : "swing", b.y - top, hd, ay - b.y));
+                } else if (wasRope && !sim.onRope) {
+                    tr.append(String.format(java.util.Locale.ROOT, " let y%+.0f v%.1f/%.1f", b.y - top, Math.hypot(b.vx, b.vz), b.vy));
+                }
+                if (b.onGround && !wasGround) {
+                    int on = -1;
+                    for (int i = 0; i < n; i++) {
+                        double[] q = tops.get(i);
+                        if (Math.hypot(b.x - q[0], b.z - q[2]) <= q[3] + 0.5 && Math.abs(b.y - q[1] - 1) < 1.5) on = i;
+                    }
+                    tr.append(on >= 0 ? " ON" + on : String.format(java.util.Locale.ROOT, " down y%.0f", b.y));
+                }
+            }
+            if (sim.sling && !wasSling) slings++;
+            wasSling = sim.sling;
+            if (!b.onGround) air++;
+            if (b.onGround && !wasGround && !sim.onRope) landings++;
+            wasGround = b.onGround;
+            for (int i = reached + 1; i <= deck; i++) {
+                double[] q = tops.get(i);
+                double h = Math.hypot(b.x - q[0], b.z - q[2]);
+                boolean on = i == deck ? b.onGround && h <= q[3] && b.y >= q[1] + 0.95 : h <= q[3] + 6 && b.y >= q[1] + 0.95;
+                if (on) {
+                    reached = i;
+                    lastGain = sim.t;
+                }
+            }
+            if (reached == deck) {
+                up = true;
+                end = "on the deck";
+                break;
+            }
+            double floor = reached >= 0 ? tops.get(reached)[1] : 0;
+            if (reached >= 0 && (b.y < floor - 14 || b.onGround && b.y < 0.5)) {
+                end = "fell from stone " + reached;
+                break;
+            }
+            if (sim.t - lastGain > 400) {
+                end = "stuck under stone " + (reached + 1);
+                break;
+            }
+        }
+        if (tr != null) tr.append(" | ").append(end);
+        return new Climb(up, reached, n, sim.t, sim.run.ropes, slings, sim.run.hardOnRope + sim.run.hardFree, landings, air, end);
+    }
+
+    /** When set, {@link #climb} writes each throw, let-go and landing into it (the stair bench's first climbs). */
+    static StringBuilder climbTrace;
+
+    /**
+     * The holding bot's let-go of a held swing ({@link #play}'s rule, {@link #heldRule}): true when it lets go of the
+     * key this tick (a let-go that would throw it into something waits up to {@link AscentSwing.Tune#holdOn} ticks).
+     */
+    static boolean heldLetGo(Sim sim, double yaw) {
+        double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
+        boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5, lit = switch (heldRule) {
+            case LIT -> q > AscentSwing.T.winFrom + 0.01;
+            case TOP -> false;
+            default -> q > 0.97 || sim.lastQ > AscentSwing.T.winFrom && q < sim.lastQ;
+        };
+        sim.lastQ = q;
+        if (!(lit || sim.rope.swung || wall)) return false;
+        if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) return true;
+        sim.waited++;
+        return false;
+    }
+
     /**
      * A held swing across a gap over nothing, as a dream's Run has them and its solver plays them (lucidium's
      * {@code AirProofs.swing}): roads one block thick 80 up, {@code len} of open air between them, a lantern {@code up}
@@ -671,8 +849,13 @@ public final class SwingBench {
      * rope thrown {@code throwAt} ticks into it and held until it lets go by itself. Returns how far past the gap's far
      * edge the feet come down to the roads' height (NaN if the rope finds nothing or never lets go). With
      * {@code groundUnder}, the same over a floor ten blocks down: there the guide's early let-go is free to throw far.
+     * {@code atTop}: the key let go at the top of the arc instead (the held rope's, SPEC §62, never lets go by itself).
      */
     static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder) {
+        return gapLanding(len, up, ahead, road, throwAt, groundUnder, false);
+    }
+
+    static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder, boolean atTop) {
         int y = 80, z = 100;
         SwingSpace.Boxes space = new SwingSpace.Boxes();
         space.add(-1, y - 1, z - 12, 2, y, z, false);
@@ -702,7 +885,8 @@ public final class SwingBench {
         for (int i = 0, held = 0; ; i++) {
             if (i > 300) return Double.NaN;
             int how = AscentSwing.tick(space, k, rope, 0, 1, w);
-            if (how == AscentSwing.WALL) return Double.NaN;
+            if (how == AscentSwing.WALL || w.braked) return Double.NaN;
+            if (atTop && rope.swung) break;
             if (how == AscentSwing.TOP) {
                 if (held >= AscentSwing.T.holdOn || AscentSwing.letGoClear(space, k, rope, 0, w)) break;
                 held++;

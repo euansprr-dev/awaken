@@ -1,6 +1,264 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/enchantment_page"
+    "type": "minecraft:select",
+    "property": "awaken:page",
+    "cases": [
+      {
+        "when": "heat_ward",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_heat_ward"
+        }
+      },
+      {
+        "when": "frost_ward",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_frost_ward"
+        }
+      },
+      {
+        "when": "charge_ward",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_charge_ward"
+        }
+      },
+      {
+        "when": "gravity_ward",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_gravity_ward"
+        }
+      },
+      {
+        "when": "spirit_ward",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_spirit_ward"
+        }
+      },
+      {
+        "when": "blast_protection",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_blast_protection"
+        }
+      },
+      {
+        "when": "projectile_protection",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_projectile_protection"
+        }
+      },
+      {
+        "when": "feather_falling",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_feather_falling"
+        }
+      },
+      {
+        "when": "clear_blood",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_clear_blood"
+        }
+      },
+      {
+        "when": "bane_of_the_dead",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_bane_of_the_dead"
+        }
+      },
+      {
+        "when": "bane_of_crawlers",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_bane_of_crawlers"
+        }
+      },
+      {
+        "when": "bane_of_beasts",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_bane_of_beasts"
+        }
+      },
+      {
+        "when": "bane_of_the_deep",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_bane_of_the_deep"
+        }
+      },
+      {
+        "when": "looting",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_looting"
+        }
+      },
+      {
+        "when": "fortune",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_fortune"
+        }
+      },
+      {
+        "when": "silk_touch",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_silk_touch"
+        }
+      },
+      {
+        "when": "efficiency",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_efficiency"
+        }
+      },
+      {
+        "when": "harvest",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_harvest"
+        }
+      },
+      {
+        "when": "insight",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_insight"
+        }
+      },
+      {
+        "when": "respiration",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_respiration"
+        }
+      },
+      {
+        "when": "aqua_affinity",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_aqua_affinity"
+        }
+      },
+      {
+        "when": "depth_strider",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_depth_strider"
+        }
+      },
+      {
+        "when": "swift_sneak",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_swift_sneak"
+        }
+      },
+      {
+        "when": "unbreaking",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_unbreaking"
+        }
+      },
+      {
+        "when": "mending",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_mending"
+        }
+      },
+      {
+        "when": "infinity",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_infinity"
+        }
+      },
+      {
+        "when": "loyalty",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_loyalty"
+        }
+      },
+      {
+        "when": "riptide",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_riptide"
+        }
+      },
+      {
+        "when": "luck_of_the_sea",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_luck_of_the_sea"
+        }
+      },
+      {
+        "when": "lure",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_lure"
+        }
+      },
+      {
+        "when": "lantern",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_lantern"
+        }
+      },
+      {
+        "when": "wayfarer",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_wayfarer"
+        }
+      },
+      {
+        "when": "gather",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_gather"
+        }
+      },
+      {
+        "when": "regrowth",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_regrowth"
+        }
+      },
+      {
+        "when": "remembrance",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_remembrance"
+        }
+      },
+      {
+        "when": "long_arm",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/enchantment_page_long_arm"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "awaken:item/enchantment_page"
+    }
   }
 }

@@ -40,19 +40,34 @@ public final class Holdfasts {
         return w.regions.roll(gx, gz, SALT);
     }
 
+    /**
+     * How far a heart lies from where the holdfasts are counted: the far landing in a Far Landing world (SPEC §67), where
+     * the game starts and there is no ridge; else the city.
+     */
     private static double out(RoadWorld w, int[] heart) {
-        return Math.hypot(heart[0] - w.cx, heart[1] - w.cz);
+        return Math.hypot(heart[0] - w.lx, heart[1] - w.lz);
+    }
+
+    /** The near edge of the holdfasts' ring: past the ridge round the city, or from the landing itself. */
+    private static int inner(RoadWorld w) {
+        return (w.farLanding() ? 0 : ridge(w)) + CLEAR;
+    }
+
+    /** A town at least {@link #CLEAR} past the city's ridge, in every world (the landing's ring may reach back toward it). */
+    private static boolean clearOfCity(RoadWorld w, int[] heart) {
+        return Math.hypot(heart[0] - w.cx, heart[1] - w.cz) >= ridge(w) + CLEAR;
     }
 
     /** The first holdfast's region cell, or null (no town region in the ring takes a town). Server start only. */
     static int @Nullable [] findFirst(RoadWorld w) {
         long t0 = System.currentTimeMillis();
-        int lo = ridge(w) + CLEAR, hi = ridge(w) + FIRST_OUT, pitch = w.regions.pitch();
+        int lo = inner(w), hi = inner(w) - CLEAR + FIRST_OUT, pitch = w.regions.pitch();
         List<int[]> cands = new ArrayList<>();
-        for (int i = Math.floorDiv(w.cx - hi, pitch) - 1; i <= Math.floorDiv(w.cx + hi, pitch) + 1; i++)
-            for (int j = Math.floorDiv(w.cz - hi, pitch) - 1; j <= Math.floorDiv(w.cz + hi, pitch) + 1; j++) {
-                double d = out(w, w.regions.heart(i, j));
-                if (d >= lo && d <= hi && RoadNet.townCell(w, i, j)) cands.add(new int[]{i, j});
+        for (int i = Math.floorDiv(w.lx - hi, pitch) - 1; i <= Math.floorDiv(w.lx + hi, pitch) + 1; i++)
+            for (int j = Math.floorDiv(w.lz - hi, pitch) - 1; j <= Math.floorDiv(w.lz + hi, pitch) + 1; j++) {
+                int[] h = w.regions.heart(i, j);
+                double d = out(w, h);
+                if (d >= lo && d <= hi && clearOfCity(w, h) && RoadNet.townCell(w, i, j)) cands.add(new int[]{i, j});
             }
         cands.sort((a, b) -> Double.compare(roll(w, a[0], a[1]), roll(w, b[0], b[1])));
         for (int[] c : cands) {
@@ -66,14 +81,14 @@ public final class Holdfasts {
 
     /** A square's pick: its lowest-rolled town region whose heart lies {@link #CLEAR} or more past the ridge, or null. */
     static int @Nullable [] pick(RoadWorld w, int sx, int sz) {
-        int x0 = w.cx + sx * SQUARE, z0 = w.cz + sz * SQUARE, pitch = w.regions.pitch(), min = ridge(w) + CLEAR;
+        int x0 = w.lx + sx * SQUARE, z0 = w.lz + sz * SQUARE, pitch = w.regions.pitch(), min = inner(w);
         int[] best = null;
         double low = 2;
         for (int i = Math.floorDiv(x0, pitch) - 1; i <= Math.floorDiv(x0 + SQUARE, pitch) + 1; i++)
             for (int j = Math.floorDiv(z0, pitch) - 1; j <= Math.floorDiv(z0 + SQUARE, pitch) + 1; j++) {
                 int[] h = w.regions.heart(i, j);
-                if (Math.floorDiv(h[0] - w.cx, SQUARE) != sx || Math.floorDiv(h[1] - w.cz, SQUARE) != sz) continue;
-                if (out(w, h) < min || !RoadNet.townCell(w, i, j)) continue;
+                if (Math.floorDiv(h[0] - w.lx, SQUARE) != sx || Math.floorDiv(h[1] - w.lz, SQUARE) != sz) continue;
+                if (out(w, h) < min || !clearOfCity(w, h) || !RoadNet.townCell(w, i, j)) continue;
                 double r = roll(w, i, j);
                 if (r < low) {
                     low = r;
@@ -92,7 +107,7 @@ public final class Holdfasts {
 
     private static boolean held(RoadWorld w, int gx, int gz) {
         int[] h = w.regions.heart(gx, gz);
-        int sx = Math.floorDiv(h[0] - w.cx, SQUARE), sz = Math.floorDiv(h[1] - w.cz, SQUARE);
+        int sx = Math.floorDiv(h[0] - w.lx, SQUARE), sz = Math.floorDiv(h[1] - w.lz, SQUARE);
         int[] p = pick(w, sx, sz);
         if (p == null || p[0] != gx || p[1] != gz) return false;
         int[] f = w.firstHoldfast;

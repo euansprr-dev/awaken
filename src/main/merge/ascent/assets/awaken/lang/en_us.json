@@ -48,7 +48,7 @@
   "awaken.ascent.record": "Longest chain yet \u00b7 %s moves",
   "awaken.ascent.gift.wings": "You have wings now.",
   "awaken.ascent.gift.wings.how": "In a fall, press jump to open them.",
-  "awaken.ascent.core.dark": "The core stays dark. It only answers someone who climbed its rings by rope.",
+  "awaken.ascent.core.dark": "The core stays dark. It only answers someone who climbed up to it by rope.",
   "awaken.ascent.core.rank": "The core stays dark. It is waiting for a %s-rank hunter.",
   "block.awaken.anchor_ring": "Anchor Ring",
   "block.awaken.wing_core": "Wing Core",
@@ -69,7 +69,7 @@
   "awaken.ascent.sovereign.aether": "Not yet: the Aether must be full.",
   "awaken.ascent.spire.climbed": "Tether Spire climbed%s",
   "awaken.ascent.spire.built": "The crown stays dark. It only answers someone who climbed by rope.",
-  "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed its rings by rope.",
+  "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed up to it by rope.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown"

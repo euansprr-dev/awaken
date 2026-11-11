@@ -120,14 +120,84 @@ public final class Pages {
         if (learned.isEmpty()) return learned;
         boolean first = k.tell();
         Known.save(p, k);
+        p.level().playSound(null, p.blockPosition(), EnchantContent.PAGE_TURN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         p.level().playSound(null, p.blockPosition(), EnchantContent.LEARN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         for (Inscriptions.Entry e : learned) {
-            p.sendSystemMessage(Component.literal("You learned " + e.name() + " for good. ").withColor(e.colour())
-                    .append(Component.literal(e.line() + " Write it onto your gear at an Inscribing Table.").withColor(0xC9D2E0)), false);
+            door(p, "read", e);
+            // While the card is sure to show (till your first enchantment is written) chat keeps one line: with the
+            // how-to there as well, five lines of chat lay over the card at the size Euan plays at. Once the card is
+            // paced and may come late, chat says all of it (it wraps)
+            boolean carded = doorTier(k) == dev.awaken.core.api.Notices.Tier.CRITICAL;
+            ItemStack fit = carded ? ItemStack.EMPTY : fits(p, e);
+            p.sendSystemMessage(Component.literal("You learned " + e.name() + ". ").withColor(e.colour())
+                    .append(Component.literal(carded ? "It isn't on anything yet." : "It isn't on anything yet. " + e.howTo()
+                            + (fit.isEmpty() ? "" : " It fits your " + fit.getHoverName().getString() + ".")
+                            + (k.hadTable() ? "" : " You can make a table: it's on your Tasks page.")).withColor(0xC9D2E0)), false);
+            dev.awaken.signal.Signal.send(p, learnedCard(p, k, e, first && e == learned.getFirst()));
         }
+        // the System's line about gates, the first time: a toast short enough to show whole (it was cut after "and its
+        // L"), paced under enchanting's topic so it follows the card instead of landing on it
+        if (first) dev.awaken.signal.Signal.toast(p, Component.literal("Each kind of gate keeps its own enchantment."),
+                dev.awaken.core.api.Notices.Tier.IMPORTANT, "enchant");
         EnchantFx.learned(p, learned.getFirst());
-        if (first) dev.awaken.signal.Signal.toast(p, Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page."));
         return learned;
+    }
+
+    /**
+     * The card a learned enchantment gets. A panel holds a title and three lines of 188 pixels at the size Euan plays at
+     * (anything more is cut with "..." or folded behind "Press K to see 2 more": the first cut had a body and four rows,
+     * and the how-to was the part hidden). So it says only what he asked for, each line a row with no value, which the
+     * panel draws at full width: it is on nothing yet, and how it gets onto a piece. What it does, the piece it fits
+     * and where a table comes from are in chat and on the page.
+     */
+    static dev.awaken.signal.SignalWindow learnedCard(ServerPlayer p, Known k, Inscriptions.Entry e, boolean first) {
+        return dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal("Learned: " + e.name()).withColor(e.colour()))
+                .row("It isn't on anything yet.", "")
+                .row("To write it on, hold the piece", "")
+                .row("and use an Inscribing Table.", "")
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(k)).topic("enchant").ttl(20 * 12).build();
+    }
+
+    /**
+     * How loud the door's two cards are. Until you have written your first enchantment they skip the System's pacing:
+     * they are the one thing that says a page is not yet on your gear, and a paced notice waits out a world's first
+     * minutes and the gaps between messages (the first filmed run showed neither card). After that they are paced like
+     * any other notice.
+     */
+    static dev.awaken.core.api.Notices.Tier doorTier(Known k) {
+        return k.written() == 0 ? dev.awaken.core.api.Notices.Tier.CRITICAL : dev.awaken.core.api.Notices.Tier.IMPORTANT;
+    }
+
+    /**
+     * The card a page gets as it reaches you (chat alone was missed: Euan read a page's arrival as the enchantment
+     * already being his gear's). Three lines, as {@link #learnedCard}: it is not on your gear, read it, then write it on
+     * at a table. Short, so a page read at once isn't kept waiting long behind it for its own card.
+     */
+    static void givenCard(ServerPlayer p, Inscriptions.Entry e) {
+        dev.awaken.signal.Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
+                        Component.literal("Page of " + e.name()).withColor(e.colour()))
+                .row("It isn't on your gear yet.", "")
+                .row("Use the page to learn it. Then", "")
+                .row("write it on at an Inscribing Table.", "")
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).tier(doorTier(Known.of(p))).topic("enchant").ttl(20 * 7).build());
+    }
+
+    /** A piece the player carries that this enchantment fits (worn first, then the hands, then the pack), or empty. */
+    static ItemStack fits(ServerPlayer p, Inscriptions.Entry e) {
+        var h = p.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(e.key());
+        if (h.isEmpty()) return ItemStack.EMPTY;
+        for (ItemStack s : EnchantGoals.carried(p)) if (EnchantRules.fits(s, h.get())) return s;
+        return ItemStack.EMPTY;
+    }
+
+    /** One line a step of the way from a page to a written piece, with the game's time, so a play's log says where it stops. */
+    static void door(ServerPlayer p, String step, Inscriptions.@Nullable Entry e) {
+        Awaken.LOG.info("[enchant] door: {} {} t={} ({})", step, e == null ? "-" : e.id().getPath(), p.level().getGameTime(), p.getGameProfile().name());
+    }
+
+    /** "Use the page to learn it, then write it onto a weapon at an Inscribing Table." */
+    static String then(Inscriptions.Entry e) {
+        return "Use the page to learn it, then write it onto " + e.piece() + " at an Inscribing Table.";
     }
 
     // ---- old books ------------------------------------------------------------------------------------------------------
@@ -174,7 +244,7 @@ public final class Pages {
         if (theme.equals("lantern_night_market")) theme = "lantern_market";
         for (ServerPlayer p : level.players()) {
             if (!p.isAlive() || p.isSpectator() || p.distanceToSqr(dead) > LORD_REACH * LORD_REACH) continue;
-            give(p, level, entry, theme);
+            if (give(p, level, entry, theme)) EnchantFx.page(p, entry, dead.position().add(0, dead.getBbHeight() * 0.5, 0));
         }
     }
 
@@ -191,8 +261,10 @@ public final class Pages {
             Known.save(p, k);
         }
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        door(p, "page given", entry);
+        givenCard(p, entry);
         p.sendSystemMessage(Component.literal(Character.toUpperCase(lord.charAt(0)) + lord.substring(1)
-                + " carried a page of " + entry.name() + ". Use it to learn it.").withColor(entry.colour()), false);
+                + " carried a page of " + entry.name() + ". " + then(entry)).withColor(entry.colour()), false);
         return true;
     }
 

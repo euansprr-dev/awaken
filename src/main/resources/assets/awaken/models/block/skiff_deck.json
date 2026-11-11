@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "awaken:block/skiff_deck_top",
+    "up": "awaken:block/skiff_deck_top",
+    "down": "awaken:block/skiff_hull",
+    "north": "awaken:block/skiff_strake",
+    "south": "awaken:block/skiff_strake",
+    "east": "awaken:block/skiff_strake",
+    "west": "awaken:block/skiff_strake"
+  }
+}

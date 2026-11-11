@@ -25,6 +25,7 @@ final class FirstTown {
 
     static int @Nullable [] find(RoadWorld w) {
         if (!w.city) return null;
+        if (w.farLanding()) return nearLanding(w);
         Terrain t = w.terrain();
         SettlementGrid.Anchor f = SettlementGrid.first(w.seed, new int[]{w.cx, w.cz});
         List<int[]> cands = new ArrayList<>();
@@ -52,6 +53,39 @@ final class FirstTown {
                 if (site == null) continue;
                 if (fallback == null) fallback = new int[]{c[0], c[1]};
                 if (crest(t, f.x(), f.z(), site[0], site[1])) return new int[]{c[0], c[1]};
+            }
+            if (fallback != null) return fallback;
+        }
+        return null;
+    }
+
+    /**
+     * A Far Landing world's first town (SPEC §67): the game starts at the landing, so its town is the nearest region round
+     * the landing (any way) whose land takes one, preferring one over a rise from the landing, under the same level cap.
+     */
+    private static int @Nullable [] nearLanding(RoadWorld w) {
+        Terrain t = w.terrain();
+        int pitch = w.regions.pitch();
+        int g0 = Math.floorDiv(w.lx, pitch), h0 = Math.floorDiv(w.lz, pitch);
+        List<int[]> cands = new ArrayList<>();
+        for (int i = g0 - 3; i <= g0 + 3; i++)
+            for (int j = h0 - 3; j <= h0 + 3; j++) {
+                if (w.regions.swallowed(i, j)) continue;
+                int[] h = w.regions.heart(i, j);
+                double d = Math.hypot(h[0] - w.lx, h[1] - w.lz);
+                if (d < 420 || d > 1700.0 * pitch / dev.awaken.living.region.RegionMap.PITCH_2) continue;
+                cands.add(new int[]{i, j, (int) d});
+            }
+        cands.sort((u, v) -> Integer.compare(u[2], v[2]));
+        for (int cap : new int[]{MAX_LEVEL, MAX_LEVEL + 10, Integer.MAX_VALUE}) {
+            int[] fallback = null;
+            for (int[] c : cands) {
+                int[] h = w.regions.heart(c[0], c[1]);
+                if (cap != Integer.MAX_VALUE && w.regions.levelAt(h[0], h[1]) > cap) continue;
+                int[] site = TownPlanner.site(t, h[0], h[1], (x, z) -> dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, 140));
+                if (site == null) continue;
+                if (fallback == null) fallback = new int[]{c[0], c[1]};
+                if (crest(t, w.lx, w.lz, site[0], site[1])) return new int[]{c[0], c[1]};
             }
             if (fallback != null) return fallback;
         }

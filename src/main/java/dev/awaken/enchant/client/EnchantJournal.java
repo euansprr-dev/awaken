@@ -39,6 +39,8 @@ final class EnchantJournal {
             StringBuilder body = new StringBuilder(e.line())
                     .append("\n").append(e.family().label).append(". Goes on ").append(e.fits())
                     .append(top > 1 ? ", up to " + Inscriptions.numeral(top) + "." : ".");
+            // what a bane won't touch is the entry's small print, not the first thing its line says (SPEC 45.15)
+            if (e.family() == dev.awaken.enchant.Family.BANE) body.append("\nA Lord, a Warden or a named beast shrugs it off, and it never touches your own beasts.");
             Known.Learned l = k.learned(e.id());
             if (l != null && !l.where().isEmpty()) body.append("\n").append(l.where()).append('.');
             if (k.inMemory(e.id())) body.append("\nIts mark is in your memory: you can write it in one stroke.");
