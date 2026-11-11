@@ -6,6 +6,17 @@ Status: **approved by Euan on 11 Nov 2026 ("Go ahead with the full plan"), all f
 built** on `claude/hearth-pets-plan-472c8d` and recorded in SPEC §69. Page (private, it shows his photos):
 https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN. The later extras (fetch, Aya on your shoulder) are not built.
 
+Where the build differs from this plan (SPEC §69 is the record of what is there):
+- Section 5.12: strides by the ground covered, steps on a turn in place, real clips for sitting down, lying down,
+  curling up, the flop and getting up, and three idles each are built. The head leading a turn is not.
+- Section 5.1: they come from wherever a hill or a wall hides them, not from the skiff's mooring (the Far Landing is not
+  merged).
+- Section 6: two tests are written, not the eight named there: `family_never_lost` (hurt, targeted, a second body, a lost
+  body, no nook) and `family_ask_and_stay` (ask, stay, one person at a time, petting, the plate and card, renaming, a fight seen). This session ran
+  neither; the manager's suite at merge is their first run.
+- Section 5.11: the listening page is a local file, `/Volumes/MEDIA/pets-ref/aya-dubu-sounds.html`. No sound has been
+  heard in the game.
+
 Euan's words (11 Nov 2026): "when you place your hearth for the first time, they should wander up to the house and be one
 of the kins, but they don't really do anything. They just kind of walk around and like they're part of the environment
 there... if they can come like join you on adventures too and follow you around in a very like natural and awesome way...
