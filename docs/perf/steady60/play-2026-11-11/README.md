@@ -34,8 +34,9 @@ Each sheet has the code before the fix on the left and after it on the right, fr
 - Glasswater (SPEC §22; `tools/autopilot/steady60-water-ci.txt`): the Air's own water. There is no sheet of it as it
   stands: `wip/glasswater-pixel-grid-rejected.jpg` is the first build, drawn on the block's sixteenth grid, which he
   saw and turned down ("I'm really not a fan of the pixelized reflections ... It looks more glitchy than anything
-  else"). It was rebuilt smooth at dd769ccd5 and handed over at his word without waiting for pictures (run
-  42997552947 was in flight).
+  else"). It was rebuilt smooth at dd769ccd5 and handed over at his word without waiting for pictures.
+  `glasswater-smooth.jpg` is that build, from run 42997552947, which landed after the hand-over: the game's own
+  water beside it, with Vivid, down at the bank, golden hour, dusk, from above, night, and on Lite.
 - The Air in other worlds (SPEC §22; `tools/autopilot/steady60-realm-sky-ci.txt`): a gate world's own sky and fog
   under the Air. Before: run 42996721809 (Amber Reach under the Air's blue). After: run 42996759340, in flight at the
   hand-over, unread.
