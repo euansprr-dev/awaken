@@ -389,6 +389,26 @@ def page_icon(g):
     return c
 
 
+def sign_particle(g):
+    """One inscription's sign, white so the particle tints it: among the letters that drift in a Study, the signs of the
+    words you know (SPEC §45.17)."""
+    c = Canvas()
+    strokes = GL.sign(g)
+    xs = [x for st in strokes for x, _ in st]
+    ys = [y for st in strokes for _, y in st]
+    w, h = max(xs) - min(xs), max(ys) - min(ys)
+    k = min(10 / max(w, 0.01), 10 / max(h, 0.01), 3.4)
+    ox, oy = 7.5 - (min(xs) + w / 2) * k, 7.5 - (min(ys) + h / 2) * k
+    white = (255, 255, 255, 255)
+    for st in strokes:
+        pts = [(round(ox + x * k), round(oy + y * k)) for x, y in st]
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            n = max(abs(x1 - x0), abs(y1 - y0), 1)
+            for i in range(n + 1):
+                c.set(round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n), white)
+    return c
+
+
 def inkwell():
     """The desk's inkwell: dark stone, a pool of lapis in its top. Top at (0..4, 0..4), a side at (4..8, 0..3), the lit
     pool alone at (8..10, 0..2)."""
@@ -425,6 +445,8 @@ def build(out):
     out.item("burin", burin())
     for i, rows in enumerate(LETTERS):
         out.particle(f"enchant_letter_{i}", letter(rows))
+    for g in GL.GLYPHS:
+        out.particle(f"enchant_sign_{g['no']}", sign_particle(g))
     out.block("word_stone_side", word_plating("side"))
     out.block("word_stone_top", word_plating("top", seams=False))
     out.block("word_stone_face", word_face())
@@ -579,7 +601,8 @@ def content():
         stone[f"facing={face}"] = v
     _write(os.path.join(ASSETS, "blockstates/word_stone.json"), {"variants": stone})
     _write(os.path.join(ASSETS, "particles/enchant_letter.json"),
-           {"textures": [f"awaken:enchant_letter_{i}" for i in range(len(LETTERS))]})
+           {"textures": [f"awaken:enchant_letter_{i}" for i in range(len(LETTERS))]
+                        + [f"awaken:enchant_sign_{g['no']}" for g in GL.GLYPHS]})  # LetterParticle counts on this order
     print("enchant: content written")
 
 

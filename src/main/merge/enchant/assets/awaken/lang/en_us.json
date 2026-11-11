@@ -36,5 +36,10 @@
   "subtitles.awaken.enchant.flare": "An old table flares",
   "subtitles.awaken.enchant.drift": "Letters drift",
   "subtitles.awaken.enchant.scrape": "An enchantment scraped off",
-  "subtitles.awaken.enchant.seal": "A stroke seals"
+  "subtitles.awaken.enchant.seal": "A stroke seals",
+  "enchantment.awaken.wayfarer": "Wayfarer",
+  "enchantment.awaken.gather": "Gather",
+  "enchantment.awaken.regrowth": "Regrowth",
+  "enchantment.awaken.remembrance": "Remembrance",
+  "enchantment.awaken.long_arm": "Long Arm"
 }

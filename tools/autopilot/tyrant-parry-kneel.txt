@@ -1,0 +1,74 @@
+# The Ember Tyrant on the duel stage (SPEC §68.6), a survival player three and a half blocks in front of it with a Maul
+# (the tightest deflect window, 3 ticks), its own choice of blows, slowed to 5 ticks a second, a picture a half tick:
+#   clips/tyrant_early      the guard raised 7 ticks before each blow: a block, the ring's dull snap, the word (first 3 times)
+#   clips/tyrant_parried    the guard raised in the band (arms parry 2): the white burst
+#   clips/tyrant_kneel      (at full speed) its stance broken, a heavy pressed at once: the charge full at once, an Execution inside the kneel
+# The log is the measure: "[arms] guard:" (each answer, how early, and why it was no deflect), "[arms] stance broken",
+# "[arms] heavy let go after N ticks held on ember_tyrant: kneeling with M ticks left, an Execution".
+# Run on CI: tools/tour-ci.sh tools/autopilot/tyrant-parry-kneel.txt
+world autopilot_tyrant_parry_kneel creative 20261111
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses duel stage ember_tyrant
+wait 80
+cmd kill @e[type=minecraft:pig,distance=..40]
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+cmd attribute @s minecraft:max_health base set 1000
+cmd effect give @s minecraft:instant_health 1 60 true
+cmd effect give @s minecraft:regeneration 100000 8 true
+cmd effect give @s minecraft:resistance 100000 3 true
+cmd gamemode survival
+hud on
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+
+# too early: the guard goes up 7 ticks before each blow
+arms parry 7
+arms rate 5
+wait 2
+arms film tyrant_early 135 0.5 2
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+
+# in the band: the burst
+arms parry 2
+arms film tyrant_parried 135 0.5 2
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.5 ~180 ~-8
+wait 45
+arms parry off
+arms rate 20
+wait 20
+
+# the kneel, at the world's own speed (a held key counts real ticks): its stance broken, a heavy pressed at once and let
+# go on the ting (9 ticks held)
+cmd execute at @e[type=awaken:ember_tyrant,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.0 ~180 ~-8
+wait 4
+arms film tyrant_kneel 90 0.5 2
+cmd awaken bosses duel break
+arms heavy 9
+wait 20
+shot tyrant_kneel_exec
+wait 70
+quit

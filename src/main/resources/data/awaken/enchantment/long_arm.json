@@ -1,0 +1,34 @@
+{
+  "anvil_cost": 4,
+  "description": {
+    "translate": "enchantment.awaken.long_arm"
+  },
+  "effects": {
+    "minecraft:attributes": [
+      {
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1.0,
+          "per_level_above_first": 1.0
+        },
+        "attribute": "minecraft:block_interaction_range",
+        "id": "awaken:enchantment.long_arm",
+        "operation": "add_value"
+      }
+    ]
+  },
+  "max_cost": {
+    "base": 42,
+    "per_level_above_first": 10
+  },
+  "max_level": 2,
+  "min_cost": {
+    "base": 12,
+    "per_level_above_first": 10
+  },
+  "slots": [
+    "chest"
+  ],
+  "supported_items": "#minecraft:enchantable/chest_armor",
+  "weight": 2
+}

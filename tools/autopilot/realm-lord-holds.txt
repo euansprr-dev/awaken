@@ -1,0 +1,68 @@
+# The Lord's fight holds (SPEC §68.6): the Cinder Workings (seed 383), its Lord awake and hurt, fought by a survival
+# player who can't be hurt. The fighter steps past the heart's line (where one look of the old rule ended the fight),
+# pauses the game for half a minute, saves, quits to the title and comes back, and only then walks away for good.
+#   lord_holds_1_fight      in the hall, the Lord awake and hurt (its bar below full)
+#   lord_holds_2_edge       just past the heart's line: the fight held
+#   lord_holds_3_paused     after the pause: the same Lord, the same health
+#   lord_holds_4_reloaded   after save, quit and reopen: the same Lord, the same health
+#   lord_holds_5_rested     gone from the hall for good: "Nobody is left in the fight ..."
+# The log is the measure: grep "\[realms\]" (woke, joined, stood past the heart's line ... the fight held, each
+# "Lord <id> <hp>" line, out of the fight, nobody is left fighting). Run on CI: tools/tour-ci.sh tools/autopilot/realm-lord-holds.txt
+world autopilot_realm_lord_holds creative 20261111
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:cinder_workings 383
+need realm
+wait 300
+cmd awaken gate realm_heart
+cmd gamemode survival
+cmd attribute @s minecraft:max_health base set 1000
+cmd effect give @s minecraft:instant_health 1 60 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:regeneration 100000 8 true
+hud on
+cmd awaken gate realm_at LORD 0 6 0 0
+wait 120
+cmd awaken gate realm_lord hurt 40
+wait 80
+cmd awaken gate realm_lord
+shot lord_holds_1_fight
+
+# a leap clear, onto the floor past the heart's line
+cmd awaken gate realm_edge
+wait 80
+cmd awaken gate realm_lord
+shot lord_holds_2_edge
+
+pause 600
+wait 40
+cmd awaken gate realm_lord
+shot lord_holds_3_paused
+
+cmd save-all
+wait 40
+leave
+world autopilot_realm_lord_holds
+waitworld
+wait 200
+cmd awaken gate realm_lord
+shot lord_holds_4_reloaded
+
+# away for good: back at the Mouth, out of the fight after 10 s
+cmd awaken gate realm_at MOUTH 0 0 0 3
+wait 225
+shot lord_holds_5_rested
+wait 40
+cmd awaken gate realm_lord
+quit

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Hush Tarn",
+  "line": "The lake froze with the monastery still on its island, and the road down to it has been under snow ever since.",
+  "form": "land",
+  "theme": "frost_monastery",
+  "ranks": [
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "land": {
+    "program": "awaken:frost_country",
+    "water": 62,
+    "params": {
+      "landform": 2
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/hush_tarn"
+    ],
+    "lens": "hush_tarn",
+    "air": [
+      "mist",
+      "wind"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 6
+  },
+  "heart": {
+    "lord": "abbot_of_frost",
+    "seat": "the_island"
+  },
+  "moods": [
+    "clear_and_cold"
+  ],
+  "ready": true
+}

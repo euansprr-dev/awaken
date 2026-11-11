@@ -290,6 +290,7 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
         for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) column(v, m, x, z);
         drawPieces(v, m);
         settle(v, m);
+        dev.awaken.gates.realms.kit.Settle.overSlabs(v); // nothing small half a block over a low slab (SPEC 50.6)
         for (Edit e : grille) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
     }
 

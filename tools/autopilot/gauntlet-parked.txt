@@ -1,0 +1,48 @@
+# A Gauntlet's presses parked in the ceiling while they are up (SPEC §17.5 "Gauntlet"; Euan, 11 Nov, in the Leaper's
+# Gauntlet: "the wall spawns in front of you"). The trial's own course, which has two presses: from the doorway and from
+# the first landing before the clock has started, where both must already be in sight with their marks on the floor under
+# them; then with the clock running, and from just short of the first.
+world gauntlet_parked survival 20261025
+waitworld
+window 1440 900
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken ascent grant tether
+cmd awaken ascent trial leaper
+# the runner builds a gate slowly: the first try said "Gate 1 is still building" at 320 ticks and the tour shot a forest
+wait 900
+cmd awaken gate enter 1
+wait 300
+cmd awaken gate interior goto rig
+wait 100
+hud off
+shot parked_01_doorway
+cmd awaken gate rig at start
+wait 60
+shot parked_02_landing
+cmd awaken gate rig at first
+wait 30
+shot parked_03_clock_running
+wait 28
+shot parked_04_half_a_beat_on
+cmd awaken gate rig at press
+wait 6
+shot parked_05_at_the_press
+wait 30
+shot parked_06_at_the_press_later
+quit

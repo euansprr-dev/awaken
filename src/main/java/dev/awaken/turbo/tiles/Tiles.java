@@ -129,6 +129,8 @@ public final class Tiles {
         try {
             GpuTextureView to = straight;
             if (to == null || forcedStraight == Boolean.FALSE || !SWAP.equals(output) || !tail(pass) || !on(pass)) return view;
+            // light to lay over the picture this frame (LensGlow): the chain's last pass lays it as it copies, so it runs
+            if (dev.awaken.lens.client.LensGlow.laid()) return view;
             if (to.getWidth(0) != view.getWidth(0) || to.getHeight(0) != view.getHeight(0)) return view;
             straightUsed = true;
             if (!loggedStraight) {

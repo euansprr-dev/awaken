@@ -291,7 +291,18 @@ final class ArmsServer {
     static void heavy(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.MoveDef heavy, int held, long now, int seq) {
         LivingEntity target = target(p, s.aimed);
         Archetype.MoveDef exec = style.move(Archetype.Move.EXECUTION);
-        if (exec != null && target != null && Arms.broken(target) && p.distanceTo(target) <= exec.reach() + target.getBbWidth()) {
+        boolean reach = exec != null && target != null && p.distanceTo(target) <= exec.reach() + target.getBbWidth();
+        if (target != null && !(target instanceof Player)) {
+            // a heavy let go on a body that kneels, or just got up: in the play log, to read a fight's kneels back (SPEC §68.6)
+            Posture tp = posture(target);
+            if (tp.brokenUntil > now - 20) {
+                dev.awaken.Awaken.LOG.info("[arms] heavy let go after {} ticks held on {}: {}, {}", held,
+                        net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(),
+                        tp.brokenUntil > now ? "kneeling with " + (tp.brokenUntil - now) + " ticks left" : "up again " + (now - tp.brokenUntil) + " ticks ago",
+                        exec != null && Arms.broken(target) && reach ? "an Execution" : !reach ? "out of the Execution's reach" : "a plain heavy");
+            }
+        }
+        if (exec != null && target != null && Arms.broken(target) && reach) {
             begin(p, s, style, Archetype.Move.EXECUTION, -1, 0, now, seq);
             return;
         }
@@ -977,6 +988,15 @@ final class ArmsServer {
         float incoming = e.getDamageContainer().getNewDamage();
         Entity by = src.getEntity();
         long now = now(p);
+        int why = ArmsRules.missWhy(g, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, untold);
+        // what the guard did with a creature's blow, in the play log, so a fight can be read back (SPEC §68.6)
+        if (by instanceof LivingEntity && !(by instanceof Player) && kind != Strikes.Kind.NONE) {
+            dev.awaken.Awaken.LOG.info("[arms] guard: {} {}'s {} blow, raised {} ticks before it (deflect window {}{}, grace {}){}{}{}",
+                    a, net.minecraft.world.entity.EntityType.getKey(by.getType()).getPath(), kind, p.getTicksUsingItem() - heldTicks,
+                    g.deflect(), untold ? " +" + ArmsRules.UNTOLD_DEFLECT + " untold" : "", grace,
+                    s.lockedOut ? ", raised again too soon after lowering it" : "", inArc ? "" : ", from outside the guard",
+                    a == ArmsRules.Answer.BLOCK || a == ArmsRules.Answer.GUARD_BREAK ? (why == ArmsRules.MISS_LATE ? " (late)" : why == ArmsRules.MISS_TOO_SOON ? " (too soon)" : " (early)") : "");
+        }
         switch (a) {
             case DEFLECT -> {
                 e.setBlockedDamage(incoming);
@@ -1023,16 +1043,23 @@ final class ArmsServer {
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
                     soundForOthers(p, ArmsSounds.BLOCK_STRUCK.get(), 1.0F, 1.0F);
                     soundForOthers(p, ArmsSounds.BLOCK_STEEL.get(), 1.0F, 1.0F);
-                    answer(p, s, ArmsPayloads.BLOCK, by);
+                    answer(p, s, ArmsPayloads.BLOCK, by, why); // the ring says why it was only a block
                 }
             }
             case GUARD_BREAK -> {
                 e.setBlockedDamage(incoming * g.heavyReduction());
                 s.guardBreak = true; // after this blow resolves: the guard drops and can't rise for a moment
                 soundForOthers(p, ArmsSounds.GUARD_BREAK.get(), 1.0F, 1.0F);
-                answer(p, s, ArmsPayloads.GUARD_BREAK, by);
+                answer(p, s, ArmsPayloads.GUARD_BREAK, by, why);
             }
-            case PASS -> e.setBlocked(false);
+            case PASS -> {
+                e.setBlocked(false);
+                // the guard was up and the blow went past it: the ring says it came from the side, or can't be guarded at all.
+                // Only to the fighter: nothing happened to the blade for anyone else to see.
+                if (by instanceof LivingEntity && !(by instanceof Player) && kind != Strikes.Kind.NONE) {
+                    AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.GUARD_PASS, by.getId(), kind.blockable() ? ArmsPayloads.PASS_SIDE : ArmsPayloads.PASS_UNGUARDABLE, 0));
+                }
+            }
         }
     }
 
@@ -1370,6 +1397,8 @@ final class ArmsServer {
         if (breaks) {
             int ticks = lord ? ArmsRules.BROKEN_TICKS_LORD : ArmsRules.BROKEN_TICKS;
             p.brokenUntil = now + ticks;
+            dev.awaken.Awaken.LOG.info("[arms] stance broken: {} kneels {} ticks (by {})",
+                    net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(), ticks, by.getName().getString());
             p.nextBreakAt = now + ArmsRules.BREAK_COOLDOWN;
             p.value = 0;
             stance(target, p, now);

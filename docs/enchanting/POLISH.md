@@ -411,8 +411,8 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 | One script | 36 glyphs in `Marks` from `tools/art/specs/_enchant_glyphs.py`; 36 page icons chosen by `awaken:page` | `Marks`, `PageSelect`, the art spec |
 | The desk | the scribe's desk model, the book on its rest, the burin in the inkwell until you choose, the real piece on the slate laid by its shape (armour's measured from its meshes), the glyph on the piece's top | `InscribingTableRenderer`, `InscribingTableBlock`, the art spec |
 | Choosing | pages over the near edge in the world, the label over the row beside the piece, sockets down the slate's left side, hold to scrape, the wheel for the level, key caps, the wake's blackletter and no card; `classicTable` keeps the old book | `Desk`, `InscribeScreen`, `InscribeScene`, `EnchantClientConfig` |
-| The words | Lantern (block of light, the rule, the Lantern Night Market's Lord; Looting to the market and old books); banes' lines | `Lantern`, `LanternGlowBlock`, `Inscriptions` |
-| At work | a ward's plate, a bane's brand for two seconds, a larger glint | `EnchantFxClient` |
+| The words | Lantern (block of light, the rule, the Lantern Night Market's Lord; Looting to the market and old books); banes' lines; then, the same day, the other five: Wayfarer, Gather, Regrowth, Remembrance and Long Arm, four of them carried by Lords in place of a vanilla name (SPEC §45.16) | `Lantern`, `LanternGlowBlock`, `Words`, `Inscriptions` |
+| At work | a ward's plate, a bane's brand for two seconds, a larger glint, Clear Blood's green pulse, a gold glint on experience with Insight in the hand | `EnchantFxClient`, `EnchantFx` |
 | On the piece | the shine (a band of light every five seconds, the script in its wake) and a faint aura in both shaders | `arms_weapon.fsh`, `armour.fsh`, `mesh_render.py` |
 | Sound | first picks in `sounds.json` and the code; the listening page | `tools/art/enchant_listen.py` |
 
@@ -422,8 +422,19 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 - The wake's chord of pitched family notes is gone (§45.18).
 - The trace's rules are untouched, but its marks are now the glyphs: straight cuts with corners.
 
-**Not built yet (waits for his play of the pilot):** Regrowth, Remembrance, Gather, Wayfarer, Long Arm; Clear Blood's and Insight's
-moments; the hold-to-write fallback.
+**The rest of the plan, built the same day** at his word that every approved plan be finished (relayed by the
+manager, 11 Nov): the five words above, Clear Blood's pulse and Insight's glint, and the small at-work touches of
+§4.3 (sparks off a ward's plate, a gold thread on an extra drop, a bane's kill going out in red, the signs of words you
+know among the drifting letters). They follow §4.3's table, with these
+choices made in the building: Gather never takes another player's pack or what a Lord or a named beast leaves (that
+lies there for everyone who fought); Remembrance names a Lord as the game says it ("the Bell Warden"); Long Arm sits
+twice among the sky platforms' six words, being found nowhere else.
+
+**Not built, and why:**
+- *The hold-to-write fallback.* The plan builds it only if he finds the trace a chore (§6); nobody has traced yet.
+- *The notch of light on a piece for each name Remembrance keeps.* The light on a piece is packed by the arms and
+  armour renderers, which have no room in it for a count; the names are in the piece's tooltip and in chat.
+- *Lantern at half strength in a Lightless gate:* gates offer no way to ask; it is full strength everywhere.
 
 **What filming it showed, and what changed** (three runs of `tools/autopilot/enchant-polish.txt` on GitHub, frames in
 `run-autopilot/screenshots-ci/enchant-polish-<run>/`):
@@ -443,4 +454,6 @@ moments; the hold-to-write fallback.
 
 **Not verified:** nobody has heard a sound; the trace has not been tried by a hand since the glyphs changed (the
 tour's pilot traces it); Lantern's frame time on the Mac is unmeasured; only one set's breastplate and helm have been
-seen on the slate (dreamsteel), though every set is measured the same way.
+seen on the slate (dreamsteel), though every set is measured the same way. Of the five later words, Gather and
+Wayfarer were filmed; Regrowth, Remembrance and Long Arm are tested in their rules but not seen in the game, and
+Wayfarer has not been walked on a laid road (only on a path).

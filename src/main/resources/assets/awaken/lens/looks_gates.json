@@ -1868,6 +1868,216 @@
       "mistHeight": 48.0,
       "fogGlow": 0.6,
       "skyGlow": 0.0
+    },
+    "biome:awaken:realm/cinder_crown": {
+      "_name": "The Cinder Crown: the last light on a burnt mountain. Everything leans red: the sky goes rose and blood-orange, the land is lit rust, the shadows are a deep red-brown, and whatever still burns blooms against it",
+      "exposure": 1.0,
+      "contrast": 1.16,
+      "saturation": 1.16,
+      "warmth": 0.6,
+      "shadowTint": [
+        0.5,
+        0.2,
+        0.18
+      ],
+      "highlightTint": [
+        1.0,
+        0.4,
+        0.24
+      ],
+      "splitTone": 0.55,
+      "vignette": 0.3,
+      "bloom": 1.2,
+      "bloomThreshold": 0.52,
+      "skyBloom": 0.2,
+      "shafts": 0.7,
+      "haze": 0.4,
+      "hazeStart": 0.28,
+      "hazeTint": [
+        1.0,
+        0.44,
+        0.22
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.08,
+      "sunsetWarmth": 0.8,
+      "sunGlow": 0.9,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.3,
+      "mistHeight": 66.0,
+      "fogGlow": 0.9,
+      "skyGlow": 0.0,
+      "heat": 0.35,
+      "glow": 0.9
+    },
+    "biome:awaken:realm/fallwater_vale": {
+      "_name": "Fallwater Vale: the morning after rain in a green valley. A high clear sun, every leaf lit yellow-green, the shade under the trees a deep teal, mist lying on the river and the fall white at the far end",
+      "exposure": 1.02,
+      "contrast": 1.12,
+      "saturation": 1.2,
+      "warmth": -0.06,
+      "shadowTint": [
+        0.16,
+        0.42,
+        0.36
+      ],
+      "highlightTint": [
+        0.86,
+        1.0,
+        0.6
+      ],
+      "splitTone": 0.4,
+      "vignette": 0.24,
+      "bloom": 0.8,
+      "bloomThreshold": 0.7,
+      "skyBloom": 0.2,
+      "shafts": 1.0,
+      "haze": 0.4,
+      "hazeStart": 0.26,
+      "hazeTint": [
+        0.7,
+        0.86,
+        0.62
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.06,
+      "sunsetWarmth": 0.2,
+      "sunGlow": 0.6,
+      "light": 0.0,
+      "ao": 0.9,
+      "filmic": 1.0,
+      "mist": 0.22,
+      "mistHeight": 64.0,
+      "fogGlow": 0.5,
+      "skyGlow": 0.0
+    },
+    "biome:awaken:realm/hush_tarn": {
+      "_name": "The Hush Tarn: first light of a clear winter morning in a bowl of snow. A low cold sun, the lit snow faintly gold and every shadow a deep clean blue, the far rim sharp, the monastery's lamps the only warm thing in it",
+      "exposure": 0.96,
+      "contrast": 1.1,
+      "saturation": 1.08,
+      "warmth": -0.22,
+      "shadowTint": [
+        0.34,
+        0.5,
+        0.9
+      ],
+      "highlightTint": [
+        1.0,
+        0.96,
+        0.88
+      ],
+      "splitTone": 0.5,
+      "vignette": 0.22,
+      "bloom": 0.7,
+      "bloomThreshold": 0.82,
+      "skyBloom": 0.15,
+      "shafts": 0.6,
+      "haze": 0.3,
+      "hazeStart": 0.3,
+      "hazeTint": [
+        0.84,
+        0.92,
+        1.0
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.15,
+      "sunGlow": 0.5,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.12,
+      "mistHeight": 63.0,
+      "fogGlow": 0.4,
+      "skyGlow": 0.0
+    },
+    "biome:awaken:realm/glass_sea": {
+      "_name": "The Glass Sea: white noon over a sea of amber glass. The sun almost overhead, the sand bleached, shadows short and warm brown, the glass throwing the light back, the far end of the road swimming in the heat, and one coin of light on the skyline",
+      "exposure": 1.05,
+      "contrast": 1.14,
+      "saturation": 1.04,
+      "warmth": 0.22,
+      "shadowTint": [
+        0.62,
+        0.44,
+        0.3
+      ],
+      "highlightTint": [
+        1.0,
+        0.97,
+        0.84
+      ],
+      "splitTone": 0.35,
+      "vignette": 0.2,
+      "bloom": 1.0,
+      "bloomThreshold": 0.72,
+      "skyBloom": 0.3,
+      "shafts": 0.3,
+      "haze": 0.3,
+      "hazeStart": 0.3,
+      "hazeTint": [
+        1.0,
+        0.92,
+        0.72
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.0,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.9,
+      "light": 0.0,
+      "ao": 0.8,
+      "filmic": 1.0,
+      "mist": 0.0,
+      "mistHeight": 63.0,
+      "fogGlow": 0.6,
+      "skyGlow": 0.0,
+      "heat": 0.7,
+      "glow": 0.9
+    },
+    "biome:awaken:realm/high_caps": {
+      "_name": "The High Caps: night under the caps, a cold cyan moon and no more; everything else is lit from below, teal off the gills and the moss, the shadows a deep blue-green, mist on the water glowing where a cap stands over it",
+      "exposure": 1.1,
+      "contrast": 1.1,
+      "saturation": 1.25,
+      "warmth": -0.15,
+      "shadowTint": [
+        0.16,
+        0.4,
+        0.55
+      ],
+      "highlightTint": [
+        0.72,
+        1.0,
+        0.94
+      ],
+      "splitTone": 0.6,
+      "vignette": 0.3,
+      "bloom": 1.2,
+      "bloomThreshold": 0.55,
+      "skyBloom": 0.1,
+      "shafts": 0.4,
+      "haze": 0.3,
+      "hazeStart": 0.25,
+      "hazeTint": [
+        0.3,
+        0.75,
+        0.8
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.0,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.3,
+      "light": 0.0,
+      "ao": 0.9,
+      "filmic": 1.0,
+      "mist": 0.4,
+      "mistHeight": 64.0,
+      "fogGlow": 0.9,
+      "skyGlow": 0.0,
+      "glow": 1.0
     }
   }
 }

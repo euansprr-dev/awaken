@@ -71,7 +71,8 @@ public final class AscentClient {
         bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, AscentScores::onPlay);
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
-        bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
+        // the windways' and updrafts' gusts: a pass of their own after the level (SPEC §17.12, "The look")
+        bus.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, WindwayRenderer::onAfterLevel);
         bus.addListener(RenderFrameEvent.Post.class, e -> ClipRecorder.frame());
         // the whole figure turns with the flight (after the body's own lean, LOW, and the casts' at LOWEST)
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Pre.class, AscentAnims::onPre);

@@ -17,8 +17,25 @@ final class LetterParticle extends SingleQuadParticle {
     private final double tx, ty, tz, ox, oy, oz, sideX, sideZ;
     private final float r0, g0, b0, phase, spin;
 
+    /** The sprite set's order (the art spec writes it): the script's twelve letters, then the thirty-six signs by number. */
+    private static final int LETTERS = 12, SIGNS = 36;
+    private static final int[] KNOWN = new int[SIGNS];
+
+    /** A letter of the script, or, one time in three, the sign of a word you know (SPEC §45.17). */
+    private static net.minecraft.client.renderer.texture.TextureAtlasSprite pick(ClientLevel level, SpriteSet sprites) {
+        var random = level.getRandom();
+        var me = net.minecraft.client.Minecraft.getInstance().player;
+        if (me != null && random.nextInt(3) == 0) {
+            dev.awaken.enchant.Known k = dev.awaken.enchant.Known.of(me);
+            int n = 0;
+            for (dev.awaken.enchant.Inscriptions.Entry e : dev.awaken.enchant.Inscriptions.ALL) if (e.no() <= SIGNS && k.knows(e.id())) KNOWN[n++] = e.no();
+            if (n > 0) return sprites.get(LETTERS + KNOWN[random.nextInt(n)] - 1, LETTERS + SIGNS - 1);
+        }
+        return sprites.get(random.nextInt(LETTERS), LETTERS + SIGNS - 1);
+    }
+
     private LetterParticle(ClientLevel level, double x, double y, double z, double xa, double ya, double za, int argb, SpriteSet sprites) {
-        super(level, x + xa, y + ya, z + za, sprites.get(level.getRandom()));
+        super(level, x + xa, y + ya, z + za, pick(level, sprites));
         tx = x;
         ty = y;
         tz = z;

@@ -481,8 +481,9 @@ public final class RigDirector {
             BlockPos min = l.world(r.x0(), -4, r.z0()), max = l.world(r.x1(), r.height, r.z1());
             BlockPos lens = BlockPos.ZERO, seal = BlockPos.ZERO;
             int dir = 0;
-            List<BlockPos> wells = new ArrayList<>();
+            List<BlockPos> wells = new ArrayList<>(), presses = new ArrayList<>();
             boolean surge = false;
+            int ram = 0;
             switch (r.rig.kind) {
                 case MIRROR_HALL -> {
                     var pz = r.rig.mirrors;
@@ -515,10 +516,20 @@ public final class RigDirector {
                             wells.add(b);
                         }
                     }
+                    // every column a press comes down in, so the client can draw it parked in the ceiling while it is up
+                    for (RigRoom.Group group : r.rig.groups) {
+                        if (group.apply() != RigRoom.Anim.PRESS) continue;
+                        for (RigRoom.Cell cell : group.cells()) {
+                            if (cell.dy() != 0 || presses.size() >= 512) continue;
+                            presses.add(l.world(cell.x(), 0, cell.z()));
+                            ram = Block.getId(cell.active());
+                        }
+                    }
                 }
                 case COLLAPSE_RUN -> {}
             }
-            rooms.add(new RigPayloads.Room(r.rig.kind.ordinal(), f.theme.ordinal(), min, max, lens, dir, seal, wells, surge));
+            rooms.add(new RigPayloads.Room(r.rig.kind.ordinal(), f.theme.ordinal(), min, max, lens, dir, seal, wells, surge, presses, ram,
+                    presses.isEmpty() ? 0 : (int) RigGauntletLive.travel(l)));
         }
         AwakenNet.send(p, new RigPayloads.Scene(rooms));
     }

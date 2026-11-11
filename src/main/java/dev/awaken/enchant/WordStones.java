@@ -19,9 +19,17 @@ import java.util.List;
 public final class WordStones {
     private WordStones() {}
 
-    /** By enchantment number: the vaults and the monolith (Insight, Efficiency, Infinity, Feather Falling), the sky
-     *  platform and the spire's crown (Feather Falling, Infinity, Insight), the ocean lab (the water's six). */
-    static final int[] VAULT = {19, 17, 26, 8}, SKY = {8, 26, 19}, SEA = {21, 22, 27, 28, 29, 30};
+    /** By enchantment number: the vaults and the monolith (Insight, Efficiency, Infinity, Feather Falling, and Unbreaking
+     *  and Blast Protection since their Lords carry new words), the sky platform and the spire's crown (Feather Falling,
+     *  Infinity, Insight, Projectile Protection, and Long Arm, which is found nowhere else), the ocean lab (the water's
+     *  six and Respiration). */
+    static final int[] VAULT = {19, 17, 26, 8, 24, 6}, SKY = {8, 26, 19, 7, 36, 36}, SEA = {21, 22, 27, 28, 29, 30, 20};
+
+    /** Whether some Word Stone can be carved with this enchantment (a way in, as a gate, the market or an old book is). */
+    static boolean carved(int no) {
+        for (int[] set : new int[][]{VAULT, SKY, SEA}) for (int n : set) if (n == no) return true;
+        return false;
+    }
 
     static int[] set(String name) {
         return switch (name) {

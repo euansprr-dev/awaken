@@ -158,6 +158,16 @@ public final class EnchantFxClient {
                             brand(pose, vc, NO[i], px, py, pz, -oz, 0, ox, size, col, Math.max(0F, 1F - k * 2.2F), held * (0.6F + 0.4F * s));
                             circle(pose, vc, px, py, pz, -oz, 0, ox, 0.3 + 0.6 * ease(k), 0.09, argb(col, a * 0.6F));
                             ring(pose, vc, x, y + hgt * 0.55, z, r, 0.08, argb(col, a * 0.3F));
+                            // what it took off flies away from the plate as sparks of the Force's colour, more of them
+                            // the more it took, out and a little down as they cool
+                            int sparks = 4 + Math.round(5 * s);
+                            for (int j = 0; j < sparks; j++) {
+                                float ang = SEED[i] * 5F + j * 2.4F;
+                                double out = (0.15 + 0.85 * ease(k)) * (0.7 + 0.3 * Mth.sin(ang * 3.1F));
+                                double side = Mth.cos(ang) * 0.55 * (0.25 + k), lift = Mth.sin(ang) * 0.5 * (0.25 + k) - 0.4 * k * k;
+                                star(pose, vc, px + ox * out * 0.7 - oz * side, py + lift, pz + oz * out * 0.7 + ox * side,
+                                        0.075 * (1 - 0.5 * k), argb(InscribeScene.hot(col, 0.55F * (1 - k)), a));
+                            }
                         } else {
                             // from nowhere in particular: a ring closing in round you at the chest, a fainter one above
                             ring(pose, vc, x, y + hgt * 0.55, z, r, 0.12, argb(InscribeScene.hot(col, 0.3F), a));
@@ -192,6 +202,9 @@ public final class EnchantFxClient {
                         float a = (k < 0.12F ? k / 0.12F : 1F - (k - 0.12F) / 0.88F) * s;
                         double iy = y + (en != null ? 0.22 : 0);
                         Vec3 v = en != null ? en.getDeltaMovement() : Vec3.ZERO;
+                        // the drop rides a gold thread from where it came out, seen from across a room
+                        if (en != null && (x - X[i]) * (x - X[i]) + (iy - Y[i]) * (iy - Y[i]) + (z - Z[i]) * (z - Z[i]) > 0.04)
+                            thread(pose, vc, X[i], Y[i], Z[i], x, iy, z, 1F, col, a * 0.8F);
                         star(pose, vc, x, iy, z, 0.26 + 0.09 * Mth.sin(age * 0.9F), argb(InscribeScene.hot(col, 0.5F), a));
                         for (int j = 1; j <= 3; j++)
                             star(pose, vc, x - v.x * j * 2.5, iy - v.y * j * 2.5 + 0.04 * j, z - v.z * j * 2.5, 0.09 - 0.018 * j,

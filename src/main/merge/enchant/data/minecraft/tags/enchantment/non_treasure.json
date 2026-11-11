@@ -12,6 +12,11 @@
     "awaken:clear_blood",
     "awaken:harvest",
     "awaken:insight",
-    "awaken:lantern"
+    "awaken:lantern",
+    "awaken:wayfarer",
+    "awaken:gather",
+    "awaken:regrowth",
+    "awaken:remembrance",
+    "awaken:long_arm"
   ]
 }

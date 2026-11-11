@@ -6,10 +6,13 @@ import dev.awaken.gates.world.FloorLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -21,11 +24,16 @@ import java.util.Set;
  * hurt one, turn toward you for the wake beat, then fight. A gate nobody makes headway in sends waves after the player,
  * and at last a hunter of the theme's Warden kind. A Realm has no rooms, so a pack is simply the monsters that carry its
  * name; nothing of its own is saved. Server thread only.
+ *
+ * <p>Out in an open land (SPEC §50.9 "Who lives there", {@code RealmCountry}) a pack may walk a beat instead of standing,
+ * a lookout on a perch sees further than anyone and calls its own to it, and the theme's Warden kind may be found at home.
  */
 public final class RealmPacks {
     private RealmPacks() {}
 
-    private static final String PACK = "awaken_realm_pack", FREE = "awaken_realm_free";
+    private static final String PACK = "awaken_realm_pack", FREE = "awaken_realm_free", LOOKOUT = "awaken_realm_lookout";
+    /** A lookout sees this far with a clear line, whatever the height between; the horn brings its own from this far round it. */
+    private static final double LOOK = 24, CALL = 38;
     /** A pack notices you inside NOTICE if it can see you, inside CLOSE whatever stands between; its own stand within COMPANY. */
     private static final double NOTICE = 13, NOTICE_UP = 7, CLOSE = 5, COMPANY = 26;
     /** Pressure: this long with no headway and waves start, one every PERIOD; the hunter comes at HUNTER. */
@@ -77,17 +85,22 @@ public final class RealmPacks {
         return out;
     }
 
-    /** One monster of a pack, standing at its spot and waiting. Null when the gate is full or nothing can stand there. */
-    private static LivingEntity stand(ServerLevel level, GateRecord g, FloorLayout f, MobRole.Role role, BlockPos pos, String pack) {
+    /** One monster of a pack, standing at its spot and waiting, or walking the pack's beat. Null when the gate is full or nothing can stand there. */
+    private static LivingEntity stand(ServerLevel level, GateRecord g, FloorLayout f, MobRole.Role role, BlockPos pos, String pack, long @Nullable [] beat) {
         LivingEntity e = Rooms.spawn(level, g, f, -1, role, pos);
         if (e == null) return null;
         e.getPersistentData().putString(PACK, pack);
-        Encounters.holdFree(e);
+        hold(e, beat);
         return e;
     }
 
+    private static void hold(LivingEntity e, long @Nullable [] beat) {
+        if (beat == null) Encounters.holdFree(e);
+        else Encounters.holdBeat(e, beat);
+    }
+
     /** One monster a sheet named. A name the mobs module doesn't know gets one of the theme's own instead, so a typo never empties a room. */
-    private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String name, BlockPos pos, String pack, ServerPlayer wakeFor) {
+    private static LivingEntity named(ServerLevel level, GateRecord g, FloorLayout f, String name, BlockPos pos, String pack, ServerPlayer wakeFor, long @Nullable [] beat) {
         boolean free = name.startsWith("~");
         LivingEntity e = Rooms.named(level, g, f, -1, free || name.startsWith("!") ? name.substring(1) : name, pos);
         if (e == null) {
@@ -97,7 +110,7 @@ public final class RealmPacks {
         if (e == null) return null;
         e.getPersistentData().putString(PACK, pack);
         if (free) e.getPersistentData().putBoolean(FREE, true); // its own habits are how it waits
-        else if (wakeFor == null) Encounters.holdFree(e);
+        else if (wakeFor == null) hold(e, beat);
         else if (e instanceof Mob m) m.setTarget(wakeFor);
         return e;
     }
@@ -108,6 +121,18 @@ public final class RealmPacks {
      * steps further out, already after that player.
      */
     public static int den(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> pack, ServerPlayer wakeFor) {
+        return den(level, g, f, center, "d" + site, pack, wakeFor, null);
+    }
+
+    /**
+     * A pack on the prowl in an open land (SPEC §50.9 "Who lives there"): a den's worth that walks a beat between two or
+     * three places, a while at each, and can be watched, waited out or met. It notices and fights as a den's does.
+     */
+    public static int prowl(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> pack, long[] beat) {
+        return den(level, g, f, center, "c" + site, pack, null, beat);
+    }
+
+    private static int den(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, String name, List<String> pack, ServerPlayer wakeFor, long @Nullable [] beat) {
         var rnd = level.getRandom();
         List<String> names = roll(pack, g.plan.rank().ordinal());
         int n = names.isEmpty() ? 4 + g.plan.rank().ordinal() / 2 + rnd.nextInt(2) : names.size(), made = 0;
@@ -118,11 +143,11 @@ public final class RealmPacks {
             if (at == null) at = settle(level, center);
             if (at == null) continue;
             LivingEntity e;
-            if (!names.isEmpty()) e = named(level, g, f, names.get(i), at, "d" + site, wakeFor);
+            if (!names.isEmpty()) e = named(level, g, f, names.get(i), at, name, wakeFor, beat);
             else {
-                e = wakeFor == null ? stand(level, g, f, i == 0 && n >= 5 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, "d" + site) : Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, at);
+                e = wakeFor == null ? stand(level, g, f, i == 0 && n >= 5 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, name, beat) : Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, at);
                 if (e != null && wakeFor != null) {
-                    e.getPersistentData().putString(PACK, "d" + site);
+                    e.getPersistentData().putString(PACK, name);
                     if (e instanceof Mob m) m.setTarget(wakeFor);
                 }
             }
@@ -138,10 +163,10 @@ public final class RealmPacks {
         LivingEntity w = null;
         if (!names.isEmpty() && names.getFirst().startsWith("!")) {
             // the sheet names the Warden itself: a creature with a body and a fight of its own
-            w = named(level, g, f, names.removeFirst(), at == null ? center : at, "w" + site, null);
+            w = named(level, g, f, names.removeFirst(), at == null ? center : at, "w" + site, null, null);
             if (w != null && !Encounters.waiting(w)) Encounters.holdFree(w);
         }
-        if (w == null) w = stand(level, g, f, MobRole.Role.WARDEN, at == null ? center : at, "w" + site);
+        if (w == null) w = stand(level, g, f, MobRole.Role.WARDEN, at == null ? center : at, "w" + site, null);
         if (w == null) return null;
         var rnd = level.getRandom();
         int n = names.isEmpty() ? 3 + g.plan.rank().ordinal() / 2 : names.size();
@@ -150,8 +175,8 @@ public final class RealmPacks {
             double a = turn + i * (Math.PI * 2 / n), r = 4.5 + rnd.nextDouble() * 2.5;
             BlockPos spot = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
             if (spot == null) continue;
-            if (names.isEmpty()) stand(level, g, f, MobRole.Role.NORMAL, spot, "w" + site);
-            else named(level, g, f, names.get(i), spot, "w" + site, null);
+            if (names.isEmpty()) stand(level, g, f, MobRole.Role.NORMAL, spot, "w" + site, null);
+            else named(level, g, f, names.get(i), spot, "w" + site, null, null);
         }
         return w;
     }
@@ -162,18 +187,44 @@ public final class RealmPacks {
     }
 
     /**
-     * A wandering pack in an open land (SPEC §50.9 "The right amount"): a den's worth of the theme's own, more with rank,
-     * standing together thirty to forty-four blocks off from a player, waiting as a den's do. Returns how many came.
+     * A lookout on its perch with its reserve out of sight behind it (SPEC §50.9 "Who lives there"): one of the theme's,
+     * its marksman where the theme has one, and three or four more standing at {@code reserve}. Seen by the lookout, you
+     * hear a horn and the reserve comes; put the lookout down unseen and the reserve never knows. Returns how many came.
      */
-    public static int wander(ServerLevel level, GateRecord g, FloorLayout f, ServerPlayer p, int k) {
+    public static int lookout(ServerLevel level, GateRecord g, FloorLayout f, BlockPos perch, BlockPos reserve, int site, String creature) {
+        BlockPos at = settle(level, perch);
+        if (at == null) return 0;
+        String pack = "c" + site;
+        LivingEntity e = creature.isEmpty() ? stand(level, g, f, MobRole.Role.NORMAL, at, pack, null) : named(level, g, f, creature, at, pack, null, null);
+        if (e == null) return 0;
+        e.getPersistentData().putBoolean(LOOKOUT, true);
         var rnd = level.getRandom();
+        int n = 3 + g.plan.rank().ordinal() / 2, made = 1;
         double turn = rnd.nextDouble() * Math.PI * 2;
-        for (int i = 0; i < 10; i++) {
-            double a = turn + i * 2.4, r = 30 + rnd.nextDouble() * 14;
-            BlockPos at = settle(level, p.blockPosition().offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
-            if (at != null) return den(level, g, f, at, 700 + k, List.of(), null);
+        for (int i = 0; i < n; i++) {
+            double a = turn + i * (Math.PI * 2 / n), r = i == 0 ? 0 : 2.5 + rnd.nextDouble() * 2.5;
+            BlockPos spot = settle(level, reserve.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
+            if (spot != null && stand(level, g, f, MobRole.Role.NORMAL, spot, pack, null) != null) made++;
         }
-        return 0;
+        return made;
+    }
+
+    /**
+     * The big one at home (SPEC §50.9 "Who lives there"): the theme's Warden kind where it lives, off the way, with two
+     * of its own (more with rank) about it. Nobody has to go near it. Returns how many came.
+     */
+    public static int lair(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site) {
+        BlockPos at = settle(level, center);
+        if (at == null || stand(level, g, f, MobRole.Role.WARDEN, at, "c" + site, null) == null) return 0;
+        var rnd = level.getRandom();
+        int n = 2 + g.plan.rank().ordinal() / 3, made = 1;
+        double turn = rnd.nextDouble() * Math.PI * 2;
+        for (int i = 0; i < n; i++) {
+            double a = turn + i * (Math.PI * 2 / n), r = 4.5 + rnd.nextDouble() * 2.5;
+            BlockPos spot = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
+            if (spot != null && stand(level, g, f, MobRole.Role.NORMAL, spot, "c" + site, null) != null) made++;
+        }
+        return made;
     }
 
     /** Whether any of a pack is still alive near its place. Only asked while someone is near, so the pack is in the world to be found. */
@@ -185,19 +236,35 @@ public final class RealmPacks {
     public static int notice(ServerLevel level, ServerPlayer p) {
         if (p.isCreative() || p.isSpectator()) return 0;
         double reach = NOTICE + COMPANY;
-        List<Mob> near = level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(reach, 14, reach), m -> Encounters.waiting(m) && !packOf(m).isEmpty());
+        List<Mob> near = level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(reach, 20, reach), m -> Encounters.waiting(m) && !packOf(m).isEmpty());
         if (near.isEmpty()) return 0;
         Set<String> woke = null;
+        Mob caller = null;
         for (Mob m : near) {
             double d2 = m.distanceToSqr(p);
-            boolean seen = d2 <= CLOSE * CLOSE || d2 <= NOTICE * NOTICE && Math.abs(m.getY() - p.getY()) <= NOTICE_UP && m.hasLineOfSight(p);
+            boolean lookout = m.getPersistentData().getBooleanOr(LOOKOUT, false);
+            // a lookout is on its perch to see: further than the rest, and up or down a slope
+            boolean inSight = lookout ? d2 <= LOOK * LOOK : d2 <= NOTICE * NOTICE && Math.abs(m.getY() - p.getY()) <= NOTICE_UP;
+            boolean seen = d2 <= CLOSE * CLOSE || inSight && m.hasLineOfSight(p);
             if (!seen && m.hurtTime <= 0 && m.getHealth() >= m.getMaxHealth()) continue;
             if (woke == null) woke = new HashSet<>();
             woke.add(packOf(m));
+            if (lookout && seen) caller = m;
         }
         if (woke == null) return 0;
         for (Mob m : near) if (woke.contains(packOf(m))) Encounters.releaseFree(m);
+        if (caller != null) call(level, caller, p);
         return woke.size();
+    }
+
+    /** A lookout that has seen someone sounds its horn: every one of its own within earshot wakes and comes for whoever it saw. */
+    private static void call(ServerLevel level, Mob lookout, ServerPlayer p) {
+        String pack = packOf(lookout);
+        for (Mob m : level.getEntitiesOfClass(Mob.class, lookout.getBoundingBox().inflate(CALL, 24, CALL), m -> m != lookout && m.isAlive() && pack.equals(packOf(m)))) {
+            Encounters.releaseFree(m);
+            m.setLastHurtByMob(p); // who it turns to when its wake beat ends, however far off they are
+        }
+        level.playSound(null, lookout.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 4F, 1.2F);
     }
 
     /** Whether a pack is awake and still has someone standing, anywhere near its place. */

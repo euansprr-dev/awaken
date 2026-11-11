@@ -30,6 +30,24 @@ public final class EncounterTests {
     private EncounterTests() {}
 
     public static void register() {
+        // A pack on the prowl (SPEC 50.9 "Who lives there"): held waiting with a beat, a monster walks from one stop to the
+        // other by the world's clock and back, and is still waiting (it has taken no target) all the while
+        AwakenTests.registerIsolated("gates_prowl_walks_its_beat", 2000, h -> {
+            for (int x = 0; x <= 14; x++) for (int z = 0; z <= 4; z++) h.setBlock(x, 1, z, net.minecraft.world.level.block.Blocks.STONE);
+            BlockPos a = h.absolutePos(new BlockPos(2, 2, 2)), b = h.absolutePos(new BlockPos(12, 2, 2));
+            Mob pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, new BlockPos(2, 2, 2));
+            Encounters.holdBeat(pig, new long[]{a.asLong(), b.asLong()});
+            boolean[] stood = new boolean[2];
+            h.onEachTick(() -> {
+                if (pig.blockPosition().closerThan(a, 3)) stood[0] = true;
+                if (pig.blockPosition().closerThan(b, 3)) stood[1] = true;
+            });
+            h.succeedWhen(() -> {
+                h.assertTrue(Encounters.waiting(pig), "it stopped waiting");
+                h.assertTrue(stood[0] && stood[1], "it has not stood at both stops of its beat yet (a " + stood[0] + ", b " + stood[1] + ", now at " + pig.blockPosition() + ")");
+                h.assertTrue(Dormant.stop(0, 2) == 0 && Dormant.stop(Dormant.STOP, 2) == 1 && Dormant.stop(Dormant.STOP * 2L, 2) == 0, "the clock doesn't turn the beat");
+            });
+        });
         AwakenTests.registerIsolated("gates_encounter_reload_once", 100, h -> {
             var level = h.getLevel();
             GateService.useTestLevel(level);
