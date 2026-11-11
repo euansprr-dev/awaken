@@ -118,7 +118,7 @@ a companion that isn't a person, any change to solo balance, any change to the l
 | The Ritual (the first boss scene) | Waits for everyone, kills all at once; each accepts alone | Nothing in the scene. The Together section says who is still choosing |
 | Infirmary and Registry | Each wakes on their own clock; Bram walks the first player | The one who wakes later sees the other waiting; the party strip appears when the band boots (4.2) |
 | Ilse's fire | Each gets the coal | When one places the Ember near the other: "Make this your home too?" (4.1) |
-| The skiff | Everyone on the deck flies together | A passenger without the coal may still fly; the film plays for all (to confirm, section 8) |
+| The skiff | Everyone on the deck flies together, coal or not, and each sees the whole film (confirmed, section 8) | A passenger who has flown may take the helm home |
 | First gate | Both walk in; the door can offer the thread | The door's card becomes a clear two-way choice (4.4, mockup M3) |
 | Gate floors | Shared credit, sealing, scaling | See each other; point; stand back up; targets; the rider's kit |
 | The Lord | +50% health each, hoard each, bell each | Target hold, the right ring, stance, a shared finishing film |
@@ -318,9 +318,10 @@ same ladders (§36). None needs timing; each has a window of seconds.
 - **The Answering Peal.** A partner rings their handbell for you; you hear it from its bearing wherever you are;
   ring yours back, stand still 5 seconds, and you're beside them. Both in the overworld, neither in a fight, a gate, a
   trial or a dream; every 10 minutes. It is Homeward's rule pointed at a person. No menu.
-- **The skiff.** Three rules for the Far Landing session to confirm: a party member without the coal may ride as
-  a passenger; the film and the crossing play for everyone on the deck; a helm used while the skiff is away says so
-  and brings it back.
+- **The skiff.** It already does two of the three things a pair needs (section 8): anyone on the deck flies, coal or
+  not, and each sees the whole film; and the skiff is never away on the server, so a late friend always finds it.
+  One gap to close with that plan: a passenger without the coal can't fly home alone (the helm turns them away). The
+  rule: anyone who has flown once may take the helm **home**; flying **out** as the pilot still needs Ilse's coal.
 - **Shown the way.** A monument your partner solved without you is a lead in your Journal ("Ana opened the Tether
   Spire east of home"). Go there with them and touch the cache: you're paid a first-timer's share, once.
 - **Found together.** A find, a region, a beast one of you discovers alone becomes a lead for the other, never a
@@ -366,6 +367,8 @@ All new fields are optional with defaults, so `together_old_saves_load_the_same`
 | Party member in another dimension | Strip shows where ("in a gate", "asleep"); no arrow | `pair_strip_far` |
 | Thread task done but the fighter leaves by the way out | No rank for either; the task's beads are kept for the next try that day | `thread_rank_needs_win` |
 | Answering Peal into unloaded or unsafe ground | Lands on the partner's last safe standing spot | `pair_peal_safe` |
+| Both of a couple have pealed and one accepts the homecoming | One fetch takes both; both are thanked in Carillon; no second card is left waiting for the other | `pair_homecoming_together` |
+| A pet is out with one of you when the other rings the Answering Peal | The pet's own catch-up rule brings it (pets plan); nothing here moves it | `pair_peal_safe` |
 | Old world, one player, all switches on | Exactly today | `alone_plays_the_same` |
 
 ## 5. Concrete demonstrations
@@ -457,9 +460,26 @@ None of these was measured in AWAKEN; they pick the direction, the tests and his
 Asked by message on 11 Nov; answers are folded in below as they arrive.
 - **Far Landing** (`spires-and-journey`): passengers without the coal, the film for everyone on deck, a helm used
   while the skiff is away, anything keyed to one player, a way straight to a friend.
+  **Answered 11 Nov** (read from its code at 2abda1c36, not merged):
+  - Only the one at the helm is checked for the coal. Everyone else on the deck flies and gets their own film.
+    The gap: a passenger without the coal can't take the skiff home alone (taken into 4.7).
+  - Both moorings belong to the world. The skiff's blocks never leave; a second flight can start while one is in
+    the air. Only the pictures can overlap for a watcher within 160 blocks who then takes the helm.
+  - Everything else is per player: the marks, the letters (16 each), the hold's errands, the invitations, the
+    homecoming. In a shared home each member who has pealed gets their own homecoming; the fetch carries anyone within
+    5 blocks but changes only its own player's marks. So a couple needs a test that one fetch serves both (4.10).
+  - Nothing goes straight to a friend. The Answering Peal (4.7) is the only such thing in this plan or that one.
 - **The Whole Boss Fight** (`boss-experience-plan`): whether the new ring knows who a blow is for; the target hold;
   more than one client filming one finishing blow.
 - **Aya and Dubu** (`hearth-pets-plan`): who may ask a pet along in a shared home; pets and the skiff and gates.
+  **Answered 11 Nov** (SPEC §69 on its branch, approved, not yet played):
+  - The pair belongs to the home and is shared by its household; a sister home gets no second pair. Owner or member
+    may ask one along; each pet answers to one person at a time, and the second to ask is told who it's with. So a
+    couple can take one each. Only the owner renames them: with two keepers (4.1) the second keeper should be able to
+    as well, a one-line change for that plan once both are merged.
+  - Nothing can target or hurt them and they never fight; in a fight they back off 11 to 13 blocks. They wait where
+    they stand when their person enters a gate or a dream and go home after five minutes. After a skiff flight their
+    own catch-up rule brings them. Nothing in this plan needs to move or protect a pet.
 - **Danger and calm** (`world-moods-plan`): mixed levels; whether its late second Hearth is the sister home.
   **Answered 11 Nov** (its page isn't published; nothing of it is approved):
   - No clash on mixed levels. Land and creature levels come from the place, never from who is there. The land's mood
