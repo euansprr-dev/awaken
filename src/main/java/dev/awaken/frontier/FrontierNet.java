@@ -25,17 +25,18 @@ public final class FrontierNet {
     /**
      * Server → a traveller. START: the flight begins (the skiff at {@code from} lifts; {@code quick}: straight into the
      * cloud). ARRIVED: you're at {@code to} now, the land is loading under the cloud. END: the flight is over, whatever
-     * the film is doing. Facings are {@code Direction.get2DDataValue}.
+     * the film is doing. Facings are {@code Direction.get2DDataValue}. {@code drawn}: there's no skiff built at
+     * {@code from} (it came for you, SPEC §67 homecoming), so the client draws it as built and hides nothing there.
      */
     public record Fly(int kind, BlockPos from, int fromFacing, BlockPos to, int toFacing, boolean quick, String title, String line,
-                      List<UUID> party) implements CustomPacketPayload {
+                      List<UUID> party, boolean drawn) implements CustomPacketPayload {
         public static final int START = 0, ARRIVED = 1, END = 2;
         public static final Type<Fly> TYPE = new Type<>(Awaken.id("frontier_fly"));
         public static final StreamCodec<ByteBuf, Fly> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Fly::kind, BlockPos.STREAM_CODEC, Fly::from, ByteBufCodecs.VAR_INT, Fly::fromFacing,
                 BlockPos.STREAM_CODEC, Fly::to, ByteBufCodecs.VAR_INT, Fly::toFacing, ByteBufCodecs.BOOL, Fly::quick,
                 ByteBufCodecs.stringUtf8(128), Fly::title, ByteBufCodecs.stringUtf8(256), Fly::line,
-                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Fly::party, Fly::new);
+                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Fly::party, ByteBufCodecs.BOOL, Fly::drawn, Fly::new);
 
         @Override
         public Type<Fly> type() {

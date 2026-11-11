@@ -119,6 +119,13 @@ public final class FrontierData extends SavedData {
         return first;
     }
 
+    /** The first of this player's marks that starts with {@code prefix} ("peal@12"), or null. */
+    @Nullable String markStarting(UUID who, String prefix) {
+        Set<String> s = marks.get(who);
+        if (s != null) for (String m : s) if (m.startsWith(prefix)) return m;
+        return null;
+    }
+
     void unmark(UUID who, String mark) {
         Set<String> s = marks.get(who);
         if (s != null && s.remove(mark)) setDirty();

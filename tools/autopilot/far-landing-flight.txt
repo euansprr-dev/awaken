@@ -1,0 +1,113 @@
+# The Far Landing's flight (SPEC §67.4-67.5): the ridge mooring and its skiff from three sides, a flight out (the lift,
+# the cloud crossing with the painting and the name, the descent onto the landing's mooring), the landing's mooring with
+# its hold and board and the land round it, then the flight home straight into the cloud.
+# The numbers are in latest.log ("[frontier]").
+# Seed 4245, a new world (rules 4). Run on CI: tools/tour-ci.sh tools/autopilot/far-landing-flight.txt 1500
+world autopilot_far_landing survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken frontier status
+cmd awaken frontier ready
+# the ridge: its land loads, the mooring is built, then we stand at its helm
+cmd awaken frontier goto ridge
+wait 120
+cmd awaken frontier goto ridge
+wait 120
+cmd awaken frontier goto ridge
+wait 60
+cmd awaken frontier status
+cmd gamemode spectator
+cmd awaken frontier look ridge 0
+wait 60
+hud off
+shot fl_01_ridge_bow_quarter
+cmd awaken frontier look ridge 1
+wait 30
+shot fl_02_ridge_stern_and_jetty
+cmd awaken frontier look ridge 2
+wait 30
+shot fl_03_ridge_from_above
+cmd gamemode survival
+cmd awaken frontier goto ridge
+wait 30
+shot fl_04_at_the_helm
+hud on
+# out: the lift, the cloud, the name, the descent
+cmd awaken frontier fly
+wait 30
+shotnow fl_05_lift_off
+wait 45
+shotnow fl_06_climbing_turn
+wait 35
+shotnow fl_07_cloud_closing
+wait 30
+shotnow fl_08_crossing_name
+wait 40
+shotnow fl_09_crossing_rule
+wait 40
+shotnow fl_10_crossing_held
+wait 40
+shotnow fl_11_t300
+wait 40
+shotnow fl_12_t340
+wait 40
+shotnow fl_13_t380
+wait 40
+shotnow fl_14_t420
+wait 40
+shotnow fl_15_t460
+wait 40
+shotnow fl_16_t500
+wait 200
+shot fl_17_set_down
+cmd awaken frontier status
+# the landing's mooring and the land round it
+cmd gamemode spectator
+cmd awaken frontier look landing 0
+wait 60
+hud off
+shot fl_18_landing_bow_quarter
+cmd awaken frontier look landing 1
+wait 30
+shot fl_19_landing_hold_and_board
+cmd awaken frontier look landing 2
+wait 30
+shot fl_20_landing_from_above
+cmd tp @s ~ ~90 ~ ~ 20
+wait 120
+shot fl_21_the_land_round_it
+hud on
+cmd gamemode survival
+cmd awaken frontier goto landing
+wait 40
+cmd awaken frontier letter
+wait 30
+shot fl_22_a_letter
+wait 200
+# home, straight into the cloud (a sneak-use after the first flight)
+cmd awaken frontier fly quick
+wait 12
+shotnow fl_23_home_quick_lift
+wait 30
+shotnow fl_24_home_crossing
+wait 40
+shotnow fl_25_home_crossing_name
+wait 300
+shot fl_26_home_at_the_ridge
+cmd awaken frontier status

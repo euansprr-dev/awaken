@@ -382,7 +382,12 @@ public final class RegionMap {
             }
         }
         if (farLanding()) {
-            // the city's calm ring eases into the land round it between 1,000 and 1,600 (the landing has no wall: E from its first step)
+            // the landing has no wall: E land from its first step to the safe line, easing into the field over 300 more
+            if (d < r.safe + LANDING_EASE) {
+                double t = clamp((d - r.safe) / LANDING_EASE, 0, 1);
+                lv = (1 - t) * Math.min(9, lv) + t * lv;
+            }
+            // the city's calm ring eases into the land round it between 1,000 and 1,600
             if (dc < CITY_EASE) {
                 double t = clamp((dc - 1000) / (CITY_EASE - 1000), 0, 1);
                 lv = (1 - t) * Math.min(9, Math.max(8, lv)) + t * lv;
@@ -396,6 +401,8 @@ public final class RegionMap {
 
     /** In a Far Landing world, where the city's calm ring has eased into the land round it (SPEC §67). */
     public static final int CITY_EASE = 1600, CITY_CALM = 1000;
+    /** Past the safe line round the landing, the land eases from E into its own level over this far. */
+    public static final int LANDING_EASE = 300;
 
     /** How far a point is from the nearest province border (the middle of a calm way): half the gap between its two nearest province hearts. */
     private double wayDistance(double x, double z) {

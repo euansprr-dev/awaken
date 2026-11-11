@@ -79,6 +79,7 @@ public final class Awaken {
         dev.awaken.storage.StorageModule.init(modBus);
         dev.awaken.shaping.ShapingModule.init(modBus);
         dev.awaken.riding.RidingModule.init(modBus);
+        dev.awaken.frontier.FrontierModule.init(modBus);
         dev.awaken.finds.FindsModule.init(modBus);
     }
 

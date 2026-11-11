@@ -16,6 +16,9 @@ public final class FarPost {
     /** Shows a letter and keeps a copy (frontier). */
     public interface Letters {
         void letter(ServerPlayer p, String from, String text);
+
+        /** Only the hold's copy (the card was shown some other way: an offer, say). */
+        void keep(ServerPlayer p, String from, String text);
     }
 
     /** City people's waiting steps, handed in through the hold: how many moved; and Hale's board, at the mooring (living). */
@@ -23,6 +26,9 @@ public final class FarPost {
         int hold(ServerPlayer p);
 
         boolean board(ServerPlayer p);
+
+        /** Every few seconds while a player who has flown out is on the land, away from the city: who writes first. */
+        default void out(ServerPlayer p) {}
     }
 
     /** A keepsake held at the hold: sent home to its family, who write back; false when it isn't one (world). */
@@ -35,7 +41,28 @@ public final class FarPost {
         boolean ready(ServerPlayer p);
     }
 
-    private static Letters letters = (p, from, text) -> {};
+    /** One of Carillon's four bells was rung for a player out on the land: a letter, and for two of them an invitation (frontier). */
+    public interface CityBells {
+        void rung(ServerPlayer p, String bellId);
+    }
+
+    private static CityBells cityBells = (p, id) -> {};
+
+    public static void installCityBells(CityBells c) {
+        cityBells = c;
+    }
+
+    public static void cityBell(ServerPlayer p, String bellId) {
+        cityBells.rung(p, bellId);
+    }
+
+    private static Letters letters = new Letters() {
+        @Override
+        public void letter(ServerPlayer p, String from, String text) {}
+
+        @Override
+        public void keep(ServerPlayer p, String from, String text) {}
+    };
     private static Errands errands = new Errands() {
         @Override
         public int hold(ServerPlayer p) {
@@ -73,6 +100,14 @@ public final class FarPost {
     /** A letter from {@code from} ("Bram", "Oren at the Forge"), in their own words. */
     public static void letter(ServerPlayer p, String from, String text) {
         letters.letter(p, from, text);
+    }
+
+    public static void keepLetter(ServerPlayer p, String from, String text) {
+        letters.keep(p, from, text);
+    }
+
+    public static void out(ServerPlayer p) {
+        errands.out(p);
     }
 
     public static int hold(ServerPlayer p) {

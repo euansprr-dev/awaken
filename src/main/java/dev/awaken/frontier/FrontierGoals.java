@@ -20,7 +20,7 @@ import java.util.List;
 final class FrontierGoals {
     private FrontierGoals() {}
 
-    static final String SKIFF = "frontier/skiff", INVITED = "frontier/invited";
+    static final String SKIFF = "frontier/skiff", INVITED = "frontier/invited", HOME = "frontier/home";
     /** Between your first power and your fire. */
     static final int PATH_SKIFF = 5;
 
@@ -32,8 +32,8 @@ final class FrontierGoals {
         MinecraftServer server = p.level().getServer();
         if (!TheLull.farLanding(server)) return List.of();
         FrontierData d = FrontierData.get(server);
-        List<Goals.Step> out = new ArrayList<>(2);
-        if (!d.marked(p.getUUID(), "landed") && FarPost.ready(p)) {
+        List<Goals.Step> out = new ArrayList<>(3);
+        if (!d.marked(p.getUUID(), "landed") && (FarPost.ready(p) || d.marked(p.getUUID(), "ready"))) {
             FrontierData.Mooring ridge = d.ridge();
             BlockPos at = ridge != null && ridge.built() ? Skiff.at(ridge.origin(), ridge.facing(), Skiff.HELM) : Moorings.ridgeSpot(server);
             out.add(Goals.Step.of(SKIFF, Goal.OUT, "Take the skiff to the far country")
@@ -41,6 +41,14 @@ final class FrontierGoals {
                     .need(Need.of("Use the helm at the skiff's stern", false))
                     .at(at)
                     .path(PATH_SKIFF)
+                    .build());
+        }
+        if (Homecoming.waiting(p)) {
+            FrontierData.Mooring landing = d.landing();
+            out.add(Goals.Step.of(HOME, Goal.OUT, "Go home to Carillon")
+                    .why("A hundred bells. The city's waiting to ring every one it has for you. The skiff comes for you the morning after, or take it from the landing.")
+                    .need(Need.of("Walk into Carillon", false))
+                    .at(landing != null && landing.built() ? Skiff.at(landing.origin(), landing.facing(), Skiff.HELM) : TheLull.centre(server))
                     .build());
         }
         String bell = Invitations.standing(p);

@@ -53,7 +53,7 @@ public final class FlightFilm {
         final BlockPos from, to;
         final Direction fromFacing;
         Direction toFacing;
-        final boolean quick, home;
+        final boolean quick, home, drawn;
         final String title, line;
         final List<UUID> party;
         final List<Snap> fromSnap = new ArrayList<>();
@@ -71,6 +71,7 @@ public final class FlightFilm {
             this.fromFacing = Direction.from2DDataValue(m.fromFacing());
             this.toFacing = Direction.from2DDataValue(m.toFacing());
             this.quick = m.quick();
+            this.drawn = m.drawn();
             this.home = m.title().equals("Carillon");
             this.title = m.title();
             this.line = m.line();
@@ -125,8 +126,13 @@ public final class FlightFilm {
         if (cur != null) clear(true);
         Flight f = new Flight(m, p.getEyeHeight());
         cur = f;
-        snap(mc.level, f.from, f.fromFacing, f.fromSnap);
-        hide(mc.level, f.from, f.fromSnap);
+        if (f.drawn) {
+            // the skiff that came for you: drawn as built where you stand, nothing real there to hide
+            template(f.fromFacing, f.fromSnap);
+        } else {
+            snap(mc.level, f.from, f.fromFacing, f.fromSnap);
+            hide(mc.level, f.from, f.fromSnap);
+        }
         CloudCrossing.begin(f.title, f.line, f.home);
         Cinema.bars(true);
         Cinema.hud(false);
@@ -388,7 +394,7 @@ public final class FlightFilm {
         cur = null;
         Minecraft mc = Minecraft.getInstance();
         if (f != null && mc.level != null) {
-            restore(mc.level, f.from, f.fromSnap);
+            if (!f.drawn) restore(mc.level, f.from, f.fromSnap);
             if (restoreAll || f.toHidden) restore(mc.level, f.to, f.toSnap);
         }
         CloudCrossing.end();

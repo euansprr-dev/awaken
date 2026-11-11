@@ -24,13 +24,30 @@ final class FrontierPost {
     static final int HOLD_SHOWS = 3;
 
     static void install() {
-        FarPost.installLetters(FrontierPost::letter);
+        FarPost.installLetters(new FarPost.Letters() {
+            @Override
+            public void letter(ServerPlayer p, String from, String text) {
+                FrontierPost.letter(p, from, text);
+            }
+
+            @Override
+            public void keep(ServerPlayer p, String from, String text) {
+                FrontierPost.keep(p, from, text);
+            }
+        });
+        Invitations.install();
+        Homecoming.install();
+    }
+
+    /** The hold's copy of a letter. */
+    static void keep(ServerPlayer p, String from, String text) {
+        MinecraftServer server = p.level().getServer();
+        FrontierData.get(server).letter(p.getUUID(), new FrontierData.Letter(from, text, PlayDays.current(server)));
     }
 
     /** A letter: the card now, a copy in the hold. */
     static void letter(ServerPlayer p, String from, String text) {
-        MinecraftServer server = p.level().getServer();
-        FrontierData.get(server).letter(p.getUUID(), new FrontierData.Letter(from, text, PlayDays.current(server)));
+        keep(p, from, text);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("A letter from " + from))
                 .body(Component.literal(text)).dialogue().ttl(readTicks(text)).priority(7).build());
         Awaken.LOG.info("[frontier] a letter from {} to {}", from, p.getName().getString());
@@ -72,9 +89,13 @@ final class FrontierPost {
     /** Every five seconds: the city's due invitations and the homecoming (SPEC §67). */
     static void tick(MinecraftServer server) {
         if (!TheLull.farLanding(server)) return;
+        FrontierData data = FrontierData.get(server);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (Flights.flying(p.getUUID())) continue;
             Invitations.check(p);
             Homecoming.check(p);
+            if (data.marked(p.getUUID(), "landed") && p.level() == server.overworld()
+                    && !dev.awaken.core.api.CityHooks.inCity(p.level(), p.blockPosition())) FarPost.out(p);
         }
     }
 }

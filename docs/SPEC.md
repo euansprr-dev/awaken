@@ -24083,3 +24083,118 @@ bell): his pick decides the whole family.
   AUDIT.md are the record.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
+
+## 67. The Far Landing (a journey played far from the city; page https://claude.ai/artifact/449tuDbGGVgmuAP2LAHRs2, copy `docs/journey/far-landing.html`, build plan `docs/journey/BUILD-PLAN.md`; Euan approved all eleven decisions 2026-11-11: "Go ahead with the full plan and recommendations")
+
+The first hour stays in and around Carillon as built. Then an old Precursor skiff on the ridge flies you out on the wind to
+a landing about 6 km away, and the real game starts there: danger is measured from the landing, and the city's errands
+come to you by letter and through the skiff's hold. You can go back any time (the skiff runs both ways), the city asks
+you back twice to hear a bell rung for you, and the morning after the Hundred Peal it fetches you home. New worlds only.
+
+**67.1 The switch: rules 4.**
+- `RegionMap.RULES` is 4. A world keeps the rules it was made under (`living_regions` saves `rules`); one with no record
+  is new and gets 4. Old worlds (V20 is 3) are untouched. The GameTest server keeps `TEST_RULES` (2).
+- Everything of this section asks `TheLull.farLanding(server)` (true only under rules ≥ 4 with Carillon standing) or
+  `TheLull.landing(server)` (null otherwise). With it false the game behaves exactly as before.
+
+**67.2 The landing (`core.api.FarLanding`, pure).**
+- 48 bearings (turned by the seed) × radii 5,000, 5,500, 6,000, 6,500, 7,000 round the city. Each spot scores its land
+  (3: plains, sunflower plains, meadow, flower forest, cherry grove, birch; 2: other forest, taiga, savanna, plains;
+  −2: snowy, slopes, windswept, stony, grove, dark forest, pale garden; −5: ocean, river, beach, shore, swamp, mangrove,
+  desert, badlands, peaks, jungle, bamboo, mushroom, ice, frozen, deep dark, dripstone, lush), then the 28 best by land
+  are measured for flatness (a cross of nine points 48 apart: 2 − spread/6, never under the sea: −3) and water (a river
+  or lake biome at 150 or 300 in eight directions: +1). Ties break on the seed. Cached per session; saved in the region
+  record as `landing_x`/`landing_z`.
+
+**67.3 The land under rules 4 (`RegionMap`).**
+- `cx, cz` stay the city (TheLull, the Commons, its ramp, its name); `lx, lz` (the landing) is where danger is measured.
+- `wideLevelAt`: the Commons' ramp to 700, 8–9 to 1,000 round the city as before; past that each region's level with its
+  odds and calm ways measured from the landing. Round the landing the land is capped at 9 (E) to the safe line (1,300)
+  and eases into the field over `LANDING_EASE` 300 more; round the city the ring eases from 8–9 at `CITY_CALM` 1,000 to
+  the field at `CITY_EASE` 1,600.
+- `makeWideLevel`: a heart within the safe line of the landing, or within 1,000 of the city, is E; the odds by distance
+  are from the landing. A calm region is named like a shelter only when it is over 2,000 from both.
+- Roads, `FirstTown`, `Holdfasts` and the stone people's places measure from the landing (§28, §43.3), keeping their old
+  clearance from the city. Aldo stays on his milestone by the ridge.
+
+**67.4 The skiff and its moorings (`dev.awaken.frontier`).**
+- Built by the server from vanilla and Precursor blocks (`Skiff`): drawn facing south, the origin the berth's middle at
+  deck height. A dark oak deck 5 wide (narrowing at bow and stern), a Precursor plating hull with dark oak stair
+  shoulders, a trim keel with a glowing core, dark oak rails open at the gangways (z 0), an end rod at the bow, a glow
+  panel helm with a trim cap at the stern (`HELM` 0,1,−3; you stand at `STAND` 0,1,−4), a stripped spruce mast to 8 with
+  a spar and two hanging lanterns at 7, a white wool sail before it, a lantern on top. The jetty: spruce arms either
+  side (x ±4..5, z −8..6), a stern cross-piece, gangways, a spruce rail with a gap at the stern for steps, lanterns on
+  the bow posts, spruce log posts to the ground. The landing's mooring adds the hold (a barrel, `HOLD` 4,1,−6) and the
+  Association's board (a lectern, `BOARD` −4,1,−6). Footprint ±5 × −9..7, keel −2 to 10 clear above.
+- The ridge mooring: city centre + (22, −ridge − 30), beside Aldo; built once a player is within 160. The landing's:
+  built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
+  4 (height spread ×3, water ×6, road ×8, distance/6); the deck sits 3 over the highest ground under it. Both are
+  guarded: breaking, placing and explosions there are refused except for creative players and operators. Saved in
+  `FrontierData` (`awaken:frontier`, schema 1).
+- Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states.
+
+**67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`).**
+- The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
+  the story off; `/awaken frontier ready` for tours). Everyone on the deck flies together. Overworld only.
+- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land loads
+  under a `frontier_flight` ticket (radius 3, 90 s); the move happens once the lift is over and the land is loaded, or
+  after 40 s more. `teleportTo` keeps the client's camera. No damage from the helm until the client says it has set down
+  (`Landed`) or 30 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
+  crash does on your next login (`pending`).
+- The client films it as one `OpeningCamera` shot through `Cinema`: the resting skiff is swapped on that client for
+  barriers (unseen, still solid) and drawn block by block with the game's own models (`submitMovingBlock`) along a lift
+  path that bobs, gathers speed along the bow, turns toward the far end leaning into the turn, and is 150 up when the
+  cloud closes. The crossing is an overlay drawn like the gates' crossing: the painting of where you're going
+  (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
+  "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that fills
+  as the land arrives. It holds at least 3 s and until the far land is drawn (or 20 s), then parts over a 110-tick
+  descent in from 190 back and 120 up, settling with a dip; the real far skiff returns six ticks before the end.
+- Watchers within 160 of a mooring see the skiff lift away with its party (their bodies hidden while it lifts); it
+  comes back empty to its berth 15 s later.
+
+**67.6 Errands come to you (`core.api.FarPost`).**
+- Letters: a card in the writer's words wherever you are (`FarPost.letter`), a copy kept in the hold (16 kept a player,
+  the newest three read out when the hold has nothing else to do).
+- The hold: a keepsake held at it goes home (world: its family writes back; you keep it; counts as shown); else each
+  waiting step of a city person's (Oren, Hale, Hettie, Kestrel, Bram; never Ilse's, which stays at her fire) is handed
+  over, up to six steps a chain a use (a talk is a note sent; a delivery is the things put in; a short delivery says
+  what's missing); else Oren's offer again if it can be taken; else the letters.
+- Hale's board stands beside it (`Bounties.board`). Hale's rack sells patterns at every Armoury door
+  (`ArmsArmoury.rackHere`, the view's `rack`).
+- Bram's bells (the Registry's handbell for the first gate, its tolling bell for the twenty-fifth) go on the Registry's
+  wagon to your yard, with his letter. Village bells are told by letter, the villages measured from the landing, and
+  their thanks come by letter.
+- Oren writes once you're out on the land with his offer on the letter (Help takes the chain); his loads go in the hold.
+
+**67.7 Going back: two invitations (`Invitations`).**
+- A city bell that's due while you're away from Carillon is yours at once, hanging where it always has. Its letter: the
+  Roost's from Kestrel, the Square's from the Choir, the market's from Hettie, the Quay's from the dockers. The first of
+  the Roost and the Square (round 1, about C rank) and the first of the market and the Quay (round 2, about B) also ask
+  you to come and hear it. While one stands it is an optional row under Out there on the Tasks page.
+- Standing in Carillon with one standing: the bell rings out over you, and people come: round 1 Kestrel and Hale (his
+  new rack), round 2 Hettie and Oren (he looks at your work). Nothing waits on it.
+
+**67.8 The homecoming (`Homecoming`).**
+- The morning after your Hundred Peal (before noon of the next play day, or any time once a morning has passed), under
+  the open sky, a card: the skiff has come for you. Go home: it is drawn where you stand (nothing built there, nobody
+  else sees it) and takes you, and anyone beside you, to the ridge. There you hear every city bell from far off and Ilse
+  says she's walking down behind you. Walking into Carillon after the peal, by skiff or not: every bell over you, and
+  Bram, Kestrel, Oren, Hale, Hettie and Ilse thank you in plain words. Once. A Tasks row says "Go home to Carillon"
+  until then. Ilse's visit to your home after the Wake stays as built (§43.14).
+
+**67.9 Ilse's talk.** In a far world her lines are the same with three changes: after Aldo, "There's an old skiff up
+on the ridge. It flies itself, out on the wind to the far country and back again. That's where hunters start now. Nobody
+from the city can stay out there, so nobody will bother you."; the coal is for wherever you want to live "in the far
+country"; her goodbye tells you the skiff brings you back whenever you want.
+
+**67.10 Tasks.** "Take the skiff to the far country" (main path, between your first power and your fire, at the helm,
+until you've landed); "Go and hear the … rung for you" (optional); "Go home to Carillon" (after the peal).
+
+**67.11 Commands and checks.**
+- `/awaken frontier status | goto ridge|landing | fly [quick] | ready | letter | invite <bell> | homecoming`.
+- GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
+  `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
+  `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
+  the way it faces).
+- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming` (seed 4245).
+- Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.

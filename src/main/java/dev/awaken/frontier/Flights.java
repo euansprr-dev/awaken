@@ -6,6 +6,7 @@ import dev.awaken.core.api.FarPost;
 import dev.awaken.core.api.TheLull;
 import dev.awaken.signal.Signal;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -94,15 +95,55 @@ final class Flights {
             if (spot == null) return;
             there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, to), false);
         }
-        FrontierData data = FrontierData.get(server);
         List<ServerPlayer> party = new ArrayList<>();
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator() || flying(p.getUUID())) continue;
             if (p == pilot || Skiff.onDeck(here.origin(), here.facing(), p.getX(), p.getY(), p.getZ())) party.add(p);
         }
-        List<UUID> ids = party.stream().map(ServerPlayer::getUUID).toList();
         String title = to == Moorings.Which.LANDING ? "The Far Landing" : "Carillon";
-        String line = line(server, to);
+        launch(level, party, here.origin(), here.facing(), to, there, quickAsked, title, line(server, to), false);
+        Awaken.LOG.info("[frontier] {} lifts from the {} with {} aboard{}", pilot.getName().getString(), from == Moorings.Which.RIDGE ? "ridge" : "landing",
+                party.size(), quickAsked ? " (straight into the cloud)" : "");
+    }
+
+    /**
+     * The homecoming (SPEC §67): the skiff has come for this player where they stand, and takes them (and anyone right
+     * beside them) home to the ridge. Never quick. False when it can't: not in the overworld, under a roof, already flying.
+     */
+    static boolean fetch(ServerPlayer pilot, String line) {
+        MinecraftServer server = pilot.level().getServer();
+        ServerLevel level = server.overworld();
+        if (pilot.level() != level || !TheLull.farLanding(server) || flying(pilot.getUUID())) return false;
+        BlockPos at = pilot.blockPosition();
+        if (!level.canSeeSky(at.above(2))) return false;
+        FrontierData.Mooring there = Moorings.get(server, Moorings.Which.RIDGE);
+        if (there == null || !there.built()) {
+            BlockPos spot = Moorings.ridgeSpot(server);
+            if (spot == null) return false;
+            there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, Moorings.Which.RIDGE), false);
+        }
+        // it rests with its stern to you and its bow toward the city, its helm where you stand
+        Direction facing = Direction.fromYRot(bearing(at, there.origin()));
+        BlockPos origin = at.subtract(rotated(facing, Skiff.STAND));
+        List<ServerPlayer> party = new ArrayList<>();
+        for (ServerPlayer p : level.players()) {
+            if (p.isSpectator() || flying(p.getUUID())) continue;
+            if (p == pilot || p.distanceToSqr(pilot) < 5 * 5) party.add(p);
+        }
+        launch(level, party, origin, facing, Moorings.Which.RIDGE, there, false, "Carillon", line, true);
+        Awaken.LOG.info("[frontier] the skiff came for {} at {} and takes {} home", pilot.getName().getString(), at.toShortString(), party.size());
+        return true;
+    }
+
+    /** A part's place relative to the berth's middle, turned to this facing. */
+    private static BlockPos rotated(Direction facing, BlockPos local) {
+        return Skiff.at(BlockPos.ZERO, facing, local.getX(), 0, local.getZ());
+    }
+
+    private static void launch(ServerLevel level, List<ServerPlayer> party, BlockPos from, Direction fromFacing, Moorings.Which to,
+                               FrontierData.Mooring there, boolean quickAsked, String title, String line, boolean drawn) {
+        FrontierData data = FrontierData.get(level.getServer());
+        List<UUID> ids = party.stream().map(ServerPlayer::getUUID).toList();
         for (ServerPlayer p : party) {
             boolean quick = quickAsked && data.marked(p.getUUID(), "flown");
             Flight f = new Flight(p.getUUID(), to, there, quick);
@@ -111,18 +152,17 @@ final class Flights {
             FLYING.put(p.getUUID(), f);
             double[] s = Moorings.stand(there);
             data.pending(p.getUUID(), new FrontierData.Dest(s[0], s[1], s[2], (float) s[3]));
-            AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.START, here.origin(), here.facing().get2DDataValue(), there.origin(),
-                    there.facing().get2DDataValue(), quick, title, line, ids));
+            AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.START, from, fromFacing.get2DDataValue(), there.origin(),
+                    there.facing().get2DDataValue(), quick, title, line, ids, drawn));
         }
-        float bearing = bearing(here.origin(), there.origin());
+        if (drawn) return; // nobody else sees a skiff that was never built there
+        float bearing = bearing(from, there.origin());
         for (ServerPlayer w : level.players()) {
             if (ids.contains(w.getUUID())) continue;
-            double dx = w.getX() - here.origin().getX(), dz = w.getZ() - here.origin().getZ();
+            double dx = w.getX() - from.getX(), dz = w.getZ() - from.getZ();
             if (dx * dx + dz * dz < SEEN_RANGE * SEEN_RANGE)
-                AwakenNet.send(w, new FrontierNet.Seen(here.origin(), here.facing().get2DDataValue(), bearing, quickAsked, ids));
+                AwakenNet.send(w, new FrontierNet.Seen(from, fromFacing.get2DDataValue(), bearing, quickAsked, ids));
         }
-        Awaken.LOG.info("[frontier] {} lifts from the {} with {} aboard{}", pilot.getName().getString(), from == Moorings.Which.RIDGE ? "ridge" : "landing",
-                party.size(), quickAsked ? " (straight into the cloud)" : "");
     }
 
     /** The small line under the title: how far, and which way from where you set out. */
@@ -193,7 +233,7 @@ final class Flights {
         boolean first = data.mark(f.who, "flown");
         if (f.to == Moorings.Which.LANDING) data.mark(f.who, "landed");
         release(level, f);
-        AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.ARRIVED, BlockPos.ZERO, 0, dest.origin(), dest.facing().get2DDataValue(), f.quick, "", "", List.of()));
+        AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.ARRIVED, BlockPos.ZERO, 0, dest.origin(), dest.facing().get2DDataValue(), f.quick, "", "", List.of(), false));
         Awaken.LOG.info("[frontier] {} set down at the {} ({}){}", p.getName().getString(), f.to == Moorings.Which.RIDGE ? "ridge" : "landing",
                 dest.origin().toShortString(), first ? ", the first flight" : "");
     }
@@ -203,7 +243,7 @@ final class Flights {
     }
 
     private static FrontierNet.Fly end(Flight f) {
-        return new FrontierNet.Fly(FrontierNet.Fly.END, BlockPos.ZERO, 0, BlockPos.ZERO, 0, f.quick, "", "", List.of());
+        return new FrontierNet.Fly(FrontierNet.Fly.END, BlockPos.ZERO, 0, BlockPos.ZERO, 0, f.quick, "", "", List.of(), false);
     }
 
     private static void release(ServerLevel level, Flight f) {

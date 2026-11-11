@@ -1,5 +1,6 @@
 package dev.awaken.frontier;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.awaken.Awaken;
@@ -29,6 +30,11 @@ final class FrontierCommands {
                 .then(Commands.literal("goto")
                         .then(Commands.literal("ridge").executes(c -> go(c.getSource(), Moorings.Which.RIDGE)))
                         .then(Commands.literal("landing").executes(c -> go(c.getSource(), Moorings.Which.LANDING))))
+                .then(Commands.literal("look")
+                        .then(Commands.literal("ridge").executes(c -> look(c.getSource(), Moorings.Which.RIDGE, 0))
+                                .then(Commands.argument("view", IntegerArgumentType.integer(0, 2)).executes(c -> look(c.getSource(), Moorings.Which.RIDGE, IntegerArgumentType.getInteger(c, "view")))))
+                        .then(Commands.literal("landing").executes(c -> look(c.getSource(), Moorings.Which.LANDING, 0))
+                                .then(Commands.argument("view", IntegerArgumentType.integer(0, 2)).executes(c -> look(c.getSource(), Moorings.Which.LANDING, IntegerArgumentType.getInteger(c, "view"))))))
                 .then(Commands.literal("fly").executes(c -> fly(c.getSource(), false))
                         .then(Commands.literal("quick").executes(c -> fly(c.getSource(), true))))
                 .then(Commands.literal("ready").executes(c -> {
@@ -96,6 +102,26 @@ final class FrontierCommands {
         src.sendSuccess(() -> Component.literal("Its land is loading; run this again in a moment."), false);
         Awaken.LOG.info("[frontier] goto {}: loading its land at {}", which, spot.toShortString());
         return 0;
+    }
+
+    /** The camera on a built mooring for a picture: 0 the bow quarter, 1 the stern quarter with the jetty, 2 high over it. */
+    private static int look(CommandSourceStack src, Moorings.Which which, int view) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        MinecraftServer server = src.getServer();
+        FrontierData.Mooring m = Moorings.get(server, which);
+        if (m == null || !m.built()) {
+            src.sendFailure(Component.literal("Not built yet (/awaken frontier goto " + which.name().toLowerCase(java.util.Locale.ROOT) + ")."));
+            return 0;
+        }
+        int[][] eyes = {{11, 5, 13}, {-12, 6, -15}, {6, 26, -8}};
+        int[] e = eyes[view];
+        BlockPos eye = Skiff.at(m.origin(), m.facing(), e[0], e[1], e[2]);
+        double tx = m.origin().getX() + 0.5, ty = m.origin().getY() + 3, tz = m.origin().getZ() + 0.5;
+        double dx = tx - (eye.getX() + 0.5), dy = ty - (eye.getY() + 1.62), dz = tz - (eye.getZ() + 0.5);
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
+        p.teleportTo(server.overworld(), eye.getX() + 0.5, eye.getY(), eye.getZ() + 0.5, Set.of(), yaw, pitch, true);
+        Awaken.LOG.info("[frontier] look {} view {}: from {} at the skiff {}", which, view, eye.toShortString(), m.origin().toShortString());
+        return 1;
     }
 
     /** A flight from the mooring you stand on (as if you'd used its helm). */
