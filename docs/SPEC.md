@@ -4245,14 +4245,29 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
 - **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
-  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
-  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
+  without Wings is judged (`WingCoreBlockEntity.judge`, in this order since 11 Nov 2026): **the rank first**, C or above
+  (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26); then the way up, which is the platform's visit
+  (§17.29: the `#awaken:warded_sky` ward opened on the way in and kept while the player stays in it), nothing built
+  (`ArrivalHooks.byMovement`) and the rope carried them (`ArrivalHooks.byLine`). Passing all three, they are given Wings
+  (`Ascent.grant`, "sky platform core")
   with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
   hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
-  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
-  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
-  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
+  most every 10 s for each reason (`Throttle`), each in its own words, and the server log says which
+  ("[ascent] the sky core at x, y, z stays dark for Name: rank|built|line"; a gift logs too):
+  - rank (`core.rank`): "The core stays dark. It's waiting for a C-rank hunter, so come back when you've reached rank
+    C." A promise is noted (`Promises.seen`, key `wing_core:x,y,z`, need rank C, "A sky core's wings").
+  - built (`core.built`): "The core stays dark. It won't answer anyone who built their way up here. Climb its rings
+    with your rope."
+  - line (`core.line`): "The core stays dark. It only answers someone who climbed its rings with the rope, not with a
+    pearl, a flight or bare hands."
+  Any way the rope carries a climber up the rings counts, however it ends: the sling, the zip's own let-go, the pull-up
+  tap, the double jump onto the deck. A pearl, a power's flight or a Runner hang never does. The core no longer asks
+  `Ascent.arrivedByMovement(p, 20)` (a third of the last 20 s on the rope or in a Runner move): that stopwatch turned
+  away a climber who stood looking round the deck for 14 s before walking in, with the rope's refusal. Very likely that
+  is what Euan met on 11 Nov, up the rings by rope: "The core stays dark. It only answers someone who climbed its rings
+  by rope." (then the words of both refusals; the core logged nothing then). Before 11 Nov the rank came last, so a
+  D-rank climber heard about the rope before the rank. Before 26 Oct a refusal came once a minute, on the minute, so a
+  refused player could wait 60 s in silence. The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
   "· needs a rope or wings". It breathes a ring of light every 3 s. The
   platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
@@ -4906,8 +4921,10 @@ manual; stop the build at the first block; the payoff answers only the line; dan
 - **The payoff answers only the line** (`ArrivalHooks.byLine`: by movement, and a LINE sample in the visit or the 20 s
   before it, nothing built): a spire's or great tree's crown, a sky platform's Wings core, a climb cache's best roll.
   A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the
-  crown says "The crown stays dark. It answers only to a line."; the core "The core stays dark. It answers only to a
-  line up its rings." (at once, then at most every 10 s). The Tether Vow is kept only at the mast by the line.
+  crown says "The crown stays dark. It answers only to a line."; the core tells a tower from a clever climb in its own
+  words (§17.9, 11 Nov 2026: rank first, then built, then the line; at once, then at most every 10 s each). The visit is
+  the whole verdict at the core, held as long as the player stays in the ward: no stopwatch on the deck. The Tether Vow
+  is kept only at the mast by the line.
 - **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
   table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
   (`chests/precursor_spire`, `chests/precursor_sky`) and its best roll in `…_best` (spire: 1 Power Core Shard + a
@@ -23772,7 +23789,8 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9: the rank first, then the rope up
+  its rings (the platform's visit, no stopwatch on the deck, since 11 Nov 2026), each refusal in its own words. After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds

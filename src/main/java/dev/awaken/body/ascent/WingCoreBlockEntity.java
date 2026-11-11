@@ -12,10 +12,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The core's watch (SPEC §17.9): twice a second, a player within {@link #REACH} who hasn't the wings is given them, if
- * they came up by moving (ArrivalHooks.byMovement: a rope, a leap, a power's flight; never a tower) and hold the rank it
- * waits for ({@link #RANK}, progression plan decision 2), with the scene of a first time. Otherwise it says why on first
- * contact (then every {@link #TELL_EVERY}): a climb up its rings, or the rank. Nothing saved.
+ * The core's watch (SPEC §17.9): twice a second, a player within {@link #REACH} who hasn't the wings is given them, with
+ * the scene of a first time, if they hold the rank it waits for ({@link #RANK}, progression plan decision 2) and the
+ * rope carried them up to it (the platform's visit, ArrivalHooks.byLine: its rings by rope, never a pearl, a power's
+ * flight, a hang or a tower). Otherwise it says why on first contact, then at most every {@link #TELL_EVERY}, each
+ * refusal in its own words ({@link Refusal}), and logs it. Nothing saved.
  */
 public class WingCoreBlockEntity extends BlockEntity {
     static final double REACH = 3.0;
@@ -37,25 +38,50 @@ public class WingCoreBlockEntity extends BlockEntity {
         }
     }
 
-    /** A player at the core without wings: given them by the long way at its rank, or told why the core stays dark. */
+    /** Why the core stays dark for someone, in the order it asks (SPEC §17.9): the rank first, then the way up. */
+    enum Refusal {
+        /** It gives the wings. */
+        NONE(""),
+        /** Below its rank: come back at rank C (the promise is noted). */
+        RANK("rank"),
+        /** Blocks they placed on the way up or since: a tower, a bridge. */
+        BUILT("built"),
+        /** Up by movement, but the rope never carried them: a pearl, a power's flight, a climb by hand. */
+        LINE("line");
+
+        final String key;
+
+        Refusal(String key) {
+            this.key = key;
+        }
+    }
+
+    /**
+     * The core's verdict. The way up is the platform's visit (the Wilds' ward, opened on the way in and kept while the
+     * player stays): once the rope has carried them up its rings, a long look round the deck before walking in still
+     * counts. Until 11 Nov the core also asked that a third of the last 20 s be spent on the rope or in a Runner move, so a
+     * climber who looked round the deck for 14 s before walking in was turned away with the rope refusal (very likely
+     * what Euan met that day, up its rings by rope: the core logged nothing then, so it can't be told for sure).
+     */
+    static Refusal judge(ServerPlayer p) {
+        if (dev.awaken.progression.Progression.rank(p).ordinal() < RANK.ordinal()) return Refusal.RANK;
+        if (!ArrivalHooks.byMovement(p)) return Refusal.BUILT;
+        if (!ArrivalHooks.byLine(p)) return Refusal.LINE;
+        return Refusal.NONE;
+    }
+
+    /** A player at the core without wings: given them, or told why the core stays dark. */
     static boolean reached(ServerPlayer p, BlockPos pos) {
-        // the core answers only the line (SPEC §17.29): its rings by rope; a pearl, a power's flight or a hang never
-        if (!ArrivalHooks.byLine(p)) {
-            if (dev.awaken.core.Throttle.allow(p, "wing_core_line", 200)) p.sendSystemMessage(Component.translatable("awaken.ascent.core.line"), true);
-            return false;
-        }
-        if (!ArrivalHooks.byMovement(p) || !Ascent.arrivedByMovement(p, 20)) {
-            if (dev.awaken.core.Throttle.allow(p, "wing_core", TELL_EVERY)) {
-                p.sendSystemMessage(Component.translatable("awaken.ascent.core.dark"), true);
+        Refusal why = judge(p);
+        if (why != Refusal.NONE) {
+            if (dev.awaken.core.Throttle.allow(p, "wing_core_" + why.key, TELL_EVERY)) {
+                p.sendSystemMessage(Component.translatable("awaken.ascent.core." + why.key, RANK.label), true);
+                dev.awaken.Awaken.LOG.info("[ascent] the sky core at {} stays dark for {}: {}", pos.toShortString(), p.getPlainTextName(), why.key);
             }
-            return false;
-        }
-        if (dev.awaken.progression.Progression.rank(p).ordinal() < RANK.ordinal()) {
-            if (dev.awaken.core.Throttle.allow(p, "wing_core", TELL_EVERY)) {
-                p.sendSystemMessage(Component.translatable("awaken.ascent.core.rank", RANK.label), true);
+            if (why == Refusal.RANK) {
+                dev.awaken.core.api.Promises.seen(p, "wing_core:" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), pos,
+                        dev.awaken.core.api.Promises.Need.rank(RANK.label), "A sky core's wings");
             }
-            dev.awaken.core.api.Promises.seen(p, "wing_core:" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), pos,
-                    dev.awaken.core.api.Promises.Need.rank(RANK.label), "A sky core's wings");
             return false;
         }
         int before = AscentServer.tiers(p);
@@ -69,6 +95,7 @@ public class WingCoreBlockEntity extends BlockEntity {
         // the way down is the lesson (SPEC §63.2): a line of light off the pier, and for a minute a fall is a soft landing
         WayUp.firstFlight(p, pos);
         dev.awaken.core.DirectorLog.log(p, "ascent", "the sky platform's core gives wings at " + pos.toShortString());
+        dev.awaken.Awaken.LOG.info("[ascent] the sky core at {} gives {} the wings", pos.toShortString(), p.getPlainTextName());
         return true;
     }
 

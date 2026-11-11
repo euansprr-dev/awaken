@@ -76,6 +76,9 @@ public final class AscentPilot {
                 age = count = phase = mark = misses = 0;
                 laneYaw = p.getYRot();
                 core = null;
+                // "run climb 25": up the rings, then 25 s looking round the deck before walking in to the core
+                linger = a[1].equals("climb") && a.length > 2 ? Integer.parseInt(a[2]) * 20 : 0;
+                deckAt = -1;
             }
             // on a line from an anchor at once (the rappel stage), the line held for half a minute (a script takes over)
             case "rappel" -> {
@@ -329,10 +332,14 @@ public final class AscentPilot {
     }
 
     /** Off the tower into flight: wings, take flight, cruise, boost, bank through a turn, slow to a hover. */
+    /** The climb's look round the deck before walking in (ticks), and when it stood on the deck (-1: not yet). */
+    private static int linger, deckAt = -1;
+
     /**
      * Up a sky platform's ladder (SPEC §17.9): look at the underside of the next anchor ring above (or, with none
      * left, the side of the pier over the chain) and throw the rope; from each hang under a ring, let go and throw at
-     * the next. On the deck, walk round the cabin to its door and in to the core. Ends with the wings or after 2 min.
+     * the next. On the deck (after a look round: {@code run climb 25} looks 25 s), walk round the cabin to its door and in to the
+     * core. Ends with the wings or after 2 min.
      */
     private static void climb(LocalPlayer p) {
         AscentState st = AscentMoves.state();
@@ -343,7 +350,19 @@ public final class AscentPilot {
                 Awaken.LOG.info("[ascent] pilot: the core gave wings");
                 script = "";
             } else if (st == AscentState.NONE && p.onGround()) {
-                walkToCore(p, core);
+                if (deckAt < 0) {
+                    deckAt = age;
+                    Awaken.LOG.info("[ascent] pilot: up on the deck after {} s{}", String.format("%.1f", age / 20.0),
+                            linger > 0 ? ", looking round for " + linger / 20 + " s" : "");
+                }
+                if (age - deckAt < linger) {
+                    // a player taking in the view: still on the deck, turning slowly
+                    p.setYRot(p.getYRot() + 1.2F);
+                    p.setYHeadRot(p.getYRot());
+                    p.setXRot(5);
+                } else {
+                    walkToCore(p, core);
+                }
             }
             return;
         }

@@ -601,24 +601,38 @@ final class AscentTests {
         var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
         h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
                 && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
-        // the core: by movement, wings; by a tower, nothing
+        // the core (SPEC §17.9): the rank first, then the way up; each refusal its own
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
         try {
-            boolean[] moved = {false};
+            boolean[] moved = {true}, line = {true};
             dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
                 @Override
                 public boolean byMovement(net.minecraft.server.level.ServerPlayer pl) {
                     return moved[0];
                 }
+
+                @Override
+                public boolean byLine(net.minecraft.server.level.ServerPlayer pl) {
+                    return moved[0] && line[0];
+                }
             });
+            // a long look round the deck before walking in: the last 20 s all standing still
             AscentMotion m = AscentServer.motion(p);
-            for (int i = 0; i < 400; i++) m.mark(true);
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
-            moved[0] = true;
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
+            for (int i = 0; i < 400; i++) m.mark(false);
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.RANK
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "up by rope at E: the core asks for C first");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
-            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
+            moved[0] = false;
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.BUILT
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
+            moved[0] = true;
+            line[0] = false;
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.LINE
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a pearl or a flight gets nothing, told apart from a tower");
+            line[0] = true;
+            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS),
+                    "up its rings by rope at C gets wings, however long they stood on the deck");
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
