@@ -722,6 +722,9 @@ final class Lesson {
             Entity e = mc.level.getEntity(follow);
             if (e != null) target = e.getPosition(pt).add(0, e.getBbHeight() * 0.6, 0);
         }
+        // a stand you are standing on is under your feet, out of the view: its prompt sits by the crosshair, not pinned
+        // at the screen's top edge where it was cut off (the unlock tour, 11 Nov)
+        if (k == Kind.STAND_ON) target = null;
         boolean pinned = target != null && project(mc, target, w, h);
         int px, py;
         if (target == null) {
