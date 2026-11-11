@@ -39,9 +39,10 @@ public final class Blueprints {
         e.addListener(Awaken.id("realms"), new Loader());
     }
 
-    /** The Realms of this theme open at this rank, in a fixed order. */
+    /** The finished Realms of this theme open at this rank, in a fixed order. One that isn't {@code ready} is never rolled, only entered by command. */
     public static List<String> open(Theme theme, Rank rank) {
-        return defs.entrySet().stream().filter(e -> e.getValue().theme().equals(theme.id) && e.getValue().ranks().contains(rank.label)).map(Map.Entry::getKey).toList();
+        return defs.entrySet().stream().filter(e -> e.getValue().ready() && e.getValue().theme().equals(theme.id) && e.getValue().ranks().contains(rank.label))
+                .map(Map.Entry::getKey).toList();
     }
 
     /** The bag (SPEC §50.2): one you haven't seen first, or the oldest of what's left. Empty means this gate rolls floors. */

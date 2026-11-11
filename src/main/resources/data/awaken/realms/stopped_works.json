@@ -8,6 +8,7 @@
     "D",
     "C"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:stopped_works",
     "water": 0
