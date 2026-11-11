@@ -435,8 +435,9 @@ final class AscentCommands {
         if (AscentServer.tiers(p) == 0) grant(src, "all");
         int n = AscentSandbox.build(p);
         src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead, and a city street behind the tower. Hold the rope "
-                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading, lets go at the top, "
-                + "and keeps swinging while you hold it. Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
+                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading and swings you back "
+                + "and forth for as long as you hold it. Let go as the rope glows to fly the furthest; hold forward to swing higher. "
+                + "Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
                 + "air opens the wings; Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
         return n;
     }
