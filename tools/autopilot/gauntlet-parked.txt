@@ -1,7 +1,7 @@
-# A Gauntlet's presses parked in the ceiling while they are up (SPEC §17.5 "Gauntlet"; Euan, 11 Nov: "the wall spawns in
-# front of you"). A Clockwork Foundry course and a Frost Monastery one: from the doorway and from the first landing before
-# the clock has started, where every press of the course must already be in sight with its marks on the floor under it;
-# then with the clock running, some down and the rest parked.
+# A Gauntlet's presses parked in the ceiling while they are up (SPEC §17.5 "Gauntlet"; Euan, 11 Nov, in the Leaper's
+# Gauntlet: "the wall spawns in front of you"). The trial's own course, which has two presses: from the doorway and from
+# the first landing before the clock has started, where both must already be in sight with their marks on the floor under
+# them; then with the clock running, and from just short of the first.
 world gauntlet_parked survival 20261025
 waitworld
 window 1440 900
@@ -18,31 +18,30 @@ wait 20
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd effect give @s minecraft:resistance 100000 4 true
-
-# ---- Clockwork Foundry -----------------------------------------------------------------------------------------------
 cmd tp @s 3000 120 3000
 wait 200
 cmd awaken gate hop
 wait 120
-cmd awaken gate open B clockwork_foundry rig
+cmd awaken ascent grant tether
+cmd awaken ascent trial leaper
 wait 320
 cmd awaken gate enter 1
 wait 200
 cmd awaken gate interior goto rig
-wait 120
+wait 100
 hud off
-shot parked_01_foundry_doorway
+shot parked_01_doorway
 cmd awaken gate rig at start
 wait 60
-shot parked_02_foundry_landing
-look 0 -25
-wait 10
-shot parked_03_foundry_landing_up
+shot parked_02_landing
 cmd awaken gate rig at first
 wait 30
-shot parked_04_foundry_clock_running
-wait 24
-shot parked_05_foundry_half_a_beat_on
+shot parked_03_clock_running
+wait 28
+shot parked_04_half_a_beat_on
 cmd awaken gate rig at press
+wait 6
+shot parked_05_at_the_press
 wait 30
-shot parked_06_foundry_under_one
+shot parked_06_at_the_press_later
+quit

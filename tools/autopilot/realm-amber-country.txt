@@ -61,3 +61,5 @@ wait 200
 cmd awaken gate realm_haunt PROWL 1 26 9
 wait 200
 shot country_prowl_two
+
+quit
