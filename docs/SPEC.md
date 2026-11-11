@@ -19711,10 +19711,12 @@ new words of the plan wait for his play.
 - **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
   `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
   `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
-  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says all of it: "You learned
-  Bane of Crawlers. It isn't on anything yet. To put it on a weapon, hold the piece and use an Inscribing Table. It fits
-  your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold), and the
-  first time ever the System's line about gates follows it there, whole (it was a toast, cut after "and its L").
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says "You learned Bane of
+  Crawlers. It isn't on anything yet." while the card below is sure to show (five lines of chat lay over it at his
+  size), and once the card is paced, all of it: "... To put it on a weapon, hold the piece and use an Inscribing Table.
+  It fits your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold).
+  The first time ever the System's line about gates follows as a paced toast short enough to show whole: "Each kind of
+  gate keeps its own enchantment." (it was a longer toast, cut after "and its L").
   **Two System panels** say the same in the room a panel has, which is a title and three lines of 188 pixels at the size
   he plays at (the first cut had a body and rows: the body was cut with "..." and the how-to folded behind "Press K to
   see 2 more"). Each line is a row with no value, which a panel draws at full width. Given (`Pages.givenCard`, 7 s):

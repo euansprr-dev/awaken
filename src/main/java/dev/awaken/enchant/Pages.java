@@ -124,17 +124,21 @@ public final class Pages {
         p.level().playSound(null, p.blockPosition(), EnchantContent.LEARN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         for (Inscriptions.Entry e : learned) {
             door(p, "read", e);
-            // chat holds all of it (it wraps); the card says the three lines that matter, in the room a panel has
-            ItemStack fit = fits(p, e);
+            // While the card is sure to show (till your first enchantment is written) chat keeps one line: with the
+            // how-to there as well, five lines of chat lay over the card at the size Euan plays at. Once the card is
+            // paced and may come late, chat says all of it (it wraps)
+            boolean carded = doorTier(k) == dev.awaken.core.api.Notices.Tier.CRITICAL;
+            ItemStack fit = carded ? ItemStack.EMPTY : fits(p, e);
             p.sendSystemMessage(Component.literal("You learned " + e.name() + ". ").withColor(e.colour())
-                    .append(Component.literal("It isn't on anything yet. " + e.howTo()
+                    .append(Component.literal(carded ? "It isn't on anything yet." : "It isn't on anything yet. " + e.howTo()
                             + (fit.isEmpty() ? "" : " It fits your " + fit.getHoverName().getString() + ".")
                             + (k.hadTable() ? "" : " You can make a table: it's on your Tasks page.")).withColor(0xC9D2E0)), false);
             dev.awaken.signal.Signal.send(p, learnedCard(p, k, e, first && e == learned.getFirst()));
         }
-        // the System's line about gates, the first time: in chat, whole (as a toast it was cut after "and its L", and a
-        // panel's foot is one line too)
-        if (first) p.sendSystemMessage(Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page.").withColor(0x9FB4D8), false);
+        // the System's line about gates, the first time: a toast short enough to show whole (it was cut after "and its
+        // L"), paced under enchanting's topic so it follows the card instead of landing on it
+        if (first) dev.awaken.signal.Signal.toast(p, Component.literal("Each kind of gate keeps its own enchantment."),
+                dev.awaken.core.api.Notices.Tier.IMPORTANT, "enchant");
         EnchantFx.learned(p, learned.getFirst());
         return learned;
     }

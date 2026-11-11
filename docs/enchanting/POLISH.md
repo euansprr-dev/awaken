@@ -407,13 +407,13 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 
 | Part | Built | Where |
 |---|---|---|
-| The door | a page's own lines, the given line, the learned card (a panel, never cut, with the piece it fits and where a table comes from), a page read at the table, the recipe's stick, the fold's facing, the door log, a page's flight and the reading beat | `Pages`, `PageItem`, `Doors`, `Inscribe`, `EnchantFx`, `EnchantFxClient` |
+| The door | a page's own lines, the given line, a card when a page reaches you and a card when you read it (each a title and three lines, the room a panel has), all of it in chat, a page read at the table, the recipe's stick, the fold's facing, the door log, a page's flight and the reading beat | `Pages`, `PageItem`, `Doors`, `Inscribe`, `EnchantFx`, `EnchantFxClient` |
 | One script | 36 glyphs in `Marks` from `tools/art/specs/_enchant_glyphs.py`; 36 page icons chosen by `awaken:page` | `Marks`, `PageSelect`, the art spec |
-| The desk | the scribe's desk model, the book on its rest, the burin in the inkwell, the real piece on the slate laid by its bounds, the glyph on the piece's top | `InscribingTableRenderer`, `InscribingTableBlock`, the art spec |
-| Choosing | pages over the near edge in the world, the label, sockets, hold to scrape, the wheel for the level, key caps, the wake's blackletter and no card; `classicTable` keeps the old book | `Desk`, `InscribeScreen`, `InscribeScene`, `EnchantClientConfig` |
+| The desk | the scribe's desk model, the book on its rest, the burin in the inkwell until you choose, the real piece on the slate laid by its shape (armour's measured from its meshes), the glyph on the piece's top | `InscribingTableRenderer`, `InscribingTableBlock`, the art spec |
+| Choosing | pages over the near edge in the world, the label over the row beside the piece, sockets down the slate's left side, hold to scrape, the wheel for the level, key caps, the wake's blackletter and no card; `classicTable` keeps the old book | `Desk`, `InscribeScreen`, `InscribeScene`, `EnchantClientConfig` |
 | The words | Lantern (block of light, the rule, the Lantern Night Market's Lord; Looting to the market and old books); banes' lines | `Lantern`, `LanternGlowBlock`, `Inscriptions` |
 | At work | a ward's plate, a bane's brand for two seconds, a larger glint | `EnchantFxClient` |
-| On the piece | the shine and the aura in both shaders | `arms_weapon.fsh`, `armour.fsh`, `mesh_render.py` |
+| On the piece | the shine (a band of light every five seconds, the script in its wake) and a faint aura in both shaders | `arms_weapon.fsh`, `armour.fsh`, `mesh_render.py` |
 | Sound | first picks in `sounds.json` and the code; the listening page | `tools/art/enchant_listen.py` |
 
 **Differs from the page, and why:**
@@ -425,5 +425,22 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 **Not built yet (waits for his play of the pilot):** Regrowth, Remembrance, Gather, Wayfarer, Long Arm; Clear Blood's and Insight's
 moments; the hold-to-write fallback.
 
-**Not verified:** nobody has heard a sound; the trace has not been tried by a hand since the glyphs changed; Lantern's
-frame time on the Mac is unmeasured; armour pieces on the slate may lie the wrong way up until a tour shows them.
+**What filming it showed, and what changed** (three runs of `tools/autopilot/enchant-polish.txt` on GitHub, frames in
+`run-autopilot/screenshots-ci/enchant-polish-<run>/`):
+
+| Seen | Cause | Now |
+|---|---|---|
+| The game would not start | the table's renderer made an item stack as its class loaded, before items exist | made at first need |
+| The sword in the hand striped pink from hilt to tip | the letters and the aura were lit by how far a face turns from the eye, and in the hand every face of a blade does | the script shows only in the band's wake, the aura is a tenth, and between crossings the piece is itself |
+| The fist over the right-hand pages, and a third of the view over a helm | the burin hand rested at the slate's near corner | the burin stands in the inkwell and the arm stays out of the view until you choose |
+| The label over the row, and over the page it named | it sat beside the page | over the row, on the page's side of the piece |
+| The one socket under the sword's point | a row behind the piece | down the slate's left side, framed |
+| A breastplate floating a third of a block up, the view to its mark nearly flat | a sculpted piece's item says only "a block" | measured from its meshes; it lies on the slate at its real size |
+| The mark of a page pointed at could not be seen | drawn for a book's close view | brighter, with a soft light under it |
+| Neither card | paced notices wait out a new world's first five minutes | CRITICAL until the first enchantment is written |
+| "Press K to see 2 more" where the how-to should be | a panel holds a title and three lines | both cards are three short lines; chat has all of it |
+| The burin most of a block tall in its inkwell | drawn at 0.42 | the size it is in the hand |
+
+**Not verified:** nobody has heard a sound; the trace has not been tried by a hand since the glyphs changed (the
+tour's pilot traces it); Lantern's frame time on the Mac is unmeasured; only one set's breastplate and helm have been
+seen on the slate (dreamsteel), though every set is measured the same way.
