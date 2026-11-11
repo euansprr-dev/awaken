@@ -44,6 +44,7 @@ public final class FrontierClient {
 
     private static void layers(RegisterGuiLayersEvent e) {
         e.registerAboveAll(Awaken.id("frontier_cloud"), CloudCrossing::render);
+        dev.awaken.opening.client.Cinema.keepLayer(Awaken.id("frontier_cloud")); // it is the film's, over the shot
     }
 
     /** Someone aboard a lifting skiff is on it, out of sight. */

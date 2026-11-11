@@ -24,6 +24,7 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd awaken frontier ready
 # the Tasks page before the flight: the skiff is the next thing on the main path
+screen holo tasks
 tasks now
 wait 40
 shot fh_01_tasks_skiff_row
@@ -36,19 +37,21 @@ wait 120
 cmd awaken frontier goto landing
 wait 60
 cmd awaken frontier status
+wait 60
 # a city bell rung for you while you're out here: Kestrel's letter asks you to come and hear it
 cmd awaken frontier invite roost
-wait 30
-shot fh_02_kestrel_invites_you
+wait 15
+shotnow fh_02_kestrel_invites_you
 wait 200
+screen holo tasks
 tasks now
 wait 40
 shot fh_03_tasks_invited_row
 screen close
 # the second of its round is a plain letter
 cmd awaken frontier invite square
-wait 30
-shot fh_04_the_choirs_letter
+wait 15
+shotnow fh_04_the_choirs_letter
 wait 200
 # into Carillon: the bell rings out over you, Kestrel and Hale come
 cmd awaken city view square
@@ -86,3 +89,4 @@ wait 140
 shot fh_15_thanks_go_on
 wait 140
 shot fh_16_ilse_walked_down
+quit

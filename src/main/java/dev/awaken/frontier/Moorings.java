@@ -35,6 +35,8 @@ final class Moorings {
     static final int RIDGE_EAST = 22, RIDGE_PAST = 30;
     /** How far round its spot a mooring looks for flat ground, and on what step. */
     static final int SEARCH = 20, SEARCH_STEP = 4;
+    /** How far past the footprint the trees come down. */
+    static final int GLADE = 6;
     /** A player this near the ridge's spot gets it built. */
     static final int BUILD_NEAR = 160;
     /** The deck stands this far over the highest ground under it. */
@@ -146,6 +148,17 @@ final class Moorings {
     static void build(ServerLevel level, BlockPos origin, Direction facing, boolean landing) {
         var rot = Skiff.rotation(facing);
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+        // a glade: the trees round the berth come down (and the snow that lay on them), so it stands in the open
+        BlockState air = Blocks.AIR.defaultBlockState();
+        for (int pass = 0; pass < 2; pass++)
+            for (int x = -Skiff.FOOT_X - GLADE; x <= Skiff.FOOT_X + GLADE; x++)
+                for (int z = Skiff.FOOT_Z0 - GLADE; z <= Skiff.FOOT_Z1 + GLADE; z++)
+                    for (int y = Skiff.KEEL - 6; y <= Skiff.CLEAR_UP + 16; y++) {
+                        BlockPos p = Skiff.at(origin, facing, x, y, z);
+                        BlockState st = level.getBlockState(p);
+                        if (pass == 0 ? st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)
+                                : st.is(Blocks.SNOW) && level.getBlockState(p.below()).isAir()) level.setBlock(p, air, flags);
+                    }
         // clear: from the keel to the clear air above, across the whole footprint
         for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
             for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)

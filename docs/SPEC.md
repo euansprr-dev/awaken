@@ -24451,14 +24451,17 @@ you back twice to hear a bell rung for you, and the morning after the Hundred Pe
 - Built by the server from vanilla and Precursor blocks (`Skiff`): drawn facing south, the origin the berth's middle at
   deck height. A dark oak deck 5 wide (narrowing at bow and stern), a Precursor plating hull with dark oak stair
   shoulders, a trim keel with a glowing core, dark oak rails open at the gangways (z 0), an end rod at the bow, a glow
-  panel helm with a trim cap at the stern (`HELM` 0,1,−3; you stand at `STAND` 0,1,−4), a stripped spruce mast to 8 with
+  panel helm at the stern, waist high and capless so the one at it sees over the bow (`HELM` 0,1,−3; you stand at
+  `STAND` 0,1,−4), a stripped spruce mast to 8 with
   a spar and two hanging lanterns at 7, a white wool sail before it, a lantern on top. The jetty: spruce arms either
   side (x ±4..5, z −8..6), a stern cross-piece, gangways, a spruce rail with a gap at the stern for steps, lanterns on
   the bow posts, spruce log posts to the ground. The landing's mooring adds the hold (a barrel, `HOLD` 4,1,−6) and the
   Association's board (a lectern, `BOARD` −4,1,−6). Footprint ±5 × −9..7, keel −2 to 10 clear above.
 - The ridge mooring: city centre + (22, −ridge − 30), beside Aldo; built once a player is within 160. The landing's:
   built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
-  4 (height spread ×3, water ×6, road ×8, distance/6); the deck sits 3 over the highest ground under it. Both are
+  4 (height spread ×3, water ×6, road ×8, distance/6); the deck sits 3 over the highest ground under it. A glade of 6 round the
+  footprint is cleared of logs and leaves (and the snow left floating on them), so a mooring in a forest stands in the
+  open and can be seen and flown from. Both are
   guarded: breaking, placing and explosions there are refused except for creative players and operators. Saved in
   `FrontierData` (`awaken:frontier`, schema 1).
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states.
@@ -24477,7 +24480,7 @@ you back twice to hear a bell rung for you, and the morning after the Hundred Pe
   cloud closes. The crossing is an overlay drawn like the gates' crossing: the painting of where you're going
   (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
   "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that fills
-  as the land arrives. It holds at least 3 s and until the far land is drawn (or 20 s), then parts over a 110-tick
+  as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s), then parts over a 110-tick
   descent in from 190 back and 120 up, settling with a dip; the real far skiff returns six ticks before the end.
 - Watchers within 160 of a mooring see the skiff lift away with its party (their bodies hidden while it lifts); it
   comes back empty to its berth 15 s later.

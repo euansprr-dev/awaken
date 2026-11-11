@@ -98,9 +98,8 @@ public final class Skiff {
         out.add(new Part(1, 1, -5, rail));
         // the bow light, pointing the way
         out.add(new Part(0, 1, 6, b("end_rod").setValue(BlockStateProperties.FACING, Direction.SOUTH)));
-        // the helm: a glowing console at the stern, a gold cap on it
+        // the helm: a glowing console at the stern, waist high, so the one at it looks out over the bow
         out.add(new Part(HELM.getX(), HELM.getY(), HELM.getZ(), glow));
-        out.add(new Part(HELM.getX(), HELM.getY() + 1, HELM.getZ(), b("awaken:precursor_trim")));
         // the mast, the spar across its top with a lantern hung at each end, and the sail before it
         for (int y = 1; y <= 8; y++) out.add(new Part(0, y, 1, mast));
         for (int x = -3; x <= 3; x++) if (x != 0) out.add(new Part(x, 7, 1, mast.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X)));

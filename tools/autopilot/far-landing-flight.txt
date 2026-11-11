@@ -24,6 +24,14 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd awaken frontier status
 cmd awaken frontier ready
+# the landing first, once, so its land is made and its mooring built: the flight out then times the way it does in play
+# (a new world's far land can take most of WAIT_MAX to generate on the runner, and every shot would land in the cloud)
+cmd awaken frontier goto landing
+wait 120
+cmd awaken frontier goto landing
+wait 120
+cmd awaken frontier goto landing
+wait 60
 # the ridge: its land loads, the mooring is built, then we stand at its helm
 cmd awaken frontier goto ridge
 wait 120
@@ -48,33 +56,29 @@ cmd awaken frontier goto ridge
 wait 30
 shot fl_04_at_the_helm
 hud on
-# out: the lift, the cloud, the name, the descent
+# out: the lift (120 ticks), the cloud closing over (from 98), the name in the cloud, then the cloud parts and the descent
 cmd awaken frontier fly
 wait 30
 shotnow fl_05_lift_off
 wait 45
 shotnow fl_06_climbing_turn
-wait 35
-shotnow fl_07_cloud_closing
 wait 30
+shotnow fl_07_cloud_closing
+wait 22
 shotnow fl_08_crossing_name
-wait 40
-shotnow fl_09_crossing_rule
-wait 40
-shotnow fl_10_crossing_held
-wait 40
-shotnow fl_11_t300
-wait 40
-shotnow fl_12_t340
-wait 40
-shotnow fl_13_t380
-wait 40
-shotnow fl_14_t420
-wait 40
-shotnow fl_15_t460
-wait 40
-shotnow fl_16_t500
-wait 200
+wait 25
+shotnow fl_09_crossing_held
+wait 25
+shotnow fl_10_cloud_parting
+wait 25
+shotnow fl_11_descent_early
+wait 30
+shotnow fl_12_descent_mid
+wait 30
+shotnow fl_13_descent_late
+wait 30
+shotnow fl_14_descent_last
+wait 160
 shot fl_17_set_down
 cmd awaken frontier status
 # the landing's mooring and the land round it
@@ -111,3 +115,4 @@ shotnow fl_25_home_crossing_name
 wait 300
 shot fl_26_home_at_the_ridge
 cmd awaken frontier status
+quit

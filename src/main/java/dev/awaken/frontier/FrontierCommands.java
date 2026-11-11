@@ -113,7 +113,7 @@ final class FrontierCommands {
             src.sendFailure(Component.literal("Not built yet (/awaken frontier goto " + which.name().toLowerCase(java.util.Locale.ROOT) + ")."));
             return 0;
         }
-        int[][] eyes = {{11, 5, 13}, {-12, 6, -15}, {6, 26, -8}};
+        int[][] eyes = {{10, 6, 12}, {-10, 7, -14}, {6, 26, -8}};
         int[] e = eyes[view];
         BlockPos eye = Skiff.at(m.origin(), m.facing(), e[0], e[1], e[2]);
         double tx = m.origin().getX() + 0.5, ty = m.origin().getY() + 3, tz = m.origin().getZ() + 0.5;
