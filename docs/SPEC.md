@@ -6631,6 +6631,14 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass in play, a part at a time** (development; client commands, nothing saved): `/awaken lens sunpass
+  off|on|setting` (the block map's walk; off leaves the heightfield's answer alone), `/awaken lens rays off|on|setting`
+  (the lit air, and with it the shortcut that spares sure pixels the walk), `/awaken lens far off|on|setting` (the far
+  block map), and `/awaken lens paths on|off`, which marks on every sunlit surface which part answered it, over the
+  answer itself and in the world's own blocks: plain where the heightfield found nothing over the ray or a block
+  stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the map
+  in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you stand,
+  the mark under it names the part that changed its mind (frame texel 34, w).
 - **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
   across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
   block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower

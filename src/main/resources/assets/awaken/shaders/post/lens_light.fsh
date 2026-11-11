@@ -263,6 +263,17 @@ float beyond(vec3 o, vec3 l, float skip, float noise, bool ultra) {
 
 // how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
 // reaches, the map's (the heightfield can only say "something stands between"; the map knows what and where)
+// Development (/awaken lens paths on; frame texel 34 w): which part answered a pixel, marked over its answer v in the
+// world's own blocks so it holds still. 1 the lit air was sure of the sun (lines across the sun's way, one a block),
+// 2 the walk left the map in the open (lines along the sun's way), 3 the walk met a section not read yet and the
+// heightfield's answer stands (a checker, four squares a block). A mark is the answer turned over, so it shows on
+// lit ground and in shade alike. Plain: the heightfield found nothing over the ray, or a block stopped the walk.
+float pathMark(int path, vec3 o, float v) {
+    if (F(34).w < 0.5) return v;
+    bool mark = path == 1 ? fract(o.x) < 0.12 : path == 2 ? fract(o.z) < 0.12 : (fract(o.x * 2.0) < 0.5) != (fract(o.z * 2.0) < 0.5);
+    return mark ? (v > 0.5 ? 0.0 : 1.0) : v;
+}
+
 float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     vec4 f12 = F(12), f15 = F(15);
     if (f15.x < 1.0) return 1.0;
@@ -295,14 +306,14 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     // than the walk does, so where it called a block dark and the walk beside it found the sun, the difference lay on
     // open grass as a patchwork under a low sun, Euan 2026-11-10; a pixel in shade walks, and meets what shades it
     // within a few blocks anyway)
-    if (litSure(p + n * 0.55) == 1.0) return beyond(o + l * walkEnd(o, l), l, 0.0, noise, ultra);
+    if (litSure(p + n * 0.55) == 1.0) return pathMark(1, o, beyond(o + l * walkEnd(o, l), l, 0.0, noise, ultra));
     int status;
     float tOut;
     float through = blockRay(o, l, status, tOut);
-    if (status == 2) return vis;
+    if (status == 2) return pathMark(3, o, vis);
     if (status == 0) return 0.0;
     // out of the map in the open: the land beyond it, by the far map and then the heightfield from there
-    return through * beyond(o + l * tOut, l, 0.0, noise, ultra);
+    return pathMark(2, o, through * beyond(o + l * tOut, l, 0.0, noise, ultra));
 }
 
 // Leaves: the heightfield knows a column's top with its leaves (r) and without (g), not where the crown ends below.

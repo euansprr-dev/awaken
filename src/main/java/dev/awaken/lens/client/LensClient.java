@@ -279,6 +279,7 @@ public final class LensClient {
                         .then(lensSwitch("sunpass", LensClient::sunPass))
                         .then(lensSwitch("rays", LensClient::rays))
                         .then(lensSwitch("far", LensClient::farMap))
+                        .then(lensSwitch("paths", LensClient::paths))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -315,6 +316,20 @@ public final class LensClient {
             default -> null;
         };
         return "far block map " + (forcedFar != null ? forcedFar : "from the setting (on)");
+    }
+
+    private static boolean showPaths;
+
+    /**
+     * {@code /awaken lens paths on|off}: marks on every lit surface which part of the Sun Pass answered it, over the
+     * answer itself (lens_light.fsh, pathMark): plain where the heightfield found nothing over the ray or a block
+     * stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the
+     * map in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you
+     * stand: the mark under it says which part changed its mind.
+     */
+    public static String paths(String arg) {
+        showPaths = arg.trim().equals("on");
+        return "sun pass paths " + (showPaths ? "on: lines across the sun's way = lit air, lines along it = walk left the map, checker = not read yet" : "off");
     }
 
     private static void tick() {
@@ -691,6 +706,7 @@ public final class LensClient {
                 blocks != null ? blocks.originX() : 0, blocks != null ? blocks.originZ() : 0);
         boolean far = sunPass && sunHere && blocks != null && blocksFar != null && blocksFar.ready() && forcedFar != Boolean.FALSE;
         lensFrame.blocksFar(far, far ? blocksFar.originX() : 0, far ? blocksFar.minY() : 0, far ? blocksFar.originZ() : 0);
+        lensFrame.paths(showPaths);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,

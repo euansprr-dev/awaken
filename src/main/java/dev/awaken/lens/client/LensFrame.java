@@ -103,10 +103,17 @@ final class LensFrame {
         farZ = originZ;
     }
 
+    // development (/awaken lens paths): the light pass marks which part of the Sun Pass answered each pixel
+    private boolean paths;
+
+    void paths(boolean on) {
+        paths = on;
+    }
+
     /**
      * The spare fourth component of a plate's texel (24 to 41): 24 to 26 the land's horizon and 27 its share; 28 and
      * 29 the block map's window, its lowest x and z from the camera; 30 and 31 the far block map's, 32 its lowest y,
-     * 33 whether it is read.
+     * 33 whether it is read; 34 the development view of the Sun Pass's parts.
      */
     private float spare(int texel, double x, double z) {
         return switch (texel) {
@@ -120,6 +127,7 @@ final class LensFrame {
             case 31 -> (float) (farZ - z);
             case 32 -> farY;
             case 33 -> farOn ? 1f : 0f;
+            case 34 -> paths ? 1f : 0f;
             default -> 0f;
         };
     }
