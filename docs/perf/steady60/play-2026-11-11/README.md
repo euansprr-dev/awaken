@@ -38,8 +38,12 @@ Each sheet has the code before the fix on the left and after it on the right, fr
   `glasswater-smooth.jpg` is that build, from run 42997552947, which landed after the hand-over: the game's own
   water beside it, with Vivid, down at the bank, golden hour, dusk, from above, night, and on Lite.
 - The Air in other worlds (SPEC §22; `tools/autopilot/steady60-realm-sky-ci.txt`): a gate world's own sky and fog
-  under the Air. Before: run 42996721809 (Amber Reach under the Air's blue). After: run 42996759340, in flight at the
-  hand-over, unread.
+  under the Air. `gate-sky-before-after.jpg`: Amber Reach three ways (the Air off, which is the land as its first
+  pictures had it; before, run 42996721809, under the Air's blue; after, run 42996759340, which landed after the
+  hand-over). After, the sky, the far fog and the clouds are the land's amber. It is hazier than the land's own
+  look: the Air's fog is by the render distance and does not follow the look's `haze`, so the far cliffs fade more
+  than in the pictures he liked. Not changed: whether a gate world's fog should follow its look's `haze` is a call
+  for him and the gates side.
 
 Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
 exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
