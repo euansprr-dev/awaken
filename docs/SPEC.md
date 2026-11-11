@@ -6198,7 +6198,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       sun only on faces turned to it, less where three samples toward the sun find more of the cell in the way; the
       lightning's glow from within, round the flash. The layer's near clouds clear round a storm (within 330 to
       450 blocks, as the far ones always did) and those behind it are not walked. Without the Air the soft storm
-      is drawn as before. Tour: `tools/autopilot/steady60-storm-ci.txt`.
+      is drawn as before. A sunlit face is kept under white with its hue (a soft knee from 0.84): past white the
+      tower was paper at golden hour and its blocks ran together. Under Lite the blocks are the whole storm: the soft
+      rain belongs to the cloud buffer Lite leaves out. Tour: `tools/autopilot/steady60-storm-ci.txt` (the cell from
+      460 blocks at three hours and by night with a strike, from 230, and from under the shelf; `living near` goes to
+      480 for it, inside the 512 a happening's tell reaches). Last run 42959983512; sheet
+      `docs/perf/steady60/play-2026-11-11/storm-blocks.jpg`. Not measured: its frame time, which needs the Mac; and
+      no shot has caught a strike at its brightest.
   - **Sunlight**: key (1.24, 1.17, 0.98) by day. The shade has weight (Euan 2026-11-10: "more black ... more
     cinematic"): its depth 2.5 times the look's under a high sun (capped at 0.9), easing to 1.5 as the sun sinks to
     sin 0.10 and by moonlight (a morning forest went black under a bright sky). The sun's light fades into the shade
@@ -6457,7 +6463,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     choose, in the sky and the fog alike).
   - Shown on CI by `tools/autopilot/steady60-steppe-fog-ci.txt` (the game's own frame beside Lens's in the Glass
     Steppe at 16 chunks; the land coming back in after the render distance is pulled in; a fast glide into the edge
-    hold's mist).
+    hold's mist): run 42959640767 before, 42959804603 after. Before, the game's frame fogs its far land sand and
+    Lens's carries a cream band between land and sky; after, both fade into the sky's horizon colour. Sheet:
+    `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
+    stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
+    was being made, which is a reading and not a measurement.
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
@@ -6490,7 +6500,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     before its name runs under the key's number. Keys 1 to 5.
   - **Not measured**: its pace on an M1. There is none here and CI's runners have no real GPU, so the 60 fps on its
     card (budget 16.7 / 25 ms) is what it is built for, not a reading. Seen on CI beside Swift and Cinematic:
-    `tools/autopilot/steady60-lite-ci.txt`. Test: `compat_look_tiers`.
+    `tools/autopilot/steady60-lite-ci.txt` (run 42960037101; under Lite `lens cost` counted no ticks). Test:
+    `compat_look_tiers`. The five-card Look page (with ImmersiveVFX) has not been seen: the runners have no such mod.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.
