@@ -6631,14 +6631,6 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
-- **The Sun Pass in play, a part at a time** (development; client commands, nothing saved): `/awaken lens sunpass
-  off|on|setting` (the block map's walk; off leaves the heightfield's answer alone), `/awaken lens rays off|on|setting`
-  (the lit air, and with it the shortcut that spares sure pixels the walk), `/awaken lens far off|on|setting` (the far
-  block map), and `/awaken lens paths on|off`, which marks on every sunlit surface which part answered it, over the
-  answer itself and in the world's own blocks: plain where the heightfield found nothing over the ray or a block
-  stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the map
-  in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you stand,
-  the mark under it names the part that changed its mind (frame texel 34, w).
 - **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
   across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
   block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
@@ -6935,43 +6927,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       64 under a roof (solid from there down), a third layer under the floor. The CPU's own marches (the lit
       air, the sun map, the dust) still take a column for solid under its top; they only ever spare a walk or
       colour the air, never shade a surface.
-  - **His own tree, the same evening** ("Same exact glitch with the tree shadow changing based on where I stand
-    ... on one side of the tree the shadow is perfect, then if I go to the other side, the shadow is gone"; a tall
-    jungle tree, a morning sun 30 degrees up). The first fix was shown on a tree built for the tour, a thin crown
-    on a bare trunk; his is the real thing. Three things stood between the two answers agreeing there:
-    - The walk stopped after 72 blocks. Under a sun 30 degrees up that is 26 blocks of height, short of a tall
-      crown, so even on ground at the camera's feet the heightfield had the say. It walks 144 now (`WALK`); a
-      texel holds sixteen blocks of one column and is read once a column, so the reads are about what they were.
-    - The walk went by a fixed 46 blocks round the camera, the least the map's window ever reaches. Ground 20
-      blocks toward the sun had 26 blocks of walk left, 15 of height. It goes to the window's own rim now (48 to
-      79 blocks, by where the camera stands in its chunk; frame texels 28 and 29, w, the window's corner from the
-      camera), and a section at the rim not read yet says so, as before.
-    - Past the walk, a crown was its top seven blocks. A mega jungle tree's is a dozen deep, an oak's four: the
-      one's lower leaves were lit from far and shaded from near, the other the reverse. The heightfield now holds
-      each column's own depth (the leaves at its top, down through gaps of up to two blocks, at most 30; kept in
-      b over 4096, four a block, where the column has no roof), read with the roofs.
-    - **The far block map** (`LensBlocksFar`, texture `awaken:lens_blocks_far`, the light pass's `farRay`). Those
-      three still left the two answers to differ wherever one column holds more than one thing: a jungle giant is
-      a small crown over a run of side boughs, and one top a column can't say so. And a window 128 blocks across
-      can't reach a 30-block crown under a 30 degree sun from ground on the sun's side of the camera, however
-      long the walk. So past the block map the walk carries on in a second map, 256 blocks across and high: cells
-      of two blocks by one by two (half the detail across, all of it in height, which keeps a ray low over the
-      ground clear of the ground beside it), two bits each: open, solid (two and more of its four blocks stop the
-      sun), leaves, or part (one block of four, shaded soft). One texel is sixteen cells of one column, as in the
-      block map. It is walked from where the block map's walk ended (its rim, or 144 blocks), and from any point
-      outside the block map and inside this one that the heightfield does not call open sky; where it ends in the
-      open, 104 to 151 blocks out, the heightfield carries on as before. A section not read yet says so and the
-      heightfield answers.
-    - Read on the client tick like the block map: a far section (32 by 16 by 32 blocks: one section of four
-      chunks) as it enters the window, nearest first, within half a tick's budget; all of them again in a slow
-      round (51 s), so a block placed far off shows late there (near by, the block map has it within half a
-      second). A section wholly under its chunk's lowest ground is solid without a look. 1 MB on each side.
-      Tick and frame time not measured.
-  - **What still differs with distance**: beyond the far map (104 blocks and more) a second mass of leaves under
-    a gap of three blocks shades nothing; within it, a shadow's edge is two blocks coarse across where the far
-    map cast it and a texel fine where the block map did.
-  - Tour in his world: `tools/autopilot/steady60-playtree-ci.txt` (his seed, pack, spot and hour; from four sides and
-    from above; each view with the walk on and off).
+  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
+    giant) shade only inside the map.
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
     blocks, and from the ground).
 - **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit

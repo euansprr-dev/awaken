@@ -26,9 +26,8 @@ import java.util.Arrays;
  * addressed by world block coordinate modulo 1024 (a ring buffer, so moving never shifts it): r the top of everything
  * that blocks motion (leaves included), g the same without leaves (a roof). Where open air lies under that solid top
  * (a bridge, an arch, a roof on posts), b is its underside and a the top of whatever stands under the air; elsewhere b
- * is {@link #SOLID_DOWN} or more and a is g, so "under a, or from b up to g" is the column's solid either way ("Shadows
- * beyond the block map"). What b is over {@link #SOLID_DOWN} says how deep the leaves at the column's top go, four a
- * block (a crown's real depth for the far march; {@link #NO_CROWN} blocks where there are none). Mips 1-4 hold the maximum of their 2×2 (the minimum for b), so far steps of the march test a whole
+ * is {@link #SOLID_DOWN} and a is g, so "under a, or from b up to g" is the column's solid either way ("Shadows beyond
+ * the block map"). Mips 1-4 hold the maximum of their 2×2 (the minimum for b), so far steps of the march test a whole
  * cell at once and never let light through where one column would stop it. Where the top is water, g sits at the block's base + 0.75 instead of
  * its top (exactly representable in half floats to y 512): the shaders read that fraction as "water here" (Lens 2's
  * reflections, L3) and lose nothing as an occluder. Built from a 64×64-chunk window centred on the camera's chunk,
@@ -51,12 +50,6 @@ final class LensHeightfield {
      * (a thicker roof is solid to the ground, as every column was; a deeper drop is solid from there down).
      */
     private static final int ROOF = 6, GAP = 64;
-    /**
-     * A crown's depth as the texture holds it: the leaves at a column's top, down through gaps of up to two blocks, at
-     * most {@link #CROWN_MAX}; {@link #NO_CROWN} where the column has no leaves over its solid top (the most, so the
-     * coarse levels, which keep the least, take a cell's depth from its leafy columns alone).
-     */
-    static final int CROWN_MAX = 30, NO_CROWN = 31;
     /** Blocks from the camera the shader may trust: the window's half-width less the camera's own chunk. */
     static final float TRUSTED = (CHUNKS / 2 - 1) * 16f;
     // the rolling rescan and the near re-read are the steady CPU cost (block changes still show within ten seconds)
@@ -264,24 +257,12 @@ final class LensHeightfield {
     private void roofs(LevelChunk chunk, int minY) {
         LevelChunkSection[] sections = chunk.getSections();
         for (int i = 0; i < 256; i++) {
-            float surface = solid[i];
-            int s = tops[i], x = i & 15, z = i >> 4;
-            // the crown: from the top leaf down to the lowest one, through gaps of up to two blocks
-            int crown = NO_CROWN, a = (int) all[i];
-            if (a > s) {
-                int lowest = a - 1, gap = 0;
-                for (int y = a - 2, end = Math.max(s, a - CROWN_MAX); y >= end; y--) {
-                    if (sections[chunk.getSectionIndex(y)].getBlockState(x, y & 15, z).is(BlockTags.LEAVES)) {
-                        lowest = y;
-                        gap = 0;
-                    } else if (++gap > 2) break;
-                }
-                crown = a - lowest;
-            }
-            under[i] = SOLID_DOWN + 4 * crown;
-            floor[i] = surface;
-            if (surface != s) continue; // water on top
-            int y = s - 2, stop = Math.max(minY, s - 1 - ROOF);
+            float top = solid[i];
+            int s = tops[i];
+            under[i] = SOLID_DOWN;
+            floor[i] = top;
+            if (top != s) continue; // water on top
+            int x = i & 15, z = i >> 4, y = s - 2, stop = Math.max(minY, s - 1 - ROOF);
             while (y >= stop && roofBlock(sections[chunk.getSectionIndex(y)].getBlockState(x, y & 15, z))) y--;
             if (y < stop) continue;
             int u = y + 1, low = Math.max(minY, y - GAP);
@@ -298,7 +279,7 @@ final class LensHeightfield {
     private void clearSlot(int slot) {
         Arrays.fill(all, NONE);
         Arrays.fill(solid, NONE);
-        Arrays.fill(under, SOLID_DOWN + 4 * NO_CROWN);
+        Arrays.fill(under, SOLID_DOWN);
         Arrays.fill(floor, NONE);
         write(slot, all, solid, under, floor);
         hash[slot] = 0;
@@ -311,7 +292,7 @@ final class LensHeightfield {
         Arrays.fill(pending, false);
         Arrays.fill(hash, 0);
         Arrays.fill(top, (short) -64);
-        short none = Float.floatToFloat16(NONE), down = Float.floatToFloat16(SOLID_DOWN + 4 * NO_CROWN);
+        short none = Float.floatToFloat16(NONE), down = Float.floatToFloat16(SOLID_DOWN);
         for (int k = 0; k < LEVELS; k++) {
             ByteBuffer m = mirror[k];
             for (int i = 0; i < m.capacity(); i += TEXEL) {
@@ -332,7 +313,7 @@ final class LensHeightfield {
             ByteBuffer m = mirror[k];
             for (int z = 0; z < n; z++) {
                 for (int x = 0; x < n; x++) {
-                    float ma = NONE, ms = NONE, mu = Float.MAX_VALUE, mf = NONE;
+                    float ma = NONE, ms = NONE, mu = SOLID_DOWN, mf = NONE;
                     for (int dz = 0; dz < step; dz++) {
                         for (int dx = 0; dx < step; dx++) {
                             int i = (x * step + dx) + (z * step + dz) * 16;

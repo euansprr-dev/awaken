@@ -75,9 +75,6 @@ public final class LensClient {
     // the Sun Pass's block map (SPEC §22 "Steady Light"): which blocks near the camera stop the sun
     private static LensBlocks blocks;
     static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
-    // the same out to 120 blocks, coarser, for the walk to carry on in (SPEC §22 "Shadows beyond the block map")
-    private static LensBlocksFar blocksFar;
-    static final Identifier BLOCKS_FAR = Awaken.id("textures/effect/lens_blocks_far.png");
     // the lit air (SPEC §22 "Steady Light"): which air near the camera the sun reaches, for its rays
     private static LensLit litAir;
     // the sun map (SPEC §22): the height the sun reaches in each column, swept on a worker in place of a pass
@@ -271,15 +268,9 @@ public final class LensClient {
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
-        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own);
-        // /awaken lens sunpass|rays|far off|on|setting (the Sun Pass's parts one at a time, in play: which of them a
-        // shadow that changes with where you stand comes from)
+        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 net.minecraft.commands.Commands.literal(Awaken.MODID).then(net.minecraft.commands.Commands.literal("lens")
-                        .then(lensSwitch("sunpass", LensClient::sunPass))
-                        .then(lensSwitch("rays", LensClient::rays))
-                        .then(lensSwitch("far", LensClient::farMap))
-                        .then(lensSwitch("paths", LensClient::paths))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -291,45 +282,6 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
-    }
-
-    /** A client command {@code /awaken lens <name> off|on|setting} that sets one development switch and says what it is now. */
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> lensSwitch(
-            String name, java.util.function.Function<String, String> set) {
-        return net.minecraft.commands.Commands.literal(name)
-                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
-                        .executes(c -> {
-                            String line = set.apply(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
-                            Awaken.LOG.info("[lens] {}", line);
-                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
-                            return 1;
-                        }));
-    }
-
-    private static @org.jspecify.annotations.Nullable Boolean forcedFar;
-
-    /** {@code /awaken lens far off|on|setting}: the far block map's walk alone (the block map's own walk stays). */
-    public static String farMap(String arg) {
-        forcedFar = switch (arg.trim()) {
-            case "on" -> Boolean.TRUE;
-            case "off" -> Boolean.FALSE;
-            default -> null;
-        };
-        return "far block map " + (forcedFar != null ? forcedFar : "from the setting (on)");
-    }
-
-    private static boolean showPaths;
-
-    /**
-     * {@code /awaken lens paths on|off}: marks on every lit surface which part of the Sun Pass answered it, over the
-     * answer itself (lens_light.fsh, pathMark): plain where the heightfield found nothing over the ray or a block
-     * stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the
-     * map in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you
-     * stand: the mark under it says which part changed its mind.
-     */
-    public static String paths(String arg) {
-        showPaths = arg.trim().equals("on");
-        return "sun pass paths " + (showPaths ? "on: lines across the sun's way = lit air, lines along it = walk left the map, checker = not read yet" : "off");
     }
 
     private static void tick() {
@@ -440,7 +392,6 @@ public final class LensClient {
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
             long t1 = System.nanoTime();
             if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
-            if (sunPass && blocksFar != null) blocksFar.tick(mc.level, at.getX(), at.getY(), at.getZ());
             if (sunMap != null) sunMap.tick(heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y,
                     moonLight ? -sunDir.z : sunDir.z, at.getX(), at.getZ());
             cost(0, t1 - t0);
@@ -613,8 +564,6 @@ public final class LensClient {
         sunMap = new LensSunMap();
         Minecraft.getInstance().getTextureManager().register(SUNMAP, sunMap.texture);
         Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
-        blocksFar = new LensBlocksFar(blocks);
-        Minecraft.getInstance().getTextureManager().register(BLOCKS_FAR, blocksFar.texture);
         Minecraft.getInstance().getTextureManager().register(LIT, litAir.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
     }
@@ -702,11 +651,7 @@ public final class LensClient {
         float tintMix = graded[Look.HAZE_TINT_MIX];
         lensFrame.land(fogR + (graded[Look.HAZE_TINT] - fogR) * tintMix, fogG + (graded[Look.HAZE_TINT + 1] - fogG) * tintMix,
                 fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
-        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f,
-                blocks != null ? blocks.originX() : 0, blocks != null ? blocks.originZ() : 0);
-        boolean far = sunPass && sunHere && blocks != null && blocksFar != null && blocksFar.ready() && forcedFar != Boolean.FALSE;
-        lensFrame.blocksFar(far, far ? blocksFar.originX() : 0, far ? blocksFar.minY() : 0, far ? blocksFar.originZ() : 0);
-        lensFrame.paths(showPaths);
+        lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,

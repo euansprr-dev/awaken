@@ -968,12 +968,6 @@
           "height": 1024
         },
         {
-          "sampler_name": "BlocksFar",
-          "location": "awaken:lens_blocks_far",
-          "width": 128,
-          "height": 2048
-        },
-        {
           "sampler_name": "Lit",
           "location": "awaken:lens_lit",
           "width": 2048,
