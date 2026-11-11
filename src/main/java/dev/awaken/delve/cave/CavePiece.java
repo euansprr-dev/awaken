@@ -1,6 +1,7 @@
 package dev.awaken.delve.cave;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -14,13 +15,25 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.BaseTorchBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CarpetBlock;
+import net.minecraft.world.level.block.ChainBlock;
+import net.minecraft.world.level.block.GrowingPlantBlock;
+import net.minecraft.world.level.block.HangingRootsBlock;
+import net.minecraft.world.level.block.LanternBlock;
+import net.minecraft.world.level.block.MultifaceBlock;
+import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -60,7 +73,9 @@ public class CavePiece extends StructurePiece {
     public void postProcess(WorldGenLevel level, StructureManager structures, ChunkGenerator generator, RandomSource random,
                             BoundingBox chunkBB, ChunkPos chunkPos, BlockPos referencePos) {
         if (style != Spec.STYLE) return;
-        spec.build(new LevelSink(level, chunkBB, random));
+        LevelSink k = new LevelSink(level, chunkBB, random);
+        spec.build(k);
+        k.settle();
     }
 
     /** Builds the part of the place inside {@code clip} into a level (worldgen: one chunk; commands: all of it); its marks. */
@@ -68,6 +83,7 @@ public class CavePiece extends StructurePiece {
         LevelSink k = new LevelSink(level, clip, RandomSource.create(spec.seed()));
         k.marks = new java.util.HashMap<>();
         spec.build(k);
+        k.settle();
         return k.marks;
     }
 
@@ -77,6 +93,8 @@ public class CavePiece extends StructurePiece {
         private final BoundingBox clip;
         private final RandomSource random;
         private final BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        /** Every piece of dressing set that hangs on or stands on something, for {@link #settle}. */
+        private final List<BlockPos> held = new ArrayList<>();
         java.util.Map<String, BlockPos> marks;
 
         LevelSink(WorldGenLevel level, BoundingBox clip, RandomSource random) {
@@ -123,6 +141,43 @@ public class CavePiece extends StructurePiece {
         @Override
         public void set(int x, int y, int z, BlockState state) {
             level.setBlock(m.set(x, y, z), state, Block.UPDATE_CLIENTS);
+            if (held(state.getBlock())) held.add(new BlockPos(x, y, z));
+        }
+
+        /**
+         * Once the place is built in this clip, every lantern, rail, chain, vine, root, lichen, carpet or torch it set that
+         * nothing holds now goes (SPEC §42.4 "Settled": a chute's lantern under a natural shaft, a mine's rails where its
+         * adit leaves the hill, a bridge's chains under no roof). Its hold is the game's own rule ({@code canSurvive}; a
+         * hanging chain needs a chain or a sturdy face over it), read once everything is cut, so it doesn't matter what the
+         * builder wrote first. A lantern's, rail's, chain's, root's or carpet's hold is in its own column, which only this
+         * chunk writes, so every chunk agrees; a lichen's, vine's or wall torch's is beside it, read as the world stands.
+         * Tops first: a chain or a vine is held by the one over it.
+         */
+        void settle() {
+            if (held.isEmpty()) return;
+            held.sort(Comparator.comparingInt(BlockPos::getY).reversed());
+            for (BlockPos p : held) {
+                BlockState s = level.getBlockState(p);
+                if (!held(s.getBlock()) || holds(s, p)) continue;
+                level.setBlock(p, s.getFluidState().createLegacyBlock(), Block.UPDATE_CLIENTS);
+            }
+            held.clear();
+        }
+
+        private boolean holds(BlockState s, BlockPos p) {
+            if (s.getBlock() instanceof ChainBlock) {
+                if (s.getValue(BlockStateProperties.AXIS) != Direction.Axis.Y) return true;
+                BlockPos up = p.above();
+                BlockState over = level.getBlockState(up);
+                return over.getBlock() instanceof ChainBlock || over.isFaceSturdy(level, up, Direction.DOWN);
+            }
+            return s.canSurvive(level, p);
+        }
+
+        private static boolean held(Block b) {
+            return b instanceof LanternBlock || b instanceof BaseRailBlock || b instanceof ChainBlock || b instanceof GrowingPlantBlock
+                    || b instanceof VineBlock || b instanceof HangingRootsBlock || b instanceof MultifaceBlock || b instanceof CarpetBlock
+                    || b instanceof BaseTorchBlock;
         }
 
         @Override

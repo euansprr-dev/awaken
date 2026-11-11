@@ -17018,6 +17018,13 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     222 crumbs and 60 lone blocks one deep; 82 ramps, 0 crumbs and 0 lone three deep), and it cuts every bore from its higher
     end whichever way it is asked, so nothing is laid in a stretch already cut (a rising leg had laid rubble in its own
     walking space). GameTest `delve_floored_ramp`.
+  - **The Delvers' dressing** (the census, the same day: a chute's lanterns hanging under a natural shaft, a mine's rails
+    where its adit leaves the hill and its bridge's chains under no roof, a grotto's cave vine, all on the home seed). Once a
+    cave place is built in a chunk (`CavePiece.LevelSink.settle`, worldgen and the place commands alike), every lantern,
+    rail, chain, vine, cave vine, hanging root, lichen, carpet or torch it set that nothing holds goes, by the game's own
+    `canSurvive` (a hanging chain: a chain or a sturdy face over it), tops first so a chain falls with the one over it. It
+    reads the chunk once everything is cut, so the order the builder wrote in doesn't matter; a lantern's, rail's, chain's,
+    root's or carpet's hold is in its own column, so the chunks agree.
   - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
     body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
     two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
