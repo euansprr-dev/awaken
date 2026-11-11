@@ -216,8 +216,13 @@ final class Carve {
 
     /** A vine on the face of the solid block on side {@code toWall} of (x, y, z), if that cell is air. */
     static void vine(Sink s, int x, int y, int z, Direction toWall) {
+        vine(s, x, y, z, toWall, false);
+    }
+
+    /** As above, and hung from the block over it too ({@code up}): the top of a fall of vines under a ledge. */
+    static void vine(Sink s, int x, int y, int z, Direction toWall, boolean up) {
         if (!s.inside(x, y, z) || !s.get(x, y, z).isAir()) return;
-        BlockState v = Blocks.VINE.defaultBlockState().setValue(VineBlock.getPropertyForFace(toWall), true);
+        BlockState v = Blocks.VINE.defaultBlockState().setValue(VineBlock.getPropertyForFace(toWall), true).setValue(VineBlock.UP, up);
         s.set(x, y, z, v);
     }
 

@@ -28,8 +28,45 @@ public record WonderFeature() implements Feature {
         return CODEC;
     }
 
-    /** The ground by the chunk generator's own noise, the same from any chunk and later from the server. */
+    /**
+     * The ground by the chunk generator's own noise, the same from any chunk and later from the server, and the land the
+     * cave places open to the sky cut out of it (SPEC §34.1): what worldgen and the server decide by.
+     */
     public static Wonders.Terrain terrain(ServerLevel level, ChunkGenerator gen) {
+        Wonders.Terrain quick = quickTerrain(level, gen);
+        return new Wonders.Terrain() {
+            @Override
+            public int ground(int x, int z) {
+                return quick.ground(x, z);
+            }
+
+            @Override
+            public int seaLevel() {
+                return quick.seaLevel();
+            }
+
+            @Override
+            public boolean structureNear(int x, int z, int chunks) {
+                return quick.structureNear(x, z, chunks);
+            }
+
+            @Override
+            public boolean cut(int x0, int z0, int x1, int z1, int y0, int y1) {
+                return dev.awaken.delve.api.CaveGround.cuts(level, x0, z0, x1, z1, y0, y1);
+            }
+
+            @Override
+            public boolean seesCuts() {
+                return true;
+            }
+        };
+    }
+
+    /**
+     * As {@link #terrain} without the caves' cuts: a quick first look over a wide stretch (a census, a command picking which
+     * regions to ask). A wonder it places may stand elsewhere, or nowhere, in the world.
+     */
+    public static Wonders.Terrain quickTerrain(ServerLevel level, ChunkGenerator gen) {
         var state = level.getChunkSource().randomState();
         return new Wonders.Terrain() {
             @Override
