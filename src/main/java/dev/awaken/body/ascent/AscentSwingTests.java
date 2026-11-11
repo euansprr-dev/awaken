@@ -20,81 +20,174 @@ final class AscentSwingTests {
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_swing_level", 40, AscentSwingTests::level);
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, AscentSwingTests::sling);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
+        dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, AscentSwingTests::held);
     }
 
     /**
-     * The guide's early let-go over nothing (SPEC §62): the Rope dream's gaps (roads in a void, laid for a let-go at the
-     * top of the arc) are landed on with the rope held, thrown early in the jump and late; the same gap with ground
-     * under it is thrown well past (the early let-go is untouched where there is ground); and with the guide off
-     * nothing changed.
+     * The Rope dream's gaps over nothing (SPEC §62): roads in a void, laid for a let-go at the top of the arc. The held
+     * rope never lets go by itself: let go at the top, thrown early in the jump or late, it lands on the far road. With
+     * the held rope off, the guide's early let-go lands there too, and with ground under the gap it throws on as before.
      */
     private static void overNothing(GameTestHelper h) {
         AscentSwing.Tune was = AscentSwing.T;
-        boolean guide = AscentSwing.guide;
+        boolean guide = AscentSwing.guide, hold = AscentSwing.hold;
         AscentSwing.T = AscentSwing.Tune.JAR;
         try {
             int[][] gaps = {{22, 14, 6, 11}, {24, 14, 8, 11}};
             for (int[] g : gaps) for (int at : new int[] {2, 9}) {
                 AscentSwing.guide = true;
+                AscentSwing.hold = true;
+                double top = SwingBench.gapLanding(g[0], g[1], g[2], g[3], at, false, true);
+                h.assertTrue(top >= 0.3 && top <= g[3] - 0.3, "a held rope over nothing let go at the top lands on the far road: " + g[0]
+                        + " wide, thrown at " + at + ", " + String.format("%.1f", top) + " past its edge, the road " + g[3] + " long");
+                AscentSwing.hold = false;
                 double held = SwingBench.gapLanding(g[0], g[1], g[2], g[3], at, false);
-                h.assertTrue(held >= 0.3 && held <= g[3] - 0.5, "a held rope over nothing lands on the far road: " + g[0] + " wide, thrown at " + at
-                        + ", " + String.format("%.1f", held) + " past its edge, the road " + g[3] + " long");
-                AscentSwing.guide = false;
-                double old = SwingBench.gapLanding(g[0], g[1], g[2], g[3], at, false);
-                h.assertTrue(old >= 0.3 && old <= g[3] - 0.3, "the rope without the guide lands there as it did: " + String.format("%.1f", old));
+                h.assertTrue(held >= 0.3 && held <= g[3] - 0.5, "held rope off: the guide's let-go over nothing lands on the far road: "
+                        + g[0] + " wide, thrown at " + at + ", " + String.format("%.1f", held) + " past its edge");
             }
             AscentSwing.guide = true;
+            AscentSwing.hold = false;
             double over = SwingBench.gapLanding(22, 14, 6, 11, 2, false), ground = SwingBench.gapLanding(22, 14, 6, 11, 2, true);
-            h.assertTrue(ground > over + 3, "with ground under the gap the early let-go throws on as before: " + String.format("%.1f", ground)
-                    + " past the edge, " + String.format("%.1f", over) + " over nothing");
+            h.assertTrue(ground > over + 3, "held rope off: with ground under the gap the early let-go throws on as before: "
+                    + String.format("%.1f", ground) + " past the edge, " + String.format("%.1f", over) + " over nothing");
         } finally {
             AscentSwing.T = was;
             AscentSwing.guide = guide;
+            AscentSwing.hold = hold;
         }
         h.succeed();
     }
 
     /**
-     * The rope as SPEC §62 has it, played by a bot that only holds the key (how a player plays it): never a hard hit on a
-     * rope, never a stopped run, at least as far as the old rope everywhere, the tall places far past what a held rope
-     * did before (lane 120, city 166, forest 124), the real-sized woods, hills and roofs (where it never fired) well past
-     * a run's 103 with no hard hit at all, and few hard hits flying free among the giants. Then the switch: with the guide
-     * off, the assisted swing's own gates as §17.31 set them (two places are enough to hold the path).
+     * The held rope (SPEC §62): a 26-block rope three blocks off to one side, the body swinging in from 40° behind, held
+     * 30 seconds with no key. It never asks to let go; after its first arc it swings back past the bottom, again and again,
+     * each forward top lower than the last (drag, no drive), none over the cap; and it settles under its anchor. Then
+     * forward held pumps it back up, never over {@code holdTop}; back held slows it to a hang. With the held rope off the
+     * same rope lets go at the top of its first arc.
      */
-    private static void bench(GameTestHelper h) {
+    private static void held(GameTestHelper h) {
         AscentSwing.Tune was = AscentSwing.T;
-        boolean guide = AscentSwing.guide;
+        boolean guide = AscentSwing.guide, hold = AscentSwing.hold;
         AscentSwing.T = AscentSwing.Tune.JAR;
         try {
             AscentSwing.guide = true;
+            AscentSwing.hold = true;
+            AscentSwing.Tune t = AscentSwing.T;
+            SwingSpace.Boxes space = new SwingSpace.Boxes();
+            AscentSwing.Work w = new AscentSwing.Work();
+            AscentSwing.Rope rope = new AscentSwing.Rope();
+            AscentRules.Kin k = new AscentRules.Kin();
+            heldStart(k, rope);
+            double[] pv = new double[4];
+            double lastTop = 999, maxAng = 0;
+            int turns = 0;
+            boolean forward = true;
+            StringBuilder tops = new StringBuilder();
+            for (int i = 0; i < 600; i++) {
+                int how = AscentSwing.tick(space, k, rope, 0, 0, w);
+                h.assertTrue(how == AscentSwing.GO, "a held rope asked to let go at tick " + i + ": " + how);
+                AscentSwing.pivot(k.x, k.z, rope.ax, rope.ay, rope.az, 0, pv);
+                double ang = AscentSwing.angleFromBottom(k, pv[0], pv[1], pv[2]);
+                maxAng = Math.max(maxAng, ang);
+                if (forward && k.vz < 0 || !forward && k.vz > 0) {
+                    if (forward) {
+                        h.assertTrue(ang < lastTop + 0.5, "a held rope's forward tops fall away: " + tops + " then " + String.format("%.1f", ang));
+                        lastTop = ang;
+                        tops.append(String.format(" %.1f", ang));
+                    }
+                    forward = !forward;
+                    turns++;
+                }
+            }
+            h.assertTrue(turns >= 8, "a held rope swings back and forth: " + turns + " turns in 30 s, forward tops" + tops);
+            h.assertTrue(maxAng < t.holdCap + 3, "no held arc over the cap: " + String.format("%.1f", maxAng));
+            AscentSwing.pivot(k.x, k.z, rope.ax, rope.ay, rope.az, 0, pv);
+            h.assertTrue(Math.abs(pv[3]) < 0.5, "a held rope settles under its anchor: still " + String.format("%.2f", pv[3]) + " off");
+            double pumped = swingFor(space, k, rope, w, 1, 600, 200, pv);
+            h.assertTrue(pumped > 60 && pumped < t.holdTop + 4, "forward pumps a held rope up to its cap: " + String.format("%.1f", pumped));
+            double slowed = swingFor(space, k, rope, w, -1, 600, 100, pv);
+            h.assertTrue(slowed < 8, "back slows a held rope to a hang: " + String.format("%.1f", slowed));
+            AscentSwing.hold = false;
+            heldStart(k, rope);
+            int let = -1;
+            for (int i = 0; i < 200 && let < 0; i++) if (AscentSwing.tick(space, k, rope, 0, 0, w) == AscentSwing.TOP) let = i;
+            h.assertTrue(let > 0, "held rope off: the rope lets go at the top of its first arc");
+        } finally {
+            AscentSwing.T = was;
+            AscentSwing.guide = guide;
+            AscentSwing.hold = hold;
+        }
+        h.succeed();
+    }
+
+    /** The held test's rope: 26 long, its anchor 3 to the side and 40 up, the hand 40° behind its bottom, going 0.8 on. */
+    private static void heldStart(AscentRules.Kin k, AscentSwing.Rope rope) {
+        rope.set(3, 40, 20, 26, 26);
+        double rad = Math.sqrt(26 * 26 - 9), a = Math.toRadians(40);
+        k.set(0, 40 - rad * Math.cos(a), 20 - rad * Math.sin(a), 0, 0, 0.8);
+    }
+
+    /** A held swing for {@code ticks} with forward at {@code fwd}: its widest angle over the last {@code last} ticks. */
+    private static double swingFor(SwingSpace s, AscentRules.Kin k, AscentSwing.Rope rope, AscentSwing.Work w, double fwd, int ticks, int last, double[] pv) {
+        double max = 0;
+        for (int i = 0; i < ticks; i++) {
+            AscentSwing.tick(s, k, rope, 0, fwd, w);
+            AscentSwing.pivot(k.x, k.z, rope.ax, rope.ay, rope.az, 0, pv);
+            if (i >= ticks - last) max = Math.max(max, AscentSwing.angleFromBottom(k, pv[0], pv[1], pv[2]));
+        }
+        return max;
+    }
+
+    /** One bench gate: noted, so every row is logged before any gate fails the test. */
+    private static void gate(java.util.List<String> bad, boolean ok, String what) {
+        if (!ok) bad.add(what);
+    }
+
+    /**
+     * The rope as SPEC §62 has it, played by bots (a player holding the key): never a hard hit on a rope, never a stopped
+     * run, at least as far as the old rope everywhere, the tall places far past what a held rope did before (lane 120,
+     * city 166, forest 124), the real-sized woods, hills and roofs (where it never fired) well past a run's 103 with no
+     * hard hit at all, and few hard hits flying free among the giants. The held rope never lets go by itself, so these
+     * bots let go of the key where the rope used to (as the window lights, else at the top); with the held rope off, the
+     * rope's own let-go keeps its gates. Then the switch: with the guide off, the assisted swing's own gates as §17.31 set
+     * them (two places are enough to hold the path). Every row is logged before any gate is judged.
+     */
+    private static void bench(GameTestHelper h) {
+        AscentSwing.Tune was = AscentSwing.T;
+        boolean guide = AscentSwing.guide, holdWas = AscentSwing.hold;
+        AscentSwing.T = AscentSwing.Tune.JAR;
+        java.util.List<String> bad = new java.util.ArrayList<>();
+        StringBuilder rows = new StringBuilder();
+        try {
+            AscentSwing.guide = true;
+            AscentSwing.hold = true;
             int free = 0;
-            StringBuilder rows = new StringBuilder();
             for (String place : SwingBench.PLACES) {
                 SwingBench.Row today = SwingBench.bench(place, false), held = SwingBench.bench(place, true, true);
                 rows.append('\n').append(today).append("\nheld   ").append(held);
-                h.assertTrue(held.hardOnRope() == 0, place + ": hard hits on the rope " + held);
-                h.assertTrue(held.stuckRuns() == 0, place + ": stopped runs " + held);
-                h.assertTrue(held.medianDistance() >= today.medianDistance() * 0.98, place + ": shorter than the old rope " + held + " vs " + today);
+                gate(bad, held.hardOnRope() == 0, place + ": hard hits on the rope " + held);
+                gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
+                gate(bad, held.medianDistance() >= today.medianDistance() * 0.98, place + ": shorter than the old rope " + held + " vs " + today);
                 free += held.hardFree();
             }
-            h.assertTrue(free <= 2, "hard hits flying free between ropes: " + free);
+            gate(bad, free <= 2, "hard hits flying free between ropes: " + free);
             String[] tall = {"lane", "city", "forest"};
             double[] tallAtLeast = {240, 250, 240};
             for (int i = 0; i < tall.length; i++) {
                 SwingBench.Row held = SwingBench.bench(tall[i], true, true);
-                h.assertTrue(held.medianDistance() >= tallAtLeast[i], tall[i] + ": a held rope goes " + held + ", wanted " + tallAtLeast[i]);
+                gate(bad, held.medianDistance() >= tallAtLeast[i], tall[i] + ": a held rope goes " + held + ", wanted " + tallAtLeast[i]);
             }
             int jump = singleTrees(0.36), run = singleTrees(0.6), fast = singleTrees(1.0);
-            h.assertTrue(jump >= 80 && run >= 70 && fast >= 60, "one tree alone, of 100: slung from a sprint jump " + jump + ", at a run " + run + ", fast " + fast);
+            gate(bad, jump >= 80 && run >= 70 && fast >= 60, "one tree alone, of 100: slung from a sprint jump " + jump + ", at a run " + run + ", fast " + fast);
             double[] woodsAtLeast = {185, 180, 175, 180};
             for (int i = 0; i < SwingBench.WOODS.length; i++) {
                 String place = SwingBench.WOODS[i];
                 SwingBench.Row held = SwingBench.bench(place, true, true);
                 rows.append("\nheld   ").append(held);
-                h.assertTrue(held.hardOnRope() == 0 && held.hardFree() == 0, place + ": hard hits " + held);
-                h.assertTrue(held.stuckRuns() == 0, place + ": stopped runs " + held);
-                h.assertTrue(held.ropesPerRun() >= 3, place + ": the rope hardly fires " + held);
-                h.assertTrue(held.medianDistance() >= woodsAtLeast[i], place + ": a held rope goes " + held + ", wanted " + woodsAtLeast[i]);
+                gate(bad, held.hardOnRope() == 0 && held.hardFree() == 0, place + ": hard hits " + held);
+                gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
+                gate(bad, held.ropesPerRun() >= 3, place + ": the rope hardly fires " + held);
+                gate(bad, held.medianDistance() >= woodsAtLeast[i], place + ": a held rope goes " + held + ", wanted " + woodsAtLeast[i]);
             }
             // the player who only holds forward and the rope, from the ground, never jump (one thumb: the rope on one key,
             // jump on another). The "holding" bot above also hops on every landing and throws only in the air, so the
@@ -105,24 +198,35 @@ final class AscentSwingTests {
             for (int i = 0; i < keyPlaces.length; i++) {
                 SwingBench.Row key = SwingBench.benchKey(keyPlaces[i]);
                 rows.append("\nkey    ").append(key);
-                h.assertTrue(key.hardOnRope() == 0, keyPlaces[i] + ", key only: hard hits on the rope " + key);
-                h.assertTrue(key.ropesPerRun() >= 3, keyPlaces[i] + ", key only: the rope hardly fires from the ground " + key);
-                h.assertTrue(key.medianDistance() >= keyAtLeast[i], keyPlaces[i] + ", key only: goes " + key + ", wanted " + keyAtLeast[i]);
+                gate(bad, key.hardOnRope() == 0, keyPlaces[i] + ", key only: hard hits on the rope " + key);
+                gate(bad, key.ropesPerRun() >= 3, keyPlaces[i] + ", key only: the rope hardly fires from the ground " + key);
+                gate(bad, key.medianDistance() >= keyAtLeast[i], keyPlaces[i] + ", key only: goes " + key + ", wanted " + keyAtLeast[i]);
             }
+            // the held rope off: the rope lets go by itself, as on 10 Nov
+            AscentSwing.hold = false;
+            for (int i = 0; i < 2; i++) {
+                SwingBench.Row held = SwingBench.bench(tall[i], true, true);
+                rows.append("\nself   ").append(held);
+                gate(bad, held.hardOnRope() == 0 && held.stuckRuns() == 0, tall[i] + ", held rope off: " + held);
+                gate(bad, held.medianDistance() >= tallAtLeast[i], tall[i] + ", held rope off: goes " + held + ", wanted " + tallAtLeast[i]);
+            }
+            AscentSwing.hold = true;
             AscentSwing.guide = false;
             for (String place : new String[] {"lane", "city"}) {
                 SwingBench.Row today = SwingBench.bench(place, false), assist = SwingBench.bench(place, true);
                 rows.append("\nclassic ").append(assist);
-                h.assertTrue(assist.hardOnRope() == 0 && assist.stuckRuns() == 0, place + ", guide off: " + assist);
-                h.assertTrue(assist.medianDistance() >= today.medianDistance() * 0.98, place + ", guide off: shorter than the old rope " + assist);
+                gate(bad, assist.hardOnRope() == 0 && assist.stuckRuns() == 0, place + ", guide off: " + assist);
+                gate(bad, assist.medianDistance() >= today.medianDistance() * 0.98, place + ", guide off: shorter than the old rope " + assist);
             }
             SwingBench.Row oak = SwingBench.bench("oak", true, true);
-            h.assertTrue(oak.ropesPerRun() == 0, "guide off: the old rule gives a real wood no rope, as it did: " + oak);
-            dev.awaken.Awaken.LOG.info("[ascent] swing bench:{}", rows);
+            gate(bad, oak.ropesPerRun() == 0, "guide off: the old rule gives a real wood no rope, as it did: " + oak);
         } finally {
             AscentSwing.T = was;
             AscentSwing.guide = guide;
+            AscentSwing.hold = holdWas;
         }
+        dev.awaken.Awaken.LOG.info("[ascent] swing bench:{}", rows);
+        h.assertTrue(bad.isEmpty(), String.join("; ", bad));
         h.succeed();
     }
 

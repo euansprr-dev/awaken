@@ -277,6 +277,8 @@ public final class SwingBench {
         // the old rope's: its anchor, length and the length it reels to
         double tax, tay, taz, tlen, ttarget;
         int t, travel, held, ropeStart = -100, cooldown, groundTicks, ground, missAt = -100, stuckTicks, pull, swingId;
+        /** Ticks the bot has waited at a held rope's let-go point because letting go would throw it into something. */
+        int waited;
         /**
          * The bot that only holds forward and the rope, never jump (how the game is played with one thumb): the rope may
          * throw from the ground, by the game's own rule (AscentMoves: a press, or three ticks down at a run ten ticks
@@ -383,6 +385,7 @@ public final class SwingBench {
             onRope = false;
             cooldown = 2;
             groundTicks = 0;
+            waited = 0;
         }
 
         /** One tick with the bot's keys. */
@@ -473,8 +476,9 @@ public final class SwingBench {
                     groundThrow = false;
                 }
             } else {
-                // a let-go into something just ahead waits a moment (the rope holds on)
-                boolean hold = !ropeKey && travel == 0 && assist && !zip && held < AscentSwing.T.holdOn && !AscentSwing.letGoClear(w, k, rope, yaw, work);
+                // a let-go into something just ahead waits a moment (the rope holds on; the held rope never does)
+                boolean hold = !ropeKey && travel == 0 && assist && !zip && !AscentSwing.hold && held < AscentSwing.T.holdOn
+                        && !AscentSwing.letGoClear(w, k, rope, yaw, work);
                 held = hold ? held + 1 : 0;
                 if (!ropeKey && travel == 0 && !hold) {
                     if (!assist) {
@@ -614,7 +618,11 @@ public final class SwingBench {
         return play(place, assist, false, x0, zOff, pitch, speed, ticks);
     }
 
-    /** {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. */
+    /**
+     * {@code hold}: the bot never lets go by hand (the rope lets go by itself): how a player holding the key plays. With
+     * the held rope ({@link AscentSwing#hold}) the rope never lets go by itself, so this bot lets go of the key where the
+     * rope used to let go: as the window lights (where the guide's held rope let go), else at the top of the arc.
+     */
     static Run play(String place, boolean assist, boolean hold, double x0, double zOff, double pitch, double speed, int ticks) {
         return play(place, assist, hold, false, x0, zOff, pitch, speed, ticks);
     }
@@ -646,7 +654,16 @@ public final class SwingBench {
                 rope = keyOnly || (assist ? !b.onGround : !b.onGround && b.vy < 0.2 && !sim.wasDown && sim.t - sim.missAt > 10);
             } else {
                 rope = true;
-                if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
+                if (sim.travel == 0 && !sim.zip && !sim.sling && assist && AscentSwing.hold) {
+                    // the held rope lets go only by the key (SPEC §62): by hand at the window's best, holding as it lights,
+                    // else at the top of the arc; a few ticks later if that would throw the bot into something just ahead
+                    // (a player sees the crown coming), as the rope's own let-go waited before
+                    double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
+                    if (q > (hold ? AscentSwing.T.winFrom + 0.01 : 0.85) || sim.rope.swung) {
+                        if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) rope = false;
+                        else sim.waited++;
+                    }
+                } else if (sim.travel == 0 && !sim.zip && !sim.sling && !(hold && assist)) {
                     double q = assist ? AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work)
                             : AscentRules.releaseQuality(sim.k, sim.tax, sim.tay, sim.taz);
                     if (q > 0.85) rope = false;
@@ -671,8 +688,13 @@ public final class SwingBench {
      * rope thrown {@code throwAt} ticks into it and held until it lets go by itself. Returns how far past the gap's far
      * edge the feet come down to the roads' height (NaN if the rope finds nothing or never lets go). With
      * {@code groundUnder}, the same over a floor ten blocks down: there the guide's early let-go is free to throw far.
+     * {@code atTop}: the key let go at the top of the arc instead (the held rope's, SPEC §62, never lets go by itself).
      */
     static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder) {
+        return gapLanding(len, up, ahead, road, throwAt, groundUnder, false);
+    }
+
+    static double gapLanding(int len, int up, int ahead, int road, int throwAt, boolean groundUnder, boolean atTop) {
         int y = 80, z = 100;
         SwingSpace.Boxes space = new SwingSpace.Boxes();
         space.add(-1, y - 1, z - 12, 2, y, z, false);
@@ -702,7 +724,8 @@ public final class SwingBench {
         for (int i = 0, held = 0; ; i++) {
             if (i > 300) return Double.NaN;
             int how = AscentSwing.tick(space, k, rope, 0, 1, w);
-            if (how == AscentSwing.WALL) return Double.NaN;
+            if (how == AscentSwing.WALL || w.braked) return Double.NaN;
+            if (atTop && rope.swung) break;
             if (how == AscentSwing.TOP) {
                 if (held >= AscentSwing.T.holdOn || AscentSwing.letGoClear(space, k, rope, 0, w)) break;
                 held++;

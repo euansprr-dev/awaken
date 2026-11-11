@@ -104,11 +104,14 @@ final class AirProofs {
 
     /**
      * A swing across {@code len}: the sprint jump, the rope thrown {@code throwAt} ticks into the air (the assisted
-     * rope's pick, the client's {@code AscentMoves.fire}), its flight out, the swing to the top of its arc letting go (the
-     * client's {@code swingTick}), then the carry to the far road at the same height, {@code road} long.
+     * rope's pick, the client's {@code AscentMoves.fire}), its flight out, then the swing. The held rope (SPEC §62) lets
+     * go only when the key is let go, so every tick of the arc from the catch to its top is a let-go the player may
+     * choose: each is played (its window boost, then the carry to the far road at the same height, {@code road} long),
+     * and the one that lands, best in the window (where the rope glows), is the proof. The arc's top is the last tried
+     * (where the rope used to let go by itself), so a gap laid for that let-go still proves.
      */
     int swing(BlockGetter v, double x, int y, int z, int len, int road, int throwAt) {
-        double need = z + len + ONTO, end = z + len + road - ONTO;
+        double need = z + len + ONTO, end = z + len + road - ONTO, mid = (need + end) / 2;
         double plain = plainJump(x, y, z - TAKE_OFF, y);
         if (!Double.isNaN(plain) && plain >= need) return fail("a plain jump crosses it");
         CourseSpace space = new CourseSpace(v);
@@ -127,28 +130,42 @@ final class AirProofs {
         double d = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
         rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, d));
         rope.fitLen = Math.min(rope.fitLen, rope.len);
-        int held = 0;
+        AscentRules.Kin c = new AscentRules.Kin();
+        int best = -1;
+        double bestScore = -1e9, nearest = Double.NaN;
         for (int i = 0; ; i++, t++) {
-            if (i > 300) return fail("the swing (" + when + ") never lets go");
+            if (i > 300) return fail("the swing (" + when + ") never tops out");
             int how = AscentSwing.tick(space, k, rope, 0, 1, w);
-            if (how == AscentSwing.WALL) return fail("the swing (" + when + ") runs into something");
+            if (how == AscentSwing.WALL || w.braked) {
+                if (best >= 0) break;
+                return fail("the swing (" + when + ") runs into something");
+            }
             if (k.y - AscentRules.HAND_HEIGHT < y - 40) return fail("the swing (" + when + ") falls away");
-            if (how == AscentSwing.TOP) {
-                if (held >= AscentSwing.T.holdOn || AscentSwing.letGoClear(space, k, rope, 0, w)) break;
-                held++;
+            boolean top = how == AscentSwing.TOP || rope.swung;
+            if (rope.caught) {
+                // the key let go now: where it comes down
+                c.set(k.x, k.y, k.z, k.vx, k.vy, k.vz);
+                double q = AscentSwing.letGo(c, rope, 0, w);
+                c.y -= AscentRules.HAND_HEIGHT; // the carry is the feet's
+                for (int j = 1; j <= 200; j++) {
+                    AscentRules.carryStep(c, 0f, 1, 0, sc);
+                    if (c.vy < 0 && c.y <= y) {
+                        double score = q - 0.01 * Math.abs(c.z - mid);
+                        if (c.z >= need && c.z <= end && score > bestScore) {
+                            bestScore = score;
+                            best = t + j;
+                        }
+                        if (Double.isNaN(nearest) || Math.abs(c.z - mid) < Math.abs(nearest - mid)) nearest = c.z;
+                        break;
+                    }
+                }
             }
+            if (top) break;
         }
-        AscentSwing.letGo(k, rope, 0, w);
-        k.y -= AscentRules.HAND_HEIGHT; // the carry is the feet's
-        for (int i = 0; i < 200; i++, t++) {
-            AscentRules.carryStep(k, 0f, 1, 0, sc);
-            if (k.vy < 0 && k.y <= y) {
-                if (k.z < need) return fail("the swing (" + when + ") lets go " + fmt(need - k.z) + " short");
-                if (k.z > end) return fail("the swing (" + when + ") flies " + fmt(k.z - end) + " past the far road");
-                return t;
-            }
-        }
-        return fail("the carry never comes down");
+        if (best >= 0) return best;
+        if (Double.isNaN(nearest)) return fail("the swing (" + when + ") never comes down");
+        if (nearest < need) return fail("the swing (" + when + ") lets go " + fmt(need - nearest) + " short at best");
+        return fail("the swing (" + when + ") flies " + fmt(nearest - end) + " past the far road at least");
     }
 
     // ---- the wings -----------------------------------------------------------------------------------------------------
