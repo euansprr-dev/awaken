@@ -36,6 +36,8 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     private @Nullable CloseView close;
     private int wing;
     private float wingFade = 1F;
+    /** Whether this opening has already gone to the suit its stand is holding. */
+    private boolean heldShown;
     private long last = System.nanoTime();
     private float time;
     private float aimX = 854F, aimY = 430F;
@@ -98,6 +100,19 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             c = null;
         }
         wingFade = Math.min(1F, wingFade + dt / WING_FADE);
+        // a stand that is holding a suit opens on that suit: it is the one being built here (SPEC §44.14). Esc steps back
+        // to the terraces to look at the rest.
+        if (c == null && !heldShown && wing == ARMOUR && HallClient.suits != null) {
+            heldShown = true;
+            ArmourSet held = TerraceView.held(HallClient.suits);
+            if (held != null) {
+                TerraceLayout.Fig f = TerraceLayout.of(held);
+                aimX = f.x();
+                aimY = f.cy();
+                openSuit(f, -1);
+                c = close;
+            }
+        }
         if (c == null) {
             float sx = s.sx(mx), sy = s.sy(my);
             if (mouseMovedSinceKey) {
@@ -178,6 +193,21 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             wingFade = 1F;
         } else if (what.equals("looks")) {
             openLooks();
+        } else if (what.equals("hover")) {
+            // tours can't move the pointer: the n-th suit (or the n-th kind's E-rank niche) as if pointed at
+            mouseMovedSinceKey = false;
+            if (wing == ARMOUR) {
+                TerraceLayout.Fig[] figs = TerraceLayout.figs();
+                TerraceLayout.Fig f = figs[Math.floorMod(n, figs.length)];
+                terrace.hover = f;
+                aimX = f.x();
+                aimY = f.cy();
+            } else {
+                HallLayout.Cell cell = HallLayout.cell(Math.floorMod(n, HallNet.COLS), Math.min(2, HallNet.ROWS - 1));
+                wall.hover = cell;
+                aimX = cell.x();
+                aimY = cell.cy();
+            }
         } else if (what.startsWith("suit:")) {
             ArmourSet set = ArmourSet.byId(what.substring(5));
             if (set == null) return;
@@ -240,11 +270,6 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         }
         if (terrace.looksAt(x, y)) {
             openLooks();
-            return;
-        }
-        ArmourPayloads.Offers o = HallClient.suits;
-        if (terrace.takeAt(x, y) && o != null && o.stand()) {
-            ForgeClient.send(o.pos(), ArmourPayloads.TAKE, 0, 0F, 0F);
             return;
         }
         TerraceLayout.Fig fig = TerraceLayout.at(x, y);

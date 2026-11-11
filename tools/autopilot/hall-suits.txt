@@ -57,6 +57,17 @@ wait 30
 use
 wait 70
 shot terr_stand
+# the hover state on a suit, then on a weapon (tours can't move the pointer: hall view hover n)
+cmd awaken hall view hover 1
+wait 20
+shot terr_hover
+cmd awaken hall view wing 0
+wait 50
+cmd awaken hall view hover 3
+wait 20
+shot wall_hover
+cmd awaken hall view wing 1
+wait 50
 click 97 191
 wait 12
 shotnow suit_zoom
@@ -68,6 +79,27 @@ shot suit_lord
 cmd awaken hall view looks 0
 wait 60
 shot looks
+screen close
+wait 10
+# ---- one suit to a stand (SPEC 44.14): boots stood on it, the Hall opens on that suit, another suit says why it waits ----
+cmd awaken hall fit wildhide 3
+wait 20
+cmd tp @s 0.5 201 1.5 0 15
+wait 20
+use
+wait 90
+shot stand_held_opens_on_suit
+cmd awaken hall suit wildhide 3
+wait 70
+shot stand_held_boots
+screenkey esc
+wait 60
+cmd awaken hall view hover 0
+wait 20
+shot stand_held_terrace
+cmd awaken hall suit bellguard 1
+wait 70
+shot stand_held_other_suit
 screen close
 wait 10
 cmd gamemode survival
