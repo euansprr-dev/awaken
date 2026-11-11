@@ -884,7 +884,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     private void wells(Random r) {
         for (Part p : new ArrayList<>(parts)) {
             if (!(p instanceof Cave room) || p.name.equals("root") || p.name.equals("side")) continue;
-            int want = room == lordHall ? 2 : 1;
+            // a stand's one great room is fought in for minutes: four wells, so the whole floor can be seen
+            int want = room == lordHall ? 2 : stand && room.name.equals("ambush") ? 4 : 1;
             double turn = r.nextDouble() * Math.PI * 2;
             for (int go = 0; go < 10 && want > 0; go++) {
                 double a = turn + go * 2.4, far = (0.22 + 0.06 * (go % 4)) * Math.min(room.rx, room.rz);
