@@ -83,6 +83,7 @@ public final class TogetherModule {
             }
         });
         Signal.onAction("together", PartyService::onAnswer);
+        dev.awaken.core.api.BellHooks.onRung(Answering::rung);
         TogetherCommands.register();
         TogetherTests.register();
 
@@ -92,10 +93,12 @@ public final class TogetherModule {
         bus.addListener(EventPriority.LOWEST, Fights::onDamage);
         bus.addListener(EventPriority.HIGH, Fights::onTarget);
         bus.addListener(EventPriority.HIGHEST, Fights::onInteract);
+        bus.addListener(EventPriority.LOW, Fights::onRespawnPosition);
         bus.addListener((ServerTickEvent.Post e) -> {
             Fights.tick(e.getServer());
             TogetherNet.tick(e.getServer());
             TourPartner.tick(e.getServer());
+            Answering.tick(e.getServer());
             if (e.getServer().getTickCount() % 20 == 0) PartyService.openingTogether(e.getServer());
         });
         bus.addListener((ServerStoppingEvent e) -> TourPartner.removeAll(e.getServer()));
@@ -103,6 +106,16 @@ public final class TogetherModule {
             Fights.forget();
             PartyService.forget();
             TogetherNet.forget();
+            Answering.forget();
+        });
+        bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
+            // whoever is already playing hears that someone new has arrived, once a session (SPEC §70.6)
+            if (!(e.getEntity() instanceof ServerPlayer p) || !TogetherConfig.joins() || dev.awaken.progression.Progression.profile(p).awakened()) return;
+            for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+                if (o != p && dev.awaken.progression.Progression.profile(o).awakened()) {
+                    Signal.toast(o, net.minecraft.network.chat.Component.literal(p.getGameProfile().name() + " has arrived, and hasn't awakened yet."));
+                }
+            }
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             Fights.forget(e.getEntity().getUUID());

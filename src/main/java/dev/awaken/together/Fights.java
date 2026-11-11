@@ -91,6 +91,10 @@ final class Fights {
     private static final Map<UUID, Integer> LIFTS = new HashMap<>();
     /** Fighters whose down ran out: the death that follows is the real one. */
     private static final Set<UUID> DYING = new HashSet<>();
+    /** Where each player's last gate stands in the overworld, noted as a blow that may kill them lands. */
+    private record Door(BlockPos at, int gateId, long tick) {}
+
+    private static final Map<UUID, Door> DOORS = new HashMap<>();
     /** Small monsters on each Gentle player right now (their entity ids), rebuilt once a second. */
     private static final Map<UUID, Set<Integer>> ON = new HashMap<>();
     /** What each player has done to each boss since it last chose whom to fight (boss entity id, then player). */
@@ -111,6 +115,7 @@ final class Fights {
         ON.clear();
         LEDGER.clear();
         SINCE_GENTLE.clear();
+        DOORS.clear();
     }
 
     static void forget(UUID id) {
@@ -225,7 +230,13 @@ final class Fights {
             SINCE_GENTLE.remove(e.getEntity().getId());
             return;
         }
-        if (!(e.getEntity() instanceof ServerPlayer p) || e.getSource().is(DamageTypes.GENERIC_KILL) || !gentle(p)) return;
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        // the gate's door, noted before the gate forgets this run: where they wake if the death is real (SPEC §70.3)
+        var run = Gates.activeRun(p);
+        if (run.isPresent() && TogetherConfig.pair()) {
+            Gates.doorOf(p).ifPresent(at -> DOORS.put(p.getUUID(), new Door(at, run.get().gateId(), p.level().getGameTime())));
+        }
+        if (e.getSource().is(DamageTypes.GENERIC_KILL) || !gentle(p)) return;
         DamageSource src = e.getSource();
         if ((src.is(DamageTypes.FALL) || src.is(DamageTypes.FELL_OUT_OF_WORLD)) && caughtFall(p)) {
             e.setCanceled(true);
@@ -368,6 +379,59 @@ final class Fights {
             DYING.remove(p.getUUID());
         }
         TogetherNet.dirty();
+    }
+
+    // ---- waking at the gate's door ---------------------------------------------------------------------------------------
+
+    /** How long after a death its gate's door is still where you wake. */
+    private static final int DOOR_TICKS = 20 * 120;
+
+    /**
+     * LOW, after the Hearth has chosen: a fighter who really died in a gate wakes at its door while someone of their
+     * party is still inside (SPEC §70.3), not at home, so the walk back is a few steps. The Satchel and the Fracture
+     * were the price as before.
+     */
+    static void onRespawnPosition(net.neoforged.neoforge.event.entity.player.PlayerRespawnPositionEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || e.isFromEndFight()) return;
+        Door door = DOORS.remove(p.getUUID());
+        MinecraftServer s = p.level().getServer();
+        ServerLevel overworld = s.overworld();
+        if (door == null || overworld.getGameTime() - door.tick() > DOOR_TICKS && p.level().getGameTime() - door.tick() > DOOR_TICKS) return;
+        boolean inside = false;
+        for (UUID id : PartyHooks.members(p)) {
+            ServerPlayer m = id.equals(p.getUUID()) ? null : s.getPlayerList().getPlayer(id);
+            if (m != null && m.isAlive() && Gates.activeRun(m).map(r -> r.gateId() == door.gateId()).orElse(false)) inside = true;
+        }
+        if (!inside) return;
+        Vec3 spot = standingNear(overworld, door.at());
+        if (spot == null) return;
+        e.setTeleportTransition(new TeleportTransition(overworld, spot, Vec3.ZERO, p.getYRot(), 0F, TeleportTransition.DO_NOTHING));
+        Signal.toast(p, Component.literal("You're at the gate's door. Your party is still inside: go back in and it'll take you to them."));
+        DirectorLog.log(p, "together", "woke at the door of gate " + door.gateId());
+    }
+
+    /** Somewhere to stand within a few blocks of a gate's door, nearest first; null if there's nowhere. */
+    private static @Nullable Vec3 standingNear(ServerLevel level, BlockPos door) {
+        for (int r = 2; r <= 5; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    for (int dy = 2; dy >= -3; dy--) {
+                        BlockPos feet = door.offset(dx, dy, dz);
+                        BlockPos below = feet.below();
+                        if (level.getBlockState(below).isFaceSturdy(level, below, Direction.UP) && open(level, feet) && open(level, feet.above())) {
+                            return new Vec3(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean open(ServerLevel level, BlockPos at) {
+        var state = level.getBlockState(at);
+        return state.getCollisionShape(level, at).isEmpty() && state.getFluidState().isEmpty();
     }
 
     // ---- monsters -----------------------------------------------------------------------------------------------------

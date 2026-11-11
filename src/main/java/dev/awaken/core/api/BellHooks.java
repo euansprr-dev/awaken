@@ -33,6 +33,22 @@ public final class BellHooks {
 
     private static Access access = new Access() {};
 
+    /** Someone who wants to hear every handbell rung (SPEC §70.6, the Answering Peal); true if the ring was theirs to use. */
+    public interface Rung {
+        boolean rung(ServerLevel level, ServerPlayer by);
+    }
+
+    private static Rung rung = (level, by) -> false;
+
+    public static void onRung(Rung r) {
+        rung = r;
+    }
+
+    /** Called by the handbell as it rings, before its own peal: true when the ring was spent on something else. */
+    public static boolean rung(ServerLevel level, ServerPlayer by) {
+        return rung.rung(level, by);
+    }
+
     public static void install(Access a) {
         access = a;
     }

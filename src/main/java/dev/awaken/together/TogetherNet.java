@@ -196,7 +196,11 @@ public final class TogetherNet {
 
     /** Every tenth tick: each player's party, sent to them only when it differs from what they were last sent. */
     static void tick(MinecraftServer s) {
-        if (s.getTickCount() % 10 != 0) return;
+        if (s.getTickCount() % 10 == 0) pass(s);
+    }
+
+    /** One pass: every player's party as it is now, sent only where it differs from what they were last sent. */
+    static void pass(MinecraftServer s) {
         for (ServerPlayer p : s.getPlayerList().getPlayers()) {
             List<Member> members = new ArrayList<>(4);
             if (TogetherConfig.seeing() || TogetherConfig.gentle()) {

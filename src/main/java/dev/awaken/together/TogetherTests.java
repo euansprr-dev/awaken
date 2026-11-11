@@ -67,11 +67,14 @@ final class TogetherTests {
         test("pair_back_turned", TogetherTests::backTurned);
         test("pair_down_and_lift", TogetherTests::downAndLift);
         test("pair_both_down", TogetherTests::bothDown);
+        test("pair_boss_turns_at_openings", TogetherTests::bossTurns);
+        test("pair_answering_peal", TogetherTests::answeringPeal);
         test("gentle_setting_kept_and_waits", TogetherTests::settingWaits);
         test("gentle_half_damage", TogetherTests::halfDamage);
         test("gentle_second_winds", TogetherTests::secondWinds);
         test("gentle_two_at_a_time", TogetherTests::twoAtATime);
         test("gentle_half_a_fighter", TogetherTests::halfAFighter);
+        test("gentle_one_phrase_in_four", TogetherTests::onePhraseInFour);
         test("gentle_story_death_cost", TogetherTests::storyDeathCost);
         test("alone_plays_the_same", TogetherTests::alonePlaysTheSame);
     }
@@ -186,12 +189,12 @@ final class TogetherTests {
             h.assertTrue(PartyService.join(a, b), "a party");
             var server = h.getLevel().getServer();
             TogetherNet.forget();
-            for (int i = 0; i < 10; i++) TogetherNet.tick(server); // one of every ten ticks is a pass, whatever the clock reads
+            TogetherNet.pass(server);
             h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 1, "the party is sent once");
-            for (int i = 0; i < 40; i++) TogetherNet.tick(server);
+            for (int i = 0; i < 4; i++) TogetherNet.pass(server);
             h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 0, "and not again while nothing changes");
             b.setHealth(b.getMaxHealth() * 0.5F);
-            for (int i = 0; i < 10; i++) TogetherNet.tick(server);
+            TogetherNet.pass(server);
             h.assertTrue(Pair.count(two.a(), TogetherNet.Party.class) == 1, "a partner's health changing is one more");
         } finally {
             two.leave();
@@ -268,6 +271,52 @@ final class TogetherTests {
             h.assertFalse(Runs.run(a).active() || Runs.run(b).active(), "both runs are over");
         } finally {
             teardown(h, g, two);
+        }
+    }
+
+    /** A zombie that counts as a gate's Lord: whom it fights is the boss rule's to say. */
+    private static Zombie lord(GameTestHelper h) {
+        Zombie z = tough(h, 1, 3);
+        z.setData(dev.awaken.core.api.CoreApi.MOB_ROLE, new dev.awaken.core.api.MobRole(dev.awaken.core.api.MobRole.Role.BOSS, 10, "", java.util.Optional.empty(), ""));
+        return z;
+    }
+
+    private static void bossTurns(GameTestHelper h) {
+        Pair.Two two = Pair.of(h);
+        ServerPlayer a = two.first(), b = two.second();
+        Zombie z = null;
+        try {
+            h.assertTrue(PartyService.join(a, b), "a party");
+            z = lord(h);
+            h.assertTrue(Fights.nextTarget(z, a) == a, "nothing done to it: it stays on the one it has");
+            blow(h, z, b);
+            h.assertTrue(Fights.nextTarget(z, a) == b, "at an opening it turns to whoever did most to it since it last chose");
+            h.assertTrue(Fights.nextTarget(z, b) == b, "and the count starts again: it stays");
+            blow(h, z, b);
+            blow(h, z, a);
+            blow(h, z, a);
+            h.assertTrue(Fights.nextTarget(z, b) == a, "more from the other turns it back");
+            PartyData.get(h.getLevel().getServer()).leave(b.getUUID(), true); // by the book: they've been fighting, and leaving waits for that
+            blow(h, z, b);
+            blow(h, z, b);
+            h.assertTrue(Fights.nextTarget(z, a) == a, "someone who isn't of the party is the game's own business, as before");
+        } finally {
+            if (z != null) z.discard();
+            two.leave();
+        }
+    }
+
+    private static void answeringPeal(GameTestHelper h) {
+        Pair.Two two = Pair.of(h);
+        ServerPlayer a = two.first(), b = two.second();
+        try {
+            h.assertTrue(PartyService.join(a, b), "a party");
+            h.assertFalse(Answering.rung(h.getLevel(), a), "a ring with nobody far off is the handbell's own");
+            h.assertFalse(Answering.rung(h.getLevel(), b), "and nobody was called, so nothing is answered");
+            h.assertTrue(Answering.whyNot(b, a) == null || h.getLevel().dimension() != net.minecraft.world.level.Level.OVERWORLD,
+                    "out in the world and clear of a fight, nothing stops it");
+        } finally {
+            two.leave();
         }
     }
 
@@ -384,6 +433,30 @@ final class TogetherTests {
         }
     }
 
+    private static void onePhraseInFour(GameTestHelper h) {
+        Pair.Two two = Pair.of(h);
+        ServerPlayer a = two.first(), b = two.second();
+        Zombie z = null;
+        try {
+            h.assertTrue(PartyService.join(a, b), "a party");
+            h.assertTrue(Fights.set(b, true), "one of them on Gentle");
+            z = lord(h);
+            int n = TogetherConfig.onePhraseIn();
+            ServerPlayer on = a;
+            int gentle = 0;
+            for (int i = 0; i < n * 3; i++) {
+                on = (ServerPlayer) Fights.nextTarget(z, on);
+                if (on == b) gentle++;
+            }
+            h.assertTrue(gentle == 3, "with someone on Full in sight, a player on Gentle gets one phrase in " + n + ", got " + gentle + " of " + n * 3);
+            h.assertTrue(Fights.set(a, true), "both on Gentle");
+            h.assertTrue(Fights.nextTarget(z, b) == b, "with nobody on Full, it fights whom it was fighting");
+        } finally {
+            if (z != null) z.discard();
+            two.leave();
+        }
+    }
+
     private static void storyDeathCost(GameTestHelper h) {
         Pair.Two two = Pair.of(h);
         ServerPlayer a = two.first(), b = two.second();
@@ -420,7 +493,7 @@ final class TogetherTests {
             var server = h.getLevel().getServer();
             TogetherNet.forget();
             one.sent();
-            for (int i = 0; i < 60; i++) TogetherNet.tick(server);
+            for (int i = 0; i < 6; i++) TogetherNet.pass(server);
             h.assertTrue(Pair.count(one, TogetherNet.Party.class) <= 2, "and the wire carries their own row, then nothing but its changes");
         } finally {
             if (z != null) z.discard();
