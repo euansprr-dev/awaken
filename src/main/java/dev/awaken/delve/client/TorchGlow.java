@@ -65,9 +65,13 @@ public final class TorchGlow {
     static final float BRIGHT = 1.15F, FADE = 0.3F;
     /** The pool at the feet (its radius a share of the reach, its strength at a level 15 light in the dark) and the halo. */
     static final float POOL_R = 0.55F, POOL_A = 0.15F, HALO = 0.6F, HALO_A = 0.5F, CORE = 0.055F;
-    /** How far under the feet the pool looks for ground to lie on (blocks), and the height over it at which it has faded out. */
+    /**
+     * How far under the feet the pool looks for ground to lie on (blocks), and the height over that ground up to which
+     * it keeps its whole strength: a jump's top is 1.25, so jumping never pulses the light. From there it fades, gone
+     * at POOL_DROP.
+     */
     static final int POOL_DROP = 5;
-    static final float POOL_LIFT = 3F;
+    static final float POOL_FREE = 1.5F;
 
     /** Mods that already light the world round held items: with one in, only the halo and pool are drawn. */
     private static final String[] DYNAMIC_LIGHTS = {"lambdynlights", "sodiumdynamiclights", "ryoamiclights", "dynamiclights"};
@@ -90,7 +94,7 @@ public final class TorchGlow {
         HeldLight.Kind kind = HeldLight.NONE;
         double x, y, z, feet;
         double poolY;           // the ground under the bearer, where the pool lies
-        float aloft;            // how far off that ground the bearer is: 0 standing, 1 from POOL_LIFT up (no pool)
+        float aloft;            // how far off that ground the bearer is: 0 up to POOL_FREE, 1 from POOL_DROP up (no pool)
         float flicker, dark;
         boolean dim;            // as bright where it stands as its own light: nothing drawn but the halo
         boolean stale;          // one of its blocks was broken or built over since its flood: redo it now
@@ -255,10 +259,11 @@ public final class TorchGlow {
         // The pool lies on the ground under the bearer, not at their feet. At the feet, a jump or a fall made it a flat
         // disc of light hanging in the air at your own height: it lit what lay under it and nothing over it, so a line
         // ran across every wall and block at the level of your feet (Euan, playing, 11 Nov: "it stays exactly at your
-        // level so it creates this weird cut off light effect in caves when you jump"). It fades as you leave the ground.
+        // level so it creates this weird cut off light effect in caves when you jump"). Whole through a jump, then it
+        // fades with height.
         double ground = groundUnder(x, y, z);
         l.poolY = Double.isNaN(ground) ? y : ground;
-        l.aloft = Double.isNaN(ground) ? 1F : Mth.clamp((float) (y - ground) / POOL_LIFT, 0F, 1F);
+        l.aloft = Double.isNaN(ground) ? 1F : Mth.clamp(((float) (y - ground) - POOL_FREE) / (POOL_DROP - POOL_FREE), 0F, 1F);
         if (l.own && p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
             float yaw = p.getViewYRot(pt) * Mth.DEG_TO_RAD;
             double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), lx = Mth.cos(yaw), lz = Mth.sin(yaw);

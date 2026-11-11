@@ -9942,7 +9942,8 @@ the feet.
   0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand
   (0.6 × √(level/15), half strength in daylight to full in the dark, a near-white core), hidden in your own first person.
   The pool lies on the ground under the bearer (the first block down within five that can be stood on, by its
-  collision top) and fades as they leave it, gone three blocks up. It was drawn at the feet's own height: off the
+  collision top). It keeps its whole strength up to 1.5 blocks over that ground, so a jump (1.25) never pulses the
+  light, and fades from there, gone five blocks up. It was drawn at the feet's own height: off the
   ground it hung in the air as a flat disc at your level and lit only what lay under it, a line across every wall
   and block (Euan, playing, 2026-11-11: "it stays exactly at your level ... weird cut off light effect in caves
   when you jump"). Tour: `tools/autopilot/heldlight-aloft-ci.txt`.
