@@ -180,11 +180,12 @@ final class RigFx {
         }
     }
 
-    /** The floor under a parked press keeps its chevrons, dim and steady; the warning before it lands pulses over them. */
+    /** The floor under a parked press keeps its chevrons, steady at half strength; the warning before it lands pulses over them. */
     private static void pressMarks(VertexConsumer vc, ClientLevel level) {
         for (RigClient.HangRoom h : RigClient.hangRooms()) {
             if (!inSight(h)) continue;
-            int mark = argb(light(h.theme), 0.2F);
+            // (0.2 at first: from the landing the marks could not be told from the floor in the first walk)
+            int mark = argb(light(h.theme), 0.5F);
             for (int i = 0; i < h.cells.size(); i++) {
                 BlockPos p = h.cells.get(i);
                 if (up(level, h, p)) hazard(vc, p.below(), mark);
