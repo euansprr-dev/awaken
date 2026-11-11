@@ -4,22 +4,25 @@
 # Run on CI: tools/tour-ci.sh tools/autopilot/sky-stair-day.txt 1800
 world sky_stair_day survival 4251
 waitworld
-window 1708 960
 gui 0
-cmd gamerule awaken:fauna_spawning false
+window 1708 960
 cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
 cmd gamerule spawn_mobs false
-cmd gamerule fall_damage false
-cmd gamerule advance_time false
-cmd weather clear 100000
-cmd time set 5500
-cmd awaken admin awaken
-wait 200
+cmd weather clear 1000000
+wait 40
+# the opening skipped, as the dusk tour does: the wake-up scene holds the view on the city's roofs through every teleport
+cmd awaken opening skip
+wait 100
+screen close
 cmd awaken powers starter 1
 wait 20
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
 cmd awaken ascent grant none
 cmd awaken ascent grant tether
 cmd awaken ascent sky goto stair
@@ -27,9 +30,6 @@ arms waitserver 100
 wait 100
 hud off
 shot sky_day_00_approach
-look 0 -55
-wait 10
-shot sky_day_01_up_the_stair
 cmd awaken ascent sky goto deck
 wait 60
 cmd awaken ascent pier

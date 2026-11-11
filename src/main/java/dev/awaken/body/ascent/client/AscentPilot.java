@@ -559,7 +559,9 @@ public final class AscentPilot {
         if (k == 0) return null;
         int cx = (int) Math.round(sx / k), cz = (int) Math.round(sz / k);
         net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
-        for (int y = top; y >= top - 30; y--) for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) {
+        // down from the highest thing up there, which may be a tree on one of the torn islands 40 over the deck (the
+        // platform both tours climb has one: looked for 30 down, the core was never found and the climb never began)
+        for (int y = top; y >= top - 80; y--) for (int dx = -18; dx <= 18; dx++) for (int dz = -18; dz <= 18; dz++) {
             m.set(cx + dx, y, cz + dz);
             if (level.getBlockState(m).is(dev.awaken.body.ascent.AscentContent.WING_CORE.get())) return m.immutable();
         }
