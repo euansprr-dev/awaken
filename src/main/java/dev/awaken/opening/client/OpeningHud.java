@@ -26,6 +26,8 @@ final class OpeningHud {
     private OpeningHud() {}
 
     static final Identifier LAYER = Awaken.id("opening_hud");
+    /** Other modules' layers that belong to a film and stay over a shot (the skiff's cloud crossing, SPEC §67.5). */
+    static final java.util.Set<Identifier> KEEP = new java.util.HashSet<>();
     static final int BRONZE = 0xC9A46A, PAPER = 0xF2EBDD, ASH = 0xB9B2A4, SIGNAL_RED = 0xFF3040, SIGNAL_CYAN = 0x40E0FF;
 
     static void register(RegisterGuiLayersEvent e) {
@@ -204,7 +206,7 @@ final class OpeningHud {
     /** The game's HUD steps aside while a shot holds the camera, under a black, or behind the eyelids. */
     static void hideHud(RenderGuiLayerEvent.Pre e) {
         Identifier id = e.getName();
-        if (id.equals(LAYER)) return;
+        if (id.equals(LAYER) || KEEP.contains(id)) return;
         String path = id.getPath();
         if (path.equals("subtitle_overlay")) return;
         boolean shot = OpeningCamera.active() || SkyShot.current != null || film;

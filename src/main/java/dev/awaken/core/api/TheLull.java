@@ -25,6 +25,7 @@ public final class TheLull {
     public static final int HOLDFAST_BELL = 768;
 
     private static Function<MinecraftServer, BlockPos> centre = s -> BlockPos.ZERO;
+    private static Function<MinecraftServer, @Nullable BlockPos> landing = s -> null;
     private static Predicate<MinecraftServer> carillon = s -> false;
     private static BiPredicate<ServerLevel, BlockPos> holdfastHeard = (l, p) -> false;
     /** Tests only: a centre to measure from instead of the world's (set and cleared inside a try/finally). */
@@ -34,6 +35,24 @@ public final class TheLull {
     public static void install(Function<MinecraftServer, BlockPos> worldCentre, Predicate<MinecraftServer> hasCity) {
         centre = worldCentre;
         carillon = hasCity;
+    }
+
+    /** The living module: the far landing of a world made under rules 4 (SPEC §67), or null in any other world. */
+    public static void installLanding(Function<MinecraftServer, @Nullable BlockPos> worldLanding) {
+        landing = worldLanding;
+    }
+
+    /**
+     * Where the real game starts in a Far Landing world (SPEC §67): the landing the skiff flies to, the land's danger
+     * measured from it. Null in a world made before (its game starts at the city's ridge, as it always did).
+     */
+    public static @Nullable BlockPos landing(MinecraftServer server) {
+        return landing.apply(server);
+    }
+
+    /** Whether this world's real game starts at a far landing (SPEC §67). */
+    public static boolean farLanding(MinecraftServer server) {
+        return landing(server) != null;
     }
 
     /** The village module: whether a holdfast's bell is heard at a place. */

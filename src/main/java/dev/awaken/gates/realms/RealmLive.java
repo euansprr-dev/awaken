@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * What happens in a Realm while someone is in it (SPEC §50.7, §50.8). Runs hands a Realm gate's players here before any of
@@ -205,21 +206,98 @@ public final class RealmLive {
 
     // ---- the Lord's hall (SPEC §50.8) --------------------------------------------------------------------------------------
 
-    /** Whoever comes in wakes the Lord; the way shuts behind them; the hall changes as the fight goes on; nobody left inside, it all resets. */
+    /**
+     * Who is in the Lord's fight (SPEC §50.8 "Who is in the fight"). A fighter is out once they fall, leave the Realm or
+     * the game, or are away from the hall for longer than this (ticks): a leap, a rope swing or a step out of the door
+     * never puts the Lord to rest.
+     */
+    public static final int AWAY_TICKS = 200;
+    /** How far from the Lord still counts as at its hall: the same reach that keeps the door from shutting. */
+    public static final int HALL_REACH = LORD_WAKE + 24, HALL_REACH_UP = 48;
+    /** When each fighter was last at the hall, per gate. Not saved: a fighter loaded from a save counts as just seen. */
+    private static final Map<Integer, Map<UUID, Long>> NEAR_AT = new HashMap<>();
+    /** Fighters already logged for standing past the heart's line in this fight (once each, so the log stays short). */
+    private static final Map<Integer, Set<UUID>> PAST_LINE = new HashMap<>();
+
+    /** Singleplayer opens another world in the same JVM: nothing of one world's fights may carry over. */
+    public static void resetAll() {
+        NEAR_AT.clear();
+        PAST_LINE.clear();
+    }
+
+    /**
+     * Why a fighter is out of the Lord's fight now, or null while they are still in it (SPEC §50.8). {@code awayTicks} is
+     * how long since they were last at the hall; falling or leaving the Realm counts at once, anything else after
+     * {@link #AWAY_TICKS}.
+     */
+    public static String outOfFight(boolean online, boolean alive, boolean inRealm, long awayTicks) {
+        if (online && !alive) return "fell";
+        if (online && !inRealm) return "left the Realm";
+        if (awayTicks <= AWAY_TICKS) return null;
+        return online ? "went far from the hall" : "left the game";
+    }
+
+    /** What stands at a point of a land (land coordinates): the world's blocks in play, the painted land in a test. */
+    public interface Solid {
+        boolean at(int x, int y, int z);
+    }
+
+    /**
+     * A spot on the Lord hall's floor just past the heart's line (SPEC §68.6), walked out from the Lord's place over the
+     * floor (up a bank of two, down any step), first heading first: {x, y, z, blocks out} in land coordinates, or null.
+     * Where the old rule's one look ended a fight; the tours stand a fighter there.
+     */
+    public static int[] pastTheLine(Land land, Solid solid) {
+        Land.Site lord = land.site(Land.SiteKind.LORD);
+        for (int h = 0; h < 16; h++) {
+            double a = h * Math.PI / 8;
+            int y = lord.y();
+            for (int r = 1; r <= HALL_REACH; r++) {
+                int x = lord.x() + (int) Math.round(Math.cos(a) * r), z = lord.z() + (int) Math.round(Math.sin(a) * r), up = 0;
+                while (up <= 2 && (solid.at(x, y, z) || solid.at(x, y + 1, z))) {
+                    y++;
+                    up++;
+                }
+                if (up > 2) break; // a wall, or the shut door: the next heading
+                while (!solid.at(x, y - 1, z) && y > lord.y() - 8) y--;
+                if (!solid.at(x, y - 1, z)) break;
+                if (!land.inHeart(x, y, z)) return new int[]{x, y, z, r};
+            }
+        }
+        return null;
+    }
+
+    /** Whoever comes in wakes the Lord; the way shuts behind them; the hall changes as the fight goes on; nobody left in the fight, it all resets. */
     private static void heart(MinecraftServer server, ServerLevel level, GateRecord g, RealmPlan plan, RealmRef ref, RealmState st, RealmData data, FloorLayout f) {
         Land land = plan.land();
         if (land.sites(Land.SiteKind.LORD).isEmpty()) return; // a trial has no Lord and no hall of one
         Land.Site lord = land.site(Land.SiteKind.LORD);
+        long now = level.getGameTime();
+        Map<UUID, Long> seen = NEAR_AT.computeIfAbsent(g.id, k -> new HashMap<>());
         boolean anyInside = false, anyAtDoor = false;
         for (ServerPlayer p : level.players()) {
             if (Runs.run(p).gateId != g.id) continue;
             int x = p.getBlockX() - RealmCells.centerX(ref.cell()), z = p.getBlockZ() - RealmCells.centerZ(ref.cell());
-            boolean in = land.inHeart(x, p.getBlockY(), z);
-            anyInside |= in;
-            if (!in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 24) anyAtDoor = true;
-            if (!st.heartOpen && !in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 14 && st.woken.add("door_line")) {
+            boolean in = land.inHeart(x, p.getBlockY(), z), able = p.isAlive() && !p.isSpectator();
+            double d = Math.hypot(x - lord.x(), z - lord.z());
+            anyInside |= in && able;
+            if (!in && d < LORD_WAKE + 24) anyAtDoor = true;
+            if (!st.heartOpen && !in && d < LORD_WAKE + 14 && st.woken.add("door_line")) {
                 if (land.heartClosedLine() != null) Signal.toast(p, Component.literal(land.heartClosedLine()));
                 data.setDirty();
+            }
+            if (!st.lordWoken || g.bossDead || !able) continue; // the Lord down: there is no fight left to join
+            UUID u = p.getUUID();
+            if (in && st.fighters.add(u)) {
+                dev.awaken.Awaken.LOG.info("[realms] gate {}: {} joined the fight with the Lord", g.id, p.getName().getString());
+                data.setDirty();
+            }
+            if (!st.fighters.contains(u)) continue;
+            if (in || d <= HALL_REACH && Math.abs(p.getBlockY() - lord.y()) <= HALL_REACH_UP) seen.put(u, now);
+            if (!in && PAST_LINE.computeIfAbsent(g.id, k -> new java.util.HashSet<>()).add(u)) {
+                // the rule of old ended the fight here (one look, nobody inside): say that it held
+                dev.awaken.Awaken.LOG.info("[realms] gate {}: {} stood past the heart's line ({} {} {}, {} blocks from the Lord); the fight held",
+                        g.id, p.getName().getString(), x, p.getBlockY(), z, Math.round(d));
             }
         }
         if (st.heartOpen && !st.lordWoken && anyInside) {
@@ -228,22 +306,41 @@ public final class RealmLive {
             if (e == null) return;
             g.boss = Optional.of(e.getUUID());
             st.lordWoken = true;
+            st.fighters.clear();
+            seen.clear();
+            PAST_LINE.remove(g.id);
+            StringBuilder who = new StringBuilder();
+            for (ServerPlayer p : level.players()) {
+                if (Runs.run(p).gateId != g.id || !p.isAlive() || p.isSpectator()) continue;
+                int x = p.getBlockX() - RealmCells.centerX(ref.cell()), z = p.getBlockZ() - RealmCells.centerZ(ref.cell());
+                if (!land.inHeart(x, p.getBlockY(), z) || !st.fighters.add(p.getUUID())) continue;
+                seen.put(p.getUUID(), now);
+                who.append(who.isEmpty() ? "" : ", ").append(p.getName().getString());
+            }
+            dev.awaken.Awaken.LOG.info("[realms] gate {}: {} woke ({} hp) for {}", g.id, net.minecraft.world.entity.EntityType.getKey(e.getType()), Math.round(e.getMaxHealth()), who);
             data.setDirty();
             GateRegistry.get(server).setDirty();
         }
-        if (!st.lordWoken) return;
+        if (!st.lordWoken || g.bossDead) return;
         LivingEntity boss = g.boss.map(level::getEntity).orElse(null) instanceof LivingEntity l && l.isAlive() ? l : null;
-        // everyone's gone (fled or fallen): it goes back to sleep and the way in is open again, so nobody's ever locked out
-        if (!anyInside && st.doorShut) {
-            if (boss != null) boss.discard();
-            g.boss = Optional.empty();
-            st.lordWoken = false;
-            st.doorShut = false;
-            st.heartStage = 0;
-            change(level, ref, land, "heart_still");
-            change(level, ref, land, "heart_open");
+        List<ServerPlayer> out = null;
+        for (java.util.Iterator<UUID> it = st.fighters.iterator(); it.hasNext(); ) {
+            UUID u = it.next();
+            ServerPlayer p = server.getPlayerList().getPlayer(u);
+            boolean online = p != null;
+            Long last = seen.putIfAbsent(u, now);
+            String why = outOfFight(online, online && p.isAlive(), online && p.level() == level && Runs.run(p).gateId == g.id, last == null ? 0 : now - last);
+            if (why == null) continue;
+            it.remove();
+            seen.remove(u);
+            dev.awaken.Awaken.LOG.info("[realms] gate {}: {} is out of the fight with the Lord ({}); {} still in it",
+                    g.id, online ? p.getName().getString() : u, why, st.fighters.size());
+            if (online) (out == null ? out = new java.util.ArrayList<>(2) : out).add(p);
             data.setDirty();
-            GateRegistry.get(server).setDirty();
+        }
+        // everyone's out of the fight (fallen, fled or gone): it goes back to sleep and the way in is open again, so nobody's ever locked out
+        if (st.fighters.isEmpty() && st.doorShut) {
+            rest(server, level, g, ref, land, st, data, boss, out);
             return;
         }
         if (boss == null) return;
@@ -261,6 +358,53 @@ public final class RealmLive {
             level.playSound(null, boss.blockPosition(), SoundEvents.DRIPSTONE_BLOCK_FALL, SoundSource.HOSTILE, 2F, 0.55F);
             data.setDirty();
         }
+    }
+
+    /** Nobody is left in the Lord's fight: it goes back to rest whole, the door opens, and everyone it concerns is told why. */
+    private static void rest(MinecraftServer server, ServerLevel level, GateRecord g, RealmRef ref, Land land, RealmState st, RealmData data, LivingEntity boss, List<ServerPlayer> out) {
+        dev.awaken.Awaken.LOG.info("[realms] gate {}: nobody is left fighting {} ({}); it goes back to rest whole and the door opens", g.id,
+                boss == null ? "the Lord (not loaded)" : net.minecraft.world.entity.EntityType.getKey(boss.getType()),
+                boss == null ? "?" : Math.round(boss.getHealth()) + "/" + Math.round(boss.getMaxHealth()) + " hp");
+        Component name = boss == null ? Component.literal("The Lord") : boss.getType().getDescription();
+        // the toast holds two short lines at any GUI scale, so it says only what happened; chat says it whole (SPEC §68.6)
+        Component toast = name.copy().append(" has gone back to rest.");
+        Component line = Component.literal("Nobody is left in the fight. ").append(name)
+                .append(" has gone back to rest, whole again. The door to its hall is open.");
+        if (boss != null) boss.discard();
+        g.boss = Optional.empty();
+        st.lordWoken = false;
+        st.doorShut = false;
+        st.heartStage = 0;
+        st.fighters.clear();
+        NEAR_AT.remove(g.id);
+        PAST_LINE.remove(g.id);
+        change(level, ref, land, "heart_still");
+        change(level, ref, land, "heart_open");
+        Set<UUID> told = new java.util.HashSet<>();
+        java.util.List<ServerPlayer> tell = new java.util.ArrayList<>();
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) if (Runs.run(p).gateId == g.id && told.add(p.getUUID())) tell.add(p);
+        if (out != null) for (ServerPlayer p : out) if (told.add(p.getUUID())) tell.add(p);
+        for (ServerPlayer p : tell) {
+            Signal.toast(p, toast);
+            p.sendSystemMessage(line);
+        }
+        data.setDirty();
+        GateRegistry.get(server).setDirty();
+    }
+
+    /** A Lord saved with its chunk after its fight was put to rest (SPEC §50.8): its hall has a new one, or none yet, so it leaves. */
+    public static boolean strayLord(MinecraftServer server, net.minecraft.world.entity.Entity e) {
+        MobRole role = MobRole.of(e);
+        if (role.role() != MobRole.Role.BOSS || role.gateId().isEmpty() || !Realms.inRealm(e.getBlockX(), e.getBlockZ())) return false;
+        GateRecord g;
+        try {
+            g = GateRegistry.get(server).gate(Integer.parseInt(role.gateId()));
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+        if (g == null || g.realm.isEmpty() || g.boss.equals(Optional.of(e.getUUID()))) return false;
+        dev.awaken.Awaken.LOG.info("[realms] gate {}: a Lord from a fight that was put to rest loaded with its chunk and left", g.id);
+        return true;
     }
 
     private static void change(ServerLevel level, RealmRef ref, Land land, String moment) {
@@ -386,6 +530,9 @@ public final class RealmLive {
         change(level, g.realm.orElseThrow(), plan.land(), "heart_open");
         st.doorShut = false;
         st.heartStage = 0;
+        st.fighters.clear();
+        NEAR_AT.remove(g.id);
+        PAST_LINE.remove(g.id);
         data.setDirty();
         BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x() + 9, s.y(), s.z());
         ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, Direction.Axis.X, 3, 3, g.plan.rank().ordinal());

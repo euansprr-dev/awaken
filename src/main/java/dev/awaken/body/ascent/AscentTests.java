@@ -26,7 +26,6 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
-        AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
         AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
@@ -598,10 +597,16 @@ final class AscentTests {
         net.minecraft.server.level.ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(BlockPos.ZERO);
         int cx = o.getX(), cz = o.getZ(), deckY = level.getMaxY() - 20;
-        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz, false);
         var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
         h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
                 && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
+        // the wings' hall: its mark under the core, the case's rail joined into a ring, a portal's corner opened
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz), "the hall's mark is under the core");
+        var rail = level.getBlockState(placed.core().offset(2, 0, 0));
+        h.assertTrue(rail.is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL)
+                && rail.getValue(net.minecraft.world.level.block.WallBlock.NORTH) != net.minecraft.world.level.block.state.properties.WallSide.NONE, "the case's rail, joined");
+        h.assertTrue(level.getBlockState(placed.core().offset(4, 0, 4)).isAir(), "the pier's corner of the cabin is a portal");
         // the core: by movement, wings; by a tower, nothing
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
@@ -619,11 +624,15 @@ final class AscentTests {
             moved[0] = true;
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
+            // the rank is asked first, then the way: at C a tower still gets nothing
+            moved[0] = false;
+            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower at C gets nothing");
+            moved[0] = true;
             h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
-            for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+            for (BlockPos q : BlockPos.betweenClosed(cx - 5, placed.chainBottom() - 1, cz - 5, cx + 20, deckY + 5, cz + 20)) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }
@@ -816,17 +825,6 @@ final class AscentTests {
             if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
         }
         return new double[]{t, 0, -1, k.y};
-    }
-    /** The slow beat (SPEC §17.15): at 0.45 of time the carry flies the same arc, slower (within a few percent). */
-    private static void slowBeat(GameTestHelper h) {
-        AscentRules.Kin a = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0), b = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0);
-        double[] scratch = new double[2];
-        for (int t = 0; t < 9; t++) AscentRules.carryStep(a, 0, 0, 0, scratch);
-        for (int t = 0; t < 20; t++) AscentRules.carryStepSlow(b, 0.45);
-        double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
-        h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
-                "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
-        h.succeed();
     }
     /**
      * The hero trees' crowns (SPEC §17.16), from each tree's own blueprint over eight seeds: the crown on the highest

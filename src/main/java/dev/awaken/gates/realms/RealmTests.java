@@ -760,6 +760,44 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // the Lord's fight holds through a leap past the heart's line, a pause, a save and a reload, and ends only when nobody
+        // is left in it (SPEC §68.6)
+        AwakenTests.register("realm_fight_holds", 400, h -> {
+            h.assertTrue(RealmLive.outOfFight(true, true, true, 0) == null, "a fighter at the hall is in the fight");
+            h.assertTrue(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS) == null, "a leap or a step out of the door keeps you in the fight");
+            h.assertTrue("went far from the hall".equals(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS + 1)), "away from the hall for long: out");
+            h.assertTrue("fell".equals(RealmLive.outOfFight(true, false, true, 0)), "falling is out at once");
+            h.assertTrue("left the Realm".equals(RealmLive.outOfFight(true, true, false, 0)), "leaving the Realm is out at once");
+            h.assertTrue(RealmLive.outOfFight(false, false, false, 20) == null, "a moment offline (a reload) is still in the fight");
+            h.assertTrue("left the game".equals(RealmLive.outOfFight(false, false, false, RealmLive.AWAY_TICKS + 1)), "offline for long: out");
+            // who is in the fight is saved with the Realm, and a save from before it still loads
+            RealmState st = new RealmState();
+            st.lordWoken = st.doorShut = st.heartOpen = true;
+            java.util.UUID u = java.util.UUID.randomUUID();
+            st.fighters.add(u);
+            var tag = RealmState.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, st).getOrThrow();
+            RealmState back = RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow();
+            h.assertTrue(back.fighters.contains(u) && back.doorShut && back.lordWoken, "the fight came back from the save as it was");
+            ((net.minecraft.nbt.CompoundTag) tag).remove("fighters");
+            h.assertTrue(RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow().fighters.isEmpty(), "an older save loads with nobody listed");
+            // the old rule's trap: a rolled crawl's hall has floor past the heart's line, where one look ended the fight
+            Blueprint bp = new Blueprint(1, "t", "dungeon", "hive", List.of("E"), new Blueprint.LandSpec("awaken:cinder_workings", 0, Map.of()),
+                    AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
+            Land land = LandPrograms.make(new Land.Ctx(bp, "awaken:cinder_workings", Rank.E, 383, 1));
+            Map<Long, V> painted = new java.util.HashMap<>();
+            int[] edge = RealmLive.pastTheLine(land, (x, y, z) -> {
+                int cx = Math.floorDiv(x, 16), cz = Math.floorDiv(z, 16);
+                V v = painted.computeIfAbsent(((long) cx << 32) ^ (cz & 0xffffffffL), k -> {
+                    V nv = new V(cx * 16, cz * 16);
+                    land.paint(nv);
+                    return nv;
+                });
+                return solid(v.get(x, y, z));
+            });
+            h.assertTrue(edge != null, "the Lord's hall has floor past the heart's line");
+            dev.awaken.Awaken.LOG.info("[realms] cinder_workings 383: past the heart's line at {} {} {}, {} blocks from the Lord", edge[0], edge[1], edge[2], edge[3]);
+            h.succeed();
+        });
         AwakenTests.register("realm_seeds_differ", 200, h -> {
             Set<Integer> seen = new HashSet<>();
             for (long seed = 1; seed <= 5; seed++) {

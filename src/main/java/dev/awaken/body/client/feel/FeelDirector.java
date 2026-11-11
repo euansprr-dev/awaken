@@ -228,7 +228,9 @@ public final class FeelDirector {
         lastYaw = yaw;
         yawRate += (dy - yawRate) * 0.35F;
         AscentState st = AscentMoves.state();
-        if (CAMERA_OVERHAUL) CameraOverhaulPause.hold(st.airborne());
+        // off while an Ascent state has the camera, and while a scene holds the view still (a station, a scene's own
+        // camera): its idle sway fades in whenever you stand still, which is all a scene is (SPEC §65.2)
+        if (CAMERA_OVERHAUL) CameraOverhaulPause.hold(st.airborne() || dev.awaken.core.api.FirstPerson.viewHeld());
         double s = AscentMoves.speed();
         float norm = (float) Mth.clamp((s - 0.4) / 2.0, 0, 1);
         float smooth = norm * norm * (3 - 2 * norm);

@@ -39,12 +39,15 @@ public final class EnchantClient {
     private EnchantClient() {}
 
     public static void init(IEventBus modBus) {
+        EnchantClientConfig.register();
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(EnchantContent.TABLE_BE.get(), InscribingTableRenderer::new));
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LetterParticle::register);
         // a Word Stone's carving glows in its enchantment's colour (SPEC §45.14)
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.BlockTintSources.class,
                 e -> e.register(java.util.List.of(new WordTint()), EnchantContent.WORD_STONE.get()));
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent.class,
+                e -> e.register(dev.awaken.Awaken.id("page"), PageSelect.TYPE));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(EnchantPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.open(msg)));
             e.register(EnchantPayloads.State.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.state(msg)));
@@ -135,17 +138,23 @@ public final class EnchantClient {
     }
 
     /**
-     * The autopilot's hand at a table (tours can't drag a mouse): {@code /awaken enchant pilot hover <no> | choose <no> |
-     * memory <no> | trace | again | close}, numbers as in the Journal.
+     * The autopilot's hand at a table (tours can't drag a mouse): {@code /awaken enchant pilot hover <no> | socket <n> |
+     * choose <no> | memory <no> | trace | again | close}, numbers as in the Journal; socket 0 is the first, -1 none.
      */
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("enchant").then(Commands.literal("pilot")
-                .then(Commands.literal("hover").then(Commands.argument("no", IntegerArgumentType.integer(0, 30)).executes(c -> {
+                .then(Commands.literal("hover").then(Commands.argument("no", IntegerArgumentType.integer(0, 36)).executes(c -> {
                     InscribeScreen.pilotHover = IntegerArgumentType.getInteger(c, "no");
+                    Desk.pilotSocket = -1;
                     return 1;
                 })))
-                .then(Commands.literal("choose").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), false))))
-                .then(Commands.literal("memory").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), true))))
+                .then(Commands.literal("socket").then(Commands.argument("n", IntegerArgumentType.integer(-1, 15)).executes(c -> {
+                    InscribeScreen.pilotHover = 0;
+                    Desk.pilotSocket = IntegerArgumentType.getInteger(c, "n");
+                    return 1;
+                })))
+                .then(Commands.literal("choose").then(Commands.argument("no", IntegerArgumentType.integer(1, 36)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), false))))
+                .then(Commands.literal("memory").then(Commands.argument("no", IntegerArgumentType.integer(1, 36)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), true))))
                 .then(Commands.literal("trace").executes(c -> {
                     InscribeScene.pilot = true;
                     return 1;
@@ -157,6 +166,7 @@ public final class EnchantClient {
                 .then(Commands.literal("close").executes(c -> {
                     if (Minecraft.getInstance().gui.screen() instanceof InscribeScreen s) s.onClose();
                     InscribeScene.pilot = false;
+                    Desk.pilotSocket = -1;
                     return 1;
                 })))));
     }
@@ -192,6 +202,13 @@ public final class EnchantClient {
             for (var en : Pages.teaches(s)) known &= k.knows(en.id());
             if (known) lines.add(at, Component.literal("You know this one").withColor(0x8FD8A8));
             return;
+        }
+        // what a piece with Remembrance has brought down, three names a line
+        var kept = s.get(dev.awaken.enchant.EnchantContent.REMEMBERED.get());
+        if (kept != null && !kept.names().isEmpty()) {
+            lines.add(Component.literal("It remembers:").withColor(0xEDE6D2));
+            for (int i = 0; i < kept.names().size(); i += 3)
+                lines.add(Component.literal(" " + String.join(", ", kept.names().subList(i, Math.min(kept.names().size(), i + 3)))).withColor(0xB9B2A0));
         }
         if (!(s.isEnchantable() || s.isEnchanted()) || EnchantRules.room(s) <= 0) return;
         String room = EnchantRules.roomLine(s);

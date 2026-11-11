@@ -1,0 +1,114 @@
+{
+  "frontier.skiff.cast_off": {
+    "subtitle": "subtitles.awaken.frontier.skiff.cast_off",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "frontier.skiff.core_wake": {
+    "subtitle": "subtitles.awaken.frontier.skiff.core_wake",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "frontier.skiff.core_hum": {
+    "subtitle": "subtitles.awaken.frontier.skiff.core_hum",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "frontier.skiff.core_rest": {
+    "subtitle": "subtitles.awaken.frontier.skiff.core_rest",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
+      }
+    ]
+  },
+  "frontier.skiff.sail": {
+    "subtitle": "subtitles.awaken.frontier.skiff.sail",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ender_dragon.flap",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.25
+      },
+      {
+        "name": "minecraft:entity.phantom.flap",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "frontier.skiff.bell": {
+    "subtitle": "subtitles.awaken.frontier.skiff.bell",
+    "sounds": [
+      {
+        "name": "minecraft:block.bell.use",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "frontier.skiff.creak": {
+    "subtitle": "subtitles.awaken.frontier.skiff.creak",
+    "sounds": [
+      {
+        "name": "minecraft:block.wooden_door.open",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block.wooden_trapdoor.open",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block.fence_gate.open",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.5
+      }
+    ]
+  },
+  "frontier.skiff.wind": {
+    "subtitle": "subtitles.awaken.frontier.skiff.wind",
+    "sounds": [
+      {
+        "name": "minecraft:item.elytra.flying",
+        "type": "event"
+      }
+    ]
+  },
+  "frontier.skiff.set_down": {
+    "subtitle": "subtitles.awaken.frontier.skiff.set_down",
+    "sounds": [
+      {
+        "name": "minecraft:block.wood.fall",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  }
+}

@@ -10,6 +10,11 @@
     "minecraft:aqua_affinity",
     "minecraft:depth_strider",
     "minecraft:luck_of_the_sea",
-    "minecraft:lure"
+    "minecraft:lure",
+    "minecraft:looting",
+    "minecraft:unbreaking",
+    "minecraft:respiration",
+    "minecraft:blast_protection",
+    "minecraft:projectile_protection"
   ]
 }

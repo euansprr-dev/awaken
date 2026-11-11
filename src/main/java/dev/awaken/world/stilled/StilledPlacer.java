@@ -66,12 +66,17 @@ final class StilledPlacer {
             return;
         }
         int ridge = TheLull.ridge(server);
-        List<StilledSpots.Spot> fixed = StilledSpots.fixed(c.getX(), c.getZ(), ridge, firstHamlet(level, c, ridge), level.getSeed());
+        // a Far Landing world (SPEC §67): the stone people sit round the landing, where the game starts; Aldo stays by the skiff
+        BlockPos l = TheLull.landing(server);
+        int[] landing = l == null ? null : new int[]{l.getX(), l.getZ()};
+        List<StilledSpots.Spot> fixed = StilledSpots.fixed(c.getX(), c.getZ(), ridge, landing == null ? firstHamlet(level, c, ridge) : null, level.getSeed(), landing);
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator()) continue;
             List<StilledSpots.Spot> near = new ArrayList<>();
             for (StilledSpots.Spot s : fixed) if (Math.hypot(s.x() - p.getX(), s.z() - p.getZ()) < RESOLVE) near.add(s);
-            near.addAll(StilledSpots.cells(c.getX(), c.getZ(), ridge, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE));
+            near.addAll(landing == null ? StilledSpots.cells(c.getX(), c.getZ(), ridge, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE)
+                    : StilledSpots.cells(landing[0], landing[1], StilledSpots.LANDING_CLEAR, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE,
+                    c.getX(), c.getZ(), ridge));
             for (StilledSpots.Spot s : near) {
                 if (data.placed.containsKey(s.id())) continue;
                 Ready r = READY.get(s.id());

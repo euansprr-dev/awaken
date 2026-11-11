@@ -20,6 +20,7 @@ final class EngraveLoop extends AbstractTickableSoundInstance {
     static float run;
     /** A steady hand's run per tick at full voice (a stroke of about 1.5 drawn in 0.4 s). */
     private static final float FULL = 0.15F, LOUDEST = 0.32F;
+    private static final boolean LOOP = false;
     private static @Nullable EngraveLoop playing;
     private float speed;
 
@@ -35,6 +36,8 @@ final class EngraveLoop extends AbstractTickableSoundInstance {
 
     /** The pen picked up a stroke: the loop starts silent (or keeps going) and the trace's run drives it. */
     static void start(BlockPos pos, ItemStack piece) {
+        // off since the polish pass: the cut is grains by distance drawn now (InscribeScene.cut), not a looped one-shot
+        if (!LOOP) return;
         if (playing != null && !playing.isStopped()) return;
         run = 0;
         playing = new EngraveLoop(soft(piece), pos);

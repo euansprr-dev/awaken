@@ -187,7 +187,8 @@ public final class Tips {
             // its context ended (or it was done, or it has said its piece): it fades
             boolean ended = UNTIL.getOrDefault(current, 0L) < ticks;
             TipRules.Def d = defs.get(current);
-            if (endAt < 0 && (ended || d == null || ticks - startedAt >= d.showFor())) endAt = ticks;
+            // a tip already up fades when an Unlock title takes the screen (SPEC §71.2); other holds only stop new ones
+            if (endAt < 0 && (ended || d == null || ticks - startedAt >= d.showFor() || UnlockMoment.active())) endAt = ticks;
             if (endAt >= 0 && ticks - endAt >= FADE) {
                 SINCE.remove(current);
                 current = null;

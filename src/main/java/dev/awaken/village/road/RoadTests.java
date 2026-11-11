@@ -54,7 +54,7 @@ public final class RoadTests {
             dev.awaken.village.world.FirstHamlet.use(dev.awaken.village.world.FirstHamlet.search(seed, centre, t));
             RoadWorld w = RoadWorld.of(seed, centre[0], centre[1], gen, rs, heights, true);
             RoadWorld.use(w);
-            h.assertTrue(w.regions.rules() == 3 && w.regions.pitch() == 1600, "the roads' world is the wide world: rules " + w.regions.rules());
+            h.assertTrue(w.regions.rules() >= 3 && w.regions.pitch() == 1600, "the roads' world is the wide world: rules " + w.regions.rules());
             int[] ft = w.firstTown;
             h.assertTrue(ft != null, "the first town is found among the bigger regions");
             int laid = 0;

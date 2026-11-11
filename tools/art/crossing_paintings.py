@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 """The crossing's paintings (SPEC 50.5): crops a 3:2 painting to 16:9 and writes the game's PNG beside its .mcmeta.
 
-usage: crossing_paintings.py <key>=<source image> ...
+usage: crossing_paintings.py [--into <textures/gui subfolder>] <key>=<source image> ...
+(the Far Landing's skiff crossing, SPEC 67.5, writes into gui/frontier as crossing_out and crossing_home.)
 Keeps the upper part of the picture, since the paintings keep their lower quarter dark and simple for the words.
 """
 import json, os, sys
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(__file__), "../../src/main/resources/assets/awaken/textures/gui/crossing")
+GUI = os.path.join(os.path.dirname(__file__), "../../src/main/resources/assets/awaken/textures/gui")
+OUT = os.path.join(GUI, "crossing")
 W, H = 1536, 864
 
-for arg in sys.argv[1:]:
+args = sys.argv[1:]
+if len(args) >= 2 and args[0] == "--into":
+    OUT = os.path.join(GUI, args[1])
+    os.makedirs(OUT, exist_ok=True)
+    args = args[2:]
+
+for arg in args:
     key, src = arg.split("=", 1)
     im = Image.open(src).convert("RGB")
     sw, sh = im.size

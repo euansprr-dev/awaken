@@ -10,8 +10,10 @@ import java.util.Map;
  * swings in the upright plane of your heading, about the anchor's point projected onto that plane: the rope still runs to
  * the real block (the server checks it), but a tower beside you holds the rope and you swing past it, never into it. The
  * swing keeps its speed (the catch keeps most of what a rope would take, the bottom of each arc drives you on), the rope
- * shortens to its fit slowly on the way down and never pulls you in, a wall in the next half second bends the swing round
- * it or lets go early, and the rope lets go at the top on its own, so you never swing back into the anchor.
+ * shortens to its fit slowly on the way down and never pulls you in, and a wall in the next half second bends the swing
+ * round it. With {@link #hold} (SPEC §62, the held rope) the rope never lets go by itself: from the top of its first arc
+ * it swings back and forth like a real rope until the key is let go. Without it, a wall nothing bends round lets go early
+ * and the top of the arc lets go on its own, as the 10 Nov build did.
  * <p>
  * Every number is in {@link Tune}; the jar's tune is {@link Tune#JAR}, and the client may swap in one read from a tuning
  * folder (RopeTuning). Nothing here allocates: the caller passes its own {@link Work}.
@@ -31,6 +33,15 @@ public final class AscentSwing {
      * swings, the held rope's earlier let-go. Off: the assisted swing exactly as §17.31 has it.
      */
     public static volatile boolean guide = true;
+
+    /**
+     * The held rope (SPEC §62; the client's {@code ropeHold} setting, on by default): letting go of the key is the only
+     * let-go. The first arc runs as ever (drive, momentum floor, window); from its top the rope is a pendulum: no drive,
+     * only its drag, forward pumps it (never over {@link Tune#holdTop}), back slows it to a hang, a wall ahead brakes it so
+     * it meets the wall softly and swings back, no arc goes over {@link Tune#holdCap}, and a rope hanging off to one side
+     * settles under its anchor. Off: the rope lets go at the top and before a wall by itself.
+     */
+    public static volatile boolean hold = true;
 
     /** The numbers (SPEC §17.31's table). Built from a map so a tuning file can name any of them. */
     public static final class Tune {
@@ -77,6 +88,18 @@ public final class AscentSwing {
         public final int slingLand;
         /** A pull up a wall in a swing's way is taken only this near (and only with a clear way to it). */
         public final double wallZip;
+        /**
+         * How far (blocks) a sling's aim leans from the top it bit toward your heading's line: the pull goes where you
+         * look, as a swing does, without leaving the rope's own top far to the side. With the held rope only (off, the
+         * rope is 10 Nov's exactly). 0: every lean tried on 11 Nov missed a bench gate by one run (SPEC §62).
+         */
+        public final double slingLean;
+        /**
+         * The held rope: forward's pump a tick through the lower part, the highest a pumped arc goes (degrees from the
+         * bottom), the highest any held arc goes (speed past the window bleeds to it), and the share of its offset a rope
+         * hanging to one side closes a tick.
+         */
+        public final double holdPump, holdTop, holdCap, holdSettle;
 
         public Tune(Map<String, Double> o) {
             ups = new double[] {22, 32, 42, 52, 62, 72};
@@ -128,6 +151,11 @@ public final class AscentSwing {
             slingReach = v(o, "slingReach", 30);
             slingTicks = (int) v(o, "slingTicks", 34);
             wallZip = v(o, "wallZip", 44);
+            slingLean = v(o, "slingLean", 0);
+            holdPump = v(o, "holdPump", 0.008);
+            holdTop = v(o, "holdTop", 80);
+            holdCap = v(o, "holdCap", 88);
+            holdSettle = v(o, "holdSettle", 0.015);
         }
 
         private static double v(Map<String, Double> o, String k, double d) {
@@ -141,10 +169,13 @@ public final class AscentSwing {
     /** The tune in use (the jar's, or the client's tuning folder's). */
     public static volatile Tune T = Tune.JAR;
 
-    /** A swing's rope: the real anchor, its length now and its fitted length, whether it has caught, its bend round a wall. */
+    /**
+     * A swing's rope: the real anchor, its length now and its fitted length, whether it has caught, whether its first arc
+     * has topped out (from then on a held rope only swings), its bend round a wall.
+     */
     public static final class Rope {
         public double ax, ay, az, len, fitLen;
-        public boolean caught;
+        public boolean caught, swung;
         public double bend;
 
         public Rope set(double ax, double ay, double az, double len, double fitLen) {
@@ -153,7 +184,7 @@ public final class AscentSwing {
             this.az = az;
             this.len = len;
             this.fitLen = fitLen;
-            caught = false;
+            caught = swung = false;
             bend = 0;
             return this;
         }
@@ -165,6 +196,7 @@ public final class AscentSwing {
             len = o.len;
             fitLen = o.fitLen;
             caught = o.caught;
+            swung = o.swung;
             bend = o.bend;
         }
     }
@@ -207,8 +239,10 @@ public final class AscentSwing {
         final double[] pv = new double[4], s = new double[3];
         final Pick[] cands = new Pick[80];
         int n;
-        /** The last tick bent the swing round something (for the trace); the carry's look found no way round. */
-        public boolean bent, blocked;
+        /** The last tick bent the swing round something (for the trace); the carry's look found no way round; a held swing braked for a wall. */
+        public boolean bent, blocked, braked;
+        /** The tick within the look-ahead the last swing tick saw it would meet something (after any bend), or -1: what a player sees coming. */
+        public int ahead = -1;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -431,14 +465,25 @@ public final class AscentSwing {
                 double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + t.slingOver - hand.y;
                 if (ahead < t.slingFrom || rise < 1 || rise > ahead * 1.2 || top < hy - 0.5) continue;
                 double sc = gauss(ahead, 16, 9) * gauss(side, 0, 7) * (0.5 + 0.5 * gauss(rise, 5, 5));
-                if (sc <= best || !slingClear(s, hand, hx, top + t.slingOver, hz, w)) continue;
+                // the pull goes where you look, as a swing does (11 Nov 2026, Euan: a rope that swings you on beats one
+                // that pulls you at the thing): its point over the top leans toward your heading's line at the top's
+                // distance, by at most slingLean, where that way is clear
+                if (sc <= best) continue;
+                double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
+                double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
+                if (!slingClear(s, hand, px, top + t.slingOver, pz, w)) {
+                    // that way blocked: straight over the top
+                    if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w)) continue;
+                    px = hx;
+                    pz = hz;
+                }
                 best = sc;
                 out.x = hx;
                 out.y = hy;
                 out.z = hz;
-                out.px = hx;
+                out.px = px;
                 out.py = top + t.slingOver;
-                out.pz = hz;
+                out.pz = pz;
                 out.top = top;
                 out.len = out.fitLen = Math.sqrt(dx * dx + (hy - hand.y) * (hy - hand.y) + dz * dz);
                 out.score = sc;
@@ -580,7 +625,9 @@ public final class AscentSwing {
      * One tick of a swing: the body (the hand point {@code k}) swings in the upright plane of the heading about the
      * anchor's projection on it (radius from the real rope: sqrt(len² - d²)); sideways speed is turned into speed along
      * the heading; through the lower half the swing drives you on (more when it is too slow to reach its window); the
-     * rope shortens toward its fit on the way down, speed kept, never a pull in.
+     * rope shortens toward its fit on the way down, speed kept, never a pull in. A held rope past its first arc
+     * ({@link #hold}) has no drive: forward pumps it and back slows it ({@link #heldPump}), and no arc tops
+     * {@link Tune#holdCap} ({@link #bleed}).
      */
     public static void step(AscentRules.Kin k, Rope rope, double heading, double fwd, Work w) {
         Tune t = T;
@@ -612,9 +659,14 @@ public final class AscentSwing {
             double o = hx * nx + hz * nz;
             double tx = hx - nx * o, ty = -ny * o, tz = hz - nz * o, tl = Math.sqrt(tx * tx + ty * ty + tz * tz);
             if (tl > 1e-3) {
-                double g = (t.drive + t.pump * Math.max(0, fwd)) * Math.min(1, (below - 0.2) / 0.5);
-                // the momentum floor: a swing too slow to reach its window gets more drive (never a dead hang)
-                if (k.speed() < t.floorSpeed && k.vx * hx + k.vz * hz >= 0) g *= t.floorDrive;
+                double f = Math.min(1, (below - 0.2) / 0.5), g;
+                if (hold && rope.swung) {
+                    g = heldPump(k, tx / tl, ty / tl, tz / tl, below, rad, fwd, f);
+                } else {
+                    g = (t.drive + t.pump * Math.max(0, fwd)) * f;
+                    // the momentum floor: a swing too slow to reach its window gets more drive (never a dead hang)
+                    if (k.speed() < t.floorSpeed && k.vx * hx + k.vz * hz >= 0) g *= t.floorDrive;
+                }
                 k.vx += tx / tl * g;
                 k.vy += ty / tl * g;
                 k.vz += tz / tl * g;
@@ -623,6 +675,7 @@ public final class AscentSwing {
         k.vx *= 1 - t.drag;
         k.vy *= 1 - t.drag;
         k.vz *= 1 - t.drag;
+        if (hold) bleed(k, below, rad);
         double out = k.vx * nx + k.vy * ny + k.vz * nz;
         if (r >= rad - 1e-6 && out > 0) {
             double s0 = k.speed();
@@ -642,6 +695,36 @@ public final class AscentSwing {
         k.y += k.vy;
         k.z += k.vz;
         if (catchOn(k, px, py, pz, rad, rope.caught ? 0 : t.catchKeep) > 0) rope.caught = true;
+    }
+
+    /**
+     * A held rope's push this tick along its tangent (ux, uy, uz: the heading's way round the pivot): forward pumps with
+     * the motion (from a hang, along the heading) while the arc it reaches stays under {@link Tune#holdTop}; back slows
+     * it, never past still; neither key, nothing (the rope swings on its own momentum and loses it to drag).
+     */
+    private static double heldPump(AscentRules.Kin k, double ux, double uy, double uz, double below, double rad, double fwd, double f) {
+        Tune t = T;
+        double along = k.vx * ux + k.vy * uy + k.vz * uz;
+        if (fwd > 0) {
+            double v2 = k.vx * k.vx + k.vy * k.vy + k.vz * k.vz;
+            if (below - v2 / (2 * AscentRules.G * rad) <= Math.cos(t.holdTop * D2R)) return 0;
+            return t.holdPump * fwd * f * (along >= -0.02 ? 1 : -1);
+        }
+        if (fwd < 0) return -Math.copySign(Math.min(Math.abs(along), t.holdPump * -fwd * f), along);
+        return 0;
+    }
+
+    /**
+     * No held arc tops {@link Tune#holdCap} (over the pivot's level a slow rope goes slack and snaps taut again): past the
+     * window and rising, the speed bleeds halfway a tick toward what would just reach the cap.
+     */
+    private static void bleed(AscentRules.Kin k, double below, double rad) {
+        Tune t = T;
+        if (k.vy <= 0 || below > Math.cos((t.winBest + t.winGood) * D2R)) return;
+        double cap2 = 2 * AscentRules.G * rad * Math.max(0, below - Math.cos(t.holdCap * D2R)), s = k.speed();
+        if (s * s <= cap2 || s < 1e-6) return;
+        double vc = Math.sqrt(cap2);
+        k.scaleV((vc + (s - vc) * 0.5) / s);
     }
 
     /** One taut step along the great circle through the velocity about (ax, ay, az) at radius len (as tetherStep's). */
@@ -790,8 +873,10 @@ public final class AscentSwing {
 
     /**
      * One whole swing tick: the step, then the look ahead (a wall in the way bends the swing a few degrees either side,
-     * the bend kept), then whether the rope should let go: at the top of the arc (past the pivot along the heading with
-     * forward speed spent, or past {@link Tune#apex}), or before a wall less than 4 ticks off that nothing bends round.
+     * the bend kept), then the top of the first arc (past the pivot along the heading with forward speed spent, or past
+     * {@link Tune#apex}; or swinging back) marks the rope {@link Rope#swung}. A held rope ({@link #hold}) always goes on:
+     * a wall less than 4 ticks off that nothing bends round brakes it, and once swung it settles under its anchor.
+     * Otherwise the rope asks to let go at that top, or before such a wall.
      */
     public static int tick(SwingSpace s, AscentRules.Kin k, Rope rope, double yaw, double fwd, Work w) {
         Tune t = T;
@@ -799,6 +884,7 @@ public final class AscentSwing {
         step(k, rope, hd, fwd, w);
         int ahead = wallAhead(s, k, rope, hd, w);
         w.bent = false;
+        w.braked = false;
         if (ahead >= 0) {
             for (double b : t.bends) {
                 if (wallAhead(s, k, rope, yaw + b, w) < 0) {
@@ -814,13 +900,45 @@ public final class AscentSwing {
         double ang = angleFromBottom(k, pv[0], pv[1], pv[2]);
         boolean past = (k.x - pv[0]) * fx(hd) + (k.z - pv[2]) * fz(hd) > 0;
         double fwdSpeed = k.vx * fx(hd) + k.vz * fz(hd);
+        boolean top = past && (ang > t.apex || fwdSpeed < 0.15 || k.vy < -0.02 && ang > 8);
+        if (!rope.swung && (top || rope.caught && fwdSpeed < -0.05)) rope.swung = true;
+        w.ahead = ahead;
+        if (hold) {
+            // the held rope: letting go of the key is the only let-go
+            if (ahead >= 0 && ahead < 4) {
+                brake(k);
+                w.braked = true;
+            }
+            if (rope.swung) settle(s, k, rope, hd, w);
+            return GO;
+        }
         if (ahead >= 0 && ahead < 4) return WALL;
         if (!past) return GO;
-        if (ang > t.apex || fwdSpeed < 0.15 || k.vy < -0.02 && ang > 8) return TOP;
+        if (top) return TOP;
         // held, with the guide: let go while it still goes forward, once it has swung (rising, past the bottom), and
         // only if that flight comes down on something (over nothing the rope holds on toward the top, as it always did)
         return guide && ang > t.apexHeld && k.vy > 0 && landsOnSomething(s, k, rope, yaw, w) ? TOP : GO;
     }
+
+    /**
+     * A held rope hanging off to one side of its anchor (the pivot is the anchor's projection on the swing's plane)
+     * drifts in under it, {@link Tune#holdSettle} of the offset a tick and a sixteenth of a block at most, while there is
+     * room beside the body: the rope comes to hang straight, as a real one would.
+     */
+    static void settle(SwingSpace s, AscentRules.Kin k, Rope rope, double heading, Work w) {
+        double[] pv = w.pv;
+        pivot(k.x, k.z, rope.ax, rope.ay, rope.az, heading, pv);
+        double d = pv[3];
+        if (Math.abs(d) < 0.05) return;
+        double m = Math.copySign(Math.min(Math.abs(d) * T.holdSettle, 0.0625), d), lx = -fz(heading), lz = fx(heading);
+        double x = k.x + lx * m, z = k.z + lz * m, y = k.y - AscentRules.HAND_HEIGHT, half = SwingSpace.HALF + SETTLE_ROOM;
+        if (s.boxHits(x - half, y + 0.001, z - half, x + half, y + SwingSpace.TALL, z + half)) return;
+        k.x = x;
+        k.z = z;
+    }
+
+    /** Room kept beside the body as a held rope settles in toward its anchor (more than the look-ahead's graze). */
+    private static final double SETTLE_ROOM = 0.25;
 
     /** The early let-go's guard: how far a flight may fall with nothing met before the ground is asked for, the reach of
      * that asking (a space answers no further down), and how much ground a landing wants on ahead of it. */

@@ -27,6 +27,11 @@ import org.jspecify.annotations.Nullable;
 public final class RoadWorld {
     public final long seed;
     public final int cx, cz;
+    /**
+     * Where the land's danger is measured from: a Far Landing world's landing (SPEC §67), else the centre. The first town
+     * and the holdfasts are found round it; the roads themselves still run from the city.
+     */
+    public final int lx, lz;
     public final RegionMap regions;
     final NoiseBasedChunkGenerator generator;
     final RandomState random;
@@ -43,9 +48,16 @@ public final class RoadWorld {
     private static volatile @Nullable RoadWorld current;
 
     private RoadWorld(long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights, boolean city, int rules) {
+        this(seed, cx, cz, gen, rs, heights, city, rules, null);
+    }
+
+    private RoadWorld(long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights, boolean city, int rules,
+                      int @Nullable [] landing) {
         this.seed = seed;
         this.cx = cx;
         this.cz = cz;
+        this.lx = landing != null ? landing[0] : cx;
+        this.lz = landing != null ? landing[1] : cz;
         this.generator = gen;
         this.random = rs;
         this.heights = heights;
@@ -55,7 +67,40 @@ public final class RoadWorld {
         // the probe names a region once, from any thread: a sampler of its own each time (no caches to share)
         this.regions = new RegionMap(seed, cx, cz, (x, z) -> land(source.createResolver(
                 rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build()))
-                .getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(63), QuartPos.fromBlock(z))), rules);
+                .getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(63), QuartPos.fromBlock(z))), rules, lx, lz);
+    }
+
+    /** Whether this world's real game starts at a far landing (SPEC §67): its first town and holdfasts are round it. */
+    public boolean farLanding() {
+        return regions.farLanding();
+    }
+
+    /**
+     * A Far Landing world's landing (SPEC §67), found from the seed before any chunk is made: the saved one, else found now
+     * on this generator (the same answer the region map gets: the finder is pure and keeps it for the session).
+     */
+    private static int[] landing(MinecraftServer server, long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights) {
+        int[] saved = dev.awaken.living.region.RegionService.landingOnDisk(server);
+        if (saved != null) return saved;
+        var source = gen.getBiomeSource();
+        var resolver = source.createResolver(rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build()));
+        GenTerrain t = GenTerrain.of(gen, heights, rs);
+        return dev.awaken.core.api.FarLanding.of(seed, cx, cz, new dev.awaken.core.api.FarLanding.Sampler() {
+            @Override
+            public String biome(int x, int z) {
+                return dev.awaken.living.region.RegionService.path(resolver.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(63), QuartPos.fromBlock(z)));
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return t.top(x, z) - t.water(x, z);
+            }
+
+            @Override
+            public int seaLevel() {
+                return t.seaLevel();
+            }
+        });
     }
 
     /** The land at a region's heart, named the way the region service names it (the archetype's vanilla name). */
@@ -97,8 +142,11 @@ public final class RoadWorld {
         RandomState rs = RandomState.create(server.registryAccess().lookupOrThrow(Registries.NOISE), seed, gen.generatorSettings().value());
         var type = stem.type().value();
         int[] c = SettlementGrid.centre();
-        RoadWorld w = new RoadWorld(seed, c[0], c[1], gen, rs, LevelHeightAccessor.create(type.minY(), type.height()),
-                dev.awaken.terrain.api.CityBasin.current() != null, dev.awaken.living.region.RegionService.rulesOnDisk(server));
+        var heights = LevelHeightAccessor.create(type.minY(), type.height());
+        boolean city = dev.awaken.terrain.api.CityBasin.current() != null;
+        int rules = dev.awaken.living.region.RegionService.rulesOnDisk(server);
+        int[] landing = city && rules >= 4 ? landing(server, seed, c[0], c[1], gen, rs, heights) : null;
+        RoadWorld w = new RoadWorld(seed, c[0], c[1], gen, rs, heights, city, rules, landing);
         RoadTimer.server = server.getRunningThread();
         RoadTimer.watch(server);
         w.prepare();
@@ -112,8 +160,9 @@ public final class RoadWorld {
         Holdfasts.clear();
         firstHoldfast = Holdfasts.findFirst(this);
         int[] f = firstTown, h = firstHoldfast;
-        Awaken.LOG.info("[road] the roads' world: seed {}, centre {} {}{}; the first town's region {}, the first holdfast's {} ({} ms)", seed, cx, cz,
-                city ? " (Carillon)" : "", f == null ? "none" : f[0] + "," + f[1], h == null ? "none" : h[0] + "," + h[1], System.currentTimeMillis() - t0);
+        Awaken.LOG.info("[road] the roads' world: seed {}, centre {} {}{}{}; the first town's region {}, the first holdfast's {} ({} ms)", seed, cx, cz,
+                city ? " (Carillon)" : "", farLanding() ? ", the far landing " + lx + " " + lz : "",
+                f == null ? "none" : f[0] + "," + f[1], h == null ? "none" : h[0] + "," + h[1], System.currentTimeMillis() - t0);
     }
 
     /** Tests and the studio: a world over a generator made for a seed (no server levels). */

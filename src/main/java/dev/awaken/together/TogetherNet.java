@@ -28,7 +28,7 @@ import java.util.UUID;
 public final class TogetherNet {
     private TogetherNet() {}
 
-    public static final int TRAVEL = 0, LEAVE = 1, FULL = 2, GENTLE = 3, HOME = 4;
+    public static final int TRAVEL = 0, LEAVE = 1, FULL = 2, GENTLE = 3, HOME = 4, SHARE_OWN = 5, SHARE_HALF = 6, SHARE_EQUAL = 7;
     /** State bits of a member. */
     public static final int F_GENTLE = 1, F_KNEEL = 2, F_DOWN = 4, F_IN_GATE = 8, F_ELSEWHERE = 16, F_SELF = 32, F_HOUSEMATE = 64;
     /** Ping kinds. */
@@ -67,10 +67,14 @@ public final class TogetherNet {
         }
     }
 
-    /** Server → one player: their party as it is now, themselves first (alone: just themselves). */
-    public record Party(List<Member> members) implements CustomPacketPayload {
+    /**
+     * Server → one player: their party as it is now, themselves first (alone: just themselves), and how it shares XP
+     * (0 each their own, 1 half, 2 equal: {@link SharedXp}).
+     */
+    public record Party(List<Member> members, int share) implements CustomPacketPayload {
         public static final Type<Party> TYPE = new Type<>(Awaken.id("together_party"));
-        public static final StreamCodec<ByteBuf, Party> STREAM_CODEC = StreamCodec.composite(Member.STREAM_CODEC.apply(ByteBufCodecs.list(8)), Party::members, Party::new);
+        public static final StreamCodec<ByteBuf, Party> STREAM_CODEC = StreamCodec.composite(Member.STREAM_CODEC.apply(ByteBufCodecs.list(8)), Party::members,
+                ByteBufCodecs.VAR_INT, Party::share, Party::new);
 
         @Override
         public Type<Party> type() {
@@ -138,6 +142,9 @@ public final class TogetherNet {
             case LEAVE -> PartyService.leave(p);
             case FULL -> Fights.set(p, false);
             case GENTLE -> Fights.set(p, true);
+            case SHARE_OWN -> SharedXp.set(p, SharedXp.OWN);
+            case SHARE_HALF -> SharedXp.set(p, SharedXp.HALF);
+            case SHARE_EQUAL -> SharedXp.set(p, SharedXp.EQUAL);
             case TRAVEL -> {
                 ServerPlayer other = p.level().getServer().getPlayerList().getPlayer(m.other());
                 if (other != null) PartyService.ask(p, other);
@@ -223,7 +230,8 @@ public final class TogetherNet {
             if (TogetherConfig.seeing() || TogetherConfig.gentle()) {
                 for (ServerPlayer m : PartyService.online(p)) members.add(member(p, m));
             }
-            Party now = new Party(members);
+            PartyData.Party own = members.size() > 1 ? PartyData.get(s).of(p.getUUID()) : null;
+            Party now = new Party(members, own == null ? SharedXp.OWN : SharedXp.of(own));
             if (!now.equals(SENT.put(p.getUUID(), now))) {
                 SENDS.merge(p.getUUID(), 1, Integer::sum);
                 AwakenNet.send(p, now);

@@ -34,6 +34,67 @@ final class WayTests {
         AwakenTests.registerIsolated("way_up_form_and_field", 60, WayTests::formAndField);
         AwakenTests.register("way_up_words_and_record", 20, WayTests::wordsAndRecord);
         AwakenTests.registerIsolated("way_up_moves", 40, WayTests::moves);
+        AwakenTests.registerIsolated("way_up_stands", 40, WayTests::stands);
+    }
+
+    /**
+     * The Gauntlet's stands (SPEC §71.3): a stand gives its move only to a player standing on it; the first gives the
+     * leap; a stand is taken once; taken a move at a time, only the moves of the stands taken may be made, and the
+     * finished run makes the leap whole; a leap that came whole stays whole at a stand.
+     */
+    private static void stands(GameTestHelper h) {
+        BodyConfig.wayOverride = true;
+        ServerPlayer p = player(h), q = player(h);
+        try {
+            BlockPos rel = new BlockPos(1, 2, 1);
+            h.setBlock(rel, AscentContent.LEAP_STAND.get().defaultBlockState().setValue(LeapStandBlock.MOVE, WayUp.Leap.DOUBLE));
+            h.setBlock(rel.east(2), AscentContent.LEAP_STAND.get().defaultBlockState().setValue(LeapStandBlock.MOVE, WayUp.Leap.DASH));
+            BlockPos first = h.absolutePos(rel), second = h.absolutePos(rel.east(2));
+            Ascent.grant(p, Ascent.Tier.TETHER, "tether vow");
+            // from across the room: nothing
+            p.teleportTo(first.getX() + 6.5, first.getY() + 0.25, first.getZ() + 0.5);
+            p.setOnGround(true);
+            WayUp.take(p, first);
+            h.assertFalse(Ascent.has(p, Ascent.Tier.LEAPER), "a stand gives nothing to someone who is not standing on it");
+            p.teleportTo(first.getX() + 0.5, first.getY() + 0.25, first.getZ() + 0.5);
+            p.setOnGround(true);
+            WayUp.take(p, first);
+            WayMemory m = WayUp.memory(p);
+            h.assertTrue(Ascent.has(p, Ascent.Tier.LEAPER) && m.stand(WayUp.Leap.DOUBLE) && !m.stand(WayUp.Leap.DASH),
+                    "the first stand gives the leap, and is taken");
+            h.assertTrue(m.parts() == WayUp.LEAP_BY_PARTS && WayUp.canLeap(p, WayUp.Leap.DOUBLE)
+                    && WayUp.canLeap(p, WayUp.Leap.DASH) != WayUp.LEAP_BY_PARTS, "the dash waits for its stand only when the leap comes by parts");
+            long before = Progression.profile(p).counter("awaken:ascent_stand_double");
+            WayUp.take(p, first);
+            h.assertTrue(Progression.profile(p).counter("awaken:ascent_stand_double") == before, "a stand is taken once");
+            p.teleportTo(second.getX() + 0.5, second.getY() + 0.25, second.getZ() + 0.5);
+            p.setOnGround(true);
+            WayUp.take(p, second);
+            h.assertTrue(WayUp.memory(p).stand(WayUp.Leap.DASH) && WayUp.canLeap(p, WayUp.Leap.DASH), "the second stand opens the dash");
+            // the record's own rule, whatever the flag says today
+            WayMemory parts = WayMemory.EMPTY.withStand(WayUp.Leap.DOUBLE, true);
+            h.assertTrue(parts.canLeap(WayUp.Leap.DOUBLE) && !parts.canLeap(WayUp.Leap.DASH) && !parts.canLeap(WayUp.Leap.SLAM)
+                    && parts.leapOpen() == WayUp.Leap.DOUBLE.bit(), "by parts, only the moves of the stands taken may be made");
+            h.assertTrue(parts.whole().leapOpen() == 0xF && WayMemory.EMPTY.leapOpen() == 0xF, "whole, and by default, every move may be made");
+            WayMemory back = WayMemory.MAP_CODEC.codec().parse(JsonOps.INSTANCE, WayMemory.MAP_CODEC.codec().encodeStart(JsonOps.INSTANCE, parts)
+                    .getOrThrow()).getOrThrow();
+            h.assertTrue(back.equals(parts), "the stands and the parts come back as they were written");
+            // a leap that came whole another way stays whole at a stand
+            Ascent.grant(q, Ascent.Tier.WINGS, "sky platform core");
+            q.teleportTo(first.getX() + 0.5, first.getY() + 0.25, first.getZ() + 0.5);
+            q.setOnGround(true);
+            WayUp.take(q, first);
+            h.assertTrue(WayUp.memory(q).stand(WayUp.Leap.DOUBLE) && !WayUp.memory(q).parts() && WayUp.canLeap(q, WayUp.Leap.SLAM),
+                    "a leap handed down whole stays whole, and its stand still plays");
+            h.assertTrue(WayUp.waiting(q) == WayUp.Rung.LEAP, "and its Gauntlet is still to run");
+        } finally {
+            BodyConfig.wayOverride = null;
+            for (ServerPlayer x : List.of(p, q)) {
+                WayUp.forget(x.getUUID());
+                h.getLevel().getServer().getPlayerList().remove(x);
+            }
+        }
+        h.succeed();
     }
 
     /** A client says it made a move out of {@code from}: the server's own judging of it. */
@@ -162,8 +223,14 @@ final class WayTests {
             Progression.passReassessment(p);
             h.assertTrue(Progression.rank(p) == Rank.C && WayUp.waiting(p) == WayUp.Rung.WINGS, "C-rank with the rope: wings wait");
             row(h, p, "way/wings");
-            Ascent.grant(p, Ascent.Tier.LEAPER, "leaper's gauntlet");
-            h.assertTrue(WayUp.memory(p).leapGate() < 0, "the gate run: it leaves the road");
+            // the leap is taken inside the Gauntlet now (SPEC §71): held, its gate still stands; run, it leaves the road
+            Ascent.grant(p, Ascent.Tier.LEAPER, "the Leaper's Gauntlet: a stand");
+            WayUp.read(p, now);
+            h.assertTrue(WayUp.memory(p).leapGate() == 7, "the leap held, the Gauntlet not run: its gate stays on the road");
+            h.assertTrue(WayUp.pay(p, 1800, 1).first() && WayUp.gauntletRun(p), "the first finished run is paid, once");
+            h.assertFalse(WayUp.pay(p, 1700, 2).first(), "a second run is not the first");
+            WayUp.read(p, now);
+            h.assertTrue(WayUp.memory(p).leapGate() < 0, "the Gauntlet run: its gate leaves the road");
             // a core gives wings: the first flight's soft landing, and a row until they have been opened once
             Ascent.grant(p, Ascent.Tier.WINGS, "sky platform core");
             WayUp.firstFlight(p, p.blockPosition());

@@ -1,0 +1,147 @@
+# The held rope (SPEC §62, 11 Nov 2026): the rope never lets go by itself. Three scenes in the sandbox's giant trees,
+# third person so the rope shows: (1) the key held 12 s with no other key, the swing going back and forth and dying
+# down, then the key let go; (2) the key and forward held 15 s, forward pumping the swing up to its cap, then let go;
+# (3) four swings let go as the rope glows, each next rope thrown at once (never two ropes on screen).
+# Each scene waits for the server first (a run on 11 Nov filmed nothing: the sandbox's build held the server while
+# the client's script ran on, so the pilot's keys all arrived after the last shot).
+# The log's [ascent] trace has the speed every tick: "swing <b/t> at <angle>" on the rope, "air <b/t>, up <b/t>" for
+# 60 ticks after each let-go (the flight should fall off smoothly, no slow beat).
+# Look tour: tools/tour-ci.sh tools/autopilot/rope-hold.txt 1800
+world rope_hold survival 4249
+waitworld
+window 960 600
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tp @s 0.5 152 0.5 0 0
+# the sandbox's floor reaches 250 out: its chunks loaded first (a run on 11 Nov filled nothing, "That position is not
+# loaded", and the player fell to the city at y 77)
+cmd forceload add -32 -16 32 256
+arms waitserver 200
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent grant none
+cmd awaken ascent grant tether
+wait 10
+cmd awaken ascent sandbox
+wait 200
+# the sandbox's build holds the server for seconds (its far chunks): every scene starts once the server has caught up
+arms waitserver 100
+screen close
+camera back
+wait 10
+
+# ---- 1: held 12 s, no other key: back and forth, dying down, then let go ----
+cmd tp @s 0.5 151 5.5 0 -10
+arms waitserver 40
+wait 20
+shotnow rh_1_start
+cmd awaken ascent pilot hold forward,sprint 16
+wait 10
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 240
+wait 15
+shotnow rh_1_hold_00
+wait 15
+shotnow rh_1_hold_01
+wait 15
+shotnow rh_1_hold_02
+wait 15
+shotnow rh_1_hold_03
+wait 15
+shotnow rh_1_hold_04
+wait 15
+shotnow rh_1_hold_05
+wait 15
+shotnow rh_1_hold_06
+wait 15
+shotnow rh_1_hold_07
+wait 30
+shotnow rh_1_hold_08
+wait 30
+shotnow rh_1_hold_09
+wait 30
+shotnow rh_1_hold_10
+wait 22
+shotnow rh_1_letgo_00
+wait 6
+shotnow rh_1_letgo_01
+wait 6
+shotnow rh_1_letgo_02
+wait 10
+shotnow rh_1_letgo_03
+wait 60
+
+# ---- 2: the key and forward held 15 s: forward pumps it up, then let go ----
+cmd tp @s 0.5 151 5.5 0 -10
+arms waitserver 40
+wait 20
+cmd awaken ascent pilot hold forward,sprint 16
+wait 10
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether,forward 300
+wait 60
+shotnow rh_2_pump_00
+wait 60
+shotnow rh_2_pump_01
+wait 60
+shotnow rh_2_pump_02
+wait 60
+shotnow rh_2_pump_03
+wait 62
+shotnow rh_2_letgo_00
+wait 8
+shotnow rh_2_letgo_01
+wait 70
+
+# ---- 3: four swings let go as the rope glows, the next rope thrown each time ----
+cmd tp @s 0.5 151 5.5 0 -10
+arms waitserver 40
+wait 20
+cmd awaken ascent pilot run swing 4
+wait 10
+shotnow rh_3_chain_00
+wait 10
+shotnow rh_3_chain_01
+wait 10
+shotnow rh_3_chain_02
+wait 10
+shotnow rh_3_chain_03
+wait 10
+shotnow rh_3_chain_04
+wait 10
+shotnow rh_3_chain_05
+wait 10
+shotnow rh_3_chain_06
+wait 10
+shotnow rh_3_chain_07
+wait 10
+shotnow rh_3_chain_08
+wait 10
+shotnow rh_3_chain_09
+wait 10
+shotnow rh_3_chain_10
+wait 10
+shotnow rh_3_chain_11
+wait 200
+cmd awaken ascent pilot stop
+wait 20
+quit

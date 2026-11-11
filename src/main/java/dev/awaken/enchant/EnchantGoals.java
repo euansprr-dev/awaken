@@ -42,7 +42,7 @@ final class EnchantGoals {
     /** The tab an enchantment belongs to: Armour for one that fits armour, Weapons for weapons and tools. */
     static Goal tab(Inscriptions.Entry e) {
         return switch (e.fits()) {
-            case "armour", "boots", "helmets", "leggings" -> Goal.ARMOUR;
+            case "armour", "boots", "helmets", "leggings", "chestplates" -> Goal.ARMOUR;
             default -> Goal.WEAPONS;
         };
     }
@@ -90,7 +90,7 @@ final class EnchantGoals {
         if (!k.hadTable()) {
             out.add(Goals.Step.of("enchant/table", tab(firstKnown), "Make an Inscribing Table").thread(thread(tab(firstKnown)), 30)
                     .why("It's where you write what you've learned onto your own gear.").makes(EnchantContent.TABLE.asItem())
-                    .need(Need.item(p, Items.BOOK, 1)).need(Need.item(p, Items.LAPIS_LAZULI, 3))
+                    .need(Need.item(p, Items.STICK, 1)).need(Need.item(p, Items.LAPIS_LAZULI, 3))
                     .need(Need.item(p, CoreApi.ESSENCE_SHARD.get(), 1))
                     .need(Need.tag(p, ItemTags.PLANKS, "Planks", 2)).need(Need.tag(p, ItemTags.STONE_CRAFTING_MATERIALS, "Stone", 2))
                     .path(Goals.PATH_FIRST_GATE + 2).priority(78).build());

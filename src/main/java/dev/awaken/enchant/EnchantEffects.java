@@ -205,6 +205,7 @@ public final class EnchantEffects {
             fading.add(i);
         }
         if (fading == null) return;
+        if (p.tickCount % 20 == 0) EnchantFx.cleared(p);
         for (MobEffectInstance i : fading) {
             int left = i.getDuration() - 10 * level;
             p.removeEffect(i.getEffect());
