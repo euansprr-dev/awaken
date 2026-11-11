@@ -1,7 +1,7 @@
 package dev.awaken.above.ruin;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -43,13 +42,8 @@ public final class RuinBlocks {
     public static void init(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
-        modBus.addListener(RuinBlocks::creativeTab);
+        Tabs.fill(Tabs.Shelf.PRECURSOR_BLOCKS, BLOCK_ITEMS);
         RuinTests.register();
         RuinShowcase.register();
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (DeferredItem<BlockItem> item : BLOCK_ITEMS) e.accept(item.get());
     }
 }

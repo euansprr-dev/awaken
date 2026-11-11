@@ -3,6 +3,7 @@ package dev.awaken.delve.cave;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -87,6 +88,10 @@ public final class CaveContent {
         PIECES.register(modBus);
         PLACEMENTS.register(modBus);
         ITEMS.register(modBus);
+        // the Delver's pick after the forged picks, the lode map with the gear, the Delver's logs with the keepsakes
+        Tabs.fill(Tabs.Shelf.PICKS, DELVERS_PICK);
+        Tabs.fill(Tabs.Shelf.GEAR, LODE_MAP);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, DELVERS_LOG);
         COMPONENTS.register(modBus);
         ATTACHMENTS.register(modBus);
         PARTICLES.register(modBus);

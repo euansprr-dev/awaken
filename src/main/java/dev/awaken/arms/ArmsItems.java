@@ -1,7 +1,7 @@
 package dev.awaken.arms;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -12,12 +12,12 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MaceItem;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.Weapon;
 import net.minecraft.world.item.ToolMaterial;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
@@ -154,12 +154,14 @@ public final class ArmsItems {
 
     static void register(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(ArmsItems::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (DeferredItem<Item> item : ALL) event.accept(item.get());
-        BLUEPRINTS.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> event.accept(e.getValue().get()));
+        // the creative menu (SPEC §1, "Creative tabs"): a style at a time, tiers E to S, the Lords' own after (ArmsData's order)
+        Tabs.fill(Tabs.Shelf.FORGED_WEAPONS, ALL);
+        Tabs.fill(Tabs.Shelf.WEAPON_BLUEPRINTS, (p, out) -> BLUEPRINTS.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(e -> out.accept(e.getValue().get())));
+        Tabs.fill(Tabs.Shelf.HOME_STATIONS, STAND_ITEM);
+        Tabs.icon(Tabs.Tab.WEAPONS, () -> {
+            Item sword = item("sovereign_longsword");
+            return sword == null ? ItemStack.EMPTY : new ItemStack(sword);
+        });
     }
 }

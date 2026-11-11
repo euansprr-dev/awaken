@@ -3,6 +3,7 @@ package dev.awaken.delve;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -199,6 +200,18 @@ public final class DelveContent {
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        // deepglass and the lode hearts with the caves; the deep's metals; the Waking Pick first among the picks; the
+        // rope's pitons and runner rope with the climbing gear; the fork and the lamps with the gear
+        Tabs.fill(Tabs.Shelf.CAVES, (p, out) -> {
+            out.accept(DEEPGLASS_ITEM.get());
+            out.accept(DEEPGLASS_SHARD.get());
+            for (Ore o : Ore.values()) if (HEART_ITEMS.containsKey(o)) out.accept(HEART_ITEMS.get(o).get());
+        });
+        Tabs.fill(Tabs.Shelf.METALS, RAW_STARMETAL, STARMETAL_INGOT, BELL_BRONZE_INGOT);
+        Tabs.fill(Tabs.Shelf.PICKS, WAKING_PICK);
+        Tabs.icon(Tabs.Tab.TOOLS, () -> WAKING_PICK.get().getDefaultInstance());
+        Tabs.fill(Tabs.Shelf.CLIMBING, PITON_ITEM, RUNNER_ROPE);
+        Tabs.fill(Tabs.Shelf.GEAR, TUNING_FORK, MINERS_LAMP, DELVER_LAMP_ITEM);
         COMPONENTS.register(modBus);
         FEATURES.register(modBus);
         PARTICLES.register(modBus);
