@@ -92,9 +92,8 @@ final class PartyStrip {
         if (down) {
             g.centeredText(font, "You're down.", w / 2, h / 2 - 24, INK);
             g.centeredText(font, self.down() > 0 ? "Your partner has " + self.down() + " seconds to reach you and lift you." : "Hold on.", w / 2, h / 2 - 12, 0xFFF0B79C);
-        } else {
-            g.centeredText(font, "A second wind." + (self.winds() > 0 ? " " + self.winds() + " left." : " That was the last for now."), w / 2, h / 2 - 24, 0xFFF0B79C);
         }
+        // a second wind says itself in the action bar (the server's line): here the edges only dim
     }
 
     private static String state(TogetherNet.Member m) {
@@ -145,7 +144,7 @@ final class PartyStrip {
         if (len < 1.0E-3F) return;
         float ex = w / 2F + ax / len * (w / 2F - 18F), ey = h / 2F + ay / len * (h / 2F - 18F);
         sprite(g, EDGE, 128, 32, ex, ey, 36F, 9F, (float) Math.toDegrees(Math.atan2(ax, -ay)), colour);
-        String label = name + "  " + blocks;
+        String label = name + " · " + blocks;
         int lw = font.width(label);
         int lx = Mth.clamp(Math.round(ex - ax / len * 14F) - lw / 2, 4, w - lw - 4), ly = Mth.clamp(Math.round(ey - ay / len * 14F) - 4, 4, h - 12);
         g.text(font, label, lx, ly, INK, true);

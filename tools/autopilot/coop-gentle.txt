@@ -1,6 +1,6 @@
 # Together (SPEC §70), the Gentle side: you on Gentle, and a partner the server plays ("Sam") on Full. The band with
-# Gentle lit, a blow at half, a second wind from inside (the screen dims at its edges and says so), the last one, and
-# the same four monsters let at you: two on you, the rest on him. First person, the HUD on.
+# Gentle lit, a blow at half, a second wind from inside (the screen dims at its edges and says so), and up again.
+# First person, the HUD on.
 world coopgentle survival 20261112
 waitworld
 window 1440 900
@@ -53,15 +53,6 @@ wait 90
 shot coop_gentle_04_up_again
 cmd awaken together status
 wait 10
-# four monsters let at you with him beside you: two stay on you
-cmd difficulty normal
-cmd summon minecraft:zombie ^-3 ^ ^7
-cmd summon minecraft:zombie ^-1 ^ ^7
-cmd summon minecraft:zombie ^1 ^ ^7
-cmd summon minecraft:zombie ^3 ^ ^7
-wait 80
-shot coop_gentle_05_two_at_a_time
-cmd kill @e[type=minecraft:zombie]
-wait 20
+# (two small monsters at a time is the test gentle_two_at_a_time's to show: a picture of it says nothing)
 info
 quit
