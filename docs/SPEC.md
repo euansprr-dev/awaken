@@ -20070,7 +20070,8 @@ and Blast Protection, the ocean lab Respiration, the sky platforms Projectile Pr
   `awaken:remembered` (schemaVersion 1, a list of names oldest first, twelve at most, saved and synced). A Lord is named
   as the game says it ("the Bell Warden"), a named beast with its title. Chat: "Your Beastbound Maul remembers the Bell
   Warden." (or "Your gear remembers ..." for more than one piece); the tooltip lists them under "It remembers:", three
-  a line. The notch of light on the piece's script line for each name is not built.
+  a line. The notch of light on the piece's script line for each name is not built: the light on a piece is packed by
+  the arms and armour renderers, which have no room in it for a count.
 - **Long Arm** (`awaken:long_arm`, chestplates, I-II, carrying): data alone, one or two blocks on
   `minecraft:block_interaction_range`; entity reach is untouched, so it never strikes further. Found only on the sky
   platforms' Word Stones (two of that set's six).
@@ -20087,14 +20088,20 @@ and Blast Protection, the ocean lab Respiration, the sky platforms Projectile Pr
   here may be bright for long: in the hand nearly every face of a blade is turned away, and the first cut, with the
   letters and the aura always on, striped the whole blade in the enchantment's colour.
 - **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
-  Force's colour and a white-hot core, held bright for half of 24 ticks.
+  Force's colour and a white-hot core, held bright for half of 24 ticks. What it took off flies from the plate as
+  sparks of the Force's colour, four to nine by how much it took.
 - **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it
-  moves for two seconds.
+  moves for two seconds. A creature a bane kills goes out in the bane's red: a ring of it over the ground where it fell,
+  motes lifting off (`EnchantFx.banedOut`).
 - **A page given** flies from where it was (a fallen Lord, a lode's heart) to the one it goes to over 16 ticks, its sign
   showing, with a page's turn and a soft pickup.
 - **Reading** (a page, an old book, a Word Stone): the glyph lifts in front of the reader, cut by cut in the order it
   will be traced, holds, then runs down into their hand; the column of light is softer.
-- An extra drop's glint is larger.
+- An extra drop's glint is larger, and the drop rides a gold thread from where it came out (Looting, Fortune,
+  Harvest).
+- **The drifting letters** (a table in a Study, a Word Stone, Wayfarer's motes): one in three is the sign of a word you
+  know, the rest the script's twelve letters (`LetterParticle.pick`; 36 sign sprites after the letters in
+  `particles/enchant_letter.json`, written by the art spec in that order).
 
 ### 45.18 Sound (first picks; Euan's ear decides on `tools/art/enchant_listen.py`)
 Every beat is Minecraft's own recordings by name. A stroke seals with one recording (`enchant.seal`, an eye set into an

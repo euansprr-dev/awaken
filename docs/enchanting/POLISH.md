@@ -423,17 +423,17 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 - The trace's rules are untouched, but its marks are now the glyphs: straight cuts with corners.
 
 **The rest of the plan, built the same day** at his word that every approved plan be finished (relayed by the
-manager, 11 Nov): the five words above, Clear Blood's pulse and Insight's glint. They follow §4.3's table, with these
+manager, 11 Nov): the five words above, Clear Blood's pulse and Insight's glint, and the small at-work touches of
+§4.3 (sparks off a ward's plate, a gold thread on an extra drop, a bane's kill going out in red, the signs of words you
+know among the drifting letters). They follow §4.3's table, with these
 choices made in the building: Gather never takes another player's pack or what a Lord or a named beast leaves (that
 lies there for everyone who fought); Remembrance names a Lord as the game says it ("the Bell Warden"); Long Arm sits
 twice among the sky platforms' six words, being found nowhere else.
 
 **Not built, and why:**
 - *The hold-to-write fallback.* The plan builds it only if he finds the trace a chore (§6); nobody has traced yet.
-- *Small at-work touches of §4.3:* sparks flying off a ward's plate, a gold thread on Looting's, Fortune's and Harvest's
-  extra drop (it has the larger glint), a creature a bane kills going out in red (it carries the brand from the killing
-  blow), the signs of words you know among a Study's drifting letters, and the notch of light on a piece for each name
-  Remembrance keeps (the names are in its tooltip and in chat).
+- *The notch of light on a piece for each name Remembrance keeps.* The light on a piece is packed by the arms and
+  armour renderers, which have no room in it for a count; the names are in the piece's tooltip and in chat.
 - *Lantern at half strength in a Lightless gate:* gates offer no way to ask; it is full strength everywhere.
 
 **What filming it showed, and what changed** (three runs of `tools/autopilot/enchant-polish.txt` on GitHub, frames in
