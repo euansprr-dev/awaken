@@ -24499,7 +24499,7 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   an ordinary tree never swings anyway: a swing wants a rope of 8 or more whose arc keeps the feet 2.5 off the floor,
   so an anchor about 10 over the ground, where an oak's crown is 4 to 7. A sling was the answer for such a tree, but
   the fans take a sling only when its whole flight is clear, including the free flight after the let-go, so in a wood
-  the next tree spoiled every sling at the one you looked at, and the rope slung over another top or missed. The
+  the next tree spoiled most slings at the one you looked at, and the rope slung over another top or missed. The
   missed rope then flew 18 blocks along the look, through the tree. Now (`AscentSwing.aimed`, the client's `pick` and
   the marker alike):
   - the look's own ray from the eye goes first: the first block it meets within reach is the target, swung from when
@@ -24513,8 +24513,8 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
     look met Block{minecraft:oak_leaves} 13.6 off, which gives no swing or sling from here; the press took nothing (a
     miss)".
   The fans, the bench and its gates are unchanged (the bench calls the fans directly). Test `ascent_rope_aimed` (from
-  real blocks: an oak 14 ahead and a wall 14 high past it; the look at the crown takes it as a sling past its top that
-  the whole-flight rule refuses, the server takes the anchor; a look at the sky meets nothing; a look at the floor
+  real blocks: an oak 14 ahead and a wall 14 high past it; the look at the crown takes it as a sling past its top, whose
+  flight played on clears the crown and meets the wall, and the server takes the anchor; a look at the sky meets nothing; a look at the floor
   meets it about 4 off and gives no sling).
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*

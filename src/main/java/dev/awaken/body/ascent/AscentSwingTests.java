@@ -423,8 +423,8 @@ final class AscentSwingTests {
     /**
      * The rope goes where you look (SPEC §62), from real blocks: a floor, an oak 14 ahead (its crown 5 wide, its top 7
      * up), and past it a stone wall 14 high. Looking at the crown from a sprint jump, the rope takes that crown, as a
-     * sling past its top (an oak gives no swing), though the flight after the crown meets the wall: the fans' rule, which
-     * wants the whole flight clear, refuses that same sling. The server takes the crown as real. Looking up at the sky
+     * sling past its top (an oak gives no swing), though the flight after the crown meets the wall (played on here):
+     * past the top, what the flight meets is yours. The server takes the crown as real. Looking up at the sky
      * the look meets nothing; looking down at the floor it meets the floor 3 or so off (where a missed rope stops), and
      * the floor gives no sling.
      */
@@ -459,8 +459,25 @@ final class AscentSwingTests {
                     String.format("the rope takes the crown you look at (the look met it %.1f off)", w.aimT));
             h.assertTrue(pick.sling && !pick.zip && Math.abs(pick.top - (by + 7)) < 0.01 && pick.z - bz > 17.5 && pick.z - bz < 19.5,
                     String.format("a sling past that crown's top: sling %b, top %.2f at z %.2f", pick.sling, pick.top - by, pick.z - bz));
-            h.assertTrue(!AscentSwing.slingClear(space, hand, pick.px, pick.py, pick.pz, w),
-                    "the fans' rule (the whole flight clear) refuses the same sling: its flight meets the wall past the crown");
+            // what the aimed rope leaves to you: played on, the flight clears the crown and then meets the wall
+            AscentRules.Kin k = new AscentRules.Kin().set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
+            boolean free = false;
+            int age = 0;
+            double met = Double.NaN;
+            for (int i = 0; i < 60 && Double.isNaN(met); i++) {
+                if (!free && i > 0) {
+                    free = AscentSwing.slingStep(k, pick.px, pick.py, pick.pz, ++age);
+                } else {
+                    k.vy = (k.vy - AscentRules.G) * AscentRules.CARRY_DRAG_V;
+                    k.vx *= AscentRules.CARRY_DRAG_H;
+                    k.vz *= AscentRules.CARRY_DRAG_H;
+                    k.x += k.vx;
+                    k.y += k.vy;
+                    k.z += k.vz;
+                }
+                if (space.bodyHits(k.x, k.y - AscentRules.HAND_HEIGHT, k.z)) met = k.z - bz;
+            }
+            h.assertTrue(met > 24, String.format("the flight past the crown meets the wall (it met something at z %.2f)", met));
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
             p.snapTo(bx + 8.5, by + 1, bz + 4.5, 0, 0);
             h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the crown as a real anchor");
