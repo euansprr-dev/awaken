@@ -6942,8 +6942,26 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
       one's lower leaves were lit from far and shaded from near, the other the reverse. The heightfield now holds
       each column's own depth (the leaves at its top, down through gaps of up to two blocks, at most 30; kept in
       b over 4096, four a block, where the column has no roof), read with the roofs.
-  - **What still differs with distance**: a second mass of leaves under a gap of three blocks and more (a jungle
-    giant's side boughs, a bush under it) shades only inside the map's walk.
+    - **The far block map** (`LensBlocksFar`, texture `awaken:lens_blocks_far`, the light pass's `farRay`). Those
+      three still left the two answers to differ wherever one column holds more than one thing: a jungle giant is
+      a small crown over a run of side boughs, and one top a column can't say so. And a window 128 blocks across
+      can't reach a 30-block crown under a 30 degree sun from ground on the sun's side of the camera, however
+      long the walk. So past the block map the walk carries on in a second map, 256 blocks across and high: cells
+      of two blocks by one by two (half the detail across, all of it in height, which keeps a ray low over the
+      ground clear of the ground beside it), two bits each: open, solid (two and more of its four blocks stop the
+      sun), leaves, or part (one block of four, shaded soft). One texel is sixteen cells of one column, as in the
+      block map. It is walked from where the block map's walk ended (its rim, or 144 blocks), and from any point
+      outside the block map and inside this one that the heightfield does not call open sky; where it ends in the
+      open, 104 to 151 blocks out, the heightfield carries on as before. A section not read yet says so and the
+      heightfield answers.
+    - Read on the client tick like the block map: a far section (32 by 16 by 32 blocks: one section of four
+      chunks) as it enters the window, nearest first, within half a tick's budget; all of them again in a slow
+      round (51 s), so a block placed far off shows late there (near by, the block map has it within half a
+      second). A section wholly under its chunk's lowest ground is solid without a look. 1 MB on each side.
+      Tick and frame time not measured.
+  - **What still differs with distance**: beyond the far map (104 blocks and more) a second mass of leaves under
+    a gap of three blocks shades nothing; within it, a shadow's edge is two blocks coarse across where the far
+    map cast it and a texel fine where the block map did.
   - Tour in his world: `tools/autopilot/steady60-playtree-ci.txt` (his seed, pack, spot and hour; from four sides and
     from above; each view with the walk on and off).
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78

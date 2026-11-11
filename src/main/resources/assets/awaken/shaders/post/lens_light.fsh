@@ -20,6 +20,7 @@ uniform sampler2D SunmapSampler;    // lens_sunmap.fsh: the height above which t
 uniform sampler2D CloudNoiseSampler; // Lens 2's clouds (L4): their shadows on the land and in the beams
 uniform sampler2D HistorySampler;   // last frame's light buffer (persistent)
 uniform sampler2D BlocksSampler;
+uniform sampler2D BlocksFarSampler;  // the far block map (LensBlocksFar): cells of two blocks by one by two, out to 120 blocks
 uniform sampler2D LitSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
@@ -125,6 +126,70 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     return 1.0;
 }
 
+// The far block map's walk (LensBlocksFar; SPEC §22 "Shadows beyond the block map"): from where the block map's walk
+// ended, or from a point outside it, on toward the sun through cells of two blocks by one by two, out to some 120
+// blocks. Every layer of leaves and every bough is in it, so a tall tree under a low sun casts one shadow wherever the
+// camera stands. Returns what gets through; status 0 when a cell stopped the sun, 1 when the ray left the far map in the
+// open at tOut (the heightfield carries on from there), 2 where it isn't read yet. Nothing nearer than skip counts: a
+// point that starts here stands on blocks of its own cell and its neighbours
+const int FAR_WALK = 176;
+bool farMap() { return F(33).w > 0.5; }
+
+float farRay(vec3 o, vec3 l, float skip, out int status, out float tOut) {
+    vec3 cam = F(12).xyz;
+    vec2 corner = vec2(F(30).w, F(31).w);
+    float yMin = F(32).w;
+    const vec3 CELL = vec3(2.0, 1.0, 2.0);
+    vec3 oc = o / CELL, lc = l / CELL;
+    ivec3 c = ivec3(floor(oc));
+    ivec3 stp = ivec3(lc.x < 0.0 ? -1 : 1, lc.y < 0.0 ? -1 : 1, lc.z < 0.0 ? -1 : 1);
+    vec3 inv = 1.0 / max(abs(lc), vec3(1.0e-5));
+    vec3 next = (vec3(c) + max(vec3(stp), 0.0) - oc) * vec3(stp) * inv;
+    float t = 0.0, through = 1.0;
+    status = 1;
+    tOut = 0.0;
+    ivec3 held = ivec3(-2147483647);
+    uint bits = 0u;
+    for (int i = 0; i < FAR_WALK; i++) {
+        if (next.x < next.y && next.x < next.z) {
+            t = next.x;
+            next.x += inv.x;
+            c.x += stp.x;
+        } else if (next.y < next.z) {
+            t = next.y;
+            next.y += inv.y;
+            c.y += stp.y;
+        } else {
+            t = next.z;
+            next.z += inv.z;
+            c.z += stp.z;
+        }
+        tOut = t;
+        vec2 q = vec2((float(c.x) + 0.5) * 2.0 - cam.x, (float(c.z) + 0.5) * 2.0 - cam.z) - corner;
+        if (q.x < 2.0 || q.y < 2.0 || q.x > 254.0 || q.y > 254.0 || float(c.y) < yMin || float(c.y) >= yMin + 256.0) return through;
+        if (t < skip) continue;
+        ivec3 key = ivec3(c.x, c.z, c.y >> 4);
+        if (key != held) {
+            held = key;
+            vec4 raw = texelFetch(BlocksFarSampler, ivec2(c.x & 127, (c.z & 127) * 16 + ((c.y >> 4) & 15)), 0);
+            bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        }
+        if (bits == 0xFFFFFFFFu) {
+            status = 2;
+            return through;
+        }
+        uint k = (bits >> uint(2 * (c.y & 15))) & 3u;
+        if (k == 0u) continue;
+        // leaves and a cell with one block in it (a post, a thin trunk) shade soft; two blocks and more stop the sun
+        if (k != 1u) through *= k == 2u ? 0.42 : 0.5;
+        if (k == 1u || through < 0.04) {
+            status = 0;
+            return 0.0;
+        }
+    }
+    return through;
+}
+
 // the lit air (LensLit; SPEC §22 "Steady Light"): the camera's place in its volume, in blocks from the volume's corner,
 // and w whether the texture holds one (frame texels 15, 20 and 21)
 vec4 litCam() { return vec4(F(20).zw, F(21).w, F(15).w); }
@@ -184,6 +249,18 @@ float walkEnd(vec3 o, vec3 l) {
     return max(min(min(e.x, min(e.y, e.z)), float(WALK) / (abs(l.x) + abs(l.y) + abs(l.z))), 0.0);
 }
 
+// Past the block map: the far map's walk from o, then the heightfield from where that ends (or from o, where the far
+// map isn't read or isn't there)
+float beyond(vec3 o, vec3 l, float skip, float noise, bool ultra) {
+    bool more;
+    if (!farMap()) return heightRay(o, l, noise, ultra, false, more);
+    int status;
+    float tOut;
+    float through = farRay(o, l, skip, status, tOut);
+    if (status == 0) return 0.0;
+    return through * heightRay(status == 2 ? o : o + l * tOut, l, noise, ultra, false, more);
+}
+
 // how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
 // reaches, the map's (the heightfield can only say "something stands between"; the map knows what and where)
 float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
@@ -194,7 +271,20 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     float vis = heightRay(o, l, noise, ultra, true, leafy);
     if (F(17).z <= 0.0) return vis;
     vec2 inMap = o.xz - f12.xz - mapCorner();
-    if (inMap.x < 2.0 || inMap.y < 2.0 || inMap.x > 126.0 || inMap.y > 126.0) return vis;
+    if (inMap.x < 2.0 || inMap.y < 2.0 || inMap.x > 126.0 || inMap.y > 126.0) {
+        // outside the block map: the far map's walk, where the heightfield finds anything over the ray at all and
+        // the point lies in the far map's window
+        vec2 inFar = o.xz - f12.xz - vec2(F(30).w, F(31).w);
+        if (!farMap() || (vis > 0.97 && !leafy) || inFar.x < 4.0 || inFar.y < 4.0 || inFar.x > 252.0 || inFar.y > 252.0
+                || o.y < F(32).w || o.y > F(32).w + 255.0) return vis;
+        // (not the first block of the way: a cell is two blocks across, and the ground beside the point is in its own)
+        int farStatus;
+        float farOut;
+        float farThrough = farRay(o, l, 1.0, farStatus, farOut);
+        if (farStatus == 0) return 0.0;
+        if (farStatus == 2) return vis;
+        return farThrough * heightRay(o + l * farOut, l, noise, ultra, false, more);
+    }
     // inside the map: lit only if nothing at all stands over the ray, leaves at any height included (the walk knows
     // where they really are)
     if (vis > 0.97 && !leafy) return vis;
@@ -205,14 +295,14 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     // than the walk does, so where it called a block dark and the walk beside it found the sun, the difference lay on
     // open grass as a patchwork under a low sun, Euan 2026-11-10; a pixel in shade walks, and meets what shades it
     // within a few blocks anyway)
-    if (litSure(p + n * 0.55) == 1.0) return heightRay(o + l * walkEnd(o, l), l, noise, ultra, false, more);
+    if (litSure(p + n * 0.55) == 1.0) return beyond(o + l * walkEnd(o, l), l, 0.0, noise, ultra);
     int status;
     float tOut;
     float through = blockRay(o, l, status, tOut);
     if (status == 2) return vis;
     if (status == 0) return 0.0;
-    // out of the map in the open: the land beyond it, by the heightfield from there
-    return through * heightRay(o + l * tOut, l, noise, ultra, false, more);
+    // out of the map in the open: the land beyond it, by the far map and then the heightfield from there
+    return through * beyond(o + l * tOut, l, 0.0, noise, ultra);
 }
 
 // Leaves: the heightfield knows a column's top with its leaves (r) and without (g), not where the crown ends below.

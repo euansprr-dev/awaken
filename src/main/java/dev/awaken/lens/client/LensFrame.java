@@ -91,6 +91,39 @@ final class LensFrame {
         blocksZ = originZ;
     }
 
+    // the far block map (LensBlocksFar): whether it is read, and its window's lowest block on each axis
+    private boolean farOn;
+    private int farX, farY, farZ;
+
+    /** This frame's far block map: whether the light pass walks it, and its window's corner (texels 30 to 33, w). */
+    void blocksFar(boolean on, int originX, int minY, int originZ) {
+        farOn = on;
+        farX = originX;
+        farY = minY;
+        farZ = originZ;
+    }
+
+    /**
+     * The spare fourth component of a plate's texel (24 to 41): 24 to 26 the land's horizon and 27 its share; 28 and
+     * 29 the block map's window, its lowest x and z from the camera; 30 and 31 the far block map's, 32 its lowest y,
+     * 33 whether it is read.
+     */
+    private float spare(int texel, double x, double z) {
+        return switch (texel) {
+            case 24 -> landR;
+            case 25 -> landG;
+            case 26 -> landB;
+            case 27 -> landK;
+            case 28 -> (float) (blocksX - x);
+            case 29 -> (float) (blocksZ - z);
+            case 30 -> (float) (farX - x);
+            case 31 -> (float) (farZ - z);
+            case 32 -> farY;
+            case 33 -> farOn ? 1f : 0f;
+            default -> 0f;
+        };
+    }
+
     // the lit air (LensLit): its volume's corner in the world, and whether the texture holds one
     private int litX, litY, litZ;
     private boolean litOn;
@@ -187,13 +220,10 @@ final class LensFrame {
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;
-            // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share;
-            // 28 and 29 the block map's window, its lowest x and z from the camera)
-            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, k == 0 ? landR : k == 1 ? landK : 0f);
-            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f,
-                    k == 0 ? landG : k == 1 ? (float) (blocksX - x) : 0f);
-            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f,
-                    k == 0 ? landB : k == 1 ? (float) (blocksZ - z) : 0f);
+            // (the plates' fourth components are spare: see spare)
+            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, spare(t, x, z));
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, spare(t + 1, x, z));
+            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, spare(t + 2, x, z));
         }
         // 42-47: up to two storm cells, three texels each (layout in lens_storm_frame.glsl)
         for (int k = 0; k < dev.awaken.living.client.StormSky.MAX; k++) {

@@ -194,7 +194,8 @@ final class LensBlocks {
         return lastKind = kindOf(state);
     }
 
-    private int kindOf(BlockState state) {
+    /** The same for any caller on the client thread (the far block map reads blocks by it too). */
+    int kindOf(BlockState state) {
         int id = Block.getId(state);
         if (id >= kinds.length) {
             int old = kinds.length;
