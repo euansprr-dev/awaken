@@ -1155,6 +1155,10 @@ Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
   source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
   1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
+  **12 Nov (Euan: builders and miners must be able to rank up too):** only kills taper by level now; a block or an ore
+  is the same work at level 60 as at level 6. Block 0.075% of a level; budgets ore .08, build .08, deep ore .10
+  (kill .15 unchanged). Mirrored in `tools/sim/pacing_sim.py`. One pool across every source outside gates is the next
+  step and is not built (`progression_diminishing_returns` holds each source to its own budget).
 - Profile schema 2 adds `banked_xp` and `unlocks`. XP earned before awakening is banked and paid on Accept, which tops the
   player up to level 2. The Accept card is a choice card.
 - Truths are first offered at level 5 (level-road flag `awaken:truths`), then at each rank-up.
@@ -25198,11 +25202,17 @@ Gentle, for that player only, all decided on the server by who a thing is aimed 
   Lord or Warden +25% health and stance (a Full partner +50%), a room a sixth more monsters, no extra elite.
 - XP, loot, boss pieces, bells and rank as anyone. Titles and records for hard feats are not earned on Gentle.
 - A blow aimed at a Full player is exactly what it was. Numbers here are first values, in `awaken-together.toml`.
+- The gate's entry card has a `Fights` row when party members are online: "You: Full. Ana: Gentle." (12 Nov.)
 
 **70.5 Reassessments.** Everyone of the party near the bell comes as a fighter on their own setting (a tied pair is no
 longer skipped). At the level and ready: the rank, whatever the setting. Short of the level: they may come and are
 told this one doesn't count for them yet. The Warden's gift goes to all, as before. A Warden's health and stance
 grow by `FightsHooks.fighters` (a player on Gentle half of one), not by a head count.
+- **A card at the bell** (12 Nov, Euan: "go ahead"): when the one who starts has party members within 24 blocks, each
+  of them gets a 30-second card ("<name> is starting the C-rank Reassessment", `Come along` / `Stay here`, saying
+  whether it counts for them yet). The bell rings as soon as all have answered, or when the cards run out, for the
+  starter and whoever said yes; nobody is pulled in (`Provings.open`, action `provingcome:<starter>`). A hall opened
+  without the cards (`openAt`, tests) still takes everyone near.
 
 **70.6 The joins.** Everyone already awakened is told when someone who hasn't awakened logs in. The **Answering Peal**
 (`Answering`, through `BellHooks.onRung`): a handbell rung in the overworld calls to every party member more than 64
@@ -25220,3 +25230,28 @@ Under the Far Landing (§67): anyone who has flown once may take the helm home.
 **70.7 Tests and tours.** `core.test.Pair` (two real survival test players in a party); prefixes `pair_`, `gentle_`;
 tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
 in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.
+  12 Nov adds `pair_shared_xp`, `pair_shared_xp_never_twice` and `together_payloads_over_the_wire` (each Together
+  payload written and read back through its codec: a single-player game hands payloads over without writing them, so a
+  codec fault would first show with a second player).
+
+**70.8 A party earns as one** (12 Nov, Euan: "if you're in the same party ... the other person should get a decent
+amount of XP as well ... a huge bummer if one person is not ranking up at the same time as you ... three options, one
+where it's exactly the same, one where other people in the party get a certain amount, maybe 50%, and one where ...
+it's each one for themselves"). `together/SharedXp`, the party's own setting (`share` on the saved party; a new party
+takes `xp_share` from `awaken-together.toml`, default **equal**), changed by any member on the band's TOGETHER section
+(`Shared XP`: `[ Equal ] [ Half ] [ Each their own ]`, with a line saying what the lit one means) or
+`/awaken together share equal|half|own`; everyone in the party is told. Joining a party says which it is on.
+- **Equal**: what any member is paid, every other member online gets too, wherever they are (another land, a gate, at
+  home). **Half**: they get `xp_share_part` of it (0.5). **Each their own**: nothing is passed on.
+- **Never twice.** Grants are gathered through `Progression.onXpGranted` and settled when the tick ends, by thing
+  (source and world key): a member is passed `part x the most another member was paid for it, minus what they were
+  paid for it themselves`. Two who clear a floor or share a kill side by side are each paid once, as before; one paid
+  less for the same thing is made up to the other. Two who play apart each earn what both did, so a pair split
+  between a gate and the home levels faster than one player alone (at most twice as fast; side by side, no faster).
+- **What is passed on**: gate kills, floors and Lords, home and world XP, the Descent, anomalies, the Regimen and
+  directives. **Firsts stay your own**: discoveries, the story, Truths, dreams and commands are never passed on.
+- A share is paid as it was earned (`Progression.grantShared`: no second scale or perk, no listener, so it is never
+  shared on); the same XP is worth more levels to a lower member, so a partner who is behind catches up. Before
+  awakening it is banked. Offline members get nothing. Only a formed party shares this way: people who merely stand
+  in the same gate keep the old rule (`Parties.sharing`).
+
