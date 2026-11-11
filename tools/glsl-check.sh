@@ -13,14 +13,14 @@ import re, sys, os
 src, dst = sys.argv[1], sys.argv[2]
 roots = {"minecraft": "/Volumes/MEDIA/Awaken/.ref/assets/assets/minecraft/shaders/include",
          "awaken": "src/main/resources/assets/awaken/shaders/include"}
-seen = set()
-def expand(text):
+# Every include is inlined where it stands, as the game does: a file brought in twice must guard itself (lens_block.glsl
+# does). Leaving out a second include because the first was "seen" hid the block from a variant whose first include sat
+# inside an #ifdef it doesn't take (Swift's composite and prefilter failed here and compiled in the game).
+def expand(text, depth=0):
+    if depth > 12: raise SystemExit("includes nest too deep: a cycle?")
     def rep(m):
         ns, name = m.group(1), m.group(2)
-        key = ns + ":" + name
-        if key in seen: return ""
-        seen.add(key)
-        return expand(open(os.path.join(roots[ns], name)).read())
+        return expand(open(os.path.join(roots[ns], name)).read(), depth + 1)
     return re.sub(r'#include\s*<([a-z_]+):([^>]+)>', rep, text)
 open(dst, "w").write(expand(open(src).read()))
 PY
