@@ -24,7 +24,7 @@ import static dev.awaken.gates.realms.kit.land.GeneratedLand.TRAIL;
  * <p>Worked out with the lake's middle at 0,0 and the way in due south of it; a seed may turn east to west.
  */
 final class Basin extends Landform {
-    private static final double ISLE = 30, LAKE = 88, RISER = 6, STEP = 12, WATER = 62;
+    private static final double ISLE = 30, LAKE = 76, RISER = 6, STEP = 12, WATER = 62;
     private static final int ISLE_FEET = 65, SHORE_FEET = 66;
 
     /** How many benches stand over the shore, and how wide each is. */
@@ -39,7 +39,8 @@ final class Basin extends Landform {
     Basin(GeneratedLand land) {
         super(land, 0xBA5121L);
         benches = 3;
-        bench = 24 + 9 * rank;
+        // (kept narrow: under Lens's Air a thing 300 blocks off is two thirds lost by day, so the hall has to stand near)
+        bench = 20 + 5 * rank;
         nSnow = N.noise(seed + 821);
         nCrag = N.noise(seed + 822);
         nTop = N.noise(seed + 823);
@@ -255,7 +256,7 @@ final class Basin extends Landform {
         st(ku, kv, kFeet, 5.2, 4, PAD);
         spur(t.x(iK), t.z(iK), t.feet(iK), t.x(iK) / kr * (kr + 10), t.z(iK) / kr * (kr + 10), kFeet, 1.4);
         // a rock frozen into the lake, a little off the way across
-        double rockU = 34, rockV = (ISLE + LAKE) / 2 + 6;
+        double rockU = 30, rockV = (ISLE + LAKE) / 2 + 4;
         st(rockU, rockV, WATER + 2, 3, 3, PAD);
         land.freeze();
 

@@ -21986,6 +21986,13 @@ Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C), The Causeway in the G
   what is in the air. Mist is laid on water or on the ground it belongs to, never at eye height along the way: a land's
   great thing has to be seen from the way in, and a layer you look along for three hundred blocks hides it (Fallwater
   Vale's first walk). A land grows with rank only so far that the great thing stays in sight from the way in.
+- **How far the great thing may stand.** Under Lens's Air (§22) the air itself takes a thing away with distance: by day
+  about half of it at 200 blocks and two thirds at 300, more at dusk, dawn and night, and more again toward the edge of
+  the render distance where no far renderer carries the land on (`lens_composite.glsl`, the Air's `near` and far terms).
+  So a rolled land keeps its great thing within about 230 blocks of the way in at the lowest rank it opens at, makes it
+  tall, and gives it something that carries: a dark shape against the sky, or a light. The Basin, the Causeway and the
+  Isles are sized to this. The Ascent's mountain stands at 300 and reads by its size; the Valley's temple at 280 does
+  not, and wants either a shorter valley or a longer reach for the Air in a Realm.
 
 - **The ground is shaped to the way.** A landform lays its run as *stations*: a point, the height of your feet there, a
   radius the ground is level over, and a width over which the land comes back to its own shape (`GeneratedLand.station`).
@@ -22100,15 +22107,15 @@ light (#f2ffd6), `sky_color` #8fc4b0, `fog_color` #b4d2a2, a grade of teal shade
 on the river only, fireflies, moths, dust and spores in the air, frogs. Lord: the Root Saint.
 
 **The Basin** (`kit/land/Basin`). A wide bowl among peaks, its sides in three benches stepping down twelve blocks at
-a time to a lake 88 in radius, and on an island in the lake the country's hall. The way in stands on a prow at the
+a time to a lake 76 in radius, and on an island in the lake the country's hall. The way in stands on a prow at the
 very lip of the top bench (from a bench's middle its own edge hides the lake). The way goes down bench by bench and
 turns back on itself at the foot of each ramp, so the island is always in front: along the top bench, a ramp cut in
 the cliff, a hairpin; back along the second and over a crevasse that splits the bench from the cliff behind it to its
 edge, on a broken bridge; a ramp, a hairpin; back along the third; a last ramp to the shore, where the Warden holds a
 court behind a gate; then straight out across the lake to the island, whose round floor (radius 23.5) is the Lord's,
 with rock raised out of the lake behind it for the hall to stand on. A steep track cuts the first corner by a ledge
-(the way round), and a pocket is cut into the cliff behind the third bench. 14 legs. A bench is 24 wide plus 9 a
-rank, so the way in is 183 blocks from the island's middle at E and 318 at S.
+(the way round), and a pocket is cut into the cliff behind the third bench. 11 legs. A bench is 20 wide plus 5 a
+rank, so the way in is 159 blocks from the island's middle at E, 189 at C (the lowest the frost opens at) and 234 at S.
 
 **The Frost Monastery's country** (`land/FrostCountry`). No new blocks. One white: snow over everything in layers,
 grey only where it is too steep to lie, along the middle of the road and on what was built. Every cliff is one of the
@@ -22140,8 +22147,9 @@ rock, where the Warden holds the gate; a stair of twelve treads goes up the rock
 the two islands beside it, each a table of rock 56 across joined to the road by a bar; the first has a bar at each
 end (the way round), and from the second a bar at the sea's own level, which barely shows, runs on to a small island
 kept back. Eleven dunes and tables stand in the sea as country, none within 24 blocks of the road. 10 legs. The Lord's
-floor is 312 blocks from the way in at D, the lowest rank the desert opens at, and 12 more a rank; the road is about 440 long. A corner of the road is
-rounded by cutting it three times, with points laid in line either side of anything that has to be straight.
+floor is 230 blocks from the way in at D, the lowest rank the desert opens at, and 10 more a rank; the road is about
+330 long, its bends placed by share of its length. A corner of the road is rounded by cutting it three times, with
+points laid in line either side of anything that has to be straight.
 
 **The Glass Desert's country** (`land/GlassCountry`). No new blocks. Its water is glass (`desert_glass`, amber over a
 bed of dark brick): the sea is somewhere to walk, with sand blown back over a third of it in long swells, a light
@@ -22161,9 +22169,9 @@ strong bloom, heat shimmer 0.7), sand, dust and wind in the air. Lord: the Glass
 
 **The Isles** (`kit/land/Isles`). Tables standing out of a sea, each on a stalk about a third as wide as itself, each
 higher than the one before (eight or nine blocks), spans from one to the next, and the last and highest (twelve more,
-104 across) the country's great thing. They stand round an arc that bulges to one side, a wider turn the more of them
-there are, so from the way in on the first you look straight across open water at the last, with the others stepping
-up beside the view, and the last is never more than 320 to 390 blocks from the first. Three tables stand between the
+100 across) the country's great thing. They stand round an arc that bulges to one side, most of a circle and more of
+it the more of them there are, so from the way in on the first you look straight across open water at the last, with
+the others stepping up beside the view, and the last table's middle is 220 blocks from the way in at E and 280 at S. Three tables stand between the
 first and the last at E and D, four at C and B, five at A and S, a den on each. The way crosses each table by its
 middle and the span after it; the middle table is split from edge to edge and crossed on what is left of a bridge (the
 kit's bridge runs either way now), an ambush on its near half and its den on the far one; a small table hangs off the
@@ -22186,7 +22194,8 @@ on a stone at the water: seventy of them). Its great thing is what stands on the
 of moss and loam with a veined stone at its heart, inside a fence of stems capped with flesh, eleven glowcaps standing
 in the fence with their gills over the floor and two taller ones at the gate; and behind it, out of the cap's back,
 one glowcap far taller than the rest, its cap 44 across and its top 54 over the floor, gills under all of it. The
-High Caps' hour is the hour before the sun: the sun at 272, sky light at three tenths and cyan (#9ae8f4), `sky_color`
+High Caps' hour is night as near as the Air allows it (its haze is thickest when the sun is low or gone, so the sun
+stands at 308 and plays the moon): sky light at three tenths and cyan (#9ae8f4), `sky_color`
 #2c5a78, `fog_color` #3a8a90, block light cyan, a teal grade with strong bloom, mist on the sea lit from under the
 caps, spores and stars in the air, the warped forest's sounds. Lord: the Mother of Spores.
 

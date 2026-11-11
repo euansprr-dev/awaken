@@ -41,7 +41,8 @@ final class Causeway extends Landform {
 
     Causeway(GeneratedLand land) {
         super(land, 0xCA05E7L);
-        far = 150 + 6 * rank;
+        // (kept short: under Lens's Air a thing 300 blocks off is two thirds lost by day, so the great thing has to stand near)
+        far = 110 + 5 * rank;
         nDune = N.noise(seed + 831);
         nCrag = N.noise(seed + 832);
         nFine = N.noise(seed + 833);
@@ -168,24 +169,25 @@ final class Causeway extends Landform {
     @Override
     void lay() {
         List<String> none = List.of();
-        double k = far / 156, west = -58, east = 58;
+        double west = -58, east = 58, top = far - 32, span = 2 * far - 98, v2 = top - 0.26 * span, v3 = top - 0.47 * span, v4 = top - 0.71 * span, v5 = top - 0.87 * span;
         int mouthV = (int) Math.round(far), wardenV = (int) Math.round(-far + 50), zs = (int) Math.round(-far + 38), heartV = (int) Math.round(-far);
-        riftV = 0;
+        riftV = (int) Math.round(top - 0.59 * span);
 
         // ---- the main way: off the headland, west, back east over the breach, and in to the gate from the south
         Trail t = new Trail();
         t.add(0, mouthV, HEAD);
-        through(t, DECK, p(0, mouthV - 1), p(0, far - 14), p(0, far - 32), p(west, 70 * k), p(west, 26 * k), p(-36, riftV), p(-24, riftV), p(-13, riftV));
+        through(t, DECK, p(0, mouthV - 1), p(0, far - 14), p(0, top), p(west, v2), p(west, v3), p(-36, riftV), p(-24, riftV), p(-13, riftV));
         int iLipW = t.last() + 1;
         for (int i = 12; i >= 7; i--) t.add(-i, riftV, DECK);
         int iBridge = t.last();
         for (int i = 7; i <= 12; i++) t.add(i, riftV, DECK);
         int iLipE = t.last();
-        through(t, DECK, p(13, riftV), p(24, riftV), p(36, riftV), p(east, -28 * k), p(east, -62 * k), p(0, -far + 74), p(0, -far + 66), p(0, wardenV + 1));
+        through(t, DECK, p(13, riftV), p(24, riftV), p(36, riftV), p(east, v4), p(east, v5), p(0, -far + 74), p(0, -far + 66), p(0, wardenV + 1));
         t.add(0, wardenV, DECK);
         int iEnd = t.last();
-        int iF1 = 50 + r.nextInt(8), iAmb = nearest(t, west, 70 * k, 0, iLipW), iAmb2 = nearest(t, east / 2, (-62 * k - far + 74) / 2, iLipE, iEnd);
-        int iIn = nearest(t, west, 60 * k, 0, iLipW), iOut = nearest(t, west, 34 * k, 0, iLipW), iB = nearest(t, east, -45 * k, iLipE, iEnd);
+        double av = (v2 + v3) / 2, bv = (v4 + v5) / 2;
+        int iF1 = 44 + r.nextInt(6), iAmb = nearest(t, west, v2, 0, iLipW), iAmb2 = nearest(t, east / 2, (v5 - far + 74) / 2, iLipE, iEnd);
+        int iIn = nearest(t, west, av + 12, 0, iLipW), iOut = nearest(t, west, av - 12, 0, iLipW), iB = nearest(t, east, bv, iLipE, iEnd);
         t.level(0, 5);
         t.level(iF1 - 3, iF1 + 3);
         t.level(iAmb - 3, iAmb + 3);
@@ -195,7 +197,7 @@ final class Causeway extends Landform {
         rift = true;
 
         // ---- the islands the dens are on, the one kept back, and those that are only country
-        double au = west - 36, av = 48 * k, bu = east + 36, bv = -45 * k, ku = bu + 62, kv = bv - 16;
+        double au = west - 36, bu = east + 36, ku = bu + 62, kv = bv - 16;
         isle(au, av, 28, ISLE, 1);
         isle(bu, bv, 28, ISLE, 1);
         isle(ku, kv, 15, ISLE - 2, 1);

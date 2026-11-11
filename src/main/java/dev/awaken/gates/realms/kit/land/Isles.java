@@ -53,17 +53,18 @@ final class Isles extends Landform {
         nFine = N.noise(seed + 842);
         int n = between + 2;
         double[] radius = new double[n], top = new double[n], along = new double[n];
-        radius[0] = 34;
+        radius[0] = 30;
         top[0] = 78;
         for (int i = 1; i <= between; i++) {
-            radius[i] = i == riftAt ? 36 : 30;
+            radius[i] = i == riftAt ? 32 : 26;
             top[i] = top[i - 1] + (i == 1 ? 8 : 9);
         }
-        radius[n - 1] = 52;
+        radius[n - 1] = 50;
         top[n - 1] = top[n - 2] + 12;
-        for (int i = 1; i < n; i++) along[i] = along[i - 1] + radius[i - 1] + radius[i] + 34;
-        // round an arc: a wider turn the more of them there are, so the last is never far from the first
-        double turn = Math.toRadians(140 + 20 * (between - 3)), rho = along[n - 1] / turn, mid = rho * Math.cos(turn / 2);
+        for (int i = 1; i < n; i++) along[i] = along[i - 1] + radius[i - 1] + radius[i] + 28;
+        // round an arc, most of a circle and more of it the more of them there are, so the last is never far from the first
+        // (under Lens's Air a thing 300 blocks off is two thirds lost by day)
+        double turn = Math.toRadians(170 + 15 * (between - 3)), rho = along[n - 1] / turn, mid = rho * Math.cos(turn / 2);
         for (int i = 0; i < n; i++) {
             double a = -turn / 2 + along[i] / rho;
             cap(i == 0 || i == n - 1 ? 0 : Math.rint(mid - rho * Math.cos(a)), Math.rint(-rho * Math.sin(a)), radius[i], top[i]);
@@ -137,8 +138,8 @@ final class Isles extends Landform {
         double[] c = caps.get(riftAt);
         double du = (mir * x - c[U]) / (c[R] + 6);
         if (Math.abs(du) >= 1) return s;
-        double o = Math.abs(z - c[V_]) - 6.8 * Math.sqrt(1 - du * du);
-        return o < 0 && s > BED ? N.lerp(s, BED, N.smooth(0, -1.5, o)) : s;
+        // (a sheer cut: a column eased half way down would be left standing on nothing once the table is hollowed under)
+        return Math.abs(z - c[V_]) < 6.8 * Math.sqrt(1 - du * du) && s > BED ? BED : s;
     }
 
     @Override
@@ -269,8 +270,8 @@ final class Isles extends Landform {
         List<String> none = List.of();
         int n = between + 2;
         double[] first = caps.get(0), great = caps.get(n - 1), split = caps.get(riftAt), ledge = caps.get(n), kept = caps.get(n + 1);
-        int mouthV = (int) Math.round(first[V_] - 22), mouthFeet = (int) first[TOP], ru = (int) split[U], rv = (int) split[V_];
-        int heartV = (int) great[V_], heartFeet = (int) great[TOP], wardenV = heartV + 38;
+        int mouthV = (int) Math.round(first[V_] - 20), mouthFeet = (int) first[TOP], ru = (int) split[U], rv = (int) split[V_];
+        int heartV = (int) great[V_], heartFeet = (int) great[TOP], wardenV = heartV + 37;
 
         // ---- the main way: across each table by its middle, over the split one dead straight, round to the last one's south side
         Trail t = new Trail();
