@@ -720,8 +720,11 @@ public final class AscentMoves {
             }
         }
         fired(p);
-        if (a == null) {
-            // nothing to bite: the rope flies out and falls back, and you keep falling as you were
+        if (a == null || assist && !overhead) {
+            // nothing to bite: the rope flies out and falls back, and you keep falling as you were. With the assist, a
+            // press the marker didn't show never pulls you at the block under the crosshair (11 Nov 2026: one key that
+            // sometimes swung you on and sometimes yanked you at a wall was hard to read); only a ring or branch
+            // straight overhead is zipped to and hung from, and the marker shows that too
             missAt = ticks;
             Vec3 look = p.getLookAngle();
             missX = eye.x + look.x * 18;
@@ -805,7 +808,7 @@ public final class AscentMoves {
         if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (!lips) return null;
-        if (markerOn && MARKER.zip && zipOk(MARKER, HAND.x, HAND.y, HAND.z)) return PICK.copy(MARKER);
+        if (markerOn && MARKER.zip && !Double.isNaN(MARKER.top) && zipOk(MARKER, HAND.x, HAND.y, HAND.z)) return PICK.copy(MARKER);
         return AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK) && zipOk(PICK, HAND.x, HAND.y, HAND.z) ? PICK : null;
     }
 
@@ -996,7 +999,8 @@ public final class AscentMoves {
         SPACE.at(p.level(), p);
         hand(p);
         Vec3 eye = p.getEyePosition();
-        markerOn = AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
+        markerOn = overheadMark(p, eye, yaw, pitch)
+                || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
         markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
@@ -1005,6 +1009,23 @@ public final class AscentMoves {
         if (markerOn && MARKER.sling && !(Lesson.wants(Lesson.Kind.SLING) && Lesson.offerMove(Lesson.Kind.SLING, new Vec3(MARKER.x, MARKER.y, MARKER.z), -1))) {
             dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.SLING);
         }
+    }
+
+    /**
+     * Looking steeply up at a ring or branch straight overhead (what a press zips to and hangs from, before any swing:
+     * {@link #fire}): the marker on it as a pull. Only looked for when the look is steep enough to find one.
+     */
+    private static boolean overheadMark(LocalPlayer p, Vec3 eye, float yaw, float pitch) {
+        if (pitch > -60) return false;
+        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, yaw, pitch, reach(p), ticks - leftAt <= 20 ? leftAnchor : null);
+        if (a == null || !overhead(a.x() - HAND.x, a.y() - HAND.y, a.z() - HAND.z)) return false;
+        MARKER.x = a.x();
+        MARKER.y = a.y();
+        MARKER.z = a.z();
+        MARKER.zip = true;
+        MARKER.sling = false;
+        MARKER.top = Double.NaN; // not a lip: pick() never takes it as one
+        return true;
     }
 
     /**

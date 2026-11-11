@@ -27,6 +27,10 @@ screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd effect give @s minecraft:resistance 100000 4 true
 cmd tp @s 0.5 152 0.5 0 0
+# the sandbox's floor reaches 250 out: its chunks loaded first (a run on 11 Nov filled nothing, "That position is not
+# loaded", and the player fell to the city at y 77)
+cmd forceload add -32 -16 32 256
+arms waitserver 200
 wait 100
 cmd fill -30 150 -12 30 150 250 minecraft:grass_block
 cmd fill -30 151 -12 30 160 250 minecraft:air

@@ -458,14 +458,17 @@ public final class AscentSwing {
                 double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + t.slingOver - hand.y;
                 if (ahead < t.slingFrom || rise < 1 || rise > ahead * 1.2 || top < hy - 0.5) continue;
                 double sc = gauss(ahead, 16, 9) * gauss(side, 0, 7) * (0.5 + 0.5 * gauss(rise, 5, 5));
-                if (sc <= best || !slingClear(s, hand, hx, top + t.slingOver, hz, w)) continue;
+                // the pull goes where you look, as a swing does (11 Nov 2026, Euan: a rope that swings you on beats one
+                // that pulls you at the thing): its point over the top, on your heading's line at the top's distance
+                double px = hand.x + fx * ahead, pz = hand.z + fz * ahead;
+                if (sc <= best || !slingClear(s, hand, px, top + t.slingOver, pz, w)) continue;
                 best = sc;
                 out.x = hx;
                 out.y = hy;
                 out.z = hz;
-                out.px = hx;
+                out.px = px;
                 out.py = top + t.slingOver;
-                out.pz = hz;
+                out.pz = pz;
                 out.top = top;
                 out.len = out.fitLen = Math.sqrt(dx * dx + (hy - hand.y) * (hy - hand.y) + dz * dz);
                 out.score = sc;

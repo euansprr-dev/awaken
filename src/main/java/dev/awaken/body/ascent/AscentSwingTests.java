@@ -21,6 +21,7 @@ final class AscentSwingTests {
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, AscentSwingTests::sling);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, AscentSwingTests::held);
+        dev.awaken.core.test.AwakenTests.register("ascent_sky_stair", 20, AscentSwingTests::skyStair);
     }
 
     /**
@@ -393,5 +394,193 @@ final class AscentSwingTests {
             for (BlockPos q : BlockPos.betweenClosed(o.offset(-2, 0, -2), o.offset(18, 26, 34))) level.setBlock(q, air, flags);
         }
         h.succeed();
+    }
+
+    // ---- the sky stair (SPEC §17.9) ------------------------------------------------------------------------------------
+
+    /** The bench's deck: 206 over its ground (a platform at 276 over land at 70). */
+    private static final int STAIR_DECK = 206;
+
+    /**
+     * The sky stair (SPEC §17.9, 11 Nov 2026): the bench's climbing bot ({@link SwingBench#climb}) up the stair to the
+     * deck, the stones as their own cells, with the deck, its rim's studs, its cabin and keel, the pier, the islands'
+     * places and the old chain and rings as they stand. First a sweep of shapes (logged, never judged), then the stair as
+     * built: the bot that hops and holds the rope up nearly every time, the one that only holds forward and the rope up
+     * most times, never a hard hit, in under a minute, and a third of the climb or more off the ground (the core gives
+     * Wings to a climb by movement: a third of the last 20 s in the air or on a wall, Ascent.arrivedByMovement). Every
+     * row is logged before any gate is judged.
+     */
+    private static void skyStair(GameTestHelper h) {
+        AscentSwing.Tune was = AscentSwing.T;
+        boolean guide = AscentSwing.guide, holdWas = AscentSwing.hold;
+        AscentSwing.T = AscentSwing.Tune.JAR;
+        AscentSwing.guide = true;
+        AscentSwing.hold = true;
+        java.util.List<String> bad = new java.util.ArrayList<>();
+        StringBuilder rows = new StringBuilder();
+        try {
+            // radius, rise, run, the top stone's distance from the deck's middle and depth under it
+            double[][] shapes = {{30, 13, 18, 26, 9}, {30, 11, 18, 26, 9}, {30, 15, 18, 26, 9}, {30, 13, 15, 26, 9}, {30, 13, 21, 26, 9},
+                    {30, 11, 15, 26, 9}, {30, 15, 21, 26, 9}, {26, 13, 18, 26, 9}, {34, 13, 18, 26, 9}, {30, 13, 18, 29, 8}, {30, 13, 18, 23, 10}};
+            for (double[] sh : shapes) {
+                StairStats st = stairRuns(new dev.awaken.above.ruin.SkyRig.Stair(sh[0], sh[1], sh[2], 3.6, (int) sh[4], sh[3], 6));
+                rows.append("\nsweep ").append(st);
+            }
+            StairStats st = stairRuns(dev.awaken.above.ruin.SkyRig.Stair.DEFAULT);
+            rows.append("\nbuilt ").append(st);
+            gate(bad, st.hopUp >= st.hopOf - 1, "the hopping bot gets up " + st.hopUp + " of " + st.hopOf);
+            gate(bad, st.keyUp * 3 >= st.keyOf * 2, "the key-only bot gets up " + st.keyUp + " of " + st.keyOf);
+            gate(bad, st.hard == 0, st.hard + " hard hits on the stair");
+            gate(bad, st.hopSeconds <= 60, "the climb takes " + st.hopSeconds + " s");
+            gate(bad, st.air >= 0.34, "a third of the climb off the ground: " + st.air);
+        } finally {
+            AscentSwing.T = was;
+            AscentSwing.guide = guide;
+            AscentSwing.hold = holdWas;
+        }
+        dev.awaken.Awaken.LOG.info("[ascent] sky stair bench:{}", rows);
+        h.assertTrue(bad.isEmpty(), String.join("; ", bad));
+        h.succeed();
+    }
+
+    /** One stair shape's climbs: the hopping bot's and the key-only bot's ups, the median climb, hard hits, the share off the ground. */
+    private record StairStats(String shape, int stones, int hopUp, int hopOf, double hopSeconds, double ropes, double slings, int hard,
+                              double air, String hopEnds, int keyUp, int keyOf, double keySeconds, String keyEnds) {
+        @Override
+        public String toString() {
+            return String.format(java.util.Locale.ROOT, "%s: %d stones | hop %d/%d up, %.1f s, ropes %.1f, slings %.1f, hard %d, air %.0f%%%s | key %d/%d up, %.1f s%s",
+                    shape, stones, hopUp, hopOf, hopSeconds, ropes, slings, hard, air * 100, hopEnds, keyUp, keyOf, keySeconds, keyEnds);
+        }
+    }
+
+    /**
+     * Climbs one stair shape on the bench: 12 hopping starts and 6 key-only, each from the ground short of the first stone
+     * (where the next stone round would have stood, 2 to 10 further back, up to 3 off the line either side, at 0.7 to 1
+     * of a run's pace), seeded.
+     */
+    private static StairStats stairRuns(dev.awaken.above.ruin.SkyRig.Stair shape) {
+        var stones = dev.awaken.above.ruin.SkyRig.stair(0, STAIR_DECK, 0, shape, (x, z) -> 0, (x, z) -> false);
+        java.util.List<double[]> tops = new java.util.ArrayList<>();
+        java.util.List<java.util.List<double[]>> pieces = new java.util.ArrayList<>();
+        for (var s : stones) {
+            tops.add(new double[] {s.x() + 0.5, s.top(), s.z() + 0.5, s.rad()});
+            java.util.List<int[]> cells = new java.util.ArrayList<>();
+            dev.awaken.above.ruin.SkyRig.stoneCells(s, (x, y, z, c) -> {
+                if (c != dev.awaken.above.ruin.SkyRig.Cell.FLOWER && c != dev.awaken.above.ruin.SkyRig.Cell.ROOTS) cells.add(new int[] {x, y, z});
+            });
+            pieces.add(boxesOf(cells));
+        }
+        tops.add(new double[] {0.5, STAIR_DECK, 0.5, 18});
+        java.util.List<double[]> always = new java.util.ArrayList<>();
+        pieces.add(deckBoxes(always));
+        // where the next stone round would have stood: the ground there, a little further back
+        var helix = dev.awaken.above.ruin.SkyRig.helix(0, STAIR_DECK, 0, shape, -64);
+        var low = stones.getFirst();
+        var next = helix.get(Math.min(helix.size() - 1, stones.size()));
+        double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));
+        dx /= d;
+        dz /= d;
+        SwingBench.Rng r = new SwingBench.Rng(31);
+        java.util.List<Double> hopTicks = new java.util.ArrayList<>(), keyTicks = new java.util.ArrayList<>();
+        java.util.Map<String, Integer> hopEnds = new java.util.TreeMap<>(), keyEnds = new java.util.TreeMap<>();
+        int hopUp = 0, keyUp = 0, hard = 0, air = 0, ticks = 0, ropes = 0, slings = 0;
+        for (int i = 0; i < 18; i++) {
+            boolean key = i >= 12;
+            double back = 2 + r.next() * 8, side = (r.next() - 0.5) * 6, speed = 0.7 + r.next() * 0.3;
+            double sx = next.x() + 0.5 - dx * back - dz * side, sz = next.z() + 0.5 - dz * back + dx * side;
+            SwingBench.Climb c = SwingBench.climb(tops, pieces, always, sx, sz, speed, key, 3600);
+            hard += c.hard();
+            if (!key) {
+                air += c.air();
+                ticks += c.ticks();
+                ropes += c.ropes();
+                slings += c.slings();
+            }
+            if (c.up()) {
+                if (key) keyUp++;
+                else hopUp++;
+                (key ? keyTicks : hopTicks).add((double) c.ticks());
+            } else {
+                (key ? keyEnds : hopEnds).merge(c.end(), 1, Integer::sum);
+            }
+        }
+        String label = String.format(java.util.Locale.ROOT, "radius %.0f, rise %.0f, run %.0f, top %.0f out %d under", shape.radius(), shape.rise(),
+                shape.run(), shape.topRadius(), shape.topGap());
+        return new StairStats(label, stones.size(), hopUp, 12, median(hopTicks) / 20, ropes / 12.0, slings / 12.0, hard,
+                ticks == 0 ? 0 : air / (double) ticks, hopEnds.isEmpty() ? "" : ", " + hopEnds, keyUp, 6, median(keyTicks) / 20,
+                keyEnds.isEmpty() ? "" : ", " + keyEnds);
+    }
+
+    private static double median(java.util.List<Double> v) {
+        if (v.isEmpty()) return Double.NaN;
+        java.util.List<Double> s = new java.util.ArrayList<>(v);
+        java.util.Collections.sort(s);
+        return s.get(s.size() / 2);
+    }
+
+    /**
+     * The platform round the stair's top as boxes (RuinBuilder.sky's, from its centre at 0, 0): the deck's disc and its
+     * rim's studs (but on the pier, which the rig clears), the cabin, the keel, the pier, the four islands' places (19 out,
+     * at the deck's height) and the old way up's perch; the chain and its rings, which run the whole height, go into
+     * {@code always}.
+     */
+    private static java.util.List<double[]> deckBoxes(java.util.List<double[]> always) {
+        int deck = STAIR_DECK;
+        var l = dev.awaken.above.ruin.SkyRig.layout(0, deck, 0, 0);
+        java.util.Set<Long> pier = new java.util.HashSet<>();
+        for (BlockPos q : l.pier()) pier.add(BlockPos.asLong(q.getX(), 0, q.getZ()));
+        java.util.List<int[]> cells = new java.util.ArrayList<>();
+        for (int x = -12; x <= 12; x++) for (int z = -12; z <= 12; z++) {
+            double d = Math.sqrt(x * x + z * z);
+            if (d <= 11.6) {
+                cells.add(new int[] {x, deck, z});
+                if (d > 10.6 && Math.floorMod(x * 3 + z * 7, 5) == 0 && !pier.contains(BlockPos.asLong(x, 0, z))) cells.add(new int[] {x, deck + 1, z});
+            }
+            for (int ly = 4; ly < 12; ly++) if (d <= 1.0 + (ly - 4) * 1.32) cells.add(new int[] {x, deck - 12 + ly, z});
+            if (Math.abs(x) <= 4 && Math.abs(z) <= 4) for (int y = deck + 1; y <= deck + 6; y++) cells.add(new int[] {x, y, z});
+        }
+        for (BlockPos q : l.pier()) cells.add(new int[] {q.getX(), q.getY(), q.getZ()});
+        for (BlockPos q : l.perch()) cells.add(new int[] {q.getX(), q.getY(), q.getZ()});
+        for (int[] c : new int[][] {{0, -19}, {19, 0}, {0, 19}, {-19, 0}}) {
+            for (int x = c[0] - 4; x <= c[0] + 4; x++) for (int z = c[1] - 4; z <= c[1] + 4; z++) {
+                double d = Math.hypot(x - c[0], z - c[1]);
+                if (d > 3.2) continue;
+                int depth = (int) Math.round((3.2 - d) * 1.6 + 1);
+                for (int k = 0; k <= depth; k++) cells.add(new int[] {x, deck - k, z});
+            }
+        }
+        BlockPos top = l.chainTop();
+        always.add(new double[] {top.getX() + 0.4, l.chainBottom(), top.getZ() + 0.4, top.getX() + 0.6, top.getY() + 1, top.getZ() + 0.6});
+        for (BlockPos q : l.rings()) always.add(new double[] {q.getX(), q.getY(), q.getZ(), q.getX() + 1, q.getY() + 1, q.getZ() + 1});
+        return boxesOf(cells);
+    }
+
+    /** Cells as few boxes: runs along x merged, then runs of the same footprint stacked. */
+    static java.util.List<double[]> boxesOf(java.util.List<int[]> cells) {
+        cells.sort(java.util.Comparator.comparingInt((int[] c) -> c[1]).thenComparingInt(c -> c[2]).thenComparingInt(c -> c[0]));
+        java.util.List<double[]> runs = new java.util.ArrayList<>();
+        for (int i = 0; i < cells.size(); ) {
+            int[] c = cells.get(i);
+            int j = i + 1, x1 = c[0];
+            while (j < cells.size() && cells.get(j)[1] == c[1] && cells.get(j)[2] == c[2] && cells.get(j)[0] <= x1 + 1) {
+                x1 = Math.max(x1, cells.get(j)[0]);
+                j++;
+            }
+            runs.add(new double[] {c[0], c[1], c[2], x1 + 1, c[1] + 1, c[2] + 1});
+            i = j;
+        }
+        java.util.Map<String, double[]> open = new java.util.HashMap<>();
+        java.util.List<double[]> out = new java.util.ArrayList<>();
+        for (double[] q : runs) {
+            String key = q[0] + "," + q[2] + "," + q[3];
+            double[] o = open.get(key);
+            if (o != null && o[4] == q[1]) o[4] = q[4];
+            else {
+                double[] b = q.clone();
+                open.put(key, b);
+                out.add(b);
+            }
+        }
+        return out;
     }
 }

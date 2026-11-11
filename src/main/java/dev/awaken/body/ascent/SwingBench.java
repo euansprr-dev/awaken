@@ -702,6 +702,111 @@ public final class SwingBench {
         return r;
     }
 
+    // ---- a climb up the sky stair (SPEC §17.9) -----------------------------------------------------------------------
+
+    /** One climb: up (on the deck), the last stone reached of how many (the deck last), ticks, ropes and slings thrown,
+     *  hard hits, landings, ticks off the ground, and how it ended. */
+    public record Climb(boolean up, int reached, int of, int ticks, int ropes, int slings, int hard, int landings, int air, String end) {}
+
+    /**
+     * A climb up a stair to a deck (SPEC §17.9): {@code tops} bottom first, each {x, top, z, rad} (its top block at
+     * {@code top}, feet on it at top + 1), the deck last ({x, deck, z, reach}: feet on it within reach of its middle);
+     * {@code pieces} each one's boxes in the same order, {@code always} the boxes there the whole way (a chain down the
+     * height). The space holds the pieces from three below the next stone to two above it (a rope reaches 44, a step is
+     * some 22: the rest are out of reach), so a long stair stays cheap. The body starts on the ground at (sx, sz) running
+     * at the first stone. The bot looks at the next stone's middle and holds forward; hopping on each landing (or, key
+     * only, never jumping: the game's own throw from the ground), it holds the rope whenever it is off the ground and
+     * lets go of a swing as {@link #play}'s holding bot does. It ends on the deck, when it falls well under the last
+     * stone it reached, after 400 ticks with no stone gained, or after {@code maxTicks}.
+     */
+    public static Climb climb(List<double[]> tops, List<List<double[]>> pieces, List<double[]> always, double sx, double sz, double speed,
+                              boolean keyOnly, int maxTicks) {
+        SwingSpace.Boxes w = new SwingSpace.Boxes();
+        int n = tops.size(), deck = n - 1, built = -99;
+        Sim sim = new Sim(new Place(w, sx, 0, sz, false), true, 0, 0, speed);
+        sim.keyOnly = keyOnly;
+        Body b = sim.b;
+        double[] first = tops.getFirst();
+        double fd = Math.max(1e-6, Math.hypot(first[0] - sx, first[2] - sz)), run = (keyOnly ? 0.28 : 0.36) * speed;
+        b.vx = (first[0] - sx) / fd * run;
+        b.vz = (first[2] - sz) / fd * run;
+        int reached = -1, lastGain = 0, landings = 0, air = 0, slings = 0;
+        boolean wasGround = true, wasSling = false, up = false;
+        String end = "out of time";
+        while (sim.t < maxTicks) {
+            int target = Math.min(reached + 1, deck);
+            if (target != built) {
+                built = target;
+                w.clear();
+                for (double[] q : always) w.add(q[0], q[1], q[2], q[3], q[4], q[5], false);
+                for (int i = Math.max(0, target - 3); i <= Math.min(deck, target + 2); i++) {
+                    for (double[] q : pieces.get(i)) w.add(q[0], q[1], q[2], q[3], q[4], q[5], false);
+                }
+            }
+            double[] tg = tops.get(target);
+            double dx = tg[0] - b.x, dz = tg[2] - b.z, hd = Math.hypot(dx, dz);
+            double yaw = Math.toDegrees(Math.atan2(-dx, dz));
+            double pitch = -Math.toDegrees(Math.atan2(tg[1] + 1 - (b.y + 1.62), Math.max(0.5, hd)));
+            boolean jump = false, rope;
+            if (b.onGround && !sim.onRope) {
+                sim.ground++;
+                jump = keyOnly ? sim.blocked : sim.ground > 3;
+                if (jump) sim.ground = 0;
+            }
+            if (!sim.onRope) rope = keyOnly || !b.onGround;
+            else rope = !(sim.travel == 0 && !sim.zip && !sim.sling && AscentSwing.hold && heldLetGo(sim, yaw));
+            sim.step(rope, 1, yaw, pitch, jump);
+            if (sim.sling && !wasSling) slings++;
+            wasSling = sim.sling;
+            if (!b.onGround) air++;
+            if (b.onGround && !wasGround && !sim.onRope) landings++;
+            wasGround = b.onGround;
+            for (int i = reached + 1; i <= Math.min(deck, reached + 3); i++) {
+                double[] q = tops.get(i);
+                double h = Math.hypot(b.x - q[0], b.z - q[2]);
+                boolean on = i == deck ? b.onGround && h <= q[3] && b.y >= q[1] + 0.95
+                        : h <= q[3] + 0.3 && b.y >= q[1] + 0.95 && b.y <= q[1] + 5;
+                if (on) {
+                    reached = i;
+                    lastGain = sim.t;
+                }
+            }
+            if (reached == deck) {
+                up = true;
+                end = "on the deck";
+                break;
+            }
+            double floor = reached >= 0 ? tops.get(reached)[1] : 0;
+            if (reached >= 0 && (b.y < floor - 14 || b.onGround && b.y < 0.5)) {
+                end = "fell from stone " + reached;
+                break;
+            }
+            if (sim.t - lastGain > 400) {
+                end = "stuck under stone " + (reached + 1);
+                break;
+            }
+        }
+        return new Climb(up, reached, n, sim.t, sim.run.ropes, slings, sim.run.hardOnRope + sim.run.hardFree, landings, air, end);
+    }
+
+    /**
+     * The holding bot's let-go of a held swing ({@link #play}'s rule, {@link #heldRule}): true when it lets go of the
+     * key this tick (a let-go that would throw it into something waits up to {@link AscentSwing.Tune#holdOn} ticks).
+     */
+    static boolean heldLetGo(Sim sim, double yaw) {
+        double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
+        boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5, lit = switch (heldRule) {
+            case LIT -> q > AscentSwing.T.winFrom + 0.01;
+            case TOP -> false;
+            default -> q > 0.97 || sim.lastQ > AscentSwing.T.winFrom && q < sim.lastQ;
+        };
+        sim.lastQ = q;
+        if (!(lit || sim.rope.swung || wall)) return false;
+        if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) return true;
+        sim.waited++;
+        return false;
+    }
+
     /**
      * A held swing across a gap over nothing, as a dream's Run has them and its solver plays them (lucidium's
      * {@code AirProofs.swing}): roads one block thick 80 up, {@code len} of open air between them, a lantern {@code up}

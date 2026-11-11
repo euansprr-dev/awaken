@@ -105,6 +105,114 @@ public final class SkyRig {
         return new Layout(core, pier, new BlockPos(chainX, top, chainZ), chainBottom, rings, stubs, drop);
     }
 
+    // ---- the stair (11 Nov 2026) --------------------------------------------------------------------------------
+
+    /**
+     * The sky stair's shape: the radius it climbs round the deck's centre, each step's rise and run (the straight line
+     * from one stone's middle to the next), a stone's radius, the top stone's depth under the deck and its distance from
+     * the centre (on the pier's diagonal, so the last pull lands on the pier), and the least a stone sits over the
+     * ground under it.
+     */
+    public record Stair(double radius, double rise, double run, double rad, int topGap, double topRadius, int firstOver) {
+        public static final Stair DEFAULT = new Stair(30, 13, 18, 3.6, 9, 26, 6);
+    }
+
+    /** A stone of the stair: the middle of its top, the height of its grass, its radius; a raft floats at the water. */
+    public record Stone(int x, int top, int z, double rad, boolean raft) {}
+
+    /**
+     * The stair's stones from the top down to {@code lowest} (the helix alone; {@link #stair} cuts it at the ground): the
+     * top one under the pier's end on the diagonal, each next one a step back round the deck and a rise lower, at the
+     * stair's radius from the second down.
+     */
+    public static List<Stone> helix(int cx, int deckY, int cz, Stair st, int lowest) {
+        List<Stone> out = new ArrayList<>();
+        double a = Math.PI / 4, r = st.topRadius();
+        int top0 = deckY - st.topGap();
+        for (int k = 0; k < 64; k++) {
+            int top = top0 - (int) Math.round(k * st.rise());
+            if (top < lowest) break;
+            out.add(new Stone(cx + (int) Math.round(r * Math.cos(a)), top, cz + (int) Math.round(r * Math.sin(a)), st.rad(), false));
+            double next = st.radius();
+            // the next one down, back round: its middle a run from this one's (the chord between the two radii)
+            double c = Math.max(-1, Math.min(1, (r * r + next * next - st.run() * st.run()) / (2 * r * next)));
+            a -= Math.acos(c);
+            r = next;
+        }
+        return out;
+    }
+
+    /**
+     * The stair as placed, bottom first: the helix down to where a stone would sit less than {@code firstOver} over
+     * the ground under it ({@code ground}: the first free height of a column, as a heightmap gives it). Over water the
+     * next place round gets a raft at the surface ({@code water}: whether a column's top is water), to climb out onto.
+     */
+    public static List<Stone> stair(int cx, int deckY, int cz, Stair st, java.util.function.IntBinaryOperator ground,
+                                    java.util.function.BiPredicate<Integer, Integer> water) {
+        List<Stone> kept = new ArrayList<>();
+        for (Stone s : helix(cx, deckY, cz, st, -64)) {
+            int g = ground.applyAsInt(s.x(), s.z());
+            if (s.top() >= g + st.firstOver()) {
+                kept.add(s);
+                continue;
+            }
+            if (water.test(s.x(), s.z()) && !kept.isEmpty()) kept.add(new Stone(s.x(), g - 1, s.z(), s.rad() + 0.6, true));
+            break;
+        }
+        return kept.reversed();
+    }
+
+    /** What a stone's cell is made of. */
+    public enum Cell { GRASS, COARSE, DIRT, STONE, ANDESITE, COAL, IRON, ROOTS, FLOWER, PLATE, TRIM }
+
+    /** One cell of a stone. */
+    public interface CellSink {
+        void cell(int x, int y, int z, Cell c);
+    }
+
+    /**
+     * A stone's cells, the same every time (a hash of the place, no random): earth like the blueprint's islands, grass
+     * on top (coarse dirt at the rim), dirt under, a keel of stone tapering down with ore in it, roots hanging under it,
+     * flowers on top; a raft is a disc of plating with a trim rim. FLOWER and ROOTS have no collision.
+     */
+    public static void stoneCells(Stone s, CellSink out) {
+        int R = (int) Math.ceil(s.rad()) + 1;
+        for (int x = s.x() - R; x <= s.x() + R; x++) {
+            for (int z = s.z() - R; z <= s.z() + R; z++) {
+                double d = Math.sqrt((x - s.x()) * (x - s.x()) + (z - s.z()) * (z - s.z()));
+                if (s.raft()) {
+                    if (d <= s.rad()) out.cell(x, s.top(), z, d > s.rad() - 1 ? Cell.TRIM : Cell.PLATE);
+                    continue;
+                }
+                d += n(x, s.top(), z) * 0.6;
+                if (d > s.rad()) continue;
+                int depth = (int) Math.round((s.rad() - d) * 1.6 + 1 + n(x, 3, z) * 1.5);
+                for (int k = 0; k <= depth; k++) {
+                    int y = s.top() - k;
+                    Cell c;
+                    if (k == 0) c = d > s.rad() - 0.8 && n(x, y, z) < 0.4 ? Cell.COARSE : Cell.GRASS;
+                    else if (k <= 1) c = Cell.DIRT;
+                    else {
+                        double o = n(x, y, z);
+                        c = o < 0.06 ? Cell.COAL : o < 0.1 ? Cell.IRON : o < 0.35 ? Cell.ANDESITE : Cell.STONE;
+                    }
+                    out.cell(x, y, z, c);
+                }
+                if (n(x, s.top() - depth - 1, z) < 0.3) out.cell(x, s.top() - depth - 1, z, Cell.ROOTS);
+                if (d < s.rad() - 1 && n(x, s.top() + 1, z) < 0.25) out.cell(x, s.top() + 1, z, Cell.FLOWER);
+            }
+        }
+    }
+
+    /** A hash of a cell in [0, 1): the stones' shape and dress, the same on the server and in the bench. */
+    static double n(int x, int y, int z) {
+        long h = x * 73856093L ^ y * 19349663L ^ z * 83492791L;
+        h ^= h >>> 13;
+        h *= 0x5bd1e995L;
+        h ^= h >>> 15;
+        return (h & 0xFFFFFF) / (double) 0x1000000;
+    }
+
     /** ChunkEvent.Load: a sky platform starting in this chunk is queued (rigged on a later tick, its columns loaded). */
     static void onChunkLoad(ChunkEvent.Load e) {
         if (!(e.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
