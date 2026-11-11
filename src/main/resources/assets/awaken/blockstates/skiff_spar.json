@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/skiff_spar"
+    },
+    "axis=z": {
+      "model": "awaken:block/skiff_spar",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/skiff_spar",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

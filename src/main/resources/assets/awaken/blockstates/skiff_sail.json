@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "band=false,plane=flat": {
+      "model": "awaken:block/skiff_sail"
+    },
+    "band=false,plane=athwart": {
+      "model": "awaken:block/skiff_sail",
+      "x": 90
+    },
+    "band=false,plane=fore_aft": {
+      "model": "awaken:block/skiff_sail",
+      "x": 90,
+      "y": 90
+    },
+    "band=true,plane=flat": {
+      "model": "awaken:block/skiff_sail_band"
+    },
+    "band=true,plane=athwart": {
+      "model": "awaken:block/skiff_sail_band",
+      "x": 90
+    },
+    "band=true,plane=fore_aft": {
+      "model": "awaken:block/skiff_sail_band",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

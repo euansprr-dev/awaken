@@ -5,12 +5,15 @@ import dev.awaken.core.Throttle;
 import dev.awaken.core.api.FarPost;
 import dev.awaken.core.api.TheLull;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.permissions.Permissions;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -44,8 +47,28 @@ public final class FrontierModule {
     static final DeferredHolder<TicketType, TicketType> FLIGHT_TICKET = TICKETS.register("frontier_flight",
             () -> new TicketType(20L * 90, TicketType.FLAG_LOADING));
 
+    static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
+
+    /** The skiff's own sounds, each named from the game's recordings (merge/frontier sounds.json, SPEC §67.5). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CAST_OFF = sound("frontier.skiff.cast_off"), CORE_WAKE = sound("frontier.skiff.core_wake"),
+            CORE_HUM = sound("frontier.skiff.core_hum"), CORE_REST = sound("frontier.skiff.core_rest"), SAIL = sound("frontier.skiff.sail"),
+            BELL = sound("frontier.skiff.bell"), CREAK = sound("frontier.skiff.creak"), WIND = sound("frontier.skiff.wind"),
+            SET_DOWN = sound("frontier.skiff.set_down");
+    /** The flight's air: cloud, streaks of wind, motes of the core's light (client.FlightAir). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_WISP = PARTICLES.register("frontier_wisp", () -> new SimpleParticleType(false)),
+            P_STREAK = PARTICLES.register("frontier_streak", () -> new SimpleParticleType(false)),
+            P_MOTE = PARTICLES.register("frontier_mote", () -> new SimpleParticleType(false));
+
+    private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
+        return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
+    }
+
     public static void init(IEventBus modBus) {
         TICKETS.register(modBus);
+        SOUNDS.register(modBus);
+        PARTICLES.register(modBus);
+        SkiffBlocks.register(modBus);
         modBus.addListener(FrontierNet::register);
         FrontierPost.install();
         FrontierGoals.register();

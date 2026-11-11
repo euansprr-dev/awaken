@@ -30,12 +30,13 @@ public final class FrontierData extends SavedData {
     /** Letters kept a player (the hold shows the newest). */
     static final int LETTERS_KEPT = 16;
 
-    /** A mooring: the berth's middle at deck height, the way its bow points, and whether its blocks are up. */
-    public record Mooring(BlockPos origin, Direction facing, boolean built) {
+    /** A mooring: the berth's middle at deck height, the way its bow points, whether its blocks are up, and in which look (Moorings.LOOK). */
+    public record Mooring(BlockPos origin, Direction facing, boolean built, int look) {
         static final Codec<Mooring> CODEC = RecordCodecBuilder.create(i -> i.group(
                 BlockPos.CODEC.fieldOf("origin").forGetter(Mooring::origin),
                 Direction.CODEC.fieldOf("facing").forGetter(Mooring::facing),
-                Codec.BOOL.fieldOf("built").forGetter(Mooring::built)).apply(i, Mooring::new));
+                Codec.BOOL.fieldOf("built").forGetter(Mooring::built),
+                Codec.INT.optionalFieldOf("look", 1).forGetter(Mooring::look)).apply(i, Mooring::new));
     }
 
     /** Where a player caught mid-flight is put: the deck they were flying to. */

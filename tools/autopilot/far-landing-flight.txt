@@ -1,6 +1,7 @@
-# The Far Landing's flight (SPEC §67.4-67.5): the ridge mooring and its skiff from three sides, a flight out (the lift,
-# the cloud crossing with the painting and the name, the descent onto the landing's mooring), the landing's mooring with
-# its hold and board and the land round it, then the flight home straight into the cloud.
+# The Far Landing's flight (SPEC §67.4-67.5): the ridge mooring and its wind-skiff from six sides and at the helm, a flight
+# out (the skiff waking, watched from off its bow; the lift, the climb and the turn at the helm; the cloud crossing with
+# the painting and the name; the descent onto the landing's mooring), the landing's mooring by day and at dusk with its
+# hold and board and the land round it, then the flight home straight into the cloud.
 # The numbers are in latest.log ("[frontier]").
 # Seed 4245, a new world (rules 4). Run on CI: tools/tour-ci.sh tools/autopilot/far-landing-flight.txt 1500
 world autopilot_far_landing survival 4245
@@ -44,75 +45,117 @@ cmd gamemode spectator
 cmd awaken frontier look ridge 0
 wait 60
 hud off
+# a settled picture first: the look views after it then have their land drawn
+shot fl_00_ridge_settle
+cmd awaken frontier look ridge 0
+wait 30
 shot fl_01_ridge_bow_quarter
 cmd awaken frontier look ridge 1
 wait 30
-shot fl_02_ridge_stern_and_jetty
+shot fl_02_ridge_stern_and_pier
 cmd awaken frontier look ridge 2
 wait 30
 shot fl_03_ridge_from_above
+cmd awaken frontier look ridge 3
+wait 30
+shot fl_04_ridge_under_the_wing
+cmd awaken frontier look ridge 4
+wait 30
+shot fl_05_ridge_from_the_steps
+cmd awaken frontier look ridge 5
+wait 30
+shot fl_06_ridge_from_ahead
 cmd gamemode survival
 cmd awaken frontier goto ridge
 wait 30
-shot fl_04_at_the_helm
+shot fl_07_at_the_helm
 hud on
-# out: the lift (120 ticks), the cloud closing over (from 98), the name in the cloud, then the cloud parts and the descent
+# out: the wake watched from off the bow (40 ticks), the lift at the helm (to 120), the cloud closing over (from 98),
+# the name in the cloud, then the cloud parts and the descent
 cmd awaken frontier fly
-wait 30
-shotnow fl_05_lift_off
-wait 45
-shotnow fl_06_climbing_turn
-wait 30
-shotnow fl_07_cloud_closing
+wait 14
+shotnow fl_08_waking
+wait 18
+shotnow fl_09_awake
+wait 20
+shotnow fl_10_lift_off
 wait 22
-shotnow fl_08_crossing_name
+shotnow fl_11_climbing
+wait 18
+shotnow fl_12_into_the_cloud
+wait 22
+shotnow fl_13_cloud_closing
+wait 22
+shotnow fl_14_crossing_name
 wait 25
-shotnow fl_09_crossing_held
+shotnow fl_15_crossing_held
 wait 25
-shotnow fl_10_cloud_parting
-wait 25
-shotnow fl_11_descent_early
-wait 30
-shotnow fl_12_descent_mid
-wait 30
-shotnow fl_13_descent_late
-wait 30
-shotnow fl_14_descent_last
+shotnow fl_16_cloud_parting
+wait 20
+shotnow fl_17_descent_early
+wait 22
+shotnow fl_18_descent_mid
+wait 22
+shotnow fl_19_descent_flare
+wait 22
+shotnow fl_20_descent_late
+wait 22
+shotnow fl_21_settling
 wait 160
-shot fl_17_set_down
+shot fl_22_set_down
 cmd awaken frontier status
 # the landing's mooring and the land round it
 cmd gamemode spectator
 cmd awaken frontier look landing 0
 wait 60
 hud off
-shot fl_18_landing_bow_quarter
+shot fl_23_landing_settle
+cmd awaken frontier look landing 0
+wait 30
+shot fl_24_landing_bow_quarter
 cmd awaken frontier look landing 1
 wait 30
-shot fl_19_landing_hold_and_board
+shot fl_25_landing_stern_and_pier
 cmd awaken frontier look landing 2
 wait 30
-shot fl_20_landing_from_above
+shot fl_26_landing_from_above
+cmd awaken frontier look landing 3
+wait 30
+shot fl_27_landing_under_the_wing
+cmd awaken frontier look landing 4
+wait 30
+shot fl_28_landing_from_the_steps
+# dusk: the lamps and the core
+cmd time set 13200
+wait 40
+cmd awaken frontier look landing 0
+wait 40
+shot fl_29_landing_at_dusk
+cmd awaken frontier look landing 1
+wait 30
+shot fl_30_landing_at_dusk_pier
+cmd time set 1500
+wait 40
 cmd tp @s ~ ~90 ~ ~ 20
 wait 120
-shot fl_21_the_land_round_it
+shot fl_31_the_land_round_it
 hud on
 cmd gamemode survival
 cmd awaken frontier goto landing
 wait 40
 cmd awaken frontier letter
 wait 30
-shot fl_22_a_letter
+shot fl_32_a_letter
 wait 200
 # home, straight into the cloud (a sneak-use after the first flight)
 cmd awaken frontier fly quick
 wait 12
-shotnow fl_23_home_quick_lift
+shotnow fl_33_home_quick_lift
 wait 30
-shotnow fl_24_home_crossing
+shotnow fl_34_home_crossing
 wait 40
-shotnow fl_25_home_crossing_name
+shotnow fl_35_home_crossing_name
 wait 300
-shot fl_26_home_at_the_ridge
+shot fl_36_home_at_the_ridge
 cmd awaken frontier status
 quit

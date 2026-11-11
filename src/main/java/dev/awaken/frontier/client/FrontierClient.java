@@ -13,7 +13,7 @@ import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-/** The Far Landing on the client (SPEC §67): the skiff's flight on film, the skiff in the air, the cloud crossing. No keys. */
+/** The Far Landing on the client (SPEC §67): the skiff's flight on film, the skiff in the air, its wind and cloud, the cloud crossing. No keys. */
 public final class FrontierClient {
     private FrontierClient() {}
 
@@ -23,6 +23,7 @@ public final class FrontierClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(FrontierClient::payloads);
         modBus.addListener(FrontierClient::layers);
+        modBus.addListener(FlightAir::register);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> {
             if (Minecraft.getInstance().isPaused()) return;

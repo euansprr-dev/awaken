@@ -3,6 +3,7 @@ package dev.awaken.frontier.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.Awaken;
 import dev.awaken.frontier.FrontierNet;
+import dev.awaken.frontier.Skiff;
 import dev.awaken.opening.client.OpeningCamera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,8 +24,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The skiff in the air (SPEC §67), drawn block by block with the game's own models: the one you're flying in, and one
- * you watch leave from its mooring (it lifts away with its party, and drifts back empty to its berth a while later).
+ * The skiff in the air (SPEC §67), drawn block by block with its own models: the one you're flying in, and one you
+ * watch leave from its mooring (it lifts away with its party, and drifts back empty to its berth a while later). It's
+ * alive as it flies: the wings rise about their roots and beat slowly, and the wind-wheel turns about its hub.
  */
 final class SkiffFx {
     private SkiffFx() {}
@@ -70,8 +72,10 @@ final class SkiffFx {
 
     static final List<Watch> WATCHES = new ArrayList<>();
 
-    private static final Quaternionf Q = new Quaternionf(), REST = new Quaternionf();
+    private static final Quaternionf Q = new Quaternionf(), REST = new Quaternionf(), LIGHT = new Quaternionf(),
+            WING_A = new Quaternionf(), WING_B = new Quaternionf(), WHEEL = new Quaternionf();
     private static final Vector3f V = new Vector3f();
+    private static final float[] RIG = new float[2];
 
     static void onSeen(FrontierNet.Seen m) {
         Minecraft mc = Minecraft.getInstance();
@@ -101,7 +105,10 @@ final class SkiffFx {
 
     /** Someone aboard a skiff this client watched leave, while it's still lifting: their body is on the skiff, unseen. */
     static boolean aboard(UUID who) {
-        for (Watch w : WATCHES) if (w.age(FrontierClient.ticks) < FlightFilm.LIFT + 40 && w.party.contains(who)) return true;
+        for (Watch w : WATCHES) {
+            long age = w.age(FrontierClient.ticks);
+            if (age >= FlightFilm.WAKE && age < FlightFilm.LIFT + 40 && w.party.contains(who)) return true;
+        }
         return false;
     }
 
@@ -121,16 +128,23 @@ final class SkiffFx {
                 float t = OpeningCamera.age() + pt;
                 if (f.phase == FlightFilm.Phase.LIFT) {
                     float[] s = sample(f.px, f.py, f.pz, f.yaw, f.nose, f.roll, Math.min(t, f.lift()));
-                    draw(ps, out, level, cam, f.from, f.fromFacing, f.fromSnap, s);
+                    FlightFilm.liftRig(t, f.quick, RIG);
+                    draw(ps, out, level, cam, f.from, f.fromFacing, f.fromSnap, s, RIG[0], RIG[1]);
                 } else if (f.phase == FlightFilm.Phase.DESCEND) {
-                    draw(ps, out, level, cam, f.to, f.toFacing, f.toSnap, FlightFilm.descent(f, t - f.descendAt));
+                    FlightFilm.descentRig(t - f.descendAt, f.descent(), RIG);
+                    draw(ps, out, level, cam, f.to, f.toFacing, f.toSnap, FlightFilm.descent(f, t - f.descendAt), RIG[0], RIG[1]);
                 }
             }
             for (Watch w : WATCHES) {
                 float age = w.age(FrontierClient.ticks) + pt;
-                if (age < FlightFilm.LIFT) draw(ps, out, level, cam, w.berth, w.facing, w.snap, sample(w.px, w.py, w.pz, w.yaw, w.nose, w.roll, age));
-                else if (age >= FlightFilm.LIFT + AWAY)
-                    draw(ps, out, level, cam, w.berth, w.facing, w.snap, FlightFilm.descent(w.back, Math.min(age - FlightFilm.LIFT - AWAY, FlightFilm.DESCENT)));
+                if (age < FlightFilm.LIFT) {
+                    FlightFilm.liftRig(age, false, RIG);
+                    draw(ps, out, level, cam, w.berth, w.facing, w.snap, sample(w.px, w.py, w.pz, w.yaw, w.nose, w.roll, age), RIG[0], RIG[1]);
+                } else if (age >= FlightFilm.LIFT + AWAY) {
+                    float back = Math.min(age - FlightFilm.LIFT - AWAY, FlightFilm.DESCENT);
+                    FlightFilm.descentRig(back, FlightFilm.DESCENT, RIG);
+                    draw(ps, out, level, cam, w.berth, w.facing, w.snap, FlightFilm.descent(w.back, back), RIG[0], RIG[1]);
+                }
             }
         } catch (RuntimeException ex) {
             Awaken.LOG.error("[frontier] drawing the skiff failed", ex);
@@ -147,15 +161,26 @@ final class SkiffFx {
                 yaw[i] + (yaw[j] - yaw[i]) * k, nose[i] + (nose[j] - nose[i]) * k, roll[i] + (roll[j] - roll[i]) * k};
     }
 
-    /** Every block of a skiff, turned as one body about its berth's middle and moved by the path's offset. */
+    /**
+     * Every block of a skiff, turned as one body about its berth's middle and moved by the path's offset; the wings turned
+     * {@code wing} degrees up about their roots and the wind-wheel {@code wheel} degrees about its hub.
+     */
     private static void draw(PoseStack ps, SubmitNodeCollector out, ClientLevel level, Vec3 cam, BlockPos berth, Direction facing,
-                             List<FlightFilm.Snap> snap, float[] s) {
+                             List<FlightFilm.Snap> snap, float[] s, float wing, float wheel) {
         if (snap.isEmpty()) return;
-        FlightFilm.turn(Q, s[3], s[4], s[5]).mul(REST.rotationY((float) Math.toRadians(facing.toYRot())));
+        // as it stands -> south-facing -> (its moving parts) -> its attitude in the air
+        FlightFilm.turn(Q, s[3], s[4], s[5]);
+        REST.rotationY((float) Math.toRadians(facing.toYRot()));
+        LIGHT.set(Q).mul(REST);
+        WING_A.rotationZ((float) Math.toRadians(wing));
+        WING_B.rotationZ((float) Math.toRadians(-wing));
+        WHEEL.rotationZ((float) Math.toRadians(wheel));
+        float wingY = Skiff.WING_Y + 0.5F, hubX = Skiff.HUB.getX(), hubY = Skiff.HUB.getY() + 0.5F, hubZ = Skiff.HUB.getZ();
         double bx = berth.getX() + 0.5 + s[0], by = berth.getY() + s[1], bz = berth.getZ() + 0.5 + s[2];
         Holder<Biome> biome = level.getBiome(berth);
         for (FlightFilm.Snap b : snap) {
-            Q.transform(V.set(b.dx(), b.dy() + 0.5F, b.dz()));
+            // lit by where its place on the hull is now (near enough for the parts that move on it)
+            LIGHT.transform(V.set(b.dx(), b.dy() + 0.5F, b.dz()));
             MovingBlockRenderState mb = new MovingBlockRenderState();
             mb.blockState = b.state();
             mb.blockPos = BlockPos.containing(bx + V.x, by + V.y, bz + V.z);
@@ -166,6 +191,13 @@ final class SkiffFx {
             ps.pushPose();
             ps.translate(bx - cam.x, by - cam.y, bz - cam.z);
             ps.rotate(Q);
+            switch (b.rig()) {
+                case Skiff.WING_A -> ps.rotateAround(WING_A, Skiff.WING_ROOT, wingY, 0F);
+                case Skiff.WING_B -> ps.rotateAround(WING_B, -Skiff.WING_ROOT, wingY, 0F);
+                case Skiff.WHEEL -> ps.rotateAround(WHEEL, hubX, hubY, hubZ);
+                default -> {}
+            }
+            ps.rotate(REST);
             ps.translate(b.dx() - 0.5F, (float) b.dy(), b.dz() - 0.5F);
             out.submitMovingBlock(ps, mb, 0);
             ps.popPose();

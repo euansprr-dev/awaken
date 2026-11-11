@@ -27,8 +27,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A skiff's flight, server side (SPEC §67). The helm starts one for everyone on the deck. The skiff lifts for six seconds
- * (the client films it), the land at the other end loads under a ticket meanwhile, and once the cloud has covered the
+ * A skiff's flight, server side (SPEC §67). The helm starts one for everyone on the deck. The skiff wakes and lifts for
+ * six seconds (the client films it), the land at the other end loads under a ticket meanwhile, and once the cloud has covered the
  * screen and the land is there the travellers are moved onto the other skiff's deck; their film then holds the cloud until
  * their own client has the land, and brings the skiff down. Nothing hurts a traveller from the helm until they're set down
  * (or half a minute after the move). A logout or a server stop mid-air puts them at the far deck; a crash does on their
@@ -45,6 +45,8 @@ final class Flights {
     static final int WAIT_MAX = 20 * 40, SHIELD_AFTER = 20 * 30;
     /** A watcher this near the mooring sees it lift away. */
     static final int SEEN_RANGE = 160;
+    /** Where you stand by a skiff that has come for you (south-facing, from its berth's middle): off its quarter, on the pier's side. */
+    static final BlockPos BESIDE = new BlockPos(-5, 0, -4);
 
     private static final class Flight {
         final UUID who;
@@ -75,6 +77,10 @@ final class Flights {
         return FLYING.containsKey(who);
     }
 
+    static boolean anyFlying() {
+        return !FLYING.isEmpty();
+    }
+
     /** The helm: everyone on this mooring's deck flies to the other end. */
     static void helm(ServerPlayer pilot, Moorings.Which from, boolean quickAsked) {
         MinecraftServer server = pilot.level().getServer();
@@ -93,7 +99,7 @@ final class Flights {
             // the far mooring stands where the land is: the seed's spot, its exact ground found once it loads
             BlockPos spot = to == Moorings.Which.RIDGE ? Moorings.ridgeSpot(server) : Moorings.landingSpot(server);
             if (spot == null) return;
-            there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, to), false);
+            there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, to), false, Moorings.LOOK);
         }
         List<ServerPlayer> party = new ArrayList<>();
         for (ServerPlayer p : level.players()) {
@@ -120,11 +126,11 @@ final class Flights {
         if (there == null || !there.built()) {
             BlockPos spot = Moorings.ridgeSpot(server);
             if (spot == null) return false;
-            there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, Moorings.Which.RIDGE), false);
+            there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, Moorings.Which.RIDGE), false, Moorings.LOOK);
         }
-        // it rests with its stern to you and its bow toward the city, its helm where you stand
+        // it has come down beside you, its bow toward the city and its core just off the ground; its helm is a few steps away
         Direction facing = Direction.fromYRot(bearing(at, there.origin()));
-        BlockPos origin = at.subtract(rotated(facing, Skiff.STAND));
+        BlockPos origin = at.subtract(rotated(facing, BESIDE)).above(-Skiff.KEEL);
         List<ServerPlayer> party = new ArrayList<>();
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator() || flying(p.getUUID())) continue;

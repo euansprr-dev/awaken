@@ -8,6 +8,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
@@ -22,9 +23,10 @@ import java.util.List;
 /**
  * The two moorings (SPEC §67): the ridge's, just past Aldo's milestone on the north road (built the first time someone
  * comes near), and the landing's, far out on the ground the seed chose (built when its land is loaded, at the latest
- * just before the first skiff comes down there). Each finds the flattest dry spot near where it should be, lifts its
- * jetty three blocks over the highest ground there, clears the air above it, and stands on log posts with steps down from
- * the stern. Nobody can break or build into one.
+ * just before the first skiff comes down there). Each finds the flattest dry spot near where it should be and sets the
+ * old landing ring's stone pad on the highest ground there, filled down to the land wherever it falls away; the skiff
+ * rests in a cradle on the pad, a pier runs along one side on log posts with steps down from its stern end, and a mast
+ * with three lights stands by its bay. Nobody can break or build into one.
  */
 final class Moorings {
     private Moorings() {}
@@ -39,8 +41,10 @@ final class Moorings {
     static final int GLADE = 6;
     /** A player this near the ridge's spot gets it built. */
     static final int BUILD_NEAR = 160;
-    /** The deck stands this far over the highest ground under it. */
-    static final int LIFT = 3;
+    /** The deck stands this far over the highest ground under it: the pad's top is that ground. */
+    static final int LIFT = -Skiff.PAD;
+    /** The mooring's look: a saved mooring of an older look is taken down and built again (1: the plank jetty; 2: the wind-skiff). */
+    static final int LOOK = 2;
 
     /** Where the ridge's mooring should be (its berth's middle, before the ground is found). */
     static BlockPos ridgeSpot(MinecraftServer server) {
@@ -74,7 +78,7 @@ final class Moorings {
         if (!TheLull.farLanding(server)) return;
         ServerLevel level = server.overworld();
         FrontierData d = FrontierData.get(server);
-        if (d.ridge() == null || !d.ridge().built()) {
+        if (d.ridge() == null || !d.ridge().built() || d.ridge().look() < LOOK) {
             BlockPos spot = ridgeSpot(server);
             for (ServerPlayer p : level.players()) {
                 double dx = p.getX() - spot.getX(), dz = p.getZ() - spot.getZ();
@@ -84,7 +88,7 @@ final class Moorings {
                 }
             }
         }
-        if (d.landing() == null || !d.landing().built()) ensure(level, Which.LANDING);
+        if (d.landing() == null || !d.landing().built() || d.landing().look() < LOOK) ensure(level, Which.LANDING);
     }
 
     /** Builds the mooring if its land is loaded; true when it stands. */
@@ -92,13 +96,19 @@ final class Moorings {
         MinecraftServer server = level.getServer();
         FrontierData d = FrontierData.get(server);
         FrontierData.Mooring m = get(server, which);
-        if (m != null && m.built()) return true;
+        if (m != null && m.built() && m.look() >= LOOK) return true;
         BlockPos spot = which == Which.RIDGE ? ridgeSpot(server) : landingSpot(server);
-        if (spot == null || !loaded(level, spot, SEARCH + Skiff.FOOT_X + 12)) return false;
+        if (spot == null || !loaded(level, spot, SEARCH + Skiff.FOOT_Z1 + GLADE + 12)) return false;
         Direction facing = facing(server, which);
+        if (m != null && m.built()) {
+            // an older look: nobody may be mid-flight to or from it while it's swapped
+            if (Flights.anyFlying()) return true;
+            razeOld(level, m);
+            m = null;
+        }
         BlockPos origin = m != null ? m.origin() : choose(level, spot, facing);
         build(level, origin, facing, which == Which.LANDING);
-        FrontierData.Mooring built = new FrontierData.Mooring(origin, facing, true);
+        FrontierData.Mooring built = new FrontierData.Mooring(origin, facing, true, LOOK);
         if (which == Which.RIDGE) d.ridge(built);
         else d.landing(built);
         Awaken.LOG.info("[frontier] the {} mooring built at {} facing {}", which == Which.RIDGE ? "ridge's" : "landing's", origin.toShortString(),
@@ -127,6 +137,8 @@ final class Moorings {
                     for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z += 2) {
                         BlockPos c = Skiff.at(at, facing, x, 0, z);
                         int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ());
+                        // a tree is not the ground: its trunk comes down with the glade
+                        while (top - 1 > level.getMinY() && level.getBlockState(new BlockPos(c.getX(), top - 1, c.getZ())).is(BlockTags.LOGS)) top--;
                         BlockState s = level.getBlockState(new BlockPos(c.getX(), top - 1, c.getZ()));
                         if (!s.getFluidState().isEmpty()) wet++;
                         if (s.is(Blocks.DIRT_PATH) || s.is(Blocks.GRAVEL) || s.is(BlockTags.SLABS) || s.is(BlockTags.STAIRS)) road++;
@@ -144,7 +156,10 @@ final class Moorings {
         return new BlockPos(at.getX(), bestTop - 1 + LIFT, at.getZ());
     }
 
-    /** Puts the mooring's blocks up: clears its air, the jetty, the skiff, the posts and the steps. */
+    /**
+     * Puts the mooring up: a glade, the old landing ring's stone pad fitted to the ground under it, the pier and its
+     * bay, the mast, the skiff in its cradle, posts down to whatever is under them, and steps down to the ground.
+     */
     static void build(ServerLevel level, BlockPos origin, Direction facing, boolean landing) {
         var rot = Skiff.rotation(facing);
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
@@ -153,7 +168,7 @@ final class Moorings {
         for (int pass = 0; pass < 2; pass++)
             for (int x = -Skiff.FOOT_X - GLADE; x <= Skiff.FOOT_X + GLADE; x++)
                 for (int z = Skiff.FOOT_Z0 - GLADE; z <= Skiff.FOOT_Z1 + GLADE; z++)
-                    for (int y = Skiff.KEEL - 6; y <= Skiff.CLEAR_UP + 16; y++) {
+                    for (int y = Skiff.PAD - 6; y <= Skiff.CLEAR_UP + 16; y++) {
                         BlockPos p = Skiff.at(origin, facing, x, y, z);
                         BlockState st = level.getBlockState(p);
                         if (pass == 0 ? st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)
@@ -164,18 +179,30 @@ final class Moorings {
             for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)
                 for (int y = Skiff.KEEL; y <= Skiff.CLEAR_UP; y++) {
                     BlockPos p = Skiff.at(origin, facing, x, y, z);
-                    if (!level.getBlockState(p).isAir()) level.setBlock(p, Blocks.AIR.defaultBlockState(), flags);
+                    if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
                 }
+        // the pad: old paving inside a kerb of stone brick, every column filled down to the ground so nothing hangs
+        int reach = (int) Math.ceil(Math.sqrt(Skiff.PAD_R2));
+        for (int x = -reach; x <= reach; x++)
+            for (int z = -reach; z <= reach; z++) {
+                int d2 = x * x + z * z;
+                if (d2 > Skiff.PAD_R2) continue;
+                boolean kerb = d2 > Skiff.PAD_R2 - 12;
+                BlockPos top = Skiff.at(origin, facing, x, Skiff.PAD, z);
+                long h = Mth.getSeed(top);
+                level.setBlock(top, kerb ? kerb(h) : paving(h), flags);
+                fillDown(level, top, kerb ? Blocks.STONE_BRICKS.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState(), flags);
+            }
         List<BlockPos> placed = new ArrayList<>();
         List<Skiff.Part> parts = new ArrayList<>(Skiff.jetty());
         parts.addAll(Skiff.skiff());
-        if (landing) parts.addAll(Skiff.landingExtras());
+        parts.addAll(landing ? Skiff.landingExtras() : Skiff.ridgeExtras());
         for (Skiff.Part part : parts) {
             BlockPos p = Skiff.at(origin, facing, part.x(), part.y(), part.z());
             level.setBlock(p, part.state().rotate(rot), flags);
             placed.add(p);
         }
-        // the posts, down to the ground
+        // the posts and the mast, down to whatever is under them
         BlockState post = Skiff.b("spruce_log");
         for (int[] xz : Skiff.POSTS) {
             for (int y = -1; y > -40; y--) {
@@ -185,14 +212,15 @@ final class Moorings {
                 level.setBlock(p, post, flags);
             }
         }
-        // the steps down from the stern's gap, until they reach the ground
+        // the steps down from the pier's stern end, on stone, until they reach the ground
         BlockState step = Skiff.b("spruce_stairs").setValue(StairBlock.FACING, Direction.SOUTH).setValue(StairBlock.HALF, Half.BOTTOM).rotate(rot);
+        BlockState under = Blocks.STONE_BRICKS.defaultBlockState();
         for (int k = 0; k < 16; k++) {
             boolean grounded = false;
-            for (int x = -1; x <= 1; x++) {
+            for (int x : Skiff.STEPS_X) {
                 BlockPos p = Skiff.at(origin, facing, x, -k, Skiff.STEPS_Z - k);
                 BlockState s = level.getBlockState(p);
-                if (!s.isAir() && !s.canBeReplaced()) {
+                if (!s.isAir() && !s.canBeReplaced() && !s.is(BlockTags.LEAVES)) {
                     grounded = true;
                     continue;
                 }
@@ -200,19 +228,73 @@ final class Moorings {
                 placed.add(p);
                 for (int up = 1; up <= 3; up++) {
                     BlockPos a = p.above(up);
-                    if (!level.getBlockState(a).isAir() && !Skiff.inFootprint(origin, facing, a)) level.setBlock(a, Blocks.AIR.defaultBlockState(), flags);
+                    if (!level.getBlockState(a).isAir() && !Skiff.inFootprint(origin, facing, a)) level.setBlock(a, air, flags);
                 }
                 BlockState below = level.getBlockState(p.below());
                 if (!below.isAir() && !below.canBeReplaced()) grounded = true;
+                else fillDown(level, p, under, flags);
             }
             if (grounded) break;
         }
-        // fences join, stairs turn, lanterns check their hooks
+        // fences join, stairs turn
         for (BlockPos p : placed) {
             BlockState s = level.getBlockState(p);
             BlockState shaped = Block.updateFromNeighbourShapes(s, level, p);
             if (shaped != s && !shaped.isAir()) level.setBlock(p, shaped, flags);
         }
+    }
+
+    /** Stone under a block, down to the ground (at most 24), so a pad's edge or a step never hangs in the air. */
+    private static void fillDown(ServerLevel level, BlockPos top, BlockState with, int flags) {
+        for (int y = 1; y <= 24; y++) {
+            BlockPos p = top.below(y);
+            BlockState s = level.getBlockState(p);
+            if (!s.isAir() && !s.canBeReplaced() && !s.is(BlockTags.LEAVES) && s.getFluidState().isEmpty()) break;
+            level.setBlock(p, with, flags);
+        }
+    }
+
+    /** The pad's kerb: stone brick, some of it mossy or cracked with age. */
+    private static BlockState kerb(long h) {
+        int k = (int) Math.floorMod(h >> 8, 10);
+        return (k < 6 ? Blocks.STONE_BRICKS : k < 8 ? Blocks.MOSSY_STONE_BRICKS : Blocks.CRACKED_STONE_BRICKS).defaultBlockState();
+    }
+
+    /** The pad's paving: worn andesite and cobble, moss in the joints. */
+    private static BlockState paving(long h) {
+        int k = (int) Math.floorMod(h >> 8, 20);
+        return (k < 8 ? Blocks.POLISHED_ANDESITE : k < 13 ? Blocks.ANDESITE : k < 17 ? Blocks.COBBLESTONE : k < 19 ? Blocks.MOSSY_COBBLESTONE
+                : Blocks.STONE_BRICKS).defaultBlockState();
+    }
+
+    /**
+     * Takes down a mooring of the first look (a plank jetty round a boxy skiff, SPEC §67.4 before 11 Nov): its footprint
+     * emptied, its posts and steps taken out. The new one is then built where the ground suits it.
+     */
+    static void razeOld(ServerLevel level, FrontierData.Mooring m) {
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockPos o = m.origin();
+        Direction f = m.facing();
+        for (int x = -5; x <= 5; x++)
+            for (int z = -9; z <= 7; z++)
+                for (int y = -2; y <= 10; y++) {
+                    BlockPos p = Skiff.at(o, f, x, y, z);
+                    if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
+                }
+        int[][] posts = {{5, -8}, {-5, -8}, {5, -1}, {-5, -1}, {5, 6}, {-5, 6}, {2, -8}, {-2, -8}};
+        for (int[] xz : posts)
+            for (int y = -3; y > -40; y--) {
+                BlockPos p = Skiff.at(o, f, xz[0], y, xz[1]);
+                if (!level.getBlockState(p).is(Blocks.SPRUCE_LOG)) break;
+                level.setBlock(p, air, flags);
+            }
+        for (int k = 0; k < 16; k++)
+            for (int x = -1; x <= 1; x++) {
+                BlockPos p = Skiff.at(o, f, x, -k, -9 - k);
+                if (level.getBlockState(p).is(Blocks.SPRUCE_STAIRS)) level.setBlock(p, air, flags);
+            }
+        Awaken.LOG.info("[frontier] the old mooring at {} taken down for the new one", o.toShortString());
     }
 
     /** The mooring whose helm (or hold, or board) is at this block, if any. */
