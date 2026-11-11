@@ -1,7 +1,8 @@
 # The Leaper's Gauntlet as a Realm (SPEC 17.10), walked from the way in: the first gulf from its near lip, the first stand's
 # room, then each crossing of the hall "Twice" from where you stand before it, and the second stand. No fighting, so
 # difficulty is peaceful. Cameras are offsets from the way in (0, 100, -140 in the land's own numbers).
-# ci knobs: RD=12
+# (No render-distance knob: at RD=12 three of five walks died as the client changed dimension, a byte copy on a chunk
+# worker into a staging buffer the render thread had just closed. No walk at the default distance has.)
 world autopilot_realm_leapers_gauntlet creative 20261121
 waitworld
 gui 0
