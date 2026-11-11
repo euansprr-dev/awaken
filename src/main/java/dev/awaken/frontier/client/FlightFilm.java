@@ -249,6 +249,7 @@ public final class FlightFilm {
                 }
                 case DESCEND -> {
                     int t = age - f.descendAt, left = f.descent() - t;
+                    if (left > 6) keepHidden(level, f);
                     if (left == 6 && f.toHidden) {
                         // the real skiff back a few ticks early, under the drawn one, so it's meshed when the drawn one goes
                         restore(level, f.to, f.toSnap);
@@ -562,6 +563,31 @@ public final class FlightFilm {
     static void hide(ClientLevel level, BlockPos berth, List<Snap> snap) {
         BlockState barrier = Blocks.BARRIER.defaultBlockState();
         for (Snap s : snap) level.setBlock(berth.offset(s.dx, s.dy, s.dz), barrier, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+    }
+
+    /**
+     * While the skiff comes down, the real one at its berth stays out of sight. The server can send that berth's blocks
+     * again after this client hid them (a mooring built while nobody was near keeps its changes until its land starts
+     * ticking, and sends them then: every first flight), and a far end this client didn't have yet can arrive late.
+     * Either way the real skiff would stand where the drawn one comes in, and the view would pass through its wind-wheel.
+     */
+    static void keepHidden(ClientLevel level, Flight f) {
+        if (!f.toHidden) {
+            List<Snap> real = new ArrayList<>();
+            snap(level, f.to, f.toFacing, real);
+            if (real.size() < Skiff.skiff().size() / 2) return;
+            f.toSnap = real;
+            f.toHidden = true;
+        }
+        BlockState barrier = Blocks.BARRIER.defaultBlockState();
+        int back = 0;
+        for (Snap s : f.toSnap) {
+            BlockPos at = f.to.offset(s.dx, s.dy, s.dz);
+            if (!level.hasChunk(at.getX() >> 4, at.getZ() >> 4) || level.getBlockState(at).is(Blocks.BARRIER)) continue;
+            level.setBlock(at, barrier, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            back++;
+        }
+        if (back > 0) Awaken.LOG.info("[frontier] {} blocks of the far skiff had come back while it descends; hidden again", back);
     }
 
     /** Puts it back where this client still has the barriers. */
