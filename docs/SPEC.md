@@ -23129,7 +23129,7 @@ every sparse structure set with a biome of its own there, ours and Minecraft's (
 mouth: `Terrain.starts`, each set asked one square of its spacing at a time); no settlement starts within its reach
 and 150, ours first (`awaken:settlement_grid`; a walled village is some 80 across from its anchor, which the land may
 move 32), then outposts and mansions, and not the city; and no monument with first say stands within `Sites.NEAR` (640), or
-within both their widths and 24, so two are never in one view (Euan, 12 Nov 2026, on how close things may stand: "it
+within both their widths and 24, so two are never in one view (Euan, 11 Nov 2026, on how close things may stand: "it
 should feel natural and still special to find one. Similar to vanilla MC I guess so you're not crossing one every 2
 minutes"; at 300 the middle distance to the next monument was 478, under two minutes at a run). Found by the first worlds made without a
 client (§64.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
@@ -23335,7 +23335,7 @@ The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42%
 (Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
 With `Sites.APART` at 80 instead of 40: 167.)
 
-**Spaced out, 12 Nov** (Euan's words above; `Sites.NEAR` 640, `APART_MIDDLE` 120, remains within 450 at chance 0.4). The
+**Spaced out, 11 Nov** (Euan's words above; `Sites.NEAR` 640, `APART_MIDDLE` 120, remains within 450 at chance 0.4). The
 same square counted again: 119 monuments of 37 kinds (E 36, D 28, C 37, B 9, A 5, S 4) and 180 remains (was 555); the
 nearest to the start 216 away, 2 within 1,000, 5 within 2,000; to the next monument least 640, middle 863, most 2,343;
 to the next of the same kind least 3,100, middle 5,717; half the land within 687 of one, nine tenths within 1,215.

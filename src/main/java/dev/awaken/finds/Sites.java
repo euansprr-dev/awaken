@@ -49,7 +49,7 @@ public final class Sites {
      */
     static final int APART_MIDDLE = 120;
     /**
-     * The nearest two monuments stand (Euan, 12 Nov 2026: "it should feel natural and still special to find one. Similar
+     * The nearest two monuments stand (Euan, 11 Nov 2026: "it should feel natural and still special to find one. Similar
      * to vanilla MC I guess so you're not crossing one every 2 minutes"). At 300, in lively land they stood a cell apart
      * and one was in sight from the last; at this, the next is at least two minutes' run away and out of view.
      */
