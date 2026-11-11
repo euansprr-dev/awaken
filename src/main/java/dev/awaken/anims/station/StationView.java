@@ -263,8 +263,6 @@ public final class StationView {
 
     /** A stack carried at a furnace is held this far out from its face (inside the stone it could not be seen). */
     public static final double FURNACE_HOLD = 0.08;
-    /** A fist at a furnace reads this wide against the world (blocks): a little over half a slot. */
-    public static final double FURNACE_FIST = 0.165;
 
     /**
      * Where the line of sight through a point of the screen meets the upright plane a stack is held in before a furnace
@@ -308,20 +306,14 @@ public final class StationView {
     // ---- the carrying hand (SPEC §65.2) -----------------------------------------------------------------------------
 
     /** How far over the surface a carried stack is held, and how far short of it the fist's middle sits along the arm. */
-    public static final double HOVER = 0.07, HAND_BACK = 0.11;
-    /** A fist is this much of a grid square across on screen, and an arm may be drawn this much longer than its model. */
-    public static final double FIST_SQUARES = 0.8, STRETCH_MOST = 1.8;
-    /** The arm's model: a fist 4 texels across; from the fist's middle back to the arm's far end, in blocks. */
-    public static final double FIST = 0.25, ARM_BACK = 0.685;
-
+    public static final double HOVER = 0.07;
     /**
-     * How far from the eye a station's arms are drawn so a fist reads {@link #FIST_SQUARES} of a square across, for a
-     * hand {@code dw} blocks from the eye in the world ({@code lens}: the hand pass's field of view against the
-     * world's, 1 when they are the same).
+     * A station's arm is the player's own arm at its own size: a fist 4 texels across, the fist's middle to the arm's
+     * far end, and how far short of the stack the fist's middle sits (half a fist and a little, so the stack is at its
+     * fingers). Never drawn longer than it is: it was a fist of 0.15 drawn up to 1.8 times its length, and played it
+     * was "way too stretched", not an arm any more (Euan, 11 Nov).
      */
-    public static double handDistance(double dw, double lens) {
-        return FIST * dw / (FIST_SQUARES * CELL * Math.max(0.05, lens));
-    }
+    public static final double FIST = 0.25, ARM_BACK = 0.685, HAND_BACK = 0.18;
 
     /**
      * Where the carrying arm's far end is aimed on screen: {@link #ROOT_DROP} gui pixels under the top of the inventory
@@ -329,11 +321,11 @@ public final class StationView {
      */
     public static final int ROOT_INSET = 34, ROOT_DROP = 24;
     /**
-     * A station's arm may be drawn this much larger than its usual fist to reach the strip. A bench never needs it in a
-     * usual window. A brewing stand does at a small GUI (its view opens to the widest there, and the strip's line of
-     * sight falls almost under the eye): its arm is then about the size of your own, a fist a quarter of a block across.
+     * In a window too small for its own arm to end under the strip, a station's arm may be drawn this much larger, whole
+     * (never longer for its width). Where even that is too short, the scene has no arm at all: a cut end in the view is
+     * worse than no hand.
      */
-    public static final double GROW_MOST = 1.6;
+    public static final double GROW_MOST = 1.25;
 
     /** The screen x the far end of an arm is aimed at, for a hand of this {@code side} holding at screen x {@code sx}. */
     private static double rootX(Layout l, double sx, int side) {
@@ -362,11 +354,10 @@ public final class StationView {
      * the layout (no clock, no speed, nothing remembered: held still, it is still; moved, it moves without a jump). It
      * takes the shortest line from the stack to the line of sight through a point under the strip, so on screen it runs
      * from the fist to under the strip in any window, layout or station, and in the world it lies back toward you.
-     * Into {@code out}: the fist's middle [0..2], a unit vector along the arm from the fist back toward you [3..5], how
-     * much longer than its model it is drawn [6] ({@code 1} to {@link #STRETCH_MOST}, found exactly), and its drawn
-     * length back from the fist's middle [7]. {@code model}: the arm's own length at the size it is drawn (world
-     * blocks, the fist's middle to its far end); {@code back}: how far short of the stack the fist's middle sits.
-     * {@code t}: three numbers of scratch.
+     * Into {@code out}: the fist's middle [0..2], a unit vector along the arm from the fist back toward you [3..5], 1
+     * [6] (the arm is never drawn longer than it is) and its length back from the fist's middle [7]. {@code model}:
+     * the arm's own length at the size it is drawn (world blocks, the fist's middle to its far end); {@code back}: how
+     * far short of the stack the fist's middle sits. {@code t}: three numbers of scratch.
      */
     public static void armTo(double hx, double hy, double hz, int side, double model, double back, Layout l, double ex, double ey, double ez,
                              Quaternionfc rot, float fov, float aspect, int guiW, int guiH, double[] out, double[] t) {
@@ -389,16 +380,15 @@ public final class StationView {
         out[0] = hx + out[3] * back;
         out[1] = hy + out[4] * back;
         out[2] = hz + out[5] * back;
-        double stretch = Mth.clamp((len - back) / model, 1, STRETCH_MOST);
-        out[6] = stretch;
-        out[7] = model * stretch;
+        out[6] = 1;
+        out[7] = model;
     }
 
     /**
-     * How much larger than a fist of {@link #FIST_SQUARES} a station's arms are drawn in this view so the longest reach
-     * (to its farthest slot, by either hand) still ends under the strip: 1 in every usual window, up to
-     * {@link #GROW_MOST} in one too small for it. One number for the whole scene. {@code model}, {@code back}: the
-     * arm's own length and the fist's place short of the stack at a fist of {@link #FIST_SQUARES}.
+     * How much larger than its own size a station's arm must be drawn in this view for the longest reach (to its
+     * farthest slot, by either hand) to end under the strip: 1 or less in every usual window (it is then drawn at its
+     * own size); over {@link #GROW_MOST}, the scene has no arm. One number for the whole scene. {@code model},
+     * {@code back}: the arm's own length and the fist's place short of the stack, at its own size.
      */
     public static double armGrow(Station s, double model, double back, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov,
                                  float aspect, int guiW, int guiH, double[] p, double[] t) {
@@ -408,7 +398,7 @@ public final class StationView {
             double hy = p[1] + (s.kind().upright ? 0 : HOVER);
             for (int side = -1; side <= 1; side += 2) need = Math.max(need, toRootLine(p[0], hy, p[2], side, l, ex, ey, ez, rot, fov, aspect, guiW, guiH, t));
         }
-        return Mth.clamp(need / (model * STRETCH_MOST + back), 1, GROW_MOST);
+        return need / (model + back);
     }
 
     /** A point of the screen the arm's far end may be at: under the strip, or off the frame. */

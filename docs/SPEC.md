@@ -24257,20 +24257,26 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   posed, from the same frame's pointer), and the world draws it exactly when the screen stops drawing the pointer's
   icon (`StationHands.carrying`, one answer for both: it was drawn twice for two frames on the way in). It rolled up
   to 14 degrees with the pointer's speed: gone.
-- **The arm** is one straight vanilla arm (`Rig.worldArms`), and **a pure function of where the stack is held, the
-  view and the layout** (`StationView.armTo`): no clock, no speed, nothing remembered. The fist's middle sits
-  `HAND_BACK` 0.11 short of the stack. The arm takes the shortest line from the stack to the line of sight through a
-  point under the strip (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side
-  of the stack): so on screen it always runs from the fist to under the strip, in any window, layout or station, and
-  in the world it lies back toward you across the table. It is drawn 1 to 1.8 times its model's length
-  (`Rig.armStretch`), found exactly, at a fist 0.8 of a grid square across (times `StationView.armGrow`, one number
-  for the scene: 1 at a bench in every usual window, his narrow room beside JEI's panels included; about 1.5 at a
-  brewing stand at his GUI size, whose view opens to the widest there; 1.6 at most),
-  each arm at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid (0.95),
-  so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
-  **What trembled:** the arm's line leaned by up to 0.08 against the pointer's speed, a speed taken a frame at a time
-  from a real mouse (noise, times a lever of half an arm); its length was searched in twentieths, so it grew and shrank
-  in steps as the pointer moved; and the hand pass had vanilla's sway in it (below).
+- **The arm is your own arm**: one straight vanilla arm (`Rig.worldArms`) at its own size and its own proportions (a
+  fist a quarter of a block across, the arm three times that), **never drawn longer than it is**. Two builds drew a
+  small fist (0.8 of a grid square) on an arm up to 1.8 times its length so it would reach the strip; played, the arms
+  were "way too stretched and don't look like the actual arms anymore" (Euan, 11 Nov). A real fist is 4 texels and a
+  grid square is 3 apart, so the hand is a square and a third across: what lies under it shows through (below).
+- **Its pose is a pure function of where the stack is held, the view and the layout** (`StationView.armTo`): no
+  clock, no speed, nothing remembered. The fist's middle sits `HAND_BACK` 0.18 short of the stack (the stack is at its
+  fingers). The arm takes the shortest line from the stack to the line of sight through a point under the strip
+  (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side of the stack): so on
+  screen it runs from the fist to under the strip, and in the world it lies back toward you across the table. At his
+  window (427 by 240 GUI, with or without JEI's panels) a table's farthest reach needs 0.98 of the arm's own length:
+  it is drawn at its own size. In a window too small for that the whole arm is drawn larger, up to 1.25
+  (`StationView.armGrow`, one number for the scene); where even that is too short the scene has **no arm** (a cut end
+  in the view is worse than no hand): the brewing stand at his GUI size, whose view opens to the widest there. Each
+  arm is drawn at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid
+  (0.95), so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
+  **What trembled in the arm itself:** its line leaned by up to 0.08 against the pointer's speed, a speed taken a
+  frame at a time from a real mouse (noise, times a lever of half an arm); its length was searched in twentieths, so
+  it grew and shrank in steps as the pointer moved; and the hand pass had vanilla's sway in it (below). The largest
+  cause was the view itself (below).
 - **In and out:** the hand comes in along its own line from under the strip and goes back the same way (a 45 ms ease
   for a stack, a sine for a pass); set down, hand and stack dip 0.045 and come back over 150 ms; picked up, the stack
   rises 0.03 over 140 ms. Nothing fades and nothing rests. When the screen shuts the hands are gone with it.
@@ -24296,11 +24302,11 @@ doesn't really look natural"). What that build did wrong is said with each rule.
 - **Nothing hidden:** a square whose middle is under the sleeve (`StationView.sleeveOver`) shows its stack on a small
   plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm.
 - Tests: `stations_hand_never_hides` (every scene, every slot, eight window sizes, with and without side panels, either
-  hand: the stretch is 1 to 1.8 and the arm's far end is under the strip or off the frame; at his window, 427 by 240,
-  the arms never need their largest size; on a table the arm never lies over the result and no square farther than
-  the stack is under the sleeve) and `stations_hand_steady` (the same held place gives the same arm whatever was asked before; as
-  the held place crosses a station in 400 steps the arm's length, its line and its far end on screen each change a
-  little at every step, never by a jump). On film: the pilot's `handslog on` writes a line a frame of where each arm
+  hand: the arm is never longer than it is and its far end is under the strip or off the frame; at his window, 427 by
+  240, every bench and the furnace have their arm and a table's is at its own size; on a table the arm never lies
+  over the result and no square farther than the stack is under the sleeve) and `stations_hand_steady` (the same held
+  place gives the same arm whatever was asked before; as the held place crosses a station in 400 steps the arm keeps
+  its length while its line and its far end on screen change a little at every step, never by a jump). On film: the pilot's `handslog on` writes a line a frame of where each arm
   was drawn (`anims.client.HandsLog`); `tools/autopilot/hands-smooth.txt` holds a stack still in each scene and sweeps
   the pointer across one.
 

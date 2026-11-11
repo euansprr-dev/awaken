@@ -231,11 +231,12 @@ public final class StationTests {
     }
 
     /**
-     * The carrying hand (SPEC §65.2), in every scene: with a stack held over any slot, at eight window sizes, with and
-     * without side panels and for either hand, the arm's far end is under the inventory strip or off the frame (no cut
-     * end in view) and it is drawn 1 to 1.8 times its length. At his own window the arms never need their largest size.
-     * On a table the arm never lies over the result and no square farther from you than the stack is under the sleeve
-     * (what is under it is shown through it).
+     * The carrying hand (SPEC §65.2), in every scene: your own arm at its own size, never drawn longer than it is. With
+     * a stack held over any slot, at eight window sizes, with and without side panels and for either hand, the arm's
+     * far end is under the inventory strip or off the frame (no cut end in view); where a window is too small for that
+     * even at the arm's largest, the scene has no arm. At his own window every bench and the furnace have their arm,
+     * and a table's is at its own size. On a table the arm never lies over the result and no square farther from you
+     * than the stack is under the sleeve (what is under it is shown through it).
      */
     static void handNeverHides(GameTestHelper h) {
         float[] view = new float[3];
@@ -246,29 +247,30 @@ public final class StationTests {
         sizes[SCREENS.length] = HIS;
         for (StationView.Kind kind : SCENES) {
             StationView.Station s = new StationView.Station(TABLE, kind, 0, 1);
-            double scale = kind.upright ? StationView.FIST / StationView.FURNACE_FIST : StationView.FIST / (StationView.FIST_SQUARES * StationView.CELL);
             for (int[] scr : sizes) {
                 int w = scr[0], gh = scr[1];
                 float aspect = (float) w / gh;
                 for (boolean sides : new boolean[]{true, false}) {
                     StationView.Layout l = StationView.layout(w, gh, sides ? 3 : 2, sides);
                     float fov = sceneView(s, l, w, gh, eye, rot, view);
-                    double back0 = kind.upright ? 0.13 : StationView.HAND_BACK;
-                    double grow = StationView.armGrow(s, StationView.ARM_BACK / scale, back0, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp);
-                    double model = StationView.ARM_BACK / scale * grow, half = StationView.FIST / 2 / scale * grow, back = back0 * grow;
+                    double grow = StationView.armGrow(s, StationView.ARM_BACK, StationView.HAND_BACK, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp);
                     String where = kind + " at " + w + "x" + gh + (sides ? " with side panels" : "");
-                    if (scr == HIS) h.assertTrue(grow < StationView.GROW_MOST - 1e-6, "at his window the arms reach the strip without their largest size, " + where + " (" + grow + ")");
+                    if (scr == HIS && kind != StationView.Kind.BREWING) {
+                        h.assertTrue(grow <= StationView.GROW_MOST, "at his window the scene has its arm, " + where + " (it would need " + grow + " times its size)");
+                    }
+                    if (scr == HIS && kind == StationView.Kind.TABLE) h.assertTrue(grow <= 1.02, "at his window a table's arm is at its own size, " + where + " (" + grow + ")");
+                    if (grow > StationView.GROW_MOST) continue; // no arm in this scene at this window
+                    double size = Math.max(1, grow), model = StationView.ARM_BACK * size, half = StationView.FIST / 2 * size, back = StationView.HAND_BACK * size;
                     for (int side = -1; side <= 1; side += 2) {
                         for (int i = 0; i < kind.slots; i++) {
                             String at = "slot " + i + ", " + where + (side > 0 ? ", right hand" : ", left hand");
                             held(s, i, p);
                             StationView.armTo(p[0], p[1], p[2], side, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, arm, tmp);
-                            h.assertTrue(arm[6] >= 1 && arm[6] <= StationView.STRETCH_MOST + 1e-6, "the arm is drawn 1 to " + StationView.STRETCH_MOST + " times its length, " + at);
+                            h.assertTrue(arm[6] == 1 && Math.abs(arm[7] - model) < 1e-9, "the arm is never drawn longer than it is, " + at);
                             boolean seen = StationView.project(arm[0] + arm[3] * arm[7], arm[1] + arm[4] * arm[7], arm[2] + arm[5] * arm[7], eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, q);
-                            // (a window too small for it: the arms are at their largest and the far end is as near the strip as it gets)
-                            h.assertTrue(!seen || StationView.hidden(l, q[0], q[1], w, gh) || grow >= StationView.GROW_MOST - 1e-6 && scr != HIS,
+                            h.assertTrue(!seen || StationView.hidden(l, q[0], q[1], w, gh),
                                     "the arm's far end is under the strip or off the frame, " + at + " (at " + Math.round(q[0]) + "," + Math.round(q[1])
-                                            + ", strip " + l.px0() + ".." + l.px1() + " from " + l.py0() + ", grow " + grow + ")");
+                                            + ", strip " + l.px0() + ".." + l.px1() + " from " + l.py0() + ", size " + size + ")");
                             if (kind != StationView.Kind.TABLE) continue;
                             int row = i == 0 ? 1 : (i - 1) / 3, under = 0;
                             for (int o = 0; o < 10; o++) {
@@ -283,16 +285,16 @@ public final class StationTests {
                 }
             }
         }
-        h.assertTrue(most <= 3, "at most three squares are ever under the sleeve (" + most + ")");
+        h.assertTrue(most <= 4, "at most four squares are ever under the sleeve (" + most + ")");
         h.succeed();
     }
 
     /**
      * Held still, a hand is still; moved, it moves without steps (SPEC §65.2, after the trembling hands of 11 Nov). The
      * arm is a pure function of where the stack is held: the same place gives the same arm whatever was asked before,
-     * and as the held place crosses a station in 400 small steps the far end's place on screen, the arm's line and its
-     * stretch each change by a little at every step, never by a jump (its length moved in twentieths before, and its
-     * line swung with the pointer's speed).
+     * and as the held place crosses a station in 400 small steps the arm keeps its length while its line and its far
+     * end's place on screen change by a little at every step, never by a jump (its length moved in twentieths before,
+     * and its line swung with the pointer's speed).
      */
     static void handSteady(GameTestHelper h) {
         float[] view = new float[3];
@@ -302,13 +304,11 @@ public final class StationTests {
         float aspect = (float) w / gh;
         for (StationView.Kind kind : SCENES) {
             StationView.Station s = new StationView.Station(TABLE, kind, 0, 1);
-            double scale = kind.upright ? StationView.FIST / StationView.FURNACE_FIST : StationView.FIST / (StationView.FIST_SQUARES * StationView.CELL);
             for (boolean sides : new boolean[]{true, false}) {
                 StationView.Layout l = StationView.layout(w, gh, sides ? 3 : 2, sides);
                 float fov = sceneView(s, l, w, gh, eye, rot, view);
-                double back0 = kind.upright ? 0.13 : StationView.HAND_BACK;
-                double grow = StationView.armGrow(s, StationView.ARM_BACK / scale, back0, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp);
-                double model = StationView.ARM_BACK / scale * grow, back = back0 * grow;
+                double size = Mth.clamp(StationView.armGrow(s, StationView.ARM_BACK, StationView.HAND_BACK, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp), 1, StationView.GROW_MOST);
+                double model = StationView.ARM_BACK * size, back = StationView.HAND_BACK * size;
                 String where = kind + (sides ? " with side panels" : "");
                 // the same place, asked twice with another between: the same arm
                 held(s, 0, p);
@@ -334,7 +334,7 @@ public final class StationTests {
                         if (step > 0) {
                             double turn = Math.toDegrees(Math.acos(Mth.clamp(arm[3] * was[3] + arm[4] * was[4] + arm[5] * was[5], -1, 1)));
                             String at = where + ", step " + step + (side > 0 ? ", right hand" : ", left hand");
-                            h.assertTrue(Math.abs(arm[6] - was[6]) < 0.03, "the arm's length changes a little at a time, " + at + " (" + was[6] + " to " + arm[6] + ")");
+                            h.assertTrue(arm[6] == 1 && arm[7] == was[7], "the arm's length never changes, " + at + " (" + was[7] + " to " + arm[7] + ")");
                             h.assertTrue(turn < 1.5, "the arm's line turns a little at a time, " + at + " (" + turn + " degrees)");
                             if (seen && q0[0] == q0[0]) {
                                 h.assertTrue(Math.hypot(q[0] - q0[0], q[1] - q0[1]) < 4, "the arm's far end moves a little at a time on screen, " + at

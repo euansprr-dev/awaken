@@ -19,8 +19,9 @@ import net.minecraft.world.phys.Vec3;
  * inventory strip and goes back the same way; resting, there is no hand in the view at all (a resting arm seen from a
  * station's own view is its cut end and its back).
  * <p>
- * <b>Held still, it is still.</b> An arm's pose is a pure function of where the stack is held, the view and the layout
- * ({@link StationView#armTo}): no speed of the pointer, no remembered place, no length that moves in steps. The only
+ * <b>It is your own arm.</b> A vanilla arm at its own size and its own proportions, never drawn longer than it is.
+ * <b>Held still, it is still.</b> Its pose is a pure function of where the stack is held, the view and the layout
+ * ({@link StationView#armTo}): no speed of the pointer, no remembered place, no length that changes. The only
  * things that move a hand over time are three short eases kept in whole nanoseconds (in under a stack, a dip as it is
  * set down, a pass). The pointer and your clicks decide everything; nothing the server sends moves a hand.
  */
@@ -80,9 +81,6 @@ final class StationHands {
                 guiW, guiH, P, Q);
     }
 
-    /** World blocks to the arm's own, so a fist reads FIST_SQUARES of a square across. */
-    static final double ARM_SCALE = StationView.FIST / (StationView.FIST_SQUARES * StationView.CELL);
-
     /** A stack set down: the hand dips this far and comes back over this long; picked up, it rises from this far under. */
     private static final double DIP = 0.045, LIFT = 0.03;
     private static final long DIP_NS = 150_000_000L, LIFT_NS = 140_000_000L, PASS_NS = 190_000_000L;
@@ -101,7 +99,7 @@ final class StationHands {
     /** How far the main hand is in under the stack (0 out of the view, 1 the stack is in it), and whether it holds one now. */
     private static double carry;
     private static boolean carrying;
-    /** How much larger than a fist of 0.8 of a square this scene's arms are (one number for the scene, {@link StationView#armGrow}). */
+    /** How much larger than its own size this scene's arm would have to be to end under the strip ({@link StationView#armGrow}). */
     private static double grow = 1;
     private static StationView.@org.jspecify.annotations.Nullable Layout layout;
     /** Where the stack is held (world); an arm ({@link StationView#armTo}'s eight numbers); scratch. */
@@ -233,13 +231,16 @@ final class StationHands {
         HandsLog.scene(s.kind().name());
         if (lay == null || screen == null) return w > 0.01F;
 
-        // the arms: world arms at the station's own scale, one size for the whole scene (found once the view is home)
+        // the arms: your own arm at its own size, never drawn longer than it is; larger, whole, only in a window too
+        // small for it to end under the strip (one number for the scene, found once the view is home), and no arm at all
+        // where even that is too short
         float hand = StationClient.ownsCamera() ? mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.hudFov : 70F;
         double lens = cam.getFov() <= 1F ? 1 : Math.tan(Math.toRadians(hand) / 2) / Math.tan(Math.toRadians(cam.getFov()) / 2);
-        double scale = upright ? StationView.FIST / StationView.FURNACE_FIST : ARM_SCALE;
-        double reach = upright ? 0.13 : StationView.HAND_BACK;
-        if (w >= 0.999F) grow = StationView.armGrow(s, StationView.ARM_BACK / scale, reach, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P, T);
-        double model = StationView.ARM_BACK / scale * grow, fist = StationView.FIST / scale * grow;
+        if (w >= 0.999F) {
+            grow = StationView.armGrow(s, StationView.ARM_BACK, StationView.HAND_BACK, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, P, T);
+        }
+        if (grow > StationView.GROW_MOST) return w > 0.01F;
+        double size = Math.max(1, grow), model = StationView.ARM_BACK * size, fist = StationView.FIST * size, reach = StationView.HAND_BACK * size;
         double c = smooth(carry);
         for (int h = 0; h < 2; h++) {
             int side = h == 0 ? 1 : -1;
@@ -263,14 +264,14 @@ final class StationHands {
                 }
             }
             if (out <= 0.004) continue;
-            StationView.armTo(tx, ty, tz, side, model, reach * grow, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, ARM, T);
+            StationView.armTo(tx, ty, tz, side, model, reach, lay, eye.x, eye.y, eye.z, cam.rotation(), cam.getFov(), aspect, gw, gh, ARM, T);
             // in and out along its own line: from under the strip to where it works
             double back = (1 - out) * (ARM[7] + 0.06);
             double fxw = ARM[0] + ARM[3] * back, fyw = ARM[1] + ARM[4] * back, fzw = ARM[2] + ARM[5] * back;
             double dw = Math.sqrt((fxw - eye.x) * (fxw - eye.x) + (fyw - eye.y) * (fyw - eye.y) + (fzw - eye.z) * (fzw - eye.z));
             rig.armDistance[h] = (float) (StationView.FIST * dw / (fist * Math.max(0.05, lens)));
             if (rig.handDistance == 0) rig.handDistance = rig.armDistance[h];
-            rig.armStretch[h] = (float) ARM[6];
+            rig.armStretch[h] = 1F;
             rig.limb(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, fxw + ARM[3], fyw + ARM[4], fzw + ARM[5], fxw, fyw, fzw, 0, 1, 0, 1F);
             HandsLog.arm(h, fxw, fyw, fzw, ARM[3], ARM[4], ARM[5], ARM[6], out);
             if (side == main && carrying && c > 0.5) {
@@ -292,7 +293,7 @@ final class StationHands {
         return w > 0.01F;
     }
 
-    /** This scene's arm size against a fist of 0.8 of a square (for the pose log). */
+    /** This scene's arm size against its own (for the pose log). */
     static double grow() {
         return grow;
     }
