@@ -22113,13 +22113,15 @@ grey only where it is too steep to lie, along the middle of the road and on what
 monks' old walls: cut stone, a dark course every eighth row, ice hanging down it in falls two blocks wide, snow
 clinging in patches; a crevasse's walls are ice lit from inside. Water is ice: the lake is swept bare in lanes, snow
 lying in swells between, here and there a light under it, its bed dark so it looks deep; the road crosses it flush,
-butter lamps on red posts either side all the way. Masts of prayer flags stand off the road, a chorten at every other
-den and a few on the benches, ice crystals where the wind leaves them. The Lord's door is a wall of ice. Its hall
+butter lamps on red posts either side all the way. Masts of prayer flags stand off the road (two red poles, the strings
+of flags between them one over another), a chorten at every other den and a few on the benches, ice crystals where the
+wind leaves them. Nothing hangs: the checks' table of kinds counts the theme's hanging blocks (flags, icicles) as things
+that stand, so a flag rests on a wall's top or on the string under it, and there are no icicles under the eaves yet. The Lord's door is a wall of ice. Its hall
 (`Dzong`) is the one thing still whole: the Lord's court in front, a round floor inside a low white wall with twelve
-piers, a lamp on each, a gate under a red beam hung with flags; behind it the keep in three tiers, 73, 53 and 31
+piers, a lamp on each and flags strung from pier to pier, a gate under a red beam; behind it the keep in three tiers, 73, 53 and 31
 blocks wide, each set back from the one under it, every wall leaning in a block in ten, a foot of the old stone, white
 above with windows two rows high, a red storey under each eave with a lamp in most of its windows, a dark eave a block
-proud all round with ice under it and snow on the terrace over it, a turret on each front corner of the first
+proud all round and snow on the terrace over it, a turret on each front corner of the first
 terrace, a dark roof stepping in to a ridge 90 blocks over the court, and a lamp on the ridge. The Hush Tarn's hour
 is the first light of a clear winter morning: the sun at 292, a cold white light (#eef6ff), `sky_color` #5e9fe6,
 `fog_color` #dcecff, a cold grade (warmth -0.22, deep blue shadows under faintly gold highlights), block light a warm

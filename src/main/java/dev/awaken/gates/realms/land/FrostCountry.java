@@ -172,7 +172,7 @@ public final class FrostCountry extends GeneratedLand {
             side = -side;
             if (at == null) continue;
             int gy = ground(at[0], at[1]);
-            if (gy < WATER || Math.abs(gy + 1 - way.get(i)[2]) > 3 || wayDist(at[0], at[1]) < 3.8) continue;
+            if (gy < WATER || Math.abs(gy + 1 - way.get(i)[2]) > 3 || wayDist(at[0], at[1]) < 3.8 || Math.hypot(at[0] - mouth().x(), at[1] - mouth().z()) < 15) continue;
             maybe(new LandPieces.LampPost(at[0], at[1], 2 + r.nextInt(2), this));
         }
         for (int i = 24; i + 3 < way.size(); i += 30 + r.nextInt(12)) {
@@ -202,7 +202,7 @@ public final class FrostCountry extends GeneratedLand {
         Own o = own();
         if (s.wet) {
             double lie = s.drift * 0.9 + s.patch * 0.6;
-            if (lie > 0.12) v.set(s.x, y, s.z, o.layers(1 + (int) ((lie - 0.12) * 7)));
+            if (lie > -0.12) v.set(s.x, y, s.z, o.layers(1 + (int) ((lie + 0.12) * 6)));
             else if (N.rnd(Math.floorDiv(s.x, 9), Math.floorDiv(s.z, 9), seed + 51) < 0.08 && s.roll < 0.45) v.set(s.x, y - 1, s.z, o.iceLit);
             else if (s.roll > 0.985) v.set(s.x, y, s.z, o.chips);
             return;
@@ -218,7 +218,7 @@ public final class FrostCountry extends GeneratedLand {
         } else if (V.holds(on) && s.roll > 0.95) v.set(s.x, y, s.z, o.chips);
     }
 
-    /** A mast of prayer flags: a red pole, an arm at its head, the flags hanging in a string under the arm. */
+    /** A mast of prayer flags: two red poles on a foot of the old stone, the flags strung between them one string over another. */
     static final class Mast extends Piece<Kit> {
         final int x, gy, z, h;
         final boolean alongX;
@@ -237,16 +237,13 @@ public final class FrostCountry extends GeneratedLand {
         @Override
         public void draw(V v, Kit m) {
             Own o = own();
-            v.foot(x, gy, z, o.stone);
-            v.set(x, gy + 1, z, o.stone);
-            for (int y = gy + 2; y <= gy + h; y++) v.set(x, y, z, o.timber);
-            BlockState arm = alongX ? o.beam : o.timber.setValue(BlockStateProperties.AXIS, Direction.Axis.Z);
-            for (int k = -2; k <= 2; k++) {
-                if (k == 0) continue;
+            for (int k = -1; k <= 1; k++) {
                 int ax = alongX ? x + k : x, az = alongX ? z : z + k;
-                v.set(ax, gy + h, az, arm);
-                v.set(ax, gy + h - 1, az, o.flags);
-                if (Math.abs(k) == 1) v.set(ax, gy + h - 2, az, o.flags);
+                v.foot(ax, gy, az, o.stone);
+                v.set(ax, gy + 1, az, o.stone);
+                // a flag is a thing that stands: each string of them rests on the one under it
+                for (int y = gy + 2; y <= gy + h; y++) if (k != 0) v.set(ax, y, az, o.timber);
+                else if (y < gy + h) v.set(ax, y, az, o.flags);
             }
         }
     }
@@ -372,17 +369,12 @@ public final class FrostCountry extends GeneratedLand {
             BlockState below = null, cur = cell(o, dx, dz, 0);
             if (cur != null) v.foot(x, feet - 1, z, o.stone);
             for (int k = 0; k <= TOP + 1; k++) {
-                BlockState next = cell(o, dx, dz, k + 1);
+                BlockState next = k < TOP ? cell(o, dx, dz, k + 1) : null;
                 int y = feet + k;
                 if (cur != null) v.set(x, y, z, cur);
                 else if (below != null && below != o.lamp) {
                     // snow lies on every terrace, roof and sill
                     if (k >= 20 && v.get(x, y, z) == null) v.set(x, y, z, o.layers(2 + (int) (N.rnd(x, z, salt + k) * 3)));
-                } else if (below == null && next == o.tiles && (k == 28 || k == 54 || k == 78 || k == 79) && v.get(x, y, z) == null) {
-                    // under the eaves: flags along the front, ice everywhere else
-                    boolean front = dz - MID_Z[k < 30 ? 0 : k < 56 ? 1 : 2] > 0 && k != 79;
-                    if (front && Math.floorMod(dx, 2) == 0) v.set(x, y, z, o.flags);
-                    else if (N.rnd(x, z, salt + 3 + k) < 0.4) v.set(x, y, z, o.icicles);
                 }
                 below = cur;
                 cur = next;
@@ -407,7 +399,6 @@ public final class FrostCountry extends GeneratedLand {
                     for (int k = 0; k <= 10; k++) v.set(x, feet + k, z, k <= 1 ? o.stone : k <= 8 ? o.plaster : k == 9 ? o.timber : o.tiles);
                     v.set(x, feet + 11, z, ex == 4 && line ? o.lamp : o.layers(2));
                 } else if (line) {
-                    v.set(x, feet + 7, z, o.flags);
                     v.set(x, feet + 8, z, o.beam);
                     v.set(x, feet + 9, z, o.beam);
                     v.set(x, feet + 10, z, o.tiles);
@@ -425,8 +416,9 @@ public final class FrostCountry extends GeneratedLand {
                 boolean heart = alongWall > edge - 0.55 && Math.abs(far - (radius + 1.3)) < 0.55;
                 v.set(x, feet + 8, z, heart ? o.lamp : o.layers(1 + (int) (N.rnd(x, z, salt + 4) * 3)));
             } else {
+                // (the checks count a flag as a thing that stands, so the strings of them run along the wall's top from pier to pier)
                 for (int k = 0; k <= 4; k++) v.set(x, feet + k, z, k == 0 ? o.stone : k <= 3 ? o.plaster : o.tiles);
-                v.set(x, feet + 5, z, o.layers(1 + (int) (N.rnd(x, z, salt + 4) * 3)));
+                v.set(x, feet + 5, z, o.flags);
             }
         }
 
