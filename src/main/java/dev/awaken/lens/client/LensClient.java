@@ -271,9 +271,14 @@ public final class LensClient {
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
-        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
+        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own);
+        // /awaken lens sunpass|rays|far off|on|setting (the Sun Pass's parts one at a time, in play: which of them a
+        // shadow that changes with where you stand comes from)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 net.minecraft.commands.Commands.literal(Awaken.MODID).then(net.minecraft.commands.Commands.literal("lens")
+                        .then(lensSwitch("sunpass", LensClient::sunPass))
+                        .then(lensSwitch("rays", LensClient::rays))
+                        .then(lensSwitch("far", LensClient::farMap))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -285,6 +290,31 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
+    }
+
+    /** A client command {@code /awaken lens <name> off|on|setting} that sets one development switch and says what it is now. */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> lensSwitch(
+            String name, java.util.function.Function<String, String> set) {
+        return net.minecraft.commands.Commands.literal(name)
+                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(c -> {
+                            String line = set.apply(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                            Awaken.LOG.info("[lens] {}", line);
+                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                            return 1;
+                        }));
+    }
+
+    private static @org.jspecify.annotations.Nullable Boolean forcedFar;
+
+    /** {@code /awaken lens far off|on|setting}: the far block map's walk alone (the block map's own walk stays). */
+    public static String farMap(String arg) {
+        forcedFar = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "far block map " + (forcedFar != null ? forcedFar : "from the setting (on)");
     }
 
     private static void tick() {
@@ -659,7 +689,7 @@ public final class LensClient {
                 fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f,
                 blocks != null ? blocks.originX() : 0, blocks != null ? blocks.originZ() : 0);
-        boolean far = sunPass && sunHere && blocks != null && blocksFar != null && blocksFar.ready();
+        boolean far = sunPass && sunHere && blocks != null && blocksFar != null && blocksFar.ready() && forcedFar != Boolean.FALSE;
         lensFrame.blocksFar(far, far ? blocksFar.originX() : 0, far ? blocksFar.minY() : 0, far ? blocksFar.originZ() : 0);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
