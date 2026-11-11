@@ -32,8 +32,11 @@ wrote your brief, will look at your pictures and will merge your branch. `README
   EnterWorktree. Push your branch to `euansprr-dev/awaken` as often as you like; never force-push; never push or merge
   `build/awaken-v1`; never merge another builder's branch.
 - **Files.** Touch what your brief lists as yours. Shared one-line files only where your brief says, fewest lines. If something
-  else needs changing, say so in the hand-back. Never edit `realms/land/AmberReach.java`; Amber Reach's golden hashes must not
-  change (seed 1 `50cc4328`, 2 `8947ec1e`, 3 `bc407d30`; the bench prints `volume:`).
+  else needs changing, say so in the hand-back. Never edit `realms/land/AmberReach.java`, and do not change
+  how the kit paints what it uses: Amber Reach's golden hashes must not change. They are the preview's (`tools/preview/preview.sh`,
+  `volume.sha`: seed 1 `50cc4328`, 2 `8947ec1e`, 3 `bc407d30`), not the bench's `volume:` line, and Amber Reach is too big for the
+  bench on GitHub (its scan runs out of memory there and then reports sites it could not walk to). Do not bench it on GitHub;
+  the suite's own `realm_amber_*` tests guard it when the manager runs them.
 - **APIs.** Minecraft 26.3 on NeoForge 26.3.0.95 is not 1.21. Before any Minecraft or NeoForge call you have not just seen used in
   this repo, check `docs/api/` and grep `/Volumes/MEDIA/Awaken/.ref/src`, `.ref/neo`, `.ref/assets`. Never guess a signature.
 - **No sub-agents, no other sessions.** You do the work yourself.

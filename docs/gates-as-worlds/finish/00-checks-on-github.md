@@ -1,5 +1,11 @@
 # Brief 00: checks on GitHub
 
+**Done, 11 Nov, by the gates session** (`tools/check-ci.sh`, hand-start inputs on `.github/workflows/gametests.yml`; a new workflow
+file cannot be started by hand until it is on the default branch, so the existing one was extended). What follows is the brief as
+written. One thing in it is wrong: Amber Reach cannot be benched on GitHub (the float scan runs out of memory on a 7 GB runner),
+and its golden hashes are the preview's, not the bench's. Timing: about eight minutes for a first compile, then about one and a
+half minutes a land and seed.
+
 **Why.** Euan is playing on the Mac and wants all of it: "shouldn't run any tests on this mac locally". Every builder still has to
 know that its code compiles, that nothing floats and that every leg can be reached. Real-game walks already run on GitHub
 (`tools/tour-ci.sh`, `.github/workflows/tours.yml`). The compile, the bench and a single named test do not. You put them there.
