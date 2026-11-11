@@ -3,7 +3,6 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.V;
 import dev.awaken.gates.realms.kit.crawl.CrawlLand;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,8 +28,13 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * down its middle and nothing else to stand on. Under the decks is the casting pit, eighteen down, its floor a crust of
  * slag that glows; nobody reaches it, because the fall catch has them first (and it is deep enough that the catch
  * cannot miss). The first walk of this land (run 43021300881) was a brick passage seven wide with a light of 15 in a
- * hundred: the kind of hallway the new gates exist not to be. The walls are the Stopped Works' own now: courses of
- * brass, furnace mouths over the slag, a pipe run, gauge lights, a roof of plate on brass ribs with lamps let into it.
+ * hundred: the kind of hallway the new gates exist not to be. Its second (run 43027608011) had the Stopped Works' walls
+ * and twice the light, and was still a shaft: flat walls striped with brass every fourth row, nothing in it bigger than
+ * a block. So a hall has its big things now: piers two by two down both walls every eighth cell, an iron beam across
+ * from pier to pier under the roof, press heads hung from the roof over the pit at whatever height each stopped at, and
+ * a casting floor of lit moulds in an iron grid where the slag was. The walls between are calm: brick and iron in
+ * panels, one course of brass in eight, with furnace mouths over the pit, a pipe run, gauge lights, and lamps let into
+ * a ribbed roof.
  *
  * <p>The way on from the second and the third stand is barred until that stand is taken ({@code trial_open_dash},
  * {@code trial_open_slam}); it opens for everyone in the gate, for good.
@@ -39,9 +43,9 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     /** The way in's floor; the level "Through" is on; how far under a hall's first deck its pit lies; how far over its highest its roof. */
     static final int Y = 100, Y2 = Y + 8, DEEP = 18, HEAD = 10;
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
-    /** The casting pit's floor: the Ember Mines' crust, which glows and burns nobody. And the glow over it. */
-    private static final BlockState SLAG = BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("magma_crust")).defaultBlockState(),
-            GLOW = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13);
+    /** The glow over the casting floor, and what a press head is made of (the Gauntlet's own ram). */
+    private static final BlockState GLOW = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13),
+            RAM = dev.awaken.gates.GatesRegistry.PRESS.get().defaultBlockState();
     /** The bars that wait for a stand: a box each, x0 y0 z0 x1 y1 z1. */
     private static final int[] DOOR_DASH = {-4, Y2, -34, 4, Y2 + 5, -34}, DOOR_SLAM = {56, Y2, 7, 56, Y2 + 5, 15};
 
@@ -49,7 +53,10 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     static final class Hall extends Part {
         /** The height of its first deck (what its walls are dressed by), its pit's floor and its roof. */
         final int base, pit, top;
-        final List<int[]> decks = new ArrayList<>(), walls = new ArrayList<>();
+        final List<int[]> decks = new ArrayList<>(), walls = new ArrayList<>(), piers = new ArrayList<>();
+        /** Where a beam crosses from a pier to the one facing it: how far along the hall. */
+        final List<Integer> beams = new ArrayList<>();
+        final boolean alongZ;
 
         Hall(String name, int x0, int z0, int x1, int z1, int base, int rise) {
             this.name = name;
@@ -60,6 +67,27 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
             this.base = base;
             pit = base - DEEP;
             top = base + rise + HEAD;
+            alongZ = z1 - z0 >= x1 - x0;
+        }
+
+        /**
+         * Piers two by two against both long walls every eighth cell, from the casting floor to the roof; none where a
+         * deck comes to the wall. Where both of a pair stand, a beam crosses between them. Call it after the decks.
+         */
+        Hall piers() {
+            for (int a = (alongZ ? z0 : x0) + 4; a + 1 <= (alongZ ? z1 : x1) - 2; a += 8) {
+                int stood = 0;
+                for (int side = 0; side < 2; side++) {
+                    int[] p = alongZ ? new int[]{side == 0 ? x0 : x1 - 1, a, side == 0 ? x0 + 1 : x1, a + 1} : new int[]{a, side == 0 ? z0 : z1 - 1, a + 1, side == 0 ? z0 + 1 : z1};
+                    boolean clear = true;
+                    for (int[] d : decks) if (p[2] >= d[0] - 1 && p[0] <= d[2] + 1 && p[3] >= d[1] - 1 && p[1] <= d[3] + 1) clear = false;
+                    if (!clear) continue;
+                    piers.add(p);
+                    stood++;
+                }
+                if (stood == 2) beams.add(a);
+            }
+            return this;
         }
 
         Hall deck(int dx0, int dz0, int dx1, int dz1, int feet) {
@@ -84,6 +112,7 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         public int feet2(int x, int z) {
             if (x < x0 || x > x1 || z < z0 || z > z1) return NONE;
             for (int[] w : walls) if (x >= w[0] && x <= w[2] && z >= w[1] && z <= w[3]) return NONE;
+            for (int[] w : piers) if (x >= w[0] && x <= w[2] && z >= w[1] && z <= w[3]) return NONE;
             int[] d = deckAt(x, z);
             return (d == null ? pit : d[4]) * 2;
         }
@@ -119,19 +148,19 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         // the way in: a gap of two, a step, a gap of three, all with what anyone has; then the lip of the first gulf, and a
         // deck off it to the east wall, where the first stand's room is
         wayIn = part(new Hall("way_in", -8, -136, 8, -103, Y, 1)
-                .deck(-2, -136, 2, -128, Y).deck(-2, -125, 2, -119, Y).deck(-2, -118, 2, -113, Y + 1).deck(-2, -109, 2, -103, Y + 1).deck(3, -108, 8, -104, Y + 1));
+                .deck(-2, -136, 2, -128, Y).deck(-2, -125, 2, -119, Y).deck(-2, -118, 2, -113, Y + 1).deck(-2, -109, 2, -103, Y + 1).deck(3, -108, 8, -104, Y + 1).piers());
         part(new Tunnel("to_stand1", 8, Y + 1, -106, 14, Y + 1, -106, 2.4, 5, seed + 2));
         part(new Cave("stand1", 19, Y + 1, -106, 6, 6, 7, seed + 3));
         // "Twice": the gulf (six wide, the far side two higher), a step three up, a gap onto a ledge two higher, and a
         // long gap with only a wall beside it
         twice = part(new Hall("twice", -8, -102, 8, -51, Y + 1, 7)
                 .deck(-2, -96, 2, -90, Y + 3).deck(-2, -89, 2, -84, Y + 6).deck(-2, -79, 2, -74, Y + 8).deck(-2, -62, 2, -51, Y + 8)
-                .wall(-3, -74, -3, -62));
+                .wall(-3, -74, -3, -62).piers());
         part(new Cave("stand2", 0, Y2, -44, 7, 7, 7, seed + 4));
         // "Through": a gap of nine; then the way turns east, with a gap of eight just past the turn and a gulf of twelve
         part(new Tunnel("to_through", 0, Y2, -38, 0, Y2, -30, 2.6, 5, seed + 5));
-        through = part(new Hall("through", -8, -30, 8, 19, Y2, 0).deck(-2, -30, 2, -25, Y2).deck(-2, -15, 2, 13, Y2).deck(3, 9, 8, 13, Y2));
-        east = part(new Hall("through_east", 9, 3, 41, 19, Y2, 0).deck(9, 9, 10, 13, Y2).deck(19, 9, 25, 13, Y2).deck(38, 9, 41, 13, Y2));
+        through = part(new Hall("through", -8, -30, 8, 19, Y2, 0).deck(-2, -30, 2, -25, Y2).deck(-2, -15, 2, 13, Y2).deck(3, 9, 8, 13, Y2).piers());
+        east = part(new Hall("through_east", 9, 3, 41, 19, Y2, 0).deck(9, 9, 10, 13, Y2).deck(19, 9, 25, 13, Y2).deck(38, 9, 41, 13, Y2).piers());
         part(new Cave("stand3", 48, Y2, 11, 7, 7, 7, seed + 6));
         part(new Tunnel("to_down", 54, Y2, 11, 62, Y2, 11, 2.6, 5, seed + 7));
         done();
@@ -176,13 +205,12 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
 
     // ---- what the works is made of: the Stopped Works' own walls ----------------------------------------------------------
 
-    /** Courses: a band of brass every fourth, a cog let into it now and then; between them plate in runs of three, iron, panels of copper sheet, a little dark brick. */
+    /** Calm walls: brick and iron in panels five by four, a panel of old copper now and then, and one course of brass in eight. */
     @Override
     protected BlockState rock(StoppedWorks.M m, int x, int y, int z) {
-        if (Math.floorMod(y, 4) == 0) return rnd(Math.floorDiv(x, 2), Math.floorDiv(z, 2), 4101) < 0.12 ? m.gear : m.brass;
-        int off = (int) (rnd(y, 0, 4102) * 3);
-        double n = rnd(Math.floorDiv(x + off, 3) * 31 + Math.floorDiv(z + off, 3), y, 4103);
-        return n < 0.5 ? m.plate : n < 0.68 ? m.iron : n < 0.84 ? m.sheet : n < 0.95 ? m.sheetOld : m.brick;
+        if (Math.floorMod(y, 8) == 4) return m.brass;
+        double n = rnd(Math.floorDiv(x, 5) * 31L + Math.floorDiv(z, 5), Math.floorDiv(y, 4), 4103);
+        return n < 0.55 ? m.brick : n < 0.9 ? m.iron : m.sheetOld;
     }
 
     @Override
@@ -195,7 +223,8 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     protected BlockState floor(StoppedWorks.M m, Part part, int x, int y, int z) {
         if (part instanceof Hall h) {
             int[] d = h.deckAt(x, z);
-            if (d == null) return SLAG;
+            // the casting floor: moulds two by two, still lit, in a grid of iron
+            if (d == null) return Math.floorMod(x, 4) >= 2 && Math.floorMod(z, 4) >= 2 ? m.gauge : m.iron;
             boolean alongZ = d[3] - d[1] >= d[2] - d[0];
             boolean end = alongZ ? z == d[1] || z == d[3] : x == d[0] || x == d[2];
             return end ? m.brass : Math.floorMod(x + z, 5) == 0 ? m.sheetOld : m.plate;
@@ -243,7 +272,41 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         }
     }
 
-    /** Light over every deck and floor every fifth cell, the slag's glow every fourth cell over the pits, and the bars that wait for a stand shut. */
+    /** A hall's big things: its piers in iron with a collar of brass at the decks and under the roof, its beams, and the press heads that stopped where they were. */
+    @Override
+    protected void special(V v, StoppedWorks.M m) {
+        for (Hall h : new Hall[]{wayIn, twice, through, east}) {
+            if (h.x1 < v.x0 - 1 || h.x0 > v.x0 + 16 || h.z1 < v.z0 - 1 || h.z0 > v.z0 + 16) continue;
+            for (int[] p : h.piers) {
+                for (int x = Math.max(p[0], v.x0 - 1); x <= Math.min(p[2], v.x0 + 16); x++) for (int z = Math.max(p[1], v.z0 - 1); z <= Math.min(p[3], v.z0 + 16); z++) {
+                    for (int y = h.pit; y < h.top; y++) v.set(x, y, z, y == h.base - 1 || y == h.top - 1 ? m.brass : m.iron);
+                }
+            }
+            int n = 0;
+            for (int a : h.beams) {
+                // the beam, one under the roof's ribs, from the pier on one side to the pier on the other
+                int by = h.top - 3;
+                for (int c = (h.alongZ ? h.x0 : h.z0) + 2; c <= (h.alongZ ? h.x1 : h.z1) - 2; c++) put(v, h.alongZ ? c : a, by, h.alongZ ? a : c, m.iron);
+                // a press head in the bay past it, over the pit on one side and then the other: a rod from the roof, a head
+                // three by three and two deep, as far down as it had got
+                int side = n++ % 2 == 0 ? 4 : -4, mid = (h.alongZ ? h.x0 + h.x1 : h.z0 + h.z1) / 2 + side, along = a + 4;
+                int drop = 2 + (int) (rnd(a, side, 4110) * 5), hx = h.alongZ ? mid : along, hz = h.alongZ ? along : mid;
+                boolean over = false;
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) over |= h.feet2(hx + dx, hz + dz) != h.pit * 2;
+                if (over) continue;
+                for (int y = h.top - 1; y >= h.top - drop; y--) put(v, hx, y, hz, m.iron);
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 1; dy <= 2; dy++) put(v, hx + dx, h.top - drop - dy, hz + dz, RAM);
+            }
+        }
+    }
+
+    /** Sets a block in this chunk's own air, margin included. */
+    private void put(V v, int x, int y, int z, BlockState s) {
+        if (x < v.x0 - 1 || x > v.x0 + 16 || z < v.z0 - 1 || z > v.z0 + 16) return;
+        if (open(x, y, z) && v.get(x, y, z) == null) v.set(x, y, z, s);
+    }
+
+    /** Light over every deck and floor every fifth cell, the moulds' glow every fourth cell over the casting floor, and the bars that wait for a stand shut. */
     @Override
     protected void finish(V v, StoppedWorks.M m) {
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) {
