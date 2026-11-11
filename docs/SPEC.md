@@ -4339,7 +4339,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  logs the shapes and judges this one. With the island in the bench's model (11 Nov, run 43022550555) the hopping bot
+  still climbs 12 of 12 (in about 28 s, no hard hit) and the key-only bot 5 of 6 (one fell from stone 14), so the
+  island costs the stair a little. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
