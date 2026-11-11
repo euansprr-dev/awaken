@@ -4258,7 +4258,11 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the last 20 s in an airborne Ascent
   state or a Runner move and no block placed), else the line's or the dark's refusal; then Wings (`Ascent.grant`, "sky
   platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`, counter
-  `awaken:ascent_wings_core`. The Horizon's "wings" need is reached by Wings or the rope alone and reads "· needs a rope
+  `awaken:ascent_wings_core`. **A core is never used up** (Euan, 11 Nov 2026, asked whether a second player should
+  have to find a second platform: "let's leave it as is"): the core keeps no record, so every player takes their wings
+  from the same core, each by their own rank and their own climb, and each sees their own case; a partner below the
+  rank is told to come back while the other's case opens (`ascent_sky_rig` holds it with two hunters). The Horizon's
+  "wings" need is reached by Wings or the rope alone and reads "· needs a rope
   or wings". The platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
   that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real

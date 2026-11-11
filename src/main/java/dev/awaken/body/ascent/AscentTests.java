@@ -629,6 +629,24 @@ final class AscentTests {
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower at C gets nothing");
             moved[0] = true;
             h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
+            // the core is never used up (Euan, 11 Nov 2026: two people both take their wings from one core, each by
+            // their own rank and their own climb): a second hunter is asked the rank, then given wings, and the first
+            // keeps theirs
+            net.minecraft.server.level.ServerPlayer second = h.makeMockServerPlayerInLevel();
+            try {
+                AscentMotion m2 = AscentServer.motion(second);
+                for (int i = 0; i < 400; i++) m2.mark(true);
+                h.assertFalse(WingCoreBlockEntity.reached(second, placed.core()) || Ascent.has(second, Ascent.Tier.WINGS),
+                        "a second hunter at E is asked the rank, whoever took wings before");
+                while (dev.awaken.progression.Progression.rank(second).ordinal() < WingCoreBlockEntity.RANK.ordinal()) {
+                    dev.awaken.progression.Progression.passReassessment(second);
+                }
+                h.assertTrue(WingCoreBlockEntity.reached(second, placed.core()) && Ascent.has(second, Ascent.Tier.WINGS),
+                        "a second hunter at C gets wings from the same core");
+                h.assertTrue(Ascent.has(p, Ascent.Tier.WINGS), "and the first keeps theirs");
+            } finally {
+                level.getServer().getPlayerList().remove(second);
+            }
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
