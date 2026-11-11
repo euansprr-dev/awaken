@@ -24,9 +24,10 @@ cmd awaken gate hop
 wait 120
 cmd awaken ascent grant tether
 cmd awaken ascent trial leaper
-wait 320
+# the runner builds a gate slowly: the first try said "Gate 1 is still building" at 320 ticks and the tour shot a forest
+wait 900
 cmd awaken gate enter 1
-wait 200
+wait 300
 cmd awaken gate interior goto rig
 wait 100
 hud off
