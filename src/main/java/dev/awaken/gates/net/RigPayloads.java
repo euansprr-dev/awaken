@@ -115,6 +115,13 @@ public final class RigPayloads {
     public record Run(int phase, int ticks, int ring, int rings, int medal, int par) implements CustomPacketPayload {
         public static final int START = 0, RING = 1, FINISH = 2, STOP = 3;
         public static final int BRONZE = 1, SILVER = 2, GOLD = 3;
+
+        /** A medal against a course's par: gold within 10% (and a second), silver within half again (and two). */
+        public static int medalFor(int ticks, int par) {
+            if (ticks <= par * 1.1 + 20) return GOLD;
+            if (ticks <= par * 1.5 + 40) return SILVER;
+            return BRONZE;
+        }
         public static final Type<Run> TYPE = new Type<>(Awaken.id("gate_rig_run"));
         public static final StreamCodec<ByteBuf, Run> STREAM_CODEC = StreamCodec.of((buf, r) -> {
             ByteBufCodecs.VAR_INT.encode(buf, r.phase);

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Walks a land on foot from where you arrive, with the Lord's door open: a step up, a drop of up to three, room for your head, and swimming across water. Any place the land says
+ * Walks a land on foot from where you arrive, with the Lord's door open: a step up, a drop of up to three (any drop in a land where no fall hurts), room for your head, and swimming across water. Any place the land says
  * is there that the walk can't reach is a mistake in the land (SPEC 50.8). For lands under a roof, where a column's ground can't tell you this.
  */
 public final class WalkCheck {
@@ -150,11 +150,13 @@ public final class WalkCheck {
             for (int[] d : dirs) {
                 int x = p[0] + d[0], z = p[2] + d[1];
                 boolean stepped = false;
-                for (int y = p[1] + 1; y >= p[1] - 4; y--) {
+                // where no fall hurts (a trial's halls), any drop is a way down
+                for (int y = p[1] + 1, low = land.soft() ? Math.max(Y0 + 1, p[1] - 64) : p[1] - 4; y >= low; y--) {
                     boolean stand = (cells.at(x, y - 1, z) || cells.water(x, y - 1, z) || cells.climb(x, y, z)) && !cells.at(x, y, z) && !cells.at(x, y + 1, z);
                     if (stand) {
                         if (seen.add(pack(x, y, z))) q.add(new int[]{x, y, z});
-                        stepped = true;
+                        // a long drop is a way down, not the way on: the jump over it is still tried
+                        stepped = y >= p[1] - 4;
                         break;
                     }
                     if (cells.at(x, y + 1, z) && y <= p[1]) break;

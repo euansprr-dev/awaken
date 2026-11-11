@@ -132,6 +132,7 @@ final class RealmRun {
             }
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
+        RealmTrial.tick(level, p, g, land, ref, st, data, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
         RealmCountry.tick(level, p, g, plan, ref, st, data, lx, lz);
     }
@@ -150,6 +151,7 @@ final class RealmRun {
     /** A server is starting: gate ids begin again in another world, so nothing kept by gate id may be read as this one's. */
     static void reset() {
         RealmCountry.reset();
+        RealmTrial.reset();
     }
 
     /** A den's fight: once its pack is gone it counts as cleared (a way may open on that), and while it's on its doors are shut. */
@@ -262,7 +264,10 @@ final class RealmRun {
                 p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
                 level.playSound(null, at, GatesRegistry.SND_RIG_PIT.get(), SoundSource.PLAYERS, 0.8F, 1F);
                 // a hall that teaches a move takes nothing for a fall and says nothing about it
-                if (c.free()) return;
+                if (c.free()) {
+                    RealmTrial.fell(p, g, land, ref, l);
+                    return;
+                }
                 p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
                 Signal.toast(p, Component.literal("You fell. You're back on the last ledge you stood on."));
             }

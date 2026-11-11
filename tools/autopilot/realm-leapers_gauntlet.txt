@@ -1,6 +1,8 @@
 # The Leaper's Gauntlet as a Realm (SPEC 17.10), walked from the way in: the first gulf from its near lip, the first stand's
-# room, then each crossing of the hall "Twice" from where you stand before it, and the second stand. No fighting, so
-# difficulty is peaceful. Cameras are offsets from the way in (0, 100, -140 in the land's own numbers).
+# room and its press making its stroke, each crossing of the hall "Twice" from where you stand before it, the second stand,
+# "Through" with its presses on their beat, the third stand, "Down" with each thing a slam moves before and after, and
+# the Long Run's three halls, its clock, a ring, the far line and the tally.
+# No fighting, so difficulty is peaceful. Cameras are offsets from the way in (0, 100, -140 in the land's own numbers).
 # (No render-distance knob: at RD=12 three of five walks died as the client changed dimension, a byte copy on a chunk
 # worker into a staging buffer the render thread had just closed. No walk at the default distance has.)
 world autopilot_realm_leapers_gauntlet creative 20261121
@@ -42,10 +44,14 @@ cmd awaken gate realm_at MOUTH 0 4 2 34
 look -90 4
 wait 60
 shot leap_to_the_stand
-cmd awaken gate realm_at MOUTH 0 19 2 34
-look -90 8
+cmd awaken gate realm_at MOUTH 0 15 2 34
+look -90 -8
 wait 60
 shot leap_stand_room
+cmd awaken gate realm_stand double
+wait 9
+shot leap_stand_stroke
+wait 60
 cmd awaken gate realm_at MOUTH 0 0 5 46
 look 0 -6
 wait 60
@@ -62,15 +68,26 @@ cmd awaken gate realm_at MOUTH 0 6 14 60
 look 150 30
 wait 60
 shot leap_twice_from_above
-cmd awaken gate realm_at MOUTH 0 0 10 96
-look 0 6
+cmd awaken gate realm_at MOUTH 0 0 9 90
+look 0 -6
 wait 60
 shot leap_second_stand
 cmd awaken gate realm_stand dash
+wait 60
 cmd awaken gate realm_at MOUTH 0 0 10 111
 look 0 8
 wait 80
 shot leap_through
+cmd awaken gate realm_at MOUTH 0 0 9 127
+look 0 0
+wait 40
+shot leap_presses_a
+wait 23
+shot leap_presses_b
+cmd awaken gate realm_at MOUTH 0 4 13 124
+look 20 28
+wait 40
+shot leap_presses_from_above
 cmd awaken gate realm_at MOUTH 0 0 10 148
 look -90 6
 wait 60
@@ -79,8 +96,105 @@ cmd awaken gate realm_at MOUTH 0 22 10 151
 look -90 6
 wait 60
 shot leap_the_last_gulf
-cmd awaken gate realm_at MOUTH 0 48 10 151
-look -90 8
+cmd awaken gate realm_at MOUTH 0 43 9 151
+look -90 -6
 wait 60
 shot leap_third_stand
+cmd awaken gate realm_stand slam
+wait 60
+cmd awaken gate realm_at MOUTH 0 66 9 151
+look -90 28
+wait 60
+shot leap_gantry
+cmd awaken gate realm_at MOUTH 0 73 3 151
+look -90 20
+wait 40
+shot leap_on_the_cracked_deck
+cmd awaken gate realm_slam
+wait 30
+look -90 0
+wait 20
+shot leap_under_the_deck
+cmd awaken gate realm_at MOUTH 0 90 1 151
+look -90 0
+wait 60
+shot leap_castings
+cmd awaken gate realm_at MOUTH 0 97 0 151
+cmd awaken gate realm_slam
+wait 20
+cmd awaken gate realm_at MOUTH 0 90 1 151
+look -90 0
+wait 40
+shot leap_castings_cleared
+cmd awaken gate realm_at MOUTH 0 106 2 151
+look -90 12
+wait 60
+shot leap_bay_and_ram
+cmd awaken gate realm_at MOUTH 0 111 -4 151
+cmd awaken gate realm_slam
+wait 30
+cmd awaken gate realm_at MOUTH 0 119 1 151
+look -90 0
+wait 40
+shot leap_ram_lifted
+cmd awaken gate realm_at MOUTH 0 131 1 147
+look -25 4
+wait 60
+shot leap_landing
+cmd awaken gate realm_at MOUTH 0 135 1 143
+look 180 4
+wait 80
+shot run_first_hall
+cmd awaken gate realm_at MOUTH 0 135 7 100
+look 180 6
+wait 60
+shot run_ring_and_gap
+cmd awaken gate realm_at MOUTH 0 135 7 82
+look 180 6
+wait 60
+shot run_wall_gap
+cmd awaken gate realm_at MOUTH 0 135 6 34
+look 180 40
+wait 60
+shot run_well
+cmd awaken gate realm_at MOUTH 0 154 -8 32
+look 0 4
+wait 80
+shot run_second_hall
+cmd awaken gate realm_at MOUTH 0 154 -9 49
+look 0 0
+wait 40
+shot run_presses
+cmd awaken gate realm_at MOUTH 0 154 -6 104
+look 0 2
+wait 60
+shot run_castings
+cmd awaken gate realm_at MOUTH 0 154 -6 130
+look 0 40
+wait 60
+shot run_second_well
+cmd awaken gate realm_at MOUTH 0 173 -19 137
+look 180 4
+wait 80
+shot run_third_hall
+# the clock: a step onto the run starts it, a ring is passed, the far line stops it and the tally is shown
+hud on
+cmd awaken gate realm_at MOUTH 0 135 1 137
+look 180 0
+wait 50
+shot run_clock
+cmd awaken gate realm_at MOUTH 0 135 6 100
+wait 30
+shot run_ring_passed
+cmd awaken gate realm_at MOUTH 0 173 -19 62
+look 180 0
+wait 70
+shot run_tally_a
+wait 90
+shot run_tally_b
+hud off
+cmd awaken gate realm_at MOUTH 0 173 -19 55
+look 180 2
+wait 200
+shot run_tally_floor
 quit

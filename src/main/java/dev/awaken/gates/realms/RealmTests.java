@@ -141,6 +141,38 @@ public final class RealmTests {
             if (dashes < 3) h.fail("the hall Through asks for the dash " + dashes + " times");
             if (land.change("trial_open_dash").isEmpty() || land.change("trial_open_slam").isEmpty()) h.fail("a stand's bars are not there to open");
             for (Land.Course c : land.courses()) if (!c.free()) h.fail("a fall in " + c.leg() + " costs something");
+            if (!land.soft()) h.fail("a fall in the trial's land hurts");
+            // three stands, each with its press over it; what a slam moves is there to move; a place for every use the plan asks for
+            if (land.stands().size() != 3) h.fail(land.stands().size() + " stands, not three");
+            for (Land.Stand s : land.stands()) if (s.head() < s.y() + 4 + RealmTrial.STROKE_DROP) h.fail("the press over the " + s.move() + " stand would come down on whoever takes it");
+            for (Land.Slam s : land.slams()) {
+                if (land.change("slam_" + s.id()).isEmpty() && land.rams().stream().noneMatch(r -> r.freedBy().equals(s.id()))) h.fail("the slam '" + s.id() + "' moves nothing");
+            }
+            if (land.slams().size() < 3) h.fail("the hall Down asks for the slam " + land.slams().size() + " times");
+            for (String mark : new String[]{"reach", "use/double/4", "use/dash/4", "use/slam/3"}) {
+                if (land.spots().stream().noneMatch(s -> s.mark().equals(mark))) h.fail("no place for the mark " + mark);
+            }
+            // the Long Run: a start, five rings stood under in turn, a far line, and a way home at both its ends
+            Land.Timed run = land.timed();
+            if (run == null || run.rings().size() < 5) h.fail("the Long Run has no clock or too few rings");
+            else {
+                for (int[] r : run.rings()) if (!walk.reaches(r[0], r[1], r[2], 1)) h.fail("the walk never stood under the ring at " + r[0] + " " + r[1] + " " + r[2]);
+                if (!walk.reaches((run.start()[0] + run.start()[3]) / 2, run.start()[1], run.start()[2], 2)) h.fail("the walk never stood where the clock starts");
+                if (!walk.reaches((run.finish()[0] + run.finish()[3]) / 2, run.finish()[1], run.finish()[2], 2)) h.fail("the walk never stood on the far line");
+            }
+            for (Land.Site s : land.sites(Land.SiteKind.PORTAL)) if (!walk.reaches(s.x(), s.y(), s.z(), 3)) h.fail("the walk never stood at the way home at " + s.x() + " " + s.y() + " " + s.z());
+            if (land.sites(Land.SiteKind.PORTAL).size() < 3) h.fail("no way home past the mouth");
+            for (Land.Slam s : land.slams()) if (s.again() && land.change("rearm_" + s.id()).isEmpty()) h.fail("the slam '" + s.id() + "' is not put back for the next run");
+            // a press on a beat is down, comes all the way up, and can be passed under for long enough to run through it
+            for (Land.Ram r : land.rams()) {
+                if (r.period() == 0) continue;
+                int open = 0, top = 0;
+                for (int c = 0; c < r.period(); c++) {
+                    if (RealmTrial.passable(r, c)) open++;
+                    top = Math.max(top, RealmTrial.offset(r, c));
+                }
+                if (RealmTrial.offset(r, 0) != 0 || top != r.travel() || open < 20) h.fail("a press's beat: up " + top + " of " + r.travel() + ", open for " + open + " ticks");
+            }
             h.succeed();
         });
         AwakenTests.register("realm_leapers_gauntlet_nothing_floats", 2400, h -> {

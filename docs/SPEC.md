@@ -26432,3 +26432,67 @@ and re-run: the gates session.
 - **K, Powers:** while the leap is held by parts, a line a move taken and "◆ Another move waits further into the
   Gauntlet."
 - **Tests:** `way_up_stands` (new), `way_up_road` (the gate stays until the run is paid; paid once).
+
+**71.8 Built: the place (11 Nov 2026, the gates session; `gates.realms.land.LeapersGauntlet`, `gates.realms.RealmTrial`).**
+A Realm laid by hand in the Stopped Works' blocks (blueprint `awaken:leapers_gauntlet`; `Realms.choose` gives it to a
+plan with `leaperTrial` once it says it is ready, which it does not until someone has walked it end to end). No monsters, no Lord.
+- **Halls.** A hall is a machine hall 17 wide with a way of decks 5 wide down its middle over a casting pit 18 down
+  (piers every eighth cell, a beam between each pair, press heads stopped over the pit, a lit casting floor). The way in:
+  a gap of 2, a step, a gap of 3, then the gulf (6 wide, the far side 2 higher) with the first stand's room off its lip.
+  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 11 beside a wall. "Through": a gap of 9, two
+  presses over a deck 28 long, a turn with a gap of 8, a gulf of 12. "Down" is rooms, not a hall: a gantry over a well
+  with a cracked deck across it 5 down and the way on 3 under that; three castings stood in a doorway with a brass plate
+  before them; a room with a bay sunk 4 and a ram stuck down in its way out.
+- **A stand's room** is round, the stand (`awaken:leap_stand`, set live by the course so it has its block entity) on a
+  dais in the middle and a press head hung in a well over it. When the Ascent says the stand was taken
+  (`TrialHooks.onStand`) the head comes down 3 cells in 6 ticks, stays 22 and goes back (never lower than 4 over the
+  plate), and the bars past that stand open for everyone in the gate, for good (`stand_<move>` in the gate's saved
+  state). A stand that has nothing left to give someone (theirs from another day) does not answer them: stood on for 4 s
+  it opens its bars all the same, with no stroke.
+- **The presses of "Through"** (`Land.Ram`, run every tick by `RealmTrial.tickServer` for gates someone is near): a
+  head 5 by 3 and 3 deep on a rod, real blocks, always in view: up 5 over the deck, a puff of dust 12 ticks before it
+  falls, down in 3 ticks, down for 34, up at a cell a tick; a beat of 64 ticks, the second press 10 ticks after the
+  first, so a dash rides the beat down the line and a runner on foot takes them one beat each. Two in "Through" (a third
+  at the deck's turn could be walked round by its corner) and two on the Long Run. A press never hurts: whoever
+  it would come down on is set clear of it on the nearer side.
+- **What a slam moves** (`Land.Slam`, `TrialHooks.onSlam`): a slam landing on the cracked deck breaks it; one landing
+  near the castings clears them out of their doorway (from either side); one landing on the bay's plate lifts the stuck
+  ram (4 cells, a cell every 3 ticks). Each is for everyone in the gate, for good (`slam_<id>`).
+- **Nothing hurts.** A fall in this land does no damage (`Land.soft`, `LivingFallEvent`), and a fall into a hall's pit
+  is caught as on any course, at no cost and with no words (`Course.free`).
+- **What the Ascent is told** (`Land.Spot`, `TrialHooks.at`): `reach` at the first gulf to whoever has not been to the
+  first stand; `use/<move>/<n>` once to each runner who comes within 5 cells of that place's near end (double 1 to 4,
+  dash 1 to 4 with the presses as 2, slam 1 to 3), a move's first place only once its stand is theirs;
+  `miss` or `miss/<move>` for every third fall at one place.
+- **The HUD's line** (`RealmTrial.hint`): "Reach the first stand", then "Cross the hall".
+- Dev: `/awaken gate realm_stand <move>` (a stand as if taken, with its stroke), `/awaken gate realm_slam` (a slam as if
+  one landed where you stand); tour `tools/autopilot/realm-leapers_gauntlet.txt`. Tests:
+  `realm_leapers_gauntlet_needs_its_moves` (the walk reaches every leg with the stands' bars open and what a slam moves
+  moved, no crossing said to need a move can be made without it, three stands with room under their presses, a place
+  for every mark, a press's beat), `realm_leapers_gauntlet_nothing_floats`.
+- **The Long Run** (`Land.Timed`, run every tick by `RealmTrial`): three halls on three levels (Y 100, 90, 80), each run
+  the other way to the one before, joined by a well with a cracked deck 5 under its lip. First hall: a gap of 3, a gulf
+  of 6 with the far side 2 higher, a step 3 up, a gap of 9, a gap of 10 beside a wall, a gulf of 12. Second: a gap of 9,
+  two presses on the beat of "Through", a step 3 up, a gulf of 12, three castings in a doorway. Third: a gap of 3, a
+  gap of 10 beside a wall, a gap of 9, and 26 cells of sprint to the far line. Seven double jumps, five dashes, three
+  slams. The clock starts at the first step onto the run and stops at the far line; five rings (brass arches over the
+  lane) give the splits. It is the old Gauntlet's clock on screen (`RigPayloads.Run`), with its medals: gold within
+  par plus a tenth and a second, silver within half again and two; par 85 s until it has been run by hand. A fall into
+  a pit puts the runner back on the last deck stood on and costs nothing. What a slam moves on the run is put back as
+  each runner comes within 44 cells of it (`Slam.again`), unless someone is in the middle of it.
+- **The far line** pays through the trial (`TrialHooks.pay`: the first time, what §71.7 says) and adds the medal's share
+  every time (6%, 3.5% or 2% of a level, as any Gauntlet's, under the `awaken:gauntlet` budget). The best time is kept
+  with the player (`GateMemory.trialBest`).
+- **The tally** (`TrialPayloads.Tally`, `gates.client.TrialTally`, in the look of the Lord's payout): the XP in the
+  middle of the view, climbing in ten steps with the game's own bell on the Lord's low walk; then "Leaper mastery · level
+  N" and its bar filling; then the time and medal in the medal's colour ("your best yet" or the best before), and the
+  counts ("Double jumps 14 · Dashes 9 · Slams 4", on two lines when one would not fit). It waits for an Unlock title
+  (one that starts while it is up stops it where it is, and it goes on after), holds 6.5 s, holds every other notice
+  while it shows, and the run's own clock leaves the time and medal to it.
+- **The way home:** an exit arch on the landing before the Long Run and one on the tally floor, besides the arch at the
+  mouth (every `PORTAL` site of a trial's land past the first gets one).
+- **Coming back:** someone who has run it before (`TrialHooks.finished`) is set down on the landing as they arrive:
+  "You've run this before, so you start at the Long Run." The gate is never marked cleared, so it stays standing.
+- **The HUD's line** goes on to "Run the Long Run" on the landing and through the run, then "The way out is open".
+- *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; the walk check on
+  the leap's real reach (it takes the plan's sizes); par set from real runs. Nobody has played it.
