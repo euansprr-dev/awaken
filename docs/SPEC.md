@@ -25245,11 +25245,17 @@ takes `xp_share` from `awaken-together.toml`, default **equal**), changed by any
   home). **Half**: they get `xp_share_part` of it (0.5). **Each their own**: nothing is passed on.
 - **Never twice.** Grants are gathered through `Progression.onXpGranted` and settled when the tick ends, by thing
   (source and world key): a member is passed `part x the most another member was paid for it, minus what they were
-  paid for it themselves`. Two who clear a floor or share a kill side by side are each paid once, as before; one paid
-  less for the same thing is made up to the other. Two who play apart each earn what both did, so a pair split
-  between a gate and the home levels faster than one player alone (at most twice as fast; side by side, no faster).
-- **What is passed on**: gate kills, floors and Lords, home and world XP, the Descent, anomalies, the Regimen and
-  directives. **Firsts stay your own**: discoveries, the story, Truths, dreams and commands are never passed on.
+  paid for it themselves`, so a kill two stood near (paid to both in one tick) is paid once each. A gate pays each
+  player inside it on their own clock (their own Satchel claimed on the way out, their own kill share, the Lord's XP
+  in beats), so gate XP is never passed to a member who was inside a gate with the earner in the last ten minutes
+  (`SharedXp.watch`, once a second): they have their own. Two who play side by side earn what they always did; two
+  who play apart each earn what both did, so a pair split between a gate and the home levels faster than one player
+  alone (at most twice as fast). Known edge: a member who leaves a gate early gets none of the floors their partner
+  goes on to clear in the next ten minutes.
+- **What is passed on**: gate kills, floors and Lords (to members who weren't in that gate), home XP (kills, ores,
+  blocks) and world XP (hunts, crafts, camps, troubles). **Firsts and errands stay your own**: discoveries, the story,
+  Truths, dreams, the Descent, anomalies, directives and commands are never passed on (each player is paid for those
+  on their own clock, so passing them would pay a pair twice).
 - A share is paid as it was earned (`Progression.grantShared`: no second scale or perk, no listener, so it is never
   shared on); the same XP is worth more levels to a lower member, so a partner who is behind catches up. Before
   awakening it is banked. Offline members get nothing. Only a formed party shares this way: people who merely stand

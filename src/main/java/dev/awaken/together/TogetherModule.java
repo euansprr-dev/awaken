@@ -97,6 +97,7 @@ public final class TogetherModule {
         bus.addListener(EventPriority.LOW, Fights::onRespawnPosition);
         bus.addListener((ServerTickEvent.Post e) -> {
             Fights.tick(e.getServer());
+            SharedXp.watch(e.getServer());
             SharedXp.settle(e.getServer());
             TogetherNet.tick(e.getServer());
             TourPartner.tick(e.getServer());

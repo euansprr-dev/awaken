@@ -564,21 +564,34 @@ final class TogetherTests {
         var server = h.getLevel().getServer();
         try {
             h.assertTrue(PartyService.join(a, b), "a party");
-            // both are paid for the same thing in the same tick (a floor they cleared side by side): nothing more is owed
+            // a kill both stood near pays both in one tick: nothing more is owed
             double a0 = total(a), b0 = total(b);
-            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
-            dev.awaken.progression.Progression.grantXp(b, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            dev.awaken.progression.Progression.grantXp(b, 40, dev.awaken.progression.Progression.XpSource.HOME);
             double ea = total(a) - a0, eb = total(b) - b0;
             SharedXp.settle(server);
             h.assertTrue(Math.abs(total(a) - a0 - ea) < 1e-6 && Math.abs(total(b) - b0 - eb) < 1e-6, "side by side, each is paid once");
             // one of them was paid less for it: Equal makes up the difference, no more
             a0 = total(a);
             b0 = total(b);
-            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
-            dev.awaken.progression.Progression.grantXp(b, 10, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            dev.awaken.progression.Progression.grantXp(b, 10, dev.awaken.progression.Progression.XpSource.HOME);
             ea = total(a) - a0;
             SharedXp.settle(server);
             h.assertTrue(Math.abs(total(b) - b0 - ea) < 1e-6 && Math.abs(total(a) - a0 - ea) < 1e-6, "the one paid less is made up to the other, and the other gets nothing more");
+            // a gate pays each player inside it on their own clock (a Satchel claimed on the way out, the Lord's XP in beats):
+            // what one of them is paid for a gate they ran together is never passed to the other
+            SharedXp.ranTogetherForTest(server, a.getUUID(), b.getUUID());
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_BOSS);
+            SharedXp.settle(server);
+            h.assertTrue(total(b) == b0, "a gate they ran together pays each of them itself");
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            ea = 0;
+            SharedXp.settle(server);
+            h.assertTrue(total(b) > b0, "what isn't the gate's is still passed on");
         } finally {
             SharedXp.forget();
             two.leave();

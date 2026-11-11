@@ -22,9 +22,12 @@ import java.util.UUID;
  * party chooses on the band; a new party starts on the world's setting.
  *
  * <p>Nothing is paid twice. What a member was paid themselves for the same thing in the same tick (a kill both stood
- * near, a floor both cleared) is taken off what they are passed, so two who play side by side earn what they always
- * did, and two who play apart each earn what both did. Firsts stay your own: discoveries, the story, Truths and
- * commands are never passed on. A share is paid as it was earned (no second scale or perk) and is never shared on.
+ * near) is taken off what they are passed. A gate pays each player inside it on their own clock (their own Satchel,
+ * their own kill share, the Lord's XP in beats), so gate XP is never passed to a member who was inside a gate with
+ * the earner in the last ten minutes: they have their own. Two who play side by side earn what they always did, and
+ * two who play apart each earn what both did. Firsts and errands stay your own: discoveries, the story, Truths, the
+ * Descent, anomalies, directives and commands are never passed on. A share is paid as it was earned (no second scale
+ * or perk) and is never shared on.
  */
 final class SharedXp {
     private SharedXp() {}
@@ -33,8 +36,38 @@ final class SharedXp {
 
     /** What is passed on: the repeatable work of playing. Firsts and the story are each player's own. */
     private static final Set<Progression.XpSource> SHARED = EnumSet.of(Progression.XpSource.GATE_KILL, Progression.XpSource.GATE_FLOOR,
-            Progression.XpSource.GATE_BOSS, Progression.XpSource.HOME, Progression.XpSource.WORLD, Progression.XpSource.DESCENT,
-            Progression.XpSource.ANOMALY, Progression.XpSource.REGIMEN, Progression.XpSource.DIRECTIVE);
+            Progression.XpSource.GATE_BOSS, Progression.XpSource.HOME, Progression.XpSource.WORLD);
+    /** What a gate pays, to each player inside it on their own clock. */
+    private static final Set<Progression.XpSource> GATE = EnumSet.of(Progression.XpSource.GATE_KILL, Progression.XpSource.GATE_FLOOR,
+            Progression.XpSource.GATE_BOSS);
+    /** Ticks after two members were last inside one gate that its pay is still each one's own (a Satchel is claimed after the way out). */
+    static final long RAN_TOGETHER = 20 * 60 * 10;
+
+    /** The server tick two players were last inside the same gate, by the pair (smaller id first). */
+    private static final Map<String, Long> TOGETHER = new HashMap<>();
+
+    private static String pair(UUID a, UUID b) {
+        return a.compareTo(b) < 0 ? a + "|" + b : b + "|" + a;
+    }
+
+    /** Once a second: who is inside a gate with whom. */
+    static void watch(MinecraftServer s) {
+        if (s.getTickCount() % 20 != 0 || s.getPlayerList().getPlayerCount() < 2) return;
+        for (ServerPlayer p : s.getPlayerList().getPlayers()) {
+            for (UUID other : dev.awaken.gates.Gates.inside(p)) {
+                if (!other.equals(p.getUUID())) TOGETHER.put(pair(p.getUUID(), other), (long) s.getTickCount());
+            }
+        }
+    }
+
+    static void ranTogetherForTest(MinecraftServer s, UUID a, UUID b) {
+        TOGETHER.put(pair(a, b), (long) s.getTickCount());
+    }
+
+    private static boolean ranTogether(MinecraftServer s, UUID a, UUID b) {
+        Long at = TOGETHER.get(pair(a, b));
+        return at != null && s.getTickCount() - at <= RAN_TOGETHER;
+    }
 
     private record Grant(UUID who, double xp, Progression.XpSource source, @Nullable String key) {}
 
@@ -43,6 +76,7 @@ final class SharedXp {
 
     static void forget() {
         TICK.clear();
+        TOGETHER.clear();
     }
 
     static String label(int share) {
@@ -89,7 +123,12 @@ final class SharedXp {
                     ServerPlayer to = s.getPlayerList().getPlayer(id);
                     if (to == null) continue;
                     double best = 0;
-                    for (var e : paid.entrySet()) if (!e.getKey().equals(id)) best = Math.max(best, e.getValue());
+                    for (var e : paid.entrySet()) {
+                        if (e.getKey().equals(id)) continue;
+                        // a gate they ran together pays each of them itself
+                        if (GATE.contains(like.source()) && ranTogether(s, e.getKey(), id)) continue;
+                        best = Math.max(best, e.getValue());
+                    }
                     double due = part * best - paid.getOrDefault(id, 0.0);
                     if (due > 1e-6) Progression.grantShared(to, due, like.source(), like.key());
                 }
