@@ -199,22 +199,10 @@ def fill_opens(rig):
 
 
 def seal_loops(rig):
-    """Every looping clip gets one key before its start and one after its end: the loop carried on a step either way (a
-    wheel that turns steadily keeps turning). The game's curve through the keys takes each key's slope from its two
-    neighbours, and at a clip's two ends it has only one, so a loop sampled without these loses half its speed for an
-    instant every time it comes round: a small hitch in every stride, wingbeat and breath. With them the seam has the
-    same slope from both sides and nobody can tell where the loop begins."""
-    for clip in rig.clips.values():
-        if not clip.loop:
-            continue
-        for ks in clip.tracks.values():
-            if len(ks) < 3 or ks[0][0] < -1e-6 or abs(ks[0][0]) > 1e-6 or abs(ks[-1][0] - clip.length) > 1e-6:
-                continue        # (sealed already, or a track that does not span the loop)
-            v0, vn = ks[0][1], ks[-1][1]
-            turn = tuple(vn[i] - v0[i] for i in range(3))      # what a whole loop adds: nothing, but for a spinning part
-            (tb, vb, _), (ta, va, ia) = ks[-2], ks[1]
-            ks.insert(0, (tb - clip.length, tuple(vb[i] - turn[i] for i in range(3)), ks[0][2]))
-            ks.append((ta + clip.length, tuple(va[i] + turn[i] for i in range(3)), ia))
+    """Every looping clip gets one key before its start and one after its end (fauna_rig.sealed: the loop carried on a
+    step either way, so the game's curve has a slope to take at the seam). Every hero rig's loops are written out this
+    way; a monster's are sealed here, in place, because its checks walk the keys themselves."""
+    R.seal_loops(rig)
 
 
 def moves(rig, **ability_of):

@@ -22504,10 +22504,22 @@ ours as its target; `/awaken admin monster act <n>` makes it act its nth move at
   a quarter of a second wide plays as written.
 - Loops have no seam. The game's curve through a clip's keys (vanilla `CATMULLROM`) takes each key's slope from its two
   neighbours and clamps at the clip's two ends, so a looping clip lost about half its speed for an instant every time
-  it came round: a hitch in every wingbeat, stride and breath. `K.seal_loops` gives every looping clip one key before
+  it came round: a hitch in every wingbeat, stride and breath. Every looping track is written out with one key before
   its start and one after its end (the loop carried on a step either way; a wheel that turns steadily keeps turning),
-  and `HeroRig.problems` and the rig check allow those two keys on a looping clip. The older hero rigs' loops (the Drip
-  Lurker's and the rest of `fauna_rig`'s users) still have the hitch; the same call would cure them.
+  and `HeroRig.problems` and the rig check allow those two keys on a looping clip.
+  **This holds for every hero rig, not only the gate monsters** (11 Nov 2026): the seal is `fauna_rig.sealed`, applied
+  where every pipeline writes its rig (`Rig.java_lines`), so the world's creatures, the wild and city creatures, the
+  kin, the levelled forms, the ritual bodies and the bosses all lose the hitch. Nothing else about a clip changes: its
+  own keys stay as written, and `Rig.sample` still plays the keys as they stand in the tools, so no pipeline's posing
+  pass moves a key. A track with nothing to seal is left alone (held still, a straight line, or one that does not
+  span the loop). `tools/art/loop_seams.py` reads the shipped rig data and refuses a looping track with a seam; with
+  `--against <revision>` it proves a rebuild changed nothing but the two guard keys, and it measures how far each
+  sealed loop moves from its old curve. The gate monsters also seal in place (`K.seal_loops`), so their previews and
+  checks run on the curve the game plays; an older pipeline may do the same once its clips are final.
+- **Known fault, not cured by the seal:** some older looping tracks have two keys at one instant (two calls keyed the
+  same bone in one clip, and their keys lie interleaved in one track), so in game that part jumps between the two at
+  every key. Such a track has no one curve to carry on: it is never sealed and is written exactly as before.
+  `loop_seams.py` counts and names them (`--twice` lists every one).
 - **The blow lands as the circle closes.** The server deals a blow on the tick its tell ends, and the closing circle
   shuts then; the body's strike clip used to begin only when the client heard it had struck, so its hit frame came
   0.07 to 0.09 s after the circle. A gate monster's wind-up is now gathered `STRIKE_LEAD` (0.08 s) before the tell ends
