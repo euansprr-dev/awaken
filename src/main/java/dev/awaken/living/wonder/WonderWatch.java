@@ -103,7 +103,7 @@ public final class WonderWatch {
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
             if (dx * dx + dz * dz > (double) Secrets.FIND * Secrets.FIND || Math.abs(p.getY() - s.y()) > 6) continue;
             List<String> have = p.getExistingData(LivingContent.SECRETS).orElse(List.of());
-            // one that kept off cut or used ground was never written (SecretFeature.stands): nothing there to find
+            // one that kept off cut or used ground was never written (SecretFeature.keepsOff): nothing there to find
             if (have.contains(s.key()) || !standing(level, s)) continue;
             List<String> next = new ArrayList<>(have);
             next.add(s.key());

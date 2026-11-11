@@ -5566,7 +5566,7 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
   any surface feature), and a cairn at (-1031, 67, -648) over a carver's pit. The noise still says ground where a cave place, a carver, a road or a settlement
   has changed it or will. So:
   - A **secret** stands on the ground of each of its columns: every column's own noise ground, no more than 2 over or under the heart's (steeper gives the spot
-    up for the next attempt), its blocks and cache moved with it (`Plan.foot`, `columns`). And it is written whole or not at all: `SecretFeature.stands` is
+    up for the next attempt), its blocks and cache moved with it (`Plan.foot`, `columns`). And it is written whole or not at all: `SecretFeature.keepsOff` is
     asked by every chunk under it and reads only what each of them holds alike (a secret is 13 blocks wide at most, so its chunks lie beside each other), and
     keeps it off when (1) a wonder's ground is within reach (38 + 2) of it; (2) any structure referenced from its chunks (or those beside its blocks within 2,
     that all of them hold) has a piece whose box crosses its blocks plus 2, from 6 under its lowest block to 12 over its highest; a piece that says which land it

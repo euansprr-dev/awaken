@@ -1,0 +1,86 @@
+# Euan's floating camp (11 Nov, "a camp here that is broken... a ton of things are floating"): his New World V20 remade
+# from its seed with the pack's terrain, and his Living Wilds secrets shot where his save holds them. The camp at
+# -1543 77 -584 stood over a hillside a delve mouth had cut; the cairn at -1031 67 -648 over a carver's pit. Two of his
+# camps that stood well, a cairn and a marked mound beside them. Each from the south a little above, then from overhead.
+# Look for: nothing floating or cut off; after the fix the two broken ones are not there at all (the log says why).
+# ci knobs: PACK=perf,world TECTONIC=awakened RD=10
+#   tools/tour-ci.sh tools/autopilot/floating-camp.txt 2400
+world floating_camp creative 3761469094609221698
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud off
+opt fov 70
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamemode spectator
+wait 40
+
+# ---- Euan's camp (the barrel hung at -1544 78 -586) ----
+cmd tp @s -1543 150 -584
+wait 400
+cmd tp @s -1543 85 -571 180 30
+wait 200
+shot camp_euan_south
+cmd tp @s -1556 85 -584 -90 30
+wait 100
+shot camp_euan_west
+cmd tp @s -1543 98 -584 180 89
+wait 100
+shot camp_euan_above
+# ---- the cairn over a carver's pit (its gravel at -1029 67 -648) ----
+cmd tp @s -1031 150 -648
+wait 300
+cmd tp @s -1030 74 -637 180 30
+wait 200
+shot cairn_pit_south
+cmd tp @s -1030 86 -648 180 89
+wait 100
+shot cairn_pit_above
+# ---- a camp that stood (its barrel at -1027 68 -672) ----
+cmd tp @s -1026 150 -670
+wait 300
+cmd tp @s -1026 75 -658 180 30
+wait 200
+shot camp_ok_east_south
+cmd tp @s -1026 86 -670 180 89
+wait 100
+shot camp_ok_east_above
+# ---- a cairn (its gravel at -1018 65 -778) ----
+cmd tp @s -1020 150 -778
+wait 300
+cmd tp @s -1019 72 -767 180 30
+wait 200
+shot cairn_ok_south
+# ---- a camp on the hills to the north (its barrel at -1477 96 -65) ----
+cmd tp @s -1476 170 -63
+wait 300
+cmd tp @s -1476 104 -51 180 30
+wait 200
+shot camp_ok_north_south
+cmd tp @s -1476 114 -63 180 89
+wait 100
+shot camp_ok_north_above
+# ---- a marked mound (its chest at -1387 63 -769) ----
+cmd tp @s -1387 150 -769
+wait 300
+cmd tp @s -1387 73 -758 180 30
+wait 200
+shot mound_ok_south
+quit
