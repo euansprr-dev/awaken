@@ -251,7 +251,9 @@ public final class AscentPilot {
                 p.setXRot(Mth.approach(p.getXRot(), -8F, 3F));
                 press(TETHER, 2);
                 press(FORWARD, 2);
-                double q = AscentRules.releaseQuality(AscentMoves.K, AscentMoves.ax, AscentMoves.ay, AscentMoves.az);
+                // the assisted swing's own window (the rope's glow); the old pendulum's release quality otherwise
+                double q = AscentMoves.swinging() ? AscentMoves.windowNow
+                        : AscentRules.releaseQuality(AscentMoves.K, AscentMoves.ax, AscentMoves.ay, AscentMoves.az);
                 if (AscentMoves.stateAge > 12 && q > 0.75) {
                     count++;
                     mark = age;
