@@ -25,7 +25,7 @@ final class TogetherSection implements StatusSections.Section {
     private static final int INK = 0xFFFFFFFF, SOFT = 0xFFB9C7D9, HOLO = 0xFF7FD4FF, ROSE = 0xFFF0B79C, RIM = 0xFF7FD4FF;
     private static final String TRAVEL = "[ Travel together ]", LEAVE = "[ Leave party ]", FULL = "[ Full ]", GENTLE = "[ Gentle ]", HOME = "[ Share my home ]";
     private static final String FIGHTS = "My fights are yours alone. Full is the game as it is. On Gentle, blows aimed at you are plainer and do half, and a blow that would kill you is a second wind instead. You can change it any time you're out of a fight.";
-    private static final String EQUAL = "[ Equal ]", HALF = "[ Half ]", OWN = "[ Each their own ]";
+    private static final String EQUAL = "[ Equal ]", HALF = "[ Half ]", OWN = "[ Own ]";
     private static final String[] SHARED = {
             "Each their own: nobody's XP is passed on. You each level by what you do yourselves.",
             "Half: each of you gets half of what the others earn, wherever you are.",

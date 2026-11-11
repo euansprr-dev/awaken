@@ -25239,7 +25239,7 @@ amount of XP as well ... a huge bummer if one person is not ranking up at the sa
 where it's exactly the same, one where other people in the party get a certain amount, maybe 50%, and one where ...
 it's each one for themselves"). `together/SharedXp`, the party's own setting (`share` on the saved party; a new party
 takes `xp_share` from `awaken-together.toml`, default **equal**), changed by any member on the band's TOGETHER section
-(`Shared XP`: `[ Equal ] [ Half ] [ Each their own ]`, with a line saying what the lit one means) or
+(`Shared XP`: `[ Equal ] [ Half ] [ Own ]` on a row of their own so it fits at GUI scale 9, with a line saying what the lit one means) or
 `/awaken together share equal|half|own`; everyone in the party is told. Joining a party says which it is on.
 - **Equal**: what any member is paid, every other member online gets too, wherever they are (another land, a gate, at
   home). **Half**: they get `xp_share_part` of it (0.5). **Each their own**: nothing is passed on.
