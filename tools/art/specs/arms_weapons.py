@@ -3930,7 +3930,7 @@ def row_hold(row, pos):
     """A weapon's first-person hold: its style's real hold (arms_holds.HOLDS, written as the weapon is really held) solved
     for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
     import arms_holds as AH
-    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2])
+    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2], row[0])
     d = AH.hold_for(row[8], pos, edge)
     if d is None:  # the style's own (the gauntlets' worn hold)
         fp = hold_of(hold_key(row))["firstperson_righthand"]
@@ -4023,15 +4023,61 @@ FP_TOP = 0.42
 BUDGET = 18_000  # triangle corners per weapon, the same as ArmsTests.MESH_BUDGET
 
 
+# A head that strikes with its mass lies on the side it strikes with (Euan 2026-11-11, the Toll: "facing the wrong way
+# and hitting with the wrong end"): a hammer's head, an axe's bit, a scythe's blade. Its declared working side
+# (arms_holds.EDGES, which turns it in both holds) must be the side its head leans to, and a head declared to work both
+# ways (a hammer's two faces) must be its own mirror. Blades are left out: a katana's or a glaive's mass leans to its back.
+MASS_LED = ("maul", "axe", "scythe")
+
+
+def head_side(B):
+    """(mirror, lean) of a design's head (the top 45% of its height, sampled every half texel): the share of it its own
+    mirror across the blade's plane covers, and its lean (+1 all of it toward -x, the item's upper left; -1 toward +x)."""
+    lo = np.min([b.c - np.abs(b.R) @ b.h for b in B], axis=0)
+    hi = np.max([b.c + np.abs(b.R) @ b.h for b in B], axis=0)
+    g = np.mgrid[lo[0]:hi[0]:0.5, lo[1]:hi[1]:0.5, lo[2]:hi[2]:0.5].reshape(3, -1).T + 0.25
+    g = g[g[:, 1] > lo[1] + 0.55 * (hi[1] - lo[1])]
+
+    def inside(P):
+        hit = np.zeros(len(P), dtype=bool)
+        for b in B:
+            hit |= (np.abs((P - b.c) @ b.R) <= b.h + 1e-6).all(axis=1)
+        return hit
+    head = g[inside(g)]
+    if not len(head):
+        return 1.0, 0.0
+    mirror = float(inside(head * np.array([-1.0, 1.0, 1.0])).mean())
+    lean = float(((head[:, 0] < -0.01).sum() - (head[:, 0] > 0.01).sum()) / len(head))
+    return mirror, lean
+
+
+def head_check(row):
+    """What is wrong with a mass-led head's declared working side (MASS_LED), or None."""
+    import arms_holds as AH
+    if row[8] not in MASS_LED:
+        return None
+    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2], row[0])
+    mirror, lean = head_side(design_of(row)()[0])
+    if edge == 0 and mirror < 0.9:
+        return f"its head works one way (its mirror covers {mirror:.2f} of it) but declares no side (arms_holds.EDGES)"
+    if edge and lean * -edge < 0.1:
+        return f"its head leans {'to -x' if lean > 0 else 'to +x'} ({lean:+.2f}) but it declares its working side at {edge:+d}"
+    return None
+
+
 def check():
     """Each weapon built: within budget, inside the item box, its atlas fitting, no two faces fighting over a plane, its
-    icon not empty; and what ArmsTests.assets checks of the written mesh (texels in the albedo half, every glow sized,
-    every stream's points on the weapon, light lifting off the B, A and S blades and only those)."""
+    icon not empty, a mass-led head working on the side it leans to (head_check); and what ArmsTests.assets checks of the
+    written mesh (texels in the albedo half, every glow sized, every stream's points on the weapon, light lifting off the
+    B, A and S blades and only those)."""
     bad = []
     for row in CATALOG:
         if design_of(row) is None:
             bad.append(f"{row[0]}: no design")
             continue
+        wrong = head_check(row)
+        if wrong:
+            bad.append(f"{row[0]}: {wrong}")
         built, look = make(row)
         n = len(built.pos)
         lo, hi = built.pos.min(axis=0) / 16.0, built.pos.max(axis=0) / 16.0

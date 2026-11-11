@@ -185,5 +185,12 @@ public final class SwingBlend {
         public boolean active(double now) {
             return (float) (now - start) < curve.length();
         }
+
+        /** Forgets what was shown (the next change of source starts clean). */
+        public void reset() {
+            lastT = Double.NaN;
+            curve.off();
+            vel.zero();
+        }
     }
 }
