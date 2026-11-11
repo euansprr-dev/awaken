@@ -48,10 +48,17 @@ cmd time set 18000
 wait 150
 shot s1_far_night
 cmd awaken living strike 440
-wait 2
 shotnow s1_far_strike_a
-wait 4
 shotnow s1_far_strike_b
+shotnow s1_far_strike_c
+wait 1
+shotnow s1_far_strike_d
+wait 2
+shotnow s1_far_strike_e
+wait 3
+shotnow s1_far_strike_f
+wait 5
+shotnow s1_far_strike_g
 cmd time set 5000
 cmd awaken living near 230
 wait 300

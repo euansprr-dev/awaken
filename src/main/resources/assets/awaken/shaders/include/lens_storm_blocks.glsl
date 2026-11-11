@@ -204,7 +204,11 @@ vec4 stormBlocks(vec3 v, float scene, out float hit) {
     vec3 lit = mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.60, 0.44), hr.y * (1.0 - 0.6 * hr.x));
     vec3 sunCol = (f16.y > 0.5 ? vec3(0.50, 0.60, 0.90) * 0.10 : lit * (0.40 + 0.3 * hr.y)) * f14.w;
     float sunOn = open * (turn > -0.25 ? 0.26 + 0.74 * face : 0.0) * nook;
-    vec3 L = sky + sunCol * (sunOn * mix(0.45, 1.55, rise));
+    vec3 L = sky + sunCol * (sunOn * mix(0.45, 1.30, rise));
+    // kept under white with its hue: a sunlit tower at golden hour is gold, and by day its faces keep the little
+    // shade that tells one block from the next (past white they were paper, run 42955820288)
+    float top = max(L.r, max(L.g, L.b));
+    if (top > 0.84) L *= (0.84 + 0.16 * (1.0 - exp(-(top - 0.84) / 0.16))) / top;
     // its lightning: the blocks round the flash glow from within, the whole cell a little
     if (c.w > 0.0) {
         vec3 d = w - c.xyz;
