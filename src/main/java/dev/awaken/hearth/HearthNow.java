@@ -57,8 +57,9 @@ public final class HearthNow {
         }
         if (!atHome(p, h)) return out;
         HearthPlayer hp = HearthService.player(p);
-        if (h.hearthfire() && h.rooms.isEmpty()) {
-            // the first night: walls and a roof (using the fire now would lift the coal again)
+        if (h.hearthfire() && !h.hadRoom()) {
+            // the first night: walls and a roof (using the fire now would lift the coal again); once a room was read it
+            // stays done (SPEC §27.14), and why a room isn't counted now is the why-line below
             out.add(NowHooks.Suggestion.of("hearth:shelter", 58, HearthTask.SHELTER));
             return out;
         }
@@ -154,11 +155,12 @@ public final class HearthNow {
 
     /**
      * The next room to suggest: shelter, a bedroom, then the Armoury, your first workshop (SPEC §27.13); a Sanctuary and the
-     * Forge once there is an Anchor; the others once you have what they're made of.
+     * Forge once there is an Anchor; the others once you have what they're made of. A kind this home has had is never
+     * suggested again (SPEC §27.14): if it isn't a room now, the why-line says why.
      */
     static @Nullable RoomType nextRoom(ServerPlayer p, HearthRecord h) {
         for (RoomType t : ORDER) {
-            if (h.hasRoom(t)) continue;
+            if (h.had(t)) continue;
             boolean relevant = switch (t) {
                 case SHELTER, BEDROOM, FITTING -> true;
                 // the Anchor's rooms once there is an Anchor; the rest once you have what they're made of
