@@ -34,6 +34,9 @@ So:
 - **The new piece is brief 07, rolled lands**: one generator that rolls a whole outdoor world from a seed, as `GeneratedCrawl`
   does for dungeons, with a skin per theme. That is how every rank gets many different worlds without weeks of hand work.
 - Briefs 01 to 04 still stand (rank changes the run and two new kinds; the way in from the world; light in the air; polish).
+- **Who builds 07.** Euan: "why would an Opus agent do it lol? Fable 5.2... would be better". A design-heavy generator goes to
+  a Fable 5.2 session at xhigh, not Opus. Started 11 Nov: session `rolled-lands`, branch `claude/rolled-lands-95b4e3`, worktree
+  `.claude/worktrees/rolled-lands-95b4e3`. It hands back after the first world (The Ascent, in Ember).
 
 ## What "finished" means
 
