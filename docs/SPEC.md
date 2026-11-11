@@ -16426,8 +16426,17 @@ in reach 23% of a fight today, 49% with these rules).
   the best 6 get a sight check; the arrays are reused. Strikes steer to it and powers bend to it; its brackets show while a
   weapon is in hand or a fight is on.
 - **The lock key** `key.awaken.lock`, default **middle mouse**, in Awaken's key group. Read before vanilla's keys each tick: it
-  locks the mark (or a creature under the crosshair), or lets go. Sharing pick block's key, a press that locked or let go is
-  the lock's alone; with nothing to lock it picks the block, as always.
+  locks the mark, or lets go. Sharing pick block's key, a press that locked or let go is the lock's alone; with nothing to lock
+  it picks the block, as always.
+- **Calm creatures** (Euan, 11 Nov 2026: "my target lock-on isn't working on sheep"): with nothing marked, the key locks any
+  creature you could strike, calm or not (a sheep, a deer, a villager, a neutral wolf), `AimRules.strikable`: never a person,
+  a body, an armour stand, something that can't be hit (not pickable, not attackable, invulnerable), your own pet or beast, or
+  what you ride or ride with. Which one: the creature under the crosshair, else the nearest the middle within `PRESS_CONE`
+  12° (to its box's edge, tighter than the mark's 25° so the key still picks the block you point at) and the mark's 24 blocks,
+  seen, and nearer than a solid block the crosshair rests on (a block you can see through, like grass, is no wall). Before
+  this only the mark (foes) and vanilla's crosshair (3 blocks) could be locked, so a sheep across a meadow never was. The mark
+  itself stays a foe's alone: no brackets hop between grazing animals, strikes don't step toward them and powers don't bend
+  to them unless you lock one.
 - **Locked**, the view follows the creature's body (58% up it) every frame: eased (`TURN_EASE` 10: the share of the gap closed a
   second, exponential), never more than 300°/s, the short way round, resting inside 0.6°; pitch at 85% and within ±80°. The
   turn moves `yRotO`/`xRotO` with `yRot`/`xRot` (as `Entity.turn`), so the frame's blend never jumps. The mouse keeps a quarter
@@ -16439,6 +16448,7 @@ in reach 23% of a fight today, 49% with these rules).
 - **Switching**: the wheel (up: the next creature to the left, down: to the right; the hotbar stays) or a flick: the mouse's
   movement summed with a 100 ms fade reaching 60 window pixels, at most one switch per 220 ms. The pick: among foes within 80°
   of the view and 40 blocks, the nearest on the screen (by angles from the locked one) within 60° of the flick's way, seen.
+  Locked onto a calm creature, the pick is among every creature you could strike (sheep to sheep); onto a foe, foes only.
 - **It lets go** on the key, after 1.5 s unseen, past 40 blocks, on a teleport (8+ blocks in a tick) or a new level, death or
   logging out. **When the locked creature dies** the ring breaks, and the lock moves to the nearest foe within 60° of the view and
   12 blocks, seen, else lets go.
@@ -16541,7 +16551,8 @@ in reach 23% of a fight today, 49% with these rules).
 `enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
 
 ### 40.9 Tests
-`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
+`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_calm_lock` (a levelled sheep and a wild wolf can be
+locked; yourself, an armour stand, your own wolf, a dying sheep can't; the press's 12° cone), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
 meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
 `aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
 `hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
