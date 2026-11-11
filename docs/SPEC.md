@@ -23696,6 +23696,10 @@ tables that write the game's files, so it cannot drift from the game. No approva
   pitch the caller asked for; `spread` lets a layer's pitch wander, `chance` leaves it out some of the time, `jitter`
   moves it a tick or two, so no two bursts are the same. A layer never brings layers of its own. Armour's own layers
   (§44.12) stay with armour; an event is never in both.
+- Tests follow the mechanism: `audio_events_resolve` lets a helper `<event>.part<n>` be a name only (unregistered, no
+  subtitle, the game's files), as it does a power score's layers; the city's "every place is mono" check and the
+  bells' "placed" list open our own files only (a recording of the game's is the game's to keep mono;
+  `sound_audit.py check` names it). No GameTest was run in the audit's session.
 - The listening page (`run-autopilot/sound-audit-listen/`, gitignored, served on 127.0.0.1:8768, never hosted) plays
   the recordings from this machine's own copy of the game and of AmbientSounds: for every row, Before (the old file,
   taken out of git once it is deleted), the picks, each alone or in its moment (a wood's birdsong under a flush, waves
