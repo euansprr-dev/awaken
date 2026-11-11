@@ -172,52 +172,20 @@ final class AscentSwingTests {
                 }
             }
             SwingBench.heldRule = SwingBench.LIT;
-            // how far a sling's aim leans toward the heading was swept on 11 Nov (SPEC §62, "One key, one read"): 1.5
+            // how far a sling's aim leans toward the heading (SPEC §62, "One key, one read"): the held gates at its
+            // neighbours, logged, never judged; then at the jar's 1.5, judged
+            for (double lean : new double[] {1.0, 2.0, 3.0}) {
+                AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("slingLean", lean));
+                java.util.List<String> would = new java.util.ArrayList<>();
+                heldGates(would, new StringBuilder());
+                rows.append(String.format(java.util.Locale.ROOT, "\nlean %.1f: %d gates missed", lean, would.size()));
+                for (String w : would) rows.append(" | ").append(w, 0, Math.min(w.length(), 110));
+            }
             AscentSwing.T = AscentSwing.Tune.JAR;
-            int free = 0;
-            for (String place : SwingBench.PLACES) {
-                SwingBench.Row today = SwingBench.bench(place, false), held = SwingBench.bench(place, true, true);
-                rows.append('\n').append(today).append("\nheld   ").append(held);
-                gate(bad, held.hardOnRope() == 0, place + ": hard hits on the rope " + held);
-                gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
-                gate(bad, held.medianDistance() >= today.medianDistance() * 0.98, place + ": shorter than the old rope " + held + " vs " + today);
-                free += held.hardFree();
-            }
-            gate(bad, free <= 2, "hard hits flying free between ropes: " + free);
-            // the held rope (11 Nov) lets go by the key alone: the bot letting go as the glow lights goes lane 227, city
-            // 253, forest 246, where the rope letting go by itself (its guide timing each let-go) went lane 243, city 263
-            String[] tall = {"lane", "city", "forest"};
-            double[] tallAtLeast = {240, 250, 240}, heldAtLeast = {220, 245, 240};
-            for (int i = 0; i < tall.length; i++) {
-                SwingBench.Row held = SwingBench.bench(tall[i], true, true);
-                gate(bad, held.medianDistance() >= heldAtLeast[i], tall[i] + ": a held rope goes " + held + ", wanted " + heldAtLeast[i]);
-            }
-            int jump = singleTrees(0.36), run = singleTrees(0.6), fast = singleTrees(1.0);
-            gate(bad, jump >= 80 && run >= 70 && fast >= 60, "one tree alone, of 100: slung from a sprint jump " + jump + ", at a run " + run + ", fast " + fast);
-            double[] woodsAtLeast = {185, 180, 175, 180};
-            for (int i = 0; i < SwingBench.WOODS.length; i++) {
-                String place = SwingBench.WOODS[i];
-                SwingBench.Row held = SwingBench.bench(place, true, true);
-                rows.append("\nheld   ").append(held);
-                gate(bad, held.hardOnRope() == 0 && held.hardFree() == 0, place + ": hard hits " + held);
-                gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
-                gate(bad, held.ropesPerRun() >= 3, place + ": the rope hardly fires " + held);
-                gate(bad, held.medianDistance() >= woodsAtLeast[i], place + ": a held rope goes " + held + ", wanted " + woodsAtLeast[i]);
-            }
-            // the player who only holds forward and the rope, from the ground, never jump (one thumb: the rope on one key,
-            // jump on another). The "holding" bot above also hops on every landing and throws only in the air, so the
-            // game's own hop from the ground went unplayed, and in the game it never fired. This bot follows the game's
-            // rule for a throw from the ground; hills may stop it (a face two blocks high with nothing over it).
-            String[] keyPlaces = {"lane", "city", "forest", "oak", "spruce", "roofs", "hills"};
-            double[] keyAtLeast = {240, 230, 230, 140, 180, 165, 135};
-            for (int i = 0; i < keyPlaces.length; i++) {
-                SwingBench.Row key = SwingBench.benchKey(keyPlaces[i]);
-                rows.append("\nkey    ").append(key);
-                gate(bad, key.hardOnRope() == 0, keyPlaces[i] + ", key only: hard hits on the rope " + key);
-                gate(bad, key.ropesPerRun() >= 3, keyPlaces[i] + ", key only: the rope hardly fires from the ground " + key);
-                gate(bad, key.medianDistance() >= keyAtLeast[i], keyPlaces[i] + ", key only: goes " + key + ", wanted " + keyAtLeast[i]);
-            }
+            heldGates(bad, rows);
             // the held rope off: the rope lets go by itself, as on 10 Nov
+            String[] tall = {"lane", "city"};
+            double[] tallAtLeast = {240, 250};
             AscentSwing.hold = false;
             for (int i = 0; i < 2; i++) {
                 SwingBench.Row held = SwingBench.bench(tall[i], true, true);
@@ -252,6 +220,53 @@ final class AscentSwingTests {
      * five of them from a sprint jump (its let-go could not lift the body over the crown it was pulled toward); a rope
      * that works everywhere takes most.
      */
+    /** The held rope's gates (the holding bot letting go as the glow lights, the woods, the key-only bot), at {@code AscentSwing.T}. */
+    private static void heldGates(java.util.List<String> bad, StringBuilder rows) {
+        int free = 0;
+        for (String place : SwingBench.PLACES) {
+            SwingBench.Row today = SwingBench.bench(place, false), held = SwingBench.bench(place, true, true);
+            rows.append('\n').append(today).append("\nheld   ").append(held);
+            gate(bad, held.hardOnRope() == 0, place + ": hard hits on the rope " + held);
+            gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
+            gate(bad, held.medianDistance() >= today.medianDistance() * 0.98, place + ": shorter than the old rope " + held + " vs " + today);
+            free += held.hardFree();
+        }
+        gate(bad, free <= 2, "hard hits flying free between ropes: " + free);
+        // the held rope (11 Nov) lets go by the key alone: the bot letting go as the glow lights goes lane 227, city
+        // 253, forest 246, where the rope letting go by itself (its guide timing each let-go) went lane 243, city 263
+        String[] tall = {"lane", "city", "forest"};
+        double[] heldAtLeast = {220, 245, 240};
+        for (int i = 0; i < tall.length; i++) {
+            SwingBench.Row held = SwingBench.bench(tall[i], true, true);
+            gate(bad, held.medianDistance() >= heldAtLeast[i], tall[i] + ": a held rope goes " + held + ", wanted " + heldAtLeast[i]);
+        }
+        int jump = singleTrees(0.36), run = singleTrees(0.6), fast = singleTrees(1.0);
+        gate(bad, jump >= 80 && run >= 70 && fast >= 60, "one tree alone, of 100: slung from a sprint jump " + jump + ", at a run " + run + ", fast " + fast);
+        double[] woodsAtLeast = {185, 180, 175, 180};
+        for (int i = 0; i < SwingBench.WOODS.length; i++) {
+            String place = SwingBench.WOODS[i];
+            SwingBench.Row held = SwingBench.bench(place, true, true);
+            rows.append("\nheld   ").append(held);
+            gate(bad, held.hardOnRope() == 0 && held.hardFree() == 0, place + ": hard hits " + held);
+            gate(bad, held.stuckRuns() == 0, place + ": stopped runs " + held);
+            gate(bad, held.ropesPerRun() >= 3, place + ": the rope hardly fires " + held);
+            gate(bad, held.medianDistance() >= woodsAtLeast[i], place + ": a held rope goes " + held + ", wanted " + woodsAtLeast[i]);
+        }
+        // the player who only holds forward and the rope, from the ground, never jump (one thumb: the rope on one key,
+        // jump on another). The "holding" bot above also hops on every landing and throws only in the air, so the
+        // game's own hop from the ground went unplayed, and in the game it never fired. This bot follows the game's
+        // rule for a throw from the ground; hills may stop it (a face two blocks high with nothing over it).
+        String[] keyPlaces = {"lane", "city", "forest", "oak", "spruce", "roofs", "hills"};
+        double[] keyAtLeast = {240, 230, 230, 140, 180, 165, 135};
+        for (int i = 0; i < keyPlaces.length; i++) {
+            SwingBench.Row key = SwingBench.benchKey(keyPlaces[i]);
+            rows.append("\nkey    ").append(key);
+            gate(bad, key.hardOnRope() == 0, keyPlaces[i] + ", key only: hard hits on the rope " + key);
+            gate(bad, key.ropesPerRun() >= 3, keyPlaces[i] + ", key only: the rope hardly fires from the ground " + key);
+            gate(bad, key.medianDistance() >= keyAtLeast[i], keyPlaces[i] + ", key only: goes " + key + ", wanted " + keyAtLeast[i]);
+        }
+    }
+
     static int singleTrees(double speed) {
         int slung = 0;
         AscentSwing.Work w = new AscentSwing.Work();
