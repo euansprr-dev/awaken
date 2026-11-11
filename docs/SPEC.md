@@ -24564,8 +24564,9 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   most twice a second, only when it differs from the last one sent to that player). A member on a knee or down kneels
   in third person for the party (`station_kneel` through `PlayerClips`); on your own screen the edges dim and a line
   says what is happening.
-- The Atlas draws party members in your dimension as live dots; `Go to <name>` is a destination that follows them
-  (**not built yet**).
+- The Atlas shows party members in your dimension as marks in their colour with their name, where the server last
+  said they stand (`MapMarks`, from the same message as the strip). `Go to <name>`, a destination that follows them,
+  is **not built yet**.
 - Pings on the lock key (middle click; a lock always wins on a monster, and a lock is shown to the party as their
   target): on anything else a marker in world light for 8 s, on the edge when off screen and on the Atlas, with one
   line chosen by what it is ("Over here", "Ore here", "Let's go in", "Look at this", "On my way", "Help" while down;

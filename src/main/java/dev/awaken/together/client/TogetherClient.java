@@ -33,6 +33,17 @@ public final class TogetherClient {
         });
         AimClient.freePress = Pings::press;
         StatusSections.add(StatusSections.Tab.STATUS, new TogetherSection());
+        // the party on the Atlas (SPEC §70.2): each member where the server last said they stand, in their colour
+        dev.awaken.core.api.MapMarks.register(player -> {
+            java.util.List<dev.awaken.core.api.MapMarks.Mark> out = new java.util.ArrayList<>();
+            int row = 0;
+            for (TogetherNet.Member m : ClientParty.members()) {
+                if (m.is(TogetherNet.F_SELF)) continue;
+                int colour = ClientParty.COLOURS[row++ % ClientParty.COLOURS.length];
+                if (!m.is(TogetherNet.F_ELSEWHERE)) out.add(new dev.awaken.core.api.MapMarks.Mark(new net.minecraft.core.BlockPos(m.x(), m.y(), m.z()), colour & 0xFFFFFF, m.name(), true));
+            }
+            return out;
+        });
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
