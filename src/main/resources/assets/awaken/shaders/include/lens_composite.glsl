@@ -196,10 +196,22 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
     vec3 N = normalize(vec3(rip.x, 1.0, rip.y)), V = normalize(p), R = reflect(V, N);
     float fres = 0.02 + 0.98 * pow(1.0 - max(dot(-V, N), 0.0), 5.0);
     mat4 vp = frameMat(4);
-    // the sky above: the frame itself where the reflected ray meets open sky on screen, else the fog's colour
-    vec3 s = project(vp, R * 1000.0, z01);
-    vec3 refl = P(10).rgb;
-    if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0 && texture(DepthSampler, s.xy).r < 1.0e-7) refl = texture(InSampler, s.xy).rgb;
+    vec3 refl;
+    if (airOn() > 0.0) {
+        // Under the Air the sky is Lens's own, drawn in this pass: the frame still holds the game's sky, and water that
+        // mirrored the frame showed a sky that is nowhere else on screen (Euan, 11 Nov: "that makes no sense"). So the
+        // water mirrors the Air: its sky the way the reflected ray looks, and its block clouds, walked from the
+        // camera's image under the surface.
+        vec3 Rs = normalize(vec3(R.x, max(R.y, 0.02), R.z));
+        refl = airSky(Rs, F(22).xyz, f16.z);
+        vec4 cb = cloudNearFrom(Rs, 1.0e9, 2.0 * max(f12.y - surf, 0.0));
+        refl = refl * cb.a + cb.rgb;
+    } else {
+        // the game's sky: the frame itself where the reflected ray meets open sky on screen, else the fog's colour
+        vec3 s = project(vp, R * 1000.0, z01);
+        refl = P(10).rgb;
+        if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0 && texture(DepthSampler, s.xy).r < 1.0e-7) refl = texture(InSampler, s.xy).rgb;
+    }
     if (Quality > 1.5) {
         // Ultra: march the reflected ray against the depth buffer, nearest first
         vec4 p1 = P(1);

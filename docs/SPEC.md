@@ -6528,6 +6528,17 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **Water under the Air** (Euan 2026-11-11, told that Cinematic's water mirrored the game's old sky: "No, that
+  makes no sense. Why would it mirror the game's old sky? That would be inconsistent."). L3's water read its
+  reflection from the frame, and under the Air the frame still holds the game's sky (Lens's is drawn in the composite
+  itself), so the water showed a sky that was nowhere else on screen, and none of Lens's clouds. Now, while the Air
+  is on, `lensWater` mirrors the Air: `airSky` the way the reflected ray looks, and the block clouds walked from the
+  camera's image under the surface (`cloudNearFrom`, the same walk as the view's with its origin dropped twice the
+  eye's height over the water, so the clouds in the water are the clouds in the sky block for block, and their haze
+  is by the whole path). The mirrored walk goes the far clouds' distance too (1,240 blocks), since the far clouds'
+  buffer is the camera's view. The Fresnel, the ripples, the glint and Ultra's march of the land are as they were;
+  without the Air the frame's sky is still the one mirrored. Not mirrored: a storm cell, the stars, the sun's and
+  moon's discs (the glint stands for them). Tour: `tools/autopilot/steady60-water-ci.txt`.
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
