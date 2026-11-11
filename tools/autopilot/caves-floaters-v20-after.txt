@@ -1,0 +1,100 @@
+# Nothing floats in a cave (SPEC §42.4 "Settled"): the after pictures on V20's seed. caves-floaters-v20.txt on the code before the
+# fix (run 42948506585) stood at each spot below to see a floating skin piece, Euan's own lichen first; this stands at the same
+# spots with the same view in a world made fresh with the fix, so each pair is the same rock before and after. Then the census.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-floaters-v20-after.txt 3000
+world caves_floaters_v20_after creative 3761469094609221698
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+hud off
+
+# e_look0: Euan's spot: the cave_lichen_shallows he saw (his shot's lichen) at -1409 39 -711 before the fix
+cmd awaken caves at -1409 38 -715
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1408.50 38.00 -714.50 -0.0 1.6
+wait 120
+shot e_look0_after
+cmd execute positioned -1409 39 -711 run awaken caves floaters 5
+wait 40
+
+# e_look1: the deep mineshaft: mineral_crust at -1456 -25 -698 before the fix
+cmd awaken caves at -1452 -27 -696
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1451.50 -27.00 -695.50 114.9 -10.5
+wait 120
+shot e_look1_after
+cmd execute positioned -1456 -25 -698 run awaken caves floaters 5
+wait 40
+
+# m_look0: near the mineshaft: wet_streaks at -1490 31 -625 before the fix
+cmd awaken caves at -1487 29 -624
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1486.50 29.00 -623.50 106.9 -14.3
+wait 120
+shot m_look0_after
+cmd execute positioned -1490 31 -625 run awaken caves floaters 5
+wait 40
+
+# r_pale_halls: the Pale Halls: an amber crystal at -1249 4 -483 before the fix
+cmd awaken caves at -1250 2 -480
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1249.50 2.00 -479.50 -163.1 -14.3
+wait 120
+shot r_pale_halls_after
+cmd execute positioned -1249 4 -483 run awaken caves floaters 5
+wait 40
+
+# r_ochre: the Ochre Deep: cave_lichen_middle at -1409 27 -600 before the fix
+cmd awaken caves at -1405 26 -600
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1404.50 26.00 -599.50 90.0 1.6
+wait 120
+shot r_ochre_after
+cmd execute positioned -1409 27 -600 run awaken caves floaters 5
+wait 40
+
+# r_black_vaults: the Black Vaults: wet_streaks at -1440 -33 -334 before the fix
+cmd awaken caves at -1436 -34 -332
+wait 20
+waitpassage
+wait 600
+cmd tp @s -1435.50 -34.00 -331.50 114.9 1.4
+wait 120
+shot r_black_vaults_after
+cmd execute positioned -1440 -33 -334 run awaken caves floaters 5
+wait 40
+
+quit
