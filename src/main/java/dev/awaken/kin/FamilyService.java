@@ -105,7 +105,9 @@ public final class FamilyService {
      */
     static @Nullable Vec3 threat(ServerLevel level, ServerPlayer p) {
         long now = level.getGameTime();
-        long[] at = THREAT_AT.computeIfAbsent(p.getUUID(), k -> new long[]{Long.MIN_VALUE});
+        // (asked-at starts well in the past, never at Long.MIN_VALUE: now minus that overflows and reads as "just asked",
+        // which answered "no fight" for ever; CI run 42988043624 filmed them at your heel with a husk on you)
+        long[] at = THREAT_AT.computeIfAbsent(p.getUUID(), k -> new long[]{now - 1000L});
         if (now - at[0] < 10) return THREAT.get(p.getUUID());
         at[0] = now;
         Vec3 found = null;

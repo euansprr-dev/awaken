@@ -71,7 +71,10 @@ final class FamilyCommands {
                             FamilyWorld.One one = home.one(k);
                             FamilyPet b = FamilyService.body(p.level(), one);
                             String line = "family: " + k.id + " arrived=" + one.arrived + " state=" + one.state + " stage=" + home.stage
-                                    + (b == null ? " body=none" : " body at " + b.blockPosition().toShortString() + " pose=" + FamilyPet.ACTS[b.act()]);
+                                    + (b == null ? " body=none" : " body at " + b.blockPosition().toShortString() + " pose=" + FamilyPet.ACTS[b.act()]
+                                    + " doing=" + b.activity + " for=" + (b.until - p.level().getGameTime())
+                                    + (b.spot == null ? "" : " spot=" + b.spot.toShortString() + " off=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(b.blockPosition().distSqr(b.spot))))
+                                    + (b.waryUntil > p.level().getGameTime() ? " wary" : "") + (b.getNavigation().isDone() ? " still" : " walking"));
                             dev.awaken.Awaken.LOG.info("[family] {}", line);
                             c.getSource().sendSuccess(() -> Component.literal(line), false);
                         }

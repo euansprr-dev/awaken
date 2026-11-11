@@ -132,7 +132,9 @@ shotnow family_c4_you_stop_from_behind
 # ---- D. a fight: they keep well back and watch, and come back when it is over ----
 cmd gamemode survival
 cmd summon minecraft:husk ~4 ~ ~
-wait 150
+wait 110
+cmd awaken admin family state
+wait 50
 cmd awaken admin family state
 camera back
 wait 6
@@ -148,12 +150,16 @@ shotnow family_d3_after_the_fight
 cmd gamemode creative
 
 # ---- E. Dubu told to wait, away from home; you walk on with Aya ----
-walk 320
-wait 380
-cmd awaken admin family use dubu sneak
+# you are suddenly 40 blocks off (as the rope or wings would take you): they turn up behind you and run in
+cmd spreadplayers ~40 ~ 0 4 false @s
 camera front
+wait 200
+cmd awaken admin family state
+shotnow family_e0_they_caught_up
+cmd awaken admin family use dubu sneak
+wait 20
 walk 60
-wait 110
+wait 120
 cmd awaken admin family state
 shotnow family_e1_dubu_waits_aya_comes
 camera first
