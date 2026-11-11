@@ -376,4 +376,4 @@ pay, or the end shows the System window with rows.
 | The leap's reach, as numbers or as rule functions the course's check can call | rope-hold-swing |
 | The mask honoured in `AscentMoves` and `AscentServer` events; the aimed dive; the double-jump mantle | rope-hold-swing |
 | The Gauntlet as a hand-laid Realm in the Stopped Works' kit: its scripted gate, halls, pieces, check, the clock, rings and medals ported from the Rig, a fall catch that costs nothing here, crossing, HUD lines, tally floor, re-run | gates |
-| A new power, a new rank, a new stratum calling `Unlocks.show` | their modules, one line each, if decision 2 is yes |
+| A new power, a new rank, a new stratum calling `Unlocks.show` | movement-unlocks, at the manager's word on 11 Nov (decision 2 was yes): built, SPEC §71.7 |

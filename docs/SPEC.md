@@ -25629,8 +25629,21 @@ and re-run: the gates session.
   no rise and no sweep. Sound: `ui.moment` at 0.8 under Minecraft's `ui.toast.challenge_complete` at 0.9. It starts only
   with no screen, no choice card, no discovery up, and `SystemHud.inCombat()` false, and waits however long; the same
   unlock twice is one. While it shows: the director and tips are held, `SystemHud.tickToasts` and `tickPanel` hold new
-  toasts (critical ones too) and info cards, and `Tips` fades a tip already up. *Not built:* other modules calling it
-  (a new power, rank or stratum); the gates' run HUD stepping aside (asked of the gates session: `showing()`).
+  toasts (critical ones too) and info cards, and `Tips` fades a tip already up. At most five wait their turn (a
+  command that hands out everything would otherwise hold the screen for minutes; play gives three at most).
+  `/awaken signal unlock <id>` (admin) shows a registered one. *Not built:* the gates' run HUD stepping aside (asked
+  of the gates session: `showing()`).
+- **The other three kinds** (Euan's "every time you unlock a major thing"; the title replaces the plain announcement,
+  never a window and a title). Each is made on the spot with `Unlocks.show(player, new Unlock(id, label, name, how,
+  colour))`, sent whole as `signal_unlock_made`:
+  - *A new power* (`Powers.learnOrLevel`, in place of the "New power" window): NEW POWER, the power's name in its
+    family's colour, and "Press [its key] to use it" with the key it landed on (`Powers.keyOf`), or "It works on its
+    own while you have it" for a passive, or "Press [K] and put it on a key" when no key was free. The Journal's
+    "Power learned" notice still keeps what it does. A changed variant keeps its window.
+  - *A new rank* (`Progression.passReassessment`, in place of the Reassessment window): RANK UP, "C-rank" in the
+    rank's colour, "C-rank gates will start to appear for you". The rank-up sound and the Journal's notice stay.
+  - *A new stratum* (`DescentModule`, in place of the toast): NEW STRATUM, the stratum's name in its rank's colour,
+    "Stratum 3 has opened below you". It follows the rank's title.
 - **The ladder's titles** (`body.ascent.AscentUnlocks`): Rope, Double Jump, Air Dash, Slam, Dive, Wings, Flight, The
   Sovereign's Form. With `wayUp` on a gift's scene keeps its light and swell and draws no words (`AscentScene.render`);
   `WayClient.sceneBegan` shows the title: the old course's edge → Double Jump, its far landing → Air Dash then Slam, a
