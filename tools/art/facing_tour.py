@@ -162,7 +162,7 @@ def picks_tour():
     lines += ["cmd tp @s 0.5 201 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
               "cmd fill -8 200 -6 8 200 9 minecraft:polished_deepslate", "cmd fill -8 201 -6 8 206 8 minecraft:air",
               "cmd fill -8 201 9 8 205 9 minecraft:stone", "cmd fill 2 201 8 7 204 8 minecraft:dirt",
-              "cmd fill -7 201 8 -2 204 8 minecraft:stone", "wait 20"]
+              "cmd fill -7 201 8 -2 204 8 minecraft:stone", "wait 200"]  # the runner's client redraws the fills slowly
     for cam in ("first", "back"):
         lines += [f"camera {cam}", f"opt fov {70 if cam == 'first' else 50}", "wait 4"]
         for form in PICKS:
@@ -171,7 +171,7 @@ def picks_tour():
                     continue
                 name = f"fp_{form}_{ground}_{'1p' if cam == 'first' else '3p'}"
                 lines += [f"cmd tp @s {x} 201 6.5 0 12", f"cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_{form}",
-                          "wait 30", f"arms film {name}_rest 3 1 3", "wait 4", f"arms film {name} 16 0.5 3", "wait 1",
+                          "wait 60", f"arms film {name}_rest 3 1 3", "wait 4", f"arms film {name} 16 0.5 3", "wait 1",
                           "cmd awaken delve demo strike", "wait 17"]
     lines.append("quit")
     return lines
