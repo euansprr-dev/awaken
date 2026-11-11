@@ -5133,8 +5133,9 @@ top), client wiring in `AscentMoves`. The server is unchanged (it still checks e
   0.08 (the snap). A let-go that would fly you into something within 6 ticks (the carry looked 12 ticks ahead, with the
   bends it may take) holds the rope up to 10 ticks longer.
 - **Holding the key: the chain.** Held in the air, the rope throws again by itself 2 ticks after a let-go (and from a
-  run off an edge), silently when there is nothing; a tap within 5 ticks of a throw with a ledge in the look zips up it
-  instead. Flying free with the key held, what's within 12 ticks is flown round (a nudge sideways or down, speed kept),
+  run off an edge), silently when there is nothing; never after a link that failed or went nowhere, or a press that
+  missed, until the next press. A tap within 5 ticks of a throw carries that throw through, never a second rope (see
+  "One press, one throw" below). Flying free with the key held, what's within 12 ticks is flown round (a nudge sideways or down, speed kept),
   else zipped over, else hopped (+0.3 or +0.45). From the ground a press throws as before (a hop into the swing).
 - **The marker.** Every other tick in the air off the rope (or with the key held on the ground) the same search runs and
   `AscentRender` draws the result: a small point with four ticks turning round it, sized with distance, eased between
@@ -24386,7 +24387,8 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
 - **When the swing dies out** the body hangs still under the anchor. From there forward pumps it up again, back holds it
   still, sneak reels in, sneak and jump rappels, jump launches, and letting go drops. A landing, a cut rope, a gone
   anchor or a refused rope still end it as before. The key let go is the let-go that tick: the old rope's wait when a
-  let-go would throw you into something (`holdOn`) is only the old rope's. A tap still zips to a ledge. The sling still
+  let-go would throw you into something (`holdOn`) is only the old rope's. A tap carries its throw through (below,
+  "One press, one throw"). The sling still
   lets go by itself (it is a throw over a top, not a swing), and a key held through its let-go still throws the next
   rope. A swing into a wall no longer hands off to a wall-run or a zip by itself: let go and jump at the wall to run it.
 - **Never two ropes.** Cause: a rope let go draws its follow-through (the line falling from its anchor, 9 ticks), and the
@@ -24429,6 +24431,32 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   2, 3) missed one by a single run (a hard hit flying free in the oaks or on the roofs, a stopped run in the city or
   the forest), where 0 passes them all: the lean stays 0, the sling as before (a top at most 30 degrees off your look,
   shown by its chevron). The one-key rule rests on the hidden zip gone and the overhead pull marked.
+- **One press, one throw** (11 Nov 2026, Euan on build cbb8d1923: "you click once, but it sends the rope three times
+  before it actually connects ... it feels super glitchy", and "I do like that you can kind of just stay clicked and it
+  kind of like brings you through the best path forward. But if we could get that in a smooth way"). Causes, from the
+  code (his log has no rope lines, and no refusals): the held chain threw again 2 ticks after any link ended, also one
+  that went nowhere (a sling whose way closed, a zip that stalled, a cut rope, a refused one), at the same top again or
+  the next one along, with no memory of the last; the free flight's own zip over a wall (`steerHeld`) threw with no
+  pause at all; and a tap within 5 ticks of a throw let go of it and threw a second rope at a lip in the look. Now, by
+  rule (`RopeChain`, pure, beside the moves):
+  - each link of the held chain is one throw at one pick, made once; the next is picked when it ends, as before;
+  - a link that ends with the key still held stops the chain until the next press when it failed (the zip blocked, the
+    sling's way closed, the rope cut or its anchor gone, the swing met a wall, the server refused it), or when it neither
+    arrived (a zip at its lip, a sling let go at its point, a let-go or launch off a swing, a hand-off to a wall-run) nor
+    carried the body 3 blocks (a swing that landed where it began); an arrival under a block in under 10 ticks went
+    nowhere too. A link the key let go of is never judged;
+  - a press that missed throws nothing more while the key stays down: one miss, never a string of tries;
+  - the free flight's zip over what is ahead is a link like the others: it waits out the 2 ticks and never follows a
+    link that went nowhere;
+  - a tap (the key up within 5 ticks of a press's throw, or before its rope bit) carries that throw through by itself:
+    a swing bites and swings its first arc and lets go at its top, a zip goes on to its lip, a sling to its let-go.
+    Taking the key again in a tapped swing holds it as ever. With the assist off the rope is as before.
+  - The log keeps one line for a press that threw more than one rope or whose held rope stopped: "[rope] one press
+    threw 3 ropes, one link at a time", or "... then the held rope stopped: the sling's way closed".
+  The swing bench still plays the old chain (its key-only bot throws 2 ticks after every let-go): its gates are as they
+  were and say nothing of this rule. Test `ascent_rope_chain` (held where every link fails, one press throws once;
+  where every link arrives, a link at a time; a miss, a key-up let-go, a swing landed 1.5 off, a short zip that arrived
+  and an arrival 0.2 off judged as above).
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

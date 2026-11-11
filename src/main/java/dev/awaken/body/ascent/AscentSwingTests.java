@@ -21,6 +21,7 @@ final class AscentSwingTests {
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, AscentSwingTests::sling);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
         dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, AscentSwingTests::held);
+        dev.awaken.core.test.AwakenTests.register("ascent_rope_chain", 20, AscentSwingTests::ropeChain);
         dev.awaken.core.test.AwakenTests.register("ascent_sky_stair", 20, AscentSwingTests::skyStair);
     }
 
@@ -119,6 +120,65 @@ final class AscentSwingTests {
             AscentSwing.hold = hold;
         }
         h.succeed();
+    }
+
+    /**
+     * One press, one throw (SPEC §62): the held rope's chain throws again only after a link that got somewhere. Held where
+     * every link fails three ticks in (the client's loop: a let-go, two ticks, the next throw), a press throws once and
+     * then nothing for the rest of the hold; where every link arrives it throws one link at a time. A press that missed
+     * throws nothing more, a link let go by the key is never judged, and a new press starts again.
+     */
+    private static void ropeChain(GameTestHelper h) {
+        h.assertTrue(heldFor(false) == 1, "held where every link fails: one throw, not " + heldFor(false));
+        int good = heldFor(true);
+        h.assertTrue(good >= 15, "held where every link arrives: a link at a time, " + good + " in 100 ticks");
+        RopeChain c = new RopeChain();
+        c.press();
+        c.thrown(0, 0, 64, 0);
+        c.missed();
+        h.assertTrue(c.stopped() && c.why().equals("the press missed"), "a press that missed stops the held rope: " + c.why());
+        c.press();
+        h.assertTrue(!c.stopped() && c.throwsThisPress() == 0, "a new press may throw again");
+        c.thrown(0, 0, 64, 0);
+        h.assertTrue(!c.ended(3, 0.2, 64, 0, false, false, "the zip was blocked") && !c.stopped(), "a link let go by the key is never judged");
+        c.thrown(10, 0, 64, 0);
+        h.assertTrue(c.ended(18, 1.5, 64, 0, true, false, null) && c.stopped(), "a held swing that landed 1.5 from its start went nowhere");
+        c.press();
+        c.thrown(0, 0, 64, 0);
+        h.assertTrue(!c.ended(25, 5, 64, 0, true, false, null), "a held link that carried the body 5 blocks is progress");
+        c.thrown(30, 5, 64, 0);
+        h.assertTrue(!c.ended(34, 5.5, 66, 0, true, true, null), "a short zip that arrived is progress");
+        c.thrown(40, 5, 66, 0);
+        h.assertTrue(c.ended(43, 5.2, 66, 0, true, true, null), "an arrival 0.2 off in 3 ticks went nowhere");
+        h.assertTrue(!c.ended(50, 0, 0, 0, true, false, "the zip was blocked"), "no link open, nothing judged");
+        h.succeed();
+    }
+
+    /**
+     * The client's held loop for 100 ticks after one press: a link lasts 3 ticks (failed: blocked, 0.4 on; arrived: 4
+     * on), the chain waits 2 ticks after it and throws again unless stopped. Returns the ropes thrown.
+     */
+    private static int heldFor(boolean arrive) {
+        RopeChain c = new RopeChain();
+        c.press();
+        double x = 0;
+        int thrown = 0, cool = 0, age = -1;
+        for (int t = 0; t < 100; t++) {
+            if (age >= 0) {
+                if (++age < 3) continue;
+                x += arrive ? 4 : 0.4;
+                c.ended(t, x, 64, 0, true, arrive, arrive ? null : "the sling's way closed");
+                age = -1;
+                cool = 2;
+            } else if (cool > 0) {
+                cool--;
+            } else if (!c.stopped()) {
+                c.thrown(t, x, 64, 0);
+                thrown++;
+                age = 0;
+            }
+        }
+        return thrown;
     }
 
     /** The held test's rope: 26 long, its anchor 3 to the side and 40 up, the hand 40° behind its bottom, going 0.8 on. */
