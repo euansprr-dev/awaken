@@ -1,0 +1,142 @@
+# The boss experience plan's storyboard frames (docs/boss-experience/PLAN.md), from the game as it is on build
+# 69fee63de: what a finishing blow has to work with today. In a practice Proving (/awaken admin trial D), armed and
+# armoured in front of the Ringer, seen over your own shoulder (vanilla's third person):
+# 1. its stance broken, down on a knee; 2. the Execution on it, a frame a tick; 3. its death, a frame every 5 ticks.
+# Run on CI: tools/tour-ci.sh tools/autopilot/boss-finisher-frames.txt
+world autopilot_boss_finisher creative 20261111
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin trial D
+wait 200
+hud off
+
+# --- onto the chancel (as fights-belfry does): it drops into the light ---
+cmd gamemode spectator
+cmd tp @s ~ ~2 ~-12 0 5
+wait 10
+cmd tp @s ~ ~20 ~6 180 30
+wait 10
+cmd tp @s ~ ~-14 ~-56 180 -12
+wait 10
+cmd tp @s ~24 ~-6 ~12 180 8
+wait 10
+cmd tp @s ~-24 ~ ~8 180 0
+wait 80
+
+# --- you, in Wildhide with a longsword, three blocks in front of it (creative: it never turns on you) ---
+cmd gamemode survival
+cmd gamemode creative
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+cmd execute at @e[type=awaken:proving_ringer,limit=1] rotated as @e[type=awaken:proving_ringer,limit=1] rotated ~ 0 run tp @s ^ ^ ^3.4 ~180 -6
+wait 20
+camera back
+wait 10
+shot finisher_00_facing
+
+# --- its stance broken: down on a knee ---
+cmd awaken admin trial break
+wait 8
+shotnow finisher_01_kneel
+wait 2
+shotnow finisher_02_kneel
+
+# --- the Execution, a frame a client tick from the press (held 12 ticks, as fights-belfry does) ---
+arms heavy 12
+shotnow finisher_exec_01
+shotnow finisher_exec_02
+shotnow finisher_exec_03
+shotnow finisher_exec_04
+shotnow finisher_exec_05
+shotnow finisher_exec_06
+shotnow finisher_exec_07
+shotnow finisher_exec_08
+shotnow finisher_exec_09
+shotnow finisher_exec_10
+shotnow finisher_exec_11
+shotnow finisher_exec_12
+shotnow finisher_exec_13
+shotnow finisher_exec_14
+shotnow finisher_exec_15
+shotnow finisher_exec_16
+shotnow finisher_exec_17
+shotnow finisher_exec_18
+shotnow finisher_exec_19
+shotnow finisher_exec_20
+shotnow finisher_exec_21
+shotnow finisher_exec_22
+shotnow finisher_exec_23
+shotnow finisher_exec_24
+shotnow finisher_exec_25
+shotnow finisher_exec_26
+shotnow finisher_exec_27
+shotnow finisher_exec_28
+shotnow finisher_exec_29
+shotnow finisher_exec_30
+shotnow finisher_exec_31
+shotnow finisher_exec_32
+shotnow finisher_exec_33
+shotnow finisher_exec_34
+shotnow finisher_exec_35
+shotnow finisher_exec_36
+wait 30
+shot finisher_03_after
+
+# --- its death today, over your shoulder: a frame every 5 ticks ---
+cmd damage @e[type=awaken:proving_ringer,limit=1] 1000000 minecraft:player_attack by @s
+shotnow finisher_death_00
+wait 4
+shotnow finisher_death_05
+wait 4
+shotnow finisher_death_10
+wait 4
+shotnow finisher_death_15
+wait 4
+shotnow finisher_death_20
+wait 4
+shotnow finisher_death_25
+wait 4
+shotnow finisher_death_30
+wait 4
+shotnow finisher_death_35
+wait 4
+shotnow finisher_death_40
+wait 4
+shotnow finisher_death_45
+wait 4
+shotnow finisher_death_50
+wait 4
+shotnow finisher_death_55
+wait 4
+shotnow finisher_death_60
+wait 4
+shotnow finisher_death_65
+wait 4
+shotnow finisher_death_70
+wait 4
+shotnow finisher_death_75
+wait 4
+shotnow finisher_death_80
+wait 4
+shotnow finisher_death_85
+wait 4
+shotnow finisher_death_90
+wait 40
+shot finisher_99_chain
+camera first
+hud on
+quit
