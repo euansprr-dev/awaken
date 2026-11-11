@@ -1,0 +1,10 @@
+{
+ "awaken:anomaly.rift_open": [
+  {
+   "delay": 0,
+   "pitch": 1.3,
+   "sound": "minecraft:block.portal.trigger",
+   "volume": 0.35
+  }
+ ]
+}

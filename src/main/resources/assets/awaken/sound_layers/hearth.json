@@ -1,0 +1,26 @@
+{
+ "awaken:hearth.lift": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:block.stone.break",
+   "volume": 0.5
+  }
+ ],
+ "awaken:hearth.room": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.amethyst_block.chime",
+   "volume": 0.3
+  }
+ ],
+ "awaken:hearth.take": [
+  {
+   "delay": 150,
+   "pitch": 1.2,
+   "sound": "minecraft:item.firecharge.use",
+   "volume": 0.4
+  }
+ ]
+}

@@ -2,75 +2,141 @@
   "hearth.anchor": {
     "subtitle": "subtitles.awaken.hearth.anchor",
     "sounds": [
-      { "name": "minecraft:block.respawn_anchor.set_spawn", "type": "event", "pitch": 0.8, "volume": 0.9 },
-      { "name": "minecraft:block.beacon.activate", "type": "event", "pitch": 0.7, "volume": 0.6 }
+      {
+        "name": "minecraft:block.respawn_anchor.set_spawn",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.6
+      }
     ]
   },
   "hearth.checkpoint": {
     "subtitle": "subtitles.awaken.hearth.checkpoint",
     "sounds": [
-      { "name": "minecraft:block.note_block.chime", "type": "event", "volume": 0.8 }
+      {
+        "name": "minecraft:block.note_block.chime",
+        "type": "event",
+        "volume": 0.8
+      }
     ]
   },
   "hearth.record": {
     "subtitle": "subtitles.awaken.hearth.record",
     "sounds": [
-      { "name": "minecraft:ui.toast.challenge_complete", "type": "event", "pitch": 1.2, "volume": 0.7 }
+      {
+        "name": "minecraft:ui.toast.challenge_complete",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.7
+      }
     ]
   },
   "hearth.trial": {
     "subtitle": "subtitles.awaken.hearth.trial",
     "sounds": [
-      { "name": "minecraft:block.beacon.power_select", "type": "event", "pitch": 0.6, "volume": 1.0 }
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
     ]
   },
   "hearth.forge": {
     "subtitle": "subtitles.awaken.hearth.forge",
     "sounds": [
-      { "name": "minecraft:block.anvil.use", "type": "event", "pitch": 0.9, "volume": 0.6 },
-      { "name": "minecraft:block.blastfurnace.fire_crackle", "type": "event", "volume": 0.8 }
+      {
+        "name": "minecraft:block.anvil.use",
+        "type": "event",
+        "pitch": 0.9,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block.blastfurnace.fire_crackle",
+        "type": "event",
+        "volume": 0.8
+      }
     ]
   },
   "hearth.request_deliver": {
     "subtitle": "subtitles.awaken.hearth.request_deliver",
     "sounds": [
-      { "name": "minecraft:item.bundle.drop_contents", "type": "event", "pitch": 1.15, "volume": 0.8 }
+      {
+        "name": "minecraft:item.bundle.drop_contents",
+        "type": "event",
+        "pitch": 1.15,
+        "volume": 0.8
+      }
     ]
   },
   "hearth.request_complete": {
     "subtitle": "subtitles.awaken.hearth.request_complete",
     "sounds": [
-      { "name": "awaken:ui.request_delivered", "type": "event" }
+      {
+        "name": "awaken:ui.request_delivered",
+        "type": "event"
+      }
     ]
   },
   "hearth.core_fuse": {
     "subtitle": "subtitles.awaken.hearth.core_fuse",
     "sounds": [
-      { "name": "minecraft:block.respawn_anchor.charge", "type": "event", "pitch": 1.4, "volume": 0.8 }
+      {
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
     ]
   },
   "hearth.take": {
     "subtitle": "subtitles.awaken.hearth.take",
     "sounds": [
-      { "name": "awaken:sfx_hearth_take", "attenuation_distance": 32 }
+      {
+        "name": "minecraft:block.stone.place",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
+      }
     ]
   },
   "hearth.fire": {
     "subtitle": "subtitles.awaken.hearth.fire",
     "sounds": [
-      { "name": "awaken:sfx_hearth_fire", "attenuation_distance": 12 }
+      {
+        "name": "minecraft:block.campfire.crackle",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
     ]
   },
   "hearth.lift": {
     "subtitle": "subtitles.awaken.hearth.lift",
     "sounds": [
-      { "name": "awaken:sfx_hearth_lift", "attenuation_distance": 16 }
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.0
+      }
     ]
   },
   "hearth.room": {
     "subtitle": "subtitles.awaken.hearth.room",
     "sounds": [
-      { "name": "awaken:ui_hearth_room" }
+      {
+        "name": "minecraft:block.campfire.crackle",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9
+      }
     ]
   }
 }

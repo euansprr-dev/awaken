@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.amb.lands_rustle",
     "sounds": [
       {
-        "name": "awaken:amb_lands_rustle"
+        "name": "minecraft:block.poplar_leaves.ambient",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.amb.lands_wind_high",
     "sounds": [
       {
-        "name": "awaken:amb_lands_wind_high"
+        "name": "minecraft:block.sand.idle",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.8
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.amb.glass_steppe",
     "sounds": [
       {
-        "name": "awaken:amb_glass_steppe"
+        "name": "minecraft:block.sand.idle",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.amb.shattered_highlands",
     "sounds": [
       {
-        "name": "awaken:amb_shattered_highlands"
+        "name": "minecraft:block.sand.idle",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.7
       }
     ]
   },
@@ -35,7 +47,10 @@
     "subtitle": "subtitles.awaken.amb.frost_spires",
     "sounds": [
       {
-        "name": "awaken:amb_frost_spires"
+        "name": "minecraft:block.sand.idle",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.25
       }
     ]
   },
@@ -43,7 +58,10 @@
     "subtitle": "subtitles.awaken.amb.mirror_marsh",
     "sounds": [
       {
-        "name": "awaken:amb_mirror_marsh"
+        "name": "minecraft:block.water.ambient",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 0.7
       }
     ]
   }

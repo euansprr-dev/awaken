@@ -51,8 +51,10 @@
     "subtitle": "subtitles.awaken.amb.rift",
     "sounds": [
       {
-        "name": "awaken:amb_rift",
-        "attenuation_distance": 32
+        "name": "minecraft:block.portal.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.7
       }
     ]
   },
@@ -60,8 +62,10 @@
     "subtitle": "subtitles.awaken.amb.grove",
     "sounds": [
       {
-        "name": "awaken:amb_grove",
-        "attenuation_distance": 24
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.6
       }
     ]
   },
@@ -69,8 +73,10 @@
     "subtitle": "subtitles.awaken.amb.star_whistle",
     "sounds": [
       {
-        "name": "awaken:amb_star_whistle",
-        "attenuation_distance": 96
+        "name": "minecraft:item.elytra.flying",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.6
       }
     ]
   },
@@ -78,8 +84,10 @@
     "subtitle": "subtitles.awaken.amb.star_cooling",
     "sounds": [
       {
-        "name": "awaken:amb_star_cooling",
-        "attenuation_distance": 20
+        "name": "minecraft:block.smoker.smoke",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -87,8 +95,10 @@
     "subtitle": "subtitles.awaken.amb.star_cooled",
     "sounds": [
       {
-        "name": "awaken:amb_star_cooled",
-        "attenuation_distance": 24
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
       }
     ]
   },
@@ -96,8 +106,10 @@
     "subtitle": "subtitles.awaken.amb.well",
     "sounds": [
       {
-        "name": "awaken:amb_well",
-        "attenuation_distance": 40
+        "name": "minecraft:block.conduit.ambient",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
       }
     ]
   },
@@ -105,8 +117,10 @@
     "subtitle": "subtitles.awaken.amb.ruin_night",
     "sounds": [
       {
-        "name": "awaken:amb_ruin_night",
-        "attenuation_distance": 32
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 0.8
       }
     ]
   },
@@ -540,22 +554,10 @@
     "subtitle": "subtitles.awaken.world.chime",
     "sounds": [
       {
-        "name": "awaken:amb_world_chime_1"
-      },
-      {
-        "name": "awaken:amb_world_chime_2"
-      },
-      {
-        "name": "awaken:amb_world_chime_3"
-      },
-      {
-        "name": "awaken:amb_world_chime_4"
-      },
-      {
-        "name": "awaken:amb_world_chime_5"
-      },
-      {
-        "name": "awaken:amb_world_chime_6"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -563,10 +565,10 @@
     "subtitle": "subtitles.awaken.world.bell_far",
     "sounds": [
       {
-        "name": "awaken:amb_world_bell_far_1"
-      },
-      {
-        "name": "awaken:amb_world_bell_far_2"
+        "name": "minecraft:block.bell.use",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.6
       }
     ]
   },
@@ -574,13 +576,10 @@
     "subtitle": "subtitles.awaken.world.halo_hiss",
     "sounds": [
       {
-        "name": "awaken:amb_world_halo_hiss_1"
-      },
-      {
-        "name": "awaken:amb_world_halo_hiss_2"
-      },
-      {
-        "name": "awaken:amb_world_halo_hiss_3"
+        "name": "minecraft:block.piston.contract",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.7
       }
     ]
   },
@@ -588,13 +587,10 @@
     "subtitle": "subtitles.awaken.world.halo_clunk",
     "sounds": [
       {
-        "name": "awaken:amb_world_halo_clunk_1"
-      },
-      {
-        "name": "awaken:amb_world_halo_clunk_2"
-      },
-      {
-        "name": "awaken:amb_world_halo_clunk_3"
+        "name": "minecraft:block.iron_door.close",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.6
       }
     ]
   },
@@ -602,16 +598,10 @@
     "subtitle": "subtitles.awaken.world.halo_chirp",
     "sounds": [
       {
-        "name": "awaken:amb_world_halo_chirp_1"
-      },
-      {
-        "name": "awaken:amb_world_halo_chirp_2"
-      },
-      {
-        "name": "awaken:amb_world_halo_chirp_3"
-      },
-      {
-        "name": "awaken:amb_world_halo_chirp_4"
+        "name": "minecraft:block.comparator.click",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.6
       }
     ]
   },
@@ -619,16 +609,10 @@
     "subtitle": "subtitles.awaken.world.dream_swell",
     "sounds": [
       {
-        "name": "awaken:amb_world_dream_swell_1"
-      },
-      {
-        "name": "awaken:amb_world_dream_swell_2"
-      },
-      {
-        "name": "awaken:amb_world_dream_swell_3"
-      },
-      {
-        "name": "awaken:amb_world_dream_swell_4"
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
       }
     ]
   },
@@ -636,16 +620,10 @@
     "subtitle": "subtitles.awaken.world.elder_creak",
     "sounds": [
       {
-        "name": "awaken:amb_world_elder_creak_1"
-      },
-      {
-        "name": "awaken:amb_world_elder_creak_2"
-      },
-      {
-        "name": "awaken:amb_world_elder_creak_3"
-      },
-      {
-        "name": "awaken:amb_world_elder_creak_4"
+        "name": "minecraft:block.creaking_heart.idle",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.7
       }
     ]
   },
@@ -653,16 +631,10 @@
     "subtitle": "subtitles.awaken.world.elder_glint",
     "sounds": [
       {
-        "name": "awaken:amb_world_elder_glint_1"
-      },
-      {
-        "name": "awaken:amb_world_elder_glint_2"
-      },
-      {
-        "name": "awaken:amb_world_elder_glint_3"
-      },
-      {
-        "name": "awaken:amb_world_elder_glint_4"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.5
       }
     ]
   },
@@ -670,22 +642,10 @@
     "subtitle": "subtitles.awaken.world.lumen_chime",
     "sounds": [
       {
-        "name": "awaken:amb_world_lumen_chime_1"
-      },
-      {
-        "name": "awaken:amb_world_lumen_chime_2"
-      },
-      {
-        "name": "awaken:amb_world_lumen_chime_3"
-      },
-      {
-        "name": "awaken:amb_world_lumen_chime_4"
-      },
-      {
-        "name": "awaken:amb_world_lumen_chime_5"
-      },
-      {
-        "name": "awaken:amb_world_lumen_chime_6"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.2
       }
     ]
   },
@@ -709,8 +669,10 @@
     "subtitle": "subtitles.awaken.amb.rift_rumble",
     "sounds": [
       {
-        "name": "awaken:amb_rift_rumble",
-        "attenuation_distance": 72
+        "name": "minecraft:block.portal.ambient",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
       }
     ]
   }

@@ -12,7 +12,7 @@ ore, even vanilla sounds better".
 world, and has no narrow steady high tone at its peak (`docs/powers-aaa/taster/ding_check.py`). A sound built by
 synthesis (sine partials, filtered noise, voiced formants) is below it, however well its loudness and brightness match.
 
-**The count.** 1890 events: 1004 at the bar, 48 remade in this audit, 838 left as they are (each row says why).
+**The count.** 1890 events: 1003 at the bar, 122 remade in this audit, 765 left as they are (each row says why).
 
 **How to read a row.** *Source before* is where the sound came from before the audit. *Fix, as built* is the recipe the
 game plays now: each recording by its name in the game, `×` its volume and `@` its pitch, `+ms` when it starts late.
@@ -83,6 +83,87 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `delve.deep_ear_cave` | Deep Ear: a cave breathes behind the rock | delve.client (the Deep Ear's tell when a cave lies behind the wall you face) | ours, synthesised (tools/art/specs/audio_delve.py): filtered noise | Below the bar. Synthetic breath of noise | A breeze drawing breath, lowered. `entity.breeze.inhale` ×0.5 @0.6 |
 | `delve.deep_ear_glass` | Deep Ear: glass hums behind the rock | delve.client (the Deep Ear's tell when Deepglass lies behind the wall you face) | ours, synthesised (tools/art/specs/audio_delve.py): sine partials | Below the bar. Synthetic hum | Amethyst resonating, well lowered: a hum through stone. `block.amethyst_block.resonate` ×0.5 @0.55 |
 
+## The world's places and ambience
+
+Caves, wind, water, far happenings, rifts and fallen stars, the special places, the city at work, the Hearth.
+
+| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
+|---|---|---|---|---|---|
+| `anomaly.rift_open` | A rift tears open | world.anomaly: a rift appearing | ours, synthesised (audio_discovery.py: noise tear) | Below the bar. Synthetic tear (noise) | Glass breaking, slowed, with a portal's trigger. `block.glass.break` ×0.6 @0.6; `block.portal.trigger` ×0.35 @1.3 |
+| `amb.rift` | An open rift's tear | core.audio.client.Ambience: looped at its source while you are near, a rift within 40 blocks | ours, synthesised (audio_amb.py: noise crackle and a sine drone) | Below the bar. Synthetic | A nether portal's hum, slowed. `block.portal.ambient` ×0.6 @0.7 |
+| `amb.grove` | A shimmer grove's glitter and breath | core.audio.client.Ambience: looped at its source while you are near, a grove within 30 blocks | ours, synthesised (audio_amb.py: sine glitter over noise) | Below the bar. Synthetic shimmer | A beacon's hum, raised and quiet. `block.beacon.ambient` ×0.3 @1.6 |
+| `amb.star_whistle` | A falling star's whistle | core.audio.client.Ambience: looped at its source while you are near, following the star down | ours, synthesised (audio_amb.py: a sine glide) | Below the bar. A sine whistle | The elytra's wind, raised: air torn. `item.elytra.flying` ×0.5 @1.6 |
+| `amb.star_cooling` | A fallen star cooling | core.audio.client.Ambience: looped at its source while you are near, the sealed meteor's hiss and ticking | ours, synthesised (audio_amb.py: noise hiss and clicks) | Below the bar. Synthetic hiss (noise) | A smoker's hiss and crackle. `block.smoker.smoke` ×0.6 @1 |
+| `amb.star_cooled` | A fallen star settles and opens | core.audio.client.Ambience: once, when the meteor opens | ours, synthesised (audio_amb.py: noise and a sine) | Below the bar. Synthetic | Fire put out, with stone splitting. `block.fire.extinguish` ×0.5 @0.8; `block.stone.break` ×0.6 @0.7 +100ms |
+| `amb.well` | The Well's shaft | core.audio.client.Ambience: looped at its source while you are near, the Well within 44 blocks | ours, synthesised (audio_amb.py: sub sines) | Below the bar. Synthetic drone | A conduit's hum, slowed. `block.conduit.ambient` ×0.5 @0.5 |
+| `amb.ruin_night` | Precursor ruins humming at night | core.audio.client.Ambience: looped at its source while you are near, ruins within 36 blocks, at night | ours, synthesised (audio_amb.py: sine partials) | Below the bar. Synthetic hum | A beacon's hum, a little lowered. `block.beacon.ambient` ×0.35 @0.8 |
+| `world.chime` | The Stillpoint's chimes | core.audio.client.world.Conductor: an event of the place's soundscape, the Stillpoint | ours, synthesised (audio_world.py: sine chimes) | Below the bar. Synthetic chime: a ding | Amethyst chiming. `block.amethyst_block.chime` ×0.6 @1 |
+| `world.bell_far` | A far bell at the Stillpoint | core.audio.client.world.Conductor: an event of the place's soundscape, the Stillpoint, about every 40 seconds | ours, synthesised (audio_world.py: a sine bell) | Below the bar. Synthetic bell | The game's bell, lowered and far, with its hum. `block.bell.use` ×0.4 @0.6; `block.bell.resonate` ×0.3 @0.6 |
+| `world.halo_hiss` | An airlock on the Halo | core.audio.client.world.Conductor: an event of the place's soundscape, the Halo | ours, synthesised (audio_world.py: filtered noise) | Below the bar. Synthetic hiss (noise) | A piston drawing back, slowed, with a breath of steam. `block.piston.contract` ×0.4 @0.7; `block.fire.extinguish` ×0.2 @0.6 |
+| `world.halo_clunk` | Far metal on the Halo | core.audio.client.world.Conductor: an event of the place's soundscape, the Halo | ours, synthesised (audio_world.py: a struck sine) | Below the bar. Synthetic clunk | An iron door closing, slowed. `block.iron_door.close` ×0.5 @0.6 |
+| `world.halo_chirp` | Data chirps on the Halo | core.audio.client.world.Conductor: an event of the place's soundscape, the Halo | ours, synthesised (audio_world.py: sine blips) | Below the bar. Synthetic blips: dings | A comparator's clicks, three, raised. `block.comparator.click` ×0.4 @1.6; `block.comparator.click` ×0.4 @1.9 +100ms; `block.comparator.click` ×0.35 @1.5 +200ms |
+| `world.dream_swell` | A swell in Lucidium's dream | core.audio.client.world.Conductor: an event of the place's soundscape, Lucidium's dream | ours, synthesised (audio_world.py: reversed sine swells) | Below the bar. Synthetic swell | Amethyst resonating, lowered. `block.amethyst_block.resonate` ×0.5 @0.7 |
+| `world.elder_creak` | The Elderwood's great trees groan | core.audio.client.world.Conductor: an event of the place's soundscape, the Elderwood, with the gusts | ours, synthesised (audio_world.py: a sine creak) | Below the bar. Synthetic creak | The creaking heart's own sound, lowered. `block.creaking_heart.idle` ×0.6 @0.7 |
+| `world.elder_glint` | Gold light glints in the Elderwood | core.audio.client.world.Conductor: an event of the place's soundscape, the Elderwood, by day | ours, synthesised (audio_world.py: a struck sine) | Below the bar. Synthetic glint: a ding | Amethyst chiming, raised and quiet. `block.amethyst_block.chime` ×0.3 @1.5 |
+| `world.lumen_chime` | Specks chime in the Lumen Forest | core.audio.client.world.Conductor: an event of the place's soundscape, the Lumen Forest, at night, one answering another | ours, synthesised (audio_world.py: struck sines) | Below the bar. Synthetic chime: a ding | Amethyst chiming. `block.amethyst_block.chime` ×0.4 @1.2 |
+| `amb.rift_rumble` | A rift's low rumble, further out | core.audio.client.Ambience: looped at its source while you are near, a rift within 72 blocks, so it is heard before it is seen | ours, synthesised (audio_discovery.py: sub sines) | Below the bar. Synthetic sub | A nether portal's hum, well slowed. `block.portal.ambient` ×0.5 @0.5 |
+| `caves.bats` | A roost of bats bursts off the roof | delve.client.CaveSound (client, placed in the cave round you): as you pass under a roost | ours, synthesised (audio_underlife.py: noise grains and squeaks) | Below the bar. Synthetic flutter and sine squeaks | A bat's take-off, three times over, its wing loop and a squeak or two. `entity.bat.takeoff` ×0.5 @1; `entity.bat.takeoff` ×0.4 @1.15 +100ms; `entity.bat.loop` ×0.5 @1 +150ms; `entity.bat.ambient` ×0.08 @1 +200ms; `entity.bat.takeoff` ×0.3 @0.9 +350ms; `entity.bat.loop` ×0.4 @1.1 +500ms |
+| `caves.chime_cricket` | Chime crickets ring in the Ochre Deep | delve.client.CaveSound (client, placed in the cave round you): the Ochre Deep's chorus | ours, synthesised (audio_underlife.py: pulsed sines in a chord) | Below the bar. Synthetic tones | Amethyst chiming, raised and quiet, over the night insects. `block.amethyst_block.chime` ×0.35 @1.7; `block.firefly_bush.idle` ×2 @1.2 |
+| `caves.cricket` | A cave cricket chirps in the dark | delve.client.CaveSound (client, placed in the cave round you): heard long before you see it | ours, synthesised (audio_underlife.py: a pulsed sine) | Below the bar. A pure pulsed tone | The game's own night insects (the firefly bush). `block.firefly_bush.idle` ×2 @1 |
+| `caves.crystal_ring` | Crystals ring | delve.client.CaveSound (client, placed in the cave round you): near crystal growths | ours, synthesised (audio_underlife.py: sine partials) | Below the bar. Synthetic tone | Amethyst resonating. `block.amethyst_block.resonate` ×0.5 @1.2 |
+| `caves.lake_lap` | Water laps at a cave lake's edge | delve.client.CaveSound (client, placed in the cave round you): by underground water | ours, synthesised (audio_underlife.py: filtered noise) | Below the bar. Synthetic water (noise) | Something swimming slowly, lowered: a lap of water. `entity.generic.swim` ×0.25 @0.7 |
+| `caves.pebble_fall` | Pebbles fall | delve.client.CaveSound (client, placed in the cave round you): now and then from a roof or a slope | ours, synthesised (audio_underlife.py: noise ticks) | Below the bar. Synthetic ticks | Gravel falling, a stone knocked, more grit. `block.gravel.fall` ×0.8 @1.2; `block.stone.hit` ×0.4 @1.5 +150ms; `block.gravel.hit` ×0.5 @1.3 +300ms |
+| `caves.pool_drip` | Water drips into a pool | delve.client.CaveSound (client, placed in the cave round you): under a wet roof | ours, synthesised (audio_underlife.py: a falling sine) | Below the bar. A sine drop | The game's own drip into a cauldron. `block.pointed_dripstone.drip_water_into_cauldron` ×2 @1 |
+| `caves.rock_tick` | Rock ticks as it settles | delve.client.CaveSound (client, placed in the cave round you): in the Ochre Deep's warm rock | ours, synthesised (audio_underlife.py: a click) | Below the bar. Synthetic click | Stone knocked, raised and quiet. `block.stone.hit` ×0.3 @1.6 |
+| `caves.root_creak` | Roots creak overhead | delve.client.CaveSound (client, placed in the cave round you): in the Rootways' roof | ours, synthesised (audio_underlife.py: a sine creak) | Below the bar. Synthetic creak | A wooden door's creak, slowed and quiet, and a root giving. `block.wooden_door.open` ×0.35 @0.55; `block.hanging_roots.break` ×0.4 @0.8 +300ms |
+| `caves.vault_rumble` | A deep rumble | delve.client.CaveSound (client, placed in the cave round you): in the Black Vaults | ours, synthesised (audio_underlife.py: a sub sine) | Below the bar. Synthetic sub | Thunder, slowed and far: a rumble through the rock. `entity.lightning_bolt.thunder` ×0.18 @0.5 |
+| `caves.violet_hum` | A low hum in the rock | delve.client.CaveSound (client, placed in the cave round you): near violet seams | ours, synthesised (audio_underlife.py: sine partials) | Below the bar. Synthetic hum | A beacon's hum, lowered. `block.beacon.ambient` ×0.3 @0.7 |
+| `caves.warm_hum` | A warm hum in the rock | delve.client.CaveSound (client, placed in the cave round you): in warm rock | ours, synthesised (audio_underlife.py: sine partials) | Below the bar. Synthetic hum | A respawn anchor's glow, lowered. `block.respawn_anchor.ambient` ×0.4 @0.7 |
+| `caves.wind_moan` | Wind moans in the cracks | delve.client.CaveSound (client, placed in the cave round you): where a cave draws air | ours, synthesised (audio_underlife.py: filtered noise) | Below the bar. Synthetic wind (noise) | A breeze drawing breath, slowed. `entity.breeze.inhale` ×0.5 @0.55 |
+| `city.cart.roll` | A cart rolls by | citizens.client.CityCritters: a cart on a street | ours, synthesised (audio_city_life.py: filtered noise and clicks) | Below the bar. Synthetic | A minecart's rolling, slowed, with a hoof on wood. `entity.minecart.riding` ×0.5 @0.7; `entity.horse.step_wood` ×0.5 @0.9 +200ms |
+| `city.cart.bells` | A cart's harness bells | citizens.client.CityCritters: with a cart | ours, synthesised (audio_city_life.py: sine bells) | Below the bar. Synthetic bells | A chain's jingle, three times. `block.chain.step` ×0.5 @1.3; `block.chain.step` ×0.45 @1.4 +100ms; `block.chain.step` ×0.4 @1.3 +250ms |
+| `city.anvil` | A smith's anvil rings in the Works | citizens.client.CitySound (client, at the place in the city): the forges | ours, synthesised (audio_city_life.py: struck sine modes) | Below the bar. Synthetic ring | The game's anvil, quieter and a little raised. `block.anvil.land` ×0.3 @1.2 |
+| `city.bellows` | A forge's fire and bellows | citizens.client.CitySound (client, at the place in the city): the forges | ours, synthesised (audio_city_life.py: filtered noise) | Below the bar. Synthetic (noise) | Fire burning, lowered, with a breeze drawing breath. `block.fire.ambient` ×0.8 @0.8; `entity.breeze.inhale` ×0.3 @0.7 |
+| `city.stall` | A market stall | citizens.client.CitySound (client, at the place in the city): the market's stalls | ours, synthesised (audio_city_life.py: voiced formants) | Below the bar. A synthetic voice | A villager making a trade. `entity.villager.trade` ×0.5 @1 |
+| `city.boat` | A boat on the river | citizens.client.CitySound (client, at the place in the city): the river | ours, synthesised (audio_city_life.py: filtered noise) | Below the bar. Synthetic water (noise) | A boat's paddle in water. `entity.boat.paddle_water` ×0.7 @0.9 |
+| `city.fountain` | A fountain | citizens.client.CitySound (client, at the place in the city): a square's fountain (looped) | ours, synthesised (audio_city_life.py: filtered noise) | Below the bar. Synthetic water (noise) | The game's own running water, raised. `block.water.ambient` ×0.7 @1.2 |
+| `city.lap` | Water lapping the quay | citizens.client.CitySound (client, at the place in the city): the quays (looped) | ours, synthesised (audio_city_life.py: filtered noise) | Below the bar. Synthetic water (noise) | The game's own water, slowed and quiet. `block.water.ambient` ×0.4 @0.8 |
+| `city.mill` | A mill turning | citizens.client.CitySound (client, at the place in the city): the mill (looped) | ours, synthesised (audio_city_life.py: filtered noise and a sine creak) | Below the bar. Synthetic | A grindstone turning, slowed. `block.grindstone.use` ×0.4 @0.5 |
+| `city.tavern` | A tavern | citizens.client.CitySound (client, at the place in the city): a tavern's door (looped) | ours, synthesised (audio_city_life.py: voiced formants (a murmur of voices)) | Below the bar. A synthetic crowd | A hearth's crackle from inside. `block.campfire.crackle` ×0.7 @0.9 |
+| `edge.headwind` | The headwind at the edge of the loaded land | core.client.EdgeHold: a loop at your ears while a fast flight is eased | ours, synthesised (audio_edge_hold.py: filtered noise) | Below the bar. Synthetic wind (noise) | The elytra's own wind. `item.elytra.flying` ×0.5 @0.8 |
+| `delve.cave.name` | A cave's name appears | delve.client.CaveClient: as a named cave's caption shows (a UI sound) | ours, synthesised (audio_caves.py: a sine swell) | Below the bar. Synthetic swell | One of the game's own cave sounds. `ambient.cave` ×0.5 @1 |
+| `delve.cave.drip` | A drip in a cave | delve.sense / delve.client.SenseLoop (client): from a wet roof near you | ours, synthesised (audio_caves.py: a sine drop) | Below the bar. A sine drop | The game's own drip onto stone. `block.pointed_dripstone.drip_water` ×2 @1 |
+| `delve.cave.drip_pool` | A drip into a pool | delve.sense / delve.client.SenseLoop (client): over standing water | ours, synthesised (audio_caves.py: a sine drop) | Below the bar. A sine drop | The game's own drip into a cauldron. `block.pointed_dripstone.drip_water_into_cauldron` ×2 @0.9 |
+| `delve.cave.drip_acid` | A drip in a sulfur cave | delve.sense / delve.client.SenseLoop (client): in the sulfur caves | ours, synthesised (audio_caves.py: a sine drop and a hiss of noise) | Below the bar. Synthetic | The game's own lava drip into a cauldron, raised: a drip that hisses. `block.pointed_dripstone.drip_lava_into_cauldron` ×1.5 @1.3 |
+| `delve.cave.far_water` | Water running somewhere far in the cave | delve.sense / delve.client.SenseLoop (client): a bed toward running water | ours, synthesised (audio_caves.py: filtered noise) | Below the bar. Synthetic water (noise) | The game's own running water, lowered. `block.water.ambient` ×0.5 @0.8 |
+| `delve.cave.sulfur_vent` | A sulfur vent breathes | delve.sense / delve.client.SenseLoop (client): in the sulfur caves | ours, synthesised (audio_caves.py: filtered noise) | Below the bar. Synthetic hiss | The game's own noxious gas (potent sulfur). `block.potent_sulfur.noxious_gas` ×0.8 @1 |
+| `delve.cave.sulfur_bubble` | A sulfur pool bubbles | delve.sense / delve.client.SenseLoop (client): in the sulfur caves | ours, synthesised (audio_caves.py: sine blips) | Below the bar. Synthetic blips | A bubble popping, lowered. `block.bubble_column.bubble_pop` ×0.6 @0.8 |
+| `delve.deep.hum` | The deep's hum | delve.client.DeepHum and Breath: below the deep line | ours, synthesised (audio_caves.py: sub sines) | Below the bar. Synthetic drone | A conduit's hum, slowed. `block.conduit.ambient` ×0.5 @0.5 |
+| `delve.deep.seep` | The deep seeping | delve.client.DeepHum: its second layer | ours, synthesised (audio_caves.py: filtered noise) | Below the bar. Synthetic (noise) | A whirlpool's water, slowed and quiet. `block.bubble_column.whirlpool_ambient` ×0.3 @0.6 |
+| `wild_plants.swish` | You push through the wild's tall plants | ground.client.WildPlantsClient: as you walk through wild plants, at most every 7 ticks | ours, synthesised (audio_wild_plants.py: noise swishes) | Below the bar. Synthetic swish (noise) | Azalea leaves brushed. `block.azalea_leaves.step` ×0.8 @1.1 |
+| `wild_plants.hiss` | A field of wild plants in the wind | ground.client.WildPlantsClient: a loop while you stand in a field of them | ours, synthesised (audio_wild_plants.py: filtered noise) | Below the bar. Synthetic wind (noise) | The game's own leaves in the wind. `block.poplar_leaves.ambient` ×1 @1.1 |
+| `hearth.take` | The Hearth's coal takes | hearth: setting the carried flame in its ring of stones | ours, synthesised (audio_hearth.py: a sine thud, clicks and noise) | Below the bar. Synthetic | A stone set down, then a fire catching. `block.stone.place` ×0.8 @0.8; `item.firecharge.use` ×0.4 @1.2 +150ms |
+| `hearth.fire` | The Hearth's fire | hearth: the fire burning at home | ours, synthesised (audio_hearth.py: filtered noise crackle) | Below the bar. Synthetic fire (noise) | The game's own campfire. `block.campfire.crackle` ×0.9 @1 |
+| `hearth.lift` | The coal lifted from the Hearth | hearth: taking the flame up to carry it | ours, synthesised (audio_hearth.py: noise and a sine) | Below the bar. Synthetic | Fire put out, quiet, with a stone taken up. `block.fire.extinguish` ×0.4 @1; `block.stone.break` ×0.5 @0.9 |
+| `hearth.room` | The Hearth knows a new room | hearth: a built room recognised | ours, synthesised (audio_hearth.py: struck sines) | Below the bar. Synthetic chime: a ding | The campfire's crackle with a quiet amethyst chime. `block.campfire.crackle` ×0.6 @0.9; `block.amethyst_block.chime` ×0.3 @0.8 |
+| `living.tell.horn` | The Wild Hunt's horn | living.client.PulseSound: the Hunt sounding its horn (400 blocks) | ours, synthesised (audio_world.py: a synthesised horn) | Below the bar. Synthetic horn | The game's goat horn, lowered. `item/goat_horn/call0 ..` ×0.8 @0.8 |
+| `living.tell.stampede` | A stampede, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a herd running (260 blocks) | ours, synthesised (audio_world.py: sub noise) | Below the bar. Synthetic rumble | A minecart's rolling rumble, slowed. `entity.minecart.riding` ×0.7 @0.5 |
+| `living.tell.wings` | A murmuration's wings, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a great flock turning (200 blocks) | ours, synthesised (audio_world.py: noise grains) | Below the bar. Synthetic flutter (noise) | A bat's wing loop: many small wings. `entity.bat.loop` ×0.6 @0.9 |
+| `living.tell.tide` | The Deep Tide's drone | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: the tide rising (320 blocks) | ours, synthesised (audio_world.py: sub sines) | Below the bar. Synthetic drone | The game's own underwater air, slowed. `ambient.underwater.loop` ×0.6 @0.6 |
+| `living.tell.bells` | A caravan's bells, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a caravan on the road (160 blocks) | ours, synthesised (audio_world.py: sine bells) | Below the bar. Synthetic bells | The game's bell, raised and quiet, tolling. `block.bell.use` ×0.3 @1.6 |
+| `living.tell.storm` | A storm, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a storm front (far) | ours, synthesised (audio_world.py: noise) | Below the bar. Synthetic (noise) | Thunder, slowed and quiet. `entity.lightning_bolt.thunder` ×0.3 @0.6 |
+| `living.dread` | Dread: something great is near | living: when a dread creature closes on you | ours, synthesised (audio_world.py: sub sines) | Below the bar. Synthetic drone | A warden near, quiet. `entity.warden.nearby_close` ×0.6 @0.8 |
+| `ambient.storm.roll` | Thunder rolls in a wild storm | living: the Wilds' storms, between the game's own cracks | ours, synthesised (audio_world.py: filtered noise) | Below the bar. Synthetic thunder (noise) | The game's thunder, slowed and softer. `entity.lightning_bolt.thunder` ×0.5 @0.7 |
+| `amb.lands_rustle` | Leaves in the wind | Conductor texture under a canopy, driven by terrain.Wind; only without AmbientSounds | ours, synthesised (audio_lands.py: filtered noise) | Below the bar. Synthetic wind (noise) | The game's own leaves in the wind (poplar leaves). `block.poplar_leaves.ambient` ×1 @1 |
+| `amb.lands_wind_high` | Wind on the heights | Conductor texture toward the open sky, driven by terrain.Wind; only without AmbientSounds | ours, synthesised (audio_lands.py: filtered noise) | Below the bar. Synthetic wind (noise) | The game's own wind over open sand, lowered. `block.sand.idle` ×1 @0.8 |
+| `amb.glass_steppe` | The Glass Steppe's air | terrain.glass.GlassLands: the land's bed | ours, synthesised (audio_lands.py: filtered noise and sine glints) | Below the bar. Synthetic | The game's own wind over sand. `block.sand.idle` ×1 @1 |
+| `amb.shattered_highlands` | The Shattered Highlands' air | terrain: the land's bed | ours, synthesised (audio_lands.py: filtered noise) | Below the bar. Synthetic wind (noise) | The game's own wind over sand, lowered. `block.sand.idle` ×1 @0.7 |
+| `amb.frost_spires` | The Frost Spires' air | terrain.frost.FrostLands: the land's bed | ours, synthesised (audio_lands.py: filtered noise and sine glints) | Below the bar. Synthetic | The game's own wind over sand, raised: thin and cold. `block.sand.idle` ×1 @1.25 |
+| `amb.mirror_marsh` | The Mirror Marsh's air | terrain.mire.MireLands: the land's bed | ours, synthesised (audio_lands.py: filtered noise) | Below the bar. Synthetic (noise) | The game's own still water, slowed and quiet. `block.water.ambient` ×0.35 @0.7 |
+| `wilds.ward_mark` | A Precursor ward takes its mark | wilds.ward: marking a ward | ours, synthesised (audio_wilds.py: sine partials) | Below the bar. Synthetic tone | A respawn anchor taking a charge. `block.respawn_anchor.charge` ×0.6 @1.2 |
+| `wilds.ward_crumble` | A ward crumbles | wilds.ward: a ward giving way | ours, synthesised (audio_wilds.py: noise) | Below the bar. Synthetic (noise) | Deepslate bricks breaking, with grit after. `block.deepslate_bricks.break` ×0.8 @0.8; `block.gravel.fall` ×0.6 @0.8 +150ms |
+| `wilds.ward_hold` | A ward holds | wilds.ward: a ward turning something back | ours, synthesised (audio_wilds.py: sine partials) | Below the bar. Synthetic tone | A beacon's click, lowered. `block.beacon.power_select` ×0.5 @0.8 |
+
 ## The Halo (above)
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -132,7 +213,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
 |---|---|---|---|---|---|
-| `anomaly.rift_open` | Something tears open | `world/anomaly/AnomalyContent` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `anomaly.rift_hum` | Rift hums | `world/anomaly/AnomalyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `anomaly.rift_hit` | Rift core cracks | `world/anomaly/AnomalyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `anomaly.rift_close` | Rift collapses | `world/anomaly/AnomalyContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
@@ -396,13 +476,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `ui.now` | Now tracker updates | `core/audio/AudioSounds` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ui.quest_done` | Quest complete | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ui.request_delivered` | Request delivered | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.rift` | Rift crackles | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.grove` | The air shimmers | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.star_whistle` | Falling star whistles | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.star_cooling` | Fallen star hisses as it cools | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.star_cooled` | Fallen star settles | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.well` | The Well hums below | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.ruin_night` | Old machines hum | `core/audio/AudioSounds` | ours: audio_amb.py, synthesised beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `music.cue.awakening` | A rising theme answers you | `core/audio/AudioSounds` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `music.cue.beast` | Low drums warn of a beast | `audio` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `music.cue.gate_forming` | Strings tremble as a gate forms | `audio` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
@@ -437,18 +510,8 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `music.layers` | Music shifts | `core/audio/AudioSounds` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `amb.layers` | Ambience shifts | `core/audio/AudioSounds` | ours: audio_layers.py / audio_world.py, synthesised stems | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `amb.world` | The world around you | `core/audio/AudioSounds` | ours: audio_layers.py / audio_world.py, synthesised stems | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.chime` | Chimes stir in the wind | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.bell_far` | A far bell tolls | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.halo_hiss` | An airlock hisses | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.halo_clunk` | Metal knocks somewhere in the station | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.halo_chirp` | Data chirps | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.dream_swell` | Glass swells in reverse | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.elder_creak` | A great limb creaks | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.elder_glint` | Gold light glints | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `world.lumen_chime` | Lumen specks chime | `audio` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ui.find` | Something found | `core/audio/AudioSounds` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ui.moment` | A discovery | `core/audio/AudioSounds` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.rift_rumble` | A rift rumbles | `core/audio/AudioSounds` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## The hundred bells
 
@@ -535,24 +598,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `body.pipe_brake` | Hands clamp on a pipe | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `body.vault` | Body vaults | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
-## The Living Deep
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `caves.bats` | Bats scatter | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.chime_cricket` | Chime crickets ring | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.cricket` | Cave cricket chirps | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.crystal_ring` | Crystals ring | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.lake_lap` | Water laps | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.pebble_fall` | Pebbles fall | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.pool_drip` | Water drips into a pool | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.rock_tick` | Rock ticks | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.root_creak` | Roots creak overhead | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.vault_rumble` | Deep rumble | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.violet_hum` | Low hum in the rock | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.warm_hum` | Warm hum in the rock | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `caves.wind_moan` | Wind moans in the cracks | `caves/CavesModule` | ours: audio_underlife.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
 ## Carillon
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -562,16 +607,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `city.bell.alarm` | Alarm bells | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `village.alarm` | A village bell rings the alarm | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `city.handbell` | The crier's handbell | `citizens/CityAudioBudget`, `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
-| `city.cart.roll` | Cart rolls | `citizens/CityAudioBudget`, `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.cart.bells` | Harness bells jingle | `citizens/CityAudioBudget`, `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.anvil` | Hammer on anvil | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.bellows` | Bellows breathe | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
-| `city.stall` | Market stall | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.boat` | Boat creaks | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.fountain` | Fountain splashes | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.lap` | Water laps at the quay | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.mill` | Mill wheel turns | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `city.tavern` | Tavern noise | `citizens/CitizensContent` | ours: audio_city_life.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `city.carillon.dawn` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `city.carillon.noon` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `city.carillon.dusk` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
@@ -585,18 +620,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `signal.warning` | Signal warning | `core/CoreModule`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `level_up` | Level up | `core` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `rank_up` | Rank up | `core` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
-## The edge hold
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `edge.headwind` | The wind pushes back | `core/CoreModule` | ours: audio_edge_hold.py, synthesised wind | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
-## Cave names
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `delve.cave.name` | A place is named | `delve/cave/CaveContent` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## The Forged Pick
 
@@ -625,16 +648,8 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
 |---|---|---|---|---|---|
-| `delve.cave.drip` | Water drips | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `delve.cave.drip_pool` | A drop falls into a pool | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `delve.cave.drip_acid` | Acid drips and sizzles | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `delve.cave.settle` | Stone settles | `delve/sense/SenseModule` | ours: audio_cave_recorded.py: CC0 cave recordings (BigSoundBank) | At the bar: recordings of real caves and falling stone (CC0), SPEC §34.5 | None needed |
-| `delve.cave.far_water` | Water runs somewhere in the dark | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `delve.cave.breath` | Air breathes in from the way out | `delve/sense/SenseModule` | ours: audio_cave_recorded.py: CC0 cave recordings (BigSoundBank) | At the bar: recordings of real caves and falling stone (CC0), SPEC §34.5 | None needed |
-| `delve.cave.sulfur_vent` | Gas hisses from the rock | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `delve.cave.sulfur_bubble` | An acid pool bubbles | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `delve.deep.hum` | The deep hums | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `delve.deep.seep` | Something in the deep hums back | `delve/sense/SenseModule` | ours: audio_caves.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `delve.band.room` | The cave's air hums around you | `delve/sense/SenseModule` | ours: audio_cave_recorded.py: CC0 cave recordings (BigSoundBank) | At the bar: recordings of real caves and falling stone (CC0), SPEC §34.5 | None needed |
 | `delve.cave.answers` | The cave answers | `delve/sense/SenseModule` | ours: audio_cave_recorded.py: CC0 cave recordings (BigSoundBank) | At the bar: recordings of real caves and falling stone (CC0), SPEC §34.5 | None needed |
 
@@ -1110,13 +1125,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `realm.amber.air` | Wind in the wheat | `gates.realms`: a realm's air | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `realm.amber.hall` | Honey drips | `gates.realms`: a realm's air | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 
-## The wild's plants
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `wild_plants.swish` | Grass brushes past | `ground/wild/WildBlocks` | ours: audio_wild_plants.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `wild_plants.hiss` | Wind in the grass | `ground/wild/WildBlocks` | ours: audio_wild_plants.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
 ## The Hearth
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -1129,10 +1137,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `hearth.request_deliver` | Items stream into the Anchor | `hearth/request/RequestContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `hearth.request_complete` | The Anchor chimes | `core/audio/client/AudioUi`, `hearth/request/RequestContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `hearth.core_fuse` | Shards fuse | `hearth/request/RequestContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-| `hearth.take` | A coal takes | `hearth/HearthContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `hearth.fire` | Hearthfire crackles | `hearth/HearthContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `hearth.lift` | A coal is lifted | `hearth/HearthContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `hearth.room` | The Hearth names a room | `hearth/HearthContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## The Holo UI
 
@@ -1219,14 +1223,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `living.xp_tick` | XP gathers | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `living.level_up` | Level up | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `living.region_enter` | Region entered | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.horn` | A hunting horn, far off | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.stampede` | A stampede rumbles | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.wings` | A great flock turns | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.tide` | The Deep Tide rolls in | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.bells` | Caravan bells | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.tell.storm` | A storm's rain roars | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.dread` | A heavy land | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ambient.storm.roll` | Thunder rolls in the distance | `living/LivingContent` | ours: audio_world.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ambient.storm.thunder` | Thunder roars | `living/LivingContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `ambient.storm.crack` | Lightning strikes | `living/LivingContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 
@@ -2094,17 +2090,6 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | `story.ritual.pulse_hard` | A great drum booms | `story` | ours: ritual_recordings.py (CC0 recordings) and ritual_sounds.py (synthesised) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `story.ritual.pulse_drone` | A low tone fills the hall | `story` | ours: ritual_recordings.py (CC0 recordings) and ritual_sounds.py (synthesised) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
-## The land's wind
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `amb.lands_rustle` | Leaves rustle in the wind | `terrain/TerrainSounds` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.lands_wind_high` | Wind blows high | `terrain/TerrainSounds` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.glass_steppe` | Glass ticks in the heat | `terrain/glass/GlassLands` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.shattered_highlands` | The faults hum | `terrain/fault/FaultLands` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.frost_spires` | Ice chimes in the wind | `terrain/frost/FrostLands` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `amb.mirror_marsh` | Still water drips | `terrain/mire/MireLands` | ours: audio_lands.py, synthesised wind beds | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
 ## The Veil
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -2126,11 +2111,3 @@ What you hear with a pick in ore. Nothing here is a note any more: stone, grit a
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
 |---|---|---|---|---|---|
 | `holdfast.bell` | A holdfast's bell rings | `village/VillageContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
-
-## The Precursor ward
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `wilds.ward_mark` | Ward notices a block | `wilds/WildsContent` | ours: audio_wilds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `wilds.ward_crumble` | Placed block crumbles | `wilds/WildsContent` | ours: audio_wilds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `wilds.ward_hold` | Ward holds | `wilds/WildsContent` | ours: audio_wilds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |

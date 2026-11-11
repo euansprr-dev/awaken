@@ -1,0 +1,41 @@
+{
+ "awaken:amb.star_cooled": [
+  {
+   "delay": 100,
+   "pitch": 0.7,
+   "sound": "minecraft:block.stone.break",
+   "volume": 0.6
+  }
+ ],
+ "awaken:world.bell_far": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:block.bell.resonate",
+   "volume": 0.3
+  }
+ ],
+ "awaken:world.halo_chirp": [
+  {
+   "delay": 100,
+   "pitch": 1.9,
+   "sound": "minecraft:block.comparator.click",
+   "volume": 0.4
+  },
+  {
+   "chance": 0.7,
+   "delay": 200,
+   "pitch": 1.5,
+   "sound": "minecraft:block.comparator.click",
+   "volume": 0.35
+  }
+ ],
+ "awaken:world.halo_hiss": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:block.fire.extinguish",
+   "volume": 0.2
+  }
+ ]
+}

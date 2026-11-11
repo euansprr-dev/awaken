@@ -1,0 +1,10 @@
+{
+ "awaken:wilds.ward_crumble": [
+  {
+   "delay": 150,
+   "pitch": 0.8,
+   "sound": "minecraft:block.gravel.fall",
+   "volume": 0.6
+  }
+ ]
+}
