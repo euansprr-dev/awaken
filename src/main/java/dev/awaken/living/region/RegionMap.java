@@ -32,7 +32,7 @@ public final class RegionMap {
     public static final int COMMONS_RADIUS = 700;
     public static final int MAX_LEVEL = 150;
     /** The rules new worlds are made under (SPEC §21.10; 3 the wide world, §21.12). */
-    public static final int RULES = 3;
+    public static final int RULES = 4;
     /** The rules the GameTest server's world is made under (its tests were written on 900-block regions). */
     public static final int TEST_RULES = 2;
     /** Each rank's levels, E to S. */
@@ -204,6 +204,11 @@ public final class RegionMap {
 
     private final long seed;
     private final int cx, cz, rules, pitch;
+    /**
+     * Where the land's danger is measured from (SPEC §67, the Far Landing): the landing in a world made under rules 4, the
+     * centre (the city) before. The Commons, its ramp and its name stay round the city in every world.
+     */
+    private final int lx, lz;
     private final Probe probe;
     private final Region commons;
     private final ConcurrentHashMap<Long, Region> regions = new ConcurrentHashMap<>();
@@ -214,9 +219,16 @@ public final class RegionMap {
     }
 
     public RegionMap(long seed, int centreX, int centreZ, Probe probe, int rules) {
+        this(seed, centreX, centreZ, probe, rules, centreX, centreZ);
+    }
+
+    /** A map whose land is measured from a landing (rules 4, SPEC §67); earlier rules ignore it and measure from the centre. */
+    public RegionMap(long seed, int centreX, int centreZ, Probe probe, int rules, int landingX, int landingZ) {
         this.seed = seed;
         this.cx = centreX;
         this.cz = centreZ;
+        this.lx = rules >= 4 ? landingX : centreX;
+        this.lz = rules >= 4 ? landingZ : centreZ;
         this.probe = probe;
         this.rules = rules;
         this.pitch = rules >= 3 ? Reach.INSTANCE.wide.pitch : PITCH_2;
@@ -225,6 +237,11 @@ public final class RegionMap {
 
     public int centreX() { return cx; }
     public int centreZ() { return cz; }
+    /** Where the land's danger is measured from: the landing in a Far Landing world (rules 4), else the centre. */
+    public int landingX() { return lx; }
+    public int landingZ() { return lz; }
+    /** Whether this map measures its land from a far landing (SPEC §67). */
+    public boolean farLanding() { return rules >= 4 && (lx != cx || lz != cz); }
     public int rules() { return rules; }
     /** The distance between region hearts (900 before the wide world, 1,600 in it): the roads' grid follows it. */
     public int pitch() { return pitch; }
@@ -326,6 +343,9 @@ public final class RegionMap {
         double d = Math.hypot(x - cx, z - cz);
         if (d <= COMMONS_RADIUS) return Math.max(1, (int) Math.round(Reach.INSTANCE.ceiling(d)));
         if (d <= 1000) return (int) clamp(Math.round(Reach.INSTANCE.ceiling(d)), 8, 9); // the ring past the wall: camps and dens seed at 8+
+        // the land itself is measured from the landing in a Far Landing world (rules 4, SPEC §67); the city keeps its ring
+        double dc = d;
+        d = Math.hypot(x - lx, z - lz);
         double wx = x + warpX(x, z), wz = z + warpZ(x, z);
         int gx = (int) Math.floor(wx / pitch), gz = (int) Math.floor(wz / pitch);
         double dmin = Double.MAX_VALUE;
@@ -361,12 +381,21 @@ public final class RegionMap {
                 }
             }
         }
-        if (d < r.safe + 300) {
+        if (farLanding()) {
+            // the city's calm ring eases into the land round it between 1,000 and 1,600 (the landing has no wall: E from its first step)
+            if (dc < CITY_EASE) {
+                double t = clamp((dc - 1000) / (CITY_EASE - 1000), 0, 1);
+                lv = (1 - t) * Math.min(9, Math.max(8, lv)) + t * lv;
+            }
+        } else if (d < r.safe + 300) {
             double t = clamp((d - 1000) / (r.safe + 300 - 1000), 0, 1);
             lv = (1 - t) * Math.min(9, Math.max(8, lv)) + t * lv;
         }
         return (int) clamp(Math.round(lv), 1, MAX_LEVEL);
     }
+
+    /** In a Far Landing world, where the city's calm ring has eased into the land round it (SPEC §67). */
+    public static final int CITY_EASE = 1600, CITY_CALM = 1000;
 
     /** How far a point is from the nearest province border (the middle of a calm way): half the gap between its two nearest province hearts. */
     private double wayDistance(double x, double z) {
@@ -394,8 +423,8 @@ public final class RegionMap {
     private double makeWideLevel(int gx, int gz, Land land) {
         Reach.Wide r = Reach.INSTANCE.wide;
         int hx = heartX(gx, gz), hz = heartZ(gx, gz);
-        double d = Math.hypot(hx - cx, hz - cz);
-        if (d <= r.safe) return 3 + 5 * unit(hash(gx, gz, 401));
+        double d = Math.hypot(hx - lx, hz - lz);
+        if (d <= r.safe || farLanding() && Math.hypot(hx - cx, hz - cz) <= CITY_CALM) return 3 + 5 * unit(hash(gx, gz, 401));
         int bx = Math.floorDiv(gx, 3), bz = Math.floorDiv(gz, 3);
         int slot = Math.floorMod(gx, 3) * 3 + Math.floorMod(gz, 3);
         int[] deck = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -540,7 +569,7 @@ public final class RegionMap {
         int band = rules >= 2 ? rankOf(heart) : legacyBand(gx, gz, land, Math.hypot(hx - cx, hz - cz));
         // a quiet vale is named like one ("Willow Rest"); worlds made before keep every name they had
         // in the wide world a calm region far out is named like a shelter too
-        boolean calmFar = rules >= 3 && band == 0 && Math.hypot(hx - cx, hz - cz) > 2000;
+        boolean calmFar = rules >= 3 && band == 0 && Math.hypot(hx - lx, hz - lz) > 2000 && Math.hypot(hx - cx, hz - cz) > 2000;
         String name = rules >= 2 && (quiet(gx, gz) || calmFar) ? Names.quiet(land.group(), hash(gx, gz, 67)) : Names.name(land.group(), band, hash(gx, gz, 67));
         return new Region(key(gx, gz), gx, gz, hx, hz, name, band, low, high, false);
     }
