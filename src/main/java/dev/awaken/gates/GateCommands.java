@@ -159,6 +159,13 @@ final class GateCommands {
                                 c.getSource().sendSuccess(() -> Component.literal(h.kind() + " at " + h.x() + " " + h.y() + " " + h.z()), false);
                                 return 1;
                             }))))));
+            // tours: a trial's stand as if taken (SPEC 17.10), so the bars past it open
+            gate.then(Commands.literal("realm_stand").requires(AwakenCommands.admin())
+                    .then(Commands.argument("move", StringArgumentType.word()).executes(c -> {
+                        if (dev.awaken.gates.realms.RealmLive.trialStand(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "move"))) return 1;
+                        c.getSource().sendFailure(Component.literal("No stand of that move here."));
+                        return 0;
+                    })));
             gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
                 GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
                 if (g == null || g.realm.isEmpty()) return 0;

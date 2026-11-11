@@ -283,6 +283,28 @@ public final class RealmLive {
         data.setDirty();
     }
 
+    /**
+     * A stand of a trial has been taken (SPEC §17.10; the Ascent says so through {@code TrialHooks.onStand}, a tour by
+     * {@code /awaken gate realm_stand}): the bars that stand keeps open for good, for everyone in that gate. False when
+     * the player is in no Realm or the land has no such stand.
+     */
+    public static boolean trialStand(ServerPlayer p, String move) {
+        GateRecord g = Runs.gateOf(p);
+        RealmPlan plan = g == null ? null : Realms.plan(g);
+        ServerLevel level = Realms.level(p.level().getServer());
+        if (plan == null || level == null) return false;
+        List<Land.Edit> open = plan.land().change("trial_open_" + move);
+        if (open.isEmpty()) return false;
+        RealmData data = RealmData.get(level.getServer());
+        if (!data.state(g.id).woken.add("stand_" + move)) return true;
+        data.setDirty();
+        RealmRef ref = g.realm.orElseThrow();
+        change(level, ref, plan.land(), "trial_open_" + move);
+        Land.Edit first = open.getFirst();
+        level.playSound(null, Realms.world(ref.cell(), first.x(), first.y(), first.z()), SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.6F, 0.55F);
+        return true;
+    }
+
     private static long[] headway(ServerLevel level, GateRecord g) {
         return HEADWAY.computeIfAbsent(g.id, k -> new long[]{level.getGameTime(), 0, 0});
     }

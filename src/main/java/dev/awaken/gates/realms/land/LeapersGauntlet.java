@@ -18,17 +18,24 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * move of the leap; the hall past it cannot be crossed without that move and asks for it four times; then the next
  * stand. No hall before the Long Run has a clock or costs anything to fall in.
  *
- * <p>Built so far: the way in, the first stand, the hall "Twice" (the double jump) and the second stand. Still to lay:
- * "Through" (the dash), "Down" (the slam), the Long Run, the tally floor. Sizes are the plan's targets until the walk
- * check runs on the leap's real reach.
+ * <p>Built so far: the way in, the first stand, the hall "Twice" (the double jump), the second stand, the hall "Through"
+ * (the dash: a gap of nine, a gap of eight round a corner, a gulf of twelve; its line of presses is still to come) and
+ * the third stand. Still to lay: "Down" (the slam), the Long Run, the tally floor. Sizes are the plan's targets until
+ * the walk check runs on the leap's real reach.
+ *
+ * <p>The way on from the second and the third stand is barred until that stand is taken ({@code trial_open_dash},
+ * {@code trial_open_slam}); it opens for everyone in the gate, for good.
  *
  * <p>A hall here is a {@link Hall}: a box cut out of the rock with floor only where a deck is laid. Everything else in
  * it is the pit, fourteen under the way in, with slag at the bottom that nobody reaches: the fall catch has them first.
  */
 public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     private static final BlockState SLAG = Blocks.MAGMA_BLOCK.defaultBlockState();
-    /** The way in's floor, and the pit's. */
-    static final int Y = 100, PIT = 86;
+    /** The way in's floor, and the pit's; the level "Through" is on. */
+    static final int Y = 100, PIT = 86, Y2 = Y + 8;
+    private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+    /** The bars that wait for a stand: a box each, x0 y0 z0 x1 y1 z1. */
+    private static final int[] DOOR_DASH = {-4, Y2, -34, 4, Y2 + 5, -34}, DOOR_SLAM = {56, Y2, 7, 56, Y2 + 5, 15};
 
     /** A box of air with decks in it. A deck is x0, z0, x1, z1 and the height feet stand at. */
     static final class Hall extends Part {
@@ -81,24 +88,29 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         }
     }
 
-    private final Cave root, stand1, stand2;
-    private final Hall wayIn, twice;
+    private final Hall wayIn, twice, through, east;
     private final List<Leap> leaps = new ArrayList<>();
 
     public LeapersGauntlet(Ctx ctx) {
         super(ctx, 0x4C454150L);
-        root = part(new Cave("root", 0, Y, -140, 6, 6, 6, seed + 1));
+        part(new Cave("root", 0, Y, -140, 6, 6, 6, seed + 1));
         // the way in: a gap of two, a step, a gap of three, all with what anyone has; then the lip of the first gulf
         wayIn = part(new Hall("way_in", -3, -136, 3, -103, PIT, Y + 9)
                 .deck(-3, -136, 3, -128, Y).deck(-3, -125, 3, -119, Y).deck(-3, -118, 3, -113, Y + 1).deck(-3, -109, 3, -103, Y + 1));
         // the first stand, in a room off the lip: you have looked at the gulf before you come to it
         part(new Tunnel("to_stand1", 3, Y + 1, -106, 9, Y + 1, -106, 2.2, 4, seed + 2));
-        stand1 = part(new Cave("stand1", 13, Y + 1, -106, 6, 6, 6, seed + 3));
+        part(new Cave("stand1", 13, Y + 1, -106, 6, 6, 6, seed + 3));
         // "Twice": the gulf (six wide, the far side two higher), a step three up, a gap onto a ledge two higher, and a
         // long gap with only a wall beside it
         twice = part(new Hall("twice", -3, -102, 3, -51, PIT, Y + 16)
                 .deck(-3, -96, 3, -90, Y + 3).deck(-3, -89, 3, -84, Y + 6).deck(-3, -79, 3, -74, Y + 8).deck(-3, -62, 3, -51, Y + 8));
-        stand2 = part(new Cave("stand2", 0, Y + 8, -44, 7, 7, 7, seed + 4));
+        part(new Cave("stand2", 0, Y2, -44, 7, 7, 7, seed + 4));
+        // "Through": a gap of nine; then the hall turns east, with a gap of eight just past the turn and a gulf of twelve
+        part(new Tunnel("to_through", 0, Y2, -38, 0, Y2, -30, 2.6, 5, seed + 5));
+        through = part(new Hall("through", -3, -30, 3, 14, Y2 - 14, Y2 + 9).deck(-3, -30, 3, -25, Y2).deck(-3, -15, 3, 14, Y2));
+        east = part(new Hall("through_east", 4, 8, 41, 14, Y2 - 14, Y2 + 9).deck(4, 8, 7, 14, Y2).deck(16, 8, 22, 14, Y2).deck(35, 8, 41, 14, Y2));
+        part(new Cave("stand3", 48, Y2, 11, 7, 7, 7, seed + 6));
+        part(new Tunnel("to_down", 54, Y2, 11, 62, Y2, 11, 2.6, 5, seed + 7));
         done();
 
         site(SiteKind.MOUTH, 0, Y, -140, 6, "");
@@ -110,16 +122,23 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         leg("way_in", LegKind.MOVEMENT, "The way in", 0, Y + 1, -116, 16, -1, none, "", "stand1");
         leg("stand1", LegKind.BREATHER, "The first stand", 13, Y + 1, -106, 6, -1, none, "", "twice");
         leg("twice", LegKind.MOVEMENT, "Twice", 0, Y + 6, -78, 26, -1, none, "", "stand2");
-        leg("stand2", LegKind.BREATHER, "The second stand", 0, Y + 8, -44, 7, -1, none, "");
+        leg("stand2", LegKind.BREATHER, "The second stand", 0, Y2, -44, 7, -1, none, "", "through");
+        leg("through", LegKind.MOVEMENT, "Through", 0, Y2, -8, 24, -1, none, "", "stand3");
+        leg("stand3", LegKind.BREATHER, "The third stand", 48, Y2, 11, 7, -1, none, "");
 
         // the first gulf is the way in's to catch: whoever falls there has not stood on anything of "Twice" yet
         course(new Course("way_in", -4, PIT - 2, -137, 4, Y + 12, -97, wayIn.ledges(), true));
         course(new Course("twice", -4, PIT - 2, -96, 4, Y + 18, -50, twice.ledges(), true));
+        course(new Course("through", -4, Y2 - 16, -31, 3, Y2 + 11, 15, through.ledges(), true));
+        course(new Course("through", 4, Y2 - 16, 7, 42, Y2 + 11, 15, east.ledges(), true));
 
         leaps.add(new Leap("double", 0, Y + 1, -103, 0, Y + 3, -96));
         leaps.add(new Leap("double", 0, Y + 3, -90, 0, Y + 6, -89));
         leaps.add(new Leap("double", 0, Y + 6, -84, 0, Y + 8, -79));
         leaps.add(new Leap("double", 0, Y + 8, -74, 0, Y + 8, -62));
+        leaps.add(new Leap("dash", 0, Y2, -25, 0, Y2, -15));
+        leaps.add(new Leap("dash", 7, Y2, 11, 16, Y2, 11));
+        leaps.add(new Leap("dash", 22, Y2, 11, 35, Y2, 11));
     }
 
     @Override
@@ -172,21 +191,42 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     @Override
     protected void adorn(V v, StoppedWorks.M m, Part part, int x, int y, int z, boolean onFloor, boolean underRoof, int wx, int wz) {}
 
-    /** The works has no window: light stands in its air, every fifth cell, over each deck and under each roof. */
+    /** The works has no window: light stands in its air, every fifth cell, over every floor and under each hall's roof. And the bars that wait for a stand are shut. */
     @Override
     protected void finish(V v, StoppedWorks.M m) {
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) {
             if (Math.floorMod(x, 5) != 0 || Math.floorMod(z, 5) != 0) continue;
-            for (Hall h : new Hall[]{wayIn, twice}) {
-                if (x < h.x0 || x > h.x1 || z < h.z0 || z > h.z1) continue;
-                light(v, m, x, h.feet(x, z) + 3, z);
-                light(v, m, x, h.top - 2, z);
-            }
-            for (Cave c : new Cave[]{root, stand1, stand2}) {
-                int f = c.feet2(x, z);
-                if (f != NONE) light(v, m, x, Part.airFrom(f) + 3, z);
+            for (Part p : parts) {
+                int f = p.feet2(x, z);
+                if (f == NONE) continue;
+                light(v, m, x, Part.airFrom(f) + 3, z);
+                if (p instanceof Hall h) light(v, m, x, h.top - 2, z);
             }
         }
+        for (int[] d : new int[][]{DOOR_DASH, DOOR_SLAM}) {
+            for (int x = Math.max(d[0], v.x0); x <= Math.min(d[3], v.x0 + 15); x++) for (int z = Math.max(d[2], v.z0); z <= Math.min(d[5], v.z0 + 15); z++) {
+                for (int y = d[1]; y <= d[4]; y++) if (open(x, y, z)) v.set(x, y, z, m.bars);
+            }
+        }
+    }
+
+    private List<Edit> unbar(int[] d) {
+        List<Edit> out = new ArrayList<>();
+        for (int x = d[0]; x <= d[3]; x++) for (int y = d[1]; y <= d[4]; y++) for (int z = d[2]; z <= d[5]; z++) if (open(x, y, z)) out.add(new Edit(x, y, z, AIR));
+        return out;
+    }
+
+    /** A stand taken opens the bars past it; the walk check goes through both, as a player who has taken them does. */
+    @Override
+    public List<Edit> change(String moment) {
+        if (moment.equals("trial_open_dash")) return unbar(DOOR_DASH);
+        if (moment.equals("trial_open_slam")) return unbar(DOOR_SLAM);
+        if (moment.equals("walk_open")) {
+            List<Edit> out = unbar(DOOR_DASH);
+            out.addAll(unbar(DOOR_SLAM));
+            return out;
+        }
+        return super.change(moment);
     }
 
     private void light(V v, StoppedWorks.M m, int x, int y, int z) {

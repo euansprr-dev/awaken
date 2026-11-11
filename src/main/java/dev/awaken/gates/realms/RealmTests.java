@@ -136,7 +136,10 @@ public final class RealmTests {
             for (Land.Leg leg : land.route()) if (!walk.reaches(leg.x(), leg.y(), leg.z(), 4)) h.fail("the walk never stood in " + leg.id() + " (" + leg.name() + ")");
             List<String> needless = dev.awaken.gates.realms.check.WalkCheck.needless(land);
             if (!needless.isEmpty()) h.fail("crossed without the move it is said to need: " + needless);
-            if (land.leaps().size() < 4) h.fail("the hall Twice asks for the double jump fewer than four times");
+            long doubles = land.leaps().stream().filter(l -> l.move().equals("double")).count(), dashes = land.leaps().stream().filter(l -> l.move().equals("dash")).count();
+            if (doubles < 4) h.fail("the hall Twice asks for the double jump " + doubles + " times, not four");
+            if (dashes < 3) h.fail("the hall Through asks for the dash " + dashes + " times");
+            if (land.change("trial_open_dash").isEmpty() || land.change("trial_open_slam").isEmpty()) h.fail("a stand's bars are not there to open");
             for (Land.Course c : land.courses()) if (!c.free()) h.fail("a fall in " + c.leg() + " costs something");
             h.succeed();
         });
