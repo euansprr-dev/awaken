@@ -243,6 +243,9 @@ public final class AscentSwing {
         public boolean bent, blocked, braked;
         /** The tick within the look-ahead the last swing tick saw it would meet something (after any bend), or -1: what a player sees coming. */
         public int ahead = -1;
+        /** What the look met in {@link #aimed} (its own copy: the looks after it reuse {@link #hit}), and how far; NaN for nothing in reach. */
+        public final SwingSpace.Hit aim = new SwingSpace.Hit();
+        public double aimT = Double.NaN;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -497,6 +500,70 @@ public final class AscentSwing {
         return any;
     }
 
+    // ---- where you look (SPEC §62, "The rope goes where you look") -------------------------------------------------
+
+    /**
+     * The rope thrown where you look first (12 Nov 2026, Euan: "I'm clearly looking at a tree that would be perfect, and
+     * it's like the rope just either just goes straight through it or just doesn't connect"). The look's own ray from the
+     * eye; the first block it meets within reach is the target, and the rope takes that target or leaves it to the looks
+     * after this one (the fans along the heading, a lip):
+     * <ul>
+     * <li>a swing from it, by {@link #find}'s own rules for one hit (a side face near its top bites the top's edge, the
+     * rope's line clear, the arc clear to the window);</li>
+     * <li>else, with {@code slings} (the guide), a sling past its top along your look, by {@link #findSling}'s rules for
+     * one hit, except that what the flight meets once it is past the point over the top is yours to steer (the fans want
+     * all of the flight clear, so in a wood the next tree spoiled every sling at a tree you looked at).</li>
+     * </ul>
+     * {@link Work#aimT} is how far the look met a block (NaN for none within reach): a press that took nothing shows
+     * its missed rope stopping there, never flying on through the tree. False when the target gives neither.
+     */
+    public static boolean aimed(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, double yaw, double pitch,
+            double reach, boolean slings, Work w, Pick out) {
+        Tune t = T;
+        SwingSpace.Hit a = w.aim;
+        double cp = Math.cos(pitch * D2R);
+        w.aimT = Double.NaN;
+        if (!s.ray(ex, ey, ez, fx(yaw) * cp, -Math.sin(pitch * D2R), fz(yaw) * cp, reach, a)) return false;
+        w.aimT = a.t;
+        // a swing from it
+        double x = a.x, y = a.y, z = a.z;
+        if (a.ny == 0 && !a.leaf) {
+            double top = s.topOver(a, t.edgeSnap);
+            if (!Double.isNaN(top)) y = top - 0.3;
+        }
+        if (plan(s, hand.x, hand.y, hand.z, yaw, reach, x, y, z, out) && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w)
+                && arcClear(s, hand, out, yaw, w)) return true;
+        if (!slings) return false;
+        // else a sling past its top (findSling's rule for one hit)
+        double hx = a.x, hy = a.y, hz = a.z;
+        double top = a.ny > 0 ? hy : s.topOver(a, 8);
+        if (Double.isNaN(top)) top = s.floorUnder(hx - a.nx * 0.34, hy + 8, hz - a.nz * 0.34);
+        double fx = fx(yaw), fz = fz(yaw), dx = hx - hand.x, dz = hz - hand.z;
+        double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + t.slingOver - hand.y;
+        if (a.t > Math.min(reach, t.slingReach) || ahead < t.slingFrom || rise < 1 || rise > ahead * 1.2 || top < hy - 0.5) return false;
+        double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
+        double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
+        if (!slingClear(s, hand, px, top + t.slingOver, pz, w, true)) {
+            if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w, true)) return false;
+            px = hx;
+            pz = hz;
+        }
+        out.x = hx;
+        out.y = hy;
+        out.z = hz;
+        out.px = px;
+        out.py = top + t.slingOver;
+        out.pz = pz;
+        out.top = top;
+        out.len = out.fitLen = Math.sqrt(dx * dx + (hy - hand.y) * (hy - hand.y) + dz * dz);
+        out.score = 1;
+        out.side = side;
+        out.elev = Math.atan2(rise, Math.max(0.01, ahead)) / D2R;
+        out.zip = false;
+        out.sling = true;
+        return true;
+    }
+
     /**
      * One tick of a sling's pull on the hand point {@code k} toward (x, y, z): speed added along the rope up to
      * {@link Tune#slingTop}, most of gravity carried by the rope. True when it lets go instead: near the point, steeply
@@ -527,6 +594,14 @@ public final class AscentSwing {
      * half a block under): the real flight never matches the played one to the texel (a look turned, a tick late).
      */
     static boolean slingClear(SwingSpace s, AscentRules.Kin hand, double x, double y, double z, Work w) {
+        return slingClear(s, hand, x, y, z, w, false);
+    }
+
+    /**
+     * As above; {@code yours} (a sling at what you look at, {@link #aimed}): once free and past the point over the top,
+     * what the flight meets is yours to steer, not a reason to refuse the sling.
+     */
+    static boolean slingClear(SwingSpace s, AscentRules.Kin hand, double x, double y, double z, Work w, boolean yours) {
         AscentRules.Kin k = w.k2;
         k.set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
         // the look-ahead's rays reuse the caller's hit: put it back for the caller's loop
@@ -550,7 +625,8 @@ public final class AscentSwing {
             if (free) freeFor++;
             // room under the feet through the pull and while it rises over the top it was pulled toward
             if (swept(s, x0, y0, z0, k.x, k.y, k.z, SLING_SIDE, i > 1 && freeFor < 12 ? SLING_UNDER : 0, free ? 0 : SLING_OVER)) {
-                ok = free && (T.slingLand < 0 ? i > 14 : freeFor > T.slingLand) && landing(s, x0, y0, z0, k);
+                ok = free && (yours && pastPoint(hand, x, z, x0, z0)
+                        || (T.slingLand < 0 ? i > 14 : freeFor > T.slingLand) && landing(s, x0, y0, z0, k));
                 break;
             }
         }
@@ -566,6 +642,12 @@ public final class AscentSwing {
         h.bz = bz;
         h.leaf = leaf;
         return ok;
+    }
+
+    /** Whether (x0, z0) is past the point (x, z) along the way from the hand to it (seen from above). */
+    private static boolean pastPoint(AscentRules.Kin hand, double x, double z, double x0, double z0) {
+        double dx = x - hand.x, dz = z - hand.z;
+        return (x0 - hand.x) * dx + (z0 - hand.z) * dz >= dx * dx + dz * dz;
     }
 
     /**

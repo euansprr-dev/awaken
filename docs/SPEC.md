@@ -24492,6 +24492,30 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   arriving 4 on, a link at a time; failing 4 on at new anchors, on; failing 4 on at one anchor, one throw; then the
   miss's pause, a key-up let-go, a swing landed 1.5 off, a short zip that arrived, a sling closed 4 on, an arrival 0.2
   off, and a press that forgets).
+- **The rope goes where you look** (12 Nov 2026, Euan on build d810948d6, after the held chain: "sometimes it's like I'm
+  clearly looking at a tree that would be perfect, and it's like the rope just either just goes straight through it or
+  just doesn't connect for some reason"). Causes, from the code: no look of the assisted rope started from the
+  crosshair except the lip's. The swing's fan of rays follows the heading at fixed angles (22 to 72 degrees up), and
+  an ordinary tree never swings anyway: a swing wants a rope of 8 or more whose arc keeps the feet 2.5 off the floor,
+  so an anchor about 10 over the ground, where an oak's crown is 4 to 7. A sling was the answer for such a tree, but
+  the fans take a sling only when its whole flight is clear, including the free flight after the let-go, so in a wood
+  the next tree spoiled most slings at the one you looked at, and the rope slung over another top or missed. The
+  missed rope then flew 18 blocks along the look, through the tree. Now (`AscentSwing.aimed`, the client's `pick` and
+  the marker alike):
+  - the look's own ray from the eye goes first: the first block it meets within reach is the target, swung from when
+    it gives a clear swing (the fan's rules for one hit), else slung past its top along your look (the sling's rules
+    for one hit, except that what the flight meets once it is past the point over the top is yours to steer); the marker
+    shows it, so what the press will take is on the tree before you press;
+  - a target that gives neither (the floor, a wall too close, open sky) leaves the throw to the fans and the lip as
+    before;
+  - a missed rope stops at the first block the look meets within 18 (never through the tree), and the log keeps one
+    line for each press that missed, or that went elsewhere while the look met something above the hand: "[rope] the
+    look met Block{minecraft:oak_leaves} 13.6 off, which gives no swing or sling from here; the press took nothing (a
+    miss)".
+  The fans, the bench and its gates are unchanged (the bench calls the fans directly). Test `ascent_rope_aimed` (from
+  real blocks: an oak 14 ahead and a wall 14 high past it; the look at the crown takes it as a sling past its top, whose
+  flight played on clears the crown and meets the wall, and the server takes the anchor; a look at the sky meets nothing; a look at the floor
+  meets it about 4 off and gives no sling).
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
