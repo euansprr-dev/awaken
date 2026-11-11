@@ -45,7 +45,9 @@ public final class AscentRemote {
 
     static void seen(AscentPayloads.Seen msg) {
         AscentState st = AscentState.byId(msg.state());
-        if (st == null) return;
+        // the local player's state is its own prediction's alone (the server shows it to everyone else)
+        Minecraft mc = Minecraft.getInstance();
+        if (st == null || mc.player != null && msg.entityId() == mc.player.getId()) return;
         Slot s = of(msg.entityId());
         if (st == AscentState.NONE) {
             if (s != null) {

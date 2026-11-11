@@ -621,7 +621,9 @@ may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes
   each also proving a plain sprint jump falls short and that the landing is on the far road, not past it:
   - **The rope** (`CourseKit.swing(len, up, ahead)`): a gap under a lantern of dream light (3 wide, 2 high, 3 deep: big
     enough for the rope's fan from anywhere on the jump), thrown at 2 and at 9 ticks into the jump (`AscentSwing.find`,
-    `entry`, `travel`, `tick` to the top, `letGoClear`/`holdOn`, `letGo`, then `carryStep`): both must land. A swing
+    `entry`, `travel`, then `tick` from the catch to the arc's top, every tick tried as the key's let-go with `letGo` and
+    `carryStep`; the held rope, §62, lets go only by the key): both must land, the landing best in the window kept; the
+    top is the last tried (where the rope once let go by itself), so a gap laid for that let-go still proves. A swing
     carries about 27 from the take-off whatever the gap, and needs open air under the arc, so the gaps are 22-24 with 9
     of road after. Layout: road 8, swing 22 (lantern 14 up, 6 on), swing 24 (14, 8), swing 22 (16, 8); par 17 s.
   - **The leap** (`CourseKit.leap(len, rise)`): the sprint jump, the double jump near its top; the air dash as it falls
@@ -4272,6 +4274,23 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
 - Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
   ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
+- **The stair** (11 Nov 2026, Euan: the platforms "aren't built in a way where it's actually easy to kind of like
+  Spider-Man swing up"; `SkyRig.Stair`, `helix`, `stair`, `stoneCells`, `rigStair`). Stones of earth the platform tore
+  up as it rose spiral up round it, each a short sling over the last: 30 out from the deck's middle, 12 up and 18 on
+  from one to the next, the top one 29 out on the pier's diagonal and 8 under the deck; from the ground up to that top
+  one, a stone only where it stands 6 or more over the land (over water a raft of plating at the surface). A stone is
+  a disc 3.6 across the radius, grass on top, a rim of earth three deep all round (a clean face to pull up onto) and
+  a keel of stone and ore under its middle, hanging roots, a lantern on two chains under the keel's tip. Under 40 over
+  the land, the canopy is opened round each stone and along the way to the next. Played on the bench
+  (`SwingBench.climb`: the stones' own cells, the deck, its studs, cabin, keel, pier, islands and the old chain and
+  rings; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
+  feet, and one that only holds forward and the rope): 12 of 12 and 6 of 6 reach the deck in about 25 s, 99% of it
+  off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
+  with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
+  chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
+  logs the shapes and judges this one. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
+  lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) at **D-rank** and have swung enough to
@@ -4501,9 +4520,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **The hand plant**: a free-run vault slaps the top (the grab sound, higher) and puffs dust off it; a ledge caught by
   a hang already does.
 - **Wind**: the rush of air follows the body's own speed too (a long fall, a fast run), not only an Ascent state's.
-- **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
-  at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
-  rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- **The slow beat** (removed 11 Nov 2026, §62 "The held rope"): a carry flying 0.7 b/t or faster, 6 or more over the
+  ground, hung at the top of its arc for 8 ticks at 0.45 of time, once per 3 s. In play it read as lag (Euan: "as if
+  there was a server lag"): the same flight slowed sometimes and not others. The carry is now one rule every tick.
 - **The tactical sprint's line** (Euan, 25 Oct: "no way of knowing when your tactical sprint is recharged"):
   `body.client.SprintBar`, a 2-pixel Holo-blue (#7FC3FF) line in the free gap just above the hotbar (Aether's gold line
   sits over the XP bar, so the two never meet), filled from the middle like Aether's: it drains while the sprint
@@ -4945,7 +4964,7 @@ Plan, proof and runs: `docs/rope-swing/` (approval page https://claude.ai/artifa
 decisions approved as recommended, "Go with the full plan"). The old rope bit the crosshair's block and reeled you to a
 fitted length with a yank (0.22) and threw away the catch's speed, so a swing aimed at a tree went into the tree. The
 assisted rope picks its own anchor along your heading, fits its length without pulling, swings you in your heading's
-plane and lets go at the top. Code: `body.ascent.AscentSwing` (plain maths over `SwingSpace`; nothing allocated a
+plane and lets go at the top (with the held rope, §62, only when you let go of the key). Code: `body.ascent.AscentSwing` (plain maths over `SwingSpace`; nothing allocated a
 tick), `LevelSpace` (the level's answers: vanilla's block rays, the body's box, the floor under a point, a column's
 top), client wiring in `AscentMoves`. The server is unchanged (it still checks each anchor is real and in reach).
 - **Decisions.** (1) The rope keeps Left Alt; the movement power is on mouse 4 (§17.30). (2) A tap at a ledge zips you
@@ -23672,7 +23691,7 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   the candidate only if nothing is met, or only a landing after the let-go. To the server and to watchers a sling is a
   ZIP; its let-go is `EV_SLING`.
 - Held, a swing lets go at `apexHeld` 55 degrees while it still rises and the flight after is clear (95 otherwise, as
-  before). With the key and forward held, three ticks on the ground at a run (or stopped against something) hop into
+  before). (Only with `ropeHold` off since 11 Nov: the held rope below never lets go by itself.) With the key and forward held, three ticks on the ground at a run (or stopped against something) hop into
   the next rope, ten ticks at least after the last throw; running, the hop takes a swing or a sling, and stopped against
   a face the pull up it too.
 - **The step the body really took.** Inside the input step the game has not yet moved the body this tick, so
@@ -23720,6 +23739,69 @@ without Minecraft, 40 runs of 15 s, median blocks):**
   tops to sling over, and chains from one to the next; the bench's key-only bot on the Run as boxes ends past the last
   road in every one of twelve tries. A Run laid for the guided rope, with a held-key proof beside the jump's (the
   bench's bot can be that proof), is the dreams' to decide.
+
+*The held rope (11 Nov 2026, Euan's playtest; branch `claude/rope-hold-swing-57f931`; switch `ropeHold` in
+`awaken-feel-client.toml`, on by default, off = the rope above exactly).* Euan: "I don't really like how it automatically
+lets go, and sometimes it glitches where it has two ropes at the same time ... It like swings you back and forth like an
+actual rope with momentum", and of the air after: "sometimes you're going fast and slow ... as if there was a server lag".
+- **Letting go of the key is the only let-go of a swing** (`AscentSwing.hold`). `tick` never asks to let go. The first
+  arc is the swing above, unchanged (drive, momentum floor, window, bends). Its top (the old let-go point: past the
+  pivot with forward speed spent, falling past it or past `apex`; or swinging back) marks the rope `swung`, and from then
+  on the rope is a pendulum: no drive and no floor, only its drag (0.002 a tick: an 80 degree arc is about 55 after 20
+  s). Forward pumps along the motion through the lower part (`holdPump` 0.008 a tick; from a hang, along the heading)
+  while the arc it would reach stays under `holdTop` 80 degrees; back slows it, never past still. No held arc goes over
+  `holdCap` 88 degrees: past the window and rising, its speed bleeds halfway a tick toward what just reaches the cap,
+  so a rope never goes slack over its pivot and snaps taut. A wall under 4 ticks ahead that nothing bends round brakes
+  it (a fifth of its speed along a tick): what it meets, it meets softly, and it swings back. A rope hanging off to one
+  side of its anchor (the swing's pivot is the anchor's projection on the swing's plane) settles under it, `holdSettle`
+  1.5% of the offset a tick and a sixteenth of a block at most, while a quarter block beside the body is clear. The
+  window and its boost work on the back swing too.
+- **When the swing dies out** the body hangs still under the anchor. From there forward pumps it up again, back holds it
+  still, sneak reels in, sneak and jump rappels, jump launches, and letting go drops. A landing, a cut rope, a gone
+  anchor or a refused rope still end it as before. The key let go is the let-go that tick: the old rope's wait when a
+  let-go would throw you into something (`holdOn`) is only the old rope's. A tap still zips to a ledge. The sling still
+  lets go by itself (it is a throw over a top, not a swing), and a key held through its let-go still throws the next
+  rope. A swing into a wall no longer hands off to a wall-run or a zip by itself: let go and jump at the wall to run it.
+- **Never two ropes.** Cause: a rope let go draws its follow-through (the line falling from its anchor, 9 ticks), and the
+  chain threw the next rope 2 ticks after the let-go at the top, so two lines showed for 7 ticks; a tap's zip and a
+  swing's zip up a wall did the same, and watchers saw it too (their copy draws the follow-through when the state leaves
+  a rope). Now one rope per body, on both sides, by rule: a rope let go or missed ends any earlier one of the same body
+  still showing (`AscentFx.ropeShot`), and the renderer draws no let-go or missed rope for a body that has a live rope
+  (`AscentRender.ropeLive`). The local player's rope belongs to its prediction alone: the server never shows a player
+  to itself, and `AscentRemote.seen` and `gatherRopes` ignore such a copy if one ever came.
+- **Smooth air after the let-go.** Cause: the slow beat (§17.15), 8 ticks at 0.45 of time at the top of a fast, high
+  carry once every 3 s, so the same flight slowed sometimes and not others. Gone: the carry is one rule every tick.
+  Also, the rope let go at its top with the key still held bent and braked the free flight (`steerHeld`) on the way to
+  the next rope; a swing now ends only with the key up, so its flight is never steered by the held key.
+- **Bench and proofs.** The bots let go of the key where the rope used to let go by itself: the "holding" and key-only
+  bots as the window lights (above 0.61, where the guide's held rope let go at 55 degrees), the by-hand bot at the
+  window's best (0.85), each else at the top of the arc, waiting up to `holdOn` ticks there when the let-go would meet
+  something (a player sees the crown coming). The bench logs every row before any gate is judged. The dreams' solver
+  (`AirProofs.swing`) tries every tick of the arc's rise as the let-go and keeps the landing best in the window (§9.6).
+  Tests: `ascent_swing_held` (a held rope never asks to let go, swings back and forth with each top lower, never over
+  the cap, settles under its anchor; forward pumps it to its cap, back stills it; off, it lets go at the top),
+  `ascent_swing_over_nothing` (the key let go at the top lands on the Rope Run's gaps; off, the guide's let-go as
+  before), `ascent_swing_bench`, `dreams_runs_solvable`. `ascent_slow_beat` is gone with the beat.
+- **The holding bot's let-go, measured** (`SwingBench.heldRule`): three habits played on the tall places, lane, city
+  and forest (median blocks): letting go as the glow lights 227, 253, 246; at its brightest 217, 243, 223; only at the
+  top of the arc 179, 206, 185; the rope letting go by itself (the guide timing each let-go) went 243, 263. The gates'
+  bot lets go as the glow lights (it goes furthest), and the held rope's tall gates are 220, 245, 240 from that.
+- **One key, one read** (11 Nov 2026, Euan: the rope that swings you on along your look "does feel actually very
+  Spider-Man-ish, but it's very not consistent ... it switches between that and sometimes pulling you directly to the
+  thing"). Holding the rope carries you on along your look: a swing, or where nothing swings a sling over a top ahead
+  over the top it bit (`findSling`; a lean of its aim toward your heading's line, `slingLean`, was tried and is 0, below). A pull straight at a thing happens only where the marker shows
+  it: a pull up a face (the gold bracket), or a ring or branch straight overhead, which the marker now shows as a pull
+  when you look up past 60 degrees (`AscentMoves.overheadMark`). With the assist on, a press the marker didn't show
+  never zips you at the block under the crosshair any more (that was the plain rope's zip taking over when no swing,
+  sling or lip was found: the yank at the thing); the rope flies out and falls back. The assist off is the plain rope
+  as before. The lean, swept on the bench (one tree of 100 slung from a sprint jump, at a run, fast; the roofs' and
+  spruce key-only medians): on the heading's line itself, 76/60/66, roofs 266, spruce 165 (oak 176 against 198):
+  leaning all the way lost the trees. Leaned where clear, else over the top: 0 gives 87/77/71, 194, 195; 1.5,
+  87/78/71, 222, 201 with no hard hit anywhere; 2.5, 88/77/71, 249, 216 with one hard hit flying free in the oaks;
+  4, 87/77/71, 265, 198 with two stopped runs in the forest. Run through all the held rope's gates, every lean (1, 1.5,
+  2, 3) missed one by a single run (a hard hit flying free in the oaks or on the roofs, a stopped run in the city or
+  the forest), where 0 passes them all: the lean stays 0, the sling as before (a top at most 30 degrees off your look,
+  shown by its chevron). The one-key rule rests on the hidden zip gone and the overhead pull marked.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

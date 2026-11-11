@@ -54,6 +54,13 @@ public interface SwingSpace {
             return boxes.size();
         }
 
+        /** Empties the space (a bench that moves its boxes with the body keeps one space). */
+        public Boxes clear() {
+            boxes.clear();
+            leaves.clear();
+            return this;
+        }
+
         public double[] box(int i) {
             return boxes.get(i);
         }
