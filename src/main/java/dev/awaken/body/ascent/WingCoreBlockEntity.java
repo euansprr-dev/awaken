@@ -99,8 +99,9 @@ public class WingCoreBlockEntity extends BlockEntity {
         return true;
     }
 
-    /** Client: the core breathes a ring of light now and then. */
+    /** Client: the core breathes a ring of light now and then, and its island has an air of its own (SPEC §17.29). */
     static void clientTick(Level level, BlockPos pos, BlockState state, WingCoreBlockEntity be) {
         if ((level.getGameTime() + pos.asLong()) % 60 == 0) dev.awaken.body.ascent.client.AscentFxBridge.coreRing(pos);
+        dev.awaken.body.ascent.client.AscentFxBridge.skyAir(pos);
     }
 }

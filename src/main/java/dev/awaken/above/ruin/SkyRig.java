@@ -35,6 +35,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * The stair (11 Nov 2026, Euan: the platforms should be built to be swung up): stones of earth the platform tore up
  * as it rose spiral up round it from the ground to under the pier, each a short sling over the last ({@link #stair}),
  * a lantern hanging under each. Placed with the rig, and on its own for platforms rigged before it.
+ * <p>
+ * The Wings' case and the arrival (11 Nov 2026): barriers in the drawn case's footprint round the core
+ * ({@link #caseCells}) and an arch over the pier's root ({@link #archCells}); placed with the rig, and on their own for
+ * platforms rigged before them.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -242,7 +246,10 @@ public final class SkyRig {
                 return;
             }
             if (!level.getBlockState(new BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
-            else if (STAIR && !stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
+            else {
+                if (STAIR && !stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
+                if (!casePlaced(level, cx, deckY, cz)) rigCase(level, cx, deckY, cz);
+            }
         }
     }
 
@@ -325,8 +332,75 @@ public final class SkyRig {
         }
         if (STAIR) rigStair(level, cx, deckY, cz);
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
+        rigCase(level, cx, deckY, cz);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
                 l.rings().size(), l.chainBottom(), ground);
+    }
+
+    // ---- the Wings' case and the arrival (11 Nov 2026) ----------------------------------------------------------
+
+    /**
+     * The Wings' case's footprint (SPEC §17.9): the case is drawn (WingCaseRenderer), three blocks square round the core
+     * and 3.4 high, so barriers stand in the 3x3 round the core three high, and over the core, to keep bodies out of its
+     * glass.
+     */
+    public static List<BlockPos> caseCells(BlockPos core) {
+        List<BlockPos> out = new ArrayList<>();
+        for (int dy = 0; dy <= 2; dy++) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            if (dx != 0 || dz != 0 || dy > 0) out.add(core.offset(dx, dy, dz));
+        }
+        return out;
+    }
+
+    /** The arch's place: the pier's cells out along x and z where it crosses (a + b = 2 ARCH and one more). */
+    static final int ARCH = 7;
+
+    /**
+     * The arrival's arch (SPEC §17.29): where the pier's root meets the deck, a Precursor pillar either side of the way
+     * (2.8 off the pier's line, on the deck), a beam two cells thick across between their tops (four clear over the
+     * pier), a light in its middle, and a lantern hung under it on each side of the way, clear of the walk. Its cells,
+     * offset from the deck's centre: x, y over the deck, z, and what stands there (0 pillar, 1 its cap, 2 beam, 3 light,
+     * 4 lantern).
+     */
+    public static List<int[]> archCells() {
+        List<int[]> out = new ArrayList<>();
+        for (int s = -1; s <= 1; s += 2) {
+            int px = ARCH + 2 * s, pz = ARCH - 2 * s;
+            for (int y = 1; y <= 4; y++) out.add(new int[]{px, y, pz, y == 4 ? 1 : 0});
+            out.add(new int[]{ARCH + s, 4, ARCH - s, 4});
+        }
+        for (int a = ARCH - 2; a <= ARCH + 2; a++) {
+            for (int sum = 2 * ARCH; sum <= 2 * ARCH + 1; sum++) {
+                int b = sum - a;
+                if (b < ARCH - 2 || b > ARCH + 2) continue;
+                out.add(new int[]{a, 5, b, a == ARCH && b == ARCH ? 3 : 2});
+            }
+        }
+        return out;
+    }
+
+    /** Whether the case's barriers stand (a platform rigged before 11 Nov has none yet). */
+    public static boolean casePlaced(ServerLevel level, int cx, int deckY, int cz) {
+        return level.getBlockState(new BlockPos(cx, deckY + 2, cz)).is(Blocks.BARRIER);
+    }
+
+    /** The case's barriers (in air only) and the arch over the pier's root (where nothing solid stands). */
+    public static void rigCase(ServerLevel level, int cx, int deckY, int cz) {
+        int flags = Block.UPDATE_CLIENTS;
+        for (BlockPos q : caseCells(new BlockPos(cx, deckY + 1, cz))) {
+            if (level.getBlockState(q).isAir()) level.setBlock(q, Blocks.BARRIER.defaultBlockState(), flags);
+        }
+        for (int[] c : archCells()) {
+            BlockPos q = new BlockPos(cx + c[0], deckY + c[1], cz + c[2]);
+            if (!level.getBlockState(q).canBeReplaced()) continue;
+            BlockState st = switch (c[3]) {
+                case 0 -> RuinBuilder.pillar();
+                case 1, 2 -> RuinBuilder.trim();
+                case 3 -> RuinBuilder.glow();
+                default -> Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true);
+            };
+            level.setBlock(q, st, flags);
+        }
     }
 
     /** How far round the deck's centre the stair builds (its radius and a stone's, and the canopy cleared round it). */

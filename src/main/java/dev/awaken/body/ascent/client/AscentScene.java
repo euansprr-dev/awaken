@@ -24,7 +24,8 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 final class AscentScene {
     private AscentScene() {}
 
-    private static final int LENGTH = 130, WINGS_AT = 34, EDGE_LENGTH = 64;
+    /** The scene's length; the tick the wings unfold (the Wings' case times its flight to it); a short edge's length. */
+    static final int LENGTH = 130, WINGS_AT = 34, EDGE_LENGTH = 64;
     static int pending, playing, age = -1, waited, mode, playingMode;
 
     static void remember(int bits, int sceneMode) {

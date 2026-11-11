@@ -63,6 +63,11 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
+    // the sky platform's island and the Wings' case (SPEC §17.29): the game's own recordings, checked clean of dings
+    public static final DeferredHolder<SoundEvent, SoundEvent> SKY_WIND = sound("ascent.sky_wind");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SKY_LEAVES = sound("ascent.sky_leaves");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CASE_HUM = sound("ascent.case_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CASE_OPEN = sound("ascent.case_open");
     // the rappel and the fittings (the game's own recordings: tools/art/specs/audit_rest.py, SPEC §66.7)
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY = sound("ascent.rappel_pay");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY_GLASS = sound("ascent.rappel_pay_glass");

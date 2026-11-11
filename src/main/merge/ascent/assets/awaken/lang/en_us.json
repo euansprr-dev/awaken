@@ -72,5 +72,9 @@
   "awaken.ascent.core.line": "The core stays dark. It only answers someone who climbed its rings with the rope, not with a pearl, a flight or bare hands.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
-  "block.awaken.spire_crown": "Spire Crown"
+  "block.awaken.spire_crown": "Spire Crown",
+  "subtitles.awaken.ascent.sky_wind": "Wind round the island",
+  "subtitles.awaken.ascent.sky_leaves": "Leaves rustle",
+  "subtitles.awaken.ascent.case_hum": "The Wings' case hums",
+  "subtitles.awaken.ascent.case_open": "The Wings' case opens"
 }

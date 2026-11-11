@@ -33,7 +33,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
     private final long seed;
     private final int rotation;
     private final int doorRank;
-    /** Which blueprint built it ({@link RuinBuilder#STYLE}); pieces saved before the redesign have none. */
+    /** Which blueprint built it ({@link RuinBuilder#style}); pieces saved before the redesign have none. */
     private final int style;
 
     public PrecursorRuinPiece(RuinKind kind, BlockPos corner, int rotation, long seed, int doorRank) {
@@ -42,7 +42,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         this.seed = seed;
         this.rotation = rotation & 3;
         this.doorRank = doorRank;
-        this.style = RuinBuilder.STYLE;
+        this.style = RuinBuilder.style(kind);
         setOrientation(null);
     }
 
@@ -111,7 +111,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         if (style < RuinBuilder.STYLE) return;
         Rotation rot = rot();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        RuinBuilder.build(kind, seed, doorRank, new RuinBuilder.Sink() {
+        RuinBuilder.build(kind, seed, doorRank, style, new RuinBuilder.Sink() {
             @Override
             public void set(int x, int y, int z, BlockState state) {
                 world(x, y, z, m);
