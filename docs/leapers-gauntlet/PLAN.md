@@ -1,6 +1,8 @@
 # The Leaper's Gauntlet, remade, and the Unlock title (plan record, 12 Nov 2026)
 
-Status: **PROPOSED. Nothing is built.** It follows `.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md` and ends
+Status: **APPROVED in full by Euan on 12 Nov 2026 ("Go ahead with the full plan": all twelve decisions yes, recorded on
+the page). The movement module's part is built (SPEC §71.7); the course is the gates session's and is not built yet.**
+It follows `.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md` and ends
 at an approval page, https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1 (`docs/leapers-gauntlet/page.html`, its
 pictures cut by `cut.py` into `shots/`; his answers save in its `answers` collection, `d1` to `d12`). SPEC §71 is the
 short form. Planner: the movement-unlocks session.
