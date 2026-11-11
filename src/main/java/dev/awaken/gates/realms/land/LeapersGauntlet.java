@@ -349,6 +349,17 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         return super.change(moment);
     }
 
+    /** The air of a works: the heat lying over each casting floor, and the glow of the moulds coming up through it. */
+    @Override
+    public dev.awaken.gates.world.FloorAir air() {
+        dev.awaken.gates.realms.kit.AirPlan air = new dev.awaken.gates.realms.kit.AirPlan()
+                .mist(Y - DEEP + 1, 4, 0xff8a30, 0.4F).mist(Y2 - DEEP + 1, 4, 0xff8a30, 0.4F);
+        for (Hall h : new Hall[]{wayIn, twice, through, east}) {
+            air.light((h.x0 + h.x1) / 2, h.pit + 3, (h.z0 + h.z1) / 2, 0xff9a40, 16, 0.8F);
+        }
+        return air.build();
+    }
+
     @Override
     public Direction.Axis portalAxis() {
         return Direction.Axis.X;
