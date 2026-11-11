@@ -4425,7 +4425,12 @@ Held at the edge of the land the client has (the edge hold, §28.9): a windway's
     at its tail and its head; it is a third to two thirds of a block wide, wider with distance so a far gust stays
     a line. Two tones across: a pale core and a soft blue-grey flank. Pale air has to read on a blue sky, which the
     core does, and on white haze and cloud, where a white line is no line at all (the first build's streaks showed
-    by day only where its slab stood behind them): there the flank carries it, and on the blue sky the flank is lost. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
+    by day only where its slab stood behind them): there the flank carries it, and on the blue sky the flank is lost.
+    Seen along a lane's own way (from its heart, or from the rim above its start) its gusts are short strokes
+    heading for one point: there they stay thin and straight and half as strong (no widening for distance, the
+    curl flattened out), from straight along to 25 degrees off; widened and curled they were a litter of ticks round
+    that point. Close by a gust is finer (0.4 of its width at the eye, whole from 22 blocks): a ribbon a block wide
+    was a bar across the view. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
     at an island), with distance from 176 to 320, and within 5 blocks of the eye, so none smears across the view.
     The core is pale mint-white by day (244, 255, 250), a dimmer sea-green by night (138, 198, 192) where white
     lines would glare; the flank (104, 146, 204) by day, a faint teal glow by night (48, 90, 106).

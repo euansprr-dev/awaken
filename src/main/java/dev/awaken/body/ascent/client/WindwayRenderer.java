@@ -234,16 +234,25 @@ public final class WindwayRenderer {
                 if (dist > VIEW + length) continue;
                 // wholly behind the camera
                 if (mx * fx + my * fy + mz * fz < -(length * 0.5 + 8)) continue;
-                double a = st.alpha * tintA * life * (1 - smooth((dist - VIEW * 0.55) / (VIEW * 0.45))) * (held && dist < 40 ? 1.3 : 1);
+                // How far from end-on it is seen: 0 looking straight along the lane, 1 from 25 degrees to the side and
+                // more. Down a lane's length its gusts are short strokes heading for one point: there they stay thin
+                // and straight and a little fainter (widened for distance and curled, they were a litter of ticks
+                // round that point, run 43014005378)
+                double toward = (mx * ux + my * uy + mz * uz) / Math.max(dist, 1e-6);
+                double sine = Math.sqrt(Math.max(0, 1 - toward * toward)), side = smooth((sine - 0.08) / 0.34);
+                double a = st.alpha * tintA * life * (1 - smooth((dist - VIEW * 0.55) / (VIEW * 0.45))) * (held && dist < 40 ? 1.3 : 1)
+                        * (0.5 + 0.5 * smooth((sine - 0.02) / 0.18));
                 if (a < 0.015) continue;
                 int lod = dist < 44 ? 0 : dist < 130 ? 1 : 2;
                 int n = lod == 0 ? 14 : lod == 1 ? 8 : 5;
-                // wider with distance, so a far gust is still a line and not a shimmer
-                double half = (st.halfMin + (st.halfMax - st.halfMin) * h6) * 1.3 * (1 + dist / 110);
+                // wider with distance, so a far gust is still a line and not a shimmer; finer close by, where a
+                // ribbon a block wide was a bar across the view
+                double half = (st.halfMin + (st.halfMax - st.halfMin) * h6) * 1.3 * (1 + dist / 110 * side) * Math.min(1, 0.4 + dist / 36);
                 double twist = (h3 - 0.5) * 0.06, wob = 0.25 + 0.45 * h2, phase = h6 * TAU + time * 0.045;
                 // a curl: over a short stretch the line runs on ahead, rises, comes back over itself and carries on
-                boolean curl = lod < 2 && h5 > 1 - st.curls;
-                double loop = 0.9 + 0.9 * h3, span = 3.2 * loop, at0 = length * (0.42 + 0.25 * h1) - span / 2;
+                // (it flattens out as the view comes round to the lane's own way: a loop seen edge-on is a tick)
+                boolean curl = lod < 2 && h5 > 1 - st.curls && side > 0.05;
+                double loop = (0.9 + 0.9 * h3) * side, span = 3.2 * (0.9 + 0.9 * h3), at0 = length * (0.42 + 0.25 * h1) - span / 2;
                 double angC = h1 * TAU + 1.7, cc = Math.cos(angC), sc = Math.sin(angC);
                 int extra = !curl ? 0 : lod == 0 ? 14 : 8;
                 int count = 0, i = 0, j = 0;
@@ -307,7 +316,7 @@ public final class WindwayRenderer {
             double length = 7 + 6 * h3, speed = 0.3 + 0.2 * h2;
             double y0 = ((time * speed + h5 * (top + length)) % (top + length)) - length;
             double ang0 = h1 * TAU + time * 0.006 * (k % 2 == 0 ? 1 : -1), rad0 = Updrafts.RADIUS * 0.8 * Math.sqrt(0.06 + 0.94 * h2);
-            double wind = (k % 2 == 0 ? 1 : -1) * (0.10 + 0.08 * h5), half = (0.20 + 0.12 * h3) * 1.3 * (1 + flat / 110);
+            double wind = (k % 2 == 0 ? 1 : -1) * (0.10 + 0.08 * h5), half = (0.20 + 0.12 * h3) * 1.3 * (1 + flat / 110) * Math.min(1, 0.4 + flat / 36);
             for (int i = 0; i <= n; i++) {
                 double f = i / (double) n, y = y0 + length * f;
                 double ang = ang0 + wind * y, rad = rad0 * (1 - 0.25 * Math.max(0, y) / top);
