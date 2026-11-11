@@ -225,6 +225,10 @@ final class AscentCommands {
                     // six blocks short of the lowest stone, from where the stone below it would have stood
                     var stones = dev.awaken.above.ruin.SkyRig.stairOn(level, cx, deckY, cz);
                     var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
+                    if (stones.isEmpty()) {
+                        src.sendFailure(Component.literal("The platform at " + cx + ", " + cz + " has no stair stones over its land"));
+                        return 0;
+                    }
                     var low = stones.getFirst();
                     var next = helix.get(Math.min(helix.size() - 1, stones.size()));
                     double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));

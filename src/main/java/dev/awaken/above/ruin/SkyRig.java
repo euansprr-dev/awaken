@@ -403,8 +403,32 @@ public final class SkyRig {
 
     /** The stair's stones on the land as it is under them, bottom first ({@link #stair}). */
     public static List<Stone> stairOn(ServerLevel level, int cx, int deckY, int cz) {
-        return stair(cx, deckY, cz, Stair.DEFAULT, (x, z) -> level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z),
-                (x, z) -> !level.getFluidState(new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z)).isEmpty());
+        // the land under each place, under its stone if one is there: once the stair stands, a heightmap stands on the
+        // stones themselves, and every stone read as sitting on the ground (a tour's sky goto stair found none)
+        Map<Long, Integer> tops = new java.util.HashMap<>();
+        for (Stone s : helix(cx, deckY, cz, Stair.DEFAULT, -64)) tops.put(BlockPos.asLong(s.x(), 0, s.z()), s.top());
+        java.util.function.IntBinaryOperator ground = (x, z) -> {
+            Integer top = tops.get(BlockPos.asLong(x, 0, z));
+            return top == null ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : land(level, x, z, top);
+        };
+        return stair(cx, deckY, cz, Stair.DEFAULT, ground, (x, z) -> !level.getFluidState(new BlockPos(x, ground.applyAsInt(x, z) - 1, z)).isEmpty());
+    }
+
+    /**
+     * The land's first free height in a column where a stone tops out at {@code top}: the heightmap's, unless that is the
+     * stone (it reaches within 12 of the top): then down through the stone's cells to the air under its keel, and on down
+     * to the first block a heightmap would stand on. No air under it within 14: it is the land.
+     */
+    static int land(ServerLevel level, int x, int z, int top) {
+        int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        if (h <= top - 12) return h;
+        var opaque = Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(x, 0, z);
+        int y = Math.min(h - 1, top + 1), floor = top - 14;
+        while (y > floor && !level.getBlockState(m.setY(y)).isAir()) y--;
+        if (y <= floor) return h;
+        while (y > level.getMinY() && !opaque.test(level.getBlockState(m.setY(y)))) y--;
+        return y + 1;
     }
 
     /** The block for a stone's cell. */
