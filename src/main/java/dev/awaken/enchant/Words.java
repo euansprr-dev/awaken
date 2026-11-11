@@ -120,7 +120,7 @@ final class Words {
         // running there costs no hunger: what the last steps took is given back (a sprint costs a tenth a block)
         if (p.isSprinting()) p.getFoodData().addExhaustion((float) (-0.1 * gone));
         level.sendParticles(ColorParticleOption.create(EnchantContent.LETTER.get(), 0xFF000000 | Family.CARRYING.colour),
-                p.getX() - dx * 0.4, p.getY() + 0.08, p.getZ() - dz * 0.4, 2, 0.12, 0.02, 0.12, 0.0);
+                p.getX() - dx * 0.3, p.getY() + 0.08, p.getZ() - dz * 0.3, 4, 0.14, 0.03, 0.14, 0.0);
     }
 
     static void onPlayerTick(PlayerTickEvent.Post e) {
