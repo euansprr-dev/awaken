@@ -109,9 +109,11 @@ final class AscentCommands {
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
-            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), false))
+            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), 0))
                     // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
-                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), true)))));
+                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), 1)))
+                    // tours: on the ground short of the stair's lowest stone, facing it (SPEC §17.9)
+                    .then(Commands.literal("stair").executes(c -> skyGoto(c.getSource(), 2)))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
                             .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
@@ -186,7 +188,7 @@ final class AscentCommands {
         return t;
     }
 
-    private static int skyGoto(CommandSourceStack src, boolean deck) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int skyGoto(CommandSourceStack src, int where) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         // vanilla's own search: only starts that really generated
@@ -212,11 +214,29 @@ final class AscentCommands {
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
                     dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+                } else if (!dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
+                    dev.awaken.above.ruin.SkyRig.rigStair(level, cx, deckY, cz);
                 }
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
                 var first = l.rings().getLast();
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
-                if (deck) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
+                if (where == 2) {
+                    // six blocks short of the lowest stone, from where the stone below it would have stood
+                    var stones = dev.awaken.above.ruin.SkyRig.stairOn(level, cx, deckY, cz);
+                    var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
+                    var low = stones.getFirst();
+                    var next = helix.get(Math.min(helix.size() - 1, stones.size()));
+                    double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));
+                    double sx = low.x() + 0.5 - dx / d * 6, sz = low.z() + 0.5 - dz / d * 6;
+                    int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(sx), (int) Math.floor(sz));
+                    float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                    float pitch = (float) -Math.toDegrees(Math.atan2(low.top() + 1 - (gy + 1.62), 6));
+                    p.teleportTo(level, sx, gy, sz, java.util.Set.of(), yaw, pitch, true);
+                    dev.awaken.Awaken.LOG.info("[ascent] sky goto stair: the platform at {}, {} (deck {}), {} stones, the lowest at {} {} {}", cx, cz,
+                            deckY, stones.size(), low.x(), low.top(), low.z());
+                    return 1;
+                }
+                if (where == 1) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
                 else p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
                 dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), under its first ring {}", cx, cz, deckY,
                         first.toShortString());

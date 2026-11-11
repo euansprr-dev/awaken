@@ -31,6 +31,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * and a hang under it: AscentRules.ZIP_UP_*). The top ring stands in a small perch: a zip to its side pulls the body
  * onto it, and from it a zip to the pier's side does the same. The core sits in the cabin's middle. Over a forest the
  * canopy under the first ring is opened, so a throw from the ground sees it.
+ * <p>
+ * The stair (11 Nov 2026, Euan: the platforms should be built to be swung up): stones of earth the platform tore up
+ * as it rose spiral up round it from the ground to under the pier, each a short sling over the last ({@link #stair}),
+ * a lantern hanging under each. Placed with the rig, and on its own for platforms rigged before it.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -237,16 +241,18 @@ public final class SkyRig {
                 return;
             }
             if (!level.getBlockState(new BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
+            else if (!stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
         }
     }
 
     /**
      * Whether every chunk the rig reads or builds in (the core out to the buoy and groundUnder's columns, 17 out along
-     * x and z) is loaded and finished: a loaded one may still be generating (under a player flying over new land), and
+     * x and z, and the stair, {@link #STAIR_REACH} round) is loaded and finished: a loaded one may still be generating (under a player flying over new land), and
      * reading it would wait for it on the server thread.
      */
     static boolean finished(ServerLevel level, int cx, int cz) {
-        for (int x = cx >> 4; x <= cx + PIER + 5 >> 4; x++) for (int z = cz >> 4; z <= cz + PIER + 5 >> 4; z++) {
+        int far = STAIR_REACH;
+        for (int x = cx - far >> 4; x <= cx + far >> 4; x++) for (int z = cz - far >> 4; z <= cz + far >> 4; z++) {
             if (level.getChunkSource().getChunkNow(x, z) == null) return false;
         }
         return true;
@@ -316,9 +322,103 @@ public final class SkyRig {
             }
             if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: {} leaves cleared under the first ring", cx, cz, opened);
         }
+        rigStair(level, cx, deckY, cz);
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
                 l.rings().size(), l.chainBottom(), ground);
+    }
+
+    /** How far round the deck's centre the stair builds (its radius and a stone's, and the canopy cleared round it). */
+    static final int STAIR_REACH = 40;
+
+    /** Whether the stair is up: its top stone's grass is there (the top one is always kept, the ground never reaches it). */
+    public static boolean stairPlaced(ServerLevel level, int cx, int deckY, int cz) {
+        Stone top = helix(cx, deckY, cz, Stair.DEFAULT, deckY - 64).getFirst();
+        return !level.getBlockState(new BlockPos(top.x(), top.top(), top.z())).isAir();
+    }
+
+    /**
+     * Places the stair ({@link #stair} on the land as it is): each stone's cells where nothing solid stands (leaves and
+     * vines give way), a lantern hanging under its keel, and for the stones low enough to stand in a forest, the canopy
+     * opened round each one and along the way up to the next, so the rope sees them and the body has room.
+     */
+    public static void rigStair(ServerLevel level, int cx, int deckY, int cz) {
+        List<Stone> stones = stairOn(level, cx, deckY, cz);
+        int flags = Block.UPDATE_CLIENTS, opened = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < stones.size(); i++) {
+            Stone s = stones.get(i);
+            int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, s.x(), s.z());
+            if (s.top() - ground < 40) {
+                // the canopy round the stone and along the way to the next one up
+                Stone up = i + 1 < stones.size() ? stones.get(i + 1) : s;
+                for (int k = 0; k <= 12; k++) {
+                    double f = k / 12.0, px = s.x() + (up.x() - s.x()) * f, pz = s.z() + (up.z() - s.z()) * f;
+                    int py = (int) Math.round(s.top() + (up.top() - s.top()) * f), r = k == 0 ? (int) Math.ceil(s.rad()) + 2 : 3;
+                    for (int x = (int) px - r; x <= (int) px + r; x++) for (int z = (int) pz - r; z <= (int) pz + r; z++) {
+                        if ((x - px) * (x - px) + (z - pz) * (z - pz) > r * r) continue;
+                        for (int y = k == 0 ? ground : py - 3; y <= py + 4; y++) {
+                            m.set(x, y, z);
+                            BlockState b = level.getBlockState(m);
+                            if (b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(Blocks.VINE)) {
+                                level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
+                                opened++;
+                            }
+                        }
+                    }
+                }
+            }
+            int[] bottom = {s.top()};
+            stoneCells(s, (x, y, z, c) -> {
+                m.set(x, y, z);
+                BlockState here = level.getBlockState(m);
+                boolean free = here.canBeReplaced() || here.is(net.minecraft.tags.BlockTags.LEAVES) || here.is(Blocks.VINE);
+                if (!free) return;
+                if ((c == Cell.FLOWER || c == Cell.ROOTS) && !here.isAir()) return;
+                level.setBlock(m, cellState(c, x, y, z), flags);
+                if (x == s.x() && z == s.z() && c != Cell.ROOTS) bottom[0] = Math.min(bottom[0], y);
+            });
+            if (!s.raft()) {
+                // a lantern on a short chain under the keel's tip: the stair reads as a spiral of lights at night
+                for (int k = 1; k <= 2; k++) {
+                    m.set(s.x(), bottom[0] - k, s.z());
+                    if (level.getBlockState(m).canBeReplaced()) level.setBlock(m, Blocks.IRON_CHAIN.defaultBlockState(), flags);
+                }
+                m.set(s.x(), bottom[0] - 3, s.z());
+                if (level.getBlockState(m).canBeReplaced()) {
+                    level.setBlock(m, Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true), flags);
+                }
+            }
+        }
+        if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky stair at {}, {}: {} leaves cleared", cx, cz, opened);
+        dev.awaken.Awaken.LOG.info("[ascent] sky stair placed at {}, {}: {} stones from {} up", cx, cz, stones.size(),
+                stones.isEmpty() ? "-" : stones.getFirst().top());
+    }
+
+    /** The stair's stones on the land as it is under them, bottom first ({@link #stair}). */
+    public static List<Stone> stairOn(ServerLevel level, int cx, int deckY, int cz) {
+        return stair(cx, deckY, cz, Stair.DEFAULT, (x, z) -> level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z),
+                (x, z) -> !level.getFluidState(new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z)).isEmpty());
+    }
+
+    /** The block for a stone's cell. */
+    private static BlockState cellState(Cell c, int x, int y, int z) {
+        return switch (c) {
+            case GRASS -> Blocks.GRASS_BLOCK.defaultBlockState();
+            case COARSE -> Blocks.COARSE_DIRT.defaultBlockState();
+            case DIRT -> Blocks.DIRT.defaultBlockState();
+            case STONE -> Blocks.STONE.defaultBlockState();
+            case ANDESITE -> Blocks.ANDESITE.defaultBlockState();
+            case COAL -> Blocks.COAL_ORE.defaultBlockState();
+            case IRON -> Blocks.IRON_ORE.defaultBlockState();
+            case ROOTS -> Blocks.HANGING_ROOTS.defaultBlockState();
+            case FLOWER -> {
+                double o = n(x, 5, z);
+                yield o < 0.8 ? Blocks.SHORT_GRASS.defaultBlockState() : n(x, 6, z) < 0.5 ? Blocks.POPPY.defaultBlockState() : Blocks.DANDELION.defaultBlockState();
+            }
+            case PLATE -> RuinBuilder.plating();
+            case TRIM -> RuinBuilder.trim();
+        };
     }
 
     public static void register(net.neoforged.bus.api.IEventBus bus) {

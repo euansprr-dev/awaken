@@ -89,6 +89,11 @@ public final class AscentSwing {
         /** A pull up a wall in a swing's way is taken only this near (and only with a clear way to it). */
         public final double wallZip;
         /**
+         * How far (blocks) a sling's aim leans from the top it bit toward your heading's line: the pull goes where you
+         * look, as a swing does, without leaving the rope's own top far to the side.
+         */
+        public final double slingLean;
+        /**
          * The held rope: forward's pump a tick through the lower part, the highest a pumped arc goes (degrees from the
          * bottom), the highest any held arc goes (speed past the window bleeds to it), and the share of its offset a rope
          * hanging to one side closes a tick.
@@ -145,6 +150,7 @@ public final class AscentSwing {
             slingReach = v(o, "slingReach", 30);
             slingTicks = (int) v(o, "slingTicks", 34);
             wallZip = v(o, "wallZip", 44);
+            slingLean = v(o, "slingLean", 2.5);
             holdPump = v(o, "holdPump", 0.008);
             holdTop = v(o, "holdTop", 80);
             holdCap = v(o, "holdCap", 88);
@@ -459,8 +465,10 @@ public final class AscentSwing {
                 if (ahead < t.slingFrom || rise < 1 || rise > ahead * 1.2 || top < hy - 0.5) continue;
                 double sc = gauss(ahead, 16, 9) * gauss(side, 0, 7) * (0.5 + 0.5 * gauss(rise, 5, 5));
                 // the pull goes where you look, as a swing does (11 Nov 2026, Euan: a rope that swings you on beats one
-                // that pulls you at the thing): its point over the top, on your heading's line at the top's distance
-                double px = hand.x + fx * ahead, pz = hand.z + fz * ahead;
+                // that pulls you at the thing): its point over the top leans toward your heading's line at the top's
+                // distance, by at most slingLean
+                double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
+                double lean = ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
                 if (sc <= best || !slingClear(s, hand, px, top + t.slingOver, pz, w)) continue;
                 best = sc;
                 out.x = hx;

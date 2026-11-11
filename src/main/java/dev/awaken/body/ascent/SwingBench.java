@@ -733,6 +733,7 @@ public final class SwingBench {
         int reached = -1, lastGain = 0, landings = 0, air = 0, slings = 0;
         boolean wasGround = true, wasSling = false, up = false;
         String end = "out of time";
+        StringBuilder tr = climbTrace;
         while (sim.t < maxTicks) {
             int target = Math.min(reached + 1, deck);
             if (target != built) {
@@ -755,7 +756,26 @@ public final class SwingBench {
             }
             if (!sim.onRope) rope = keyOnly || !b.onGround;
             else rope = !(sim.travel == 0 && !sim.zip && !sim.sling && AscentSwing.hold && heldLetGo(sim, yaw));
+            boolean wasRope = sim.onRope;
             sim.step(rope, 1, yaw, pitch, jump);
+            if (tr != null && tr.length() < 1500) {
+                double top = tg[1];
+                if (!wasRope && sim.onRope) {
+                    double ay = sim.sling ? sim.sy : sim.zip ? sim.tay : sim.rope.ay;
+                    tr.append(String.format(java.util.Locale.ROOT, " t%d>%d %s y%+.0f h%.0f a%+.0f", sim.t, target,
+                            sim.sling ? "sling" : sim.zip ? "zip" : "swing", b.y - top, hd, ay - b.y));
+                } else if (wasRope && !sim.onRope) {
+                    tr.append(String.format(java.util.Locale.ROOT, " let y%+.0f v%.1f/%.1f", b.y - top, Math.hypot(b.vx, b.vz), b.vy));
+                }
+                if (b.onGround && !wasGround) {
+                    int on = -1;
+                    for (int i = 0; i < n; i++) {
+                        double[] q = tops.get(i);
+                        if (Math.hypot(b.x - q[0], b.z - q[2]) <= q[3] + 0.5 && Math.abs(b.y - q[1] - 1) < 1.5) on = i;
+                    }
+                    tr.append(on >= 0 ? " ON" + on : String.format(java.util.Locale.ROOT, " down y%.0f", b.y));
+                }
+            }
             if (sim.sling && !wasSling) slings++;
             wasSling = sim.sling;
             if (!b.onGround) air++;
@@ -786,8 +806,12 @@ public final class SwingBench {
                 break;
             }
         }
+        if (tr != null) tr.append(" | ").append(end);
         return new Climb(up, reached, n, sim.t, sim.run.ropes, slings, sim.run.hardOnRope + sim.run.hardFree, landings, air, end);
     }
+
+    /** When set, {@link #climb} writes each throw, let-go and landing into it (the stair bench's first climbs). */
+    static StringBuilder climbTrace;
 
     /**
      * The holding bot's let-go of a held swing ({@link #play}'s rule, {@link #heldRule}): true when it lets go of the
