@@ -1,0 +1,77 @@
+# A tall tree's shadow from near and far (Euan, playing, 11 Nov: "There's an issue here with the tree's shadow ... it
+# moves as I move ... if I move completely to the left of the tree, then the entire shadow of the tree basically
+# disappears. We need to double check this is fixed across the board for not just trees"). A jungle giant built on a
+# lawn (a trunk twenty-six blocks high, a crown fourteen across in its top five) and a stone table twelve high (four
+# legs and a slab: a solid thing with open air under it), in a mid-morning sun. The same ground from 16, 42 and 78
+# blocks off (inside the block map, across its edge at 46, beyond it), framed alike by a narrower view each time;
+# then from the ground at 30 and 55 blocks. The shadows should be the same shape in every one.
+# SPEC §22 "Shadows beyond the block map".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-treeshadow-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 2500
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 121 60.5 180 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 121 -10 50 150 110 minecraft:air
+cmd fill -75 120 -10 50 120 50 minecraft:grass_block
+cmd fill -75 120 51 50 120 110 minecraft:grass_block
+cmd fill 0 121 30 1 146 31 minecraft:jungle_log
+cmd fill -6 143 24 7 147 37 minecraft:jungle_leaves[persistent=true]
+cmd fill 0 143 30 1 146 31 minecraft:jungle_log
+cmd fill 20 121 60 20 132 60 minecraft:cobblestone
+cmd fill 27 121 60 27 132 60 minecraft:cobblestone
+cmd fill 20 121 67 20 132 67 minecraft:cobblestone
+cmd fill 27 121 67 27 132 67 minecraft:cobblestone
+cmd fill 19 133 59 28 133 68 minecraft:stone
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+wait 400
+cmd time set 2500
+# --- the tree's shadow, from the south, looking north at it
+cmd tp @s -31.5 133 46.5 180 37
+opt fov 70
+wait 300
+shot t1_tree_from_16
+cmd tp @s -31.5 150 72.5 180 35
+opt fov 42
+wait 300
+shot t2_tree_from_42
+cmd tp @s -31.5 170 108.5 180 32
+opt fov 24
+wait 300
+shot t3_tree_from_78
+# --- the table's shadow, from the south
+cmd tp @s 8.5 133 80.5 180 37
+opt fov 70
+wait 300
+shot t4_table_from_16
+cmd tp @s 8.5 170 142.5 180 32
+opt fov 24
+wait 300
+shot t5_table_from_78
+# --- from the ground: toward the tree's shadow at 30 and at 55 blocks
+opt fov 70
+cmd tp @s -31.5 123 60.5 180 8
+wait 300
+shot t6_ground_from_30
+cmd tp @s -31.5 123 85.5 180 6
+wait 300
+shot t7_ground_from_55
+quit

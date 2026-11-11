@@ -31,6 +31,9 @@ public final class EnchantModule {
         bus.addListener(EnchantFx::onLootingDrops);
         bus.addListener(EnchantFx::onPickupXp);
         bus.addListener(EnchantFx::onFall);
+        bus.addListener(Lantern::onPlayerTick);
+        bus.addListener(Lantern::onLogout);
+        bus.addListener(Lantern::onStopping);
         bus.addListener(Pages::onDeath);
         bus.addListener(Doors::onDeath);
         bus.addListener(Doors::onBreak);
@@ -50,6 +53,7 @@ public final class EnchantModule {
                 "word_stone");
         dev.awaken.core.api.EnchantApi.stones(WordStones::place);
         Sources.neverHeld("the Inscribing Table's tool, only drawn in your hand while you write (enchant.client)", "burin");
+        Sources.neverHeld("the light a Lantern helmet sheds: set and cleared by the helmet, nothing to see or hold (enchant.Lantern, SPEC §45.16)", "lantern_glow");
         EnchantCommands.register();
         EnchantTests.register();
     }

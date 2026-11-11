@@ -1,0 +1,53 @@
+# Shade on a creature (Euan, playing, 11 Nov: "the shadows on animals are a bit broken ... actual artifacts in the
+# shadows, where the shadows have jagged edges or like zigzags"). A stone pillar's shadow falls across a cow that
+# stands still, square to the world (where the fault showed) and another turned thirty-five degrees: each from its
+# sunlit side at under three blocks, and from above. SPEC §22 "Shade on creatures".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-creature-shade-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 2500
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 0 10
+cmd forceload add -32 -32 32 48
+wait 200
+cmd fill -20 120 -6 24 120 40 minecraft:grass_block
+cmd fill 6 121 10 7 126 11 minecraft:stone
+cmd fill 6 121 20 7 126 21 minecraft:stone
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd summon minecraft:cow 1.5 121 12.0 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Rotation:[0f,0f]}
+cmd summon minecraft:cow 1.5 121 22.0 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Rotation:[35f,0f]}
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+wait 400
+cmd time set 2500
+cmd tp @s 4.3 122.4 12.9 100 14
+wait 300
+shot c1_square_cow_side
+cmd tp @s 3.6 122.9 10.4 55 22
+wait 200
+shot c1_square_cow_three_quarter
+cmd tp @s 1.5 125.2 13.6 180 62
+wait 200
+shot c2_square_cow_above
+cmd tp @s 4.3 122.4 22.9 100 14
+wait 300
+shot c3_turned_cow_side
+cmd tp @s 1.5 125.2 23.6 180 62
+wait 200
+shot c4_turned_cow_above
+quit

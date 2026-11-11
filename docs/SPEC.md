@@ -6624,6 +6624,52 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **Shadows beyond the block map** (Euan, playing, 2026-11-11, in a jungle: "There's an issue here with the tree's
+  shadow ... it moves as I move, so the shadow isn't consistent ... it's very cut off, and then if I move, the shadow
+  moves along with my view ... if I move completely to the left of the tree, then the entire shadow of the tree
+  basically disappears. We need to double check this is fixed across the board for not just trees"). The Sun Pass
+  has two answers for "does the sun reach this point": the block map, exact, within 46 blocks of the camera, and the
+  heightfield beyond it and for the rest of a ray that leaves the map. The heightfield knows a column's top with its
+  leaves and without, not where a crown ends below, and it took the whole column under the leaves' top for leaves: a
+  curtain to the ground. So a ray that passed under a crown was shaded wherever the heightfield had the say, and lit
+  where the map did, and the line between the two, a straight edge on the ground at the map's reach toward the sun,
+  moved with the camera. Under tall trees (a jungle) that was a slab of shade that came and went.
+  - **The rule**: beyond the block map a crown shades a ray only in the top seven blocks of its column
+    (`CANOPY` in lens_light.fsh, `heightRay`), so a tree far off casts its crown's shadow and light passes under
+    it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
+    a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
+    has its say wherever the old curtain did, at the same cost.
+  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
+    giant) shade only inside the map; and a solid thing with open air under it (a bridge, an arch, a table) is a
+    solid pillar to the heightfield, so beyond 46 blocks its shadow is the pillar's and nearer it is the thing's
+    own. Telling those apart needs the underside of each column's top run in the heightfield (a third channel and
+    a scan at chunk load): not built.
+  - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
+    blocks, and from the ground).
+- **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
+  broken ... you can see really weird frames or really weird pixels ... actual artifacts in the shadows, where the
+  shadows have jagged edges or like zigzags"). Close to the eye the Air's shadows are cut in the texture's own
+  pixels: a point on a face square to the world asks for its light from the centre of its sixteenth-of-a-block
+  texel, in the light pass and again where the composite reads the light (SPEC §22 "Sunlight"). Those texels are the
+  world's, on the world's grid. A creature's side is square to the world whenever it happens to face that way, and
+  its shade was then cut along a grid that is not its skin's and does not move with it: stair-steps a texel wide
+  that crawled as it walked or breathed. Now only a block's own face is cut that way (`blockFace` in
+  lens_height.glsl: the point just behind the surface lies in its column's solid, by the heightfield); a creature,
+  a dropped item or anything else with open air behind its surface keeps the smooth shadow, the sun's small disc
+  smoothed over frames. Known gaps: under a solid roof everything reads as a block (the heightfield has one top a
+  column), so a creature indoors is cut as before; and a leaf block's face is no longer cut (the solid top is
+  without leaves), which on a leaf texture does not show. Tour:
+  `tools/autopilot/steady60-creature-shade-ci.txt`.
+- **Near lights against the sky** (Euan, playing by night, 2026-11-11: "the Firefly lights goes behind clouds. Which
+  shouldn't be the case"). A particle writes no depth, so where a firefly's glow shows against the sky its pixel is
+  sky to the composite, and the wisps and the clouds were laid over it as they are over the stars. What the frame
+  holds over the game's own sky is the sun, the moon, the stars and any light that is near; a near light is told
+  from the rest by where it is and by its colour: not within the sun's disc (some 12 degrees) or the moon's (some
+  8), and not white as the stars are (its strongest channel leads its weakest by a quarter and more). That light is
+  put back over whatever of the sky covered it (`nearGlow`, `skyCover` in lens_composite.glsl). Not while the
+  game's own sunrise glow is up, which is coloured sky: at dusk a firefly still goes behind a cloud. Not solved by
+  it: a white or grey particle (snow, smoke) against a cloud, and a near light in front of far land, which takes
+  the land's fog. No tour: fireflies come by chance at night; to be seen in play.
 - **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
   own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
   atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
@@ -6642,7 +6688,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
   - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
     share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
-  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
+  - **How much fog** stays the Air's own, by the render distance: a land's look gives the fog its tint, not its
+    amount (`haze` and `hazeStart` do not act under the Air). On Amber Reach that is hazier than the land's first
+    pictures, the far cliffs fading more. Shown the two side by side and asked whether a gate world's fog should
+    follow its look's haze strength, Euan said: "Leave it" (2026-11-11).
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite). Before, run
+    42996721809; after, 42996759340: the sky, the far fog and the clouds are the land's amber. Sheet:
+    `docs/perf/steady60/play-2026-11-11/gate-sky-before-after.jpg`.
 - **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
   like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
   that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
@@ -19559,7 +19611,7 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
   piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
 
 ### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
-- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+- **`awaken:inscribing_table`**: lapis, stick (a book until §45.15), lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
   `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
   built: the recipe is always known.)
 - **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
@@ -19615,6 +19667,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   `village.Trade`.
 
 ### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+(Since §45.15 the book's two pages and the result card are the `classicTable` setting only, the table is a desk with the
+book on a rest, and the piece on the slate is the thing itself. The view, the hands, the trace and its numbers stand.)
 - **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
   you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
   where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
@@ -19796,6 +19850,125 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.
+
+### 45.15 The polish pass: the door, the desk, one script (plan docs/enchanting/POLISH.md, page https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb; Euan approved the full plan 2026-11-11: "go ahead with the full plan", with three changes)
+His changes, which override the page where they differ: **no menu** ("let's not make it a menu for enchanting. It should
+stay 3D inside of the actual world, like similar to how it is now, maybe just better, like more cinematic"); an
+inscription's look **must not distract from the armour set** but should give "a nice shine" or a small aura (§45.17);
+and **a page must say how it is used** ("I thought the pages were like being automatically applied... say: you enchant
+this onto a weapon by doing XYZ"). What the audit found is in POLISH.md §2: across two worlds he was given six pages, read
+four, and never built the table. Built first as a pilot (the door, the desk, his three banes and Lantern); the other five
+new words of the plan wait for his play.
+
+- **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
+  `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
+  `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says "You learned Bane of
+  Crawlers. It isn't on anything yet." while the card below is sure to show (five lines of chat lay over it at his
+  size), and once the card is paced, all of it: "... To put it on a weapon, hold the piece and use an Inscribing Table.
+  It fits your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold).
+  The first time ever the System's line about gates follows as a paced toast short enough to show whole: "Each kind of
+  gate keeps its own enchantment." (it was a longer toast, cut after "and its L").
+  **Two System panels** say the same in the room a panel has, which is a title and three lines of 188 pixels at the size
+  he plays at (the first cut had a body and rows: the body was cut with "..." and the how-to folded behind "Press K to
+  see 2 more"). Each line is a row with no value, which a panel draws at full width. Given (`Pages.givenCard`, 7 s):
+  "Page of Bane of Crawlers" / "It isn't on your gear yet." / "Use the page to learn it. Then" / "write it on at an
+  Inscribing Table." Read (`Pages.learnedCard`, 12 s): "Learned: Bane of Crawlers" / "It isn't on anything yet." / "To
+  write it on, hold the piece" / "and use an Inscribing Table." Until you have written your first enchantment both
+  panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`: paced, the first filmed run showed
+  neither, a new world being quiet for its first five minutes); after that they are paced like any notice. A page held
+  to the table is read there.
+- **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
+  of a Hive."); what it won't touch is the Journal entry's small print.
+- **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
+  stone. Tasks' `enchant/table` asks for the stick.
+- **A converted vanilla table** opens facing as the server says (`Open.facing`): the scene framed itself before the new
+  block reached the client and fell back to north.
+- **The door's log**: `[enchant] door: page given|read|table set|opened|written[ clean| from memory] <id> t=<game time>`.
+- **One script** (`Marks`, written by `tools/art/specs/_enchant_glyphs.py java`): 36 designed glyphs in place of five
+  generated templates. A glyph is its family's frame (wards a shield, banes a spear, spoils a cup, carrying a gable,
+  keeping a knot) and the enchantment's own sign, straight cuts between points of a 7 by 7 grid, 2 to 5 strokes, sampled
+  about every 0.11 of the mark with every corner a sample. `Marks.frame(no)` counts the frame's strokes; `Marks.grid(no)`
+  gives the corners. Numbers 32 to 36 are drawn for the words not built yet. A Word Stone's `word` runs 1 to 36.
+- **Every page has its own leaf**: 36 item textures (`enchantment_page_<path>`: the sign in dark ink on a parchment with a
+  band in the family's colour) chosen by the item model select `awaken:page` (`PageSelect`: the enchantment's id path).
+- **The scribe's desk** (the block's model, `tools/art/specs/enchant.py`): two trestle ends and a stretcher, an apron with
+  a brass pull, the slate (its top at 12 of 16) with the lapis channel, a rail along the back, a brass rest at the
+  writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
+  right with the burin standing in it while nobody writes and while its writer still chooses: the hand takes it up as
+  the chosen page comes down (`InscribeScene.burinOut`; held through the choosing, the fist lay over the right-hand
+  pages). While you choose the arm rig still holds that arm, low by your side and out of the view: left to the game, its
+  own hand came back into the corner still holding the piece. The floating book is gone. Shape and outline follow.
+- **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
+  weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
+  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (half a block across), a
+  helm or boots standing (0.42 across and never taller than 0.32). A sculpted armour piece's item says only that it
+  fills a block, so its real width, height and depth are measured from its meshes as the armour's item renderer fits it
+  (`InscribingTableRenderer.shape`; taken as the block, a breastplate floated a third of a block over the slate and the
+  view to its mark went flat). The glyph rides on the piece's top (`InscribeScene.lift`).
+- **Choosing in the world, no menu** (`Desk`; the screen only frees the pointer). The pages of what you know that fits
+  rise out of the book over 10 ticks and hang in a row over the desk's near edge, each the real page, leaning back toward
+  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, shows its glyph on the
+  piece, and shows one label over the row on the page's own side of the piece, so it covers neither the row nor the
+  piece: its name and level, its line, "Up to II here, III in your Study", the price as the
+  things themselves (red when you can't pay) and "Click to write it." (the wheel changes the level; a page in memory:
+  "Click: from memory. Shift and click: trace it."). A click takes the page down onto the piece over 8 ticks while the rest
+  sink, and the trace begins. What can't go on lies flat on the slate, dim, and its label says why. What is written
+  shows as glyphs in sockets let into the slate down its left side (behind the piece, a longsword's point lay over the
+  one it had), a framed glyph for each thing written and an empty frame for each it still has room for; a press held
+  on one for 16 ticks closes a ring round it and scrapes it off, its label to its left. A line of key caps at the foot
+  says the rest.
+  The view frames the whole desk while you choose. The room steps back (a soft dark frame at the screen's edges).
+- **The wake** shows the enchantment's name in the Hall's blackletter over a soft light, how it came out ("A clean hand",
+  "Written", "From memory") and, at the foot, the levels that came back and "Its mark is in your memory now." with Space
+  to write another and Esc to step away. No card. It is drawn here, not through `HallMoment`, whose anvil doesn't belong
+  at a desk.
+- **`classicTable`** (`config/awaken-enchant-client.toml`, off): the old book of two pages and the result card, kept for
+  one build.
+- Dev: `/awaken admin enchant page <id>` gives a page as a door does. Tour `tools/autopilot/enchant-polish.txt`. Tests
+  `enchant_glyphs`, `enchant_door`.
+
+### 45.16 Lantern, the first new word (`Lantern`, `LanternGlowBlock`)
+- **`awaken:lantern`** (helmets, I-III, carrying): your helmet lights the dark around you. The Lantern Night Market's
+  Lord carries its page; Looting, which he carried, is sold at the market and found in old books. The Journal counts
+  thirty-one.
+- Where the wearer's head is darker than the word's own light (8, 10, 12), one `awaken:lantern_glow` stands there: a block
+  with nothing to see, touch or hold that only gives light, so friends see by it too. It follows when the wearer has gone
+  two blocks, sits in water as water, and goes out in daylight, by a brighter fire, when the helmet comes off, at death,
+  on leaving, or when left four blocks behind. What the old glow still lends a place doesn't count as light of the
+  world's own (`Lantern.dark`). A glow nobody wears clears itself on its own tick (a crash, a chunk that slept).
+  Asked every fourth tick a wearer.
+- One soft sound as it catches (`block.lantern.place`). **Its frame time on the Mac is not measured yet**: each move
+  rebuilds a chunk section. Test `enchant_lantern`.
+
+### 45.17 Seen at work, and on the piece
+- **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of
+  itself keeps its own colour (it took the enchantment's, which made the piece read as a different one). An inscribed
+  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, with its script
+  showing for a moment in the band's wake and a few pixels catching it, and a small aura, the enchantment's colour held
+  faintly (a tenth) on the faces turned furthest from you, breathing. Between crossings the piece is itself. Nothing
+  here may be bright for long: in the hand nearly every face of a blade is turned away, and the first cut, with the
+  letters and the aura always on, striped the whole blade in the enchantment's colour.
+- **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
+  Force's colour and a white-hot core, held bright for half of 24 ticks.
+- **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it
+  moves for two seconds.
+- **A page given** flies from where it was (a fallen Lord, a lode's heart) to the one it goes to over 16 ticks, its sign
+  showing, with a page's turn and a soft pickup.
+- **Reading** (a page, an old book, a Word Stone): the glyph lifts in front of the reader, cut by cut in the order it
+  will be traced, holds, then runs down into their hand; the column of light is softer.
+- An extra drop's glint is larger.
+
+### 45.18 Sound (first picks; Euan's ear decides on `tools/art/enchant_listen.py`)
+Every beat is Minecraft's own recordings by name. A stroke seals with one recording (`enchant.seal`, an eye set into an
+End portal frame) two semitones higher each stroke, not a family's chime. The wake is `block.respawn_anchor.set_spawn`
+over a bell's resonance low (`enchant.wake_under`); the piece's chord of §45.14 (each other enchantment's note a third, a
+fifth and an octave up) is gone, since a stack of pitched chimes at the peak is the high tone he asked to be rid of.
+Reading is a page's turn and a respawn anchor's charge. The cut under the hand is grains of the burin by distance drawn
+(every 0.12 of the mark), not a one-shot played as a loop. A ward is a shield's block, a bane a trident going in, an
+extra drop gold armour put on, carrying a bucket filling. None of it has been heard in the game. The listening page
+(`python3 tools/art/enchant_listen.py serve`, http://127.0.0.1:8767) plays ten beats in their moments, today's beside
+three picks each; his marks land in `run-autopilot/enchant-listen/picks.json`.
 
 ## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
 

@@ -73,6 +73,9 @@ final class EnchantTests {
         AwakenTests.register("enchant_fold", 20, EnchantTests::fold);
         AwakenTests.register("enchant_doors", 20, EnchantTests::doors);
         AwakenTests.register("enchant_word_stone", 20, EnchantTests::wordStone);
+        AwakenTests.register("enchant_glyphs", 20, EnchantTests::glyphs);
+        AwakenTests.register("enchant_door", 20, EnchantTests::door);
+        AwakenTests.register("enchant_lantern", 60, EnchantTests::lantern);
         AwakenTests.registerIsolated("enchant_inscribe", 100, EnchantTests::inscribe);
         AwakenTests.registerIsolated("enchant_tasks", 100, EnchantTests::tasks);
     }
@@ -126,13 +129,13 @@ final class EnchantTests {
      */
     private static void rule(GameTestHelper h) {
         Registry<Enchantment> reg = reg(h);
-        h.assertTrue(Inscriptions.ALL.size() == 30, "thirty enchantments");
+        h.assertTrue(Inscriptions.ALL.size() == 31, "thirty-one enchantments (the thirty and Lantern)");
         for (int i = 0; i < Inscriptions.ALL.size(); i++) {
             Inscriptions.Entry e = Inscriptions.ALL.get(i);
             h.assertTrue(e.no() == i + 1, e.name() + " is number " + (i + 1));
             h.assertTrue(reg.get(e.key()).isPresent(), e.id() + " exists");
             h.assertTrue(!e.gate().isEmpty() || e.market() || e.books(), e.name() + " has a way in");
-            h.assertTrue(Marks.strokes(e.no()) >= 3 && Marks.strokes(e.no()) <= 6, e.name() + "'s mark has 3-6 strokes");
+            h.assertTrue(Marks.strokes(e.no()) >= 2 && Marks.strokes(e.no()) <= 5, e.name() + "'s glyph has 2-5 strokes");
             Enchantment en = reg.getOrThrow(e.key()).value();
             for (var bad : List.<DataComponentType<?>>of(EnchantmentEffectComponents.DAMAGE, EnchantmentEffectComponents.POST_ATTACK,
                     EnchantmentEffectComponents.ARMOR_EFFECTIVENESS, EnchantmentEffectComponents.SMASH_DAMAGE_PER_FALLEN_BLOCK))
@@ -162,6 +165,85 @@ final class EnchantTests {
         h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(ResourceKey.<net.minecraft.world.item.crafting.Recipe<?>>create(Registries.RECIPE, dev.awaken.Awaken.id("inscribing_table"))).isPresent(),
                 "the Inscribing Table can");
         h.succeed();
+    }
+
+    /** One script (SPEC §45.15): 36 glyphs, each its own, every stroke on the grid and long enough to cut. */
+    private static void glyphs(GameTestHelper h) {
+        h.assertTrue(Marks.count() == 36, "thirty-six glyphs: " + Marks.count());
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int no = 1; no <= Marks.count(); no++) {
+            float[][] grid = Marks.grid(no), m = Marks.of(no);
+            h.assertTrue(m.length >= 2 && m.length <= 5, "glyph " + no + " has 2-5 strokes: " + m.length);
+            h.assertTrue(Marks.frame(no) >= 1 && Marks.frame(no) < m.length, "glyph " + no + " has a frame and a sign of its own");
+            h.assertTrue(seen.add(java.util.Arrays.deepToString(grid)), "glyph " + no + " is like no other");
+            for (int i = 0; i < m.length; i++) {
+                h.assertTrue(m[i].length >= 8, "glyph " + no + " stroke " + i + " has samples to follow: " + m[i].length / 2);
+                for (float c : grid[i]) h.assertTrue(c >= 0 && c <= 6, "glyph " + no + " stays on the grid");
+                for (float c : m[i]) h.assertTrue(Math.abs(c) <= 1F, "glyph " + no + " stays in its square");
+                // the first sample is the first corner: where the hand picks the cut up
+                h.assertTrue(Math.abs(m[i][0] - (grid[i][0] - 3) * Marks.UNIT) < 1e-5 && Math.abs(m[i][1] + (grid[i][1] - 3) * Marks.UNIT) < 1e-5,
+                        "glyph " + no + " stroke " + i + " starts at its first corner");
+            }
+        }
+        h.succeed();
+    }
+
+    /**
+     * The door (SPEC §45.15): the table is made without a book; a page says that reading only teaches it and how it gets
+     * onto a piece; what a Lord's page line and a learned card say names the table.
+     */
+    private static void door(GameTestHelper h) {
+        var level = h.getLevel();
+        List<ItemStack> grid = List.of(new ItemStack(Items.LAPIS_LAZULI), new ItemStack(Items.STICK), new ItemStack(Items.LAPIS_LAZULI),
+                new ItemStack(Items.OAK_PLANKS), new ItemStack(CoreApi.ESSENCE_SHARD.get()), new ItemStack(Items.OAK_PLANKS),
+                new ItemStack(Items.COBBLESTONE), new ItemStack(Items.LAPIS_LAZULI), new ItemStack(Items.COBBLESTONE));
+        var input = net.minecraft.world.item.crafting.CraftingInput.of(3, 3, grid);
+        var found = level.getServer().getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, input, level);
+        h.assertTrue(found.isPresent() && found.get().value().assemble(input).is(EnchantContent.TABLE_ITEM.get()),
+                "the table is made from a stick, three lapis, a shard, two planks and two stone");
+        Inscriptions.Entry bane = Inscriptions.of(Identifier.parse("awaken:bane_of_crawlers")), lantern = Inscriptions.of(Identifier.parse("awaken:lantern"));
+        h.assertTrue(bane.howTo().equals("To put it on a weapon, hold the piece and use an Inscribing Table."), bane.howTo());
+        h.assertTrue(lantern != null && lantern.howTo().contains("a helmet") && lantern.gate().equals("lantern_market"), "Lantern goes on a helmet, from the Lantern Night Market's Lord");
+        h.assertTrue(Inscriptions.ofGate("lantern_night_market") == lantern, "that Lord carries Lantern now");
+        Inscriptions.Entry looting = Inscriptions.of(Identifier.parse("minecraft:looting"));
+        h.assertTrue(looting.gate().isEmpty() && looting.market() && looting.books(), "and Looting is sold and found in old books");
+        h.assertTrue(Pages.then(bane).contains("then write it onto a weapon at an Inscribing Table"), Pages.then(bane));
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Known.save(p, Known.fresh());
+        p.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        var card = Pages.learnedCard(p, Known.of(p), bane, true);
+        String rows = card.rows().stream().map(r -> r.label().getString()).toList().toString();
+        h.assertTrue(rows.contains("It isn't on anything yet") && rows.contains("use an Inscribing Table"), "the learned card says how it gets onto a piece: " + rows);
+        // a panel shows a title and three lines; a body, a fourth row or a foot is cut or folded away
+        h.assertTrue(card.rows().size() == 3 && card.body().isEmpty() && card.footer().isEmpty(), "and all of it fits a panel: " + rows);
+        h.assertTrue(card.rows().stream().allMatch(r -> r.value().getString().isEmpty() && r.label().getString().length() <= 35), "each line a full-width row short enough for it");
+        h.succeed();
+    }
+
+    /**
+     * Lantern (SPEC §45.16): the rule for when a place is dark enough, the level read off the helmet, and a glow left
+     * with no wearer clearing itself.
+     */
+    private static void lantern(GameTestHelper h) {
+        h.assertTrue(Lantern.dark(0, 0, 0, 8), "pitch dark takes the light");
+        h.assertTrue(Lantern.dark(3, 6, 6, 8), "the old glow's own light two blocks off doesn't count as the world's");
+        h.assertFalse(Lantern.dark(15, 0, 0, 12), "daylight needs none");
+        h.assertFalse(Lantern.dark(0, 13, 6, 12), "nor does a torch's side");
+        h.assertTrue(Lantern.dark(0, 9, 0, 12), "a dim fire still leaves room for Lantern III");
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        h.assertTrue(Lantern.level(p) == 0, "no helmet, no light");
+        p.setItemSlot(EquipmentSlot.HEAD, with(new ItemStack(Items.IRON_HELMET), ench(h, "awaken:lantern"), 2));
+        h.assertTrue(Lantern.level(p) == 2, "Lantern II on the helmet: " + Lantern.level(p));
+        h.assertTrue(EnchantRules.fits(new ItemStack(Items.IRON_HELMET), ench(h, "awaken:lantern"))
+                && !EnchantRules.fits(new ItemStack(Items.IRON_BOOTS), ench(h, "awaken:lantern")), "it goes on helmets only");
+        p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        BlockPos at = new BlockPos(1, 2, 1);
+        h.setBlock(at, EnchantContent.LANTERN_GLOW.get().defaultBlockState().setValue(LanternGlowBlock.LEVEL, 3));
+        h.assertTrue(h.getBlockState(at).getLightEmission() == 12, "a glow of III gives light 12");
+        h.runAfterDelay(LanternGlowBlock.CHECK + 6, () -> {
+            h.assertTrue(h.getBlockState(at).isAir(), "a glow nobody wears clears itself: " + h.getBlockState(at));
+            h.succeed();
+        });
     }
 
     /** A page teaches for good and is spent; a known page stays; an old book teaches only what can still be written. */
@@ -204,7 +286,7 @@ final class EnchantTests {
         h.assertTrue(Pages.teaches(got).getFirst().id().getPath().equals("heat_ward"), "the Ember Mines keep Heat Ward");
         h.assertTrue(Pages.where(got).equals("From the Ember Tyrant, the Lord of the Ember Mines"), "it says where it came from: " + Pages.where(got));
         h.assertTrue(Known.of(p).gatePaid("ember_mines"), "the kind of gate is paid");
-        h.assertTrue(Inscriptions.ofGate("awaken:lantern_night_market").id().getPath().equals("looting"), "the night market's theme reads as the Lantern Market");
+        h.assertTrue(Inscriptions.ofGate("awaken:lantern_night_market").id().getPath().equals("lantern"), "the night market's theme reads as the Lantern Market, whose Lord carries Lantern since §45.16");
         h.succeed();
     }
 
