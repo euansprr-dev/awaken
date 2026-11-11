@@ -45,6 +45,27 @@ Each sheet has the code before the fix on the left and after it on the right, fr
   than in the pictures he liked. Asked whether a gate world's fog should follow its look's `haze`, he said
   "Leave it": it stays.
 
+- Shadows beyond the block map (SPEC §22; `tools/autopilot/steady60-treeshadow-ci.txt`, runs 43001148091 before and
+  43001230601 after): "There's an issue here with the tree's shadow ... it moves as I move ... if I move completely
+  to the left of the tree, then the entire shadow of the tree basically disappears. We need to double check this is
+  fixed across the board for not just trees". A jungle giant on a lawn from 16, 42 and 78 blocks and from the ground.
+  `tree-shadow-before-after.jpg`: before, from 78 blocks (past the block map's 46) the crown's shadow is a dark slab
+  from the trunk's foot outward, as if the air under the leaves were solid; after, it is the same square with the
+  trunk's thin line that it is from 16. `tree-shadow-ground-before-after.jpg`: the same from the ground at 55.
+  **Not across the board yet**: the stone table beside it (a slab on four legs) still throws a slab's shadow from
+  its feet at 78 blocks, in both rows. A solid roof with open air under it (a bridge, an arch, a market roof) is
+  right only within 46 blocks; the heightfield holds a column's top and nothing about what is open beneath it.
+- Shade on creatures (SPEC §22; `tools/autopilot/steady60-creature-shade-ci.txt`, runs 43001737613 before and
+  43001812108 after): "the shadows on animals are a bit broken ... you can see ... actual artifacts in the shadows,
+  where the shadows have jagged edges or like zigzags". `creature-shade-before-after.jpg`: a pillar's shadow across a
+  cow, square to the world and turned. Before, the edge on the cow is cut on the world's texel grid, which a
+  creature's skin does not lie on: saw teeth on the flank, steps on the back. After, a soft straight edge on the cow;
+  the grass under it keeps its texel-cut edge.
+- Near lights against the sky (SPEC §22; `tools/autopilot/steady60-firefly-ci.txt`, run 43002556044, after only: his
+  own screenshot is the before): "the Firefly lights goes behind clouds. Which shouldn't be the case".
+  `fireflies-over-clouds.jpg`: six fireflies against the night sky, brightened 4.5 times so the clouds show; the
+  second sits on a band of cloud and is whole. None in the run's sixteen shots is cut by a cloud.
+
 Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
 exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
 fogged, and the sun's rays coming out hard-edged under a low sun near the cloud layer (seen in the world-moods
