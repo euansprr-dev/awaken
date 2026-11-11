@@ -36,6 +36,8 @@ final class MobsEvents {
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onServerStopped);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLogout);
+        // the finishing blow's truce (SPEC §67.4): a beaten body harms nobody, and its striker is safe while its ending plays
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, dev.awaken.mobs.entity.Finishers::onIncomingDamage);
         dev.awaken.mobs.entity.FightWatch.init();
         dev.awaken.mobs.entity.FairGuard.init();
         // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
@@ -91,10 +93,12 @@ final class MobsEvents {
         Hazards.clear(null);
         dev.awaken.mobs.entity.Carriers.clear(null);
         dev.awaken.mobs.entity.ToldBite.reset(false);
+        dev.awaken.mobs.entity.Finishers.clear();
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Mobs.forget(event.getEntity());
         dev.awaken.mobs.entity.FairGuard.forget(event.getEntity().getUUID());
+        dev.awaken.mobs.entity.Finishers.forget(event.getEntity().getUUID());
     }
 }

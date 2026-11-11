@@ -715,6 +715,7 @@ final class ArmsServer {
         }
         pendingCap = def.bossCap();
         pendingRiposte = s.move == Archetype.Move.RIPOSTE;
+        pendingExecution = s.move == Archetype.Move.EXECUTION;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -745,6 +746,7 @@ final class ArmsServer {
             if (speed != null) speed.removeModifier(FULL_STRENGTH);
             pendingBy = pendingTarget = -1;
             pendingPush = false;
+            pendingExecution = false;
         }
         // the blow that used its last use: it is worn out from here (never destroyed, SPEC §67.1), and its owner is told once
         if (!worn && dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem())) dev.awaken.core.api.Lasting.tell(p, p.getMainHandItem(), true);
@@ -1358,6 +1360,32 @@ final class ArmsServer {
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
         }
+    }
+
+    /** Whether the Arms blow now being delivered is an Execution's (set for the length of its {@code attack}). */
+    private static boolean pendingExecution;
+
+    /** Whether this damage is an Execution's blow landing now: the finisher, and the one blow that ends a beaten body (SPEC §67.4). */
+    static boolean executing(DamageSource source) {
+        Entity by = source.getEntity();
+        return pendingExecution && by != null && by.getId() == pendingBy && source.getDirectEntity() == by;
+    }
+
+    /**
+     * A body beaten to its last point (SPEC §67.4): its stance is broken for {@code ticks}, whatever it held and whenever
+     * it last broke, so a heavy released on it is the Execution; {@code by} and those near are told, as for any break.
+     */
+    static void beaten(LivingEntity target, int ticks, ServerPlayer by) {
+        if (target instanceof Player) return;
+        Posture p = posture(target);
+        long now = now(target);
+        p.value = 0;
+        p.brokenUntil = now + ticks;
+        p.nextBreakAt = now + ticks + ArmsRules.BREAK_COOLDOWN;
+        stance(target, p, now);
+        sound(target, ArmsSounds.BREAK.get(), 1.0F, 0.8F);
+        AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
+        seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
     }
 
     /**

@@ -20,6 +20,7 @@ public final class MobsClient {
         dev.awaken.mobs.client.kit.KitConfig.register();
         // one clock for every told blow: what the ring and the glint are drawn from (SPEC §67.2)
         dev.awaken.core.api.Strikes.installComing(TellClock.INSTANCE);
+        dev.awaken.mobs.client.finish.FinishClient.init(modBus); // a boss's finishing blow, as it is shown (SPEC §67.4)
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);
@@ -32,6 +33,7 @@ public final class MobsClient {
             // the carriers (SPEC §47.2)
             e.register(dev.awaken.mobs.net.MobsNet.Carrier.TYPE, (msg, ctx) -> CarrierView.onCarrier(msg));
             e.register(dev.awaken.mobs.net.MobsNet.CarrierEnd.TYPE, (msg, ctx) -> CarrierView.onEnd(msg.id()));
+            e.register(dev.awaken.mobs.net.MobsNet.Finish.TYPE, (msg, ctx) -> dev.awaken.mobs.client.finish.FinishClient.onFinish(msg));
             e.register(dev.awaken.mobs.net.MobsNet.Tell.TYPE, (msg, ctx) -> {
                 var level = net.minecraft.client.Minecraft.getInstance().level;
                 if (level != null) dev.awaken.mobs.entity.ToldBite.heard(msg.id(), msg.ticks(), level.getGameTime());

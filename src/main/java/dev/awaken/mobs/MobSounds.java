@@ -21,6 +21,8 @@ public final class MobSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_PHASE = sound("mobs.boss_phase");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_TOLL = sound("mobs.boss_toll");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_DEFEATED = sound("mobs.boss_defeated");
+    /** A boss's finishing blow landing (SPEC §67.4): Minecraft's own heaviest impact, by name. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> FINISH_BLOW = sound("mobs.finish.blow");
     public static final DeferredHolder<SoundEvent, SoundEvent> RISE = sound("mobs.rise");
     public static final DeferredHolder<SoundEvent, SoundEvent> CORD_BITE = sound("mobs.cord_bite");
     public static final DeferredHolder<SoundEvent, SoundEvent> LISTENER_HEAR = sound("mobs.listener_hear");

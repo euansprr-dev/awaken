@@ -282,6 +282,11 @@ public final class Strikes {
             return false;
         }
 
+        /** Whether the body is beaten to its last point and waits for the blow that ends it (both sides, SPEC §67.4). */
+        default boolean atLastStand(LivingEntity e) {
+            return false;
+        }
+
         /** Whether the body is reeling: its phrase's last blow was turned aside (the biggest clash, SPEC §67.3). */
         default boolean reeling(LivingEntity e) {
             return false;
@@ -336,6 +341,10 @@ public final class Strikes {
         return duel.reeling(e);
     }
 
+    public static boolean atLastStand(LivingEntity e) {
+        return duel.atLastStand(e);
+    }
+
     public static boolean opening(LivingEntity e) {
         return duel.opening(e);
     }
@@ -364,6 +373,17 @@ public final class Strikes {
         /** Fills a body's stance as a blow of {@code by}'s would (Arms: full, it breaks). */
         void add(LivingEntity target, int amount, Player by);
 
+        /**
+         * A body beaten to its last point (SPEC §67.4): its stance is broken for {@code ticks}, whatever it held, so the
+         * blow that ends it is the finisher on a broken stance, and {@code by} and those near are told it is open.
+         */
+        default void beaten(LivingEntity target, int ticks, Player by) {}
+
+        /** Whether this damage is an Execution's blow landing now (the finisher on a broken stance). */
+        default boolean executing(DamageSource source) {
+            return false;
+        }
+
         /** A duel body begins or stops fighting: held, its stance doesn't drain (SPEC §47.3 "Held while it fights"). */
         default void hold(LivingEntity target, boolean fighting) {}
     }
@@ -377,6 +397,16 @@ public final class Strikes {
     /** A blow of {@code by}'s that isn't a swing (a shot sent back) fills the body's stance. */
     public static void posture(LivingEntity target, int amount, Player by) {
         postures.add(target, amount, by);
+    }
+
+    /** A body beaten to its last point is held open for the blow that ends it (SPEC §67.4). */
+    public static void beaten(LivingEntity target, int ticks, Player by) {
+        postures.beaten(target, ticks, by);
+    }
+
+    /** Whether this damage is an Execution's blow landing now: the one blow that ends a beaten body (SPEC §67.4). */
+    public static boolean executing(DamageSource source) {
+        return postures.executing(source);
     }
 
     /** A duel body began ({@code true}) or stopped fighting: while it fights its stance holds (SPEC §47.3). */

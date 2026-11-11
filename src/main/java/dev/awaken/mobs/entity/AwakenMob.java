@@ -80,7 +80,9 @@ public class AwakenMob extends Monster {
     public static final int F_HAUNTED = 1, F_FROSTED = 1 << 1, F_CHARGED = 1 << 2, F_VOLATILE = 1 << 3, F_ECHO = 1 << 4,
             F_RISEN = 1 << 5, F_FALLEN = 1 << 6, F_PHASED = 1 << 7, F_GUARDING = 1 << 8, F_CHARGING = 1 << 9,
             F_DECOY = 1 << 10, F_FUSING = 1 << 11, F_DORMANT = 1 << 12, F_DUEL = 1 << 13, F_HEAVY = 1 << 14,
-            F_SPLIT_CHILD = 1 << 15;
+            F_SPLIT_CHILD = 1 << 15,
+            /** A boss beaten to its last point: it kneels and waits for the blow that ends it (SPEC §67.4). Never saved. */
+            F_BEATEN = 1 << 16;
     /** Flags that are saved with the entity (the rest are recomputed). */
     // F_FALLEN: its rise is spent when it falls, so one saved mid-fall still has to get up (its ticks aren't saved: at once)
     private static final int SAVED_FLAGS = F_ECHO | F_RISEN | F_DECOY | F_DORMANT | F_SPLIT_CHILD | F_VOLATILE | F_HAUNTED | F_FALLEN;

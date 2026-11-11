@@ -109,8 +109,12 @@ public final class FightScripts {
      * lean on, and from its second the moves that answer it come up more; its shots wear your most-used power's look.
      * {@code mind}: it watches you and answers (SPEC §48); a fight without one plays as it did.
      */
+    /**
+     * {@code finish}: this body dies only to a finishing blow (SPEC §67.4): at its last point it kneels, beaten, and waits
+     * for it. False (the default) until its ending has been made and seen: the pilots first.
+     */
     public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death, boolean duel,
-                        int stance, boolean mirrors, Optional<Mind> mind) {
+                        int stance, boolean mirrors, Optional<Mind> mind, boolean finish) {
         public static final Codec<Fight> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schemaVersion").forGetter(Fight::schemaVersion),
                 Codec.STRING.fieldOf("id").forGetter(Fight::id),
@@ -122,7 +126,8 @@ public final class FightScripts {
                 Codec.BOOL.optionalFieldOf("duel", false).forGetter(Fight::duel),
                 Codec.INT.optionalFieldOf("stance", 0).forGetter(Fight::stance),
                 Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(Fight::mirrors),
-                Mind.CODEC.optionalFieldOf("mind").forGetter(Fight::mind)
+                Mind.CODEC.optionalFieldOf("mind").forGetter(Fight::mind),
+                Codec.BOOL.optionalFieldOf("finish", false).forGetter(Fight::finish)
         ).apply(i, Fight::new));
 
         public Phase phase(int p) {
