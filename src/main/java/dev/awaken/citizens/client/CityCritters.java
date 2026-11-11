@@ -717,7 +717,8 @@ public final class CityCritters {
                 if (threat(c, gull ? 6.5 : 4.0, gull ? 9 : 8) || h.alarmed > now - 4) {
                     if (h.alarmed < now - 4) {
                         h.alarmed = now;
-                        sound(level, c, gull ? CitySounds.GULL_CALL : CitySounds.PIGEON_FLUTTER, gull ? 0.7F : 0.9F, 0.9F + r.nextFloat() * 0.2F);
+                        if (gull) call(level, c, true, 0.7F, 0.9F + r.nextFloat() * 0.2F);
+                        else sound(level, c, CitySounds.PIGEON_FLUTTER, 0.9F, 0.9F + r.nextFloat() * 0.2F);
                     }
                     takeOff(c, r);
                     return;
@@ -756,7 +757,7 @@ public final class CityCritters {
                     clip(c, "call");
                     c.timer = 30;
                     if (dist2Player(c) < 28 * 28) {
-                        sound(level, c, gull ? CitySounds.GULL_CALL : CitySounds.PIGEON_COO, gull ? 0.55F : 0.35F, 0.9F + r.nextFloat() * 0.25F);
+                        call(level, c, gull, gull ? 0.55F : 0.35F, 0.9F + r.nextFloat() * 0.25F);
                     }
                 }
                 // perched birds come back down to their ground after a while (unless it's their tower)
@@ -829,7 +830,7 @@ public final class CityCritters {
         // flap while climbing, glide when level or falling (a gull mostly glides, beating now and then)
         boolean flap = c.vy > 0.03 || (gull ? (now + c.seed) % 140 < 26 : (now + c.seed) % 60 < 38);
         clip(c, flap ? "fly" : "glide");
-        if (gull && (now + c.seed) % 300 == 0 && dist2Player(c) < 48 * 48) sound(level, c, CitySounds.GULL_CALL, 0.6F, 0.85F + r.nextFloat() * 0.3F);
+        if (gull && (now + c.seed) % 300 == 0 && dist2Player(c) < 48 * 48) call(level, c, true, 0.6F, 0.85F + r.nextFloat() * 0.3F);
         if (--c.timer <= 0 && !threat(c, 10, 14)) landAt(c, level, h, r, !h.tower && r.nextFloat() < 0.6F);
     }
 
@@ -1275,6 +1276,15 @@ public final class CityCritters {
     static double top(ClientLevel level, double x, double z) {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
         return y > level.getMinY() + 1 ? y : CityLife.sy + 1;
+    }
+
+    /**
+     * A gull's cry or a pigeon's coo. Minecraft has no recording of either, so with AmbientSounds the real bird's is
+     * played (CityNature, SPEC §66.3); without it, our own recipe from the game's recordings, at the bird.
+     */
+    private static void call(ClientLevel level, CityCritter c, boolean gull, float vol, float pitch) {
+        if (CityNature.voice(gull, Math.sqrt(dist2Player(c)))) return;
+        sound(level, c, gull ? CitySounds.GULL_CALL : CitySounds.PIGEON_COO, vol, pitch);
     }
 
     private static void sound(ClientLevel level, CityCritter c, SoundEvent ev, float vol, float pitch) {

@@ -3,9 +3,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_pay",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_pay",
-        "attenuation_distance": 16,
-        "stream": false
+        "name": "minecraft:item.lead.untied",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
       }
     ]
   },
@@ -13,9 +14,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_pay_glass",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_pay_glass",
-        "attenuation_distance": 16,
-        "stream": false
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.3
       }
     ]
   },
@@ -23,8 +25,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_catch",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_catch",
-        "attenuation_distance": 12
+        "name": "minecraft:item.lead.tied",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -32,8 +36,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_kick",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_kick",
-        "attenuation_distance": 20
+        "name": "minecraft:block.stone.step",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
       }
     ]
   },
@@ -41,8 +47,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_plant",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_plant",
-        "attenuation_distance": 16
+        "name": "minecraft:block.stone.fall",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -50,8 +58,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_reel",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_reel",
-        "attenuation_distance": 12
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -59,8 +69,10 @@
     "subtitle": "subtitles.awaken.ascent.rappel_fit",
     "sounds": [
       {
-        "name": "awaken:ascent_rappel_fit",
-        "attenuation_distance": 12
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   }

@@ -1,0 +1,10 @@
+{
+ "awaken:signal.open": [
+  {
+   "delay": 0,
+   "pitch": 1.2,
+   "sound": "minecraft:block.amethyst_block.chime",
+   "volume": 0.3
+  }
+ ]
+}

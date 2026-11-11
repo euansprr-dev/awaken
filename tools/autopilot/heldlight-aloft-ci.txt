@@ -1,0 +1,56 @@
+# The held light's pool, off the ground (Euan, playing, 11 Nov; SPEC §28.3 "Held light"): the soft pool a carried torch
+# lays at your feet was drawn at the feet's own height, so in the air (a jump, a fall) it was a flat disc of light
+# floating at your level, lighting what lay under it and nothing over it: a line across every wall and block.
+# A dark stone room by night, a torch in hand: standing, then held against the ceiling two blocks up (levitation; a
+# runner's ticks are too uneven to catch a jump's top), then down again.
+# Run: tools/tour-ci.sh tools/autopilot/heldlight-aloft-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fill 8 120 -9 26 120 9 minecraft:stone
+cmd fill 9 121 -8 25 127 -8 minecraft:stone
+cmd fill 9 121 8 25 127 8 minecraft:stone
+cmd fill 25 121 -8 25 127 8 minecraft:stone
+cmd fill 9 121 -8 9 127 8 minecraft:stone
+cmd fill 9 125 -8 25 127 8 minecraft:stone
+cmd setblock 19 121 0 minecraft:andesite
+cmd fill 20 121 -3 22 122 -2 minecraft:stone
+cmd fill 14 121 3 15 121 4 minecraft:dirt
+cmd time set 18000
+cmd tp @s 16.5 121 0.5 -90 18
+camera first
+hud on
+lookswitch cinematic
+cmd item replace entity @s weapon.mainhand with minecraft:torch
+wait 300
+look -90 18
+wait 40
+shot h1_standing
+cmd effect give @s minecraft:levitation 120 0 true
+wait 160
+shot h2_aloft
+look -40 26
+wait 20
+shot h4_aloft_side
+cmd effect clear @s
+wait 100
+shot h3_standing_side
+quit

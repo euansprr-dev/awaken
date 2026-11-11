@@ -225,6 +225,38 @@ bool lrHave = false;
 // how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
 float lensOpen = 1.0;
 
+// The sky's light under a roof, from beside it (SPEC §22 "Steady Light", cover): how much of the open sky a point
+// under solid cover still has from the side, 1 at the roof's edge falling to nothing six blocks in, as the game's own
+// sky light falls off into a cave. Along the four compass lines from the point: the nearest column each way that
+// stands open to the sky at the point's height (the heightfield), each line read in the two rows it runs between, so
+// the answer is smooth along a line and across it and no row or block shows as a step. hp: the point, in world blocks.
+float skyBeside(vec3 hp) {
+    float best = 0.0;
+    for (int axis = 0; axis < 2; axis++) {
+        float along = axis == 0 ? hp.x : hp.z, across = (axis == 0 ? hp.z : hp.x) - 0.5;
+        int a0 = int(floor(along)), r0 = int(floor(across));
+        float fr = across - float(r0);
+        for (int dir = 0; dir < 2; dir++) {
+            float f0 = 0.0, f1 = 0.0;
+            for (int d = 1; d <= 6; d++) {
+                int a = dir == 0 ? a0 + d : a0 - d;
+                // from the point to that column's near edge
+                float fall = 1.0 - (dir == 0 ? float(a) - along : along - float(a + 1)) / 6.0;
+                if (fall <= 0.0) break;
+                ivec2 c0 = axis == 0 ? ivec2(a, r0) : ivec2(r0, a), c1 = axis == 0 ? ivec2(a, r0 + 1) : ivec2(r0 + 1, a);
+                float o0 = 1.0 - smoothstep(1.0, 3.0, heightAt(c0, 0).g - hp.y);
+                float o1 = 1.0 - smoothstep(1.0, 3.0, heightAt(c1, 0).g - hp.y);
+                f0 = max(f0, o0 * fall);
+                f1 = max(f1, o1 * fall);
+                // (nothing farther along can beat a column fully open in both rows)
+                if (o0 >= 1.0 && o1 >= 1.0) break;
+            }
+            best = max(best, mix(f0, f1, fr));
+        }
+    }
+    return best;
+}
+
 vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
     dbg = vec4(0.0);
     vec4 f12 = F(12), f14 = F(14), f16 = F(16), l17 = P(17), l18 = P(18), m20 = P(20);
@@ -271,7 +303,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     lrHave = true;
     if (sun > 0.0) {
         // solid blocks above this point in its own column: under a ledge it's shade, deep under a roof it's left alone
-        float cover = 0.0;
+        float cover = 0.0, beside = 0.0;
         if (F(15).x > 0.0) {
             vec3 hp = p + f12.xyz + n * 0.1;
             ivec2 col = ivec2(floor(hp.xz));
@@ -283,8 +315,15 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
                         min(heightAt(col + ivec2(0, 1), 0).g, heightAt(col - ivec2(0, 1), 0).g));
                 cover = min(cover, side - hp.y);
             }
+            // (still under a roof: what of the sky reaches in from beside it)
+            if (cover > 1.0) beside = skyBeside(hp);
         }
-        float open = 1.0 - smoothstep(1.0, 7.0, cover);
+        // Deep under a roof the model stands back and the game's own light stays. It stood back by the roof's thickness
+        // alone, so a block one step into a cave or under a cliff's overhang, where the game still draws full sky
+        // light, kept the game's brightness beside open ground in the Air's deep shade: bright grey blocks against
+        // dark blue ones along every roof line (Euan, playing, 11 Nov: "shading issues in this cave"). The shade now
+        // carries on in from the roof's edge and fades over six blocks, as the game's sky light does.
+        float open = max(1.0 - smoothstep(1.0, 7.0, cover), beside);
         lensOpen = open;
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
         // game's own face shading and only cast shadows show; by golden hour every face is lit or shaded by its turn
@@ -684,8 +723,21 @@ void main() {
     if (under > 0.0) c = mix(c, max(c, game * 0.85), under * (1.0 - smoothstep(0.05, 0.22, luma(game))));
     // Within arm's reach (your hand and what it holds, a wall at your nose) never darker than the game at all: a held
     // torch's handle, lit by its own flame, read dark under a cave look (Euan 2026-10-29). Eased out as Lens's light
-    // eases in, 1.25 to 1.45 blocks. (sky || farTerrain, not Lens light's `open`: Swift has no LENS_LIGHT and no `open`)
-    if (!(sky || farTerrain)) c = mix(c, max(c, game), 1.0 - smoothstep(1.25, 1.45, d));
+    // eases in, 1.25 to 1.45 blocks. (sky || farTerrain, not Lens light's `open`: Swift has no LENS_LIGHT and no `open`.)
+    // The reach is by the line of sight, the very distance Lens's light eases in by (lensLight's `near`). It was the
+    // depth straight ahead: with a wide view (sprinting widens it) the ground at the bottom of the screen and a wall
+    // at its side are two blocks away and yet under 1.45 ahead, so a band along those edges took the game's own
+    // brightness back and stood out raw against the shade (Euan, playing, 11 Nov: "the bottom edge and sometimes left
+    // edge of my screen has no shaders ... changes based on my pace and how I move my head").
+#ifdef LENS_LIGHT
+    float handReach = open ? 1.0e9 : length(pRel);
+#else
+    // Swift has no world position: the hand's own distance, by the fixed field of view the game draws the hand with
+    // (tan 35 degrees), which a wider world view only lengthens
+    vec2 handRay = (texCoord * 2.0 - 1.0) * vec2(OutSize.x / OutSize.y, 1.0) * 0.7002;
+    float handReach = d * sqrt(1.0 + dot(handRay, handRay));
+#endif
+    if (!(sky || farTerrain)) c = mix(c, max(c, game), 1.0 - smoothstep(1.25, 1.45, handReach));
     // crushed blacks: the darks fall to black and the light that's left looks brighter against them
     float crush = rit.g * 0.2;
     c = max(c - crush, 0.0) / (1.0 - crush);

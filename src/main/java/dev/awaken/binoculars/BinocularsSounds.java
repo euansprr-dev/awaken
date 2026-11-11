@@ -8,7 +8,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The binoculars' sounds (SPEC §39.5), our own, synthesised by {@code tools/art/specs/binoculars_sounds.py}; events and
+ * The binoculars' sounds (SPEC §39.5), the game's own recordings by name ({@code tools/art/specs/audit_rest.py}, SPEC §66.7); events and
  * subtitles in {@code src/main/merge/binoculars}. Only your own client plays them, quietly and near the ear.
  */
 public final class BinocularsSounds {

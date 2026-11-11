@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * The deep's registrations (SPEC §28.3): Deepglass and its shard, the lode hearts, starmetal, bell bronze, the Tuning
  * Fork, pitons and Runner's rope, the miner's lamp, the lode feature, and the strike's particles and sounds. Textures,
- * models, recipes, loot and tags come from tools/art/specs/delve.py; sounds from tools/art/specs/audio_delve.py.
+ * models, recipes, loot and tags come from tools/art/specs/delve.py; sounds are the game's own recordings (tools/art/specs/audit_mining.py, SPEC §66.4).
  */
 public final class DelveContent {
     private DelveContent() {}
@@ -162,7 +162,7 @@ public final class DelveContent {
     /** Dust in the air your light reaches (SPEC §34.5): the mote's sprite, lit by the world, so it shows only in light. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_MOTE = PARTICLES.register("delve_light_mote", () -> new SimpleParticleType(false));
 
-    // ---- sounds (tools/art/specs/audio_delve.py) ------------------------------------------------------------------------
+    // ---- sounds (the game's own: specs/audit_mining.py) ------------------------------------------------------------------------
 
     public static final Map<Ore, DeferredHolder<SoundEvent, SoundEvent>> STRIKE = new EnumMap<>(Ore.class);
 

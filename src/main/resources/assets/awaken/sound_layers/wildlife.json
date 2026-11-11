@@ -1,0 +1,546 @@
+{
+ "awaken:wild.crow.caw": [
+  {
+   "chance": 0.7,
+   "delay": 500,
+   "pitch": 0.58,
+   "sound": "awaken:wild.crow.caw.part1",
+   "spread": 0.04,
+   "volume": 0.6
+  }
+ ],
+ "awaken:wild.duck.quack": [
+  {
+   "chance": 0.6,
+   "delay": 300,
+   "pitch": 0.76,
+   "sound": "minecraft:entity.chicken.ambient",
+   "spread": 0.03,
+   "volume": 0.7
+  }
+ ],
+ "awaken:wild.flush": [
+  {
+   "delay": 50,
+   "jitter": 50,
+   "pitch": 1.5,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.08,
+   "volume": 1.0
+  },
+  {
+   "delay": 0,
+   "pitch": 1.45,
+   "sound": "minecraft:entity.bat.takeoff",
+   "spread": 0.06,
+   "volume": 0.16
+  }
+ ],
+ "awaken:wild.rustle": [
+  {
+   "chance": 0.7,
+   "delay": 100,
+   "pitch": 0.9,
+   "sound": "minecraft:block.grass.step",
+   "volume": 2.0
+  }
+ ],
+ "awaken:wild.song.finch": [
+  {
+   "chance": 0.95,
+   "delay": 150,
+   "pitch": 1.95,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 300,
+   "pitch": 1.88,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 400,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 500,
+   "pitch": 1.72,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 600,
+   "pitch": 1.64,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 700,
+   "pitch": 1.56,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 800,
+   "pitch": 1.5,
+   "sound": "awaken:wild.song.finch.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 950,
+   "pitch": 1.35,
+   "sound": "awaken:wild.song.finch.part2",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 1100,
+   "pitch": 1.7,
+   "sound": "awaken:wild.song.finch.part3",
+   "spread": 0.02,
+   "volume": 0.42
+  }
+ ],
+ "awaken:wild.song.robin": [
+  {
+   "chance": 0.85,
+   "delay": 100,
+   "jitter": 50,
+   "pitch": 1.85,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 250,
+   "jitter": 50,
+   "pitch": 1.5,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 350,
+   "jitter": 50,
+   "pitch": 1.95,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 600,
+   "jitter": 50,
+   "pitch": 1.7,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 700,
+   "jitter": 50,
+   "pitch": 1.45,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 850,
+   "jitter": 50,
+   "pitch": 1.9,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 1050,
+   "jitter": 50,
+   "pitch": 1.6,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 1150,
+   "jitter": 50,
+   "pitch": 1.8,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  },
+  {
+   "chance": 0.85,
+   "delay": 1400,
+   "jitter": 50,
+   "pitch": 1.5,
+   "sound": "minecraft:entity.parrot.ambient",
+   "spread": 0.07,
+   "volume": 0.6
+  }
+ ],
+ "awaken:wild.song.tit": [
+  {
+   "chance": 0.92,
+   "delay": 200,
+   "pitch": 1.5,
+   "sound": "awaken:wild.song.tit.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 450,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.tit.part2",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 650,
+   "pitch": 1.5,
+   "sound": "awaken:wild.song.tit.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 900,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.tit.part2",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 1100,
+   "pitch": 1.5,
+   "sound": "awaken:wild.song.tit.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 1350,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.tit.part2",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.92,
+   "delay": 1550,
+   "pitch": 1.5,
+   "sound": "awaken:wild.song.tit.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  }
+ ],
+ "awaken:wild.song.wren": [
+  {
+   "chance": 0.95,
+   "delay": 50,
+   "pitch": 2.0,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 100,
+   "pitch": 1.9,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 150,
+   "pitch": 2.0,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 200,
+   "pitch": 1.85,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 250,
+   "pitch": 2.0,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 300,
+   "pitch": 1.9,
+   "sound": "awaken:wild.song.wren.part1",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 500,
+   "pitch": 1.7,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 550,
+   "pitch": 1.75,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 600,
+   "pitch": 1.7,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 650,
+   "pitch": 1.75,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 700,
+   "pitch": 1.7,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 750,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.wren.part2",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 900,
+   "pitch": 1.9,
+   "sound": "awaken:wild.song.wren.part3",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 950,
+   "pitch": 1.8,
+   "sound": "awaken:wild.song.wren.part3",
+   "spread": 0.03,
+   "volume": 0.42
+  },
+  {
+   "chance": 0.95,
+   "delay": 1000,
+   "pitch": 1.9,
+   "sound": "awaken:wild.song.wren.part3",
+   "spread": 0.03,
+   "volume": 0.42
+  }
+ ],
+ "awaken:wild.squirrel.chatter": [
+  {
+   "delay": 100,
+   "pitch": 0.64,
+   "sound": "minecraft:entity.bat.ambient",
+   "spread": 0.04,
+   "volume": 0.1
+  },
+  {
+   "delay": 200,
+   "pitch": 0.6,
+   "sound": "minecraft:entity.bat.ambient",
+   "spread": 0.04,
+   "volume": 0.09
+  },
+  {
+   "chance": 0.7,
+   "delay": 350,
+   "pitch": 0.62,
+   "sound": "minecraft:entity.bat.ambient",
+   "spread": 0.04,
+   "volume": 0.08
+  }
+ ],
+ "awaken:wild.wings.big": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:item.armor.equip_elytra",
+   "volume": 0.45
+  },
+  {
+   "delay": 150,
+   "jitter": 50,
+   "pitch": 0.66,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.06,
+   "volume": 1.0
+  },
+  {
+   "chance": 0.8,
+   "delay": 350,
+   "jitter": 50,
+   "pitch": 0.7,
+   "sound": "minecraft:entity.parrot.fly",
+   "spread": 0.06,
+   "volume": 0.8
+  }
+ ],
+ "awaken:wild.woodpecker.drum": [
+  {
+   "delay": 50,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.45
+  },
+  {
+   "delay": 100,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.5
+  },
+  {
+   "delay": 150,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.5
+  },
+  {
+   "delay": 200,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.48
+  },
+  {
+   "delay": 250,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.45
+  },
+  {
+   "delay": 300,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.42
+  },
+  {
+   "delay": 350,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.38
+  },
+  {
+   "delay": 400,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.34
+  },
+  {
+   "delay": 450,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.3
+  },
+  {
+   "delay": 500,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.26
+  },
+  {
+   "delay": 550,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.22
+  },
+  {
+   "delay": 600,
+   "pitch": 0.95,
+   "sound": "awaken:wild.woodpecker.drum.part1",
+   "spread": 0.02,
+   "volume": 0.18
+  }
+ ],
+ "awaken:wild.woodpecker.tap": [
+  {
+   "chance": 0.85,
+   "delay": 200,
+   "pitch": 1.15,
+   "sound": "awaken:wild.woodpecker.tap.part1",
+   "spread": 0.03,
+   "volume": 0.3
+  },
+  {
+   "chance": 0.6,
+   "delay": 350,
+   "pitch": 1.15,
+   "sound": "awaken:wild.woodpecker.tap.part1",
+   "spread": 0.03,
+   "volume": 0.26
+  },
+  {
+   "chance": 0.4,
+   "delay": 650,
+   "pitch": 1.15,
+   "sound": "awaken:wild.woodpecker.tap.part1",
+   "spread": 0.03,
+   "volume": 0.3
+  }
+ ]
+}
