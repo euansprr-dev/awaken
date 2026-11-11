@@ -14,13 +14,18 @@ cmd gamerule spawn_mobs false
 cmd weather clear 1000000
 cmd time set 6000
 cmd awaken admin awaken
-wait 200
+# the opening's flight over the city holds the camera and hides the HUD for its first half minute: a title waits for
+# the HUD, so nothing is asked for until the opening has handed over
+wait 900
 hud on
 camera first
+wait 10
 # ---- a new power: the starter ----
 cmd awaken powers starter 1
 wait 20
 screen close
+hud on
+camera first
 wait 8
 shotnow ut_01_power_opening
 wait 30
