@@ -66,6 +66,28 @@ Each sheet has the code before the fix on the left and after it on the right, fr
   `fireflies-over-clouds.jpg`: six fireflies against the night sky, brightened 4.5 times so the clouds show; the
   second sits on a band of cloud and is whole. None in the run's sixteen shots is cut by a cloud.
 
+- The windways and the updrafts, rebuilt as gusts (SPEC §17.12 "The look", §17.6, §22 "Light over the Air";
+  `tools/autopilot/steady60-windway-ci.txt`, a sky platform and its 667-block lane on seed 4246): "I really don't
+  like these wind flows ... they look very bad ... they look glitchy basically, as you can see, like they kind of
+  cut off. Near the actual island as well ... rebuild something that kind of looks like wind gusts or something that
+  actually look good. And they don't use much performance".
+  - Before (run 43006874586): not only by night. At every hour each lane stands as a long hard-edged slab with
+    square ends: the game's flat sky blue by day, grey at dusk, black by night; an updraft is a slab column. Their
+    quads wrote depth, so Lens took them for something solid and kept the game's own sky behind them. Under Swift,
+    which keeps the game's sky, there is no slab, only faint streaks.
+  - After (run 43016117197, tip 941dcc7bc): long thin lines of pale air that taper at both ends, some curling over
+    themselves, fading out toward the platform; the updraft is the same gusts winding up its column.
+    `windways-before-after.jpg`: from 42 blocks to the side, by day, at dusk and by night.
+    `windways-start-inside-updraft.jpg`: looking back at the platform a lane leaves, an updraft, and from the
+    lane's heart looking along it. Under Lite and Swift by night they are the same (in the run's folder).
+  - On the way: run 43007770991 stopped as Lens started (the light layer's clear texel could not be cleared: a
+    clear's target must be a copy's destination too). Run 43014005378 was the first to draw: no slabs, but a gust
+    close by was a bar across the view and, down the lane's length, the far ones were a litter of ticks round the
+    vanishing point; both tuned in 941dcc7bc.
+  - Not measured: frame times (the Mac is his while he plays). Not seen: the gusts in motion, and from the ground
+    far below a lane. From the rim right above a lane's start its gusts are seen end-on, a few short strokes
+    beside the island.
+
 Not fixed here: the ground under a slide or a crawl is now lit like any ground (the hand's own depth settled it),
 exact light under cover (needs the game's light data in a texture), Lens's shadows on land the game has already
 fogged, and the sun's rays coming out hard-edged under a low sun near the cloud layer (seen in the world-moods
