@@ -8,7 +8,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The lock's sound events (SPEC §40.4): synthesised in the System's glass voice by {@code tools/art/specs/aim_sounds.py},
+ * The lock's sound events (SPEC §40.4): the game's own clicks and crystal by name ({@code tools/art/specs/audit_rest.py}, SPEC §66.7),
  * events and subtitles in {@code src/main/merge/aim}. Only your own client plays them; registered on both sides like
  * every sound event.
  */

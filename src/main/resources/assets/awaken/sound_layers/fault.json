@@ -1,0 +1,18 @@
+{
+ "awaken:fault.tear": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:entity.enderman.teleport",
+   "volume": 0.3
+  }
+ ],
+ "awaken:fault.voice": [
+  {
+   "delay": 100,
+   "pitch": 1.6,
+   "sound": "minecraft:entity.enderman.ambient",
+   "volume": 0.3
+  }
+ ]
+}

@@ -251,8 +251,8 @@ final class BellTests {
 
     /** Every bell sound played in the world is mono, so it comes from where its bell is and fades with distance. */
     static void soundsPlaced(GameTestHelper h) {
-        java.util.List<String> files = new java.util.ArrayList<>(java.util.List.of("bell_handbell", "bell_toll", "bell_hum", "bell_wake", "bell_gap",
-                "bell_hang", "bell_swell"));
+        // (a gap's knock and a bell hung on its hook are the game's own recordings now, mono by the game: SPEC §66.8)
+        java.util.List<String> files = new java.util.ArrayList<>(java.util.List.of("bell_handbell", "bell_toll", "bell_hum", "bell_wake", "bell_swell"));
         for (int k = 0; k < 15; k++) files.addAll(List.of("bell_note_" + k, "bell_far_" + k, "bell_muffled_" + k));
         for (String f : files) {
             int ch = channels("/assets/awaken/sounds/" + f + ".ogg");
