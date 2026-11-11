@@ -260,8 +260,10 @@ final class RealmRun {
                 p.resetFallDistance();
                 p.setDeltaMovement(Vec3.ZERO);
                 p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
-                p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
                 level.playSound(null, at, GatesRegistry.SND_RIG_PIT.get(), SoundSource.PLAYERS, 0.8F, 1F);
+                // a hall that teaches a move takes nothing for a fall and says nothing about it
+                if (c.free()) return;
+                p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
                 Signal.toast(p, Component.literal("You fell. You're back on the last ledge you stood on."));
             }
             return;
