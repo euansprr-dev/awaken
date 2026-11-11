@@ -1060,6 +1060,7 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        ArmsAnswers.tell(r); // the ring hears how the guard answered (SPEC §67.2)
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
