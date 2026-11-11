@@ -182,15 +182,18 @@ final class Reticle {
         boolean coming = kind != Strikes.Kind.NONE && left <= APPROACH && left > -LINGER;
         int tellColour = coming ? colour(kind) : -1;
         boolean reaches = coming && Strikes.reaches(le);
-        int window = reaches && Strikes.lands(le) ? window(p, kind) : 0;
+        // whose blow it is (SPEC §70.3): yours closes in full, with its band and its colour on the ring; someone else's is a
+        // thin, still ring that promises you nothing
+        boolean mine = mine(p, le, coming);
+        int window = mine && reaches && Strikes.lands(le) ? window(p, kind) : 0;
         boolean hot = window > 0 && left <= window - BAND_EARLY && left >= BAND_LATE;
 
-        int base = hot ? LIGHT : tellColour >= 0 ? mix(HOLO, tellColour, 0.65F) : HOLO;
+        int base = hot ? LIGHT : tellColour >= 0 && mine ? mix(HOLO, tellColour, 0.65F) : HOLO;
         if (locked) lockRing(g, sx, sy, r, base, now, reduced);
         else if (!bare) brackets(g, sx, sy, r, base, now, reduced);
         if (coming) {
             // with no lock on it there is no ring for the blow's to close onto: the mark and the bare boss get one while a blow comes
-            if (!locked) glowed(g, RING, RING_G, 128, 128, sx, sy, r * 2.45F, r * 2.45F, 0F, base, 0.6F);
+            if (!locked) glowed(g, RING, RING_G, 128, 128, sx, sy, r * 2.45F, r * 2.45F, 0F, base, mine ? 0.6F : 0.3F);
             // the band: where the ring is while a guard raised now turns the blow aside, white while the ring is in it
             if (window > 0) {
                 int i = Mth.clamp(window, 3, 5) - 3;
@@ -199,9 +202,10 @@ final class Reticle {
             // the closing ring: one speed for every blow, from 1 + SPREAD lock rings down onto the ring as the blow lands
             float f = Mth.clamp((float) (left / APPROACH), 0F, 1F);
             float tr = r * (1F + SPREAD * f);
-            float alpha = (0.5F + 0.5F * (1F - f)) * (reaches ? 1F : 0.35F) * (left < 0 ? Mth.clamp((float) (1 + left / LINGER), 0F, 1F) : 1F);
+            float alpha = (0.5F + 0.5F * (1F - f)) * (!mine ? 0.3F : reaches ? 1F : 0.35F) * (left < 0 ? Mth.clamp((float) (1 + left / LINGER), 0F, 1F) : 1F);
             int ring = hot ? LIGHT : tellColour;
-            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * 2.3F, tr * 2.3F, 0F, ring, alpha);
+            float size = mine ? 2.3F : 2.1F; // someone else's blow: a thinner ring (SPEC §70.3)
+            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * size, tr * size, 0F, ring, alpha);
             if (hot) glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * 2.3F + 2F, tr * 2.3F + 2F, 0F, LIGHT, alpha * 0.8F); // a thicker line while it is "now"
         }
         answered(g, le.getId(), sx, sy, r, now, reduced);
@@ -210,6 +214,30 @@ final class Reticle {
         ANCHOR[2] = r;
         anchored = true;
         return true;
+    }
+
+    /** Bodies whose coming blow is aimed at someone else (SPEC §70.3), kept from the tell to the blow's landing. */
+    private static final int[] OTHERS = {-1, -1, -1, -1};
+
+    /**
+     * Whether this body's coming blow is yours to answer. Its tell says whom it is aimed at only while the wind-up lasts;
+     * the ring runs on to the landing (SPEC §67.2), so what the tell last said is kept until the blow is over.
+     */
+    private static boolean mine(LocalPlayer p, Entity e, boolean coming) {
+        int id = e.getId(), at = -1, free = -1;
+        for (int i = 0; i < OTHERS.length; i++) {
+            if (OTHERS[i] == id) at = i;
+            else if (OTHERS[i] < 0 && free < 0) free = i;
+        }
+        Strikes.Tell tell = Strikes.tell(e);
+        if (tell != null && tell.kind() != Strikes.Kind.NONE && tell.ticks() > 0) {
+            boolean yours = tell.aimedAt(p.getId());
+            if (!yours && at < 0 && free >= 0) OTHERS[free] = id;
+            if (yours && at >= 0) OTHERS[at] = -1;
+            return yours;
+        }
+        if (at >= 0 && !coming) OTHERS[at] = -1;
+        return at < 0;
     }
 
     /**
@@ -293,7 +321,7 @@ final class Reticle {
             double left = e == null ? Double.NaN : Strikes.left(e, 1F);
             if (!Double.isNaN(left) && left <= APPROACH) {
                 Strikes.Kind kind = Strikes.comingKind(e);
-                int window = Strikes.reaches(e) && Strikes.lands(e) ? window(p, kind) : 0;
+                int window = mine(p, e, true) && Strikes.reaches(e) && Strikes.lands(e) ? window(p, kind) : 0;
                 pressOf = id;
                 pressAge = 0;
                 pressLeft = left;
@@ -464,7 +492,7 @@ final class Reticle {
             // on the blow's own clock, as the ring is (SPEC §67.2): the arc brightens evenly and lasts until the blow lands
             double left = Strikes.left(le, pt);
             Strikes.Kind kind = Double.isNaN(left) ? Strikes.Kind.NONE : Strikes.comingKind(le);
-            if (kind == Strikes.Kind.NONE || left <= 0) continue;
+            if (kind == Strikes.Kind.NONE || left <= 0 || !mine(p, le, true)) continue; // someone else's blow is no threat to you (SPEC §70.3)
             AABB b = le.getBoundingBox();
             Vec3 c = b.getCenter();
             if (project(c.x, c.y, c.z, w, h, 0.92F)) continue; // in view: its own tell (and the ring) say it

@@ -92,6 +92,8 @@ public class AwakenMob extends Monster {
     private static final EntityDataAccessor<Integer> DATA_TELEGRAPH = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** The class of the blow being told (core.api.Strikes.Kind ordinal; NONE between blows), for the tell's look. */
     private static final EntityDataAccessor<Byte> DATA_TELL = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
+    /** Whom the blow being told is for: their entity id, or -1 for everyone in its way (SPEC §70.3). */
+    private static final EntityDataAccessor<Integer> DATA_TELL_FOR = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** Role ordinal (MobRole.Role) for visuals. */
     private static final EntityDataAccessor<Byte> DATA_ROLE = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
     /** Entity id of the player a MIMIC wears, -1 if none. */
@@ -213,6 +215,7 @@ public class AwakenMob extends Monster {
         b.define(DATA_FLAGS, 0);
         b.define(DATA_TELEGRAPH, 0);
         b.define(DATA_TELL, (byte) Strikes.Kind.NONE.ordinal());
+        b.define(DATA_TELL_FOR, -1);
         b.define(DATA_ROLE, (byte) 0);
         b.define(DATA_MIMIC, -1);
     }
@@ -315,6 +318,20 @@ public class AwakenMob extends Monster {
     public void setTell(int ticks, Strikes.Kind kind, boolean heavyLook) {
         setTelegraph(ticks, heavyLook);
         entityData.set(DATA_TELL, (byte) (ticks > 0 ? kind : Strikes.Kind.NONE).ordinal());
+        // a told blow is its target's to answer; whoever else is locked on sees a thin ring (SPEC §70.3)
+        LivingEntity at = getTarget();
+        int who = ticks > 0 && at != null ? at.getId() : -1;
+        if (entityData.get(DATA_TELL_FOR) != who) entityData.set(DATA_TELL_FOR, who);
+    }
+
+    /** The blow being told reaches everyone in its way (a sweep, a burst, an ability): it is everyone's to answer. */
+    public void tellAll() {
+        if (entityData.get(DATA_TELL_FOR) != -1) entityData.set(DATA_TELL_FOR, -1);
+    }
+
+    /** Whom the blow being told is for (an entity id), -1 for everyone (both sides). */
+    public int tellFor() {
+        return entityData.get(DATA_TELL_FOR);
     }
 
     /**

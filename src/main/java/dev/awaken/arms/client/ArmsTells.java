@@ -73,7 +73,9 @@ final class ArmsTells {
                 else cue = !GLINTED[slot] && left <= window() - BAND_EARLY;
                 if (cue) {
                     GLINTED[slot] = true;
-                    FxClient.tellMark(FxClient.TELL_GLINT, hx, hy, hz, LIGHT, size * 1.1F, 5);
+                    // the cue to guard is for whoever the blow is aimed at (SPEC §70.3)
+                    var me = net.minecraft.client.Minecraft.getInstance().player;
+                    if (me == null || t.aimedAt(me.getId())) FxClient.tellMark(FxClient.TELL_GLINT, hx, hy, hz, LIGHT, size * 1.1F, 5);
                 }
             }
             case HEAVY -> {

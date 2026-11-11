@@ -1,0 +1,64 @@
+# The spotlight at arm's length (Euan, playing, 11 Nov: "When I get close to a door that's full of shade ... it creates
+# this spotlight effect in my view. And then if I move forward, the spotlight effect moves with me"; "Same thing when I
+# get close to a wall ... the same issue as earlier, but for walls and for ceilings"). An oak hut with a low roof and a
+# doorway, in the morning, its west wall in shade, at his wide view. The shaded wall from 0.8 blocks and from 2.5; the
+# doorway from a block off; inside, a wall at 0.8 blocks and the ceiling overhead. A pickaxe in the hand, which must
+# stay as the game lights it. SPEC §22 "Reach and cover", the hand.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-hand-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 2000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 5
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fill 6 121 -4 13 123 4 minecraft:oak_planks hollow
+cmd fill 7 120 -3 12 120 3 minecraft:oak_planks
+cmd fill 6 121 0 6 122 0 minecraft:air
+cmd setblock 12 121 3 minecraft:torch
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+camera first
+hud on
+opt fov 90
+lookswitch cinematic
+wait 400
+cmd time set 2000
+cmd tp @s 3.5 121 -2.5 -90 0
+wait 200
+shot h1_wall_from_2_5
+cmd tp @s 5.2 121 -2.5 -90 0
+wait 100
+shot h2_wall_from_0_8
+look -90 -35
+wait 40
+shot h2_wall_from_0_8_up
+look -60 10
+wait 40
+shot h2_wall_from_0_8_aside
+cmd tp @s 5.0 121 0.5 -90 4
+wait 100
+shot h3_doorway_from_1
+cmd tp @s 9.5 121 -3.2 180 0
+wait 200
+shot h4_inside_wall_0_8
+look 180 -75
+wait 60
+shot h5_inside_ceiling
+look 90 5
+wait 60
+shot h6_inside_to_the_door
+quit

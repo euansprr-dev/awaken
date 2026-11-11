@@ -49,6 +49,12 @@ public final class LensClient {
     // storm cells) and none of the light's textures (no heightfield, block map, sun map or lit air, and none of their
     // tick work)
     static final Identifier LITE = Awaken.id("lens_lite");
+    // the hand's own depth (LensHand): which pixels are the hand and what it holds
+    // (a chain's "awaken:lens_hand_depth" is this path: the game reads a chain's textures from textures/effect/. The
+    // first build registered the bare name, the chain found nothing there and read the game's missing-texture
+    // checkerboard as the hand: two quarters of the screen unlit, run 42985247494)
+    static final Identifier HAND = Awaken.id("textures/effect/lens_hand_depth.png");
+    private static LensHand hand;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
@@ -576,6 +582,13 @@ public final class LensClient {
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         if (!active) return;
         if (framed && lensFrame != null) writeFrame(e);
+        // the hand is drawn next, into a depth of its own: Lens's light is for the world and stops at the hand, which
+        // it can only tell from a wall at arm's length by that depth (SPEC §22 "Reach and cover")
+        if (params != null && hand != null) {
+            var handTarget = dev.awaken.turbo.pixels.PixelsHooks.handTarget();
+            params.hand(hand.point(handTarget != null ? handTarget.getDepthTextureView() : null));
+            params.uploadIfChanged();
+        }
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
@@ -620,6 +633,11 @@ public final class LensClient {
         double drift = ((ticks % 768_000L) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) * 0.04;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, drift, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
+        // a land with a sky of its own (every world but the overworld): the Air draws the land's colours, its horizon
+        // the game's fog colour with the look's haze tint over it (SPEC §22 "The Air in other worlds")
+        float tintMix = graded[Look.HAZE_TINT_MIX];
+        lensFrame.land(fogR + (graded[Look.HAZE_TINT] - fogR) * tintMix, fogG + (graded[Look.HAZE_TINT + 1] - fogG) * tintMix,
+                fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
@@ -633,6 +651,14 @@ public final class LensClient {
     }
 
     private static final float[] AIR_FOG = new float[3];
+    // the game's fog colour this frame, as its terrain was fogged with it
+    private static float fogR, fogG, fogB;
+
+    /** Whether this world's sky is its own under the Air: every world but the overworld (its biomes say its colours). */
+    private static boolean ownSky() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.level.dimension() != Level.OVERWORLD;
+    }
 
     /**
      * The game's fog under the Air (SPEC §22): while Lens draws the sky, the game's own fog takes the Air's horizon colour
@@ -651,6 +677,8 @@ public final class LensClient {
         Minecraft mc = Minecraft.getInstance();
         // (the sun as the last frame had it: this is asked before the frame's own values are worked out)
         if (mc.level == null || sunDir.lengthSquared() < 0.5f) return;
+        // a land with a sky of its own keeps its fog: there the Air's horizon is that colour, not the other way round
+        if (ownSky()) return;
         var forward = camera.forwardVector();
         float hx = forward.x(), hz = forward.z(), len = (float) Math.sqrt(hx * hx + hz * hz);
         if (len < 1.0e-3f) {
@@ -674,6 +702,8 @@ public final class LensClient {
         if (params != null) return;
         params = new LensParams();
         Minecraft.getInstance().getTextureManager().register(PARAMS, params.texture);
+        hand = new LensHand();
+        Minecraft.getInstance().getTextureManager().register(HAND, hand);
         Minecraft.getInstance().getTextureManager().register(FAR_DEPTH, dev.awaken.compat.client.FarTerrain.depthTexture());
         zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         Awaken.LOG.info("[lens] ready ({} depth)", zeroToOne ? "zero-to-one" : "minus-one-to-one");
@@ -748,6 +778,9 @@ public final class LensClient {
         }
         float underTarget = roof > eye.y + 0.5 ? 1f : 0f;
         under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
+        fogR = fog.color.x();
+        fogG = fog.color.y();
+        fogB = fog.color.z();
         params.write(debug, graded, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,

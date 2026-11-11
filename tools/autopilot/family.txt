@@ -1,0 +1,309 @@
+# Aya and Dubu at the Hearth (SPEC §69, plan docs/family/PLAN.md). A home (/awaken admin kin yard: a real Hearthfire),
+# then the real thing: they arrive (Dubu first, running; Aya after, at a walk), their day at home, out with you (asked
+# along, walking, stopping), a fight they keep out of, and Dubu told to wait. Then a studio of bodies that belong to
+# nobody (/awaken admin family place), each pose close up: her loaf and belly-up roll, his chin on his paws, his giraffe.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/family.txt 2400
+world autopilot_family creative 11112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+window 1440 900
+info
+camera first
+hud off
+cmd clear @s
+
+# ---- a home out west: the Hearthfire, and a mown patch of grass in front of it ----
+cmd awaken city view square
+wait 200
+cmd time set 4200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+# the YOUR GROUND card opens once the fire's warmth has run out over the land, which a slow machine draws late: it is
+# closed well after, and again before the first picture
+wait 400
+screen close
+wait 60
+screen close
+wait 60
+screen close
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~-1 ~1 ~5 ~-1 ~9 minecraft:grass_block
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~ ~1 ~5 ~4 ~9 minecraft:air
+cmd kill @e[type=item]
+wait 20
+
+# ---- A. they arrive: Dubu first, running in; Aya after him, taking her time ----
+screen close
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~3.5 180 0
+cmd awaken admin family arrive
+camera back
+wait 70
+cmd awaken admin family state
+shotnow family_a1_dubu_on_his_way
+wait 70
+camera front
+wait 12
+shotnow family_a2_dubu_says_hello
+wait 390
+cmd awaken admin family state
+shotnow family_a4_aya_sits_and_looks
+camera back
+wait 8
+shotnow family_a5_aya_from_behind_you
+wait 200
+camera front
+wait 12
+cmd awaken admin family state
+shotnow family_a6_both_home
+camera first
+
+# ---- B. their day at home, with nobody in (the camera is a spectator) ----
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.2 ~3.2 ~9.5 180 22
+wait 300
+cmd awaken admin family state
+shot family_b1_at_home
+cmd tick sprint 900
+wait 200
+cmd awaken admin family state
+shot family_b2_at_home_later
+cmd awaken admin family play
+wait 30
+shotnow family_b4_dubu_asks_aya_to_play
+wait 30
+shotnow family_b4b_dubu_asks_aya_to_play
+wait 50
+cmd awaken admin family state
+wait 60
+cmd time set 11400
+cmd tick sprint 2200
+wait 240
+cmd awaken admin family state
+shot family_b5_evening_by_the_fire
+cmd time set 15500
+cmd tick sprint 600
+wait 200
+cmd awaken admin family state
+shot family_b3_at_home_at_night
+cmd time set 4200
+cmd gamemode creative
+
+# ---- C. out with you: asked along, walking east, then you stop ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 -90 6
+wait 100
+cmd awaken admin family use dubu sneak
+cmd awaken admin family use aya sneak
+cmd awaken admin family state
+camera front
+wait 30
+walk 230
+wait 150
+shotnow family_c1_out_with_you
+camera back
+wait 40
+shotnow family_c2_out_with_you_from_behind
+wait 180
+cmd awaken admin family state
+shotnow family_c3_you_stop_they_sit
+camera back
+wait 8
+shotnow family_c4_you_stop_from_behind
+
+# ---- D. a fight: they keep well back and watch, and come back when it is over ----
+cmd gamemode survival
+cmd summon minecraft:husk ~4 ~ ~
+wait 110
+cmd awaken admin family state
+wait 50
+cmd awaken admin family state
+camera back
+wait 6
+shotnow family_d1_a_fight_they_keep_back
+camera front
+wait 8
+shotnow family_d2_a_fight_from_the_front
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=item]
+wait 150
+cmd awaken admin family state
+shotnow family_d3_after_the_fight
+cmd gamemode creative
+
+# ---- E. Dubu told to wait, away from home; you walk on with Aya ----
+# you are suddenly 40 blocks off (as the rope or wings would take you): they turn up behind you and run in
+cmd spreadplayers ~40 ~ 0 4 false @s
+camera front
+wait 200
+cmd awaken admin family state
+shotnow family_e0_they_caught_up
+cmd awaken admin family use dubu sneak
+wait 20
+walk 60
+wait 120
+cmd awaken admin family state
+shotnow family_e1_dubu_waits_aya_comes
+camera first
+wait 20
+# the posed bodies below belong to nobody; the real two leave the stage for them (the rule off takes their bodies, the
+# record keeps them)
+cmd gamerule awaken:hearth_family false
+wait 40
+
+# ---- 1. in front of the fire: her loaf, his chin on his paws ----
+screen close
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1.5 ~0.1 ~2.3
+cmd awaken admin family place aya rest 18
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~0.1 ~2.5
+cmd awaken admin family place dubu rest -22
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.2 ~-0.35 ~6.4 180 6
+wait 80
+shot family_01_at_the_fire
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.5 ~-0.7 ~4.2 152 9
+wait 30
+shot family_02_aya_loaf
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.6 ~-0.7 ~4.4 -155 9
+wait 30
+shot family_03_dubu_chin_down
+
+# ---- 2. sitting and standing, close ----
+cmd awaken admin family pose aya sit
+cmd awaken admin family pose dubu sit
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.5 ~-0.6 ~4.2 152 8
+wait 40
+shot family_04_aya_sits
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.6 ~-0.6 ~4.4 -155 8
+wait 30
+shot family_05_dubu_sits
+cmd awaken admin family pose aya idle
+cmd awaken admin family pose dubu idle
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.1 ~-0.5 ~5.6 180 8
+wait 40
+shot family_06_both_standing
+# getting down and getting up, caught half way: each is a clip of its own (to_sit, to_rest, from_...), not a blend
+cmd awaken admin family pose aya sit
+cmd awaken admin family pose dubu rest
+wait 6
+shotnow family_06b_getting_down_half_way
+wait 40
+cmd awaken admin family pose aya idle
+cmd awaken admin family pose dubu idle
+wait 5
+shotnow family_06c_getting_up_half_way
+wait 30
+
+# ---- 3. beside you: the player between them, seen from the front ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~ ~2.4 0 4
+camera front
+wait 60
+shot family_07_beside_you
+camera back
+wait 30
+shot family_08_beside_you_from_behind
+camera first
+
+# ---- 4. her own poses: belly up, the stretch, hello ----
+cmd gamemode spectator
+cmd awaken admin family pose aya roll
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.4 ~-0.5 ~4.0 150 14
+wait 40
+shot family_09_aya_belly_up
+cmd awaken admin family pose aya idle
+wait 12
+cmd awaken admin family pose aya stretch
+wait 24
+shotnow family_10_aya_stretch
+wait 40
+cmd awaken admin family pose aya nudge
+wait 18
+shotnow family_11_aya_hello
+wait 40
+cmd awaken admin family pose aya hide
+wait 30
+shotnow family_12_aya_wary
+
+# ---- 5. his: hello (the play-bow), wary ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.7 ~-0.5 ~4.6 -155 10
+cmd awaken admin family pose dubu idle
+wait 30
+cmd awaken admin family pose dubu nudge
+wait 11
+shotnow family_13_dubu_play_bow
+wait 50
+cmd awaken admin family pose dubu hide
+wait 30
+shotnow family_14_dubu_wary
+
+# ---- 6. walking past: her tail up, his giraffe in his mouth ----
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.2 ~0.1 ~4.6
+cmd awaken admin family place aya idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.2 ~0.1 ~3.4
+cmd awaken admin family place dubu carry -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~-0.55 ~8.2 180 6
+wait 40
+shot family_15_before_the_walk
+cmd awaken admin family walk aya 8.5 1.0
+cmd awaken admin family walk dubu 8.5 1.0
+wait 30
+shotnow family_16_walking_a
+wait 7
+shotnow family_17_walking_b
+wait 7
+shotnow family_18_walking_c
+wait 80
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.6 ~0.1 ~4.6
+cmd awaken admin family place aya idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4.6 ~0.1 ~3.4
+cmd awaken admin family place dubu idle -90
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~-0.55 ~8.2 180 6
+wait 30
+cmd awaken admin family walk aya 9 1.9
+cmd awaken admin family walk dubu 9 1.9
+wait 14
+shotnow family_19_running_a
+wait 5
+shotnow family_20_running_b
+wait 60
+
+# ---- 7. evening: asleep by the fire, him with his giraffe ----
+cmd awaken admin family clear
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1.3 ~0.1 ~2.2
+cmd awaken admin family place aya sleep 30
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~0.1 ~2.6
+cmd awaken admin family place dubu sleep -70
+cmd time set 12950
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.1 ~-0.3 ~5.6 180 10
+wait 80
+shot family_21_evening_asleep
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-0.2 ~1.4 ~4.6 180 38
+wait 30
+shot family_22_evening_from_above
+cmd time set 4200
+cmd gamemode creative
+quit

@@ -23,6 +23,7 @@ uniform sampler2D BlocksSampler;
 uniform sampler2D LitSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
+uniform sampler2D HandSampler;      // the hand's own depth (LensHand): 0 where there is no hand
 
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_height.glsl>
@@ -399,8 +400,11 @@ void main() {
         return;
     }
     float vis = 1.0, ao = 1.0, vol = 0.0;
-    // the hand and the holo glass (within arm's reach, or a world plate over a creature) are never shadowed
-    if (!sky && dist >= 1.25 && !onPlate(p)) {
+    // the hand and the holo glass (a world plate over a creature) are never shadowed. The hand by its own depth where
+    // Lens has it (parameter texel 26 r): by reach instead, a wall, a door or a ceiling within arm's length went
+    // unshadowed with it, a disc of raw light that moved with the camera (Euan, playing, 11 Nov: "this spotlight effect")
+    bool hand = P(26).r > 0.5 ? texture(HandSampler, texCoord).r > 0.0 : dist < 1.25;
+    if (!sky && !hand && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
         // (a face turned from the light is left to the composite, except inside the Sun Pass's block map, where the

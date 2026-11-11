@@ -67,10 +67,14 @@ public final class AimClient {
         boolean clicked = false;
         while (KEY.consumeClick()) clicked = true;
         if (!clicked || mc.player == null || mc.gui.screen() != null || !AimConfig.enabled() || Lock.paused(mc)) return;
-        if (Lock.press(mc) && KEY.same(mc.options.keyPickItem)) {
+        // a press the lock didn't want may be a ping (SPEC §70.2): in a party it points at what the crosshair is on
+        if ((Lock.press(mc) || freePress.getAsBoolean()) && KEY.same(mc.options.keyPickItem)) {
             while (mc.options.keyPickItem.consumeClick()) {
-                // spent on the lock
+                // spent on the lock, or on the ping
             }
         }
     }
+
+    /** What a press does when it neither locked nor let go; true if it used the press. Set by the together module. */
+    public static java.util.function.BooleanSupplier freePress = () -> false;
 }

@@ -192,6 +192,31 @@ public class AwakenBoss extends AwakenMob {
         return net.minecraft.world.entity.LinearInterpolationHandler.create(this);
     }
 
+    private boolean turningOnPurpose;
+
+    /**
+     * In the middle of a phrase a boss keeps the one it is fighting (SPEC §70.3): another player's blow doesn't turn it.
+     * It changes at an opening, by its fight's own choice ({@link #turnTo}). Alone this never comes up.
+     */
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        LivingEntity now = getTarget();
+        if (!turningOnPurpose && target != now && target instanceof Player && now instanceof Player held && now.isAlive() && !now.isRemoved()
+                && now.level() == level() && fight != null && fight.midPhrase() && dev.awaken.core.api.FightsHooks.pair()
+                && !dev.awaken.core.api.FightsHooks.kneeling(held)) return;
+        super.setTarget(target);
+    }
+
+    /** It turns to someone else on purpose: its fight's choice at an opening. */
+    void turnTo(LivingEntity target) {
+        turningOnPurpose = true;
+        try {
+            super.setTarget(target);
+        } finally {
+            turningOnPurpose = false;
+        }
+    }
+
     /** Where clients are told it is: while a move carries it, ahead by what their glide lags, so the run keeps the clip's clock (SPEC §48.8). */
     @Override
     public Vec3 trackingPosition() {
