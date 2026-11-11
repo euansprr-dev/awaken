@@ -365,6 +365,8 @@ public final class RealmLive {
                 boss == null ? "the Lord (not loaded)" : net.minecraft.world.entity.EntityType.getKey(boss.getType()),
                 boss == null ? "?" : Math.round(boss.getHealth()) + "/" + Math.round(boss.getMaxHealth()) + " hp");
         Component name = boss == null ? Component.literal("The Lord") : boss.getType().getDescription();
+        // the toast holds two short lines at any GUI scale, so it says only what happened; chat says it whole (SPEC §68.6)
+        Component toast = name.copy().append(" has gone back to rest.");
         Component line = Component.literal("Nobody is left in the fight. ").append(name)
                 .append(" has gone back to rest, whole again. The door to its hall is open.");
         if (boss != null) boss.discard();
@@ -378,8 +380,13 @@ public final class RealmLive {
         change(level, ref, land, "heart_still");
         change(level, ref, land, "heart_open");
         Set<UUID> told = new java.util.HashSet<>();
-        for (ServerPlayer p : server.getPlayerList().getPlayers()) if (Runs.run(p).gateId == g.id && told.add(p.getUUID())) Signal.toast(p, line);
-        if (out != null) for (ServerPlayer p : out) if (told.add(p.getUUID())) Signal.toast(p, line);
+        java.util.List<ServerPlayer> tell = new java.util.ArrayList<>();
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) if (Runs.run(p).gateId == g.id && told.add(p.getUUID())) tell.add(p);
+        if (out != null) for (ServerPlayer p : out) if (told.add(p.getUUID())) tell.add(p);
+        for (ServerPlayer p : tell) {
+            Signal.toast(p, toast);
+            p.sendSystemMessage(line);
+        }
         data.setDirty();
         GateRegistry.get(server).setDirty();
     }
