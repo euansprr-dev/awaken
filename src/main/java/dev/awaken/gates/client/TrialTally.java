@@ -30,20 +30,25 @@ final class TrialTally {
     private static final Object HOLD = new Object();
 
     private static TrialPayloads.Tally tally;
-    private static long from = -1;
+    private static long from = -1, heldAt = -1;
     private static int rung;
 
     static void show(TrialPayloads.Tally t) {
         if (tally == null) Notices.client().hold(HOLD, true); // nothing else talks over it
         tally = t;
-        from = -1;
+        from = heldAt = -1;
         rung = 0;
     }
 
     static void reset() {
         if (tally != null) Notices.client().hold(HOLD, false);
         tally = null;
-        from = -1;
+        from = heldAt = -1;
+    }
+
+    /** Whether the tally is up: it says the run's time and medal itself, so the run's own clock leaves them to it. */
+    static boolean showing() {
+        return tally != null;
     }
 
     private static long climb() {
@@ -53,12 +58,16 @@ final class TrialTally {
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (tally == null || mc.level == null) return;
-        // an Unlock title has the screen to itself: the tally begins when it has gone
+        // an Unlock title has the screen to itself: the tally waits for it, and goes on from where it was
+        long now = Util.getMillis();
         if (dev.awaken.core.api.Unlocks.client().showing()) {
-            from = -1;
+            if (heldAt < 0) heldAt = now;
             return;
         }
-        long now = Util.getMillis();
+        if (heldAt >= 0) {
+            if (from >= 0) from += now - heldAt;
+            heldAt = -1;
+        }
         if (from < 0) from = now + 300;
         if (now < from) return;
         long t = now - from;
@@ -71,7 +80,7 @@ final class TrialTally {
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
-        if (tally == null || from < 0 || mc.gui.hud.isHidden()) return;
+        if (tally == null || from < 0 || heldAt >= 0 || mc.gui.hud.isHidden() || dev.awaken.core.api.Unlocks.client().showing()) return;
         long now = Util.getMillis();
         if (now < from) return;
         long t = now - from, climb = climb(), end = climb + BAR_MS + 2 * LINE_MS + HOLD_MS;

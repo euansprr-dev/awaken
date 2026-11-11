@@ -26296,8 +26296,9 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - **The tally** (`TrialPayloads.Tally`, `gates.client.TrialTally`, in the look of the Lord's payout): the XP in the
   middle of the view, climbing in ten steps with the game's own bell on the Lord's low walk; then "Leaper mastery · level
   N" and its bar filling; then the time and medal in the medal's colour ("your best yet" or the best before), and the
-  counts ("Double jumps 14 · Dashes 9 · Slams 4", on two lines when one would not fit). It waits for an Unlock title,
-  holds 6.5 s, and holds every other notice while it shows.
+  counts ("Double jumps 14 · Dashes 9 · Slams 4", on two lines when one would not fit). It waits for an Unlock title
+  (one that starts while it is up stops it where it is, and it goes on after), holds 6.5 s, holds every other notice
+  while it shows, and the run's own clock leaves the time and medal to it.
 - **The way home:** an exit arch on the landing before the Long Run and one on the tally floor, besides the arch at the
   mouth (every `PORTAL` site of a trial's land past the first gets one).
 - **Coming back:** someone who has run it before (`TrialHooks.finished`) is set down on the landing as they arrive:
