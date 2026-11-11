@@ -475,6 +475,16 @@ Asked by message on 11 Nov; answers are folded in below as they arrive.
   - Nothing goes straight to a friend. The Answering Peal (4.7) is the only such thing in this plan or that one.
 - **The Whole Boss Fight** (`boss-experience-plan`): whether the new ring knows who a blow is for; the target hold;
   more than one client filming one finishing blow.
+  **Answered 11 Nov** (its SPEC §68, merged into build the same day):
+  - Whose blow: its ring times the blow on its own clock and takes "whose" from `Strikes.Tell.aimedAt`: the full ring,
+    the band, the white "now", the glint and the threat arc show only for the target; anyone else gets the thin ring.
+    It remembers what the tell last said until the blow is over, because the tell clears a tick before the blow lands.
+    "Too early / Too late" come from the server's reply to your own guard, so they were always per player.
+  - The target hold doesn't clash: nothing of its reads or sets the target except the last stand, which clears it.
+  - The finishing blow: the server already sends one `mobs_finish` (boss, striker, ticks) to everyone within 64 blocks
+    and every client plays the blow's light and the body's ending; only the striker's client gets the freeze, the bars
+    and the camera. A shared film is a client-side change in `mobs.client.finish.FinishClient` (let party members
+    through the "mine" test and frame from the striker's position). Either fighter can already take it.
 - **Aya and Dubu** (`hearth-pets-plan`): who may ask a pet along in a shared home; pets and the skiff and gates.
   **Answered 11 Nov** (SPEC §69 on its branch, approved, not yet played):
   - The pair belongs to the home and is shared by its household; a sister home gets no second pair. Owner or member

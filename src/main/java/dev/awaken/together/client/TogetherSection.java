@@ -25,6 +25,11 @@ final class TogetherSection implements StatusSections.Section {
     private static final int INK = 0xFFFFFFFF, SOFT = 0xFFB9C7D9, HOLO = 0xFF7FD4FF, ROSE = 0xFFF0B79C, RIM = 0xFF7FD4FF;
     private static final String TRAVEL = "[ Travel together ]", LEAVE = "[ Leave party ]", FULL = "[ Full ]", GENTLE = "[ Gentle ]", HOME = "[ Share my home ]";
     private static final String FIGHTS = "My fights are yours alone. Full is the game as it is. On Gentle, blows aimed at you are plainer and do half, and a blow that would kill you is a second wind instead. You can change it any time you're out of a fight.";
+    private static final String EQUAL = "[ Equal ]", HALF = "[ Half ]", OWN = "[ Own ]";
+    private static final String[] SHARED = {
+            "Each their own: nobody's XP is passed on. You each level by what you do yourselves.",
+            "Half: each of you gets half of what the others earn, wherever you are.",
+            "Equal: what any of you earns, you all get, wherever you are. You level together."};
     private static final UUID NOBODY = new UUID(0, 0);
 
     private record Button(int x, int y, int w, int kind, UUID other) {
@@ -80,11 +85,20 @@ final class TogetherSection implements StatusSections.Section {
         return font.split(Component.literal(FIGHTS), width - PAD * 2);
     }
 
+    private static List<FormattedCharSequence> shared(Font font, int width) {
+        return font.split(Component.literal(SHARED[Math.max(0, Math.min(2, ClientParty.share()))]), width - PAD * 2);
+    }
+
+    /** Shared XP shows with a party: its name, its three choices on a row of their own, and what the lit one means. */
+    private static int sharedHeight(Font font, int width) {
+        return mates() > 0 ? ROW * 2 + shared(font, width).size() * 10 + 4 : 0;
+    }
+
     @Override
     public int height(int width) {
         Font font = Minecraft.getInstance().font;
         int rows = mates() + strangersAtHome() + Math.min(MAX_NEAR, near().size());
-        return PAD + rows * ROW + (mates() > 0 ? ROW : 0) + 4 + ROW + fights(font, width).size() * 10 + PAD;
+        return PAD + rows * ROW + (mates() > 0 ? ROW : 0) + 4 + sharedHeight(font, width) + ROW + fights(font, width).size() * 10 + PAD;
     }
 
     @Override
@@ -128,6 +142,22 @@ final class TogetherSection implements StatusSections.Section {
             ty += ROW;
         }
         ty += 4;
+        // shared XP: the party's, so anyone in it may change it
+        if (mates() > 0) {
+            int share = Math.max(0, Math.min(2, ClientParty.share()));
+            g.text(font, "Shared XP", x + PAD, ty, INK, false);
+            ty += ROW;
+            int ox = x + width - PAD - font.width(OWN), hx = ox - 6 - font.width(HALF), ex = hx - 6 - font.width(EQUAL);
+            button(g, font, EQUAL, ex, ty, TogetherNet.SHARE_EQUAL, NOBODY, share == 2 ? HOLO : SOFT, mouseX, mouseY);
+            button(g, font, HALF, hx, ty, TogetherNet.SHARE_HALF, NOBODY, share == 1 ? HOLO : SOFT, mouseX, mouseY);
+            button(g, font, OWN, ox, ty, TogetherNet.SHARE_OWN, NOBODY, share == 0 ? HOLO : SOFT, mouseX, mouseY);
+            ty += ROW;
+            for (FormattedCharSequence l : shared(font, width)) {
+                g.text(font, l, x + PAD, ty, SOFT, false);
+                ty += 10;
+            }
+            ty += 4;
+        }
         // my fights
         TogetherNet.Member self = ClientParty.self();
         boolean gentle = self != null && self.is(TogetherNet.F_GENTLE);

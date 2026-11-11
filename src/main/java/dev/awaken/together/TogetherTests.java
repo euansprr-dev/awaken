@@ -76,6 +76,9 @@ final class TogetherTests {
         test("gentle_half_a_fighter", TogetherTests::halfAFighter);
         test("gentle_one_phrase_in_four", TogetherTests::onePhraseInFour);
         test("gentle_story_death_cost", TogetherTests::storyDeathCost);
+        test("pair_shared_xp", TogetherTests::sharedXp);
+        test("pair_shared_xp_never_twice", TogetherTests::sharedXpNeverTwice);
+        test("together_payloads_over_the_wire", TogetherTests::payloadsOverTheWire);
         test("alone_plays_the_same", TogetherTests::alonePlaysTheSame);
     }
 
@@ -502,6 +505,119 @@ final class TogetherTests {
         } finally {
             if (z != null) z.discard();
             one.leave();
+        }
+    }
+
+    /** A player's whole XP so far, as one number (levels are cheap enough at the start to add up). */
+    private static double total(ServerPlayer p) {
+        var prof = dev.awaken.progression.Progression.profile(p);
+        double t = prof.xp();
+        for (int lv = 1; lv < prof.level(); lv++) t += dev.awaken.progression.Curve.xpToNext(lv);
+        return t;
+    }
+
+    private static void sharedXp(GameTestHelper h) {
+        Pair.Two two = Pair.of(h);
+        ServerPlayer a = two.first(), b = two.second();
+        var server = h.getLevel().getServer();
+        try {
+            double b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            SharedXp.settle(server);
+            h.assertTrue(total(b) == b0, "strangers share nothing");
+            h.assertTrue(PartyService.join(a, b), "a party");
+            PartyData.Party party = PartyData.get(server).of(a.getUUID());
+            h.assertTrue(party != null && SharedXp.of(party) == SharedXp.EQUAL, "a new party shares equally until it chooses");
+            double a0 = total(a);
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            double earned = total(a) - a0;
+            SharedXp.settle(server);
+            h.assertTrue(earned > 0 && Math.abs(total(b) - b0 - earned) < 1e-6, "Equal: what one earns, the other gets (" + earned + ", " + (total(b) - b0) + ")");
+            h.assertTrue(Math.abs(total(a) - a0 - earned) < 1e-6, "and a share is never shared back");
+            SharedXp.set(b, SharedXp.HALF);
+            a0 = total(a);
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            earned = total(a) - a0;
+            SharedXp.settle(server);
+            h.assertTrue(Math.abs(total(b) - b0 - earned * 0.5) < 1e-6, "Half: the other gets half (" + earned + ", " + (total(b) - b0) + ")");
+            SharedXp.set(a, SharedXp.OWN);
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            SharedXp.settle(server);
+            h.assertTrue(total(b) == b0, "Each their own: nothing is passed on");
+            SharedXp.set(a, SharedXp.EQUAL);
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.DISCOVERY);
+            SharedXp.settle(server);
+            h.assertTrue(total(b) == b0, "a first is your own: a discovery is never passed on");
+        } finally {
+            SharedXp.forget();
+            two.leave();
+        }
+    }
+
+    private static void sharedXpNeverTwice(GameTestHelper h) {
+        Pair.Two two = Pair.of(h);
+        ServerPlayer a = two.first(), b = two.second();
+        var server = h.getLevel().getServer();
+        try {
+            h.assertTrue(PartyService.join(a, b), "a party");
+            // a kill both stood near pays both in one tick: nothing more is owed
+            double a0 = total(a), b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            dev.awaken.progression.Progression.grantXp(b, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            double ea = total(a) - a0, eb = total(b) - b0;
+            SharedXp.settle(server);
+            h.assertTrue(Math.abs(total(a) - a0 - ea) < 1e-6 && Math.abs(total(b) - b0 - eb) < 1e-6, "side by side, each is paid once");
+            // one of them was paid less for it: Equal makes up the difference, no more
+            a0 = total(a);
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            dev.awaken.progression.Progression.grantXp(b, 10, dev.awaken.progression.Progression.XpSource.HOME);
+            ea = total(a) - a0;
+            SharedXp.settle(server);
+            h.assertTrue(Math.abs(total(b) - b0 - ea) < 1e-6 && Math.abs(total(a) - a0 - ea) < 1e-6, "the one paid less is made up to the other, and the other gets nothing more");
+            // a gate pays each player inside it on their own clock (a Satchel claimed on the way out, the Lord's XP in beats):
+            // what one of them is paid for a gate they ran together is never passed to the other
+            SharedXp.ranTogetherForTest(server, a.getUUID(), b.getUUID());
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_FLOOR);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.GATE_BOSS);
+            SharedXp.settle(server);
+            h.assertTrue(total(b) == b0, "a gate they ran together pays each of them itself");
+            b0 = total(b);
+            dev.awaken.progression.Progression.grantXp(a, 40, dev.awaken.progression.Progression.XpSource.HOME);
+            ea = 0;
+            SharedXp.settle(server);
+            h.assertTrue(total(b) > b0, "what isn't the gate's is still passed on");
+        } finally {
+            SharedXp.forget();
+            two.leave();
+        }
+    }
+
+    /**
+     * Every Together payload through its codec, as a real connection sends it (a single-player game hands them over
+     * without writing them, so a codec that can't be read back would first show with a second player).
+     */
+    private static void payloadsOverTheWire(GameTestHelper h) {
+        java.util.UUID id = java.util.UUID.randomUUID();
+        var member = new TogetherNet.Member(id, "Ana", 14, TogetherNet.F_GENTLE | TogetherNet.F_IN_GATE, 3, 2, 17, -1200, 64, 88000);
+        var party = new TogetherNet.Party(java.util.List.of(member, member), SharedXp.EQUAL);
+        var ask = new TogetherNet.Ask(TogetherNet.SHARE_HALF, id);
+        var ping = new TogetherNet.Ping(id, "Ana", TogetherNet.TARGET, 42, 1.5, -64.25, 3e6, "Their target");
+        io.netty.buffer.ByteBuf buf = io.netty.buffer.Unpooled.buffer();
+        try {
+            TogetherNet.Party.STREAM_CODEC.encode(buf, party);
+            h.assertTrue(party.equals(TogetherNet.Party.STREAM_CODEC.decode(buf)) && !buf.isReadable(), "the party reads back as it was written");
+            TogetherNet.Ask.STREAM_CODEC.encode(buf, ask);
+            h.assertTrue(ask.equals(TogetherNet.Ask.STREAM_CODEC.decode(buf)) && !buf.isReadable(), "a button reads back as it was written");
+            TogetherNet.Ping.STREAM_CODEC.encode(buf, ping);
+            h.assertTrue(ping.equals(TogetherNet.Ping.STREAM_CODEC.decode(buf)) && !buf.isReadable(), "a ping reads back as it was written");
+        } finally {
+            buf.release();
         }
     }
 }

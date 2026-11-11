@@ -30,6 +30,10 @@ final class TogetherCommands {
                     PartyService.leave(c.getSource().getPlayerOrException());
                     return 1;
                 }))
+                .then(Commands.literal("share")
+                        .then(Commands.literal("equal").executes(c -> share(c.getSource().getPlayerOrException(), SharedXp.EQUAL)))
+                        .then(Commands.literal("half").executes(c -> share(c.getSource().getPlayerOrException(), SharedXp.HALF)))
+                        .then(Commands.literal("own").executes(c -> share(c.getSource().getPlayerOrException(), SharedXp.OWN))))
                 .then(Commands.literal("fights")
                         .then(Commands.literal("full").executes(c -> Fights.set(c.getSource().getPlayerOrException(), false) ? 1 : 0))
                         .then(Commands.literal("gentle").executes(c -> Fights.set(c.getSource().getPlayerOrException(), true) ? 1 : 0)))
@@ -105,6 +109,11 @@ final class TogetherCommands {
         }
         line.append(" Your fights are ").append(Fights.gentle(p) ? "Gentle, with " + Fights.windsLeft(p) + " second winds left." : "Full.");
         src.sendSuccess(() -> Component.literal(line.toString()), false);
+        return 1;
+    }
+
+    private static int share(ServerPlayer p, int share) {
+        SharedXp.set(p, share);
         return 1;
     }
 }
