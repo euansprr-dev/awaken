@@ -96,6 +96,16 @@ public final class RealmTests {
             if (Blueprints.pick(Theme.HIVE, Rank.S, Set.of(), 1).isPresent()) h.fail("a rank with no Realm rolled one");
             if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of(), 1).isEmpty()) h.fail("the open Realm wasn't rolled");
             if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of("awaken:amber_reach"), 1).isEmpty()) h.fail("a full bag didn't refill");
+            // a Realm that doesn't say it is ready is never rolled, alone or beside one that is
+            Blueprint unready = new Blueprint(1, "t", "land", "hive", List.of("E"), AMBER.land(), AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(),
+                    AMBER.heart(), AMBER.moods(), "", false);
+            Blueprints.replace(Map.of("awaken:unready", unready));
+            if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of(), 1).isPresent()) h.fail("a Realm that isn't ready was rolled");
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER, "awaken:unready", unready));
+            for (long seed = 0; seed < 8; seed++) {
+                if (!Blueprints.pick(Theme.HIVE, Rank.E, Set.of("awaken:amber_reach"), seed).equals(java.util.Optional.of("awaken:amber_reach"))) h.fail("an unready Realm was rolled beside a ready one");
+            }
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
             h.succeed();
         });
         // the fence posts Euan caught: a real floating post has to fail, or the check proves nothing

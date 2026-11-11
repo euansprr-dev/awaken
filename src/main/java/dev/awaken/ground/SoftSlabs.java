@@ -1,5 +1,6 @@
 package dev.awaken.ground;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -18,7 +19,7 @@ import java.util.List;
 public final class SoftSlabs {
     private SoftSlabs() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.GROUND);
 
     public static final DeferredBlock<SoftSlabBlock> DIRT_SLAB = slab("dirt_slab", MapColor.DIRT, SoundType.GRAVEL, 0.5F);
     public static final DeferredBlock<SoftSlabBlock> COARSE_DIRT_SLAB = slab("coarse_dirt_slab", MapColor.DIRT, SoundType.GRAVEL, 0.5F);

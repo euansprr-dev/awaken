@@ -8,6 +8,7 @@
     "D",
     "C"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:glass_warrens",
     "water": 0

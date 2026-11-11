@@ -1,6 +1,7 @@
 package dev.awaken.village;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
@@ -31,6 +32,7 @@ public final class VillageContent {
 
     static void register(IEventBus modBus) {
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, INN_KEY);
         SOUNDS.register(modBus);
     }
 

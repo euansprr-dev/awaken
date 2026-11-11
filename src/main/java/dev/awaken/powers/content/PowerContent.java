@@ -1,7 +1,7 @@
 package dev.awaken.powers.content;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.powers.Loadout;
 import dev.awaken.powers.PowerRegistry;
 import dev.awaken.powers.PowerType;
@@ -22,7 +22,6 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -112,7 +111,15 @@ public final class PowerContent {
         EFFECTS.register(modBus);
         ATTACHMENTS.register(modBus);
         modBus.addListener(PowerContent::attributes);
-        modBus.addListener(PowerContent::creativeTab);
+        // a core of every power the menu may show (hidden passives stay hidden), each power its own kind in JEI (a core's
+        // variant doesn't make it another)
+        Tabs.fill(Tabs.Shelf.POWER_CORES, (p, out) -> {
+            for (PowerType t : PowerRegistry.all()) if (!(t.isPassive() && t.hidden)) out.accept(core(t, 0));
+        });
+        Tabs.variants(POWER_CORE, s -> {
+            PowerCoreData d = s.get(CORE_DATA.get());
+            return d == null ? null : d.power();
+        });
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
@@ -124,13 +131,5 @@ public final class PowerContent {
         ItemStack stack = new ItemStack(POWER_CORE.get());
         stack.set(CORE_DATA.get(), new PowerCoreData(type.id.toString(), Math.max(0, Math.min(type.variants.size() - 1, variant))));
         return stack;
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (PowerType t : PowerRegistry.all()) {
-            if (t.isPassive() && t.hidden) continue;
-            event.accept(core(t, 0));
-        }
     }
 }

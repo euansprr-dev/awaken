@@ -11,10 +11,10 @@ import dev.awaken.armour.ArmourSet;
 import dev.awaken.armour.ForgeSong;
 import dev.awaken.armour.net.ArmourPayloads;
 import dev.awaken.core.Forces;
+import dev.awaken.core.client.ui.Figure;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -419,7 +419,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             int by = py + 26, bh = Math.min(170, ph - 40);
             g.fill(bx, by, bx + bw, by + bh, 0xC00A0F18);
             g.outline(bx, by, bw, bh, 0x803A4A60);
-            InventoryScreen.extractEntityInInventoryFollowsMouse(g, bx, by + 6, bx + bw, by + bh - 4, (int) (bh * 0.36F), 0.0625F, mouseX, mouseY,
+            Figure.followsMouse(g, bx, by + 6, bx + bw, by + bh - 4, (int) (bh * 0.36F), 0.0625F, mouseX, mouseY,
                     player);
         }
     }

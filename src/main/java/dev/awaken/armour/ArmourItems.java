@@ -1,7 +1,7 @@
 package dev.awaken.armour;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.gear.GearItems;
 import dev.awaken.gear.HunterTier;
 import dev.awaken.gear.Piece;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import org.jspecify.annotations.Nullable;
 
@@ -154,18 +153,17 @@ public final class ArmourItems {
     }
 
     static void init(IEventBus modBus) {
-        modBus.addListener(ArmourItems::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        event.accept(ArmourContent.STAND_ITEM.get());
-        for (ArmourSet set : ArmourSet.values()) {
-            var row = PIECES.get(set);
-            if (row != null) for (ArmorType type : ForgeSong.PIECES) event.accept(row.get(type).get());
-            var pat = PATTERNS.get(set);
-            if (pat != null) event.accept(pat.get());
-        }
+        // the creative menu (SPEC §1, "Creative tabs"): a set at a time, helmet to boots, then its pattern
+        Tabs.fill(Tabs.Shelf.FORGED_ARMOUR, (p, out) -> {
+            for (ArmourSet set : ArmourSet.values()) {
+                var row = PIECES.get(set);
+                if (row != null) for (ArmorType type : ForgeSong.PIECES) out.accept(row.get(type).get());
+                var pat = PATTERNS.get(set);
+                if (pat != null) out.accept(pat.get());
+            }
+        });
+        Tabs.fill(Tabs.Shelf.HOME_STATIONS, ArmourContent.STAND_ITEM);
+        Tabs.icon(Tabs.Tab.ARMOUR, () -> stack(ArmourSet.BELLGUARD, ArmorType.CHESTPLATE));
     }
 
     static ItemStack stack(ArmourSet set, ArmorType type) {

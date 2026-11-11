@@ -2,6 +2,7 @@ package dev.awaken.enchant;
 
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleType;
@@ -121,14 +122,14 @@ public final class EnchantContent {
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);
-        modBus.addListener(EnchantContent::creativeTab);
-    }
-
-    /** The table, and one page of each of the thirty (the creative tab only: in play pages are found). */
-    private static void creativeTab(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
-        e.accept(TABLE_ITEM.get());
-        var reg = e.getParameters().holders().lookupOrThrow(Registries.ENCHANTMENT);
-        for (Inscriptions.Entry en : Inscriptions.ALL) reg.get(en.key()).ifPresent(h -> e.accept(Pages.page(h, "")));
+        // the table with the stations, the Burin with the gear; one page of each of the thirty on the pages shelf (in
+        // play pages are found), and JEI lists each page as its own kind
+        Tabs.fill(Tabs.Shelf.HOME_STATIONS, TABLE_ITEM);
+        Tabs.fill(Tabs.Shelf.GEAR, BURIN);
+        Tabs.fill(Tabs.Shelf.PAGES, (p, out) -> {
+            var reg = p.holders().lookupOrThrow(Registries.ENCHANTMENT);
+            for (Inscriptions.Entry en : Inscriptions.ALL) reg.get(en.key()).ifPresent(h -> out.accept(Pages.page(h, "")));
+        });
+        Tabs.variants(PAGE, () -> net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS);
     }
 }

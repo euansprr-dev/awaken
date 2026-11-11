@@ -1,5 +1,6 @@
 package dev.awaken.terrain;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import dev.awaken.terrain.block.LumenCapBlock;
 import dev.awaken.terrain.tree.LandsTrees;
@@ -27,7 +28,7 @@ import java.util.List;
 public final class LandsBlocks {
     private LandsBlocks() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.LANDS);
 
     // ---- Elderwood ---------------------------------------------------------------------------------------------------
     public static final DeferredBlock<RotatedPillarBlock> ELDER_LOG = SET.log("elder_log", MapColor.SAND, MapColor.QUARTZ);
@@ -70,5 +71,6 @@ public final class LandsBlocks {
 
     static void init(IEventBus modBus) {
         SET.init(modBus);
+        Tabs.icon(Tabs.Tab.NATURE, () -> ELDER_SAPLING.get().asItem().getDefaultInstance());
     }
 }

@@ -1,6 +1,7 @@
 package dev.awaken.living.craft;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -64,6 +65,9 @@ public final class CraftItems {
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
+        // the herbs, then the meals made from them
+        Tabs.fill(Tabs.Shelf.HERBS_AND_MEALS, SUNLEAF, FROSTCAP, EMBERROOT, MOONMOSS, DUSKBLOOM, SPIRITGRASS, HERB_BROTH, FROSTCAP_TEA,
+                EMBER_SKEWER, MOONMOSS_SOUP, HUNTERS_STEW, FORAGERS_SALAD, MINERS_PASTY, ANGLERS_CHOWDER, SPIRIT_TEA);
     }
 
     /** A meal: food, then its strengths (longer for a cook with Hunter's Stew). */

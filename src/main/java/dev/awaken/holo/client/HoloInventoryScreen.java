@@ -1,6 +1,7 @@
 package dev.awaken.holo.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.awaken.core.client.ui.Figure;
 import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.holo.ui.HoverTick;
 import dev.awaken.holo.ui.InventoryWells;
@@ -126,7 +127,7 @@ final class HoloInventoryScreen extends InventoryScreen {
         look.blob(g, leftPos + (InventoryLook.FIGURE_X0 + InventoryLook.FIGURE_X1) / 2f, topPos + InventoryLook.FIGURE_Y1 - 4f, 17f, 3.5f,
                 Glass.EDGE, 0.30f * k);
         if (contentShown()) {
-            extractEntityInInventoryFollowsMouse(g, leftPos + InventoryLook.FIGURE_X0, topPos + InventoryLook.FIGURE_Y0,
+            Figure.followsMouse(g, leftPos + InventoryLook.FIGURE_X0, topPos + InventoryLook.FIGURE_Y0,
                     leftPos + InventoryLook.FIGURE_X1, topPos + InventoryLook.FIGURE_Y1, 30, 0.0625F, mouseX, mouseY, minecraft.player);
         }
     }

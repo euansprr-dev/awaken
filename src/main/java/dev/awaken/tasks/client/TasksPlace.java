@@ -3,6 +3,7 @@ package dev.awaken.tasks.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.core.api.Goals.Goal;
 import dev.awaken.core.client.ui.BandPlaces;
+import dev.awaken.core.client.ui.Figure;
 import dev.awaken.core.client.ui.Hot;
 import dev.awaken.core.client.ui.Kit;
 import dev.awaken.core.client.ui.Sheet;
@@ -16,7 +17,6 @@ import dev.awaken.tasks.net.TaskPayloads.RecipeRow;
 import dev.awaken.tasks.net.TaskPayloads.StepRow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -424,7 +424,7 @@ final class TasksPlace implements BandPlaces.Place {
             boolean on = c == looked, mine = c.id().equals(f.chosen()), over = Sheet.in(mx, my, cx, y, cx + w, y + ph - 8);
             if (over || on) s.fill(cx + 6, y, cx + w - 6, y + ph - 8, Glass.a(Glass.EDGE, on ? .10F : .06F));
             if (worn && i < figures.size()) {
-                InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(cx), s.gy(y + 4), s.gx(cx + w), s.gy(y + tall),
+                Figure.followsMouse(s.g, s.gx(cx), s.gy(y + 4), s.gx(cx + w), s.gy(y + tall),
                         Math.round(tall * .41F * s.k), .0625F, s.ox + mx * s.k, s.oy + my * s.k, figures.get(i));
             } else {
                 int k = c.show().size(), across = k <= 1 ? 1 : 2, down = (k + across - 1) / across;
