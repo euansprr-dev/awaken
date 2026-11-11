@@ -6631,7 +6631,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
   - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
     share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
-  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
+  - **How much fog** stays the Air's own, by the render distance: a land's look gives the fog its tint, not its
+    amount (`haze` and `hazeStart` do not act under the Air). On Amber Reach that is hazier than the land's first
+    pictures, the far cliffs fading more. Shown the two side by side and asked whether a gate world's fog should
+    follow its look's haze strength, Euan said: "Leave it" (2026-11-11).
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite). Before, run
+    42996721809; after, 42996759340: the sky, the far fog and the clouds are the land's amber. Sheet:
+    `docs/perf/steady60/play-2026-11-11/gate-sky-before-after.jpg`.
 - **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
   like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
   that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
