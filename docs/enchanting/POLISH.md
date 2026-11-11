@@ -422,8 +422,7 @@ Euan, in the planning session: "go ahead with the full plan." All seventeen as r
 - The wake's chord of pitched family notes is gone (§45.18).
 - The trace's rules are untouched, but its marks are now the glyphs: straight cuts with corners.
 
-**Not built yet (waits for his play of the pilot):** Regrowth, Remembrance, Gather, Wayfarer, Long Arm; a page arriving as
-a card as well as a line (the given line is still chat; the learned card is the panel); Clear Blood's and Insight's
+**Not built yet (waits for his play of the pilot):** Regrowth, Remembrance, Gather, Wayfarer, Long Arm; Clear Blood's and Insight's
 moments; the hold-to-write fallback.
 
 **Not verified:** nobody has heard a sound; the trace has not been tried by a hand since the glyphs changed; Lantern's

@@ -150,6 +150,19 @@ public final class Pages {
         return w.presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).topic("enchant").ttl(20 * 14).build();
     }
 
+    /**
+     * The card a page gets as it reaches you (chat alone was missed: Euan read a page's arrival as the enchantment
+     * already being his gear's). It says the two steps: read it, then write it on at a table.
+     */
+    static void givenCard(ServerPlayer p, Inscriptions.Entry e) {
+        dev.awaken.signal.Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
+                        Component.literal("Page of " + e.name()).withColor(e.colour()))
+                .body(Component.literal(e.line()))
+                .row("First", "Use the page to learn it.")
+                .row("Then", e.howTo())
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).topic("enchant").ttl(20 * 10).build());
+    }
+
     /** A piece the player carries that this enchantment fits (worn first, then the hands, then the pack), or empty. */
     static ItemStack fits(ServerPlayer p, Inscriptions.Entry e) {
         var h = p.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(e.key());
@@ -230,6 +243,7 @@ public final class Pages {
         }
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
         door(p, "page given", entry);
+        givenCard(p, entry);
         p.sendSystemMessage(Component.literal(Character.toUpperCase(lord.charAt(0)) + lord.substring(1)
                 + " carried a page of " + entry.name() + ". " + then(entry)).withColor(entry.colour()), false);
         return true;

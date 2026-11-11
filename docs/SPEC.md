@@ -19711,7 +19711,8 @@ new words of the plan wait for his play.
 - **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
   `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
   `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
-  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one: chat keeps "You learned Bane of
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`), with a System panel ("Page of Bane of
+  Crawlers", its line, "First: Use the page to learn it.", "Then: To put it on a weapon, ...": `Pages.givenCard`). Reading one: chat keeps "You learned Bane of
   Crawlers. It isn't on anything yet. To put it on a weapon, ..." and a System panel (`Pages.learnedCard`, a PANEL so nothing
   is cut, 14 s) says what it does, "Learned: You know it for good. It isn't on anything yet.", "To use it: ... You write it
   on there.", the piece you carry that it fits ("It fits: your Beastbound Maul") and, while you have never set a table

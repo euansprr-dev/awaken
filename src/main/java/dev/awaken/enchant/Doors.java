@@ -99,7 +99,10 @@ final class Doors {
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
         Inscriptions.Entry entry = Inscriptions.of(id);
         Pages.door(p, "page given", entry);
-        if (entry != null) EnchantFx.page(p, entry, where);
+        if (entry != null) {
+            EnchantFx.page(p, entry, where);
+            Pages.givenCard(p, entry);
+        }
         p.sendSystemMessage(Component.literal(said + (entry == null ? " Use it to learn it." : " " + Pages.then(entry)))
                 .withColor(entry == null ? 0xC9B8FF : entry.colour()), false);
         return true;
