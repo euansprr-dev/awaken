@@ -35,6 +35,18 @@ with no local Java (Euan was playing): everything was compiled and tested throug
 - Dead branches left where code still asks `RidingHooks.rider` or `run.riding` (always false now): gates, progression,
   trials. Harmless; a cleanup for whoever next touches those files.
 
+## Checked on CI (11 Nov)
+- Compiles: `tools/check-ci.sh` runs on the branch from ccec4082f on.
+- Tests: `pair_`, `gentle_`, `alone_`, `together_` all pass (40 tests, run 42993742693 at d230549ef).
+- Tours with a server-played partner (the opening skipped, on open ground):
+  - `coop-gentle` run 42993195083: the band's TOGETHER section with My fights lit on Gentle and nothing cut off; the
+    party strip; a second wind from inside (health back to half, the line with how many are left).
+  - `coop-full` run 42993195127: the strip with "Gentle" beside her name; the edge arrow with the distance at 63 blocks;
+    her ping ("Over here" under her name, a diamond on the ground); "on a knee" on the strip as her second wind lands.
+  - Not shown by them: the kneeling pose (the runner has no animation library, so nothing plays, as designed without
+    it), a boss fight with two players (the ring's owner, the held target, what a boss throws at a Gentle player), the
+    down screen and a lift, the door, the Answering Peal, the Atlas marks.
+
 ## Unseen and unmeasured
 Nobody has played any of it. Every Gentle number is a first value in `awaken-together.toml`. The strip's place on the
 screen, the knee, the markers and every line were chosen without a picture until the two partner tours ran.

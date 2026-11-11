@@ -143,10 +143,12 @@ final class PartyStrip {
         float len = (float) Math.sqrt(ax * ax + ay * ay);
         if (len < 1.0E-3F) return;
         float ex = w / 2F + ax / len * (w / 2F - 18F), ey = h / 2F + ay / len * (h / 2F - 18F);
-        sprite(g, EDGE, 128, 32, ex, ey, 36F, 9F, (float) Math.toDegrees(Math.atan2(ax, -ay)), colour);
+        // the band's edge mark and its diamond, as the lock's own off-screen arrow is drawn, in the member's colour
+        sprite(g, EDGE, 128, 32, ex, ey, 48F, 12F, (float) Math.toDegrees(Math.atan2(ax, -ay)), colour);
+        sprite(g, DIAMOND, 32, 32, ex - ax / len * 9F, ey - ay / len * 9F, 8F, 8F, 0F, colour);
         String label = name + " · " + blocks;
         int lw = font.width(label);
-        int lx = Mth.clamp(Math.round(ex - ax / len * 14F) - lw / 2, 4, w - lw - 4), ly = Mth.clamp(Math.round(ey - ay / len * 14F) - 4, 4, h - 12);
+        int lx = Mth.clamp(Math.round(ex - ax / len * 24F) - lw / 2, 4, w - lw - 4), ly = Mth.clamp(Math.round(ey - ay / len * 24F) - 4, 4, h - 12);
         g.text(font, label, lx, ly, INK, true);
     }
 
