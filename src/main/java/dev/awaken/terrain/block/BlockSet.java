@@ -1,7 +1,7 @@
 package dev.awaken.terrain.block;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -26,16 +25,28 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 /**
- * One Awakened biome's blocks and their items, registered together and shown in the creative tab in the order they
- * were made. The shapes every Awakened tree shares live here (log, planks, leaves, sapling), so each biome's block class
- * only says what is its own.
+ * One Awakened biome's blocks and their items, registered together and shown on their creative shelf in the order they
+ * were made (SPEC §1, "Creative tabs"). The shapes every Awakened tree shares live here (log, planks, leaves, sapling),
+ * so each biome's block class only says what is its own.
  */
 public final class BlockSet {
     public final DeferredRegister.Blocks blocks = DeferredRegister.createBlocks(Awaken.MODID);
     private final DeferredRegister.Items items = DeferredRegister.createItems(Awaken.MODID);
     private final List<DeferredItem<BlockItem>> tab = new ArrayList<>();
+    private final Tabs.Shelf shelf;
 
-    /** Gives the block its item and its place in the tab. */
+    /** A set whose items go on this creative shelf. */
+    public BlockSet(Tabs.Shelf shelf) {
+        this.shelf = shelf;
+    }
+
+    /** A set on no shelf: its items land on Unsorted and the creative tabs' check names them. Say the shelf instead. */
+    @Deprecated
+    public BlockSet() {
+        this.shelf = null;
+    }
+
+    /** Gives the block its item and its place on the shelf. */
     public <B extends Block> DeferredBlock<B> withItem(DeferredBlock<B> block) {
         tab.add(items.registerSimpleBlockItem(block));
         return block;
@@ -75,11 +86,6 @@ public final class BlockSet {
     public void init(IEventBus modBus) {
         blocks.register(modBus);
         items.register(modBus);
-        modBus.addListener(this::creativeTab);
-    }
-
-    private void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (var item : tab) e.accept(item.get());
+        if (shelf != null) Tabs.fill(shelf, tab);
     }
 }

@@ -1,13 +1,13 @@
 package dev.awaken.tasks.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.awaken.core.client.ui.Figure;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.tasks.net.TaskPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.component.DataComponents;
@@ -163,7 +163,7 @@ final class SetPreviewScreen extends Screen implements dev.awaken.signal.client.
             int x = x0 + i * (w + GAP);
             g.fill(x, y0, x + w, y0 + bh, on ? 0xC0102018 : lit ? 0xC0101A28 : 0xC00A0F18);
             g.outline(x, y0, w, bh, Glass.a(on ? Glass.GOOD : Glass.EDGE, on ? 1f : lit ? 0.8f : 0.35f));
-            InventoryScreen.extractEntityInInventoryFollowsMouse(g, x, y0 + 6, x + w, y0 + bh - 4, (int) (bh * 0.36f), 0.0625F, mouseX, mouseY,
+            Figure.followsMouse(g, x, y0 + 6, x + w, y0 + bh - 4, (int) (bh * 0.36f), 0.0625F, mouseX, mouseY,
                     figures.get(i));
             int ty = y0 + bh + 5;
             fit(g, c.title(), x, ty, w, on ? 0xFF000000 | Glass.GOOD : 0xFFFFFFFF);

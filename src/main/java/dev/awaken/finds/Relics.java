@@ -1,7 +1,7 @@
 package dev.awaken.finds;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.finds.kit.Olden;
 import dev.awaken.finds.verb.Ctx;
 import dev.awaken.progression.Progression;
@@ -33,7 +33,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -370,10 +369,7 @@ public final class Relics {
 
     static void init(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
-            if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-            for (Family f : Family.values()) e.accept(f.relic());
-        });
+        Tabs.fill(Tabs.Shelf.RELICS, (p, out) -> { for (Family f : Family.values()) out.accept(f.relic()); });
         NeoForge.EVENT_BUS.addListener(Relics::tick);
         NeoForge.EVENT_BUS.addListener(Relics::breakSpeed);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> CARRIED.remove(e.getEntity().getUUID()));

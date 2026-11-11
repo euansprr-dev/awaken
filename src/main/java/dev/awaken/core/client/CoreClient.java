@@ -14,6 +14,7 @@ public final class CoreClient {
         EdgeHoldClient.init(); // fast movement eases at the edge of the land this client has (SPEC §28.9)
         EdgeHoldCue.init(); // its headwind and the mist at the edge (SPEC §28.9)
         PassageClient.init(modBus); // the dusk while a teleport waits for its land (SPEC §28.9)
+        dev.awaken.core.client.ui.Figure.init(modBus); // bodies in screens, as deep as they are big (SPEC §57.4)
         // Awaken's HUD never draws over a screen (chat aside)
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, HudUnderScreens::pre);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> {

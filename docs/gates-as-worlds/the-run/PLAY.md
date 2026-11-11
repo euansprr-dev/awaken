@@ -1,9 +1,16 @@
 # The Run: how to play it, and what to look for
 
-Everything here is on branch `claude/gates-as-worlds-plan-fcb81b`. It is not in `build/awaken-v1` and not in the play copy
-until someone merges it. The new gates are behind the `gateRealms` switch (off), so the quickest way in is the command.
+The nineteen gates, the variety pass and depth and air are in `build/awaken-v1`. The new gates are behind the `gateRealms`
+switch, off unless a world turns it on.
 
 ## Getting in
+
+**From the world** (11 Nov): set `gateRealms = true` in `config/awaken-synced.toml` and every new gate whose theme and rank
+have a finished Realm is one (the seventeen rolled kinds, The Broodwarren, The Hour Crypt, Amber Reach; a blueprint is
+finished when it says `"ready": true`). Gates already standing stay the old kind, and so do themes and ranks with no Realm
+yet. Nobody has walked into one from the world before: every walk so far used the command.
+
+**By command:**
 
 Stand anywhere in the overworld, as an admin:
 

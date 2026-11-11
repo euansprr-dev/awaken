@@ -6,7 +6,7 @@ import dev.awaken.above.frame.FrameModule;
 import dev.awaken.above.frame.FrameModuleItem;
 import dev.awaken.above.power.EssenceCellItem;
 import dev.awaken.above.scan.ScannerItem;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
@@ -19,7 +19,6 @@ import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -95,35 +94,24 @@ public final class AboveItems {
 
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(AboveItems::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        event.accept(SCANNER.get());
-        event.accept(SCRAP.get());
-        event.accept(CIRCUIT.get());
-        event.accept(ALLOY.get());
-        event.accept(CELL.get());
-        event.accept(FABRICATOR.get());
-        for (var m : MACHINES.values()) event.accept(m.get());
-        event.accept(RING_FRAME.get());
-        event.accept(FRAME_HELMET.get());
-        event.accept(FRAME_CHEST.get());
-        event.accept(FRAME_LEGS.get());
-        event.accept(FRAME_BOOTS.get());
-        for (var m : MODULES.values()) event.accept(m.get());
-        event.accept(PLATING.get());
-        event.accept(PANEL.get());
-        event.accept(TRIM.get());
-        event.accept(GLOW_PANEL.get());
-        event.accept(WARNING_LIGHT.get());
-        event.accept(VOID_GLASS.get());
-        event.accept(MEMBRANE.get());
-        event.accept(BROKEN_MACHINE.get());
-        event.accept(LOG_TERMINAL.get());
-        event.accept(DOOR.get());
-        event.accept(DOOR_CORE.get());
-        event.accept(RETURN_PAD.get());
+        // the creative menu (SPEC §1, "Creative tabs")
+        Tabs.fill(Tabs.Shelf.PRECURSOR_PARTS, SCRAP, CIRCUIT, ALLOY, CELL);
+        Tabs.fill(Tabs.Shelf.GEAR, SCANNER);
+        Tabs.fill(Tabs.Shelf.FRAMES, (p, out) -> {
+            out.accept(FRAME_HELMET.get());
+            out.accept(FRAME_CHEST.get());
+            out.accept(FRAME_LEGS.get());
+            out.accept(FRAME_BOOTS.get());
+            for (var m : MODULES.values()) out.accept(m.get());
+        });
+        Tabs.fill(Tabs.Shelf.MACHINES, (p, out) -> {
+            out.accept(FABRICATOR.get());
+            for (var m : MACHINES.values()) out.accept(m.get());
+            out.accept(RING_FRAME.get());
+            out.accept(RETURN_PAD.get());
+        });
+        Tabs.fill(Tabs.Shelf.PRECURSOR_BLOCKS, PLATING, PANEL, TRIM, GLOW_PANEL, WARNING_LIGHT, VOID_GLASS, MEMBRANE, DOOR, DOOR_CORE,
+                LOG_TERMINAL, BROKEN_MACHINE);
+        Tabs.icon(Tabs.Tab.BUILDING, () -> PLATING.get().getDefaultInstance());
     }
 }

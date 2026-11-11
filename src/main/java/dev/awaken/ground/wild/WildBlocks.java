@@ -1,6 +1,7 @@
 package dev.awaken.ground.wild;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -33,7 +34,7 @@ import java.util.function.Function;
 public final class WildBlocks {
     private WildBlocks() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.GROUND);
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     private static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
@@ -128,6 +129,7 @@ public final class WildBlocks {
     public static void init(IEventBus modBus) {
         SET.init(modBus);
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.HERBS_AND_MEALS, BLACKBERRIES);
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);
     }

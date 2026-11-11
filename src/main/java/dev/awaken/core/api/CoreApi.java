@@ -1,12 +1,10 @@
 package dev.awaken.core.api;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -35,14 +33,7 @@ public final class CoreApi {
     public static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
         ITEMS.register(modBus);
-        modBus.addListener(CoreApi::creativeTab);
-        CoreModule.tabIcon = () -> LORD_HEART.get().getDefaultInstance();
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().equals(CoreModule.TAB_KEY)) {
-            event.accept(ESSENCE_SHARD.get());
-            event.accept(LORD_HEART.get());
-        }
+        Tabs.fill(Tabs.Shelf.ESSENCE, ESSENCE_SHARD, LORD_HEART);
+        Tabs.icon(Tabs.Tab.MATERIALS, () -> ESSENCE_SHARD.get().getDefaultInstance());
     }
 }

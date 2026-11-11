@@ -1,13 +1,12 @@
 package dev.awaken.hearth.request;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Rarity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -44,10 +43,6 @@ public final class RequestContent {
         ITEMS.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
-        modBus.addListener(RequestContent::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (e.getTabKey().equals(CoreModule.TAB_KEY)) e.accept(CORE_SHARD.get());
+        Tabs.fill(Tabs.Shelf.ESSENCE, CORE_SHARD);
     }
 }
