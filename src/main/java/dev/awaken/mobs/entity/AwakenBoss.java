@@ -309,6 +309,12 @@ public class AwakenBoss extends AwakenMob {
         if (entityData.get(DATA_KIT_AIM) != v) entityData.set(DATA_KIT_AIM, v);
     }
 
+    /** An ability of any of its phases by name, or null (both sides: the bestiary is shared). */
+    public dev.awaken.mobs.def.@Nullable Ability abilityNamed(String name) {
+        for (dev.awaken.mobs.def.MobDef.Phase ph : def().phases) for (dev.awaken.mobs.def.Ability a : ph.abilities()) if (a.name().equals(name)) return a;
+        return null;
+    }
+
     /** Whether the playing move's blow has committed to its aim (from its lock on). */
     public boolean kitAimed() {
         return (entityData.get(DATA_KIT_AIM) & 1) != 0;

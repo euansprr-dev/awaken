@@ -25,7 +25,12 @@ import net.minecraft.world.level.Level;
  * its body animates on, to the first active tick whose capsules reach where you stand ({@link KitReach#firstTouch}, the
  * server's own rule), asked of the pose the blow has committed to: the server sends its aim (the facing it turns to,
  * the step it takes, its lean and its run) as the move locks, a quarter of a second or so before the blow. Until then
- * the blow is taken to land on its first tick; if the committed blow reaches no tick, it is said to pass you by;</li>
+ * the blow is taken to land on its first tick; if the committed blow reaches no tick, it is said to pass you by. A
+ * move whose ability strikes for it is asked by that ability's own rule: a slam's core lands on the first active tick
+ * on whoever stands in it (its bells come down after), and a charge is walked ahead at the pace the server carries it,
+ * to the tick its body or its blow reaches you. A charge's tick is an estimate (who else stands in its way, a wall, the
+ * ground under a flier), so its ring closes with it but promises no parry band ({@link #lands}); a leap's and a step's
+ * ring closes as they set off, as the tell always did;</li>
  * <li>any other body's from the count it first showed, on the game's clock.</li>
  * </ul>
  * A later count is never read for time: a tell that ends well before its blow was called off (the slot is let go), and a
@@ -56,6 +61,11 @@ public final class TellClock implements Strikes.Coming {
     private static final double[] SX = new double[SLOTS], SY = new double[SLOTS], SZ = new double[SLOTS];
     private static final float[] SYAW = new float[SLOTS], SRUN = new float[SLOTS];
     private static final boolean[] KIT = new boolean[SLOTS], REACH = new boolean[SLOTS], LANDS = new boolean[SLOTS], SEEN = new boolean[SLOTS];
+    /** What strikes for a kit move besides its capsules: a slam's core (and how wide), a charge, or a body carried some other way. */
+    private static final int PLAIN = 0, SLAM = 1, CHARGE = 2, CARRIED = 3;
+    private static final int[] ABILITY = new int[SLOTS];
+    private static final float[] CORE = new float[SLOTS];
+    private static final boolean DEV = !net.neoforged.fml.loading.FMLEnvironment.isProduction();
 
     static {
         java.util.Arrays.fill(ID, Integer.MIN_VALUE);
@@ -135,6 +145,19 @@ public final class TellClock implements Strikes.Coming {
             WIND[s] = played.windup() + played.hold();
             ACTIVE[s] = played.active();
             FIRST[s] = KitReach.firstCapsule(m);
+            ABILITY[s] = PLAIN;
+            dev.awaken.mobs.def.Ability a = m.ability().map(boss::abilityNamed).orElse(null);
+            if (a != null) {
+                switch (a.kind()) {
+                    case SLAM -> {
+                        ABILITY[s] = SLAM;
+                        CORE[s] = Math.min(KitReach.SLAM_CORE, a.radius());
+                    }
+                    case CHARGE -> ABILITY[s] = CHARGE;
+                    case LEAP, BLINK -> ABILITY[s] = CARRIED;
+                    default -> { }
+                }
+            }
         }
         int wind = WIND[s], first = FIRST[s];
         if (began) {
@@ -144,7 +167,8 @@ public final class TellClock implements Strikes.Coming {
             long now = level.getGameTime();
             FROM[s] = now + (boss.kitStart() - (int) now);
             KIND[s] = Strikes.Kind.NONE.ordinal();
-            LANDS[s] = first >= 0;
+            // the parry band is promised only where the tick is the server's own rule: never for a body its ability carries
+            LANDS[s] = first >= 0 && ABILITY[s] != CHARGE && ABILITY[s] != CARRIED;
             REACH[s] = true;
             AIMED[s] = false;
             // the strike of active tick k runs wind + 1 + k ticks after the move began (FightRunner.step counts from 1);
@@ -165,18 +189,73 @@ public final class TellClock implements Strikes.Coming {
             SYAW[s] = yaw;
             SRUN[s] = boss.kitAimRun();
         }
-        if (!AIMED[s]) return true;
+        if (!AIMED[s] || ABILITY[s] == CARRIED) return true;
         double left = AT[s] - ServerPace.since(level, FROM[s], 1F);
         if (left <= FIXED && !committed) return true; // fixed for the ring's last ticks: "now" never moves once it is near
         // which tick of the committed blow reaches where you stand now, by the rule the server strikes with
-        int k = KitReach.firstTouch(m, ACTIVE[s], SX[s], SY[s], SZ[s], SYAW[s], boss.kitLean(), boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP,
-                m.motion().advance() * SRUN[s], m.motion().rise(), p.getBoundingBox());
+        int k = landing(m, s, boss, p);
         REACH[s] = k >= 0;
         double want = wind + 1 + (k >= 0 ? k : first);
+        if (DEV && committed) {
+            dev.awaken.Awaken.LOG.info("[fights] clock: {} {} commits: {} (active tick {}, tick {} of the move)", boss.def().id, m.id(),
+                    k >= 0 ? "it reaches you" : "it passes you by", k, (int) want);
+        }
         // as the blow commits the landing is set (eased over the tick it is drawn in); after that it follows you about a
         // sweep at an even pace, never a jump
         AT[s] = committed ? want : AT[s] + Math.max(-SLEW, Math.min(SLEW, want - AT[s]));
         return true;
+    }
+
+    /** The active tick (0-based) the committed blow first reaches where you stand, or -1: the server's rule for what strikes. */
+    private static int landing(KitMoves.Move m, int s, AwakenBoss boss, LocalPlayer p) {
+        float lean = boss.kitLean(), hip = boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
+        net.minecraft.world.phys.AABB box = p.getBoundingBox();
+        if (ABILITY[s] == CHARGE) return charge(m, s, boss, p, box, lean, hip);
+        if (ABILITY[s] == SLAM) {
+            // a slam's core: everyone within it of the point its move names, as the active window opens (Abilities.area)
+            java.util.List<Float> o = m.origin();
+            double cx = SX[s], cy = SY[s], cz = SZ[s];
+            if (o.size() >= 3) {
+                net.minecraft.world.phys.Vec3 c = KitReach.point(SX[s], SY[s], SZ[s], SYAW[s], lean, hip, o.get(0), o.get(1), o.get(2));
+                cx = c.x;
+                cy = c.y;
+                cz = c.z;
+            }
+            double dx = p.getX() - cx, dz = p.getZ() - cz;
+            if (dx * dx + dz * dz <= CORE[s] * CORE[s] && Math.abs(p.getY() - cy) < 4.0) return 0;
+        }
+        return KitReach.firstTouch(m, ACTIVE[s], SX[s], SY[s], SZ[s], SYAW[s], lean, hip, m.motion().advance() * SRUN[s], m.motion().rise(), box);
+    }
+
+    /**
+     * A charge, walked ahead as the server carries it (AbilityRunner's CHARGE): from where it stands, straight at you and
+     * {@link KitReach#CHARGE_PAST} past (a flier down to your feet), a stride a tick from the tick after it sets off;
+     * each tick its body's touch is asked before its stride, and its blow's capsules where it stands.
+     */
+    private static int charge(KitMoves.Move m, int s, AwakenBoss boss, LocalPlayer p, net.minecraft.world.phys.AABB box, float lean, float hip) {
+        boolean flies = boss.def().flies();
+        double speed = KitReach.chargeSpeed(flies);
+        double fx = p.getX() - SX[s], fz = p.getZ() - SZ[s], len = Math.sqrt(fx * fx + fz * fz);
+        double rx = len < 1.0E-3 ? 0 : fx * (len + KitReach.CHARGE_PAST) / len, rz = len < 1.0E-3 ? 0 : fz * (len + KitReach.CHARGE_PAST) / len;
+        double ry = flies ? p.getY() - SY[s] : 0;
+        double run = Math.sqrt(rx * rx + ry * ry + rz * rz);
+        if (run < 1.0E-4) return 0;
+        int ticks = net.minecraft.util.Mth.clamp(net.minecraft.util.Mth.ceil(run / speed), 4, KitReach.CHARGE_TICKS + 4);
+        double vx = rx / run * speed, vy = ry / run * speed, vz = rz / run * speed;
+        net.minecraft.world.phys.AABB body = boss.getBoundingBox().move(SX[s] - boss.getX(), SY[s] - boss.getY(), SZ[s] - boss.getZ());
+        java.util.List<java.util.List<KitMoves.Capsule>> hits = m.hits();
+        for (int k = 0; k <= ticks; k++) {
+            int strides = Math.max(0, k - 1);
+            double ox = vx * strides, oy = vy * strides, oz = vz * strides;
+            if (k >= 1 && body.move(ox, oy, oz).inflate(KitReach.CHARGE_GRAZE).intersects(box)) return k;
+            if (k < ACTIVE[s] && k < hits.size()) {
+                for (KitMoves.Capsule c : hits.get(k)) {
+                    if (KitReach.touches(KitReach.point(SX[s] + ox, SY[s] + oy, SZ[s] + oz, SYAW[s], lean, hip, c.ax(), c.ay(), c.az()),
+                            KitReach.point(SX[s] + ox, SY[s] + oy, SZ[s] + oz, SYAW[s], lean, hip, c.bx(), c.by(), c.bz()), c.r(), box)) return k;
+                }
+            }
+        }
+        return -1;
     }
 
     /** Any other body: its blow from the count it first showed, on the game's clock. */

@@ -24659,15 +24659,21 @@ Execution), `opening` (the camera), `living` (the plate's words).
   light (a white-gold and a body-coloured flare, sparks the way the blow went, Minecraft's heaviest impact by name,
   `mobs.finish.blow`), then the body's own ending: its `death` clip with its light leaving it, no vanilla red flash
   (`KitRenderer`) and no white puff (`AwakenBoss.makePoofParticles`: a last flare and its light let go). For the
-  striker: both bodies held 280 ms, one white frame, the frame's bars (11.5% each, which also begin to close while the
-  attack key is held on a beaten body in reach), and in the cinematic view the camera out of their eyes
-  (`core.api.Shots`, the opening's `OpeningCamera`): a low shot to one side of the two bodies and a little behind the
-  striker, pushing in slowly for 6 ticks and the ending (26 to 66), then 10 ticks back into their eyes; the HUD's other
-  layers are not drawn while it runs. Three framings are tried (its left, its right, high behind), each with both ends
-  of the push in open air and in sight of both bodies; none clear, or `OWN_EYES`, or reduced motion: the same beats with
-  no camera move. `finishingBlows` in `awaken-mobs-client.toml`: `CINEMATIC` (default), `OWN_EYES`, `OFF`.
+  striker: both bodies held 280 ms, one white frame, the frame's bars (11.5% each; they begin to close while the
+  attack key is held on a beaten body in reach and stay closed 16 ticks after it is let go, so the blow lands inside
+  them), and in the cinematic view the camera out of their eyes (`core.api.Shots`, the opening's `OpeningCamera`): a
+  low shot to one side of the two bodies and a little to the striker's end of the line between them, looking at the
+  body a little under its middle through a drawn-in lens (74% of the player's own field of view, easing to 72%), as far off as fits the
+  two of them across and stands the body's box 62% of the frame high (3.2 to 14 blocks; the second film had it half as large as meant), pushing in an eighth of the way for 6
+  ticks and the ending (26 to 66). **The way back is a cut, never a flight** (the first film flew the camera through the
+  striker's own head): over the shot's last 5 ticks the bars meet, the view is given back under them, and they open on
+  the striker's own eyes. The frame (bars, white frame, skip line) is drawn after every HUD layer
+  (`RenderGuiEvent.Post`), not as a layer: the opening's camera cancels the layers while a shot runs, and the first film
+  had no bars in the shot because of it. Three framings are tried (its left, its right, high behind), each with both
+  ends of the push in open air and in sight of both bodies; none clear, or `OWN_EYES`, or reduced motion: the same beats
+  with no camera move. `finishingBlows` in `awaken-mobs-client.toml`: `CINEMATIC` (default), `OWN_EYES`, `OFF`.
 - **Skipping:** an ending watched once (`endingsSeen`, kept in the client's settings) is skipped by holding Sneak for
-  half a second; the hint shows in the lower bar.
+  half a second; the hint shows in the lower bar, and a skip leaves by the same cut (the bars meet first).
 - **Where this differs from the approved page** (the page's storyboard assumed a new move filmed from its start): the cut
   comes as the blow lands, since the blow is the player's own Execution through their own hands and the server's word
   for the kill is the only trigger (one side decides; nothing is predicted). So the finishing move is each style's own

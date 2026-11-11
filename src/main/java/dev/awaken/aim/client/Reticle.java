@@ -339,13 +339,16 @@ final class Reticle {
         Entity e = attackerId >= 0 ? mc.level.getEntity(attackerId) : null;
         double left = e == null ? Double.NaN : Strikes.left(e, mc.getDeltaTracker().getGameTimeDeltaPartialTick(true));
         boolean pressed = pressOf == attackerId;
-        if (!Double.isNaN(left)) {
+        // only a blow the ring said reaches you measures the ring: a wave or a shot of the same body lands on its own time
+        boolean said = !Double.isNaN(left) && Strikes.reaches(e);
+        if (said) {
             answers++;
             offSum += left;
             offMax = Math.max(offMax, Math.abs(left));
         }
         if (pressed && pressHot && answer == Strikes.Answer.DEFLECT) hotDeflected++;
-        Awaken.LOG.info("[fights] ring: {} with the ring at {} ticks{}", answer, Double.isNaN(left) ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", left),
+        Awaken.LOG.info("[fights] ring: {} with the ring at {} ticks{}{}", answer, Double.isNaN(left) ? "n/a" : String.format(java.util.Locale.ROOT, "%+.2f", left),
+                Double.isNaN(left) || said ? "" : " (the ring said this blow passes by)",
                 pressed ? String.format(java.util.Locale.ROOT, "; guard raised at %.2f ticks (%s)", pressLeft, pressHot ? "in the band" : "outside it") : "");
         if (pressed) pressOf = -1;
     }

@@ -14,6 +14,17 @@ import java.util.List;
 public final class KitReach {
     private KitReach() {}
 
+    /** A slam strikes everyone within this of where it lands, on its first active tick (the rest of its reach is a wave). */
+    public static final float SLAM_CORE = 1.5F;
+    /** A kit charge: the ticks it runs at most, how far past you it carries, and how near its body has to come to strike. */
+    public static final int CHARGE_TICKS = 14;
+    public static final double CHARGE_PAST = 1.5, CHARGE_GRAZE = 0.6;
+
+    /** Blocks a tick a charge carries its body. */
+    public static double chargeSpeed(boolean flies) {
+        return flies ? 1.0 : 0.85;
+    }
+
     /**
      * A point of the body's space (blocks: +x left, +y up, +z forward) in the world, for a body at (bx, by, bz) facing
      * {@code yaw} and leaning {@code lean} degrees into its blow about a hip {@code hip} blocks up.

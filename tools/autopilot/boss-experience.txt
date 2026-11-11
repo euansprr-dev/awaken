@@ -1,13 +1,18 @@
 # The Whole Boss Fight as built (SPEC §67), filmed on the duel stage (/awaken bosses duel stage, SPEC §47.3) in daylight.
-# 1. The ring in a real fight, slowed to 5 ticks a second, a picture a half tick (clips/ring_struck: the guard never
-#    raised, the ring closes onto the blow; clips/ring_parried: the guard raised in the middle of the band).
+# You stand in survival in a blow's reach (put back there before each one, with health enough for the whole film) and the
+# boss is made to play that blow (duel play); between them it fights as it does.
+# 1. The ring, slowed to 5 ticks a second, a picture a half tick: clips/ring_struck (the guard never raised, the ring
+#    closes onto the Swing), clips/ring_parried (the guard raised in the middle of the band), clips/ring_clang (the Clang,
+#    a slam: its core lands as the bells start down).
 # 2. The band against the server: the guard raised on the ring's own clock (arms parry) at the band's early edge, its
-#    late edge, a tick too early and a tick too late. The log's "[fights] ring:" lines and its totals are the measure:
-#    every guard the ring showed white must come back DEFLECT.
+#    late edge, its middle, a tick too early and a tick too late, then no guard at all. The log's "[fights] ring:" and
+#    "[fights] clock:" lines and the totals are the measure: every guard the ring showed white must come back DEFLECT,
+#    and a blow that lands must find the ring at about -1 to 0.
 # 3. A worn-out blade beside a fresh one in the bag: the crack on its icon.
 # 4. The last stand and the finishing blow on the three pilots: the plate's words, a heavy held and let go, the bars,
 #    the cut out of your eyes, the white frame, its own ending, the cut back (clips/finish_ringer at half speed, a
-#    picture a tick; the Regent and the Colossus as frames).
+#    picture a tick; the Regent and the Colossus as frames), with the Regent's dive (a charge) and the Colossus's slam
+#    taken unguarded first for the ring's clock.
 # Run on CI: tools/tour-ci.sh tools/autopilot/boss-experience.txt 2400
 world autopilot_boss_experience creative 20261111
 waitworld
@@ -29,67 +34,237 @@ cmd kill @e[type=!minecraft:player,distance=..60]
 cmd awaken bosses duel stage proving_ringer
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
-
-# --- 1. the ring in a real fight, slowed: you stand in front of the Ringer in survival and it fights as it does ---
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
 cmd item replace entity @s armor.head with awaken:wildhide_helmet
 cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
 cmd item replace entity @s armor.legs with awaken:wildhide_leggings
 cmd item replace entity @s armor.feet with awaken:wildhide_boots
-cmd effect give @s minecraft:regeneration 100000 6 true
-cmd effect give @s minecraft:resistance 100000 3 true
-cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ ~ ~3.0 180 -10
+cmd attribute @s minecraft:max_health base set 1000
+cmd effect give @s minecraft:instant_health 1 60 true
+cmd effect give @s minecraft:regeneration 100000 8 true
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
 cmd gamemode survival
 hud on
-wait 30
-shot ring_00_fight
+wait 40
+
+# --- 1. the ring, slowed ---
 arms rate 5
 wait 2
-arms film ring_struck 70 0.5 2
-wait 74
+arms film ring_struck 46 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
 arms parry 2.5
-arms film ring_parried 80 0.5 2
-wait 84
+arms film ring_parried 46 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+arms film ring_clang 64 0.5 2
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+arms parry off
 arms rate 20
 wait 10
 
-# --- 2. the band against the server, at full speed: early edge, late edge, a tick early, a tick late ---
+# --- 2. the band against the server: the guard at 3.5 ticks (early edge) ---
 arms parry 3.5
-wait 500
-shot band_00_early_edge
-arms parry 1.75
-wait 500
-shot band_01_late_edge
-arms parry 4.5
-wait 400
-shot band_02_too_early
-arms parry 0.75
-wait 400
-shot band_03_too_late
-arms parry off
-cmd gamemode creative
-wait 10
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+shot band_early_edge
 
-# --- 3. a worn-out blade beside a fresh one, in the bag ---
+# --- 2. the band against the server: the guard at 1.75 ticks (late edge) ---
+arms parry 1.75
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+shot band_late_edge
+
+# --- 2. the band against the server: the guard at 2.5 ticks (middle) ---
+arms parry 2.5
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+shot band_middle
+
+# --- 2. the band against the server: the guard at 4.5 ticks (too early) ---
+arms parry 4.5
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+shot band_too_early
+
+# --- 2. the band against the server: the guard at 0.75 ticks (too late) ---
+arms parry 0.75
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+shot band_too_late
+
+# --- 2. no guard: where the ring stands as each blow lands ---
+arms parry off
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.6 180 -10
+cmd awaken bosses duel play swing_a
+wait 44
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~ 200 ~2.2 180 -10
+cmd awaken bosses duel play clang
+wait 62
+
+# --- 3. a worn-out blade beside a fresh one, in the bag (the Ringer put away first) ---
+cmd kill @e[type=awaken:proving_ringer]
+wait 60
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword[minecraft:damage=899]
-cmd item replace entity @s weapon.offhand with awaken:wildhide_longsword
+cmd item replace entity @s hotbar.1 with awaken:wildhide_longsword
 wait 10
 holo inv open
 wait 15
 shot worn_00_bag
 screen close
 wait 5
-cmd item replace entity @s weapon.offhand with minecraft:air
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd gamemode creative
 
 # --- 4a. the Ringer's last stand and its finishing blow, at half speed, a picture a tick ---
 cmd awaken bosses duel stage proving_ringer
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
-cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~0.4 ~ ~3.2 180 -8
-cmd gamemode survival
-wait 3
-cmd gamemode creative
-cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+cmd execute at @e[type=awaken:proving_ringer,limit=1] run tp @s ~0.4 200 ~3.2 180 -8
 wait 20
 shot finish_00_before
 cmd damage @e[type=awaken:proving_ringer,limit=1] 1000000 minecraft:player_attack by @s
@@ -105,15 +280,32 @@ arms rate 20
 wait 20
 shot finish_99_after
 
-# --- 4b. the Hive Regent, a flier: it comes down, and its finishing blow at full speed ---
+# --- 4b. the Hive Regent, a flier: its dive unguarded (a charge), then beaten, down, and finished ---
 cmd awaken bosses duel stage hive_regent
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
-cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~0.4 ~ ~3.4 180 -14
-wait 20
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~ 200 ~7 180 -20
+cmd gamemode survival
+wait 40
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~ 200 ~7 180 -20
+cmd awaken bosses duel play dive
+wait 70
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~ 200 ~7 180 -20
+cmd awaken bosses duel play dive
+wait 70
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~ 200 ~7 180 -20
+cmd awaken bosses duel play dive
+wait 70
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~ 200 ~7 180 -20
+cmd awaken bosses duel play dive
+wait 70
+cmd gamemode creative
+wait 10
 shot regent_00_before
 cmd damage @e[type=awaken:hive_regent,limit=1] 1000000 minecraft:player_attack by @s
-wait 30
+wait 50
+cmd execute at @e[type=awaken:hive_regent,limit=1] run tp @s ~0.3 ~ ~3.0 180 -10
+wait 12
 shot regent_01_beaten
 arms heavy 12
 shotnow regent_blow_01
@@ -168,15 +360,32 @@ shotnow regent_blow_49
 shotnow regent_blow_50
 wait 40
 
-# --- 4c. the Gearwright Colossus, the tall one: the same shot has to hold it ---
+# --- 4c. the Gearwright Colossus, the tall one: its slam unguarded, then beaten and finished ---
 cmd awaken bosses duel stage gearwright_colossus
 wait 80
 cmd kill @e[type=minecraft:pig,distance=..40]
-cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~0.4 ~ ~4.4 180 -18
-wait 20
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~ 200 ~2.2 180 -30
+cmd gamemode survival
+wait 40
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~ 200 ~2.2 180 -30
+cmd awaken bosses duel play slam
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~ 200 ~2.2 180 -30
+cmd awaken bosses duel play slam
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~ 200 ~2.2 180 -30
+cmd awaken bosses duel play slam
+wait 80
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~ 200 ~2.2 180 -30
+cmd awaken bosses duel play slam
+wait 80
+cmd gamemode creative
+wait 10
 shot colossus_00_before
 cmd damage @e[type=awaken:gearwright_colossus,limit=1] 1000000 minecraft:player_attack by @s
 wait 30
+cmd execute at @e[type=awaken:gearwright_colossus,limit=1] run tp @s ~0.3 ~ ~3.2 180 -22
+wait 12
 shot colossus_01_beaten
 arms heavy 12
 shotnow colossus_blow_01

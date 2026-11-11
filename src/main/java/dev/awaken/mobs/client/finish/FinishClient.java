@@ -54,8 +54,8 @@ public final class FinishClient {
     private static final float BAR_SHARE = 0.115F;
     /** The shot: at least and at most this long on the ending (ticks); the bars close over its last ticks. */
     private static final int HOLD_MIN = 26, HOLD_MAX = 66, SHUT = 5;
-    /** The lens: the share of your own field of view the shot draws in to, and how much of the frame's height the body stands. */
-    private static final float FOV_IN = 0.74F, FILL = 0.5F;
+    /** The lens: the share of your own field of view the shot draws in to, and how much of the frame's height the body's box stands. */
+    private static final float FOV_IN = 0.74F, FILL = 0.62F;
     /** The bars stay closed this long after the attack key is let go on a beaten body (ticks): the blow is on its way. */
     private static final int ARMED = 16;
     /** Sneak held this long skips an ending you have watched before (ticks). */
@@ -270,8 +270,8 @@ public final class FinishClient {
             double half = Math.tan(Math.toRadians(mc.options.fov().get() * FOV_IN * 0.5));
             double aspect = (double) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
             double dist = Mth.clamp(Math.max((sep + b.getBbWidth() + 2.2) / (2 * half * aspect), tall / FILL / (2 * half)), 3.2, 14.0);
-            // it looks between you, nearer the body, at about its middle
-            Vec3 focus = new Vec3(at.x - ax * sep * 0.38, my + tall * 0.52, at.z - az * sep * 0.38);
+            // it looks between you, nearer the body, a little under its middle (a body's box stands taller than it does)
+            Vec3 focus = new Vec3(at.x - ax * sep * 0.38, my + tall * 0.42, at.z - az * sep * 0.38);
             Vec3 chest = new Vec3(at.x, at.y + tall * 0.5, at.z), mine = new Vec3(feet.x, feet.y + 1.2, feet.z);
             int hold = 6 + Mth.clamp(ending, HOLD_MIN, HOLD_MAX);
             double low = my + 0.5 + tall * 0.06;
