@@ -1545,8 +1545,7 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   spent; Red Gates red-rimmed. The hum is two loops with a 48-block falloff, pitch by rank. Old gates and Wells are
   rebuilt in place when loaded.
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
-  version (`RuinBuilder.style`: 2 for all, the sky platform 3 since its island, §17.9; a piece keeps building the
-  version it was started with, so an old platform's unbuilt chunks never weld a new island onto an old deck). The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
+  version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
 - The Atlas shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 - Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
   vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
@@ -4322,26 +4321,6 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
   turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
   and the wings read from its end) and the other diagonal otherwise (a quarter turn round the deck from the pier).
-- **The island and the arch** (11 Nov 2026; the manager's brief: "a floating island that stops you in your tracks"):
-  - *The island* (new platforms only, blueprint `SKY_STYLE` 3, `RuinBuilder.garden`): the deck sits in the ground it
-    tore up. A ring of garden one step below the deck, from the deck's edge (11.6) out to about 13.6 along the axes and
-    12.2 along the diagonals, ragged; the rim sits on a layer of its earth. Under the ring a collar of rock (tuff,
-    andesite, stone, a little coal, iron and copper), deepest mid-ring (up to 11 down), never reaching in to the keel;
-    hanging from it glow berries (grown out, lit on about half), hanging roots and glow lichen. On it grass and moss,
-    wildflowers, ferns, bushes, azaleas and a few firefly bushes; nothing grows within 2 of a diagonal (the pier, its
-    rings and the stair come in on one). Up to eight trees at the eighths, 12 out: flowering azaleas (a trunk 4 high so
-    the crown clears a head on the rim, a lantern hung on the outer side) and now and then a tall autumn poplar; no
-    crown within 4 of a diagonal (the arch's room) or near an axis (the tethers). The four torn-up islands are bigger
-    (3 to 4.3 across the radius) and grown over: a cherry with petals where the oak stood, a poplar on the first,
-    wildflowers, glow berries under them. Everything stays inside the 49×26×49 piece and clear of `ascent_sky_rig`'s checks.
-  - *The arch* (`SkyRig.archCells`, `rigArch`, `archPlaced`: the light in its beam is its mark; old platforms get it
-    too, placed only where nothing solid stands): where
-    the pier's root meets the deck (7, 7), a Precursor pillar either side of the way (9, 5) and (5, 9), 2.8 off its line,
-    four high and capped; across their tops a beam two cells thick (a + b = 14 and 15, 5 over the deck, four clear over
-    the walk) with a light at its middle; a lantern hung under the beam on each side of the walk, at (8, 6) and (6, 8).
-  The island was built beside a case of this session's own (rope-hold-swing, 11 Nov), barriers in a 3x3 round the core and
-  sounds for its hum and shutter; build had the wings' hall and its case by then, so those were dropped in the merge and
-  the hall's case kept. The island's own wind and leaves sounds went with them (the hall's air has its gusts).
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4370,17 +4349,14 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   a keel of stone and ore under its middle, hanging roots, a lantern on two chains under the keel's tip. Under 40 over
   the land, the canopy is opened round each stone and along the way to the next. Played on the bench
   (`SwingBench.climb`: the stones' own cells, the deck, its studs, cabin, keel, pier, islands and the old chain and
-  rings, and since 11 Nov the island's garden, collar and trees and the four islands as the real blueprint lays them,
-  and the arch; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
+  rings; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
   feet, and one that only holds forward and the rope): 12 of 12 and 6 of 6 reach the deck in about 25 s, 99% of it
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. With the island in the bench's model (11 Nov, run 43022550555) the hopping bot
-  still climbs 12 of 12 (in about 28 s, no hard hit) and the key-only bot 5 of 6 (one fell from stone 14), so the
-  island costs the stair a little. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one
-  constant to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get
-  it on their next load; the first rig's chain and rings stay beside it);
+  logs the shapes and judges this one. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one constant
+  to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get it on
+  their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
@@ -5038,8 +5014,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
   A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the
   crown says "The crown stays dark. It answers only to a line."; the core tells a tower from a clever climb in its own
   words (§17.9, 11 Nov 2026: rank first, then built, then the line; at once, then at most every 10 s each). The visit is
-  the whole verdict at the core, held as long as the player stays in the ward: no stopwatch on the deck. What it keeps
-  is in view from the pier: under the arch, the real wings in a glass case through the wings' hall's portal (§17.9). The Tether Vow
+  the whole verdict at the core, held as long as the player stays in the ward: no stopwatch on the deck. The Tether Vow
   is kept only at the mast by the line.
 - **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
   table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
@@ -24443,8 +24418,7 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   this client knows has wings: yourself by tier, others once seen with them open). The body rides the beat by 1.3
   texels. Motes are shed from the tips of the large wings on a downstroke and on a flare.
 - Rungs: one pair (0.94), Skyborn two (1.18 and 0.6 under it), the Sovereign's form three gold pairs and a ring of 14
-  boxes. The same first-rung pair hangs in the sky platform's glass case and flies out of it at the gift (§17.9,
-  `WingCaseRenderer`, the feather and halo pipelines). Others' rung is known once they are seen in flight.
+  boxes. Others' rung is known once they are seen in flight.
 - Far forms: past 48 blocks every other feather, broader, no coverts or shafts (51 boxes); past 96 the three bones and
   six slabs (27).
 - Drawn in their own pipeline, depth written, both sides, unlit: vanilla's emissive type writes no depth, so 231
@@ -24573,9 +24547,7 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9: the rank first, then the rope up
-  its rings (the platform's visit, no stopwatch on the deck, since 11 Nov 2026), each refusal in its own words. The
-  wings hang in a glass case at the core, and the gift opens it and sends them to the player's back (§17.9). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9's (the rank is asked first, then the rope up its rings: the platform's visit, no stopwatch on the deck, each refusal in its own words; from 11 Nov the wings hang in a case at the core and the climb is the stair). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
