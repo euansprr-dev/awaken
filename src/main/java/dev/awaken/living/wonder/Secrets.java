@@ -48,6 +48,8 @@ public final class Secrets {
     public static final class Plan {
         final Long2ObjectOpenHashMap<BlockState> blocks = new Long2ObjectOpenHashMap<>();
         final List<Cache> caches = new ArrayList<>(1);
+        /** Each column's own ground against the heart's (key: (dx, 0, dz)); its blocks are already moved by it. */
+        final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap feet = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
 
         void set(int dx, int dy, int dz, BlockState s) {
             if (Math.abs(dx) <= REACH && Math.abs(dz) <= REACH && dy >= -4 && dy <= 10) blocks.put(BlockPos.asLong(dx, dy, dz), s);
@@ -59,6 +61,16 @@ public final class Secrets {
 
         public List<Cache> caches() {
             return caches;
+        }
+
+        /** How far the ground of the plan's column (dx, dz) lies over (or under) the heart's: where that column stands. */
+        public int foot(int dx, int dz) {
+            return feet.get(BlockPos.asLong(dx, 0, dz));
+        }
+
+        /** The plan's columns (keys (dx, 0, dz)). */
+        public it.unimi.dsi.fastutil.longs.LongSet columns() {
+            return feet.keySet();
         }
     }
 
@@ -115,10 +127,35 @@ public final class Secrets {
                 int rank = RegionMap.rankOf(map.levelAt(x, z));
                 Plan plan = new Plan();
                 build(kind, plan, RandomSource.create(mix(h, 7)));
-                out[i] = new Site(kind, r.id(), r.name(), i, rank, x, t.ground(x, z), z, plan);
+                // every column stands on its own ground (SPEC §21.11): a log or a barrel never hangs a block over a slope
+                plan = settle(plan, x, hs[0], z, t);
+                if (plan == null) continue;
+                out[i] = new Site(kind, r.id(), r.name(), i, rank, x, hs[0], z, plan);
                 break;
             }
         }
+        return out;
+    }
+
+    /** No column of a secret stands further than this over or under its heart's ground: steeper ground gives the spot up. */
+    static final int STEP = 2;
+
+    /** The plan with each column moved onto its own ground, or null where a column's ground is more than {@link #STEP} off. */
+    private static @Nullable Plan settle(Plan p, int x, int y, int z, Wonders.Terrain t) {
+        Plan out = new Plan();
+        for (long k : p.blocks.keySet()) {
+            long col = BlockPos.asLong(BlockPos.getX(k), 0, BlockPos.getZ(k));
+            if (out.feet.containsKey(col)) continue;
+            int off = t.ground(x + BlockPos.getX(k), z + BlockPos.getZ(k)) - y;
+            if (Math.abs(off) > STEP) return null;
+            out.feet.put(col, off);
+        }
+        for (var e : p.blocks.long2ObjectEntrySet()) {
+            long k = e.getLongKey();
+            int dx = BlockPos.getX(k), dz = BlockPos.getZ(k);
+            out.set(dx, BlockPos.getY(k) + out.foot(dx, dz), dz, e.getValue());
+        }
+        for (Cache c : p.caches) out.caches.add(new Cache(c.dx(), c.dy() + out.foot(c.dx(), c.dz()), c.dz(), c.brushable()));
         return out;
     }
 
@@ -143,6 +180,7 @@ public final class Secrets {
     public static Plan planOf(Kind kind, long seed) {
         Plan p = new Plan();
         build(kind, p, RandomSource.create(seed));
+        for (long k : p.blocks.keySet()) p.feet.put(BlockPos.asLong(BlockPos.getX(k), 0, BlockPos.getZ(k)), 0);
         return p;
     }
 

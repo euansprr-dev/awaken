@@ -33,11 +33,14 @@ public final class WonderWatch {
         return WonderFeature.terrain(level, level.getChunkSource().getGenerator());
     }
 
-    /** Wonders within {@code radius} of a point, or none when the map is not made yet. */
+    /**
+     * Wonders within {@code radius} of a point, or none when the map is not made yet. A region whose wonder isn't worked out
+     * yet is worked out off the server thread and counts from the next ask (its first look runs cave probes).
+     */
     public static List<Wonders.Site> near(ServerLevel level, int x, int z, int radius) {
         RegionMap map = RegionService.mapIfReady(level.getServer());
         if (map == null) return List.of();
-        var all = Wonders.near(level.getSeed(), map, terrain(level), x, z, x, z, radius);
+        var all = Wonders.near(level.getSeed(), map, terrain(level), x, z, x, z, radius, false);
         List<Wonders.Site> out = new ArrayList<>(all.size());
         for (Wonders.Site s : all) {
             double dx = s.x() - x, dz = s.z() - z;
@@ -100,7 +103,8 @@ public final class WonderWatch {
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
             if (dx * dx + dz * dz > (double) Secrets.FIND * Secrets.FIND || Math.abs(p.getY() - s.y()) > 6) continue;
             List<String> have = p.getExistingData(LivingContent.SECRETS).orElse(List.of());
-            if (have.contains(s.key())) continue;
+            // one that kept off cut or used ground was never written (SecretFeature.stands): nothing there to find
+            if (have.contains(s.key()) || !standing(level, s)) continue;
             List<String> next = new ArrayList<>(have);
             next.add(s.key());
             p.setData(LivingContent.SECRETS.get(), List.copyOf(next));
@@ -109,6 +113,20 @@ public final class WonderWatch {
             if (fresh) Progression.markNewThing(p, s.kind().display);
             Finds.tell(p, Finds.Find.of("secret", "Secret · " + s.kind().display, s.kind().display, s.kind().line, 0xF0C060, true));
         }
+    }
+
+    /** Whether the secret stands in the world: most of its plan's blocks are there (one the world never wrote has next to none). */
+    static boolean standing(ServerLevel level, Secrets.Site s) {
+        int have = 0, all = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (var e : s.plan().blocks().long2ObjectEntrySet()) {
+            long k = e.getLongKey();
+            m.set(s.x() + BlockPos.getX(k), s.y() + BlockPos.getY(k), s.z() + BlockPos.getZ(k));
+            if (!level.hasChunkAt(m)) return false;
+            all++;
+            if (level.getBlockState(m).is(e.getValue().getBlock())) have++;
+        }
+        return all > 0 && have * 2 >= all;
     }
 
     /** The Atlas marks for the wonders this player has found. */

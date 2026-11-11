@@ -954,6 +954,10 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
+  the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
+- `dev.awaken.core.api.GroundPiece` (§28.9, §21.11) — `usesGround(WorldGenLevel, ChunkGenerator, x, z, r)`: a structure piece whose
+  box is coarser than its land (road legs, settlements) says whether it paints, clears or grades any land within r of (x, z).
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
   (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
   underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
@@ -5557,6 +5561,27 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
 - Review of the first real-generation tour (CI 40458312323): wonders generate through the feature as intended (statues, ring stones, a black house with graves, found by walking up with the toast); it showed a wonder on a Precursor ruin's floor and one on stilts
   at a cliff, so a wonder's site keeps three chunks clear of any structure that may start (`Terrain.structureNear`, from the generator state's structure sets), a secret one chunk, a column whose real ground is more than three blocks from the
   heart's level is left out, the foot is built up at most four blocks, and what grows through a wonder's ground (leaves, logs, tall grass: `Kind.clear` blocks round the heart) is cleared. Not handled: a road passing through a wonder.
+- **Ground others stand on** (Euan's playtest 11 Nov, build 5c930ea6d: "a camp here that is broken... a ton of things are floating"): a cold camp at (-1543, 77, -584) in
+  his New World V20 stood at the noise's ground over a hillside a delve mouth had already cut away (the mouth is a structure at `underground_structures`, before
+  any surface feature), and a cairn at (-1031, 67, -648) over a carver's pit. The noise still says ground where a cave place, a carver, a road or a settlement
+  has changed it or will. So:
+  - A **secret** stands on the ground of each of its columns: every column's own noise ground, no more than 2 over or under the heart's (steeper gives the spot
+    up for the next attempt), its blocks and cache moved with it (`Plan.foot`, `columns`). And it is written whole or not at all: `SecretFeature.stands` is
+    asked by every chunk under it and reads only what each of them holds alike (a secret is 13 blocks wide at most, so its chunks lie beside each other), and
+    keeps it off when (1) a wonder's ground is within reach (38 + 2) of it; (2) any structure referenced from its chunks (or those beside its blocks within 2,
+    that all of them hold) has a piece whose box crosses its blocks plus 2, from 6 under its lowest block to 12 over its highest; a piece that says which land it
+    uses (`core.api.GroundPiece`: road legs and settlements, whose boxes are their whole rasters) is asked that instead, with a road's 8 of banks; (3) a start
+    one of its chunks can't read (past the 8 chunks the FEATURES step holds) is named; (4) a column's ground block is air, water or ice, or not a whole
+    block, or the block under it is air or water (a carver's pit, a pond: carving is part of the terrain step, done in every chunk beside). One that kept off is
+    simply not there: `WonderWatch` counts a secret found only when at least half its plan's blocks stand in the world.
+  - A **wonder** keeps off a cave place open to the sky (a mouth, a sinkhole, a mine's adit) whose box crosses its footprint and cleared ground plus 3, from 6
+    under to 12 over its ground: `Terrain.cut`, through `delve.api.CaveGround` (§34.1, each nearby candidate start's own site search), and tries its next
+    spot. Its sites are a full terrain's (`WonderFeature.terrain`, worldgen and the server); `quickTerrain` (no probes) is for a census and a command's first
+    look, cached apart (`Terrain.seesCuts`). The server thread asks `Wonders.near(..., wait false)`: a region not worked out yet is worked out on a background
+    thread and counts from the next ask (the ward and finding start a second later), so a region's first look never stalls a tick. `wonder list|goto` pick
+    regions by the quick look, nearest first, then ask each as worldgen does.
+  - New chunks only: a secret or wonder an old world already holds stays as written; one whose site moves under the new rule may be written in part where
+    the old and the new land meet. Not handled: a road passing through a wonder (as before), and a carver's pit under a wonder (its columns are left out, as before).
 - Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
   is one piece standing on the ground in all three families), `living_secret_sites`.
 - **Chains** (Build 6, the part done): five more for the lands the first nine skip (`data/awaken/awaken/quest/`): Silk on the Road (band 2, Pell, spiders on a road), Iron in the Ranks (band 2, Gus, zombies in scrap iron), Ash on the Wind
@@ -10744,7 +10769,9 @@ chunks (a road leg reaching 8 chunks from its lattice start, named from the chun
 than being read (reading it crashed world generation, CI tour 10 Nov: "Requested chunk unavailable during world
 generation"). A layout is asked in its own plan coordinates (offsets from its origin, as the painter asks it); asked in
 the world's, the first version saw no real road or settlement. Tests: `village_tall_things_keep_off`,
-`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin). The carriageway is a two-track country road in the land's own ground: a crown grown over
+`village_tall_things_keep_off_region` (a region built as the FEATURES step builds it, far from the world's origin).
+**Ground others stand on** (11 Nov, §21.11): `RoadPiece` and `VillagePiece` are `core.api.GroundPiece`s, answering
+`usesGround` with the same layout test plus the banks, so a surface secret asks the land they use rather than their boxes. The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
@@ -13561,6 +13588,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
   and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
   stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
+- **Ground others stand on** (11 Nov, §21.11): a cave place is cut at `underground_structures`, before anything at the
+  surface, so the noise still says ground where a mouth, a sinkhole or an adit has opened the hill, and a thing set there
+  hung over the hole (a Living Wilds camp, Euan's V20). `delve.api.CaveGround.cuts(level, x0, z0, x1, z1, y0, y1)`
+  (`cave.CaveCuts`) says whether one's box crosses a box, from the seed: every candidate start within 8 chunks (a place
+  fits within 8 of its start) of the mouth, sinkhole (and the first sinkhole) and mine sets has its own site search run
+  (`CaveLocate.site`, without the stub's biome check, so it errs toward a cut), remembered per start (20,000, then
+  refilled). Wonders ask it before taking a spot; secrets read the references of their own chunks instead.
 - **The joint, since 9 Nov** (Euan's playtest 9 Nov, "maybe 10 blocks deep, and then it just stops"): the joint must be a
   real cave. Until then any floor with three of air over it counted, so open ground did: the tunnel of his mouth at -472
   181 -2424 came back out on the hillside 20 blocks round, with a real cave 4 blocks under its floor. In his save 16 of
