@@ -3,7 +3,7 @@
  "id": "guardian_rim",
  "moves": "guardian_rim",
  "duel": true,
- "stance": 320,
+ "stance": 180,
  "intro": {
   "pose": "idle",
   "move": "wake"

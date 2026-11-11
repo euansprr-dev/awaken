@@ -870,7 +870,7 @@ MOVE_SOUNDS = {"cinders": {"swing": "cast", "impact": ""}, "pyre": {"swing": "fl
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 300,
+    "stance": 160,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies burnt out until its fire catches, and gets up
     "phases": [
         {"pool": [

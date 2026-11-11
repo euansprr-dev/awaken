@@ -3,7 +3,7 @@
  "id": "proving_unmade",
  "moves": "proving_unmade",
  "duel": true,
- "stance": 340,
+ "stance": 190,
  "intro": {
   "pose": "kneel",
   "move": "rise"

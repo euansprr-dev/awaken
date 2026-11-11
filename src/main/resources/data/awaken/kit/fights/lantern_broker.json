@@ -3,7 +3,7 @@
  "id": "lantern_broker",
  "moves": "lantern_broker",
  "duel": true,
- "stance": 240,
+ "stance": 130,
  "intro": {
   "pose": "idle",
   "move": "wake"

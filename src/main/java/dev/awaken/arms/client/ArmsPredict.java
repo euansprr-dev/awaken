@@ -1303,7 +1303,8 @@ public final class ArmsPredict {
                     ArmsFx.guardSpark(e, s.aux2(), s.aux() == ArmsPayloads.DEFLECT);
                 }
             }
-            case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
+            case ArmsPayloads.POSTURE, ArmsPayloads.POSTURE_HELD -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other(),
+                    s.what() == ArmsPayloads.POSTURE_HELD);
             default -> { }
         }
     }

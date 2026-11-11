@@ -3,7 +3,7 @@
  "id": "proving_keepers_shadow",
  "moves": "proving_keepers_shadow",
  "duel": true,
- "stance": 420,
+ "stance": 230,
  "intro": {
   "pose": "stand",
   "move": "emerge"

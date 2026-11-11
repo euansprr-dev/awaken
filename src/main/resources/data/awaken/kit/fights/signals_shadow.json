@@ -3,7 +3,7 @@
  "id": "signals_shadow",
  "moves": "signals_shadow",
  "duel": true,
- "stance": 360,
+ "stance": 200,
  "intro": {
   "pose": "kneel",
   "move": "arrive"

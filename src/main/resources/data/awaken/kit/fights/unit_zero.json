@@ -3,7 +3,7 @@
  "id": "unit_zero",
  "moves": "unit_zero",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "kneel",
   "move": "wake"

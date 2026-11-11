@@ -358,7 +358,7 @@ MOVE_SOUNDS = {"descend": {"swing": "roar"}, "break": {"swing": "impact"}, "lift
 FIGHT = {
     # a duel (SPEC §47.3): phrases of four and five, the spear's reach and the wings covering the ground round it
     "duel": True,
-    "stance": 380,  # tuned with the sim (SPEC §47.8)
+    "stance": 210,  # tuned with the sim (SPEC §47.8)
     "intro": {"pose": "kneel", "move": "descend"},
     "phases": [
         # the whole cathedral: the spear in fours, Descent, the Wingbeat, the Halo Turn, the Lance, the Stoop
