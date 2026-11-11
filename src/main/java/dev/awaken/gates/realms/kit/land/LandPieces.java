@@ -74,27 +74,40 @@ public final class LandPieces {
             pillar(v, d, cx + 13, cz - 15, 8, 304);
         }
 
-        /** The arch home, three deep: jambs on stepped feet, a lit keystone, a coping, and the opening the arch's light stands in. */
+        /**
+         * The arch home: a gabled head over the opening with a lit keystone, jambs that step down to buttresses either side,
+         * a lamp on each shoulder. Its middle slice stands taller and wider than the two beside it, so no face of it is one plane.
+         */
         private void arch(V v, Dress d) {
             int az = cz + 6;
-            for (int k = -1; k <= 1; k++) for (int s = -4; s <= 4; s++) {
+            for (int k = -1; k <= 1; k++) for (int s = -5; s <= 5; s++) {
                 int x = cx + s, z = az + k, a = Math.abs(s);
+                boolean mid = k == 0;
+                if (a > 3 && !mid) continue;
                 v.foot(x, feet - 1, z, a <= 1 ? d.stone() : d.rock());
-                if (a <= 1) v.set(x, feet - 1, z, k == 0 ? d.dark() : d.stone());
-                for (int h = 0; h <= 5; h++) {
+                if (a <= 1) v.set(x, feet - 1, z, mid ? d.dark() : d.stone());
+                Direction in = s < 0 ? Direction.EAST : Direction.WEST;
+                for (int h = 0; h <= 7; h++) {
                     BlockState b = null;
                     if (a <= 1) {
-                        if (h == 3) b = a == 0 ? (k == 0 ? d.seam() : d.rock()) : Build.under(d.rockStairs(), s < 0 ? Direction.WEST : Direction.EAST);
-                        else if (h == 4) b = d.rock();
-                        else if (h == 5 && k == 0) b = d.rockSlab();
-                    } else if (a <= 3) {
-                        if (h <= 4) b = h == 0 || h == 4 ? d.dark() : d.rock();
-                        else if (k == 0) b = a == 2 ? d.rockSlab() : null;
-                    } else if (k == 0) b = h == 0 ? d.rock() : h == 1 ? Build.stair(d.rockStairs(), s < 0 ? Direction.EAST : Direction.WEST) : null;
-                    if (b != null || a <= 3 && h <= 5) v.set(x, feet + h, z, b);
+                        if (h == 3) b = a == 0 ? (mid ? d.seam() : d.rock()) : Build.under(d.rockStairs(), in.getOpposite());
+                        else if (h == 4) b = mid ? d.rock() : d.rockSlab();
+                        else if (h == 5 && mid) b = a == 0 ? d.rock() : Build.stair(d.rockStairs(), in);
+                        else if (h == 6 && mid && a == 0) b = d.seam();
+                        else if (h == 7 && mid && a == 0) b = d.rockSlab();
+                    } else if (a == 2) {
+                        if (h <= 3) b = h == 0 ? d.dark() : d.rock();
+                        else if (h == 4) b = mid ? d.dark() : d.rockSlab();
+                        else if (h == 5 && mid) b = d.rockSlab();
+                    } else if (a == 3) {
+                        int top = mid ? 3 : 2;
+                        if (h <= top) b = h == 0 ? d.dark() : d.rock();
+                        else if (h == top + 1) b = mid ? d.lamp() : d.rockSlab();
+                    } else if (h < 6 - a) b = d.rock();
+                    else if (h == 6 - a) b = Build.stair(d.rockStairs(), in);
+                    if (b != null || a <= 3) v.set(x, feet + h, z, b);
                 }
             }
-            for (int s = -3; s <= 3; s += 6) v.set(cx + s, feet + 5, az, d.lamp());
         }
 
         /** A broken pillar of the land's own rock, in courses, its top gone. */
@@ -438,7 +451,7 @@ public final class LandPieces {
                 BlockState b;
                 if (y >= gy + tall - 2) b = d.seam();
                 else if (Math.floorMod(y + i * 3, 13) == 0) b = d.ore();
-                else if (N.rnd(x * 7L + y, z, salt + i) < 0.05 + 0.1 * t) b = d.seam();
+                else if (N.rnd(x * 7L + y, z, salt + i) < 0.08 + 0.14 * t) b = d.seam();
                 else b = Math.floorMod(y, 5) == 2 ? d.dark() : d.rock();
                 v.set(x, y, z, b);
             }

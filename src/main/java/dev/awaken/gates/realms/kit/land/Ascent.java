@@ -52,6 +52,9 @@ final class Ascent extends Landform {
     private int riftV, deckFeet;
     private double riftMid;
     private boolean rift;
+    /** The fall down the face: its bearing, and the pool at the knee it ends in. */
+    private static final double FALL = Math.PI / 2 - 0.5;
+    private double poolU, poolV, poolY;
 
     Ascent(GeneratedLand land) {
         super(land, 0xA5CE27L);
@@ -92,6 +95,9 @@ final class Ascent extends Landform {
         for (int i = 0; i < prof.length && i < v0 + 8; i++) prof[i] = Math.min(crest, Math.max(prof[i], courtFeet + 7 + FACE * (v0 - i)));
         crestOut = v0 - (crest - courtFeet - 7) / FACE;
         kneeR = v0 + 2;
+        poolU = Math.cos(FALL) * (kneeR + 13);
+        poolV = Math.sin(FALL) * (kneeR + 13);
+        poolY = at(kneeR + 13) - 1.5;
         laid = true;
     }
 
@@ -138,7 +144,10 @@ final class Ascent extends Landform {
         if (nDune.get(u / 140 + 9, v / 140) < 0.15) return 0;
         Hex h = N.hex(u, v, 6.5);
         double k = N.rnd(h.q(), h.r(), seed + 31);
-        return k < 0.08 && h.edge() < 0.9 ? WATER + 6 + N.rnd(h.q(), h.r(), seed + 32) * 22 : 0;
+        if (k >= 0.08) return 0;
+        // highest at its middle and falling away to the water: a stack, not a box
+        double far = Math.hypot(u - h.cx(), v - h.cz()) / 6.5, top = (8 + N.rnd(h.q(), h.r(), seed + 32) * 24) * (1 - 0.7 * far * far);
+        return top > 2 ? WATER + top : 0;
     }
 
     private static double wrap(double a) {
@@ -153,7 +162,10 @@ final class Ascent extends Landform {
             double th = chan[c] + 0.085 * Math.sin(r / 23 + c * 1.9) + 0.045 * Math.sin(r / 8.7 + c * 4.1);
             best = Math.min(best, Math.abs(wrap(a - th)) * r);
         }
-        return best;
+        // and one straight down the face beside the stair, from the crest to a pool at the knee: what you see burning from the shore
+        // (a little narrower in the count than it lies, so it comes out a block wider than the rest)
+        if (r < kneeR + 13) best = Math.min(best, Math.abs(wrap(a - FALL)) * r - 0.8);
+        return Math.min(best, Math.hypot(u - poolU, v - poolV) - 4.5);
     }
 
     private static double channelWide(double r) {
@@ -195,6 +207,9 @@ final class Ascent extends Landform {
             }
         }
         // channels cut a little into the ground and throw up a bank either side
+        // the pool at the foot of the fall lies in a hollow of its own
+        double pool = laid ? Math.hypot(u - poolU, v - poolV) : 99;
+        if (pool < 10) y = N.lerp(y, poolY, N.smooth(10, 6, pool));
         double ch = channel(u, v, r, p);
         if (ch < 8) {
             double w = channelWide(r);
@@ -328,10 +343,11 @@ final class Ascent extends Landform {
             add(t, u, v);
         }
         int iA = t.last();
-        // the fights along the approach: the first within a minute of the way in, then one every sixty blocks or so
+        // the fights along the approach: the first within a minute of the way in, the rest shared out evenly from there to the
+        // foot of the flank, forty to seventy blocks apart however long the approach came out
         List<Integer> early = new ArrayList<>();
-        for (int i = 46 + r.nextInt(8); i < iA - 26; i += 56 + r.nextInt(10)) early.add(i);
-        if (early.isEmpty()) early.add(Math.max(20, iA / 2));
+        int first = Math.min(46 + r.nextInt(8), Math.max(20, iA / 2)), count = Math.max(1, (int) Math.ceil((iA - first) / 70.0));
+        for (int k = 0; k < count; k++) early.add(first + (iA - first) * k / count);
         // the flank: out along it, back across it, in again, between two hairpins; each arm climbs as it goes
         double delta = at(100) - yA, grade = 0.19;
         traverse(t, 1, grade, yA + delta * 0.38, Double.NaN);
@@ -423,6 +439,7 @@ final class Ascent extends Landform {
             land.way(mir * us, vk, mir * ue, vk, 2);
             for (int j = 0; j <= ROW; j += 4) st(ue + 3 * dir, vk - j, yk + TREADS, 2.8, 3, FLOOR);
             lamps.add(new int[]{ue + 5 * dir, vk - ROW});
+            lamps.add(new int[]{0, vk + 3});
             if (k == balcony) {
                 balU = ue + 8 * dir;
                 balV = vk - 4;
@@ -457,8 +474,9 @@ final class Ascent extends Landform {
         for (int k : new int[]{8, 5, 0, -5, -8}) ledges.add(new int[]{lx(k), deckFeet, riftV});
         land.putCourse(new Course("rift", -12, deckFeet - 14, li(riftMid) - 11, 12, deckFeet + 9, li(riftMid) + 11, ledges));
         for (int s = -1; s <= 1; s += 2) land.maybe(new LandPieces.LampPost(lx(9 * s), riftV + 4, 3, land));
-        // a lamp at the far corner of every landing: from the shore the stair is a line of lights going up the crag
-        for (int[] l : lamps) land.maybe(new LandPieces.LampPost(lx(l[0]), l[1], 3, land));
+        // a lamp at the far corner of every landing and half way along every flight, on its outer side: from the shore the
+        // stair is a line of lights going up the crag
+        for (int[] l : lamps) land.maybe(new LandPieces.LampPost(lx(l[0]), l[1], 4, land));
 
         // the court, its gate, its Waystone; the crown and the Lord's door
         land.must(new LandPieces.Court(0, courtFeet, vc, 11.4, land));

@@ -193,9 +193,10 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         Dress d = dress;
         double line = Math.abs(vein.get(x / 11.0 + y / 23.0, y / 6.0, z / 11.0 - y / 29.0));
         if (line < 0.035) return N.rnd(x * 31L + y, z, seed + 11) < 0.35 ? d.ore() : d.seam();
+        // courses: mostly the rock itself, with beds of the firm ground's stone and of the dark stone lying in it
         double course = strata.get(x / 60.0, y / 3.4, z / 60.0);
-        if (course > 0.55) return d.dark();
-        if (course < -0.62) return d.stone();
+        if (course > 0.42) return d.dark();
+        if (course < -0.38) return d.stone();
         return d.rock();
     }
 
